@@ -4,7 +4,7 @@ extends RefCounted
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 
-const STATE_SCHEMA_VERSION := 3
+const STATE_SCHEMA_VERSION := 4
 const COMMAND_SCHEMA_VERSION := 1
 const FACT_SCHEMA_VERSION := 1
 const FACT_PRODUCERS := ["game", "event", "service", "travel", "crew", "heat", "town", "sweep", "scenario"]
@@ -39,6 +39,21 @@ const FACT_REQUIRED_FIELDS := {
 	"world_boundary": ["amount", "action_index"],
 	"scenario_command": ["command_id", "receipt_id"],
 }
+const FACT_FIELD_TYPES := {
+	"game_result": {"game_id": TYPE_STRING, "action_id": TYPE_STRING, "won": TYPE_BOOL, "ended": TYPE_BOOL, "bankroll_delta": TYPE_INT, "chips_delta": TYPE_INT, "applied_heat_delta": TYPE_INT},
+	"event_result": {"event_id": TYPE_STRING, "choice_id": TYPE_STRING, "resolution_id": TYPE_STRING, "resolved": TYPE_BOOL, "ok": TYPE_BOOL},
+	"service_result": {"kind": TYPE_STRING, "service_id": TYPE_STRING, "ok": TYPE_BOOL, "action_id": TYPE_STRING},
+	"travel_departed": {"source_id": TYPE_STRING, "target_id": TYPE_STRING, "travel_kind": TYPE_STRING},
+	"travel_arrived": {"source_id": TYPE_STRING, "target_id": TYPE_STRING, "travel_kind": TYPE_STRING},
+	"crew_changed": {"member_id": TYPE_STRING, "change": TYPE_STRING, "value": -1},
+	"crew_job_changed": {"job_id": TYPE_STRING, "definition_id": TYPE_STRING, "member_id": TYPE_STRING, "status": TYPE_STRING, "outcome": TYPE_STRING},
+	"heat_changed": {"previous": TYPE_INT, "current": TYPE_INT, "applied_delta": TYPE_INT, "source": TYPE_STRING},
+	"heat_band_changed": {"previous_band": TYPE_STRING, "current_band": TYPE_STRING, "current": TYPE_INT, "source": TYPE_STRING},
+	"town_transition": {"action_index": TYPE_INT, "weather": TYPE_STRING, "day_type": TYPE_STRING, "happening_ids": TYPE_ARRAY},
+	"sweep_changed": {"action_index": TYPE_INT, "node_id": TYPE_STRING, "segment_index": TYPE_INT, "active": TYPE_BOOL},
+	"world_boundary": {"amount": TYPE_INT, "action_index": TYPE_INT},
+	"scenario_command": {"command_id": TYPE_STRING, "receipt_id": TYPE_STRING},
+}
 const PRODUCER_ORDER := {
 	"game": 10, "event": 20, "service": 30, "travel": 40,
 	"crew": 50, "heat": 60, "town": 70, "sweep": 80, "scenario": 90,
@@ -66,6 +81,7 @@ static func initial_state(definition: Dictionary, node_id: String, seed_token: S
 		"status": STATUS_ACTIVE,
 		"phase_id": SequenceSchemaScript.initial_phase_id(definition),
 		"phase_action_counter": 0,
+		"phase_boundary_grace": 0,
 		"boundary_serial": 0,
 		"fact_serial_next": 1,
 		"last_flushed_fact_serial": 0,
@@ -81,6 +97,10 @@ static func initial_state(definition: Dictionary, node_id: String, seed_token: S
 		"command_fingerprints": {},
 		"transition_receipts": [],
 		"transition_delivery_receipts": [],
+		"active_stages": [],
+		"event_request_queue": [],
+		"event_request_history": [],
+		"event_request_delivery_receipts": [],
 		"cleanup_receipts": [],
 		"visit_receipts": [],
 		"expiry_receipts": [],
@@ -92,7 +112,7 @@ static func initial_state(definition: Dictionary, node_id: String, seed_token: S
 		"runtime_errors": [],
 		"performance_counters": {"transitions_prepared": 0, "facts_flushed": 0, "commands_applied": 0},
 	}
-	return _enter_phase(state, definition, str(state.get("phase_id", "")), "initial")
+	return _enter_phase(state, definition, str(state.get("phase_id", "")), "initial", false)
 
 
 static func normalize_state(value: Variant, definition: Dictionary = {}) -> Dictionary:
@@ -111,6 +131,7 @@ static func normalize_state(value: Variant, definition: Dictionary = {}) -> Dict
 		"status": str(source.get("status", STATUS_ACTIVE)),
 		"phase_id": str(source.get("phase_id", "")).strip_edges(),
 		"phase_action_counter": maxi(0, int(source.get("phase_action_counter", 0))),
+		"phase_boundary_grace": clampi(int(source.get("phase_boundary_grace", 0)), 0, 1),
 		"boundary_serial": maxi(0, int(source.get("boundary_serial", 0))),
 		"fact_serial_next": maxi(1, int(source.get("fact_serial_next", 1))),
 		"last_flushed_fact_serial": maxi(0, int(source.get("last_flushed_fact_serial", 0))),
@@ -126,6 +147,10 @@ static func normalize_state(value: Variant, definition: Dictionary = {}) -> Dict
 		"command_fingerprints": _dict(source.get("command_fingerprints", {})),
 		"transition_receipts": _bounded_strings(source.get("transition_receipts", []), MAX_RECEIPTS),
 		"transition_delivery_receipts": _bounded_strings(source.get("transition_delivery_receipts", []), MAX_RECEIPTS),
+		"active_stages": _bounded_records(source.get("active_stages", []), MAX_RECEIPTS),
+		"event_request_queue": _bounded_records(source.get("event_request_queue", []), MAX_RECEIPTS),
+		"event_request_history": _bounded_records(source.get("event_request_history", []), MAX_RECEIPTS),
+		"event_request_delivery_receipts": _bounded_strings(source.get("event_request_delivery_receipts", []), MAX_RECEIPTS),
 		"cleanup_receipts": _bounded_strings(source.get("cleanup_receipts", []), MAX_RECEIPTS),
 		"visit_receipts": _bounded_strings(source.get("visit_receipts", []), MAX_RECEIPTS),
 		"expiry_receipts": _bounded_strings(source.get("expiry_receipts", []), MAX_RECEIPTS),
@@ -177,11 +202,11 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 		return {"ok": false, "errors": validation, "state": state, "replayed": false}
 	var command_id := str(command_value.get("command_id", "")).strip_edges()
 	var payload := _dict(command_value.get("payload", {}))
-	var descriptor := _command_descriptor(state, definition, str(command_value.get("owner_namespace", "")), str(command_value.get("stable_object_id", "")), command_id)
+	var descriptor := _command_descriptor(state, definition, str(command_value.get("owner_namespace", "")), str(command_value.get("stable_object_id", "")), command_id, context)
 	var cost := maxi(0, int(_dict(descriptor.get("action", {})).get("cost", 0)))
 	var original_state := state.duplicate(true)
 	var state_before := JSON.stringify(_canonical_variant(state))
-	var handler_result := _apply_registered_handler(state, definition, command_value)
+	var handler_result := _apply_registered_handler(state, definition, command_value, context)
 	state = _dict(handler_result.get("state", state))
 	if not bool(handler_result.get("ok", false)):
 		return {"ok": false, "errors": _array(handler_result.get("errors", [])), "state": state, "replayed": false}
@@ -203,6 +228,7 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 		"command_id": command_id,
 		"phase_id": str(state.get("phase_id", "")),
 		"status": str(state.get("status", "")),
+		"boundary_serial": int(state.get("boundary_serial", 0)),
 		"cost": cost,
 		"outcomes": _string_array(state.get("resolved_outcomes", [])),
 		"changed": state_before != JSON.stringify(_canonical_variant(state)),
@@ -289,6 +315,17 @@ static func validate_fact(state: Dictionary, fact_value: Dictionary) -> Array:
 			var required_field := str(required_field_value)
 			if not payload.has(required_field):
 				errors.append("scenario %s fact requires payload.%s" % [fact_type, required_field])
+		var field_types := _dict(FACT_FIELD_TYPES.get(fact_type, {}))
+		for field_value in payload.keys():
+			var field := str(field_value)
+			if not field_types.has(field):
+				errors.append("scenario %s fact payload contains unknown field %s" % [fact_type, field])
+				continue
+			var expected_type := int(field_types.get(field, -1))
+			if expected_type >= 0 and typeof(payload.get(field_value)) != expected_type:
+				errors.append("scenario %s fact payload.%s has the wrong type" % [fact_type, field])
+		if fact_type == "town_transition" and _string_array(payload.get("happening_ids", [])).size() != _array(payload.get("happening_ids", [])).size():
+			errors.append("scenario town_transition fact payload.happening_ids must contain unique stable strings")
 	return errors
 
 
@@ -365,9 +402,12 @@ static func apply_reentry(state_value: Dictionary, definition: Dictionary, visit
 			next["last_feedback"] = "This room sequence has expired. The exit remains clear."
 		"aftermath":
 			# Terminal aftermath is already materialized in semantic_state. Partial
-			# sequences cannot invent an outcome at reentry and therefore resume.
+			# sequences cannot invent an outcome at reentry and therefore resume
+			# their current phase's readable arrival state.
 			if status == STATUS_AFTERMATH:
 				next["last_feedback"] = _aftermath_feedback(next, definition)
+			elif status == STATUS_ACTIVE:
+				next["last_feedback"] = str(SequenceSchemaScript.phase(definition, str(next.get("phase_id", ""))).get("arrival_feedback", next.get("last_feedback", "")))
 		"resume":
 			if status == STATUS_AFTERMATH:
 				next["last_feedback"] = _aftermath_feedback(next, definition)
@@ -437,6 +477,7 @@ static func drain_transitions(state_value: Dictionary, definition: Dictionary, r
 	var delivered := _string_array(state.get("transition_delivery_receipts", []))
 	var emitted: Array = []
 	var remaining: Array = []
+	var active_stages := _bounded_records(state.get("active_stages", []), MAX_RECEIPTS)
 	for transition_value in _array(semantic.get("transition_queue", [])):
 		var transition := _dict(transition_value)
 		var receipt_id := str(transition.get("receipt_id", "")).strip_edges()
@@ -448,10 +489,36 @@ static func drain_transitions(state_value: Dictionary, definition: Dictionary, r
 			presentation["duration_boundaries"] = 0
 		emitted.append(presentation)
 		delivered.append(receipt_id)
+		if str(presentation.get("op", "")) == "stage" and int(presentation.get("duration_boundaries", 0)) > 0:
+			var stage := presentation.duplicate(true)
+			stage["started_boundary"] = int(state.get("boundary_serial", 0))
+			stage["expires_boundary"] = int(state.get("boundary_serial", 0)) + int(presentation.get("duration_boundaries", 0))
+			active_stages.append(stage)
 	semantic["transition_queue"] = remaining
 	state["semantic_state"] = semantic
 	state["transition_delivery_receipts"] = _bounded_strings(delivered, MAX_RECEIPTS)
+	state["active_stages"] = _bounded_records(active_stages, MAX_RECEIPTS)
 	return {"ok": true, "state": state, "transitions": emitted, "errors": []}
+
+
+static func drain_event_requests(state_value: Dictionary, definition: Dictionary) -> Dictionary:
+	var state := normalize_state(state_value, definition)
+	if state.is_empty():
+		return {"ok": false, "state": state, "requests": [], "errors": ["scenario event-request drain requires state"]}
+	var delivered := _string_array(state.get("event_request_delivery_receipts", []))
+	var history := _bounded_records(state.get("event_request_history", []), MAX_RECEIPTS)
+	var emitted: Array = []
+	for request_value in _bounded_records(state.get("event_request_queue", []), MAX_RECEIPTS):
+		var request := _dict(request_value)
+		var request_id := str(request.get("request_id", "")).strip_edges()
+		if request_id.is_empty() or delivered.has(request_id): continue
+		emitted.append(request)
+		history.append(request)
+		delivered.append(request_id)
+	state["event_request_queue"] = []
+	state["event_request_history"] = _bounded_records(history, MAX_RECEIPTS)
+	state["event_request_delivery_receipts"] = _bounded_strings(delivered, MAX_RECEIPTS)
+	return {"ok": true, "state": state, "requests": emitted, "errors": []}
 
 
 static func public_projection(state_value: Dictionary, definition: Dictionary = {}) -> Dictionary:
@@ -463,12 +530,15 @@ static func public_projection(state_value: Dictionary, definition: Dictionary = 
 		"node_id": str(state.get("node_id", "")),
 		"phase_id": str(state.get("phase_id", "")),
 		"status": str(state.get("status", "")),
+		"boundary_serial": maxi(0, int(state.get("boundary_serial", 0))),
 		"objectives": _public_objectives(state, definition),
 		"local_state": _dict(state.get("local_state", {})),
 		"resolved_outcomes": _string_array(state.get("resolved_outcomes", [])),
 		"last_feedback": str(state.get("last_feedback", "")),
 		"semantic_state": _dict(state.get("semantic_state", {})),
 		"pending_transition_count": _array(_dict(state.get("semantic_state", {})).get("transition_queue", [])).size(),
+		"active_stages": _bounded_records(state.get("active_stages", []), MAX_RECEIPTS),
+		"pending_event_request_count": _array(state.get("event_request_queue", [])).size(),
 	}
 
 
@@ -495,7 +565,7 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 		errors.append("scenario command is unavailable in the current phase")
 	if typeof(command_value.get("payload", {})) != TYPE_DICTIONARY:
 		errors.append("scenario command payload must be a dictionary")
-	var descriptor := _command_descriptor(state, definition, owner_namespace, stable_object_id, command_id)
+	var descriptor := _command_descriptor(state, definition, owner_namespace, stable_object_id, command_id, context)
 	if not bool(descriptor.get("identity_present", false)):
 		errors.append("scenario command targets a missing interaction identity")
 	else:
@@ -511,7 +581,7 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 	return errors
 
 
-static func _apply_registered_handler(state: Dictionary, definition: Dictionary, command_value: Dictionary) -> Dictionary:
+static func _apply_registered_handler(state: Dictionary, definition: Dictionary, command_value: Dictionary, context: Dictionary = {}) -> Dictionary:
 	var next := state.duplicate(true)
 	var command_id := str(command_value.get("command_id", "")).strip_edges()
 	var descriptor := _command_descriptor(
@@ -519,7 +589,8 @@ static func _apply_registered_handler(state: Dictionary, definition: Dictionary,
 		definition,
 		str(command_value.get("owner_namespace", "")),
 		str(command_value.get("stable_object_id", "")),
-		command_id
+		command_id,
+		context
 	)
 	var action := _dict(descriptor.get("action", {}))
 	var handler_id := str(action.get("handler", "")).strip_edges()
@@ -527,7 +598,7 @@ static func _apply_registered_handler(state: Dictionary, definition: Dictionary,
 		return {"ok": true, "state": next}
 	if not OperationRegistryScript.registered_handlers().has(handler_id):
 		return {"ok": false, "state": state, "errors": ["scenario command handler is unregistered: %s" % handler_id]}
-	return _run_handler(next, definition, handler_id, _dict(action.get("inputs", {})), {"command_id": command_id, "payload": _dict(command_value.get("payload", {}))})
+	return _run_handler(next, definition, handler_id, _dict(action.get("inputs", {})), {"command_id": command_id, "receipt_id": str(command_value.get("idempotency_key", "")), "payload": _dict(command_value.get("payload", {}))})
 
 
 static func _run_handler(state: Dictionary, definition: Dictionary, handler_id: String, inputs: Dictionary, trigger: Dictionary) -> Dictionary:
@@ -551,13 +622,23 @@ static func _run_handler(state: Dictionary, definition: Dictionary, handler_id: 
 			if not outcome.is_empty() and not outcomes.has(outcome): outcomes.append(outcome)
 			next["resolved_outcomes"] = outcomes
 		"publish_feedback":
-			next["last_feedback"] = str(inputs.get("message", ""))
+			var feedback_message := str(inputs.get("message", ""))
+			next["last_feedback"] = feedback_message
+			next = _queue_feedback_transition(next, feedback_message, trigger)
 		"request_cleanup":
 			next = _apply_cleanup(next, definition, str(inputs.get("reason", "requested")))
 			next["status"] = STATUS_CLEANED
 		"event_bridge":
-			# The bridge records correlation only. Event consequences remain owned by
-			# EventModule and arrive as a later typed event_result fact.
+			var event_id := str(inputs.get("event_id", "")).strip_edges()
+			var resolution_id := str(inputs.get("resolution_id", "")).strip_edges()
+			var request_id := "event_request:%s:%s:%s" % [event_id, resolution_id, _trigger_receipt(trigger)]
+			var requests := _bounded_records(next.get("event_request_queue", []), MAX_RECEIPTS)
+			var known := false
+			for request_value in requests:
+				if str(_dict(request_value).get("request_id", "")) == request_id: known = true
+			if not known:
+				requests.append({"request_id": request_id, "event_id": event_id, "resolution_id": resolution_id, "scenario_id": str(next.get("scenario_id", "")), "node_id": str(next.get("node_id", "")), "phase_id": str(next.get("phase_id", ""))})
+			next["event_request_queue"] = _bounded_records(requests, MAX_RECEIPTS)
 			next["last_feedback"] = "Event choice recorded for the room sequence."
 	return {"ok": true, "state": next}
 
@@ -567,6 +648,9 @@ static func _apply_fact(state: Dictionary, definition: Dictionary, fact_value: D
 	var original := state.duplicate(true)
 	var fact_type := str(fact_value.get("fact_type", ""))
 	var payload := _dict(fact_value.get("payload", {}))
+	var skip_phase_boundary := fact_type == "world_boundary" and int(next.get("phase_boundary_grace", 0)) > 0
+	if skip_phase_boundary:
+		next["phase_boundary_grace"] = 0
 	for subscription_value in _array(SequenceSchemaScript.sequence(definition).get("fact_subscriptions", [])):
 		var subscription := _dict(subscription_value)
 		if subscription.is_empty():
@@ -590,16 +674,24 @@ static func _apply_fact(state: Dictionary, definition: Dictionary, fact_value: D
 			var step := _dict(step_value)
 			if str(step.get("kind", "")) == "fact" and str(step.get("fact_type", "")) == fact_type:
 				next = _complete_objective_step(next, definition, str(objective.get("id", "")), str(step.get("id", "")))
-			elif str(step.get("kind", "")) == "world_boundary" and fact_type == "world_boundary":
+			elif str(step.get("kind", "")) == "world_boundary" and fact_type == "world_boundary" and not skip_phase_boundary:
 				next = _complete_objective_step(next, definition, str(objective.get("id", "")), str(step.get("id", "")))
 	if fact_type == "event_result":
-		var event_receipt := "%s:%s" % [str(payload.get("event_id", "")), str(payload.get("choice_id", ""))]
-		var event_receipts := _string_array(next.get("event_choice_receipts", []))
-		_append_unique(event_receipts, event_receipt)
-		next["event_choice_receipts"] = event_receipts
+		var resolution_id := str(payload.get("resolution_id", "")).strip_edges()
+		if not resolution_id.is_empty() and not _event_resolution_was_requested(next, str(payload.get("event_id", "")), resolution_id):
+			return {"ok": false, "state": original, "errors": ["scenario event_result does not match a delivered event request"]}
+		if bool(payload.get("resolved", false)):
+			var event_receipt := "%s:%s" % [resolution_id if not resolution_id.is_empty() else str(payload.get("event_id", "")), str(payload.get("choice_id", ""))]
+			var event_receipts := _string_array(next.get("event_choice_receipts", []))
+			_append_unique(event_receipts, event_receipt)
+			next["event_choice_receipts"] = event_receipts
 	if fact_type == "world_boundary":
-		next["phase_action_counter"] = int(next.get("phase_action_counter", 0)) + maxi(1, int(payload.get("amount", 1)))
-	var trigger := {"kind": "fact", "fact_type": fact_type, "fact_id": str(fact_value.get("fact_id", "")), "payload": payload}
+		# Presentation stages expire on real world boundaries even when a newly
+		# entered phase consumes its one-boundary progression grace.
+		next["active_stages"] = _unexpired_stages(next.get("active_stages", []), int(next.get("boundary_serial", 0)))
+		if not skip_phase_boundary:
+			next["phase_action_counter"] = int(next.get("phase_action_counter", 0)) + maxi(1, int(payload.get("amount", 1)))
+	var trigger := {"kind": "fact", "fact_type": "world_boundary_grace" if skip_phase_boundary else fact_type, "fact_id": str(fact_value.get("fact_id", "")), "payload": payload}
 	next = _evaluate_branches(next, definition, trigger)
 	if _array(next.get("runtime_errors", [])).size() > _array(original.get("runtime_errors", [])).size():
 		return {"ok": false, "state": original, "errors": _array(next.get("runtime_errors", [])).slice(_array(original.get("runtime_errors", [])).size())}
@@ -629,7 +721,7 @@ static func _evaluate_branches(state: Dictionary, definition: Dictionary, trigge
 			for objective_id_value in _dict(branch.get("objective_outcomes", {})).keys():
 				next = _resolve_objective(next, definition, str(objective_id_value), str(_dict(branch.get("objective_outcomes", {})).get(objective_id_value, "")))
 			if not target.is_empty():
-				next = _enter_phase(next, definition, target, branch_id)
+				next = _enter_phase(next, definition, target, branch_id, str(trigger.get("kind", "")) == "command")
 				advanced = true
 				break
 			return _resolve_outcome(next, definition, str(branch.get("outcome", "")).strip_edges(), branch_id)
@@ -643,7 +735,7 @@ static func _evaluate_branches(state: Dictionary, definition: Dictionary, trigge
 			if index >= 0 and index + 1 < ids.size():
 				var target := str(ids[index + 1])
 				if _entry_conditions_match(SequenceSchemaScript.phase(definition, target), next, trigger):
-					next = _enter_phase(next, definition, target, "ordered_compat")
+					next = _enter_phase(next, definition, target, "ordered_compat", false)
 					continue
 		return next
 	_append_runtime_error(next, "scenario phase graph exceeded its bounded transition count")
@@ -670,7 +762,7 @@ static func _entry_conditions_match(phase_data: Dictionary, state: Dictionary, t
 	return true
 
 
-static func _enter_phase(state: Dictionary, definition: Dictionary, phase_id: String, source_receipt: String) -> Dictionary:
+static func _enter_phase(state: Dictionary, definition: Dictionary, phase_id: String, source_receipt: String, grant_boundary_grace: bool = false) -> Dictionary:
 	var original := state.duplicate(true)
 	var next := state.duplicate(true)
 	var phase_data := SequenceSchemaScript.phase(definition, phase_id)
@@ -683,6 +775,10 @@ static func _enter_phase(state: Dictionary, definition: Dictionary, phase_id: St
 		return original
 	next["phase_id"] = phase_id
 	next["phase_action_counter"] = 0
+	# A UI command is followed by its turn boundary, which must not count twice.
+	# Fact/world transitions already occur at a safe boundary, so their next real
+	# boundary remains eligible for objectives and ordered compatibility advance.
+	next["phase_boundary_grace"] = 1 if grant_boundary_grace else 0
 	next["last_feedback"] = str(phase_data.get("arrival_feedback", ""))
 	var semantic := _dict(next.get("semantic_state", {}))
 	var transition_receipts := _string_array(next.get("transition_receipts", []))
@@ -909,7 +1005,7 @@ static func _trim_dictionary_to_receipts(values: Dictionary, receipts: Array) ->
 			values.erase(key_value)
 
 
-static func _command_descriptor(state: Dictionary, definition: Dictionary, owner_namespace: String, stable_object_id: String, command_id: String) -> Dictionary:
+static func _command_descriptor(state: Dictionary, definition: Dictionary, owner_namespace: String, stable_object_id: String, command_id: String, context: Dictionary = {}) -> Dictionary:
 	var identity := OperationRegistryScript.identity(owner_namespace, stable_object_id)
 	var interactions := _dict(_dict(state.get("semantic_state", {})).get("interactions", {}))
 	var interaction := _dict(interactions.get(identity, {}))
@@ -918,8 +1014,47 @@ static func _command_descriptor(state: Dictionary, definition: Dictionary, owner
 	for action_value in _array(interaction.get("available_actions", [])):
 		var action := _dict(action_value)
 		if str(action.get("id", "")) == command_id:
-			return {"identity_present": true, "interaction_enabled": bool(interaction.get("enabled", false)), "action_present": true, "action": action}
-	return {"identity_present": true, "interaction_enabled": bool(interaction.get("enabled", false)), "action_present": false, "action": {}}
+			return {"identity_present": true, "interaction_enabled": _interaction_enabled_for_command(interaction, context), "action_present": true, "action": action}
+	return {"identity_present": true, "interaction_enabled": _interaction_enabled_for_command(interaction, context), "action_present": false, "action": {}}
+
+
+static func _interaction_enabled_for_command(interaction: Dictionary, context: Dictionary) -> bool:
+	if str(interaction.get("mode", "add")) == "augment":
+		var target_identity := OperationRegistryScript.identity(str(interaction.get("target_owner_namespace", "")), str(interaction.get("target_stable_object_id", "")))
+		var availability := _dict(context.get("host_interaction_availability", {}))
+		return availability.has(target_identity) and typeof(availability.get(target_identity)) == TYPE_BOOL and bool(availability.get(target_identity, false))
+	return bool(interaction.get("enabled", false))
+
+
+static func _queue_feedback_transition(state: Dictionary, message: String, trigger: Dictionary) -> Dictionary:
+	var next := state.duplicate(true)
+	var semantic := OperationRegistryScript.normalize_semantic_state(_dict(next.get("semantic_state", {})))
+	var queue := _array(semantic.get("transition_queue", []))
+	queue.append({"family": "transition_ops", "op": "feedback", "channel": "feedback", "message": message, "receipt_id": "feedback:%s" % _trigger_receipt(trigger)})
+	semantic["transition_queue"] = queue
+	next["semantic_state"] = semantic
+	return next
+
+
+static func _trigger_receipt(trigger: Dictionary) -> String:
+	var receipt := str(trigger.get("receipt_id", trigger.get("fact_id", trigger.get("command_id", "boundary")))).strip_edges()
+	return receipt.replace(":", "_")
+
+
+static func _event_resolution_was_requested(state: Dictionary, event_id: String, resolution_id: String) -> bool:
+	for value in _bounded_records(state.get("event_request_history", []), MAX_RECEIPTS):
+		var request := _dict(value)
+		if str(request.get("event_id", "")) == event_id and str(request.get("resolution_id", "")) == resolution_id:
+			return true
+	return false
+
+
+static func _unexpired_stages(value: Variant, boundary_serial: int) -> Array:
+	var result: Array = []
+	for stage_value in _bounded_records(value, MAX_RECEIPTS):
+		var stage := _dict(stage_value)
+		if int(stage.get("expires_boundary", 0)) > boundary_serial: result.append(stage)
+	return result
 
 
 static func _command_precondition_errors(state: Dictionary, action: Dictionary) -> Array:
@@ -1008,6 +1143,14 @@ static func _fact_array(value: Variant) -> Array:
 
 static func _bounded_strings(value: Variant, limit: int) -> Array:
 	var result := _string_array(value)
+	if result.size() > limit: result = result.slice(result.size() - limit, result.size())
+	return result
+
+
+static func _bounded_records(value: Variant, limit: int) -> Array:
+	var result: Array = []
+	for record_value in _array(value):
+		if typeof(record_value) == TYPE_DICTIONARY: result.append((record_value as Dictionary).duplicate(true))
 	if result.size() > limit: result = result.slice(result.size() - limit, result.size())
 	return result
 

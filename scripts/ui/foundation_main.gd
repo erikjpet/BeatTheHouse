@@ -7141,6 +7141,10 @@ func _refresh() -> void:
 		_render_start_screen()
 		return
 	_evaluate_run_terminal_state()
+	var scenario_transition_message := _consume_scenario_transitions()
+	if not scenario_transition_message.is_empty():
+		_show_message(scenario_transition_message)
+		_autosave_foundation_run("Room presentation saved.")
 	_render_environment_screen()
 	if _run_menu_is_visible():
 		_refresh_run_menu()
@@ -7327,7 +7331,6 @@ func _render_start_screen() -> void:
 
 func _render_environment_screen() -> void:
 	_ensure_run_ui_built()
-	var scenario_transition_message := _consume_scenario_transitions()
 	if current_screen == SCREEN_START:
 		_set_current_screen(SCREEN_ENVIRONMENT)
 	start_screen.visible = false
@@ -7364,8 +7367,6 @@ func _render_environment_screen() -> void:
 	_schedule_action_panel_refresh()
 	_refresh_world_map_overlay()
 	_update_procedural_music()
-	if not scenario_transition_message.is_empty():
-		_show_message(scenario_transition_message)
 
 
 func _refresh_world_header(selected_world_object_override: Dictionary = {}) -> void:
@@ -8151,7 +8152,8 @@ func _add_context_scenario_actions(card: VBoxContainer, object_data: Dictionary)
 		var button := _add_card_button(card, label, Callable(self, "_activate_scenario_action").bind(
 			str(action.get("scenario_owner_namespace", object_data.get("scenario_owner_namespace", "scenario"))),
 			str(action.get("scenario_stable_object_id", object_data.get("scenario_stable_object_id", ""))),
-			command_id
+			command_id,
+			str(action.get("scenario_idempotency_key", ""))
 		), not bool(action.get("enabled", true)), true)
 		button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 
@@ -9987,7 +9989,8 @@ func activate_interactable_object(object_id: String) -> bool:
 			return _activate_scenario_action(
 				str(object_data.get("scenario_owner_namespace", "scenario")),
 				str(object_data.get("scenario_stable_object_id", "")),
-				str(object_data.get("scenario_command_id", object_data.get("confirm_action_id", "")))
+				str(object_data.get("scenario_command_id", object_data.get("confirm_action_id", ""))),
+				str(object_data.get("scenario_idempotency_key", ""))
 			)
 	_show_message("Inspect this first.")
 	_refresh()
@@ -9995,38 +9998,38 @@ func activate_interactable_object(object_id: String) -> bool:
 
 
 func _activate_scenario_action_token(token: String) -> bool:
-	for object_value in _interactable_object_view_list():
-		var object_data := _copy_dict(object_value)
-		for action_value in _copy_array(object_data.get("inline_actions", [])):
-			var action := _copy_dict(action_value)
-			if str(action.get("emit_object_id", "")) != token:
-				continue
-			return _activate_scenario_action(
-				str(action.get("scenario_owner_namespace", object_data.get("scenario_owner_namespace", "scenario"))),
-				str(action.get("scenario_stable_object_id", object_data.get("scenario_stable_object_id", ""))),
-				str(action.get("scenario_command_id", action.get("id", "")))
-			)
+	var descriptor := ScenarioSemanticViewModelScript.action_descriptor_for_token(_interactable_object_view_list(), token)
+	if not descriptor.is_empty():
+		return _activate_scenario_action(
+			str(descriptor.get("owner_namespace", "scenario")),
+			str(descriptor.get("stable_object_id", "")),
+			str(descriptor.get("command_id", "")),
+			str(descriptor.get("idempotency_key", ""))
+		)
 	_show_message("That room action is no longer available.")
 	_refresh()
 	return false
 
 
-func _activate_scenario_action(owner_namespace: String, stable_object_id: String, command_id: String) -> bool:
+func _activate_scenario_action(owner_namespace: String, stable_object_id: String, command_id: String, authored_idempotency_key: String = "") -> bool:
 	if run_state == null or stable_object_id.strip_edges().is_empty() or command_id.strip_edges().is_empty():
 		return false
-	var sequence_state := _copy_dict(run_state.current_environment.get("scenario_sequence_state", {}))
-	var serial := _copy_array(sequence_state.get("command_receipts", [])).size()
-	var idempotency_key := "ui:%s:%s:%s:%d" % [owner_namespace, stable_object_id, command_id, serial]
-	var result := run_state.scenario_sequence_command(command_id, idempotency_key, {}, owner_namespace, stable_object_id)
+	var projection := run_state.scenario_sequence_projection()
+	var idempotency_key := authored_idempotency_key.strip_edges()
+	if idempotency_key.is_empty():
+		idempotency_key = "ui:%d:%s:%s:%s" % [maxi(0, int(projection.get("boundary_serial", 0))), owner_namespace, stable_object_id, command_id]
+	var result := run_state.scenario_sequence_command(command_id, idempotency_key, {}, owner_namespace, stable_object_id, _scenario_host_interaction_availability())
 	if not bool(result.get("ok", false)):
 		var errors := _copy_array(result.get("errors", []))
 		_show_message(str(errors[0]) if not errors.is_empty() else "That room action could not be completed.")
 		_refresh()
 		return false
 	var cost := maxi(0, int(result.get("cost", 0)))
-	run_state.advance_environment_turns(1)
+	if not bool(result.get("replayed", false)):
+		run_state.advance_environment_turns(1)
+	_consume_scenario_event_requests()
 	var transition_message := _consume_scenario_transitions()
-	var projection := run_state.scenario_sequence_projection()
+	projection = run_state.scenario_sequence_projection()
 	var message := transition_message
 	if message.is_empty():
 		message = str(projection.get("last_feedback", "Room state updated."))
@@ -10037,6 +10040,18 @@ func _activate_scenario_action(owner_namespace: String, stable_object_id: String
 	_autosave_foundation_run("Room sequence saved.")
 	_refresh()
 	return true
+
+
+func _scenario_host_interaction_availability() -> Dictionary:
+	var availability: Dictionary = {}
+	for record_value in _interactable_object_view_list():
+		var record := _copy_dict(record_value)
+		var owner := str(record.get("owner_namespace", "")).strip_edges()
+		var stable_id := str(record.get("stable_object_id", "")).strip_edges()
+		if owner.is_empty() or stable_id.is_empty():
+			continue
+		availability["%s::%s" % [owner, stable_id]] = bool(record.get("enabled", true)) and bool(record.get("interactive", true))
+	return availability
 
 
 func _consume_scenario_transitions() -> String:
@@ -10050,11 +10065,27 @@ func _consume_scenario_transitions() -> String:
 		var transition := _copy_dict(transition_value)
 		var cue_id := str(transition.get("cue_id", "")).strip_edges()
 		if not cue_id.is_empty():
-			_play_environment_audio_cue(cue_id)
+			if str(transition.get("op", "")) == "music":
+				_on_game_surface_music_cue(cue_id, {"source": "scenario", "transition": transition})
+			else:
+				_play_environment_audio_cue(cue_id)
 		var message := str(transition.get("message", "")).strip_edges()
 		if not message.is_empty() and not messages.has(message):
 			messages.append(message)
 	return " ".join(messages)
+
+
+func _consume_scenario_event_requests() -> void:
+	if run_state == null or not run_state.scenario_sequence_active():
+		return
+	var drained := run_state.scenario_drain_event_requests()
+	if not bool(drained.get("ok", false)):
+		return
+	for request_value in _copy_array(drained.get("requests", [])):
+		var request := _copy_dict(request_value)
+		var event_id := str(request.get("event_id", "")).strip_edges()
+		if not event_id.is_empty():
+			_activate_event_object(event_id)
 
 
 func _complete_delivery_handoff(node_id: String) -> bool:

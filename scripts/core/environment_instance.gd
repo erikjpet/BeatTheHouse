@@ -61,6 +61,10 @@ var scenario_sequence_state: Dictionary = {}
 var scenario_sequence_projection: Dictionary = {}
 var scenario_render_snapshot: Dictionary = {}
 var scenario_sequence_migration: Dictionary = {}
+var scenario_sequence_base_game_ids: Array = []
+var scenario_sequence_base_service_ids: Array = []
+var scenario_sequence_base_travel_hooks: Array = []
+var scenario_sequence_base_game_modifiers: Dictionary = {}
 var environment_layer_schema_version: int = 0
 var current_layer_id: String = ""
 var default_layer_id: String = ""
@@ -199,6 +203,10 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.scenario_sequence_projection = _copy_dict(data.get("scenario_sequence_projection", {}))
 	environment.scenario_render_snapshot = _copy_dict(data.get("scenario_render_snapshot", {}))
 	environment.scenario_sequence_migration = _copy_dict(data.get("scenario_sequence_migration", {}))
+	environment.scenario_sequence_base_game_ids = _copy_array(data.get("scenario_sequence_base_game_ids", []))
+	environment.scenario_sequence_base_service_ids = _copy_array(data.get("scenario_sequence_base_service_ids", []))
+	environment.scenario_sequence_base_travel_hooks = _copy_array(data.get("scenario_sequence_base_travel_hooks", []))
+	environment.scenario_sequence_base_game_modifiers = _copy_dict(data.get("scenario_sequence_base_game_modifiers", {}))
 	environment.environment_layer_schema_version = maxi(0, int(data.get("environment_layer_schema_version", 0)))
 	environment.current_layer_id = str(data.get("current_layer_id", "")).strip_edges()
 	environment.default_layer_id = str(data.get("default_layer_id", "")).strip_edges()
@@ -272,6 +280,10 @@ func to_dict() -> Dictionary:
 		result["scenario_sequence_state"] = scenario_sequence_state.duplicate(true)
 		result["scenario_sequence_projection"] = scenario_sequence_projection.duplicate(true)
 		result["scenario_render_snapshot"] = scenario_render_snapshot.duplicate(true)
+		result["scenario_sequence_base_game_ids"] = scenario_sequence_base_game_ids.duplicate(true)
+		result["scenario_sequence_base_service_ids"] = scenario_sequence_base_service_ids.duplicate(true)
+		result["scenario_sequence_base_travel_hooks"] = scenario_sequence_base_travel_hooks.duplicate(true)
+		result["scenario_sequence_base_game_modifiers"] = scenario_sequence_base_game_modifiers.duplicate(true)
 	if not scenario_sequence_migration.is_empty():
 		result["scenario_sequence_migration"] = scenario_sequence_migration.duplicate(true)
 	if environment_layer_schema_version > 0 and not current_layer_id.is_empty():
