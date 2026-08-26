@@ -393,3 +393,9 @@ their own detailed handoffs and test evidence.
   `9D4C85...F8116`. Fresh import, exhaustive parsing and the focused Coin
   Pusher suite are running serially before a separate opening audit. EV remains
   unreleased.
+- 2026-08-26: External depth dependency `env06_6` reports clean frozen head
+  `aa179f110f4411d9c598c98387f5d78cf6fdc2af`, accepted author self-review,
+  accepted independent P2-remediation review with no P1/P2, and a 51.6-second
+  static validator pass. Formal branch acceptance, merge and board status remain
+  withheld pending mandatory serialized host gates; depth continues HOST and
+  board HOLD.
