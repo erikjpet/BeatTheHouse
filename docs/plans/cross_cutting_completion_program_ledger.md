@@ -101,3 +101,13 @@ their own detailed handoffs and test evidence.
   hold. Their process trees were stopped/allowed to exit, both reports were
   invalidated, and the pusher owner acknowledged that closure will rerun from
   scratch without the override only after literal exclusive HOST release.
+- 2026-08-25: The foreign interactive editor exited and global verification
+  returned zero Godot/compiler processes. Literal exclusive HOST release was
+  issued to `pusherv3_10` for a from-scratch closure battery, including 200,000
+  accepted plays per machine; meta, balance, depth, pusher-audit, and scratch
+  runtime work remain held.
+- 2026-08-25: The owner answered `fix06_3` Phase 5: choose option (a), expanded
+  to procedural per-ticket generation so every Crossword Corner ticket has a
+  unique generated puzzle and printed content that exactly matches its
+  mechanics. The scratch author remains a board non-writer and will replace its
+  prior BLOCKED delta with a final cited delta after implementation/review.
