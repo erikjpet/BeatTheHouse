@@ -26,6 +26,24 @@ const ALLOWED_EXCEPTION_ROWS := [
 	"choice_or_failure", "material_outcomes", "revisit_coverage", "world_connection",
 	"primary_verb", "feedback_and_exit",
 ]
+const MAX_PHASES := 16
+const MAX_BRANCHES_PER_PHASE := 8
+const MAX_OBJECTIVES := 8
+const MAX_STEPS_PER_OBJECTIVE := 8
+const MAX_LOCAL_FIELDS := 32
+const MAX_FACT_SUBSCRIPTIONS := 32
+const MAX_AFTERMATHS := 8
+const MAX_OPERATIONS_PER_FAMILY := 32
+const MAX_COLLECTION_ENTRIES := 64
+const MAX_DATA_DEPTH := 12
+const MAX_TOTAL_VALUES := 4096
+const MAX_TEXT_LENGTH := 512
+const PHASE_KEYS := ["id", "label", "arrival_feedback", "exit_prompt", "terminal", "entry_conditions", "objective_ids", "advance_after_actions", "scene_ops", "interaction_ops", "actor_ops", "transition_ops", "branches"]
+const BRANCH_KEYS := ["id", "condition", "next_phase", "outcome"]
+const CONDITION_KEYS := ["type", "command_id", "fact_type", "key", "value", "objective_id", "step_id", "outcome", "receipt_id"]
+const OBJECTIVE_KEYS := ["id", "label", "progress_label", "steps", "outcomes"]
+const STEP_KEYS := ["id", "label", "kind", "command_id", "fact_type"]
+const AFTERMATH_KEYS := ["label", "revisit_feedback", "scene_ops", "interaction_ops", "actor_ops", "service_ops", "game_ops", "route_ops"]
 
 
 static func sequence(definition: Dictionary) -> Dictionary:
@@ -47,11 +65,14 @@ static func validate_definition(definition: Dictionary, operation_registry: Vari
 	_append_unknown_keys(label, authored, ALLOWED_SEQUENCE_KEYS, errors)
 	if int(authored.get("schema_version", 0)) != SCHEMA_VERSION:
 		errors.append("%s schema_version must be %d." % [label, SCHEMA_VERSION])
+	_validate_shape_bounds(label, authored, errors)
 	_validate_local_state_schema(label, _dict(authored.get("local_state_schema", {})), errors)
 	_validate_phase_graph(label, _dict(authored.get("phase_graph", {})), operation_registry, errors)
 	_validate_objectives(label, _array(authored.get("objectives", [])), errors)
 	_validate_reentry_expiry_cleanup(label, authored, operation_registry, errors)
-	_validate_aftermath(label, _dict(authored.get("aftermath", {})), operation_registry, errors)
+	var reachable_outcomes := _reachable_outcomes(_dict(authored.get("phase_graph", {})))
+	_validate_cross_references(label, authored, reachable_outcomes, errors)
+	_validate_aftermath(label, _dict(authored.get("aftermath", {})), reachable_outcomes, operation_registry, errors)
 	_validate_fact_subscriptions(label, _array(authored.get("fact_subscriptions", [])), operation_registry, errors)
 	_validate_tags_and_exceptions(label, authored, errors)
 	_validate_no_executable_strings(label, authored, errors)
@@ -119,59 +140,59 @@ static func normalized_signature(definition: Dictionary) -> Dictionary:
 	var graph := _dict(authored.get("phase_graph", {}))
 	var phase_features: Array = []
 	for phase_value in _array(graph.get("phases", [])):
-		if typeof(phase_value) != TYPE_DICTIONARY:
-			continue
-		var phase_data := phase_value as Dictionary
-		var op_features: Array = []
+		var phase_data := _dict(phase_value)
+		var operation_features: Array = []
 		for family in ["scene_ops", "interaction_ops", "actor_ops", "transition_ops"]:
 			for op_value in _array(phase_data.get(family, [])):
-				if typeof(op_value) == TYPE_DICTIONARY:
-					var op := op_value as Dictionary
-					op_features.append("%s:%s:%s" % [family, str(op.get("op", "")), str(op.get("role", op.get("channel", "")))])
-		op_features.sort()
+				operation_features.append(_normalized_operation_feature(family, _dict(op_value)))
+		operation_features.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
 		var branches: Array = []
 		for branch_value in _array(phase_data.get("branches", [])):
-			if typeof(branch_value) != TYPE_DICTIONARY:
-				continue
-			var branch := branch_value as Dictionary
+			var branch := _dict(branch_value)
 			var condition := _dict(branch.get("condition", {}))
-			branches.append("%s:%s:%s" % [str(condition.get("type", "")), str(condition.get("command_id", condition.get("fact_type", ""))), str(branch.get("outcome", "phase" if not str(branch.get("next_phase", "")).is_empty() else "terminal"))])
-		branches.sort()
+			branches.append({
+				"condition": _normalized_condition_feature(condition),
+				"edge": "phase" if not str(branch.get("next_phase", "")).is_empty() else "outcome",
+			})
+		branches.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
 		phase_features.append({
-			"ops": op_features,
+			"ops": operation_features,
 			"branches": branches,
 			"objective_count": _string_array(phase_data.get("objective_ids", [])).size(),
 			"terminal": bool(phase_data.get("terminal", false)),
-			"action_boundary": maxi(0, int(phase_data.get("advance_after_actions", 0))) > 0,
+			"advance_after_actions": maxi(0, int(phase_data.get("advance_after_actions", 0))),
 		})
+	phase_features.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
 	var objective_features: Array = []
 	for objective_value in _array(authored.get("objectives", [])):
-		if typeof(objective_value) != TYPE_DICTIONARY:
-			continue
-		var objective := objective_value as Dictionary
+		var objective := _dict(objective_value)
 		var steps: Array = []
 		for step_value in _array(objective.get("steps", [])):
-			if typeof(step_value) == TYPE_DICTIONARY:
-				var step := step_value as Dictionary
-				steps.append("%s:%s" % [str(step.get("kind", "")), str(step.get("command_id", step.get("fact_type", "")))])
-		objective_features.append({"steps": steps, "outcomes": _string_array(objective.get("outcomes", [])).size()})
-	var aftermath_domains: Array = []
-	for outcome_value in _sorted_keys(_dict(authored.get("aftermath", {}))):
-		var aftermath := _dict(_dict(authored.get("aftermath", {})).get(outcome_value, {}))
-		var domains: Array = []
-		for domain in ["scene_ops", "interaction_ops", "actor_ops", "service_ops", "game_ops", "route_ops"]:
-			if not _array(aftermath.get(domain, [])).is_empty():
-				domains.append(domain)
-		aftermath_domains.append(domains)
+			var step := _dict(step_value)
+			steps.append({"kind": str(step.get("kind", "")), "source": str(step.get("fact_type", "world" if str(step.get("kind", "")) == "world_boundary" else "command"))})
+		steps.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
+		objective_features.append({"steps": steps, "outcome_count": _string_array(objective.get("outcomes", [])).size()})
+	objective_features.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
+	var aftermath_features: Array = []
+	for aftermath_value in _dict(authored.get("aftermath", {})).values():
+		aftermath_features.append(_normalized_aftermath_effect(_dict(aftermath_value)))
+	aftermath_features.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
+	var cleanup_features: Array = []
+	for operation_value in _array(_dict(authored.get("cleanup", {})).get("operations", [])):
+		var operation := _dict(operation_value)
+		cleanup_features.append(_normalized_operation_feature(str(operation.get("family", "")), operation))
+	cleanup_features.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
 	return {
 		"phase_count": phase_features.size(),
 		"phases": phase_features,
+		"topology": _normalized_topology(graph),
 		"objectives": objective_features,
-		"aftermath_domains": aftermath_domains,
+		"aftermath": aftermath_features,
+		"cleanup": cleanup_features,
 		"fact_types": _fact_subscription_types(authored.get("fact_subscriptions", [])),
 		"mechanic_tags": _sorted_strings(authored.get("mechanic_tags", [])),
-		"reentry": str(_dict(authored.get("reentry_policy", {})).get("partial", "")),
-		"expiry": str(_dict(authored.get("expiry", {})).get("boundary", "")),
+		"reentry": _canonical_variant(_dict(authored.get("reentry_policy", {}))),
+		"expiry": _canonical_variant(_dict(authored.get("expiry", {}))),
 	}
 
 
@@ -194,7 +215,70 @@ static func signature_similarity(left: Dictionary, right: Dictionary) -> float:
 	return float(intersection) / float(maxi(1, union.size()))
 
 
+static func catalog_uniqueness_report(definitions: Array, expected_count: int, operation_registry: Variant = null, masked_visual_explanations: Dictionary = {}) -> Dictionary:
+	var failures: Array = []
+	var warnings: Array = []
+	var rows: Array = []
+	var ids: Dictionary = {}
+	if definitions.size() != expected_count:
+		failures.append("scenario sequence rollout expected %d definitions, got %d." % [expected_count, definitions.size()])
+	for definition_value in definitions:
+		var definition := _dict(definition_value)
+		var scenario_id := str(definition.get("id", "")).strip_edges()
+		if not _valid_id(scenario_id) or ids.has(scenario_id):
+			failures.append("scenario sequence rollout has invalid or duplicate id %s." % scenario_id)
+			continue
+		ids[scenario_id] = true
+		var validation := validate_definition(definition, operation_registry)
+		if not validation.is_empty():
+			failures.append("scenario %s is invalid: %s" % [scenario_id, JSON.stringify(validation)])
+		rows.append({"id": scenario_id, "signature": normalized_signature(definition), "nearest_id": "", "nearest_similarity": 0.0})
+	for left_index in range(rows.size()):
+		for right_index in range(left_index + 1, rows.size()):
+			var left_row := _dict(rows[left_index])
+			var right_row := _dict(rows[right_index])
+			var left_signature := _dict(left_row.get("signature", {}))
+			var right_signature := _dict(right_row.get("signature", {}))
+			var similarity := signature_similarity(left_signature, right_signature)
+			if similarity > float(left_row.get("nearest_similarity", 0.0)):
+				left_row["nearest_similarity"] = similarity
+				left_row["nearest_id"] = str(right_row.get("id", ""))
+				rows[left_index] = left_row
+			if similarity > float(right_row.get("nearest_similarity", 0.0)):
+				right_row["nearest_similarity"] = similarity
+				right_row["nearest_id"] = str(left_row.get("id", ""))
+				rows[right_index] = right_row
+			var equal_hash := JSON.stringify(_canonical_variant(left_signature)) == JSON.stringify(_canonical_variant(right_signature))
+			var band := uniqueness_band(similarity, equal_hash)
+			var pair_key := "%s::%s" % [str(left_row.get("id", "")), str(right_row.get("id", ""))]
+			var diagnostic := "scenario %s vs %s: %.3f (%s)." % [str(left_row.get("id", "")), str(right_row.get("id", "")), similarity, str(band.get("status", ""))]
+			if bool(band.get("blocking", false)):
+				failures.append(diagnostic)
+			elif str(band.get("status", "")) == "warning":
+				if str(masked_visual_explanations.get(pair_key, "")).strip_edges().is_empty():
+					failures.append("%s Missing masked visual explanation." % diagnostic)
+				else:
+					warnings.append(diagnostic)
+	rows.sort_custom(func(a: Variant, b: Variant) -> bool: return str((a as Dictionary).get("id", "")) < str((b as Dictionary).get("id", "")))
+	return {"ok": failures.is_empty(), "expected_count": expected_count, "actual_count": definitions.size(), "rows": rows, "failures": failures, "warnings": warnings}
+
+
+static func uniqueness_band(similarity: float, equal_normalized_hash: bool = false) -> Dictionary:
+	var score := clampf(similarity, 0.0, 1.0)
+	if equal_normalized_hash:
+		return {"status": "equal_hash_hard_fail", "severity": "P1", "blocking": true}
+	if score >= 0.820:
+		return {"status": "fail", "severity": "P1", "blocking": true}
+	if score >= 0.720:
+		return {"status": "blocking_review", "severity": "P2", "blocking": true}
+	if score >= 0.600:
+		return {"status": "warning", "severity": "P2", "blocking": false}
+	return {"status": "pass", "severity": "", "blocking": false}
+
+
 static func _validate_local_state_schema(label: String, fields: Dictionary, errors: Array) -> void:
+	if fields.size() > MAX_LOCAL_FIELDS:
+		errors.append("%s local_state_schema exceeds %d fields." % [label, MAX_LOCAL_FIELDS])
 	for field_value in _sorted_keys(fields):
 		var field_id := str(field_value)
 		if not _valid_id(field_id):
@@ -215,13 +299,17 @@ static func _validate_phase_graph(label: String, graph: Dictionary, operation_re
 	if phases.is_empty():
 		errors.append("%s phase_graph must contain phases." % label)
 		return
+	if phases.size() > MAX_PHASES:
+		errors.append("%s phase_graph exceeds %d phases." % [label, MAX_PHASES])
 	var ids: Dictionary = {}
+	var branch_ids: Dictionary = {}
 	for phase_value in phases:
 		if typeof(phase_value) != TYPE_DICTIONARY:
 			errors.append("%s phase must be a dictionary." % label)
 			continue
 		var phase_data := phase_value as Dictionary
 		var phase_id := str(phase_data.get("id", "")).strip_edges()
+		_append_unknown_keys("%s phase %s" % [label, phase_id], phase_data, PHASE_KEYS, errors)
 		if not _valid_id(phase_id) or ids.has(phase_id):
 			errors.append("%s has invalid or duplicate phase id %s." % [label, phase_id])
 		else:
@@ -233,19 +321,30 @@ static func _validate_phase_graph(label: String, graph: Dictionary, operation_re
 		for condition_value in _array(phase_data.get("entry_conditions", [])):
 			_validate_condition("%s phase %s entry" % [label, phase_id], _dict(condition_value), errors)
 		for family in ["scene_ops", "interaction_ops", "actor_ops", "transition_ops"]:
-			for operation_value in _array(phase_data.get(family, [])):
+			var operations := _array(phase_data.get(family, []))
+			_validate_operation_receipt_uniqueness("%s phase %s %s" % [label, phase_id, family], operations, errors)
+			for operation_value in operations:
 				if typeof(operation_value) != TYPE_DICTIONARY:
 					errors.append("%s phase %s %s entry must be a dictionary." % [label, phase_id, family])
 				elif operation_registry != null and operation_registry.has_method("validate_operation"):
 					for operation_error in operation_registry.call("validate_operation", family, operation_value as Dictionary):
 						errors.append("%s phase %s: %s" % [label, phase_id, str(operation_error)])
-		for branch_value in _array(phase_data.get("branches", [])):
+		var branches := _array(phase_data.get("branches", []))
+		if branches.is_empty():
+			errors.append("%s phase %s is a dead end without a terminal branch." % [label, phase_id])
+		if branches.size() > MAX_BRANCHES_PER_PHASE:
+			errors.append("%s phase %s exceeds %d branches." % [label, phase_id, MAX_BRANCHES_PER_PHASE])
+		for branch_value in branches:
 			if typeof(branch_value) != TYPE_DICTIONARY:
 				errors.append("%s phase %s branch must be a dictionary." % [label, phase_id])
 				continue
 			var branch := branch_value as Dictionary
-			if not _valid_id(str(branch.get("id", ""))):
-				errors.append("%s phase %s has invalid branch id." % [label, phase_id])
+			_append_unknown_keys("%s phase %s branch" % [label, phase_id], branch, BRANCH_KEYS, errors)
+			var branch_id := str(branch.get("id", "")).strip_edges()
+			if not _valid_id(branch_id) or branch_ids.has(branch_id):
+				errors.append("%s phase %s has invalid or duplicate branch id %s." % [label, phase_id, branch_id])
+			else:
+				branch_ids[branch_id] = phase_id
 			_validate_condition("%s phase %s branch" % [label, phase_id], _dict(branch.get("condition", {})), errors)
 	var initial_id := str(graph.get("initial_phase", "")).strip_edges()
 	if initial_id.is_empty() or not ids.has(initial_id):
@@ -262,7 +361,15 @@ static func _validate_phase_graph(label: String, graph: Dictionary, operation_re
 				errors.append("%s branch %s must name exactly one next_phase or outcome." % [label, str(branch.get("id", ""))])
 			elif not target.is_empty() and not ids.has(target):
 				errors.append("%s branch %s references unknown phase %s." % [label, str(branch.get("id", "")), target])
+			elif not outcome.is_empty() and not bool(phase_data.get("terminal", false)):
+				errors.append("%s non-terminal phase %s cannot emit outcome %s." % [label, str(phase_data.get("id", "")), outcome])
+			if bool(phase_data.get("terminal", false)) and not target.is_empty():
+				errors.append("%s terminal phase %s cannot branch to another phase." % [label, str(phase_data.get("id", ""))])
 	_validate_reachability(label, initial_id, phases, ids, errors)
+	_validate_termination(label, initial_id, phases, ids, errors)
+	var outcomes := _reachable_outcomes(graph)
+	if outcomes.size() < 3:
+		errors.append("%s requires at least three reachable terminal outcomes." % label)
 
 
 static func _validate_reachability(label: String, initial_id: String, phases: Array, ids: Dictionary, errors: Array) -> void:
@@ -285,7 +392,44 @@ static func _validate_reachability(label: String, initial_id: String, phases: Ar
 			errors.append("%s contains unreachable phase %s." % [label, str(phase_value)])
 
 
+static func _validate_termination(label: String, initial_id: String, phases: Array, ids: Dictionary, errors: Array) -> void:
+	if not ids.has(initial_id):
+		return
+	var predecessors: Dictionary = {}
+	var terminating: Dictionary = {}
+	for phase_value in phases:
+		var phase_data := _dict(phase_value)
+		var phase_id := str(phase_data.get("id", ""))
+		predecessors[phase_id] = []
+	for phase_value in phases:
+		var phase_data := _dict(phase_value)
+		var phase_id := str(phase_data.get("id", ""))
+		for branch_value in _array(phase_data.get("branches", [])):
+			var branch := _dict(branch_value)
+			var target := str(branch.get("next_phase", "")).strip_edges()
+			if not str(branch.get("outcome", "")).strip_edges().is_empty():
+				terminating[phase_id] = true
+			elif ids.has(target):
+				var reverse := _array(predecessors.get(target, []))
+				if not reverse.has(phase_id):
+					reverse.append(phase_id)
+				predecessors[target] = reverse
+	var pending := terminating.keys()
+	while not pending.is_empty():
+		var target := str(pending.pop_front())
+		for predecessor_value in _array(predecessors.get(target, [])):
+			var predecessor := str(predecessor_value)
+			if not terminating.has(predecessor):
+				terminating[predecessor] = true
+				pending.append(predecessor)
+	for phase_id_value in ids.keys():
+		if not terminating.has(str(phase_id_value)):
+			errors.append("%s phase %s has no path to a terminal outcome." % [label, str(phase_id_value)])
+
+
 static func _validate_objectives(label: String, objectives: Array, errors: Array) -> void:
+	if objectives.size() > MAX_OBJECTIVES:
+		errors.append("%s exceeds %d objectives." % [label, MAX_OBJECTIVES])
 	var ids: Dictionary = {}
 	for objective_value in objectives:
 		if typeof(objective_value) != TYPE_DICTIONARY:
@@ -293,6 +437,7 @@ static func _validate_objectives(label: String, objectives: Array, errors: Array
 			continue
 		var objective := objective_value as Dictionary
 		var objective_id := str(objective.get("id", "")).strip_edges()
+		_append_unknown_keys("%s objective %s" % [label, objective_id], objective, OBJECTIVE_KEYS, errors)
 		if not _valid_id(objective_id) or ids.has(objective_id):
 			errors.append("%s has invalid or duplicate objective id %s." % [label, objective_id])
 		else:
@@ -302,58 +447,372 @@ static func _validate_objectives(label: String, objectives: Array, errors: Array
 		var steps := _array(objective.get("steps", []))
 		if steps.is_empty():
 			errors.append("%s objective %s requires at least one step." % [label, objective_id])
+		if steps.size() > MAX_STEPS_PER_OBJECTIVE:
+			errors.append("%s objective %s exceeds %d steps." % [label, objective_id, MAX_STEPS_PER_OBJECTIVE])
 		var step_ids: Dictionary = {}
 		for step_value in steps:
 			var step := _dict(step_value)
 			var step_id := str(step.get("id", "")).strip_edges()
+			_append_unknown_keys("%s objective %s step %s" % [label, objective_id, step_id], step, STEP_KEYS, errors)
 			if not _valid_id(step_id) or step_ids.has(step_id) or str(step.get("label", "")).strip_edges().is_empty():
 				errors.append("%s objective %s has invalid/duplicate/unlabeled step %s." % [label, objective_id, step_id])
 			step_ids[step_id] = true
-			if not ["command", "fact", "world_boundary"].has(str(step.get("kind", ""))):
+			var kind := str(step.get("kind", ""))
+			if not ["command", "fact", "world_boundary"].has(kind):
 				errors.append("%s objective %s step %s has invalid kind." % [label, objective_id, step_id])
-		for outcome_value in _string_array(objective.get("outcomes", [])):
+			elif kind == "command" and not _valid_id(str(step.get("command_id", ""))):
+				errors.append("%s objective %s step %s requires command_id." % [label, objective_id, step_id])
+			elif kind == "fact" and not FACT_TYPES.has(str(step.get("fact_type", ""))):
+				errors.append("%s objective %s step %s requires registered fact_type." % [label, objective_id, step_id])
+		var objective_outcomes := _string_array(objective.get("outcomes", []))
+		if objective_outcomes.is_empty():
+			errors.append("%s objective %s requires outcomes." % [label, objective_id])
+		for outcome_value in objective_outcomes:
 			if not OBJECTIVE_OUTCOMES.has(str(outcome_value)):
 				errors.append("%s objective %s has invalid outcome %s." % [label, objective_id, str(outcome_value)])
 
 
 static func _validate_reentry_expiry_cleanup(label: String, authored: Dictionary, operation_registry: Variant, errors: Array) -> void:
 	var reentry := _dict(authored.get("reentry_policy", {}))
+	_append_unknown_keys("%s reentry_policy" % label, reentry, ["partial", "terminal", "expired"], errors)
 	for key in ["partial", "terminal", "expired"]:
 		if not REENTRY_POLICIES.has(str(reentry.get(key, ""))):
 			errors.append("%s reentry_policy.%s is invalid." % [label, key])
 	var expiry := _dict(authored.get("expiry", {}))
+	_append_unknown_keys("%s expiry" % label, expiry, ["boundary", "after", "policy"], errors)
 	if not EXPIRY_BOUNDARIES.has(str(expiry.get("boundary", ""))) or not EXPIRY_POLICIES.has(str(expiry.get("policy", ""))):
 		errors.append("%s expiry requires a registered boundary and policy." % label)
 	if int(expiry.get("after", 0)) < 0:
 		errors.append("%s expiry.after must be non-negative." % label)
 	var cleanup := _dict(authored.get("cleanup", {}))
+	_append_unknown_keys("%s cleanup" % label, cleanup, ["operations"], errors)
 	if cleanup.is_empty() or _array(cleanup.get("operations", [])).is_empty():
 		errors.append("%s cleanup must declare operations." % label)
+	var cleanup_by_family: Dictionary = {}
 	for operation_value in _array(cleanup.get("operations", [])):
 		if typeof(operation_value) != TYPE_DICTIONARY:
 			errors.append("%s cleanup operation must be a dictionary." % label)
 		elif operation_registry != null and operation_registry.has_method("validate_any_operation"):
 			for operation_error in operation_registry.call("validate_any_operation", operation_value as Dictionary):
 				errors.append("%s cleanup: %s" % [label, str(operation_error)])
+		if typeof(operation_value) == TYPE_DICTIONARY:
+			var family := str((operation_value as Dictionary).get("family", ""))
+			var operations := _array(cleanup_by_family.get(family, []))
+			operations.append(operation_value)
+			cleanup_by_family[family] = operations
+	for family_value in cleanup_by_family.keys():
+		_validate_operation_receipt_uniqueness("%s cleanup %s" % [label, str(family_value)], _array(cleanup_by_family.get(family_value, [])), errors)
 
 
-static func _validate_aftermath(label: String, aftermaths: Dictionary, operation_registry: Variant, errors: Array) -> void:
-	if aftermaths.size() < 2:
-		errors.append("%s aftermath must define at least two material outcomes." % label)
+static func _validate_aftermath(label: String, aftermaths: Dictionary, reachable_outcomes: Array, operation_registry: Variant, errors: Array) -> void:
+	if aftermaths.size() < 3:
+		errors.append("%s aftermath must define at least three material outcomes." % label)
+	if aftermaths.size() > MAX_AFTERMATHS:
+		errors.append("%s aftermath exceeds %d outcomes." % [label, MAX_AFTERMATHS])
+	var keys := _sorted_strings(aftermaths.keys())
+	var expected := _sorted_strings(reachable_outcomes)
+	if keys != expected:
+		errors.append("%s aftermath keys must exactly match reachable outcomes (expected %s, got %s)." % [label, JSON.stringify(expected), JSON.stringify(keys)])
+	var material_axes: Dictionary = {}
+	var effect_signatures: Dictionary = {}
 	for outcome_value in _sorted_keys(aftermaths):
 		var outcome_id := str(outcome_value)
 		var aftermath := _dict(aftermaths.get(outcome_value, {}))
+		_append_unknown_keys("%s aftermath %s" % [label, outcome_id], aftermath, AFTERMATH_KEYS, errors)
 		if not _valid_id(outcome_id) or str(aftermath.get("label", "")).strip_edges().is_empty() or str(aftermath.get("revisit_feedback", "")).strip_edges().is_empty():
 			errors.append("%s aftermath %s requires valid id, label, and revisit_feedback." % [label, outcome_id])
 		var change_count := 0
 		for family in ["scene_ops", "interaction_ops", "actor_ops", "service_ops", "game_ops", "route_ops"]:
-			change_count += _array(aftermath.get(family, [])).size()
-			for operation_value in _array(aftermath.get(family, [])):
+			var operations := _array(aftermath.get(family, []))
+			_validate_operation_receipt_uniqueness("%s aftermath %s %s" % [label, outcome_id, family], operations, errors)
+			change_count += operations.size()
+			if not operations.is_empty():
+				material_axes[family] = true
+			for operation_value in operations:
 				if typeof(operation_value) == TYPE_DICTIONARY and operation_registry != null and operation_registry.has_method("validate_operation"):
 					for operation_error in operation_registry.call("validate_operation", family, operation_value as Dictionary):
 						errors.append("%s aftermath %s: %s" % [label, outcome_id, str(operation_error)])
 		if change_count <= 0:
 			errors.append("%s aftermath %s has no semantic change." % [label, outcome_id])
+		var effect_signature := JSON.stringify(_normalized_aftermath_effect(aftermath))
+		if effect_signatures.has(effect_signature):
+			errors.append("%s aftermath %s duplicates the normalized material effect of %s." % [label, outcome_id, str(effect_signatures.get(effect_signature, ""))])
+		else:
+			effect_signatures[effect_signature] = outcome_id
+	if material_axes.size() < 2:
+		errors.append("%s aftermath requires at least two independent material axes." % label)
+
+
+static func _validate_operation_receipt_uniqueness(label: String, operations: Array, errors: Array) -> void:
+	if operations.size() > MAX_OPERATIONS_PER_FAMILY:
+		errors.append("%s exceeds %d operations." % [label, MAX_OPERATIONS_PER_FAMILY])
+	var receipts: Dictionary = {}
+	for operation_value in operations:
+		var receipt_id := str(_dict(operation_value).get("receipt_id", "")).strip_edges()
+		if receipt_id.is_empty():
+			continue
+		if receipts.has(receipt_id):
+			errors.append("%s contains duplicate authored receipt_id %s." % [label, receipt_id])
+		else:
+			receipts[receipt_id] = true
+
+
+static func _validate_cross_references(label: String, authored: Dictionary, reachable_outcomes: Array, errors: Array) -> void:
+	var local_ids := _dict(authored.get("local_state_schema", {}))
+	var subscribed_facts := _fact_subscription_types(authored.get("fact_subscriptions", []))
+	var authored_receipts: Dictionary = {}
+	var objective_steps: Dictionary = {}
+	for objective_value in _array(authored.get("objectives", [])):
+		var objective := _dict(objective_value)
+		var objective_id := str(objective.get("id", ""))
+		var steps: Dictionary = {}
+		for step_value in _array(objective.get("steps", [])):
+			steps[str(_dict(step_value).get("id", ""))] = true
+		objective_steps[objective_id] = steps
+	var graph := _dict(authored.get("phase_graph", {}))
+	for phase_value in _array(graph.get("phases", [])):
+		var receipt_phase := _dict(phase_value)
+		for family in ["scene_ops", "interaction_ops", "actor_ops", "transition_ops"]:
+			for operation_value in _array(receipt_phase.get(family, [])):
+				authored_receipts[str(_dict(operation_value).get("receipt_id", ""))] = true
+	for aftermath_value in _dict(authored.get("aftermath", {})).values():
+		var receipt_aftermath := _dict(aftermath_value)
+		for family in ["scene_ops", "interaction_ops", "actor_ops", "service_ops", "game_ops", "route_ops"]:
+			for operation_value in _array(receipt_aftermath.get(family, [])):
+				authored_receipts[str(_dict(operation_value).get("receipt_id", ""))] = true
+	for operation_value in _array(_dict(authored.get("cleanup", {})).get("operations", [])):
+		authored_receipts[str(_dict(operation_value).get("receipt_id", ""))] = true
+	for phase_value in _array(graph.get("phases", [])):
+		var phase_data := _dict(phase_value)
+		var phase_id := str(phase_data.get("id", ""))
+		for objective_id_value in _string_array(phase_data.get("objective_ids", [])):
+			if not objective_steps.has(str(objective_id_value)):
+				errors.append("%s phase %s references unknown objective %s." % [label, phase_id, str(objective_id_value)])
+		for condition_value in _array(phase_data.get("entry_conditions", [])):
+			_validate_condition_refs("%s phase %s entry" % [label, phase_id], _dict(condition_value), local_ids, objective_steps, reachable_outcomes, subscribed_facts, authored_receipts, errors)
+		for branch_value in _array(phase_data.get("branches", [])):
+			_validate_condition_refs("%s phase %s branch" % [label, phase_id], _dict(_dict(branch_value).get("condition", {})), local_ids, objective_steps, reachable_outcomes, subscribed_facts, authored_receipts, errors)
+		for operation_value in _array(phase_data.get("interaction_ops", [])):
+			var interaction := _dict(_dict(operation_value).get("interaction", {}))
+			for action_value in _array(interaction.get("available_actions", _dict(operation_value).get("available_actions", []))):
+				_validate_action_refs("%s phase %s action" % [label, phase_id], _dict(action_value), local_ids, objective_steps, errors)
+	for subscription_value in _array(authored.get("fact_subscriptions", [])):
+		var subscription := _dict(subscription_value)
+		if not subscription.is_empty():
+			_validate_handler_input_refs("%s fact subscription" % label, str(subscription.get("handler", "")), _dict(subscription.get("inputs", {})), local_ids, objective_steps, errors)
+	for objective_value in _array(authored.get("objectives", [])):
+		for step_value in _array(_dict(objective_value).get("steps", [])):
+			var step := _dict(step_value)
+			if str(step.get("kind", "")) == "fact" and not subscribed_facts.has(str(step.get("fact_type", ""))):
+				errors.append("%s objective fact step references unsubscribed fact %s." % [label, str(step.get("fact_type", ""))])
+
+
+static func _validate_condition_refs(label: String, condition: Dictionary, local_ids: Dictionary, objective_steps: Dictionary, reachable_outcomes: Array, subscribed_facts: Array, authored_receipts: Dictionary, errors: Array) -> void:
+	match str(condition.get("type", "")):
+		"fact":
+			if not subscribed_facts.has(str(condition.get("fact_type", ""))):
+				errors.append("%s references unsubscribed fact %s." % [label, str(condition.get("fact_type", ""))])
+		"local_equals", "local_min":
+			if not local_ids.has(str(condition.get("key", ""))):
+				errors.append("%s references unknown local state %s." % [label, str(condition.get("key", ""))])
+		"objective":
+			var objective_id := str(condition.get("objective_id", ""))
+			var step_id := str(condition.get("step_id", ""))
+			if not objective_steps.has(objective_id) or not _dict(objective_steps.get(objective_id, {})).has(step_id):
+				errors.append("%s references unknown objective step %s/%s." % [label, objective_id, step_id])
+		"outcome":
+			if not reachable_outcomes.has(str(condition.get("outcome", ""))):
+				errors.append("%s references unknown outcome %s." % [label, str(condition.get("outcome", ""))])
+		"receipt":
+			var receipt_id := str(condition.get("receipt_id", ""))
+			var receipt_parts := receipt_id.split(":", false)
+			if not _valid_receipt_id(receipt_id):
+				errors.append("%s requires a stable scoped receipt_id." % label)
+			elif receipt_parts.is_empty() or not authored_receipts.has(str(receipt_parts[receipt_parts.size() - 1])):
+				errors.append("%s references unknown authored receipt %s." % [label, receipt_id])
+
+
+static func _validate_action_refs(label: String, action: Dictionary, local_ids: Dictionary, objective_steps: Dictionary, errors: Array) -> void:
+	for requirement_value in _array(action.get("requires_objective_steps", [])):
+		var requirement := _dict(requirement_value)
+		var objective_id := str(requirement.get("objective_id", ""))
+		var step_id := str(requirement.get("step_id", ""))
+		if not objective_steps.has(objective_id) or not _dict(objective_steps.get(objective_id, {})).has(step_id):
+			errors.append("%s references unknown objective step %s/%s." % [label, objective_id, step_id])
+	for requirement_value in _array(action.get("requires_local", [])):
+		var requirement := _dict(requirement_value)
+		if not local_ids.has(str(requirement.get("key", ""))):
+			errors.append("%s references unknown local state %s." % [label, str(requirement.get("key", ""))])
+	_validate_handler_input_refs(label, str(action.get("handler", "")), _dict(action.get("inputs", {})), local_ids, objective_steps, errors)
+
+
+static func _validate_handler_input_refs(label: String, handler_id: String, inputs: Dictionary, local_ids: Dictionary, objective_steps: Dictionary, errors: Array) -> void:
+	if handler_id in ["set_local", "increment_local"] and not local_ids.has(str(inputs.get("key", ""))):
+		errors.append("%s handler references unknown local state %s." % [label, str(inputs.get("key", ""))])
+	elif handler_id == "complete_objective_step":
+		var objective_id := str(inputs.get("objective_id", ""))
+		var step_id := str(inputs.get("step_id", ""))
+		if not objective_steps.has(objective_id) or not _dict(objective_steps.get(objective_id, {})).has(step_id):
+			errors.append("%s handler references unknown objective step %s/%s." % [label, objective_id, step_id])
+
+
+static func _reachable_outcomes(graph: Dictionary) -> Array:
+	var phases := _array(graph.get("phases", []))
+	var initial_id := str(graph.get("initial_phase", "")).strip_edges()
+	var index: Dictionary = {}
+	for phase_value in phases:
+		var phase_data := _dict(phase_value)
+		index[str(phase_data.get("id", ""))] = phase_data
+	if not index.has(initial_id):
+		return []
+	var reached := {initial_id: true}
+	var pending: Array = [initial_id]
+	var outcomes: Array = []
+	while not pending.is_empty():
+		var phase_id := str(pending.pop_front())
+		var phase_data := _dict(index.get(phase_id, {}))
+		for branch_value in _array(phase_data.get("branches", [])):
+			var branch := _dict(branch_value)
+			var outcome := str(branch.get("outcome", "")).strip_edges()
+			var target := str(branch.get("next_phase", "")).strip_edges()
+			if bool(phase_data.get("terminal", false)) and not outcome.is_empty() and not outcomes.has(outcome):
+				outcomes.append(outcome)
+			elif index.has(target) and not reached.has(target):
+				reached[target] = true
+				pending.append(target)
+	outcomes.sort()
+	return outcomes
+
+
+static func _normalized_aftermath_effect(aftermath: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for family in ["scene_ops", "interaction_ops", "actor_ops", "service_ops", "game_ops", "route_ops"]:
+		var features: Array = []
+		for operation_value in _array(aftermath.get(family, [])):
+			features.append(_normalized_operation_feature(family, _dict(operation_value)))
+		features.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
+		if not features.is_empty():
+			result[family] = features
+	return result
+
+
+static func _normalized_operation_feature(family: String, operation: Dictionary) -> Dictionary:
+	var payload := _dict(operation.get("object", operation.get("actor", operation.get("interaction", {}))))
+	var result := {
+		"family": family,
+		"op": str(operation.get("op", "")),
+		"mode": str(operation.get("mode", "")),
+		"owner": str(operation.get("owner_namespace", "")),
+	}
+	for key in ["state", "appearance", "behavior", "pose", "enabled", "source_id", "channel", "duration_boundaries"]:
+		if operation.has(key):
+			result[key] = operation.get(key)
+	for key in ["role", "behavior", "enabled", "safe_exit"]:
+		if payload.has(key):
+			result["payload_%s" % key] = payload.get(key)
+	var action_features: Array = []
+	for action_value in _array(payload.get("available_actions", operation.get("available_actions", []))):
+		var action := _dict(action_value)
+		action_features.append({
+			"handler": str(action.get("handler", "")),
+			"cost_band": 0 if int(action.get("cost", 0)) <= 0 else 1 if int(action.get("cost", 0)) < 10 else 2,
+			"objective_preconditions": _array(action.get("requires_objective_steps", [])).size(),
+			"local_preconditions": _array(action.get("requires_local", [])).size(),
+		})
+	action_features.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
+	if not action_features.is_empty():
+		result["actions"] = action_features
+	return result
+
+
+static func _normalized_condition_feature(condition: Dictionary) -> Dictionary:
+	var type_id := str(condition.get("type", ""))
+	var result := {"type": type_id}
+	if type_id == "fact":
+		result["fact_type"] = str(condition.get("fact_type", ""))
+	elif type_id in ["local_equals", "local_min"]:
+		result["value_type"] = typeof(condition.get("value"))
+	return result
+
+
+static func _normalized_topology(graph: Dictionary) -> Array:
+	var phases := _array(graph.get("phases", []))
+	var feature_by_id: Dictionary = {}
+	for phase_value in phases:
+		var phase_data := _dict(phase_value)
+		var phase_id := str(phase_data.get("id", ""))
+		var phase_edges := 0
+		var outcome_edges := 0
+		for branch_value in _array(phase_data.get("branches", [])):
+			if str(_dict(branch_value).get("next_phase", "")).strip_edges().is_empty():
+				outcome_edges += 1
+			else:
+				phase_edges += 1
+		feature_by_id[phase_id] = {"phase_edges": phase_edges, "outcome_edges": outcome_edges, "terminal": bool(phase_data.get("terminal", false)), "depth": -1}
+	var initial := str(graph.get("initial_phase", ""))
+	if feature_by_id.has(initial):
+		var initial_feature := _dict(feature_by_id.get(initial, {}))
+		initial_feature["depth"] = 0
+		feature_by_id[initial] = initial_feature
+		var pending: Array = [initial]
+		while not pending.is_empty():
+			var phase_id := str(pending.pop_front())
+			var depth := int(_dict(feature_by_id.get(phase_id, {})).get("depth", 0))
+			for phase_value in phases:
+				var phase_data := _dict(phase_value)
+				if str(phase_data.get("id", "")) != phase_id:
+					continue
+				for branch_value in _array(phase_data.get("branches", [])):
+					var target := str(_dict(branch_value).get("next_phase", ""))
+					if feature_by_id.has(target) and int(_dict(feature_by_id.get(target, {})).get("depth", -1)) < 0:
+						var target_feature := _dict(feature_by_id.get(target, {}))
+						target_feature["depth"] = depth + 1
+						feature_by_id[target] = target_feature
+						pending.append(target)
+	var result := feature_by_id.values()
+	result.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
+	return result
+
+
+static func _validate_shape_bounds(label: String, value: Variant, errors: Array) -> void:
+	var counter := {"count": 0}
+	_validate_bounded_value(label, value, 0, counter, errors)
+
+
+static func _validate_bounded_value(label: String, value: Variant, depth: int, counter: Dictionary, errors: Array) -> void:
+	counter["count"] = int(counter.get("count", 0)) + 1
+	if int(counter.get("count", 0)) > MAX_TOTAL_VALUES:
+		if not _contains_error(errors, "total value limit"):
+			errors.append("%s exceeds the total value limit." % label)
+		return
+	if depth > MAX_DATA_DEPTH:
+		if not _contains_error(errors, "nesting depth"):
+			errors.append("%s exceeds the maximum nesting depth." % label)
+		return
+	match typeof(value):
+		TYPE_DICTIONARY:
+			if (value as Dictionary).size() > MAX_COLLECTION_ENTRIES:
+				errors.append("%s contains an oversized dictionary." % label)
+			for nested in (value as Dictionary).values():
+				_validate_bounded_value(label, nested, depth + 1, counter, errors)
+		TYPE_ARRAY:
+			if (value as Array).size() > MAX_COLLECTION_ENTRIES:
+				errors.append("%s contains an oversized array." % label)
+			for nested in value as Array:
+				_validate_bounded_value(label, nested, depth + 1, counter, errors)
+		TYPE_STRING:
+			if str(value).length() > MAX_TEXT_LENGTH:
+				errors.append("%s contains text longer than %d characters." % [label, MAX_TEXT_LENGTH])
+		TYPE_FLOAT:
+			if is_nan(float(value)) or is_inf(float(value)):
+				errors.append("%s contains a non-finite number." % label)
+
+
+static func _contains_error(errors: Array, needle: String) -> bool:
+	for error_value in errors:
+		if str(error_value).contains(needle):
+			return true
+	return false
 
 
 static func _validate_tags_and_exceptions(label: String, authored: Dictionary, errors: Array) -> void:
@@ -367,6 +826,8 @@ static func _validate_tags_and_exceptions(label: String, authored: Dictionary, e
 
 
 static func _validate_fact_subscriptions(label: String, subscriptions: Array, operation_registry: Variant, errors: Array) -> void:
+	if subscriptions.size() > MAX_FACT_SUBSCRIPTIONS:
+		errors.append("%s exceeds %d fact subscriptions." % [label, MAX_FACT_SUBSCRIPTIONS])
 	for subscription_value in subscriptions:
 		if typeof(subscription_value) == TYPE_STRING:
 			var fact_type := str(subscription_value).strip_edges()
@@ -382,10 +843,19 @@ static func _validate_fact_subscriptions(label: String, subscriptions: Array, op
 		if not FACT_TYPES.has(fact_type):
 			errors.append("%s fact subscription references unregistered fact type %s." % [label, fact_type])
 		var handler_id := str(subscription.get("handler", "")).strip_edges()
-		if operation_registry == null or not operation_registry.has_method("registered_handlers") or not (operation_registry.call("registered_handlers") as Dictionary).has(handler_id):
+		var handlers := operation_registry.call("registered_handlers") as Dictionary if operation_registry != null and operation_registry.has_method("registered_handlers") else {}
+		if not handlers.has(handler_id):
 			errors.append("%s fact subscription references unregistered handler %s." % [label, handler_id])
 		if typeof(subscription.get("inputs", {})) != TYPE_DICTIONARY:
 			errors.append("%s fact subscription inputs must be a dictionary." % label)
+		elif handlers.has(handler_id):
+			var inputs := _dict(subscription.get("inputs", {}))
+			var expected := _array(_dict(handlers.get(handler_id, {})).get("inputs", []))
+			_append_unknown_keys("%s fact subscription inputs" % label, inputs, expected + ["value_from_payload"], errors)
+			for input_value in expected:
+				var input_id := str(input_value)
+				if not inputs.has(input_id) and not (input_id == "value" and inputs.has("value_from_payload")):
+					errors.append("%s fact subscription handler %s requires input %s." % [label, handler_id, input_id])
 
 
 static func _fact_subscription_types(value: Variant) -> Array:
@@ -400,6 +870,7 @@ static func _fact_subscription_types(value: Variant) -> Array:
 
 
 static func _validate_condition(label: String, condition: Dictionary, errors: Array) -> void:
+	_append_unknown_keys(label, condition, CONDITION_KEYS, errors)
 	var type_id := str(condition.get("type", "")).strip_edges()
 	if not CONDITION_TYPES.has(type_id):
 		errors.append("%s condition has invalid type %s." % [label, type_id])
@@ -412,6 +883,10 @@ static func _validate_condition(label: String, condition: Dictionary, errors: Ar
 		errors.append("%s local condition requires key." % label)
 	elif type_id == "objective" and (not _valid_id(str(condition.get("objective_id", ""))) or not _valid_id(str(condition.get("step_id", "")))):
 		errors.append("%s objective condition requires objective_id and step_id." % label)
+	elif type_id == "outcome" and not _valid_id(str(condition.get("outcome", ""))):
+		errors.append("%s outcome condition requires outcome." % label)
+	elif type_id == "receipt" and not _valid_receipt_id(str(condition.get("receipt_id", ""))):
+		errors.append("%s receipt condition requires scoped receipt_id." % label)
 
 
 static func _validate_no_executable_strings(label: String, value: Variant, errors: Array, path: String = "") -> void:
@@ -512,6 +987,19 @@ static func _valid_id(value: String) -> bool:
 	for index in range(text.length()):
 		var code := text.unicode_at(index)
 		if not (code >= 97 and code <= 122) and not (code >= 48 and code <= 57) and code != 95 and code != 45:
+			return false
+	return true
+
+
+static func _valid_receipt_id(value: String) -> bool:
+	var text := value.strip_edges()
+	if text.is_empty():
+		return false
+	var parts := text.split(":", false)
+	if parts.size() < 2:
+		return false
+	for part_value in parts:
+		if not _valid_id(str(part_value)):
 			return false
 	return true
 

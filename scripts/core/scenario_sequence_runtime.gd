@@ -110,16 +110,16 @@ static func normalize_state(value: Variant, definition: Dictionary = {}) -> Dict
 		"local_state": SequenceSchemaScript.normalize_local_state(definition, source.get("local_state", {})) if not definition.is_empty() else _dict(source.get("local_state", {})),
 		"objective_progress": _normalize_objective_progress(source.get("objective_progress", {})),
 		"resolved_branches": _bounded_strings(source.get("resolved_branches", []), MAX_RECEIPTS),
-		"resolved_outcomes": _bounded_strings(source.get("resolved_outcomes", []), MAX_RECEIPTS),
+		"resolved_outcomes": _string_array(source.get("resolved_outcomes", [])),
 		"semantic_state": _dict(source.get("semantic_state", {})),
 		"fact_queue": _fact_array(source.get("fact_queue", [])),
-		"fact_receipts": _bounded_strings(source.get("fact_receipts", []), MAX_RECEIPTS),
-		"command_receipts": _bounded_strings(source.get("command_receipts", []), MAX_RECEIPTS),
+		"fact_receipts": _string_array(source.get("fact_receipts", [])),
+		"command_receipts": _string_array(source.get("command_receipts", [])),
 		"command_results": _dict(source.get("command_results", {})),
 		"command_fingerprints": _dict(source.get("command_fingerprints", {})),
-		"transition_receipts": _bounded_strings(source.get("transition_receipts", []), MAX_RECEIPTS),
-		"cleanup_receipts": _bounded_strings(source.get("cleanup_receipts", []), MAX_RECEIPTS),
-		"visit_receipts": _bounded_strings(source.get("visit_receipts", []), MAX_RECEIPTS),
+		"transition_receipts": _string_array(source.get("transition_receipts", [])),
+		"cleanup_receipts": _string_array(source.get("cleanup_receipts", [])),
+		"visit_receipts": _string_array(source.get("visit_receipts", [])),
 		"fact_fingerprints": _dict(source.get("fact_fingerprints", {})),
 		"last_feedback": str(source.get("last_feedback", "")),
 		"performance_counters": _normalize_counters(source.get("performance_counters", {})),
@@ -156,6 +156,8 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 		cached["state"] = state
 		return cached
 	var validation := _validate_command(state, definition, command_value, context)
+	if _string_array(state.get("command_receipts", [])).size() >= MAX_RECEIPTS:
+		validation.append("scenario command lifetime receipt limit reached")
 	if not validation.is_empty():
 		return {"ok": false, "errors": validation, "state": state, "replayed": false}
 	var command_id := str(command_value.get("command_id", "")).strip_edges()
@@ -168,7 +170,7 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 	state = _complete_command_objective_steps(state, definition, command_id)
 	var trigger := {"kind": "command", "command_id": command_id, "receipt_id": receipt_id, "payload": payload}
 	state = _evaluate_branches(state, definition, trigger)
-	var receipts := _bounded_strings(state.get("command_receipts", []), MAX_RECEIPTS - 1)
+	var receipts := _string_array(state.get("command_receipts", []))
 	receipts.append(receipt_id)
 	state["command_receipts"] = receipts
 	var counters := _normalize_counters(state.get("performance_counters", {}))
@@ -225,6 +227,8 @@ static func enqueue_fact(state_value: Dictionary, definition: Dictionary, fact_v
 		return {"ok": true, "duplicate": true, "state": state, "errors": []}
 	if not errors.is_empty():
 		return {"ok": false, "duplicate": false, "state": state, "errors": errors}
+	if _string_array(state.get("fact_receipts", [])).size() + _fact_array(state.get("fact_queue", [])).size() >= MAX_RECEIPTS:
+		return {"ok": false, "duplicate": false, "state": state, "errors": ["scenario fact lifetime receipt limit reached"]}
 	var queue := _fact_array(state.get("fact_queue", []))
 	if queue.size() >= MAX_FACT_QUEUE:
 		return {"ok": false, "duplicate": false, "state": state, "errors": ["scenario fact queue is full"]}
@@ -293,7 +297,7 @@ static func flush_facts(state_value: Dictionary, definition: Dictionary, boundar
 		if not bool(response.get("ok", false)):
 			errors.append_array(_array(response.get("errors", [])))
 			continue
-		var receipts := _bounded_strings(state.get("fact_receipts", []), MAX_RECEIPTS - 1)
+		var receipts := _string_array(state.get("fact_receipts", []))
 		receipts.append(fact_id)
 		state["fact_receipts"] = receipts
 		var fingerprints := _dict(state.get("fact_fingerprints", {}))
@@ -492,7 +496,7 @@ static func _enter_phase(state: Dictionary, definition: Dictionary, phase_id: St
 	next["last_feedback"] = str(phase_data.get("arrival_feedback", ""))
 	var semantic := _dict(next.get("semantic_state", {}))
 	var transition_receipts := _string_array(next.get("transition_receipts", []))
-	var phase_receipt := "phase:%s:%s" % [phase_id, source_receipt]
+	var phase_receipt := "%s:%s:phase:%s:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), phase_id, source_receipt]
 	if transition_receipts.has(phase_receipt):
 		return next
 	for family in ["scene_ops", "interaction_ops", "actor_ops", "transition_ops"]:
@@ -503,7 +507,7 @@ static func _enter_phase(state: Dictionary, definition: Dictionary, phase_id: St
 			return next
 		semantic = _dict(applied.get("state", semantic))
 	transition_receipts.append(phase_receipt)
-	next["transition_receipts"] = _bounded_strings(transition_receipts, MAX_RECEIPTS)
+	next["transition_receipts"] = transition_receipts
 	next["semantic_state"] = semantic
 	var counters := _normalize_counters(next.get("performance_counters", {}))
 	counters["transitions_prepared"] = int(counters.get("transitions_prepared", 0)) + 1
@@ -521,8 +525,9 @@ static func _resolve_outcome(state: Dictionary, definition: Dictionary, outcome:
 	next = _apply_cleanup(next, definition, "terminal:%s" % source_receipt)
 	var aftermath := _dict(_dict(SequenceSchemaScript.sequence(definition).get("aftermath", {})).get(outcome, {}))
 	var semantic := _dict(next.get("semantic_state", {}))
+	var aftermath_scope := "%s:%s:aftermath:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), outcome]
 	for family in ["scene_ops", "interaction_ops", "actor_ops", "service_ops", "game_ops", "route_ops"]:
-		var applied := OperationRegistryScript.apply_operations(semantic, family, _array(aftermath.get(family, [])), "aftermath:%s" % outcome)
+		var applied := OperationRegistryScript.apply_operations(semantic, family, _array(aftermath.get(family, [])), aftermath_scope)
 		if not bool(applied.get("ok", false)):
 			next["status"] = STATUS_CLEANED
 			return next
@@ -535,7 +540,7 @@ static func _resolve_outcome(state: Dictionary, definition: Dictionary, outcome:
 
 static func _apply_cleanup(state: Dictionary, definition: Dictionary, reason: String) -> Dictionary:
 	var next := state.duplicate(true)
-	var receipt_id := "cleanup:%s" % reason
+	var receipt_id := "%s:%s:cleanup:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), reason]
 	var receipts := _string_array(next.get("cleanup_receipts", []))
 	if receipts.has(receipt_id):
 		return next
@@ -548,7 +553,7 @@ static func _apply_cleanup(state: Dictionary, definition: Dictionary, reason: St
 			semantic = _dict(applied.get("state", semantic))
 	next["semantic_state"] = semantic
 	receipts.append(receipt_id)
-	next["cleanup_receipts"] = _bounded_strings(receipts, MAX_RECEIPTS)
+	next["cleanup_receipts"] = receipts
 	return next
 
 
@@ -621,7 +626,7 @@ static func state_semantics_for_definition(definition: Dictionary, phase_id: Str
 	var semantic: Dictionary = {}
 	var phase_data := SequenceSchemaScript.phase(definition, phase_id)
 	for family in ["scene_ops", "interaction_ops", "actor_ops", "transition_ops"]:
-		var applied := OperationRegistryScript.apply_operations(semantic, family, _array(phase_data.get(family, [])), "definition:%s" % phase_id)
+		var applied := OperationRegistryScript.apply_operations(semantic, family, _array(phase_data.get(family, [])), "definition:preview:phase:%s" % phase_id)
 		semantic = _dict(applied.get("state", semantic))
 	return semantic
 
