@@ -1,11 +1,18 @@
 extends RefCounted
 
+const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
+const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
+
 
 static func interactable_object_view_list(host: Variant) -> Array:
 	if host.run_state == null or host.library == null:
 		return []
 	if host._is_meta_session():
 		return host._meta_interactable_object_view_list()
+	var preparation: Dictionary = _dict(host.run_state.scenario_prepare_semantic_finalization())
+	if not bool(preparation.get("ok", false)):
+		host.run_state.current_environment["scenario_sequence_lifecycle_errors"] = host._copy_array(preparation.get("errors", []))
+		return []
 	var failed = host._run_failed_without_recovery()
 	var failed_reason = host._pressure_status_text(host._run_pressure_view())
 	if failed_reason.strip_edges().is_empty():
@@ -57,7 +64,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var event_id := str((event_value as Dictionary).get("id", ""))
 		if event_id != "numbers_desk" and not contact_event_ids.has(event_id):
 			event_options.append(event_value)
-	return host.EnvironmentInteractionViewModelScript.interactable_object_view_list(host.run_state, host.library, {
+	var result: Array = _array(host.EnvironmentInteractionViewModelScript.interactable_object_view_list(host.run_state, host.library, {
 		"run_failed_without_recovery": failed,
 		"failed_reason": failed_reason,
 		"selection": {
@@ -84,7 +91,142 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"after_travel_objects": after_travel_objects,
 		"closing_time_locked": host._closing_time_blocks_environment_actions(),
 		"closing_time_reason": host._closing_time_disabled_reason(),
-	})
+	}))
+	var definition: Dictionary = _dict(host.run_state.scenario_sequence_definition())
+	if ScenarioSequenceSchemaScript.is_sequence(definition):
+		var finalized: Dictionary = _dict(host.run_state.scenario_finalize_base_semantics(result, host.library))
+		if not bool(finalized.get("ok", false)):
+			host.run_state.current_environment["scenario_sequence_lifecycle_errors"] = host._copy_array(finalized.get("errors", []))
+			return []
+		result = host._copy_array(finalized.get("records", []))
+		result = project_sequence_interactions(result, host.run_state.scenario_sequence_projection())
+	return result
+
+
+static func project_sequence_interactions(base_records: Array, projection: Dictionary) -> Array:
+	var semantic_state := _dict(projection.get("semantic_state", {}))
+	if not semantic_state.has("interactions") and not semantic_state.has("scene_objects"): return base_records.duplicate(true)
+	var semantic_interactions := _dict(semantic_state.get("interactions", {}))
+	var semantic_scene_objects := _dict(semantic_state.get("scene_objects", {}))
+	var projected: Array = []
+	var consumed: Dictionary = {}
+	var used_presentation_ids: Dictionary = {}
+	var scenario_presentation_ids: Dictionary = {}
+	for collection in [semantic_scene_objects, semantic_interactions]:
+		for semantic_value in (collection as Dictionary).values():
+			var semantic := _dict(semantic_value)
+			if str(semantic.get("owner_namespace", "")) == "scenario":
+				var owned_identity := "scenario::%s" % str(semantic.get("stable_object_id", ""))
+				scenario_presentation_ids[owned_identity] = true
+	for record_value in base_records:
+		if typeof(record_value) != TYPE_DICTIONARY: continue
+		var record := (record_value as Dictionary).duplicate(true)
+		var identity := "%s::%s" % [str(record.get("owner_namespace", "")), str(record.get("stable_object_id", ""))]
+		var presentation_id := str(record.get("object_id", ""))
+		if scenario_presentation_ids.has(presentation_id) and identity != presentation_id: continue
+		if semantic_scene_objects.has(identity): record = _merge_projected_scene_object(record, _dict(semantic_scene_objects.get(identity, {})))
+		if not semantic_interactions.has(identity):
+			if str(record.get("owner_namespace", "")).is_empty() or not bool(record.get("interactive", true)) or semantic_scene_objects.has(identity):
+				if semantic_scene_objects.has(identity):
+					record["interactive"] = false
+					record["scenario_sequence_actions"] = []
+				projected.append(record)
+				used_presentation_ids[str(record.get("object_id", ""))] = true
+				consumed[identity] = true
+			continue
+		var semantic := _dict(semantic_interactions.get(identity, {}))
+		var merged := _merge_projected_interaction(record, semantic)
+		projected.append(merged)
+		used_presentation_ids[str(merged.get("object_id", ""))] = true
+		consumed[identity] = true
+	var pending: Array = []
+	for identity_value in semantic_interactions.keys():
+		var identity := str(identity_value)
+		if consumed.has(identity): continue
+		var semantic := _dict(semantic_interactions.get(identity, {}))
+		if semantic.is_empty(): continue
+		var merged := _merge_projected_interaction({}, semantic)
+		var presentation_id := str(merged.get("object_id", ""))
+		if used_presentation_ids.has(presentation_id): continue
+		pending.append(merged)
+		used_presentation_ids[presentation_id] = true
+		consumed[identity] = true
+	for identity_value in semantic_scene_objects.keys():
+		var identity := str(identity_value)
+		if consumed.has(identity): continue
+		var semantic := _dict(semantic_scene_objects.get(identity, {}))
+		if semantic.is_empty(): continue
+		var merged := _merge_projected_scene_object({}, semantic)
+		var presentation_id := str(merged.get("object_id", ""))
+		if used_presentation_ids.has(presentation_id): continue
+		pending.append(merged)
+		used_presentation_ids[presentation_id] = true
+	pending.sort_custom(func(a: Variant, b: Variant) -> bool:
+		var left := _dict(a)
+		var right := _dict(b)
+		var left_order := int(left.get("focus_order", 0))
+		var right_order := int(right.get("focus_order", 0))
+		return left_order < right_order if left_order != right_order else str(left.get("object_id", "")) < str(right.get("object_id", ""))
+	)
+	projected.append_array(pending)
+	return projected
+
+
+static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary) -> Dictionary:
+	var result := base.duplicate(true)
+	var scenario_owned := str(semantic.get("owner_namespace", "")) == "scenario"
+	var owned_identity := "%s::%s" % [str(semantic.get("owner_namespace", "")), str(semantic.get("stable_object_id", ""))]
+	var presentation_id := owned_identity if scenario_owned else str(semantic.get("presentation_object_id", result.get("object_id", "")))
+	result["object_id"] = presentation_id
+	result["object_type"] = str(result.get("object_type", "scenario_sequence" if scenario_owned else "info"))
+	result["visual_type"] = str(result.get("visual_type", "fixture"))
+	result["source_id"] = str(semantic.get("source_id", result.get("source_id", semantic.get("stable_object_id", ""))))
+	result["owner_namespace"] = str(semantic.get("owner_namespace", ""))
+	result["stable_object_id"] = str(semantic.get("stable_object_id", ""))
+	result["label"] = str(semantic.get("label", result.get("label", presentation_id)))
+	result["short_description"] = str(semantic.get("prompt", result.get("short_description", "")))
+	result["action_summary"] = str(semantic.get("prompt", result.get("action_summary", "Choose an action.")))
+	result["state_label"] = str(semantic.get("state_label", result.get("state_label", "Available")))
+	result["enabled"] = bool(semantic.get("enabled", false))
+	result["interactive"] = true
+	result["disabled_reason"] = str(semantic.get("disabled_reason", ""))
+	result["non_color_state"] = str(semantic.get("non_color_state", result.get("non_color_state", "available")))
+	result["focus_order"] = int(semantic.get("focus_order", result.get("focus_order", 0)))
+	var normalized := _dict(semantic.get("normalized_hit_rect", {}))
+	if not normalized.is_empty():
+		result["focus_rect"] = Rect2(float(normalized.get("x", 0.0)), float(normalized.get("y", 0.0)), float(normalized.get("w", 0.0)), float(normalized.get("h", 0.0)))
+	var actions := _array(semantic.get("available_actions", []))
+	result["available_actions"] = actions
+	if not actions.is_empty(): result["confirm_action_id"] = str(_dict(actions[0]).get("id", ""))
+	var sequence_actions: Array = []
+	for action_value in actions:
+		var action := _dict(action_value)
+		if scenario_owned or not str(action.get("action_origin_receipt_key", "")).is_empty(): sequence_actions.append(action)
+	result["scenario_sequence_actions"] = sequence_actions
+	return result
+
+
+static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary) -> Dictionary:
+	var result := base.duplicate(true)
+	var owner := str(semantic.get("owner_namespace", result.get("owner_namespace", "")))
+	var stable_id := str(semantic.get("stable_object_id", result.get("stable_object_id", "")))
+	var owned_identity := "%s::%s" % [owner, stable_id]
+	result["object_id"] = owned_identity if owner == "scenario" else str(result.get("object_id", semantic.get("presentation_object_id", owned_identity)))
+	result["object_type"] = str(result.get("object_type", "scenario_scene_object" if owner == "scenario" else "info"))
+	result["visual_type"] = str(result.get("visual_type", "fixture"))
+	result["source_id"] = str(result.get("source_id", stable_id))
+	result["owner_namespace"] = owner
+	result["stable_object_id"] = stable_id
+	result["label"] = str(semantic.get("label", result.get("label", stable_id)))
+	result["short_description"] = str(semantic.get("role", result.get("short_description", "Room fixture")))
+	result["state_label"] = str(semantic.get("state", semantic.get("appearance", result.get("state_label", "Present"))))
+	result["enabled"] = bool(semantic.get("enabled", result.get("enabled", true)))
+	result["visible"] = bool(semantic.get("visible", result.get("visible", true)))
+	result["interactive"] = bool(result.get("interactive", false))
+	result["scenario_sequence_actions"] = _array(result.get("scenario_sequence_actions", []))
+	var normalized := _dict(semantic.get("normalized_hit_rect", {}))
+	if not normalized.is_empty(): result["focus_rect"] = Rect2(float(normalized.get("x", 0.0)), float(normalized.get("y", 0.0)), float(normalized.get("w", 0.0)), float(normalized.get("h", 0.0)))
+	return result
 
 
 static func crew_presence_interactable_objects(host: Variant, event_options: Array = []) -> Array:
@@ -257,6 +399,14 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 			"focus_rect": host._interaction_rect_for_object("numbers:silas", "numbers_silas", 0),
 		}))
 	return objects
+
+
+static func _dict(value: Variant) -> Dictionary:
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func _array(value: Variant) -> Array:
+	return value as Array if typeof(value) == TYPE_ARRAY else []
 
 
 static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bool = true) -> Array:

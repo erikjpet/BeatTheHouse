@@ -43,6 +43,7 @@ const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
 const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
 const CONTEXT_MODE_NUMBERS := "numbers"
 const CONTEXT_MODE_DELIVERY := "delivery"
+const CONTEXT_MODE_SCENARIO_SEQUENCE := "scenario_sequence"
 const META_LOCATION_HOME := "home"
 const META_LOCATION_START_RUN := "start_run"
 const RUN_INFO_BAND_RATIO := 0.10
@@ -8126,6 +8127,16 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_context_service_actions(card, source_id)
 		CONTEXT_MODE_LENDER:
 			_add_context_lender_actions(card, source_id)
+	_add_context_scenario_sequence_actions(card, object_data)
+
+
+func _add_context_scenario_sequence_actions(card: VBoxContainer, object_data: Dictionary) -> void:
+	for action_value in _copy_array(object_data.get("scenario_sequence_actions", [])):
+		if typeof(action_value) != TYPE_DICTIONARY: continue
+		var action := action_value as Dictionary
+		var action_id := str(action.get("id", ""))
+		if action_id.is_empty(): continue
+		_add_card_button(card, str(action.get("label", action_id.replace("_", " ").capitalize())), Callable(self, "_activate_scenario_sequence_action").bind(object_data, action), false, action_id == str(object_data.get("confirm_action_id", "")))
 
 
 func _add_game_object_context_details(card: VBoxContainer, game_id: String) -> void:
@@ -9953,9 +9964,45 @@ func activate_interactable_object(object_id: String) -> bool:
 			if select_lender_hook(source_id):
 				return confirm_selected_lender_hook()
 			return false
+		CONTEXT_MODE_SCENARIO_SEQUENCE:
+			var actions := _copy_array(object_data.get("scenario_sequence_actions", []))
+			if actions.is_empty() or typeof(actions[0]) != TYPE_DICTIONARY: return false
+			return _activate_scenario_sequence_action(object_data, actions[0] as Dictionary)
 	_show_message("Inspect this first.")
 	_refresh()
 	return false
+
+
+func _activate_scenario_sequence_action(object_data: Dictionary, action: Dictionary) -> bool:
+	if run_state == null or not _guard_player_input_route(): return false
+	var action_id := str(action.get("id", ""))
+	if action_id.is_empty(): return false
+	var sequence_state := _copy_dict(run_state.current_environment.get("scenario_sequence_state", {}))
+	var receipt_ordinal := _copy_array(sequence_state.get("command_receipts", [])).size()
+	var visit_id := str(run_state.current_environment.get("environment_visit_id", "visit"))
+	var receipt_id := "scenario:%s:%s:%s:%d" % [visit_id, str(object_data.get("object_id", "interaction")), action_id, receipt_ordinal]
+	var result := run_state.scenario_sequence_command(
+		action_id,
+		receipt_id,
+		{},
+		str(object_data.get("owner_namespace", "")),
+		str(object_data.get("stable_object_id", "")),
+		str(action.get("action_origin_owner_namespace", object_data.get("owner_namespace", ""))),
+		str(action.get("action_origin_stable_object_id", object_data.get("stable_object_id", ""))),
+		str(action.get("action_origin_receipt_key", "")),
+		str(action.get("action_origin_boundary_id", "")),
+		str(action.get("action_origin_fingerprint", ""))
+	)
+	if not bool(result.get("ok", false)):
+		var errors := _copy_array(result.get("errors", []))
+		_show_message(str(errors[0]) if not errors.is_empty() else "That room action is no longer available.")
+		_refresh()
+		return false
+	var feedback := str(_copy_dict(result.get("state", {})).get("last_feedback", ""))
+	if not feedback.is_empty(): _show_message(feedback)
+	_autosave_foundation_run("Scenario progress saved.")
+	_refresh()
+	return true
 
 
 func _complete_delivery_handoff(node_id: String) -> bool:
@@ -12321,7 +12368,8 @@ func _apply_meta_environment(location_id: String) -> void:
 	var environment := _build_meta_environment(location_id)
 	if environment.is_empty():
 		return
-	run_state.set_environment(environment)
+	var installed := run_state.set_environment(environment)
+	if not bool(installed.get("ok", false)): return
 	_invalidate_travel_view_cache()
 	_refresh_run_action_service()
 
@@ -12956,7 +13004,11 @@ func start_game_test_session(game_id: String) -> void:
 	dev_game_test_mode = true
 	_refresh_run_action_service()
 	var environment := _game_test_environment(game_id, game)
-	run_state.set_environment(environment)
+	var installed := run_state.set_environment(environment)
+	if not bool(installed.get("ok", false)):
+		var install_errors := _copy_array(installed.get("errors", []))
+		if game_test_status_label != null: game_test_status_label.text = str(install_errors[0]) if not install_errors.is_empty() else "Could not enter the test room."
+		return
 	current_game = null
 	last_game_result = {}
 	last_environment_runtime_result = {}
