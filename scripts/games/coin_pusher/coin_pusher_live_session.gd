@@ -276,7 +276,7 @@ static func make_snapshot(simulation: Dictionary, machine: Dictionary = {}) -> D
 		"drop_queue": (machine.get("drop_queue", []) as Array).duplicate(true) if typeof(machine.get("drop_queue", [])) == TYPE_ARRAY else [],
 		"next_body_id": int(simulation.get("next_body_id", 1)),
 		"coin_count": compact_count,
-		"coin_blob": Marshalls.raw_to_base64(bytes),
+		"coin_blob": Marshalls.raw_to_base64(bytes) if not bytes.is_empty() else "",
 		"coin_multiplier_blob": Marshalls.raw_to_base64(multiplier_nibbles) if has_multipliers else "",
 		"coin_provenance": provenance_sidecar,
 		"extra_bodies": extras,

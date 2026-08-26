@@ -178,6 +178,31 @@ func _check_pusher_v3_10_idle_queue_cups_and_stack(library: ContentLibrary, game
 	if queued != 30 or int((queue_machine.get("simulation", {}) as Dictionary).get("accepted_inserts", 0)) != 30 or not bool(queue_machine.get("motor_started", false)) or not (queue_machine.get("drop_queue", []) as Array).is_empty() or not saw_left or not saw_right:
 		failures.append("pusherv3_10 30-coin FIFO did not emit at cadence from a steerable bound rail nozzle.")
 
+	# Two paid reservations may be appended while an earlier batch is still
+	# active. Their durable FIFO must round-trip without merging, loss, or
+	# duplication, and reopening must resume the already-started motor rather
+	# than regenerate the cabinet.
+	var persist_machine := {"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-10-QUEUE-PERSIST"), machine, 0), "variation_state": {}, "drop_queue": [], "motor_started": false, "selected_nozzle_id": "quarter_rail"}
+	CoinPusherLiveSessionScript.begin(persist_machine, machine, 7712)
+	var first_reserved := CoinPusherLiveSessionScript.enqueue_drops(persist_machine, {"nozzle_id": "quarter_rail", "density": 1, "provenance": {"paid_batch": 1}}, 5)
+	var second_reserved := CoinPusherLiveSessionScript.enqueue_drops(persist_machine, {"nozzle_id": "quarter_rail", "density": 1, "provenance": {"paid_batch": 2}}, 7)
+	var persisted_queue: Array = (persist_machine.get("drop_queue", []) as Array).duplicate(true)
+	var persisted_snapshot := CoinPusherLiveSessionScript.make_snapshot(persist_machine.get("simulation", {}), persist_machine)
+	var reopened_machine := {"settled_state": persisted_snapshot}
+	CoinPusherLiveSessionScript.begin(reopened_machine, machine, 7712)
+	var reopened_queue: Array = (reopened_machine.get("drop_queue", []) as Array).duplicate(true)
+	var reopen_msec := 0
+	CoinPusherLiveSessionScript.advance(reopened_machine, reopen_msec)
+	for _frame in range(40):
+		reopen_msec += 50
+		CoinPusherLiveSessionScript.advance(reopened_machine, reopen_msec)
+	var reopened_simulation: Dictionary = reopened_machine.get("simulation", {})
+	if first_reserved != 5 or second_reserved != 7 or persisted_queue.size() != 2 or reopened_queue != persisted_queue \
+			or int(persisted_snapshot.get("coin_count", -1)) != 0 or not str(persisted_snapshot.get("coin_blob", "invalid")).is_empty() \
+			or not bool(reopened_machine.get("motor_started", false)) or int(reopened_simulation.get("accepted_inserts", -1)) != 12 \
+			or not (reopened_machine.get("drop_queue", []) as Array).is_empty() or not bool((reopened_simulation.get("last_invariants", {}) as Dictionary).get("conservation_ok", false)):
+		failures.append("pusherv3_10 concurrent paid queues did not persist and resume exactly once: before=%s after=%s accepted=%d." % [JSON.stringify(persisted_queue), JSON.stringify(reopened_machine.get("drop_queue", [])), int(reopened_simulation.get("accepted_inserts", -1))])
+
 	var ridge: Dictionary = (machine.get("machines", {}) as Dictionary).get("jackpot_ridge", {})
 	var target: Dictionary = ((ridge.get("apparatus", {}) as Dictionary).get("targets", []) as Array)[0]
 	var cup_state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-10-CUP"), ridge, 0)
