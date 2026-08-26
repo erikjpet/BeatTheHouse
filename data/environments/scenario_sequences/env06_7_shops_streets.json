@@ -690,14 +690,14 @@
                 {
                   "family": "interaction_ops",
                   "op": "gate",
-                  "receipt_id": "awaiting_stock_open_host_delivery_event",
+                  "receipt_id": "awaiting_stock_keep_host_delivery_event_gated",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_event_host_gate",
                   "mode": "gate",
                   "target_owner_namespace": "event",
                   "target_stable_object_id": "event:scenario_delivery_day_stock",
-                  "enabled": true,
-                  "disabled_reason": ""
+                  "enabled": false,
+                  "disabled_reason": "The delivered scenario request owns this stock choice; the base card stays gated."
                 }
               ],
               "actor_ops": [
@@ -1503,7 +1503,7 @@
             "arrival_click_disabled",
             "sorting_click_disabled",
             "verification_click_disabled",
-            "request_delivery_opens_event",
+            "drained_request_activates_event",
             "early_result_cannot_enter_queue",
             "pre_request_click_emits_no_event_result",
             "pre_request_queue_remains_clean",
