@@ -1,6 +1,9 @@
 class_name ScenarioEngine
 extends RefCounted
 
+const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
+const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
+
 # Deterministic scenario overlays. Selection belongs to RunGenerator; this
 # module only builds and advances the selected node-owned state.
 
@@ -90,7 +93,7 @@ static func apply_to_archetype(archetype: Dictionary, state_value: Variant) -> D
 	return result
 
 
-static func attach_to_environment(environment: Dictionary, state_value: Variant) -> void:
+static func attach_to_environment(environment: Dictionary, state_value: Variant, definition: Dictionary = {}) -> void:
 	var state := normalize_state(state_value)
 	if state.is_empty():
 		return
@@ -100,6 +103,75 @@ static func attach_to_environment(environment: Dictionary, state_value: Variant)
 	environment["scenario_phase_action_counter"] = int(state.get("phase_action_counter", 0))
 	environment["scenario_applied_phase_index"] = int(state.get("phase_index", 0)) if _state_targets_layer(state, environment) else -1
 	_apply_exclusive_opportunity(environment)
+	ensure_sequence_state(environment, definition)
+
+
+# Public sequence API. Producers publish through enqueue/flush and never mutate
+# sequence internals. RunState supplies the node-owned definition/state seam.
+static func ensure_sequence_state(environment: Dictionary, definition: Dictionary, seed_token: String = "") -> Dictionary:
+	if not SequenceSchemaScript.is_sequence(definition):
+		return {}
+	var node_id := str(environment.get("world_node_id", environment.get("archetype_id", environment.get("id", "")))).strip_edges()
+	var state := SequenceRuntimeScript.normalize_state(environment.get("scenario_sequence_state", {}), definition)
+	if state.is_empty():
+		state = SequenceRuntimeScript.initial_state(definition, node_id, seed_token)
+	elif str(state.get("node_id", "")) != node_id and _sequence_state_can_bind_initial_node(state, environment):
+		state["node_id"] = node_id
+	environment["scenario_sequence_state"] = state
+	environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(state, definition)
+	return state.duplicate(true)
+
+
+static func sequence_command(environment: Dictionary, definition: Dictionary, command: Dictionary, context: Dictionary = {}) -> Dictionary:
+	var state := ensure_sequence_state(environment, definition)
+	if state.is_empty():
+		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
+	var result := SequenceRuntimeScript.apply_command(state, definition, command, context)
+	var next := _copy_dict(result.get("state", state))
+	environment["scenario_sequence_state"] = next
+	environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(next, definition)
+	result["state"] = next.duplicate(true)
+	return result
+
+
+static func enqueue_sequence_fact(environment: Dictionary, definition: Dictionary, fact: Dictionary) -> Dictionary:
+	var state := ensure_sequence_state(environment, definition)
+	if state.is_empty():
+		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
+	var result := SequenceRuntimeScript.enqueue_fact(state, definition, fact)
+	var next := _copy_dict(result.get("state", state))
+	environment["scenario_sequence_state"] = next
+	environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(next, definition)
+	result["state"] = next.duplicate(true)
+	return result
+
+
+static func flush_sequence_facts(environment: Dictionary, definition: Dictionary, boundary_serial: int) -> Dictionary:
+	var state := ensure_sequence_state(environment, definition)
+	if state.is_empty():
+		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
+	var result := SequenceRuntimeScript.flush_facts(state, definition, boundary_serial)
+	var next := _copy_dict(result.get("state", state))
+	environment["scenario_sequence_state"] = next
+	environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(next, definition)
+	result["state"] = next.duplicate(true)
+	return result
+
+
+static func sequence_projection(environment: Dictionary, definition: Dictionary = {}) -> Dictionary:
+	var state := SequenceRuntimeScript.normalize_state(environment.get("scenario_sequence_state", {}), definition)
+	return SequenceRuntimeScript.public_projection(state, definition) if not state.is_empty() else {}
+
+
+static func _sequence_state_can_bind_initial_node(state: Dictionary, environment: Dictionary) -> bool:
+	var original := str(state.get("node_id", "")).strip_edges()
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	return (original.is_empty() or original == archetype_id) \
+		and int(state.get("boundary_serial", 0)) == 0 \
+		and int(state.get("phase_action_counter", 0)) == 0 \
+		and _copy_array(state.get("fact_receipts", [])).is_empty() \
+		and _copy_array(state.get("command_receipts", [])).is_empty() \
+		and _copy_array(state.get("fact_queue", [])).is_empty()
 
 
 static func advance_environment(environment: Dictionary, amount: int) -> bool:

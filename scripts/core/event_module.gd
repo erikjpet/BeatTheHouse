@@ -335,6 +335,7 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 			"crew_switch_reveal", "crew_lucky_collection", "crew_knuckles_stash", "crew_knuckles_retrieve", "crew_job_accept", "crew_practice_rig", "crew_stake_loss_choice", "crew_collection_choice", "crew_rook_ride", "crew_heist":
 				pass
 	CharacterChainModelScript.apply_to_environment(run_state, run_state.current_environment)
+	run_state.scenario_publish_event_result(result)
 
 
 # Returns a no-op event result for invalid choices.

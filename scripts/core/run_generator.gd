@@ -33,8 +33,13 @@ func next_environment(run_state: RunState, target_archetype_id: String = "", tar
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
+	var source_id := run_state.current_world_node_id()
+	var destination_id := str(environment_data.get("world_node_id", environment_data.get("archetype_id", ""))).strip_edges()
+	run_state.scenario_publish_travel("travel_departed", source_id, destination_id, "legacy")
+	run_state.scenario_flush_facts()
 	run_state.save_rng(rng)
 	run_state.set_environment(environment_data)
+	run_state.scenario_publish_travel("travel_arrived", source_id, run_state.current_world_node_id(), "legacy")
 	return EnvironmentInstance.from_dict(run_state.current_environment)
 
 
@@ -131,6 +136,10 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 	var access := run_state.grand_casino_room_access_status(target_id, int(flags.get("casino_high_limit_buy_in", 60)))
 	if not bool(access.get("available", false)):
 		return false
+	var source_room_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
+	if source_room_id != target_id:
+		run_state.scenario_publish_travel("travel_departed", source_room_id, target_id, "grand_room")
+		run_state.scenario_flush_facts()
 	run_state.store_grand_casino_room_environment(run_state.current_environment)
 	var environment_data := run_state.grand_casino_room_environment(target_id)
 	if environment_data.is_empty():
@@ -154,6 +163,8 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.set_environment(environment_data)
+	if source_room_id != target_id:
+		run_state.scenario_publish_travel("travel_arrived", source_room_id, target_id, "grand_room")
 	return true
 
 
@@ -198,8 +209,14 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 	if run_state.has_world_map():
 		_apply_world_travel_targets(layer_state, run_state, run_state.world_map, run_state.current_world_node_id())
 	layer_state["layout"] = EnvironmentInstance.ensure_generated_layout(layer_state)
+	var source_layer_id := str(run_state.current_environment.get("current_layer_id", "")).strip_edges()
+	if source_layer_id != target_id:
+		run_state.scenario_publish_travel("travel_departed", source_layer_id, target_id, "layer")
+		run_state.scenario_flush_facts()
 	if not run_state.install_environment_layer_state(target_id, layer_state):
 		return {"ok": false, "message": "The room could not be entered."}
+	if source_layer_id != target_id:
+		run_state.scenario_publish_travel("travel_arrived", source_layer_id, target_id, "layer")
 	# Scenario reconciliation and layer installation can replace flat event
 	# arrays. Recompute recruitment/presence against the final active layer so
 	# real side-door entries and restored revisits expose the authored fallback.
@@ -297,10 +314,15 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 	if node.is_empty():
 		return EnvironmentInstance.from_dict(run_state.current_environment) if not run_state.current_environment.is_empty() else _legacy_next_environment(run_state, target_archetype_id, rng)
 	if run_state.has_world_map() and not run_state.current_environment.is_empty():
+		if current_node_id != target_id:
+			run_state.scenario_publish_travel("travel_departed", current_node_id, target_id, "world")
+			run_state.scenario_flush_facts()
 		run_state.store_current_world_node_environment()
 	var environment_data := _world_environment_data_for_node(run_state, map_data, node, rng)
 	run_state.set_environment(environment_data)
 	run_state.enter_world_node(target_id, run_state.current_environment)
+	if not current_node_id.is_empty() and current_node_id != target_id:
+		run_state.scenario_publish_travel("travel_arrived", current_node_id, target_id, "world")
 	_apply_tutorial_authored_travel_targets(run_state, target_id)
 	if initialized_tutorial_map:
 		# enter_node() normally reveals every neighbor. Reapply the authored first
@@ -396,6 +418,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		CrewRecruitmentModelScript.apply_to_environment(run_state, restored)
 		_apply_world_travel_targets(restored, run_state, map_data, node_id)
 		restored["world_node_id"] = node_id
+		ScenarioEngineScript.ensure_sequence_state(restored, run_state.seeded_scenario_definition_for_node(node_id))
 		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored)
 		return restored
 	var depth := run_state.environment_travel_count()
@@ -411,6 +434,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	# Game generation hooks may publish node-scoped facts. Give them the stable
 	# world-node identity before generating their canonical machine state.
 	environment_data["world_node_id"] = node_id
+	ScenarioEngineScript.ensure_sequence_state(environment_data, scenario)
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	if str(archetype.get("kind", "")) == "home":
