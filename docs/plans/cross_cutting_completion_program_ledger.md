@@ -338,3 +338,12 @@ their own detailed handoffs and test evidence.
   identical, proving complete restoration of non-pusher per-seed coverage.
   Runtime acceptance remains blocked on the Systems budget and fresh exact-head
   gates; EV remains unreleased.
+- 2026-08-26: `fix06_4` P1 remediation advanced the clean branch to
+  `f577e9110b1ef28a4bbc0d0fb72e37a279ba8318` (two commits from base, four
+  files, +92/-6, clean diff check). A shared live predicate now gates both
+  reprieve-marker emission and enforcement using canonical Peek action,
+  tutorial status, Punchline venue/table presence and incomplete lesson state.
+  Hostile true-marker fixtures cover post-completion, non-tutorial, non-Pal and
+  non-Peek cases and require normal idempotent barring; an unmarked otherwise
+  eligible result also bars. Hover parity remains. Exact-head independent
+  re-review is in progress; runtime stays held behind pusher HOST ownership.
