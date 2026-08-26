@@ -12,6 +12,7 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const IGNORED_BASELINE_PATH := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
+const IGNORED_BASELINE_CHANGE_COMMIT := "a0d2b6ff7155484830909728f3051f587dc5dc4d"
 const JSON_EXACT_INTEGER_LIMIT := 9007199254740991.0
 
 
@@ -511,6 +512,11 @@ static func _check_crew_ignoring_regression(library: ContentLibrary, failures: A
 	if typeof(baseline) != TYPE_DICTIONARY:
 		failures.append("Crew-ignoring accepted-main golden fixture is missing or invalid.")
 	else:
+		var provenance := _dict((baseline as Dictionary).get("provenance", {}))
+		if str(provenance.get("change_commit", "")) != IGNORED_BASELINE_CHANGE_COMMIT \
+			or str(provenance.get("reason", "")).strip_edges().is_empty() \
+			or str(provenance.get("proof", "")).strip_edges().is_empty():
+			failures.append("Crew-ignoring golden fixture lacks the audited authored-state provenance.")
 		var expected_capture := _normalize_ignored_capture_numeric_types(_dict((baseline as Dictionary).get("capture", {})))
 		if JSON.stringify(generated_a) != JSON.stringify(expected_capture):
 			failures.append("Crew-ignoring full RunState/current/world environment bytes shifted from accepted main outside authorized anchor ambience.")

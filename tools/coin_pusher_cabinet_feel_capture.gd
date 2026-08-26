@@ -16,6 +16,7 @@ var failed := false
 var started_msec := 0
 var stop_after_idle := false
 var stop_after_crossing := false
+var only_depth_crossing := false
 
 
 func _init() -> void:
@@ -26,6 +27,8 @@ func _init() -> void:
 			stop_after_idle = true
 		elif argument == "--stop-after-crossing":
 			stop_after_crossing = true
+		elif argument == "--only-depth-crossing":
+			only_depth_crossing = true
 	call_deferred("_run")
 
 
@@ -58,6 +61,17 @@ func _run() -> void:
 	app.set_process(false)
 	print("[cabinet-capture] production surface ready")
 	_progress("production_surface_ready")
+	# The depth-sort cache acceptance is independent of the solver's broader
+	# cabinet-feel scenarios. Keep the cumulative --stop-after-crossing mode for
+	# its original prefix contract, and provide an explicit targeted mode whose
+	# exit status is owned only by the two exact-order crossing frames.
+	if only_depth_crossing:
+		print("[cabinet-capture] depth crossing only")
+		_progress("depth_crossing")
+		await _capture_depth_crossing()
+		_write_depth_crossing_manifest()
+		_finish()
+		return
 	print("[cabinet-capture] idle")
 	_progress("idle")
 	await _capture_idle()
@@ -261,7 +275,9 @@ func _capture_depth_crossing() -> void:
 	front_fragment["y"] = 40000
 	_apply_body_views([rear_puck, front_fragment], 77, {}, 78)
 	var purple_sample := await _feature_color_evidence("purple", "09_depth_crossing_purple_front.png")
-	var crossing_valid := int(teal_sample.get("teal_pixel_count", 0)) > int(purple_sample.get("teal_pixel_count", 0)) + 100 \
+	var crossing_valid := bool(teal_sample.get("saved", false)) \
+		and bool(purple_sample.get("saved", false)) \
+		and int(teal_sample.get("teal_pixel_count", 0)) > int(purple_sample.get("teal_pixel_count", 0)) + 100 \
 		and int(purple_sample.get("purple_pixel_count", 0)) > int(teal_sample.get("purple_pixel_count", 0)) + 100
 	if not crossing_valid:
 		_fail("Exact-order GL crossing probe did not change the visible overlap owner: teal=%s purple=%s." % [teal_sample, purple_sample])
@@ -376,8 +392,8 @@ func _feature_color_evidence(kind: String, debug_file: String) -> Dictionary:
 	await process_frame
 	var image := root.get_viewport().get_texture().get_image()
 	if image == null:
-		return {"pixel_count": 0, "kind": kind}
-	image.save_png("%s/%s" % [out_dir, debug_file])
+		return {"pixel_count": 0, "kind": kind, "saved": false}
+	var saved := image.save_png("%s/%s" % [out_dir, debug_file]) == OK
 	var teal_pixel_count := 0
 	var purple_pixel_count := 0
 	var teal_sample := Color.BLACK
@@ -394,7 +410,7 @@ func _feature_color_evidence(kind: String, debug_file: String) -> Dictionary:
 			if color.b > color.g + 0.30 and color.r > color.g + 0.08:
 				purple_pixel_count += 1
 				purple_sample = color
-	return {"kind": kind, "teal_pixel_count": teal_pixel_count, "purple_pixel_count": purple_pixel_count, "teal_sample_rgb": [teal_sample.r, teal_sample.g, teal_sample.b], "purple_sample_rgb": [purple_sample.r, purple_sample.g, purple_sample.b]}
+	return {"kind": kind, "saved": saved, "teal_pixel_count": teal_pixel_count, "purple_pixel_count": purple_pixel_count, "teal_sample_rgb": [teal_sample.r, teal_sample.g, teal_sample.b], "purple_sample_rgb": [purple_sample.r, purple_sample.g, purple_sample.b]}
 
 
 func _project_for_capture(x: int, y: int, z: int) -> Vector2:
@@ -506,6 +522,38 @@ func _write_manifest() -> void:
 	var file := FileAccess.open("%s/manifest.json" % out_dir, FileAccess.WRITE)
 	if file == null:
 		_fail("Could not write cabinet feel manifest.")
+		return
+	file.store_string(JSON.stringify(manifest, "\t") + "\n")
+	file.close()
+
+
+func _write_depth_crossing_manifest() -> void:
+	var required_files := ["08_depth_crossing_teal_front.png", "09_depth_crossing_purple_front.png"]
+	var files: Array = []
+	for file_name in required_files:
+		var path := "%s/%s" % [out_dir, file_name]
+		files.append({"name": file_name, "saved": FileAccess.file_exists(path)})
+	var crossing_valid := captures.size() == 1 \
+		and str(captures[0].get("id", "")) == "exact_depth_crossing" \
+		and bool(captures[0].get("state_valid", false))
+	var all_files_saved := true
+	for file_data in files:
+		all_files_saved = all_files_saved and bool((file_data as Dictionary).get("saved", false))
+	if not all_files_saved:
+		_fail("Targeted depth-crossing capture did not save both required screenshots.")
+	var manifest := {
+		"schema": "coin_pusher_v3_depth_crossing",
+		"capture_size": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y},
+		"mode": "only_depth_crossing",
+		"required_screenshot_count": required_files.size(),
+		"screenshot_count": required_files.size() if all_files_saved else 0,
+		"passed": not failed and crossing_valid and all_files_saved,
+		"captures": captures,
+		"files": files,
+	}
+	var file := FileAccess.open("%s/manifest.json" % out_dir, FileAccess.WRITE)
+	if file == null:
+		_fail("Could not write targeted depth-crossing manifest.")
 		return
 	file.store_string(JSON.stringify(manifest, "\t") + "\n")
 	file.close()

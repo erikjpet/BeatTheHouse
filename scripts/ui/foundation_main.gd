@@ -1848,6 +1848,19 @@ func _game_surface_realtime_state_patch(now_msec: int, current_surface_state_ove
 	return patch
 
 
+func _game_surface_realtime_entry_anchor_patch(now_msec: int, current_surface_state: Dictionary) -> Dictionary:
+	if current_game != null and current_game.has_method("surface_realtime_entry_anchor_patch"):
+		var ui_state := _current_game_surface_realtime_ui_state(now_msec)
+		var module_patch: Variant = current_game.surface_realtime_entry_anchor_patch(run_state, run_state.current_environment, ui_state, current_surface_state)
+		if typeof(module_patch) == TYPE_DICTIONARY and not (module_patch as Dictionary).is_empty():
+			var anchor_patch: Dictionary = module_patch
+			# Entry owns one authoritative timestamp. All dense presentation fields
+			# remain the already-built game snapshot and are rendered exactly once.
+			anchor_patch["surface_time_msec"] = now_msec
+			return anchor_patch
+	return _game_surface_realtime_state_patch(now_msec, current_surface_state)
+
+
 func _augment_game_surface_realtime_patch(patch: Dictionary, ui_state: Dictionary) -> void:
 	_sync_surface_feature_music_state(patch)
 	# The host clock is part of every realtime boundary even when a module emits
@@ -10643,6 +10656,17 @@ func _render_foundation_snapshots() -> void:
 	if game_surface_canvas != null:
 		game_surface_canvas.set_game_module(current_game)
 		if game_visible:
+			# A realtime module's first boundary is an entry anchor, not a gameplay
+			# tick. Apply it before the initial render so the module clock, host
+			# throttle, and canvas timestamp all begin from the same authored instant.
+			if last_game_surface_realtime_refresh_msec <= 0 \
+					and bool(game_snapshot.get("surface_realtime_state_refresh", false)):
+				var entry_msec := int(game_snapshot.get("surface_time_msec", _environment_simulation_time_msec()))
+				var entry_patch := _game_surface_realtime_entry_anchor_patch(entry_msec, game_snapshot)
+				if not entry_patch.is_empty():
+					for entry_key in entry_patch.keys():
+						game_snapshot[entry_key] = entry_patch[entry_key]
+					last_game_surface_realtime_refresh_msec = entry_msec
 			game_surface_canvas.render_game_snapshot(game_snapshot)
 	if cheat_dock != null:
 		cheat_dock.render(game_snapshot)
