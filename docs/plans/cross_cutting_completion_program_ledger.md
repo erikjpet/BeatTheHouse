@@ -196,3 +196,11 @@ their own detailed handoffs and test evidence.
   `08e1f2fc2a0aecf70ba35ee3f0278d8ecb4cbfad`. Independent production-delta
   review returned STATIC ACCEPT FOR RUNTIME with no new P0-P3 finding; the
   focused suite is being rerun and prior evidence/board P3s remain open.
+- 2026-08-26: On `08e1f2fc`, every pusher-focused assertion passed, including
+  the 6,240-drop legal traversal sweep and hold matrix, but the wrapper stayed
+  red because zero-body snapshot serialization passed an empty byte array to
+  Godot base64 encoding. The generic two-line serializer/guard correction
+  advanced exact head to clean `7a8db7758716359a6c2851950dd0ae840017cb92`.
+  Independent delta review returned STATIC ACCEPT FOR RUNTIME with no new
+  P0-P3; empty restore remains compatible and every nonempty snapshot remains
+  byte-identical. Fresh focused evidence is running.
