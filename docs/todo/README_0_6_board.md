@@ -1,4 +1,4 @@
-﻿# 0.6 Active Task Board — The Living Town & The Crew
+# 0.6 Active Task Board — The Living Town & The Crew
 
 Created: 2026-08-13 · Binding design contract:
 `docs/plans/0.6_living_world_roadmap.md` (v4, owner-approved).
@@ -168,6 +168,30 @@ each stage builds on the last.
 | pusherv3_9 | `pusherv3_9_contact_bed_and_opaque_edge_prompt.md` | DONE | pusherv3_8 | touching opening bed and solid payout-edge occlusion | Codex | 2026-08-25 | 2026-08-25 | All opening stock belongs to real contact clusters; a shallow physical incline and opaque foreground apron now hold and occlude the edge prime until coins visibly clear the shelf. Focused/full regression, parity, determinism, visual, performance, and 200k-per-machine EV gates pass. |
 | pusherv3_10 | `../todone/pusherv3_10_opening_plinko_nozzles_and_stack_physics_prompt.md` | DONE | pusherv3_9 | full-width settled openings, full Plinko subsystem, nozzle queues, clarified stack physics | Codex | 2026-08-25 | 2026-08-25 | Quiet full-width openings, five-position dense-Plinko traversal metrics, rare reachable Ridge/Vault cups, same-nozzle bounded chains, tap/hold FIFO nozzles, unilateral carried stack supports, exact native/Web parity, actual-GL QA, and native performance pass. |
 
+### Owner-requested depth rework — living games and real environment sequences (2026-08-25)
+
+The shipped Craps, back-room poker, and Tonight variants satisfy their original
+contracts but do not yet satisfy the owner's experiential bar. In particular,
+scenario overlays mostly alter data/presentation and resolve a one-shot event;
+they do not reliably transform the room or give the player a unique multi-step
+task. These rows supersede no stable ids or verified rules. They deepen the
+runtime and convert every existing variation. Completion is all-or-nothing at
+`depth06_1`.
+
+Parallel execution launcher:
+`docs/todo/depth06_0_parallel_orchestration_prompt.md`. Give that prompt to one
+primary integrator; it requires isolated worktrees, sub-agent implementation
+and review, preserved logical commits, staged merges, and final exact-tree
+acceptance. It is an orchestration prompt, not an additional completion row.
+
+| ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| env06_6 | `env06_6_dynamic_scenario_runtime_prompt.md` | TODO | env06_1/2/3/5 (DONE) | env06_7, craps06_3, crew06_10 | — | — | — | Add spatial/object/actor/interactable operations, objectives, branch graphs, aftermath, reentry/cleanup, migration, and anti-cloning audits. |
+| env06_7 | `env06_7_all_variations_sequence_rework_prompt.md` | TODO | env06_6 | depth06_1 | — | — | — | Convert and individually accept all 55 catalog ids; every prompt checkbox has a distinct physical sequence and branch aftermath. |
+| craps06_3 | `craps06_3_craps_depth_rework_prompt.md` | TODO | craps06_1/2, env06_6 | depth06_1 | — | — | — | Tactile throw/settlement phases, complete wager controls, staffed table ritual, physical energy reactions, and deeper street sequence. |
+| crew06_10 | `crew06_10_backroom_poker_depth_rework_prompt.md` | TODO | crew06_2/5/6/9, env06_6 | depth06_1 | — | — | — | Ordered betting, real session reentry, observable tell timelines, character staging, and five changing-room poker nights. |
+| depth06_1 | `depth06_1_games_and_scenarios_release_gate_prompt.md` | TODO | env06_7, craps06_3, crew06_10 | depth-program closure | — | — | — | Independent exact-tree audit; cannot pass with an omitted/reward-only variation or static-panel game experience. |
+
 ### Wave D — Crew depth
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
@@ -208,6 +232,73 @@ the owner's playtest is expected to change.
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | fix06_1 | `fix06_1_dead_event_interactions_prompt.md` | DONE | env06_2, env06_3 (landed) | crew06_5+ inherit the class guard | Codex | 2026-08-14 | 2026-08-14 | Generic synthesized-speaker fix; 99-event audit shifted only 3 beach events; permanent generated-environment guard, systems/UI/all, determinism, and visual QA PASS. |
+| fix06_3 | `scratch_ticket_art_alignment_rca_and_fix_prompt.md` | BLOCKED | — (analysed 2026-08-11, deferred from 0.5 to 0.6) | game06_5 inherits a clean surface | Codex | 2026-08-25 | — | Six-ticket alignment, exact v8→v9 partial-progress migration, regenerated overlays, and GPU visual capture are complete; Phase 5 is blocked on the owner's Crossword Corner art/mechanics choice. |
+
+### Family 1 — Game depth parity (owner scope decision, 2026-08-25)
+
+The owner's depth standard applies to the whole game, not to craps, poker and
+the coin pusher alone. `data/games/games.json` ships eleven games; eight of them
+plus the Grand Casino duel still resolve as control panels. Launcher:
+`game06_0_game_depth_orchestration_prompt.md` (PM copies it into one primary
+integrator, which employs sub-agents). Program design:
+`docs/plans/0.6_remaining_work_program.md`.
+
+Shared-file hazard: `table_game_visuals.gd` and `game_surface_canvas.gd` serve
+every table game. `game06_1` lands the ritual vocabulary once so the content
+rows can run in parallel without colliding in both files.
+
+| ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| game06_1 | `game06_1_table_machine_ritual_runtime_prompt.md` | TODO | craps06_3 | game06_2..7 | — | — | — | Ritual/phase/actor/pointer vocabulary. Must re-express the landed craps ritual with no craps special-case in shared code. |
+| game06_2 | `game06_2_blackjack_depth_prompt.md` | TODO | game06_1 | game06_7 | — | — | — | 7000 lines, most-integrated game. Consumer audit before any settlement edit. |
+| game06_3 | `game06_3_baccarat_roulette_depth_prompt.md` | TODO | game06_1 | depth parity | — | — | — | Baccarat ceremony and squeeze; roulette wheel, ball and layout chip placement. |
+| game06_4 | `game06_4_machine_games_depth_prompt.md` | TODO | game06_1 | depth parity | — | — | — | Cabinet, credits, handle, hand-pay. Per-frame deep copies forbidden — slot watchdog precedent. |
+| game06_5 | `game06_5_counter_games_depth_prompt.md` | TODO | game06_1 | depth parity | — | — | — | Clerk, rack, counter transaction; preserves mask/foil/region renderers; disposes of the open art-alignment defect. |
+| game06_6 | `game06_6_bar_dice_depth_prompt.md` | TODO | game06_1, craps06_3 | depth parity | — | — | — | Street register game; reuses craps06_2 dispersal/teaching seams. |
+| game06_7 | `game06_7_showdown_duel_depth_prompt.md` | TODO | game06_1, game06_2 | depth parity | — | — | — | Rourke duel staging; both endings; outcome ladder preserved exactly. |
+| game06_8 | `game06_8_games_depth_release_gate_prompt.md` | TODO | game06_2..7, depth06_1 | Family 1 closure | — | — | — | Independent exact-tree audit. Cannot pass with a control-panel game or a pointer-only verb. |
+
+### Family 2 — Crew and world surface depth (owner scope decision, 2026-08-25)
+
+The flagship pillar is still a text menu: streets, Numbers, jobs, plays, sweep
+encounters, heist phases and the Turn all resolve through `EventModule` choice
+actions while the environments around them become rooms. Launcher:
+`world06_0_crew_world_depth_orchestration_prompt.md`.
+
+Hidden-state discipline is absolute across this family. A Turn or heist leak is
+an automatic P0 and blocks the program.
+
+| ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| world06_1 | `world06_1_crew_sequence_adapter_prompt.md` | TODO | env06_6 | world06_2..6 | — | — | — | Bridges crew/world systems onto the env06_6 runtime; owns the EventModule crew seam and the hidden-state leak test. |
+| world06_2 | `world06_2_streets_sequences_prompt.md` | TODO | world06_1 | world06_6 | — | — | — | Deliveries, multi-stop routes, holds, stash/ditch, pursuit. Owns the reusable chase verbs. |
+| world06_3 | `world06_3_numbers_depth_prompt.md` | TODO | world06_1, world06_2 | — | — | — | — | Book as a place, slips as objects, the draw as an occasion, both rig routes staged. |
+| world06_4 | `world06_4_backroom_jobs_recruitment_prompt.md` | TODO | world06_1 | — | — | — | — | L3 occupancy, job board, all 13 jobs, seven recruitment encounters. `stake_horse` and `collection` need real sequences. |
+| world06_5 | `world06_5_plays_and_sweep_encounters_prompt.md` | TODO | world06_1, game06_1 | — | — | — | — | Five plays as table presence; sweep encounters as street moments. Chip Dump funding = shipped model A. |
+| world06_6 | `world06_6_heist_and_turn_staging_prompt.md` | TODO | world06_1, world06_2, crew06_10 | world06_7 | — | — | — | Both plans staged, both exits, the confrontation. Read the crew06_8 log entries before planning. |
+| world06_7 | `world06_7_crew_world_depth_release_gate_prompt.md` | TODO | world06_2..6 | Family 2 closure | — | — | — | Independent audit; the hidden-information audit is the blocking one. |
+
+### Family 3 — Cross-cutting completion (2026-08-25)
+
+Work the board never covered: the update being visible between runs, the
+combined economy, teaching what 0.6 became, the sound of the reworked surfaces,
+whether a real 0.5 save survives all of 0.6 at once, whether it still runs on
+Web and low-end, whether the playtest gate still describes the thing being
+playtested, and what the second half of 0.6 is. Launcher:
+`cross06_0_cross_cutting_orchestration_prompt.md`.
+
+| ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| meta06_1 | `meta06_1_career_run_report_surfacing_prompt.md` | TODO | — | — | — | — | — | Career screen hardcodes two victory routes; `crew_heist` wins are counted in the profile and displayed nowhere. Reporting only — no new cross-run progression. |
+| balance06_1 | `balance06_1_cross_system_economy_audit_prompt.md` | TODO | — | polish balance pass | — | — | — | Measures the combined economy; proposes, never tunes. Delivers a committed harness. |
+| board06_1 | `board06_1_board_hygiene_prompt.md` | TODO | — | — | — | — | — | Close the answered Chip Dump question, retire superseded rows, split the 170 KB board, remove the orphaned `streets_run_model.gd.uid`. Coordinate the merge window. |
+| pusherv3_11 | `pusherv3_11_pusher_program_closure_audit_prompt.md` | TODO | pusherv3_10 | pusher closure | — | — | — | First audit of the V3 machine as a program across ten rows. Pillar 4 fidelity, EV bands, parity, code health. |
+| audio06_1 | `audio06_1_surface_sfx_pass_prompt.md` | TODO | Families 1 and 2 rituals landed | — | — | — | — | The SFX manifest holds one profile (the pusher). Music stays external; this row writes the handoff delta. |
+| integ06_1 | `integ06_1_composition_migration_soak_prompt.md` | TODO | Families 1 and 2 merged | playtest06_2 | — | — | — | 0.5→0.6 migration matrix, maximal-node composition, full-run soaks on both platforms. |
+| perf06_1 | `perf06_1_performance_platform_pass_prompt.md` | TODO | Families 1 and 2 merged | playtest06_2 | — | — | — | First project-wide pass since the pusher physics and the scenario runtime. Idle 0.000 without a liveness counter is a failure. |
+| teach06_2 | `teach06_2_teaching_pass_two_prompt.md` | TODO | depth06_1, game06_8, world06_7 | — | — | — | — | Audit all 63 lessons for staleness, then teach the systems that have none. |
+| playtest06_2 | `playtest06_2_playtest_gate_refresh_prompt.md` | TODO | integ06_1, perf06_1 | owner playtest | — | — | — | Amends `playtest06_1` in place: real dependency list, named seeds, playtest script, finding-capture format. |
+| polish06_0 | `polish06_0_post_playtest_program_prompt.md` | TODO | — | the parked second half | — | — | — | Designs the post-playtest half and stops. Delivers parked prompts; performs no polish and no release activity. |
 
 ### The owner playtest is the terminus of this board
 
@@ -228,13 +319,22 @@ What happens then is the owner's, not an agent's:
 
 ## Owner Questions (needs owner; do not guess)
 
-- **pusherv3_10 — stacked support sentence and Plinko cup lifecycle: OPEN
-  (2026-08-25).** The owner's final stack requirement ended at “when a coin is
-  stacked on other coins it should not move the other …”. Which bodies must not
-  move, under what contact/pusher conditions, and what should the upper coin do
-  instead? Also, after a physical Plinko cup awards its result, is its triggering
-  coin consumed, retained and later released, or immediately released onto the
-  pusher? These answers are required for correct impulse and conservation rules.
+- **fix06_3 — Crossword Corner art/mechanics reconciliation: OPEN
+  (2026-08-25).** Choose whether to (a) keep the shipped printed art and rebuild
+  the mechanical puzzle/word list to match it, with an RTP re-check; (b) keep
+  the shipped mechanics and repaint only the Crossword Corner background at the
+  quality of the other six tickets; or (c) ship the other six aligned and hold
+  Crossword Corner. Codex recommends **(b)** because it preserves the authored
+  odds, payouts, and puzzle behavior and confines the remaining work to the one
+  asset whose printed geometry/content is inconsistent.
+
+- **pusherv3_10 — stacked support sentence and Plinko cup lifecycle: ANSWERED
+  (2026-08-25).** Only the pushing ledge supplies horizontal push force; a coin
+  landing across supports never spreads them, but it remains carried by their
+  motion. Supported landings are bad drops with negative audio; bed-level
+  landings receive a positive ding. Cups consume their triggering coin, and
+  multiplier cups enqueue children from that coin's source nozzle. Hard-to-reach
+  placement and bounded reproduction must protect flow and ROI.
 
 - **pusherv3_4 — Jackpot Ridge lock puck target: ANSWERED (2026-08-18).** The superseded variation
   design says a lock puck will “freeze a shelf one cycle.” The binding V3
@@ -291,6 +391,31 @@ What happens then is the owner's, not an agent's:
   crew06_7 can proceed without this answer; no agent may invent the economy.
 
 ## Discovery & Decision Log
+
+- 2026-08-25 [fix06_3] Repository reality contradicts the prompt status: commit
+  `547c0983` (2026-08-12) already landed layout-v9 measured data, the runtime
+  loader, contain-fit art frame, bounded icon/foil geometry, hash guards, and
+  six-ticket review sheets while the same commit added a prompt still saying no
+  gameplay code had changed. This execution therefore audited that landed work,
+  completed its overlay/count/dimension verification and exact partial-progress
+  migration proof, and left Crossword mechanics/art untouched for the owner.
+
+- 2026-08-25 [env06_6/env06_7] Owner depth audit found 55/55 current
+  scenarios use presentation plus an exclusive event, while only 9/55 have
+  more than one phase. The runtime allowlist has no spatial/object/actor/
+  objective/branch-aftermath operations; authored event outcomes are dominated
+  by flags, bankroll, suspicion, and 13 item grants. New completion standard:
+  every variant must be a unique playable room sequence, not a reward overlay.
+- 2026-08-25 [craps06_3] Shipped craps math/state coverage is substantial, but
+  play remains click-bet/click-roll with a static surface; table energy changes
+  music values and a patron line rather than room actors/objects. The depth pass
+  preserves verified rules while adding throw/settlement ritual and physical
+  casino/street reactions.
+- 2026-08-25 [crew06_10] Shipped poker has deterministic cards/policies and
+  hidden tell learning, but betting is aggregated per NPC, only one tell beat
+  survives at a time, timing uses surface age, portraits are generic, room
+  state barely changes, and the persisted settled flag requires an explicit
+  reentry audit. The depth pass must fix these without exposing Turn secrets.
 
 - 2026-08-18 [pusherv3_4] Owner Amendment 6.2 rejects the direct-to-deck
   retraction-apex shortcut. All entries now use a visible rear delivery board;
@@ -1606,6 +1731,12 @@ What happens then is the owner's, not an agent's:
 
 ## Work Log
 
+- 2026-08-25 [depth rework planning] Added implementation-ready TODO prompts
+  for the dynamic scenario runtime, all 55 individually named sequence
+  conversions, Craps depth, back-room poker depth, and an independent closure
+  gate. Dependencies require the runtime first and forbid catalog closure with
+  any omitted, cloned, metadata-only, or reward-only variant.
+
 - 2026-08-18 [content06_1] Owner selected the already-verified within-run
   souvenir interpretation. PM completed and archived the row; `playtest06_1`
   now waits only on the serial coin-pusher closure.
@@ -2194,3 +2325,21 @@ What happens then is the owner's, not an agent's:
   carried by the physical bed; good/bad stable landings receive distinct one-shot
   feedback. Cups consume the trigger and multiplier awards feed visibly from the
   same nozzle with rare, ROI-bounded chain potential.
+- 2026-08-25 [pusherv3_10] Implementation completed. Production machines now
+  enter parked with full-width played-in stock; dense full-height Plinko fields,
+  authored static/rail nozzles, deterministic tap/hold FIFOs, rare reachable
+  consumed-coin cups and bounded same-nozzle chains are live. Exhaustive traversal
+  metrics, unilateral carried-stack fixtures, exact native/Web parity, actual-GL
+  captures, snapshot/conservation, and the 300-body performance gate pass.
+- 2026-08-25 [fix06_3] Codex claimed the scratch-ticket art-alignment correction.
+  Work will complete the measured geometry, undistorted shared frame, bounded
+  icon/foil geometry, migration, and permanent regression guards that do not
+  depend on Crossword Corner's owner-only art-direction decision; Phase 5 will
+  remain untouched pending that ruling.
+- 2026-08-25 [fix06_3] BLOCKED on the logged Crossword Corner art-direction
+  choice after completing every independent phase. Six-ticket verification is
+  0.000 px/0.000%, focused assertions and GPU layer capture pass, and partial
+  v8→v9 progress now migrates to one mask sample. The focused harness remains
+  timing-red (best 19.923 s / 19.024 s) and full reruns were repeatedly denied
+  a clean window by the concurrently active `pusherv3_10` Godot work; no budget,
+  assertion, unrelated process, Crossword mechanic, or `_pro` art was changed.
