@@ -65,7 +65,7 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		# Presentation-only tick pair. These public views let the renderer
 		# interpolate exact contact results without reading solver internals or
 		# reconstructing a previous position from velocity.
-		"presentation_previous_bodies": opening_views,
+		"presentation_previous_bodies": opening_views.duplicate(true),
 		"presentation_current_bodies": opening_views,
 		"presentation_feature_count": _presentation_feature_count(opening_views),
 		"presentation_previous_face_y": int(simulation.get("face_y", 0)),
@@ -374,10 +374,17 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 	var simulation: Dictionary = machine.get("simulation", {})
 	var rng := _session_rng(session)
 	var all_events: Array = []
-	for _tick in range(maxi(0, tick_count)):
-		var current_views: Variant = session.get("presentation_current_bodies", [])
-		session["presentation_previous_bodies"] = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
-		session["presentation_previous_face_y"] = int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
+	var safe_tick_count := maxi(0, tick_count)
+	var previous_views: Array = []
+	var previous_face_y := int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
+	for tick_index in range(safe_tick_count):
+		# Only the final consecutive tick pair is visible. Catch-up ticks still run
+		# one-by-one for exact input/event/RNG semantics, but do not allocate and
+		# discard a 300-body public projection after every intermediate step.
+		if tick_index == safe_tick_count - 1:
+			var current_views: Variant = session.get("presentation_current_bodies", [])
+			previous_views = current_views if safe_tick_count == 1 and typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
+			previous_face_y = int(simulation.get("face_y", 0))
 		var tick_value := int(simulation.get("tick", 0))
 		_release_due_drop(machine, simulation, tick_value)
 		var trace_slice: Array = []
@@ -388,13 +395,17 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 			cursor += 1
 		session["input_cursor"] = cursor
 		var result := CoinPusherSolverScript.step_ticks(simulation, {"input_trace": trace_slice, "rng": rng, "motor_enabled": bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false))}, 1)
-		session["presentation_current_bodies"] = _presentation_body_views(simulation)
-		session["presentation_feature_count"] = _presentation_feature_count(session["presentation_current_bodies"])
-		session["presentation_current_face_y"] = int(simulation.get("face_y", 0))
-		session["presentation_view_serial"] = int(session.get("presentation_view_serial", 0)) + 1
 		all_events.append_array(result.get("events", []))
+	if safe_tick_count > 0:
+		var current_views := _presentation_body_views(simulation)
+		session["presentation_previous_bodies"] = previous_views
+		session["presentation_current_bodies"] = current_views
+		session["presentation_feature_count"] = _presentation_feature_count(current_views)
+		session["presentation_previous_face_y"] = previous_face_y
+		session["presentation_current_face_y"] = int(simulation.get("face_y", 0))
+		session["presentation_view_serial"] = int(session.get("presentation_view_serial", 0)) + safe_tick_count
 	session["rng"] = rng.snapshot()
-	session["liveness_ticks"] = int(session.get("liveness_ticks", 0)) + maxi(0, tick_count)
+	session["liveness_ticks"] = int(session.get("liveness_ticks", 0)) + safe_tick_count
 	return {"events": all_events}
 
 

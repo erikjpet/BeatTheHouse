@@ -343,28 +343,37 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 	_ensure_coin_batch()
 	var current: Array = state.get("coin_pusher_bodies", []) if typeof(state.get("coin_pusher_bodies", [])) == TYPE_ARRAY else []
 	var previous: Array = state.get("coin_pusher_previous_bodies", []) if typeof(state.get("coin_pusher_previous_bodies", [])) == TYPE_ARRAY else []
-	var previous_by_id := {}
 	var alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
-	if alpha < 0.999:
+	var aligned_previous := alpha < 0.999 and _body_order_matches(current, previous)
+	var previous_by_id := {}
+	if alpha < 0.999 and not aligned_previous:
 		for value in previous:
 			if typeof(value) == TYPE_DICTIONARY:
 				previous_by_id[str((value as Dictionary).get("id", ""))] = value
-	var sorted_bodies := _depth_sorted_bodies(current, int(state.get("coin_pusher_presentation_view_serial", state.get("coin_pusher_liveness_ticks", 0))))
-	var count := mini(BATCH_CAPACITY, sorted_bodies.size())
+	var sorted_indices := _depth_sorted_body_indices(current, int(state.get("coin_pusher_presentation_view_serial", state.get("coin_pusher_liveness_ticks", 0))))
+	var count := mini(BATCH_CAPACITY, sorted_indices.size())
 	_coin_multimesh.visible_instance_count = count
 	var feature_labels: Array = []
 	var airborne_shadows: Array = []
 	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
 	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
 	var board := _delivery_board(apparatus, geometry)
-	for index in range(count):
-		var body: Dictionary = sorted_bodies[index]
+	var board_y := int(board.get("y", 0))
+	var board_z_bottom := float(board.get("z_bottom", 0.0))
+	var body_colors: Dictionary = cabinet.get("body_colors", {}) if typeof(cabinet.get("body_colors", {})) == TYPE_DICTIONARY else {}
+	var default_body_color := Color(str(body_colors.get("default", NEUTRAL_CABINET["body_colors"]["default"])))
+	var body_color_cache := {"coin": default_body_color}
+	var labels: Dictionary = cabinet.get("body_labels", {}) if typeof(cabinet.get("body_labels", {})) == TYPE_DICTIONARY else {}
+	for instance_index in range(count):
+		var body_index := int(sorted_indices[instance_index])
+		var body: Dictionary = current[body_index]
 		var body_id := str(body.get("id", ""))
+		var kind := str(body.get("kind", "coin"))
 		var x := float(int(body.get("x", 0)))
 		var y := float(int(body.get("y", 0)))
 		var z := float(int(body.get("z", 0)))
 		if alpha < 0.999:
-			var prior: Dictionary = previous_by_id.get(body_id, body)
+			var prior: Dictionary = previous[body_index] if aligned_previous else previous_by_id.get(body_id, body)
 			var previous_x := int(prior.get("x", body.get("x", 0)))
 			var previous_y := int(prior.get("y", body.get("y", 0)))
 			var previous_z := int(prior.get("z", body.get("z", 0)))
@@ -372,23 +381,25 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 			y = lerpf(float(previous_y), y, alpha)
 			z = lerpf(float(previous_z), z, alpha)
 		var falling := str(body.get("rest_state", "")) == "falling"
-		var on_delivery_board := falling and absi(int(round(y)) - int(board["y"])) <= int(body.get("radius", 2350)) and z >= float(board["z_bottom"])
+		var on_delivery_board := falling and absi(int(round(y)) - board_y) <= int(body.get("radius", 2350)) and z >= board_z_bottom
 		var point := _project_delivery_board_point(board, x, z) if on_delivery_board else _project_f(x, y, z)
-		var body_color := _body_color(str(body.get("kind", "coin")), cabinet)
+		if not body_color_cache.has(kind):
+			body_color_cache[kind] = Color(str(body_colors.get(kind, body_colors.get("default", NEUTRAL_CABINET["body_colors"]["default"]))))
+		var body_color: Color = body_color_cache.get(kind, default_body_color)
 		var frame := posmod(body_id.hash(), ROTATION_VARIANTS.size())
 		var rotation: float = ROTATION_VARIANTS[frame]
 		var depth_scale := lerpf(1.0, REAR_WIDTH_FACTOR, clampf(y / _world_back_y, 0.0, 1.0))
 		var radius_scale := float(body.get("radius", int(_coin_radius))) / _coin_radius
 		var visual_scale := depth_scale * radius_scale
-		_coin_multimesh.set_instance_transform_2d(index, Transform2D(rotation, Vector2(visual_scale, visual_scale), 0.0, point))
-		if _coin_instance_color_cache[index] != body_color:
-			_coin_multimesh.set_instance_color(index, body_color)
-			_coin_instance_color_cache[index] = body_color
+		_coin_multimesh.set_instance_transform_2d(instance_index, Transform2D(rotation, Vector2(visual_scale, visual_scale), 0.0, point))
+		if _coin_instance_color_cache[instance_index] != body_color:
+			_coin_multimesh.set_instance_color(instance_index, body_color)
+			_coin_instance_color_cache[instance_index] = body_color
 		if falling:
-			var shadow_point := _project_delivery_board_point(board, x, z) if on_delivery_board and z > float(board["z_bottom"]) + _coin_height else _project_f(x, y, float(board["z_bottom"]))
+			var shadow_point := _project_delivery_board_point(board, x, z) if on_delivery_board and z > board_z_bottom + _coin_height else _project_f(x, y, board_z_bottom)
 			airborne_shadows.append({"point": shadow_point, "scale": visual_scale})
-		if str(body.get("kind", "coin")) != "coin":
-			feature_labels.append({"kind": str(body.get("kind", "")), "point": point})
+		if kind != "coin":
+			feature_labels.append({"kind": kind, "point": point})
 	for shadow_value in airborne_shadows:
 		var shadow: Dictionary = shadow_value
 		var shadow_scale := float(shadow.get("scale", 1.0))
@@ -400,20 +411,23 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 		var feature: Dictionary = feature_value
 		var point: Vector2 = feature["point"]
 		var kind := str(feature.get("kind", ""))
-		var labels: Dictionary = cabinet.get("body_labels", {}) if typeof(cabinet.get("body_labels", {})) == TYPE_DICTIONARY else {}
 		var label := str(labels.get(kind, kind.left(1).to_upper()))
 		if not label.is_empty():
 			surface.surface_reel_symbol_label(label, Rect2(point - Vector2(9, 8), Vector2(18, 16)), 10, Color("#111722"))
 
 
-func _depth_sorted_bodies(bodies: Array, presentation_view_serial: int) -> Array:
+func _depth_sorted_body_indices(bodies: Array, presentation_view_serial: int) -> Array:
 	var first_id := str((bodies[0] as Dictionary).get("id", "")) if not bodies.is_empty() and typeof(bodies[0]) == TYPE_DICTIONARY else ""
 	var last_id := str((bodies[bodies.size() - 1] as Dictionary).get("id", "")) if not bodies.is_empty() and typeof(bodies[bodies.size() - 1]) == TYPE_DICTIONARY else ""
 	var key := "%d:%d:%s:%s" % [presentation_view_serial, bodies.size(), first_id, last_id]
 	if key == _sorted_body_cache_key:
 		return _sorted_body_cache
-	_sorted_body_cache = bodies.duplicate(false)
-	_sorted_body_cache.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+	_sorted_body_cache.resize(bodies.size())
+	for body_index in range(bodies.size()):
+		_sorted_body_cache[body_index] = body_index
+	_sorted_body_cache.sort_custom(func(a_index: int, b_index: int) -> bool:
+		var a: Dictionary = bodies[a_index]
+		var b: Dictionary = bodies[b_index]
 		var a_key := int(a.get("y", 0)) * 100000 - int(a.get("z", 0))
 		var b_key := int(b.get("y", 0)) * 100000 - int(b.get("z", 0))
 		return a_key > b_key if a_key != b_key else str(a.get("id", "")) < str(b.get("id", ""))
@@ -424,9 +438,40 @@ func _depth_sorted_bodies(bodies: Array, presentation_view_serial: int) -> Array
 
 func debug_batch_body_order_for_test(bodies: Array, liveness_tick: int) -> Array:
 	var result: Array = []
-	for body_value in _depth_sorted_bodies(bodies, liveness_tick):
-		result.append(str((body_value as Dictionary).get("id", "")))
+	for body_index in _depth_sorted_body_indices(bodies, liveness_tick):
+		result.append(str((bodies[int(body_index)] as Dictionary).get("id", "")))
 	return result
+
+
+func debug_interpolated_bodies_for_test(current: Array, previous: Array, alpha: float, presentation_view_serial: int) -> Array:
+	var aligned_previous := _body_order_matches(current, previous)
+	var previous_by_id := {}
+	if not aligned_previous:
+		for value in previous:
+			if typeof(value) == TYPE_DICTIONARY:
+				previous_by_id[str((value as Dictionary).get("id", ""))] = value
+	var result: Array = []
+	for body_index_value in _depth_sorted_body_indices(current, presentation_view_serial):
+		var body_index := int(body_index_value)
+		var body: Dictionary = current[body_index]
+		var prior: Dictionary = previous[body_index] if aligned_previous else previous_by_id.get(str(body.get("id", "")), body)
+		result.append({
+			"id": str(body.get("id", "")),
+			"x": lerpf(float(prior.get("x", body.get("x", 0))), float(body.get("x", 0)), alpha),
+			"y": lerpf(float(prior.get("y", body.get("y", 0))), float(body.get("y", 0)), alpha),
+			"z": lerpf(float(prior.get("z", body.get("z", 0))), float(body.get("z", 0)), alpha),
+		})
+	return result
+
+
+func _body_order_matches(current: Array, previous: Array) -> bool:
+	if current.size() != previous.size():
+		return false
+	for body_index in range(current.size()):
+		if typeof(current[body_index]) != TYPE_DICTIONARY or typeof(previous[body_index]) != TYPE_DICTIONARY \
+				or str((current[body_index] as Dictionary).get("id", "")) != str((previous[body_index] as Dictionary).get("id", "")):
+			return false
+	return true
 
 
 func debug_depth_cache_key_for_test() -> String:

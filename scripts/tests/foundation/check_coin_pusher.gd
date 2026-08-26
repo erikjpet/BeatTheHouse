@@ -452,6 +452,86 @@ func _check_pusher_v3_presentation_view(machine: Dictionary, failures: Array) ->
 	if canonical_after != canonical_before:
 		failures.append("Coin Pusher V3 lean public presentation projection mutated canonical solver state/outcomes.")
 
+	# The common renderer path keeps body order stable across ticks. It must use
+	# the same-index prior body without constructing a 300-entry ID dictionary,
+	# while a hostile reordering still falls back to exact ID interpolation.
+	var renderer := CoinPusherRenderer.new()
+	var interpolation_current := [
+		{"id": "front", "kind": "coin", "x": 100, "y": 100, "z": 0},
+		{"id": "rear", "kind": "coin", "x": 200, "y": 200, "z": 0},
+	]
+	var interpolation_previous := [
+		{"id": "front", "kind": "coin", "x": 0, "y": 100, "z": 0},
+		{"id": "rear", "kind": "coin", "x": 100, "y": 200, "z": 0},
+	]
+	var interpolation_current_before := JSON.stringify(interpolation_current)
+	var interpolation_previous_before := JSON.stringify(interpolation_previous)
+	var aligned_projection: Array = renderer.debug_interpolated_bodies_for_test(interpolation_current, interpolation_previous, 0.5, 700)
+	var reordered_previous := [interpolation_previous[1].duplicate(true), interpolation_previous[0].duplicate(true)]
+	var reordered_before := JSON.stringify(reordered_previous)
+	var fallback_projection: Array = renderer.debug_interpolated_bodies_for_test(interpolation_current, reordered_previous, 0.5, 701)
+	if aligned_projection != fallback_projection \
+			or aligned_projection.size() != 2 \
+			or str((aligned_projection[0] as Dictionary).get("id", "")) != "rear" \
+			or float((aligned_projection[0] as Dictionary).get("x", -1.0)) != 150.0 \
+			or str((aligned_projection[1] as Dictionary).get("id", "")) != "front" \
+			or float((aligned_projection[1] as Dictionary).get("x", -1.0)) != 50.0:
+		failures.append("Coin Pusher V3 renderer fast/fallback interpolation paths did not preserve exact ID and depth-order projection: aligned=%s fallback=%s." % [JSON.stringify(aligned_projection), JSON.stringify(fallback_projection)])
+	if JSON.stringify(interpolation_current) != interpolation_current_before \
+			or JSON.stringify(interpolation_previous) != interpolation_previous_before \
+			or JSON.stringify(reordered_previous) != reordered_before:
+		failures.append("Coin Pusher V3 renderer interpolation mutated its current/previous public view buffers.")
+
+	# Four-tick catch-up must publish only the exact final consecutive pair. The
+	# opening and published buffers remain distinct, ordered, and equivalent to
+	# canonical projection without changing save/reload results.
+	var live_simulation := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-PRESENTATION-CATCHUP"), machine, 24)
+	var expected_simulation := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-PRESENTATION-CATCHUP"), machine, 24)
+	var live_machine := {"simulation": live_simulation, "motor_started": true, "locked_down": false, "drop_queue": [], "variation_state": {}}
+	var live_session: Dictionary = CoinPusherLiveSessionScript.begin(live_machine, machine, 8814)
+	var opening_previous: Array = live_session.get("presentation_previous_bodies", [])
+	var opening_current: Array = live_session.get("presentation_current_bodies", [])
+	var opening_previous_before := JSON.stringify(opening_previous)
+	var opening_current_before := JSON.stringify(opening_current)
+	CoinPusherLiveSessionScript.advance(live_machine, 0)
+	CoinPusherSolverScript.step_ticks(expected_simulation, {"motor_enabled": true}, 3)
+	var expected_previous := CoinPusherLiveSessionScript.presentation_body_views_for_test(expected_simulation)
+	CoinPusherSolverScript.step_ticks(expected_simulation, {"motor_enabled": true}, 1)
+	var expected_current := CoinPusherLiveSessionScript.presentation_body_views_for_test(expected_simulation)
+	var catch_up := CoinPusherLiveSessionScript.advance(live_machine, 67)
+	var catch_up_previous: Array = live_session.get("presentation_previous_bodies", [])
+	var catch_up_current: Array = live_session.get("presentation_current_bodies", [])
+	if is_same(opening_previous, opening_current) or is_same(catch_up_previous, catch_up_current) \
+			or JSON.stringify(opening_previous) != opening_previous_before \
+			or JSON.stringify(opening_current) != opening_current_before:
+		failures.append("Coin Pusher V3 presentation double buffers aliased or mutated a previously published view.")
+	if int(catch_up.get("ticks", 0)) != 4 \
+			or int(live_session.get("presentation_view_serial", -1)) != 4 \
+			or catch_up_previous != expected_previous \
+			or catch_up_current != expected_current:
+		failures.append("Coin Pusher V3 bounded catch-up did not publish the exact final consecutive projection pair: ticks=%s serial=%s previous=%s current=%s." % [catch_up.get("ticks"), live_session.get("presentation_view_serial"), JSON.stringify(catch_up_previous), JSON.stringify(catch_up_current)])
+	var live_body_ids: Array = catch_up_current.map(func(body: Dictionary) -> String: return str(body.get("id", "")))
+	var solver_body_ids: Array = (live_simulation.get("bodies", []) as Array).map(func(body: Dictionary) -> String: return str(body.get("id", "")))
+	if catch_up_current.size() != (live_simulation.get("bodies", []) as Array).size() or live_body_ids != solver_body_ids:
+		failures.append("Coin Pusher V3 bounded presentation projection changed body count/order: live=%s solver=%s." % [JSON.stringify(live_body_ids), JSON.stringify(solver_body_ids)])
+	var saved := CoinPusherLiveSessionScript.make_snapshot(live_simulation, live_machine)
+	var restored := CoinPusherLiveSessionScript.restore_snapshot(saved, machine)
+	var resaved := CoinPusherLiveSessionScript.make_snapshot(restored, live_machine)
+	var restored_canonical_views := CoinPusherSolverScript.body_views(restored)
+	var restored_presentation_views := CoinPusherLiveSessionScript.presentation_body_views_for_test(restored)
+	var restored_projection_matches := restored_canonical_views.size() == restored_presentation_views.size()
+	for body_index in range(restored_canonical_views.size()):
+		if not restored_projection_matches:
+			break
+		var restored_canonical_body: Dictionary = restored_canonical_views[body_index]
+		var restored_presentation_body: Dictionary = restored_presentation_views[body_index]
+		for field in ["id", "kind", "x", "y", "z", "rest_state", "support_kind"]:
+			if restored_presentation_body.get(field) != restored_canonical_body.get(field):
+				restored_projection_matches = false
+				break
+	if JSON.stringify(resaved) != JSON.stringify(saved) or not restored_projection_matches:
+		failures.append("Coin Pusher V3 bounded presentation projection changed compact save/reload determinism or restored visual projection equivalence.")
+
 
 func _check_pusher_v3_machine_data(machine: Dictionary, failures: Array) -> void:
 	var geometry: Dictionary = machine.get("geometry", {}) if typeof(machine.get("geometry", {})) == TYPE_DICTIONARY else {}
