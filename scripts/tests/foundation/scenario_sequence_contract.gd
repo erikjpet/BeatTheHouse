@@ -24,6 +24,7 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RolloutManifestScript := preload("res://scripts/core/scenario_sequence_rollout_manifest.gd")
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
+const CoachOverlayScript := preload("res://scripts/ui/coach_overlay.gd")
 
 
 class LifecycleFixtureGame:
@@ -169,6 +170,34 @@ class LifecycleForcedTravelProbe:
 		return forced_travel_result.duplicate(true)
 
 
+class LifecycleDirectExitProbe:
+	extends LifecycleCallerProbe
+
+	var direct_exit_choice: Dictionary = {}
+
+	func _local_parent_home_door_travel_choice(_target_id: String) -> Dictionary:
+		return direct_exit_choice.duplicate(true)
+
+
+class LifecycleCageShortcutProbe:
+	extends LifecycleCallerProbe
+
+	var cage_fixture := {
+		"object_id": "casino_fixture:cage",
+		"object_type": FoundationMain.CONTEXT_MODE_CASINO_FIXTURE,
+		"source_id": "cage",
+		"interactive": true,
+		"enabled": true,
+		"focus_rect": {"x": 0.2, "y": 0.2, "w": 0.2, "h": 0.2},
+		"focus_point": {"x": 0.3, "y": 0.3},
+	}
+
+	func _interactable_object(object_id: String) -> Dictionary:
+		if object_id == "casino_fixture:cage":
+			return cage_fixture.duplicate(true)
+		return super._interactable_object(object_id)
+
+
 static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_schema(failures)
 	_check_catalog_rollout(library, failures)
@@ -214,11 +243,92 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	layer_rng.configure(91201)
 	var layered_environment := EnvironmentInstanceScript.from_archetype(library.environment_archetype("small_underground_casino"), 1, layer_rng, library).to_dict()
 	layer_probe.run_state.current_environment = layered_environment
-	var layer_before := _caller_probe_state(layer_probe)
-	var layer_result := layer_probe.resolve_event_choice("side_door", "punchline_password")
-	if bool(layer_result.get("ok", true)) or _caller_probe_state(layer_probe) != layer_before or layer_probe.autosave_count != 0 or layer_probe.presentation_count != 0 or layer_probe.message_log.is_empty() or str(layer_probe.message_log.back()) != "Layer caller fixture rejected.":
-		failures.append("Public event-layer caller did not reject and restore the resolved event byte-identically before presentation/autosave.")
+	_install_real_event_popup(layer_probe, "side_door")
+	_install_active_event_coach(layer_probe)
+	var layer_before := _public_caller_probe_state(layer_probe)
+	var layer_message_start := layer_probe.message_log.size()
+	var layer_ok := layer_probe.activate_event_choice_action("side_door", "punchline_password")
+	var layer_messages := layer_probe.message_log.slice(layer_message_start)
+	if layer_ok or _public_caller_probe_state(layer_probe) != layer_before or layer_probe.autosave_count != 0 or layer_probe.presentation_count != 0 \
+			or layer_messages != ["Selected event choice: Try the word.", "Layer caller fixture rejected."]:
+		failures.append("Public event-card selection/confirm caller did not reject, restore its real popup/coach/focus/screen state exactly, or retain exact failure ordering before presentation/autosave.")
 	layer_probe.free()
+
+	var map_probe := _lifecycle_probe(library, _lifecycle_run(true))
+	var map_generator := LifecycleRejectingGenerator.new(library)
+	map_generator.install_world_destination = true
+	map_probe.generator = map_generator
+	_install_real_world_map_popup(map_probe, "motel", "Motel")
+	var map_before := _public_caller_probe_state(map_probe)
+	var map_message_start := map_probe.message_log.size()
+	var map_result := map_probe.confirm_world_map_travel()
+	var map_messages := map_probe.message_log.slice(map_message_start)
+	if bool(map_result.get("ok", true)) or _public_caller_probe_state(map_probe) != map_before or map_probe.autosave_count != 0 or map_probe.presentation_count != 0 \
+			or map_messages != ["Traveling to Motel...", "Delivery caller fixture rejected."]:
+		failures.append("Public world-map caller did not propagate travel rejection, restore its real controller/popup state exactly, or retain exact error ordering without downstream success.")
+	map_probe.free()
+
+	var meta_map_probe := LifecycleMetaEntryRejectProbe.new()
+	meta_map_probe.library = library
+	meta_map_probe.run_state = _lifecycle_run(false)
+	meta_map_probe.run_state.narrative_flags["_meta_home_session"] = true
+	meta_map_probe.meta_session_active = true
+	meta_map_probe.meta_session_location_id = FoundationMain.META_LOCATION_HOME
+	meta_map_probe.current_screen = FoundationMain.SCREEN_TRAVEL
+	_install_real_world_map_popup(meta_map_probe, "pawn_shop", "Sal's Pawn Shop")
+	var meta_map_before := _public_caller_probe_state(meta_map_probe)
+	var meta_map_message_start := meta_map_probe.message_log.size()
+	var meta_map_result := meta_map_probe.confirm_world_map_travel()
+	var meta_map_messages := meta_map_probe.message_log.slice(meta_map_message_start)
+	if bool(meta_map_result.get("ok", true)) or _public_caller_probe_state(meta_map_probe) != meta_map_before or meta_map_probe.autosave_count != 0 or meta_map_probe.presentation_count != 0 \
+			or meta_map_messages != ["Meta entry caller fixture rejected."]:
+		failures.append("Public meta-map caller did not propagate entry rejection, restore its real controller/popup/session state exactly, or retain the single terminal error.")
+	meta_map_probe.free()
+
+	var direct_probe := LifecycleDirectExitProbe.new()
+	direct_probe.library = library
+	direct_probe.run_state = _lifecycle_run(true)
+	var direct_generator := LifecycleRejectingGenerator.new(library)
+	direct_generator.install_world_destination = true
+	direct_probe.generator = direct_generator
+	direct_probe.current_screen = FoundationMain.SCREEN_ENVIRONMENT
+	direct_probe.selected_action_category = FoundationMain.ACTION_CATEGORY_EVENTS
+	direct_probe.direct_exit_choice = {
+		"id": "motel", "label": "Motel", "enabled": true, "distance": "near", "travel_minutes": 6,
+		"route": {"id": "bar_node_to_motel", "from": "bar_node", "to": "motel", "distance": "near", "cost": 0, "suspicion_delta": 0},
+	}
+	_install_real_world_map_popup(direct_probe, "motel", "Motel")
+	var direct_exit_before := _public_caller_probe_state(direct_probe)
+	var direct_exit_message_start := direct_probe.message_log.size()
+	var direct_exit_ok := direct_probe.activate_interactable_object("travel:leave")
+	var direct_exit_messages := direct_probe.message_log.slice(direct_exit_message_start)
+	if direct_exit_ok or _public_caller_probe_state(direct_probe) != direct_exit_before or direct_probe.autosave_count != 0 or direct_probe.presentation_count != 0 \
+			or direct_exit_messages != ["Traveling to Motel...", "Delivery caller fixture rejected."]:
+		failures.append("Public direct-exit caller did not restore pre-focus state and propagate the exact travel failure without downstream success.")
+	direct_probe.free()
+
+	var cage_run := _grand_casino_lifecycle_run(library)
+	if cage_run == null:
+		failures.append("Public Cage shortcut fixture could not build the production Grand Casino room route.")
+	else:
+		var cage_probe := LifecycleCageShortcutProbe.new()
+		cage_probe.library = library
+		cage_probe.run_state = cage_run
+		var cage_generator := LifecycleRejectingGenerator.new(library)
+		cage_generator.reject_room = true
+		cage_probe.generator = cage_generator
+		cage_probe.current_screen = FoundationMain.SCREEN_ENVIRONMENT
+		var cage_choice := cage_probe._travel_choice(RunStateScript.GRAND_CASINO_CAGE_ARCHETYPE_ID)
+		var cage_label := str(cage_choice.get("label", RunStateScript.GRAND_CASINO_CAGE_ARCHETYPE_ID))
+		_install_real_world_map_popup(cage_probe, RunStateScript.GRAND_CASINO_CAGE_ARCHETYPE_ID, cage_label)
+		var cage_before := _public_caller_probe_state(cage_probe)
+		var cage_message_start := cage_probe.message_log.size()
+		var cage_ok := cage_probe.activate_interactable_object("casino_fixture:cage")
+		var cage_messages := cage_probe.message_log.slice(cage_message_start)
+		var expected_cage_messages := ["Route marked: %s." % cage_label, "Traveling to %s..." % cage_label, "Grand-room caller fixture rejected."]
+		if cage_choice.is_empty() or cage_ok or _public_caller_probe_state(cage_probe) != cage_before or cage_probe.autosave_count != 0 or cage_probe.presentation_count != 0 or cage_messages != expected_cage_messages:
+			failures.append("Public Cage shortcut did not restore pre-focus/selection state and propagate exact room-entry failure ordering without downstream success.")
+		cage_probe.free()
 
 	var delivery_probe := _lifecycle_probe(library, _lifecycle_run(true))
 	var delivery_generator := LifecycleRejectingGenerator.new(library)
@@ -274,15 +384,15 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 		failures.append("Meta entry caller did not restore its prior session/run/home/screen after apply rejection.")
 	meta_entry_probe.free()
 
-	var direct_probe := _lifecycle_probe(library, _lifecycle_run(false))
-	direct_probe.show_game_library_launcher = true
-	direct_probe.reject_install = true
-	var direct_before := _caller_probe_state(direct_probe)
-	var direct_result := direct_probe.start_game_test_session("lifecycle_fixture_game")
+	var direct_game_probe := _lifecycle_probe(library, _lifecycle_run(false))
+	direct_game_probe.show_game_library_launcher = true
+	direct_game_probe.reject_install = true
+	var direct_before := _caller_probe_state(direct_game_probe)
+	var direct_result := direct_game_probe.start_game_test_session("lifecycle_fixture_game")
 	var direct_errors := _array(direct_result.get("errors", []))
-	if bool(direct_result.get("ok", true)) or _caller_probe_state(direct_probe) != direct_before or direct_probe.autosave_count != 0 or direct_errors.is_empty() or str(direct_errors[0]) != "Environment caller fixture rejected.":
+	if bool(direct_result.get("ok", true)) or _caller_probe_state(direct_game_probe) != direct_before or direct_game_probe.autosave_count != 0 or direct_errors.is_empty() or str(direct_errors[0]) != "Environment caller fixture rejected.":
 		failures.append("Direct game-test entry did not return/restore its enclosing run and screen after room rejection.")
-	direct_probe.free()
+	direct_game_probe.free()
 
 	var forced_probe := LifecycleForcedTravelProbe.new()
 	forced_probe.library = library
@@ -309,6 +419,106 @@ static func _lifecycle_probe(library: ContentLibrary, run_state: RunState) -> Li
 	return probe
 
 
+static func _install_real_event_popup(probe: LifecycleCallerProbe, event_id: String) -> void:
+	probe._build_event_choice_popup_overlay()
+	probe._show_interactable_event_popup(event_id)
+
+
+static func _install_active_event_coach(probe: LifecycleCallerProbe) -> void:
+	var coach := CoachOverlayScript.new()
+	probe.add_child(coach)
+	coach._build()
+	coach.active_lesson = {
+		"id": "lifecycle_event_coach",
+		"scope": "tutorial_run",
+		"completion": {"type": "anchored_action", "action_id": "event:side_door"},
+	}
+	coach.active_context = {"sentinel": "event-coach-context"}
+	coach.latest_context = {"sentinel": "event-coach-latest"}
+	coach.prepared_snapshot = {"visible": true, "lesson_id": "lifecycle_event_coach"}
+	coach.active_anchor_kind_value = "interactable_object"
+	coach.active_anchor_id_value = "event:side_door"
+	coach.visible = true
+	coach.panel.visible = true
+	coach.focus_layer.set_snapshot({"visible": true, "lesson_id": "lifecycle_event_coach"})
+	probe.coach_overlay = coach
+
+
+static func _install_real_world_map_popup(probe: FoundationMain, target_id: String, target_label: String) -> void:
+	var overlay := Control.new()
+	var holder := Control.new()
+	var nodes_layer := Control.new()
+	var title := Label.new()
+	var detail_popup := PanelContainer.new()
+	var detail_stack := VBoxContainer.new()
+	var detail_label := Label.new()
+	var badge_slot := VBoxContainer.new()
+	var confirm := Button.new()
+	probe.add_child(overlay)
+	overlay.add_child(holder)
+	holder.add_child(nodes_layer)
+	overlay.add_child(title)
+	overlay.add_child(detail_popup)
+	detail_popup.add_child(detail_stack)
+	detail_stack.add_child(detail_label)
+	detail_stack.add_child(badge_slot)
+	detail_stack.add_child(confirm)
+	overlay.visible = true
+	detail_popup.visible = true
+	title.text = "Lifecycle map title"
+	detail_label.text = "Lifecycle map detail"
+	confirm.text = "Travel fixture"
+	probe.world_map_overlay = overlay
+	probe.world_map_holder = holder
+	probe.world_map_nodes_layer = nodes_layer
+	probe.world_map_title_label = title
+	probe.world_map_detail_popup = detail_popup
+	probe.world_map_detail_label = detail_label
+	probe.world_map_badge_slot = badge_slot
+	probe.world_map_confirm_button = confirm
+	probe._ensure_world_map_overlay_controller()
+	probe.world_map_overlay_controller.configure_nodes(overlay, holder, nodes_layer, title, detail_popup, detail_label, badge_slot, confirm)
+	probe.selected_world_map_node_id = target_id
+	probe.selected_travel_target_id = target_id
+	probe.selected_travel_label = target_label
+	probe.world_map_snapshot_cache_key = "host-map-cache"
+	probe.world_map_canvas_snapshot_key = "host-canvas-cache"
+	# Deliberately keep the live controller distinct from its host fields. The
+	# public confirm callback synchronizes it before travel; rollback must recover
+	# the exact pre-callback controller as well as the host selection.
+	probe.world_map_overlay_controller.set_small_screen_mode(true)
+	probe.world_map_overlay_controller.sync_from_host("controller-sentinel", "controller-target", "Controller Target", "controller-map-cache", "controller-canvas-cache")
+
+
+static func _public_caller_probe_state(probe: FoundationMain) -> String:
+	var lifecycle_snapshot := probe._foundation_lifecycle_snapshot()
+	var coach_state := _dict(lifecycle_snapshot.get("coach", {}))
+	coach_state.erase("ref")
+	var popup_state := {
+		"visible": probe.event_choice_popup_overlay.visible if probe.event_choice_popup_overlay != null else false,
+		"title": probe.event_choice_popup_title_label.text if probe.event_choice_popup_title_label != null else "",
+		"summary": probe.event_choice_popup_summary_label.text if probe.event_choice_popup_summary_label != null else "",
+		"choice_children": probe.event_choice_popup_choices_list.get_child_count() if probe.event_choice_popup_choices_list != null else 0,
+	}
+	var map_popup_state := {
+		"visible": probe.world_map_overlay.visible if probe.world_map_overlay != null else false,
+		"detail_visible": probe.world_map_detail_popup.visible if probe.world_map_detail_popup != null else false,
+		"title": probe.world_map_title_label.text if probe.world_map_title_label != null else "",
+		"detail": probe.world_map_detail_label.text if probe.world_map_detail_label != null else "",
+		"confirm_text": probe.world_map_confirm_button.text if probe.world_map_confirm_button != null else "",
+		"confirm_disabled": probe.world_map_confirm_button.disabled if probe.world_map_confirm_button != null else true,
+	}
+	return "%s\n%s" % [
+		_caller_probe_state(probe),
+		JSON.stringify({
+			"controller": lifecycle_snapshot.get("world_map_controller", {}),
+			"coach": coach_state,
+			"event_popup": popup_state,
+			"map_popup": map_popup_state,
+		}),
+	]
+
+
 static func _lifecycle_run(delivery_reject: bool) -> RunState:
 	var run_state: RunState = LifecycleDeliveryRejectRun.new() if delivery_reject else RunStateScript.new()
 	run_state.start_new("LIFECYCLE-PUBLIC-CALLER")
@@ -326,6 +536,19 @@ static func _lifecycle_run(delivery_reject: bool) -> RunState:
 	}
 	run_state.grand_casino_room_states = {"sentinel": {"id": "caller_room_sentinel", "archetype_id": "grand_casino"}}
 	run_state.home_state = {"status": "tenant", "place": "caller_home"}
+	return run_state
+
+
+static func _grand_casino_lifecycle_run(library: ContentLibrary) -> RunState:
+	var rng := RngStream.new()
+	rng.configure(91203)
+	var environment := EnvironmentInstanceScript.from_archetype(library.environment_archetype(RunStateScript.GRAND_CASINO_ARCHETYPE_ID), 1, rng, library).to_dict()
+	if environment.is_empty():
+		return null
+	var run_state := RunStateScript.new()
+	run_state.start_new("LIFECYCLE-CAGE-SHORTCUT")
+	run_state.current_environment = environment
+	run_state.grand_casino_room_states = {"sentinel": {"id": "cage_shortcut_sentinel", "archetype_id": RunStateScript.GRAND_CASINO_ARCHETYPE_ID}}
 	return run_state
 
 

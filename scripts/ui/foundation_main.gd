@@ -237,6 +237,10 @@ var heat_talk_candidate_visit_count := 0
 var table_talk_candidate_visit_count := 0
 var input_route_guard_visit_count := 0
 var input_route_coach_notification_visit_count := 0
+var deferred_coach_refresh_generation_counter := 0
+var deferred_coach_refresh_active_generation := 0
+var tutorial_action_resume_generation_counter := 0
+var tutorial_action_resume_active_generation := 0
 var embedded_incremental_snapshot_count := 0
 var embedded_full_snapshot_fallback_count := 0
 var deferred_embedded_refresh_generation := 0
@@ -479,6 +483,8 @@ var world_map_canvas_snapshot_key: String = ""
 var world_map_detail_badges_key: String = "__unset__"
 var rendered_environment_snapshot_signature: String = ""
 var action_panel_refresh_scheduled := false
+var action_panel_refresh_generation_counter := 0
+var action_panel_refresh_active_generation := 0
 var game_coach_refresh_scheduled := false
 var tutorial_guardrail_dialogue_reconcile_active := false
 var pending_action_panel_object: Dictionary = {}
@@ -2042,6 +2048,7 @@ func select_travel_option(target_id: String) -> bool:
 
 # Confirms the selected travel destination through RunGenerator.
 func confirm_selected_travel(require_immediate_result: bool = false) -> bool:
+	var caller_rollback := _foundation_lifecycle_snapshot()
 	if run_state == null:
 		return false
 	if _guard_player_input_route(_closing_time_blocks_environment_actions()):
@@ -2063,7 +2070,10 @@ func confirm_selected_travel(require_immediate_result: bool = false) -> bool:
 		_refresh()
 		return false
 	var travel_result: Variant = _travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice, require_immediate_result)
-	return bool((travel_result as Dictionary).get("ok", false)) if typeof(travel_result) == TYPE_DICTIONARY else true
+	var travel_ok := bool((travel_result as Dictionary).get("ok", false)) if typeof(travel_result) == TYPE_DICTIONARY else true
+	if not travel_ok:
+		_restore_foundation_lifecycle_snapshot(caller_rollback)
+	return travel_ok
 
 
 func wait_out_police_sweep() -> bool:
@@ -2165,19 +2175,23 @@ func select_world_map_node(node_id: String) -> bool:
 	return bool(result.get("ok", false))
 
 
-func confirm_world_map_travel() -> void:
+func confirm_world_map_travel() -> Dictionary:
+	var caller_rollback := _foundation_lifecycle_snapshot()
 	if _guard_blocking_decision_or_transition():
-		return
+		return {"ok": false, "errors": ["Travel is currently blocked."]}
 	_sync_world_map_overlay_controller_from_host()
 	var confirmed_target_id := selected_world_map_node_id
 	if confirmed_target_id.is_empty() and not selected_travel_target_id.is_empty():
 		confirmed_target_id = selected_travel_target_id
 	if confirmed_target_id.is_empty():
 		_show_message("Select a map stop first.")
-		return
+		_restore_foundation_lifecycle_snapshot(caller_rollback)
+		return {"ok": false, "errors": ["Select a map stop first."]}
 	if _is_meta_session():
-		_confirm_meta_world_map_travel()
-		return
+		var meta_result := _confirm_meta_world_map_travel()
+		if not bool(meta_result.get("ok", false)):
+			_restore_foundation_lifecycle_snapshot(caller_rollback)
+		return meta_result
 	var coach_travel_action := "travel:%s" % confirmed_target_id
 	var choice := _travel_choice(confirmed_target_id)
 	var result := world_map_overlay_controller.confirm_run_selection(choice)
@@ -2188,7 +2202,8 @@ func confirm_world_map_travel() -> void:
 			_show_message(message)
 		if bool(result.get("refresh", false)):
 			_refresh_world_map_overlay()
-		return
+		_restore_foundation_lifecycle_snapshot(caller_rollback)
+		return {"ok": false, "errors": [message if not message.is_empty() else "Map travel is not available."]}
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
 	_sync_coach_focus_visibility()
@@ -2199,7 +2214,10 @@ func confirm_world_map_travel() -> void:
 			# one-button acknowledgement first so the shared TalkDock queue cannot
 			# misclassify the requested action as abandoning Pal and add Heat.
 			_advance_completed_tutorial_action_dialogue(completed_lesson_id)
-	_travel_to(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), result.get("choice", {}) as Dictionary)
+	var travel_result := _travel_to(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), result.get("choice", {}) as Dictionary, true)
+	if not bool(travel_result.get("ok", false)):
+		_restore_foundation_lifecycle_snapshot(caller_rollback)
+	return travel_result
 
 
 func _select_meta_world_map_node(node_id: String) -> bool:
@@ -2214,7 +2232,8 @@ func _select_meta_world_map_node(node_id: String) -> bool:
 	return bool(result.get("ok", false))
 
 
-func _confirm_meta_world_map_travel() -> void:
+func _confirm_meta_world_map_travel() -> Dictionary:
+	var caller_rollback := _foundation_lifecycle_snapshot()
 	var choice := _meta_travel_choice(selected_world_map_node_id)
 	var result := world_map_overlay_controller.confirm_meta_selection(meta_session_location_id, choice)
 	_sync_world_map_overlay_controller_to_host()
@@ -2224,14 +2243,18 @@ func _confirm_meta_world_map_travel() -> void:
 			_show_message(message)
 		if bool(result.get("refresh", false)):
 			_refresh_world_map_overlay()
-		return
+		_restore_foundation_lifecycle_snapshot(caller_rollback)
+		return {"ok": false, "errors": [message if not message.is_empty() else "Meta travel is not available."]}
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
 	var target_id := str(result.get("target_id", META_LOCATION_HOME))
 	if target_id == META_LOCATION_START_RUN:
 		start_meta_quick_run()
-		return
-	_enter_meta_location(target_id)
+		return {"ok": true, "errors": []}
+	var meta_result := _enter_meta_location(target_id)
+	if not bool(meta_result.get("ok", false)):
+		_restore_foundation_lifecycle_snapshot(caller_rollback)
+	return meta_result
 
 
 # Selects an event choice without mutating simulation state.
@@ -2259,11 +2282,33 @@ func select_event_choice(event_id: String, choice_id: String) -> bool:
 
 
 # Resolves the selected event choice through EventModule.
-func confirm_selected_event_choice() -> void:
+func confirm_selected_event_choice() -> Dictionary:
 	if selected_event_id.is_empty() or selected_event_choice_id.is_empty():
 		_show_message("Select an event choice first.")
-		return
-	resolve_event_choice(selected_event_id, selected_event_choice_id)
+		return {"ok": false, "errors": ["Select an event choice first."]}
+	return resolve_event_choice(selected_event_id, selected_event_choice_id)
+
+
+# Owns the full public event-card interaction, including the selection UI and
+# any tutorial acknowledgement that occurs before EventModule resolves.
+func activate_event_choice_action(event_id: String, choice_id: String) -> bool:
+	var caller_rollback := _foundation_lifecycle_snapshot()
+	_record_tutorial_action_if_authored("event:%s" % event_id)
+	if coach_overlay != null:
+		var completed_lesson_id := coach_overlay.active_lesson_id()
+		if coach_overlay.notify_action("event:%s" % event_id) and not completed_lesson_id.is_empty():
+			_consume_recorded_tutorial_action("event:%s" % event_id)
+			# Event cards resolve directly. Complete the parent-event tutorial
+			# acknowledgement before selecting and confirming the response.
+			_advance_completed_tutorial_action_dialogue(completed_lesson_id)
+	if not select_event_choice(event_id, choice_id):
+		_restore_foundation_lifecycle_snapshot(caller_rollback)
+		return false
+	var event_result := confirm_selected_event_choice()
+	if not bool(event_result.get("ok", false)):
+		_restore_foundation_lifecycle_snapshot(caller_rollback)
+		return false
+	return true
 
 
 # Resolves one selected event choice through EventModule.
@@ -4921,14 +4966,16 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 		"current_game", "current_game_state_key", "game_exit_settle_active", "last_game_exit_final_projection_rendered",
 		"last_game_result", "last_environment_runtime_result", "last_item_result", "last_hook_result", "game_surface_ui_state",
 		"selected_action_category", "current_screen", "selected_action_id", "selected_action_kind", "selected_action_label", "selected_stake",
-		"selected_travel_target_id", "selected_travel_label", "selected_event_id", "selected_event_choice_id", "selected_event_label", "selected_event_choice_label",
+		"selected_travel_target_id", "selected_travel_label", "selected_world_map_node_id", "world_map_snapshot_cache_key", "world_map_canvas_snapshot_key",
+		"selected_event_id", "selected_event_choice_id", "selected_event_label", "selected_event_choice_label",
 		"selected_item_offer_id", "selected_item_offer_label", "selected_item_offer_price", "selected_service_hook_id", "selected_service_hook_label", "service_hook_resolution_locked", "selected_lender_hook_id", "selected_lender_hook_label",
 		"hover_target_id", "focus_target_id", "selected_object_id", "camera_focus_rect", "camera_focus_point", "current_context_mode",
+		"action_panel_refresh_scheduled", "action_panel_refresh_active_generation", "pending_action_panel_object",
 		"pending_event_choice_popup_event_id", "pending_event_choice_popup_focus_choice_id", "pending_event_choice_popup_snapshot",
 		"pending_wager_confirm_action_id", "pending_wager_confirm_skip_stake_validation", "pending_wager_confirm_preserve_surface_ui_state", "pending_wager_confirm_stake", "pending_wager_confirm_source_game_id", "pending_wager_confirm_source_game_state_key",
 		"run_inventory_popup_mode", "run_inventory_context_container_id", "selected_run_inventory_item_id", "selected_run_inventory_item_source",
 		"travel_transition_active", "travel_transition_target_id", "travel_transition_target_label",
-		"game_surface_session_generation", "deferred_embedded_refresh_generation", "deferred_embedded_refresh_pending", "deferred_embedded_refresh_run_state", "deferred_embedded_refresh_game", "deferred_embedded_refresh_environment", "deferred_embedded_refresh_result", "deferred_embedded_refresh_canvas", "deferred_embedded_refresh_game_state_key", "deferred_embedded_refresh_surface_session_generation",
+		"game_surface_session_generation", "deferred_coach_refresh_active_generation", "tutorial_action_resume_active_generation", "deferred_embedded_refresh_generation", "deferred_embedded_refresh_pending", "deferred_embedded_refresh_run_state", "deferred_embedded_refresh_game", "deferred_embedded_refresh_environment", "deferred_embedded_refresh_result", "deferred_embedded_refresh_canvas", "deferred_embedded_refresh_game_state_key", "deferred_embedded_refresh_surface_session_generation",
 		"game_surface_auto_resolving", "last_game_surface_realtime_refresh_msec", "surface_feature_music_active", "surface_feature_music_ducking", "drunk_time_anchor_real_msec", "drunk_time_anchor_scaled_msec", "drunk_time_last_scale",
 		"pending_autosave", "pending_autosave_status_text", "pending_autosave_after_frame", "pending_autosave_not_before_msec", "pending_autosave_first_queued_msec",
 		"autosave_dirty_generation", "autosave_inflight_generation", "autosave_completed_generation", "save_status_message",
@@ -4943,6 +4990,20 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 		var control: Variant = get(control_name)
 		if control is CanvasItem:
 			visibility[control_name] = (control as CanvasItem).visible
+	snapshot["world_map_controller_ref"] = world_map_overlay_controller
+	snapshot["world_map_controller"] = world_map_overlay_controller.export_state() if world_map_overlay_controller != null else {}
+	snapshot["coach"] = _coach_lifecycle_snapshot()
+	snapshot["event_popup_presentation"] = {
+		"title": event_choice_popup_title_label.text if event_choice_popup_title_label != null else "",
+		"summary": event_choice_popup_summary_label.text if event_choice_popup_summary_label != null else "",
+	}
+	snapshot["world_map_popup_presentation"] = {
+		"title": world_map_title_label.text if world_map_title_label != null else "",
+		"detail": world_map_detail_label.text if world_map_detail_label != null else "",
+		"detail_visible": world_map_detail_popup.visible if world_map_detail_popup != null else false,
+		"confirm_text": world_map_confirm_button.text if world_map_confirm_button != null else "",
+		"confirm_disabled": world_map_confirm_button.disabled if world_map_confirm_button != null else true,
+	}
 	return snapshot
 
 
@@ -4966,6 +5027,101 @@ func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		var control: Variant = get(control_name)
 		if control is CanvasItem:
 			(control as CanvasItem).visible = bool(visibility.get(control_name, false))
+	var restored_world_map_controller: Variant = snapshot.get("world_map_controller_ref", null)
+	world_map_overlay_controller = restored_world_map_controller as WorldMapOverlayController if restored_world_map_controller is WorldMapOverlayController else null
+	if world_map_overlay_controller != null:
+		var controller_state := _copy_dict(snapshot.get("world_map_controller", {}))
+		world_map_overlay_controller.set_small_screen_mode(bool(controller_state.get("small_screen_mode", false)))
+		world_map_overlay_controller.sync_from_host(
+			str(controller_state.get("selected_node_id", "")),
+			str(controller_state.get("selected_travel_target_id", "")),
+			str(controller_state.get("selected_travel_label", "")),
+			str(controller_state.get("snapshot_cache_key", "")),
+			str(controller_state.get("canvas_snapshot_key", ""))
+		)
+	_restore_coach_lifecycle_snapshot(_copy_dict(snapshot.get("coach", {})))
+	var event_popup_presentation := _copy_dict(snapshot.get("event_popup_presentation", {}))
+	if event_choice_popup_title_label != null:
+		event_choice_popup_title_label.text = str(event_popup_presentation.get("title", ""))
+	if event_choice_popup_summary_label != null:
+		event_choice_popup_summary_label.text = str(event_popup_presentation.get("summary", ""))
+	var world_map_popup_presentation := _copy_dict(snapshot.get("world_map_popup_presentation", {}))
+	if world_map_title_label != null:
+		world_map_title_label.text = str(world_map_popup_presentation.get("title", ""))
+	if world_map_detail_label != null:
+		world_map_detail_label.text = str(world_map_popup_presentation.get("detail", ""))
+	if world_map_detail_popup != null:
+		world_map_detail_popup.visible = bool(world_map_popup_presentation.get("detail_visible", false))
+	if world_map_confirm_button != null:
+		world_map_confirm_button.text = str(world_map_popup_presentation.get("confirm_text", ""))
+		world_map_confirm_button.disabled = bool(world_map_popup_presentation.get("confirm_disabled", true))
+	if environment_canvas != null:
+		environment_canvas.set_selected_object(selected_object_id, true)
+	if environment_header != null:
+		var restored_focus_object := _interactable_object(selected_object_id) if not selected_object_id.is_empty() else {}
+		_refresh_world_header(restored_focus_object)
+	_sync_talk_dock_coach_avoid_rect()
+
+
+func _coach_lifecycle_snapshot() -> Dictionary:
+	if coach_overlay == null:
+		return {}
+	return {
+		"ref": coach_overlay,
+		"seen": coach_overlay.seen.duplicate(true),
+		"queued_lessons": coach_overlay.queued_lessons.duplicate(true),
+		"queued_ids": coach_overlay.queued_ids.duplicate(true),
+		"active_lesson": coach_overlay.active_lesson.duplicate(true),
+		"active_context": coach_overlay.active_context.duplicate(true),
+		"latest_context": coach_overlay.latest_context.duplicate(true),
+		"prepared_snapshot": coach_overlay.prepared_snapshot.duplicate(true),
+		"active_layout_key": coach_overlay.active_layout_key,
+		"live_anchor_rect": coach_overlay.live_anchor_rect,
+		"live_anchor_rect_valid": coach_overlay.live_anchor_rect_valid,
+		"live_anchor_change_count": coach_overlay.live_anchor_change_count,
+		"active_anchor_kind": coach_overlay.active_anchor_kind_value,
+		"active_anchor_id": coach_overlay.active_anchor_id_value,
+		"active_dialogue_requested": coach_overlay.active_dialogue_requested,
+		"active_dialogue_was_requested": coach_overlay.active_dialogue_was_requested,
+		"active_dialogue_acknowledged": coach_overlay.active_dialogue_acknowledged,
+		"visible": coach_overlay.visible,
+		"panel_visible": coach_overlay.panel.visible if coach_overlay.panel != null else false,
+		"focus_visible": coach_overlay.focus_layer.visible if coach_overlay.focus_layer != null else false,
+		"focus_snapshot": coach_overlay.focus_layer.snapshot.duplicate(true) if coach_overlay.focus_layer != null else {},
+		"focus_live_anchor_rect": coach_overlay.focus_layer.live_anchor_rect if coach_overlay.focus_layer != null else Rect2(),
+		"focus_live_anchor_rect_valid": coach_overlay.focus_layer.live_anchor_rect_valid if coach_overlay.focus_layer != null else false,
+	}
+
+
+func _restore_coach_lifecycle_snapshot(snapshot: Dictionary) -> void:
+	var restored_coach: Variant = snapshot.get("ref", null)
+	if not (restored_coach is CoachOverlay) or coach_overlay != restored_coach:
+		return
+	coach_overlay.seen = _copy_dict(snapshot.get("seen", {}))
+	coach_overlay.queued_lessons = _copy_array(snapshot.get("queued_lessons", []))
+	coach_overlay.queued_ids = _copy_dict(snapshot.get("queued_ids", {}))
+	coach_overlay.active_lesson = _copy_dict(snapshot.get("active_lesson", {}))
+	coach_overlay.active_context = _copy_dict(snapshot.get("active_context", {}))
+	coach_overlay.latest_context = _copy_dict(snapshot.get("latest_context", {}))
+	coach_overlay.prepared_snapshot = _copy_dict(snapshot.get("prepared_snapshot", {}))
+	coach_overlay.active_layout_key = int(snapshot.get("active_layout_key", 0))
+	coach_overlay.live_anchor_rect = snapshot.get("live_anchor_rect", Rect2()) as Rect2
+	coach_overlay.live_anchor_rect_valid = bool(snapshot.get("live_anchor_rect_valid", false))
+	coach_overlay.live_anchor_change_count = int(snapshot.get("live_anchor_change_count", 0))
+	coach_overlay.active_anchor_kind_value = str(snapshot.get("active_anchor_kind", ""))
+	coach_overlay.active_anchor_id_value = str(snapshot.get("active_anchor_id", ""))
+	coach_overlay.active_dialogue_requested = bool(snapshot.get("active_dialogue_requested", false))
+	coach_overlay.active_dialogue_was_requested = bool(snapshot.get("active_dialogue_was_requested", false))
+	coach_overlay.active_dialogue_acknowledged = bool(snapshot.get("active_dialogue_acknowledged", false))
+	coach_overlay.visible = bool(snapshot.get("visible", false))
+	if coach_overlay.panel != null:
+		coach_overlay.panel.visible = bool(snapshot.get("panel_visible", false))
+	if coach_overlay.focus_layer != null:
+		coach_overlay.focus_layer.snapshot = _copy_dict(snapshot.get("focus_snapshot", {}))
+		coach_overlay.focus_layer.live_anchor_rect = snapshot.get("focus_live_anchor_rect", Rect2()) as Rect2
+		coach_overlay.focus_layer.live_anchor_rect_valid = bool(snapshot.get("focus_live_anchor_rect_valid", false))
+		coach_overlay.focus_layer.visible = bool(snapshot.get("focus_visible", false))
+		coach_overlay.focus_layer.queue_redraw()
 
 
 func _install_lifecycle_environment(environment: Dictionary) -> Dictionary:
@@ -5001,6 +5157,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		var meta_result := _enter_meta_location(meta_target_id)
 		if not bool(meta_result.get("ok", false)):
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+			return meta_result
 		return meta_result
 	var local_casino_room_move := bool(choice_data.get("local_casino_room", false))
 	if local_casino_room_move and (not run_state.is_grand_casino_environment() or _environment_archetype(target_id).is_empty()):
@@ -7351,7 +7508,7 @@ func _refresh_after_environment_selection() -> void:
 	if run_state.is_tutorial_run():
 		# Tutorial coach context is intentionally evaluated after the click returns;
 		# it can inspect the full authored target matrix without taxing normal play.
-		call_deferred("_refresh_coach_at_boundary")
+		_defer_coach_boundary_refresh()
 
 
 func _refresh_after_game_selection() -> void:
@@ -7599,10 +7756,14 @@ func _schedule_action_panel_refresh(focused_object_override: Dictionary = {}) ->
 	if action_panel_refresh_scheduled:
 		return
 	action_panel_refresh_scheduled = true
-	call_deferred("_flush_action_panel_refresh")
+	action_panel_refresh_generation_counter += 1
+	action_panel_refresh_active_generation = action_panel_refresh_generation_counter
+	call_deferred("_flush_action_panel_refresh", action_panel_refresh_active_generation)
 
 
-func _flush_action_panel_refresh() -> void:
+func _flush_action_panel_refresh(expected_generation: int) -> void:
+	if expected_generation != action_panel_refresh_active_generation:
+		return
 	action_panel_refresh_scheduled = false
 	var focused_object := pending_action_panel_object
 	pending_action_panel_object = {}
@@ -8411,7 +8572,7 @@ func _add_context_event_inline_actions(card: VBoxContainer, event_id: String, in
 			continue
 		var label := str(action_data.get("label", choice_id))
 		var selected := bool(action_data.get("selected", false))
-		var button := _add_card_button(card, label, Callable(self, "resolve_event_choice").bind(event_id, choice_id), false, selected)
+		var button := _add_card_button(card, label, Callable(self, "activate_event_choice_action").bind(event_id, choice_id), false, selected)
 		button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 		_set_control_font_size(button, 16)
 		var detail := str(action_data.get("text", "")).strip_edges()
@@ -8433,7 +8594,7 @@ func _add_event_choice_action_option(stack: VBoxContainer, event_id: String, cho
 		return
 	var selected := event_id == selected_event_id and choice_id == selected_event_choice_id
 	var label := str(choice_data.get("label", choice_id))
-	var button := _add_card_button(stack, label, Callable(self, "resolve_event_choice").bind(event_id, choice_id), false, selected)
+	var button := _add_card_button(stack, label, Callable(self, "activate_event_choice_action").bind(event_id, choice_id), false, selected)
 	button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	_set_control_font_size(button, 16)
 	var detail := _event_choice_action_detail(choice_data)
@@ -10079,16 +10240,20 @@ func _focus_interactable_object_with_data(object_id: String, object_data: Dictio
 	# only after the input callback returns so ambient advice cannot consume or
 	# cover the interaction that revealed it.
 	if coach_overlay != null and run_state != null and not run_state.is_tutorial_run():
-		call_deferred("_refresh_coach_at_boundary")
+		_defer_coach_boundary_refresh()
 	_sync_talk_dock_coach_avoid_rect()
 	return true
 
 
 func activate_interactable_object(object_id: String) -> bool:
+	var caller_rollback := _foundation_lifecycle_snapshot()
 	if _guard_player_input_route(false, object_id):
 		return false
 	if _is_meta_session():
-		return _activate_meta_interactable_object(object_id)
+		var meta_action_ok := _activate_meta_interactable_object(object_id)
+		if not meta_action_ok and object_id == "travel:leave":
+			_restore_foundation_lifecycle_snapshot(caller_rollback)
+		return meta_action_ok
 	if object_id.begins_with("scenario_action:"):
 		return _activate_scenario_action_token(object_id)
 	if object_id == "travel:leave":
@@ -10097,26 +10262,41 @@ func activate_interactable_object(object_id: String) -> bool:
 			if not bool(direct_room_exit.get("enabled", true)):
 				_show_message(str(direct_room_exit.get("disabled_reason", "That door is not available right now.")))
 				_refresh()
+				_restore_foundation_lifecycle_snapshot(caller_rollback)
 				return false
 			focus_interactable_object(object_id)
-			return bool(_travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true).get("ok", false))
+			var direct_exit_result := _travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true)
+			if not bool(direct_exit_result.get("ok", false)):
+				_restore_foundation_lifecycle_snapshot(caller_rollback)
+			return bool(direct_exit_result.get("ok", false))
 		var leave_object := _interactable_object(object_id)
 		if leave_object.is_empty():
 			if not _travel_choice_view_list().is_empty() and not _run_failed_without_recovery():
 				selected_object_id = object_id
 				focus_target_id = object_id
 				current_context_mode = CONTEXT_MODE_TRAVEL
-				return open_world_map()
+				var map_opened := open_world_map()
+				if not map_opened:
+					_restore_foundation_lifecycle_snapshot(caller_rollback)
+				return map_opened
+			_restore_foundation_lifecycle_snapshot(caller_rollback)
 			return false
 		if not bool(leave_object.get("enabled", true)):
 			var leave_disabled_reason := str(leave_object.get("disabled_reason", "Not available right now."))
 			_show_message(leave_disabled_reason)
 			_refresh()
+			_restore_foundation_lifecycle_snapshot(caller_rollback)
 			return false
 		focus_interactable_object(object_id)
-		return open_world_map()
+		var map_opened := open_world_map()
+		if not map_opened:
+			_restore_foundation_lifecycle_snapshot(caller_rollback)
+		return map_opened
 	if object_id.begins_with("event_response:"):
-		return _activate_event_response_action(object_id)
+		var event_action_ok := _activate_event_response_action(object_id)
+		if not event_action_ok:
+			_restore_foundation_lifecycle_snapshot(caller_rollback)
+		return event_action_ok
 	if object_id.begins_with("cage_atm_action:"):
 		return _activate_cage_atm_action(object_id)
 	if service_hook_resolution_locked and object_id.begins_with("service:"):
@@ -10159,7 +10339,10 @@ func activate_interactable_object(object_id: String) -> bool:
 		CONTEXT_MODE_DIALOGUE:
 			return start_dialogue(source_id, object_data)
 		CONTEXT_MODE_CASINO_FIXTURE:
-			return _inspect_casino_fixture(object_data)
+			var fixture_ok := _inspect_casino_fixture(object_data)
+			if not fixture_ok and str(object_data.get("source_id", "")).strip_edges() == "cage":
+				_restore_foundation_lifecycle_snapshot(caller_rollback)
+			return fixture_ok
 		CONTEXT_MODE_NUMBERS:
 			return _open_numbers_surface(source_id)
 		CONTEXT_MODE_DELIVERY:
@@ -10181,11 +10364,22 @@ func activate_interactable_object(object_id: String) -> bool:
 					if not bool(direct_room_exit.get("enabled", true)):
 						_show_message(str(direct_room_exit.get("disabled_reason", "That door is not available right now.")))
 						_refresh()
+						_restore_foundation_lifecycle_snapshot(caller_rollback)
 						return false
-					return bool(_travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true).get("ok", false))
-				return open_world_map()
+					var direct_exit_result := _travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true)
+					if not bool(direct_exit_result.get("ok", false)):
+						_restore_foundation_lifecycle_snapshot(caller_rollback)
+					return bool(direct_exit_result.get("ok", false))
+				var map_opened := open_world_map()
+				if not map_opened:
+					_restore_foundation_lifecycle_snapshot(caller_rollback)
+				return map_opened
 			if select_travel_option(source_id):
-				return confirm_selected_travel(true)
+				var travel_ok := confirm_selected_travel(true)
+				if not travel_ok:
+					_restore_foundation_lifecycle_snapshot(caller_rollback)
+				return travel_ok
+			_restore_foundation_lifecycle_snapshot(caller_rollback)
 			return false
 		CONTEXT_MODE_SERVICE:
 			if select_service_hook(source_id):
@@ -10380,11 +10574,16 @@ func _enter_environment_layer(layer_id: String) -> bool:
 func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 	var fixture_id := str(object_data.get("source_id", "")).strip_edges()
 	if fixture_id == "cage":
+		var caller_rollback := _foundation_lifecycle_snapshot()
 		# Compatibility alias for old tutorial/save anchors. It routes to the new
 		# room and never constructs the retired modal.
 		if run_state != null and str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID:
 			if select_travel_option(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
-				return confirm_selected_travel(true)
+				var travel_ok := confirm_selected_travel(true)
+				if not travel_ok:
+					_restore_foundation_lifecycle_snapshot(caller_rollback)
+				return travel_ok
+			_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return _start_linda_cage_services(object_data)
 	if fixture_id == "cage_counter":
 		return _start_linda_cage_services(object_data)
@@ -10762,19 +10961,7 @@ func _activate_event_response_action(action_object_id: String) -> bool:
 		return false
 	var event_id := payload.substr(0, separator)
 	var choice_id := payload.substr(separator + 1)
-	_record_tutorial_action_if_authored("event:%s" % event_id)
-	if coach_overlay != null:
-		var completed_lesson_id := coach_overlay.active_lesson_id()
-		if coach_overlay.notify_action("event:%s" % event_id) and not completed_lesson_id.is_empty():
-			_consume_recorded_tutorial_action("event:%s" % event_id)
-			# Canvas event cards resolve a response directly instead of reopening the
-			# event popup. A tutorial anchored to the parent event must therefore be
-			# acknowledged here, before its natural follow-up conversation is queued.
-			_advance_completed_tutorial_action_dialogue(completed_lesson_id)
-	if not select_event_choice(event_id, choice_id):
-		return false
-	confirm_selected_event_choice()
-	return true
+	return activate_event_choice_action(event_id, choice_id)
 
 
 func _activate_meta_interactable_object(object_id: String) -> bool:
@@ -12470,10 +12657,14 @@ func _on_coach_lesson_completed(lesson_id: String) -> void:
 			var action_id := str(action_id_value)
 			if action_id.begins_with("item:"):
 				_consume_recorded_tutorial_action(action_id)
-	call_deferred("_resume_after_completed_tutorial_action", lesson_id)
+	tutorial_action_resume_generation_counter += 1
+	tutorial_action_resume_active_generation = tutorial_action_resume_generation_counter
+	call_deferred("_resume_after_completed_tutorial_action", lesson_id, tutorial_action_resume_active_generation)
 
 
-func _resume_after_completed_tutorial_action(lesson_id: String) -> void:
+func _resume_after_completed_tutorial_action(lesson_id: String, expected_generation: int) -> void:
+	if expected_generation != tutorial_action_resume_active_generation:
+		return
 	_advance_completed_tutorial_action_dialogue(lesson_id)
 	_clear_stale_focus_before_dependent_tutorial_target(lesson_id)
 	if lesson_id == TUTORIAL_META_HOME_CARD_LESSON_ID and _is_meta_session():
@@ -12693,7 +12884,7 @@ func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -
 		# The Meta Home room and its first container geometry are built during this
 		# refresh. Evaluate once more after the scene has settled so the forced
 		# handoff can anchor to the real Bag instead of disappearing at the seam.
-		call_deferred("_refresh_coach_at_boundary")
+		_defer_coach_boundary_refresh()
 	if clean_location == pawn_location and _sal_starter_offer_is_pending():
 		_resume_sal_starter_offer()
 	return applied
@@ -16168,6 +16359,18 @@ func _compact_run_hud_enabled() -> bool:
 	if width <= 0.0 and is_inside_tree():
 		width = get_viewport_rect().size.x
 	return width > 0.0 and width <= RUN_HUD_COMPACT_MAX_WIDTH
+
+
+func _defer_coach_boundary_refresh() -> void:
+	deferred_coach_refresh_generation_counter += 1
+	deferred_coach_refresh_active_generation = deferred_coach_refresh_generation_counter
+	call_deferred("_refresh_coach_at_boundary_if_current", deferred_coach_refresh_active_generation)
+
+
+func _refresh_coach_at_boundary_if_current(expected_generation: int) -> void:
+	if expected_generation != deferred_coach_refresh_active_generation:
+		return
+	_refresh_coach_at_boundary()
 
 
 func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false) -> void:
