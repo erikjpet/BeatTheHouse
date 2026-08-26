@@ -629,6 +629,8 @@ static func resolved_semantic_state(state_value: Dictionary) -> Dictionary:
 	state["interactions"] = interactions
 	if not bool(resolved.get("ok", false)):
 		state["interaction_resolution_errors"] = _array(resolved.get("errors", []))
+	for collection_key in ["actors", "games", "interactions", "routes", "scene_objects", "services"]:
+		state[collection_key] = _records_with_presence(_dict(state.get(collection_key, {})))
 	return state
 
 
@@ -638,14 +640,45 @@ static func resolved_semantic_state(state_value: Dictionary) -> Dictionary:
 static func public_semantic_state(state_value: Dictionary) -> Dictionary:
 	var resolved := resolved_semantic_state(state_value)
 	return {
-		"actors": _dict(resolved.get("actors", {})),
-		"games": _dict(resolved.get("games", {})),
-		"interactions": _dict(resolved.get("interactions", {})),
-		"routes": _dict(resolved.get("routes", {})),
-		"scene_objects": _dict(resolved.get("scene_objects", {})),
-		"services": _dict(resolved.get("services", {})),
+		"actors": _public_collection_with_tombstones(resolved, "actors"),
+		"games": _public_collection_with_tombstones(resolved, "games"),
+		"interactions": _public_collection_with_tombstones(resolved, "interactions"),
+		"routes": _public_collection_with_tombstones(resolved, "routes"),
+		"scene_objects": _public_collection_with_tombstones(resolved, "scene_objects"),
+		"services": _public_collection_with_tombstones(resolved, "services"),
 		"transition_queue": _array(resolved.get("transition_queue", [])),
 	}
+
+
+static func _records_with_presence(records: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for identity_value in records.keys():
+		var identity_key := str(identity_value)
+		var record := _dict(records.get(identity_value, {}))
+		if record.is_empty():
+			continue
+		record["present"] = true
+		result[identity_key] = record
+	return result
+
+
+static func _public_collection_with_tombstones(resolved: Dictionary, collection_key: String) -> Dictionary:
+	var result := _dict(resolved.get(collection_key, {}))
+	var tombstones := _dict(_dict(resolved.get("tombstones", {})).get(collection_key, {}))
+	for identity_value in tombstones.keys():
+		var identity_key := str(identity_value)
+		var parsed := parse_owned_identity(identity_key)
+		# Scenario-created identities have no immutable base presentation to
+		# suppress. Their removal is represented by absence; only declared,
+		# inventory-backed producer identities need a closed public tombstone.
+		if parsed.is_empty() or str(parsed.get("owner_namespace", "")) == "scenario" or not _target_authorized(resolved, collection_key, identity_key):
+			continue
+		result[identity_key] = {
+			"owner_namespace": str(parsed.get("owner_namespace", "")),
+			"stable_object_id": str(parsed.get("stable_object_id", "")),
+			"present": false,
+		}
+	return result
 
 
 static func _boundary_kind(boundary_id: String) -> String:
