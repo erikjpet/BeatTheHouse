@@ -240,6 +240,31 @@ static func _check_negative_fixtures(failures: Array) -> void:
 	invalid_fact["sequence"]["fact_subscriptions"] = ["invented_fact"]
 	if not _contains_text(SequenceSchemaScript.validate_definition(invalid_fact, OperationRegistryScript), "unregistered fact type"):
 		failures.append("Sequence schema accepted an unregistered fact subscription.")
+	var unscoped_event_fact := _fixture_definition()
+	unscoped_event_fact["sequence"]["fact_subscriptions"][0] = "event_result"
+	if not _contains_text(SequenceSchemaScript.validate_definition(unscoped_event_fact, OperationRegistryScript), "payload_equals.event_id"):
+		failures.append("Sequence schema accepted an event-result subscription without an event-id payload predicate.")
+	var unknown_event_field := _fixture_definition()
+	unknown_event_field["sequence"]["fact_subscriptions"][0]["payload_equals"] = {"event_id": "fixture_event", "invented": "collision"}
+	if not _contains_text(SequenceSchemaScript.validate_definition(unknown_event_field, OperationRegistryScript), "unknown event_result field"):
+		failures.append("Sequence schema accepted an unregistered event-result predicate field.")
+	var wrong_event_type := _fixture_definition()
+	wrong_event_type["sequence"]["fact_subscriptions"][0]["payload_equals"] = {"event_id": "fixture_event", "resolved": "yes"}
+	if not _contains_text(SequenceSchemaScript.validate_definition(wrong_event_type, OperationRegistryScript), "wrong type"):
+		failures.append("Sequence schema accepted a wrong-type event-result predicate.")
+	var invalid_happening_predicate := _fixture_definition()
+	invalid_happening_predicate["sequence"]["fact_subscriptions"].append({"fact_type": "town_transition", "payload_equals": {"happening_ids": ["roadwork", "roadwork"]}})
+	if not _contains_text(SequenceSchemaScript.validate_definition(invalid_happening_predicate, OperationRegistryScript), "unique stable strings"):
+		failures.append("Sequence schema accepted an unreachable town-happening payload predicate.")
+	var unscoped_event_branch := _fixture_definition()
+	unscoped_event_branch["sequence"]["phase_graph"]["phases"][0]["branches"][0]["condition"] = {"type": "fact", "fact_type": "event_result"}
+	if not _contains_text(SequenceSchemaScript.validate_definition(unscoped_event_branch, OperationRegistryScript), "payload_equals.event_id"):
+		failures.append("Sequence schema accepted an event-result branch without an event-id payload predicate.")
+	var empty_event_bridge := _runtime_definition()
+	empty_event_bridge["sequence"]["phase_graph"]["phases"][0]["interaction_ops"][1]["interaction"]["available_actions"][0]["handler"] = "event_bridge"
+	empty_event_bridge["sequence"]["phase_graph"]["phases"][0]["interaction_ops"][1]["interaction"]["available_actions"][0]["inputs"] = {"event_id": "fixture_event", "resolution_id": ""}
+	if not _contains_text(SequenceSchemaScript.validate_definition(empty_event_bridge, OperationRegistryScript), "non-empty stable event_id and resolution_id"):
+		failures.append("Sequence schema accepted an event bridge without a durable resolution id.")
 	var dead_end := _fixture_definition()
 	dead_end["sequence"]["phase_graph"]["phases"][0]["branches"] = []
 	if not _contains_text(SequenceSchemaScript.validate_definition(dead_end, OperationRegistryScript), "dead end"):
@@ -911,6 +936,19 @@ static func _check_transition_and_event_delivery(failures: Array) -> void:
 	phases[0] = arrival
 	graph["phases"] = phases
 	sequence["phase_graph"] = graph
+	var objectives := _array(sequence.get("objectives", []))
+	var event_objective := _dict(objectives[0])
+	var event_steps := _array(event_objective.get("steps", []))
+	event_steps.append({"id": "record_event_choice", "label": "Record the correlated event choice", "kind": "fact", "fact_type": "event_result", "payload_equals": {"event_id": "fixture_event"}})
+	event_objective["steps"] = event_steps
+	objectives[0] = event_objective
+	sequence["objectives"] = objectives
+	sequence["fact_subscriptions"][0] = {
+		"fact_type": "event_result",
+		"payload_equals": {"event_id": "fixture_event"},
+		"handler": "increment_local",
+		"inputs": {"key": "pressure", "amount": 1},
+	}
 	bridged_definition["sequence"] = sequence
 	var applied := SequenceRuntimeScript.apply_command(SequenceRuntimeScript.initial_state(bridged_definition, "bar_node", "event_seed"), bridged_definition, SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "event_bridge:1", {}, "scenario", "command_console"), {"available_funds": 2})
 	var drained := SequenceRuntimeScript.drain_event_requests(_dict(applied.get("state", {})), bridged_definition)
@@ -918,6 +956,39 @@ static func _check_transition_and_event_delivery(failures: Array) -> void:
 	if not bool(applied.get("ok", false)) or _array(drained.get("requests", [])).size() != 1 or not _array(drained_again.get("requests", [])).is_empty():
 		failures.append("Scenario event bridge did not publish one durable correlated request.")
 	var delivered_state := _dict(drained.get("state", {}))
+	var unrelated_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:unrelated", 1, 1, {"event_id": "unrelated_event", "choice_id": "accept", "resolved": true, "ok": true})
+	var unrelated_queued := SequenceRuntimeScript.enqueue_fact(delivered_state, bridged_definition, unrelated_fact)
+	var unrelated_result := SequenceRuntimeScript.flush_facts(_dict(unrelated_queued.get("state", {})), bridged_definition, 1)
+	if bool(unrelated_result.get("ok", true)) or not _contains_text(_array(unrelated_result.get("errors", [])), "does not match") or int(_dict(_dict(unrelated_result.get("state", {})).get("local_state", {})).get("pressure", -1)) != 0 or not _array(_dict(unrelated_result.get("state", {})).get("event_choice_receipts", [])).is_empty():
+		failures.append("An unrelated event_result with a colliding choice id reached this scenario before payload isolation.")
+	var uncorrelated_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:uncorrelated", 2, 1, {"event_id": "fixture_event", "choice_id": "accept", "resolved": true, "ok": true})
+	var uncorrelated_queued := SequenceRuntimeScript.enqueue_fact(delivered_state, bridged_definition, uncorrelated_fact)
+	var uncorrelated_result := SequenceRuntimeScript.flush_facts(_dict(uncorrelated_queued.get("state", {})), bridged_definition, 1)
+	if bool(uncorrelated_result.get("ok", true)) or not _contains_text(_array(uncorrelated_result.get("errors", [])), "does not match") or int(_dict(_dict(uncorrelated_result.get("state", {})).get("local_state", {})).get("pressure", -1)) != 0 or JSON.stringify(_dict(uncorrelated_result.get("state", {})).get("objective_progress", {})) != JSON.stringify(delivered_state.get("objective_progress", {})):
+		failures.append("A delivered event-bridge request accepted an event_result without its resolution correlation.")
+	var branch_definition := bridged_definition.duplicate(true)
+	var branch_sequence := _dict(branch_definition.get("sequence", {}))
+	var branch_graph := _dict(branch_sequence.get("phase_graph", {}))
+	var branch_phases := _array(branch_graph.get("phases", []))
+	var branch_complication := _dict(branch_phases[1])
+	var complication_branches := _array(branch_complication.get("branches", []))
+	complication_branches.append({"id": "event_collision_to_aftermath", "condition": {"type": "fact", "fact_type": "event_result", "payload_equals": {"event_id": "fixture_event"}}, "next_phase": "aftermath"})
+	branch_complication["branches"] = complication_branches
+	branch_phases[1] = branch_complication
+	var branch_aftermath := _dict(branch_phases[2])
+	var aftermath_branches := _array(branch_aftermath.get("branches", []))
+	aftermath_branches.append({"id": "event_collision_repaired", "condition": {"type": "fact", "fact_type": "event_result", "payload_equals": {"event_id": "fixture_event"}}, "outcome": "repaired", "objective_outcomes": {"clear_exit": "success"}})
+	branch_aftermath["branches"] = aftermath_branches
+	branch_phases[2] = branch_aftermath
+	branch_graph["phases"] = branch_phases
+	branch_sequence["phase_graph"] = branch_graph
+	branch_definition["sequence"] = branch_sequence
+	var branch_uncorrelated_result := SequenceRuntimeScript.flush_facts(_dict(uncorrelated_queued.get("state", {})), branch_definition, 1)
+	if bool(branch_uncorrelated_result.get("ok", true)) or not _contains_text(_array(branch_uncorrelated_result.get("errors", [])), "does not match"):
+		failures.append("Uncorrelated event-result branch fixture was not rejected.")
+	for stable_key in ["phase_id", "status", "local_state", "objective_progress", "resolved_branches", "resolved_outcomes", "semantic_state"]:
+		if JSON.stringify(_dict(branch_uncorrelated_result.get("state", {})).get(stable_key)) != JSON.stringify(delivered_state.get(stable_key)):
+			failures.append("Uncorrelated event-result isolation ran a handler, objective step, or branch before rejection (%s)." % stable_key)
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("ENV06-6-EVENT-BRIDGE", RunState.custom_challenge("env06_6_event_bridge", "ENV06-6-EVENT-BRIDGE", {"fixture": true}))
 	run_state.current_environment = {
@@ -934,8 +1005,14 @@ static func _check_transition_and_event_delivery(failures: Array) -> void:
 	var correlated_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:correlated", 1, 1, {"event_id": "fixture_event", "choice_id": "accept", "resolution_id": "fixture_resolution", "resolved": true, "ok": true})
 	var correlated_queued := SequenceRuntimeScript.enqueue_fact(delivered_state, bridged_definition, correlated_fact)
 	var correlated_result := SequenceRuntimeScript.flush_facts(_dict(correlated_queued.get("state", {})), bridged_definition, 1)
-	if not bool(correlated_result.get("ok", false)) or not _array(_dict(correlated_result.get("state", {})).get("event_choice_receipts", [])).has("fixture_resolution:accept"):
+	var correlated_state := _dict(correlated_result.get("state", {}))
+	if not bool(correlated_result.get("ok", false)) or not _array(correlated_state.get("event_choice_receipts", [])).has("fixture_resolution:accept") or int(_dict(correlated_state.get("local_state", {})).get("pressure", -1)) != 1 or not _array(_dict(_dict(correlated_state.get("objective_progress", {})).get("clear_exit", {})).get("completed_steps", [])).has("record_event_choice"):
 		failures.append("Scenario event bridge did not accept its delivered correlated event result.")
+	var consumed_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:consumed_again", 2, 1, {"event_id": "fixture_event", "choice_id": "conflicting_choice", "resolution_id": "fixture_resolution", "resolved": true, "ok": true})
+	var consumed_queued := SequenceRuntimeScript.enqueue_fact(correlated_state, bridged_definition, consumed_fact)
+	var consumed_result := SequenceRuntimeScript.flush_facts(_dict(consumed_queued.get("state", {})), bridged_definition, 1)
+	if bool(consumed_result.get("ok", true)) or not _contains_text(_array(consumed_result.get("errors", [])), "does not match") or int(_dict(_dict(consumed_result.get("state", {})).get("local_state", {})).get("pressure", -1)) != 1 or _array(_dict(consumed_result.get("state", {})).get("event_choice_receipts", [])).size() != 1:
+		failures.append("A consumed event resolution reran under a fresh fact id or conflicting choice.")
 	var mismatched_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:mismatched", 2, 1, {"event_id": "fixture_event", "choice_id": "accept", "resolution_id": "wrong_resolution", "resolved": true, "ok": true})
 	var mismatched_queued := SequenceRuntimeScript.enqueue_fact(delivered_state, bridged_definition, mismatched_fact)
 	var mismatched_result := SequenceRuntimeScript.flush_facts(_dict(mismatched_queued.get("state", {})), bridged_definition, 1)
@@ -987,7 +1064,10 @@ static func _runtime_definition() -> Dictionary:
 	graph["phases"] = phases
 	sequence["phase_graph"] = graph
 	sequence["objectives"] = [{"id": "clear_exit", "label": "Keep the exit clear", "progress_label": "Exit lane", "steps": [{"id": "move_chair", "label": "Move the chair", "kind": "command", "command_id": "prepare"}], "outcomes": ["success", "failure", "ignore", "cancel"]}]
-	sequence["fact_subscriptions"] = [{"fact_type": "heat_changed", "handler": "set_local", "inputs": {"key": "pressure", "value_from_payload": "current"}}]
+	sequence["fact_subscriptions"] = [
+		{"fact_type": "event_result", "payload_equals": {"event_id": "fixture_event"}},
+		{"fact_type": "heat_changed", "handler": "set_local", "inputs": {"key": "pressure", "value_from_payload": "current"}},
+	]
 	var cleanup := _dict(sequence.get("cleanup", {}))
 	var cleanup_operations := _array(cleanup.get("operations", []))
 	cleanup_operations.append({"family": "interaction_ops", "op": "remove", "receipt_id": "cleanup_command_console", "owner_namespace": "scenario", "stable_object_id": "command_console"})
@@ -1073,7 +1153,7 @@ static func _fixture_definition() -> Dictionary:
 			"mechanic_tags": ["room_route", "multi_step"],
 			"sequence_signature": "route-protection-choice-aftermath",
 			"owner_exceptions": [],
-			"fact_subscriptions": ["event_result", "travel_departed", "heat_changed"],
+			"fact_subscriptions": [{"fact_type": "event_result", "payload_equals": {"event_id": "fixture_event"}}, "travel_departed", "heat_changed"],
 			"completion_contract": {
 				"arrival_readable": true, "semantic_changes": true, "scenario_interaction": true,
 				"action_boundaries": true, "choice_or_failure": true, "material_outcomes": true,
