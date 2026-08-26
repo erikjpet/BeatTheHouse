@@ -1128,3 +1128,17 @@ their own detailed handoffs and test evidence.
   values `3905d124...`/`4a5dd092...`. No golden edit, rerun or top-level Smoke
   occurred. Exact head and DLL remain clean/unchanged; host is zero/HOLD. A
   read-only exact structural-delta review is required before any refresh.
+- 2026-08-26: Author and independent golden audits reject a mechanical refresh
+  from opaque hashes alone. History strongly identifies stale pusher9 state:
+  `1bf14138` authored the current pusher8 hashes, then `21ccef09` changed pusher9
+  opening generation/geometry without refreshing this UI golden; effective f072
+  retains 21c after reverting a0. But the failure report cannot prove path
+  confinement, and later pusher10 refresh `4b03f439` is not reusable. Since
+  final pusher integration is not imminent enough to unblock Wave 1, primary
+  selects an isolated branch-matching native structural diagnostic: compare
+  exact pre-pusher9 `1bf14138` with exact f072, repeat f072, and require every
+  byte difference to be confined to current-environment and duplicated bar-node
+  Coin Pusher `settled_state`. Temporary diagnostics are non-acceptance and must
+  be removed. Only after that proof may the two hashes plus split provenance
+  (`travel-scalars@9cff9b23;full-generated-state@21ccef09`) be proposed; final
+  pusher's later state must win semantically when it lands.
