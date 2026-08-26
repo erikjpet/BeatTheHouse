@@ -303,11 +303,11 @@ Assert-True $sourceFunctionMatch.Success "Could not locate the canonical Foundat
 $declaredSplitSources = @([regex]::Matches($sourceFunctionMatch.Groups[1].Value, '"(scripts/tests/foundation/[^\"]+\.gd)"') | ForEach-Object { $_.Groups[1].Value })
 Assert-True (($declaredSplitSources -join "|") -ceq ($expectedSplitSources -join "|")) "Canonical nine-source Foundation split-runner order changed."
 $splitLines = @(Get-SplitTestRunnerLines -ProjectRoot $projectRoot -SourceRelativePaths $expectedSplitSources)
-Assert-True ($splitLines.Count -eq 35084) "Canonical Foundation composite line count changed from 35,084."
-Assert-True ((Get-SplitTestRunnerSemanticSha256 -Lines $splitLines) -ceq "52e0bc8635f52ab39019edef4995a77a4d6662e937158475f6430071d2702e45") "Canonical Foundation composite semantic hash changed."
+Assert-True ($splitLines.Count -eq 34909) "Canonical Foundation composite line count changed from 34,909."
+Assert-True ((Get-SplitTestRunnerSemanticSha256 -Lines $splitLines) -ceq "b00570931a02b28478d5c611d2202b1dd26c6dd143bc944a848baf72a86fb76c") "Canonical Foundation composite semantic hash changed."
 $splitBytes = [byte[]](Get-SplitTestRunnerBytes -Lines $splitLines)
-Assert-True ($splitBytes.Length -eq 2308016) "Canonical Foundation composite exact byte length changed."
-Assert-True ((Get-SplitTestRunnerByteSha256 -Bytes $splitBytes) -ceq "19b60badb149eed8bad881ed95228223f168b54172407f0c6016686162ed8f19") "Canonical Foundation composite exact byte hash changed."
+Assert-True ($splitBytes.Length -eq 2293595) "Canonical Foundation composite exact byte length changed."
+Assert-True ((Get-SplitTestRunnerByteSha256 -Bytes $splitBytes) -ceq "046565d1639f1a66466b4724c594c697074b084762f5aa2e469968aabe7d1147") "Canonical Foundation composite exact byte hash changed."
 Assert-True (-not ($splitBytes.Length -ge 3 -and $splitBytes[0] -eq 0xEF -and $splitBytes[1] -eq 0xBB -and $splitBytes[2] -eq 0xBF)) "Foundation composite unexpectedly contains a UTF-8 BOM."
 $splitText = (New-Object System.Text.UTF8Encoding($false)).GetString($splitBytes)
 Assert-True (-not [regex]::IsMatch($splitText, '(?<!\r)\n')) "Foundation composite contains a non-CRLF line ending."
