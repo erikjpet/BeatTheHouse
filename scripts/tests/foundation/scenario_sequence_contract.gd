@@ -248,6 +248,38 @@ static func _check_competing_interaction_overlay_priorities(failures: Array) -> 
 		or not _contains_text(_array(replacement_result.get("errors", [])), "owned by sweep"):
 		failures.append("Replacement winner precedence did not follow its public source identity.")
 
+	var collision_base := _interaction_record("base", "augment_collision", "Collision target", true)
+	collision_base["available_actions"] = [{"id": "activate", "label": "Activate", "input_action": "confirm", "non_color_state": "ready"}]
+	var base_collision := _priority_overlay("sweep", "augment", "base", "augment_collision", "sweep")
+	base_collision["available_actions"] = [
+		{"id": "activate", "label": "Colliding activate", "input_action": "confirm", "non_color_state": "ready"},
+		{"id": "sweep_unique", "label": "Sweep unique", "input_action": "confirm", "non_color_state": "ready"},
+	]
+	var base_collision_result := OperationRegistryScript.resolve_interactions([collision_base], [base_collision])
+	var base_collision_record := _dict(_array(base_collision_result.get("records", []))[0])
+	if bool(base_collision_result.get("ok", true)) \
+		or not _array(base_collision_result.get("accepted_overlay_source_identities", [])).is_empty() \
+		or _array(base_collision_record.get("available_actions", [])).size() != 1 \
+		or JSON.stringify(base_collision_record).contains("sweep_unique"):
+		failures.append("Base-action collision did not reject the whole augment atomically.")
+
+	var equal_a := _priority_overlay("scenario", "augment", "base", "equal_augment", "equal")
+	equal_a["stable_object_id"] = "a_equal_augment"
+	equal_a["available_actions"] = [{"id": "duplicate_action", "label": "A duplicate", "input_action": "confirm", "non_color_state": "ready"}]
+	var equal_z := equal_a.duplicate(true)
+	equal_z["stable_object_id"] = "z_equal_augment"
+	equal_z["available_actions"] = [{"id": "duplicate_action", "label": "Z duplicate", "input_action": "confirm", "non_color_state": "ready"}]
+	var equal_base := _interaction_record("base", "equal_augment", "Equal target", true)
+	var equal_forward := OperationRegistryScript.resolve_interactions([equal_base], [equal_z, equal_a])
+	var equal_reverse := OperationRegistryScript.resolve_interactions([equal_base], [equal_a, equal_z])
+	var equal_record := _dict(_array(equal_forward.get("records", []))[0])
+	if JSON.stringify(equal_forward) != JSON.stringify(equal_reverse) \
+		or bool(equal_forward.get("ok", true)) \
+		or _array(equal_forward.get("accepted_overlay_source_identities", [])) != ["scenario::a_equal_augment"] \
+		or _array(equal_record.get("available_actions", [])).size() != 2 \
+		or not _contains_text(_array(equal_forward.get("errors", [])), "duplicate_action collides"):
+		failures.append("Same-priority duplicate augment action did not preserve the deterministic first winner/error.")
+
 
 static func _check_golden_operation_state(state: Dictionary, failures: Array) -> void:
 	var scene := _dict(state.get("scene_objects", {}))
@@ -332,6 +364,19 @@ static func _check_negative_fixtures(failures: Array) -> void:
 	empty_event_bridge["sequence"]["phase_graph"]["phases"][0]["interaction_ops"][1]["interaction"]["available_actions"][0]["inputs"] = {"event_id": "fixture_event", "resolution_id": ""}
 	if not _contains_text(SequenceSchemaScript.validate_definition(empty_event_bridge, OperationRegistryScript), "non-empty stable event_id and resolution_id"):
 		failures.append("Sequence schema accepted an event bridge without a durable resolution id.")
+	var broad_only_event_bridge := _runtime_definition()
+	broad_only_event_bridge["sequence"]["phase_graph"]["phases"][0]["interaction_ops"][1]["interaction"]["available_actions"][0]["handler"] = "event_bridge"
+	broad_only_event_bridge["sequence"]["phase_graph"]["phases"][0]["interaction_ops"][1]["interaction"]["available_actions"][0]["inputs"] = {"event_id": "fixture_event", "resolution_id": "fixture_resolution"}
+	var broad_bridge_errors := SequenceSchemaScript.validate_definition(broad_only_event_bridge, OperationRegistryScript)
+	if not _contains_text(broad_bridge_errors, "requires an exact event_result authorizer"):
+		failures.append("Sequence schema accepted a correlated event bridge with only broad observers.")
+	var exact_event_bridge := broad_only_event_bridge.duplicate(true)
+	exact_event_bridge["sequence"]["fact_subscriptions"].append({
+		"fact_type": "event_result",
+		"payload_equals": {"event_id": "fixture_event", "choice_id": "accept", "resolution_id": "fixture_resolution", "resolved": true, "ok": true},
+	})
+	if _contains_text(SequenceSchemaScript.validate_definition(exact_event_bridge, OperationRegistryScript), "requires an exact event_result authorizer"):
+		failures.append("Sequence schema rejected a correlated event bridge with an exact authored result predicate.")
 	var dead_end := _fixture_definition()
 	dead_end["sequence"]["phase_graph"]["phases"][0]["branches"] = []
 	if not _contains_text(SequenceSchemaScript.validate_definition(dead_end, OperationRegistryScript), "dead end"):

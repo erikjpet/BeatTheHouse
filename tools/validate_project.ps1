@@ -152,12 +152,20 @@ foreach ($requiredAuditSeam in @(
 $scenarioContractSource = Get-Content -LiteralPath (Join-Path $root "scripts/tests/foundation/scenario_sequence_contract.gd") -Raw
 foreach ($requiredGrowthProbe in @(
     'for rollout_count_value in [13, 55]',
-    'hostile_fixture_report_for_definitions(reversed_definitions)',
-    'package_for_scenario(DELIVERY_SCENARIO_ID, expanded_catalog)',
-    '"label": "unsupported_choice"'
+	'hostile_fixture_report_for_definitions(reversed_definitions)',
+	'package_for_scenario(DELIVERY_SCENARIO_ID, expanded_catalog)',
+	'"label": "unsupported_choice"',
+	'base_collision_result',
+	'broad_only_event_bridge'
 )) {
     if (-not $scenarioContractSource.Contains($requiredGrowthProbe)) {
         $failures.Add("Scenario sequence contract is missing growth/authority probe: $requiredGrowthProbe")
+    }
+}
+$scenarioPresentationSource = Get-Content -LiteralPath (Join-Path $root "scripts/tests/foundation/scenario_presentation_contract.gd") -Raw
+foreach ($requiredOverlayProbe in @('collision_overlay', 'z_equal_augment', 'sweep_unique')) {
+    if (-not $scenarioPresentationSource.Contains($requiredOverlayProbe)) {
+        $failures.Add("Scenario presentation contract is missing collision probe: $requiredOverlayProbe")
     }
 }
 
