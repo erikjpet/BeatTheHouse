@@ -58,6 +58,7 @@ func current_snapshot() -> Dictionary:
 		"route_ids": _row_ids(_array(model.get("routes", []))),
 		"release_section_count": _array(model.get("release_0_6", [])).size(),
 		"visible_ledger_text": _ledger_text(),
+		"release_row_geometry": _release_row_geometry(),
 		"history_count": _array(model.get("history", [])).size(),
 		"challenge_count": _array(model.get("challenges", [])).size(),
 		"small_screen_mode": small_screen_mode,
@@ -219,11 +220,16 @@ func _render_release_ledger() -> void:
 		for row_value in _array(section.get("rows", [])):
 			var row := _dict(row_value)
 			var line := HBoxContainer.new()
+			line.set_meta("career_release_row", true)
 			line.add_theme_constant_override("separation", VisualStyle.SPACE_3)
 			var label := FoundationWidgetsScript.muted_label(str(row.get("label", "")), VisualStyle.TYPE_SMALL)
 			label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			label.size_flags_stretch_ratio = 0.58
 			line.add_child(label)
 			var value := FoundationWidgetsScript.label(str(row.get("value", "")), VisualStyle.TYPE_SMALL)
+			value.custom_minimum_size = Vector2(VisualStyle.SPACE_9 * 4.0, 0)
+			value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			value.size_flags_stretch_ratio = 0.42
 			value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 			value.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			FoundationWidgetsScript.set_control_font_color(value, VisualStyle.role("selected"))
@@ -326,3 +332,30 @@ func _ledger_text() -> String:
 			var row := _dict(row_value)
 			parts.append("%s %s" % [str(row.get("label", "")), str(row.get("value", ""))])
 	return " | ".join(parts)
+
+
+func _release_row_geometry() -> Array:
+	var rows: Array = []
+	if release_grid == null:
+		return rows
+	for node in release_grid.find_children("*", "HBoxContainer", true, false):
+		if not bool(node.get_meta("career_release_row", false)) or node.get_child_count() != 2:
+			continue
+		var label := node.get_child(0) as Label
+		var value := node.get_child(1) as Label
+		if label == null or value == null:
+			continue
+		var font := value.get_theme_font("font")
+		var font_size := value.get_theme_font_size("font_size")
+		rows.append({
+			"label": label.text,
+			"value": value.text,
+			"line_width": node.size.x,
+			"label_width": label.size.x,
+			"value_width": value.size.x,
+			"value_text_width": font.get_string_size(value.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x,
+			"line_count": value.get_line_count(),
+			"visible_line_count": value.get_visible_line_count(),
+			"clip_text": value.clip_text,
+		})
+	return rows

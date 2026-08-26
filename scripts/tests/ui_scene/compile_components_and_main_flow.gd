@@ -503,6 +503,8 @@ func _check_career_stats_screen_component() -> bool:
 		if ledger_text.find(required) == -1:
 			push_error("Career ledger truncated or omitted an essential value '%s': %s." % [required, ledger_text])
 			return false
+	if not _career_release_geometry_is_legible(snapshot, "1280x720 standard"):
+		return false
 	screen.size = Vector2(920, 540)
 	screen.set_small_screen_mode(true)
 	screen.set_reduce_motion(true)
@@ -511,13 +513,49 @@ func _check_career_stats_screen_component() -> bool:
 	if not bool(small_snapshot.get("small_screen_mode", false)) or not bool(small_snapshot.get("reduce_motion", false)) or str(small_snapshot.get("visible_ledger_text", "")) != ledger_text:
 		push_error("Career ledger lost a value in small/reduced-motion mode: %s." % JSON.stringify(small_snapshot))
 		return false
+	if not _career_release_geometry_is_legible(small_snapshot, "920x540 small/reduced-motion"):
+		return false
 	VisualStyleScript.set_high_contrast_enabled(true)
-	if str(screen.current_snapshot().get("visible_ledger_text", "")) != ledger_text:
+	await process_frame
+	var contrast_snapshot := screen.current_snapshot()
+	if str(contrast_snapshot.get("visible_ledger_text", "")) != ledger_text:
 		push_error("Career ledger changed semantic values in high-contrast/color-safe mode.")
+		return false
+	if not _career_release_geometry_is_legible(contrast_snapshot, "920x540 high-contrast/color-safe"):
 		return false
 	VisualStyleScript.set_high_contrast_enabled(false)
 	screen.queue_free()
 	await process_frame
+	return true
+
+
+func _career_release_geometry_is_legible(snapshot: Dictionary, mode_label: String) -> bool:
+	var rows: Array = snapshot.get("release_row_geometry", []) if typeof(snapshot.get("release_row_geometry", [])) == TYPE_ARRAY else []
+	if rows.size() != 13:
+		push_error("Career ledger geometry did not expose all 13 rendered rows in %s: %s." % [mode_label, JSON.stringify(rows)])
+		return false
+	var found_inner_circle := false
+	for row_value in rows:
+		if typeof(row_value) != TYPE_DICTIONARY:
+			push_error("Career ledger geometry emitted a malformed row in %s." % mode_label)
+			return false
+		var row: Dictionary = row_value
+		var value_width := float(row.get("value_width", 0.0))
+		var text_width := float(row.get("value_text_width", 0.0))
+		if value_width < VisualStyle.SPACE_9 * 4.0 - 1.0 \
+				or value_width + 1.0 < minf(text_width, VisualStyle.SPACE_9 * 4.0) \
+				or bool(row.get("clip_text", true)) \
+				or int(row.get("visible_line_count", 0)) != int(row.get("line_count", -1)):
+			push_error("Career ledger allocated a character-wide or clipped value column in %s: %s." % [mode_label, JSON.stringify(row)])
+			return false
+		if str(row.get("value", "")) == "Inner Circle":
+			found_inner_circle = true
+			if int(row.get("line_count", 0)) != 1 or value_width + 1.0 < text_width:
+				push_error("Career ledger did not keep Inner Circle legible on one rendered line in %s: %s." % [mode_label, JSON.stringify(row)])
+				return false
+	if not found_inner_circle:
+		push_error("Career ledger geometry did not include the rendered Inner Circle value in %s." % mode_label)
+		return false
 	return true
 
 
