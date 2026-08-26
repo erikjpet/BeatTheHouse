@@ -235,3 +235,11 @@ their own detailed handoffs and test evidence.
   and forwards it; production callers remain on the unchanged default. The new
   exact head is back under independent cumulative review. No evidence from the
   rejected head is accepted.
+- 2026-08-26: Independent cumulative re-review issued
+  `ACCEPT d009f69f49b910edfd6815926b77264e9fcaddc4` with no P0-P3 findings.
+  The wrapper now accepts and forwards the default-false diagnostic flag; only
+  the foundation guard and standalone audit pass `true`. Production settling,
+  assertions, restore/migration callers, compact snapshots and canonical
+  digests remain unchanged. This is static acceptance only: all affected
+  runtime evidence is being refreshed on the accepted exact head, and merge/EV
+  remain blocked until those gates pass.
