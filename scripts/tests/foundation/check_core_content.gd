@@ -30,6 +30,7 @@ const NumbersContractScript := preload("res://scripts/tests/foundation/numbers_c
 const Tier2ScenarioContractScript := preload("res://scripts/tests/foundation/tier2_scenario_contract.gd")
 const ScenarioBacklogContractScript := preload("res://scripts/tests/foundation/scenario_backlog_contract.gd")
 const ScenarioSequenceContractScript := preload("res://scripts/tests/foundation/scenario_sequence_contract.gd")
+const EnvironmentSemanticInventoryContractScript := preload("res://scripts/tests/foundation/environment_semantic_inventory_contract.gd")
 const InteractableEventClassGuardScript := preload("res://scripts/tests/foundation/interactable_event_class_guard.gd")
 const GameActivationClassGuardScript := preload("res://scripts/tests/foundation/game_activation_class_guard.gd")
 const Onboarding06ContractScript := preload("res://scripts/tests/foundation/onboarding_06_contract.gd")
@@ -773,6 +774,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	Tier2ScenarioContractScript.check(library, failures)
 	ScenarioBacklogContractScript.check(library, failures)
 	ScenarioSequenceContractScript.check(library, failures)
+	EnvironmentSemanticInventoryContractScript.check(library, failures)
 
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CONTENT-CHECK")
