@@ -2323,17 +2323,17 @@ func _check_delivery_closed_next_hop_nonblocking(app: Control) -> bool:
 
 
 func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bool:
-	# This hermetic integrated-tree capture was reproduced at commit
-	# 9cff9b2309d70c6c93ab34cc60cc18f79f56201b with meta injection explicitly
-	# disabled. Hashes cover each full serialized value; the integrated scenario
-	# catalog is included with no field exclusions or post-change twin values.
+	# The ordinary-travel scalar baseline was first captured at 9cff9b23. The
+	# full generated-state hashes include the pusherv3_10 physical-opening state
+	# introduced at 258fd9cb. Meta injection remains explicitly disabled; hashes
+	# cover each full serialized value with no field exclusions or twin values.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "cc863db9425747f1ff8e519795c1fd38f15536e08d47fdba858c07b380755234",
+		"current_environment_sha256": "8e762b57aa344d98b9480625f7a8b8d8406ea16da40b968414fd60bf25b6b9e0",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
-		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
+		"baseline_scope": "travel-scalars@9cff9b23;full-generated-state@258fd9cb",
 		"rng_state": 70883311,
 		"route_choice_sha256": "3fd96381385eb4ba8868bddac39f233b6c62d586e0cd4b249f45e050cb10657b",
 		"seed": "DELIVERY-ORDINARY-BASELINE",
@@ -2341,7 +2341,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0801d8c617e0ab15f304eae949a7c70fae01fc4031f24580d34f74e2dedd72ce",
-		"world_map_sha256": "69f0ec6470eaf7c334f2897548a9846a4324d9d3f3d20c3cb213bc7371129597",
+		"world_map_sha256": "37692cdcc8eb7d50fa9962fc6decae028ec1c24c163fd3af7bc57bdce81f076c",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
@@ -2382,7 +2382,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"current_environment_sha256": JSON.stringify(run_state.current_environment).sha256_text(),
 		"current_world_node_id": run_state.current_world_node_id(),
 		"heat_delta": run_state.suspicion_level() - heat_before,
-		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
+		"baseline_scope": "travel-scalars@9cff9b23;full-generated-state@258fd9cb",
 		"rng_state": run_state.rng_state,
 		"route_choice_sha256": JSON.stringify(choice).sha256_text(),
 		"seed": "DELIVERY-ORDINARY-BASELINE",
