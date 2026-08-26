@@ -534,3 +534,22 @@ their own detailed handoffs and test evidence.
   One clean fresh-directory exact-head Systems retry is authorized; another
   budget miss stops without changing the cap. Parity/visual/perf and EV remain
   held.
+- 2026-08-26: The single authorized Systems retry on clean `4b03f439` again
+  passed all 55 assertions and all four shards with zero stderr, but remained a
+  hard timing red at 44.685 seconds, 0.973 seconds above the immutable cap.
+  Checkout and host returned clean/zero; no later pusher gate ran. Further
+  unchanged retry and budget changes are forbidden. An independent static
+  diagnosis is identifying the smallest coverage-preserving harness
+  optimization while pusher parity/visual/performance and EV remain held.
+- 2026-08-26: Wave 1 host ownership passed to `meta06_1` after exact preflight:
+  `codex/cross-meta` remains on base `3d4a41da` with exactly its 11 owned
+  modified/untracked paths, clean diff check and zero Godot/compiler processes.
+  `HOST RELEASE: META06_1` authorizes only its prompt-required serial validation
+  and capture gates. Balance, depth and pusher remain held.
+- 2026-08-26: Depth evidence remediation reports clean static head
+  `c04cc20083c0fa76fe6b33fcd0d07e830a22bb7e`, one nine-path commit from the
+  independently accepted same-boundary base `571a9243`. Author full-range
+  self-review found no P1/P2; the static validator passed in 53.0 seconds and
+  AST/Node/diff/scope checks passed. Independent exact-head static review is in
+  progress. Formal env06_6 acceptance, merge, board changes and host eligibility
+  remain withheld.
