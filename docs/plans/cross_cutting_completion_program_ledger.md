@@ -172,3 +172,10 @@ their own detailed handoffs and test evidence.
   left branch-matching parse, suites, native/Web parity, budgets, and fresh
   uncontested 600,000-play economics pending. A non-author exact-head static
   review began; neither merge nor runtime acceptance is implied.
+- 2026-08-26: Independent exact-head review returned STATIC ACCEPT FOR RUNTIME
+  on clean `66f6560f`: no P0, P1, or P2 finding. Three P3 hygiene items remain:
+  label direct cup-mouth capture fixtures as rendering-only and use fresh legal
+  production-path data for reachability; reconcile the already answered owner
+  question in the primary board edit; and replace pre-reopen prompt evidence
+  before archive. Final ACCEPT and merge remain blocked on the complete clean-
+  host exact-head runtime battery.
