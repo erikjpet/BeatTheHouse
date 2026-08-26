@@ -1044,3 +1044,15 @@ their own detailed handoffs and test evidence.
   pusher prompt/row on this line and removes 15 stale PNGs plus one manifest;
   `codex/cross-board` remains separate and untouched. All prior runtime is
   nontransferable; fresh exact-head review and runtime are pending.
+- 2026-08-26: Fresh nonauthor review issued
+  `REJECT 37f10ddaf8f654ee942b215b71cdcebde5be8f9c` with one P1 and no
+  P0/P2/P3. Revert algebra, 34-path scope, evidence deletion, four full-runner
+  pins, focused-source identity, AST, hostile contracts, validation and diff
+  checks all pass. The normal revert nevertheless restored factually stale
+  pusher coordination text: the active-board row became TODO/unclaimed and the
+  prompt reopened stack/cup questions whose owner rulings and active ownership
+  are already canonical. That state risks a duplicate claim and discards
+  binding decisions. Runtime remains held. Author is assigned a separate
+  docs-only semantic correction that keeps implementation unaccepted, restores
+  IN_PROGRESS/active ownership and answered rulings, records truthful work-log
+  provenance, and imports no pusher product or stale evidence.
