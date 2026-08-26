@@ -284,3 +284,12 @@ their own detailed handoffs and test evidence.
   bar world copy. Labels, seeds, schemas and unaffected hashes are unchanged.
   Exact head `a3ae328e8761e3efba65d03f96865f515bcf51f5` is running Systems and awaits
   its own independent cumulative review. No runtime evidence is accepted yet.
+- 2026-08-26: `/root/fix06_4_blackjack_baseline` completed static work and the
+  mandatory self-review on clean `codex/cross-remediation` head
+  `838a595bf7ddf3facd77dc63217d704cbc706618` (base `0bcbda20`, one commit,
+  three files, +39/-3, clean diff check). The harness mirrors production exact
+  hover hits and the count guard requires hover activation; generic Heat
+  backoff honors Blackjack's existing tutorial-reprieve result marker, while a
+  post-completion unmarked negative case still proves persistent barring.
+  Runtime is correctly pending under HOST HOLD. `/root/review_fix06_4` is
+  performing independent exact-head review; no merge is authorized.
