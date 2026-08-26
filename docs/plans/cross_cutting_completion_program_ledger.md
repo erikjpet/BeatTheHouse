@@ -415,6 +415,11 @@ their own detailed handoffs and test evidence.
   zero awake/unsupported/tray/gutter/kinetic residue, and five parked periods
   byte-stable on each machine's seed-zero context. Full Foundation is now
   running serially. EV remains unreleased.
+- 2026-08-26: Full Foundation stayed within budget and failed only the same two
+  pre-pusher Blackjack baseline assertions already routed to accepted static
+  `fix06_4`; no new pusher or shared failure appeared. The dedicated Contracts
+  suite is running as the authoritative shared-contract gate. EV remains
+  unreleased.
 - 2026-08-26: Depth immediately corrected that readiness claim after a
   read-only executable-gate audit reopened `env06_6` at `aa179f11` with three
   P1 evidence-harness gaps: no native/Web exact-sequence parity producer, no
