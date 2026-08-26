@@ -910,3 +910,16 @@ their own detailed handoffs and test evidence.
   now limited to eliminating eagerly constructed Foundation fixtures for suites
   whose exact registration paths never consume them; no budget, assertion,
   source selection or rerun is authorized.
+- 2026-08-26: Independent fourth diagnosis issued `REJECT` on lazy fixture
+  initialization with one P1 and one contingent P2. Across the four stable red
+  reports, report duration minus the two exact checks leaves only 134-163ms for
+  all content/fixture construction, initial fingerprints, setup and dispatch;
+  that cannot close a 409ms minimum deficit, and two remaining fingerprints of
+  an eight-record fixture are negligible beside the retained ~745KB production
+  fingerprint. Although an exhaustive getter/firewall design could make the
+  cleanup semantically safe, using it as this timing fix would rely on variance.
+  No edit or runtime is authorized. The next bounded diagnosis targets the
+  measured 9.569-second startup/parse interval with a suite-scoped generated
+  composite that retains exact owning source bodies and uses fail-closed stubs
+  only for compiler-visible omitted providers; it must prove identical
+  registered/executed Blackjack checks and cannot alter budgets or assertions.
