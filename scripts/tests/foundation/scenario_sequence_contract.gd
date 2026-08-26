@@ -5,18 +5,40 @@ const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_sche
 const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const HostTransactionScript := preload("res://scripts/core/scenario_host_transaction.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const RolloutManifestScript := preload("res://scripts/core/scenario_sequence_rollout_manifest.gd")
 
 
-static func check(_library: ContentLibrary, failures: Array) -> void:
+static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_schema(failures)
+	_check_catalog_rollout(library, failures)
 	_check_registered_operations(failures)
 	_check_interaction_identity(failures)
 	_check_negative_fixtures(failures)
 	_check_lifecycle_commands(failures)
+	_check_handler_reducer_contracts(failures)
 	_check_serialized_fact_ingress(failures)
+	_check_atomic_runtime_failures(failures)
 	_check_sequence_persistence_seam(failures)
 	_check_authoritative_receipt_capacity(failures)
 	_check_host_transaction_seam(failures)
+
+
+static func _check_catalog_rollout(library: ContentLibrary, failures: Array) -> void:
+	var definitions: Array = []
+	for pool_value in library.environment_scenarios.values():
+		definitions.append_array(_array(pool_value))
+	var report := SequenceSchemaScript.catalog_rollout_report(definitions, RolloutManifestScript.expected_ids(), OperationRegistryScript, {}, RolloutManifestScript.required_sequence_ids())
+	if RolloutManifestScript.EXPECTED_COUNT != 55 or RolloutManifestScript.expected_ids().size() != 55 or not bool(report.get("ok", false)):
+		failures.append("Production sequence rollout manifest does not enforce the exact 55-id catalog without blocking pending env06_7 packages: %s" % JSON.stringify(report.get("failures", [])))
+	var proof := _fixture_definition()
+	proof["id"] = "proof"
+	var pending := {"id": "pending"}
+	var proof_report := SequenceSchemaScript.catalog_rollout_report([pending, proof], ["pending", "proof"], OperationRegistryScript, {}, ["proof"])
+	if not bool(proof_report.get("ok", false)):
+		failures.append("A valid declared sequence proof was blocked by an explicitly pending catalog id.")
+	var missing_report := SequenceSchemaScript.catalog_rollout_report([pending, {"id": "proof"}], ["pending", "proof"], OperationRegistryScript, {}, ["proof"])
+	if bool(missing_report.get("ok", true)) or not _contains_text(_array(missing_report.get("failures", [])), "missing its required sequence"):
+		failures.append("Rollout manifest accepted a missing sequence-required proof.")
 
 
 static func _check_schema(failures: Array) -> void:
@@ -43,6 +65,14 @@ static func _check_schema(failures: Array) -> void:
 	identity_renamed["sequence"]["phase_graph"]["phases"][0]["scene_ops"][0]["receipt_id"] = "renamed_receipt"
 	if SequenceSchemaScript.signature_text(definition) != SequenceSchemaScript.signature_text(identity_renamed):
 		failures.append("Calculated mechanic signature changes under stable-id/receipt renaming.")
+	var reordered := definition.duplicate(true)
+	reordered["sequence"]["phase_graph"]["phases"].reverse()
+	if SequenceSchemaScript.signature_text(definition) != SequenceSchemaScript.signature_text(reordered):
+		failures.append("Calculated mechanic signature changes under phase reordering.")
+	var mismatched_signature := definition.duplicate(true)
+	mismatched_signature["sequence"]["sequence_signature"] = "forged"
+	if not _contains_text(SequenceSchemaScript.validate_definition(mismatched_signature, OperationRegistryScript), "sequence_signature mismatch"):
+		failures.append("Sequence schema accepted an authored/calculated signature mismatch.")
 	var boundary_expectations := [[0.599, "pass"], [0.600, "warning"], [0.719, "warning"], [0.720, "blocking_review"], [0.819, "blocking_review"], [0.820, "fail"]]
 	for expectation_value in boundary_expectations:
 		var expectation := expectation_value as Array
@@ -70,7 +100,7 @@ static func _check_registered_operations(failures: Array) -> void:
 	}
 	if operations != expected:
 		failures.append("Scenario registered operation surface changed: %s." % JSON.stringify(operations))
-	var state: Dictionary = {}
+	var state := _operation_semantic_seed()
 	for family_value in expected.keys():
 		var family := str(family_value)
 		var family_operations: Array = []
@@ -114,8 +144,16 @@ static func _check_registered_operations(failures: Array) -> void:
 	var handlers := OperationRegistryScript.registered_handlers()
 	for handler_id in ["set_local", "increment_local", "complete_objective_step", "record_outcome", "publish_feedback", "request_cleanup", "event_bridge"]:
 		var handler := _dict(handlers.get(handler_id, {}))
-		if handler.is_empty() or str(handler.get("rng", "")) != "none" or not handler.has("persistent"):
+		if handler.is_empty() or str(handler.get("rng", "")) != "none" or not handler.has("persistent") or _array(handler.get("outputs", [])).is_empty():
 			failures.append("Scenario handler %s lacks explicit input/output/persistence/RNG contract." % handler_id)
+	var absent_target := _operation_fixture("scene_ops", "set_state", 9999)
+	var absent_result := OperationRegistryScript.apply_operations(state, "scene_ops", [absent_target], "fixture:node:phase:absent")
+	if bool(absent_result.get("ok", true)) or JSON.stringify(absent_result.get("state", {})) != JSON.stringify(state):
+		failures.append("Scenario operation synthesized an undeclared absent target.")
+	var alias_left := OperationRegistryScript.structural_receipt_key("a:b:c:d", "scene_ops", "x:y")
+	var alias_right := OperationRegistryScript.structural_receipt_key("a:b:c:d:x", "scene_ops", "y")
+	if alias_left == alias_right:
+		failures.append("Structural operation receipt identity aliases colon-delimited tuples.")
 
 
 static func _check_interaction_identity(failures: Array) -> void:
@@ -166,6 +204,18 @@ static func _check_interaction_identity(failures: Array) -> void:
 	var inaccessible_result := OperationRegistryScript.resolve_interactions(base, [inaccessible])
 	if bool(inaccessible_result.get("ok", true)) or _array(inaccessible_result.get("records", [])).size() != 1:
 		failures.append("Inaccessible interaction overlay did not fail closed without leaking a record.")
+	var hostile_base := _interaction_record("base", "non_add_base", "Bad base", true)
+	hostile_base["mode"] = "gate"
+	hostile_base["target_owner_namespace"] = "base"
+	hostile_base["target_stable_object_id"] = "exit"
+	if bool(OperationRegistryScript.resolve_interactions([hostile_base], []).get("ok", true)):
+		failures.append("Base interaction accepted a non-add overlay mode.")
+	var competing := gate.duplicate(true)
+	competing["stable_object_id"] = "exit_gate_two"
+	var competing_result := OperationRegistryScript.resolve_interactions(base, [gate, competing])
+	var competing_records := _array(competing_result.get("records", []))
+	if bool(competing_result.get("ok", true)) or competing_records.size() != 1 or not bool(_dict(competing_records[0]).get("enabled", false)):
+		failures.append("Competing interaction overlays did not fail closed before mutating their shared target.")
 
 
 static func _check_golden_operation_state(state: Dictionary, failures: Array) -> void:
@@ -268,7 +318,7 @@ static func _check_negative_fixtures(failures: Array) -> void:
 	if not _contains_text(SequenceSchemaScript.validate_definition(unsubscribed_fact, OperationRegistryScript), "unsubscribed fact"):
 		failures.append("Sequence schema accepted a branch referencing an unsubscribed fact.")
 	var unknown_receipt := _fixture_definition()
-	unknown_receipt["sequence"]["phase_graph"]["phases"][0]["entry_conditions"] = [{"type": "receipt", "receipt_id": "scenario:node:phase:unknown_receipt"}]
+	unknown_receipt["sequence"]["phase_graph"]["phases"][0]["entry_conditions"] = [{"type": "receipt", "receipt_kind": "operation", "family": "scene_ops", "boundary_id": "scenario:node:phase:arrival", "receipt_id": "unknown_receipt"}]
 	if not _contains_text(SequenceSchemaScript.validate_definition(unknown_receipt, OperationRegistryScript), "unknown authored receipt"):
 		failures.append("Sequence schema accepted an unknown receipt reference.")
 	var unknown_outcome := _fixture_definition()
@@ -292,6 +342,16 @@ static func _check_negative_fixtures(failures: Array) -> void:
 	bad_stage.erase("reduced_motion_message")
 	if OperationRegistryScript.validate_operation("transition_ops", bad_stage).is_empty():
 		failures.append("Scenario transition stage accepted an unbounded inaccessible payload.")
+	var cyclic: Dictionary = {}
+	cyclic["cycle"] = cyclic
+	if not _contains_text(OperationRegistryScript.validate_bounded_variant("hostile cycle", cyclic), "cycle"):
+		failures.append("Scenario Variant validation did not reject a recursive container cycle.")
+	var blocked_initial := _runtime_definition()
+	blocked_initial["sequence"]["phase_graph"]["phases"][0]["entry_conditions"] = [{"type": "local_min", "key": "pressure", "value": 1}]
+	blocked_initial["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(blocked_initial)
+	var blocked_state := SequenceRuntimeScript.initial_state(blocked_initial, "bar_node", "blocked_seed")
+	if str(blocked_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or not _contains_text(_array(blocked_state.get("errors", [])), "entry conditions"):
+		failures.append("Failed initial entry conditions silently produced an active partial sequence.")
 
 
 static func _check_lifecycle_commands(failures: Array) -> void:
@@ -327,6 +387,7 @@ static func _check_lifecycle_commands(failures: Array) -> void:
 		["wrong node", SequenceRuntimeScript.command("prepare", "other_node", "arrival", "bad:node", {}, "scenario", "command_console")],
 		["stale", SequenceRuntimeScript.command("prepare", "bar_node", "later", "bad:phase", {}, "scenario", "command_console")],
 		["identity", SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "bad:owner", {}, "intruder", "command_console")],
+		["absent interaction", SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "bad:absent", {}, "scenario", "absent_console")],
 		["unavailable", SequenceRuntimeScript.command("invented", "bar_node", "arrival", "bad:action", {}, "scenario", "command_console")],
 	]
 	var missing_key := SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "", {}, "scenario", "command_console")
@@ -426,6 +487,38 @@ static func _check_serialized_fact_ingress(failures: Array) -> void:
 		failures.append("Scenario fact ingress remained open after terminal cleanup/aftermath.")
 
 
+static func _check_handler_reducer_contracts(failures: Array) -> void:
+	var definition := _runtime_definition()
+	var fixtures := {
+		"set_local": {"key": "pressure", "value": 2},
+		"increment_local": {"key": "pressure", "amount": 1},
+		"complete_objective_step": {"objective_id": "clear_exit", "step_id": "move_chair"},
+		"record_outcome": {"outcome": "repaired"},
+		"publish_feedback": {"message": "Readable feedback."},
+		"request_cleanup": {"reason": "handler"},
+		"event_bridge": {"event_id": "fixture_event", "resolution_id": "leave"},
+	}
+	var contracts := OperationRegistryScript.registered_handlers()
+	for handler_id_value in fixtures.keys():
+		var handler_id := str(handler_id_value)
+		var before := SequenceRuntimeScript.initial_state(definition, "bar_node", "handler_seed")
+		var response := SequenceRuntimeScript._run_handler(before, definition, handler_id, _dict(fixtures.get(handler_id, {})), {})
+		if not bool(response.get("ok", false)):
+			failures.append("Registered handler %s failed its golden reducer fixture." % handler_id)
+			continue
+		var after := _dict(response.get("state", {}))
+		var changed_keys: Array = []
+		for key_value in after.keys():
+			var key := str(key_value)
+			if JSON.stringify(after.get(key)) != JSON.stringify(before.get(key)):
+				changed_keys.append(key)
+		changed_keys.sort()
+		var declared_outputs := _array(_dict(contracts.get(handler_id, {})).get("outputs", []))
+		declared_outputs.sort()
+		if changed_keys != declared_outputs:
+			failures.append("Registered handler %s changed %s but declares outputs %s." % [handler_id, JSON.stringify(changed_keys), JSON.stringify(declared_outputs)])
+
+
 static func _check_sequence_persistence_seam(failures: Array) -> void:
 	var definition := _runtime_definition()
 	var sequence_state := SequenceRuntimeScript.initial_state(definition, "bar_node", "fixture_seed")
@@ -436,6 +529,55 @@ static func _check_sequence_persistence_seam(failures: Array) -> void:
 	var plain := EnvironmentInstanceScript.from_dict({"id": "plain", "archetype_id": "bar", "world_node_id": "bar_node"}).to_dict()
 	if plain.has("scenario_sequence_state") or plain.has("scenario_sequence_projection"):
 		failures.append("No-sequence environment gained dynamic sequence persistence fields.")
+
+
+static func _check_atomic_runtime_failures(failures: Array) -> void:
+	var definition := _runtime_definition()
+	var initial := SequenceRuntimeScript.initial_state(definition, "bar_node", "atomic_seed")
+	var prepared := SequenceRuntimeScript.apply_command(initial, definition, SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "atomic:prepare", {}, "scenario", "command_console"), {"available_funds": 2})
+	var prepared_state := _dict(prepared.get("state", {}))
+	var bad_phase := definition.duplicate(true)
+	bad_phase["sequence"]["phase_graph"]["phases"][1]["scene_ops"] = [_operation_fixture("scene_ops", "set_state", 9999)]
+	var before_phase := JSON.stringify(prepared_state)
+	var failed_phase := SequenceRuntimeScript.apply_command(prepared_state, bad_phase, SequenceRuntimeScript.command("finish", "bar_node", "arrival", "atomic:finish", {}, "scenario", "command_console"), {"available_funds": 4})
+	if bool(failed_phase.get("ok", true)) or JSON.stringify(failed_phase.get("state", {})) != before_phase:
+		failures.append("Failed phase entry committed command, objective, receipt, or semantic state.")
+	var blocked_entry := definition.duplicate(true)
+	blocked_entry["sequence"]["phase_graph"]["phases"][1]["entry_conditions"] = [{"type": "local_min", "key": "pressure", "value": 5}]
+	var failed_entry := SequenceRuntimeScript.apply_command(prepared_state, blocked_entry, SequenceRuntimeScript.command("finish", "bar_node", "arrival", "atomic:entry", {}, "scenario", "command_console"), {"available_funds": 4})
+	if bool(failed_entry.get("ok", true)) or JSON.stringify(failed_entry.get("state", {})) != before_phase:
+		failures.append("Phase entry conditions were not executed atomically.")
+	var receipt_entry := definition.duplicate(true)
+	receipt_entry["sequence"]["phase_graph"]["phases"][1]["entry_conditions"] = [{"type": "receipt", "receipt_kind": "operation", "family": "scene_ops", "boundary_id": "sequence_fixture:bar_node:phase:arrival:initial", "receipt_id": "scene_spawn_100"}]
+	receipt_entry["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(receipt_entry)
+	var receipt_initial := SequenceRuntimeScript.initial_state(receipt_entry, "bar_node", "receipt_entry_seed")
+	var receipt_prepared := SequenceRuntimeScript.apply_command(receipt_initial, receipt_entry, SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "receipt:prepare", {}, "scenario", "command_console"), {"available_funds": 2})
+	var receipt_finished := SequenceRuntimeScript.apply_command(_dict(receipt_prepared.get("state", {})), receipt_entry, SequenceRuntimeScript.command("finish", "bar_node", "arrival", "receipt:finish", {}, "scenario", "command_console"), {"available_funds": 4})
+	if not bool(receipt_finished.get("ok", false)) or str(_dict(receipt_finished.get("state", {})).get("phase_id", "")) != "aftermath":
+		failures.append("Typed operation receipt condition did not match its exact family/boundary/authored id record.")
+	var bad_cleanup := definition.duplicate(true)
+	bad_cleanup["sequence"]["expiry"]["policy"] = "cleanup"
+	bad_cleanup["sequence"]["cleanup"]["operations"].append(_operation_fixture("scene_ops", "set_state", 9999))
+	var failed_expiry := SequenceRuntimeScript.apply_expiry_boundary(initial, bad_cleanup, "night_end")
+	if bool(failed_expiry.get("ok", true)) or JSON.stringify(failed_expiry.get("state", {})) != JSON.stringify(initial):
+		failures.append("Failed expiry cleanup committed partial state or a cleanup receipt.")
+	var bad_fact := bad_cleanup.duplicate(true)
+	bad_fact["sequence"]["fact_subscriptions"] = [{"fact_type": "event_result", "handler": "request_cleanup", "inputs": {"reason": "fact"}}]
+	var queued := SequenceRuntimeScript.enqueue_fact(initial, bad_fact, SequenceRuntimeScript.fact("event_result", "event", "bar_node", "atomic:fact", 1, 1, _fact_payload("event_result")))
+	var queued_state := _dict(queued.get("state", {}))
+	var failed_flush := SequenceRuntimeScript.flush_facts(queued_state, bad_fact, 1)
+	if bool(failed_flush.get("ok", true)) or JSON.stringify(failed_flush.get("state", {})) != JSON.stringify(queued_state) or not _array(failed_flush.get("processed", [])).is_empty():
+		failures.append("Failed fact batch dropped a fact or committed a partial receipt/state change.")
+	var visit := SequenceRuntimeScript.record_visit(initial, definition, "visit_1")
+	var visit_replay := SequenceRuntimeScript.record_visit(_dict(visit.get("state", {})), definition, "visit_1")
+	if not bool(visit.get("ok", false)) or not bool(visit_replay.get("replayed", false)):
+		failures.append("Scenario visit receipt is not stable and replay-safe.")
+	var reentered := SequenceRuntimeScript.apply_reentry(initial, definition, "visit_2")
+	if not bool(reentered.get("ok", false)) or str(reentered.get("policy", "")) != "resume" or _array(_dict(reentered.get("state", {})).get("visit_receipts", [])).size() != 1:
+		failures.append("Scenario partial reentry policy did not execute with a durable visit receipt.")
+	var expired := SequenceRuntimeScript.apply_expiry_boundary(initial, definition, "night_end")
+	if not bool(expired.get("ok", false)) or not bool(_dict(expired.get("state", {})).get("expired", false)) or str(_dict(_dict(_dict(expired.get("state", {})).get("objective_progress", {})).get("clear_exit", {})).get("outcome", "")) != "ignore":
+		failures.append("Scenario expiry policy did not persist its objective outcome.")
 
 
 static func _check_authoritative_receipt_capacity(failures: Array) -> void:
@@ -473,7 +615,7 @@ static func _check_authoritative_receipt_capacity(failures: Array) -> void:
 	if not bool(old_fact_replay.get("ok", false)) or not bool(old_fact_replay.get("duplicate", false)):
 		failures.append("Old fact receipt became replayable after reaching capacity.")
 
-	var semantic: Dictionary = {}
+	var semantic: Dictionary = {"declared_targets": {"scene_objects": ["scenario::fixture_700"]}}
 	var first_operation := _operation_fixture("scene_ops", "set_state", 700)
 	for index in range(SequenceRuntimeScript.MAX_RECEIPTS + 16):
 		var operation := first_operation.duplicate(true)
@@ -484,6 +626,20 @@ static func _check_authoritative_receipt_capacity(failures: Array) -> void:
 	var operation_replay := OperationRegistryScript.apply_operations(semantic, "scene_ops", [first_operation], "capacity:node:phase:0")
 	if not bool(operation_replay.get("ok", false)) or not _array(operation_replay.get("applied", [])).is_empty() or JSON.stringify(operation_replay.get("state", {})) != JSON.stringify(semantic):
 		failures.append("Old transition/operation receipt was evicted after presentation capacity.")
+	var full_receipts: Array = []
+	for index in range(OperationRegistryScript.MAX_OPERATION_RECEIPTS):
+		full_receipts.append("op_capacity_%d" % index)
+	var full_state := {"declared_targets": {"scene_objects": ["scenario::fixture_700"]}, "operation_receipts": full_receipts}
+	var receipt_overflow := OperationRegistryScript.apply_operations(full_state, "scene_ops", [first_operation], "capacity:node:phase:new")
+	if bool(receipt_overflow.get("ok", true)) or not _contains_text(_array(receipt_overflow.get("errors", [])), "receipt limit"):
+		failures.append("Operation lifetime receipt capacity did not fail closed.")
+	var full_queue: Array = []
+	for index in range(OperationRegistryScript.MAX_TRANSITION_QUEUE):
+		full_queue.append({"receipt_id": "queued_%d" % index})
+	var queue_state := {"transition_queue": full_queue}
+	var queue_overflow := OperationRegistryScript.apply_operations(queue_state, "transition_ops", [_operation_fixture("transition_ops", "feedback", 999)], "capacity:node:phase:queue")
+	if bool(queue_overflow.get("ok", true)) or not _contains_text(_array(queue_overflow.get("errors", [])), "queue capacity") or JSON.stringify(queue_overflow.get("state", {})) != JSON.stringify(OperationRegistryScript.apply_operations(queue_state, "transition_ops", [], "capacity:node:phase:noop").get("state", {})):
+		failures.append("Transition queue capacity did not preserve the unchanged semantic state.")
 
 
 static func _check_host_transaction_seam(failures: Array) -> void:
@@ -822,6 +978,7 @@ static func _runtime_definition() -> Dictionary:
 	var interaction_op := _operation_fixture("interaction_ops", "add", 200)
 	interaction_op["stable_object_id"] = "command_console"
 	interaction_op["interaction"] = _interaction_record("scenario", "command_console", "Keep the exit clear", true)
+	interaction_op["interaction"]["safe_exit"] = true
 	interaction_op["interaction"]["available_actions"] = [
 		{"id": "prepare", "label": "Brace the exit", "input_action": "confirm", "non_color_state": "ready", "cost": 2, "handler": "increment_local", "inputs": {"key": "pressure", "amount": 1}},
 		{"id": "finish", "label": "Open the lane", "input_action": "confirm", "non_color_state": "ready", "cost": 4, "requires_objective_steps": [{"objective_id": "clear_exit", "step_id": "move_chair"}]},
@@ -835,6 +992,7 @@ static func _runtime_definition() -> Dictionary:
 	sequence["objectives"] = [{"id": "clear_exit", "label": "Keep the exit clear", "progress_label": "Exit lane", "steps": [{"id": "move_chair", "label": "Move the chair", "kind": "command", "command_id": "prepare"}], "outcomes": ["success", "failure", "ignore", "cancel"]}]
 	sequence["fact_subscriptions"] = [{"fact_type": "heat_changed", "handler": "set_local", "inputs": {"key": "pressure", "value_from_payload": "current"}}]
 	definition["sequence"] = sequence
+	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
 	return definition
 
 
@@ -856,7 +1014,7 @@ static func _fact_payload(fact_type: String) -> Dictionary:
 
 
 static func _fixture_definition() -> Dictionary:
-	return {
+	var definition := {
 		"id": "sequence_fixture",
 		"archetype_id": "bar",
 		"display_name": "Sequence Fixture",
@@ -881,7 +1039,7 @@ static func _fixture_definition() -> Dictionary:
 					},
 					{
 						"id": "aftermath", "label": "Cleanup", "arrival_feedback": "The lane opens again.", "exit_prompt": "Leave through the clear front door.", "terminal": true,
-						"entry_conditions": [], "objective_ids": [], "advance_after_actions": 0, "scene_ops": [], "interaction_ops": [], "actor_ops": [], "transition_ops": [],
+						"entry_conditions": [], "objective_ids": [], "advance_after_actions": 0, "scene_ops": [], "interaction_ops": [_operation_fixture("interaction_ops", "add", 201)], "actor_ops": [], "transition_ops": [],
 						"branches": [
 							{"id": "finish", "condition": {"type": "always"}, "outcome": "repaired"},
 							{"id": "break", "condition": {"type": "fact", "fact_type": "heat_changed"}, "outcome": "broken"},
@@ -899,11 +1057,45 @@ static func _fixture_definition() -> Dictionary:
 				"broken": {"label": "Broken", "revisit_feedback": "A broken chair marks the fight.", "scene_ops": [_operation_fixture("scene_ops", "set_appearance", 102)], "route_ops": [_operation_fixture("route_ops", "close", 102)]},
 				"refused": {"label": "Refused", "revisit_feedback": "The staff keep their distance.", "actor_ops": [_operation_fixture("actor_ops", "set_pose", 103)], "service_ops": [_operation_fixture("service_ops", "gate", 103)]},
 			},
+			"declared_targets": {
+				"scene_objects": ["scenario::fixture_101", "scenario::fixture_102"],
+				"interactions": [],
+				"actors": ["scenario::fixture_103"],
+				"services": ["scenario::fixture_103"],
+				"games": [],
+				"routes": ["scenario::fixture_101", "scenario::fixture_102"],
+			},
 			"mechanic_tags": ["room_route", "multi_step"],
-			"sequence_signature": "route-protection-choice-aftermath",
+			"sequence_signature": "",
 			"owner_exceptions": [],
 			"fact_subscriptions": ["event_result", "travel_departed", "heat_changed"],
 		},
+	}
+	definition["sequence"]["phase_graph"]["phases"][0]["interaction_ops"][0]["interaction"]["safe_exit"] = true
+	definition["sequence"]["phase_graph"]["phases"][1]["interaction_ops"][0]["interaction"]["safe_exit"] = true
+	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
+	return definition
+
+
+static func _operation_semantic_seed() -> Dictionary:
+	var declared := {"scene_objects": [], "interactions": [], "actors": [], "services": [], "games": [], "routes": []}
+	for index in range(10):
+		declared["scene_objects"].append("scenario::fixture_%d" % index)
+	for index in range(6):
+		declared["actors"].append("scenario::fixture_%d" % index)
+	for index in range(4):
+		declared["services"].append("scenario::fixture_%d" % index)
+		declared["games"].append("scenario::fixture_%d" % index)
+		declared["routes"].append("scenario::fixture_%d" % index)
+	for index in range(2, 6):
+		declared["interactions"].append("base::fixture_target_%d" % index)
+	return {
+		"scene_objects": {"scenario::fixture_1": {"owner_namespace": "scenario", "stable_object_id": "fixture_1"}},
+		"interactions": {"scenario::fixture_1": _interaction_record("scenario", "fixture_1", "Existing", true)},
+		"actors": {"scenario::fixture_1": {"owner_namespace": "scenario", "stable_object_id": "fixture_1"}},
+		"services": {"scenario::fixture_1": {"owner_namespace": "scenario", "stable_object_id": "fixture_1"}},
+		"games": {"scenario::fixture_1": {"owner_namespace": "scenario", "stable_object_id": "fixture_1"}},
+		"declared_targets": declared,
 	}
 
 
