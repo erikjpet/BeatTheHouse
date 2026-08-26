@@ -766,3 +766,15 @@ their own detailed handoffs and test evidence.
   registrations, budgets, cache and reports are unchanged; pusher `30ee954d`
   dry-applies cleanly at disjoint hunks. No runtime ran. Independent exact-head
   review is active.
+- 2026-08-26: `board06_1` quiet-window structural commit landed cleanly at
+  `564ff86ebd484f1de874348f262ff00ec89a4d8f`. The active board now links to
+  canonical dated Discovery/Decision and Work companions; all 170 and 124
+  historical entries respectively are preserved verbatim, superseded pusher
+  rows and `art06_1` moved intact to a non-claimable archive, shipped Chip Dump
+  data closes model A, current owner verdicts are cited, existing DONE links are
+  repaired and accepted `polish06_0` is closed/archived. The pusher v3.10 prompt
+  is restored to TODO location because its external closure branch truthfully
+  remains open. Board writes are released only for coordinated row/log semantic
+  rebases around this hash; structure remains primary-owned. `board06_1` stays
+  IN_PROGRESS pending depth/Family 1/Family 2 reconciliation, self-review and
+  independent review.
