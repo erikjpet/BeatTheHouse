@@ -35,9 +35,9 @@ their own detailed handoffs and test evidence.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `meta06_1` | `codex/cross-meta` | `D:\Projects\Beat-The-House-worktrees\cross-meta` | `/root/wave1_meta06_1` | Career/run-report view models and screens; profile stats path; focused tests and documented captures | `3d4a41da` | None | IN_PROGRESS | TBD, non-author | None reported | Pending handoff | - | - | Retained |
 | `balance06_1` | `codex/cross-balance` | `D:\Projects\Beat-The-House-worktrees\cross-balance` | `/root/wave1_balance06_1` | Opt-in economy harness, audit report, harness tests only; no product/tuning data | `3d4a41da` | None | IN_PROGRESS | TBD, non-author | Pending audit | Pending handoff | - | - | Retained |
-| `board06_1` | `codex/cross-board` | `D:\Projects\Beat-The-House-worktrees\cross-board` | `/root` | Board and companion logs; verified ignored orphan UIDs only | `3d4a41da` | Quiet-window coordination | COORDINATING | TBD, non-author | None reported | Pending | - | - | Retained |
+| `board06_1` | `codex/cross-board` | `D:\Projects\Beat-The-House-worktrees\cross-board` | `/root` | Board and companion logs; verified ignored orphan UIDs only | `3d4a41da` | Quiet-window coordination | QUIET WINDOW ACTIVE; protected-input audit | TBD, non-author | Family 1/2 contracts and board sections exist only in protected preflight user state; orphan UIDs are likewise protected untracked files | Pending | - | - | Retained |
 | `polish06_0` | `codex/cross-polish` | `D:\Projects\Beat-The-House-worktrees\cross-polish` | `/root/wave1_polish06_0` | Parked program document and newly defined parked prompts/templates; no execution | `3d4a41da` | None | MERGED; board/archive closure pending; outputs PARKED | `/root/review_polish06_0` | No P0-P3 findings | Author validation PASS 86.6s; reviewer validation PASS 116.4s; diff/structure checks PASS | `be14c1ce` ACCEPT | `dba53fb5` | Retained |
-| `pusherv3_11` | `codex/cross-pusher-audit` | Not created | Unassigned independent auditor | Closure audit report/evidence only | TBD | `pusherv3_10` | HELD | TBD | - | - | - | - | Not created |
+| `pusherv3_11` | `codex/cross-pusher-audit` | `D:\Projects\Beat-The-House-worktrees\cross-pusher-audit` | `/root/review_polish06_0` (authored no V3 row) | Closure audit report/evidence only; no product edits | `554773c6` | `pusherv3_10` merged | IN_PROGRESS; static-only under HOST lock | TBD, non-author | Static audit pending | Runtime measurements held for serialized HOST | - | - | Retained |
 | `audio06_1` | `codex/cross-audio` | Not created | Unassigned | Surface SFX manifest/assets/shared path/tests | TBD | Families 1 and 2 rituals | HELD | TBD | - | - | - | - | Not created |
 | `integ06_1` | `codex/cross-integ` | Not created | Unassigned auditor | Integration harness/report/tests only | TBD | Families 1 and 2 merged | HELD | TBD | - | - | - | - | Not created |
 | `perf06_1` | `codex/cross-perf` | Not created | Unassigned auditor | Performance harness/report/gates and evidence-named behavior-preserving optimization only | TBD | Families 1 and 2 merged | HELD | TBD | - | - | - | - | Not created |
@@ -66,3 +66,22 @@ their own detailed handoffs and test evidence.
   It will pause its depth-only row/log edits for the announced `board06_1`
   structural window, then semantically rebase them around the exact split
   commit. Canonical companion paths will be sent only after that commit lands.
+- 2026-08-25: External dependency `pusherv3_10` froze locally at
+  `a0d2b6ff7155484830909728f3051f587dc5dc4d`, with staged-only scope, explicit
+  zero-process/board-quiet handoff, no push, and the exact board closure delta
+  delegated to this primary. It merged with `--no-ff` as `554773c6`.
+- 2026-08-25: Wave 2 `pusherv3_11` began on frozen integration base
+  `554773c6` with an independent auditor who authored none of V3. Static audit
+  is active; runtime evidence is serialized behind Wave 1 meta and balance.
+- 2026-08-25: The board quiet window is active. Depth paused at clean exact
+  head `2053257a` and supplied the five-row plus work-log semantic delta.
+  Safe board-input searches found no committed Family 1/2 program document,
+  prompt set, or board section in the integration line or any ref; their only
+  copies are protected dirty/untracked preflight user state and cannot be
+  copied or staged under the launcher contract. The ignored orphan UIDs also
+  exist only as protected untracked files in the original tree.
+- 2026-08-25: HOST release to meta was withdrawn before any meta process
+  launched when it detected a foreign interactive Godot pair. The pusher task
+  proved zero task-owned processes; the remaining editor descends from a
+  long-lived user PowerShell session. All cross workers remain runtime-held
+  until the foreign session exits or the owner authorizes coexistence.
