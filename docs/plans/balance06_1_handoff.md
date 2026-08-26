@@ -31,9 +31,10 @@ response.
 2. `e74a57cebbda198cda9c1a95ada1c2081f1bb7c6` — adds the opt-in seeded economy
    audit prototype and its PowerShell launcher, unchanged from the measured
    precommit worktree blobs.
-3. The branch-tip handoff commit — archives all 65 ignored artifacts byte for
-   byte and adds the honest partial report, evidence provenance, and this status
-   map.
+3. The branch-tip handoff commit — tracks 61 of the 65 artifacts named by the
+   source manifest and adds the honest partial report, evidence provenance, and
+   this status map. The four `foundation_systems.systems_*.godot.log` files
+   remained ignored and source-worktree-only.
 
 ## Contract requirement map
 
@@ -99,8 +100,13 @@ The exact measurement commands are in
   `.tmp/balance06_1/` — smoke, determinism first, and byte-identical determinism
   repeat JSON. The clean landing omits these three large supersedable blobs.
 - `docs/plans/evidence/balance06_1/validation/foundation_systems_retry1/` — all
-  27 root reports/logs plus 25 isolated user-data files from the passing systems
-  run.
+  23 tracked root reports/logs plus 25 isolated user-data files from the passing
+  systems run (48 tracked files total). The four manifest-named
+  `foundation_systems.systems_activation.godot.log`,
+  `foundation_systems.systems_core.godot.log`,
+  `foundation_systems.systems_events_saves.godot.log`, and
+  `foundation_systems.systems_world_release.godot.log` files remained ignored
+  and source-worktree-only.
 - `docs/plans/evidence/balance06_1/validation/foundation_contracts_1/` — all ten
   files from the blocked contracts run, including the diagnostic stderr.
 - `docs/plans/evidence/balance06_1/SHA256SUMS.txt` — preserves hashes for the
