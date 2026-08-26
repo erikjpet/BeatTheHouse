@@ -868,14 +868,16 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 func _enter_grand_casino_duel_surface() -> bool:
 	if run_state == null or not run_state.grand_casino_duel_active(run_state.current_environment):
 		return false
-	_reset_game_surface_runtime_state()
+	var rollback := _foundation_lifecycle_snapshot()
 	if str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
 		var room_result := generator.enter_grand_casino_room_result(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
 		if not bool(room_result.get("ok", false)):
+			_restore_foundation_lifecycle_snapshot(rollback)
 			var room_errors := _copy_array(room_result.get("errors", []))
 			_show_message(str(room_errors[0]) if not room_errors.is_empty() else "The back room could not be entered safely.")
 			_refresh()
 			return false
+	_reset_game_surface_runtime_state()
 	var duel_game_ids := _string_array(run_state.current_environment.get("game_ids", []))
 	var local_flags := _copy_dict(run_state.current_environment.get("local_narrative_flags", {}))
 	var duel_game_id := str(local_flags.get("showdown_game_id", "")).strip_edges()
@@ -2025,28 +2027,29 @@ func select_travel_option(target_id: String) -> bool:
 
 
 # Confirms the selected travel destination through RunGenerator.
-func confirm_selected_travel() -> void:
+func confirm_selected_travel(require_immediate_result: bool = false) -> bool:
 	if run_state == null:
-		return
+		return false
 	if _guard_player_input_route(_closing_time_blocks_environment_actions()):
-		return
+		return false
 	if selected_travel_target_id.is_empty():
 		_show_message("Select a travel destination first.")
-		return
+		return false
 	var choice := _travel_choice(selected_travel_target_id)
 	if travel_transition_active:
 		_show_message("Travel is already in progress.")
-		return
+		return false
 	if choice.is_empty():
 		_show_message("No open route leads there from this room.")
 		_clear_selected_travel()
 		_refresh()
-		return
+		return false
 	if not bool(choice.get("enabled", true)):
 		_show_message(str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop.")))
 		_refresh()
-		return
-	_travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice)
+		return false
+	var travel_result: Variant = _travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice, require_immediate_result)
+	return bool((travel_result as Dictionary).get("ok", false)) if typeof(travel_result) == TYPE_DICTIONARY else true
 
 
 func wait_out_police_sweep() -> bool:
@@ -2250,30 +2253,30 @@ func confirm_selected_event_choice() -> void:
 
 
 # Resolves one selected event choice through EventModule.
-func resolve_event_choice(event_id: String, choice_id: String) -> void:
+func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
 	if travel_transition_active:
 		_show_message("Travel is already in progress.")
 		_refresh_modal_contract_owner()
-		return
+		return {"ok": false, "errors": ["Travel is already in progress."]}
 	if _event_choice_popup_is_visible() and not _event_choice_popup_allows_event_resolution(event_id):
 		_show_message("Finish the current prompt first.")
 		_refresh_modal_contract_owner()
-		return
+		return {"ok": false, "errors": ["Finish the current prompt first."]}
 	var talk_entry := _pending_talk_event_entry(event_id)
 	if not _event_choice_popup_is_visible() and not talk_entry.is_empty() and not str(talk_entry.get("dialogue_id", "")).strip_edges().is_empty():
 		_resolve_dialogue_choice(talk_entry, choice_id)
-		return
+		return {"ok": true, "delegated": true, "errors": []}
 	var resolving_talk := not _event_choice_popup_is_visible() and not talk_entry.is_empty()
 	if not _event_choice_popup_is_visible() and not resolving_talk and _guard_player_input_route():
-		return
+		return {"ok": false, "errors": ["Player input is currently blocked."]}
 	var tutorial_forced_choice := _tutorial_forced_event_choice(event_id)
 	if not tutorial_forced_choice.is_empty() and tutorial_forced_choice != choice_id:
 		_show_message("Your pal points you back to the highlighted choice.")
-		return
+		return {"ok": false, "errors": ["The tutorial requires a different event choice."]}
 	var event_definition := library.event(event_id)
 	if event_definition.is_empty():
 		_show_message("Event definition is missing.")
-		return
+		return {"ok": false, "errors": ["Event definition is missing."]}
 	var event_module := EventModule.new()
 	event_module.setup(event_definition, library)
 	var event_context := _pending_event_trigger_context(event_id)
@@ -2285,17 +2288,14 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 		if resolving_talk and run_state != null:
 			run_state.complete_talk_event_resolution(event_id)
 			_refresh_talk_dock()
-		return
+		return {"ok": false, "errors": ["Event cannot trigger right now."]}
 	var popup_rect := _talk_dock_panel_rect() if resolving_talk else event_choice_popup_panel.get_global_rect() if event_choice_popup_panel != null else Rect2()
 	var had_event_popup := bool(pending_event_choice_popup_snapshot.get("visible", false))
 	var popup_type := str(pending_event_choice_popup_snapshot.get("popup_type", ""))
 	var was_triggered_popup := popup_type == "triggered_event"
 	var return_to_game_after_event := _event_resolution_returns_to_active_game(popup_type, event_context)
 	var inventory_before := _run_inventory_id_set()
-	var layer_entry_rollback_run := run_state.to_dict()
-	var layer_entry_rollback_environment := run_state.current_environment.duplicate(true)
-	var layer_entry_rollback_world_map := run_state.world_map.duplicate(true)
-	var layer_entry_rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
+	var event_rollback := _foundation_lifecycle_snapshot()
 	var result := event_module.resolve(run_state, event_environment, choice_id)
 	var result_deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
 	var layer_discovery: Dictionary = result_deltas.get("environment_layer_discovery", {}) if typeof(result_deltas.get("environment_layer_discovery", {})) == TYPE_DICTIONARY else {}
@@ -2303,13 +2303,19 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	if bool(result.get("ok", false)) and bool(layer_discovery.get("enter", false)) and not discovered_layer_id.is_empty():
 		var layer_entry := generator.enter_environment_layer(run_state, discovered_layer_id, false)
 		if not bool(layer_entry.get("ok", false)):
-			run_state.from_dict(layer_entry_rollback_run)
-			run_state.current_environment = layer_entry_rollback_environment
-			run_state.world_map = layer_entry_rollback_world_map
-			run_state.grand_casino_room_states = layer_entry_rollback_room_states
+			_restore_foundation_lifecycle_snapshot(event_rollback)
 			_show_message(str(layer_entry.get("message", "The event could not enter its destination room safely.")))
 			_refresh()
-			return
+			return {"ok": false, "errors": [str(layer_entry.get("message", "The event could not enter its destination room safely."))]}
+	if bool(result.get("ok", false)) and bool(result.get("duel_ready", false)):
+		var room_result := generator.enter_grand_casino_room_result(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
+		if not bool(room_result.get("ok", false)):
+			_restore_foundation_lifecycle_snapshot(event_rollback)
+			var room_errors := _copy_array(room_result.get("errors", []))
+			var room_error := str(room_errors[0]) if not room_errors.is_empty() else "The back room could not be entered safely."
+			_show_message(room_error)
+			_refresh()
+			return {"ok": false, "errors": [room_error]}
 	var showdown_continues := (
 		event_id == RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID
 		and run_state != null
@@ -2343,19 +2349,20 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 		if not _enter_grand_casino_duel_surface():
 			_show_message("Rourke's Back Room table could not open.")
 			_refresh()
-		return
+			return {"ok": false, "errors": ["Rourke's Back Room table could not open."]}
+		return result
 	if showdown_continues:
 		_set_current_screen(SCREEN_EVENT)
 		_refresh()
 		if not _show_interactable_event_popup(event_id):
 			_show_message("Rourke's next showdown beat could not open.")
-		return
+		return result
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("event"):
 		_refresh()
-		return
+		return result
 	if resolving_talk:
 		_refresh()
-		return
+		return result
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
 	if return_to_game_after_event and run_state != null and not run_state.is_terminal():
@@ -2363,6 +2370,7 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	else:
 		_set_current_screen(SCREEN_RESULT)
 	_refresh()
+	return result
 
 
 func _event_resolution_returns_to_active_game(popup_type: String, event_context: Dictionary) -> bool:
@@ -2410,10 +2418,11 @@ func _apply_post_action_environment_interrupt(source: String) -> bool:
 		return true
 	post_interrupt_forced_travel_visit_count += 1
 	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
-	var travel_applied := _apply_forced_environment_travel(source)
+	var forced_travel := _apply_forced_environment_travel(source)
+	var travel_applied := bool(forced_travel.get("ok", false)) and bool(forced_travel.get("applied", false))
 	if debug_enabled:
 		debug_timing["interrupt_forced_travel"] = Time.get_ticks_usec() - debug_stage_started_usec
-	if travel_applied:
+	if not bool(forced_travel.get("ok", false)) or travel_applied:
 		return true
 	post_interrupt_talk_enqueue_visit_count += 1
 	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
@@ -2602,14 +2611,17 @@ func _enqueue_talk_events_for_action_boundary(source: String) -> bool:
 	return enqueued
 
 
-func _apply_forced_environment_travel(_source: String) -> bool:
+func _apply_forced_environment_travel(_source: String) -> Dictionary:
+	if run_state == null:
+		return {"ok": false, "applied": false, "errors": ["Forced travel requires an active run."]}
+	var rollback := _foundation_lifecycle_snapshot()
 	var closing_actions := int(run_state.narrative_flags.get("health_inspector_closing_actions", 0))
 	if closing_actions <= 0:
-		return false
+		return {"ok": true, "applied": false, "errors": []}
 	closing_actions -= 1
 	run_state.narrative_flags["health_inspector_closing_actions"] = closing_actions
 	if closing_actions > 0:
-		return false
+		return {"ok": true, "applied": false, "errors": []}
 	var choices := _travel_choice_view_list()
 	for choice_value in choices:
 		if typeof(choice_value) != TYPE_DICTIONARY:
@@ -2618,10 +2630,16 @@ func _apply_forced_environment_travel(_source: String) -> bool:
 		if bool(choice.get("enabled", false)):
 			run_state.narrative_flags["health_inspector_forced_travel"] = true
 			_show_message("The Health Inspector shuts the room down. You have to move.")
-			_travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice)
-			return true
+			var travel_result := _travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice, true)
+			if not bool(travel_result.get("ok", false)):
+				_restore_foundation_lifecycle_snapshot(rollback)
+				var travel_errors := _copy_array(travel_result.get("errors", []))
+				var travel_error := str(travel_errors[0]) if not travel_errors.is_empty() else "Forced travel could not be completed safely."
+				_show_message(travel_error)
+				return {"ok": false, "applied": false, "errors": [travel_error]}
+			return {"ok": true, "applied": true, "errors": []}
 	run_state.narrative_flags["health_inspector_closing_actions"] = 1
-	return false
+	return {"ok": true, "applied": false, "errors": []}
 
 
 func _maybe_trigger_unavoidable_event(source: String) -> bool:
@@ -3605,8 +3623,12 @@ func _resolve_sal_starter_dialogue_choice(entry: Dictionary, choice_id: String) 
 		_refresh_talk_dock()
 		_refresh()
 		return
+	var environment_applied := _apply_meta_environment(meta_session_location_id)
+	if not bool(environment_applied.get("ok", false)):
+		_refresh_talk_dock()
+		_refresh()
+		return
 	run_state.complete_talk_event_resolution(str(entry.get("event_id", "dialogue:sal_starter_offer")))
-	_apply_meta_environment(meta_session_location_id)
 	_refresh_meta_item_interaction()
 	_refresh_talk_dock()
 	_show_message(str(result.get("message", "Sal's offer is closed.")))
@@ -4868,11 +4890,80 @@ func abandon_run_from_menu() -> void:
 	_refresh()
 
 
-func _travel_to(target_id: String, target_label: String, choice_data: Dictionary = {}) -> void:
+func _foundation_lifecycle_snapshot() -> Dictionary:
+	var snapshot := {
+		"run_state_ref": run_state,
+		"run": run_state.to_dict() if run_state != null else {},
+		"environment": run_state.current_environment.duplicate(true) if run_state != null else {},
+		"world_map": run_state.world_map.duplicate(true) if run_state != null else {},
+		"room_states": run_state.grand_casino_room_states.duplicate(true) if run_state != null else {},
+		"home_state": run_state.home_state.duplicate(true) if run_state != null else {},
+		"fields": {},
+		"visibility": {},
+	}
+	var fields: Dictionary = snapshot["fields"]
+	for field_name in [
+		"meta_session_active", "meta_session_location_id", "meta_last_panel_message", "dev_game_test_mode",
+		"current_game", "current_game_state_key", "game_exit_settle_active", "last_game_exit_final_projection_rendered",
+		"last_game_result", "last_environment_runtime_result", "last_item_result", "last_hook_result", "game_surface_ui_state",
+		"selected_action_category", "current_screen", "selected_action_id", "selected_action_kind", "selected_action_label", "selected_stake",
+		"selected_travel_target_id", "selected_travel_label", "selected_event_id", "selected_event_choice_id", "selected_event_label", "selected_event_choice_label",
+		"selected_item_offer_id", "selected_item_offer_label", "selected_item_offer_price", "selected_service_hook_id", "selected_service_hook_label", "service_hook_resolution_locked", "selected_lender_hook_id", "selected_lender_hook_label",
+		"hover_target_id", "focus_target_id", "selected_object_id", "camera_focus_rect", "camera_focus_point", "current_context_mode",
+		"pending_event_choice_popup_event_id", "pending_event_choice_popup_focus_choice_id", "pending_event_choice_popup_snapshot",
+		"pending_wager_confirm_action_id", "pending_wager_confirm_skip_stake_validation", "pending_wager_confirm_preserve_surface_ui_state", "pending_wager_confirm_stake", "pending_wager_confirm_source_game_id", "pending_wager_confirm_source_game_state_key",
+		"run_inventory_popup_mode", "run_inventory_context_container_id", "selected_run_inventory_item_id", "selected_run_inventory_item_source",
+		"travel_transition_active", "travel_transition_target_id", "travel_transition_target_label",
+		"game_surface_session_generation", "deferred_embedded_refresh_generation", "deferred_embedded_refresh_pending", "deferred_embedded_refresh_run_state", "deferred_embedded_refresh_game", "deferred_embedded_refresh_environment", "deferred_embedded_refresh_result", "deferred_embedded_refresh_canvas", "deferred_embedded_refresh_game_state_key", "deferred_embedded_refresh_surface_session_generation",
+		"game_surface_auto_resolving", "last_game_surface_realtime_refresh_msec", "surface_feature_music_active", "surface_feature_music_ducking", "drunk_time_anchor_real_msec", "drunk_time_anchor_scaled_msec", "drunk_time_last_scale",
+		"pending_autosave", "pending_autosave_status_text", "pending_autosave_after_frame", "pending_autosave_not_before_msec", "pending_autosave_first_queued_msec",
+		"autosave_dirty_generation", "autosave_inflight_generation", "autosave_completed_generation", "save_status_message",
+	]:
+		var value: Variant = get(field_name)
+		fields[field_name] = value.duplicate(true) if typeof(value) == TYPE_DICTIONARY or typeof(value) == TYPE_ARRAY else value
+	var visibility: Dictionary = snapshot["visibility"]
+	for control_name in [
+		"run_screen", "start_screen", "start_menu_controls", "start_menu_intro", "inventory_page", "game_test_menu",
+		"event_choice_popup_overlay", "run_inventory_overlay", "run_journal_overlay", "run_menu_overlay", "world_map_overlay", "travel_transition_overlay",
+	]:
+		var control: Variant = get(control_name)
+		if control is CanvasItem:
+			visibility[control_name] = (control as CanvasItem).visible
+	return snapshot
+
+
+func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
+	var restored_run: Variant = snapshot.get("run_state_ref", null)
+	run_state = restored_run as RunState if restored_run is RunState else null
+	if run_state != null:
+		run_state.from_dict(_copy_dict(snapshot.get("run", {})))
+		run_state.current_environment = _copy_dict(snapshot.get("environment", {}))
+		run_state.world_map = _copy_dict(snapshot.get("world_map", {}))
+		run_state.grand_casino_room_states = _copy_dict(snapshot.get("room_states", {}))
+		run_state.home_state = _copy_dict(snapshot.get("home_state", {}))
+	var fields := _copy_dict(snapshot.get("fields", {}))
+	for field_name_value in fields.keys():
+		var field_name := str(field_name_value)
+		var value: Variant = fields.get(field_name)
+		set(field_name, value.duplicate(true) if typeof(value) == TYPE_DICTIONARY or typeof(value) == TYPE_ARRAY else value)
+	var visibility := _copy_dict(snapshot.get("visibility", {}))
+	for control_name_value in visibility.keys():
+		var control_name := str(control_name_value)
+		var control: Variant = get(control_name)
+		if control is CanvasItem:
+			(control as CanvasItem).visible = bool(visibility.get(control_name, false))
+
+
+func _install_lifecycle_environment(environment: Dictionary) -> Dictionary:
+	return run_state.set_environment(environment) if run_state != null else {"ok": false, "errors": ["Environment installation requires an active run."]}
+
+
+func _travel_to(target_id: String, target_label: String, choice_data: Dictionary = {}, require_immediate_result: bool = false) -> Dictionary:
 	if run_state == null:
-		return
+		return {"ok": false, "errors": ["Travel requires an active run."]}
 	if travel_transition_active:
-		return
+		return {"ok": false, "errors": ["Travel is already in progress."]}
+	var lifecycle_rollback := _foundation_lifecycle_snapshot()
 	_clear_recent_result_feedback()
 	var ignored_talk_entries: Array = []
 	if choice_data.is_empty():
@@ -4883,32 +4974,36 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if route.is_empty():
 		route = library.route(target_id) if library != null else {}
 	if not bool(choice_data.get("enabled", true)):
-		_show_message(str(choice_data.get("disabled_reason", "Route closed. Check hours or pick another stop.")))
+		var disabled_reason := str(choice_data.get("disabled_reason", "Route closed. Check hours or pick another stop."))
+		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		_show_message(disabled_reason)
 		_refresh()
-		return
+		return {"ok": false, "errors": [disabled_reason]}
 	if _is_meta_session():
 		var meta_target_id := target_id.strip_edges()
 		if meta_target_id == META_LOCATION_START_RUN:
 			start_meta_quick_run()
-			return
-		_enter_meta_location(meta_target_id)
-		return
+			return {"ok": true, "errors": []}
+		var meta_result := _enter_meta_location(meta_target_id)
+		if not bool(meta_result.get("ok", false)):
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		return meta_result
 	var local_casino_room_move := bool(choice_data.get("local_casino_room", false))
 	if local_casino_room_move and (not run_state.is_grand_casino_environment() or _environment_archetype(target_id).is_empty()):
+		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		_show_message("That interior casino door is not available.")
 		_refresh()
-		return
+		return {"ok": false, "errors": ["That interior casino door is not available."]}
 	var departure_source_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges() if local_casino_room_move else run_state.current_world_node_id()
 	var departure_kind := "grand_room" if local_casino_room_move else "world"
 	var departure_preflight := run_state.scenario_preflight_environment_change(departure_source_id, target_id, departure_kind)
 	if not bool(departure_preflight.get("ok", false)):
-		_show_message(str(_array(departure_preflight.get("errors", []))[0]) if not _array(departure_preflight.get("errors", [])).is_empty() else "Travel could not begin safely.")
+		var departure_errors := _array(departure_preflight.get("errors", []))
+		var departure_error := str(departure_errors[0]) if not departure_errors.is_empty() else "Travel could not begin safely."
+		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		_show_message(departure_error)
 		_refresh()
-		return
-	var rollback_environment := run_state.current_environment.duplicate(true)
-	var rollback_run := run_state.to_dict()
-	var rollback_world_map := run_state.world_map.duplicate(true)
-	var rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
+		return {"ok": false, "errors": [departure_error]}
 	# Preserve the source surface before generation/storage without clearing the
 	# live UI until every authoritative travel mutation has committed.
 	_checkpoint_current_game_surface_ui_state()
@@ -4916,7 +5011,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	ignored_talk_entries = _pending_talk_entries()
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
-	var web_atomic_travel := _should_use_atomic_web_travel_transition()
+	# Callers that must act on the authoritative result cannot cross a presentation
+	# frame boundary; their travel commits atomically just like the web path.
+	var web_atomic_travel := require_immediate_result or _should_use_atomic_web_travel_transition()
 	if web_atomic_travel:
 		travel_transition_active = true
 		travel_transition_target_id = target_id
@@ -4925,9 +5022,6 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			travel_transition_overlay.visible = false
 	else:
 		_show_travel_transition(target_id, target_label, "Leaving %s..." % str(previous_environment.get("display_name", "this room")))
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
 	_show_message("Traveling to %s..." % target_label)
 	if not web_atomic_travel:
 		_refresh()
@@ -4950,52 +5044,48 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	run_state.current_environment["departed_game_clock_minutes"] = departed_game_clock_minutes
 	var clock_result := run_state.advance_game_clock_minutes(travel_minutes)
 	if not bool(clock_result.get("ok", false)):
-		run_state.from_dict(rollback_run)
-		run_state.current_environment = rollback_environment
-		run_state.world_map = rollback_world_map
-		run_state.grand_casino_room_states = rollback_room_states
-		_hide_travel_transition()
-		_show_message(str(_array(clock_result.get("errors", []))[0]) if not _array(clock_result.get("errors", [])).is_empty() else "Travel time could not advance safely.")
+		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		var clock_errors := _array(clock_result.get("errors", []))
+		var clock_error := str(clock_errors[0]) if not clock_errors.is_empty() else "Travel time could not advance safely."
+		_show_message(clock_error)
 		_refresh()
-		return
+		return {"ok": false, "errors": [clock_error]}
 	route["arrived_game_clock_minutes"] = maxi(departed_game_clock_minutes, run_state.game_clock_minutes)
 	var install_result: Dictionary
 	if local_casino_room_move:
 		install_result = generator.enter_grand_casino_room_result(run_state, target_id)
 		if not bool(install_result.get("ok", false)):
-			run_state.from_dict(rollback_run)
-			run_state.current_environment = rollback_environment
-			run_state.world_map = rollback_world_map
-			run_state.grand_casino_room_states = rollback_room_states
-			_hide_travel_transition()
-			_show_message(str(_array(install_result.get("errors", []))[0]) if not _array(install_result.get("errors", [])).is_empty() else "The interior casino room could not be prepared.")
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+			var room_errors := _array(install_result.get("errors", []))
+			var room_error := str(room_errors[0]) if not room_errors.is_empty() else "The interior casino room could not be prepared."
+			_show_message(room_error)
 			_refresh()
-			return
+			return {"ok": false, "errors": [room_error]}
 		if bool(choice_data.get("high_limit_buy_in", false)):
 			run_state.narrative_flags["grand_casino_high_limit_access"] = true
 			run_state.narrative_flags["grand_casino_high_limit_access_method"] = "cash_buy_in"
 	else:
 		install_result = generator.travel_environment_result(run_state, target_id, true)
 		if not bool(install_result.get("ok", false)):
-			run_state.from_dict(rollback_run)
-			run_state.current_environment = rollback_environment
-			run_state.world_map = rollback_world_map
-			run_state.grand_casino_room_states = rollback_room_states
-			_hide_travel_transition()
-			_show_message(str(_array(install_result.get("errors", []))[0]) if not _array(install_result.get("errors", [])).is_empty() else "Travel destination could not be installed.")
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+			var install_errors := _array(install_result.get("errors", []))
+			var install_error := str(install_errors[0]) if not install_errors.is_empty() else "Travel destination could not be installed."
+			_show_message(install_error)
 			_refresh()
-			return
+			return {"ok": false, "errors": [install_error]}
 	var delivery_arrival := run_state.delivery_resolve_travel_arrival(route, route_risk) if run_state.delivery_has_active_run() else {}
 	if not delivery_arrival.is_empty() and not bool(delivery_arrival.get("ok", false)):
-		run_state.from_dict(rollback_run)
-		run_state.current_environment = rollback_environment
-		run_state.world_map = rollback_world_map
-		run_state.grand_casino_room_states = rollback_room_states
-		_hide_travel_transition()
+		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		var delivery_errors := _copy_array(delivery_arrival.get("errors", []))
-		_show_message(str(delivery_errors[0]) if not delivery_errors.is_empty() else str(delivery_arrival.get("message", "Delivery arrival could not be resolved safely.")))
+		var delivery_error := str(delivery_errors[0]) if not delivery_errors.is_empty() else str(delivery_arrival.get("message", "Delivery arrival could not be resolved safely."))
+		_show_message(delivery_error)
 		_refresh()
-		return
+		return {"ok": false, "errors": [delivery_error]}
+	# Modal contents are destructively rebuilt when hidden, so keep them intact
+	# until every authoritative travel boundary (including delivery arrival) commits.
+	_hide_event_choice_popup()
+	_hide_run_inventory_popup()
+	_hide_run_journal_popup()
 	# Tutorial and UI-local acknowledgements are committed only after the
 	# authoritative clock, departure journal, map cursor, and destination commit.
 	if coach_overlay != null:
@@ -5084,6 +5174,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_refresh()
 	elif web_atomic_travel:
 		_refresh()
+	return {"ok": true, "errors": [], "travel_result": travel_result.duplicate(true)}
 
 
 func _queue_normal_grand_host_greeting(previous_environment: Dictionary) -> void:
@@ -9957,8 +10048,7 @@ func activate_interactable_object(object_id: String) -> bool:
 				_refresh()
 				return false
 			focus_interactable_object(object_id)
-			_travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit)
-			return true
+			return bool(_travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true).get("ok", false))
 		var leave_object := _interactable_object(object_id)
 		if leave_object.is_empty():
 			if not _travel_choice_view_list().is_empty() and not _run_failed_without_recovery():
@@ -10041,12 +10131,10 @@ func activate_interactable_object(object_id: String) -> bool:
 						_show_message(str(direct_room_exit.get("disabled_reason", "That door is not available right now.")))
 						_refresh()
 						return false
-					_travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit)
-					return true
+					return bool(_travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true).get("ok", false))
 				return open_world_map()
 			if select_travel_option(source_id):
-				confirm_selected_travel()
-				return true
+				return confirm_selected_travel(true)
 			return false
 		CONTEXT_MODE_SERVICE:
 			if select_service_hook(source_id):
@@ -10138,8 +10226,7 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 		# room and never constructs the retired modal.
 		if run_state != null and str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID:
 			if select_travel_option(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
-				confirm_selected_travel()
-				return true
+				return confirm_selected_travel(true)
 		return _start_linda_cage_services(object_data)
 	if fixture_id == "cage_counter":
 		return _start_linda_cage_services(object_data)
@@ -12352,11 +12439,11 @@ func open_meta_home() -> void:
 	_enter_meta_location(META_LOCATION_HOME)
 
 
-func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -> void:
+func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -> Dictionary:
 	var clean_location := location_id.strip_edges()
 	if clean_location == META_LOCATION_START_RUN:
 		start_meta_quick_run()
-		return
+		return {"ok": true, "errors": []}
 	var pawn_location := _meta_pawn_location_id()
 	if clean_location != pawn_location:
 		clean_location = META_LOCATION_HOME
@@ -12364,12 +12451,7 @@ func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -
 		_initialize_foundation()
 	if meta_collection_service == null:
 		_initialize_meta_collection()
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
-	_hide_world_map_overlay()
-	_hide_travel_transition()
-	_reset_game_surface_runtime_state()
+	var rollback := _foundation_lifecycle_snapshot()
 	if run_state == null or not _is_meta_session():
 		run_state = RunState.new()
 		var meta_challenge := {
@@ -12397,6 +12479,16 @@ func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -
 	meta_session_location_id = clean_location
 	run_state.narrative_flags["_meta_home_session"] = true
 	run_state.run_status = RunState.RUN_STATUS_ACTIVE
+	var applied := _apply_meta_environment(clean_location)
+	if not bool(applied.get("ok", false)):
+		_restore_foundation_lifecycle_snapshot(rollback)
+		return applied
+	_hide_event_choice_popup()
+	_hide_run_inventory_popup()
+	_hide_run_journal_popup()
+	_hide_world_map_overlay()
+	_hide_travel_transition()
+	_reset_game_surface_runtime_state()
 	current_game = null
 	last_game_result = {}
 	last_item_result = {}
@@ -12415,7 +12507,6 @@ func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -
 		inventory_page.visible = false
 	if game_test_menu != null:
 		game_test_menu.visible = false
-	_apply_meta_environment(clean_location)
 	if coach_overlay != null:
 		coach_overlay.suspend()
 	_configure_coach_for_run()
@@ -12436,6 +12527,7 @@ func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -
 		call_deferred("_refresh_coach_at_boundary")
 	if clean_location == pawn_location and _sal_starter_offer_is_pending():
 		_resume_sal_starter_offer()
+	return applied
 
 
 func _exit_meta_session() -> void:
@@ -12480,19 +12572,29 @@ func _meta_pawn_location_id() -> String:
 	return meta_session_controller.pawn_location_id()
 
 
-func _apply_meta_environment(location_id: String) -> void:
+func _apply_meta_environment(location_id: String) -> Dictionary:
 	if run_state == null:
-		return
-	var environment := _build_meta_environment(location_id)
+		return {"ok": false, "errors": ["That location requires an active session."]}
+	var rollback := _foundation_lifecycle_snapshot()
+	var built := _meta_environment_result(location_id)
+	var environment: Dictionary = (built.get("environment", {}) as Dictionary).duplicate(true) if typeof(built.get("environment", {})) == TYPE_DICTIONARY else {}
 	if environment.is_empty():
-		return
-	var installed := run_state.set_environment(environment)
+		_restore_foundation_lifecycle_snapshot(rollback)
+		var build_error := "That location could not be prepared safely."
+		_show_message(build_error)
+		return {"ok": false, "errors": [build_error]}
+	var installed := _install_lifecycle_environment(environment)
 	if not bool(installed.get("ok", false)):
+		_restore_foundation_lifecycle_snapshot(rollback)
 		var install_errors := _copy_array(installed.get("errors", []))
-		_show_message(str(install_errors[0]) if not install_errors.is_empty() else "That location could not be entered safely.")
-		return
+		var install_error := str(install_errors[0]) if not install_errors.is_empty() else "That location could not be entered safely."
+		_show_message(install_error)
+		return {"ok": false, "errors": [install_error]}
+	if typeof(built.get("home_state", {})) == TYPE_DICTIONARY and not (built.get("home_state", {}) as Dictionary).is_empty():
+		run_state.home_state = (built.get("home_state", {}) as Dictionary).duplicate(true)
 	_invalidate_travel_view_cache()
 	_refresh_run_action_service()
+	return {"ok": true, "errors": [], "environment": run_state.current_environment.duplicate(true)}
 
 
 func _ensure_meta_session_controller() -> void:
@@ -12501,13 +12603,15 @@ func _ensure_meta_session_controller() -> void:
 	meta_session_controller.configure(library, meta_collection_service)
 
 
-func _build_meta_environment(location_id: String) -> Dictionary:
+func _meta_environment_result(location_id: String) -> Dictionary:
 	_ensure_meta_session_controller()
-	var result := meta_session_controller.build_environment_result(location_id, run_state)
+	return meta_session_controller.build_environment_result(location_id, run_state)
+
+
+func _build_meta_environment(location_id: String) -> Dictionary:
+	var result := _meta_environment_result(location_id)
 	if result.is_empty():
 		return {}
-	if typeof(result.get("home_state", {})) == TYPE_DICTIONARY and not (result.get("home_state", {}) as Dictionary).is_empty():
-		run_state.home_state = (result.get("home_state", {}) as Dictionary).duplicate(true)
 	return (result.get("environment", {}) as Dictionary).duplicate(true) if typeof(result.get("environment", {})) == TYPE_DICTIONARY else {}
 
 
@@ -12614,8 +12718,10 @@ func buy_meta_home_upgrade() -> void:
 	var result: Dictionary = meta_collection_service.purchase_housing_upgrade()
 	if bool(result.get("ok", false)):
 		meta_collection_service.save()
+		if not bool(_apply_meta_environment(META_LOCATION_HOME).get("ok", false)):
+			_refresh()
+			return
 		meta_last_panel_message = str(result.get("message", "Home upgraded."))
-		_apply_meta_environment(META_LOCATION_HOME)
 	_show_meta_popup("Upgrade Home", str(result.get("message", "Upgrade unavailable.")), "meta_upgrade")
 	_add_meta_close_card()
 	_refresh()
@@ -12710,8 +12816,10 @@ func _confirm_meta_sal_purchase(token: String) -> void:
 		_add_meta_close_card()
 		_refresh()
 		return
+	if not bool(_apply_meta_environment(meta_session_location_id).get("ok", false)):
+		_refresh()
+		return
 	meta_last_panel_message = str(result.get("message", "Purchase complete."))
-	_apply_meta_environment(meta_session_location_id)
 	_hide_event_choice_popup()
 	var purchased_item := _copy_dict(result.get("item", {}))
 	selected_meta_item_key = "meta:item:%d" % int(purchased_item.get("instance_id", 0))
@@ -12734,7 +12842,9 @@ func _toggle_meta_item_pack(instance_id: int, should_pack: bool) -> void:
 	var result: Dictionary = meta_collection_service.pack_instance(instance_id) if should_pack else meta_collection_service.unpack_instance(instance_id)
 	if bool(result.get("ok", false)):
 		meta_collection_service.save()
-		_apply_meta_environment(meta_session_location_id)
+		if not bool(_apply_meta_environment(meta_session_location_id).get("ok", false)):
+			_refresh()
+			return
 	meta_last_panel_message = str(result.get("message", "Packing unchanged."))
 	selected_meta_item_key = "meta:item:%d" % instance_id
 	_refresh_meta_item_interaction()
@@ -12837,10 +12947,12 @@ func _open_selected_meta_bag(instance_id: int) -> void:
 		_refresh_meta_item_interaction()
 		return
 	var revealed_item := _copy_dict(result.get("item", {}))
+	if not bool(_apply_meta_environment(meta_session_location_id).get("ok", false)):
+		_refresh()
+		return
 	selected_meta_item_key = "meta:item:%d" % int(revealed_item.get("instance_id", 0))
 	meta_trade_selected_instance_ids.clear()
 	meta_last_panel_message = _collection_reveal_text(result)
-	_apply_meta_environment(meta_session_location_id)
 	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_CONTAINER, selected_meta_item_key)
 	_open_bag_reel(result)
 	_show_message(meta_last_panel_message)
@@ -12901,10 +13013,12 @@ func _confirm_meta_trade_up(token: String) -> void:
 		_refresh()
 		return
 	var granted := _copy_dict(result.get("item", {}))
+	if not bool(_apply_meta_environment(meta_session_location_id).get("ok", false)):
+		_refresh()
+		return
 	selected_meta_item_key = "meta:item:%d" % int(granted.get("instance_id", 0))
 	meta_trade_selected_instance_ids.clear()
 	meta_last_panel_message = str(result.get("message", "Trade-up complete."))
-	_apply_meta_environment(meta_session_location_id)
 	_hide_event_choice_popup()
 	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_TRADE, selected_meta_item_key)
 	_show_message(meta_last_panel_message)
@@ -12937,7 +13051,9 @@ func _confirm_meta_sale(token: String) -> void:
 		_add_meta_close_card()
 		_refresh()
 		return
-	_apply_meta_environment(meta_session_location_id)
+	if not bool(_apply_meta_environment(meta_session_location_id).get("ok", false)):
+		_refresh()
+		return
 	meta_last_panel_message = str(result.get("message", "Sale complete."))
 	_refresh()
 	_hide_event_choice_popup()
@@ -13106,30 +13222,33 @@ func close_game_test_menu() -> void:
 	_refresh_start_screen()
 
 
-func start_game_test_session(game_id: String) -> void:
+func start_game_test_session(game_id: String) -> Dictionary:
 	if not show_game_library_launcher:
-		return
+		return {"ok": false, "errors": ["The game test launcher is disabled."]}
 	if library == null:
 		_initialize_foundation()
 	var game := _game_module_for_id(game_id)
 	if game == null:
 		if game_test_status_label != null:
 			game_test_status_label.text = "Could not load %s." % game_id
-		return
-	_hide_travel_transition()
-	_reset_game_surface_runtime_state()
+		return {"ok": false, "errors": ["Could not load %s." % game_id]}
+	var rollback := _foundation_lifecycle_snapshot()
 	run_state = RunState.new()
 	run_state.start_new(_game_test_seed(game_id))
-	_bind_run_state_presentation_signals()
 	run_state.bankroll = _game_test_bankroll()
 	dev_game_test_mode = true
-	_refresh_run_action_service()
 	var environment := _game_test_environment(game_id, game)
-	var installed := run_state.set_environment(environment)
+	var installed := _install_lifecycle_environment(environment)
 	if not bool(installed.get("ok", false)):
+		_restore_foundation_lifecycle_snapshot(rollback)
 		var install_errors := _copy_array(installed.get("errors", []))
-		if game_test_status_label != null: game_test_status_label.text = str(install_errors[0]) if not install_errors.is_empty() else "Could not enter the test room."
-		return
+		var install_error := str(install_errors[0]) if not install_errors.is_empty() else "Could not enter the test room."
+		if game_test_status_label != null: game_test_status_label.text = install_error
+		return {"ok": false, "errors": [install_error]}
+	_bind_run_state_presentation_signals()
+	_hide_travel_transition()
+	_reset_game_surface_runtime_state()
+	_refresh_run_action_service()
 	current_game = null
 	last_game_result = {}
 	last_environment_runtime_result = {}
@@ -13154,7 +13273,10 @@ func start_game_test_session(game_id: String) -> void:
 		start_menu_controls.visible = true
 	if start_menu_intro != null:
 		start_menu_intro.visible = true
-	enter_game(game_id)
+	if not enter_game(game_id):
+		_restore_foundation_lifecycle_snapshot(rollback)
+		return {"ok": false, "errors": ["Could not enter the test game."]}
+	return {"ok": true, "errors": [], "environment": run_state.current_environment.duplicate(true)}
 
 
 func acquire_profile_chip() -> void:

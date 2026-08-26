@@ -15,6 +15,149 @@ const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environ
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 
 
+class LifecycleFixtureGame:
+	extends GameModule
+
+	func _init() -> void:
+		definition = {"id": "lifecycle_fixture_game", "display_name": "Lifecycle Fixture", "family": "slot", "legal_actions": [], "cheat_actions": []}
+
+
+class LifecycleRejectingGenerator:
+	extends RunGenerator
+
+	var reject_layer := false
+	var reject_room := false
+	var install_world_destination := false
+
+	func _init(p_library: ContentLibrary) -> void:
+		super(p_library)
+
+	func _poison(run_state: RunState, marker: String) -> void:
+		run_state.bankroll += 17
+		run_state.current_environment["caller_poison"] = marker
+		run_state.world_map["caller_poison"] = marker
+		run_state.grand_casino_room_states["caller_poison"] = {"marker": marker}
+
+	func enter_environment_layer(run_state: RunState, _target_layer_id: String, _advance_action: bool = true) -> Dictionary:
+		if not reject_layer:
+			return super.enter_environment_layer(run_state, _target_layer_id, _advance_action)
+		_poison(run_state, "layer")
+		return {"ok": false, "message": "Layer caller fixture rejected."}
+
+	func enter_grand_casino_room_result(run_state: RunState, _target_archetype_id: String) -> Dictionary:
+		if not reject_room:
+			return super.enter_grand_casino_room_result(run_state, _target_archetype_id)
+		_poison(run_state, "grand_room")
+		return {"ok": false, "errors": ["Grand-room caller fixture rejected."]}
+
+	func travel_environment_result(run_state: RunState, target_archetype_id: String, _target_prevalidated: bool = false) -> Dictionary:
+		if not install_world_destination:
+			return super.travel_environment_result(run_state, target_archetype_id, _target_prevalidated)
+		run_state.current_environment = {"id": "%s_fixture" % target_archetype_id, "archetype_id": target_archetype_id, "world_node_id": target_archetype_id, "display_name": "Fixture Destination", "kind": "home", "event_ids": [], "game_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [], "next_archetypes": []}
+		run_state.world_map["current_node_id"] = target_archetype_id
+		return {"ok": true, "errors": [], "source_id": "bar_node", "target_id": target_archetype_id, "environment": run_state.current_environment.duplicate(true)}
+
+
+class LifecycleDeliveryRejectRun:
+	extends RunState
+
+	func delivery_has_active_run() -> bool:
+		return true
+
+	func delivery_resolve_travel_arrival(_route: Dictionary = {}, _route_risk: Dictionary = {}) -> Dictionary:
+		bankroll += 23
+		current_environment["delivery_poison"] = true
+		world_map["delivery_poison"] = true
+		grand_casino_room_states["delivery_poison"] = {"active": true}
+		return {"ok": false, "errors": ["Delivery caller fixture rejected."]}
+
+
+class LifecycleCallerProbe:
+	extends FoundationMain
+
+	var message_log: Array = []
+	var autosave_count := 0
+	var presentation_count := 0
+	var reject_install := false
+	var meta_result: Dictionary = {}
+	var forced_choice: Dictionary = {}
+	var forced_travel_result: Dictionary = {"ok": false, "errors": ["Forced travel caller fixture rejected."]}
+	var fixture_game := LifecycleFixtureGame.new()
+
+	func _show_message(text: String) -> void:
+		message_log.append(text)
+
+	func _refresh() -> void:
+		pass
+
+	func _autosave_foundation_run(_status_text: String = "Autosaved.", _force: bool = false) -> bool:
+		autosave_count += 1
+		return true
+
+	func _start_conclusion_animation(_result: Dictionary, _popup_rect: Rect2) -> void:
+		presentation_count += 1
+
+	func _show_item_found_popups(_result: Dictionary, _inventory_before: Dictionary) -> void:
+		presentation_count += 1
+
+	func _guard_player_input_route(_force_closing_allowed: bool = false, _coach_action_id: String = "ui:any", _notify_coach: bool = true) -> bool:
+		return false
+
+	func _install_lifecycle_environment(environment: Dictionary) -> Dictionary:
+		if not reject_install:
+			return super._install_lifecycle_environment(environment)
+		run_state.bankroll += 31
+		run_state.current_environment = {"id": "install_poison"}
+		run_state.world_map["install_poison"] = true
+		run_state.grand_casino_room_states["install_poison"] = {"active": true}
+		run_state.home_state["install_poison"] = true
+		return {"ok": false, "errors": ["Environment caller fixture rejected."]}
+
+	func _meta_environment_result(_location_id: String) -> Dictionary:
+		return meta_result.duplicate(true)
+
+	func _meta_pawn_location_id() -> String:
+		return "pawn"
+
+	func _initialize_meta_collection() -> void:
+		pass
+
+	func _travel_choice_view_list() -> Array:
+		return [forced_choice.duplicate(true)] if not forced_choice.is_empty() else []
+
+	func _game_module_for_id(_game_id: String) -> GameModule:
+		return fixture_game
+
+	func _game_test_environment(_game_id: String, _game: GameModule) -> Dictionary:
+		return {"id": "game_test_fixture", "archetype_id": "bar", "display_name": "Game Test Fixture", "game_ids": ["lifecycle_fixture_game"], "event_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [], "next_archetypes": []}
+
+
+class LifecycleMetaEntryRejectProbe:
+	extends LifecycleCallerProbe
+
+	func _apply_meta_environment(_location_id: String) -> Dictionary:
+		run_state.bankroll += 41
+		run_state.current_environment = {"id": "meta_entry_poison"}
+		run_state.home_state["meta_entry_poison"] = true
+		current_screen = SCREEN_RESULT
+		meta_session_active = true
+		meta_session_location_id = "poison"
+		_show_message("Meta entry caller fixture rejected.")
+		return {"ok": false, "errors": ["Meta entry caller fixture rejected."]}
+
+
+class LifecycleForcedTravelProbe:
+	extends LifecycleCallerProbe
+
+	func _travel_to(_target_id: String, _target_label: String, _choice_data: Dictionary = {}, _require_immediate_result: bool = false) -> Dictionary:
+		run_state.bankroll += 37
+		run_state.current_environment["forced_poison"] = true
+		run_state.world_map["forced_poison"] = true
+		run_state.grand_casino_room_states["forced_poison"] = {"active": true}
+		current_screen = SCREEN_RESULT
+		return forced_travel_result.duplicate(true)
+
+
 static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_schema(failures)
 	_check_catalog_rollout(library, failures)
@@ -23,7 +166,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_semantic_inventory(library, failures)
 	_check_base_semantic_producer(library, failures)
 	_check_lifecycle_finalization(library, failures)
-	_check_lifecycle_caller_failure_contract(failures)
+	_check_lifecycle_caller_failure_contract(library, failures)
 	_check_negative_fixtures(failures)
 	_check_lifecycle_commands(failures)
 	_check_handler_reducer_contracts(failures)
@@ -36,21 +179,173 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_host_transaction_seam(failures)
 
 
-static func _check_lifecycle_caller_failure_contract(failures: Array) -> void:
-	var source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
-	for required_fragment in [
-		"var layer_entry := generator.enter_environment_layer(run_state, discovered_layer_id, false)",
-		"if not bool(layer_entry.get(\"ok\", false)):",
-		"run_state.from_dict(layer_entry_rollback_run)",
-		"var delivery_arrival := run_state.delivery_resolve_travel_arrival(route, route_risk)",
-		"if not delivery_arrival.is_empty() and not bool(delivery_arrival.get(\"ok\", false)):",
-		"run_state.from_dict(rollback_run)",
-		"var room_result := generator.enter_grand_casino_room_result",
-		"The back room could not be entered safely.",
-		"That location could not be entered safely.",
-	]:
-		if source.find(str(required_fragment)) < 0:
-			failures.append("Foundation production caller contract no longer visibly propagates and rolls back lifecycle failure: %s" % str(required_fragment))
+static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, failures: Array) -> void:
+	var layer_probe := _lifecycle_probe(library, _lifecycle_run(false))
+	var layer_generator := LifecycleRejectingGenerator.new(library)
+	layer_generator.reject_layer = true
+	layer_probe.generator = layer_generator
+	var layer_rng := RngStream.new()
+	layer_rng.configure(91201)
+	var layered_environment := EnvironmentInstanceScript.from_archetype(library.environment_archetype("small_underground_casino"), 1, layer_rng, library).to_dict()
+	layer_probe.run_state.current_environment = layered_environment
+	var layer_before := _caller_probe_state(layer_probe)
+	var layer_result := layer_probe.resolve_event_choice("side_door", "punchline_password")
+	if bool(layer_result.get("ok", true)) or _caller_probe_state(layer_probe) != layer_before or layer_probe.autosave_count != 0 or layer_probe.presentation_count != 0 or layer_probe.message_log.is_empty() or str(layer_probe.message_log.back()) != "Layer caller fixture rejected.":
+		failures.append("Public event-layer caller did not reject and restore the resolved event byte-identically before presentation/autosave.")
+	layer_probe.free()
+
+	var delivery_probe := _lifecycle_probe(library, _lifecycle_run(true))
+	var delivery_generator := LifecycleRejectingGenerator.new(library)
+	delivery_generator.install_world_destination = true
+	delivery_probe.generator = delivery_generator
+	delivery_probe.last_game_result = {"sentinel": "game_result"}
+	delivery_probe.last_item_result = {"sentinel": "item_result"}
+	delivery_probe.last_hook_result = {"sentinel": "hook_result"}
+	delivery_probe.selected_travel_target_id = "motel"
+	delivery_probe.selected_travel_label = "Motel"
+	var delivery_before := _caller_probe_state(delivery_probe)
+	var delivery_result := delivery_probe._travel_to("motel", "Motel", {
+		"id": "motel", "label": "Motel", "enabled": true, "distance": "near", "travel_minutes": 6,
+		"route": {"id": "bar_node_to_motel", "from": "bar_node", "to": "motel", "distance": "near", "cost": 0, "suspicion_delta": 0},
+	}, true)
+	if bool(delivery_result.get("ok", true)) or _caller_probe_state(delivery_probe) != delivery_before or delivery_probe.autosave_count != 0 or delivery_probe.current_screen != FoundationMain.SCREEN_ENVIRONMENT or delivery_probe.message_log.is_empty() or str(delivery_probe.message_log.back()) != "Delivery caller fixture rejected.":
+		failures.append("Public delivery-arrival travel caller did not restore a valid source/destination transaction or suppressed downstream success UI.")
+	delivery_probe.free()
+
+	var showdown_run := _showdown_caller_run(library)
+	if showdown_run == null:
+		failures.append("Forced-casino caller fixture could not reach the production pre-duel event boundary.")
+	else:
+		var showdown_probe := _lifecycle_probe(library, showdown_run)
+		var showdown_generator := LifecycleRejectingGenerator.new(library)
+		showdown_generator.reject_room = true
+		showdown_probe.generator = showdown_generator
+		var showdown_before := _caller_probe_state(showdown_probe)
+		var showdown_result := showdown_probe.resolve_event_choice(RunStateScript.GRAND_CASINO_SHOWDOWN_EVENT_ID, "hold_steady")
+		if bool(showdown_result.get("ok", true)) or _caller_probe_state(showdown_probe) != showdown_before or showdown_probe.autosave_count != 0 or showdown_probe.presentation_count != 0 or showdown_probe.message_log.is_empty() or str(showdown_probe.message_log.back()) != "Grand-room caller fixture rejected.":
+			failures.append("Forced casino event caller presented/autosaved or retained the resolved event after back-room rejection.")
+		showdown_probe.free()
+
+	var apply_probe := _lifecycle_probe(library, _lifecycle_run(false))
+	apply_probe.reject_install = true
+	apply_probe.meta_result = {
+		"environment": {"id": "meta_home_fixture", "archetype_id": "apartment", "display_name": "Meta Home"},
+		"home_state": {"status": "tenant", "place": "fixture_home"},
+	}
+	var apply_before := _caller_probe_state(apply_probe)
+	var apply_result := apply_probe._apply_meta_environment("home")
+	if bool(apply_result.get("ok", true)) or _caller_probe_state(apply_probe) != apply_before or apply_probe.message_log.is_empty() or str(apply_probe.message_log.back()) != "Environment caller fixture rejected.":
+		failures.append("Meta environment apply helper did not return failure, restore home/run authority, and retain its error UI.")
+	apply_probe.free()
+
+	var meta_entry_probe := LifecycleMetaEntryRejectProbe.new()
+	meta_entry_probe.library = library
+	meta_entry_probe.run_state = _lifecycle_run(false)
+	meta_entry_probe.current_screen = FoundationMain.SCREEN_ENVIRONMENT
+	var meta_entry_before := _caller_probe_state(meta_entry_probe)
+	var meta_entry_result := meta_entry_probe._enter_meta_location("home")
+	if bool(meta_entry_result.get("ok", true)) or _caller_probe_state(meta_entry_probe) != meta_entry_before or meta_entry_probe.message_log.is_empty() or str(meta_entry_probe.message_log.back()) != "Meta entry caller fixture rejected.":
+		failures.append("Meta entry caller did not restore its prior session/run/home/screen after apply rejection.")
+	meta_entry_probe.free()
+
+	var direct_probe := _lifecycle_probe(library, _lifecycle_run(false))
+	direct_probe.show_game_library_launcher = true
+	direct_probe.reject_install = true
+	var direct_before := _caller_probe_state(direct_probe)
+	var direct_result := direct_probe.start_game_test_session("lifecycle_fixture_game")
+	var direct_errors := _array(direct_result.get("errors", []))
+	if bool(direct_result.get("ok", true)) or _caller_probe_state(direct_probe) != direct_before or direct_probe.autosave_count != 0 or direct_errors.is_empty() or str(direct_errors[0]) != "Environment caller fixture rejected.":
+		failures.append("Direct game-test entry did not return/restore its enclosing run and screen after room rejection.")
+	direct_probe.free()
+
+	var forced_probe := LifecycleForcedTravelProbe.new()
+	forced_probe.library = library
+	forced_probe.run_state = _lifecycle_run(false)
+	forced_probe.generator = LifecycleRejectingGenerator.new(library)
+	forced_probe.current_screen = FoundationMain.SCREEN_ENVIRONMENT
+	forced_probe.selected_action_category = FoundationMain.ACTION_CATEGORY_TRAVEL
+	forced_probe.run_state.narrative_flags["health_inspector_closing_actions"] = 1
+	forced_probe.forced_choice = {"id": "motel", "label": "Motel", "enabled": true}
+	var forced_before := _caller_probe_state(forced_probe)
+	var forced_result := forced_probe._apply_forced_environment_travel("health_inspector")
+	if bool(forced_result.get("ok", true)) or bool(forced_result.get("applied", true)) or _caller_probe_state(forced_probe) != forced_before or forced_probe.message_log.is_empty() or forced_probe.autosave_count != 0 or str(forced_probe.message_log.back()) != "Forced travel caller fixture rejected.":
+		failures.append("Health-inspector forced travel did not restore closing/forced flags and enclosing state or propagate its explicit failure.")
+	forced_probe.free()
+
+
+static func _lifecycle_probe(library: ContentLibrary, run_state: RunState) -> LifecycleCallerProbe:
+	var probe := LifecycleCallerProbe.new()
+	probe.library = library
+	probe.run_state = run_state
+	probe.generator = LifecycleRejectingGenerator.new(library)
+	probe.current_screen = FoundationMain.SCREEN_ENVIRONMENT
+	probe.selected_action_category = FoundationMain.ACTION_CATEGORY_TRAVEL
+	return probe
+
+
+static func _lifecycle_run(delivery_reject: bool) -> RunState:
+	var run_state: RunState = LifecycleDeliveryRejectRun.new() if delivery_reject else RunStateScript.new()
+	run_state.start_new("LIFECYCLE-PUBLIC-CALLER")
+	run_state.current_environment = {
+		"id": "bar_caller_fixture", "archetype_id": "bar", "world_node_id": "bar_node", "display_name": "Caller Bar", "kind": "bar",
+		"game_ids": [], "event_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [], "next_archetypes": ["motel"],
+	}
+	run_state.world_map = {
+		"version": 3, "seed_text": "LIFECYCLE-PUBLIC-CALLER", "start_node_id": "bar_node", "current_node_id": "bar_node",
+		"nodes": [
+			{"id": "bar_node", "archetype_id": "bar", "kind": "bar", "tier": 1, "state": "revealed", "seen": true, "environment": run_state.current_environment.duplicate(true)},
+			{"id": "motel", "archetype_id": "motel", "kind": "home", "tier": 1, "state": "revealed", "seen": true, "environment": {}},
+		],
+		"edges": [{"a": "bar_node", "b": "motel"}], "visited_path": ["bar_node"],
+	}
+	run_state.grand_casino_room_states = {"sentinel": {"id": "caller_room_sentinel", "archetype_id": "grand_casino"}}
+	run_state.home_state = {"status": "tenant", "place": "caller_home"}
+	return run_state
+
+
+static func _caller_probe_state(probe: FoundationMain) -> String:
+	var run_state: RunState = probe.run_state
+	var lifecycle_snapshot := probe._foundation_lifecycle_snapshot()
+	var enclosing_fields: Dictionary = {}
+	for field_name_value in _dict(lifecycle_snapshot.get("fields", {})).keys():
+		var field_name := str(field_name_value)
+		var value: Variant = _dict(lifecycle_snapshot.get("fields", {})).get(field_name)
+		enclosing_fields[field_name] = (value as Object).get_instance_id() if value is Object else value
+	return JSON.stringify({
+		"run_ref": run_state.get_instance_id() if run_state != null else 0,
+		"run": run_state.to_dict() if run_state != null else {},
+		"environment": run_state.current_environment if run_state != null else {},
+		"world_map": run_state.world_map if run_state != null else {},
+		"room_states": run_state.grand_casino_room_states if run_state != null else {},
+		"home_state": run_state.home_state if run_state != null else {},
+		"enclosing_fields": enclosing_fields,
+		"visibility": lifecycle_snapshot.get("visibility", {}),
+	})
+
+
+static func _showdown_caller_run(library: ContentLibrary) -> RunState:
+	var rng := RngStream.new()
+	rng.configure(91202)
+	var environment := EnvironmentInstanceScript.from_archetype(library.environment_archetype(RunStateScript.GRAND_CASINO_ARCHETYPE_ID), 1, rng, library).to_dict()
+	if environment.is_empty():
+		return null
+	var event_ids := _array(environment.get("event_ids", []))
+	if not event_ids.has(RunStateScript.GRAND_CASINO_SHOWDOWN_EVENT_ID):
+		event_ids.append(RunStateScript.GRAND_CASINO_SHOWDOWN_EVENT_ID)
+	environment["event_ids"] = event_ids
+	var run_state := RunStateScript.new()
+	run_state.start_new("LIFECYCLE-FORCED-CASINO")
+	run_state.current_environment = environment
+	run_state.narrative_flags["the_house_calls_pending"] = true
+	var module := EventModule.new()
+	module.setup(library.event(RunStateScript.GRAND_CASINO_SHOWDOWN_EVENT_ID), library)
+	for choice_id in ["enter_back_room", "keep_everything", "face_rourke", "hold_steady", "hold_steady"]:
+		var result := module.resolve(run_state, run_state.current_environment, choice_id)
+		if not bool(result.get("ok", false)):
+			return null
+	if str(run_state.narrative_flags.get("grand_casino_showdown_step", "")) != RunStateScript.GRAND_CASINO_SHOWDOWN_STEP_INTERROGATION or int(run_state.narrative_flags.get("grand_casino_showdown_interrogation_beat", -1)) != 2:
+		return null
+	return run_state
 
 
 static func _check_semantic_inventory(library: ContentLibrary, failures: Array) -> void:
@@ -386,7 +681,14 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	var capacity_run := RunStateScript.new()
 	capacity_run.current_environment = valid_authority_environment.duplicate(true)
 	capacity_run.current_environment["scenario_sequence_definition"] = capacity_definition
-	capacity_run.world_map = {"version": 1, "start_node_id": "bar_node", "current_node_id": "bar_node", "revision": 0, "nodes": [], "edges": [], "visited_path": ["bar_node"], "runtime_ephemeral": {"nonce": 17}}
+	capacity_run.world_map = {
+		"version": 3, "seed_text": "LIFECYCLE-CAPACITY", "start_node_id": "bar_node", "current_node_id": "bar_node", "revision": 0,
+		"nodes": [
+			{"id": "bar_node", "archetype_id": "bar", "kind": "bar", "tier": 1, "state": "revealed", "seen": true, "environment": {}},
+			{"id": "motel", "archetype_id": "motel", "kind": "home", "tier": 1, "state": "revealed", "seen": true, "environment": {}},
+		],
+		"edges": [{"a": "bar_node", "b": "motel"}], "visited_path": ["bar_node"], "runtime_ephemeral": {"nonce": 17},
+	}
 	capacity_run.grand_casino_room_states = {"sentinel": {"id": "sentinel", "archetype_id": "bar", "scenario_sequence_projection": {"ephemeral": "preserve"}}}
 	var capacity_state := _dict(capacity_run.current_environment.get("scenario_sequence_state", {}))
 	while SequenceRuntimeScript._next_cause_ordinal(capacity_state) < SequenceRuntimeScript.MAX_RECEIPTS - 1:
@@ -424,6 +726,10 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		path_run.grand_casino_room_states = capacity_run.grand_casino_room_states.duplicate(true)
 		if production_path == "legacy_next_environment":
 			path_run.world_map = {}
+		elif production_path == "grand_room_result":
+			path_run.current_environment["id"] = "grand_casino_capacity"
+			path_run.current_environment["archetype_id"] = RunStateScript.GRAND_CASINO_ARCHETYPE_ID
+			path_run.current_environment["world_node_id"] = "grand_casino"
 		elif production_path == "layer_entry" and not layered_capacity_environment.is_empty():
 			path_run.current_environment = layered_capacity_environment.duplicate(true)
 		var path_run_before := JSON.stringify(path_run.to_dict())
