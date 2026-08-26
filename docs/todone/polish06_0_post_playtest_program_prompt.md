@@ -1,5 +1,15 @@
-Status: TODO (delivers a parked program; performs no polish work)
+Status: DONE (delivered a parked program; performed no polish work)
 Board row: `polish06_0` in `docs/todo/README_0_6_board.md`
+
+## Execution Record
+
+- **Completed:** 2026-08-26
+- **Source and landing:** Entangled source `be14c1ce471d4bb4cb8b633a2fc76a34c397de47`; independently accepted head `202b3f629cfce48d539e4e36c064508ca8bcd354`; integration merge `7f5a989face80c6bb647f9fb9d06f1d34b1d999b`; main merge `cabf2fea02f9e564ea69662e3beeb0c2bf22164c`.
+- **Landing method:** The source branch was 8 commits ahead and 47 behind collection base `70eaaf80`, with merge base `9976e24f59614f6142856e43c2a31dae21aa8fcc`, so it was not merged or cherry-picked wholesale. Four logical commits were semantically replayed; all 11 owned document blobs at the accepted head are byte-identical to source `be14c1ce`.
+- **Independent review:** Final ACCEPT at `202b3f62` with no findings; exact-head validation passed in 59.700s. Integration `7f5a989f` received independent acceptance and validation passed in 48.991s.
+- **Post-land verification:** At exact main `cabf2fea`, static validation passed in 49.075s. The complete ignored four-file native addon was supplied, hash-verified, imported in 50.977s and qualified in 3.652s as `available=true`, `backend=native_v3`. Full Smoke passed in 238.418s; exact stage milliseconds were 50144 validation, 17985 import, 24884 load, 38139 foundation, 55968 UI, 6969 Dave, 4941 roulette audio and 38586 performance.
+- **Custody and authority:** All generated program documents and prompts remain PARKED and non-claimable until the owner explicitly opens the polish pass. No version bump, packaging, release, remote, product or cleanup action occurred. Owner dirty files, untracked paths and `review_artifacts/` were untouched; source and evidence worktrees remain retained pending cleanup.
+- **Deviations:** None.
 
 # Agent Prompt — 0.6 polish06_0: The Second Half of 0.6
 
