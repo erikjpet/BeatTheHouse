@@ -91,3 +91,13 @@ their own detailed handoffs and test evidence.
   again until that final dependency head merges. When the foreign editor exits,
   serialized HOST order is pusher closure, then `meta06_1`, then `balance06_1`;
   `pusherv3_11` resumes only from the refreshed exact integration head.
+- 2026-08-25: A newly active `fix06_3` scratch-ticket task joined the board
+  quiet window. Its author paused board and runtime work and supplied the exact
+  BLOCKED row, owner question, discovery entry, claim entry, and block entry for
+  primary preservation. Its three uncommitted implementation files remain
+  protected concurrent work and are not part of this program.
+- 2026-08-25: Two queued pusher wrappers launched with
+  `-AllowConcurrentGodot` while a foreign editor was live, despite the HOST
+  hold. Their process trees were stopped/allowed to exit, both reports were
+  invalidated, and the pusher owner acknowledged that closure will rerun from
+  scratch without the override only after literal exclusive HOST release.
