@@ -872,6 +872,9 @@ func _enter_grand_casino_duel_surface() -> bool:
 	if str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
 		var room_result := generator.enter_grand_casino_room_result(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
 		if not bool(room_result.get("ok", false)):
+			var room_errors := _copy_array(room_result.get("errors", []))
+			_show_message(str(room_errors[0]) if not room_errors.is_empty() else "The back room could not be entered safely.")
+			_refresh()
 			return false
 	var duel_game_ids := _string_array(run_state.current_environment.get("game_ids", []))
 	var local_flags := _copy_dict(run_state.current_environment.get("local_narrative_flags", {}))
@@ -2289,12 +2292,24 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	var was_triggered_popup := popup_type == "triggered_event"
 	var return_to_game_after_event := _event_resolution_returns_to_active_game(popup_type, event_context)
 	var inventory_before := _run_inventory_id_set()
+	var layer_entry_rollback_run := run_state.to_dict()
+	var layer_entry_rollback_environment := run_state.current_environment.duplicate(true)
+	var layer_entry_rollback_world_map := run_state.world_map.duplicate(true)
+	var layer_entry_rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
 	var result := event_module.resolve(run_state, event_environment, choice_id)
 	var result_deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
 	var layer_discovery: Dictionary = result_deltas.get("environment_layer_discovery", {}) if typeof(result_deltas.get("environment_layer_discovery", {})) == TYPE_DICTIONARY else {}
 	var discovered_layer_id := str(layer_discovery.get("layer_id", "")).strip_edges()
 	if bool(result.get("ok", false)) and bool(layer_discovery.get("enter", false)) and not discovered_layer_id.is_empty():
-		generator.enter_environment_layer(run_state, discovered_layer_id, false)
+		var layer_entry := generator.enter_environment_layer(run_state, discovered_layer_id, false)
+		if not bool(layer_entry.get("ok", false)):
+			run_state.from_dict(layer_entry_rollback_run)
+			run_state.current_environment = layer_entry_rollback_environment
+			run_state.world_map = layer_entry_rollback_world_map
+			run_state.grand_casino_room_states = layer_entry_rollback_room_states
+			_show_message(str(layer_entry.get("message", "The event could not enter its destination room safely.")))
+			_refresh()
+			return
 	var showdown_continues := (
 		event_id == RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID
 		and run_state != null
@@ -4970,6 +4985,17 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_show_message(str(_array(install_result.get("errors", []))[0]) if not _array(install_result.get("errors", [])).is_empty() else "Travel destination could not be installed.")
 			_refresh()
 			return
+	var delivery_arrival := run_state.delivery_resolve_travel_arrival(route, route_risk) if run_state.delivery_has_active_run() else {}
+	if not delivery_arrival.is_empty() and not bool(delivery_arrival.get("ok", false)):
+		run_state.from_dict(rollback_run)
+		run_state.current_environment = rollback_environment
+		run_state.world_map = rollback_world_map
+		run_state.grand_casino_room_states = rollback_room_states
+		_hide_travel_transition()
+		var delivery_errors := _copy_array(delivery_arrival.get("errors", []))
+		_show_message(str(delivery_errors[0]) if not delivery_errors.is_empty() else str(delivery_arrival.get("message", "Delivery arrival could not be resolved safely.")))
+		_refresh()
+		return
 	# Tutorial and UI-local acknowledgements are committed only after the
 	# authoritative clock, departure journal, map cursor, and destination commit.
 	if coach_overlay != null:
@@ -4983,7 +5009,6 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			route["numbers_past_post_travel_actions"] = numbers_travel_actions
 	run_state.clear_closing_time_state()
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
-	var delivery_arrival := run_state.delivery_resolve_travel_arrival(route, route_risk) if run_state.delivery_has_active_run() else {}
 	_update_procedural_music()
 	current_game = null
 	last_game_result = {}
@@ -12462,7 +12487,10 @@ func _apply_meta_environment(location_id: String) -> void:
 	if environment.is_empty():
 		return
 	var installed := run_state.set_environment(environment)
-	if not bool(installed.get("ok", false)): return
+	if not bool(installed.get("ok", false)):
+		var install_errors := _copy_array(installed.get("errors", []))
+		_show_message(str(install_errors[0]) if not install_errors.is_empty() else "That location could not be entered safely.")
+		return
 	_invalidate_travel_view_cache()
 	_refresh_run_action_service()
 

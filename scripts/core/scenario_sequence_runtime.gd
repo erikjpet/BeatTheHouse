@@ -145,6 +145,11 @@ static func normalize_state(value: Variant, definition: Dictionary = {}, trusted
 	var source := value as Dictionary
 	if int(source.get("schema_version", 0)) != STATE_SCHEMA_VERSION or str(source.get("scenario_id", "")).strip_edges().is_empty():
 		return {}
+	# Persisted causal authority must never become valid by normalization dropping
+	# its oldest entries. Reject every bounded receipt/journal/queue collection in
+	# its raw saved shape before any filtering, migration, or compatibility trim.
+	if not _persisted_collections_within_limits(source):
+		return {}
 	var semantic_source := _dict(source.get("semantic_state", {})).duplicate(true)
 	if not trusted_host_semantics.is_empty():
 		semantic_source["event_choices"] = _dict(trusted_host_semantics.get("event_choices", {}))
@@ -212,6 +217,43 @@ static func normalize_state(value: Variant, definition: Dictionary = {}, trusted
 	if not definition.is_empty() and not SequenceSchemaScript.phase_ids(definition).has(str(state.get("phase_id", ""))) and str(state.get("status", "")) == STATUS_ACTIVE:
 		state["status"] = STATUS_CLEANED
 	return state
+
+
+static func _persisted_collections_within_limits(source: Dictionary) -> bool:
+	var receipt_arrays := [
+		"resolved_branches", "resolved_outcomes",
+		"fact_receipts", "fact_receipt_records", "fact_flush_batch_records",
+		"command_receipts", "command_receipt_records", "branch_resolution_records",
+		"transition_receipts", "transition_receipt_records",
+		"cleanup_receipts", "cleanup_receipt_records", "event_correlations",
+		"visit_receipts", "visit_receipt_records", "expiry_boundary_records",
+	]
+	for key_value in receipt_arrays:
+		var receipt_key := str(key_value)
+		var receipt_value: Variant = source.get(receipt_key, [])
+		if typeof(receipt_value) == TYPE_ARRAY and (receipt_value as Array).size() > MAX_RECEIPTS:
+			return false
+	var queue_value: Variant = source.get("fact_queue", [])
+	if typeof(queue_value) == TYPE_ARRAY and (queue_value as Array).size() > MAX_FACT_QUEUE:
+		return false
+	for key_value in ["command_results", "command_fingerprints", "cleanup_fingerprints", "fact_fingerprints"]:
+		var dictionary_key := str(key_value)
+		var dictionary_value: Variant = source.get(dictionary_key, {})
+		if typeof(dictionary_value) == TYPE_DICTIONARY and (dictionary_value as Dictionary).size() > MAX_RECEIPTS:
+			return false
+	var semantic := _dict(source.get("semantic_state", {}))
+	var transition_queue_value: Variant = semantic.get("transition_queue", [])
+	if typeof(transition_queue_value) == TYPE_ARRAY and (transition_queue_value as Array).size() > OperationRegistryScript.MAX_TRANSITION_QUEUE:
+		return false
+	for key_value in ["operation_receipts", "operation_receipt_records"]:
+		var operation_key := str(key_value)
+		var operation_value: Variant = semantic.get(operation_key, [])
+		if typeof(operation_value) == TYPE_ARRAY and (operation_value as Array).size() > OperationRegistryScript.MAX_OPERATION_RECEIPTS:
+			return false
+	var operation_fingerprints_value: Variant = semantic.get("operation_fingerprints", {})
+	if typeof(operation_fingerprints_value) == TYPE_DICTIONARY and (operation_fingerprints_value as Dictionary).size() > OperationRegistryScript.MAX_OPERATION_RECEIPTS:
+		return false
+	return true
 
 
 static func command(command_id: String, node_id: String, phase_id: String, idempotency_key: String, payload: Dictionary = {}, owner_namespace: String = "scenario", stable_object_id: String = "sequence", action_origin_owner_namespace: String = "", action_origin_stable_object_id: String = "", action_origin_receipt_key: String = "", action_origin_boundary_id: String = "", action_origin_fingerprint: String = "") -> Dictionary:
@@ -1480,13 +1522,11 @@ static func _fact_array(value: Variant) -> Array:
 	return result
 
 
-static func _bounded_records(value: Variant, limit: int) -> Array:
+static func _bounded_records(value: Variant, _limit: int) -> Array:
 	var result: Array = []
 	for record_value in _array(value):
 		if typeof(record_value) == TYPE_DICTIONARY:
 			result.append((record_value as Dictionary).duplicate(true))
-	if result.size() > limit:
-		result = result.slice(result.size() - limit, result.size())
 	return result
 
 
@@ -1554,10 +1594,8 @@ static func _normalized_fact_queue(value: Variant, state: Dictionary) -> Array:
 	return result
 
 
-static func _bounded_strings(value: Variant, limit: int) -> Array:
-	var result := _string_array(value)
-	if result.size() > limit: result = result.slice(result.size() - limit, result.size())
-	return result
+static func _bounded_strings(value: Variant, _limit: int) -> Array:
+	return _string_array(value)
 
 
 static func _append_unique(values: Array, value: String) -> void:

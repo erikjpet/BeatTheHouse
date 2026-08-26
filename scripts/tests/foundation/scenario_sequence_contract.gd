@@ -23,6 +23,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_semantic_inventory(library, failures)
 	_check_base_semantic_producer(library, failures)
 	_check_lifecycle_finalization(library, failures)
+	_check_lifecycle_caller_failure_contract(failures)
 	_check_negative_fixtures(failures)
 	_check_lifecycle_commands(failures)
 	_check_handler_reducer_contracts(failures)
@@ -33,6 +34,23 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_depth_remediation_contracts(failures)
 	_check_authoritative_receipt_capacity(failures)
 	_check_host_transaction_seam(failures)
+
+
+static func _check_lifecycle_caller_failure_contract(failures: Array) -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	for required_fragment in [
+		"var layer_entry := generator.enter_environment_layer(run_state, discovered_layer_id, false)",
+		"if not bool(layer_entry.get(\"ok\", false)):",
+		"run_state.from_dict(layer_entry_rollback_run)",
+		"var delivery_arrival := run_state.delivery_resolve_travel_arrival(route, route_risk)",
+		"if not delivery_arrival.is_empty() and not bool(delivery_arrival.get(\"ok\", false)):",
+		"run_state.from_dict(rollback_run)",
+		"var room_result := generator.enter_grand_casino_room_result",
+		"The back room could not be entered safely.",
+		"That location could not be entered safely.",
+	]:
+		if source.find(str(required_fragment)) < 0:
+			failures.append("Foundation production caller contract no longer visibly propagates and rolls back lifecycle failure: %s" % str(required_fragment))
 
 
 static func _check_semantic_inventory(library: ContentLibrary, failures: Array) -> void:
@@ -254,24 +272,6 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		var valid_overlay_command := _runtime_command(valid_overlay_state, definition, "prepare", str(valid_overlay_state.get("node_id", "")), str(valid_overlay_state.get("phase_id", "")), "valid:overlay:handler", {}, "scenario", "command_console")
 		if not bool(ScenarioEngineScript.sequence_command(valid_overlay_environment, definition, valid_overlay_command, {"available_funds": 10}).get("ok", false)):
 			failures.append("Authenticated authored interaction operation no longer authorized its exact handler action.")
-	var travel_generator := RunGeneratorScript.new(library)
-	for travel_kind_value in ["legacy", "world", "grand_room", "layer"]:
-		var travel_kind := str(travel_kind_value)
-		var departure_run := RunStateScript.new()
-		departure_run.current_environment = valid_authority_environment.duplicate(true)
-		var departure_state_before := _dict(departure_run.current_environment.get("scenario_sequence_state", {}))
-		var departure_receipt_count_before := _array(departure_state_before.get("fact_receipt_records", [])).size()
-		var committed_departure := travel_generator._commit_travel_departure(departure_run, "bar_node", "%s_target" % travel_kind, travel_kind)
-		var departure_state_after := _dict(departure_run.current_environment.get("scenario_sequence_state", {}))
-		var departure_receipts_after := _array(departure_state_after.get("fact_receipt_records", []))
-		var departure_envelope := _dict(_dict(departure_receipts_after.back()).get("envelope", {})) if not departure_receipts_after.is_empty() else {}
-		var departure_payload := _dict(departure_envelope.get("payload", {}))
-		if not bool(committed_departure.get("ok", false)) \
-				or departure_receipts_after.size() != departure_receipt_count_before + 1 \
-				or str(departure_envelope.get("fact_type", "")) != "travel_departed" \
-				or str(departure_payload.get("travel_kind", "")) != travel_kind \
-				or not _array(departure_state_after.get("fact_queue", [])).is_empty():
-			failures.append("The %s travel entry path did not commit exactly one flushed departure receipt." % travel_kind)
 	var cost_run := RunStateScript.new()
 	cost_run.current_environment = valid_authority_environment.duplicate(true)
 	cost_run.bankroll = 10
@@ -396,13 +396,53 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 			break
 		capacity_state = _dict(capacity_visit.get("state", {}))
 	capacity_run.current_environment["scenario_sequence_state"] = capacity_state
-	var capacity_run_before := JSON.stringify(capacity_run.to_dict())
-	var capacity_environment_before := JSON.stringify(capacity_run.current_environment)
-	var capacity_world_map_before := JSON.stringify(capacity_run.world_map)
-	var capacity_room_states_before := JSON.stringify(capacity_run.grand_casino_room_states)
-	var capacity_departure := RunGeneratorScript.new(library).travel_environment_result(capacity_run, "motel")
-	if bool(capacity_departure.get("ok", true)) or JSON.stringify(capacity_run.to_dict()) != capacity_run_before or JSON.stringify(capacity_run.current_environment) != capacity_environment_before or JSON.stringify(capacity_run.world_map) != capacity_world_map_before or JSON.stringify(capacity_run.grand_casino_room_states) != capacity_room_states_before:
-		failures.append("MAX_RECEIPTS - 1 departure did not reserve departure-plus-expiry capacity before every travel mutation.")
+	var layered_capacity_environment: Dictionary = {}
+	var layered_proof_run := RunStateScript.new()
+	layered_proof_run.current_environment = valid_authority_environment.duplicate(true)
+	for ephemeral_key in ["scenario_sequence_state", "scenario_sequence_projection", "scenario_semantic_ready", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_action_digest", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context"]:
+		layered_proof_run.current_environment.erase(ephemeral_key)
+	layered_proof_run.current_environment["scenario_sequence_definition"] = capacity_definition
+	layered_proof_run.current_environment["scenario_sequence_pending_visit_id"] = "capacity_layer_visit"
+	layered_proof_run.current_environment["environment_layer_schema_version"] = 1
+	layered_proof_run.current_environment["current_layer_id"] = "main"
+	layered_proof_run.current_environment["default_layer_id"] = "main"
+	layered_proof_run.current_environment["layer_ids"] = ["main", "back_room"]
+	layered_proof_run.current_environment["layer_transitions"] = [{"target_layer_id": "back_room"}]
+	layered_proof_run.current_environment["layer_states"] = {"back_room": {"id": "bar_back_room", "archetype_id": "bar", "world_node_id": "bar_node"}}
+	var layered_finalized := layered_proof_run.scenario_finalize_base_semantics([presentation], library)
+	if not bool(layered_finalized.get("ok", false)):
+		failures.append("Production layer-entry capacity fixture could not seal its real layered source.")
+	else:
+		layered_capacity_environment = layered_proof_run.current_environment.duplicate(true)
+		layered_capacity_environment["scenario_sequence_state"] = capacity_state.duplicate(true)
+	for production_path_value in ["legacy_next_environment", "world_travel_result", "grand_room_result", "layer_entry"]:
+		var production_path := str(production_path_value)
+		var path_run := RunStateScript.new()
+		path_run.from_dict(capacity_run.to_dict())
+		path_run.current_environment = capacity_run.current_environment.duplicate(true)
+		path_run.world_map = capacity_run.world_map.duplicate(true)
+		path_run.grand_casino_room_states = capacity_run.grand_casino_room_states.duplicate(true)
+		if production_path == "legacy_next_environment":
+			path_run.world_map = {}
+		elif production_path == "layer_entry" and not layered_capacity_environment.is_empty():
+			path_run.current_environment = layered_capacity_environment.duplicate(true)
+		var path_run_before := JSON.stringify(path_run.to_dict())
+		var path_environment_before := JSON.stringify(path_run.current_environment)
+		var path_world_map_before := JSON.stringify(path_run.world_map)
+		var path_room_states_before := JSON.stringify(path_run.grand_casino_room_states)
+		var path_reported_failure := true
+		var path_generator := RunGeneratorScript.new(library)
+		match production_path:
+			"legacy_next_environment":
+				path_generator.next_environment(path_run, "motel", true)
+			"world_travel_result":
+				path_reported_failure = not bool(path_generator.travel_environment_result(path_run, "motel", true).get("ok", true))
+			"grand_room_result":
+				path_reported_failure = not bool(path_generator.enter_grand_casino_room_result(path_run, RunStateScript.GRAND_CASINO_CAGE_ARCHETYPE_ID).get("ok", true))
+			"layer_entry":
+				path_reported_failure = not bool(path_generator.enter_environment_layer(path_run, "back_room", false).get("ok", true))
+		if not path_reported_failure or JSON.stringify(path_run.to_dict()) != path_run_before or JSON.stringify(path_run.current_environment) != path_environment_before or JSON.stringify(path_run.world_map) != path_world_map_before or JSON.stringify(path_run.grand_casino_room_states) != path_room_states_before:
+			failures.append("%s did not reserve combined departure-plus-expiry capacity and reject byte-identically." % production_path)
 	var final_visit := SequenceRuntimeScript.record_visit(capacity_state, capacity_definition, "departure_capacity_final")
 	if not bool(final_visit.get("ok", false)):
 		failures.append("Production world-boundary capacity fixture could not fill its final causal receipt.")
@@ -427,6 +467,27 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	var overbound_normalized := RunStateScript._normalize_environment(overbound_saved_environment)
 	if str(future_normalized.get("scenario_sequence_migration_error", "")).is_empty() or future_normalized.has("scenario_sequence_state") or bool(blocked_finalize.get("ok", true)) or blocked_restore.current_environment.has("scenario_semantic_ready") or blocked_restore.current_environment.has("scenario_sequence_state") or str(instance_restore.get("scenario_sequence_migration_error", "")).is_empty() or instance_restore.has("scenario_sequence_state") or str(overbound_normalized.get("scenario_sequence_migration_error", "")).is_empty() or overbound_normalized.has("scenario_sequence_state"):
 		failures.append("Malformed, unsupported, or overbound persisted sequence state restarted instead of requiring explicit migration.")
+	var overlimit_saved_environment := RunStateScript._environment_for_persistent_storage(valid_authority_environment)
+	var overlimit_saved_state := _dict(overlimit_saved_environment.get("scenario_sequence_state", {}))
+	overlimit_saved_state["fact_receipt_records"] = []
+	for hostile_index in range(SequenceRuntimeScript.MAX_RECEIPTS + 1):
+		overlimit_saved_state["fact_receipt_records"].append({"hostile": hostile_index})
+	overlimit_saved_environment["scenario_sequence_state"] = overlimit_saved_state
+	var overlimit_run_normalized := RunStateScript._normalize_environment(overlimit_saved_environment)
+	var overlimit_instance_normalized := EnvironmentInstanceScript.from_dict(overlimit_saved_environment).to_dict()
+	if overlimit_run_normalized.has("scenario_sequence_state") or str(overlimit_run_normalized.get("scenario_sequence_migration_error", "")).is_empty() or overlimit_instance_normalized.has("scenario_sequence_state") or str(overlimit_instance_normalized.get("scenario_sequence_migration_error", "")).is_empty():
+		failures.append("A persisted 257-entry receipt journal survived RunState or EnvironmentInstance load normalization.")
+	var overlimit_layer_environment := valid_authority_environment.duplicate(true)
+	overlimit_layer_environment.erase("scenario_sequence_state")
+	overlimit_layer_environment["environment_layer_schema_version"] = 1
+	overlimit_layer_environment["current_layer_id"] = "main"
+	overlimit_layer_environment["default_layer_id"] = "main"
+	overlimit_layer_environment["layer_ids"] = ["main", "back_room"]
+	overlimit_layer_environment["layer_states"] = {"back_room": {"id": "overlimit_layer", "scenario_sequence_state": overlimit_saved_state.duplicate(true)}}
+	var normalized_overlimit_layers := RunStateScript._normalize_environment(overlimit_layer_environment)
+	var normalized_overlimit_layer_body := _dict(_dict(normalized_overlimit_layers.get("layer_states", {})).get("back_room", {}))
+	if normalized_overlimit_layer_body.has("scenario_sequence_state") or str(normalized_overlimit_layer_body.get("scenario_sequence_migration_error", "")).is_empty():
+		failures.append("A nested layer retained a persisted 257-entry receipt journal instead of requiring migration.")
 	var valid_proof_version := int(run_state.current_environment.get("scenario_semantic_inventory_version", 0))
 	var valid_proof_digest := str(run_state.current_environment.get("scenario_semantic_digest", ""))
 	var proof_type_cases := [
@@ -1676,6 +1737,55 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	over_capacity_state["fact_serial_next"] = int(forged_pending.get("ingress_serial", 2)) + 1
 	if not SequenceRuntimeScript.normalize_state(over_capacity_state, definition).is_empty() or bool(ScenarioEngineScript._rebuild_receipted_semantic_mutations(over_capacity_state, definition, host_semantics).get("ok", true)):
 		failures.append("Normalization or Engine reconstruction retained 255 visit causes plus two pending facts beyond the global capacity.")
+	var overbound_receipt_values: Array = []
+	for hostile_index in range(SequenceRuntimeScript.MAX_RECEIPTS + 1):
+		overbound_receipt_values.append("hostile_%d" % hostile_index)
+	for field_value in [
+		"resolved_branches", "resolved_outcomes",
+		"fact_receipts", "fact_receipt_records", "fact_flush_batch_records",
+		"command_receipts", "command_receipt_records", "branch_resolution_records",
+		"transition_receipts", "transition_receipt_records",
+		"cleanup_receipts", "cleanup_receipt_records", "event_correlations",
+		"visit_receipts", "visit_receipt_records", "expiry_boundary_records",
+	]:
+		var overbound_field_state := initial.duplicate(true)
+		overbound_field_state[str(field_value)] = overbound_receipt_values.duplicate(true)
+		if not SequenceRuntimeScript.normalize_state(overbound_field_state, definition).is_empty():
+			failures.append("Persisted %s accepted 257 entries by filtering or tail-slicing before its runtime limit check." % str(field_value))
+	var overbound_dictionary_values: Dictionary = {}
+	for hostile_index in range(SequenceRuntimeScript.MAX_RECEIPTS + 1):
+		overbound_dictionary_values["hostile_%d" % hostile_index] = ""
+	for field_value in ["command_results", "command_fingerprints", "cleanup_fingerprints", "fact_fingerprints"]:
+		var overbound_dictionary_state := initial.duplicate(true)
+		overbound_dictionary_state[str(field_value)] = overbound_dictionary_values.duplicate(true)
+		if not SequenceRuntimeScript.normalize_state(overbound_dictionary_state, definition).is_empty():
+			failures.append("Persisted %s accepted 257 entries before its runtime limit check." % str(field_value))
+	var overbound_queue_values: Array = []
+	for hostile_index in range(SequenceRuntimeScript.MAX_FACT_QUEUE + 1):
+		overbound_queue_values.append("hostile_queue_%d" % hostile_index)
+	var overbound_fact_queue := initial.duplicate(true)
+	overbound_fact_queue["fact_queue"] = overbound_queue_values.duplicate(true)
+	if not SequenceRuntimeScript.normalize_state(overbound_fact_queue, definition).is_empty():
+		failures.append("Persisted fact_queue accepted 129 entries by filtering before its queue limit check.")
+	var overbound_transition_queue := initial.duplicate(true)
+	overbound_transition_queue["semantic_state"]["transition_queue"] = overbound_queue_values.duplicate(true)
+	if not SequenceRuntimeScript.normalize_state(overbound_transition_queue, definition).is_empty():
+		failures.append("Persisted semantic transition_queue accepted 129 entries before its queue limit check.")
+	var overbound_operation_values: Array = []
+	var overbound_operation_fingerprints: Dictionary = {}
+	for hostile_index in range(OperationRegistryScript.MAX_OPERATION_RECEIPTS + 1):
+		var hostile_receipt := "hostile_operation_%d" % hostile_index
+		overbound_operation_values.append(hostile_receipt)
+		overbound_operation_fingerprints[hostile_receipt] = "0".repeat(64)
+	for field_value in ["operation_receipts", "operation_receipt_records"]:
+		var overbound_operation_state := initial.duplicate(true)
+		overbound_operation_state["semantic_state"][str(field_value)] = overbound_operation_values.duplicate(true)
+		if not SequenceRuntimeScript.normalize_state(overbound_operation_state, definition).is_empty():
+			failures.append("Persisted semantic %s accepted 513 entries before its runtime limit check." % str(field_value))
+	var overbound_operation_fingerprint_state := initial.duplicate(true)
+	overbound_operation_fingerprint_state["semantic_state"]["operation_fingerprints"] = overbound_operation_fingerprints
+	if not SequenceRuntimeScript.normalize_state(overbound_operation_fingerprint_state, definition).is_empty():
+		failures.append("Persisted semantic operation_fingerprints accepted 513 entries before its runtime limit check.")
 
 	var fact_state := SequenceRuntimeScript.initial_state(definition, "bar_node", "fact_batch_seed", host_semantics)
 	var first_payload := _fact_payload("heat_changed")

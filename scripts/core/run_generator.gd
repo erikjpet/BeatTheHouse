@@ -27,18 +27,12 @@ func travel_environment_result(run_state: RunState, target_archetype_id: String,
 	var preflight := run_state.scenario_preflight_environment_change(source_id, target_id, "world")
 	if not bool(preflight.get("ok", false)):
 		return {"ok": false, "errors": _copy_array(preflight.get("errors", [])), "environment": run_state.current_environment.duplicate(true)}
-	var rollback_run := run_state.to_dict()
-	var rollback_environment := run_state.current_environment.duplicate(true)
-	var rollback_world_map := run_state.world_map.duplicate(true)
-	var rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
+	var rollback := _travel_rollback_snapshot(run_state)
 	var environment := next_environment(run_state, target_id, target_prevalidated)
 	var arrived_id := run_state.current_world_node_id()
 	if target_id.is_empty() or arrived_id != target_id:
-		run_state.from_dict(rollback_run)
-		run_state.current_environment = rollback_environment
-		run_state.world_map = rollback_world_map
-		run_state.grand_casino_room_states = rollback_room_states
-		return {"ok": false, "errors": ["Travel destination was not installed."], "environment": rollback_environment.duplicate(true)}
+		_restore_travel_snapshot(run_state, rollback)
+		return {"ok": false, "errors": ["Travel destination was not installed."], "environment": _copy_dict(rollback.get("environment", {}))}
 	return {"ok": true, "errors": [], "environment": environment.to_dict(), "source_id": source_id, "target_id": arrived_id}
 
 
@@ -50,15 +44,9 @@ func enter_grand_casino_room_result(run_state: RunState, target_archetype_id: St
 	var preflight := run_state.scenario_preflight_environment_change(source_id, target_id, "grand_room") if source_id != target_id else {"ok": true, "inactive": true, "errors": []}
 	if not bool(preflight.get("ok", false)):
 		return {"ok": false, "errors": _copy_array(preflight.get("errors", []))}
-	var rollback_run := run_state.to_dict()
-	var rollback_environment := run_state.current_environment.duplicate(true)
-	var rollback_world_map := run_state.world_map.duplicate(true)
-	var rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
+	var rollback := _travel_rollback_snapshot(run_state)
 	if not enter_grand_casino_room(run_state, target_id):
-		run_state.from_dict(rollback_run)
-		run_state.current_environment = rollback_environment
-		run_state.world_map = rollback_world_map
-		run_state.grand_casino_room_states = rollback_room_states
+		_restore_travel_snapshot(run_state, rollback)
 		return {"ok": false, "errors": ["The interior casino room could not be installed."]}
 	return {"ok": true, "errors": [], "source_id": source_id, "target_id": target_id, "environment": run_state.current_environment.duplicate(true)}
 
@@ -75,33 +63,29 @@ func _commit_travel_departure(run_state: RunState, source_id: String, target_id:
 	return {"ok": true, "inactive": false, "errors": []}
 
 
+func _travel_rollback_snapshot(run_state: RunState) -> Dictionary:
+	return {
+		"run": run_state.to_dict(),
+		"environment": run_state.current_environment.duplicate(true),
+		"world_map": run_state.world_map.duplicate(true),
+		"room_states": run_state.grand_casino_room_states.duplicate(true),
+	}
+
+
+func _restore_travel_snapshot(run_state: RunState, rollback: Dictionary) -> void:
+	run_state.from_dict(_copy_dict(rollback.get("run", {})))
+	run_state.current_environment = _copy_dict(rollback.get("environment", {}))
+	run_state.world_map = _copy_dict(rollback.get("world_map", {}))
+	run_state.grand_casino_room_states = _copy_dict(rollback.get("room_states", {}))
+
+
 # Builds and assigns the next environment for a run. A prevalidated target is
 # reserved for the travel UI after it validates arrival hours, then advances the clock.
 func next_environment(run_state: RunState, target_archetype_id: String = "", target_prevalidated: bool = false) -> EnvironmentInstance:
-	if not run_state.current_environment.is_empty() and not bool(run_state.scenario_preflight_environment_change().get("ok", false)):
-		return EnvironmentInstance.from_dict(run_state.current_environment)
 	var rng := run_state.create_rng()
 	if run_state.has_world_map() or run_state.current_environment.is_empty():
 		return _next_world_environment(run_state, target_archetype_id, rng, target_prevalidated)
-	var depth := run_state.environment_travel_count()
-	if not run_state.current_environment.is_empty():
-		depth += 1
-	var archetype := _pick_archetype(run_state, depth, rng, target_archetype_id)
-	var scenario := _select_scenario(run_state, str(archetype.get("id", "")), rng)
-	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
-	var environment_data := environment.to_dict()
-	run_state.apply_town_generation_modifiers(environment_data, rng)
-	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
-	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
-	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
-	var source_id := run_state.current_world_node_id()
-	var destination_id := str(environment_data.get("world_node_id", environment_data.get("archetype_id", ""))).strip_edges()
-	if not bool(_commit_travel_departure(run_state, source_id, destination_id, "legacy").get("ok", false)): return EnvironmentInstance.from_dict(run_state.current_environment)
-	run_state.save_rng(rng)
-	var installed := run_state.set_environment(environment_data)
-	if not bool(installed.get("ok", false)): return EnvironmentInstance.from_dict(run_state.current_environment)
-	run_state.scenario_publish_travel("travel_arrived", source_id, run_state.current_world_node_id(), "legacy")
-	return EnvironmentInstance.from_dict(run_state.current_environment)
+	return _legacy_next_environment(run_state, target_archetype_id, rng)
 
 
 # Builds the next environment from a cloned run so route previews do not mutate state.
@@ -200,13 +184,17 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 	var source_room_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
 	if source_room_id != target_id and not bool(run_state.scenario_preflight_environment_change(source_room_id, target_id, "grand_room").get("ok", false)):
 		return false
+	var rollback := _travel_rollback_snapshot(run_state)
 	if source_room_id != target_id:
-		if not bool(_commit_travel_departure(run_state, source_room_id, target_id, "grand_room").get("ok", false)): return false
+		if not bool(_commit_travel_departure(run_state, source_room_id, target_id, "grand_room").get("ok", false)):
+			_restore_travel_snapshot(run_state, rollback)
+			return false
 	run_state.store_grand_casino_room_environment(run_state.current_environment)
 	var environment_data := run_state.grand_casino_room_environment(target_id)
 	if environment_data.is_empty():
 		var archetype := _archetype_by_id(target_id)
 		if archetype.is_empty():
+			_restore_travel_snapshot(run_state, rollback)
 			return false
 		var rng := run_state.create_rng()
 		var depth := maxi(0, int(run_state.current_environment.get("depth", run_state.environment_travel_count())))
@@ -225,7 +213,9 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	var installed := run_state.set_environment(environment_data)
-	if not bool(installed.get("ok", false)): return false
+	if not bool(installed.get("ok", false)):
+		_restore_travel_snapshot(run_state, rollback)
+		return false
 	if source_room_id != target_id:
 		run_state.scenario_publish_travel("travel_arrived", source_room_id, target_id, "grand_room")
 	return true
@@ -385,6 +375,8 @@ func world_map_snapshot(run_state: RunState, selected_id: String = "") -> Dictio
 
 
 func _next_world_environment(run_state: RunState, target_archetype_id: String, rng: RngStream, target_prevalidated: bool = false) -> EnvironmentInstance:
+	var rollback := _travel_rollback_snapshot(run_state)
+	var had_source := not run_state.current_environment.is_empty()
 	var map := WorldMap.new(library)
 	var initialized_tutorial_map := false
 	if not run_state.has_world_map():
@@ -399,23 +391,31 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 	if run_state.current_environment.is_empty() and target_id.is_empty():
 		target_id = WorldMap.current_node_id(map_data)
 	elif not target_id.is_empty() and not target_prevalidated and not _world_target_is_available(run_state, map_data, current_node_id, target_id):
+		if had_source: _restore_travel_snapshot(run_state, rollback)
 		return EnvironmentInstance.from_dict(run_state.current_environment)
 	elif target_id.is_empty():
 		target_id = _fallback_world_neighbor(run_state, map_data, current_node_id)
 	if target_id.is_empty():
+		if had_source: _restore_travel_snapshot(run_state, rollback)
 		return EnvironmentInstance.from_dict(run_state.current_environment) if not run_state.current_environment.is_empty() else _legacy_next_environment(run_state, target_archetype_id, rng)
 	var node := WorldMap.node_by_id(map_data, target_id)
 	if node.is_empty():
+		if had_source: _restore_travel_snapshot(run_state, rollback)
 		return EnvironmentInstance.from_dict(run_state.current_environment) if not run_state.current_environment.is_empty() else _legacy_next_environment(run_state, target_archetype_id, rng)
 	if not run_state.current_environment.is_empty() and not bool(run_state.scenario_preflight_environment_change(current_node_id, target_id, "world").get("ok", false)):
+		_restore_travel_snapshot(run_state, rollback)
 		return EnvironmentInstance.from_dict(run_state.current_environment)
 	if run_state.has_world_map() and not run_state.current_environment.is_empty():
 		if current_node_id != target_id:
-			if not bool(_commit_travel_departure(run_state, current_node_id, target_id, "world").get("ok", false)): return EnvironmentInstance.from_dict(run_state.current_environment)
+			if not bool(_commit_travel_departure(run_state, current_node_id, target_id, "world").get("ok", false)):
+				_restore_travel_snapshot(run_state, rollback)
+				return EnvironmentInstance.from_dict(run_state.current_environment)
 		run_state.store_current_world_node_environment()
 	var environment_data := _world_environment_data_for_node(run_state, map_data, node, rng)
 	var installed := run_state.set_environment(environment_data)
-	if not bool(installed.get("ok", false)): return EnvironmentInstance.from_dict(run_state.current_environment)
+	if not bool(installed.get("ok", false)):
+		_restore_travel_snapshot(run_state, rollback)
+		return EnvironmentInstance.from_dict(run_state.current_environment)
 	run_state.enter_world_node(target_id, run_state.current_environment)
 	if not current_node_id.is_empty() and current_node_id != target_id:
 		run_state.scenario_publish_travel("travel_arrived", current_node_id, target_id, "world")
@@ -489,22 +489,39 @@ func _apply_tutorial_initial_map_targets(map_data: Dictionary, run_state: RunSta
 
 
 func _legacy_next_environment(run_state: RunState, target_archetype_id: String, rng: RngStream) -> EnvironmentInstance:
-	if not run_state.current_environment.is_empty() and not bool(run_state.scenario_preflight_environment_change().get("ok", false)):
-		return EnvironmentInstance.from_dict(run_state.current_environment)
+	var rollback := _travel_rollback_snapshot(run_state)
+	var source_id := run_state.current_world_node_id()
+	var had_source := not run_state.current_environment.is_empty()
 	var depth := run_state.environment_travel_count()
-	if not run_state.current_environment.is_empty():
+	if had_source:
 		depth += 1
 	var archetype := _pick_archetype(run_state, depth, rng, target_archetype_id)
 	var scenario := _select_scenario(run_state, str(archetype.get("id", "")), rng)
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	var environment_data := environment.to_dict()
+	var destination_id := str(environment_data.get("world_node_id", environment_data.get("archetype_id", ""))).strip_edges()
+	if had_source:
+		# Legacy travel learns its destination through generation, so reserve both
+		# the departure fact and leave/visit-end expiry only after that identity is
+		# known, but before any generated-room mutation is committed to the run.
+		var preflight := run_state.scenario_preflight_environment_change(source_id, destination_id, "legacy")
+		if destination_id.is_empty() or not bool(preflight.get("ok", false)):
+			_restore_travel_snapshot(run_state, rollback)
+			return EnvironmentInstance.from_dict(run_state.current_environment)
 	run_state.apply_town_generation_modifiers(environment_data, rng)
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
+	if had_source and not bool(_commit_travel_departure(run_state, source_id, destination_id, "legacy").get("ok", false)):
+		_restore_travel_snapshot(run_state, rollback)
+		return EnvironmentInstance.from_dict(run_state.current_environment)
 	run_state.save_rng(rng)
 	var installed := run_state.set_environment(environment_data)
-	if not bool(installed.get("ok", false)): return EnvironmentInstance.from_dict(run_state.current_environment)
+	if not bool(installed.get("ok", false)):
+		_restore_travel_snapshot(run_state, rollback)
+		return EnvironmentInstance.from_dict(run_state.current_environment)
+	if had_source:
+		run_state.scenario_publish_travel("travel_arrived", source_id, run_state.current_world_node_id(), "legacy")
 	return EnvironmentInstance.from_dict(run_state.current_environment)
 
 

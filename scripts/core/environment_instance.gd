@@ -338,6 +338,7 @@ static func _durable_sequence_state(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY: return {}
 	if (value as Dictionary).is_empty(): return {}
 	if not ScenarioOperationRegistryScript.validate_bounded_variant("persisted environment scenario sequence state", value).is_empty(): return {}
+	if not ScenarioSequenceRuntimeScript._persisted_collections_within_limits(value as Dictionary): return {}
 	var state := (value as Dictionary).duplicate(true)
 	var semantic := _copy_dict(state.get("semantic_state", {}))
 	for key in ["target_inventory", "declared_targets", "base_interactions", "event_choices", "scene_objects", "interactions", "actors", "services", "games", "routes", "transition_queue", "tombstones"]: semantic.erase(key)
