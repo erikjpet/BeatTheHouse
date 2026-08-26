@@ -10,7 +10,9 @@ extends RefCounted
 static func candidate_ids(archetype: Dictionary, event_definitions: Array) -> Array:
 	var pool := _string_array(archetype.get("event_pool", []))
 	if event_definitions.is_empty():
-		return pool
+		# A raw pool is not event authority. Callers without validated definitions
+		# fail closed through the same resolver path as an empty ContentLibrary.
+		return []
 	var scopes := _string_array(archetype.get("event_scopes", []))
 	var result: Array = []
 	for definition_value in event_definitions:

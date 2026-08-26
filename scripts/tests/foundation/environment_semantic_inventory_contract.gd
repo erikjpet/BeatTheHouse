@@ -1,6 +1,7 @@
 extends RefCounted
 
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const EnvironmentEventResolverScript := preload("res://scripts/core/environment_event_resolver.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
@@ -64,6 +65,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_exclusive_pool_and_choices(library, failures)
 	_check_event_guarantees_and_choice_authority(library, failures)
 	_check_event_runtime_catalog_parity(failures)
+	_check_event_generation_without_definitions(failures)
 	_check_rare_route_catalog(library, failures)
 	_check_rare_route_materialization(library, failures)
 	_check_semantic_zone_shapes(library, failures)
@@ -282,6 +284,26 @@ static func _check_event_runtime_catalog_parity(failures: Array) -> void:
 		guaranteed_ids.sort()
 		if observed_union != authorized_ids or observed_intersection != guaranteed_ids:
 			failures.append("Event catalog/runtime generation membership diverged for %s: authorized=%s guaranteed=%s observed_union=%s observed_intersection=%s." % [str(matrix.get("label", "matrix")), JSON.stringify(authorized_ids), JSON.stringify(guaranteed_ids), JSON.stringify(observed_union), JSON.stringify(observed_intersection)])
+
+
+static func _check_event_generation_without_definitions(failures: Array) -> void:
+	var archetype := _event_archetype(["required_event", "optional_event"], ["required_event"], [1, 1])
+	var contract := EnvironmentEventResolverScript.selection_contract(archetype, [])
+	if not _array(contract.get("candidates", [])).is_empty() or not _array(contract.get("required", [])).is_empty() or not _array(contract.get("possible", [])).is_empty() or not _array(contract.get("guaranteed", [])).is_empty() or int(contract.get("minimum_selected_count", -1)) != 0 or int(contract.get("maximum_selected_count", -1)) != 0:
+		failures.append("Event resolver authorized raw required/count pool ids without validated definitions.")
+	var null_library := _generated_from_archetype(archetype, null, 73100)
+	var layered := archetype.duplicate(true)
+	layered["layers"] = {"room": {}}
+	layered["default_layer_id"] = "room"
+	layered["layer_discovery_defaults"] = {"room": true}
+	var null_layer := _generated_from_archetype_layer(layered, "room", null, 73100)
+	if not _array(null_library.get("event_ids", [])).is_empty() or _array(null_library.get("event_ids", [])) != _array(null_layer.get("event_ids", [])):
+		failures.append("Null-library ordinary/layer event generation did not share required/count fail-closed resolver semantics.")
+	var empty_library := ContentLibrary.new()
+	var empty_definitions := _generated_from_archetype(archetype, empty_library, 73100)
+	var empty_layer := _generated_from_archetype_layer(layered, "room", empty_library, 73100)
+	if not _array(empty_definitions.get("event_ids", [])).is_empty() or not _array(empty_layer.get("event_ids", [])).is_empty():
+		failures.append("A non-null ContentLibrary with empty definitions silently authorized raw event-pool ids.")
 
 
 static func _check_rare_route_catalog(library: ContentLibrary, failures: Array) -> void:
@@ -1177,6 +1199,12 @@ static func _generated_from_archetype(archetype: Dictionary, library: ContentLib
 	var rng := RngStream.new()
 	rng.configure(seed)
 	return EnvironmentInstanceScript.from_archetype(archetype, 1, rng, library, {}, definition).to_dict()
+
+
+static func _generated_from_archetype_layer(archetype: Dictionary, layer_id: String, library: ContentLibrary, seed: int) -> Dictionary:
+	var rng := RngStream.new()
+	rng.configure(seed)
+	return EnvironmentInstanceScript.from_archetype_layer(archetype, layer_id, 1, rng, library).to_dict()
 
 
 static func _event_definition(event_id: String, scope: String, interaction_mode: String = "interactable", unique_class: String = "", priority: int = 0) -> Dictionary:
