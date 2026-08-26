@@ -308,7 +308,7 @@ playtested, and what the second half of 0.6 is. Launcher:
 | perf06_1 | `perf06_1_performance_platform_pass_prompt.md` | TODO | Families 1 and 2 merged | playtest06_2 | — | — | — | First project-wide pass since the pusher physics and the scenario runtime. Idle 0.000 without a liveness counter is a failure. |
 | teach06_2 | `teach06_2_teaching_pass_two_prompt.md` | TODO | depth06_1, game06_8, world06_7 | — | — | — | — | Audit all 63 lessons for staleness, then teach the systems that have none. |
 | playtest06_2 | `playtest06_2_playtest_gate_refresh_prompt.md` | TODO | integ06_1, perf06_1 | owner playtest | — | — | — | Amends `playtest06_1` in place: real dependency list, named seeds, playtest script, finding-capture format. |
-| polish06_0 | `polish06_0_post_playtest_program_prompt.md` | TODO | — | the parked second half | — | — | — | Designs the post-playtest half and stops. Delivers parked prompts; performs no polish and no release activity. |
+| polish06_0 | `../todone/polish06_0_post_playtest_program_prompt.md` | DONE | — | the parked second half | PM:Codex/sub:polish-program | 2026-08-26 | 2026-08-26 | Planning program landed at `cabf2fea` with 11 source-identical documents and full native-backed Smoke PASS. Every output remains PARKED and non-claimable until the owner explicitly opens the polish pass; no polish or release activity was performed. |
 
 ### The owner playtest is the terminus of this board
 
