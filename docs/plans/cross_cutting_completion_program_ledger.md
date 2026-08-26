@@ -164,3 +164,11 @@ their own detailed handoffs and test evidence.
   authorship transferred to that task for a clean static commit/self-review;
   the earlier pusher task is idle, all killed EV outputs remain rejected, and
   HOST stays held pending exact-head independent review and integration.
+- 2026-08-26: The superseding pusher author completed mandatory self-review at
+  clean exact head `66f6560f909c4598379084d0635bcf3e0d1f455c`. Six commits after
+  `a0d2b6ff` cover hardened hold/stack behavior, truthful close/reopen history,
+  physical opening settlement, actual-GL sequence evidence, and permanent
+  opening/queue guards. Static diff checks passed, but the author explicitly
+  left branch-matching parse, suites, native/Web parity, budgets, and fresh
+  uncontested 600,000-play economics pending. A non-author exact-head static
+  review began; neither merge nor runtime acceptance is implied.
