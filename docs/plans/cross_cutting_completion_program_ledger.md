@@ -405,6 +405,10 @@ their own detailed handoffs and test evidence.
   with no Coin Pusher failure; clean statically accepted `fix06_4` addresses
   both but still awaits its serialized runtime gate. A fresh standalone focused
   Coin Pusher suite is running from stable zero.
+- 2026-08-26: Exact-head focused Coin Pusher passed in 181.557 seconds with a
+  clean wrapper exit. A fresh standalone 12-context opening audit is running
+  from stable zero and must terminate explicitly; no provisional report is
+  being reused. EV remains unreleased.
 - 2026-08-26: Depth immediately corrected that readiness claim after a
   read-only executable-gate audit reopened `env06_6` at `aa179f11` with three
   P1 evidence-harness gaps: no native/Web exact-sequence parity producer, no
