@@ -615,6 +615,20 @@ function Invoke-FoundationSystemsSharded {
     if (-not $planCheck.valid) {
         throw "Invalid foundation systems shard plan: $(@($planCheck.errors) -join ' | ')"
     }
+    $canonicalShardOrder = @($plan.Keys | ForEach-Object { [string]$_ })
+    # Start the two critical-path shards first so private-project setup for the
+    # shorter shards cannot delay their Godot processes. This changes scheduling
+    # only; reports are restored to the manifest's canonical order before merge.
+    $launchShardOrder = @(
+        "systems_activation",
+        "systems_events_saves",
+        "systems_core",
+        "systems_world_release"
+    )
+    $orderDelta = @(Compare-Object -ReferenceObject $canonicalShardOrder -DifferenceObject $launchShardOrder)
+    if ($orderDelta.Count -gt 0) {
+        throw "Foundation systems launch order does not exactly cover the canonical shard plan."
+    }
 
     # Generate the composite source once, then copy it into each private
     # project. No child traverses the parent report tree through res://.tmp.
@@ -626,7 +640,7 @@ function Invoke-FoundationSystemsSharded {
     $runnerPath = Join-Path $root ($runnerRelativePath.Replace("/", "\"))
     $parentCacheRoot = Join-Path $root ".godot"
     $cacheBefore = @(Get-FoundationCacheFingerprint -CacheRoot $parentCacheRoot)
-    foreach ($shardIdValue in $plan.Keys) {
+    foreach ($shardIdValue in $launchShardOrder) {
         $shardId = [string]$shardIdValue
         $safeShardId = $shardId -replace "[^A-Za-z0-9_.-]", "_"
         $reportFile = "foundation_systems.$safeShardId.json"
@@ -782,6 +796,18 @@ function Invoke-FoundationSystemsSharded {
     [System.IO.File]::WriteAllText($stdout, $combinedStdout.ToString())
     [System.IO.File]::WriteAllText($stderr, $combinedStderr.ToString())
 
+    $shardResultsById = @{}
+    foreach ($shardResult in $shardResults) {
+        $shardResultsById[[string]$shardResult.shard_id] = $shardResult
+    }
+    $canonicalShardResults = @()
+    foreach ($canonicalShardId in $canonicalShardOrder) {
+        if (-not $shardResultsById.ContainsKey($canonicalShardId)) {
+            throw "Foundation systems shard result is missing for '$canonicalShardId'."
+        }
+        $canonicalShardResults += $shardResultsById[$canonicalShardId]
+    }
+    $shardResults = $canonicalShardResults
     $merged = Merge-FoundationSystemsShardReports -ExpectedIds $expectedIds -ShardResults $shardResults
     $aggregateReport = $merged.report
     $aggregateReport.started_msec = $startedMsec
