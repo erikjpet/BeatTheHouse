@@ -24,7 +24,7 @@ their own detailed handoffs and test evidence.
 
 | Gate | Practical runtime/evidence at preflight |
 | --- | --- |
-| `tools/validate_project.ps1` | Clean integration probe exceeded 120 seconds and was terminated; no pass claimed. Historical repository records are commonly 15-30 seconds, so this requires isolated diagnosis. |
+| `tools/validate_project.ps1` | First clean probe exceeded a 120-second wrapper window; a direct quiet rerun passed with exit 0 in 75.3 seconds. |
 | `tools/check_godot.ps1 -RequireGodot -FoundationSuite <name>` | Supported names: smoke, contracts, games, systems, ui, slot/slots, slot_acceptance, blackjack, roulette, baccarat, craps, video_poker, bar_dice, crew_poker, pull_tabs, scratch_tickets, coin_pusher, audit, all/full. |
 | Foundation recorded baselines | all 153.768s; systems 29.141s; UI compile 83.234s; contracts 153.594s; games 146.950s; slot 25.535s; slot acceptance 638.945s; audit 646.713s; focused game suites generally 11-86s where recorded. |
 | Extended gates | 10-seed determinism, native/Web parity, performance with mandatory idle-liveness counter-gate, visual QA, accessibility, save/migration, soak, and row-specific harnesses. |
