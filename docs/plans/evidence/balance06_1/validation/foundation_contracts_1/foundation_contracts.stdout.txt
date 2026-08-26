@@ -1,0 +1,31 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+FOUNDATION_CHECK_START id=content suite=contracts
+FOUNDATION_CHECK_DONE id=content duration_msec=6262 failures=0
+FOUNDATION_CHECK_START id=crew_recruitment_contract suite=contracts
+RUN_SAVE_MIGRATION town_state regenerated from seed for a pre-0.6 save.
+RUN_SAVE_MIGRATION town_state regenerated from seed for a pre-0.6 save.
+FOUNDATION_CHECK_DONE id=crew_recruitment_contract duration_msec=1168 failures=0
+FOUNDATION_CHECK_START id=crew_layer3_jobs_contract suite=contracts
+FOUNDATION_CHECK_DONE id=crew_layer3_jobs_contract duration_msec=102 failures=0
+FOUNDATION_CHECK_START id=crew_plays_contract suite=contracts
+FOUNDATION_CHECK_DONE id=crew_plays_contract duration_msec=105 failures=0
+FOUNDATION_CHECK_START id=crew_heist_contract suite=contracts
+FOUNDATION_CHECK_DONE id=crew_heist_contract duration_msec=239 failures=0
+FOUNDATION_CHECK_START id=crew_turn_contract suite=contracts
+FOUNDATION_CHECK_DONE id=crew_turn_contract duration_msec=988 failures=0
+FOUNDATION_CHECK_START id=character_chains_contract suite=contracts
+FOUNDATION_CHECK_DONE id=character_chains_contract duration_msec=119 failures=0
+FOUNDATION_CHECK_START id=content_depth_contract suite=contracts
+FOUNDATION_CHECK_DONE id=content_depth_contract duration_msec=314 failures=0
+FOUNDATION_CHECK_START id=coach_engine_foundation suite=contracts
+FOUNDATION_CHECK_DONE id=coach_engine_foundation duration_msec=46 failures=0
+FOUNDATION_CHECK_START id=foundation_contracts suite=contracts
+GRAND_CASINO_PREMIUM_TABLE roulette games=1 pressure=grand-incomplete staff=true
+GRAND_CASINO_PREMIUM_TABLE baccarat games=1 pressure=showdown-pending staff=true
+BAR_DICE ship_captain_crew/friendly house edge over 1000 rounds = 0.1106
+BAR_DICE ship_captain_crew/standard house edge over 1000 rounds = 0.1423
+BAR_DICE ship_captain_crew/sharp house edge over 1000 rounds = 0.1719
+VIDEO_POKER jacks_or_better/full_pay/1HAND RTP = 0.9973
+VIDEO_POKER deuces_wild/full_pay/2HAND RTP = 0.8866
+VIDEO_POKER double_double_bonus/full_pay/3HAND RTP = 0.9365
