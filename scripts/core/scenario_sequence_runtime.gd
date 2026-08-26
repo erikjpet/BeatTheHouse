@@ -1070,33 +1070,51 @@ static func _event_resolution_was_requested(state: Dictionary, event_id: String,
 static func _event_fact_is_authorized(state: Dictionary, definition: Dictionary, payload: Dictionary) -> bool:
 	var event_id := str(payload.get("event_id", "")).strip_edges()
 	var resolution_id := str(payload.get("resolution_id", "")).strip_edges()
-	if event_id.is_empty():
+	if event_id.is_empty() or not _matches_authored_event_result_payload(definition, payload):
 		return false
 	if _event_request_was_delivered(state, event_id):
 		return not resolution_id.is_empty() and not _event_resolution_was_consumed(state, resolution_id) and _event_resolution_was_requested(state, event_id, resolution_id)
 	if not resolution_id.is_empty():
 		return not _event_resolution_was_consumed(state, resolution_id) and _event_resolution_was_requested(state, event_id, resolution_id)
+	return true
+
+
+static func _matches_authored_event_result_payload(definition: Dictionary, payload: Dictionary) -> bool:
 	var authored := SequenceSchemaScript.sequence(definition)
 	for subscription_value in _array(authored.get("fact_subscriptions", [])):
 		var subscription := _dict(subscription_value)
-		if str(subscription.get("fact_type", "")) == "event_result" and _payload_predicate_matches(_dict(subscription.get("payload_equals", {})), payload):
+		if str(subscription.get("fact_type", "")) == "event_result" and _event_payload_predicate_matches(_dict(subscription.get("payload_equals", {})), payload):
 			return true
 	for phase_value in _array(_dict(authored.get("phase_graph", {})).get("phases", [])):
 		var phase_data := _dict(phase_value)
 		for condition_value in _array(phase_data.get("entry_conditions", [])):
 			var condition := _dict(condition_value)
-			if str(condition.get("type", "")) == "fact" and str(condition.get("fact_type", "")) == "event_result" and _payload_predicate_matches(_dict(condition.get("payload_equals", {})), payload):
+			if str(condition.get("type", "")) == "fact" and str(condition.get("fact_type", "")) == "event_result" and _event_payload_predicate_matches(_dict(condition.get("payload_equals", {})), payload):
 				return true
 		for branch_value in _array(phase_data.get("branches", [])):
 			var condition := _dict(_dict(branch_value).get("condition", {}))
-			if str(condition.get("type", "")) == "fact" and str(condition.get("fact_type", "")) == "event_result" and _payload_predicate_matches(_dict(condition.get("payload_equals", {})), payload):
+			if str(condition.get("type", "")) == "fact" and str(condition.get("fact_type", "")) == "event_result" and _event_payload_predicate_matches(_dict(condition.get("payload_equals", {})), payload):
 				return true
 	for objective_value in _array(authored.get("objectives", [])):
 		for step_value in _array(_dict(objective_value).get("steps", [])):
 			var step := _dict(step_value)
-			if str(step.get("kind", "")) == "fact" and str(step.get("fact_type", "")) == "event_result" and _payload_predicate_matches(_dict(step.get("payload_equals", {})), payload):
+			if str(step.get("kind", "")) == "fact" and str(step.get("fact_type", "")) == "event_result" and _event_payload_predicate_matches(_dict(step.get("payload_equals", {})), payload):
 				return true
 	return false
+
+
+static func _event_payload_predicate_matches(predicate: Dictionary, payload: Dictionary) -> bool:
+	# Delivered event results are externally sourced authority. A broad objective
+	# predicate may observe a supported result, but it cannot authorize arbitrary
+	# choices or failed/unresolved payloads. An authorizing predicate must bind the
+	# event's discriminating result fields; correlated requests also bind their
+	# exact resolution id.
+	for key in ["event_id", "choice_id", "resolved", "ok"]:
+		if not predicate.has(key):
+			return false
+	if not str(payload.get("resolution_id", "")).strip_edges().is_empty() and not predicate.has("resolution_id"):
+		return false
+	return _payload_predicate_matches(predicate, payload)
 
 
 static func _event_request_was_delivered(state: Dictionary, event_id: String) -> bool:
