@@ -382,3 +382,8 @@ their own detailed handoffs and test evidence.
   is only 1.451 seconds, the coordinator issued
   `HOST RELEASE: PUSHERV3_10 NON-EV` for a clean exact-head Systems rerun and the
   remaining serial battery. EV is still explicitly unreleased.
+- 2026-08-26: Fresh committed-head Systems on `e4a7be3f` passed with zero
+  failures at 42.509 seconds, 1.203 seconds under the unchanged 43.712-second
+  cap. The author is verifying stable-zero cleanup and proceeding serially to
+  exact-head Windows debug/release and Web debug/release builds. EV remains
+  unreleased.
