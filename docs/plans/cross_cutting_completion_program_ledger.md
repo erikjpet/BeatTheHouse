@@ -878,3 +878,18 @@ their own detailed handoffs and test evidence.
   handoff omitted from its first final summary. Pusher `30ee954d` has a textual
   overlap at the legacy runner setup; semantic integration must preserve this
   verified accessor plus all pusher scheduling and canonical-result logic.
+- 2026-08-26: Author mandatory self-review issued static-scope `ACCEPT` for
+  exact clean `6b680ee113c42116cc0c3d7efbae1d16da96cfd8`, with runtime
+  acceptance explicitly withheld and no owner exceptions. The handoff records
+  accepted semantic base `90d87174`, tree-identical post-revert checkpoint
+  `8e0c4f58`, normal revert purposes, five-path effective ownership, exact
+  requirement-to-symbol/test mapping, both diff checks, AST/hostile-contract
+  passes, author validator PASS in 48.7 seconds, full debug/TODO/dead/generated/
+  shortcut/privacy/time/randomness/duplicate/save/idempotency hazard review,
+  absent generated output and zero Godot/compiler processes. No product,
+  Foundation GDScript source, shard manifest, data, native, scene, budget,
+  registration, board or release surface changed. Mandatory remaining evidence
+  is a missing-output import-enabled Blackjack run, an identical second run
+  proving stable path/hash/mtime, import-enabled Systems, then Contracts and
+  full Smoke; every stage stops on first red and no `-NoImport` timing may be
+  accepted.
