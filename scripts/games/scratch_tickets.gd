@@ -41,6 +41,7 @@ const RESTOCK_ONE_PERCENT := 40
 const RESTOCK_TWO_PERCENT := 10
 const SCALPER_VISIT_CHANCE_PERCENT := 30
 const SCALPER_KNOWS_CHANCE_PERCENT := 50
+const PRACTICE_STOCK_COUNT := 100
 const MACHINE_RECT := Rect2(18, 13, 278, 404)
 const PLAY_SURFACE_RECT := Rect2(306, 48, 586, 370)
 const DEFAULT_TICKET_RECT := Rect2(422, 54, 354, 356)
@@ -892,6 +893,12 @@ func _redeemer_label(environment: Dictionary) -> String:
 	return "Lottery Clerk"
 
 
+func _is_practice_environment(environment: Dictionary) -> bool:
+	var flags_value: Variant = environment.get("local_narrative_flags", {})
+	var flags: Dictionary = flags_value if typeof(flags_value) == TYPE_DICTIONARY else {}
+	return bool(flags.get("practice_session", false))
+
+
 func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	var day_key := int(environment.get("generated_day", environment.get("day", 0)))
 	var stream_key := "scratch-stock:%s:day:%d" % [str(environment.get("id", "room")), day_key]
@@ -899,13 +906,14 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	var machine_rng := root_rng.fork(stream_key)
 	var current_absolute_minute := maxi(0, run_state.game_clock_minutes) if run_state != null else maxi(0, day_key * 1440)
 	var restock_phase_minute := machine_rng.randi_range(0, RESTOCK_INTERVAL_MINUTES - 1)
+	var practice_session := _is_practice_environment(environment)
 	var stock: Array = []
 	for ticket_type_value in _ticket_types():
 		var ticket_type: Dictionary = ticket_type_value
 		var count_range := _int_array(ticket_type.get("stock_count", [0, 5]))
-		var maximum := clampi(int(count_range[1]) if count_range.size() > 1 else 5, 1, 5)
+		var maximum := PRACTICE_STOCK_COUNT if practice_session else clampi(int(count_range[1]) if count_range.size() > 1 else 5, 1, 5)
 		var stock_roll := machine_rng.randi_range(0, 19)
-		var remaining := 0 if stock_roll < 15 else mini(maximum, stock_roll - 14)
+		var remaining := PRACTICE_STOCK_COUNT if practice_session else (0 if stock_roll < 15 else mini(maximum, stock_roll - 14))
 		stock.append({
 			"type_id": str(ticket_type.get("id", "")),
 			"display_name": str(ticket_type.get("display_name", "Ticket")),

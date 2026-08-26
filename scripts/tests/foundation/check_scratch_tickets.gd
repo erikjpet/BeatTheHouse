@@ -910,6 +910,18 @@ func _check_scratch_stock(game: GameModule, failures: Array) -> void:
 	for type_id in SCRATCH_IDS:
 		if not seen_types.has(type_id):
 			failures.append("Scratch machine stock omitted %s." % type_id)
+	var practice: Dictionary = game.call("_generate_machine_state", null, {
+		"id": "practice_scratch_tickets",
+		"day": 4,
+		"local_narrative_flags": {"practice_session": true},
+	}, _scratch_rng("practice-stock-root"))
+	var practice_stock := _dict_array(practice.get("stock", []))
+	if practice_stock.size() != SCRATCH_IDS.size():
+		failures.append("Scratch practice stock did not include every ticket type.")
+	for slot_value in practice_stock:
+		var practice_slot: Dictionary = slot_value
+		if int(practice_slot.get("remaining", 0)) != 100 or int(practice_slot.get("capacity", 0)) != 100:
+			failures.append("Scratch practice stock did not provide 100 copies of %s." % str(practice_slot.get("type_id", "")))
 	var out_of_stock_rows := 0
 	var total_rows := 0
 	var stocked_counts := {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}

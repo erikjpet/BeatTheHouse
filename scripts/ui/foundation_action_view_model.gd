@@ -478,13 +478,13 @@ static func game_test_environment(host: Variant, game_id: String, game: GameModu
 		rng.configure(1)
 	var generated = game.generate_environment_state(host.run_state, environment, rng.fork("game_state:%s" % game_id))
 	if not generated.is_empty():
-		if game_id == "scratch_tickets":
-			_set_scratch_ticket_practice_stock(generated)
 		var state_overrides = host._copy_dict(overrides.get("game_state", {}))
 		if state_overrides.is_empty() and not overrides.has("environment"):
 			state_overrides = overrides
 		if not state_overrides.is_empty():
 			host._deep_merge_dict(generated, state_overrides)
+		if game_id == "scratch_tickets":
+			_set_scratch_ticket_practice_stock(generated)
 		var states: Dictionary = environment.get("game_states", {})
 		states[game_id] = generated.duplicate(true)
 		environment["game_states"] = states
