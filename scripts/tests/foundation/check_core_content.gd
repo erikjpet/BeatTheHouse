@@ -46,6 +46,7 @@ const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
+const CareerStatsViewModelScript := preload("res://scripts/ui/career_stats_view_model.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")
@@ -4560,8 +4561,13 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 	profile_inventory.record_run_result(_profile_result_fixture("failure", RunStateScript.FAILURE_POLICE_CAPTURE, "2026-07-03", 55, {}, "standard"))
 	profile_inventory.record_run_result(_profile_result_fixture("failure", RunStateScript.FAILURE_STRANDED, "2026-07-04", 5, {}, "standard"))
 	profile_inventory.record_run_result(_profile_result_fixture("failure", RunStateScript.FAILURE_ABANDONED, "2026-07-05", 100, {}, "standard"))
+	var heist_fixture := _profile_result_fixture("victory", "crew_heist", "2026-07-06", 480, {"craps": 3, "coin_pusher": 2, "crew_draw_poker": 4}, "standard")
+	heist_fixture[ProfileInventoryScript.RELEASE_REPORTING_KEY] = _release_profile_fixture()
+	profile_inventory.record_run_result(heist_fixture)
 	var snapshot := profile_inventory.to_dict()
 	snapshot["future_profile_field"] = {"kept": true}
+	snapshot["lifetime_stats"]["future_lifetime_counter"] = 71
+	snapshot["lifetime_stats"][ProfileInventoryScript.RELEASE_REPORTING_KEY]["future_release_counter"] = 19
 	var restored: ProfileInventory = ProfileInventoryScript.new()
 	restored.from_dict(snapshot)
 	if restored.item_quantity(ProfileInventory.REFERENCE_CHIP_ID) != 1:
@@ -4572,16 +4578,64 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 		failures.append("ProfileInventory did not round-trip coach seen-state and tutorial completion.")
 	if restored.completed_challenge_rows().is_empty():
 		failures.append("ProfileInventory did not surface completed challenge rows.")
-	if restored.run_history.size() != 5:
+	if restored.run_history.size() != 6:
 		failures.append("ProfileInventory did not append one history entry for each terminal fixture.")
-	if int(restored.lifetime_stats.get("total_runs", 0)) != 5:
+	if int(restored.lifetime_stats.get("total_runs", 0)) != 6:
 		failures.append("ProfileInventory lifetime total_runs did not match terminal fixtures.")
 	var victories := _copy_dict(restored.lifetime_stats.get("victories_per_route", {}))
-	if int(victories.get("players_card_cashout", 0)) != 1:
-		failures.append("ProfileInventory did not count players-card victories by route.")
+	if int(victories.get("players_card_cashout", 0)) != 1 or int(victories.get("crew_heist", 0)) != 1:
+		failures.append("ProfileInventory did not count players-card and crew-heist victories by route.")
 	var games_played := _copy_dict(restored.lifetime_stats.get("games_played", {}))
-	if int(games_played.get("bar_dice", 0)) != 2 or int(games_played.get("blackjack", 0)) != 1:
+	if int(games_played.get("bar_dice", 0)) != 2 or int(games_played.get("blackjack", 0)) != 1 or int(games_played.get("craps", 0)) != 3 or int(games_played.get("coin_pusher", 0)) != 2 or int(games_played.get("crew_draw_poker", 0)) != 4:
 		failures.append("ProfileInventory did not merge lifetime game tallies.")
+	var release_stats := _copy_dict(restored.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
+	if int(release_stats.get("crew_path_runs", 0)) != 1 or str(release_stats.get("highest_crew_standing", "")) != "made" or int(release_stats.get("crew_members_met", 0)) != 2 \
+		or int(release_stats.get("crew_members_met_unique", 0)) != 2 or _copy_array(release_stats.get("crew_member_ids_met", [])) != ["crew_rook", "crew_lucky"] \
+		or int(release_stats.get("crew_jobs_completed", 0)) != 3 or int(release_stats.get("crew_jobs_abandoned", 0)) != 1 or int(release_stats.get("crew_turn_resolutions", 0)) != 1 \
+		or int(release_stats.get("nights_survived", 0)) != 2 or int(release_stats.get("scenarios_experienced", 0)) != 2 or int(release_stats.get("notable_aftermath_outcomes", 0)) != 1 \
+		or int(release_stats.get("sweeps_encountered", 0)) != 2 or int(release_stats.get("rumors_proved_true", 0)) != 1 or int(release_stats.get("numbers_slips_placed", 0)) != 4 \
+		or int(release_stats.get("numbers_hits", 0)) != 1 or int(release_stats.get("numbers_rig_runs", 0)) != 1 or int(release_stats.get("delivery_runs_completed", 0)) != 2 or int(release_stats.get("delivery_packages_lost", 0)) != 1:
+		failures.append("ProfileInventory did not aggregate the complete reporting-only 0.6 lifetime ledger: %s." % JSON.stringify(release_stats))
+	if int(restored.lifetime_stats.get("future_lifetime_counter", 0)) != 71 or int(release_stats.get("future_release_counter", 0)) != 19:
+		failures.append("ProfileInventory normalization lost an unknown existing lifetime counter.")
+	var career_model := CareerStatsViewModelScript.build(restored)
+	var career_routes: Array = career_model.get("routes", []) if typeof(career_model.get("routes", [])) == TYPE_ARRAY else []
+	if CareerStatsViewModelScript.route_definition_ids() != ["players_card_cashout", "showdown", "crew_heist"] or career_routes.size() < 3 or JSON.stringify(career_routes).find("crew_heist") == -1 or JSON.stringify(career_model).find("Back-Room Poker") == -1:
+		failures.append("Career ledger did not render all producible victory routes and generic 0.6 game tallies.")
+	var historical_profile := ProfileInventoryScript.new()
+	historical_profile.from_dict({"schema_version": 5, "lifetime_stats": {"total_runs": 4, "victories_per_route": {"crew_heist": 4}, "future_counter": 33}})
+	var historical_career := CareerStatsViewModelScript.build(historical_profile)
+	if JSON.stringify(historical_career.get("routes", [])).find("Crew Heist") == -1 or str(_copy_dict((historical_career.get("headline", []) as Array)[1]).get("value", "")) != "4" or int(historical_profile.lifetime_stats.get("future_counter", 0)) != 33:
+		failures.append("An existing counted-but-undisplayed heist route did not surface without migration loss.")
+	var unique_member_profile := ProfileInventoryScript.new()
+	var first_member_run := _profile_result_fixture("failure", RunStateScript.FAILURE_ABANDONED, "2026-07-07", 90, {})
+	var first_member_release := _release_profile_fixture()
+	first_member_release["crew"]["turn_resolution"] = "The Turn must not leave a failed run's private ledger."
+	first_member_run[ProfileInventoryScript.RELEASE_REPORTING_KEY] = first_member_release
+	unique_member_profile.record_run_result(first_member_run)
+	var second_member_run := _profile_result_fixture("failure", RunStateScript.FAILURE_STRANDED, "2026-07-08", 40, {})
+	var second_release := _release_profile_fixture()
+	second_release["crew"].erase("turn_resolution")
+	second_release["crew"]["members_met"] = [{"id": "crew_rook", "label": "Rook"}, {"id": "crew_bishop", "label": "Bishop"}]
+	second_member_run[ProfileInventoryScript.RELEASE_REPORTING_KEY] = second_release
+	unique_member_profile.record_run_result(second_member_run)
+	var unique_member_stats := _copy_dict(unique_member_profile.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
+	if _copy_array(unique_member_stats.get("crew_member_ids_met", [])) != ["crew_rook", "crew_bishop", "crew_lucky"] or int(unique_member_stats.get("crew_members_met_unique", 0)) != 3 or int(unique_member_stats.get("crew_members_met", 0)) != 4 or int(unique_member_stats.get("crew_turn_resolutions", -1)) != 0:
+		failures.append("Career ledger did not deduplicate the lifetime Crew roster while preserving the cumulative contact counter: %s." % JSON.stringify(unique_member_stats))
+	var unique_member_career := CareerStatsViewModelScript.build(unique_member_profile)
+	var displayed_unique_members := false
+	for section_value in _copy_array(unique_member_career.get("release_0_6", [])):
+		var section := _copy_dict(section_value)
+		if str(section.get("id", "")) != "crew":
+			continue
+		for row_value in _copy_array(section.get("rows", [])):
+			var row := _copy_dict(row_value)
+			if str(row.get("label", "")) == "Members met" and str(row.get("value", "")) == "3":
+				displayed_unique_members = true
+	if not displayed_unique_members:
+		failures.append("Career ledger did not display the unique Crew roster count: %s." % JSON.stringify(unique_member_career.get("release_0_6", [])))
+	if JSON.stringify(unique_member_career.get("release_0_6", [])).to_lower().contains("turn"):
+		failures.append("Failed-run career reporting named the hidden Turn before any approved resolution.")
 	if not restored.to_dict().has("future_profile_field"):
 		failures.append("ProfileInventory did not preserve unknown profile keys.")
 	if int(restored.to_dict().get("act", 0)) != 1:
@@ -4635,6 +4689,16 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 		failures.append("ProfileInventory markerless profile did not normalize Act 1 with empty act_seam.")
 	if not old_profile.tips_seen.is_empty() or old_profile.tutorial_completed:
 		failures.append("ProfileInventory legacy profile did not default coach fields compatibly.")
+	var old_release := _copy_dict(old_profile.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
+	if int(old_release.get("delivery_runs_completed", -1)) != 0 or int(old_release.get("numbers_hits", -1)) != 0:
+		failures.append("ProfileInventory absent 0.6 reporting fields did not default compatibly.")
+	var reporting_only_profile := ProfileInventoryScript.new()
+	reporting_only_profile.add_reference_chip()
+	var progression_before := {"items": reporting_only_profile.items.duplicate(true), "challenges": reporting_only_profile.challenge_completions.duplicate(true), "act_seam": reporting_only_profile.act_seam.duplicate(true)}
+	reporting_only_profile.record_run_result(heist_fixture)
+	var progression_after := {"items": reporting_only_profile.items.duplicate(true), "challenges": reporting_only_profile.challenge_completions.duplicate(true), "act_seam": reporting_only_profile.act_seam.duplicate(true)}
+	if JSON.stringify(progression_after) != JSON.stringify(progression_before):
+		failures.append("0.6 career fields changed cross-run progression instead of remaining read-only reporting.")
 	_check_act_two_seam_payloads(failures)
 	_remove_profile_inventory_test_file()
 	OS.set_environment(ProfileInventoryScript.INVENTORY_PATH_ENV, "")
@@ -4692,6 +4756,28 @@ func _profile_result_fixture(outcome: String, route: String, completed_date: Str
 		"bankroll_lost": maxi(0, RunStateScript.DEFAULT_BANKROLL - final_bankroll),
 		"biggest_single_win": maxi(0, final_bankroll - RunStateScript.DEFAULT_BANKROLL),
 		"games_played": games_played.duplicate(true),
+	}
+
+
+func _release_profile_fixture() -> Dictionary:
+	return {
+		"crew": {
+			"path_walked": true,
+			"standing": "made",
+			"members_met": [{"id": "crew_rook", "label": "Rook"}, {"id": "crew_lucky", "label": "Lucky"}],
+			"jobs_completed": 3,
+			"jobs_abandoned": 1,
+			"turn_resolution": "The Turn broke the score.",
+		},
+		"world": {
+			"nights_survived": 2,
+			"scenarios": [{"id": "bar_wake", "label": "The Wake"}, {"id": "corner_store_aftermath", "label": "The Aftermath"}],
+			"notable_outcomes": [{"id": "scenario_aftermath_fence_offer:take", "label": "Aftermath Fence Offer / Take"}],
+			"sweeps_encountered": 2,
+			"rumors_proved_true": 1,
+		},
+		"numbers": {"slips_placed": 4, "hits": 1, "rig_route_used": true},
+		"deliveries": {"runs_completed": 2, "packages_lost": 1},
 	}
 
 
