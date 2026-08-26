@@ -122,6 +122,7 @@ class LifecycleCallerProbe:
 	var talk_dock_fixture_root: Control
 	var capture_transaction_attention := false
 	var failed_talk_dock_attention_tween: Tween
+	var environment_hover_signal_log: Array[String] = []
 
 	func _show_message(text: String) -> void:
 		message_log.append(text)
@@ -137,6 +138,10 @@ class LifecycleCallerProbe:
 		for tween_value in talk_dock.attention_tween_lifecycle_snapshot():
 			if tween_value is Tween and not prior_tweens.has(tween_value):
 				failed_talk_dock_attention_tween = tween_value as Tween
+
+	func _on_environment_object_hovered(object_id: String) -> void:
+		environment_hover_signal_log.append(object_id)
+		super._on_environment_object_hovered(object_id)
 
 	func _autosave_foundation_run(_status_text: String = "Autosaved.", _force: bool = false) -> bool:
 		autosave_count += 1
@@ -280,7 +285,12 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	var layered_environment := EnvironmentInstanceScript.from_archetype(library.environment_archetype("small_underground_casino"), 1, layer_rng, library).to_dict()
 	layer_probe.run_state.current_environment = layered_environment
 	_install_real_event_popup(layer_probe, "side_door")
-	_install_active_tutorial_presentation(layer_probe, "tutorial_family_phone", "event:side_door", "family_phone")
+	_install_active_tutorial_presentation(layer_probe, "tutorial_family_phone", "event:side_door", "family_phone", true)
+	var layer_hover_signal_count := layer_probe.environment_hover_signal_log.size()
+	var layer_hover_baseline_valid := layer_probe.environment_hover_signal_log == ["event:side_door"] \
+			and layer_probe.selected_object_id.is_empty() and layer_probe.environment_canvas.selected_object_id.is_empty() \
+			and layer_probe.hover_target_id == "event:side_door" and layer_probe.environment_canvas.hovered_object_id == "event:side_door" \
+			and layer_probe.environment_canvas.mouse_default_cursor_shape == Control.CURSOR_POINTING_HAND
 	var layer_before := _public_caller_probe_state(layer_probe)
 	var layer_preexisting_talk_tweens := layer_probe.talk_dock.attention_tween_lifecycle_snapshot()
 	var layer_preexisting_coach_tween: Variant = layer_probe.coach_overlay.attention_tween_lifecycle_snapshot().get("tween", null)
@@ -308,7 +318,12 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	var preexisting_coach_tween_progressed := layer_probe.coach_overlay.panel.modulate.a > coach_alpha_before_step
 	var layer_preexisting_coach_survived := layer_preexisting_coach_tween is Tween and (layer_preexisting_coach_tween as Tween).is_valid()
 	var layer_rollback_checkpoint_clean := layer_probe.coach_overlay.lifecycle_protected_attention_tweens.is_empty()
-	if layer_ok or not layer_rollback_equal or not layer_stale_work_ignored or layer_probe.autosave_count != 0 or layer_probe.presentation_count != 0 \
+	var layer_hover_rollback_exact := layer_probe.environment_hover_signal_log.size() == layer_hover_signal_count \
+			and layer_probe.selected_object_id.is_empty() and layer_probe.environment_canvas.selected_object_id.is_empty() \
+			and layer_probe.hover_target_id == "event:side_door" and layer_probe.environment_canvas.hovered_object_id == "event:side_door" \
+			and layer_probe.environment_canvas.mouse_default_cursor_shape == Control.CURSOR_POINTING_HAND
+	if layer_ok or not layer_rollback_equal or not layer_stale_work_ignored or not layer_hover_baseline_valid or not layer_hover_rollback_exact \
+			or layer_probe.autosave_count != 0 or layer_probe.presentation_count != 0 \
 			or layer_messages != ["", "Selected event choice: Try the word.", "Layer caller fixture rejected."] \
 			or layer_probe.failed_talk_dock_attention_tween == null or layer_probe.failed_talk_dock_attention_tween.is_valid() \
 			or not _all_valid_tweens(layer_preexisting_talk_tweens) or not layer_preexisting_coach_survived \
@@ -517,7 +532,7 @@ static func _install_real_event_popup(probe: LifecycleCallerProbe, event_id: Str
 	probe._show_interactable_event_popup(event_id)
 
 
-static func _install_active_tutorial_presentation(probe: LifecycleCallerProbe, lesson_id: String, action_id: String, dialogue_node: String) -> void:
+static func _install_active_tutorial_presentation(probe: LifecycleCallerProbe, lesson_id: String, action_id: String, dialogue_node: String, hover_only_canvas_baseline: bool = false) -> void:
 	probe.run_state.challenge_config["tutorial"] = true
 	var fixture_root := Control.new()
 	fixture_root.name = "LifecycleTalkDockFixture"
@@ -532,6 +547,10 @@ static func _install_active_tutorial_presentation(probe: LifecycleCallerProbe, l
 	environment_snapshot["reduce_motion"] = false
 	environment_canvas.render_environment_snapshot(environment_snapshot)
 	probe.environment_canvas = environment_canvas
+	environment_canvas.object_hovered.connect(Callable(probe, "_on_environment_object_hovered"))
+	environment_canvas.object_focused.connect(Callable(probe, "_on_environment_object_focused"))
+	environment_canvas.object_activated.connect(Callable(probe, "_on_environment_object_activated"))
+	environment_canvas.view_geometry_changed.connect(Callable(probe, "_on_environment_view_geometry_changed"))
 	var game_surface_canvas := GameSurfaceCanvasScript.new()
 	game_surface_canvas.size = fixture_root.size
 	fixture_root.add_child(game_surface_canvas)
@@ -611,8 +630,13 @@ static func _install_active_tutorial_presentation(probe: LifecycleCallerProbe, l
 		_clear_talk_dock_choice_hierarchy(dock)
 		dock._render_choices()
 	dock._complete_body_reveal()
-	probe.selected_object_id = "event:side_door"
-	environment_canvas.set_selected_object(probe.selected_object_id, false)
+	if hover_only_canvas_baseline:
+		probe.selected_object_id = ""
+		environment_canvas.set_selected_object("", false)
+		environment_canvas._set_hovered_object("event:side_door")
+	else:
+		probe.selected_object_id = "event:side_door"
+		environment_canvas.set_selected_object(probe.selected_object_id, false)
 	dock.set_avoid_global_rect(Rect2(620.0, 390.0, 230.0, 170.0), "lifecycle:%s" % lesson_id, 760.0)
 	probe._apply_talk_dock_environment_reserve()
 	environment_canvas.scene_idle_animation_redraw_accumulator = 0.03125
@@ -656,10 +680,12 @@ static func _free_lifecycle_presentation_probe(probe: LifecycleCallerProbe) -> v
 	probe.coach_overlay = null
 	probe.environment_canvas = null
 	probe.game_surface_canvas = null
-	if probe.talk_dock_fixture_root != null and is_instance_valid(probe.talk_dock_fixture_root):
-		probe.talk_dock_fixture_root.free()
+	var fixture_root := probe.talk_dock_fixture_root
 	probe.talk_dock_fixture_root = null
-	probe.free()
+	if fixture_root != null and is_instance_valid(fixture_root):
+		fixture_root.free()
+	if is_instance_valid(probe):
+		probe.free()
 
 
 static func _install_real_world_map_popup(probe: FoundationMain, target_id: String, target_label: String) -> void:
@@ -712,6 +738,8 @@ static func _public_caller_probe_state(probe: FoundationMain) -> String:
 	var lifecycle_snapshot := probe._foundation_lifecycle_snapshot()
 	var coach_state := _dict(lifecycle_snapshot.get("coach", {}))
 	coach_state.erase("ref")
+	coach_state.erase("parent_ref")
+	coach_state.erase("focus_ref")
 	var coach_attention_state := _dict(coach_state.get("attention", {}))
 	coach_attention_state.erase("tween")
 	coach_state["attention"] = coach_attention_state
