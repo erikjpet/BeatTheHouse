@@ -18,6 +18,11 @@ function Get-ProjectRelativePath {
     return [System.Uri]::UnescapeDataString($rootUri.MakeRelativeUri($pathUri).ToString()) -replace "\\", "/"
 }
 
+function Test-JsonObjectRoot {
+    param([AllowNull()][object]$Value)
+    return $null -ne $Value -and $Value.GetType() -eq [System.Management.Automation.PSCustomObject]
+}
+
 $requiredFiles = @(
     "README.md",
     "project.godot",
@@ -32,6 +37,10 @@ $requiredFiles = @(
     "scripts/core/profile_inventory.gd",
     "scripts/core/attribute_badges.gd",
     "scripts/core/content_library.gd",
+    "scripts/core/scenario_sequence_catalog.gd",
+    "scripts/core/scenario_sequence_schema.gd",
+    "scripts/core/scenario_sequence_runtime.gd",
+    "scripts/core/scenario_operation_registry.gd",
     "scripts/core/character_roster.gd",
     "scripts/core/crew_state_model.gd",
     "scripts/core/crew_recruitment_model.gd",
@@ -51,6 +60,7 @@ $requiredFiles = @(
     "scripts/tests/foundation/crew_turn_contract.gd",
     "scripts/tests/foundation/character_chains_contract.gd",
     "scripts/tests/foundation/content_depth_contract.gd",
+    "scripts/tests/foundation/scenario_sequence_contract.gd",
     "scripts/tests/foundation/crew_ignored_golden_probe.gd",
     "scripts/tests/fixtures/crew06_5_ignored_run_baseline.json",
     "scripts/tests/foundation/check_scratch_tickets.gd",
@@ -61,9 +71,12 @@ $requiredFiles = @(
     "tools/gdscript_load_check.gd",
     "tools/foundation_visual_qa.ps1",
     "tools/foundation_visual_qa.gd",
+    "tools/scenario_sequence_audit.ps1",
+    "tools/scenario_sequence_audit.gd",
     "data/art/art_manifest.json",
     "data/art/attribute_glyphs.json",
     "data/environments/archetypes.json",
+    "data/environments/scenario_sequences/env06_7_shops_streets.json",
     "data/items/items.json",
     "data/events/events.json",
     "data/characters/characters.json",
@@ -101,6 +114,20 @@ $requiredFiles = @(
 )
 
 $failures = New-Object System.Collections.Generic.List[string]
+
+$objectRootContractFixtures = @(
+    @{ Label = "object"; Value = ('{"fixture":true}' | ConvertFrom-Json); Expected = $true },
+    @{ Label = "array"; Value = ('[1,2]' | ConvertFrom-Json); Expected = $false },
+    @{ Label = "null"; Value = ('null' | ConvertFrom-Json); Expected = $false },
+    @{ Label = "string"; Value = ('"fixture"' | ConvertFrom-Json); Expected = $false },
+    @{ Label = "number"; Value = ('7' | ConvertFrom-Json); Expected = $false },
+    @{ Label = "boolean"; Value = ('true' | ConvertFrom-Json); Expected = $false }
+)
+foreach ($fixture in $objectRootContractFixtures) {
+    if ((Test-JsonObjectRoot $fixture.Value) -ne $fixture.Expected) {
+        $failures.Add("JSON object-root classifier contract failed for $($fixture.Label).")
+    }
+}
 
 foreach ($relative in $requiredFiles) {
     $path = Join-Path $root $relative
@@ -169,6 +196,9 @@ $objectJsonFiles = @(
     "data/environments/scenarios.json",
     "data/story/character_chains.json"
 )
+$objectJsonDirectories = @(
+    "data/environments/scenario_sequences/"
+)
 
 $jsonFiles = Get-ChildItem -LiteralPath (Join-Path $root "data") -Filter "*.json" -File -Recurse -ErrorAction SilentlyContinue
 
@@ -180,8 +210,15 @@ foreach ($jsonFile in $jsonFiles) {
             $failures.Add("JSON file parsed to null: $($jsonFile.FullName)")
         }
         $relativeJson = Get-ProjectRelativePath $jsonFile.FullName
-        if ($objectJsonFiles -contains $relativeJson) {
-            if ($parsed -is [System.Array]) {
+        $requiresObject = $objectJsonFiles -contains $relativeJson
+        foreach ($directory in $objectJsonDirectories) {
+            if ($relativeJson.StartsWith($directory, [System.StringComparison]::OrdinalIgnoreCase)) {
+                $requiresObject = $true
+                break
+            }
+        }
+        if ($requiresObject) {
+            if (-not (Test-JsonObjectRoot $parsed)) {
                 $failures.Add("JSON file must contain an object: $($jsonFile.FullName)")
             }
         }
