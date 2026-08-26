@@ -14,6 +14,7 @@ static func check(_library: ContentLibrary, failures: Array) -> void:
 	_check_lifecycle_commands(failures)
 	_check_serialized_fact_ingress(failures)
 	_check_sequence_persistence_seam(failures)
+	_check_authoritative_receipt_capacity(failures)
 
 
 static func _check_schema(failures: Array) -> void:
@@ -35,6 +36,23 @@ static func _check_schema(failures: Array) -> void:
 	renamed["display_name"] = "Different prose"
 	if SequenceSchemaScript.signature_text(definition) != SequenceSchemaScript.signature_text(renamed) or SequenceSchemaScript.signature_similarity(signature_a, SequenceSchemaScript.normalized_signature(renamed)) != 1.0:
 		failures.append("Calculated mechanic signature can be evaded by renaming display identity.")
+	var identity_renamed := definition.duplicate(true)
+	identity_renamed["sequence"]["phase_graph"]["phases"][0]["scene_ops"][0]["stable_object_id"] = "renamed_prop"
+	identity_renamed["sequence"]["phase_graph"]["phases"][0]["scene_ops"][0]["receipt_id"] = "renamed_receipt"
+	if SequenceSchemaScript.signature_text(definition) != SequenceSchemaScript.signature_text(identity_renamed):
+		failures.append("Calculated mechanic signature changes under stable-id/receipt renaming.")
+	var boundary_expectations := [[0.599, "pass"], [0.600, "warning"], [0.719, "warning"], [0.720, "blocking_review"], [0.819, "blocking_review"], [0.820, "fail"]]
+	for expectation_value in boundary_expectations:
+		var expectation := expectation_value as Array
+		var score := float(expectation[0])
+		var expected_band := str(expectation[1])
+		if str(SequenceSchemaScript.uniqueness_band(score).get("status", "")) != expected_band:
+			failures.append("Uniqueness band boundary %.3f did not resolve to %s." % [score, expected_band])
+	if str(SequenceSchemaScript.uniqueness_band(0.1, true).get("status", "")) != "equal_hash_hard_fail":
+		failures.append("Equal normalized mechanic hashes are not a hard failure.")
+	var exact_count := SequenceSchemaScript.catalog_uniqueness_report([definition], 2, OperationRegistryScript)
+	if bool(exact_count.get("ok", true)) or not _contains_text(_array(exact_count.get("failures", [])), "expected 2"):
+		failures.append("Sequence rollout audit did not enforce exact catalog count.")
 
 
 static func _check_registered_operations(failures: Array) -> void:
@@ -56,16 +74,41 @@ static func _check_registered_operations(failures: Array) -> void:
 		var family_operations: Array = []
 		for index in range((expected[family] as Array).size()):
 			family_operations.append(_operation_fixture(family, str((expected[family] as Array)[index]), index))
-		var applied := OperationRegistryScript.apply_operations(state, family, family_operations, "boundary_%s" % family)
+		var boundary_scope := "fixture:node:phase:%s" % family
+		var applied := OperationRegistryScript.apply_operations(state, family, family_operations, boundary_scope)
 		if not bool(applied.get("ok", false)):
 			failures.append("Registered %s fixtures failed: %s." % [family, JSON.stringify(applied.get("errors", []))])
 			continue
 		state = _dict(applied.get("state", {}))
-		var replay := OperationRegistryScript.apply_operations(state, family, family_operations, "boundary_%s" % family)
+		var replay := OperationRegistryScript.apply_operations(state, family, family_operations, boundary_scope)
 		if not bool(replay.get("ok", false)) or not _array(replay.get("applied", [])).is_empty() or JSON.stringify(replay.get("state", {})) != JSON.stringify(state):
 			failures.append("Registered %s operations are not idempotent by boundary receipt." % family)
 	if _array(state.get("operation_receipts", [])).size() != 39:
 		failures.append("Registered operation fixture did not receipt every operation exactly once.")
+	_check_golden_operation_state(state, failures)
+	var before_atomic := JSON.stringify(state)
+	var valid := _operation_fixture("scene_ops", "set_state", 901)
+	var invalid := _operation_fixture("scene_ops", "set_state", 902)
+	invalid["op"] = "reflect"
+	var atomic := OperationRegistryScript.apply_operations(state, "scene_ops", [valid, invalid], "fixture:node:phase:atomic")
+	if bool(atomic.get("ok", true)) or not _array(atomic.get("applied", [])).is_empty() or JSON.stringify(atomic.get("state", {})) != before_atomic:
+		failures.append("Scenario operation batch was not prevalidated and atomic.")
+	var duplicate_receipt_a := _operation_fixture("scene_ops", "set_state", 903)
+	var duplicate_receipt_b := _operation_fixture("scene_ops", "set_appearance", 904)
+	duplicate_receipt_b["receipt_id"] = duplicate_receipt_a["receipt_id"]
+	if bool(OperationRegistryScript.apply_operations(state, "scene_ops", [duplicate_receipt_a, duplicate_receipt_b], "fixture:node:phase:duplicate").get("ok", true)):
+		failures.append("Scenario operation batch accepted duplicate authored receipt ids.")
+	var conflicting_replay := _operation_fixture("scene_ops", "set_state", 8)
+	conflicting_replay["state"] = "conflicting"
+	var conflict := OperationRegistryScript.apply_operations(state, "scene_ops", [conflicting_replay], "fixture:node:phase:scene_ops")
+	if bool(conflict.get("ok", true)) or not _contains_text(_array(conflict.get("errors", [])), "conflicting content"):
+		failures.append("Scenario operation receipt accepted conflicting replay content.")
+	var wrong_family := _operation_fixture("scene_ops", "set_state", 905)
+	wrong_family["family"] = "actor_ops"
+	if OperationRegistryScript.validate_operation("scene_ops", wrong_family).is_empty():
+		failures.append("Scenario operation accepted a mismatched family field.")
+	if bool(OperationRegistryScript.apply_operations(state, "scene_ops", [valid], "unscoped").get("ok", true)):
+		failures.append("Scenario operation batch accepted an unscoped boundary receipt.")
 	var handlers := OperationRegistryScript.registered_handlers()
 	for handler_id in ["set_local", "increment_local", "complete_objective_step", "record_outcome", "publish_feedback", "request_cleanup", "event_bridge"]:
 		var handler := _dict(handlers.get(handler_id, {}))
@@ -95,6 +138,71 @@ static func _check_interaction_identity(failures: Array) -> void:
 	var priority_result := OperationRegistryScript.resolve_interactions([higher], [low_priority])
 	if bool(priority_result.get("ok", true)) or _array(priority_result.get("records", [])).size() != 1 or str(_dict(_array(priority_result.get("records", []))[0]).get("owner_namespace", "")) != "scenario":
 		failures.append("Lower-priority interaction override did not fail closed.")
+	var triple := OperationRegistryScript.resolve_interactions([
+		_interaction_record("base", "triple", "One", true),
+		_interaction_record("base", "triple", "Two", true),
+		_interaction_record("base", "triple", "Three", true),
+	], [])
+	if bool(triple.get("ok", true)) or not _array(triple.get("records", [])).is_empty():
+		failures.append("Triple duplicate interaction identity was not permanently tainted.")
+	var invalid_owner := _interaction_record("intruder", "bad", "Bad", true)
+	var invalid_mode := _interaction_record("scenario", "bad_mode", "Bad", true)
+	invalid_mode["mode"] = "steal"
+	var missing_target := _interaction_record("scenario", "missing_target", "Missing", true)
+	missing_target["mode"] = "replace"
+	missing_target["target_owner_namespace"] = "base"
+	missing_target["target_stable_object_id"] = "absent"
+	var hostile := OperationRegistryScript.resolve_interactions(base, [invalid_owner, invalid_mode, missing_target])
+	if bool(hostile.get("ok", true)) or _array(hostile.get("records", [])).size() != 1 or str(_dict(_array(hostile.get("records", []))[0]).get("stable_object_id", "")) != "exit":
+		failures.append("Invalid owner/mode/missing-target overlays leaked invalid interaction records.")
+	var inaccessible := _interaction_record("scenario", "bad_accessibility", "Bad", true)
+	inaccessible["focus_order"] = "first"
+	inaccessible["hit_bounds"] = {"w": 43, "h": 44}
+	inaccessible["min_target_size"] = 43
+	inaccessible["safe_exit"] = "yes"
+	inaccessible["input_actions"] = [7]
+	var inaccessible_result := OperationRegistryScript.resolve_interactions(base, [inaccessible])
+	if bool(inaccessible_result.get("ok", true)) or _array(inaccessible_result.get("records", [])).size() != 1:
+		failures.append("Inaccessible interaction overlay did not fail closed without leaking a record.")
+
+
+static func _check_golden_operation_state(state: Dictionary, failures: Array) -> void:
+	var scene := _dict(state.get("scene_objects", {}))
+	var interactions := _dict(state.get("interactions", {}))
+	var actors := _dict(state.get("actors", {}))
+	var services := _dict(state.get("services", {}))
+	var games := _dict(state.get("games", {}))
+	var routes := _dict(state.get("routes", {}))
+	var checks := [
+		[not scene.has("scenario::fixture_1"), "scene remove"],
+		[str(_dict(scene.get("scenario::fixture_2", {})).get("anchor_id", "")) == "bar_floor_3", "scene move"],
+		[bool(_dict(scene.get("scenario::fixture_4", {})).get("visible", false)), "scene reveal"],
+		[not bool(_dict(scene.get("scenario::fixture_5", {})).get("visible", true)), "scene hide"],
+		[bool(_dict(scene.get("scenario::fixture_6", {})).get("enabled", false)), "scene enable"],
+		[not bool(_dict(scene.get("scenario::fixture_7", {})).get("enabled", true)), "scene disable"],
+		[str(_dict(scene.get("scenario::fixture_8", {})).get("state", "")) == "ready", "scene state"],
+		[str(_dict(scene.get("scenario::fixture_9", {})).get("appearance", "")) == "scuffed", "scene appearance"],
+		[str(_dict(interactions.get("scenario::fixture_2", {})).get("mode", "")) == "replace", "interaction replace"],
+		[not bool(_dict(interactions.get("scenario::fixture_3", {})).get("enabled", true)), "interaction gate"],
+		[str(_dict(interactions.get("scenario::fixture_4", {})).get("source_id", "")) == "fixture_source", "interaction retarget"],
+		[_array(_dict(interactions.get("scenario::fixture_5", {})).get("available_actions", [])).size() == 1, "interaction augment"],
+		[not actors.has("scenario::fixture_1"), "actor despawn"],
+		[str(_dict(actors.get("scenario::fixture_2", {})).get("anchor_id", "")) == "bar_actor_2", "actor position"],
+		[str(_dict(actors.get("scenario::fixture_3", {})).get("route_id", "")) == "bar_route", "actor route"],
+		[str(_dict(actors.get("scenario::fixture_4", {})).get("pose", "")) == "brace", "actor pose"],
+		[str(_dict(actors.get("scenario::fixture_5", {})).get("behavior", "")) == "watch", "actor behavior"],
+		[_array(state.get("transition_queue", [])).size() == 5, "transition reducers"],
+		[services.has("scenario::fixture_0") and not services.has("scenario::fixture_1") and not bool(_dict(services.get("scenario::fixture_2", {})).get("enabled", true)) and services.has("scenario::fixture_3"), "service reducers"],
+		[games.has("scenario::fixture_0") and not games.has("scenario::fixture_1") and not bool(_dict(games.get("scenario::fixture_2", {})).get("enabled", true)) and games.has("scenario::fixture_3") and not _dict(_dict(games.get("scenario::fixture_3", {})).get("modifier", {})).is_empty(), "game reducers"],
+		[bool(_dict(routes.get("scenario::fixture_0", {})).get("enabled", false)), "route open"],
+		[not bool(_dict(routes.get("scenario::fixture_1", {})).get("enabled", true)), "route close"],
+		[not bool(_dict(routes.get("scenario::fixture_2", {})).get("enabled", true)), "route gate"],
+		[str(_dict(routes.get("scenario::fixture_3", {})).get("source_id", "")) == "alternate_exit", "route retarget"],
+	]
+	for check_value in checks:
+		var check := check_value as Array
+		if not bool(check[0]):
+			failures.append("Golden registered-operation state failed for %s." % str(check[1]))
 
 
 static func _check_negative_fixtures(failures: Array) -> void:
@@ -116,6 +224,72 @@ static func _check_negative_fixtures(failures: Array) -> void:
 	invalid_fact["sequence"]["fact_subscriptions"] = ["invented_fact"]
 	if not _contains_text(SequenceSchemaScript.validate_definition(invalid_fact, OperationRegistryScript), "unregistered fact type"):
 		failures.append("Sequence schema accepted an unregistered fact subscription.")
+	var dead_end := _fixture_definition()
+	dead_end["sequence"]["phase_graph"]["phases"][0]["branches"] = []
+	if not _contains_text(SequenceSchemaScript.validate_definition(dead_end, OperationRegistryScript), "dead end"):
+		failures.append("Sequence schema accepted a non-terminal dead end.")
+	var duplicate_branch := _fixture_definition()
+	duplicate_branch["sequence"]["phase_graph"]["phases"][1]["branches"][1]["id"] = "finish"
+	if not _contains_text(SequenceSchemaScript.validate_definition(duplicate_branch, OperationRegistryScript), "duplicate branch"):
+		failures.append("Sequence schema accepted duplicate branch ids.")
+	var nonterminating := _fixture_definition()
+	nonterminating["sequence"]["phase_graph"]["phases"][1]["terminal"] = false
+	nonterminating["sequence"]["phase_graph"]["phases"][1]["branches"] = [{"id": "loop", "condition": {"type": "always"}, "next_phase": "arrival"}]
+	if not _contains_text(SequenceSchemaScript.validate_definition(nonterminating, OperationRegistryScript), "no path to a terminal"):
+		failures.append("Sequence schema accepted a reachable non-terminating cycle.")
+	var mismatched_aftermath := _fixture_definition()
+	mismatched_aftermath["sequence"]["aftermath"].erase("refused")
+	if not _contains_text(SequenceSchemaScript.validate_definition(mismatched_aftermath, OperationRegistryScript), "exactly match reachable outcomes"):
+		failures.append("Sequence schema accepted aftermath keys that do not match terminal outcomes.")
+	var duplicate_effect := _fixture_definition()
+	duplicate_effect["sequence"]["aftermath"]["refused"] = duplicate_effect["sequence"]["aftermath"]["repaired"].duplicate(true)
+	if not _contains_text(SequenceSchemaScript.validate_definition(duplicate_effect, OperationRegistryScript), "duplicates the normalized material effect"):
+		failures.append("Sequence schema accepted duplicate normalized aftermath effects.")
+	var unknown_key := _fixture_definition()
+	unknown_key["sequence"]["phase_graph"]["phases"][0]["mystery"] = true
+	if not _contains_text(SequenceSchemaScript.validate_definition(unknown_key, OperationRegistryScript), "unknown key"):
+		failures.append("Sequence schema accepted an unknown phase key.")
+	var nonterminal_outcome := _fixture_definition()
+	nonterminal_outcome["sequence"]["phase_graph"]["phases"][0]["branches"] = [{"id": "early", "condition": {"type": "always"}, "outcome": "repaired"}]
+	if not _contains_text(SequenceSchemaScript.validate_definition(nonterminal_outcome, OperationRegistryScript), "non-terminal phase"):
+		failures.append("Sequence schema accepted an outcome edge from a non-terminal phase.")
+	var unknown_objective := _fixture_definition()
+	unknown_objective["sequence"]["phase_graph"]["phases"][0]["objective_ids"] = ["missing_objective"]
+	if not _contains_text(SequenceSchemaScript.validate_definition(unknown_objective, OperationRegistryScript), "unknown objective"):
+		failures.append("Sequence schema accepted an unknown objective reference.")
+	var unknown_local := _fixture_definition()
+	unknown_local["sequence"]["phase_graph"]["phases"][0]["entry_conditions"] = [{"type": "local_equals", "key": "missing_local", "value": true}]
+	if not _contains_text(SequenceSchemaScript.validate_definition(unknown_local, OperationRegistryScript), "unknown local state"):
+		failures.append("Sequence schema accepted an unknown local-state reference.")
+	var unsubscribed_fact := _fixture_definition()
+	unsubscribed_fact["sequence"]["fact_subscriptions"].erase("heat_changed")
+	if not _contains_text(SequenceSchemaScript.validate_definition(unsubscribed_fact, OperationRegistryScript), "unsubscribed fact"):
+		failures.append("Sequence schema accepted a branch referencing an unsubscribed fact.")
+	var unknown_receipt := _fixture_definition()
+	unknown_receipt["sequence"]["phase_graph"]["phases"][0]["entry_conditions"] = [{"type": "receipt", "receipt_id": "scenario:node:phase:unknown_receipt"}]
+	if not _contains_text(SequenceSchemaScript.validate_definition(unknown_receipt, OperationRegistryScript), "unknown authored receipt"):
+		failures.append("Sequence schema accepted an unknown receipt reference.")
+	var unknown_outcome := _fixture_definition()
+	unknown_outcome["sequence"]["phase_graph"]["phases"][0]["entry_conditions"] = [{"type": "outcome", "outcome": "invented"}]
+	if not _contains_text(SequenceSchemaScript.validate_definition(unknown_outcome, OperationRegistryScript), "unknown outcome"):
+		failures.append("Sequence schema accepted an unknown outcome reference.")
+	var oversized := _fixture_definition()
+	for index in range(SequenceSchemaScript.MAX_OPERATIONS_PER_FAMILY + 1):
+		oversized["sequence"]["phase_graph"]["phases"][0]["scene_ops"].append(_operation_fixture("scene_ops", "set_state", 1000 + index))
+	if not _contains_text(SequenceSchemaScript.validate_definition(oversized, OperationRegistryScript), "exceeds 32 operations"):
+		failures.append("Sequence schema accepted an oversized operation family.")
+	var deeply_nested := _fixture_definition()
+	var nested: Dictionary = {"leaf": true}
+	for _index in range(SequenceSchemaScript.MAX_DATA_DEPTH + 2):
+		nested = {"nested": nested}
+	deeply_nested["sequence"]["owner_exceptions"] = [nested]
+	if not _contains_text(SequenceSchemaScript.validate_definition(deeply_nested, OperationRegistryScript), "nesting depth"):
+		failures.append("Sequence schema accepted data beyond its nesting-depth bound.")
+	var bad_stage := _operation_fixture("transition_ops", "stage", 99)
+	bad_stage["duration_boundaries"] = 9
+	bad_stage.erase("reduced_motion_message")
+	if OperationRegistryScript.validate_operation("transition_ops", bad_stage).is_empty():
+		failures.append("Scenario transition stage accepted an unbounded inaccessible payload.")
 
 
 static func _check_lifecycle_commands(failures: Array) -> void:
@@ -262,6 +436,54 @@ static func _check_sequence_persistence_seam(failures: Array) -> void:
 		failures.append("No-sequence environment gained dynamic sequence persistence fields.")
 
 
+static func _check_authoritative_receipt_capacity(failures: Array) -> void:
+	var definition := _runtime_definition()
+	var state := SequenceRuntimeScript.initial_state(definition, "bar_node", "receipt_seed")
+	var first_command := SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "capacity:command:0", {}, "scenario", "command_console")
+	for index in range(SequenceRuntimeScript.MAX_RECEIPTS):
+		var command := first_command if index == 0 else SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "capacity:command:%d" % index, {}, "scenario", "command_console")
+		var applied := SequenceRuntimeScript.apply_command(state, definition, command, {"available_funds": 2})
+		if not bool(applied.get("ok", false)):
+			failures.append("Authoritative command receipt capacity failed before its declared limit at %d." % index)
+			return
+		state = _dict(applied.get("state", {}))
+	var overflow := SequenceRuntimeScript.apply_command(state, definition, SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "capacity:command:overflow", {}, "scenario", "command_console"), {"available_funds": 2})
+	if bool(overflow.get("ok", true)) or not _contains_text(_array(overflow.get("errors", [])), "lifetime receipt limit"):
+		failures.append("Sequence command lifetime did not fail closed at receipt capacity.")
+	var old_replay := SequenceRuntimeScript.apply_command(state, definition, first_command, {"available_funds": 0})
+	if not bool(old_replay.get("ok", false)) or not bool(old_replay.get("replayed", false)):
+		failures.append("Old command receipt became replayable after reaching capacity.")
+
+	var fact_state := SequenceRuntimeScript.initial_state(definition, "bar_node", "fact_receipt_seed")
+	var first_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "capacity:fact:0", 0, 1, _fact_payload("event_result"))
+	for index in range(SequenceRuntimeScript.MAX_RECEIPTS):
+		var typed_fact := first_fact if index == 0 else SequenceRuntimeScript.fact("event_result", "event", "bar_node", "capacity:fact:%d" % index, index, 1, _fact_payload("event_result"))
+		var queued := SequenceRuntimeScript.enqueue_fact(fact_state, definition, typed_fact)
+		if not bool(queued.get("ok", false)):
+			failures.append("Authoritative fact receipt capacity failed before its declared limit at %d." % index)
+			return
+		var flushed := SequenceRuntimeScript.flush_facts(_dict(queued.get("state", {})), definition, 1)
+		fact_state = _dict(flushed.get("state", {}))
+	var fact_overflow := SequenceRuntimeScript.enqueue_fact(fact_state, definition, SequenceRuntimeScript.fact("event_result", "event", "bar_node", "capacity:fact:overflow", 999, 1, _fact_payload("event_result")))
+	if bool(fact_overflow.get("ok", true)) or not _contains_text(_array(fact_overflow.get("errors", [])), "lifetime receipt limit"):
+		failures.append("Sequence fact lifetime did not fail closed at receipt capacity.")
+	var old_fact_replay := SequenceRuntimeScript.enqueue_fact(fact_state, definition, first_fact)
+	if not bool(old_fact_replay.get("ok", false)) or not bool(old_fact_replay.get("duplicate", false)):
+		failures.append("Old fact receipt became replayable after reaching capacity.")
+
+	var semantic: Dictionary = {}
+	var first_operation := _operation_fixture("scene_ops", "set_state", 700)
+	for index in range(SequenceRuntimeScript.MAX_RECEIPTS + 16):
+		var operation := first_operation.duplicate(true)
+		if index > 0:
+			operation["receipt_id"] = "capacity_operation_%d" % index
+		var applied_ops := OperationRegistryScript.apply_operations(semantic, "scene_ops", [operation], "capacity:node:phase:%d" % index)
+		semantic = _dict(applied_ops.get("state", {}))
+	var operation_replay := OperationRegistryScript.apply_operations(semantic, "scene_ops", [first_operation], "capacity:node:phase:0")
+	if not bool(operation_replay.get("ok", false)) or not _array(operation_replay.get("applied", [])).is_empty() or JSON.stringify(operation_replay.get("state", {})) != JSON.stringify(semantic):
+		failures.append("Old transition/operation receipt was evicted after presentation capacity.")
+
+
 static func _runtime_definition() -> Dictionary:
 	var definition := _fixture_definition()
 	var sequence := _dict(definition.get("sequence", {}))
@@ -272,8 +494,8 @@ static func _runtime_definition() -> Dictionary:
 	interaction_op["stable_object_id"] = "command_console"
 	interaction_op["interaction"] = _interaction_record("scenario", "command_console", "Keep the exit clear", true)
 	interaction_op["interaction"]["available_actions"] = [
-		{"id": "prepare", "label": "Brace the exit", "cost": 2, "handler": "increment_local", "inputs": {"key": "pressure", "amount": 1}},
-		{"id": "finish", "label": "Open the lane", "cost": 4, "requires_objective_steps": [{"objective_id": "clear_exit", "step_id": "move_chair"}]},
+		{"id": "prepare", "label": "Brace the exit", "input_action": "confirm", "non_color_state": "ready", "cost": 2, "handler": "increment_local", "inputs": {"key": "pressure", "amount": 1}},
+		{"id": "finish", "label": "Open the lane", "input_action": "confirm", "non_color_state": "ready", "cost": 4, "requires_objective_steps": [{"objective_id": "clear_exit", "step_id": "move_chair"}]},
 	]
 	arrival["interaction_ops"] = [interaction_op]
 	arrival["branches"] = [{"id": "continue", "condition": {"type": "command", "command_id": "finish"}, "next_phase": "aftermath"}]
@@ -331,36 +553,42 @@ static func _fixture_definition() -> Dictionary:
 					{
 						"id": "aftermath", "label": "Cleanup", "arrival_feedback": "The lane opens again.", "exit_prompt": "Leave through the clear front door.", "terminal": true,
 						"entry_conditions": [], "objective_ids": [], "advance_after_actions": 0, "scene_ops": [], "interaction_ops": [], "actor_ops": [], "transition_ops": [],
-						"branches": [{"id": "finish", "condition": {"type": "always"}, "outcome": "repaired"}],
+						"branches": [
+							{"id": "finish", "condition": {"type": "always"}, "outcome": "repaired"},
+							{"id": "break", "condition": {"type": "fact", "fact_type": "heat_changed"}, "outcome": "broken"},
+							{"id": "refuse", "condition": {"type": "command", "command_id": "refuse"}, "outcome": "refused"},
+						],
 					},
 				],
 			},
 			"objectives": [{"id": "clear_exit", "label": "Keep the exit clear", "progress_label": "Exit lane", "steps": [{"id": "move_chair", "label": "Move the chair", "kind": "command", "command_id": "protect_exit"}], "outcomes": ["success", "failure", "ignore", "cancel"]}],
 			"reentry_policy": {"partial": "resume", "terminal": "aftermath", "expired": "expired"},
 			"expiry": {"boundary": "night_end", "after": 1, "policy": "ignore"},
-			"cleanup": {"operations": [{"family": "scene_ops", "op": "remove", "owner_namespace": "scenario", "stable_object_id": "fixture_100"}]},
+			"cleanup": {"operations": [{"family": "scene_ops", "op": "remove", "receipt_id": "cleanup_fixture", "owner_namespace": "scenario", "stable_object_id": "fixture_100"}]},
 			"aftermath": {
-				"repaired": {"label": "Repaired", "revisit_feedback": "The chair is back in place.", "scene_ops": [_operation_fixture("scene_ops", "set_state", 101)]},
-				"broken": {"label": "Broken", "revisit_feedback": "A broken chair marks the fight.", "scene_ops": [_operation_fixture("scene_ops", "set_appearance", 102)]},
+				"repaired": {"label": "Repaired", "revisit_feedback": "The chair is back in place.", "scene_ops": [_operation_fixture("scene_ops", "set_state", 101)], "route_ops": [_operation_fixture("route_ops", "open", 101)]},
+				"broken": {"label": "Broken", "revisit_feedback": "A broken chair marks the fight.", "scene_ops": [_operation_fixture("scene_ops", "set_appearance", 102)], "route_ops": [_operation_fixture("route_ops", "close", 102)]},
+				"refused": {"label": "Refused", "revisit_feedback": "The staff keep their distance.", "actor_ops": [_operation_fixture("actor_ops", "set_pose", 103)], "service_ops": [_operation_fixture("service_ops", "gate", 103)]},
 			},
 			"mechanic_tags": ["room_route", "multi_step"],
 			"sequence_signature": "route-protection-choice-aftermath",
 			"owner_exceptions": [],
-			"fact_subscriptions": ["event_result", "travel_departed"],
+			"fact_subscriptions": ["event_result", "travel_departed", "heat_changed"],
 		},
 	}
 
 
 static func _operation_fixture(family: String, op_id: String, index: int) -> Dictionary:
 	var stable_id := "fixture_%d" % index
-	var operation := {"family": family, "op": op_id, "owner_namespace": "scenario", "stable_object_id": stable_id}
+	var operation := {"family": family, "op": op_id, "receipt_id": "%s_%s_%d" % [family.trim_suffix("_ops"), op_id, index], "owner_namespace": "scenario", "stable_object_id": stable_id}
 	match family:
 		"scene_ops":
 			if op_id in ["spawn", "replace"]:
 				operation["object"] = {"label": "Fixture prop", "role": "obstacle", "anchor_id": "bar_floor_%d" % index, "bounds": {"w": 48, "h": 48}, "visible": true, "enabled": true}
-			operation["anchor_id"] = "bar_floor_%d" % (index + 1)
-			operation["state"] = "ready"
-			operation["appearance"] = "scuffed"
+			elif op_id == "move": operation["anchor_id"] = "bar_floor_%d" % (index + 1)
+			elif op_id == "disable": operation["disabled_reason"] = "Blocked by the fixture."
+			elif op_id == "set_state": operation["state"] = "ready"
+			elif op_id == "set_appearance": operation["appearance"] = "scuffed"
 		"interaction_ops":
 			if op_id in ["add", "replace"]:
 				operation["interaction"] = _interaction_record("scenario", stable_id, "Fixture interaction", true)
@@ -368,29 +596,43 @@ static func _operation_fixture(family: String, op_id: String, index: int) -> Dic
 				operation["mode"] = op_id
 				operation["target_owner_namespace"] = "base"
 				operation["target_stable_object_id"] = "fixture_target_%d" % index
-			operation["enabled"] = false
-			operation["disabled_reason"] = "Blocked by the fixture."
-			operation["source_id"] = "fixture_source"
-			operation["available_actions"] = [{"id": "fixture_action", "label": "Act"}]
+			if op_id == "gate":
+				operation["enabled"] = false
+				operation["disabled_reason"] = "Blocked by the fixture."
+			elif op_id == "retarget": operation["source_id"] = "fixture_source"
+			elif op_id == "augment": operation["available_actions"] = [{"id": "fixture_action", "label": "Act", "input_action": "confirm", "non_color_state": "ready"}]
 		"actor_ops":
 			if op_id == "spawn":
 				operation["actor"] = {"label": "Fixture actor", "actor_id": "actor_fixture", "anchor_id": "bar_actor", "behavior": "idle"}
-			operation["anchor_id"] = "bar_actor_%d" % index
-			operation["route_id"] = "bar_route"
-			operation["pose"] = "brace"
-			operation["behavior"] = "watch"
+			elif op_id == "set_position": operation["anchor_id"] = "bar_actor_%d" % index
+			elif op_id == "set_route": operation["route_id"] = "bar_route"
+			elif op_id == "set_pose": operation["pose"] = "brace"
+			elif op_id == "set_behavior": operation["behavior"] = "watch"
 		"transition_ops":
 			operation["channel"] = "room"
-			operation["cue_id"] = "fixture_cue"
-			operation["message"] = "The room changes."
+			if op_id in ["sound", "music"]: operation["cue_id"] = "fixture_cue"
+			elif op_id == "stage":
+				operation["message"] = "The room changes."
+				operation["stage_id"] = "fixture_stage"
+				operation["duration_boundaries"] = 1
+				operation["reduced_motion_message"] = "The room changes without motion."
+			elif op_id == "scene_change":
+				operation["message"] = "The room changes."
+				operation["change_id"] = "fixture_change"
+			elif op_id == "feedback": operation["message"] = "The room changes."
 		"service_ops", "game_ops":
 			if op_id in ["add", "replace"]:
 				operation["object"] = {"id": stable_id, "label": "Fixture"}
-			operation["enabled"] = false
-			operation["modifier"] = {"tone": "tense"}
+			elif op_id == "gate":
+				operation["enabled"] = false
+				operation["disabled_reason"] = "Closed by the fixture."
+			elif family == "game_ops" and op_id == "set_modifier": operation["modifier"] = {"tone": "tense"}
 		"route_ops":
-			operation["enabled"] = op_id != "close"
-			operation["source_id"] = "alternate_exit"
+			if op_id == "close": operation["disabled_reason"] = "The fixture closes this route."
+			elif op_id == "gate":
+				operation["enabled"] = false
+				operation["disabled_reason"] = "The fixture gates this route."
+			elif op_id == "retarget": operation["source_id"] = "alternate_exit"
 	return operation
 
 
@@ -403,9 +645,13 @@ static func _interaction_record(owner: String, stable_id: String, label: String,
 		"prompt": "Choose an action.",
 		"enabled": enabled,
 		"disabled_reason": "Blocked." if not enabled else "",
-		"available_actions": [{"id": "use", "label": "Use"}] if enabled else [],
+		"available_actions": [{"id": "use", "label": "Use", "input_action": "confirm", "non_color_state": "ready"}] if enabled else [],
 		"input_actions": ["confirm"],
 		"non_color_state": "open" if enabled else "closed",
+		"focus_order": 0,
+		"hit_bounds": {"w": 48, "h": 48},
+		"min_target_size": 44,
+		"safe_exit": stable_id.contains("exit"),
 	}
 
 
