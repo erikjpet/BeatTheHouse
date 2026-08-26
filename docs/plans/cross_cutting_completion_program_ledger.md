@@ -1067,3 +1067,12 @@ their own detailed handoffs and test evidence.
   AST, hostile contract (2.9s), validator (49.5s), semantic-doc, conflict and
   diff checks pass. All runtime evidence remains pending/nontransferable. Fresh
   nonauthor exact-head review is active; HOST remains held.
+- 2026-08-26: Fresh nonauthor review issued
+  `ACCEPT f072b1c3380cd34eaf7a6f0ea3acd56873d2fd80`, P0/P1/P2/P3 all zero.
+  Reviewer confirms the prior P1 is closed by the separate two-doc commit;
+  board chronology and prompt rulings are truthful without a DONE/evidence
+  claim. Commit boundaries remain exact: normal inverse, four full-pin literals,
+  then two docs. Independent inverse/34-path/evidence-deletion/full-pin/focused-
+  identity checks reproduce; AST, semantic docs, hostile contract, validation
+  (50.9s), and full/focused diff checks pass on a clean exact head. Runtime is
+  wholly pending; old ignored generated resources remain non-evidence.
