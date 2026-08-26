@@ -3,7 +3,7 @@ extends RefCounted
 
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const SNAPSHOT_SCHEMA := "coin_pusher_settled_v3"
-const SNAPSHOT_VERSION := 2
+const SNAPSHOT_VERSION := 3
 const FIXED_HZ := 60
 const MAX_CATCH_UP_TICKS := 4
 const MAX_SETTLE_TICKS := 1200
@@ -15,6 +15,9 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		var snapshot: Dictionary = machine.get("settled_state", {}) if typeof(machine.get("settled_state", {})) == TYPE_DICTIONARY else {}
 		if str(snapshot.get("schema", "")) == SNAPSHOT_SCHEMA:
 			machine["simulation"] = restore_snapshot(snapshot, machine_definition)
+			machine["motor_started"] = bool(snapshot.get("motor_started", int(snapshot.get("version", 1)) < 3))
+			machine["selected_nozzle_id"] = str(snapshot.get("selected_nozzle_id", ""))
+			machine["drop_queue"] = (snapshot.get("drop_queue", []) as Array).duplicate(true) if typeof(snapshot.get("drop_queue", [])) == TYPE_ARRAY else []
 			machine["variation_state"] = (snapshot.get("sub_game", {}) as Dictionary).duplicate(true) if typeof(snapshot.get("sub_game", {})) == TYPE_DICTIONARY else {}
 			var alarm: Dictionary = snapshot.get("alarm", {}) if typeof(snapshot.get("alarm", {})) == TYPE_DICTIONARY else {}
 			machine["tell_rung"] = int(alarm.get("tell_rung", machine.get("tell_rung", 0)))
@@ -33,6 +36,16 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		simulation["collected_count"] = 0
 	if not simulation.has("collected_value"):
 		simulation["collected_value"] = 0
+	if not simulation.has("cup_consumed_count"):
+		simulation["cup_consumed_count"] = 0
+	if not simulation.has("cup_consumed_value"):
+		simulation["cup_consumed_value"] = 0
+	if not machine.has("motor_started"):
+		machine["motor_started"] = false
+	if typeof(machine.get("drop_queue", [])) != TYPE_ARRAY:
+		machine["drop_queue"] = []
+	if not machine.has("selected_nozzle_id") or str(machine.get("selected_nozzle_id", "")).is_empty():
+		machine["selected_nozzle_id"] = _default_nozzle_id(machine_definition, simulation)
 	var rng := RngStream.new()
 	rng.configure(seed)
 	var opening_views := _presentation_body_views(simulation)
@@ -74,6 +87,30 @@ static func queue_input(machine: Dictionary, input: Dictionary) -> Dictionary:
 	session["durable_ready"] = false
 	session["durable_dirty"] = true
 	return event
+
+
+static func enqueue_drops(machine: Dictionary, request: Dictionary, count: int) -> int:
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	if simulation.is_empty() or session.is_empty() or (bool(session.get("input_locked", false)) and not bool(request.get("bonus_origin", false))):
+		return 0
+	var accepted := maxi(0, count)
+	if accepted <= 0:
+		return 0
+	var item := request.duplicate(true)
+	item["remaining"] = accepted
+	item["next_emit_tick"] = maxi(int(simulation.get("tick", 0)), int(item.get("next_emit_tick", simulation.get("tick", 0))))
+	item["nozzle_id"] = str(item.get("nozzle_id", machine.get("selected_nozzle_id", _default_nozzle_id(_machine_definition(simulation), simulation))))
+	var queue: Array = machine.get("drop_queue", []) if typeof(machine.get("drop_queue", [])) == TYPE_ARRAY else []
+	queue.append(item)
+	machine["drop_queue"] = queue
+	machine["motor_started"] = true
+	if not bool(simulation.get("skill_stop_engaged", false)):
+		var run_rate := int(simulation.get("motor_run_rate_fp", CoinPusherSolverScript.FP))
+		simulation["motor_target_rate_fp"] = run_rate
+	session["durable_ready"] = false
+	session["durable_dirty"] = true
+	return accepted
 
 
 static func advance(machine: Dictionary, now_msec: int) -> Dictionary:
@@ -223,6 +260,13 @@ static func make_snapshot(simulation: Dictionary, machine: Dictionary = {}) -> D
 		"stroke_cycle_serial": int(simulation.get("stroke_cycle_serial", 0)),
 		"carriage_x": int(simulation.get("carriage_x", 50000)),
 		"selected_hole": int(simulation.get("selected_hole", 0)),
+		"motor_rate_fp": int(simulation.get("motor_rate_fp", 0)),
+		"motor_target_rate_fp": int(simulation.get("motor_target_rate_fp", 0)),
+		"motor_run_rate_fp": int(simulation.get("motor_run_rate_fp", CoinPusherSolverScript.FP)),
+		"skill_stop_engaged": bool(simulation.get("skill_stop_engaged", false)),
+		"motor_started": bool(machine.get("motor_started", true)),
+		"selected_nozzle_id": str(machine.get("selected_nozzle_id", "")),
+		"drop_queue": (machine.get("drop_queue", []) as Array).duplicate(true) if typeof(machine.get("drop_queue", [])) == TYPE_ARRAY else [],
 		"next_body_id": int(simulation.get("next_body_id", 1)),
 		"coin_count": compact_count,
 		"coin_blob": Marshalls.raw_to_base64(bytes),
@@ -232,6 +276,9 @@ static func make_snapshot(simulation: Dictionary, machine: Dictionary = {}) -> D
 		"tray_count": int(packed_tray.get("count", 0)),
 		"tray_coin_blob": str(packed_tray.get("coin_blob", "")),
 		"tray_extras": packed_tray.get("extras", []),
+		"cup_consumed_count": int(simulation.get("cup_consumed_count", 0)),
+		"cup_consumed_value": int(simulation.get("cup_consumed_value", 0)),
+		"target_last_capture": (simulation.get("target_last_capture", {}) as Dictionary).duplicate(true) if typeof(simulation.get("target_last_capture", {})) == TYPE_DICTIONARY else {},
 		"sub_game": (machine.get("variation_state", {}) as Dictionary).duplicate(true) if typeof(machine.get("variation_state", {})) == TYPE_DICTIONARY else {},
 		"alarm": {
 			"tell_rung": int(machine.get("tell_rung", 0)),
@@ -255,6 +302,10 @@ static func restore_snapshot(snapshot: Dictionary, machine_definition: Dictionar
 	simulation["previous_face_y"] = int(simulation["face_y"])
 	simulation["carriage_x"] = int(snapshot.get("carriage_x", 50000))
 	simulation["selected_hole"] = int(snapshot.get("selected_hole", 0))
+	simulation["motor_rate_fp"] = int(snapshot.get("motor_rate_fp", CoinPusherSolverScript.FP))
+	simulation["motor_target_rate_fp"] = int(snapshot.get("motor_target_rate_fp", CoinPusherSolverScript.FP))
+	simulation["motor_run_rate_fp"] = int(snapshot.get("motor_run_rate_fp", CoinPusherSolverScript.FP))
+	simulation["skill_stop_engaged"] = bool(snapshot.get("skill_stop_engaged", false))
 	simulation["next_body_id"] = int(snapshot.get("next_body_id", 1))
 	var bodies: Array = []
 	var raw := Marshalls.base64_to_raw(str(snapshot.get("coin_blob", "")))
@@ -301,14 +352,14 @@ static func restore_snapshot(snapshot: Dictionary, machine_definition: Dictionar
 			bodies.append(_restore_extra(body_value as Dictionary, machine_definition))
 	simulation["bodies"] = bodies
 	var restored_tray: Array = _restore_tray(snapshot)
-	simulation["opening_body_count"] = bodies.size() + restored_tray.size()
+	simulation["opening_body_count"] = bodies.size() + restored_tray.size() + int(snapshot.get("cup_consumed_count", 0))
 	simulation["accepted_inserts"] = 0
 	simulation["collected_count"] = 0
 	simulation["collected_value"] = 0
+	simulation["cup_consumed_count"] = int(snapshot.get("cup_consumed_count", 0))
+	simulation["cup_consumed_value"] = int(snapshot.get("cup_consumed_value", 0))
+	simulation["target_last_capture"] = (snapshot.get("target_last_capture", {}) as Dictionary).duplicate(true) if typeof(snapshot.get("target_last_capture", {})) == TYPE_DICTIONARY else {}
 	simulation["tray_ledger"] = restored_tray
-	simulation["skill_stop_engaged"] = false
-	simulation["motor_rate_fp"] = CoinPusherSolverScript.FP
-	simulation["motor_target_rate_fp"] = CoinPusherSolverScript.FP
 	return simulation
 
 
@@ -328,6 +379,7 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 		session["presentation_previous_bodies"] = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
 		session["presentation_previous_face_y"] = int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
 		var tick_value := int(simulation.get("tick", 0))
+		_release_due_drop(machine, simulation, tick_value)
 		var trace_slice: Array = []
 		var cursor := int(session.get("input_cursor", 0))
 		var trace: Array = session.get("input_trace", [])
@@ -335,7 +387,7 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 			trace_slice.append(trace[cursor])
 			cursor += 1
 		session["input_cursor"] = cursor
-		var result := CoinPusherSolverScript.step_ticks(simulation, {"input_trace": trace_slice, "rng": rng, "motor_enabled": not bool(machine.get("locked_down", false))}, 1)
+		var result := CoinPusherSolverScript.step_ticks(simulation, {"input_trace": trace_slice, "rng": rng, "motor_enabled": bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false))}, 1)
 		session["presentation_current_bodies"] = _presentation_body_views(simulation)
 		session["presentation_feature_count"] = _presentation_feature_count(session["presentation_current_bodies"])
 		session["presentation_current_face_y"] = int(simulation.get("face_y", 0))
@@ -344,6 +396,71 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 	session["rng"] = rng.snapshot()
 	session["liveness_ticks"] = int(session.get("liveness_ticks", 0)) + maxi(0, tick_count)
 	return {"events": all_events}
+
+
+static func _release_due_drop(machine: Dictionary, simulation: Dictionary, tick_value: int) -> void:
+	var queue: Array = machine.get("drop_queue", []) if typeof(machine.get("drop_queue", [])) == TYPE_ARRAY else []
+	if queue.is_empty():
+		return
+	var item: Dictionary = queue[0] if typeof(queue[0]) == TYPE_DICTIONARY else {}
+	if item.is_empty() or int(item.get("remaining", 0)) <= 0:
+		queue.pop_front()
+		machine["drop_queue"] = queue
+		return
+	if tick_value < int(item.get("next_emit_tick", tick_value)):
+		return
+	var definition := _machine_definition(simulation)
+	var nozzle_id := str(item.get("nozzle_id", _default_nozzle_id(definition, simulation)))
+	var x := _nozzle_x(definition, simulation, nozzle_id)
+	var provenance: Dictionary = item.get("provenance", {}) if typeof(item.get("provenance", {})) == TYPE_DICTIONARY else {}
+	provenance = provenance.duplicate(true)
+	provenance["source_nozzle_id"] = nozzle_id
+	provenance["chain_depth"] = maxi(0, int(item.get("chain_depth", 0)))
+	if not str(item.get("parent_body_id", "")).is_empty():
+		provenance["chain_parent_body_id"] = str(item.get("parent_body_id", ""))
+	queue_input(machine, {
+		"kind": "drop",
+		"x": x,
+		"density": maxi(1, int(item.get("density", 1))),
+		"provenance": provenance,
+		"bonus_origin": bool(item.get("bonus_origin", false)),
+	})
+	item["remaining"] = int(item.get("remaining", 1)) - 1
+	var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
+	item["next_emit_tick"] = tick_value + maxi(1, int(apparatus.get("release_interval_ticks", 6)))
+	if int(item["remaining"]) <= 0:
+		queue.pop_front()
+	else:
+		queue[0] = item
+	machine["drop_queue"] = queue
+
+
+static func _machine_definition(simulation: Dictionary) -> Dictionary:
+	return simulation.get("machine_definition", {}) if typeof(simulation.get("machine_definition", {})) == TYPE_DICTIONARY else {}
+
+
+static func _default_nozzle_id(definition: Dictionary, simulation: Dictionary) -> String:
+	var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
+	var nozzles: Array = apparatus.get("nozzles", []) if typeof(apparatus.get("nozzles", [])) == TYPE_ARRAY else []
+	if str(apparatus.get("type", "rail_slot")) == "hole_set" and not nozzles.is_empty():
+		var index := clampi(int(simulation.get("selected_hole", 0)), 0, nozzles.size() - 1)
+		return str((nozzles[index] as Dictionary).get("id", "nozzle_%d" % index)) if typeof(nozzles[index]) == TYPE_DICTIONARY else "nozzle_%d" % index
+	return str((nozzles[0] as Dictionary).get("id", "rail")) if not nozzles.is_empty() and typeof(nozzles[0]) == TYPE_DICTIONARY else "rail"
+
+
+static func _nozzle_x(definition: Dictionary, simulation: Dictionary, nozzle_id: String) -> int:
+	var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
+	var nozzles: Array = apparatus.get("nozzles", []) if typeof(apparatus.get("nozzles", [])) == TYPE_ARRAY else []
+	for nozzle_value in nozzles:
+		if typeof(nozzle_value) != TYPE_DICTIONARY:
+			continue
+		var nozzle: Dictionary = nozzle_value
+		if str(nozzle.get("id", "")) != nozzle_id:
+			continue
+		if str(nozzle.get("mount", "static")) == "rail":
+			return int(simulation.get("carriage_x", nozzle.get("x", 50000)))
+		return int(nozzle.get("x", simulation.get("carriage_x", 50000)))
+	return int(simulation.get("carriage_x", 50000))
 
 
 # Renderer-facing public state intentionally excludes canonical solver fields

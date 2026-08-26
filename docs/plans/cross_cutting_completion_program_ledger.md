@@ -33,10 +33,10 @@ their own detailed handoffs and test evidence.
 
 | Row | Branch | Worktree | Owner | File ownership | Base commit | Dependencies | Status | Reviewer | Findings | Test evidence | Accepted head | Merge commit | Cleanup |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `meta06_1` | `codex/cross-meta` | `D:\Projects\Beat-The-House-worktrees\cross-meta` | `/root/wave1_meta06_1` | Career/run-report view models and screens; profile stats path; focused tests and documented captures | `64d387e9` | None | IN_PROGRESS | TBD, non-author | None reported | Pending handoff | - | - | Retained |
-| `balance06_1` | `codex/cross-balance` | `D:\Projects\Beat-The-House-worktrees\cross-balance` | `/root/wave1_balance06_1` | Opt-in economy harness, audit report, harness tests only; no product/tuning data | `64d387e9` | None | IN_PROGRESS | TBD, non-author | Pending audit | Pending handoff | - | - | Retained |
-| `board06_1` | `codex/cross-board` | `D:\Projects\Beat-The-House-worktrees\cross-board` | `/root` | Board and companion logs; verified ignored orphan UIDs only | `64d387e9` | Quiet-window coordination | COORDINATING | TBD, non-author | None reported | Pending | - | - | Retained |
-| `polish06_0` | `codex/cross-polish` | `D:\Projects\Beat-The-House-worktrees\cross-polish` | `/root/wave1_polish06_0` | Parked program document and newly defined parked prompts/templates; no execution | `64d387e9` | None | IN_PROGRESS; outputs PARKED | TBD, non-author | None reported | Pending handoff | - | - | Retained |
+| `meta06_1` | `codex/cross-meta` | `D:\Projects\Beat-The-House-worktrees\cross-meta` | `/root/wave1_meta06_1` | Career/run-report view models and screens; profile stats path; focused tests and documented captures | `3d4a41da` | None | IN_PROGRESS | TBD, non-author | None reported | Pending handoff | - | - | Retained |
+| `balance06_1` | `codex/cross-balance` | `D:\Projects\Beat-The-House-worktrees\cross-balance` | `/root/wave1_balance06_1` | Opt-in economy harness, audit report, harness tests only; no product/tuning data | `3d4a41da` | None | IN_PROGRESS | TBD, non-author | Pending audit | Pending handoff | - | - | Retained |
+| `board06_1` | `codex/cross-board` | `D:\Projects\Beat-The-House-worktrees\cross-board` | `/root` | Board and companion logs; verified ignored orphan UIDs only | `3d4a41da` | Quiet-window coordination | COORDINATING | TBD, non-author | None reported | Pending | - | - | Retained |
+| `polish06_0` | `codex/cross-polish` | `D:\Projects\Beat-The-House-worktrees\cross-polish` | `/root/wave1_polish06_0` | Parked program document and newly defined parked prompts/templates; no execution | `3d4a41da` | None | MERGED; board/archive closure pending; outputs PARKED | `/root/review_polish06_0` | No P0-P3 findings | Author validation PASS 86.6s; reviewer validation PASS 116.4s; diff/structure checks PASS | `be14c1ce` ACCEPT | `dba53fb5` | Retained |
 | `pusherv3_11` | `codex/cross-pusher-audit` | Not created | Unassigned independent auditor | Closure audit report/evidence only | TBD | `pusherv3_10` | HELD | TBD | - | - | - | - | Not created |
 | `audio06_1` | `codex/cross-audio` | Not created | Unassigned | Surface SFX manifest/assets/shared path/tests | TBD | Families 1 and 2 rituals | HELD | TBD | - | - | - | - | Not created |
 | `integ06_1` | `codex/cross-integ` | Not created | Unassigned auditor | Integration harness/report/tests only | TBD | Families 1 and 2 merged | HELD | TBD | - | - | - | - | Not created |
@@ -53,3 +53,16 @@ their own detailed handoffs and test evidence.
   and worker worktrees were clean and were not touched.
 - 2026-08-25: Later waves remain held until their exact dependency heads land on
   this integration branch.
+- 2026-08-25: Wave 1 claim state landed at `3d4a41da`; every Wave 1 task
+  worktree was fast-forwarded to that exact clean head before implementation.
+- 2026-08-25: The `board06_1` pre-edit audit found eleven ignored `.gd.uid`
+  files whose sibling source paths are absent. Removal remains held for the
+  board quiet window and independent exact-path review.
+- 2026-08-25: `polish06_0` independently accepted at exact head `be14c1ce`
+  with no findings and merged with `--no-ff` as `dba53fb5`. Its generated work
+  remains PARKED; active-board closure awaits the coordinated primary edit.
+- 2026-08-25: The depth-program integrator identified itself and confirmed it
+  owns only `env06_6`, `env06_7`, `craps06_3`, `crew06_10`, and `depth06_1`.
+  It will pause its depth-only row/log edits for the announced `board06_1`
+  structural window, then semantically rebase them around the exact split
+  commit. Canonical companion paths will be sent only after that commit lands.

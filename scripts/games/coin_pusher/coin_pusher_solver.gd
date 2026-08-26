@@ -141,7 +141,11 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 	var definition := machine_definition.duplicate(true)
 	var geometry := _geometry(definition)
 	var stroke := _stroke(definition)
-	var phase := seed_rng.randi_range(0, maxi(1, int(stroke.get("period_ticks", STROKE_PERIOD))) - 1)
+	# A fresh cabinet is presented at the retracted apex with its motor parked.
+	# This is the one phase where the platform has no instantaneous motion and it
+	# leaves the largest safe gap between the pusher face and opening stock.
+	var period := maxi(1, int(stroke.get("period_ticks", STROKE_PERIOD)))
+	var phase := period / 2
 	var state := {
 		"schema": SCHEMA,
 		"version": VERSION,
@@ -153,8 +157,8 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 		"next_body_id": 1,
 		"phase_fp": phase * FP,
 		"stroke_cycle_serial": 0,
-		"motor_rate_fp": FP,
-		"motor_target_rate_fp": FP,
+		"motor_rate_fp": 0,
+		"motor_target_rate_fp": 0,
 		"motor_run_rate_fp": FP,
 		"skill_stop_engaged": false,
 		"carriage_x": _default_release_x(definition),
@@ -170,6 +174,9 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 		"external_origin_count": 0,
 		"collected_count": 0,
 		"collected_value": 0,
+		"cup_consumed_count": 0,
+		"cup_consumed_value": 0,
+		"target_last_capture": {},
 		"last_events": [],
 		"last_step_metrics": {},
 		"last_invariants": {},
@@ -198,11 +205,11 @@ static func public_contract() -> Dictionary:
 
 static func implementation_contract() -> Dictionary:
 	var contract := public_contract()
-	contract["geometry_amendment"] = "6.2"
+	contract["geometry_amendment"] = "6.3"
 	return contract
 
 
-static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1, provenance: Dictionary = {}) -> Dictionary:
+static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1, provenance: Dictionary = {}, bonus_origin: bool = false) -> Dictionary:
 	var definition := _definition(state)
 	var bodies: Array = state.get("bodies", [])
 	if bodies.size() >= _ceiling(definition):
@@ -232,7 +239,10 @@ static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1
 	body["vx"] = rng.randi_range(-velocity_jitter, velocity_jitter) if velocity_jitter > 0 else 0
 	body["accepted"] = true
 	bodies.append(body)
-	state["accepted_inserts"] = int(state.get("accepted_inserts", 0)) + 1
+	if bonus_origin:
+		state["external_origin_count"] = int(state.get("external_origin_count", 0)) + 1
+	else:
+		state["accepted_inserts"] = int(state.get("accepted_inserts", 0)) + 1
 	state["last_events"] = [{"kind": "insert", "body_id": str(body.get("id", "")), "x": int(body.get("x", 0))}]
 	_wake_nearby(bodies, int(body.get("x", 0)), int(body.get("y", 0)), radius * 3, str(body.get("id", "")))
 	return body
@@ -474,7 +484,7 @@ static func _native_solver_backend() -> Object:
 			or int(contract.get("state_version", -1)) != VERSION \
 			or int(contract.get("fixed_hz", -1)) != FIXED_HZ \
 			or int(contract.get("fixed_point_scale", -1)) != FP \
-			or str(contract.get("geometry_amendment", "")) != "6.2" \
+			or str(contract.get("geometry_amendment", "")) != "6.3" \
 			or str(contract.get("contact_normal", "")) != "radial_euclidean" \
 			or int(contract.get("collision_passes", -1)) != SOLVER_PASSES \
 			or str(contract.get("transport_rule", "")) != "platform_carry_plus_back_plate":
@@ -599,6 +609,9 @@ static func canonical_digest(state: Dictionary) -> Dictionary:
 		"external_origin_count": int(state.get("external_origin_count", 0)),
 		"collected_count": int(state.get("collected_count", 0)),
 		"collected_value": int(state.get("collected_value", 0)),
+		"cup_consumed_count": int(state.get("cup_consumed_count", 0)),
+		"cup_consumed_value": int(state.get("cup_consumed_value", 0)),
+		"target_last_capture": (state.get("target_last_capture", {}) as Dictionary).duplicate(true) if typeof(state.get("target_last_capture", {})) == TYPE_DICTIONARY else {},
 	}
 
 
@@ -691,6 +704,7 @@ static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
 	_integrate_bodies(bodies, definition)
 	var gravity_work := maxi(0, _kinetic_energy(bodies) - before_gravity)
 	var peg_work := _apply_peg_contacts(bodies, definition, events)
+	_apply_plinko_targets(state, bodies, definition, events)
 	var grid := _scratch_grid
 	grid.rebuild(bodies)
 	var nestle_work := _resolve_supports(bodies, definition, new_face, events, grid)
@@ -715,6 +729,7 @@ static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
 			if _resolve_body_contact(bodies[left_index], bodies[right_index]):
 				collisions += 1
 		platform_work += _resolve_static_contacts(bodies, geometry, static_candidates, new_face, face_delta)
+	_advect_supported_bodies(bodies)
 	grid.rebuild(bodies)
 	nestle_work += _resolve_supports(bodies, definition, new_face, events, grid)
 	for body_value in bodies:
@@ -729,8 +744,55 @@ static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
 	var energy_ok := after_energy <= before_energy + platform_work + gravity_work + peg_work + nestle_work
 	var active_count := bodies.size()
 	var origin_count := int(state.get("opening_body_count", 0)) + int(state.get("accepted_inserts", 0)) + int(state.get("external_origin_count", 0))
-	var conservation_ok := active_count + (state.get("tray_ledger", []) as Array).size() + (state.get("gutter_ledger", []) as Array).size() + int(state.get("collected_count", 0)) == origin_count
+	var conservation_ok := active_count + (state.get("tray_ledger", []) as Array).size() + (state.get("gutter_ledger", []) as Array).size() + int(state.get("collected_count", 0)) + int(state.get("cup_consumed_count", 0)) == origin_count
 	return {"events": events, "collision_count": collisions, "candidate_count": max_candidate_count, "energy_ok": energy_ok, "conservation_ok": conservation_ok}
+
+
+static func _apply_plinko_targets(state: Dictionary, bodies: Array, definition: Dictionary, events: Array) -> void:
+	var apparatus := _apparatus(definition)
+	var targets: Array = apparatus.get("targets", []) if typeof(apparatus.get("targets", [])) == TYPE_ARRAY else []
+	if targets.is_empty():
+		return
+	var board := _drop_board(definition)
+	var board_y := int(board.get("y", DROP_Y))
+	for body_index in range(bodies.size() - 1, -1, -1):
+		var body: Dictionary = bodies[body_index]
+		if _is_terminal_body(body) or str(body.get("kind", "coin")) != "coin" or str(body.get("rest_state", "")) != "falling":
+			continue
+		if absi(int(body.get("y", 0)) - board_y) > int(body.get("radius", COIN_RADIUS)):
+			continue
+		for target_value in targets:
+			if typeof(target_value) != TYPE_DICTIONARY:
+				continue
+			var target: Dictionary = target_value
+			var target_id := str(target.get("id", ""))
+			var last_capture: Dictionary = state.get("target_last_capture", {}) if typeof(state.get("target_last_capture", {})) == TYPE_DICTIONARY else {}
+			var cooldown_ticks := maxi(0, int(target.get("cooldown_ticks", 0)))
+			if last_capture.has(target_id) and int(state.get("tick", 0)) - int(last_capture[target_id]) < cooldown_ticks:
+				continue
+			var mouth_radius := maxi(1, int(target.get("mouth_radius", target.get("radius", 2200))))
+			var dx := int(body.get("x", 0)) - int(target.get("x", 0))
+			var dz := int(body.get("z", 0)) - int(target.get("z", 0))
+			if dx * dx + dz * dz > mouth_radius * mouth_radius:
+				continue
+			var metadata: Dictionary = body.get("meta", {}) if typeof(body.get("meta", {})) == TYPE_DICTIONARY else {}
+			var value := maxi(0, int(metadata.get("value", 1)))
+			state["cup_consumed_count"] = int(state.get("cup_consumed_count", 0)) + 1
+			state["cup_consumed_value"] = int(state.get("cup_consumed_value", 0)) + value
+			last_capture[target_id] = int(state.get("tick", 0))
+			state["target_last_capture"] = last_capture
+			events.append({
+				"kind": "plinko_cup",
+				"target_id": target_id,
+				"body_id": str(body.get("id", "")),
+				"x": int(body.get("x", 0)),
+				"z": int(body.get("z", 0)),
+				"reward": (target.get("reward", {}) as Dictionary).duplicate(true) if typeof(target.get("reward", {})) == TYPE_DICTIONARY else {},
+				"metadata": metadata.duplicate(true),
+				"tick": int(state.get("tick", 0)),
+			})
+			bodies.remove_at(body_index)
+			break
 
 
 static func _update_motor(state: Dictionary, motor_enabled: bool) -> bool:
@@ -1163,12 +1225,16 @@ static func _resolve_body_contact(left: Dictionary, right: Dictionary) -> bool:
 	var right_was_awake := not bool(right.get("sleeping", false))
 	var left_is_moving := absi(int(left.get("vx", 0))) + absi(int(left.get("vy", 0))) + absi(int(left.get("vz", 0))) >= SLEEP_SPEED
 	var right_is_moving := absi(int(right.get("vx", 0))) + absi(int(right.get("vy", 0))) + absi(int(right.get("vz", 0))) >= SLEEP_SPEED
+	var left_incoming := str(left.get("rest_state", "")) == "falling"
+	var right_incoming := str(right.get("rest_state", "")) == "falling"
+	var unilateral_left := left_incoming and not right_incoming
+	var unilateral_right := right_incoming and not left_incoming
 	# A merely not-yet-asleep resting body must not perpetually wake an
 	# overlapping sleeper.  Only a body carrying meaningful motion propagates
 	# an awake island through contact.
-	if left_was_awake and left_is_moving and not right_was_awake:
+	if left_was_awake and left_is_moving and not right_was_awake and not unilateral_left:
 		_wake(right)
-	elif right_was_awake and right_is_moving and not left_was_awake:
+	elif right_was_awake and right_is_moving and not left_was_awake and not unilateral_right:
 		_wake(left)
 	var distance := maxi(1, _isqrt(distance_sq))
 	var nx := _divi(dx * FP, distance)
@@ -1176,8 +1242,11 @@ static func _resolve_body_contact(left: Dictionary, right: Dictionary) -> bool:
 	var penetration := minimum - distance
 	var correction := _divi(maxi(0, penetration - SLOP) * BETA, FP)
 	var contact_changed := false
-	var inverse_left := _divi(FP * FP, maxi(1, int(left.get("mass", FP))))
-	var inverse_right := _divi(FP * FP, maxi(1, int(right.get("mass", FP))))
+	# A newly falling coin resolves around an established bed; its landing may not
+	# separate or accelerate the supporting/bed coins. Once it has joined the bed,
+	# ordinary bilateral contacts transmit the pusher ledge's pressure normally.
+	var inverse_left := 0 if unilateral_right else _divi(FP * FP, maxi(1, int(left.get("mass", FP))))
+	var inverse_right := 0 if unilateral_left else _divi(FP * FP, maxi(1, int(right.get("mass", FP))))
 	var inverse_sum := maxi(1, inverse_left + inverse_right)
 	var left_correction := _divi(correction * inverse_left, inverse_sum)
 	var right_correction := correction - left_correction
@@ -1222,8 +1291,10 @@ static func _resolve_body_contact(left: Dictionary, right: Dictionary) -> bool:
 			right["vz"] = right_v_before.z
 			contact_changed = false
 	if contact_changed:
-		_wake(left)
-		_wake(right)
+		if not unilateral_right:
+			_wake(left)
+		if not unilateral_left:
+			_wake(right)
 	return true
 
 
@@ -1250,11 +1321,16 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 			body["support_kind"] = surface_kind
 			body["carried_sleep"] = surface_kind == "platform"
 			body["support_ids"] = []
+			body.erase("support_anchor_x")
+			body.erase("support_anchor_y")
 			body["rest_state"] = "resting"
 			if was_surface_falling:
 				var first_support := bool((body.get("meta", {}) as Dictionary).get("inserted", false)) and not bool((body.get("meta", {}) as Dictionary).get("first_support_recorded", false))
 				var scatter := _apply_landing_scatter(body, impact_speed)
-				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": surface_kind, "support_root": surface_kind, "first_support": first_support, "fall_height": maxi(0, fall_start_z - surface_z), "impact_speed": impact_speed, "impact_class": "hard" if impact_speed >= HARD_IMPACT_SPEED else "soft", "stack_depth": 0, "landing_scatter_x": scatter.x, "landing_scatter_y": scatter.y})
+				var landing_quality := "bed_level_good" if first_support else ""
+				if first_support:
+					(body.get("meta", {}) as Dictionary)["landing_quality"] = landing_quality
+				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": surface_kind, "support_root": surface_kind, "first_support": first_support, "landing_quality": landing_quality, "fall_height": maxi(0, fall_start_z - surface_z), "impact_speed": impact_speed, "impact_class": "hard" if impact_speed >= HARD_IMPACT_SPEED else "soft", "stack_depth": 0, "landing_scatter_x": scatter.x, "landing_scatter_y": scatter.y})
 				if first_support:
 					(body.get("meta", {}) as Dictionary)["first_support_recorded"] = true
 				body.erase("fall_start_z")
@@ -1274,6 +1350,8 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 		var y_high := false
 		var centroid_x := 0
 		var centroid_y := 0
+		var support_position_x := 0
+		var support_position_y := 0
 		var top_carried := false
 		var support_ids: Array = []
 		var cell_x := _floor_div(int(body.get("x", 0)), BROADPHASE_CELL)
@@ -1312,6 +1390,8 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 						y_high = false
 						centroid_x = 0
 						centroid_y = 0
+						support_position_x = 0
+						support_position_y = 0
 						top_carried = false
 						support_ids = []
 					support_count += 1
@@ -1323,6 +1403,8 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 					y_high = y_high or dy >= -SUPPORT_MARGIN
 					centroid_x += dx
 					centroid_y += dy
+					support_position_x += int(support.get("x", 0))
+					support_position_y += int(support.get("y", 0))
 					var support_carried := bool(support.get("carried_sleep", false)) or str(support.get("support_kind", "")) == "platform"
 					top_carried = top_carried or support_carried
 					support_index = grid.next_index(support_index)
@@ -1353,13 +1435,22 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 			if str(body.get("support_kind", "")) == "body":
 				body["carried_sleep"] = top_carried
 			body["support_ids"] = support_ids if str(body.get("support_kind", "")) == "body" else []
+			if str(body.get("support_kind", "")) == "body":
+				body["support_anchor_x"] = _divi(support_position_x, support_count)
+				body["support_anchor_y"] = _divi(support_position_y, support_count)
+			else:
+				body.erase("support_anchor_x")
+				body.erase("support_anchor_y")
 			body["rest_state"] = "resting"
 			if was_falling:
 				var stack_depth := maxi(0, _divi(support_top - surface_z, maxi(1, int(body.get("height", COIN_HEIGHT)))))
 				var support_root := "platform" if str(body.get("support_kind", "")) == "platform" or (str(body.get("support_kind", "")) == "body" and top_carried) else "deck"
 				var first_support := bool((body.get("meta", {}) as Dictionary).get("inserted", false)) and not bool((body.get("meta", {}) as Dictionary).get("first_support_recorded", false))
 				var scatter := _apply_landing_scatter(body, impact_speed)
-				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": str(body.get("support_kind", "")), "support_root": support_root, "first_support": first_support, "fall_height": maxi(0, fall_start_z - support_top), "impact_speed": impact_speed, "impact_class": "hard" if impact_speed >= HARD_IMPACT_SPEED else "soft", "stack_depth": stack_depth, "landing_scatter_x": scatter.x, "landing_scatter_y": scatter.y})
+				var landing_quality := "supported_bad" if first_support else ""
+				if first_support:
+					(body.get("meta", {}) as Dictionary)["landing_quality"] = landing_quality
+				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": str(body.get("support_kind", "")), "support_root": support_root, "first_support": first_support, "landing_quality": landing_quality, "fall_height": maxi(0, fall_start_z - support_top), "impact_speed": impact_speed, "impact_class": "hard" if impact_speed >= HARD_IMPACT_SPEED else "soft", "stack_depth": stack_depth, "landing_scatter_x": scatter.x, "landing_scatter_y": scatter.y})
 				if first_support:
 					(body.get("meta", {}) as Dictionary)["first_support_recorded"] = true
 				body.erase("fall_start_z")
@@ -1373,6 +1464,8 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 				body["pending_platform_deposit"] = true
 			body["support_kind"] = ""
 			body["support_ids"] = []
+			body.erase("support_anchor_x")
+			body.erase("support_anchor_y")
 			body["carried_sleep"] = false
 			body["rest_state"] = "falling"
 			body["sleep_ticks"] = 0
@@ -1381,6 +1474,49 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 			events.append({"kind": "platform_deposit", "body_id": str(body.get("id", ""))})
 			body.erase("pending_platform_deposit")
 	return nestle_work
+
+
+static func _advect_supported_bodies(bodies: Array) -> void:
+	# Deck-supported riders are not direct platform passengers, so the previous
+	# carry flag left them pinned in world space while their supporting coins were
+	# driven by the ledge. Follow the support centroid after contact resolution;
+	# this moves only the rider and never feeds an impulse back into its supports.
+	var by_id := {}
+	for body_value in bodies:
+		var indexed: Dictionary = body_value
+		by_id[str(indexed.get("id", ""))] = indexed
+	for body_value in bodies:
+		var body: Dictionary = body_value
+		if _is_terminal_body(body) or str(body.get("support_kind", "")) != "body" or bool(body.get("carried_sleep", false)):
+			continue
+		var ids: Array = body.get("support_ids", []) if typeof(body.get("support_ids", [])) == TYPE_ARRAY else []
+		if ids.is_empty() or not body.has("support_anchor_x") or not body.has("support_anchor_y"):
+			continue
+		var centroid_x := 0
+		var centroid_y := 0
+		var count := 0
+		for id_value in ids:
+			var support_value: Variant = by_id.get(str(id_value), null)
+			if typeof(support_value) != TYPE_DICTIONARY:
+				continue
+			var support: Dictionary = support_value
+			if _is_terminal_body(support):
+				continue
+			centroid_x += int(support.get("x", 0))
+			centroid_y += int(support.get("y", 0))
+			count += 1
+		if count <= 0:
+			continue
+		centroid_x = _divi(centroid_x, count)
+		centroid_y = _divi(centroid_y, count)
+		var dx := centroid_x - int(body.get("support_anchor_x", centroid_x))
+		var dy := centroid_y - int(body.get("support_anchor_y", centroid_y))
+		body["x"] = int(body.get("x", 0)) + dx
+		body["y"] = int(body.get("y", 0)) + dy
+		body["support_anchor_x"] = centroid_x
+		body["support_anchor_y"] = centroid_y
+		if dx != 0 or dy != 0:
+			_wake(body)
 
 
 static func _deck_surface_z(geometry: Dictionary, y: int) -> int:
@@ -1476,7 +1612,7 @@ static func _apply_trace_input(state: Dictionary, input: Dictionary, rng_value: 
 	match str(input.get("kind", "")):
 		"drop":
 			if rng_value is RngStream:
-				add_coin(state, rng_value as RngStream, int(input.get("x", state.get("carriage_x", WIDTH / 2))), int(input.get("density", 1)), input.get("provenance", {}))
+				add_coin(state, rng_value as RngStream, int(input.get("x", state.get("carriage_x", WIDTH / 2))), int(input.get("density", 1)), input.get("provenance", {}), bool(input.get("bonus_origin", false)))
 		"carriage":
 			set_carriage(state, int(input.get("x", state.get("carriage_x", WIDTH / 2))))
 		"hole":
@@ -1510,46 +1646,48 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 	var base_positions: Array = []
 	var base_rows: Array = []
 	var row_specs: Array = []
-	var lower_columns := [8, 9, 10, 9, 8, 10, 9, 8]
-	var upper_columns := [9, 10, 8, 9, 10, 9, 9]
+	var lower_cluster_counts := [
+		[4, 4, 4], [3, 4, 3], [4, 4, 4], [3, 4, 3], [4, 4, 4],
+		[3, 4, 3], [4, 4, 4], [3, 4, 3], [4, 4, 4],
+	]
+	var upper_cluster_counts := [[3, 4, 3], [4, 3, 4], [3, 4, 3]]
 	var x_step := radius * 2 - 80
-	var y_step := radius * 2 - 730
-	var lattice_columns := 10
-	var lattice_start := _divi(width - (lattice_columns - 1) * x_step, 2)
-	# A real prime is a connected, locally irregular mass rather than nine coins
-	# sampled from fifteen distant lanes. Eight lower rows bridge the slight edge
-	# incline to the moving face; seven upper rows leave rear working room. Varying
-	# row lengths produce macro gaps at the sides while every cluster remains in
-	# true collision-tolerance contact through a staggered hex-like packing. A
-	# single shallow compression gap behind the edge prime prevents the idle
-	# machine from paying while preserving a visibly touching ledge buildup.
-	for row in range(lower_columns.size()):
-		row_specs.append({"columns": lower_columns[row], "y": tray_lip + 8000 + row * y_step + (600 if row > 0 else 0)})
-	for row in range(upper_columns.size()):
-		row_specs.append({"columns": upper_columns[row], "y": face + radius + 800 + row * y_step})
+	var y_step := radius * 2 - 80
+	var cluster_centers := [_divi(width, 6), _divi(width, 2), _divi(width * 5, 6)]
+	# Three separated, internally touching clusters populate every horizontal
+	# third. The lower bed carries most stock; only three compact rows occupy the
+	# retracted upper platform, leaving a real rest gap ahead of the parked face.
+	for row in range(lower_cluster_counts.size()):
+		row_specs.append({"clusters": lower_cluster_counts[row], "y": tray_lip + 8000 + row * y_step + (600 if row > 0 else 0)})
+	for row in range(upper_cluster_counts.size()):
+		row_specs.append({"clusters": upper_cluster_counts[row], "y": face + radius + 1000 + row * y_step})
 	var max_base_columns := 0
 	for spec_value in row_specs:
 		var spec: Dictionary = spec_value
 		var row_positions: Array = []
-		var columns := int(spec.get("columns", 0))
+		var clusters: Array = spec.get("clusters", []) if typeof(spec.get("clusters", [])) == TYPE_ARRAY else []
+		var columns := 0
+		for cluster_count_value in clusters:
+			columns += int(cluster_count_value)
 		max_base_columns = maxi(max_base_columns, columns)
-		var trimmed_columns := lattice_columns - columns
 		var stagger := 0 if base_rows.size() % 2 == 0 else _divi(x_step, 2)
 		var row_drift := rng.randi_range(-60, 60)
-		var start_x := lattice_start + _divi(trimmed_columns, 2) * x_step + stagger + row_drift
-		for column in range(columns):
-			# Tiny scuffs break surveying-perfect rows without opening a visible or
-			# mechanical gap: adjacent centers stay at or just inside one diameter.
-			var x := clampi(start_x + column * x_step + rng.randi_range(-20, 20), radius, width - radius)
-			var y := int(spec.get("y", 0)) + rng.randi_range(-20, 20)
-			var on_platform := y >= face
-			row_positions.append({
-				"x": x,
-				"y": y,
-				"z": int(geometry.get("platform_top_z", PLATFORM_TOP_Z)) if on_platform else _deck_surface_z(geometry, y),
-				"support": "platform" if on_platform else "deck",
-				"carried": on_platform,
-			})
+		for cluster_index in range(clusters.size()):
+			var cluster_count := int(clusters[cluster_index])
+			var start_x := int(cluster_centers[cluster_index]) - _divi((cluster_count - 1) * x_step, 2) + stagger + row_drift
+			for column in range(cluster_count):
+				# Tiny scuffs break surveying-perfect rows without opening a visible or
+				# mechanical gap inside each third's pressure cluster.
+				var x := clampi(start_x + column * x_step + rng.randi_range(-20, 20), radius, width - radius)
+				var y := int(spec.get("y", 0)) + rng.randi_range(-20, 20)
+				var on_platform := y >= face
+				row_positions.append({
+					"x": x,
+					"y": y,
+					"z": int(geometry.get("platform_top_z", PLATFORM_TOP_Z)) if on_platform else _deck_surface_z(geometry, y),
+					"support": "platform" if on_platform else "deck",
+					"carried": on_platform,
+				})
 		base_rows.append(row_positions)
 	# Interleave rows so smaller diagnostic/migration fixtures still occupy the
 	# whole cabinet instead of filling a pristine rear block first.
@@ -1688,7 +1826,7 @@ static func _seed_dense_benchmark_machine(state: Dictionary, rng: RngStream, cou
 	for index in range(count):
 		var base: Dictionary = base_positions[index % base_positions.size()]
 		var layer := _divi(index, base_positions.size())
-		var body := _new_body(state, "coin", clampi(int(base.get("x", 0)) + (rng.randi_range(-180, 180) if layer > 0 else 0), radius, width - radius), int(base.get("y", 0)) + (rng.randi_range(-180, 180) if layer > 0 else 0), int(base.get("z", 0)) + layer * height, radius, height, mass, {"value": int(coins.get("value", 1)), "opening": true})
+		var body := _new_body(state, "coin", clampi(int(base.get("x", 0)) + (rng.randi_range(-1400, 1400) if layer > 0 else 0), radius, width - radius), int(base.get("y", 0)) + (rng.randi_range(-1400, 1400) if layer > 0 else 0), int(base.get("z", 0)) + layer * height, radius, height, mass, {"value": int(coins.get("value", 1)), "opening": true})
 		body["support_kind"] = str(base.get("support", "deck")) if layer == 0 else "body"
 		body["sleeping"] = true
 		body["sleep_ticks"] = SLEEP_TICKS
@@ -1735,14 +1873,16 @@ static func _invariant_report(state: Dictionary, energy_ok: bool) -> Dictionary:
 	var tray_count := (state.get("tray_ledger", []) as Array).size()
 	var gutter_count := (state.get("gutter_ledger", []) as Array).size()
 	var collected_count := int(state.get("collected_count", 0))
+	var cup_consumed_count := int(state.get("cup_consumed_count", 0))
 	var origin_count := int(state.get("opening_body_count", 0)) + int(state.get("accepted_inserts", 0)) + int(state.get("external_origin_count", 0))
 	return {
 		"energy_ok": energy_ok,
-		"conservation_ok": active_count + tray_count + gutter_count + collected_count == origin_count,
+		"conservation_ok": active_count + tray_count + gutter_count + collected_count + cup_consumed_count == origin_count,
 		"active": active_count,
 		"tray": tray_count,
 		"gutter": gutter_count,
 		"collected": collected_count,
+		"cup_consumed": cup_consumed_count,
 		"origin": origin_count,
 		"refused": int(state.get("refused_inserts", 0)),
 	}
