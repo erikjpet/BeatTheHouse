@@ -120,7 +120,7 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 		"receipt_id": "actor_spawn_route_guard",
 		"owner_namespace": "scenario",
 		"stable_object_id": "route_guard",
-		"actor": {"label": "Route guard", "actor_id": "route_guard", "anchor_id": "bar_actor", "behavior": "flee", "route_id": "base::world:bar", "pose": "brace"},
+		"actor": {"label": "Route guard", "actor_id": "route_guard", "anchor_id": "bar_actor", "behavior": "patrol", "route_id": "base::world:bar", "pose": "brace"},
 	})
 	phase["actor_ops"] = actor_ops
 	_append_interaction(definition, {
@@ -149,53 +149,108 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 	_reseal_definition(definition)
 	var run_state := RunStateScript.new()
 	run_state.current_environment = _finalization_environment(definition)
-	run_state.current_environment["semantic_anchors"]["bar"] = {"position": [620.0, 230.0]}
+	run_state.current_environment["semantic_anchors"]["bar"] = {"position": [860.0, 390.0]}
 	run_state.scenario_prepare_semantic_finalization()
 	var trusted_base := [_production_presentation()]
 	var finalized := run_state.scenario_finalize_base_semantics(trusted_base, library, _production_layout_context())
 	var projected_candidate := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), finalized)
 	var projected := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, projected_candidate, trusted_base)
 	var actor := _record(_array(projected.get("records", [])), "scenario::route_guard")
-	if not bool(finalized.get("ok", false)) or not bool(projected.get("ok", false)) or _array(actor.get("actor_route_points", [])).size() != 2 or _dict(actor.get("actor_route_stage", {})).is_empty():
+	var authority_record := _dict(_dict(finalized.get("layout_authority", {})).get("scenario::route_guard", {}))
+	var route_points := _array(actor.get("actor_route_points", []))
+	var route_stage := _dict(actor.get("actor_route_stage", {}))
+	if not bool(finalized.get("ok", false)) or not bool(projected.get("ok", false)) or route_points.size() != 2 or route_stage.is_empty():
 		failures.append("Validated finalization did not preserve authored actor route staging in the public projection: %s" % JSON.stringify(finalized.get("errors", [])))
 		return
+	var normal_start := _canvas_point(route_points[0])
+	var normal_endpoint := _canvas_point(route_points[1])
+	var small_start := _canvas_point(route_stage.get("small_screen_start", {}))
+	var small_endpoint := _canvas_point(route_stage.get("small_screen_endpoint", {}))
+	var reduced_endpoint := _canvas_point(route_stage.get("reduced_motion_endpoint", {}))
+	var duration := float(route_stage.get("duration_sec", 0.0))
+	var expected_duration := clampf(normal_start.distance_to(normal_endpoint) / 82.0, 0.75, 8.0)
+	if str(authority_record.get("presentation_object_id", "")) != "scenario::route_guard" \
+		or str(route_stage.get("mode", "")) != "ping_pong" \
+		or not is_equal_approx(duration, expected_duration) \
+		or not normal_endpoint.is_equal_approx(Vector2(860.0, 390.0)) \
+		or not reduced_endpoint.is_equal_approx(normal_endpoint) \
+		or not small_endpoint.is_equal_approx(Vector2(848.0, 390.0)) \
+		or normal_endpoint.is_equal_approx(small_endpoint) \
+		or normal_start.is_equal_approx(normal_endpoint) \
+		or small_start.is_equal_approx(small_endpoint):
+		failures.append("Finalized route authority did not seal distinct normal/small endpoints, explicit duration, reduced endpoint, and ping-pong order.")
 	var canvas = PixelSceneCanvasScript.new()
 	canvas.size = BOARD_SIZE
-	canvas.render_environment_snapshot({"id": "finalized_route", "archetype_id": "bar", "reduce_motion": true, "interactable_objects": projected.get("records", [])})
-	var actor_rect := _snapshot_rect(_layout_entry(_dict(canvas.current_view_snapshot().get("object_layout", {})), "scenario::route_guard").get("rect", {}))
-	if not actor_rect.get_center().is_equal_approx(Vector2(620.0, 230.0)) or canvas.object_id_at_local_position(actor_rect.get_center()) != "scenario::route_guard":
-		failures.append("Public reduced-motion canvas draw/hit routing did not use the sealed actor endpoint geometry.")
+	canvas.render_environment_snapshot({"id": "finalized_route", "archetype_id": "bar", "reduce_motion": false, "interactable_objects": projected.get("records", [])})
+	var start_rect := _canvas_object_rect(canvas, "scenario::route_guard")
+	if not start_rect.get_center().is_equal_approx(normal_start) or not start_rect.size.is_equal_approx(Vector2(72.0, 80.0)) or canvas.object_id_at_local_position(start_rect.get_center()) != "scenario::route_guard":
+		failures.append("Public non-reduced canvas did not draw/hit the routed actor at its sealed normal start and size.")
+	canvas.actor_route_time = duration * 0.5
+	var midpoint_rect := _canvas_object_rect(canvas, "scenario::route_guard")
+	if not midpoint_rect.get_center().is_equal_approx(normal_start.lerp(normal_endpoint, 0.5)) or not midpoint_rect.size.is_equal_approx(Vector2(72.0, 80.0)) or canvas.object_id_at_local_position(midpoint_rect.get_center()) != "scenario::route_guard":
+		failures.append("Public non-reduced canvas did not draw/hit the routed actor at the explicit-duration midpoint.")
+	canvas.actor_route_time = duration
+	var endpoint_rect := _canvas_object_rect(canvas, "scenario::route_guard")
+	if not endpoint_rect.get_center().is_equal_approx(normal_endpoint) or not endpoint_rect.size.is_equal_approx(Vector2(72.0, 80.0)) or canvas.object_id_at_local_position(endpoint_rect.get_center()) != "scenario::route_guard":
+		failures.append("Public non-reduced canvas did not draw/hit the routed actor at the explicit-duration endpoint.")
+	canvas.actor_route_time = duration * 2.0
+	var returned_rect := _canvas_object_rect(canvas, "scenario::route_guard")
+	if not returned_rect.get_center().is_equal_approx(normal_start) or canvas.object_id_at_local_position(returned_rect.get_center()) != "scenario::route_guard":
+		failures.append("Public canvas did not honor sealed ping-pong ordering after one full route cycle.")
+	canvas.actor_route_time = duration
 	canvas.set_small_screen_mode(true)
-	var small_actor_rect := _snapshot_rect(_layout_entry(_dict(canvas.current_view_snapshot().get("object_layout", {})), "scenario::route_guard").get("rect", {}))
-	if not small_actor_rect.get_center().is_equal_approx(Vector2(620.0, 230.0)) or canvas.object_id_at_local_position(small_actor_rect.get_center()) != "scenario::route_guard":
-		failures.append("Expanded small-screen actor route staging diverged from its sealed reduced-motion endpoint.")
+	var small_actor_rect := _canvas_object_rect(canvas, "scenario::route_guard")
+	if not small_actor_rect.get_center().is_equal_approx(small_endpoint) or not small_actor_rect.size.is_equal_approx(Vector2(SMALL_SCREEN_TARGET.x, 80.0)) or canvas.object_id_at_local_position(small_actor_rect.get_center()) != "scenario::route_guard" or not _rect_inside_canvas(small_actor_rect):
+		failures.append("Public small-screen canvas did not use the sealed expanded size and board-clamped endpoint.")
+	canvas.set_small_screen_mode(false)
+	canvas.render_environment_snapshot({"id": "finalized_reduced_route", "archetype_id": "bar", "reduce_motion": true, "interactable_objects": projected.get("records", [])})
+	var reduced_rect := _canvas_object_rect(canvas, "scenario::route_guard")
+	if not reduced_rect.get_center().is_equal_approx(reduced_endpoint) or not reduced_rect.size.is_equal_approx(Vector2(72.0, 80.0)) or canvas.object_id_at_local_position(reduced_rect.get_center()) != "scenario::route_guard":
+		failures.append("Public reduced-motion canvas did not draw/hit the sealed normal reduced endpoint.")
+	canvas.set_small_screen_mode(true)
+	var reduced_small_rect := _canvas_object_rect(canvas, "scenario::route_guard")
+	if not reduced_small_rect.get_center().is_equal_approx(small_endpoint) or not reduced_small_rect.size.is_equal_approx(Vector2(SMALL_SCREEN_TARGET.x, 80.0)) or canvas.object_id_at_local_position(reduced_small_rect.get_center()) != "scenario::route_guard" or not _rect_inside_canvas(reduced_small_rect):
+		failures.append("Public reduced-motion small-screen canvas diverged from the sealed clamped endpoint or expanded size.")
 	canvas.free()
 
-	var forged_finalized := finalized.duplicate(true)
-	var forged_actor: Dictionary = forged_finalized["projection"]["semantic_state"]["actors"]["scenario::route_guard"]
-	forged_actor["route_points"][1] = {"x": 0.12, "y": 0.82}
-	forged_actor["route_stage"]["endpoint"] = {"x": 0.12, "y": 0.82}
-	forged_actor["route_stage"]["reduced_motion_endpoint"] = {"x": 0.12, "y": 0.82}
-	forged_actor["route_stage"]["small_screen_endpoint"] = {"x": 0.12, "y": 0.82}
-	forged_actor["route_stage"]["duration_sec"] = 0.01
-	var forged_projection := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), forged_finalized)
-	var forged_record_projection := projected.duplicate(true)
-	var forged_projected_actor := _mutable_record(forged_record_projection.get("records", []), "scenario::route_guard")
-	forged_projected_actor["actor_route_points"][1] = {"x": 0.12, "y": 0.82}
-	forged_projected_actor["actor_route_stage"]["reduced_motion_endpoint"] = {"x": 0.12, "y": 0.82}
-	forged_projected_actor["actor_route_stage"]["duration_sec"] = 0.01
-	var committed_forgery := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, forged_record_projection, trusted_base)
-	var forged_records := _array(committed_forgery.get("records", []))
-	if bool(forged_projection.get("ok", true)) or bool(committed_forgery.get("ok", true)) or not _record(forged_records, "scenario::route_guard").is_empty() or _record(forged_records, "scenario::presentation_failure").is_empty() or _records_have_scenario_actions(forged_records):
-		failures.append("Hostile finalized actor route/timing mutation reached presentation instead of returning trusted base plus a disabled fallback.")
+	var forged_authority_finalized := finalized.duplicate(true)
+	forged_authority_finalized["layout_authority"]["scenario::route_guard"]["presentation_object_id"] = "game:slot"
+	var forged_authority_projection := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), forged_authority_finalized)
+	if bool(forged_authority_projection.get("ok", true)):
+		failures.append("Finalized presentation-object identity mutation did not break the closed authority digest before projection.")
+
+	for semantic_mutation_value in ["normalized_hit_rect", "small_screen_rect", "z_order", "route_point_start", "route_point_endpoint", "stage_start", "stage_endpoint", "stage_reduced_endpoint", "stage_small_start", "stage_small_endpoint", "stage_duration", "stage_mode"]:
+		var semantic_mutation := str(semantic_mutation_value)
+		var forged_finalized := finalized.duplicate(true)
+		var forged_actor: Dictionary = forged_finalized["projection"]["semantic_state"]["actors"]["scenario::route_guard"]
+		_mutate_route_actor(forged_actor, semantic_mutation)
+		var forged_projection := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), forged_finalized)
+		if bool(forged_projection.get("ok", true)):
+			failures.append("Finalized semantic actor mutation %s did not reject against sealed route authority." % semantic_mutation)
+
+	var committed_environment := run_state.current_environment.duplicate(true)
 	var forged_canvas = PixelSceneCanvasScript.new()
 	forged_canvas.size = BOARD_SIZE
-	forged_canvas.render_environment_snapshot({"id": "forged_finalized_route", "archetype_id": "bar", "reduce_motion": true, "interactable_objects": forged_records})
-	var forged_view := _dict(forged_canvas.current_view_snapshot())
-	var failure_rect := _snapshot_rect(_layout_entry(_dict(forged_view.get("object_layout", {})), "scenario::presentation_failure").get("rect", {}))
-	if not _object(_array(forged_view.get("objects", [])), "scenario::route_guard").is_empty() or forged_canvas.object_id_at_local_position(Vector2(108.0, 352.6)) == "scenario::route_guard" or forged_canvas.object_id_at_local_position(failure_rect.get_center()) != "scenario::presentation_failure":
-		failures.append("Public canvas draw/hit routing exposed forged actor relocation before consuming the explicit failure result.")
+	for projected_mutation_value in ["object_id_collision", "normalized_rect", "small_screen_rect", "scenario_z_order", "route_point_start", "route_point_endpoint", "stage_start", "stage_endpoint", "stage_reduced_endpoint", "stage_small_start", "stage_small_endpoint", "stage_duration", "stage_mode", "authority_identity", "authority_digest", "duplicate_record"]:
+		var projected_mutation := str(projected_mutation_value)
+		run_state.current_environment = committed_environment.duplicate(true)
+		var forged_record_projection := projected.duplicate(true)
+		var forged_projected_actor := _mutable_record(forged_record_projection.get("records", []), "scenario::route_guard")
+		if projected_mutation == "duplicate_record":
+			var forged_projected_records: Array = forged_record_projection["records"]
+			forged_projected_records.append(forged_projected_actor.duplicate(true))
+		else:
+			_mutate_projected_route_actor(forged_projected_actor, projected_mutation)
+		var committed_forgery := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, forged_record_projection, trusted_base)
+		var forged_records := _array(committed_forgery.get("records", []))
+		if bool(committed_forgery.get("ok", true)) or not _record(forged_records, "scenario::route_guard").is_empty() or _record(forged_records, "game:slot").is_empty() or _record(forged_records, "scenario::presentation_failure").is_empty() or _records_have_scenario_actions(forged_records):
+			failures.append("Projected actor mutation %s reached presentation instead of trusted base plus disabled fallback." % projected_mutation)
+		forged_canvas.render_environment_snapshot({"id": "forged_finalized_route_%s" % projected_mutation, "archetype_id": "bar", "reduce_motion": true, "interactable_objects": forged_records})
+		var failure_rect := _canvas_object_rect(forged_canvas, "scenario::presentation_failure")
+		if not _object(_array(forged_canvas.current_view_snapshot().get("objects", [])), "scenario::route_guard").is_empty() or forged_canvas.object_id_at_local_position(failure_rect.get_center()) != "scenario::presentation_failure":
+			failures.append("Public canvas draw/hit routing exposed projected actor mutation %s before consuming the explicit failure result." % projected_mutation)
 	forged_canvas.free()
+	run_state.current_environment = committed_environment
 
 
 static func _check_committed_projection_mismatch(library: Variant, failures: Array) -> void:
@@ -206,6 +261,8 @@ static func _check_committed_projection_mismatch(library: Variant, failures: Arr
 	var finalized := run_state.scenario_finalize_base_semantics(trusted_base, library, _production_layout_context())
 	var first_projection := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), finalized)
 	var replayed := run_state.scenario_finalize_base_semantics(trusted_base, library, _production_layout_context())
+	if str(finalized.get("layout_authority_digest", "")) != str(replayed.get("layout_authority_digest", "")) or JSON.stringify(finalized.get("layout_authority", {})) != JSON.stringify(replayed.get("layout_authority", {})):
+		failures.append("Semantic replay changed the sealed presentation-identity mapping or its authority digest.")
 	# Model a stale presentation result racing a newer replay commit without
 	# changing the projected records themselves.
 	run_state.current_environment["scenario_layout_authority_digest"] = "0".repeat(64)
@@ -910,6 +967,82 @@ static func _records_have_scenario_actions(records: Array) -> bool:
 		if not _array(_dict(value).get("scenario_sequence_actions", [])).is_empty():
 			return true
 	return false
+
+
+static func _canvas_point(value: Variant) -> Vector2:
+	var point := _dict(value)
+	return Vector2(float(point.get("x", -1.0)) * BOARD_SIZE.x, float(point.get("y", -1.0)) * BOARD_SIZE.y)
+
+
+static func _canvas_object_rect(canvas: Variant, object_id: String) -> Rect2:
+	var view := _dict(canvas.current_view_snapshot())
+	return _snapshot_rect(_layout_entry(_dict(view.get("object_layout", {})), object_id).get("rect", {}))
+
+
+static func _rect_inside_canvas(rect: Rect2) -> bool:
+	return rect.has_area() and rect.position.x >= -0.01 and rect.position.y >= -0.01 and rect.end.x <= BOARD_SIZE.x + 0.01 and rect.end.y <= BOARD_SIZE.y + 0.01
+
+
+static func _mutate_route_actor(actor: Dictionary, mutation: String) -> void:
+	match mutation:
+		"normalized_hit_rect", "small_screen_rect":
+			var rect := _dict(actor.get(mutation, {}))
+			rect["x"] = float(rect.get("x", 0.0)) + 0.01
+			actor[mutation] = rect
+		"z_order":
+			actor["z_order"] = int(actor.get("z_order", 0)) + 1
+		"route_point_start", "route_point_endpoint":
+			var points := _array(actor.get("route_points", []))
+			var point_index := 0 if mutation == "route_point_start" else 1
+			points[point_index] = {"x": 0.13, "y": 0.77}
+			actor["route_points"] = points
+		_:
+			var stage := _dict(actor.get("route_stage", {}))
+			_mutate_route_stage(stage, mutation)
+			actor["route_stage"] = stage
+
+
+static func _mutate_projected_route_actor(actor: Dictionary, mutation: String) -> void:
+	match mutation:
+		"object_id_collision":
+			actor["object_id"] = "game:slot"
+		"normalized_rect", "small_screen_rect":
+			var rect := _dict(actor.get(mutation, {}))
+			rect["x"] = float(rect.get("x", 0.0)) + 0.01
+			actor[mutation] = rect
+		"scenario_z_order":
+			actor["scenario_z_order"] = int(actor.get("scenario_z_order", 0)) + 1
+		"route_point_start", "route_point_endpoint":
+			var points := _array(actor.get("actor_route_points", []))
+			var point_index := 0 if mutation == "route_point_start" else 1
+			points[point_index] = {"x": 0.13, "y": 0.77}
+			actor["actor_route_points"] = points
+		"authority_identity":
+			actor["scenario_layout_authority_identity"] = "scenario::command_console"
+		"authority_digest":
+			actor["scenario_layout_authority_digest"] = "0".repeat(64)
+		_:
+			var stage := _dict(actor.get("actor_route_stage", {}))
+			_mutate_route_stage(stage, mutation)
+			actor["actor_route_stage"] = stage
+
+
+static func _mutate_route_stage(stage: Dictionary, mutation: String) -> void:
+	match mutation:
+		"stage_start":
+			stage["start"] = {"x": 0.13, "y": 0.77}
+		"stage_endpoint":
+			stage["endpoint"] = {"x": 0.13, "y": 0.77}
+		"stage_reduced_endpoint":
+			stage["reduced_motion_endpoint"] = {"x": 0.13, "y": 0.77}
+		"stage_small_start":
+			stage["small_screen_start"] = {"x": 0.13, "y": 0.77}
+		"stage_small_endpoint":
+			stage["small_screen_endpoint"] = {"x": 0.13, "y": 0.77}
+		"stage_duration":
+			stage["duration_sec"] = float(stage.get("duration_sec", 0.0)) + 0.5
+		"stage_mode":
+			stage["mode"] = "to_endpoint"
 
 
 static func _object(objects: Array, object_id: String) -> Dictionary:
