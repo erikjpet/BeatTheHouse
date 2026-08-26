@@ -2193,6 +2193,7 @@ func confirm_world_map_travel() -> Dictionary:
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
 	_sync_coach_focus_visibility()
+	_protect_foundation_coach_attention(caller_rollback)
 	if coach_overlay != null:
 		var completed_lesson_id := coach_overlay.active_lesson_id()
 		if coach_overlay.notify_action(coach_travel_action) and not completed_lesson_id.is_empty():
@@ -2203,6 +2204,8 @@ func confirm_world_map_travel() -> Dictionary:
 	var travel_result := _travel_to(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), result.get("choice", {}) as Dictionary, true)
 	if not bool(travel_result.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(caller_rollback)
+	else:
+		_commit_foundation_coach_attention(caller_rollback)
 	return travel_result
 
 
@@ -2279,6 +2282,7 @@ func confirm_selected_event_choice() -> Dictionary:
 # any tutorial acknowledgement that occurs before EventModule resolves.
 func activate_event_choice_action(event_id: String, choice_id: String) -> bool:
 	var caller_rollback := _foundation_lifecycle_snapshot()
+	_protect_foundation_coach_attention(caller_rollback)
 	_record_tutorial_action_if_authored("event:%s" % event_id)
 	if coach_overlay != null:
 		var completed_lesson_id := coach_overlay.active_lesson_id()
@@ -2294,6 +2298,7 @@ func activate_event_choice_action(event_id: String, choice_id: String) -> bool:
 	if not bool(event_result.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return false
+	_commit_foundation_coach_attention(caller_rollback)
 	return true
 
 
@@ -5044,6 +5049,8 @@ func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	if world_map_confirm_button != null:
 		world_map_confirm_button.text = str(world_map_popup_presentation.get("confirm_text", ""))
 		world_map_confirm_button.disabled = bool(world_map_popup_presentation.get("confirm_disabled", true))
+	var talk_dock_canvas_snapshot := _copy_dict(snapshot.get("talk_dock_canvases", {}))
+	_prepare_talk_dock_canvas_lifecycle_restore(talk_dock_canvas_snapshot)
 	if environment_canvas != null:
 		environment_canvas.set_selected_object(selected_object_id, true)
 	if environment_header != null:
@@ -5054,7 +5061,7 @@ func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		_sync_talk_dock_coach_avoid_rect()
 	else:
 		_restore_talk_dock_lifecycle_snapshot(talk_dock_snapshot)
-	_restore_talk_dock_canvas_lifecycle_snapshot(_copy_dict(snapshot.get("talk_dock_canvases", {})))
+	_restore_talk_dock_canvas_lifecycle_snapshot(talk_dock_canvas_snapshot)
 
 
 func _coach_lifecycle_snapshot() -> Dictionary:
@@ -5078,8 +5085,11 @@ func _coach_lifecycle_snapshot() -> Dictionary:
 		"active_dialogue_requested": coach_overlay.active_dialogue_requested,
 		"active_dialogue_was_requested": coach_overlay.active_dialogue_was_requested,
 		"active_dialogue_acknowledged": coach_overlay.active_dialogue_acknowledged,
+		"focus_visual_enabled": coach_overlay.focus_visual_enabled,
 		"visible": coach_overlay.visible,
 		"panel_visible": coach_overlay.panel.visible if coach_overlay.panel != null else false,
+		"panel_modulate": coach_overlay.panel.modulate if coach_overlay.panel != null else Color.WHITE,
+		"attention": coach_overlay.attention_tween_lifecycle_snapshot(),
 		"focus_visible": coach_overlay.focus_layer.visible if coach_overlay.focus_layer != null else false,
 		"focus_snapshot": coach_overlay.focus_layer.snapshot.duplicate(true) if coach_overlay.focus_layer != null else {},
 		"focus_live_anchor_rect": coach_overlay.focus_layer.live_anchor_rect if coach_overlay.focus_layer != null else Rect2(),
@@ -5107,15 +5117,32 @@ func _restore_coach_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	coach_overlay.active_dialogue_requested = bool(snapshot.get("active_dialogue_requested", false))
 	coach_overlay.active_dialogue_was_requested = bool(snapshot.get("active_dialogue_was_requested", false))
 	coach_overlay.active_dialogue_acknowledged = bool(snapshot.get("active_dialogue_acknowledged", false))
+	coach_overlay.focus_visual_enabled = bool(snapshot.get("focus_visual_enabled", true))
 	coach_overlay.visible = bool(snapshot.get("visible", false))
 	if coach_overlay.panel != null:
 		coach_overlay.panel.visible = bool(snapshot.get("panel_visible", false))
+		coach_overlay.panel.modulate = snapshot.get("panel_modulate", Color.WHITE) as Color
 	if coach_overlay.focus_layer != null:
 		coach_overlay.focus_layer.snapshot = _copy_dict(snapshot.get("focus_snapshot", {}))
 		coach_overlay.focus_layer.live_anchor_rect = snapshot.get("focus_live_anchor_rect", Rect2()) as Rect2
 		coach_overlay.focus_layer.live_anchor_rect_valid = bool(snapshot.get("focus_live_anchor_rect_valid", false))
 		coach_overlay.focus_layer.visible = bool(snapshot.get("focus_visible", false))
 		coach_overlay.focus_layer.queue_redraw()
+	coach_overlay.restore_attention_tween_lifecycle_snapshot(_copy_dict(snapshot.get("attention", {})))
+
+
+func _protect_foundation_coach_attention(snapshot: Dictionary) -> void:
+	var coach_snapshot := _copy_dict(snapshot.get("coach", {}))
+	var restored_coach: Variant = coach_snapshot.get("ref", null)
+	if restored_coach is CoachOverlay and coach_overlay == restored_coach:
+		coach_overlay.protect_attention_tween_lifecycle_snapshot(_copy_dict(coach_snapshot.get("attention", {})))
+
+
+func _commit_foundation_coach_attention(snapshot: Dictionary) -> void:
+	var coach_snapshot := _copy_dict(snapshot.get("coach", {}))
+	var restored_coach: Variant = coach_snapshot.get("ref", null)
+	if restored_coach is CoachOverlay and coach_overlay == restored_coach:
+		coach_overlay.commit_attention_tween_lifecycle_snapshot(_copy_dict(coach_snapshot.get("attention", {})))
 
 
 func _talk_dock_lifecycle_snapshot() -> Dictionary:
@@ -5137,6 +5164,7 @@ func _talk_dock_lifecycle_snapshot() -> Dictionary:
 		"ref": talk_dock,
 		"parent_ref": parent,
 		"parent_index": talk_dock.get_index() if parent != null else -1,
+		"attention_tweens": talk_dock.attention_tween_lifecycle_snapshot(),
 		"entry": talk_dock.entry.duplicate(true),
 		"option": talk_dock.option.duplicate(true),
 		"queue_count": talk_dock.queue_count,
@@ -5209,6 +5237,7 @@ func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	if restored_parent is Node and talk_dock.get_parent() == restored_parent:
 		var restored_index := clampi(int(snapshot.get("parent_index", talk_dock.get_index())), 0, maxi(0, (restored_parent as Node).get_child_count() - 1))
 		(restored_parent as Node).move_child(talk_dock, restored_index)
+	talk_dock.restore_attention_tween_lifecycle_snapshot(_copy_array(snapshot.get("attention_tweens", [])))
 	talk_dock.entry = _copy_dict(snapshot.get("entry", {}))
 	talk_dock.option = _copy_dict(snapshot.get("option", {}))
 	talk_dock.queue_count = int(snapshot.get("queue_count", 0))
@@ -5403,25 +5432,82 @@ func _restore_talk_dock_choice_lifecycle_snapshot(snapshot: Array) -> void:
 func _talk_dock_canvas_lifecycle_snapshot() -> Dictionary:
 	return {
 		"environment_ref": environment_canvas,
+		"environment_selected_object_id": environment_canvas.selected_object_id if environment_canvas != null else "",
+		"environment_hovered_object_id": environment_canvas.hovered_object_id if environment_canvas != null else "",
 		"environment_activity_paused": environment_canvas.environment_activity_paused if environment_canvas != null else false,
 		"environment_redraw_accumulator": environment_canvas.scene_idle_animation_redraw_accumulator if environment_canvas != null else 0.0,
+		"environment_redraw_count": environment_canvas.scene_idle_animation_redraw_count if environment_canvas != null else 0,
+		"environment_flicker": environment_canvas.flicker if environment_canvas != null else 0.0,
 		"environment_reserved_rect": environment_canvas.reserved_overlay_global_rect if environment_canvas != null else Rect2(),
+		"environment_camera_zoom": environment_canvas.camera_zoom if environment_canvas != null else 1.0,
+		"environment_camera_offset": environment_canvas.camera_offset if environment_canvas != null else Vector2.ZERO,
+		"environment_target_camera_zoom": environment_canvas.target_camera_zoom if environment_canvas != null else 1.0,
+		"environment_target_camera_offset": environment_canvas.target_camera_offset if environment_canvas != null else Vector2.ZERO,
+		"environment_camera_focus_point": environment_canvas.camera_focus_point if environment_canvas != null else Vector2(0.5, 0.5),
+		"environment_camera_focus_active": environment_canvas.camera_focus_active if environment_canvas != null else false,
+		"environment_camera_target_dirty": environment_canvas.camera_target_dirty if environment_canvas != null else false,
+		"environment_camera_target_refresh_count": environment_canvas.camera_target_refresh_count if environment_canvas != null else 0,
+		"environment_info_card_rect": environment_canvas.info_card_visual_rect if environment_canvas != null else Rect2(),
+		"environment_info_card_object_id": environment_canvas.info_card_visual_object_id if environment_canvas != null else "",
+		"environment_info_card_animating": environment_canvas.info_card_animating if environment_canvas != null else false,
 		"game_surface_ref": game_surface_canvas,
 		"game_surface_activity_paused": game_surface_canvas.environment_activity_paused if game_surface_canvas != null else false,
 		"game_surface_pointer_pending": game_surface_canvas.captured_pointer_move_pending if game_surface_canvas != null else false,
+		"game_surface_pointer_position": game_surface_canvas.captured_pointer_move_position if game_surface_canvas != null else Vector2.ZERO,
+		"game_surface_redraw_accumulator": game_surface_canvas.surface_animation_redraw_accumulator if game_surface_canvas != null else 0.0,
+		"game_surface_redraw_count": game_surface_canvas.surface_animation_redraw_count if game_surface_canvas != null else 0,
+		"game_surface_continuous_redraw_active": game_surface_canvas.continuous_redraw_was_active if game_surface_canvas != null else false,
+		"game_surface_flicker": game_surface_canvas.flicker if game_surface_canvas != null else 0.0,
+		"game_surface_render_elapsed_sec": game_surface_canvas.surface_render_elapsed_sec if game_surface_canvas != null else 0.0,
+		"game_surface_simulation_clock_msec": game_surface_canvas.surface_simulation_clock_msec if game_surface_canvas != null else 0.0,
+		"game_surface_presentation_clock_msec": game_surface_canvas.surface_presentation_clock_msec if game_surface_canvas != null else 0.0,
 	}
+
+
+func _prepare_talk_dock_canvas_lifecycle_restore(snapshot: Dictionary) -> void:
+	var restored_environment_canvas: Variant = snapshot.get("environment_ref", null)
+	if restored_environment_canvas == null or environment_canvas != restored_environment_canvas:
+		return
+	# Selection recomputes camera clearance synchronously. Put the authoritative
+	# reserved geometry back first and force the target dirty so that recomputation
+	# can never observe the failed dock footprint.
+	environment_canvas.reserved_overlay_global_rect = snapshot.get("environment_reserved_rect", Rect2()) as Rect2
+	environment_canvas.camera_target_dirty = true
 
 
 func _restore_talk_dock_canvas_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	var restored_environment_canvas: Variant = snapshot.get("environment_ref", null)
 	if restored_environment_canvas != null and environment_canvas == restored_environment_canvas:
+		environment_canvas.selected_object_id = str(snapshot.get("environment_selected_object_id", ""))
+		environment_canvas.hovered_object_id = str(snapshot.get("environment_hovered_object_id", ""))
 		environment_canvas.environment_activity_paused = bool(snapshot.get("environment_activity_paused", false))
 		environment_canvas.scene_idle_animation_redraw_accumulator = float(snapshot.get("environment_redraw_accumulator", 0.0))
+		environment_canvas.scene_idle_animation_redraw_count = int(snapshot.get("environment_redraw_count", 0))
+		environment_canvas.flicker = float(snapshot.get("environment_flicker", 0.0))
 		environment_canvas.reserved_overlay_global_rect = snapshot.get("environment_reserved_rect", Rect2()) as Rect2
+		environment_canvas.camera_zoom = float(snapshot.get("environment_camera_zoom", 1.0))
+		environment_canvas.camera_offset = snapshot.get("environment_camera_offset", Vector2.ZERO) as Vector2
+		environment_canvas.target_camera_zoom = float(snapshot.get("environment_target_camera_zoom", 1.0))
+		environment_canvas.target_camera_offset = snapshot.get("environment_target_camera_offset", Vector2.ZERO) as Vector2
+		environment_canvas.camera_focus_point = snapshot.get("environment_camera_focus_point", Vector2(0.5, 0.5)) as Vector2
+		environment_canvas.camera_focus_active = bool(snapshot.get("environment_camera_focus_active", false))
+		environment_canvas.camera_target_dirty = bool(snapshot.get("environment_camera_target_dirty", false))
+		environment_canvas.camera_target_refresh_count = int(snapshot.get("environment_camera_target_refresh_count", 0))
+		environment_canvas.info_card_visual_rect = snapshot.get("environment_info_card_rect", Rect2()) as Rect2
+		environment_canvas.info_card_visual_object_id = str(snapshot.get("environment_info_card_object_id", ""))
+		environment_canvas.info_card_animating = bool(snapshot.get("environment_info_card_animating", false))
 	var restored_game_surface_canvas: Variant = snapshot.get("game_surface_ref", null)
 	if restored_game_surface_canvas != null and game_surface_canvas == restored_game_surface_canvas:
 		game_surface_canvas.environment_activity_paused = bool(snapshot.get("game_surface_activity_paused", false))
 		game_surface_canvas.captured_pointer_move_pending = bool(snapshot.get("game_surface_pointer_pending", false))
+		game_surface_canvas.captured_pointer_move_position = snapshot.get("game_surface_pointer_position", Vector2.ZERO) as Vector2
+		game_surface_canvas.surface_animation_redraw_accumulator = float(snapshot.get("game_surface_redraw_accumulator", 0.0))
+		game_surface_canvas.surface_animation_redraw_count = int(snapshot.get("game_surface_redraw_count", 0))
+		game_surface_canvas.continuous_redraw_was_active = bool(snapshot.get("game_surface_continuous_redraw_active", false))
+		game_surface_canvas.flicker = float(snapshot.get("game_surface_flicker", 0.0))
+		game_surface_canvas.surface_render_elapsed_sec = float(snapshot.get("game_surface_render_elapsed_sec", 0.0))
+		game_surface_canvas.surface_simulation_clock_msec = float(snapshot.get("game_surface_simulation_clock_msec", 0.0))
+		game_surface_canvas.surface_presentation_clock_msec = float(snapshot.get("game_surface_presentation_clock_msec", 0.0))
 
 
 func _install_lifecycle_environment(environment: Dictionary) -> Dictionary:
