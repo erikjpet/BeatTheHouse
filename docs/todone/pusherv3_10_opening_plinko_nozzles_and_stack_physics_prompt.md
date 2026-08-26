@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — 2026-08-25
+Status: DONE — 2026-08-25
 Board row: `pusherv3_10` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — pusherv3_10: Full-Width Resting Openings, Full Plinko, Drop Nozzles, and Stack Physics
@@ -235,3 +235,55 @@ joining the pusher bed or resolving a variant-specific physical target.
   cup enqueues its awarded drops from the triggering coin's source nozzle, so
   rare deterministic chains are possible. Cup placement and capture probability
   must keep chain reproduction and total ROI within safe authored limits.
+
+## Execution record
+
+- **Quiet full-width opening:** All three production machines now seed irregular
+  touching clusters in the left, center, and right thirds. Their opening reports
+  retain `150/150/154` bodies with at least `150/150/154` contacting bodies,
+  `14/14/13` edge bodies, and `20/21/23` upper bodies in the final seed matrix.
+  A five-period (`1,200` tick) no-input fixture proves an unchanged body/tray/
+  gutter/event digest and a parked zero-rate motor; the first queued committed
+  drop starts the motor. Motor, nozzle, and FIFO state survive snapshot restore.
+- **Full Plinko and authored cups:** Quarter/Ridge/Vault use `45/33/53` small
+  staggered pegs over `48,000/48,000/52,000`-unit delivery fields. The exhaustive
+  legal-nozzle/phase/jitter matrix resolves `7,680` drops with zero stuck bodies,
+  records meaningful one-shot peg contacts, and reports landing entropy/lateral
+  spread for five rail positions and all three fixed Ridge nozzles. Ridge's hard
+  `5X/$3` cups capture `0.83%/1.25%` only from their respective edge nozzles;
+  Vault's `5X/$4` cups capture `0.625%/3.33%` only from the extreme rail ends.
+  Every cup is reachable, no sampled position exceeds the `8%` multiplier or
+  `10%` cash exploit cap, and multiplier reproduction remains far subcritical.
+- **Visible same-nozzle chains:** Solver/reference/native target volumes consume
+  the trigger exactly once and emit `plinko_cup` with target, reward, provenance,
+  and tick. A `5X` event queues five visible bonus-origin children on the same
+  stable nozzle id with parent/depth metadata, a depth cap of `3`, and a hard
+  award cap of `60`; rail position is sampled at each six-tick emission.
+- **Tap/hold/nozzle controls:** The physical drop slot is a captured pointer
+  control: a tap reserves one coin, deterministic 180-tick/three-second hold
+  reserves 30, affordability truncates atomically, and FIFO releases remain
+  steerable during play. Static Ridge nozzles and Quarter/Vault rail nozzles are
+  authored data, selected visibly, and persisted with queued paid stock.
+- **Stack correction and feedback:** Falling/settling upper coins have unilateral
+  support response, so they resolve themselves without spreading one-, two-, or
+  three-coin supports. Support anchors advect riders with the moving bed/shelf.
+  The first support graph stores `bed_level_good` or `supported_bad` and produces
+  exactly one positive ding or negative stack cue; persistent contact cannot
+  replay either cue.
+- **Parity, performance, and visuals:** The focused production suite passes at
+  `.tmp/pusherv3_10_reachability.json`; the 300-body native solver is `4.207 ms`
+  p95 against its `12 ms` ceiling. Independent Windows native/Web reference
+  parity passes with payload
+  `17822461d5d650ef381678f414b19d4a143a3e48b68bab64cfb168b06f66a1bb`
+  at `.tmp/pusherv3_10_input_parity/manifest.json`. The actual-OpenGL normal/
+  reduced-motion capture manifest passes at
+  `review_artifacts/coin_pusher_pusherv3_10_20260825/manifest.json`.
+- **Economy accounting:** The last complete persistent audit remains the
+  `pusherv3_9` 200,000-paid-drop-per-machine baseline (`0.890210/0.926025/
+  0.841235` physical ROI), with ample margin inside all authored bands. The
+  new exhaustive cup rates bound paid-coin capture below `0.8%` when averaged
+  across sampled nozzles, while all cash and child-drop value remains explicitly
+  outside physical ROI. The unattended EV shard/harness now reconciles
+  `cup_consumed_count` by paid/opening/feature origin and reports target capture,
+  instant payout, and awarded child drops separately for the `pusherv3_11`
+  program-closure rerun.
