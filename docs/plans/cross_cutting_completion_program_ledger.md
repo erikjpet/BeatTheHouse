@@ -584,3 +584,28 @@ their own detailed handoffs and test evidence.
   21-checkpoint trace (the positive fixture contains only one). Static validation
   still passed. Depth is making a bounded same-nine-file static remediation;
   formal acceptance, host eligibility, merge and board changes remain withheld.
+- 2026-08-26: Independent pusher timing diagnosis recommends one smallest safe
+  harness change: dispatch unchanged Systems shards in critical-path order
+  activation, events/saves, core, world/release, then restore canonical manifest
+  order before report merge. Every shard body/ownership list, all 55 IDs,
+  per-shard order, isolated caches, cleanup, stderr checks, assertions and the
+  43.712-second budget remain unchanged. Blanket state reuse, coverage cuts and
+  budget changes remain rejected. The pusher owner may implement this static
+  harness-only projection, then must self-review and obtain exact-head review;
+  runtime remains held behind Wave 1.
+- 2026-08-26: Balance recovered after the missing-cache diagnosis: canonical
+  import passed in 40.7 seconds, existing parent and new child check-only loads
+  passed in 3.5/3.4 seconds, and the exact one-seed-per-style/eight-action smoke
+  passed in 10.2 seconds (8 runs/8 styles). The constant rename is the only code
+  remediation. Remaining balance gates continue serially under its exclusive
+  slot.
+- 2026-08-26: `meta06_1` self-review completed on clean exact head
+  `d7052142ac8feda664589f3b5dab7a49b4c39703`, three logical commits from base,
+  11 intended files and +1205/-48 with clean diff/static validation. The author
+  mapped every producible victory/failure/heist terminal, full run/lifetime
+  ledger, save compatibility, hidden-Turn exclusions, boundary idempotency and
+  responsive/accessibility surfaces to production and permanent fixtures. The
+  two pre-review Systems failures were traced to empty-ledger materialization and
+  JSON whole-number normalization and repaired; exact-head runtime evidence is
+  intentionally absent. Independent exact-head review is in progress and meta
+  remains frozen/HOST HOLD.
