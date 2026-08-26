@@ -303,11 +303,11 @@ Assert-True $sourceFunctionMatch.Success "Could not locate the canonical Foundat
 $declaredSplitSources = @([regex]::Matches($sourceFunctionMatch.Groups[1].Value, '"(scripts/tests/foundation/[^\"]+\.gd)"') | ForEach-Object { $_.Groups[1].Value })
 Assert-True (($declaredSplitSources -join "|") -ceq ($expectedSplitSources -join "|")) "Canonical nine-source Foundation split-runner order changed."
 $splitLines = @(Get-SplitTestRunnerLines -ProjectRoot $projectRoot -SourceRelativePaths $expectedSplitSources)
-Assert-True ($splitLines.Count -eq 34909) "Canonical Foundation composite line count changed from 34,909."
-Assert-True ((Get-SplitTestRunnerSemanticSha256 -Lines $splitLines) -ceq "b00570931a02b28478d5c611d2202b1dd26c6dd143bc944a848baf72a86fb76c") "Canonical Foundation composite semantic hash changed."
+Assert-True ($splitLines.Count -eq 34915) "Canonical Foundation composite line count changed from 34,915."
+Assert-True ((Get-SplitTestRunnerSemanticSha256 -Lines $splitLines) -ceq "7a01065dd8ff38346f5e6a1fa1dfaf156609c29cae6dfb90f470ec5452ce2737") "Canonical Foundation composite semantic hash changed."
 $splitBytes = [byte[]](Get-SplitTestRunnerBytes -Lines $splitLines)
-Assert-True ($splitBytes.Length -eq 2293595) "Canonical Foundation composite exact byte length changed."
-Assert-True ((Get-SplitTestRunnerByteSha256 -Bytes $splitBytes) -ceq "046565d1639f1a66466b4724c594c697074b084762f5aa2e469968aabe7d1147") "Canonical Foundation composite exact byte hash changed."
+Assert-True ($splitBytes.Length -eq 2293959) "Canonical Foundation composite exact byte length changed."
+Assert-True ((Get-SplitTestRunnerByteSha256 -Bytes $splitBytes) -ceq "4a08e3bec0747a4505298e2af562f8988d0e05ef605af0045e97258e41453494") "Canonical Foundation composite exact byte hash changed."
 Assert-True (-not ($splitBytes.Length -ge 3 -and $splitBytes[0] -eq 0xEF -and $splitBytes[1] -eq 0xBB -and $splitBytes[2] -eq 0xBF)) "Foundation composite unexpectedly contains a UTF-8 BOM."
 $splitText = (New-Object System.Text.UTF8Encoding($false)).GetString($splitBytes)
 Assert-True (-not [regex]::IsMatch($splitText, '(?<!\r)\n')) "Foundation composite contains a non-CRLF line ending."
@@ -336,10 +336,10 @@ Assert-True (($derivedOmittedSources -join "|") -ceq ($expectedBlackjackOmittedS
 $blackjackBaseLines = @(Get-SplitTestRunnerLines -ProjectRoot $projectRoot -SourceRelativePaths $expectedBlackjackSplitSources)
 $blackjackFocusedLines = @(Get-BlackjackFocusedSplitTestRunnerLines -Lines $blackjackBaseLines)
 $blackjackFocusedBytes = [byte[]](Get-SplitTestRunnerBytes -Lines $blackjackFocusedLines)
-Assert-True ($blackjackFocusedLines.Count -eq 30464) "Focused Blackjack composite line count changed from 30,464."
-Assert-True ((Get-SplitTestRunnerSemanticSha256 -Lines $blackjackFocusedLines) -ceq "c2f8bd89822c9c883dd7f0f43be8be0d3b910a43f764369106a4b7a12d4a6f42") "Focused Blackjack semantic hash changed."
-Assert-True ($blackjackFocusedBytes.Length -eq 1968001) "Focused Blackjack exact byte length changed from 1,968,001."
-Assert-True ((Get-SplitTestRunnerByteSha256 -Bytes $blackjackFocusedBytes) -ceq "126f0c33468e6d4b84ae17de784aa2d1270cf22994356b8be9dadfb46a44b43f") "Focused Blackjack exact byte hash changed."
+Assert-True ($blackjackFocusedLines.Count -eq 30470) "Focused Blackjack composite line count changed from 30,470."
+Assert-True ((Get-SplitTestRunnerSemanticSha256 -Lines $blackjackFocusedLines) -ceq "7a32d8aa16743a897adfe2d85a9e616ec99ad21d99e3a7b6a99cfd6cfb15a98a") "Focused Blackjack semantic hash changed."
+Assert-True ($blackjackFocusedBytes.Length -eq 1968365) "Focused Blackjack exact byte length changed from 1,968,365."
+Assert-True ((Get-SplitTestRunnerByteSha256 -Bytes $blackjackFocusedBytes) -ceq "7b2bc0254d71a58a8c0387e886be66c48fae4e2d4dacd5599c44542439941362") "Focused Blackjack exact byte hash changed."
 Assert-True (-not ($blackjackFocusedBytes.Length -ge 3 -and $blackjackFocusedBytes[0] -eq 0xEF -and $blackjackFocusedBytes[1] -eq 0xBB -and $blackjackFocusedBytes[2] -eq 0xBF)) "Focused Blackjack composite unexpectedly contains a UTF-8 BOM."
 $blackjackFocusedDiskText = (New-Object System.Text.UTF8Encoding($false)).GetString($blackjackFocusedBytes)
 Assert-True (-not [regex]::IsMatch($blackjackFocusedDiskText, '(?<!\r)\n')) "Focused Blackjack composite contains a non-CRLF line ending."
