@@ -202,11 +202,51 @@ foreach ($requiredEvidenceSeam in @(
     'static func canonical_semantic_sha256',
     'static func validate_probe_report',
     'static func validate_capture_manifest',
+    'static func obstruction_target_contract',
+    'EXPECTED_OBSTRUCTION_TARGET_IDS',
+    'EXPECTED_TRACE_ROWS',
+    '_validate_runtime_trace',
     'REQUIRED_PERFORMANCE_ROWS'
 )) {
     if (-not $scenarioProbeSupportSource.Contains($requiredEvidenceSeam)) {
         $failures.Add("Scenario evidence support is missing fail-closed authority: $requiredEvidenceSeam")
     }
+}
+foreach ($requiredObstructionAuthority in @(
+    '"scenario:scenario:delivery_event_gate"',
+    '"scenario:scenario:delivery_exit"',
+    '["inspect_manifest"]',
+    '["ignore_delivery", "refuse_sort"]',
+    '"workstation" if not expected_safe_exit else "exit"',
+    'emit_object_id.ends_with(expected_token_suffix)'
+)) {
+    if (-not $scenarioProbeSupportSource.Contains($requiredObstructionAuthority)) {
+        $failures.Add("Scenario obstruction support lost exact production target/action authority: $requiredObstructionAuthority")
+    }
+}
+$expectedTraceRows = @(
+    'arrival_delivery_blocked|arrival|active|', 'base_event_pre_request_gated|arrival|active|',
+    'obstruction_overlay_zero_overlap|arrival|active|', 'hit_target_overlay_44_minimum|arrival|active|',
+    'sorting_aisle_rerouted|sorting|active|', 'verification_station_ready|verification|active|',
+    'awaiting_stock_choice|awaiting_stock|active|', 'base_event_request_delivered|awaiting_stock|active|',
+    'partial_revisit_awaiting_stock|awaiting_stock|active|', 'resolution_repaired|resolution|aftermath|repaired',
+    'terminal_revisit_repaired|resolution|aftermath|repaired', 'resolution_broken|resolution|aftermath|broken',
+    'terminal_revisit_broken|resolution|aftermath|broken', 'resolution_refused|resolution|aftermath|refused',
+    'terminal_revisit_refused|resolution|aftermath|refused', 'base_event_terminal_gated|resolution|aftermath|refused',
+    'resolution_interrupted|resolution|aftermath|interrupted', 'terminal_revisit_interrupted|resolution|aftermath|interrupted',
+    'expired_revisit_night_end|arrival|cleaned|', 'reduced_motion_arrival|arrival|active|',
+    'small_screen_104x76|arrival|active|'
+)
+$traceBlock = [regex]::Match($scenarioProbeSupportSource, '(?s)const EXPECTED_TRACE_ROWS := \[(.*?)\]\s*const PERFORMANCE_BUDGETS')
+$actualTraceRows = @()
+if ($traceBlock.Success) {
+    foreach ($traceMatch in [regex]::Matches($traceBlock.Groups[1].Value, '\{"label": "([^"]+)", "phase_id": "([^"]+)", "status": "([^"]+)", "outcomes": \[([^\]]*)\]\}')) {
+        $outcome = $traceMatch.Groups[4].Value.Replace('"', '').Trim()
+        $actualTraceRows += "$($traceMatch.Groups[1].Value)|$($traceMatch.Groups[2].Value)|$($traceMatch.Groups[3].Value)|$outcome"
+    }
+}
+if ($actualTraceRows.Count -ne 21 -or (Compare-Object -ReferenceObject $expectedTraceRows -DifferenceObject $actualTraceRows -SyncWindow 0)) {
+    $failures.Add("Scenario evidence support lost the exact 21-row runtime label/phase/status/outcome contract.")
 }
 foreach ($requiredMainSeam in @(
     'extends Node',
@@ -221,6 +261,9 @@ foreach ($requiredMainSeam in @(
     'RenderingServer.frame_post_draw',
     'current_environment_result_feedback_snapshot',
     'environment_reserved_global_rect',
+    '_obstruction_target_evidence',
+    'obstruction_center_hit_count',
+    'intersection(reserved).get_area() > 0.0',
     'load_foundation_run',
     'ENV06_6_SEQUENCE_PROBE='
 )) {
@@ -228,13 +271,13 @@ foreach ($requiredMainSeam in @(
         $failures.Add("Scenario evidence main scene is missing production seam: $requiredMainSeam")
     }
 }
-if ($scenarioProbeMainSource.Contains('scenario_flush_facts') -or $scenarioProbeMainSource.Contains('_interactable_object_view_list')) {
-    $failures.Add("Scenario evidence main scene must not manually flush facts or use the private interactable list.")
+if ($scenarioProbeMainSource.Contains('scenario_flush_facts') -or $scenarioProbeMainSource.Contains('_interactable_object_view_list') -or $scenarioProbeMainSource.Contains('var scenario_added := false') -or $scenarioProbeMainSource.Contains('scenario_hit_rects.size() != 1') -or $scenarioProbeMainSource.Contains('intersection(reserved).get_area() > 0.5')) {
+    $failures.Add("Scenario evidence main scene must not manually flush facts, use the private interactable list, or collapse the two production obstruction targets.")
 }
 if (-not $scenarioProbeSceneSource.Contains('type="Node"') -or -not $scenarioProbeSceneSource.Contains('scenario_sequence_probe_main.gd')) {
     $failures.Add("Scenario evidence entry scene must attach the Node-backed probe script.")
 }
-if ($scenarioVisualWrapperSource.Contains('"--headless"') -or -not $scenarioVisualWrapperSource.Contains('scenario_sequence_probe_main.tscn') -or -not $scenarioVisualWrapperSource.Contains('Get-FileHash') -or -not $scenarioVisualWrapperSource.Contains('BTH_DISTRIBUTION_DATA_ROOT')) {
+if ($scenarioVisualWrapperSource.Contains('"--headless"') -or -not $scenarioVisualWrapperSource.Contains('scenario_sequence_probe_main.tscn') -or -not $scenarioVisualWrapperSource.Contains('Get-FileHash') -or -not $scenarioVisualWrapperSource.Contains('BTH_DISTRIBUTION_DATA_ROOT') -or -not $scenarioVisualWrapperSource.Contains('expectedRuntimeTraceIds') -or -not $scenarioVisualWrapperSource.Contains('expectedRuntimeStateById')) {
     $failures.Add("Scenario visual wrapper must be direct, windowed, isolated, and byte-hash fail-closed.")
 }
 foreach ($requiredWebSeam in @('launchPersistentContext', 'Emulation.setCPUThrottlingRate', 'pageerror', 'requestfailed', 'ENV06_6_SEQUENCE_PROBE=')) {
@@ -245,6 +288,7 @@ foreach ($requiredWebSeam in @('launchPersistentContext', 'Emulation.setCPUThrot
 foreach ($requiredParitySeam in @(
     'native_process_1', 'native_process_2', 'web_process_1', 'web_process_2', 'native_web_semantic_exact',
     'transientAddon', 'BTH_DISTRIBUTION_DATA_ROOT', 'run_transient_scons.py',
+    'expectedRuntimeTraceLabels', 'expectedRuntimeStateByLabel', 'semantic.checkpoints',
     'Copy-Item -LiteralPath $canonicalAddon', 'Required Windows host library is unavailable',
     'Get-ChildItem -LiteralPath (Join-Path $transientAddon "bin") -Filter "*.wasm"'
 )) {

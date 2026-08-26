@@ -1583,17 +1583,77 @@ static func _check_executable_evidence_contract(failures: Array) -> void:
 		or _array(contract.get("capture_ids", [])) != ScenarioSequenceProbeSupportScript.EXPECTED_CAPTURE_IDS \
 		or _array(contract.get("phase_ids", [])) != ScenarioSequenceProbeSupportScript.EXPECTED_PHASES:
 		failures.append("Executable evidence support does not pin the production delivery-day contract exactly: %s" % JSON.stringify(contract.get("failures", [])))
+	var obstruction_records := [
+		{
+			"object_id": "scenario:scenario:delivery_exit", "object_type": "scenario", "owner_namespace": "scenario",
+			"stable_object_id": "delivery_exit", "role": "exit", "enabled": true, "interactive": true, "safe_exit": true,
+			"inline_actions": [
+				{"enabled": true, "emit_object_id": "scenario_action:1:scenario:delivery_exit:ignore_delivery", "scenario_command_id": "ignore_delivery"},
+				{"enabled": true, "emit_object_id": "scenario_action:1:scenario:delivery_exit:refuse_sort", "scenario_command_id": "refuse_sort"},
+			],
+		},
+		{
+			"object_id": "scenario:scenario:delivery_event_gate", "object_type": "scenario", "owner_namespace": "scenario",
+			"stable_object_id": "delivery_event_gate", "role": "workstation", "enabled": true, "interactive": true, "safe_exit": false,
+			"inline_actions": [{"enabled": true, "emit_object_id": "scenario_action:1:scenario:delivery_event_gate:inspect_manifest", "scenario_command_id": "inspect_manifest"}],
+		},
+	]
+	var obstruction_contract := ScenarioSequenceProbeSupportScript.obstruction_target_contract(obstruction_records)
+	if not bool(obstruction_contract.get("ok", false)) \
+		or _array(obstruction_contract.get("target_object_ids", [])) != ScenarioSequenceProbeSupportScript.EXPECTED_OBSTRUCTION_TARGET_IDS:
+		failures.append("Executable obstruction contract rejected the distinct production event-gate and safe-exit targets.")
+	var collapsed_obstruction := obstruction_records.duplicate(true)
+	collapsed_obstruction[0]["object_id"] = "scenario:scenario:delivery_event_gate"
+	if bool(ScenarioSequenceProbeSupportScript.obstruction_target_contract(collapsed_obstruction).get("ok", false)):
+		failures.append("Executable obstruction contract accepted collapsed event-gate/safe-exit identities.")
+	var disabled_obstruction := obstruction_records.duplicate(true)
+	disabled_obstruction[1]["enabled"] = false
+	if bool(ScenarioSequenceProbeSupportScript.obstruction_target_contract(disabled_obstruction).get("ok", false)):
+		failures.append("Executable obstruction contract accepted a disabled delivery-event gate.")
+	var wrong_exit_role := obstruction_records.duplicate(true)
+	wrong_exit_role[0]["safe_exit"] = false
+	if bool(ScenarioSequenceProbeSupportScript.obstruction_target_contract(wrong_exit_role).get("ok", false)):
+		failures.append("Executable obstruction contract accepted a delivery exit without safe-exit authority.")
+	var wrong_obstruction_action := obstruction_records.duplicate(true)
+	wrong_obstruction_action[1]["inline_actions"][0]["scenario_command_id"] = "wrong_command"
+	if bool(ScenarioSequenceProbeSupportScript.obstruction_target_contract(wrong_obstruction_action).get("ok", false)):
+		failures.append("Executable obstruction contract accepted the wrong delivery-event action authority.")
+	var wrong_obstruction_role := obstruction_records.duplicate(true)
+	wrong_obstruction_role[1]["role"] = "exit"
+	if bool(ScenarioSequenceProbeSupportScript.obstruction_target_contract(wrong_obstruction_role).get("ok", false)):
+		failures.append("Executable obstruction contract accepted the wrong delivery-event authored role.")
+	var wrong_obstruction_token := obstruction_records.duplicate(true)
+	wrong_obstruction_token[1]["inline_actions"][0]["emit_object_id"] = "scenario_action:1:scenario:delivery_exit:inspect_manifest"
+	if bool(ScenarioSequenceProbeSupportScript.obstruction_target_contract(wrong_obstruction_token).get("ok", false)):
+		failures.append("Executable obstruction contract accepted a token targeting the wrong production object.")
+	var extra_obstruction_action := obstruction_records.duplicate(true)
+	extra_obstruction_action[1]["inline_actions"].append({"enabled": true, "emit_object_id": "wrong_token", "scenario_command_id": ""})
+	if bool(ScenarioSequenceProbeSupportScript.obstruction_target_contract(extra_obstruction_action).get("ok", false)):
+		failures.append("Executable obstruction contract accepted an extra malformed enabled action.")
 
 	var named_rows: Dictionary = {}
 	for row_id in ScenarioSequenceProbeSupportScript.REQUIRED_PERFORMANCE_ROWS:
 		named_rows[row_id] = ScenarioSequenceProbeSupportScript.timing_summary([1.0])
+	var valid_checkpoints: Array = []
+	for expected_value in ScenarioSequenceProbeSupportScript.EXPECTED_TRACE_ROWS:
+		var expected := _dict(expected_value)
+		valid_checkpoints.append({
+			"label": str(expected.get("label", "")),
+			"projection": {
+				"scenario_id": DELIVERY_SCENARIO_ID,
+				"node_id": DELIVERY_NODE_ID,
+				"phase_id": str(expected.get("phase_id", "")),
+				"status": str(expected.get("status", "")),
+				"resolved_outcomes": _array(expected.get("outcomes", [])).duplicate(),
+			},
+		})
 	var valid_report := {
 		"schema": "env06_6_scenario_sequence_probe_v1",
 		"ok": true,
 		"platform": "Windows",
 		"scenario_id": DELIVERY_SCENARIO_ID,
 		"seed": ScenarioSequenceProbeSupportScript.PROOF_SEED,
-		"semantic": {"capture_ids": ScenarioSequenceProbeSupportScript.EXPECTED_CAPTURE_IDS, "outcomes": ScenarioSequenceProbeSupportScript.EXPECTED_OUTCOMES, "checkpoints": [{"label": "arrival", "phase_id": "arrival"}]},
+		"semantic": {"capture_ids": ScenarioSequenceProbeSupportScript.EXPECTED_CAPTURE_IDS, "outcomes": ScenarioSequenceProbeSupportScript.EXPECTED_OUTCOMES, "checkpoints": valid_checkpoints},
 		"performance": {
 			"named_rows": named_rows,
 			"missing_rows": [],
@@ -1612,12 +1672,61 @@ static func _check_executable_evidence_contract(failures: Array) -> void:
 	timing_only["performance"]["transition"]["max_ms"] = 2.0
 	if ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(timing_only) != str(valid_report.get("semantic_sha256", "")):
 		failures.append("Executable probe canonical hash includes timing data.")
-	var semantic_mutation := valid_report.duplicate(true)
-	semantic_mutation["semantic"]["checkpoints"][0]["phase_id"] = "sorting"
-	if ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(semantic_mutation) == str(valid_report.get("semantic_sha256", "")):
+	var missing_checkpoint := valid_report.duplicate(true)
+	_array(missing_checkpoint["semantic"]["checkpoints"]).pop_back()
+	missing_checkpoint["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(missing_checkpoint)
+	if ScenarioSequenceProbeSupportScript.validate_probe_report(missing_checkpoint, "Windows").is_empty():
+		failures.append("Executable probe validator accepted a missing runtime checkpoint.")
+	var duplicate_checkpoint := valid_report.duplicate(true)
+	duplicate_checkpoint["semantic"]["checkpoints"][1] = _dict(duplicate_checkpoint["semantic"]["checkpoints"][0]).duplicate(true)
+	duplicate_checkpoint["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(duplicate_checkpoint)
+	if ScenarioSequenceProbeSupportScript.validate_probe_report(duplicate_checkpoint, "Windows").is_empty():
+		failures.append("Executable probe validator accepted a duplicate runtime checkpoint.")
+	var reordered_checkpoints := valid_report.duplicate(true)
+	var reordered_rows := _array(reordered_checkpoints["semantic"]["checkpoints"])
+	var first_row := _dict(reordered_rows[0]).duplicate(true)
+	reordered_rows[0] = _dict(reordered_rows[1]).duplicate(true)
+	reordered_rows[1] = first_row
+	reordered_checkpoints["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(reordered_checkpoints)
+	if ScenarioSequenceProbeSupportScript.validate_probe_report(reordered_checkpoints, "Windows").is_empty():
+		failures.append("Executable probe validator accepted reordered runtime checkpoints.")
+	var mislabeled_checkpoint := valid_report.duplicate(true)
+	mislabeled_checkpoint["semantic"]["checkpoints"][0]["label"] = "arrival_mislabeled"
+	mislabeled_checkpoint["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(mislabeled_checkpoint)
+	if ScenarioSequenceProbeSupportScript.validate_probe_report(mislabeled_checkpoint, "Windows").is_empty():
+		failures.append("Executable probe validator accepted a mislabeled runtime checkpoint.")
+	var wrong_scenario := valid_report.duplicate(true)
+	wrong_scenario["semantic"]["checkpoints"][0]["projection"]["scenario_id"] = "wrong_scenario"
+	wrong_scenario["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(wrong_scenario)
+	if ScenarioSequenceProbeSupportScript.validate_probe_report(wrong_scenario, "Windows").is_empty():
+		failures.append("Executable probe validator accepted a checkpoint from the wrong scenario.")
+	var wrong_node := valid_report.duplicate(true)
+	wrong_node["semantic"]["checkpoints"][0]["projection"]["node_id"] = "wrong_node"
+	wrong_node["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(wrong_node)
+	if ScenarioSequenceProbeSupportScript.validate_probe_report(wrong_node, "Windows").is_empty():
+		failures.append("Executable probe validator accepted a checkpoint from the wrong node.")
+	var wrong_phase := valid_report.duplicate(true)
+	wrong_phase["semantic"]["checkpoints"][0]["projection"]["phase_id"] = "sorting"
+	if ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(wrong_phase) == str(valid_report.get("semantic_sha256", "")):
 		failures.append("Executable probe canonical hash ignored semantic trace data.")
-	if ScenarioSequenceProbeSupportScript.validate_probe_report(semantic_mutation, "Windows").is_empty():
-		failures.append("Executable probe validator accepted a stale semantic hash.")
+	wrong_phase["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(wrong_phase)
+	if ScenarioSequenceProbeSupportScript.validate_probe_report(wrong_phase, "Windows").is_empty():
+		failures.append("Executable probe validator accepted the wrong checkpoint phase.")
+	var wrong_status := valid_report.duplicate(true)
+	wrong_status["semantic"]["checkpoints"][9]["projection"]["status"] = "active"
+	wrong_status["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(wrong_status)
+	if ScenarioSequenceProbeSupportScript.validate_probe_report(wrong_status, "Windows").is_empty():
+		failures.append("Executable probe validator accepted the wrong checkpoint status.")
+	var wrong_outcome := valid_report.duplicate(true)
+	wrong_outcome["semantic"]["checkpoints"][9]["projection"]["resolved_outcomes"] = ["broken"]
+	wrong_outcome["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(wrong_outcome)
+	if ScenarioSequenceProbeSupportScript.validate_probe_report(wrong_outcome, "Windows").is_empty():
+		failures.append("Executable probe validator accepted the wrong checkpoint outcome.")
+	var missing_semantic_capture := valid_report.duplicate(true)
+	_array(missing_semantic_capture["semantic"]["capture_ids"]).pop_back()
+	missing_semantic_capture["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(missing_semantic_capture)
+	if ScenarioSequenceProbeSupportScript.validate_probe_report(missing_semantic_capture, "Windows").is_empty():
+		failures.append("Executable probe validator accepted a missing semantic capture id.")
 	var missing_row := valid_report.duplicate(true)
 	missing_row["performance"]["named_rows"].erase("load_rebuild")
 	missing_row["performance"]["missing_rows"] = ["load_rebuild"]
@@ -1628,16 +1737,10 @@ static func _check_executable_evidence_contract(failures: Array) -> void:
 	if ScenarioSequenceProbeSupportScript.validate_probe_report(over_budget, "Windows").is_empty():
 		failures.append("Executable probe validator accepted an over-budget native transition.")
 
-	var outcome_by_capture := {
-		"resolution_repaired": "repaired",
-		"resolution_broken": "broken",
-		"resolution_refused": "refused",
-		"resolution_interrupted": "interrupted",
-	}
 	var capture_rows: Array = []
-	for capture_id_value in ScenarioSequenceProbeSupportScript.EXPECTED_CAPTURE_IDS:
-		var capture_id := str(capture_id_value)
-		var outcome := str(outcome_by_capture.get(capture_id, ""))
+	for expected_value in ScenarioSequenceProbeSupportScript.EXPECTED_TRACE_ROWS:
+		var expected := _dict(expected_value)
+		var capture_id := str(expected.get("label", ""))
 		capture_rows.append({
 			"capture_id": capture_id,
 			"file": "%s.png" % capture_id,
@@ -1645,8 +1748,11 @@ static func _check_executable_evidence_contract(failures: Array) -> void:
 			"width": 1280,
 			"height": 720,
 			"image_format": "png",
-			"status": "aftermath" if not outcome.is_empty() else "active",
-			"outcomes": [outcome] if not outcome.is_empty() else [],
+			"scenario_id": DELIVERY_SCENARIO_ID,
+			"node_id": DELIVERY_NODE_ID,
+			"phase_id": str(expected.get("phase_id", "")),
+			"status": str(expected.get("status", "")),
+			"outcomes": _array(expected.get("outcomes", [])).duplicate(),
 			"visual_state_sha256": ("state:%s" % capture_id).sha256_text(),
 			"live_assertions_passed": true,
 		})
@@ -1654,6 +1760,8 @@ static func _check_executable_evidence_contract(failures: Array) -> void:
 		"schema": "env06_6_scenario_sequence_capture_manifest_v1",
 		"passed": true,
 		"failures": [],
+		"scenario_id": DELIVERY_SCENARIO_ID,
+		"seed": ScenarioSequenceProbeSupportScript.PROOF_SEED,
 		"capture_ids": ScenarioSequenceProbeSupportScript.EXPECTED_CAPTURE_IDS,
 		"captures": capture_rows,
 	}
@@ -1664,26 +1772,55 @@ static func _check_executable_evidence_contract(failures: Array) -> void:
 	if ScenarioSequenceProbeSupportScript.validate_capture_manifest(duplicate_capture).is_empty():
 		failures.append("Executable visual validator accepted a duplicate capture id.")
 	var weak_capture := valid_manifest.duplicate(true)
-	weak_capture["captures"][15]["live_assertions_passed"] = false
+	weak_capture["captures"][20]["live_assertions_passed"] = false
 	if ScenarioSequenceProbeSupportScript.validate_capture_manifest(weak_capture).is_empty():
 		failures.append("Executable visual validator accepted failed small-screen live assertions.")
+	var reordered_capture := valid_manifest.duplicate(true)
+	var reordered_capture_rows := _array(reordered_capture.get("captures", []))
+	var first_capture := _dict(reordered_capture_rows[0]).duplicate(true)
+	reordered_capture_rows[0] = _dict(reordered_capture_rows[1]).duplicate(true)
+	reordered_capture_rows[1] = first_capture
+	if ScenarioSequenceProbeSupportScript.validate_capture_manifest(reordered_capture).is_empty():
+		failures.append("Executable visual validator accepted reordered runtime capture rows.")
+	var wrong_capture_identity := valid_manifest.duplicate(true)
+	wrong_capture_identity["captures"][0]["node_id"] = "wrong_node"
+	if ScenarioSequenceProbeSupportScript.validate_capture_manifest(wrong_capture_identity).is_empty():
+		failures.append("Executable visual validator accepted a capture from the wrong production node.")
+	var wrong_capture_outcome := valid_manifest.duplicate(true)
+	wrong_capture_outcome["captures"][9]["outcomes"] = ["broken"]
+	if ScenarioSequenceProbeSupportScript.validate_capture_manifest(wrong_capture_outcome).is_empty():
+		failures.append("Executable visual validator accepted the wrong material outcome trace.")
 
 	var main_source := FileAccess.get_file_as_string("res://tools/scenario_sequence_probe_main.gd")
 	var scene_source := FileAccess.get_file_as_string("res://tools/scenario_sequence_probe_main.tscn")
 	var visual_source := FileAccess.get_file_as_string("res://tools/scenario_sequence_visual_capture.ps1")
 	var web_source := FileAccess.get_file_as_string("res://tools/scenario_sequence_web_capture.mjs")
 	var parity_source := FileAccess.get_file_as_string("res://tools/scenario_sequence_parity_performance.ps1")
-	if not main_source.begins_with("extends Node") or main_source.find("res://scenes/main.tscn") < 0 or main_source.find("activate_interactable_object") < 0 or main_source.find("global_rect_for_object") < 0 or main_source.find("RenderingServer.frame_post_draw") < 0 or main_source.find("scenario_flush_facts") >= 0:
+	if not main_source.begins_with("extends Node") \
+		or main_source.find("res://scenes/main.tscn") < 0 \
+		or main_source.find("activate_interactable_object") < 0 \
+		or main_source.find("global_rect_for_object") < 0 \
+		or main_source.find("object_id_at_local_position") < 0 \
+		or main_source.find("_obstruction_target_evidence") < 0 \
+		or main_source.find("intersection(reserved).get_area() > 0.0") < 0 \
+		or main_source.find("RenderingServer.frame_post_draw") < 0 \
+		or main_source.find("scenario_flush_facts") >= 0 \
+		or main_source.find("var scenario_added := false") >= 0 \
+		or main_source.find("scenario_hit_rects.size() != 1") >= 0 \
+		or main_source.find("intersection(reserved).get_area() > 0.5") >= 0:
 		failures.append("Executable evidence main scene lost a production seam or introduced manual fact flushing.")
 	if scene_source.find("type=\"Node\"") < 0 or scene_source.find("scenario_sequence_probe_main.gd") < 0:
 		failures.append("Executable evidence scene is not a Node-backed dedicated entry scene.")
-	if visual_source.find("scenario_sequence_probe_main.tscn") < 0 or visual_source.find("--headless") >= 0 or visual_source.find("Get-FileHash") < 0:
+	if visual_source.find("scenario_sequence_probe_main.tscn") < 0 or visual_source.find("--headless") >= 0 or visual_source.find("Get-FileHash") < 0 or visual_source.find("expectedRuntimeTraceIds") < 0 or visual_source.find("expectedRuntimeStateById") < 0:
 		failures.append("Executable visual wrapper is not direct, windowed, and byte-hash fail-closed.")
 	if web_source.find("Emulation.setCPUThrottlingRate") < 0 or web_source.find("pageerror") < 0 or web_source.find("requestfailed") < 0:
 		failures.append("Executable Web capture lost CPU4 or browser-error authority.")
 	if parity_source.find("native_process_1") < 0 \
 		or parity_source.find("web_process_1") < 0 \
 		or parity_source.find("native_web_semantic_exact") < 0 \
+		or parity_source.find("expectedRuntimeTraceLabels") < 0 \
+		or parity_source.find("expectedRuntimeStateByLabel") < 0 \
+		or parity_source.find("semantic.checkpoints") < 0 \
 		or parity_source.find("Copy-Item -LiteralPath $canonicalAddon") < 0 \
 		or parity_source.find("Required Windows host library is unavailable") < 0 \
 		or parity_source.find("Get-ChildItem -LiteralPath (Join-Path $transientAddon \"bin\") -Filter \"*.wasm\"") < 0:

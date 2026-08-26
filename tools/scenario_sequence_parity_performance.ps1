@@ -11,6 +11,46 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+$expectedCaptureIds = @(
+    "arrival_delivery_blocked", "sorting_aisle_rerouted", "verification_station_ready", "awaiting_stock_choice",
+    "resolution_repaired", "resolution_broken", "resolution_refused", "resolution_interrupted",
+    "partial_revisit_awaiting_stock", "terminal_revisit_repaired", "terminal_revisit_broken",
+    "terminal_revisit_refused", "terminal_revisit_interrupted", "expired_revisit_night_end",
+    "reduced_motion_arrival", "small_screen_104x76", "obstruction_overlay_zero_overlap",
+    "hit_target_overlay_44_minimum", "base_event_pre_request_gated", "base_event_request_delivered",
+    "base_event_terminal_gated"
+)
+$expectedRuntimeTraceLabels = @(
+    "arrival_delivery_blocked", "base_event_pre_request_gated", "obstruction_overlay_zero_overlap",
+    "hit_target_overlay_44_minimum", "sorting_aisle_rerouted", "verification_station_ready",
+    "awaiting_stock_choice", "base_event_request_delivered", "partial_revisit_awaiting_stock",
+    "resolution_repaired", "terminal_revisit_repaired", "resolution_broken", "terminal_revisit_broken",
+    "resolution_refused", "terminal_revisit_refused", "base_event_terminal_gated", "resolution_interrupted",
+    "terminal_revisit_interrupted", "expired_revisit_night_end", "reduced_motion_arrival", "small_screen_104x76"
+)
+$expectedRuntimeStateByLabel = @{
+    "arrival_delivery_blocked" = @("arrival", "active", "")
+    "base_event_pre_request_gated" = @("arrival", "active", "")
+    "obstruction_overlay_zero_overlap" = @("arrival", "active", "")
+    "hit_target_overlay_44_minimum" = @("arrival", "active", "")
+    "sorting_aisle_rerouted" = @("sorting", "active", "")
+    "verification_station_ready" = @("verification", "active", "")
+    "awaiting_stock_choice" = @("awaiting_stock", "active", "")
+    "base_event_request_delivered" = @("awaiting_stock", "active", "")
+    "partial_revisit_awaiting_stock" = @("awaiting_stock", "active", "")
+    "resolution_repaired" = @("resolution", "aftermath", "repaired")
+    "terminal_revisit_repaired" = @("resolution", "aftermath", "repaired")
+    "resolution_broken" = @("resolution", "aftermath", "broken")
+    "terminal_revisit_broken" = @("resolution", "aftermath", "broken")
+    "resolution_refused" = @("resolution", "aftermath", "refused")
+    "terminal_revisit_refused" = @("resolution", "aftermath", "refused")
+    "base_event_terminal_gated" = @("resolution", "aftermath", "refused")
+    "resolution_interrupted" = @("resolution", "aftermath", "interrupted")
+    "terminal_revisit_interrupted" = @("resolution", "aftermath", "interrupted")
+    "expired_revisit_night_end" = @("arrival", "cleaned", "")
+    "reduced_motion_arrival" = @("arrival", "active", "")
+    "small_screen_104x76" = @("arrival", "active", "")
+}
 if ($Cpu -lt 1) { throw "Cpu must be at least 1." }
 if ($TimeoutMs -lt 1) { throw "TimeoutMs must be positive." }
 if (-not $GodotPath) { $GodotPath = $env:GODOT_BIN }
@@ -90,6 +130,25 @@ function Invoke-NativeProbe {
 
 function Assert-PerformanceRows {
     param($Report, [string]$Label)
+    $captureIds = @($Report.semantic.capture_ids | ForEach-Object { [string]$_ })
+    if ($captureIds.Count -ne 21 -or (Compare-Object -ReferenceObject $expectedCaptureIds -DifferenceObject $captureIds -SyncWindow 0)) {
+        throw "$Label does not preserve the exact authored semantic capture-id contract."
+    }
+    $checkpoints = @($Report.semantic.checkpoints)
+    $checkpointLabels = @($checkpoints | ForEach-Object { [string]$_.label })
+    if ($checkpointLabels.Count -ne 21 -or @($checkpointLabels | Sort-Object -Unique).Count -ne 21 -or (Compare-Object -ReferenceObject $expectedRuntimeTraceLabels -DifferenceObject $checkpointLabels -SyncWindow 0)) {
+        throw "$Label does not preserve the exact unique 21-row runtime trace order."
+    }
+    foreach ($checkpoint in $checkpoints) {
+        if ([string]$checkpoint.projection.scenario_id -cne "corner_store_delivery_day" -or [string]$checkpoint.projection.node_id -cne "corner_store_delivery_day_node") {
+            throw "$Label runtime trace lost production scenario/node identity."
+        }
+        $expectedState = @($expectedRuntimeStateByLabel[[string]$checkpoint.label])
+        $actualOutcomes = @($checkpoint.projection.resolved_outcomes | ForEach-Object { [string]$_ }) -join ","
+        if ($expectedState.Count -ne 3 -or [string]$checkpoint.projection.phase_id -cne [string]$expectedState[0] -or [string]$checkpoint.projection.status -cne [string]$expectedState[1] -or $actualOutcomes -cne [string]$expectedState[2]) {
+            throw "$Label runtime trace lost exact phase/status/outcome authority at $([string]$checkpoint.label)."
+        }
+    }
     $requiredRows = @(
         "content_schema_catalog_preparation", "command", "command_request_drain_event_delivery", "fact_publish_flush_terminal_cleanup",
         "projection_layout", "save", "load_rebuild", "reentry", "expiry", "terminal_cleanup", "steady_prepared_frame"

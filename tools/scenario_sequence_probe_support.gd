@@ -37,6 +37,33 @@ const EXPECTED_CAPTURE_IDS := [
 	"base_event_request_delivered",
 	"base_event_terminal_gated",
 ]
+const EXPECTED_OBSTRUCTION_TARGET_IDS := [
+	"scenario:scenario:delivery_event_gate",
+	"scenario:scenario:delivery_exit",
+]
+const EXPECTED_TRACE_ROWS := [
+	{"label": "arrival_delivery_blocked", "phase_id": "arrival", "status": "active", "outcomes": []},
+	{"label": "base_event_pre_request_gated", "phase_id": "arrival", "status": "active", "outcomes": []},
+	{"label": "obstruction_overlay_zero_overlap", "phase_id": "arrival", "status": "active", "outcomes": []},
+	{"label": "hit_target_overlay_44_minimum", "phase_id": "arrival", "status": "active", "outcomes": []},
+	{"label": "sorting_aisle_rerouted", "phase_id": "sorting", "status": "active", "outcomes": []},
+	{"label": "verification_station_ready", "phase_id": "verification", "status": "active", "outcomes": []},
+	{"label": "awaiting_stock_choice", "phase_id": "awaiting_stock", "status": "active", "outcomes": []},
+	{"label": "base_event_request_delivered", "phase_id": "awaiting_stock", "status": "active", "outcomes": []},
+	{"label": "partial_revisit_awaiting_stock", "phase_id": "awaiting_stock", "status": "active", "outcomes": []},
+	{"label": "resolution_repaired", "phase_id": "resolution", "status": "aftermath", "outcomes": ["repaired"]},
+	{"label": "terminal_revisit_repaired", "phase_id": "resolution", "status": "aftermath", "outcomes": ["repaired"]},
+	{"label": "resolution_broken", "phase_id": "resolution", "status": "aftermath", "outcomes": ["broken"]},
+	{"label": "terminal_revisit_broken", "phase_id": "resolution", "status": "aftermath", "outcomes": ["broken"]},
+	{"label": "resolution_refused", "phase_id": "resolution", "status": "aftermath", "outcomes": ["refused"]},
+	{"label": "terminal_revisit_refused", "phase_id": "resolution", "status": "aftermath", "outcomes": ["refused"]},
+	{"label": "base_event_terminal_gated", "phase_id": "resolution", "status": "aftermath", "outcomes": ["refused"]},
+	{"label": "resolution_interrupted", "phase_id": "resolution", "status": "aftermath", "outcomes": ["interrupted"]},
+	{"label": "terminal_revisit_interrupted", "phase_id": "resolution", "status": "aftermath", "outcomes": ["interrupted"]},
+	{"label": "expired_revisit_night_end", "phase_id": "arrival", "status": "cleaned", "outcomes": []},
+	{"label": "reduced_motion_arrival", "phase_id": "arrival", "status": "active", "outcomes": []},
+	{"label": "small_screen_104x76", "phase_id": "arrival", "status": "active", "outcomes": []},
+]
 
 const PERFORMANCE_BUDGETS := {
 	"native_transition_p95_ms": 16.0,
@@ -63,6 +90,7 @@ const REQUIRED_PERFORMANCE_ROWS := [
 
 static func production_contract() -> Dictionary:
 	var failures: Array = []
+	failures.append_array(_trace_contract_failures())
 	var raw_text := FileAccess.get_file_as_string(PACKAGE_PATH)
 	if raw_text.is_empty():
 		return {"ok": false, "failures": ["Production sequence package could not be read."]}
@@ -114,6 +142,68 @@ static func production_contract() -> Dictionary:
 	}
 
 
+static func obstruction_target_contract(records_value: Variant) -> Dictionary:
+	var failures: Array = []
+	var by_id: Dictionary = {}
+	for record_value in _array(records_value):
+		var record := _dict(record_value)
+		var object_id := str(record.get("object_id", ""))
+		if not EXPECTED_OBSTRUCTION_TARGET_IDS.has(object_id):
+			continue
+		if by_id.has(object_id):
+			failures.append("Production obstruction target %s appears more than once." % object_id)
+			continue
+		var expected_stable_id := "delivery_event_gate" if object_id == EXPECTED_OBSTRUCTION_TARGET_IDS[0] else "delivery_exit"
+		var expected_safe_exit := object_id == EXPECTED_OBSTRUCTION_TARGET_IDS[1]
+		var expected_role := "workstation" if not expected_safe_exit else "exit"
+		if str(record.get("object_type", "")) != "scenario" \
+			or str(record.get("owner_namespace", "")) != "scenario" \
+			or str(record.get("stable_object_id", "")) != expected_stable_id \
+			or str(record.get("role", "")) != expected_role:
+			failures.append("Production obstruction target %s lost its scenario identity." % object_id)
+		if not bool(record.get("enabled", false)) or not bool(record.get("interactive", false)):
+			failures.append("Production obstruction target %s is not enabled and interactive." % object_id)
+		if bool(record.get("safe_exit", false)) != expected_safe_exit:
+			failures.append("Production obstruction target %s has incorrect safe-exit authority." % object_id)
+		var expected_command_ids := ["inspect_manifest"] if not expected_safe_exit else ["ignore_delivery", "refuse_sort"]
+		var enabled_command_ids: Array = []
+		for action_value in _array(record.get("inline_actions", [])):
+			var action := _dict(action_value)
+			if not bool(action.get("enabled", false)):
+				continue
+			var command_id := str(action.get("scenario_command_id", ""))
+			var emit_object_id := str(action.get("emit_object_id", ""))
+			var expected_token_suffix := ":scenario:%s:%s" % [expected_stable_id, command_id]
+			enabled_command_ids.append(command_id)
+			if command_id.is_empty() \
+				or not emit_object_id.begins_with("scenario_action:") \
+				or not emit_object_id.ends_with(expected_token_suffix):
+				failures.append("Production obstruction target %s contains an enabled action without exact token authority." % object_id)
+		if enabled_command_ids != expected_command_ids:
+			failures.append("Production obstruction target %s lost its exact enabled tokenized scenario actions." % object_id)
+		by_id[object_id] = record.duplicate(true)
+	var targets: Array = []
+	for expected_id_value in EXPECTED_OBSTRUCTION_TARGET_IDS:
+		var expected_id := str(expected_id_value)
+		if not by_id.has(expected_id):
+			failures.append("Production obstruction target is missing: %s." % expected_id)
+			continue
+		targets.append(_dict(by_id.get(expected_id, {})).duplicate(true))
+	var target_ids: Array = []
+	for target_value in targets:
+		target_ids.append(str(_dict(target_value).get("object_id", "")))
+	if target_ids.size() == 2 and target_ids[0] == target_ids[1]:
+		failures.append("Production obstruction target identities collapsed.")
+	return {
+		"ok": failures.is_empty(),
+		"failures": failures,
+		"targets": targets,
+		"target_object_ids": target_ids,
+		"non_exit_object_id": EXPECTED_OBSTRUCTION_TARGET_IDS[0] if by_id.has(EXPECTED_OBSTRUCTION_TARGET_IDS[0]) else "",
+		"safe_exit_object_id": EXPECTED_OBSTRUCTION_TARGET_IDS[1] if by_id.has(EXPECTED_OBSTRUCTION_TARGET_IDS[1]) else "",
+	}
+
+
 static func canonical_semantic(report: Dictionary) -> Dictionary:
 	var semantic := _dict(report.get("semantic", {})).duplicate(true)
 	return _canonical_dictionary(semantic)
@@ -156,9 +246,9 @@ static func validate_probe_report(report: Dictionary, expected_platform: String)
 	if not _array(report.get("failures", [])).is_empty():
 		failures.append("Probe contains runtime failures.")
 	var semantic := _dict(report.get("semantic", {}))
-	var checkpoints := _array(semantic.get("checkpoints", []))
-	if checkpoints.is_empty():
-		failures.append("Probe emitted no semantic checkpoints.")
+	if _string_array(semantic.get("capture_ids", [])) != EXPECTED_CAPTURE_IDS:
+		failures.append("Probe semantic capture ids are not the exact authored 21-id contract.")
+	failures.append_array(_validate_runtime_trace(semantic.get("checkpoints", []), "label", true))
 	if _string_array(semantic.get("outcomes", [])) != EXPECTED_OUTCOMES:
 		failures.append("Probe did not execute the exact four material outcomes.")
 	if str(report.get("semantic_sha256", "")) != canonical_semantic_sha256(report):
@@ -205,12 +295,15 @@ static func validate_capture_manifest(manifest: Dictionary) -> Array:
 		failures.append("Capture manifest schema changed.")
 	if not bool(manifest.get("passed", false)) or not _array(manifest.get("failures", [])).is_empty():
 		failures.append("Capture manifest did not pass.")
+	if str(manifest.get("scenario_id", "")) != SCENARIO_ID or str(manifest.get("seed", "")) != PROOF_SEED:
+		failures.append("Capture manifest did not execute the production scenario/seed.")
 	var ids := _string_array(manifest.get("capture_ids", []))
 	if ids != EXPECTED_CAPTURE_IDS:
 		failures.append("Capture manifest ids are not the exact authored 21-id sequence.")
 	var captures := _array(manifest.get("captures", []))
 	if captures.size() != EXPECTED_CAPTURE_IDS.size():
 		failures.append("Capture manifest must contain exactly 21 capture records.")
+	failures.append_array(_validate_runtime_trace(captures, "capture_id", false))
 	var seen: Dictionary = {}
 	var by_id: Dictionary = {}
 	for capture_value in captures:
@@ -254,6 +347,56 @@ static func _percentile(sorted_samples: Array[float], percentile: float) -> floa
 		return 0.0
 	var rank := ceili(percentile * float(sorted_samples.size())) - 1
 	return sorted_samples[clampi(rank, 0, sorted_samples.size() - 1)]
+
+
+static func _validate_runtime_trace(rows_value: Variant, label_key: String, nested_projection: bool) -> Array:
+	var failures: Array = []
+	var rows := _array(rows_value)
+	if rows.size() != EXPECTED_TRACE_ROWS.size():
+		failures.append("Runtime evidence trace must contain exactly 21 ordered records.")
+	var seen: Dictionary = {}
+	for index in range(rows.size()):
+		var row := _dict(rows[index])
+		var label := str(row.get(label_key, ""))
+		seen[label] = int(seen.get(label, 0)) + 1
+		if index >= EXPECTED_TRACE_ROWS.size():
+			failures.append("Runtime evidence trace contains unexpected trailing record %s." % label)
+			continue
+		var expected := _dict(EXPECTED_TRACE_ROWS[index])
+		var expected_label := str(expected.get("label", ""))
+		if label != expected_label:
+			failures.append("Runtime evidence record %d expected %s but saw %s." % [index, expected_label, label])
+		var projection := _dict(row.get("projection", {})) if nested_projection else row
+		if str(projection.get("scenario_id", "")) != SCENARIO_ID or str(projection.get("node_id", "")) != NODE_ID:
+			failures.append("Runtime evidence record %s lost production scenario/node identity." % expected_label)
+		if str(projection.get("phase_id", "")) != str(expected.get("phase_id", "")) \
+			or str(projection.get("status", "")) != str(expected.get("status", "")):
+			failures.append("Runtime evidence record %s has the wrong phase/status invariant." % expected_label)
+		var outcome_key := "resolved_outcomes" if nested_projection else "outcomes"
+		if _string_array(projection.get(outcome_key, [])) != _string_array(expected.get("outcomes", [])):
+			failures.append("Runtime evidence record %s has the wrong outcome invariant." % expected_label)
+	for expected_value in EXPECTED_TRACE_ROWS:
+		var expected_label := str(_dict(expected_value).get("label", ""))
+		if int(seen.get(expected_label, 0)) != 1:
+			failures.append("Runtime evidence record %s was not produced exactly once." % expected_label)
+	return failures
+
+
+static func _trace_contract_failures() -> Array:
+	var failures: Array = []
+	var trace_labels: Array = []
+	for row_value in EXPECTED_TRACE_ROWS:
+		var row := _dict(row_value)
+		trace_labels.append(str(row.get("label", "")))
+		if str(row.get("phase_id", "")).is_empty() or str(row.get("status", "")).is_empty() or typeof(row.get("outcomes", [])) != TYPE_ARRAY:
+			failures.append("Pinned runtime trace row is incomplete: %s." % str(row.get("label", "")))
+	var sorted_trace := trace_labels.duplicate()
+	var sorted_captures := EXPECTED_CAPTURE_IDS.duplicate()
+	sorted_trace.sort()
+	sorted_captures.sort()
+	if trace_labels.size() != 21 or _unique_strings(trace_labels).size() != 21 or sorted_trace != sorted_captures:
+		failures.append("Pinned runtime trace must contain every authored capture id exactly once.")
+	return failures
 
 
 static func _canonical_dictionary(source: Dictionary) -> Dictionary:

@@ -73,12 +73,47 @@ $expectedIds = @(
     "hit_target_overlay_44_minimum", "base_event_pre_request_gated", "base_event_request_delivered",
     "base_event_terminal_gated"
 )
+$expectedRuntimeTraceIds = @(
+    "arrival_delivery_blocked", "base_event_pre_request_gated", "obstruction_overlay_zero_overlap",
+    "hit_target_overlay_44_minimum", "sorting_aisle_rerouted", "verification_station_ready",
+    "awaiting_stock_choice", "base_event_request_delivered", "partial_revisit_awaiting_stock",
+    "resolution_repaired", "terminal_revisit_repaired", "resolution_broken", "terminal_revisit_broken",
+    "resolution_refused", "terminal_revisit_refused", "base_event_terminal_gated", "resolution_interrupted",
+    "terminal_revisit_interrupted", "expired_revisit_night_end", "reduced_motion_arrival", "small_screen_104x76"
+)
+$expectedRuntimeStateById = @{
+    "arrival_delivery_blocked" = @("arrival", "active", "")
+    "base_event_pre_request_gated" = @("arrival", "active", "")
+    "obstruction_overlay_zero_overlap" = @("arrival", "active", "")
+    "hit_target_overlay_44_minimum" = @("arrival", "active", "")
+    "sorting_aisle_rerouted" = @("sorting", "active", "")
+    "verification_station_ready" = @("verification", "active", "")
+    "awaiting_stock_choice" = @("awaiting_stock", "active", "")
+    "base_event_request_delivered" = @("awaiting_stock", "active", "")
+    "partial_revisit_awaiting_stock" = @("awaiting_stock", "active", "")
+    "resolution_repaired" = @("resolution", "aftermath", "repaired")
+    "terminal_revisit_repaired" = @("resolution", "aftermath", "repaired")
+    "resolution_broken" = @("resolution", "aftermath", "broken")
+    "terminal_revisit_broken" = @("resolution", "aftermath", "broken")
+    "resolution_refused" = @("resolution", "aftermath", "refused")
+    "terminal_revisit_refused" = @("resolution", "aftermath", "refused")
+    "base_event_terminal_gated" = @("resolution", "aftermath", "refused")
+    "resolution_interrupted" = @("resolution", "aftermath", "interrupted")
+    "terminal_revisit_interrupted" = @("resolution", "aftermath", "interrupted")
+    "expired_revisit_night_end" = @("arrival", "cleaned", "")
+    "reduced_motion_arrival" = @("arrival", "active", "")
+    "small_screen_104x76" = @("arrival", "active", "")
+}
 $actualIds = @($manifest.capture_ids)
 if (-not $manifest.passed -or @($manifest.failures).Count -ne 0) { throw "Visual capture manifest did not pass." }
 if ($actualIds.Count -ne $expectedIds.Count -or (Compare-Object -ReferenceObject $expectedIds -DifferenceObject $actualIds -SyncWindow 0)) {
     throw "Visual capture manifest does not preserve the exact ordered 21-id contract."
 }
 if (@($manifest.captures).Count -ne 21) { throw "Visual capture manifest does not contain exactly 21 capture rows." }
+$actualRuntimeTraceIds = @($manifest.captures | ForEach-Object { [string]$_.capture_id })
+if (@($actualRuntimeTraceIds | Sort-Object -Unique).Count -ne 21 -or (Compare-Object -ReferenceObject $expectedRuntimeTraceIds -DifferenceObject $actualRuntimeTraceIds -SyncWindow 0)) {
+    throw "Visual capture rows do not preserve the exact unique 21-row runtime trace order."
+}
 $seen = @{}
 $byId = @{}
 foreach ($capture in @($manifest.captures)) {
@@ -91,6 +126,14 @@ foreach ($capture in @($manifest.captures)) {
     $hash = (Get-FileHash -LiteralPath $png -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($hash -cne ([string]$capture.png_sha256).ToLowerInvariant()) { throw "Capture PNG hash mismatch: $id" }
     if (-not $capture.live_assertions_passed) { throw "Capture live assertions failed: $id" }
+    if ([string]$capture.scenario_id -cne "corner_store_delivery_day" -or [string]$capture.node_id -cne "corner_store_delivery_day_node") {
+        throw "Capture lost production scenario/node identity: $id"
+    }
+    $expectedState = @($expectedRuntimeStateById[$id])
+    $actualOutcomes = @($capture.outcomes | ForEach-Object { [string]$_ }) -join ","
+    if ($expectedState.Count -ne 3 -or [string]$capture.phase_id -cne [string]$expectedState[0] -or [string]$capture.status -cne [string]$expectedState[1] -or $actualOutcomes -cne [string]$expectedState[2]) {
+        throw "Capture lost exact phase/status/outcome authority: $id"
+    }
     if ([int]$capture.width -lt 1280 -or [int]$capture.height -lt 720 -or [string]$capture.image_format -cne "png") {
         throw "Capture does not prove a full 1280x720-or-larger PNG: $id"
     }
