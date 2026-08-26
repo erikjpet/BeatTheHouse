@@ -4753,6 +4753,21 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 	})
 	if TutorialFlowScript.should_auto_start(active_reporting_profile, tutorial_meta_default):
 		failures.append("Actual 0.6 reporting activity did not block automatic tutorial start.")
+	for unknown_default_value in [0, false, "", [], {}]:
+		var unknown_reporting_profile := ProfileInventoryScript.new()
+		unknown_reporting_profile.from_dict({
+			"schema_version": 5,
+			"tutorial_completed": false,
+			"lifetime_stats": {ProfileInventoryScript.RELEASE_REPORTING_KEY: {"future_reporting_field": unknown_default_value}},
+		})
+		var unknown_snapshot := unknown_reporting_profile.to_dict()
+		var unknown_round_trip := ProfileInventoryScript.new()
+		unknown_round_trip.from_dict(JSON.parse_string(JSON.stringify(unknown_snapshot)) as Dictionary)
+		var unknown_release := _copy_dict(unknown_round_trip.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
+		if not unknown_release.has("future_reporting_field"):
+			failures.append("ProfileInventory normalization/roundtrip lost unknown neutral-looking 0.6 reporting field of type %d." % typeof(unknown_default_value))
+		elif TutorialFlowScript.should_auto_start(unknown_round_trip, tutorial_meta_default):
+			failures.append("Unknown neutral-looking 0.6 reporting field of type %d did not conservatively block automatic tutorial start." % typeof(unknown_default_value))
 	var reporting_only_profile := ProfileInventoryScript.new()
 	reporting_only_profile.add_reference_chip()
 	var progression_before := {"items": reporting_only_profile.items.duplicate(true), "challenges": reporting_only_profile.challenge_completions.duplicate(true), "act_seam": reporting_only_profile.act_seam.duplicate(true)}
