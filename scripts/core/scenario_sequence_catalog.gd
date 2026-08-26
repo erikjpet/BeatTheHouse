@@ -128,6 +128,25 @@ static func overlay_for(scenario_id: String, catalog: Dictionary = {}) -> Dictio
 	return _dict(_dict(source.get("overlays", {})).get(scenario_id.strip_edges(), {}))
 
 
+static func package_for_scenario(scenario_id: String, catalog: Dictionary = {}) -> Dictionary:
+	var wanted := scenario_id.strip_edges()
+	var source := _default_catalog() if catalog.is_empty() else catalog
+	if wanted.is_empty() or not bool(source.get("ok", false)):
+		return {}
+	var match: Dictionary = {}
+	for package_value in _array(source.get("packages", [])):
+		var package := _dict(package_value)
+		var scenario_ids := _array(package.get("scenario_ids", []))
+		if scenario_ids.count(wanted) != 1:
+			continue
+		if not match.is_empty():
+			# Arbitrary/synthetic catalogs receive the same fail-closed uniqueness
+			# guarantee as load_catalog, without assuming a singleton rollout.
+			return {}
+		match = package
+	return match
+
+
 static func apply_overlay(definition: Dictionary, catalog: Dictionary = {}) -> Dictionary:
 	if definition.is_empty():
 		return {}
