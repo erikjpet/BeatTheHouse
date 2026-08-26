@@ -6,8 +6,11 @@ extends RefCounted
 const INVENTORY_PATH := "user://profile_inventory.json"
 const INVENTORY_PATH_ENV := "BTH_PROFILE_INVENTORY_PATH"
 const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
+const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const SCHEMA_VERSION := 5
 const RUN_HISTORY_LIMIT := 20
+const RELEASE_REPORTING_KEY := "release_0_6"
+const CREW_STANDING_IDS := ["stranger", "marker", "associate", "made", "inner_circle"]
 const REFERENCE_CHIP_ID := "profile_poker_chip"
 const ACTIVE_SCRATCH_TICKET_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const REFERENCE_CHIP := {
@@ -301,6 +304,44 @@ func _record_lifetime_stats(entry: Dictionary) -> void:
 			continue
 		tallies[game_id] = maxi(0, int(tallies.get(game_id, 0))) + maxi(0, int(_copy_dict(entry.get("games_played", {})).get(game_id_value, 0)))
 	stats["games_played"] = tallies
+	var release := _normalize_release_lifetime_stats(stats.get(RELEASE_REPORTING_KEY, {}))
+	var run_release := _copy_dict(entry.get(RELEASE_REPORTING_KEY, {}))
+	var crew := _copy_dict(run_release.get("crew", {}))
+	var world := _copy_dict(run_release.get("world", {}))
+	var numbers := _copy_dict(run_release.get("numbers", {}))
+	var deliveries := _copy_dict(run_release.get("deliveries", {}))
+	release["crew_path_runs"] = int(release.get("crew_path_runs", 0)) + (1 if bool(crew.get("path_walked", false)) else 0)
+	release["highest_crew_standing"] = _higher_crew_standing(str(release.get("highest_crew_standing", "stranger")), str(crew.get("standing", "stranger")))
+	var run_members := _normalize_reporting_rows(crew.get("members_met", []))
+	var member_ids_met := _normalize_crew_member_ids(release.get("crew_member_ids_met", []))
+	for member in run_members:
+		var member_id := str(member.get("id", ""))
+		if CrewStateModelScript.MEMBER_IDS.has(member_id) and not member_ids_met.has(member_id):
+			member_ids_met.append(member_id)
+	member_ids_met = _normalize_crew_member_ids(member_ids_met)
+	# Retain the cumulative contact counter for schema compatibility, but expose
+	# the exact unique roster count as "Members met" on the career surface.
+	release["crew_members_met"] = int(release.get("crew_members_met", 0)) + run_members.size()
+	release["crew_member_ids_met"] = member_ids_met
+	release["crew_members_met_unique"] = maxi(int(release.get("crew_members_met_unique", 0)), member_ids_met.size())
+	release["crew_jobs_completed"] = int(release.get("crew_jobs_completed", 0)) + maxi(0, int(crew.get("jobs_completed", 0)))
+	release["crew_jobs_abandoned"] = int(release.get("crew_jobs_abandoned", 0)) + maxi(0, int(crew.get("jobs_abandoned", 0)))
+	var approved_turn_resolution := str(entry.get("outcome", "")) == "victory" \
+		and str(entry.get("route", "")) == "crew_heist" \
+		and crew.has("turn_resolution") \
+		and not str(crew.get("turn_resolution", "")).strip_edges().is_empty()
+	release["crew_turn_resolutions"] = int(release.get("crew_turn_resolutions", 0)) + (1 if approved_turn_resolution else 0)
+	release["nights_survived"] = int(release.get("nights_survived", 0)) + maxi(0, int(world.get("nights_survived", 0)))
+	release["scenarios_experienced"] = int(release.get("scenarios_experienced", 0)) + _copy_array(world.get("scenarios", [])).size()
+	release["notable_aftermath_outcomes"] = int(release.get("notable_aftermath_outcomes", 0)) + _copy_array(world.get("notable_outcomes", [])).size()
+	release["sweeps_encountered"] = int(release.get("sweeps_encountered", 0)) + maxi(0, int(world.get("sweeps_encountered", 0)))
+	release["rumors_proved_true"] = int(release.get("rumors_proved_true", 0)) + maxi(0, int(world.get("rumors_proved_true", 0)))
+	release["numbers_slips_placed"] = int(release.get("numbers_slips_placed", 0)) + maxi(0, int(numbers.get("slips_placed", 0)))
+	release["numbers_hits"] = int(release.get("numbers_hits", 0)) + maxi(0, int(numbers.get("hits", 0)))
+	release["numbers_rig_runs"] = int(release.get("numbers_rig_runs", 0)) + (1 if bool(numbers.get("rig_route_used", false)) else 0)
+	release["delivery_runs_completed"] = int(release.get("delivery_runs_completed", 0)) + maxi(0, int(deliveries.get("runs_completed", 0)))
+	release["delivery_packages_lost"] = int(release.get("delivery_packages_lost", 0)) + maxi(0, int(deliveries.get("packages_lost", 0)))
+	stats[RELEASE_REPORTING_KEY] = release
 	lifetime_stats = stats
 
 
@@ -387,7 +428,8 @@ func _normalize_run_history_entry(value: Dictionary) -> Dictionary:
 	var completed_date := str(value.get("completed_date", "")).strip_edges()
 	if completed_date.is_empty():
 		completed_date = _today_date_string()
-	return {
+	var result := value.duplicate(true)
+	result.merge({
 		"seed": str(value.get("seed", value.get("seed_text", ""))).strip_edges(),
 		"route": route,
 		"outcome": outcome,
@@ -406,7 +448,10 @@ func _normalize_run_history_entry(value: Dictionary) -> Dictionary:
 		"bankroll_lost": maxi(0, int(value.get("bankroll_lost", maxi(0, -int(value.get("bankroll_delta", 0)))))),
 		"biggest_single_win": maxi(0, int(value.get("biggest_single_win", 0))),
 		"games_played": _normalize_int_dictionary(value.get("games_played", {})),
-	}
+	}, true)
+	if value.has(RELEASE_REPORTING_KEY):
+		result[RELEASE_REPORTING_KEY] = _normalize_release_run_stats(value.get(RELEASE_REPORTING_KEY, {}))
+	return result
 
 
 func _normalize_daily_runs(value: Variant) -> Dictionary:
@@ -422,14 +467,129 @@ func _normalize_daily_runs(value: Variant) -> Dictionary:
 
 func _normalize_lifetime_stats(value: Variant) -> Dictionary:
 	var source := _copy_dict(value)
-	return {
+	var result := source.duplicate(true)
+	_normalize_whole_number_values(result)
+	result.merge({
 		"total_runs": maxi(0, int(source.get("total_runs", 0))),
 		"victories_per_route": _normalize_int_dictionary(source.get("victories_per_route", {})),
 		"biggest_single_win": maxi(0, int(source.get("biggest_single_win", 0))),
 		"total_bankroll_won": maxi(0, int(source.get("total_bankroll_won", 0))),
 		"total_bankroll_lost": maxi(0, int(source.get("total_bankroll_lost", 0))),
 		"games_played": _normalize_int_dictionary(source.get("games_played", {})),
-	}
+	}, true)
+	if source.has(RELEASE_REPORTING_KEY):
+		result[RELEASE_REPORTING_KEY] = _normalize_release_lifetime_stats(source.get(RELEASE_REPORTING_KEY, {}))
+	return result
+
+
+static func _normalize_release_run_stats(value: Variant) -> Dictionary:
+	var source := _copy_dict(value)
+	var result := source.duplicate(true)
+	var crew := _copy_dict(source.get("crew", {}))
+	var normalized_crew := crew.duplicate(true)
+	normalized_crew.merge({
+		"path_walked": bool(crew.get("path_walked", false)),
+		"standing": _normalize_crew_standing(str(crew.get("standing", "stranger"))),
+		"members_met": _normalize_reporting_rows(crew.get("members_met", [])),
+		"jobs_completed": maxi(0, int(crew.get("jobs_completed", 0))),
+		"jobs_abandoned": maxi(0, int(crew.get("jobs_abandoned", 0))),
+	}, true)
+	var turn_resolution := str(crew.get("turn_resolution", "")).strip_edges()
+	if turn_resolution.is_empty():
+		normalized_crew.erase("turn_resolution")
+	else:
+		normalized_crew["turn_resolution"] = turn_resolution
+	var world := _copy_dict(source.get("world", {}))
+	var normalized_world := world.duplicate(true)
+	normalized_world.merge({
+		"nights_survived": maxi(0, int(world.get("nights_survived", 0))),
+		"scenarios": _normalize_reporting_rows(world.get("scenarios", [])),
+		"notable_outcomes": _normalize_reporting_rows(world.get("notable_outcomes", [])),
+		"sweeps_encountered": maxi(0, int(world.get("sweeps_encountered", 0))),
+		"rumors_proved_true": maxi(0, int(world.get("rumors_proved_true", 0))),
+	}, true)
+	var numbers := _copy_dict(source.get("numbers", {}))
+	var normalized_numbers := numbers.duplicate(true)
+	normalized_numbers.merge({
+		"slips_placed": maxi(0, int(numbers.get("slips_placed", 0))),
+		"hits": maxi(0, int(numbers.get("hits", 0))),
+		"rig_route_used": bool(numbers.get("rig_route_used", false)),
+	}, true)
+	var deliveries := _copy_dict(source.get("deliveries", {}))
+	var normalized_deliveries := deliveries.duplicate(true)
+	normalized_deliveries.merge({
+		"runs_completed": maxi(0, int(deliveries.get("runs_completed", 0))),
+		"packages_lost": maxi(0, int(deliveries.get("packages_lost", 0))),
+	}, true)
+	result["crew"] = normalized_crew
+	result["world"] = normalized_world
+	result["numbers"] = normalized_numbers
+	result["deliveries"] = normalized_deliveries
+	return result
+
+
+static func _normalize_release_lifetime_stats(value: Variant) -> Dictionary:
+	var source := _copy_dict(value)
+	var result := source.duplicate(true)
+	_normalize_whole_number_values(result)
+	result["highest_crew_standing"] = _normalize_crew_standing(str(source.get("highest_crew_standing", "stranger")))
+	var member_ids_met := _normalize_crew_member_ids(source.get("crew_member_ids_met", []))
+	result["crew_member_ids_met"] = member_ids_met
+	result["crew_members_met_unique"] = maxi(maxi(0, int(source.get("crew_members_met_unique", 0))), member_ids_met.size())
+	for key in [
+		"crew_path_runs", "crew_members_met", "crew_jobs_completed", "crew_jobs_abandoned", "crew_turn_resolutions",
+		"nights_survived", "scenarios_experienced", "notable_aftermath_outcomes", "sweeps_encountered", "rumors_proved_true",
+		"numbers_slips_placed", "numbers_hits", "numbers_rig_runs", "delivery_runs_completed", "delivery_packages_lost",
+	]:
+		result[key] = maxi(0, int(source.get(key, 0)))
+	return result
+
+
+static func _normalize_whole_number_values(value: Dictionary) -> void:
+	# JSON restores numbers as floats. Lifetime dictionaries are forward-compatible,
+	# so canonicalize unknown whole-number counters too instead of losing them or
+	# allowing an otherwise identical save/load round trip to change their type.
+	for key in value.keys():
+		var entry: Variant = value.get(key)
+		if typeof(entry) == TYPE_FLOAT and float(entry) == float(int(entry)):
+			value[key] = int(entry)
+
+
+static func _normalize_crew_member_ids(value: Variant) -> Array:
+	var source: Array = value if typeof(value) == TYPE_ARRAY else []
+	var result: Array = []
+	for member_id in CrewStateModelScript.MEMBER_IDS:
+		if source.has(member_id):
+			result.append(member_id)
+	return result
+
+
+static func _normalize_reporting_rows(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for row_value in value as Array:
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row := (row_value as Dictionary).duplicate(true)
+		var row_id := str(row.get("id", "")).strip_edges()
+		var label := str(row.get("label", row_id.replace("_", " ").capitalize())).strip_edges()
+		if row_id.is_empty() and label.is_empty():
+			continue
+		row["id"] = row_id
+		row["label"] = label
+		result.append(row)
+	return result
+
+
+static func _normalize_crew_standing(value: String) -> String:
+	return value if CREW_STANDING_IDS.has(value) else "stranger"
+
+
+static func _higher_crew_standing(a: String, b: String) -> String:
+	var normalized_a := _normalize_crew_standing(a)
+	var normalized_b := _normalize_crew_standing(b)
+	return normalized_b if CREW_STANDING_IDS.find(normalized_b) > CREW_STANDING_IDS.find(normalized_a) else normalized_a
 
 
 static func _normalize_int_dictionary(value: Variant) -> Dictionary:
@@ -538,3 +698,9 @@ static func _copy_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
 	return (value as Dictionary).duplicate(true)
+
+
+static func _copy_array(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return (value as Array).duplicate(true)

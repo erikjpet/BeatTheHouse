@@ -18,6 +18,22 @@ const RUN_MAP_BACKGROUND_PATH := "res://assets/art/map_backgrounds/cyberpunk_cit
 # at the same geography as the live travel map.
 const RUN_REPORT_MAP_BACKGROUND_PATH := RUN_MAP_BACKGROUND_PATH
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
+const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+
+const CREW_MEMBER_LABELS := {
+	"crew_rook": "Rook",
+	"crew_velvet": "Velvet",
+	"crew_knuckles": "Knuckles",
+	"crew_switch": "Switch",
+	"crew_mags": "Mags",
+	"crew_bishop": "Bishop",
+	"crew_lucky": "Lucky",
+}
+const GAME_LABELS := {
+	"craps": "Craps",
+	"coin_pusher": "Quarter Falls",
+	"crew_draw_poker": "Back-Room Poker",
+}
 
 
 static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary:
@@ -56,11 +72,262 @@ static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary
 		"meta_reward": build_meta_reward(run_data),
 		"debts": build_debt_ledger(_dict_array(run_data.get("debt", [])), story_log),
 		"money_rows": build_money_rows(story_log, catalogs),
+		"release_0_6": build_release_ledger(run_data),
 		"timeline": timeline,
 		"map_snapshot": report_map,
 		"seed": _player_facing_seed(run_data),
 		"tutorial_failure": _is_tutorial_failure(run_data),
 	}
+
+
+# Reporting-only terminal aggregation. This reads serialized state once when a
+# report/profile entry is built; it never participates in run rules or unlocks.
+static func build_release_ledger(run_data: Dictionary) -> Dictionary:
+	var crew := _crew_ledger(run_data)
+	var world := _world_ledger(run_data)
+	var numbers := _numbers_ledger(run_data)
+	var games := _games_ledger(run_data)
+	var deliveries := _deliveries_ledger(run_data)
+	var sections := [
+		{"id": "crew", "title": "Crew", "rows": _crew_rows(crew)},
+		{"id": "world", "title": "World", "rows": _world_rows(world)},
+		{"id": "numbers", "title": "Numbers", "rows": _numbers_rows(numbers)},
+		{"id": "games", "title": "Games", "rows": games.duplicate(true)},
+		{"id": "deliveries", "title": "Deliveries", "rows": _delivery_rows(deliveries)},
+	]
+	return {
+		"crew": crew,
+		"world": world,
+		"numbers": numbers,
+		"games": games,
+		"deliveries": deliveries,
+		"sections": sections,
+		"summary_lines": _ledger_summary_lines(crew, world, numbers, games, deliveries),
+	}
+
+
+static func release_profile_snapshot(run_data: Dictionary) -> Dictionary:
+	var ledger := build_release_ledger(run_data)
+	return {
+		"crew": _copy_dict(ledger.get("crew", {})),
+		"world": _copy_dict(ledger.get("world", {})),
+		"numbers": _copy_dict(ledger.get("numbers", {})),
+		"deliveries": _copy_dict(ledger.get("deliveries", {})),
+	}
+
+
+static func _crew_ledger(run_data: Dictionary) -> Dictionary:
+	var crew_state := _copy_dict(run_data.get("crew_state", {}))
+	var trust := _copy_dict(crew_state.get("trust", {}))
+	var member_rows: Array = []
+	var standing_index := 0
+	for member_id_value in CrewStateModelScript.MEMBER_IDS:
+		var member_id := str(member_id_value)
+		var rank := CrewStateModelScript.rank_for_trust(maxi(0, int(trust.get(member_id, 0))))
+		var rank_index := CrewStateModelScript.RANK_IDS.find(rank)
+		standing_index = maxi(standing_index, rank_index)
+		# RunState's heist path defines "met" as any canonical rank other than
+		# stranger. Keep terminal reporting on that exact shipped boundary.
+		if rank != "stranger":
+			member_rows.append({"id": member_id, "label": str(CREW_MEMBER_LABELS.get(member_id, member_id.replace("crew_", "").capitalize())), "standing": rank})
+	var completed := 0
+	var abandoned := 0
+	for job_value in _copy_dict(crew_state.get("jobs", {})).values():
+		if typeof(job_value) != TYPE_DICTIONARY or str((job_value as Dictionary).get("status", "")) != "resolved":
+			continue
+		var job_outcome := str((job_value as Dictionary).get("outcome", ""))
+		if job_outcome == "success":
+			completed += 1
+		elif job_outcome == "abandoned":
+			abandoned += 1
+	var heist := _copy_dict(crew_state.get("crew_heist", {}))
+	var result := {
+		"path_walked": not trust.is_empty() and _positive_value_count(trust) > 0 or not _copy_dict(crew_state.get("jobs", {})).is_empty() or not heist.is_empty(),
+		"standing": str(CrewStateModelScript.RANK_IDS[standing_index]),
+		"members_met": member_rows,
+		"jobs_completed": completed,
+		"jobs_abandoned": abandoned,
+	}
+	# The ending copy is the contract-approved public source. Never inspect the
+	# hidden Turn payload, and never name it before a completed terminal heist.
+	var flags := _copy_dict(run_data.get("narrative_flags", {}))
+	var terminal_heist := str(run_data.get("run_status", "")) == RunState.RUN_STATUS_ENDED \
+		and str(flags.get("demo_victory_route", "")) == RunState.CREW_HEIST_ROUTE \
+		and str(heist.get("status", "")) == "completed"
+	var ending_copy := str(flags.get("demo_victory_message", "")).strip_edges()
+	if terminal_heist and ending_copy.to_lower().contains("the turn"):
+		result["turn_resolution"] = ending_copy
+	return result
+
+
+static func _world_ledger(run_data: Dictionary) -> Dictionary:
+	var visited := _visited_node_ids(run_data)
+	var scenario_by_id := {}
+	var current_environment := _copy_dict(run_data.get("current_environment", {}))
+	_record_scenario(scenario_by_id, current_environment)
+	var world_map := _copy_dict(run_data.get("world_map", {}))
+	for node_value in _dict_array(world_map.get("nodes", [])):
+		var node_id := str(node_value.get("id", "")).strip_edges()
+		if not visited.has(node_id):
+			continue
+		_record_scenario(scenario_by_id, _copy_dict(node_value.get("environment", node_value)))
+	var scenarios: Array = scenario_by_id.values()
+	scenarios.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("label", "")) < str(b.get("label", "")))
+	var notable_lookup := {}
+	var sweeps := 0
+	for entry in _dict_array(run_data.get("story_log", [])):
+		if str(entry.get("type", "")) == "police_sweep_encounter":
+			sweeps += 1
+		var event_id := str(entry.get("event_id", "")).strip_edges()
+		if not event_id.begins_with("scenario_"):
+			continue
+		var choice_id := str(entry.get("choice_id", "")).strip_edges()
+		var outcome_id := "%s:%s" % [event_id, choice_id]
+		notable_lookup[outcome_id] = {
+			"id": outcome_id,
+			"label": "%s / %s" % [event_id.trim_prefix("scenario_").replace("_", " ").capitalize(), choice_id.replace("_", " ").capitalize()],
+		}
+	var notable: Array = notable_lookup.values()
+	notable.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("label", "")) < str(b.get("label", "")))
+	var living_world := _copy_dict(_copy_dict(run_data.get("town_state", {})).get("living_world", {}))
+	var rumors_proved_true := 0
+	for target_value in _copy_dict(living_world.get("heard_by_node", {})).keys():
+		if visited.has(str(target_value)):
+			rumors_proved_true += 1
+	var end_minutes := maxi(RunState.GAME_CLOCK_START_MINUTE, int(run_data.get("game_clock_minutes", RunState.GAME_CLOCK_START_MINUTE)))
+	return {
+		"nights_survived": maxi(0, int(floor(float(end_minutes) / 1440.0))),
+		"scenarios": scenarios,
+		"notable_outcomes": notable,
+		"sweeps_encountered": sweeps,
+		"rumors_proved_true": rumors_proved_true,
+	}
+
+
+static func _numbers_ledger(run_data: Dictionary) -> Dictionary:
+	var state := _copy_dict(run_data.get("numbers_state", {}))
+	var slips := _dict_array(state.get("slips", []))
+	var hits := 0
+	for slip in slips:
+		if str(slip.get("status", "")) == "settled" and bool(slip.get("won", false)):
+			hits += 1
+	return {
+		"slips_placed": slips.size(),
+		"hits": hits,
+		"rig_route_used": str(_copy_dict(state.get("fix_state", {})).get("status", "")) == "completed",
+	}
+
+
+static func _games_ledger(run_data: Dictionary) -> Array:
+	var flags := _copy_dict(run_data.get("narrative_flags", {}))
+	var tallies := _copy_dict(flags.get("profile_games_played", run_data.get("games_played", {})))
+	var rows: Array = []
+	for game_id_value in tallies.keys():
+		var game_id := str(game_id_value).strip_edges()
+		var count := maxi(0, int(tallies.get(game_id_value, 0)))
+		if game_id.is_empty() or count <= 0:
+			continue
+		rows.append({"id": game_id, "label": str(GAME_LABELS.get(game_id, game_id.replace("_", " ").capitalize())), "value": count})
+	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("label", "")) < str(b.get("label", "")))
+	return rows
+
+
+static func _deliveries_ledger(run_data: Dictionary) -> Dictionary:
+	var flags := _copy_dict(run_data.get("narrative_flags", {}))
+	return {
+		"runs_completed": maxi(0, int(flags.get("profile_delivery_runs_completed", 0))),
+		"packages_lost": maxi(0, int(flags.get("profile_delivery_packages_lost", 0))),
+	}
+
+
+static func _crew_rows(crew: Dictionary) -> Array:
+	var member_labels: Array[String] = []
+	for member in _dict_array(crew.get("members_met", [])):
+		member_labels.append(str(member.get("label", "")))
+	var rows: Array = [
+		{"label": "Path", "value": "Walked" if bool(crew.get("path_walked", false)) else "Untouched"},
+		{"label": "Standing", "value": str(crew.get("standing", "stranger")).replace("_", " ").capitalize()},
+		{"label": "Members met", "value": ", ".join(member_labels) if not member_labels.is_empty() else "None"},
+		{"label": "Jobs", "value": "%d completed / %d abandoned" % [int(crew.get("jobs_completed", 0)), int(crew.get("jobs_abandoned", 0))]},
+	]
+	if crew.has("turn_resolution"):
+		rows.append({"label": "The Turn", "value": str(crew.get("turn_resolution", ""))})
+	return rows
+
+
+static func _world_rows(world: Dictionary) -> Array:
+	return [
+		{"label": "Nights", "value": str(int(world.get("nights_survived", 0)))},
+		{"label": "Scenarios", "value": str(_copy_array(world.get("scenarios", [])).size())},
+		{"label": "Aftermath", "value": str(_copy_array(world.get("notable_outcomes", [])).size())},
+		{"label": "Sweeps", "value": str(int(world.get("sweeps_encountered", 0)))},
+		{"label": "True rumors", "value": str(int(world.get("rumors_proved_true", 0)))},
+	]
+
+
+static func _numbers_rows(numbers: Dictionary) -> Array:
+	return [
+		{"label": "Slips", "value": str(int(numbers.get("slips_placed", 0)))},
+		{"label": "Hits", "value": str(int(numbers.get("hits", 0)))},
+		{"label": "Rig route", "value": "Used" if bool(numbers.get("rig_route_used", false)) else "No"},
+	]
+
+
+static func _delivery_rows(deliveries: Dictionary) -> Array:
+	return [
+		{"label": "Runs completed", "value": str(int(deliveries.get("runs_completed", 0)))},
+		{"label": "Packages lost", "value": str(int(deliveries.get("packages_lost", 0)))},
+	]
+
+
+static func _ledger_summary_lines(crew: Dictionary, world: Dictionary, numbers: Dictionary, games: Array, deliveries: Dictionary) -> Array:
+	var lines: Array = [
+		"Crew | path %s | %s | %d met | jobs %d complete/%d abandoned" % ["walked" if bool(crew.get("path_walked", false)) else "untouched", str(crew.get("standing", "stranger")).replace("_", " ").capitalize(), _copy_array(crew.get("members_met", [])).size(), int(crew.get("jobs_completed", 0)), int(crew.get("jobs_abandoned", 0))],
+		"World | %d nights | %d scenarios | %d aftermath | %d sweeps | %d true rumors" % [int(world.get("nights_survived", 0)), _copy_array(world.get("scenarios", [])).size(), _copy_array(world.get("notable_outcomes", [])).size(), int(world.get("sweeps_encountered", 0)), int(world.get("rumors_proved_true", 0))],
+		"Numbers | %d slips | %d hits | rig %s" % [int(numbers.get("slips_placed", 0)), int(numbers.get("hits", 0)), "used" if bool(numbers.get("rig_route_used", false)) else "unused"],
+		"Deliveries | %d complete | %d lost" % [int(deliveries.get("runs_completed", 0)), int(deliveries.get("packages_lost", 0))],
+	]
+	var game_parts: Array[String] = []
+	for game in games:
+		game_parts.append("%s %d" % [str(game.get("label", "Game")), int(game.get("value", 0))])
+	lines.append("Games | %s" % ("No tables played" if game_parts.is_empty() else " | ".join(game_parts)))
+	if crew.has("turn_resolution"):
+		lines.append("The Turn | %s" % str(crew.get("turn_resolution", "")))
+	return lines
+
+
+static func _visited_node_ids(run_data: Dictionary) -> Array:
+	var result: Array = []
+	for value in _copy_array(_copy_dict(run_data.get("world_map", {})).get("visited_path", [])):
+		_append_unique_string(result, str(value))
+	for entry in _dict_array(run_data.get("environment_history", [])):
+		_append_unique_string(result, str(entry.get("world_node_id", entry.get("archetype_id", entry.get("id", "")))))
+	var current := _copy_dict(run_data.get("current_environment", {}))
+	_append_unique_string(result, str(current.get("world_node_id", current.get("archetype_id", current.get("id", "")))))
+	return result
+
+
+static func _record_scenario(target: Dictionary, environment: Dictionary) -> void:
+	var state := _copy_dict(environment.get("scenario_state", {}))
+	var scenario_id := str(state.get("id", environment.get("scenario_id", ""))).strip_edges()
+	if scenario_id.is_empty():
+		return
+	var label := str(state.get("display_name", environment.get("scenario_display_name", scenario_id.replace("_", " ").capitalize()))).strip_edges()
+	target[scenario_id] = {"id": scenario_id, "label": label if not label.is_empty() else scenario_id.replace("_", " ").capitalize()}
+
+
+static func _append_unique_string(target: Array, value: String) -> void:
+	var clean := value.strip_edges()
+	if not clean.is_empty() and not target.has(clean):
+		target.append(clean)
+
+
+static func _positive_value_count(values: Dictionary) -> int:
+	var count := 0
+	for value in values.values():
+		if int(value) > 0:
+			count += 1
+	return count
 
 
 static func build_meta_reward(run_data: Dictionary) -> Dictionary:
@@ -201,14 +468,15 @@ static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Diction
 	var outcome_key := str(run_data.get("run_failure_reason", RunState.FAILURE_BANKROLL_ZERO))
 	if won:
 		var victory_route := str(flags.get("demo_victory_route", ""))
-		if victory_route == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID:
-			outcome_key = "players_card"
-		elif victory_route == "crew_heist":
-			outcome_key = "heist_%s" % str(flags.get("crew_heist_outcome", "somebody_got_pinched"))
-		else:
+		outcome_key = RunState.report_outcome_key_for_runtime(victory_route, str(flags.get("crew_heist_outcome", "")))
+		if outcome_key.is_empty():
 			outcome_key = "showdown_survived"
 	var entries := _copy_dict(registry.get("outcomes", registry))
 	var definition := _copy_dict(entries.get(outcome_key, {}))
+	if definition.is_empty() and outcome_key == "heist_closed":
+		definition = _copy_dict(entries.get("showdown_survived", {}))
+		definition["title"] = "The Score Broke"
+		definition["how"] = "The crew left with the ending the room allowed."
 	var title := str(definition.get("title", outcome_key.replace("_", " ").capitalize()))
 	var how := str(run_data.get("run_failure_message", ""))
 	if tutorial_failure:
@@ -1004,3 +1272,7 @@ static func _inventory_item_ids(value: Variant) -> Array:
 
 static func _copy_dict(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func _copy_array(value: Variant) -> Array:
+	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []

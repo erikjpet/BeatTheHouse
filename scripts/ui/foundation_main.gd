@@ -13896,6 +13896,7 @@ func _profile_run_result_snapshot(terminal_result: Dictionary = {}) -> Dictionar
 		"bankroll_lost": maxi(0, int(run_state.narrative_flags.get("profile_bankroll_lost", maxi(0, RunState.DEFAULT_BANKROLL - run_state.bankroll)))),
 		"biggest_single_win": maxi(0, int(run_state.narrative_flags.get("profile_biggest_single_win", 0))),
 		"games_played": _copy_dict(run_state.narrative_flags.get("profile_games_played", {})),
+		"release_0_6": RunReportViewModelScript.release_profile_snapshot(run_state.to_dict()),
 		"terminal_message": str(terminal_result.get("message", "")),
 	}
 
@@ -13904,13 +13905,10 @@ func _profile_victory_route() -> String:
 	if run_state == null:
 		return "victory"
 	var route := str(run_state.narrative_flags.get("demo_victory_route", "")).strip_edges()
-	if route == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID:
-		return "players_card_cashout"
-	if route == RunState.GRAND_CASINO_SHOWDOWN_ROUTE:
-		return "showdown"
-	if route.is_empty():
-		return "victory"
-	return route
+	var profile_route := RunState.profile_victory_route_for_runtime(route)
+	if not profile_route.is_empty():
+		return profile_route
+	return route if not route.is_empty() else "victory"
 
 
 func _record_challenge_completion_if_needed() -> void:
