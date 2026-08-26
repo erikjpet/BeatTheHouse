@@ -59,7 +59,7 @@ func _run() -> void:
 	failures.append_array(_strings(library.validation_errors))
 	failures.append_array(_strings(catalog.get("failures", [])))
 	failures.append_array(_strings(authority_report.get("failures", [])))
-	var hostile_fixtures := _hostile_fixture_report(definitions[0] if definitions.size() == 1 else {})
+	var hostile_fixtures := _hostile_fixture_report(_representative_definition(definitions))
 	for fixture_value in hostile_fixtures:
 		var fixture := _dict(fixture_value)
 		if not bool(fixture.get("rejected", false)):
@@ -67,10 +67,10 @@ func _run() -> void:
 	var dossiers: Array = []
 	for definition_value in definitions:
 		dossiers.append(_dossier(_dict(definition_value), authority_report))
-	var exact_proof_shape := expected_count == 1 \
-		and int(authority_report.get("actual_count", -1)) == 1 \
-		and int(authority_report.get("expected_comparison_count", -1)) == 0 \
-		and int(authority_report.get("comparison_count", -1)) == 0
+	var exact_expected_shape := int(authority_report.get("actual_count", -1)) == expected_count \
+		and int(authority_report.get("expected_comparison_count", -1)) == int(expected_count * (expected_count - 1) / 2) \
+		and int(authority_report.get("comparison_count", -1)) == int(expected_count * (expected_count - 1) / 2)
+	var exact_proof_shape := expected_count == 1 and exact_expected_shape
 	if expected_count == 1 and not exact_proof_shape:
 		failures.append("env06_6 proof audit requires exactly 1 definition and 0 pairwise comparisons.")
 	var report := {
@@ -80,6 +80,7 @@ func _run() -> void:
 		"actual_count": int(authority_report.get("actual_count", definitions.size())),
 		"expected_comparison_count": int(authority_report.get("expected_comparison_count", -1)),
 		"comparison_count": int(authority_report.get("comparison_count", -1)),
+		"exact_expected_shape": exact_expected_shape,
 		"exact_env06_6_proof_shape": exact_proof_shape,
 		"similarity_fail_threshold": similarity_fail_threshold,
 		"threshold_authority": "ScenarioSequenceSchema.uniqueness_band",
@@ -123,6 +124,19 @@ func _masked_explanations(definitions: Array) -> Dictionary:
 		for key_value in _dict(authoring.get("masked_visual_explanations", {})).keys():
 			result[str(key_value)] = str(_dict(authoring.get("masked_visual_explanations", {})).get(key_value, ""))
 	return result
+
+
+func _representative_definition(definitions: Array) -> Dictionary:
+	var ordered: Array = []
+	for definition_value in definitions:
+		if typeof(definition_value) == TYPE_DICTIONARY:
+			ordered.append((definition_value as Dictionary).duplicate(true))
+	ordered.sort_custom(func(a: Variant, b: Variant) -> bool: return str(_dict(a).get("id", "")) < str(_dict(b).get("id", "")))
+	for definition_value in ordered:
+		var definition := _dict(definition_value)
+		if SequenceSchemaScript.validate_definition(definition, OperationRegistryScript).is_empty():
+			return definition
+	return {}
 
 
 func _dossier(definition: Dictionary, authority_report: Dictionary) -> Dictionary:
@@ -260,7 +274,7 @@ func _objective_rows(sequence: Dictionary) -> Array:
 
 func _hostile_fixture_report(definition: Dictionary) -> Array:
 	if definition.is_empty():
-		return [{"class": "fixture_source", "rejected": false, "diagnostic": "exactly one production definition is required"}]
+		return [{"class": "fixture_source", "rejected": false, "diagnostic": "at least one schema-valid production definition is required"}]
 	var result: Array = []
 	var unreachable := definition.duplicate(true)
 	var unreachable_phases := _phases(unreachable)
