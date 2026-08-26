@@ -2232,7 +2232,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 		var object_type := str(record.get("visual_type", interaction_type))
 		var normalized_rect := _normalized_rect_from_record(record)
 		var focus_point := normalized_rect.position + normalized_rect.size * 0.5
-		var minimum_visual_size := _minimum_object_visual_size(object_type)
+		var layout_resolved := bool(record.get("scenario_layout_resolved", false))
+		var minimum_visual_size := Vector2.ZERO if layout_resolved else _minimum_object_visual_size(object_type)
 		var scene_object := {
 			"id": object_id,
 			"type": object_type,
@@ -2426,7 +2427,13 @@ func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int)
 
 
 func _normalized_rect_from_record(record: Dictionary) -> Rect2:
+	var layout_resolved := bool(record.get("scenario_layout_resolved", false))
 	var rect := _rect_from_dict(record.get("normalized_rect", record.get("focus_rect", {})))
+	if layout_resolved:
+		# Finalized scenario records are already board-bounded and digested by the
+		# layout resolver. Legacy visual minima and position clamps must not alter
+		# the exact rectangle after validation.
+		return rect
 	var object_type := str(record.get("visual_type", record.get("object_type", "info")))
 	var minimum_visual_size := _minimum_object_visual_size(object_type)
 	var minimum_normalized_size := Vector2(
@@ -3642,6 +3649,10 @@ func _board_rect_for_object(object_data: Dictionary) -> Rect2:
 	if route_position.x >= 0.0 and route_position.y >= 0.0:
 		var route_rect := _board_rect_for_object_at_position(object_data, route_position)
 		if small_screen_mode:
+			if bool(object_data.get("scenario_layout_resolved", false)):
+				var sealed_small := _rect_from_dict(object_data.get("small_screen_rect", {}))
+				var sealed_size := sealed_small.size * Vector2(BOARD_SIZE)
+				return Rect2(route_rect.get_center() - sealed_size * 0.5, sealed_size)
 			var route_size := Vector2(maxf(route_rect.size.x, SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.x), maxf(route_rect.size.y, SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.y))
 			return _clamp_board_rect(Rect2(route_rect.get_center() - route_size * 0.5, route_size))
 		return route_rect
@@ -3654,7 +3665,7 @@ func _board_rect_for_object(object_data: Dictionary) -> Rect2:
 
 func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
 	var rect := _board_rect_for_object(object_data)
-	if not small_screen_mode:
+	if not small_screen_mode or bool(object_data.get("scenario_layout_resolved", false)):
 		return rect
 	var minimum_size := SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE
 	var next_size := Vector2(maxf(rect.size.x, minimum_size.x), maxf(rect.size.y, minimum_size.y))
@@ -3674,9 +3685,14 @@ func _actor_route_position(object_data: Dictionary) -> Vector2:
 		return Vector2(-1.0, -1.0)
 	var start := _vector2_from_dict(points[0], Vector2(-1.0, -1.0))
 	var endpoint := _vector2_from_dict(points[1], Vector2(-1.0, -1.0))
+	if small_screen_mode and bool(object_data.get("scenario_layout_resolved", false)):
+		start = _vector2_from_dict(stage.get("small_screen_start", points[0]), start)
+		endpoint = _vector2_from_dict(stage.get("small_screen_endpoint", points[1]), endpoint)
 	if start.x < 0.0 or endpoint.x < 0.0:
 		return Vector2(-1.0, -1.0)
 	if reduce_motion:
+		if small_screen_mode and bool(object_data.get("scenario_layout_resolved", false)):
+			return endpoint
 		return _vector2_from_dict(stage.get("reduced_motion_endpoint", points[1]), endpoint)
 	var route_key := _actor_route_cache_key(object_data)
 	var started_at := float(actor_route_started_at_cache.get(route_key, actor_route_time))

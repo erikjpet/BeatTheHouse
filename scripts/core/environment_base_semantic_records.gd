@@ -118,6 +118,7 @@ static func from_interactable_records(records_value: Array) -> Dictionary:
 			"normalized_hit_rect": _dict(geometry.get("normalized_hit_rect", {})),
 			"min_target_size": OperationRegistryScript.MIN_TARGET_SIZE,
 			"safe_exit": presentation_id == "travel:leave" or presentation_id.begins_with("environment_layer:") or presentation_id.begins_with("travel:"),
+			"alternate_exit": false,
 			"source_id": str(source.get("source_id", "")),
 		}
 		interactions.append(interaction)
