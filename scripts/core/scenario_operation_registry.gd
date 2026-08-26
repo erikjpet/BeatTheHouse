@@ -186,6 +186,19 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 		_ingest_interaction_record(records, tainted, errors, source_value, false)
 	for source_value in overlay_records:
 		_ingest_interaction_record(records, tainted, errors, source_value, true)
+	# Effective overlay ownership is reducer-private. Mutating a base-owned record
+	# must not rewrite its public identity, but later overlays still compare against
+	# the strongest owner that already won that target.
+	var effective_winners: Dictionary = {}
+	for record_key_value in records.keys():
+		var record_key := str(record_key_value)
+		var record := _dict(records.get(record_key_value, {}))
+		if str(record.get("mode", "add")) == "add":
+			effective_winners[record_key] = {
+				"priority": int(OWNER_PRIORITY.get(str(record.get("owner_namespace", "")), -1)),
+				"owner_namespace": str(record.get("owner_namespace", "")),
+				"source_key": record_key,
+			}
 	var ordered_overlays := overlay_records.duplicate(true)
 	ordered_overlays.sort_custom(Callable(ScenarioOperationRegistry, "_sort_interaction_overlay"))
 	for overlay_value in ordered_overlays:
@@ -199,12 +212,18 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 		if mode == "add":
 			continue
 		var target_key := identity(str(overlay.get("target_owner_namespace", "")), str(overlay.get("target_stable_object_id", "")))
+		var priority := int(OWNER_PRIORITY.get(str(overlay.get("owner_namespace", "")), -1))
+		var effective_winner := _dict(effective_winners.get(target_key, {}))
+		var effective_priority := int(effective_winner.get("priority", -1))
+		if not effective_winner.is_empty() and priority < effective_priority:
+			errors.append("interaction %s cannot override higher-priority %s owned by %s." % [source_key, target_key, str(effective_winner.get("owner_namespace", ""))])
+			records.erase(source_key)
+			continue
 		if not records.has(target_key):
 			errors.append("interaction %s targets missing identity %s." % [identity_from(overlay), target_key])
 			records.erase(source_key)
 			continue
-		var priority := int(OWNER_PRIORITY.get(str(overlay.get("owner_namespace", "")), -1))
-		var target_priority := int(OWNER_PRIORITY.get(str((records.get(target_key, {}) as Dictionary).get("owner_namespace", "")), -1))
+		var target_priority := effective_priority if not effective_winner.is_empty() else int(OWNER_PRIORITY.get(str((records.get(target_key, {}) as Dictionary).get("owner_namespace", "")), -1))
 		if priority < target_priority:
 			errors.append("interaction %s cannot override higher-priority %s." % [source_key, target_key])
 			records.erase(source_key)
@@ -232,6 +251,11 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 				target["source_id"] = str(overlay.get("source_id", target.get("source_id", "")))
 				records[target_key] = target
 				records.erase(source_key)
+		effective_winners[target_key] = {
+			"priority": priority,
+			"owner_namespace": str(overlay.get("owner_namespace", "")),
+			"source_key": source_key,
+		}
 	var result: Array = []
 	var keys := records.keys()
 	keys.sort()
