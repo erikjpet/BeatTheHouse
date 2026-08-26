@@ -3248,6 +3248,8 @@ func _validate_scenario_definitions() -> void:
 	var item_ids := _ids_for(items)
 	var character_ids := _ids_for(characters)
 	var seen_ids: Dictionary = {}
+	var sequence_definitions: Array = []
+	var masked_visual_explanations: Dictionary = {}
 	for archetype_key_value in environment_scenarios.keys():
 		var archetype_key := str(archetype_key_value).strip_edges()
 		if archetype_key.is_empty() or not archetype_ids.has(archetype_key):
@@ -3303,6 +3305,9 @@ func _validate_scenario_definitions() -> void:
 					validation_errors.append("environment_scenarios %s phase[%d] advance_after_actions is not sane." % [scenario_id, phase_index])
 				_validate_scenario_mutations(scenario_id, "phase[%d].mutations" % phase_index, phase.get("mutations", {}), event_ids, service_ids, game_ids, item_ids)
 			if definition.has("sequence"):
+				sequence_definitions.append(definition.duplicate(true))
+				for pair_key_value in _as_dict(_as_dict(definition.get("sequence_authoring", {})).get("masked_visual_explanations", {})).keys():
+					masked_visual_explanations[str(pair_key_value)] = str(_as_dict(_as_dict(definition.get("sequence_authoring", {})).get("masked_visual_explanations", {})).get(pair_key_value, ""))
 				validation_errors.append_array(ScenarioEngineScript.validate_sequence_definition(definition, {
 					"archetype_ids": archetype_ids,
 					"event_ids": event_ids,
@@ -3316,6 +3321,17 @@ func _validate_scenario_definitions() -> void:
 	for overlay_id_value in overlay_ids:
 		if not seen_ids.has(str(overlay_id_value)):
 			validation_errors.append("scenario sequence overlay references unknown legacy scenario: %s" % str(overlay_id_value))
+	# Validate every present overlay transactionally during the staged conversion.
+	# The strict env06_7 completion gate calls the same report with expected_count
+	# 55 (and therefore exactly 1,485 comparisons); env06_6's production proof
+	# intentionally runs with expected_count 1 without pretending rollout is done.
+	if not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty():
+		var uniqueness_audit := ScenarioEngineScript.sequence_catalog_audit(sequence_definitions, sequence_definitions.size(), masked_visual_explanations)
+		scenario_sequence_catalog["uniqueness_audit"] = uniqueness_audit
+		for failure_value in _copy_array(uniqueness_audit.get("failures", [])):
+			validation_errors.append(str(failure_value))
+		for warning_value in _copy_array(uniqueness_audit.get("warnings", [])):
+			validation_warnings.append(str(warning_value))
 
 
 func _validate_scenario_mutations(scenario_id: String, label: String, value: Variant, event_ids: Dictionary, service_ids: Dictionary, game_ids: Dictionary, item_ids: Dictionary) -> void:

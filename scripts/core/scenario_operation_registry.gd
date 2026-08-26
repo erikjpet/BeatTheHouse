@@ -571,12 +571,17 @@ static func _validate_interaction_record(record: Dictionary, errors: Array, over
 		if not record.has("enabled") or typeof(record.get("enabled")) != TYPE_BOOL or not bool(record.get("enabled", false)) and str(record.get("disabled_reason", "")).strip_edges().is_empty():
 			errors.append("interaction gate is missing enabled/disabled semantics.")
 	elif mode == "augment":
-		if _array(record.get("available_actions", [])).is_empty():
+		var augment_actions := _array(record.get("available_actions", []))
+		if augment_actions.is_empty():
 			errors.append("interaction augment requires actions.")
 		else:
+			var augment_inputs: Array = []
+			for action_value in augment_actions:
+				var input_action := str(_dict(action_value).get("input_action", "")).strip_edges()
+				if not input_action.is_empty() and not augment_inputs.has(input_action): augment_inputs.append(input_action)
 			_validate_interaction_payload({
 				"label": "Augment", "state_label": "Available", "prompt": "Choose.", "enabled": true,
-				"available_actions": _array(record.get("available_actions", [])), "input_actions": ["confirm"],
+				"available_actions": augment_actions, "input_actions": augment_inputs,
 				"non_color_state": "available", "focus_order": 0, "hit_bounds": {"w": MIN_TARGET_SIZE, "h": MIN_TARGET_SIZE},
 				"min_target_size": MIN_TARGET_SIZE, "safe_exit": false,
 			}, errors)
@@ -617,18 +622,19 @@ static func _validate_and_track_target(family: String, operation: Dictionary, kn
 		or (family == "actor_ops" and op_id == "spawn") \
 		or (family in ["service_ops", "game_ops"] and op_id == "add")
 	var removes := op_id in ["remove", "despawn"]
-	var requires_existing := family in ["scene_ops", "actor_ops"] and not creates \
-		or family == "interaction_ops" and removes \
-		or family in ["service_ops", "game_ops"] and not creates
+	var requires_existing := family in ["scene_ops", "actor_ops"] and not creates and not removes \
+		or family in ["service_ops", "game_ops"] and not creates and not removes
 	if creates:
 		if known_targets.has(key):
 			errors.append("%s %s cannot create duplicate scenario target %s." % [family, op_id, key])
 		else:
 			known_targets[key] = true
+	elif removes:
+		# Cleanup/removal is deliberately conditional and idempotent: a branch may
+		# never have created its temporary identity, but cleanup must still succeed.
+		known_targets.erase(key)
 	elif requires_existing and not known_targets.has(key):
 		errors.append("%s %s targets missing scenario identity %s." % [family, op_id, key])
-	elif removes:
-		known_targets.erase(key)
 
 
 static func _contains_forbidden_path(value: Variant) -> bool:

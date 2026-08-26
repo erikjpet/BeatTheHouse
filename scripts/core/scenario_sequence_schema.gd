@@ -75,7 +75,8 @@ static func validate_definition(definition: Dictionary, operation_registry: Vari
 	_validate_aftermath(label, _dict(authored.get("aftermath", {})), reachable_outcomes, operation_registry, errors)
 	_validate_fact_subscriptions(label, _array(authored.get("fact_subscriptions", [])), operation_registry, errors)
 	_validate_tags_and_exceptions(label, authored, errors)
-	_validate_completion_contract(label, _dict(authored.get("completion_contract", {})), errors)
+	_validate_completion_contract(label, _dict(authored.get("completion_contract", {})), definition, errors)
+	_validate_cross_family_identity_collisions(label, authored, errors)
 	_validate_no_executable_strings(label, authored, errors)
 	return errors
 
@@ -221,6 +222,7 @@ static func catalog_uniqueness_report(definitions: Array, expected_count: int, o
 	var failures: Array = []
 	var warnings: Array = []
 	var rows: Array = []
+	var dossiers: Array = []
 	var ids: Dictionary = {}
 	if definitions.size() != expected_count:
 		failures.append("scenario sequence rollout expected %d definitions, got %d." % [expected_count, definitions.size()])
@@ -234,9 +236,28 @@ static func catalog_uniqueness_report(definitions: Array, expected_count: int, o
 		var validation := validate_definition(definition, operation_registry)
 		if not validation.is_empty():
 			failures.append("scenario %s is invalid: %s" % [scenario_id, JSON.stringify(validation)])
+		var authored := sequence(definition)
+		var phases := _array(_dict(authored.get("phase_graph", {})).get("phases", []))
+		var branch_count := 0
+		for phase_value in phases: branch_count += _array(_dict(phase_value).get("branches", [])).size()
 		rows.append({"id": scenario_id, "signature": normalized_signature(definition), "nearest_id": "", "nearest_similarity": 0.0})
+		dossiers.append({
+			"id": scenario_id,
+			"package_id": str(definition.get("sequence_package_id", "")),
+			"handler_pack": str(definition.get("sequence_handler_pack", "")),
+			"renderer_id": str(definition.get("sequence_renderer_id", "")),
+			"phase_count": phases.size(),
+			"branch_count": branch_count,
+			"objective_count": _array(authored.get("objectives", [])).size(),
+			"mechanic_tags": _string_array(authored.get("mechanic_tags", [])),
+			"calculated_completion": calculated_completion_contract(definition),
+			"capture_ids": _string_array(_dict(definition.get("sequence_authoring", {})).get("capture_ids", [])),
+			"seed_evidence": _dict(_dict(definition.get("sequence_authoring", {})).get("seed_evidence", {})),
+		})
+	var comparison_count := 0
 	for left_index in range(rows.size()):
 		for right_index in range(left_index + 1, rows.size()):
+			comparison_count += 1
 			var left_row := _dict(rows[left_index])
 			var right_row := _dict(rows[right_index])
 			var left_signature := _dict(left_row.get("signature", {}))
@@ -252,7 +273,9 @@ static func catalog_uniqueness_report(definitions: Array, expected_count: int, o
 				rows[right_index] = right_row
 			var equal_hash := JSON.stringify(_canonical_variant(left_signature)) == JSON.stringify(_canonical_variant(right_signature))
 			var band := uniqueness_band(similarity, equal_hash)
-			var pair_key := "%s::%s" % [str(left_row.get("id", "")), str(right_row.get("id", ""))]
+			var pair_ids := [str(left_row.get("id", "")), str(right_row.get("id", ""))]
+			pair_ids.sort()
+			var pair_key := "%s::%s" % [pair_ids[0], pair_ids[1]]
 			var diagnostic := "scenario %s vs %s: %.3f (%s)." % [str(left_row.get("id", "")), str(right_row.get("id", "")), similarity, str(band.get("status", ""))]
 			if bool(band.get("blocking", false)):
 				failures.append(diagnostic)
@@ -262,7 +285,11 @@ static func catalog_uniqueness_report(definitions: Array, expected_count: int, o
 				else:
 					warnings.append(diagnostic)
 	rows.sort_custom(func(a: Variant, b: Variant) -> bool: return str((a as Dictionary).get("id", "")) < str((b as Dictionary).get("id", "")))
-	return {"ok": failures.is_empty(), "expected_count": expected_count, "actual_count": definitions.size(), "rows": rows, "failures": failures, "warnings": warnings}
+	dossiers.sort_custom(func(a: Variant, b: Variant) -> bool: return str((a as Dictionary).get("id", "")) < str((b as Dictionary).get("id", "")))
+	var expected_comparisons := int(expected_count * (expected_count - 1) / 2)
+	if comparison_count != expected_comparisons:
+		failures.append("scenario sequence rollout expected %d pairwise comparisons, got %d." % [expected_comparisons, comparison_count])
+	return {"ok": failures.is_empty(), "expected_count": expected_count, "actual_count": definitions.size(), "expected_comparison_count": expected_comparisons, "comparison_count": comparison_count, "rows": rows, "dossiers": dossiers, "failures": failures, "warnings": warnings}
 
 
 static func uniqueness_band(similarity: float, equal_normalized_hash: bool = false) -> Dictionary:
@@ -336,7 +363,9 @@ static func _validate_phase_graph(label: String, graph: Dictionary, operation_re
 			errors.append("%s phase %s is a dead end without a terminal branch." % [label, phase_id])
 		if branches.size() > MAX_BRANCHES_PER_PHASE:
 			errors.append("%s phase %s exceeds %d branches." % [label, phase_id, MAX_BRANCHES_PER_PHASE])
-		for branch_value in branches:
+		var seen_conditions: Dictionary = {}
+		for branch_index in range(branches.size()):
+			var branch_value: Variant = branches[branch_index]
 			if typeof(branch_value) != TYPE_DICTIONARY:
 				errors.append("%s phase %s branch must be a dictionary." % [label, phase_id])
 				continue
@@ -348,6 +377,12 @@ static func _validate_phase_graph(label: String, graph: Dictionary, operation_re
 			else:
 				branch_ids[branch_id] = phase_id
 			_validate_condition("%s phase %s branch" % [label, phase_id], _dict(branch.get("condition", {})), errors)
+			var condition_fingerprint := JSON.stringify(_canonical_variant(_dict(branch.get("condition", {}))))
+			if seen_conditions.has(condition_fingerprint):
+				errors.append("%s phase %s branch %s is structurally shadowed by an earlier identical condition." % [label, phase_id, branch_id])
+			seen_conditions[condition_fingerprint] = true
+			if str(_dict(branch.get("condition", {})).get("type", "")) == "always" and branch_index < branches.size() - 1:
+				errors.append("%s phase %s has an always branch before later unreachable branches." % [label, phase_id])
 			if branch.has("objective_outcomes") and typeof(branch.get("objective_outcomes")) != TYPE_DICTIONARY:
 				errors.append("%s phase %s branch %s objective_outcomes must be a dictionary." % [label, phase_id, branch_id])
 	var initial_id := str(graph.get("initial_phase", "")).strip_edges()
@@ -839,12 +874,131 @@ static func _validate_tags_and_exceptions(label: String, authored: Dictionary, e
 			errors.append("%s owner exception must name row, reason, owner, and approved_on." % label)
 
 
-static func _validate_completion_contract(label: String, contract: Dictionary, errors: Array) -> void:
+static func _validate_completion_contract(label: String, contract: Dictionary, definition: Dictionary, errors: Array) -> void:
 	_append_unknown_keys("%s completion_contract" % label, contract, ALLOWED_EXCEPTION_ROWS, errors)
+	var calculated := calculated_completion_contract(definition)
+	var exception_rows := _owner_exception_rows(sequence(definition).get("owner_exceptions", []))
 	for row_value in ALLOWED_EXCEPTION_ROWS:
 		var row := str(row_value)
-		if not contract.has(row) or typeof(contract.get(row)) != TYPE_BOOL or not bool(contract.get(row, false)):
+		var excepted := exception_rows.has(row)
+		if (not contract.has(row) or typeof(contract.get(row)) != TYPE_BOOL or not bool(contract.get(row, false))) and not excepted:
 			errors.append("%s completion_contract.%s must be explicitly true." % [label, row])
+		elif not bool(calculated.get(row, false)) and not excepted:
+			errors.append("%s completion_contract.%s is not supported by calculated sequence structure." % [label, row])
+
+
+static func calculated_completion_contract(definition: Dictionary) -> Dictionary:
+	var authored := sequence(definition)
+	var graph := _dict(authored.get("phase_graph", {}))
+	var phases := _array(graph.get("phases", []))
+	var initial := phase(definition, str(graph.get("initial_phase", "")))
+	var semantic_changes: Dictionary = {}
+	var has_interaction := false
+	var has_action := false
+	var action_boundaries: Dictionary = {}
+	var has_safe_exit := false
+	var has_feedback := false
+	var has_world_route := false
+	var outcomes: Array = []
+	for phase_value in phases:
+		var phase_data := _dict(phase_value)
+		for family in ["scene_ops", "actor_ops"]:
+			for operation_value in _array(phase_data.get(family, [])):
+				var operation := _dict(operation_value)
+				semantic_changes["%s:%s:%s" % [family, str(operation.get("owner_namespace", "")), str(operation.get("stable_object_id", ""))]] = true
+		for transition_value in _array(phase_data.get("transition_ops", [])):
+			if str(_dict(transition_value).get("op", "")) in ["feedback", "stage", "scene_change"]: has_feedback = true
+		for interaction_value in _array(phase_data.get("interaction_ops", [])):
+			var operation := _dict(interaction_value)
+			var interaction := _dict(operation.get("interaction", {}))
+			if str(operation.get("op", "")) in ["add", "replace"] and not interaction.is_empty(): has_interaction = true
+			if str(operation.get("op", "")) == "augment": has_interaction = true
+			var actions := _array(operation.get("available_actions", interaction.get("available_actions", [])))
+			if not actions.is_empty(): has_action = true
+			if bool(interaction.get("safe_exit", false)): has_safe_exit = true
+		for branch_value in _array(phase_data.get("branches", [])):
+			var branch := _dict(branch_value)
+			var condition := _dict(branch.get("condition", {}))
+			var condition_type := str(condition.get("type", ""))
+			if condition_type == "command": action_boundaries["command:%s" % str(condition.get("command_id", ""))] = true
+			elif condition_type == "fact": action_boundaries["fact:%s" % str(condition.get("fact_type", ""))] = true
+			elif condition_type == "objective": action_boundaries["objective:%s" % str(condition.get("objective_id", ""))] = true
+			var outcome := str(branch.get("outcome", ""))
+			if not outcome.is_empty() and not outcomes.has(outcome): outcomes.append(outcome)
+	for objective_value in _array(authored.get("objectives", [])):
+		for step_value in _array(_dict(objective_value).get("steps", [])):
+			var step := _dict(step_value)
+			var step_kind := str(step.get("kind", ""))
+			if step_kind == "command": action_boundaries["command:%s" % str(step.get("command_id", ""))] = true
+			elif step_kind == "fact": action_boundaries["fact:%s" % str(step.get("fact_type", ""))] = true
+			elif step_kind == "world_boundary": action_boundaries["world_boundary"] = true
+	var aftermaths := _dict(authored.get("aftermath", {}))
+	var material_aftermath_signatures: Dictionary = {}
+	var revisit_feedback_complete := not aftermaths.is_empty()
+	for aftermath_value in aftermaths.values():
+		var aftermath := _dict(aftermath_value)
+		if str(aftermath.get("revisit_feedback", "")).strip_edges().is_empty(): revisit_feedback_complete = false
+		var material_effect: Array = []
+		for family in ["scene_ops", "actor_ops", "service_ops", "game_ops", "route_ops"]:
+			for operation_value in _array(aftermath.get(family, [])):
+				var operation := _dict(operation_value)
+				material_effect.append(_normalized_operation_feature(family, operation))
+				if family in ["scene_ops", "actor_ops"]:
+					semantic_changes["%s:%s:%s" % [family, str(operation.get("owner_namespace", "")), str(operation.get("stable_object_id", ""))]] = true
+				if family in ["service_ops", "game_ops", "route_ops"]: has_world_route = true
+		if not material_effect.is_empty():
+			material_effect.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
+			material_aftermath_signatures[JSON.stringify(material_effect)] = true
+	var reentry := _dict(authored.get("reentry_policy", {}))
+	var expiry := _dict(authored.get("expiry", {}))
+	var all_exit_prompts := not phases.is_empty()
+	for phase_value in phases:
+		if str(_dict(phase_value).get("exit_prompt", "")).strip_edges().is_empty(): all_exit_prompts = false
+	return {
+		"arrival_readable": not str(initial.get("arrival_feedback", "")).strip_edges().is_empty() and (not _array(initial.get("scene_ops", [])).is_empty() or not _array(initial.get("actor_ops", [])).is_empty()),
+		"semantic_changes": semantic_changes.size() >= 2,
+		"scenario_interaction": has_interaction and has_action,
+		"action_boundaries": action_boundaries.size() >= 2 and phases.size() >= 3,
+		"choice_or_failure": outcomes.size() >= 2,
+		"material_outcomes": aftermaths.size() >= 2 and material_aftermath_signatures.size() >= 2,
+		"revisit_coverage": reentry.has("partial") and reentry.has("terminal") and reentry.has("expired") and not str(expiry.get("boundary", "")).is_empty() and revisit_feedback_complete,
+		"world_connection": has_safe_exit or has_world_route,
+		"primary_verb": has_action and not action_boundaries.is_empty(),
+		"feedback_and_exit": has_feedback and all_exit_prompts and has_safe_exit,
+	}
+
+
+static func _owner_exception_rows(value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	for exception_value in _array(value):
+		var exception := _dict(exception_value)
+		var row := str(exception.get("row", ""))
+		if ALLOWED_EXCEPTION_ROWS.has(row) and not str(exception.get("reason", "")).strip_edges().is_empty() and not str(exception.get("owner", "")).strip_edges().is_empty() and not str(exception.get("approved_on", "")).strip_edges().is_empty():
+			result[row] = true
+	return result
+
+
+static func _validate_cross_family_identity_collisions(label: String, authored: Dictionary, errors: Array) -> void:
+	var created: Dictionary = {}
+	var operation_groups: Array = []
+	for phase_value in _array(_dict(authored.get("phase_graph", {})).get("phases", [])):
+		var phase_data := _dict(phase_value)
+		operation_groups.append_array(_array(phase_data.get("scene_ops", [])))
+		operation_groups.append_array(_array(phase_data.get("actor_ops", [])))
+	for aftermath_value in _dict(authored.get("aftermath", {})).values():
+		var aftermath := _dict(aftermath_value)
+		operation_groups.append_array(_array(aftermath.get("scene_ops", [])))
+		operation_groups.append_array(_array(aftermath.get("actor_ops", [])))
+	for operation_value in operation_groups:
+		var operation := _dict(operation_value)
+		var family := str(operation.get("family", ""))
+		if not ((family == "scene_ops" and str(operation.get("op", "")) == "spawn") or (family == "actor_ops" and str(operation.get("op", "")) == "spawn")):
+			continue
+		var identity := "%s::%s" % [str(operation.get("owner_namespace", "")), str(operation.get("stable_object_id", ""))]
+		if created.has(identity) and str(created.get(identity, "")) != family:
+			errors.append("%s reuses semantic identity %s across scene and actor families." % [label, identity])
+		else:
+			created[identity] = family
 
 
 static func _validate_fact_subscriptions(label: String, subscriptions: Array, operation_registry: Variant, errors: Array) -> void:

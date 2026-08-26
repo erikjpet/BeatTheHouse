@@ -10,7 +10,10 @@ static func compose(base_records: Array, prepared: Dictionary, selection: Dictio
 		return {"ok": true, "records": base_records.duplicate(true), "errors": []}
 	var errors := _array(prepared.get("errors", []))
 	if not bool(prepared.get("ok", false)):
-		return {"ok": false, "records": base_records.duplicate(true), "errors": errors}
+		var failed_records := base_records.duplicate(true)
+		failed_records.append(_presentation_error_record(errors))
+		return {"ok": false, "records": failed_records, "errors": errors}
+	var boundary_serial := maxi(0, int(prepared.get("boundary_serial", 0)))
 	var base_semantic: Array = []
 	var presentations: Dictionary = {}
 	var base_order: Array[String] = []
@@ -40,20 +43,41 @@ static func compose(base_records: Array, prepared: Dictionary, selection: Dictio
 			continue
 		var base_record := _apply_resolved_base(_dict(presentations.get(identity, {})), _dict(resolved_by_identity.get(identity, {})))
 		if augment_lookup.has(identity):
-			base_record = _append_augmented_actions(base_record, _array(augment_lookup.get(identity, [])))
+			base_record = _append_augmented_actions(base_record, _array(augment_lookup.get(identity, [])), boundary_serial)
 		result.append(base_record)
 	var scenario_records: Array = []
 	for value in _array(resolution.get("records", [])):
 		var semantic := _dict(value)
 		var identity := OperationRegistryScript.identity_from(semantic)
 		if str(semantic.get("owner_namespace", "")) == "scenario":
-			var record := _scenario_record(semantic, _dict(visuals.get(identity, {})), selection)
+			var record := _scenario_record(semantic, _dict(visuals.get(identity, {})), selection, boundary_serial)
 			if not record.is_empty(): scenario_records.append(record)
 	scenario_records.sort_custom(Callable(ScenarioSemanticViewModel, "_sort_records"))
 	result.append_array(scenario_records)
 
 	result = _apply_service_game_route_state(result, prepared)
 	return {"ok": bool(resolution.get("ok", false)) and errors.is_empty(), "records": result, "errors": errors}
+
+
+static func action_descriptor_for_token(records: Array, token: String) -> Dictionary:
+	var wanted := token.strip_edges()
+	if wanted.is_empty() or not wanted.begins_with("scenario_action:"):
+		return {}
+	for record_value in records:
+		var record := _dict(record_value)
+		if not bool(record.get("enabled", true)) or not bool(record.get("interactive", true)):
+			continue
+		for action_value in _array(record.get("inline_actions", [])):
+			var action := _dict(action_value)
+			if str(action.get("emit_object_id", "")) != wanted or not bool(action.get("enabled", true)):
+				continue
+			return {
+				"owner_namespace": str(action.get("scenario_owner_namespace", record.get("scenario_owner_namespace", "scenario"))),
+				"stable_object_id": str(action.get("scenario_stable_object_id", record.get("scenario_stable_object_id", ""))),
+				"command_id": str(action.get("scenario_command_id", action.get("id", ""))),
+				"idempotency_key": str(action.get("scenario_idempotency_key", "")),
+			}
+	return {}
 
 
 static func _base_semantic_record(record: Dictionary) -> Dictionary:
@@ -95,7 +119,7 @@ static func _apply_resolved_base(record: Dictionary, semantic: Dictionary) -> Di
 	return result
 
 
-static func _append_augmented_actions(record: Dictionary, augment_descriptors: Array) -> Dictionary:
+static func _append_augmented_actions(record: Dictionary, augment_descriptors: Array, boundary_serial: int) -> Dictionary:
 	var result := record.duplicate(true)
 	var inline := _array(result.get("scenario_augmented_inline_actions", []))
 	for descriptor_value in augment_descriptors:
@@ -103,13 +127,17 @@ static func _append_augmented_actions(record: Dictionary, augment_descriptors: A
 		for action_value in _array(descriptor.get("available_actions", [])):
 			var action := _dict(action_value)
 			var action_id := str(action.get("id", ""))
+			var owner := str(descriptor.get("owner_namespace", "scenario"))
+			var stable_id := str(descriptor.get("stable_object_id", ""))
+			var idempotency_key := _action_idempotency_key(boundary_serial, owner, stable_id, action_id)
 			inline.append({
 				"id": action_id,
 				"label": str(action.get("label", action_id.replace("_", " ").capitalize())),
 				"enabled": bool(result.get("enabled", true)),
-				"emit_object_id": "scenario_action:%s:%s:%s" % [str(descriptor.get("owner_namespace", "scenario")), str(descriptor.get("stable_object_id", "")), action_id],
-				"scenario_owner_namespace": str(descriptor.get("owner_namespace", "scenario")),
-				"scenario_stable_object_id": str(descriptor.get("stable_object_id", "")),
+				"emit_object_id": _action_token(boundary_serial, owner, stable_id, action_id),
+				"scenario_idempotency_key": idempotency_key,
+				"scenario_owner_namespace": owner,
+				"scenario_stable_object_id": stable_id,
 				"scenario_command_id": action_id,
 				"cost": maxi(0, int(action.get("cost", 0))),
 			})
@@ -120,7 +148,7 @@ static func _append_augmented_actions(record: Dictionary, augment_descriptors: A
 	return result
 
 
-static func _scenario_record(interaction: Dictionary, visual: Dictionary, selection: Dictionary) -> Dictionary:
+static func _scenario_record(interaction: Dictionary, visual: Dictionary, selection: Dictionary, boundary_serial: int) -> Dictionary:
 	if visual.is_empty(): return {}
 	var owner := str(interaction.get("owner_namespace", ""))
 	var stable_id := str(interaction.get("stable_object_id", ""))
@@ -130,12 +158,13 @@ static func _scenario_record(interaction: Dictionary, visual: Dictionary, select
 	for value in actions:
 		var action := _dict(value)
 		var action_id := str(action.get("id", ""))
-		var token := "%s:%s" % [object_id, action_id]
+		var token := _action_token(boundary_serial, owner, stable_id, action_id)
 		inline_actions.append({
 			"id": action_id,
 			"label": str(action.get("label", action_id.replace("_", " ").capitalize())),
 			"enabled": bool(interaction.get("enabled", true)),
 			"emit_object_id": token,
+			"scenario_idempotency_key": _action_idempotency_key(boundary_serial, owner, stable_id, action_id),
 			"scenario_owner_namespace": owner,
 			"scenario_stable_object_id": stable_id,
 			"scenario_command_id": action_id,
@@ -175,6 +204,7 @@ static func _scenario_record(interaction: Dictionary, visual: Dictionary, select
 		"scenario_owner_namespace": owner,
 		"scenario_stable_object_id": stable_id,
 		"scenario_command_id": str(_dict(actions[0] if not actions.is_empty() else {}).get("id", "")),
+		"scenario_idempotency_key": _action_idempotency_key(boundary_serial, owner, stable_id, str(_dict(actions[0] if not actions.is_empty() else {}).get("id", ""))),
 		"safe_exit": bool(interaction.get("safe_exit", false)),
 		"focus_order": maxi(0, int(interaction.get("focus_order", 0))),
 		"role": str(visual.get("role", "")),
@@ -183,10 +213,53 @@ static func _scenario_record(interaction: Dictionary, visual: Dictionary, select
 		"pose": str(visual.get("pose", "")),
 		"behavior": str(visual.get("behavior", "")),
 		"route_id": str(visual.get("route_id", "")),
+		"route_points": _array(visual.get("route_points", [])),
+		"small_screen_rect": _dict(visual.get("small_screen_rect", {})),
 		"z_order": int(visual.get("z_order", 0)),
 		"hovered": object_id == str(selection.get("hover_target_id", "")),
 		"focused": object_id == str(selection.get("focus_target_id", "")),
 		"selected": object_id == str(selection.get("selected_object_id", "")),
+	}
+
+
+static func _action_idempotency_key(boundary_serial: int, owner: String, stable_id: String, action_id: String) -> String:
+	return "ui:%d:%s:%s:%s" % [maxi(0, boundary_serial), _token_component(owner), _token_component(stable_id), _token_component(action_id)]
+
+
+static func _action_token(boundary_serial: int, owner: String, stable_id: String, action_id: String) -> String:
+	return "scenario_action:%d:%s:%s:%s" % [maxi(0, boundary_serial), _token_component(owner), _token_component(stable_id), _token_component(action_id)]
+
+
+static func _token_component(value: String) -> String:
+	return value.replace("%", "%25").replace(":", "%3A")
+
+
+static func _presentation_error_record(errors: Array) -> Dictionary:
+	var detail := str(errors[0]) if not errors.is_empty() else "The authored room presentation is unavailable."
+	return {
+		"object_id": "scenario:presentation_error",
+		"object_type": "scenario",
+		"visual_type": "scenario_object",
+		"source_id": "presentation_error",
+		"label": "Room sequence unavailable",
+		"short_description": detail,
+		"identity_summary": "Authoring error",
+		"presence": "scenario_error",
+		"interactive": false,
+		"decorative": false,
+		"enabled": false,
+		"disabled_reason": detail,
+		"normalized_rect": {"x": 0.39, "y": 0.72, "w": 0.22, "h": 0.14},
+		"focus_rect": {"x": 0.39, "y": 0.72, "w": 0.22, "h": 0.14},
+		"action_summary": detail,
+		"status_summary": "Unavailable",
+		"state_badge": "error",
+		"non_color_state": "error",
+		"inline_actions": [],
+		"available_actions": [],
+		"owner_namespace": "scenario",
+		"stable_object_id": "presentation_error",
+		"focus_order": 99999,
 	}
 
 

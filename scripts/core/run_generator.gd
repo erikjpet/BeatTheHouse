@@ -213,6 +213,8 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 	if source_layer_id != target_id:
 		run_state.scenario_publish_travel("travel_departed", source_layer_id, target_id, "layer")
 		run_state.scenario_flush_facts()
+		run_state.scenario_apply_expiry("visit_end")
+		run_state.store_current_environment_layer_state()
 	if not run_state.install_environment_layer_state(target_id, layer_state):
 		return {"ok": false, "message": "The room could not be entered."}
 	if source_layer_id != target_id:

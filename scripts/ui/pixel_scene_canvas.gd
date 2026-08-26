@@ -72,7 +72,7 @@ const OBJECT_INFO_ACTION_GAP := 5.0
 const OBJECT_INFO_INLINE_ACTION_HEIGHT := 19.0
 const OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT := 11.0
 const OBJECT_INFO_INLINE_ACTION_GAP := 5.0
-const OBJECT_INFO_INLINE_ACTION_MAX := 4
+const OBJECT_INFO_INLINE_ACTION_MAX := 8
 const OBJECT_INFO_BOTTOM_PADDING := 8.0
 const OBJECT_INFO_ANIMATION_SPEED := 14.0
 const OBJECT_INFO_RECT_SNAP_EPSILON := 0.25
@@ -155,10 +155,12 @@ var scenario_presentation: Dictionary = {}
 var scenario_palette_overlay := Color.TRANSPARENT
 var scenario_crowd_count := 0
 var scenario_signage := ""
+var selected_info_action_index := 0
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	focus_mode = Control.FOCUS_ALL
 	clip_contents = true
 	_ensure_drunk_distortion_overlay()
 
@@ -306,6 +308,7 @@ func set_selected_object(object_id: String, snap_to_target: bool = true) -> void
 		_set_hovered_object("")
 	if selected_object_id != object_id:
 		selected_object_id = object_id
+		selected_info_action_index = 0
 		_invalidate_camera_target()
 	_update_camera_target_if_needed()
 	# Reduced-motion and explicit room resets snap. A tutorial conversation only
@@ -418,6 +421,27 @@ func local_position_for_selected_info_action_button() -> Vector2:
 
 
 func _gui_input(event: InputEvent) -> void:
+	# Authored action bindings own their declared input. Navigation is the
+	# fallback only when the selected interaction does not consume the event.
+	if _activate_selected_info_action_for_authored_input(event):
+		accept_event()
+		return
+	if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
+		var direction := -1 if event.is_action_pressed("ui_left") else 1
+		if _cycle_interactive_object(direction):
+			accept_event()
+			return
+	if event.is_action_pressed("ui_up") or event.is_action_pressed("ui_down"):
+		var entries := _selected_info_action_entries_from_info(_selected_object_info())
+		if not entries.is_empty():
+			var direction := -1 if event.is_action_pressed("ui_up") else 1
+			selected_info_action_index = posmod(selected_info_action_index + direction, entries.size())
+			accept_event()
+			queue_redraw()
+			return
+	if event.is_action_pressed("ui_accept") and _activate_selected_info_action_by_index():
+		accept_event()
+		return
 	if event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion
 		var badge_tooltip := _selected_info_badge_tooltip_at_local_position(motion.position)
@@ -1905,7 +1929,7 @@ func _draw_scene_objects() -> void:
 				_draw_selected_item_frame(rect, object_type)
 		elif hovered:
 			_draw_hover_scene_mark(rect)
-		elif not disabled and not low_detail:
+		elif should_draw_hotspot_hint(object_data, low_detail):
 			_draw_hotspot_hint(rect, object_type)
 		_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered)
 	_draw_selected_object_info()
@@ -1929,6 +1953,12 @@ func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) ->
 	var pose := str(object_data.get("pose", "idle"))
 	var accent := C_ORANGE if behavior in ["guard", "fight", "flee"] else C_TEAL
 	var center := rect.get_center()
+	var route_points := _copy_array(object_data.get("route_points", []))
+	if route_points.size() >= 2:
+		var start := _vector2_from_dict(route_points[0], Vector2.ZERO) * Vector2(BOARD_SIZE)
+		var finish := _vector2_from_dict(route_points[1], Vector2.ZERO) * Vector2(BOARD_SIZE)
+		draw_dashed_line(start, finish, accent, 2.0, 7.0, true)
+		draw_circle(finish, 4.0, accent)
 	var head_radius := clampf(rect.size.x * 0.15, 6.0, 12.0)
 	draw_circle(Vector2(center.x, rect.position.y + head_radius + 4.0), head_radius, C_SOFT.darkened(0.15))
 	var body_top := rect.position.y + head_radius * 2.0 + 6.0
@@ -2215,6 +2245,23 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 	for object_value in objects:
 		ids[str(_copy_dict(object_value).get("id", ""))] = true
 	var render_snapshot := _copy_dict(snapshot.get("scenario_render_snapshot", {}))
+	if not bool(render_snapshot.get("ok", false)):
+		objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
+		return objects
+	for stage_index in range(_copy_array(render_snapshot.get("active_stages", [])).size()):
+		var stage := _copy_dict(_copy_array(render_snapshot.get("active_stages", []))[stage_index])
+		var stage_id := str(stage.get("stage_id", "stage_%d" % stage_index))
+		var stage_object_id := "scenario:stage:%s" % stage_id
+		if ids.has(stage_object_id): continue
+		objects.append_array(_objects_from_interactable_records([{
+			"object_id": stage_object_id, "object_type": "scenario", "visual_type": "scenario_object",
+			"source_id": stage_id, "label": str(stage.get("message", "Room state")),
+			"short_description": str(stage.get("message", "")), "presence": "scenario_stage",
+			"interactive": false, "decorative": true, "enabled": true,
+			"normalized_rect": {"x": 0.34, "y": 0.06 + float(stage_index) * 0.09, "w": 0.32, "h": 0.08},
+			"non_color_state": "stage", "z_order": 10000 + stage_index,
+		}]))
+		ids[stage_object_id] = true
 	for visual_value in _copy_array(render_snapshot.get("visual_objects", [])):
 		var visual := _copy_dict(visual_value)
 		var object_id := str(visual.get("object_id", ""))
@@ -2222,6 +2269,7 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 			continue
 		objects.append_array(_objects_from_interactable_records([visual]))
 		ids[object_id] = true
+	objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
 	return objects
 
 
@@ -2292,11 +2340,34 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"pose": str(record.get("pose", "")),
 			"behavior": str(record.get("behavior", "")),
 			"route_id": str(record.get("route_id", "")),
+			"route_points": _copy_array(record.get("route_points", [])),
+			"small_screen_rect": _copy_dict(record.get("small_screen_rect", {})),
 			"non_color_state": str(record.get("non_color_state", "")),
 			"z_order": int(record.get("z_order", 0)),
+			"z_order_explicit": bool(record.get("z_order_explicit", record.has("z_order"))),
+			"focus_order": maxi(0, int(record.get("focus_order", 0))),
 		}
 		objects.append(_apply_draw_hints(scene_object, object_type, index))
 	return objects
+
+
+static func _sort_composed_scene_objects(a: Dictionary, b: Dictionary) -> bool:
+	var az := _composed_z_order(a)
+	var bz := _composed_z_order(b)
+	return str(a.get("id", "")) < str(b.get("id", "")) if az == bz else az < bz
+
+
+static func _composed_z_order(value: Dictionary) -> int:
+	if bool(value.get("z_order_explicit", false)):
+		return int(value.get("z_order", 0))
+	var position_value: Variant = value.get("position", Vector2.ZERO)
+	if typeof(position_value) != TYPE_VECTOR2:
+		return 0
+	return int(round(float((position_value as Vector2).y) * BOARD_SIZE.y))
+
+
+static func should_draw_hotspot_hint(object_data: Dictionary, low_detail: bool) -> bool:
+	return bool(object_data.get("interactive", true)) and not bool(object_data.get("disabled", false)) and not low_detail
 
 
 func _reserved_overlay_local_rect() -> Rect2:
@@ -2928,7 +2999,9 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 				"emit_object_id": str(action_data.get("emit_object_id", action_data.get("id", ""))),
 				"button_rect": button_rect,
 				"detail_rect": detail_rect,
-				"selected": bool(action_data.get("selected", false)),
+				"selected": entries.size() == selected_info_action_index,
+				"input_action": str(action_data.get("input_action", "")),
+				"enabled": bool(action_data.get("enabled", true)),
 			})
 			y += button_height + detail_height + OBJECT_INFO_INLINE_ACTION_GAP
 		return entries
@@ -3054,6 +3127,77 @@ func _activate_selected_info_action_at_local_position(local_position: Vector2) -
 	object_focused.emit(object_id)
 	var emit_object_id := str(action_entry.get("emit_object_id", "")).strip_edges()
 	object_activated.emit(emit_object_id if not emit_object_id.is_empty() else object_id)
+	return true
+
+
+func _activate_selected_info_action_by_index() -> bool:
+	var entries := _selected_info_action_entries_from_info(_selected_object_info())
+	if entries.is_empty():
+		return false
+	selected_info_action_index = clampi(selected_info_action_index, 0, entries.size() - 1)
+	return _activate_selected_info_action_entry(entries[selected_info_action_index])
+
+
+func _activate_selected_info_action_for_authored_input(event: InputEvent) -> bool:
+	var entries := _selected_info_action_entries_from_info(_selected_object_info())
+	for index in range(entries.size()):
+		var entry := _copy_dict(entries[index])
+		var input_action := str(entry.get("input_action", "")).strip_edges()
+		if input_action.is_empty() or not InputMap.has_action(input_action):
+			continue
+		if event.is_action_pressed(input_action):
+			selected_info_action_index = index
+			return _activate_selected_info_action_entry(entry)
+	return false
+
+
+func _activate_selected_info_action_entry(action_entry: Dictionary) -> bool:
+	if action_entry.is_empty() or not bool(action_entry.get("enabled", true)):
+		return false
+	var info := _selected_object_info()
+	var object_id := str(info.get("object_id", selected_object_id))
+	if object_id.is_empty():
+		return false
+	set_selected_object(object_id)
+	object_focused.emit(object_id)
+	var emit_object_id := str(action_entry.get("emit_object_id", "")).strip_edges()
+	object_activated.emit(emit_object_id if not emit_object_id.is_empty() else object_id)
+	return true
+
+
+func keyboard_reachable_object_ids() -> Array:
+	var ids: Array = []
+	var candidates: Array = []
+	for object_value in _active_scene_objects():
+		var object_data := _copy_dict(object_value)
+		if not bool(object_data.get("interactive", true)) or not bool(object_data.get("visible", true)):
+			continue
+		var object_id := str(object_data.get("id", "")).strip_edges()
+		if not object_id.is_empty(): candidates.append(object_data)
+	candidates.sort_custom(Callable(PixelSceneCanvas, "_sort_keyboard_objects"))
+	for candidate_value in candidates:
+		ids.append(str(_copy_dict(candidate_value).get("id", "")))
+	return ids
+
+
+static func _sort_keyboard_objects(a: Dictionary, b: Dictionary) -> bool:
+	var af := maxi(0, int(a.get("focus_order", 0)))
+	var bf := maxi(0, int(b.get("focus_order", 0)))
+	return str(a.get("id", "")) < str(b.get("id", "")) if af == bf else af < bf
+
+
+func _cycle_interactive_object(direction: int) -> bool:
+	var ids := keyboard_reachable_object_ids()
+	if ids.is_empty():
+		return false
+	var current_index := ids.find(selected_object_id)
+	if current_index < 0:
+		current_index = 0 if direction >= 0 else ids.size() - 1
+	else:
+		current_index = posmod(current_index + (-1 if direction < 0 else 1), ids.size())
+	var object_id := str(ids[current_index])
+	set_selected_object(object_id)
+	object_focused.emit(object_id)
 	return true
 
 
@@ -3632,6 +3776,11 @@ func _update_drunk_distortion_protected_rects() -> void:
 
 
 func _board_rect_for_object(object_data: Dictionary) -> Rect2:
+	if small_screen_mode:
+		var small_rect := _rect_from_dict(object_data.get("small_screen_rect", {}))
+		if small_rect.has_area():
+			var board_size := Vector2(BOARD_SIZE)
+			return Rect2(small_rect.position * board_size, small_rect.size * board_size)
 	return _board_rect_for_object_at_position(object_data, object_data.get("position", Vector2(0.5, 0.5)))
 
 

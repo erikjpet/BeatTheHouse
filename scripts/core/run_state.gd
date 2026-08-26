@@ -338,6 +338,7 @@ var _item_definitions_loaded: bool = false
 var _item_effect_total_cache: Dictionary = {}
 var _owned_item_lookup_cache: Dictionary = {}
 var _owned_item_lookup_cache_valid := false
+var _scenario_sequence_definition_cache: Dictionary = {}
 
 
 # Resets the run from a seed and optional challenge.
@@ -368,6 +369,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	current_environment = {}
 	world_map = {}
 	scenario_recent_by_archetype = {}
+	_scenario_sequence_definition_cache = {}
 	grand_casino_room_states = {}
 	grand_casino_staffing = {}
 	rourke_current_room = ""
@@ -1395,10 +1397,24 @@ func _event_cadence_visit_key(environment_data: Dictionary) -> String:
 # Sets the current environment and records the previous one.
 func set_environment(environment_data: Dictionary) -> void:
 	var previous_was_grand_casino := _is_grand_casino_environment(current_environment)
-	var destination_is_revisit := environment_data.has("departed_game_clock_minutes")
+	var destination_sequence_state := ScenarioSequenceRuntimeScript.normalize_state(environment_data.get("scenario_sequence_state", {}))
+	var destination_is_revisit := environment_data.has("departed_game_clock_minutes") or not destination_sequence_state.is_empty() and (
+		int(destination_sequence_state.get("boundary_serial", 0)) > 0
+		or str(destination_sequence_state.get("status", ScenarioSequenceRuntimeScript.STATUS_ACTIVE)) != ScenarioSequenceRuntimeScript.STATUS_ACTIVE
+		or not _copy_array(destination_sequence_state.get("command_receipts", [])).is_empty()
+		or not _copy_array(destination_sequence_state.get("fact_receipts", [])).is_empty()
+		or not _copy_array(destination_sequence_state.get("visit_receipts", [])).is_empty()
+	)
 	if not current_environment.is_empty():
 		scenario_apply_expiry("leave", _crew_action_index())
 		scenario_apply_expiry("visit_end", _crew_action_index())
+		# Lifecycle cleanup and its receipts are authoritative source-room state.
+		# Persist them before any caller can observe the destination as current.
+		if is_layered_environment():
+			store_current_environment_layer_state()
+		if _is_grand_casino_environment(current_environment):
+			store_grand_casino_room_environment(current_environment)
+		store_current_world_node_environment()
 		# Travel advances the clock before installing the destination, but stamps
 		# the actual departure first. Preserve that boundary so the report can
 		# animate the journey instead of collapsing it to a zero-length teleport.
@@ -1602,10 +1618,16 @@ func scenario_for_node(node_id: String) -> Dictionary:
 # identity/definition; the environment fallback exists for headless fixtures.
 func scenario_sequence_definition() -> Dictionary:
 	var node_id := current_world_node_id()
+	var scenario_id := str(_copy_dict(current_environment.get("scenario_state", {})).get("id", current_environment.get("scenario_id", ""))).strip_edges()
+	if not scenario_id.is_empty() and _scenario_sequence_definition_cache.has(scenario_id):
+		return _copy_dict(_scenario_sequence_definition_cache.get(scenario_id, {}))
 	var definition := seeded_scenario_definition_for_node(node_id)
 	if definition.is_empty():
 		definition = _copy_dict(current_environment.get("scenario_sequence_definition", {}))
-	return ScenarioEngineScript.sequence_definition_for_environment(current_environment, definition)
+	var resolved := ScenarioEngineScript.sequence_definition_for_environment(current_environment, definition)
+	if not scenario_id.is_empty():
+		_scenario_sequence_definition_cache[scenario_id] = resolved.duplicate(true)
+	return resolved
 
 
 func scenario_sequence_active() -> bool:
@@ -1616,7 +1638,7 @@ func scenario_sequence_projection() -> Dictionary:
 	return ScenarioEngineScript.sequence_projection(current_environment, scenario_sequence_definition())
 
 
-func scenario_sequence_command(command_id: String, idempotency_key: String, payload: Dictionary = {}, owner_namespace: String = "scenario", stable_object_id: String = "sequence") -> Dictionary:
+func scenario_sequence_command(command_id: String, idempotency_key: String, payload: Dictionary = {}, owner_namespace: String = "scenario", stable_object_id: String = "sequence", host_interaction_availability: Dictionary = {}) -> Dictionary:
 	var definition := scenario_sequence_definition()
 	if definition.is_empty():
 		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
@@ -1631,7 +1653,13 @@ func scenario_sequence_command(command_id: String, idempotency_key: String, payl
 		stable_object_id
 	)
 	var candidate_environment := current_environment.duplicate(true)
-	var result := ScenarioEngineScript.sequence_command(candidate_environment, definition, authored_command, {"available_funds": bankroll})
+	# This map is an internal presentation-to-state boundary: FoundationMain
+	# derives it synchronously from the current composed interaction model. The
+	# default is empty/fail-closed, and extension handlers cannot rewrite it.
+	var result := ScenarioEngineScript.sequence_command(candidate_environment, definition, authored_command, {
+		"available_funds": bankroll,
+		"host_interaction_availability": host_interaction_availability.duplicate(true),
+	})
 	if not bool(result.get("ok", false)):
 		return result
 	var cost := 0 if bool(result.get("replayed", false)) else maxi(0, int(result.get("cost", 0)))
@@ -1676,6 +1704,13 @@ func scenario_drain_transitions(reduced_motion: bool = false) -> Dictionary:
 	if definition.is_empty():
 		return {"ok": false, "inactive": true, "transitions": [], "errors": []}
 	return ScenarioEngineScript.drain_sequence_transitions(current_environment, definition, reduced_motion)
+
+
+func scenario_drain_event_requests() -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if definition.is_empty():
+		return {"ok": false, "inactive": true, "requests": [], "errors": []}
+	return ScenarioEngineScript.drain_sequence_event_requests(current_environment, definition)
 
 
 # Migrates every persisted environment graph without changing scenario identity
@@ -1824,12 +1859,38 @@ func scenario_publish_event_result(result: Dictionary) -> void:
 		if typeof(hook_value) == TYPE_DICTIONARY and str((hook_value as Dictionary).get("type", "")) == "resolve_event":
 			resolved = true
 			break
+	var event_id := str(result.get("event_id", result.get("source_id", "")))
+	var resolution_id := str(result.get("resolution_id", "")).strip_edges()
+	if resolution_id.is_empty():
+		resolution_id = _scenario_pending_resolution_for_event(event_id)
 	scenario_enqueue_fact("event_result", "event", {
-		"event_id": str(result.get("event_id", result.get("source_id", ""))),
+		"event_id": event_id,
 		"choice_id": str(result.get("choice_id", result.get("action_id", ""))),
+		"resolution_id": resolution_id,
 		"resolved": resolved,
 		"ok": bool(result.get("ok", false)),
 	})
+
+
+func _scenario_pending_resolution_for_event(event_id: String) -> String:
+	var state := ScenarioSequenceRuntimeScript.normalize_state(current_environment.get("scenario_sequence_state", {}))
+	var history := _copy_array(state.get("event_request_history", []))
+	var receipts := _string_array(_copy_array(state.get("event_choice_receipts", [])))
+	for index in range(history.size() - 1, -1, -1):
+		var request := _copy_dict(history[index])
+		if str(request.get("event_id", "")) != event_id:
+			continue
+		var resolution_id := str(request.get("resolution_id", "")).strip_edges()
+		if resolution_id.is_empty():
+			continue
+		var already_resolved := false
+		for receipt_value in receipts:
+			if str(receipt_value).begins_with("%s:" % resolution_id):
+				already_resolved = true
+				break
+		if not already_resolved:
+			return resolution_id
+	return ""
 
 
 func scenario_publish_service_result(kind: String, hook_id: String, result: Dictionary) -> void:
@@ -2003,6 +2064,13 @@ func install_environment_layer_state(layer_id: String, layer_state: Dictionary) 
 	if not scenario_state.is_empty():
 		ScenarioEngineScript.reconcile_environment(target, scenario_state)
 	current_environment = _normalize_environment(target)
+	ScenarioEngineScript.migrate_environment_sequence(
+		current_environment,
+		{},
+		"%d:layer:%s:%s" % [seed_value, str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))), target_id]
+	)
+	if not ScenarioSequenceRuntimeScript.normalize_state(current_environment.get("scenario_sequence_state", {})).is_empty():
+		scenario_reenter_current("layer:%s:%d" % [target_id, _crew_action_index()])
 	CharacterChainModelScript.apply_to_environment(self, current_environment)
 	return true
 
@@ -12304,6 +12372,7 @@ func to_save_snapshot() -> Dictionary:
 
 # Restores the run from saved data.
 func from_dict(data: Dictionary) -> void:
+	_scenario_sequence_definition_cache = {}
 	var saved_crew_state: Dictionary = data.get("crew_state", {}) if typeof(data.get("crew_state", {})) == TYPE_DICTIONARY else {}
 	var legacy_streets_migration := _copy_dict(data.get("active_streets_run", {}))
 	seed_text = str(data.get("seed_text", "FOUNDATION-SEED"))
@@ -13679,8 +13748,19 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 		environment.erase("scenario_render_snapshot")
 	else:
 		environment["scenario_sequence_state"] = sequence_state
-		environment["scenario_sequence_projection"] = _copy_dict(environment.get("scenario_sequence_projection", {}))
-		environment["scenario_render_snapshot"] = _copy_dict(environment.get("scenario_render_snapshot", {}))
+		# Projection and render data are derived from authoritative sequence state.
+		# Never trust a stale or tampered saved copy across schema/content versions.
+		environment.erase("scenario_sequence_projection")
+		environment.erase("scenario_render_snapshot")
+		var baseline_sources := {
+			"scenario_sequence_base_game_ids": "game_ids",
+			"scenario_sequence_base_service_ids": "service_ids",
+			"scenario_sequence_base_travel_hooks": "travel_hooks",
+		}
+		for baseline_array_key in baseline_sources.keys():
+			var source_key := str(baseline_sources.get(baseline_array_key, ""))
+			environment[baseline_array_key] = _copy_array(environment.get(baseline_array_key, environment.get(source_key, [])))
+		environment["scenario_sequence_base_game_modifiers"] = _copy_dict(environment.get("scenario_sequence_base_game_modifiers", environment.get("scenario_game_modifiers", {})))
 	if environment.has("scenario_sequence_migration"):
 		environment["scenario_sequence_migration"] = _copy_dict(environment.get("scenario_sequence_migration", {}))
 	_normalize_environment_layers(environment)

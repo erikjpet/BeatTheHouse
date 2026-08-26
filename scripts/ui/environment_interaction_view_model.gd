@@ -446,7 +446,7 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 	var enabled := bool(source.get("enabled", true))
 	var interactive := bool(source.get("interactive", true))
 	var object_id := str(source.get("object_id", ""))
-	return {
+	var result := {
 		"object_id": object_id,
 		"object_type": str(source.get("object_type", "info")),
 		"visual_type": str(source.get("visual_type", source.get("object_type", "info"))),
@@ -493,7 +493,10 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"pose": str(source.get("pose", "")),
 		"behavior": str(source.get("behavior", "")),
 		"route_id": str(source.get("route_id", "")),
+		"route_points": _copy_array(source.get("route_points", [])),
+		"small_screen_rect": _copy_dict(source.get("small_screen_rect", {})),
 		"z_order": int(source.get("z_order", 0)),
+		"z_order_explicit": source.has("z_order"),
 		"visible": bool(source.get("visible", true)),
 		"visual_key": str(source.get("visual_key", "")),
 		"prop": str(source.get("prop", "")),
@@ -510,6 +513,7 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"focused": object_id == str(selection.get("focus_target_id", "")),
 		"selected": object_id == str(selection.get("selected_object_id", "")),
 	}
+	return result
 
 
 static func character_identity_summary(speaker: Dictionary) -> String:
