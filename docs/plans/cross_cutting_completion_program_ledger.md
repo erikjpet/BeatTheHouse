@@ -360,3 +360,15 @@ their own detailed handoffs and test evidence.
   budget, with the activation shard at 41.084 seconds. No dirty-tree evidence
   is accepted. The author restored clean exact head `34314876` and is profiling
   remaining repeated guard work; no ineffective product optimization remains.
+- 2026-08-26: Pusher self-review completed on clean exact head
+  `e4a7be3f369fc62bc5017918f03784238fb253e6`, one commit from accepted
+  `34314876` and a one-line `review_artifacts/.gdignore` diff. Both unaccepted
+  guard candidates and the native shortcut are absent. Targeted read/load
+  searches found no evidence-directory consumer; six capture tools use it only
+  as an output destination. Clean import reduced `.godot/imported` from 2,086
+  files to 992 and removed the volatile pusher-review textures. The unchanged
+  guard retains 235 traversals/round trips, 10 seeds, 11 games, seven hooks and
+  all hostile fixtures. A stable-zero, same-tree provisional Systems run passed
+  55 merged checks with zero stderr at 42.262 seconds under the unchanged
+  43.712-second budget. Independent exact-head review is in progress; committed
+  head runtime evidence and EV remain unreleased.
