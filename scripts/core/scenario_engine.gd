@@ -7,6 +7,7 @@ const SequenceCatalogScript := preload("res://scripts/core/scenario_sequence_cat
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_extension_dispatch.gd")
 const VALIDATED_SEQUENCE_MARKER := "__scenario_sequence_runtime_validated"
+const SEQUENCE_SUPPRESSION_KEY := "sequence_suppressed"
 
 # Deterministic scenario overlays. Selection belongs to RunGenerator; this
 # module only builds and advances the selected node-owned state.
@@ -45,6 +46,7 @@ static func initial_state(definition: Dictionary) -> Dictionary:
 		"layer_id": str(definition.get("layer_id", "")).strip_edges(),
 		"display_name": str(definition.get("display_name", "")).strip_edges(),
 		"placeholder": bool(definition.get("placeholder", false)),
+		"sequence_suppressed": bool(definition.get(SEQUENCE_SUPPRESSION_KEY, false)),
 		"phase_index": 0,
 		"phase_action_counter": 0,
 		"mutations": _copy_dict(definition.get("mutations", {})),
@@ -73,6 +75,7 @@ static func normalize_state(value: Variant) -> Dictionary:
 		"layer_id": str(source.get("layer_id", "")).strip_edges(),
 		"display_name": str(source.get("display_name", scenario_id)).strip_edges(),
 		"placeholder": bool(source.get("placeholder", false)),
+		"sequence_suppressed": bool(source.get(SEQUENCE_SUPPRESSION_KEY, false)),
 		"phase_index": phase_index,
 		"phase_action_counter": maxi(0, int(source.get("phase_action_counter", 0))),
 		"mutations": _copy_dict(source.get("mutations", {})),
@@ -116,6 +119,9 @@ static func sequence_definition_for_environment(environment: Dictionary, preferr
 	var scenario_id := str(_copy_dict(environment.get("scenario_state", {})).get("id", environment.get("scenario_id", ""))).strip_edges()
 	if scenario_id.is_empty():
 		return {}
+	if _sequence_is_suppressed(environment, preferred):
+		var suppressed_source := preferred if not preferred.is_empty() and str(preferred.get("id", preferred.get("scenario_id", ""))).strip_edges() == scenario_id else {"id": scenario_id, "archetype_id": str(_copy_dict(environment.get("scenario_state", {})).get("archetype_id", environment.get("archetype_id", "")))}
+		return suppress_sequence_definition(suppressed_source)
 	# RunState caches the immutable resolved definition. Preserve that owned
 	# validation receipt so refresh/presentation reads never re-run the schema.
 	if not preferred.is_empty() \
@@ -150,6 +156,10 @@ static func migrate_environment_sequence(environment: Dictionary, preferred: Dic
 	if legacy.is_empty():
 		return {"ok": true, "changed": false, "active": false, "scenario_id": ""}
 	var scenario_id := str(legacy.get("id", ""))
+	if _sequence_is_suppressed(environment, preferred):
+		var suppressed_before := JSON.stringify(environment)
+		_clear_environment_sequence(environment)
+		return {"ok": true, "changed": suppressed_before != JSON.stringify(environment), "active": false, "suppressed": true, "scenario_id": scenario_id, "definition": sequence_definition_for_environment(environment, preferred)}
 	var definition := sequence_definition_for_environment(environment, preferred)
 	# A runtime installed before its content packages must leave legacy snapshots
 	# exactly alone. Once an overlay exists, migration is deterministic and in-place.
@@ -168,6 +178,9 @@ static func migrate_environment_sequence(environment: Dictionary, preferred: Dic
 
 
 static func ensure_sequence_state(environment: Dictionary, definition: Dictionary, seed_token: String = "") -> Dictionary:
+	if _sequence_is_suppressed(environment, definition):
+		_clear_environment_sequence(environment)
+		return {}
 	definition = sequence_definition_for_environment(environment, definition)
 	if not SequenceSchemaScript.is_sequence(definition):
 		return {}
@@ -226,6 +239,9 @@ static func flush_sequence_facts(environment: Dictionary, definition: Dictionary
 
 
 static func sequence_projection(environment: Dictionary, definition: Dictionary = {}) -> Dictionary:
+	if _sequence_is_suppressed(environment, definition):
+		_clear_environment_sequence(environment)
+		return {}
 	definition = sequence_definition_for_environment(environment, definition)
 	var state := SequenceRuntimeScript.normalize_state(environment.get("scenario_sequence_state", {}), definition)
 	return SequenceRuntimeScript.public_projection(state, definition) if not state.is_empty() else {}
@@ -280,8 +296,42 @@ static func drain_sequence_event_requests(environment: Dictionary, definition: D
 
 
 static func refresh_sequence_snapshots(environment: Dictionary, definition: Dictionary = {}) -> Dictionary:
+	if _sequence_is_suppressed(environment, definition):
+		_clear_environment_sequence(environment)
+		return {}
 	definition = sequence_definition_for_environment(environment, definition)
 	return _refresh_sequence_snapshots(environment, definition)
+
+
+static func suppress_sequence_definition(definition: Dictionary) -> Dictionary:
+	var result := _without_sequence_overlay(definition)
+	result[SEQUENCE_SUPPRESSION_KEY] = true
+	return result
+
+
+static func _sequence_is_suppressed(environment: Dictionary, preferred: Dictionary = {}) -> bool:
+	return bool(_copy_dict(environment.get("scenario_state", {})).get(SEQUENCE_SUPPRESSION_KEY, false)) or bool(preferred.get(SEQUENCE_SUPPRESSION_KEY, false))
+
+
+static func _clear_environment_sequence(environment: Dictionary) -> void:
+	var baseline_arrays := {
+		"scenario_sequence_base_game_ids": "game_ids",
+		"scenario_sequence_base_service_ids": "service_ids",
+		"scenario_sequence_base_travel_hooks": "travel_hooks",
+	}
+	for baseline_key_value in baseline_arrays.keys():
+		var baseline_key := str(baseline_key_value)
+		if environment.has(baseline_key):
+			environment[str(baseline_arrays.get(baseline_key_value, ""))] = _copy_array(environment.get(baseline_key, []))
+	if environment.has("scenario_sequence_base_game_modifiers"):
+		environment["scenario_game_modifiers"] = _copy_dict(environment.get("scenario_sequence_base_game_modifiers", {}))
+	for key in [
+		"scenario_sequence_state", "scenario_sequence_projection", "scenario_render_snapshot",
+		"scenario_sequence_migration", "scenario_sequence_definition",
+		"scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids",
+		"scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers",
+	]:
+		environment.erase(key)
 
 
 static func _refresh_sequence_snapshots(environment: Dictionary, definition: Dictionary) -> Dictionary:

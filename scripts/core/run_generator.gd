@@ -420,7 +420,8 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		CrewRecruitmentModelScript.apply_to_environment(run_state, restored)
 		_apply_world_travel_targets(restored, run_state, map_data, node_id)
 		restored["world_node_id"] = node_id
-		ScenarioEngineScript.ensure_sequence_state(restored, run_state.seeded_scenario_definition_for_node(node_id))
+		var restored_definition := _apply_scenario_pin_suppression(run_state, node_id, run_state.seeded_scenario_definition_for_node(node_id))
+		ScenarioEngineScript.ensure_sequence_state(restored, restored_definition)
 		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored)
 		return restored
 	var depth := run_state.environment_travel_count()
@@ -658,7 +659,7 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream)
 		return {}
 	var seeded_definition := run_state.seeded_scenario_definition_for_node(archetype_id)
 	if not seeded_definition.is_empty():
-		return seeded_definition
+		return _apply_scenario_pin_suppression(run_state, archetype_id, seeded_definition)
 	var seeded := run_state.seeded_scenario_for_node(archetype_id)
 	var seeded_id := str(seeded.get("id", "")).strip_edges()
 	if not seeded_id.is_empty():
@@ -667,7 +668,7 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream)
 				continue
 			var definition: Dictionary = definition_value
 			if str(definition.get("id", "")) == seeded_id:
-				return definition.duplicate(true)
+				return _apply_scenario_pin_suppression(run_state, archetype_id, definition)
 	var modifiers := _copy_dict(run_state.challenge_config.get("modifiers", {}))
 	var pins := _copy_dict(modifiers.get("scenario_pins", {}))
 	var pinned_id := str(pins.get(archetype_id, "")).strip_edges()
@@ -678,13 +679,7 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream)
 			var pinned: Dictionary = definition_value
 			if str(pinned.get("id", "")) == pinned_id:
 				run_state.remember_scenario_selection(archetype_id, pinned_id)
-				var selected_pin := pinned.duplicate(true)
-				# Challenge authors may pin the name of tonight without letting its
-				# overlay disturb a controlled teaching or test environment.
-				if not bool(modifiers.get("scenario_pins_apply_mutations", true)):
-					selected_pin["mutations"] = {}
-					selected_pin["phases"] = []
-				return selected_pin
+				return _apply_scenario_pin_suppression(run_state, archetype_id, pinned)
 		return {}
 	var excludes := _copy_dict(modifiers.get("scenario_excludes", {}))
 	var excluded_ids := _string_array(excludes.get(archetype_id, []))
@@ -733,6 +728,24 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream)
 	var selected_id := str(selected.get("id", ""))
 	run_state.remember_scenario_selection(archetype_id, selected_id)
 	return selected.duplicate(true)
+
+
+func _apply_scenario_pin_suppression(run_state: RunState, archetype_id: String, definition: Dictionary) -> Dictionary:
+	var result := definition.duplicate(true)
+	if run_state == null:
+		return result
+	var scenario_id := str(result.get("id", "")).strip_edges()
+	if scenario_id.is_empty():
+		scenario_id = str(_copy_dict(_copy_dict(run_state.challenge_config.get("modifiers", {})).get("scenario_pins", {})).get(archetype_id, "")).strip_edges()
+	if not run_state.scenario_sequence_is_suppressed(scenario_id, archetype_id):
+		return result
+	if result.is_empty():
+		result = {"id": scenario_id, "archetype_id": archetype_id}
+	# Challenge authors may pin the name of tonight without letting its legacy
+	# mutations, phases, or dynamic sequence disturb a controlled environment.
+	result["mutations"] = {}
+	result["phases"] = []
+	return ScenarioEngineScript.suppress_sequence_definition(result)
 
 
 # Picks one archetype while respecting optional low-weight rare venues.

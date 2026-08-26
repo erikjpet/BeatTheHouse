@@ -1624,10 +1624,22 @@ func scenario_sequence_definition() -> Dictionary:
 	var definition := seeded_scenario_definition_for_node(node_id)
 	if definition.is_empty():
 		definition = _copy_dict(current_environment.get("scenario_sequence_definition", {}))
+	if scenario_sequence_is_suppressed(scenario_id, str(current_environment.get("archetype_id", node_id))):
+		definition = ScenarioEngineScript.suppress_sequence_definition(definition if not definition.is_empty() else {"id": scenario_id, "archetype_id": str(current_environment.get("archetype_id", node_id))})
 	var resolved := ScenarioEngineScript.sequence_definition_for_environment(current_environment, definition)
 	if not scenario_id.is_empty():
 		_scenario_sequence_definition_cache[scenario_id] = resolved.duplicate(true)
 	return resolved
+
+
+func scenario_sequence_is_suppressed(scenario_id: String, archetype_id: String = "") -> bool:
+	var modifiers := _copy_dict(challenge_config.get("modifiers", {}))
+	if bool(modifiers.get("scenario_pins_apply_mutations", true)):
+		return false
+	var clean_archetype := archetype_id.strip_edges()
+	if clean_archetype.is_empty():
+		clean_archetype = str(current_environment.get("archetype_id", current_world_node_id())).strip_edges()
+	return not clean_archetype.is_empty() and str(_copy_dict(modifiers.get("scenario_pins", {})).get(clean_archetype, "")).strip_edges() == scenario_id.strip_edges()
 
 
 func scenario_sequence_active() -> bool:
@@ -1727,7 +1739,7 @@ func migrate_legacy_scenario_sequences() -> Dictionary:
 		"scenario_ids": [],
 		"changed_paths": [],
 	}
-	var current_result := _migrate_scenario_environment_graph(current_environment, "current_environment", report)
+	var current_result := _migrate_scenario_environment_graph(current_environment, "current_environment", report, str(current_environment.get("archetype_id", "")))
 	if bool(current_result.get("changed", false)):
 		current_environment = _copy_dict(current_result.get("environment", current_environment))
 	var nodes := _copy_array(world_map.get("nodes", []))
@@ -1740,7 +1752,7 @@ func migrate_legacy_scenario_sequences() -> Dictionary:
 		if environment.is_empty():
 			continue
 		var node_id := str(node.get("id", index)).strip_edges()
-		var stored_result := _migrate_scenario_environment_graph(environment, "world_map.nodes.%s.environment" % node_id, report)
+		var stored_result := _migrate_scenario_environment_graph(environment, "world_map.nodes.%s.environment" % node_id, report, str(node.get("archetype_id", "")))
 		if bool(stored_result.get("changed", false)):
 			node["environment"] = _copy_dict(stored_result.get("environment", environment))
 			nodes[index] = node
@@ -1754,7 +1766,7 @@ func migrate_legacy_scenario_sequences() -> Dictionary:
 	for room_id_value in rooms.keys():
 		var room_id := str(room_id_value)
 		var room := _copy_dict(rooms.get(room_id_value, {}))
-		var room_result := _migrate_scenario_environment_graph(room, "grand_casino_room_states.%s" % room_id, report)
+		var room_result := _migrate_scenario_environment_graph(room, "grand_casino_room_states.%s" % room_id, report, room_id)
 		if bool(room_result.get("changed", false)):
 			rooms[room_id_value] = _copy_dict(room_result.get("environment", room))
 			rooms_changed = true
@@ -1765,19 +1777,24 @@ func migrate_legacy_scenario_sequences() -> Dictionary:
 	return report
 
 
-func _migrate_scenario_environment_graph(environment: Dictionary, path: String, report: Dictionary) -> Dictionary:
+func _migrate_scenario_environment_graph(environment: Dictionary, path: String, report: Dictionary, fallback_archetype_id: String = "") -> Dictionary:
 	if environment.is_empty():
 		return {"changed": false, "environment": environment}
 	var before := JSON.stringify(environment)
 	var candidate := environment.duplicate(true)
-	_migrate_scenario_snapshot_in_place(candidate, path, report)
+	var graph_archetype_id := str(candidate.get("archetype_id", "")).strip_edges()
+	if graph_archetype_id.is_empty():
+		graph_archetype_id = str(_copy_dict(candidate.get("scenario_state", {})).get("archetype_id", "")).strip_edges()
+	if graph_archetype_id.is_empty():
+		graph_archetype_id = fallback_archetype_id.strip_edges()
+	_migrate_scenario_snapshot_in_place(candidate, path, report, graph_archetype_id)
 	var states := _copy_dict(candidate.get("layer_states", {}))
 	for layer_id_value in states.keys():
 		var layer_id := str(layer_id_value)
 		var layer := _copy_dict(states.get(layer_id_value, {}))
 		if layer.is_empty():
 			continue
-		_migrate_scenario_snapshot_in_place(layer, "%s.layer_states.%s" % [path, layer_id], report)
+		_migrate_scenario_snapshot_in_place(layer, "%s.layer_states.%s" % [path, layer_id], report, graph_archetype_id)
 		states[layer_id_value] = layer
 	if not states.is_empty():
 		candidate["layer_states"] = states
@@ -1791,7 +1808,7 @@ func _migrate_scenario_environment_graph(environment: Dictionary, path: String, 
 	return {"changed": changed, "environment": candidate if changed else environment}
 
 
-func _migrate_scenario_snapshot_in_place(environment: Dictionary, path: String, report: Dictionary) -> void:
+func _migrate_scenario_snapshot_in_place(environment: Dictionary, path: String, report: Dictionary, fallback_archetype_id: String = "") -> void:
 	report["snapshots_checked"] = int(report.get("snapshots_checked", 0)) + 1
 	var scenario_id := str(_copy_dict(environment.get("scenario_state", {})).get("id", environment.get("scenario_id", ""))).strip_edges()
 	if scenario_id.is_empty():
@@ -1802,9 +1819,33 @@ func _migrate_scenario_snapshot_in_place(environment: Dictionary, path: String, 
 	if not scenario_ids.has(scenario_id):
 		scenario_ids.append(scenario_id)
 	report["scenario_ids"] = scenario_ids
-	var result := ScenarioEngineScript.migrate_environment_sequence(environment, {}, "%d:%s" % [seed_value, path])
+	var preferred := _scenario_sequence_migration_definition(environment, fallback_archetype_id)
+	var result := ScenarioEngineScript.migrate_environment_sequence(environment, preferred, "%d:%s" % [seed_value, path])
 	if bool(result.get("active", false)):
 		report["active_sequences"] = int(report.get("active_sequences", 0)) + 1
+
+
+# Old saves predate the durable suppression marker, so every independently
+# persisted snapshot must re-derive it from the restored challenge before the
+# content catalog is allowed to resolve a newly installed sequence overlay.
+func _scenario_sequence_migration_definition(environment: Dictionary, fallback_archetype_id: String = "") -> Dictionary:
+	var scenario_state := ScenarioEngineScript.normalize_state(environment.get("scenario_state", {}))
+	var scenario_id := str(scenario_state.get("id", environment.get("scenario_id", ""))).strip_edges()
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	if archetype_id.is_empty():
+		archetype_id = str(scenario_state.get("archetype_id", "")).strip_edges()
+	if archetype_id.is_empty():
+		archetype_id = fallback_archetype_id.strip_edges()
+	if scenario_id.is_empty() or not scenario_sequence_is_suppressed(scenario_id, archetype_id):
+		return {}
+	scenario_state[ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY] = true
+	environment["scenario_state"] = ScenarioEngineScript.normalize_state(scenario_state)
+	var preferred := _copy_dict(environment.get("scenario_sequence_definition", {}))
+	if str(preferred.get("id", preferred.get("scenario_id", ""))).strip_edges() != scenario_id:
+		preferred = {}
+	if preferred.is_empty():
+		preferred = {"id": scenario_id, "archetype_id": archetype_id}
+	return ScenarioEngineScript.suppress_sequence_definition(preferred)
 
 
 func scenario_enqueue_fact(fact_type: String, producer: String, payload: Dictionary = {}, fact_id: String = "", node_id: String = "") -> Dictionary:
