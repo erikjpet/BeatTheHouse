@@ -40,6 +40,10 @@ const REGISTERED_HANDLERS := {
 	"request_cleanup": {"inputs": ["reason"], "output": "cleanup_receipts", "persistent": true, "rng": "none"},
 	"event_bridge": {"inputs": ["event_id", "resolution_id"], "output": "fact_queue", "persistent": true, "rng": "none"},
 }
+const MAX_OPERATIONS_PER_BATCH := 32
+const MAX_ACTIONS_PER_INTERACTION := 8
+const MIN_TARGET_SIZE := 44.0
+const COMMON_OPERATION_KEYS := ["family", "op", "receipt_id", "owner_namespace", "stable_object_id"]
 
 
 static func identity(owner_namespace: String, stable_object_id: String) -> String:
@@ -69,18 +73,25 @@ static func validate_any_operation(operation: Dictionary) -> Array:
 
 static func validate_operation(family: String, operation: Dictionary) -> Array:
 	var errors: Array = []
+	if not OP_FAMILIES.has(family):
+		return ["operation family is unregistered: %s." % family]
 	var allowed_ops: Array = OP_FAMILIES.get(family, [])
 	var op_id := str(operation.get("op", "")).strip_edges()
+	_append_unknown_keys(family, operation, _allowed_operation_keys(family, op_id), errors)
+	if str(operation.get("family", "")).strip_edges() != family:
+		errors.append("%s operation requires an exact matching family field." % family)
 	if not allowed_ops.has(op_id):
 		errors.append("%s operation is unregistered: %s." % [family, op_id])
 	var owner := str(operation.get("owner_namespace", "")).strip_edges()
 	var stable_id := str(operation.get("stable_object_id", "")).strip_edges()
 	if not OWNER_NAMESPACES.has(owner) or not _valid_id(stable_id):
 		errors.append("%s %s requires registered owner_namespace and stable_object_id." % [family, op_id])
+	if not _valid_id(str(operation.get("receipt_id", ""))):
+		errors.append("%s %s requires a stable authored receipt_id." % [family, op_id])
 	var mode := str(operation.get("mode", "")).strip_edges()
 	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
-		if not ["replace", "gate", "augment", "retarget"].has(mode):
-			errors.append("interaction %s requires explicit replace/gate/augment/retarget mode." % op_id)
+		if mode != op_id:
+			errors.append("interaction %s requires matching explicit mode." % op_id)
 		var target_owner := str(operation.get("target_owner_namespace", "")).strip_edges()
 		var target_id := str(operation.get("target_stable_object_id", "")).strip_edges()
 		if not OWNER_NAMESPACES.has(target_owner) or not _valid_id(target_id):
@@ -93,8 +104,13 @@ static func validate_operation(family: String, operation: Dictionary) -> Array:
 			_validate_scene_payload(payload, errors)
 		elif family == "interaction_ops":
 			_validate_interaction_payload(payload, errors)
+			if str(payload.get("owner_namespace", "")).strip_edges() != owner or str(payload.get("stable_object_id", "")).strip_edges() != stable_id:
+				errors.append("interaction payload identity must exactly match its operation identity.")
 		elif family == "actor_ops":
 			_validate_actor_payload(payload, errors)
+		elif family in ["service_ops", "game_ops"]:
+			_validate_service_game_payload(payload, errors)
+	_validate_operation_fields(family, op_id, operation, errors)
 	if family == "actor_ops" and op_id == "set_behavior" and not ["idle", "watch", "patrol", "guard", "flee", "fight", "work", "depart"].has(str(operation.get("behavior", ""))):
 		errors.append("actor behavior is not in the bounded registry.")
 	if family == "transition_ops" and op_id in ["sound", "music"] and not _valid_id(str(operation.get("cue_id", ""))):
@@ -105,61 +121,81 @@ static func validate_operation(family: String, operation: Dictionary) -> Array:
 
 
 static func apply_operations(state_value: Dictionary, family: String, operations: Array, boundary_id: String) -> Dictionary:
-	var state := _normalize_semantic_state(state_value)
+	var original := _normalize_semantic_state(state_value)
+	if not OP_FAMILIES.has(family):
+		return {"ok": false, "state": original, "applied": [], "errors": ["operation family is unregistered: %s." % family]}
+	if not _valid_boundary_scope(boundary_id):
+		return {"ok": false, "state": original, "applied": [], "errors": ["operation batch requires an instance/content/phase/boundary scope."]}
+	if operations.size() > MAX_OPERATIONS_PER_BATCH:
+		return {"ok": false, "state": original, "applied": [], "errors": ["operation batch exceeds %d entries." % MAX_OPERATIONS_PER_BATCH]}
 	var applied: Array = []
 	var errors: Array = []
+	var authored_receipts: Dictionary = {}
+	var pending: Array = []
+	var fingerprints := _dict(original.get("operation_fingerprints", {}))
 	for index in range(operations.size()):
 		if typeof(operations[index]) != TYPE_DICTIONARY:
 			errors.append("%s[%d] is not a dictionary." % [family, index])
 			continue
-		var operation := (operations[index] as Dictionary).duplicate(true)
-		var validation := validate_operation(family, operation)
+		var candidate := operations[index] as Dictionary
+		var validation := validate_operation(family, candidate)
 		if not validation.is_empty():
 			errors.append_array(validation)
-			continue
-		var receipt_id := str(operation.get("receipt_id", "%s:%s:%d" % [boundary_id, family, index])).strip_edges()
+		var authored_receipt := str(candidate.get("receipt_id", "")).strip_edges()
+		if authored_receipts.has(authored_receipt):
+			errors.append("operation batch contains duplicate authored receipt_id %s." % authored_receipt)
+		elif not authored_receipt.is_empty():
+			authored_receipts[authored_receipt] = true
+		if not authored_receipt.is_empty():
+			var authoritative_receipt := "%s:%s:%s" % [boundary_id.strip_edges(), family, authored_receipt]
+			var fingerprint := JSON.stringify(_canonical_variant(candidate))
+			if fingerprints.has(authoritative_receipt) and str(fingerprints.get(authoritative_receipt, "")) != fingerprint:
+				errors.append("operation receipt %s was reused for conflicting content." % authoritative_receipt)
+			pending.append({"operation": candidate.duplicate(true), "receipt_id": authoritative_receipt, "fingerprint": fingerprint})
+	if not errors.is_empty():
+		return {"ok": false, "state": original, "applied": [], "errors": errors}
+	var state := original.duplicate(true)
+	for pending_value in pending:
+		var item := pending_value as Dictionary
+		var operation := _dict(item.get("operation", {}))
+		var receipt_id := str(item.get("receipt_id", ""))
 		if _string_array(state.get("operation_receipts", [])).has(receipt_id):
 			continue
 		_apply_operation(state, family, operation, receipt_id)
 		var receipts := _string_array(state.get("operation_receipts", []))
 		receipts.append(receipt_id)
 		state["operation_receipts"] = receipts
+		fingerprints[receipt_id] = str(item.get("fingerprint", ""))
+		state["operation_fingerprints"] = fingerprints.duplicate(true)
 		applied.append(receipt_id)
-	return {"ok": errors.is_empty(), "state": state, "applied": applied, "errors": errors}
+	return {"ok": true, "state": state, "applied": applied, "errors": []}
 
 
 static func resolve_interactions(base_records: Array, overlay_records: Array) -> Dictionary:
 	var records: Dictionary = {}
+	var tainted: Dictionary = {}
 	var errors: Array = []
-	for source_value in base_records + overlay_records:
-		if typeof(source_value) != TYPE_DICTIONARY:
-			continue
-		var source := (source_value as Dictionary).duplicate(true)
-		var key := identity_from(source)
-		if key == "::":
-			errors.append("interaction record has no stable owner identity.")
-			continue
-		if records.has(key):
-			# Same-owner duplicates are hostile and fail closed rather than letting
-			# iteration order silently pick a winner.
-			records.erase(key)
-			errors.append("illegal duplicate interaction identity %s." % key)
-			continue
-		records[key] = source
+	for source_value in base_records:
+		_ingest_interaction_record(records, tainted, errors, source_value, false)
+	for source_value in overlay_records:
+		_ingest_interaction_record(records, tainted, errors, source_value, true)
 	var ordered_overlays := overlay_records.duplicate(true)
 	ordered_overlays.sort_custom(Callable(ScenarioOperationRegistry, "_sort_interaction_overlay"))
 	for overlay_value in ordered_overlays:
 		if typeof(overlay_value) != TYPE_DICTIONARY:
 			continue
 		var overlay := overlay_value as Dictionary
+		var source_key := identity_from(overlay)
+		if tainted.has(source_key) or not records.has(source_key):
+			continue
 		var mode := str(overlay.get("mode", "add"))
 		if mode == "add":
 			continue
 		var target_key := identity(str(overlay.get("target_owner_namespace", "")), str(overlay.get("target_stable_object_id", "")))
 		if not records.has(target_key):
 			errors.append("interaction %s targets missing identity %s." % [identity_from(overlay), target_key])
+			records.erase(source_key)
 			continue
-		var source_key := identity_from(overlay)
 		var priority := int(OWNER_PRIORITY.get(str(overlay.get("owner_namespace", "")), -1))
 		var target_priority := int(OWNER_PRIORITY.get(str((records.get(target_key, {}) as Dictionary).get("owner_namespace", "")), -1))
 		if priority < target_priority:
@@ -193,8 +229,34 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 	var keys := records.keys()
 	keys.sort()
 	for key_value in keys:
-		result.append((records.get(key_value, {}) as Dictionary).duplicate(true))
+		if not tainted.has(str(key_value)):
+			result.append((records.get(key_value, {}) as Dictionary).duplicate(true))
 	return {"ok": errors.is_empty(), "records": result, "errors": errors}
+
+
+static func _ingest_interaction_record(records: Dictionary, tainted: Dictionary, errors: Array, source_value: Variant, overlay: bool) -> void:
+	if typeof(source_value) != TYPE_DICTIONARY:
+		errors.append("interaction record must be a dictionary.")
+		return
+	var source := (source_value as Dictionary).duplicate(true)
+	var key := identity_from(source)
+	var validation: Array = []
+	_validate_interaction_record(source, validation, overlay)
+	if not validation.is_empty():
+		errors.append_array(validation)
+		records.erase(key)
+		tainted[key] = true
+		return
+	if tainted.has(key):
+		return
+	if records.has(key):
+		# Same-owner duplicates are hostile and fail closed rather than letting
+		# iteration order silently pick a winner.
+		records.erase(key)
+		tainted[key] = true
+		errors.append("illegal duplicate interaction identity %s." % key)
+		return
+	records[key] = source
 
 
 static func _apply_operation(state: Dictionary, family: String, operation: Dictionary, receipt_id: String) -> void:
@@ -210,6 +272,16 @@ static func _apply_operation(state: Dictionary, family: String, operation: Dicti
 	var key := identity_from(operation)
 	var op_id := str(operation.get("op", ""))
 	var payload := _dict(operation.get("object", operation.get("actor", operation.get("interaction", {}))))
+	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
+		var overlay := payload
+		overlay["owner_namespace"] = str(operation.get("owner_namespace", ""))
+		overlay["stable_object_id"] = str(operation.get("stable_object_id", ""))
+		for overlay_key in ["mode", "target_owner_namespace", "target_stable_object_id", "enabled", "disabled_reason", "source_id", "available_actions"]:
+			if operation.has(overlay_key):
+				overlay[overlay_key] = operation.get(overlay_key)
+		collection[key] = overlay
+		state[collection_key] = collection
+		return
 	if ["remove", "despawn"].has(op_id):
 		collection.erase(key)
 	elif ["spawn", "add", "replace"].has(op_id):
@@ -244,6 +316,12 @@ static func _apply_operation(state: Dictionary, family: String, operation: Dicti
 				current["disabled_reason"] = str(operation.get("disabled_reason", "Unavailable.")) if not bool(current.get("enabled", false)) else ""
 			"retarget": current["source_id"] = str(operation.get("source_id", current.get("source_id", "")))
 			"set_modifier": current["modifier"] = _dict(operation.get("modifier", {}))
+			"open":
+				current["enabled"] = true
+				current["disabled_reason"] = ""
+			"close":
+				current["enabled"] = false
+				current["disabled_reason"] = str(operation.get("disabled_reason", "Route closed."))
 		collection[key] = current
 	state[collection_key] = collection
 
@@ -258,6 +336,7 @@ static func _normalize_semantic_state(value: Dictionary) -> Dictionary:
 		"routes": _dict(value.get("routes", {})),
 		"transition_queue": _array(value.get("transition_queue", [])),
 		"operation_receipts": _string_array(value.get("operation_receipts", [])),
+		"operation_fingerprints": _dict(value.get("operation_fingerprints", {})),
 	}
 
 
@@ -270,34 +349,238 @@ static func _collection_key(family: String) -> String:
 
 
 static func _validate_scene_payload(payload: Dictionary, errors: Array) -> void:
+	_append_unknown_keys("scene object payload", payload, ["label", "role", "anchor_id", "zone_id", "bounds", "visible", "enabled", "state", "appearance"], errors)
 	if str(payload.get("label", "")).strip_edges().is_empty() or str(payload.get("role", "")).strip_edges().is_empty():
 		errors.append("scene object requires label and semantic role.")
 	if str(payload.get("anchor_id", "")).strip_edges().is_empty() and str(payload.get("zone_id", "")).strip_edges().is_empty():
 		errors.append("scene object requires bounded anchor_id or zone_id.")
 	var bounds := _dict(payload.get("bounds", {}))
-	if bounds.is_empty() or float(bounds.get("w", 0.0)) <= 0.0 or float(bounds.get("h", 0.0)) <= 0.0:
+	_append_unknown_keys("scene object bounds", bounds, ["w", "h"], errors)
+	if bounds.is_empty() or not _finite_number(bounds.get("w")) or not _finite_number(bounds.get("h")) or float(bounds.get("w", 0.0)) <= 0.0 or float(bounds.get("h", 0.0)) <= 0.0:
 		errors.append("scene object requires positive semantic bounds.")
 
 
 static func _validate_interaction_payload(payload: Dictionary, errors: Array) -> void:
+	_append_unknown_keys("interaction payload", payload, ["owner_namespace", "stable_object_id", "label", "state_label", "prompt", "enabled", "disabled_reason", "available_actions", "input_actions", "non_color_state", "focus_order", "hit_bounds", "min_target_size", "safe_exit", "mode", "target_owner_namespace", "target_stable_object_id", "source_id"], errors)
 	for key in ["label", "state_label", "prompt"]:
 		if str(payload.get(key, "")).strip_edges().is_empty():
 			errors.append("interaction requires accessible %s." % key)
-	if not payload.has("enabled"):
+	if not payload.has("enabled") or typeof(payload.get("enabled")) != TYPE_BOOL:
 		errors.append("interaction requires enabled state.")
 	elif not bool(payload.get("enabled", false)) and str(payload.get("disabled_reason", "")).strip_edges().is_empty():
 		errors.append("disabled interaction requires disabled_reason.")
+	if typeof(payload.get("available_actions", [])) != TYPE_ARRAY:
+		errors.append("interaction available_actions must be an array.")
 	if _array(payload.get("available_actions", [])).is_empty() and bool(payload.get("enabled", false)):
 		errors.append("enabled interaction requires available_actions.")
+	if _array(payload.get("available_actions", [])).size() > MAX_ACTIONS_PER_INTERACTION:
+		errors.append("interaction exceeds the bounded action count.")
+	var action_ids: Dictionary = {}
+	for action_value in _array(payload.get("available_actions", [])):
+		if typeof(action_value) != TYPE_DICTIONARY:
+			errors.append("interaction action must be a dictionary.")
+			continue
+		var action := _dict(action_value)
+		_append_unknown_keys("interaction action", action, ["id", "label", "input_action", "non_color_state", "cost", "handler", "inputs", "requires_objective_steps", "requires_local"], errors)
+		var action_id := str(action.get("id", "")).strip_edges()
+		if not _valid_id(action_id) or action_ids.has(action_id) or str(action.get("label", "")).strip_edges().is_empty() or not _valid_id(str(action.get("input_action", ""))) or str(action.get("non_color_state", "")).strip_edges().is_empty():
+			errors.append("interaction action requires unique id, label, input_action, and non_color_state.")
+		action_ids[action_id] = true
+		var handler_id := str(action.get("handler", "")).strip_edges()
+		if action.has("cost") and (typeof(action.get("cost")) != TYPE_INT or int(action.get("cost", 0)) < 0):
+			errors.append("interaction action cost must be a non-negative integer.")
+		if not handler_id.is_empty() and not REGISTERED_HANDLERS.has(handler_id):
+			errors.append("interaction action references unregistered handler %s." % handler_id)
+		elif not handler_id.is_empty():
+			if typeof(action.get("inputs", {})) != TYPE_DICTIONARY:
+				errors.append("interaction action handler inputs must be a dictionary.")
+			var inputs := _dict(action.get("inputs", {}))
+			var expected_inputs := _array(_dict(REGISTERED_HANDLERS.get(handler_id, {})).get("inputs", []))
+			_append_unknown_keys("interaction action handler inputs", inputs, expected_inputs, errors)
+			for input_value in expected_inputs:
+				if not inputs.has(str(input_value)):
+					errors.append("interaction action handler %s requires input %s." % [handler_id, str(input_value)])
+		for requirement_value in _array(action.get("requires_objective_steps", [])):
+			var requirement := _dict(requirement_value)
+			_append_unknown_keys("interaction objective precondition", requirement, ["objective_id", "step_id"], errors)
+			if not _valid_id(str(requirement.get("objective_id", ""))) or not _valid_id(str(requirement.get("step_id", ""))):
+				errors.append("interaction objective precondition requires objective_id and step_id.")
+		for requirement_value in _array(action.get("requires_local", [])):
+			var requirement := _dict(requirement_value)
+			_append_unknown_keys("interaction local precondition", requirement, ["key", "equals"], errors)
+			if not _valid_id(str(requirement.get("key", ""))) or not requirement.has("equals"):
+				errors.append("interaction local precondition requires key and equals.")
+		if action.has("requires_objective_steps") and typeof(action.get("requires_objective_steps")) != TYPE_ARRAY:
+			errors.append("interaction objective preconditions must be an array.")
+		if action.has("requires_local") and typeof(action.get("requires_local")) != TYPE_ARRAY:
+			errors.append("interaction local preconditions must be an array.")
+	var input_actions := _strict_id_array(payload.get("input_actions", []))
+	if input_actions.is_empty() or input_actions.size() != _array(payload.get("input_actions", [])).size() or str(payload.get("non_color_state", "")).strip_edges().is_empty():
+		errors.append("interaction requires input_actions and a non-color state.")
+	for action_value in _array(payload.get("available_actions", [])):
+		if typeof(action_value) == TYPE_DICTIONARY and not input_actions.has(str((action_value as Dictionary).get("input_action", ""))):
+			errors.append("interaction action input_action must be declared in input_actions.")
+	if typeof(payload.get("focus_order")) != TYPE_INT or int(payload.get("focus_order", -1)) < 0:
+		errors.append("interaction requires non-negative focus_order.")
+	var hit_bounds := _dict(payload.get("hit_bounds", {}))
+	_append_unknown_keys("interaction hit_bounds", hit_bounds, ["w", "h"], errors)
+	if not _finite_number(hit_bounds.get("w")) or not _finite_number(hit_bounds.get("h")) or not _finite_number(payload.get("min_target_size")) or float(hit_bounds.get("w", 0.0)) < MIN_TARGET_SIZE or float(hit_bounds.get("h", 0.0)) < MIN_TARGET_SIZE or float(payload.get("min_target_size", 0.0)) < MIN_TARGET_SIZE:
+		errors.append("interaction hit bounds/min_target_size are below the accessible minimum.")
+	if not payload.has("safe_exit") or typeof(payload.get("safe_exit")) != TYPE_BOOL:
+		errors.append("interaction must declare safe_exit semantics.")
 
 
 static func _validate_actor_payload(payload: Dictionary, errors: Array) -> void:
+	_append_unknown_keys("actor payload", payload, ["label", "actor_id", "anchor_id", "zone_id", "behavior", "route_id", "pose"], errors)
 	if str(payload.get("label", "")).strip_edges().is_empty() or str(payload.get("actor_id", "")).strip_edges().is_empty():
 		errors.append("actor requires label and actor_id.")
 	if str(payload.get("anchor_id", "")).strip_edges().is_empty() and str(payload.get("zone_id", "")).strip_edges().is_empty():
 		errors.append("actor requires authored anchor_id or zone_id.")
 	if not ["idle", "watch", "patrol", "guard", "flee", "fight", "work", "depart"].has(str(payload.get("behavior", "idle"))):
 		errors.append("actor payload behavior is not bounded.")
+
+
+static func _validate_service_game_payload(payload: Dictionary, errors: Array) -> void:
+	_append_unknown_keys("service/game payload", payload, ["id", "label", "enabled", "disabled_reason", "modifier"], errors)
+	if not _valid_id(str(payload.get("id", ""))) or str(payload.get("label", "")).strip_edges().is_empty():
+		errors.append("service/game payload requires id and label.")
+
+
+static func _allowed_operation_keys(family: String, op_id: String) -> Array:
+	var specific: Array = []
+	match family:
+		"scene_ops":
+			specific = {
+				"spawn": ["object"], "replace": ["object"], "move": ["anchor_id", "zone_id"],
+				"disable": ["disabled_reason"], "set_state": ["state"], "set_appearance": ["appearance"],
+			}.get(op_id, [])
+		"interaction_ops":
+			specific = {
+				"add": ["interaction"],
+				"replace": ["interaction", "mode", "target_owner_namespace", "target_stable_object_id"],
+				"gate": ["mode", "target_owner_namespace", "target_stable_object_id", "enabled", "disabled_reason"],
+				"retarget": ["mode", "target_owner_namespace", "target_stable_object_id", "source_id"],
+				"augment": ["mode", "target_owner_namespace", "target_stable_object_id", "available_actions"],
+			}.get(op_id, [])
+		"actor_ops":
+			specific = {"spawn": ["actor"], "set_position": ["anchor_id", "zone_id"], "set_route": ["route_id"], "set_pose": ["pose"], "set_behavior": ["behavior"]}.get(op_id, [])
+		"transition_ops":
+			specific = {
+				"stage": ["channel", "message", "stage_id", "duration_boundaries", "reduced_motion_message"],
+				"sound": ["channel", "cue_id"], "music": ["channel", "cue_id"],
+				"scene_change": ["channel", "message", "change_id"], "feedback": ["channel", "message"],
+			}.get(op_id, [])
+		"service_ops":
+			specific = {"add": ["object"], "replace": ["object"], "gate": ["enabled", "disabled_reason"]}.get(op_id, [])
+		"game_ops":
+			specific = {"add": ["object"], "replace": ["object"], "gate": ["enabled", "disabled_reason"], "set_modifier": ["modifier"]}.get(op_id, [])
+		"route_ops":
+			specific = {"close": ["disabled_reason"], "gate": ["enabled", "disabled_reason"], "retarget": ["source_id"]}.get(op_id, [])
+	return COMMON_OPERATION_KEYS + specific
+
+
+static func _validate_operation_fields(family: String, op_id: String, operation: Dictionary, errors: Array) -> void:
+	match family:
+		"scene_ops":
+			if op_id == "move" and str(operation.get("anchor_id", "")).strip_edges().is_empty() and str(operation.get("zone_id", "")).strip_edges().is_empty():
+				errors.append("scene move requires anchor_id or zone_id.")
+			elif op_id == "set_state" and str(operation.get("state", "")).strip_edges().is_empty():
+				errors.append("scene set_state requires state.")
+			elif op_id == "set_appearance" and str(operation.get("appearance", "")).strip_edges().is_empty():
+				errors.append("scene set_appearance requires appearance.")
+			elif op_id == "disable" and str(operation.get("disabled_reason", "")).strip_edges().is_empty():
+				errors.append("scene disable requires disabled_reason.")
+		"interaction_ops":
+			if op_id == "gate" and not operation.has("enabled"):
+				errors.append("interaction gate requires enabled.")
+			elif op_id == "gate" and not bool(operation.get("enabled", false)) and str(operation.get("disabled_reason", "")).strip_edges().is_empty():
+				errors.append("disabled interaction gate requires disabled_reason.")
+			elif op_id == "retarget" and str(operation.get("source_id", "")).strip_edges().is_empty():
+				errors.append("interaction retarget requires source_id.")
+			elif op_id == "augment" and _array(operation.get("available_actions", [])).is_empty():
+				errors.append("interaction augment requires available_actions.")
+			elif op_id == "augment":
+				_validate_interaction_payload({
+					"label": "Augment", "state_label": "Available", "prompt": "Choose.", "enabled": true,
+					"available_actions": _array(operation.get("available_actions", [])), "input_actions": ["confirm"],
+					"non_color_state": "available", "focus_order": 0, "hit_bounds": {"w": MIN_TARGET_SIZE, "h": MIN_TARGET_SIZE},
+					"min_target_size": MIN_TARGET_SIZE, "safe_exit": false,
+				}, errors)
+		"actor_ops":
+			if op_id == "set_position" and str(operation.get("anchor_id", "")).strip_edges().is_empty() and str(operation.get("zone_id", "")).strip_edges().is_empty():
+				errors.append("actor set_position requires anchor_id or zone_id.")
+			elif op_id == "set_route" and not _valid_id(str(operation.get("route_id", ""))):
+				errors.append("actor set_route requires route_id.")
+			elif op_id == "set_pose" and not _valid_id(str(operation.get("pose", ""))):
+				errors.append("actor set_pose requires pose.")
+		"transition_ops":
+			if str(operation.get("channel", "")).strip_edges().is_empty():
+				errors.append("transition operation requires channel.")
+			if op_id == "stage":
+				if not _valid_id(str(operation.get("stage_id", ""))) or str(operation.get("message", "")).strip_edges().is_empty() or int(operation.get("duration_boundaries", -1)) < 0 or int(operation.get("duration_boundaries", 0)) > 8 or str(operation.get("reduced_motion_message", "")).strip_edges().is_empty():
+					errors.append("transition stage requires stage_id, message, bounded duration, and reduced-motion fallback.")
+			elif op_id == "scene_change":
+				if not _valid_id(str(operation.get("change_id", ""))) or str(operation.get("message", "")).strip_edges().is_empty():
+					errors.append("transition scene_change requires change_id and message.")
+			elif op_id == "feedback" and str(operation.get("message", "")).strip_edges().is_empty():
+				errors.append("transition feedback requires message.")
+		"service_ops", "game_ops":
+			if op_id == "gate" and not operation.has("enabled"):
+				errors.append("%s gate requires enabled." % family)
+			elif op_id == "gate" and not bool(operation.get("enabled", false)) and str(operation.get("disabled_reason", "")).strip_edges().is_empty():
+				errors.append("disabled %s gate requires disabled_reason." % family)
+			if family == "game_ops" and op_id == "set_modifier" and _dict(operation.get("modifier", {})).is_empty():
+				errors.append("game set_modifier requires modifier.")
+		"route_ops":
+			if op_id == "close" and str(operation.get("disabled_reason", "")).strip_edges().is_empty():
+				errors.append("route close requires disabled_reason.")
+			elif op_id == "gate" and not operation.has("enabled"):
+				errors.append("route gate requires enabled.")
+			elif op_id == "gate" and not bool(operation.get("enabled", false)) and str(operation.get("disabled_reason", "")).strip_edges().is_empty():
+				errors.append("disabled route gate requires disabled_reason.")
+			elif op_id == "retarget" and str(operation.get("source_id", "")).strip_edges().is_empty():
+				errors.append("route retarget requires source_id.")
+
+
+static func _validate_interaction_record(record: Dictionary, errors: Array, overlay: bool) -> void:
+	var owner := str(record.get("owner_namespace", "")).strip_edges()
+	var stable_id := str(record.get("stable_object_id", "")).strip_edges()
+	if not OWNER_NAMESPACES.has(owner) or not _valid_id(stable_id):
+		errors.append("interaction record has invalid stable owner identity.")
+		return
+	var mode := str(record.get("mode", "add")).strip_edges()
+	if not ["add", "replace", "gate", "augment", "retarget"].has(mode):
+		errors.append("interaction %s has invalid mode %s." % [identity(owner, stable_id), mode])
+		return
+	if overlay and mode != "add":
+		var target_owner := str(record.get("target_owner_namespace", "")).strip_edges()
+		var target_id := str(record.get("target_stable_object_id", "")).strip_edges()
+		if not OWNER_NAMESPACES.has(target_owner) or not _valid_id(target_id):
+			errors.append("interaction %s has invalid target identity." % identity(owner, stable_id))
+			return
+	if mode in ["add", "replace"]:
+		_validate_interaction_payload(record, errors)
+	elif mode == "gate":
+		if not record.has("enabled") or typeof(record.get("enabled")) != TYPE_BOOL or not bool(record.get("enabled", false)) and str(record.get("disabled_reason", "")).strip_edges().is_empty():
+			errors.append("interaction gate is missing enabled/disabled semantics.")
+	elif mode == "augment":
+		if _array(record.get("available_actions", [])).is_empty():
+			errors.append("interaction augment requires actions.")
+		else:
+			_validate_interaction_payload({
+				"label": "Augment", "state_label": "Available", "prompt": "Choose.", "enabled": true,
+				"available_actions": _array(record.get("available_actions", [])), "input_actions": ["confirm"],
+				"non_color_state": "available", "focus_order": 0, "hit_bounds": {"w": MIN_TARGET_SIZE, "h": MIN_TARGET_SIZE},
+				"min_target_size": MIN_TARGET_SIZE, "safe_exit": false,
+			}, errors)
+	elif mode == "retarget" and str(record.get("source_id", "")).strip_edges().is_empty():
+		errors.append("interaction retarget requires source_id.")
+
+
+static func _append_unknown_keys(label: String, value: Dictionary, allowed: Array, errors: Array) -> void:
+	for key_value in value.keys():
+		if not allowed.has(str(key_value)):
+			errors.append("%s contains unknown key: %s." % [label, str(key_value)])
 
 
 static func _sort_interaction_overlay(a: Variant, b: Variant) -> bool:
@@ -339,6 +622,52 @@ static func _valid_id(value: String) -> bool:
 		if not (code >= 97 and code <= 122) and not (code >= 48 and code <= 57) and code != 95 and code != 45 and code != 58:
 			return false
 	return true
+
+
+static func _valid_boundary_scope(value: String) -> bool:
+	var parts := value.strip_edges().split(":", false)
+	if parts.size() < 4:
+		return false
+	for part_value in parts:
+		if not _valid_id(str(part_value)):
+			return false
+	return true
+
+
+static func _finite_number(value: Variant) -> bool:
+	if not [TYPE_INT, TYPE_FLOAT].has(typeof(value)):
+		return false
+	return not is_nan(float(value)) and not is_inf(float(value))
+
+
+static func _strict_id_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for item_value in value as Array:
+		if typeof(item_value) != TYPE_STRING:
+			return []
+		var item := str(item_value).strip_edges()
+		if not _valid_id(item) or result.has(item):
+			return []
+		result.append(item)
+	return result
+
+
+static func _canonical_variant(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		var result: Dictionary = {}
+		var keys := (value as Dictionary).keys()
+		keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+		for key_value in keys:
+			result[str(key_value)] = _canonical_variant((value as Dictionary).get(key_value))
+		return result
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for item_value in value as Array:
+			result.append(_canonical_variant(item_value))
+		return result
+	return value
 
 
 static func _string_array(value: Variant) -> Array:
