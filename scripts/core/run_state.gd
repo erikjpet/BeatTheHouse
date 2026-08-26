@@ -3011,9 +3011,14 @@ func blackjack_suspicion_delta_before_backoff(amount: int) -> int:
 
 # Converts the first blackjack result at 90 Heat into a persistent location
 # backoff. The result seam calls this only after the canonical heat delta lands.
+# Blackjack owns tutorial eligibility and marks results protected until its
+# existing counting-lesson completion rule retires the reprieve.
 func apply_blackjack_heat_backoff(result: Dictionary) -> Dictionary:
 	var game_id := str(result.get("game_id", result.get("source_id", "")))
-	if game_id != "blackjack" or suspicion_level() < BLACKJACK_BACKOFF_HEAT or current_environment.is_empty():
+	if game_id != "blackjack" \
+			or bool(result.get("blackjack_tutorial_peek_reprieve", false)) \
+			or suspicion_level() < BLACKJACK_BACKOFF_HEAT \
+			or current_environment.is_empty():
 		return {}
 	var game_states := _copy_dict(current_environment.get("game_states", {}))
 	var table := _copy_dict(game_states.get("blackjack", {}))

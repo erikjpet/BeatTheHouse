@@ -3496,8 +3496,9 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		live_clock_harness.simulation_clock_msec = first_spawn + 10
 		var challenge_before_draw := JSON.stringify(live_clock_surface.get("count_challenge", {}))
 		game.call("_draw_count_challenge", live_clock_harness, live_clock_surface)
-		if _surface_harness_first_hit(live_clock_harness, "blackjack_count_icon", 0).is_empty():
-			failures.append("Blackjack count bubble animation used the stale snapshot clock instead of the live canvas clock.")
+		var live_count_hit := _surface_harness_first_hit(live_clock_harness, "blackjack_count_icon", 0)
+		if live_count_hit.is_empty() or not bool(live_count_hit.get("activate_on_hover", false)):
+			failures.append("Blackjack count bubble animation did not expose a live hover-activation target from the canvas clock.")
 		if not live_clock_harness.labels.has("COUNT +7"):
 			failures.append("Blackjack count badge reset to the current hand delta instead of retaining the cumulative shoe count.")
 		if JSON.stringify(live_clock_surface.get("count_challenge", {})) != challenge_before_draw:
@@ -3638,6 +3639,31 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("The tutorial Peek reprieve did not preserve the current hand without confiscating its wager twice.")
 	if not bool(tutorial_peek_run.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false)):
 		failures.append("Tutorial blackjack did not persist the one-time dealer warning marker.")
+	var backoff_guard_run: RunState = RunStateScript.new()
+	backoff_guard_run.start_new("BLACKJACK-TUTORIAL-REPRIEVE-BACKOFF-GUARD", {"tutorial": true, "modifiers": {"tutorial_run": true}})
+	backoff_guard_run.current_environment = {
+		"id": "blackjack_reprieve_backoff_guard",
+		"display_name": "Pal's Tutorial Table",
+		"archetype_id": "small_underground_casino",
+		"game_states": {"blackjack": {"dealer_name": "Pal"}},
+	}
+	backoff_guard_run.suspicion["level"] = RunState.BLACKJACK_BACKOFF_HEAT
+	var protected_backoff := backoff_guard_run.apply_blackjack_heat_backoff({
+		"game_id": "blackjack",
+		"action_id": "peek_hole_card",
+		"blackjack_tutorial_peek_reprieve": true,
+	})
+	var protected_backoff_table: Dictionary = (backoff_guard_run.current_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
+	if not protected_backoff.is_empty() or bool(protected_backoff_table.get("barred", false)) or bool(protected_backoff_table.get("heat_backoff", false)):
+		failures.append("RunState Heat backoff overrode a Blackjack tutorial Peek reprieve.")
+	protected_backoff_table["tutorial_count_completed"] = true
+	var normal_backoff := backoff_guard_run.apply_blackjack_heat_backoff({
+		"game_id": "blackjack",
+		"action_id": "peek_hole_card",
+	})
+	var normal_backoff_table: Dictionary = (backoff_guard_run.current_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
+	if normal_backoff.is_empty() or not bool(normal_backoff_table.get("barred", false)) or not bool(normal_backoff_table.get("heat_backoff", false)):
+		failures.append("RunState Heat backoff did not bar a non-reprieved Blackjack result.")
 	var second_tutorial_table := tutorial_peek_table.duplicate(true)
 	second_tutorial_table["barred"] = false
 	tutorial_peek_environment["game_states"] = {"blackjack": second_tutorial_table}

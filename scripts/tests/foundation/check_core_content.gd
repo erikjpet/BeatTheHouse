@@ -289,6 +289,11 @@ class SurfaceHarness:
 	func surface_add_exact_hit(rect: Rect2, action: String, index: int = -1) -> void:
 		surface_add_hit(rect, action, index, false)
 
+	func surface_add_exact_hover_hit(rect: Rect2, action: String, index: int = -1) -> void:
+		surface_add_hit(rect, action, index, false)
+		if not hit_regions.is_empty():
+			(hit_regions[-1] as Dictionary)["activate_on_hover"] = true
+
 	func surface_add_cached_exact_hits(_cache_key: String, rect_sources: Array, action: String) -> void:
 		for index in range(rect_sources.size()):
 			var source_value: Variant = rect_sources[index]
