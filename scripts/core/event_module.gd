@@ -336,6 +336,10 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				pass
 	CharacterChainModelScript.apply_to_environment(run_state, run_state.current_environment)
 	run_state.scenario_publish_event_result(result)
+	# The event action already advanced the authoritative world boundary above.
+	# Consume its correlated scenario fact on that same boundary so an accepted
+	# choice cannot leave sequence aftermath pending until another player action.
+	run_state.scenario_flush_facts()
 
 
 # Returns a no-op event result for invalid choices.

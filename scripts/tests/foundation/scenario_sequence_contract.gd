@@ -11,6 +11,7 @@ const ScenarioSequenceAuditScript := preload("res://tools/scenario_sequence_audi
 const ScenarioPresentationContractScript := preload("res://scripts/tests/foundation/scenario_presentation_contract.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
+const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const DELIVERY_SCENARIO_ID := "corner_store_delivery_day"
 const DELIVERY_NODE_ID := "corner_store_delivery_day_node"
 const DELIVERY_EVENT_ID := "scenario_delivery_day_stock"
@@ -1431,6 +1432,7 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 	var delivered_request := _dict(requests[0] if requests.size() == 1 else {})
 	if not bool(drained.get("ok", false)) or requests.size() != 1 or str(delivered_request.get("event_id", "")) != DELIVERY_EVENT_ID or str(delivered_request.get("resolution_id", "")) != DELIVERY_RESOLUTION_ID or _array(delivered.get("event_request_history", [])).size() != 1 or not _array(delivered.get("event_request_queue", [])).is_empty() or bool(_delivery_event_record(delivered).get("enabled", true)):
 		failures.append("Delivery bridge did not emit/history the exact request while retaining the host gate.")
+	_check_delivery_event_module_resolution_boundary(library, definition, delivered, failures)
 	var early_recovery_sorting := _dict(SequenceRuntimeScript.apply_command(early_rejected_state, definition, SequenceRuntimeScript.command("inspect_manifest", DELIVERY_NODE_ID, "arrival", "delivery:recover:inspect", {}, "scenario", "delivery_event_gate"), {}).get("state", {}))
 	var early_recovery_verification := _dict(SequenceRuntimeScript.apply_command(early_recovery_sorting, definition, SequenceRuntimeScript.command("shift_cartons", DELIVERY_NODE_ID, "sorting", "delivery:recover:shift", {}, "scenario", "delivery_cartons"), {}).get("state", {}))
 	var early_recovery_before_drain := _dict(SequenceRuntimeScript.apply_command(early_recovery_verification, definition, SequenceRuntimeScript.command("request_stock_check", DELIVERY_NODE_ID, "verification", "delivery:recover:request", {}, "scenario", "sorting_shelf"), {}).get("state", {}))
@@ -1571,6 +1573,114 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 
 static func _delivery_base_event_record() -> Dictionary:
 	return _interaction_record("event", "event:scenario_delivery_day_stock", "Delivery stock", true)
+
+
+static func _check_delivery_event_module_resolution_boundary(library: ContentLibrary, definition: Dictionary, delivered: Dictionary, failures: Array) -> void:
+	var contract_source := FileAccess.get_file_as_string("res://scripts/tests/foundation/scenario_sequence_contract.gd")
+	var probe_start := contract_source.find("static func _check_delivery_event_module_resolution_boundary")
+	var probe_end := contract_source.find("\nstatic func _delivery_event_record", probe_start + 1)
+	var production_probe := contract_source.substr(probe_start, probe_end - probe_start) if probe_start >= 0 and probe_end > probe_start else ""
+	if production_probe.contains("scenario_" + "flush_facts("):
+		failures.append("Delivery EventModule production-path probe must not manually flush scenario facts.")
+	var event_definition := library.event(DELIVERY_EVENT_ID)
+	if event_definition.is_empty():
+		failures.append("Delivery-day production event definition is missing.")
+		return
+	var invalid_run_state = _delivery_event_module_run_state(definition, delivered, "invalid")
+	var invalid_before := _delivery_event_module_observation(invalid_run_state)
+	var invalid_module = EventModuleScript.new()
+	invalid_module.setup(event_definition, library)
+	var invalid_result := invalid_module.resolve(invalid_run_state, invalid_run_state.current_environment, "invented_delivery_choice")
+	if bool(invalid_result.get("ok", true)) or JSON.stringify(_delivery_event_module_observation(invalid_run_state)) != JSON.stringify(invalid_before):
+		failures.append("EventModule invalid delivery choice crossed a boundary or changed production state.")
+	for expectation_value in [
+		{"choice_id": "clear_the_aisle", "outcome": "repaired", "bankroll_delta": 0, "suspicion_delta": 0, "item_count": 0, "flag_id": "delivery_day_passed"},
+		{"choice_id": "take_the_deal", "outcome": "broken", "bankroll_delta": 6, "suspicion_delta": 1, "item_count": 1, "flag_id": "delivery_day_deal"},
+	]:
+		var expectation := _dict(expectation_value)
+		var choice_id := str(expectation.get("choice_id", ""))
+		var run_state = _delivery_event_module_run_state(definition, delivered, choice_id)
+		var action_before := int(run_state.event_cadence_summary().get("action_index", 0))
+		var turns_before := int(run_state.current_environment.get("turns", 0))
+		var boundary_before := int(_dict(run_state.current_environment.get("scenario_sequence_state", {})).get("boundary_serial", 0))
+		var bankroll_before := int(run_state.bankroll)
+		var suspicion_before := int(run_state.suspicion_level())
+		var story_count_before := _array(run_state.story_log).size()
+		var fact_receipts_before := _array(_dict(run_state.current_environment.get("scenario_sequence_state", {})).get("fact_receipts", []))
+		var event_module = EventModuleScript.new()
+		event_module.setup(event_definition, library)
+		var event_result := event_module.resolve(run_state, run_state.current_environment, choice_id)
+		var terminal := _dict(run_state.current_environment.get("scenario_sequence_state", {}))
+		var exact_event_receipt := "%s:%s" % [DELIVERY_RESOLUTION_ID, choice_id]
+		var fact_receipts := _array(terminal.get("fact_receipts", []))
+		var new_fact_receipts := fact_receipts.slice(fact_receipts_before.size())
+		var event_fact_receipts: Array = []
+		for receipt_value in new_fact_receipts:
+			if str(receipt_value).begins_with("event:event_result:"):
+				event_fact_receipts.append(receipt_value)
+		if not bool(event_result.get("ok", false)) \
+			or str(terminal.get("status", "")) != SequenceRuntimeScript.STATUS_AFTERMATH \
+			or _array(terminal.get("resolved_outcomes", [])) != [str(expectation.get("outcome", ""))] \
+			or _array(terminal.get("event_choice_receipts", [])) != [exact_event_receipt]:
+			failures.append("EventModule did not produce immediate exact %s delivery aftermath/receipt." % choice_id)
+		if not _array(terminal.get("fact_queue", [])).is_empty() or not _array(terminal.get("event_request_queue", [])).is_empty() or event_fact_receipts.size() != 1:
+			failures.append("EventModule left duplicate or pending %s delivery fact/request consequences." % choice_id)
+		if int(run_state.event_cadence_summary().get("action_index", -1)) != action_before + 1 \
+			or int(run_state.current_environment.get("turns", -1)) != turns_before + 1 \
+			or int(terminal.get("boundary_serial", -1)) != boundary_before + 1:
+			failures.append("EventModule %s resolution did not stay on its single advanced boundary." % choice_id)
+		if int(run_state.bankroll) != bankroll_before + int(expectation.get("bankroll_delta", 0)) \
+			or int(run_state.suspicion_level()) != suspicion_before + int(expectation.get("suspicion_delta", 0)) \
+			or _array(run_state.current_environment.get("resolved_event_ids", [])) != [DELIVERY_EVENT_ID] \
+			or _array(run_state.inventory) != (["delivery_twine"] if int(expectation.get("item_count", 0)) == 1 else []) \
+			or not bool(run_state.narrative_flags.get(str(expectation.get("flag_id", "")), false)) \
+			or _array(run_state.story_log).size() != story_count_before + 1:
+			failures.append("EventModule duplicated or lost base %s event consequences." % choice_id)
+		var resolved_observation := _delivery_event_module_observation(run_state)
+		var replay_allowed := event_module.can_trigger(run_state, run_state.current_environment)
+		if replay_allowed:
+			event_module.resolve(run_state, run_state.current_environment, choice_id)
+		if replay_allowed or JSON.stringify(_delivery_event_module_observation(run_state)) != JSON.stringify(resolved_observation):
+			failures.append("EventModule production replay gate duplicated %s facts, receipts, reward, or boundaries." % choice_id)
+
+
+static func _delivery_event_module_run_state(definition: Dictionary, delivered: Dictionary, seed_suffix: String):
+	var run_state = RunStateScript.new()
+	run_state.start_new("DELIVERY-EVENT-BOUNDARY-%s" % seed_suffix)
+	run_state.current_environment = {
+		"id": "corner_store_delivery_day_001",
+		"archetype_id": "corner_store",
+		"world_node_id": DELIVERY_NODE_ID,
+		"kind": "shop",
+		"turns": 0,
+		"event_ids": [DELIVERY_EVENT_ID],
+		"resolved_event_ids": [],
+		"game_ids": [],
+		"service_ids": [],
+		"travel_hooks": [],
+		"scenario_game_modifiers": {},
+		"layout": {"object_rects": {}},
+		"scenario_id": DELIVERY_SCENARIO_ID,
+		"scenario_state": {"id": DELIVERY_SCENARIO_ID, "archetype_id": "corner_store"},
+		"scenario_sequence_definition": definition.duplicate(true),
+		"scenario_sequence_state": delivered.duplicate(true),
+	}
+	ScenarioEngineScript.refresh_sequence_snapshots(run_state.current_environment, definition)
+	return run_state
+
+
+static func _delivery_event_module_observation(run_state) -> Dictionary:
+	return {
+		"bankroll": int(run_state.bankroll),
+		"suspicion": int(run_state.suspicion_level()),
+		"inventory": _array(run_state.inventory),
+		"narrative_flags": _dict(run_state.narrative_flags),
+		"story_log": _array(run_state.story_log),
+		"event_cadence": run_state.event_cadence_summary(),
+		"environment_turns": int(run_state.current_environment.get("turns", 0)),
+		"resolved_event_ids": _array(run_state.current_environment.get("resolved_event_ids", [])),
+		"sequence_state": _dict(run_state.current_environment.get("scenario_sequence_state", {})),
+	}
 
 
 static func _delivery_event_record(state: Dictionary) -> Dictionary:
