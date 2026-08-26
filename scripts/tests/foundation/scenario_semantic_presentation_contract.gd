@@ -22,6 +22,7 @@ static func check(library: Variant, failures: Array) -> void:
 	_check_atomic_finalization_layout(library, failures)
 	_check_finalized_accessibility(library, failures)
 	_check_finalized_actor_route(library, failures)
+	_check_committed_projection_mismatch(library, failures)
 	_check_atomic_projection_failures(failures)
 
 
@@ -122,6 +123,25 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 		"actor": {"label": "Route guard", "actor_id": "route_guard", "anchor_id": "bar_actor", "behavior": "flee", "route_id": "base::world:bar", "pose": "brace"},
 	})
 	phase["actor_ops"] = actor_ops
+	_append_interaction(definition, {
+		"owner_namespace": "scenario",
+		"stable_object_id": "route_guard",
+		"presentation_object_id": "scenario::route_guard",
+		"label": "Route guard",
+		"state_label": "Available",
+		"prompt": "Inspect the routed guard.",
+		"enabled": true,
+		"disabled_reason": "",
+		"available_actions": [{"id": "inspect_guard", "label": "Inspect", "input_action": "confirm", "non_color_state": "ready"}],
+		"input_actions": ["confirm"],
+		"non_color_state": "available",
+		"focus_order": 6,
+		"hit_bounds": {"w": 72, "h": 80},
+		"normalized_hit_rect": {"x": 0.3, "y": 0.2, "w": 0.08, "h": 0.18},
+		"min_target_size": 44,
+		"safe_exit": false,
+		"alternate_exit": false,
+	})
 	var cleanup: Dictionary = definition["sequence"]["cleanup"]
 	var cleanup_ops: Array = cleanup.get("operations", [])
 	cleanup_ops.append({"family": "actor_ops", "op": "despawn", "receipt_id": "cleanup_actor_route_guard", "owner_namespace": "scenario", "stable_object_id": "route_guard"})
@@ -131,8 +151,10 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 	run_state.current_environment = _finalization_environment(definition)
 	run_state.current_environment["semantic_anchors"]["bar"] = {"position": [620.0, 230.0]}
 	run_state.scenario_prepare_semantic_finalization()
-	var finalized := run_state.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
-	var projected := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), finalized)
+	var trusted_base := [_production_presentation()]
+	var finalized := run_state.scenario_finalize_base_semantics(trusted_base, library, _production_layout_context())
+	var projected_candidate := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), finalized)
+	var projected := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, projected_candidate, trusted_base)
 	var actor := _record(_array(projected.get("records", [])), "scenario::route_guard")
 	if not bool(finalized.get("ok", false)) or not bool(projected.get("ok", false)) or _array(actor.get("actor_route_points", [])).size() != 2 or _dict(actor.get("actor_route_stage", {})).is_empty():
 		failures.append("Validated finalization did not preserve authored actor route staging in the public projection: %s" % JSON.stringify(finalized.get("errors", [])))
@@ -141,12 +163,63 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 	canvas.size = BOARD_SIZE
 	canvas.render_environment_snapshot({"id": "finalized_route", "archetype_id": "bar", "reduce_motion": true, "interactable_objects": projected.get("records", [])})
 	var actor_rect := _snapshot_rect(_layout_entry(_dict(canvas.current_view_snapshot().get("object_layout", {})), "scenario::route_guard").get("rect", {}))
-	if not actor_rect.get_center().is_equal_approx(Vector2(620.0, 230.0)):
-		failures.append("Public reduced-motion canvas routing did not use the sealed actor endpoint geometry.")
+	if not actor_rect.get_center().is_equal_approx(Vector2(620.0, 230.0)) or canvas.object_id_at_local_position(actor_rect.get_center()) != "scenario::route_guard":
+		failures.append("Public reduced-motion canvas draw/hit routing did not use the sealed actor endpoint geometry.")
 	canvas.set_small_screen_mode(true)
 	var small_actor_rect := _snapshot_rect(_layout_entry(_dict(canvas.current_view_snapshot().get("object_layout", {})), "scenario::route_guard").get("rect", {}))
-	if not small_actor_rect.get_center().is_equal_approx(Vector2(620.0, 230.0)):
+	if not small_actor_rect.get_center().is_equal_approx(Vector2(620.0, 230.0)) or canvas.object_id_at_local_position(small_actor_rect.get_center()) != "scenario::route_guard":
 		failures.append("Expanded small-screen actor route staging diverged from its sealed reduced-motion endpoint.")
+	canvas.free()
+
+	var forged_finalized := finalized.duplicate(true)
+	var forged_actor: Dictionary = forged_finalized["projection"]["semantic_state"]["actors"]["scenario::route_guard"]
+	forged_actor["route_points"][1] = {"x": 0.12, "y": 0.82}
+	forged_actor["route_stage"]["endpoint"] = {"x": 0.12, "y": 0.82}
+	forged_actor["route_stage"]["reduced_motion_endpoint"] = {"x": 0.12, "y": 0.82}
+	forged_actor["route_stage"]["small_screen_endpoint"] = {"x": 0.12, "y": 0.82}
+	forged_actor["route_stage"]["duration_sec"] = 0.01
+	var forged_projection := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), forged_finalized)
+	var forged_record_projection := projected.duplicate(true)
+	var forged_projected_actor := _mutable_record(forged_record_projection.get("records", []), "scenario::route_guard")
+	forged_projected_actor["actor_route_points"][1] = {"x": 0.12, "y": 0.82}
+	forged_projected_actor["actor_route_stage"]["reduced_motion_endpoint"] = {"x": 0.12, "y": 0.82}
+	forged_projected_actor["actor_route_stage"]["duration_sec"] = 0.01
+	var committed_forgery := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, forged_record_projection, trusted_base)
+	var forged_records := _array(committed_forgery.get("records", []))
+	if bool(forged_projection.get("ok", true)) or bool(committed_forgery.get("ok", true)) or not _record(forged_records, "scenario::route_guard").is_empty() or _record(forged_records, "scenario::presentation_failure").is_empty() or _records_have_scenario_actions(forged_records):
+		failures.append("Hostile finalized actor route/timing mutation reached presentation instead of returning trusted base plus a disabled fallback.")
+	var forged_canvas = PixelSceneCanvasScript.new()
+	forged_canvas.size = BOARD_SIZE
+	forged_canvas.render_environment_snapshot({"id": "forged_finalized_route", "archetype_id": "bar", "reduce_motion": true, "interactable_objects": forged_records})
+	var forged_view := _dict(forged_canvas.current_view_snapshot())
+	var failure_rect := _snapshot_rect(_layout_entry(_dict(forged_view.get("object_layout", {})), "scenario::presentation_failure").get("rect", {}))
+	if not _object(_array(forged_view.get("objects", [])), "scenario::route_guard").is_empty() or forged_canvas.object_id_at_local_position(Vector2(108.0, 352.6)) == "scenario::route_guard" or forged_canvas.object_id_at_local_position(failure_rect.get_center()) != "scenario::presentation_failure":
+		failures.append("Public canvas draw/hit routing exposed forged actor relocation before consuming the explicit failure result.")
+	forged_canvas.free()
+
+
+static func _check_committed_projection_mismatch(library: Variant, failures: Array) -> void:
+	var run_state := RunStateScript.new()
+	run_state.current_environment = _finalization_environment(ScenarioSequenceContractScript.finalization_fixture_definition())
+	var trusted_base := [_production_presentation()]
+	run_state.scenario_prepare_semantic_finalization()
+	var finalized := run_state.scenario_finalize_base_semantics(trusted_base, library, _production_layout_context())
+	var first_projection := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), finalized)
+	var replayed := run_state.scenario_finalize_base_semantics(trusted_base, library, _production_layout_context())
+	# Model a stale presentation result racing a newer replay commit without
+	# changing the projected records themselves.
+	run_state.current_environment["scenario_layout_authority_digest"] = "0".repeat(64)
+	var rejected := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, first_projection, trusted_base)
+	var records := _array(rejected.get("records", []))
+	if not bool(finalized.get("ok", false)) or not bool(first_projection.get("ok", false)) or not bool(replayed.get("ok", false)) or not bool(replayed.get("replayed", false)) or bool(rejected.get("ok", true)) or not _record(records, "scenario::command_console").is_empty() or _record(records, "game:slot").is_empty() or _record(records, "scenario::presentation_failure").is_empty() or _records_have_scenario_actions(records):
+		failures.append("Committed-digest replay mismatch returned stale projected scenario records instead of trusted base plus disabled fallback.")
+	var canvas = PixelSceneCanvasScript.new()
+	canvas.size = BOARD_SIZE
+	canvas.render_environment_snapshot({"id": "stale_replay_projection", "archetype_id": "bar", "interactable_objects": records})
+	var view := _dict(canvas.current_view_snapshot())
+	var failure_rect := _snapshot_rect(_layout_entry(_dict(view.get("object_layout", {})), "scenario::presentation_failure").get("rect", {}))
+	if not _object(_array(view.get("objects", [])), "scenario::command_console").is_empty() or canvas.object_id_at_local_position(failure_rect.get_center()) != "scenario::presentation_failure":
+		failures.append("Public canvas consumed stale replay projection records during committed-digest rejection.")
 	canvas.free()
 
 
@@ -821,6 +894,22 @@ static func _record(records: Array, object_id: String) -> Dictionary:
 		if str(record.get("object_id", "")) == object_id:
 			return record
 	return {}
+
+
+static func _mutable_record(records_value: Variant, object_id: String) -> Dictionary:
+	if typeof(records_value) != TYPE_ARRAY:
+		return {}
+	for value in records_value as Array:
+		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("object_id", "")) == object_id:
+			return value as Dictionary
+	return {}
+
+
+static func _records_have_scenario_actions(records: Array) -> bool:
+	for value in records:
+		if not _array(_dict(value).get("scenario_sequence_actions", [])).is_empty():
+			return true
+	return false
 
 
 static func _object(objects: Array, object_id: String) -> Dictionary:
