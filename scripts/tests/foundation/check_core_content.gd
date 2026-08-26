@@ -30,6 +30,7 @@ const NumbersContractScript := preload("res://scripts/tests/foundation/numbers_c
 const Tier2ScenarioContractScript := preload("res://scripts/tests/foundation/tier2_scenario_contract.gd")
 const ScenarioBacklogContractScript := preload("res://scripts/tests/foundation/scenario_backlog_contract.gd")
 const ScenarioSequenceContractScript := preload("res://scripts/tests/foundation/scenario_sequence_contract.gd")
+const EnvironmentSemanticInventoryContractScript := preload("res://scripts/tests/foundation/environment_semantic_inventory_contract.gd")
 const InteractableEventClassGuardScript := preload("res://scripts/tests/foundation/interactable_event_class_guard.gd")
 const GameActivationClassGuardScript := preload("res://scripts/tests/foundation/game_activation_class_guard.gd")
 const Onboarding06ContractScript := preload("res://scripts/tests/foundation/onboarding_06_contract.gd")
@@ -289,6 +290,11 @@ class SurfaceHarness:
 
 	func surface_add_exact_hit(rect: Rect2, action: String, index: int = -1) -> void:
 		surface_add_hit(rect, action, index, false)
+
+	func surface_add_exact_hover_hit(rect: Rect2, action: String, index: int = -1) -> void:
+		surface_add_exact_hit(rect, action, index)
+		if not hit_regions.is_empty():
+			(hit_regions[-1] as Dictionary)["activate_on_hover"] = true
 
 	func surface_add_cached_exact_hits(_cache_key: String, rect_sources: Array, action: String) -> void:
 		for index in range(rect_sources.size()):
@@ -759,6 +765,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	Tier2ScenarioContractScript.check(library, failures)
 	ScenarioBacklogContractScript.check(library, failures)
 	ScenarioSequenceContractScript.check(library, failures)
+	EnvironmentSemanticInventoryContractScript.check(library, failures)
 
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CONTENT-CHECK")
