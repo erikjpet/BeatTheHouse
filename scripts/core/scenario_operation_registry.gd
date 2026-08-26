@@ -35,6 +35,7 @@ const REGISTERED_HANDLERS := {
 	"set_local": {"inputs": ["key", "value"], "output": "local_state", "persistent": true, "rng": "none"},
 	"increment_local": {"inputs": ["key", "amount"], "output": "local_state", "persistent": true, "rng": "none"},
 	"complete_objective_step": {"inputs": ["objective_id", "step_id"], "output": "objective_progress", "persistent": true, "rng": "none"},
+	"resolve_objective": {"inputs": ["objective_id", "outcome"], "output": "objective_progress", "persistent": true, "rng": "none"},
 	"record_outcome": {"inputs": ["outcome"], "output": "resolved_outcomes", "persistent": true, "rng": "none"},
 	"publish_feedback": {"inputs": ["message"], "output": "transition_queue", "persistent": false, "rng": "none"},
 	"request_cleanup": {"inputs": ["reason"], "output": "cleanup_receipts", "persistent": true, "rng": "none"},
@@ -62,6 +63,10 @@ static func registered_operations() -> Dictionary:
 
 static func registered_handlers() -> Dictionary:
 	return REGISTERED_HANDLERS.duplicate(true)
+
+
+static func normalize_semantic_state(value: Dictionary) -> Dictionary:
+	return _normalize_semantic_state(value)
 
 
 static func validate_any_operation(operation: Dictionary) -> Array:
@@ -133,6 +138,7 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 	var authored_receipts: Dictionary = {}
 	var pending: Array = []
 	var fingerprints := _dict(original.get("operation_fingerprints", {}))
+	var known_targets := _dict(original.get(_collection_key(family), {}))
 	for index in range(operations.size()):
 		if typeof(operations[index]) != TYPE_DICTIONARY:
 			errors.append("%s[%d] is not a dictionary." % [family, index])
@@ -152,6 +158,7 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 			if fingerprints.has(authoritative_receipt) and str(fingerprints.get(authoritative_receipt, "")) != fingerprint:
 				errors.append("operation receipt %s was reused for conflicting content." % authoritative_receipt)
 			pending.append({"operation": candidate.duplicate(true), "receipt_id": authoritative_receipt, "fingerprint": fingerprint})
+		_validate_and_track_target(family, candidate, known_targets, errors)
 	if not errors.is_empty():
 		return {"ok": false, "state": original, "applied": [], "errors": errors}
 	var state := original.duplicate(true)
@@ -589,8 +596,39 @@ static func _sort_interaction_overlay(a: Variant, b: Variant) -> bool:
 	var left_priority := int(OWNER_PRIORITY.get(str(left.get("owner_namespace", "")), -1))
 	var right_priority := int(OWNER_PRIORITY.get(str(right.get("owner_namespace", "")), -1))
 	if left_priority != right_priority:
-		return left_priority < right_priority
+		return left_priority > right_priority
 	return identity_from(left) < identity_from(right)
+
+
+static func _validate_and_track_target(family: String, operation: Dictionary, known_targets: Dictionary, errors: Array) -> void:
+	if family == "transition_ops":
+		return
+	var owner := str(operation.get("owner_namespace", ""))
+	var key := identity_from(operation)
+	var op_id := str(operation.get("op", ""))
+	# Base objects/interactions live in the prepared host snapshot rather than the
+	# scenario-owned reducer. The host resolver validates those targets later.
+	if owner != "scenario":
+		return
+	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
+		return
+	var creates := (family == "scene_ops" and op_id == "spawn") \
+		or (family == "interaction_ops" and op_id == "add") \
+		or (family == "actor_ops" and op_id == "spawn") \
+		or (family in ["service_ops", "game_ops"] and op_id == "add")
+	var removes := op_id in ["remove", "despawn"]
+	var requires_existing := family in ["scene_ops", "actor_ops"] and not creates \
+		or family == "interaction_ops" and removes \
+		or family in ["service_ops", "game_ops"] and not creates
+	if creates:
+		if known_targets.has(key):
+			errors.append("%s %s cannot create duplicate scenario target %s." % [family, op_id, key])
+		else:
+			known_targets[key] = true
+	elif requires_existing and not known_targets.has(key):
+		errors.append("%s %s targets missing scenario identity %s." % [family, op_id, key])
+	elif removes:
+		known_targets.erase(key)
 
 
 static func _contains_forbidden_path(value: Variant) -> bool:
