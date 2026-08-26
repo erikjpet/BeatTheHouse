@@ -6,6 +6,9 @@ extends RefCounted
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioSequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
+const ScenarioOperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
+const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
+const ScenarioSequenceRolloutManifestScript := preload("res://scripts/core/scenario_sequence_rollout_manifest.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 
 const ENVIRONMENT_ARCHETYPES_PATH := "res://data/environments/archetypes.json"
@@ -3250,6 +3253,7 @@ func _validate_scenario_definitions() -> void:
 	var seen_ids: Dictionary = {}
 	var sequence_definitions: Array = []
 	var masked_visual_explanations: Dictionary = {}
+	var rollout_definitions: Array = []
 	for archetype_key_value in environment_scenarios.keys():
 		var archetype_key := str(archetype_key_value).strip_edges()
 		if archetype_key.is_empty() or not archetype_ids.has(archetype_key):
@@ -3264,6 +3268,7 @@ func _validate_scenario_definitions() -> void:
 				validation_errors.append("environment_scenarios %s[%d] must be a dictionary." % [archetype_key, index])
 				continue
 			var definition := ScenarioSequenceCatalogScript.apply_overlay(scenario_value as Dictionary, scenario_sequence_catalog)
+			rollout_definitions.append(definition)
 			var scenario_id := str(definition.get("id", "")).strip_edges()
 			var declared_archetype := str(definition.get("archetype_id", "")).strip_edges()
 			if scenario_id.is_empty():
@@ -3332,6 +3337,12 @@ func _validate_scenario_definitions() -> void:
 			validation_errors.append(str(failure_value))
 		for warning_value in _copy_array(uniqueness_audit.get("warnings", [])):
 			validation_warnings.append(str(warning_value))
+	var rollout_ids := ScenarioSequenceRolloutManifestScript.expected_ids()
+	if ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT != 55 or rollout_ids.size() != ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT:
+		validation_errors.append("scenario sequence rollout manifest must contain exactly 55 catalog ids.")
+	var rollout_report := ScenarioSequenceSchemaScript.catalog_rollout_report(rollout_definitions, rollout_ids, ScenarioOperationRegistryScript, {}, ScenarioSequenceRolloutManifestScript.required_sequence_ids())
+	validation_errors.append_array(_copy_array(rollout_report.get("failures", [])))
+	validation_warnings.append_array(_copy_array(rollout_report.get("warnings", [])))
 
 
 func _validate_scenario_mutations(scenario_id: String, label: String, value: Variant, event_ids: Dictionary, service_ids: Dictionary, game_ids: Dictionary, item_ids: Dictionary) -> void:

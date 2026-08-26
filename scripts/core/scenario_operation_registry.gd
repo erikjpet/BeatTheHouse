@@ -32,17 +32,23 @@ const OP_FAMILIES := {
 	"route_ops": ROUTE_OPS,
 }
 const REGISTERED_HANDLERS := {
-	"set_local": {"inputs": ["key", "value"], "output": "local_state", "persistent": true, "rng": "none"},
-	"increment_local": {"inputs": ["key", "amount"], "output": "local_state", "persistent": true, "rng": "none"},
-	"complete_objective_step": {"inputs": ["objective_id", "step_id"], "output": "objective_progress", "persistent": true, "rng": "none"},
-	"resolve_objective": {"inputs": ["objective_id", "outcome"], "output": "objective_progress", "persistent": true, "rng": "none"},
-	"record_outcome": {"inputs": ["outcome"], "output": "resolved_outcomes", "persistent": true, "rng": "none"},
-	"publish_feedback": {"inputs": ["message"], "output": "transition_queue", "persistent": false, "rng": "none"},
-	"request_cleanup": {"inputs": ["reason"], "output": "cleanup_receipts", "persistent": true, "rng": "none"},
-	"event_bridge": {"inputs": ["event_id", "resolution_id"], "output": "fact_queue", "persistent": true, "rng": "none"},
+	"set_local": {"inputs": ["key", "value"], "outputs": ["local_state"], "persistent": true, "rng": "none"},
+	"increment_local": {"inputs": ["key", "amount"], "outputs": ["local_state"], "persistent": true, "rng": "none"},
+	"complete_objective_step": {"inputs": ["objective_id", "step_id"], "outputs": ["objective_progress"], "persistent": true, "rng": "none"},
+	"resolve_objective": {"inputs": ["objective_id", "outcome"], "outputs": ["objective_progress"], "persistent": true, "rng": "none"},
+	"record_outcome": {"inputs": ["outcome"], "outputs": ["resolved_outcomes"], "persistent": true, "rng": "none"},
+	"publish_feedback": {"inputs": ["message"], "outputs": ["last_feedback", "semantic_state"], "persistent": true, "rng": "none"},
+	"request_cleanup": {"inputs": ["reason"], "outputs": ["semantic_state", "cleanup_receipts", "cleanup_receipt_records", "status"], "persistent": true, "rng": "none"},
+	"event_bridge": {"inputs": ["event_id", "resolution_id"], "outputs": ["event_request_queue", "last_feedback"], "persistent": true, "rng": "none"},
 }
 const MAX_OPERATIONS_PER_BATCH := 32
 const MAX_ACTIONS_PER_INTERACTION := 8
+const MAX_OPERATION_RECEIPTS := 512
+const MAX_TRANSITION_QUEUE := 128
+const MAX_VARIANT_DEPTH := 12
+const MAX_VARIANT_VALUES := 4096
+const MAX_VARIANT_TEXT := 512
+const MAX_VARIANT_COLLECTION := 512
 const MIN_TARGET_SIZE := 44.0
 const COMMON_OPERATION_KEYS := ["family", "op", "receipt_id", "owner_namespace", "stable_object_id"]
 
@@ -78,6 +84,7 @@ static func validate_any_operation(operation: Dictionary) -> Array:
 
 static func validate_operation(family: String, operation: Dictionary) -> Array:
 	var errors: Array = []
+	errors.append_array(validate_bounded_variant("scenario operation", operation))
 	if not OP_FAMILIES.has(family):
 		return ["operation family is unregistered: %s." % family]
 	var allowed_ops: Array = OP_FAMILIES.get(family, [])
@@ -125,7 +132,21 @@ static func validate_operation(family: String, operation: Dictionary) -> Array:
 	return errors
 
 
+static func structural_receipt_key(boundary_id: String, family: String, authored_receipt_id: String) -> String:
+	var tuple := _length_prefixed(boundary_id.strip_edges()) + _length_prefixed(family.strip_edges()) + _length_prefixed(authored_receipt_id.strip_edges())
+	return "op_%s" % tuple.sha256_text()
+
+
+static func validate_bounded_variant(label: String, value: Variant) -> Array:
+	var errors: Array = []
+	_validate_bounded_variant(label, value, 0, {"count": 0}, [], errors)
+	return errors
+
+
 static func apply_operations(state_value: Dictionary, family: String, operations: Array, boundary_id: String) -> Dictionary:
+	var state_validation := validate_bounded_variant("scenario semantic state", state_value)
+	if not state_validation.is_empty():
+		return {"ok": false, "state": state_value, "applied": [], "errors": state_validation}
 	var original := _normalize_semantic_state(state_value)
 	if not OP_FAMILIES.has(family):
 		return {"ok": false, "state": original, "applied": [], "errors": ["operation family is unregistered: %s." % family]}
@@ -139,6 +160,7 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 	var pending: Array = []
 	var fingerprints := _dict(original.get("operation_fingerprints", {}))
 	var known_targets := _dict(original.get(_collection_key(family), {}))
+	var existing_receipts := _string_array(original.get("operation_receipts", []))
 	for index in range(operations.size()):
 		if typeof(operations[index]) != TYPE_DICTIONARY:
 			errors.append("%s[%d] is not a dictionary." % [family, index])
@@ -152,28 +174,48 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 			errors.append("operation batch contains duplicate authored receipt_id %s." % authored_receipt)
 		elif not authored_receipt.is_empty():
 			authored_receipts[authored_receipt] = true
-		if not authored_receipt.is_empty():
-			var authoritative_receipt := "%s:%s:%s" % [boundary_id.strip_edges(), family, authored_receipt]
+		if not authored_receipt.is_empty() and validation.is_empty():
+			var authoritative_receipt := structural_receipt_key(boundary_id, family, authored_receipt)
 			var fingerprint := JSON.stringify(_canonical_variant(candidate))
 			if fingerprints.has(authoritative_receipt) and str(fingerprints.get(authoritative_receipt, "")) != fingerprint:
 				errors.append("operation receipt %s was reused for conflicting content." % authoritative_receipt)
-			pending.append({"operation": candidate.duplicate(true), "receipt_id": authoritative_receipt, "fingerprint": fingerprint})
+			pending.append({"operation": candidate.duplicate(true), "receipt_id": authoritative_receipt, "authored_receipt_id": authored_receipt, "fingerprint": fingerprint})
 		_validate_and_track_target(family, candidate, known_targets, errors)
+	var new_receipt_count := 0
+	for pending_value in pending:
+		if not existing_receipts.has(str(_dict(pending_value).get("receipt_id", ""))): new_receipt_count += 1
+	if existing_receipts.size() + new_receipt_count > MAX_OPERATION_RECEIPTS:
+		errors.append("operation lifetime receipt limit reached.")
+	if _array(original.get("transition_queue", [])).size() > MAX_TRANSITION_QUEUE:
+		errors.append("transition queue exceeds its persisted capacity.")
+	if family == "transition_ops" and _array(original.get("transition_queue", [])).size() + new_receipt_count > MAX_TRANSITION_QUEUE:
+		errors.append("transition queue capacity reached.")
 	if not errors.is_empty():
 		return {"ok": false, "state": original, "applied": [], "errors": errors}
 	var state := original.duplicate(true)
 	for pending_value in pending:
 		var item := pending_value as Dictionary
+		var receipt_id := str(item.get("receipt_id", ""))
+		if existing_receipts.has(receipt_id): continue
+		var target_errors := _validate_operation_target(state, family, _dict(item.get("operation", {})))
+		if not target_errors.is_empty(): errors.append_array(target_errors)
+		else: _apply_operation(state, family, _dict(item.get("operation", {})), receipt_id)
+	if not errors.is_empty():
+		return {"ok": false, "state": original, "applied": [], "errors": errors}
+	for pending_value in pending:
+		var item := pending_value as Dictionary
 		var operation := _dict(item.get("operation", {}))
 		var receipt_id := str(item.get("receipt_id", ""))
-		if _string_array(state.get("operation_receipts", [])).has(receipt_id):
+		if existing_receipts.has(receipt_id):
 			continue
-		_apply_operation(state, family, operation, receipt_id)
 		var receipts := _string_array(state.get("operation_receipts", []))
 		receipts.append(receipt_id)
 		state["operation_receipts"] = receipts
 		fingerprints[receipt_id] = str(item.get("fingerprint", ""))
 		state["operation_fingerprints"] = fingerprints.duplicate(true)
+		var records := _array(state.get("operation_receipt_records", []))
+		records.append({"receipt_key": receipt_id, "boundary_id": boundary_id.strip_edges(), "family": family, "authored_receipt_id": str(item.get("authored_receipt_id", "")), "fingerprint": str(item.get("fingerprint", ""))})
+		state["operation_receipt_records"] = records
 		applied.append(receipt_id)
 	return {"ok": true, "state": state, "applied": applied, "errors": []}
 
@@ -202,6 +244,25 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 	var ordered_overlays := overlay_records.duplicate(true)
 	ordered_overlays.sort_custom(Callable(ScenarioOperationRegistry, "_sort_interaction_overlay"))
 	var accepted_overlay_source_identities: Array = []
+	var target_claims: Dictionary = {}
+	for overlay_value in ordered_overlays:
+		if typeof(overlay_value) != TYPE_DICTIONARY:
+			continue
+		var overlay := overlay_value as Dictionary
+		var source_key := identity_from(overlay)
+		if tainted.has(source_key) or not records.has(source_key) or str(overlay.get("mode", "add")) == "add":
+			continue
+		var target_key := identity(str(overlay.get("target_owner_namespace", "")), str(overlay.get("target_stable_object_id", "")))
+		var claims := _string_array(target_claims.get(target_key, []))
+		claims.append(source_key)
+		target_claims[target_key] = claims
+	for target_key_value in target_claims.keys():
+		var claims := _string_array(target_claims.get(target_key_value, []))
+		if claims.size() <= 1:
+			continue
+		errors.append("interactions %s compete for target %s." % [JSON.stringify(claims), str(target_key_value)])
+		for source_key_value in claims:
+			records.erase(str(source_key_value))
 	for overlay_value in ordered_overlays:
 		if typeof(overlay_value) != TYPE_DICTIONARY:
 			continue
@@ -213,6 +274,8 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 		if mode == "add":
 			continue
 		var target_key := identity(str(overlay.get("target_owner_namespace", "")), str(overlay.get("target_stable_object_id", "")))
+		if _string_array(target_claims.get(target_key, [])).size() > 1:
+			continue
 		var priority := int(OWNER_PRIORITY.get(str(overlay.get("owner_namespace", "")), -1))
 		var effective_winner := _dict(effective_winners.get(target_key, {}))
 		var effective_priority := int(effective_winner.get("priority", -1))
@@ -379,6 +442,35 @@ static func _apply_operation(state: Dictionary, family: String, operation: Dicti
 	state[collection_key] = collection
 
 
+static func _validate_operation_target(state: Dictionary, family: String, operation: Dictionary) -> Array:
+	if family == "transition_ops":
+		return []
+	var errors: Array = []
+	var collection_key := _collection_key(family)
+	var collection := _dict(state.get(collection_key, {}))
+	var key := identity_from(operation)
+	var op_id := str(operation.get("op", "")).strip_edges()
+	var create_operation := family == "scene_ops" and op_id == "spawn" or family == "interaction_ops" and op_id == "add" or family == "actor_ops" and op_id == "spawn" or family in ["service_ops", "game_ops"] and op_id == "add"
+	if create_operation:
+		if collection.has(key):
+			errors.append("%s %s cannot create existing identity %s." % [family, op_id, key])
+		return errors
+	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
+		if collection.has(key):
+			errors.append("interaction overlay identity already exists: %s." % key)
+		var target_key := identity(str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", "")))
+		if not collection.has(target_key) and not _target_declared(state, collection_key, target_key):
+			errors.append("interaction %s targets undeclared missing identity %s." % [key, target_key])
+		return errors
+	if ["remove", "despawn"].has(op_id):
+		if not collection.has(key):
+			errors.append("%s %s targets missing identity %s." % [family, op_id, key])
+		return errors
+	if not collection.has(key) and not _target_declared(state, collection_key, key):
+		errors.append("%s %s targets undeclared missing identity %s." % [family, op_id, key])
+	return errors
+
+
 static func _normalize_semantic_state(value: Dictionary) -> Dictionary:
 	return {
 		"scene_objects": _dict(value.get("scene_objects", {})),
@@ -389,8 +481,23 @@ static func _normalize_semantic_state(value: Dictionary) -> Dictionary:
 		"routes": _dict(value.get("routes", {})),
 		"transition_queue": _array(value.get("transition_queue", [])),
 		"operation_receipts": _string_array(value.get("operation_receipts", [])),
+		"operation_receipt_records": _array(value.get("operation_receipt_records", [])),
 		"operation_fingerprints": _dict(value.get("operation_fingerprints", {})),
+		"declared_targets": _normalize_declared_targets(value.get("declared_targets", {})),
 	}
+
+
+static func _normalize_declared_targets(value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	var source := _dict(value)
+	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes"]:
+		result[collection_key] = _string_array(source.get(collection_key, []))
+	return result
+
+
+static func _target_declared(state: Dictionary, collection_key: String, target_key: String) -> bool:
+	var declared := _dict(state.get("declared_targets", {}))
+	return _string_array(declared.get(collection_key, [])).has(target_key)
 
 
 static func _collection_key(family: String) -> String:
@@ -605,6 +712,9 @@ static func _validate_interaction_record(record: Dictionary, errors: Array, over
 	if not ["add", "replace", "gate", "augment", "retarget"].has(mode):
 		errors.append("interaction %s has invalid mode %s." % [identity(owner, stable_id), mode])
 		return
+	if not overlay and mode != "add":
+		errors.append("base interaction %s must use add mode." % identity(owner, stable_id))
+		return
 	if overlay and mode != "add":
 		var target_owner := str(record.get("target_owner_namespace", "")).strip_edges()
 		var target_id := str(record.get("target_stable_object_id", "")).strip_edges()
@@ -684,15 +794,27 @@ static func _validate_and_track_target(family: String, operation: Dictionary, kn
 
 
 static func _contains_forbidden_path(value: Variant) -> bool:
-	if typeof(value) == TYPE_DICTIONARY:
-		for nested in (value as Dictionary).values():
-			if _contains_forbidden_path(nested): return true
-	elif typeof(value) == TYPE_ARRAY:
-		for nested in value as Array:
-			if _contains_forbidden_path(nested): return true
+	return _contains_forbidden_path_inner(value, 0, [])
+
+
+static func _contains_forbidden_path_inner(value: Variant, depth: int, ancestors: Array) -> bool:
+	if depth > MAX_VARIANT_DEPTH:
+		return true
+	if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY]:
+		for ancestor in ancestors:
+			if is_same(ancestor, value):
+				return true
+		var next_ancestors := ancestors.duplicate(false)
+		next_ancestors.append(value)
+		if typeof(value) == TYPE_DICTIONARY:
+			for nested in (value as Dictionary).values():
+				if _contains_forbidden_path_inner(nested, depth + 1, next_ancestors): return true
+		else:
+			for nested in value as Array:
+				if _contains_forbidden_path_inner(nested, depth + 1, next_ancestors): return true
 	elif typeof(value) == TYPE_STRING:
-		var text := str(value)
-		return text.begins_with("res://") or text.begins_with("user://") or text.contains("../") or text.contains("/root/") or text.contains("get_node(")
+		var source_text := str(value)
+		return source_text.begins_with("res://") or source_text.begins_with("user://") or source_text.contains("../") or source_text.contains("/root/") or source_text.contains("get_node(")
 	return false
 
 
@@ -745,19 +867,75 @@ static func _strict_id_array(value: Variant) -> Array:
 
 
 static func _canonical_variant(value: Variant) -> Variant:
-	if typeof(value) == TYPE_DICTIONARY:
-		var result: Dictionary = {}
-		var keys := (value as Dictionary).keys()
-		keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
-		for key_value in keys:
-			result[str(key_value)] = _canonical_variant((value as Dictionary).get(key_value))
-		return result
-	if typeof(value) == TYPE_ARRAY:
-		var result: Array = []
+	return _canonical_variant_inner(value, 0, [])
+
+
+static func _canonical_variant_inner(value: Variant, depth: int, ancestors: Array) -> Variant:
+	if depth > MAX_VARIANT_DEPTH:
+		return "<depth-limit>"
+	if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY]:
+		for ancestor in ancestors:
+			if is_same(ancestor, value):
+				return "<cycle>"
+		var next_ancestors := ancestors.duplicate(false)
+		next_ancestors.append(value)
+		if typeof(value) == TYPE_DICTIONARY:
+			var result: Dictionary = {}
+			var keys := (value as Dictionary).keys()
+			keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+			for key_value in keys:
+				result[str(key_value)] = _canonical_variant_inner((value as Dictionary).get(key_value), depth + 1, next_ancestors)
+			return result
+		var result_array: Array = []
 		for item_value in value as Array:
-			result.append(_canonical_variant(item_value))
-		return result
+			result_array.append(_canonical_variant_inner(item_value, depth + 1, next_ancestors))
+		return result_array
 	return value
+
+
+static func _validate_bounded_variant(label: String, value: Variant, depth: int, budget: Dictionary, ancestors: Array, errors: Array) -> void:
+	if errors.size() >= 16:
+		return
+	budget["count"] = int(budget.get("count", 0)) + 1
+	if int(budget.get("count", 0)) > MAX_VARIANT_VALUES:
+		errors.append("%s exceeds the bounded value count." % label)
+		return
+	if depth > MAX_VARIANT_DEPTH:
+		errors.append("%s exceeds the bounded nesting depth." % label)
+		return
+	var value_type := typeof(value)
+	if value_type in [TYPE_DICTIONARY, TYPE_ARRAY]:
+		for ancestor in ancestors:
+			if is_same(ancestor, value):
+				errors.append("%s contains a recursive container cycle." % label)
+				return
+		var size := (value as Dictionary).size() if value_type == TYPE_DICTIONARY else (value as Array).size()
+		if size > MAX_VARIANT_COLLECTION:
+			errors.append("%s contains a collection exceeding %d entries." % [label, MAX_VARIANT_COLLECTION])
+			return
+		var next_ancestors := ancestors.duplicate(false)
+		next_ancestors.append(value)
+		if value_type == TYPE_DICTIONARY:
+			for key_value in (value as Dictionary).keys():
+				if typeof(key_value) != TYPE_STRING or str(key_value).length() > MAX_VARIANT_TEXT:
+					errors.append("%s contains an invalid or oversized dictionary key." % label)
+					continue
+				_validate_bounded_variant(label, (value as Dictionary).get(key_value), depth + 1, budget, next_ancestors, errors)
+		else:
+			for nested in value as Array:
+				_validate_bounded_variant(label, nested, depth + 1, budget, next_ancestors, errors)
+	elif value_type == TYPE_STRING:
+		if str(value).length() > MAX_VARIANT_TEXT:
+			errors.append("%s contains text exceeding %d characters." % [label, MAX_VARIANT_TEXT])
+	elif value_type == TYPE_FLOAT:
+		if not _finite_number(value):
+			errors.append("%s contains a non-finite number." % label)
+	elif not [TYPE_NIL, TYPE_BOOL, TYPE_INT].has(value_type):
+		errors.append("%s contains unsupported Variant type %d." % [label, value_type])
+
+
+static func _length_prefixed(value: String) -> String:
+	return "%d:%s" % [value.length(), value]
 
 
 static func _string_array(value: Variant) -> Array:
@@ -770,8 +948,8 @@ static func _string_array(value: Variant) -> Array:
 
 
 static func _array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+	return (value as Array).duplicate(false) if typeof(value) == TYPE_ARRAY else []
 
 
 static func _dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+	return (value as Dictionary).duplicate(false) if typeof(value) == TYPE_DICTIONARY else {}
