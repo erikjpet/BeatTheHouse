@@ -1,0 +1,133 @@
+{
+    "failure_count":  1,
+    "passed":  false,
+    "tool":  "check_godot",
+    "suite":  "Smoke",
+    "suite_time_budget_multiplier":  1.5,
+    "stages":  [
+                   {
+                       "name":  "validate_project",
+                       "command":  "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                       "arguments":  [
+                                         "-ExecutionPolicy",
+                                         "Bypass",
+                                         "-File",
+                                         "D:\\Projects\\Beat-The-House-worktrees\\cross-balance\\tools\\validate_project.ps1",
+                                         "-Quiet"
+                                     ],
+                       "exit_code":  0,
+                       "timed_out":  false,
+                       "duration_msec":  49470,
+                       "duration_sec":  49.47,
+                       "suite_time_baseline_sec":  0,
+                       "suite_time_budget_sec":  0,
+                       "suite_time_budget_exceeded":  false,
+                       "stderr_issue_count":  0,
+                       "stderr_issues":  [
+
+                                         ],
+                       "stdout":  "D:\\Projects\\Beat-The-House-worktrees\\cross-balance\\.tmp\\balance06_1\\foundation_contracts_1\\validate_project.stdout.txt",
+                       "stderr":  "D:\\Projects\\Beat-The-House-worktrees\\cross-balance\\.tmp\\balance06_1\\foundation_contracts_1\\validate_project.stderr.txt",
+                       "error":  ""
+                   },
+                   {
+                       "name":  "godot_import",
+                       "command":  "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+                       "arguments":  [
+                                         "--headless",
+                                         "--path",
+                                         "D:\\Projects\\Beat-The-House-worktrees\\cross-balance",
+                                         "--import"
+                                     ],
+                       "exit_code":  0,
+                       "timed_out":  false,
+                       "duration_msec":  17979,
+                       "duration_sec":  17.979,
+                       "suite_time_baseline_sec":  0,
+                       "suite_time_budget_sec":  0,
+                       "suite_time_budget_exceeded":  false,
+                       "stderr_issue_count":  0,
+                       "stderr_issues":  [
+
+                                         ],
+                       "stdout":  "D:\\Projects\\Beat-The-House-worktrees\\cross-balance\\.tmp\\balance06_1\\foundation_contracts_1\\godot_import.stdout.txt",
+                       "stderr":  "D:\\Projects\\Beat-The-House-worktrees\\cross-balance\\.tmp\\balance06_1\\foundation_contracts_1\\godot_import.stderr.txt",
+                       "error":  ""
+                   },
+                   {
+                       "name":  "gdscript_load_check",
+                       "command":  "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+                       "arguments":  [
+                                         "--headless",
+                                         "--path",
+                                         "D:\\Projects\\Beat-The-House-worktrees\\cross-balance",
+                                         "--script",
+                                         "res://tools/gdscript_load_check.gd",
+                                         "--",
+                                         "--roots=res://scripts,res://tools",
+                                         "--exclude=res://scripts/tests/foundation,res://scripts/tests/ui_scene",
+                                         "--report=res://.tmp/balance06_1/foundation_contracts_1/gdscript_load_check.json"
+                                     ],
+                       "exit_code":  0,
+                       "timed_out":  false,
+                       "duration_msec":  24906,
+                       "duration_sec":  24.907,
+                       "suite_time_baseline_sec":  0,
+                       "suite_time_budget_sec":  0,
+                       "suite_time_budget_exceeded":  false,
+                       "stderr_issue_count":  0,
+                       "stderr_issues":  [
+
+                                         ],
+                       "stdout":  "D:\\Projects\\Beat-The-House-worktrees\\cross-balance\\.tmp\\balance06_1\\foundation_contracts_1\\gdscript_load_check.stdout.txt",
+                       "stderr":  "D:\\Projects\\Beat-The-House-worktrees\\cross-balance\\.tmp\\balance06_1\\foundation_contracts_1\\gdscript_load_check.stderr.txt",
+                       "error":  ""
+                   },
+                   {
+                       "name":  "foundation_contracts",
+                       "command":  "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+                       "arguments":  [
+                                         "--headless",
+                                         "--path",
+                                         "D:\\Projects\\Beat-The-House-worktrees\\cross-balance",
+                                         "--script",
+                                         "res://.tmp/generated_tests/foundation_check_split_runner.gd",
+                                         "--",
+                                         "--suite=contracts",
+                                         "--report=res://.tmp/balance06_1/foundation_contracts_1/foundation_contracts.json"
+                                     ],
+                       "exit_code":  124,
+                       "timed_out":  true,
+                       "duration_msec":  300046,
+                       "duration_sec":  300.047,
+                       "suite_time_baseline_sec":  153.594,
+                       "suite_time_budget_sec":  230.391,
+                       "suite_time_budget_exceeded":  true,
+                       "stderr_issue_count":  1,
+                       "stderr_issues":  [
+                                             "SCRIPT ERROR: Invalid call. Nonexistent function \u0027surface_add_exact_hover_hit\u0027 in base \u0027RefCounted (SurfaceHarness)\u0027."
+                                         ],
+                       "stdout":  "D:\\Projects\\Beat-The-House-worktrees\\cross-balance\\.tmp\\balance06_1\\foundation_contracts_1\\foundation_contracts.stdout.txt",
+                       "stderr":  "D:\\Projects\\Beat-The-House-worktrees\\cross-balance\\.tmp\\balance06_1\\foundation_contracts_1\\foundation_contracts.stderr.txt",
+                       "error":  "Stage foundation_contracts took 300.047s, exceeding the S0.1 suite-time budget 230.391s (baseline 153.594s * 1.50)."
+                   }
+               ],
+    "suite_time_stage_baselines_sec":  {
+                                           "ui_scene_compile":  83.234,
+                                           "foundation_bar_dice":  60.646,
+                                           "foundation_slot":  25.535,
+                                           "foundation_slot_acceptance":  638.945,
+                                           "foundation_scratch_tickets":  12.683,
+                                           "foundation_systems":  29.141,
+                                           "foundation_games":  146.95,
+                                           "foundation_all":  153.768,
+                                           "foundation_video_poker":  85.802,
+                                           "foundation_contracts":  153.594,
+                                           "foundation_pull_tabs":  13.253,
+                                           "foundation_baccarat":  11.209,
+                                           "foundation_audit":  646.713,
+                                           "foundation_blackjack":  11.86,
+                                           "foundation_roulette":  11.031
+                                       },
+    "report_dir":  "D:\\Projects\\Beat-The-House-worktrees\\cross-balance\\.tmp\\balance06_1\\foundation_contracts_1"
+}

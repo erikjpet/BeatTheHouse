@@ -1,0 +1,12 @@
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_add_exact_hover_hit' in base 'RefCounted (SurfaceHarness)'.
+   at: BlackjackGame._draw_count_challenge (res://scripts/games/blackjack.gd:2939)
+   GDScript backtrace (most recent call first):
+       [0] _draw_count_challenge (res://scripts/games/blackjack.gd:2939)
+       [1] _check_blackjack_surface_contract (res://.tmp/generated_tests/foundation_check_split_runner.gd:15406)
+       [2] _check_game_surface_contracts (res://.tmp/generated_tests/foundation_check_split_runner.gd:4787)
+       [3] _check_foundation_contract_smoke (res://.tmp/generated_tests/foundation_check_split_runner.gd:3777)
+       [4] _check_foundation_contract_smoke_for_suite (res://.tmp/generated_tests/foundation_check_split_runner.gd:717)
+       [5] _foundation_run_check (res://.tmp/generated_tests/foundation_check_split_runner.gd:653)
+       [6] _foundation_run_contract_suite (res://.tmp/generated_tests/foundation_check_split_runner.gd:548)
+       [7] _foundation_run_suite (res://.tmp/generated_tests/foundation_check_split_runner.gd:502)
+       [8] _init (res://.tmp/generated_tests/foundation_check_split_runner.gd:405)

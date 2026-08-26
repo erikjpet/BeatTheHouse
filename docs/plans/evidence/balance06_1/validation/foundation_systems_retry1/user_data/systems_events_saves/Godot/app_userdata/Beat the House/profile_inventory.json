@@ -1,0 +1,39 @@
+{
+	"act": 1,
+	"act_seam": {
+
+	},
+	"challenge_completions": {
+
+	},
+	"daily_runs": {
+		"best_result": {
+
+		},
+		"best_streak": 0,
+		"current_streak": 0,
+		"last_completed_date": "",
+		"last_daily_id": ""
+	},
+	"items": [],
+	"lifetime_stats": {
+		"biggest_single_win": 0,
+		"games_played": {
+
+		},
+		"total_bankroll_lost": 0,
+		"total_bankroll_won": 0,
+		"total_runs": 0,
+		"victories_per_route": {
+
+		}
+	},
+	"run_history": [],
+	"schema_version": 5,
+	"scratch_ticket_collection_acknowledged": false,
+	"scratch_ticket_types_discovered": [],
+	"tips_seen": {
+		"tip06_tonight_changes_rooms": true
+	},
+	"tutorial_completed": false
+}

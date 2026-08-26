@@ -1,0 +1,40 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+FOUNDATION_CHECK_START id=ui_state_machine_input_fuzz_foundation suite=systems
+FOUNDATION_CHECK_DONE id=ui_state_machine_input_fuzz_foundation duration_msec=2042 failures=0
+FOUNDATION_CHECK_START id=economy_pressure_foundation suite=systems
+FOUNDATION_CHECK_DONE id=economy_pressure_foundation duration_msec=59 failures=0
+FOUNDATION_CHECK_START id=travel_route_foundation suite=systems
+FOUNDATION_CHECK_DONE id=travel_route_foundation duration_msec=295 failures=0
+FOUNDATION_CHECK_START id=world_map_foundation suite=systems
+FOUNDATION_CHECK_DONE id=world_map_foundation duration_msec=6736 failures=0
+FOUNDATION_CHECK_START id=meta_home_run_boundary suite=systems
+FOUNDATION_CHECK_DONE id=meta_home_run_boundary duration_msec=133 failures=0
+FOUNDATION_CHECK_START id=meta_home_fresh_store_defaults suite=systems
+FOUNDATION_CHECK_DONE id=meta_home_fresh_store_defaults duration_msec=68 failures=0
+FOUNDATION_CHECK_START id=meta_home_fixture_pollution_migration suite=systems
+FOUNDATION_CHECK_DONE id=meta_home_fixture_pollution_migration duration_msec=86 failures=0
+FOUNDATION_CHECK_START id=time_open_hours_foundation suite=systems
+FOUNDATION_CHECK_DONE id=time_open_hours_foundation duration_msec=534 failures=0
+FOUNDATION_CHECK_START id=service_hook_foundation suite=systems
+FOUNDATION_CHECK_DONE id=service_hook_foundation duration_msec=72 failures=0
+FOUNDATION_CHECK_START id=suspicion_security_foundation suite=systems
+FOUNDATION_CHECK_DONE id=suspicion_security_foundation duration_msec=89 failures=0
+FOUNDATION_CHECK_START id=run_report_foundation suite=systems
+FOUNDATION_CHECK_DONE id=run_report_foundation duration_msec=61 failures=0
+FOUNDATION_CHECK_START id=music_fx_foundation suite=systems
+FOUNDATION_CHECK_DONE id=music_fx_foundation duration_msec=78 failures=0
+FOUNDATION_CHECK_START id=music_stem_director_foundation suite=systems
+FOUNDATION_CHECK_DONE id=music_stem_director_foundation duration_msec=242 failures=0
+FOUNDATION_CHECK_START id=skill_cheat_contract_foundation suite=systems
+SKILL_CHEAT_CONTRACT_MATRIX pull_tabs/tab_detector_scan:cheat:cheat_resolved:+0, slot/nudge:cheat:nudge_resolved:+31, bar_dice/loaded_toss:cheat:controlled_roll_partial:+31, bar_dice/palmed_swap:cheat:palmed_swap_perfect:+31, blackjack/peek_hole_card:cheat:heat_taken:+21, blackjack/count_cards:cheat:heat_taken:+21, baccarat/read_baccarat_shoe:cheat:shoe_read_perfect:+31, baccarat/edge_sort:cheat:edge_sort_blown:+31, roulette/read_wheel_bias:cheat:wheel_read_perfect:+0, roulette/past_post:cheat:past_post_blown:+31, craps/dice_setting:cheat:applied:+31, craps/dice_switching:cheat:caught:+31, video_poker/mark_holds:cheat:holdout_blown:+31
+FOUNDATION_CHECK_DONE id=skill_cheat_contract_foundation duration_msec=490 failures=0
+FOUNDATION_CHECK_START id=skill_timing_helper_foundation suite=systems
+FOUNDATION_CHECK_DONE id=skill_timing_helper_foundation duration_msec=41 failures=0
+FOUNDATION_CHECK_START id=skill_cheat_item_modifier_foundation suite=systems
+FOUNDATION_CHECK_DONE id=skill_cheat_item_modifier_foundation duration_msec=121 failures=0
+FOUNDATION_CHECK_START id=m2_system_interaction_scenario suite=systems
+FOUNDATION_CHECK_DONE id=m2_system_interaction_scenario duration_msec=207 failures=0
+FOUNDATION_CHECK_START id=recovery_loss_pressure_foundation suite=systems
+FOUNDATION_CHECK_DONE id=recovery_loss_pressure_foundation duration_msec=2055 failures=0
+Foundation Godot checks passed. suite=systems checks=18 report=D:/Projects/Beat-The-House-worktrees/cross-balance/.tmp/balance06_1/foundation_systems_retry1/foundation_systems.systems_world_release.json

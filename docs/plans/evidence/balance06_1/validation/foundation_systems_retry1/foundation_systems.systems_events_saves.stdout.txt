@@ -1,0 +1,52 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+FOUNDATION_CHECK_START id=event_module_foundation suite=systems
+FOUNDATION_CHECK_DONE id=event_module_foundation duration_msec=210 failures=0
+FOUNDATION_CHECK_START id=event_system_state_foundation suite=systems
+FOUNDATION_CHECK_DONE id=event_system_state_foundation duration_msec=117 failures=0
+FOUNDATION_CHECK_START id=interactable_event_class_guard suite=systems
+FOUNDATION_CHECK_DONE id=interactable_event_class_guard duration_msec=2995 failures=0
+FOUNDATION_CHECK_START id=crew_recruitment_contract suite=systems
+RUN_SAVE_MIGRATION town_state regenerated from seed for a pre-0.6 save.
+RUN_SAVE_MIGRATION town_state regenerated from seed for a pre-0.6 save.
+FOUNDATION_CHECK_DONE id=crew_recruitment_contract duration_msec=1977 failures=0
+FOUNDATION_CHECK_START id=crew_layer3_jobs_contract suite=systems
+FOUNDATION_CHECK_DONE id=crew_layer3_jobs_contract duration_msec=109 failures=0
+FOUNDATION_CHECK_START id=crew_plays_contract suite=systems
+FOUNDATION_CHECK_DONE id=crew_plays_contract duration_msec=127 failures=0
+FOUNDATION_CHECK_START id=crew_heist_contract suite=systems
+FOUNDATION_CHECK_DONE id=crew_heist_contract duration_msec=279 failures=0
+FOUNDATION_CHECK_START id=crew_turn_contract suite=systems
+FOUNDATION_CHECK_DONE id=crew_turn_contract duration_msec=1033 failures=0
+FOUNDATION_CHECK_START id=character_chains_contract suite=systems
+FOUNDATION_CHECK_DONE id=character_chains_contract duration_msec=139 failures=0
+FOUNDATION_CHECK_START id=content_depth_contract suite=systems
+FOUNDATION_CHECK_DONE id=content_depth_contract duration_msec=340 failures=0
+FOUNDATION_CHECK_START id=lottery_redemption_clerk_merge suite=systems
+FOUNDATION_CHECK_DONE id=lottery_redemption_clerk_merge duration_msec=41 failures=0
+FOUNDATION_CHECK_START id=talk_decision_system_foundation suite=systems
+FOUNDATION_CHECK_DONE id=talk_decision_system_foundation duration_msec=417 failures=0
+FOUNDATION_CHECK_START id=dialogue_system_foundation suite=systems
+FOUNDATION_CHECK_DONE id=dialogue_system_foundation duration_msec=63 failures=0
+FOUNDATION_CHECK_START id=t4_7_event_interaction_model suite=systems
+FOUNDATION_CHECK_DONE id=t4_7_event_interaction_model duration_msec=1117 failures=0
+FOUNDATION_CHECK_START id=t6_7_visibility_event_cadence suite=systems
+FOUNDATION_CHECK_DONE id=t6_7_visibility_event_cadence duration_msec=534 failures=0
+FOUNDATION_CHECK_START id=save_service_foundation_round_trip suite=systems
+FOUNDATION_CHECK_DONE id=save_service_foundation_round_trip duration_msec=230 failures=0
+FOUNDATION_CHECK_START id=save_load_interrupt_fuzz_foundation suite=systems
+RUN_SAVE_MIGRATION town_state regenerated from seed for a pre-0.6 save.
+RUN_SAVE_MIGRATION town_state regenerated from seed for a pre-0.6 save.
+FOUNDATION_CHECK_DONE id=save_load_interrupt_fuzz_foundation duration_msec=4525 failures=0
+FOUNDATION_CHECK_START id=platform_services_foundation suite=systems
+FOUNDATION_CHECK_DONE id=platform_services_foundation duration_msec=49 failures=0
+FOUNDATION_CHECK_START id=jazz_club_foundation suite=systems
+FOUNDATION_CHECK_DONE id=jazz_club_foundation duration_msec=129 failures=0
+FOUNDATION_CHECK_START id=lender_debt_foundation suite=systems
+RUN_SAVE_MIGRATION active_streets_run closed; synthetic geography is no longer supported.
+FOUNDATION_CHECK_DONE id=lender_debt_foundation duration_msec=1349 failures=0
+FOUNDATION_CHECK_START id=demo_boss_objective_foundation suite=systems
+GRAND_CASINO_CARD_TIERS bronze=1/5 silver=3/15 gold=5/30 look_away=5 dialogues=6
+HOUSE_CALLS_PHASES walk=walk pat_down=clean evidence=winnings_ledger,attention,heat_ledger clean_terms=true dirty_terms=true failure=casino_taken_out_back
+FOUNDATION_CHECK_DONE id=demo_boss_objective_foundation duration_msec=2032 failures=0
+Foundation Godot checks passed. suite=systems checks=21 report=D:/Projects/Beat-The-House-worktrees/cross-balance/.tmp/balance06_1/foundation_systems_retry1/foundation_systems.systems_events_saves.json
