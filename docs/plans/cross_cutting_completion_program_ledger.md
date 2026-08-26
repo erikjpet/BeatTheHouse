@@ -399,6 +399,12 @@ their own detailed handoffs and test evidence.
   static validator pass. Formal branch acceptance, merge and board status remain
   withheld pending mandatory serialized host gates; depth continues HOST and
   board HOLD.
+- 2026-08-26: Exact pusher-head exhaustive parsing is fully green. The smoke
+  tail remains red only on the two previously routed pre-pusher Blackjack
+  baseline defects (stale count-bubble clock and premature tutorial barring),
+  with no Coin Pusher failure; clean statically accepted `fix06_4` addresses
+  both but still awaits its serialized runtime gate. A fresh standalone focused
+  Coin Pusher suite is running from stable zero.
 - 2026-08-26: Depth immediately corrected that readiness claim after a
   read-only executable-gate audit reopened `env06_6` at `aa179f11` with three
   P1 evidence-harness gaps: no native/Web exact-sequence parity producer, no
