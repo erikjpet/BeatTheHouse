@@ -111,3 +111,15 @@ their own detailed handoffs and test evidence.
   unique generated puzzle and printed content that exactly matches its
   mechanics. The scratch author remains a board non-writer and will replace its
   prior BLOCKED delta with a final cited delta after implementation/review.
+- 2026-08-25: The clean replacement `pusherv3_10` project/import/exhaustive-
+  parse/foundation battery passed in the canonical frozen checkout. Two stale
+  non-canonical closure checkers (`settle_3` and `settle_direct`) then attempted
+  to relaunch; their exact process trees were stopped and their reports were
+  rejected. After three consecutive zero-process windows, exclusive HOST was
+  released only for the fresh 600,000 accepted-play economy proof.
+- 2026-08-25: Separate owner-authorized `fix06_3` work advanced the original
+  `main` branch to `ef523652a5b1d6582c958bce3316ef26e2e03bb1` with exactly nine
+  Scratch-owned files. That task excluded the active board, unrelated paths,
+  generated evidence, and runtime claims; no push occurred. This is an
+  external concurrent main-line change, not cross-program acceptance, and must
+  be semantically reconciled before the final integration merge.
