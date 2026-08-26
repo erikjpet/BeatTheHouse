@@ -1,21 +1,21 @@
 class_name ScenarioLayoutResolver
 extends RefCounted
 
-const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
-
 const BOARD_SIZE := Vector2(900.0, 430.0)
 const SMALL_SCREEN_TARGET := Vector2(104.0, 76.0)
-const MAX_LABEL_LENGTH := 48
-const ZONE_CENTERS := {
-	"left": Vector2(180.0, 232.0),
-	"right": Vector2(720.0, 232.0),
-	"center": Vector2(450.0, 220.0),
-	"foreground": Vector2(450.0, 342.0),
-	"background": Vector2(450.0, 112.0),
-	"exit_lane": Vector2(820.0, 342.0),
-	"service_lane": Vector2(132.0, 250.0),
-}
-const ANCHOR_FIELDS := {
+const MAX_VISUALS := 128
+const MIN_SCENE_SIZE := Vector2(16.0, 16.0)
+const DEFAULT_SCENE_SIZE := Vector2(48.0, 48.0)
+const DEFAULT_ACTOR_SIZE := Vector2(72.0, 80.0)
+const COLLISION_RATIO := 0.65
+const COLLISION_OFFSETS := [
+	Vector2.ZERO,
+	Vector2(56.0, 0.0), Vector2(-56.0, 0.0),
+	Vector2(0.0, 52.0), Vector2(0.0, -52.0),
+	Vector2(56.0, 52.0), Vector2(-56.0, 52.0),
+	Vector2(56.0, -52.0), Vector2(-56.0, -52.0),
+]
+const LAYOUT_SPOT_FIELDS := {
 	"game": "game_spots",
 	"event": "event_spots",
 	"item": "item_spots",
@@ -27,285 +27,334 @@ const ANCHOR_FIELDS := {
 }
 
 
-static func prepare(environment: Dictionary, projection: Dictionary) -> Dictionary:
-	if projection.is_empty():
-		return {}
-	var semantic := _dict(projection.get("semantic_state", {}))
+static func resolve(base_records: Array, projection: Dictionary, environment: Dictionary = {}) -> Dictionary:
+	var semantic_state := _dict(projection.get("semantic_state", {}))
+	var resolved_projection := projection.duplicate(true)
+	# The optional environment argument keeps the pure composition API backward
+	# compatible for callers that only inspect semantic membership. Production
+	# passes the exact room snapshot and therefore always takes the bounded path.
+	if semantic_state.is_empty() or environment.is_empty():
+		return {
+			"ok": true,
+			"projection": resolved_projection,
+			"errors": [],
+			"warnings": [],
+			"layout_audit": {"visual_count": 0, "collision_adjustment_count": 0},
+		}
 	var errors: Array = []
 	var warnings: Array = []
-	var visuals: Array = []
-	var interaction_overlays: Array = []
-	var visual_identities: Dictionary = {}
-	var occupied: Array = []
-	var exit_lane := Rect2(Vector2(764.0, 286.0), Vector2(136.0, 144.0))
-	for object_id_value in _dict(_dict(environment.get("layout", {})).get("object_rects", {})).keys():
-		occupied.append({"identity": "base::%s" % str(object_id_value), "rect": _dict(_dict(_dict(environment.get("layout", {})).get("object_rects", {})).get(object_id_value, {})), "base": true})
-
-	for value in _ordered_values(_dict(semantic.get("scene_objects", {}))):
-		var scene := _dict(value)
-		var identity := OperationRegistryScript.identity_from(scene)
-		var visual := _prepare_visual(environment, scene, false, errors)
-		if visual.is_empty():
-			continue
-		visual_identities[identity] = visual.duplicate(true)
-		visuals.append(visual)
-		_validate_placement(identity, visual, occupied, exit_lane, errors, warnings)
-
-	for value in _ordered_values(_dict(semantic.get("actors", {}))):
-		var actor := _dict(value)
-		var identity := OperationRegistryScript.identity_from(actor)
-		if visual_identities.has(identity):
-			errors.append("scenario semantic identity %s collides across scene and actor families." % identity)
-			continue
-		var visual := _prepare_visual(environment, actor, true, errors, projection, semantic)
-		if visual.is_empty():
-			continue
-		visual_identities[identity] = visual.duplicate(true)
-		visuals.append(visual)
-		_validate_placement(identity, visual, occupied, exit_lane, errors, warnings)
-
-	var has_safe_exit := false
-	for value in _ordered_values(_dict(semantic.get("interactions", {}))):
-		var interaction := _dict(value)
-		interaction_overlays.append(interaction)
-		var identity := OperationRegistryScript.identity_from(interaction)
-		var mode := str(interaction.get("mode", "add"))
-		if mode in ["add", "replace"]:
-			var minimum := maxf(OperationRegistryScript.MIN_TARGET_SIZE, float(interaction.get("min_target_size", 0.0)))
-			var bounds := _dict(interaction.get("hit_bounds", {}))
-			if float(bounds.get("w", 0.0)) < minimum or float(bounds.get("h", 0.0)) < minimum:
-				errors.append("scenario interaction %s has a hit target below %.0f pixels." % [identity, minimum])
-			if not visual_identities.has(identity):
-				errors.append("scenario interaction %s has no rendered scene object or actor." % identity)
-		if bool(interaction.get("enabled", false)) and bool(interaction.get("safe_exit", false)) and not _array(interaction.get("available_actions", [])).is_empty():
-			var exit_visual := _dict(visual_identities.get(identity, {}))
-			var target_is_base_exit := _base_travel_identity_exists(environment, str(interaction.get("target_stable_object_id", "")))
-			if target_is_base_exit or not exit_visual.is_empty() and _pixel_rect(_dict(exit_visual.get("normalized_rect", {}))).intersects(exit_lane):
-				has_safe_exit = true
-			else:
-				errors.append("scenario safe-exit interaction %s is not spatially correlated with the exit lane or a base travel target." % identity)
-
-	for visual_value in visuals:
-		var visual := _dict(visual_value)
-		if str(visual.get("role", "")) == "obstacle" and bool(visual.get("visible", true)) and bool(visual.get("enabled", true)):
-			var pixels := _pixel_rect(_dict(visual.get("normalized_rect", {})))
-			if pixels.intersects(exit_lane) and not has_safe_exit:
-				errors.append("scenario obstacle %s blocks the exit lane without an enabled safe-exit interaction." % str(visual.get("semantic_identity", "")))
-
-	visuals.sort_custom(Callable(ScenarioLayoutResolver, "_sort_visuals"))
+	var occupied := _base_occupied_records(base_records)
+	var base_by_identity := _base_records_by_identity(base_records)
+	var collision_adjustments := 0
+	var visual_count := 0
+	var resolved_scenes: Dictionary = {}
+	var resolved_actors: Dictionary = {}
+	for collection_entry in [
+		[semantic_state.get("scene_objects", {}), false, resolved_scenes],
+		[semantic_state.get("actors", {}), true, resolved_actors],
+	]:
+		var collection := _dict((collection_entry as Array)[0])
+		var actor := bool((collection_entry as Array)[1])
+		var destination: Dictionary = (collection_entry as Array)[2]
+		var identities := collection.keys()
+		identities.sort()
+		for identity_value in identities:
+			var identity := str(identity_value)
+			var semantic := _dict(collection.get(identity_value, {}))
+			if semantic.is_empty():
+				continue
+			if not bool(semantic.get("present", true)):
+				destination[identity] = semantic
+				continue
+			visual_count += 1
+			if visual_count > MAX_VISUALS:
+				errors.append("Scenario presentation exceeds the %d visual-object bound." % MAX_VISUALS)
+				continue
+			var resolved := _resolve_visual(
+				identity,
+				semantic,
+				actor,
+				environment,
+				semantic_state,
+				_dict(base_by_identity.get(identity, {})),
+				occupied,
+				errors,
+				warnings
+			)
+			if resolved.is_empty():
+				var rejected := semantic.duplicate(true)
+				rejected["layout_valid"] = false
+				destination[identity] = rejected
+				continue
+			resolved["layout_valid"] = true
+			if bool(resolved.get("collision_adjusted", false)):
+				collision_adjustments += 1
+			destination[identity] = resolved
+			if bool(resolved.get("visible", true)):
+				occupied.append({
+					"identity": identity,
+					"rect": _pixel_rect(_dict(resolved.get("normalized_hit_rect", {}))),
+				})
+	semantic_state["scene_objects"] = resolved_scenes
+	semantic_state["actors"] = resolved_actors
+	resolved_projection["semantic_state"] = semantic_state
 	return {
-		"schema_version": 1,
-		"scenario_id": str(projection.get("scenario_id", "")),
-		"phase_id": str(projection.get("phase_id", "")),
-		"status": str(projection.get("status", "")),
-		"boundary_serial": maxi(0, int(projection.get("boundary_serial", 0))),
 		"ok": errors.is_empty(),
+		"projection": resolved_projection,
 		"errors": errors,
 		"warnings": warnings,
-		"visual_objects": visuals,
-		"interaction_overlays": interaction_overlays,
-		"services": _ordered_values(_dict(semantic.get("services", {}))),
-		"games": _ordered_values(_dict(semantic.get("games", {}))),
-		"routes": _ordered_values(_dict(semantic.get("routes", {}))),
-		"active_stages": _array(projection.get("active_stages", [])),
 		"layout_audit": {
+			"visual_count": mini(visual_count, MAX_VISUALS),
+			"collision_adjustment_count": collision_adjustments,
 			"board_size": {"x": BOARD_SIZE.x, "y": BOARD_SIZE.y},
-			"minimum_target_size": OperationRegistryScript.MIN_TARGET_SIZE,
-			"small_screen_target": {"x": SMALL_SCREEN_TARGET.x, "y": SMALL_SCREEN_TARGET.y},
-			"visual_count": visuals.size(),
-			"interaction_count": interaction_overlays.size(),
-			"safe_exit_present": has_safe_exit,
+			"small_screen_target": {"w": SMALL_SCREEN_TARGET.x, "h": SMALL_SCREEN_TARGET.y},
 		},
 	}
 
 
-static func _prepare_visual(environment: Dictionary, semantic: Dictionary, actor: bool, errors: Array, projection: Dictionary = {}, semantic_state: Dictionary = {}) -> Dictionary:
-	var identity := OperationRegistryScript.identity_from(semantic)
-	var label := str(semantic.get("label", "")).strip_edges()
-	if identity == "::":
-		errors.append("scenario visual is missing its stable owner identity.")
+static func _resolve_visual(
+	identity: String,
+	semantic: Dictionary,
+	actor: bool,
+	environment: Dictionary,
+	semantic_state: Dictionary,
+	base_record: Dictionary,
+	occupied: Array,
+	errors: Array,
+	warnings: Array
+) -> Dictionary:
+	var result := semantic.duplicate(true)
+	var base_rect := _record_pixel_rect(base_record)
+	var center := _resolve_center(
+		environment,
+		str(semantic.get("anchor_id", base_record.get("anchor_id", ""))),
+		str(semantic.get("zone_id", base_record.get("zone_id", "")))
+	)
+	if (not _finite_point(center) or center.x < 0.0) and base_rect.size.x > 0.0 and base_rect.size.y > 0.0:
+		center = base_rect.get_center()
+	if not _finite_point(center) or center.x < 0.0:
+		errors.append("Scenario visual %s references an unresolved anchor or zone." % identity)
 		return {}
-	if label.is_empty():
-		errors.append("scenario visual %s is missing its accessible label." % identity)
-		return {}
-	if label.length() > MAX_LABEL_LENGTH:
-		errors.append("scenario visual %s label exceeds %d characters." % [identity, MAX_LABEL_LENGTH])
-	var center := _resolve_center(environment, str(semantic.get("anchor_id", "")), str(semantic.get("zone_id", "")))
-	if center.x < 0.0:
-		errors.append("scenario visual %s references an unresolved anchor or zone." % identity)
-		return {}
+	var default_size := DEFAULT_ACTOR_SIZE if actor else DEFAULT_SCENE_SIZE
 	var bounds := _dict(semantic.get("bounds", {}))
-	var size := Vector2(float(bounds.get("w", 72.0 if actor else 48.0)), float(bounds.get("h", 80.0 if actor else 48.0)))
-	size.x = maxf(size.x, 16.0)
-	size.y = maxf(size.y, 16.0)
+	var size := Vector2(float(bounds.get("w", 0.0)), float(bounds.get("h", 0.0)))
+	if size.x <= 0.0 or size.y <= 0.0:
+		size = base_rect.size if base_rect.size.x > 0.0 and base_rect.size.y > 0.0 else default_size
+	var minimum := MIN_SCENE_SIZE
+	if not _finite_point(size) or size.x < minimum.x or size.y < minimum.y or size.x > BOARD_SIZE.x or size.y > BOARD_SIZE.y:
+		errors.append("Scenario visual %s has out-of-bounds semantic dimensions." % identity)
+		return {}
 	var route_points: Array = []
-	if actor and not str(semantic.get("route_id", "")).strip_edges().is_empty():
-		var route_center := _resolve_route_center(environment, semantic_state, str(semantic.get("route_id", "")))
-		if route_center.x < 0.0:
-			errors.append("scenario actor %s references an unresolved route %s." % [identity, str(semantic.get("route_id", ""))])
-		else:
-			route_points = [_point_dict(center), _point_dict(route_center)]
-			var behavior := str(semantic.get("behavior", "idle"))
-			if behavior in ["flee", "depart"] or (behavior == "patrol" and int(projection.get("boundary_serial", 0)) % 2 == 1):
-				center = route_center
-	var pixels := Rect2(center - size * 0.5, size)
-	var owner := str(semantic.get("owner_namespace", ""))
-	var stable_id := str(semantic.get("stable_object_id", ""))
-	return {
-		"object_id": "scenario:%s:%s" % [owner, stable_id],
-		"object_type": "scenario_actor" if actor else "scenario_object",
-		"visual_type": "scenario_actor" if actor else "scenario_object",
-		"source_id": str(semantic.get("actor_id", stable_id)),
-		"label": label,
-		"short_description": _visual_description(semantic, actor),
-		"presence": "scenario",
-		"interactive": false,
-		"decorative": true,
-		"enabled": bool(semantic.get("enabled", true)),
-		"visible": bool(semantic.get("visible", true)),
-		"disabled_reason": str(semantic.get("disabled_reason", "")),
-		"normalized_rect": _normalized_rect(pixels),
-		"focus_rect": _normalized_rect(pixels),
-		"small_screen_rect": _expanded_normalized_rect(pixels, SMALL_SCREEN_TARGET),
-		"owner_namespace": owner,
-		"stable_object_id": stable_id,
-		"semantic_identity": identity,
-		"role": str(semantic.get("role", "actor" if actor else "prop")),
-		"state": str(semantic.get("state", "")),
-		"appearance": str(semantic.get("appearance", "")),
-		"pose": str(semantic.get("pose", "idle")),
-		"behavior": str(semantic.get("behavior", "idle")),
-		"route_id": str(semantic.get("route_id", "")),
-		"route_points": route_points,
-		"non_color_state": _non_color_state(semantic, actor),
-		"z_order": int(round(center.y)) + (20 if actor else 0),
-	}
-
-
-static func _resolve_route_center(environment: Dictionary, semantic: Dictionary, route_id: String) -> Vector2:
-	if route_id.begins_with("layout:"):
-		return _resolve_center(environment, route_id, "")
-	if route_id.begins_with("zone:"):
-		return _resolve_center(environment, "", route_id.trim_prefix("zone:"))
-	for route_value in _dict(semantic.get("routes", {})).values():
-		var route := _dict(route_value)
-		if str(route.get("stable_object_id", "")) != route_id: continue
-		var source := str(route.get("source_id", ""))
-		return _resolve_center(environment, source if source.begins_with("layout:") else "", source.trim_prefix("zone:") if source.begins_with("zone:") else "")
-	return Vector2(-1.0, -1.0)
-
-
-static func _point_dict(value: Vector2) -> Dictionary:
-	return {"x": value.x / BOARD_SIZE.x, "y": value.y / BOARD_SIZE.y}
+	if actor:
+		var route_id := str(semantic.get("route_id", "")).strip_edges()
+		if not route_id.is_empty():
+			var route_center := _resolve_route_center(environment, semantic_state, route_id)
+			if _finite_point(route_center) and route_center.x >= 0.0:
+				route_points = [_normalized_point(center), _normalized_point(route_center)]
+				if str(semantic.get("behavior", "idle")) in ["patrol", "flee", "depart"]:
+					center = route_center
+			else:
+				warnings.append("Scenario actor %s route %s has no room-space endpoint." % [identity, route_id])
+	var authored_rect := _clamp_inside_board(Rect2(center - size * 0.5, size))
+	var placement := _collision_safe_rect(identity, authored_rect, occupied)
+	var pixel_rect: Rect2 = placement.get("rect", authored_rect)
+	var adjusted := bool(placement.get("adjusted", false))
+	if bool(placement.get("colliding", false)):
+		warnings.append("Scenario visual %s retains an authored overlap after bounded collision resolution." % identity)
+	result["present"] = true
+	result["semantic_kind"] = "actor" if actor else "scene_object"
+	result["normalized_hit_rect"] = _normalized_rect(pixel_rect)
+	result["small_screen_rect"] = _expanded_normalized_rect(pixel_rect, SMALL_SCREEN_TARGET)
+	result["resolved_bounds"] = {"w": pixel_rect.size.x, "h": pixel_rect.size.y}
+	result["collision_adjusted"] = adjusted
+	result["route_points"] = route_points
+	if not result.has("label"):
+		result["label"] = str(base_record.get("label", result.get("stable_object_id", identity)))
+	if actor:
+		result["enabled"] = bool(result.get("enabled", true))
+		result["visible"] = bool(result.get("visible", true))
+	return result
 
 
 static func _resolve_center(environment: Dictionary, anchor_id: String, zone_id: String) -> Vector2:
-	if not anchor_id.strip_edges().is_empty():
+	var anchors := _dict(environment.get("semantic_anchors", {}))
+	var zones := _dict(environment.get("semantic_zones", {}))
+	if not anchor_id.is_empty() and anchors.has(anchor_id):
+		return _point(_dict(anchors.get(anchor_id, {})).get("position", []))
+	if not zone_id.is_empty() and zones.has(zone_id):
+		var zone_rect := _pixel_bounds(_dict(zones.get(zone_id, {})).get("bounds", []))
+		if zone_rect.size.x > 0.0 and zone_rect.size.y > 0.0:
+			return zone_rect.get_center()
+	var layout := _dict(environment.get("layout", environment))
+	var object_rects := _dict(layout.get("object_rects", {}))
+	if not anchor_id.is_empty() and object_rects.has(anchor_id):
+		var object_rect := _normalized_or_pixel_rect(object_rects.get(anchor_id, {}))
+		if object_rect.size.x > 0.0 and object_rect.size.y > 0.0:
+			return object_rect.get_center()
+	if anchor_id.begins_with("layout:"):
 		var parts := anchor_id.split(":", false)
-		if parts.size() == 3 and str(parts[0]) == "layout" and ANCHOR_FIELDS.has(str(parts[1])) and str(parts[2]).is_valid_int():
-			var spots := _array(_dict(environment.get("layout", {})).get(str(ANCHOR_FIELDS.get(str(parts[1]), "")), []))
+		if parts.size() == 3 and LAYOUT_SPOT_FIELDS.has(str(parts[1])) and str(parts[2]).is_valid_int():
+			var spots := _array(layout.get(str(LAYOUT_SPOT_FIELDS.get(str(parts[1]), "")), []))
 			var index := int(parts[2])
 			if index >= 0 and index < spots.size():
 				return _point(spots[index])
-	if ZONE_CENTERS.has(zone_id):
-		return ZONE_CENTERS.get(zone_id, Vector2(-1.0, -1.0))
 	return Vector2(-1.0, -1.0)
 
 
-static func _validate_placement(identity: String, visual: Dictionary, occupied: Array, exit_lane: Rect2, errors: Array, warnings: Array) -> void:
-	var rect := _pixel_rect(_dict(visual.get("normalized_rect", {})))
-	if rect.position.x < 0.0 or rect.position.y < 0.0 or rect.end.x > BOARD_SIZE.x or rect.end.y > BOARD_SIZE.y:
-		errors.append("scenario visual %s is outside the 900x430 room board." % identity)
+static func _resolve_route_center(environment: Dictionary, semantic_state: Dictionary, route_id: String) -> Vector2:
+	var routes := _dict(semantic_state.get("routes", {}))
+	var route := _dict(routes.get(route_id, {}))
+	for candidate_value in [
+		str(route.get("source_id", "")),
+		str(route.get("stable_object_id", "")),
+		route_id.get_slice("::", 1),
+	]:
+		var candidate := str(candidate_value)
+		var center := _resolve_center(environment, candidate, candidate)
+		if center.x >= 0.0:
+			return center
+	return Vector2(-1.0, -1.0)
+
+
+static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array) -> Dictionary:
+	for offset_value in COLLISION_OFFSETS:
+		var candidate := _clamp_inside_board(Rect2(authored.position + (offset_value as Vector2), authored.size))
+		if not _substantially_overlaps(identity, candidate, occupied):
+			return {"rect": candidate, "adjusted": not (offset_value as Vector2).is_zero_approx(), "colliding": false}
+	return {"rect": authored, "adjusted": false, "colliding": true}
+
+
+static func _substantially_overlaps(identity: String, rect: Rect2, occupied: Array) -> bool:
 	for occupied_value in occupied:
-		var prior := _dict(occupied_value)
-		var prior_rect := _layout_or_normalized_rect(_dict(prior.get("rect", {})))
-		if rect.intersection(prior_rect).get_area() > minf(rect.get_area(), prior_rect.get_area()) * 0.65:
-			if bool(prior.get("base", false)):
-				errors.append("scenario visual %s substantially overlaps base layout identity %s." % [identity, str(prior.get("identity", ""))])
-			else:
-				warnings.append("scenario visuals %s and %s substantially overlap; deterministic depth order is applied." % [str(prior.get("identity", "")), identity])
-	occupied.append({"identity": identity, "rect": _normalized_rect(rect)})
-	if str(visual.get("role", "")) == "exit" and not rect.intersects(exit_lane):
-		warnings.append("scenario exit visual %s is outside the authored exit lane." % identity)
+		var occupied_record := _dict(occupied_value)
+		if str(occupied_record.get("identity", "")) == identity:
+			continue
+		var other: Rect2 = occupied_record.get("rect", Rect2())
+		if other.size.x <= 0.0 or other.size.y <= 0.0:
+			continue
+		var overlap := rect.intersection(other).get_area()
+		if overlap > minf(rect.get_area(), other.get_area()) * COLLISION_RATIO:
+			return true
+	return false
 
 
-static func _visual_description(value: Dictionary, actor: bool) -> String:
-	var parts: Array[String] = []
-	if actor:
-		parts.append(str(value.get("behavior", "idle")).replace("_", " "))
-		parts.append(str(value.get("pose", "idle")).replace("_", " "))
-	else:
-		parts.append(str(value.get("role", "object")).replace("_", " "))
-		if not str(value.get("state", "")).is_empty(): parts.append(str(value.get("state", "")).replace("_", " "))
-	return ", ".join(parts).capitalize()
+static func _base_records_by_identity(base_records: Array) -> Dictionary:
+	var result: Dictionary = {}
+	for value in base_records:
+		var record := _dict(value)
+		var identity := "%s::%s" % [str(record.get("owner_namespace", "")), str(record.get("stable_object_id", ""))]
+		if identity != "::":
+			result[identity] = record
+	return result
 
 
-static func _non_color_state(value: Dictionary, actor: bool) -> String:
-	if actor:
-		return "%s; %s" % [str(value.get("behavior", "idle")).replace("_", " "), str(value.get("pose", "idle")).replace("_", " ")]
-	var state := str(value.get("state", "present")).replace("_", " ")
-	var appearance := str(value.get("appearance", "")).replace("_", " ")
-	return state if appearance.is_empty() else "%s; %s" % [state, appearance]
+static func _base_occupied_records(base_records: Array) -> Array:
+	var result: Array = []
+	for value in base_records:
+		var record := _dict(value)
+		var rect := _record_pixel_rect(record)
+		if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+			continue
+		result.append({
+			"identity": "%s::%s" % [str(record.get("owner_namespace", "")), str(record.get("stable_object_id", ""))],
+			"rect": rect,
+		})
+	return result
 
 
-static func _normalized_rect(rect: Rect2) -> Dictionary:
-	return {"x": rect.position.x / BOARD_SIZE.x, "y": rect.position.y / BOARD_SIZE.y, "w": rect.size.x / BOARD_SIZE.x, "h": rect.size.y / BOARD_SIZE.y}
+static func _record_pixel_rect(record: Dictionary) -> Rect2:
+	if record.is_empty():
+		return Rect2()
+	return _normalized_or_pixel_rect(record.get("focus_rect", record.get("normalized_rect", {})))
+
+
+static func _normalized_or_pixel_rect(value: Variant) -> Rect2:
+	var rect := _rect(value)
+	if not _finite_point(rect.position) or not _finite_point(rect.size) or rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		return Rect2()
+	if rect.position.x <= 1.0 and rect.position.y <= 1.0 and rect.size.x <= 1.0 and rect.size.y <= 1.0:
+		return Rect2(rect.position * BOARD_SIZE, rect.size * BOARD_SIZE)
+	return rect
+
+
+static func _pixel_bounds(value: Variant) -> Rect2:
+	if typeof(value) == TYPE_ARRAY and (value as Array).size() >= 4:
+		return Rect2(float((value as Array)[0]), float((value as Array)[1]), float((value as Array)[2]), float((value as Array)[3]))
+	return _normalized_or_pixel_rect(value)
+
+
+static func _clamp_inside_board(rect: Rect2) -> Rect2:
+	var position := Vector2(
+		clampf(rect.position.x, 0.0, BOARD_SIZE.x - rect.size.x),
+		clampf(rect.position.y, 0.0, BOARD_SIZE.y - rect.size.y)
+	)
+	return Rect2(position, rect.size)
 
 
 static func _expanded_normalized_rect(rect: Rect2, minimum: Vector2) -> Dictionary:
 	var size := Vector2(maxf(rect.size.x, minimum.x), maxf(rect.size.y, minimum.y))
-	var position := rect.get_center() - size * 0.5
-	position.x = clampf(position.x, 0.0, BOARD_SIZE.x - size.x)
-	position.y = clampf(position.y, 0.0, BOARD_SIZE.y - size.y)
-	return _normalized_rect(Rect2(position, size))
+	size.x = minf(size.x, BOARD_SIZE.x)
+	size.y = minf(size.y, BOARD_SIZE.y)
+	var expanded := _clamp_inside_board(Rect2(rect.get_center() - size * 0.5, size))
+	return _normalized_rect(expanded)
+
+
+static func _normalized_rect(rect: Rect2) -> Dictionary:
+	return {
+		"x": rect.position.x / BOARD_SIZE.x,
+		"y": rect.position.y / BOARD_SIZE.y,
+		"w": rect.size.x / BOARD_SIZE.x,
+		"h": rect.size.y / BOARD_SIZE.y,
+	}
 
 
 static func _pixel_rect(value: Dictionary) -> Rect2:
-	return Rect2(float(value.get("x", 0.0)) * BOARD_SIZE.x, float(value.get("y", 0.0)) * BOARD_SIZE.y, float(value.get("w", 0.0)) * BOARD_SIZE.x, float(value.get("h", 0.0)) * BOARD_SIZE.y)
+	return Rect2(
+		float(value.get("x", 0.0)) * BOARD_SIZE.x,
+		float(value.get("y", 0.0)) * BOARD_SIZE.y,
+		float(value.get("w", 0.0)) * BOARD_SIZE.x,
+		float(value.get("h", 0.0)) * BOARD_SIZE.y
+	)
 
 
-static func _layout_or_normalized_rect(value: Dictionary) -> Rect2:
-	if float(value.get("x", 0.0)) > 1.0 or float(value.get("y", 0.0)) > 1.0 or float(value.get("w", 0.0)) > 1.0 or float(value.get("h", 0.0)) > 1.0:
-		return Rect2(float(value.get("x", 0.0)), float(value.get("y", 0.0)), float(value.get("w", 0.0)), float(value.get("h", 0.0)))
-	return _pixel_rect(value)
+static func _normalized_point(point: Vector2) -> Dictionary:
+	return {"x": point.x / BOARD_SIZE.x, "y": point.y / BOARD_SIZE.y}
 
 
-static func _base_travel_identity_exists(environment: Dictionary, target_stable_id: String) -> bool:
-	var object_id := target_stable_id.strip_edges()
-	if not object_id.begins_with("travel:"):
-		return false
-	if not _dict(_dict(environment.get("layout", {})).get("object_rects", {})).has(object_id):
-		return false
-	if object_id == "travel:leave":
-		return not _array(environment.get("travel_hooks", environment.get("next_archetypes", []))).is_empty() or not _array(environment.get("next_archetypes", [])).is_empty()
-	var target_id := object_id.trim_prefix("travel:")
-	return _array(environment.get("travel_hooks", [])).has(target_id) or _array(environment.get("next_archetypes", [])).has(target_id)
+static func _finite_point(point: Vector2) -> bool:
+	return is_finite(point.x) and is_finite(point.y)
 
 
 static func _point(value: Variant) -> Vector2:
-	if typeof(value) == TYPE_VECTOR2: return value
-	if typeof(value) == TYPE_ARRAY and (value as Array).size() >= 2: return Vector2(float((value as Array)[0]), float((value as Array)[1]))
-	if typeof(value) == TYPE_DICTIONARY: return Vector2(float((value as Dictionary).get("x", -1.0)), float((value as Dictionary).get("y", -1.0)))
+	if typeof(value) == TYPE_VECTOR2:
+		return value as Vector2
+	if typeof(value) == TYPE_VECTOR2I:
+		var point := value as Vector2i
+		return Vector2(float(point.x), float(point.y))
+	if typeof(value) == TYPE_ARRAY and (value as Array).size() >= 2:
+		return Vector2(float((value as Array)[0]), float((value as Array)[1]))
+	if typeof(value) == TYPE_DICTIONARY:
+		return Vector2(float((value as Dictionary).get("x", -1.0)), float((value as Dictionary).get("y", -1.0)))
 	return Vector2(-1.0, -1.0)
 
 
-static func _ordered_values(value: Dictionary) -> Array:
-	var result: Array = []
-	var keys := value.keys()
-	keys.sort()
-	for key_value in keys: result.append(_dict(value.get(key_value, {})))
-	return result
-
-
-static func _sort_visuals(a: Dictionary, b: Dictionary) -> bool:
-	var az := int(a.get("z_order", 0))
-	var bz := int(b.get("z_order", 0))
-	return str(a.get("semantic_identity", "")) < str(b.get("semantic_identity", "")) if az == bz else az < bz
-
-
-static func _array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+static func _rect(value: Variant) -> Rect2:
+	if typeof(value) == TYPE_RECT2:
+		return value as Rect2
+	if typeof(value) != TYPE_DICTIONARY:
+		return Rect2()
+	var data := value as Dictionary
+	return Rect2(
+		float(data.get("x", 0.0)),
+		float(data.get("y", 0.0)),
+		float(data.get("w", 0.0)),
+		float(data.get("h", 0.0))
+	)
 
 
 static func _dict(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func _array(value: Variant) -> Array:
+	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
