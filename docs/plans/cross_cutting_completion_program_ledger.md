@@ -226,3 +226,12 @@ their own detailed handoffs and test evidence.
   evidence is invalidated pending fresh reruns. Systems also exceeded its hard
   duration budget (72.245 s versus 43.712 s); that is tracked separately for a
   clean rerun after the golden correction. EV remains unreleased.
+- 2026-08-26: Independent review issued
+  `REJECT 432c8a6cb74690bbd8cbcde050d049c5994b9f52`: the save-boundary fix was
+  otherwise clean, but the standalone audit called a four-argument
+  `create_machine` through the three-argument public solver API and therefore
+  could not execute. The exact load failure reproduced in the author's rerun.
+  Commit `d009f69f` adds the same default-false diagnostic parameter to the API
+  and forwards it; production callers remain on the unchanged default. The new
+  exact head is back under independent cumulative review. No evidence from the
+  rejected head is accepted.
