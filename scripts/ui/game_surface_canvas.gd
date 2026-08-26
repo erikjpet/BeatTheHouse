@@ -1096,7 +1096,12 @@ func _clear_captured_surface_pointer_state() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_FOCUS_EXIT:
 		_cancel_captured_surface_pointer()
-	elif what == NOTIFICATION_VISIBILITY_CHANGED and is_node_ready() and not is_visible_in_tree():
+	elif what == NOTIFICATION_VISIBILITY_CHANGED and is_node_ready():
+		_sync_surface_visibility(is_visible_in_tree())
+
+
+func _sync_surface_visibility(surface_visible: bool) -> void:
+	if not surface_visible:
 		_cancel_captured_surface_pointer()
 
 
