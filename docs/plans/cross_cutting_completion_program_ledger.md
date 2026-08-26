@@ -37,7 +37,7 @@ their own detailed handoffs and test evidence.
 | `balance06_1` | `codex/cross-balance` | `D:\Projects\Beat-The-House-worktrees\cross-balance` | `/root/wave1_balance06_1` | Opt-in economy harness, audit report, harness tests only; no product/tuning data | `3d4a41da` | None | IN_PROGRESS | TBD, non-author | Pending audit | Pending handoff | - | - | Retained |
 | `board06_1` | `codex/cross-board` | `D:\Projects\Beat-The-House-worktrees\cross-board` | `/root` | Board and companion logs; verified ignored orphan UIDs only | `3d4a41da` | Quiet-window coordination | QUIET WINDOW ACTIVE; protected-input audit | TBD, non-author | Family 1/2 contracts and board sections exist only in protected preflight user state; orphan UIDs are likewise protected untracked files | Pending | - | - | Retained |
 | `polish06_0` | `codex/cross-polish` | `D:\Projects\Beat-The-House-worktrees\cross-polish` | `/root/wave1_polish06_0` | Parked program document and newly defined parked prompts/templates; no execution | `3d4a41da` | None | MERGED; board/archive closure pending; outputs PARKED | `/root/review_polish06_0` | No P0-P3 findings | Author validation PASS 86.6s; reviewer validation PASS 116.4s; diff/structure checks PASS | `be14c1ce` ACCEPT | `dba53fb5` | Retained |
-| `pusherv3_11` | `codex/cross-pusher-audit` | `D:\Projects\Beat-The-House-worktrees\cross-pusher-audit` | `/root/review_polish06_0` (authored no V3 row) | Closure audit report/evidence only; no product edits | `554773c6` | `pusherv3_10` merged | IN_PROGRESS; static-only under HOST lock | TBD, non-author | Static audit pending | Runtime measurements held for serialized HOST | - | - | Retained |
+| `pusherv3_11` | `codex/cross-pusher-audit` | `D:\Projects\Beat-The-House-worktrees\cross-pusher-audit` | `/root/review_polish06_0` (authored no V3 row) | Closure audit report/evidence only; no product edits | `554773c6` (provisional) | Final `pusherv3_10` closure/evidence commit | HELD after provisional static start; dependency resumed by owner | TBD, non-author | Provisional static findings preserved; must re-check final dependency head | Runtime measurements not started | - | - | Retained |
 | `audio06_1` | `codex/cross-audio` | Not created | Unassigned | Surface SFX manifest/assets/shared path/tests | TBD | Families 1 and 2 rituals | HELD | TBD | - | - | - | - | Not created |
 | `integ06_1` | `codex/cross-integ` | Not created | Unassigned auditor | Integration harness/report/tests only | TBD | Families 1 and 2 merged | HELD | TBD | - | - | - | - | Not created |
 | `perf06_1` | `codex/cross-perf` | Not created | Unassigned auditor | Performance harness/report/gates and evidence-named behavior-preserving optimization only | TBD | Families 1 and 2 merged | HELD | TBD | - | - | - | - | Not created |
@@ -85,3 +85,9 @@ their own detailed handoffs and test evidence.
   proved zero task-owned processes; the remaining editor descends from a
   long-lived user PowerShell session. All cross workers remain runtime-held
   until the foreign session exits or the owner authorizes coexistence.
+- 2026-08-25: The owner resumed `pusherv3_10` for its deferred full
+  200k-per-machine closure audit and a separate evidence commit after frozen
+  implementation head `a0d2b6ff`. Wave 2's provisional static audit is held
+  again until that final dependency head merges. When the foreign editor exits,
+  serialized HOST order is pusher closure, then `meta06_1`, then `balance06_1`;
+  `pusherv3_11` resumes only from the refreshed exact integration head.
