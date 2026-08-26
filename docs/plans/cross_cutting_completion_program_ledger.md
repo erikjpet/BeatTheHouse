@@ -123,3 +123,8 @@ their own detailed handoffs and test evidence.
   generated evidence, and runtime claims; no push occurred. This is an
   external concurrent main-line change, not cross-program acceptance, and must
   be semantically reconciled before the final integration merge.
+- 2026-08-25: The canonical 600,000-play pusher economy run was invalidated
+  when the user's foreign interactive editor (parent PID 23012) reopened at
+  23:53:07 after the clean preflight windows. Only the exact pusher EV process
+  tree was stopped; the user editor was preserved. No run1 shard may be cited,
+  and every runtime owner returned to HOST hold pending a new exclusive window.
