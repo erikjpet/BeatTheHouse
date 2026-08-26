@@ -57,6 +57,8 @@ var scenario_game_modifiers: Dictionary = {}
 var scenario_presentation: Dictionary = {}
 var scenario_exclusive_opportunity: Dictionary = {}
 var scenario_hook_flags: Dictionary = {}
+var scenario_sequence_state: Dictionary = {}
+var scenario_sequence_projection: Dictionary = {}
 var environment_layer_schema_version: int = 0
 var current_layer_id: String = ""
 var default_layer_id: String = ""
@@ -138,7 +140,7 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	if not selected_state.is_empty():
 		environment.scenario_state = selected_state
 		var scenario_environment := environment.to_dict()
-		ScenarioEngineScript.attach_to_environment(scenario_environment, selected_state)
+		ScenarioEngineScript.attach_to_environment(scenario_environment, selected_state, selected_scenario)
 		environment = from_dict(scenario_environment)
 	environment.layout = ensure_generated_layout(environment.to_dict())
 	return environment
@@ -191,6 +193,8 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.scenario_presentation = _copy_dict(data.get("scenario_presentation", {}))
 	environment.scenario_exclusive_opportunity = _copy_dict(data.get("scenario_exclusive_opportunity", {}))
 	environment.scenario_hook_flags = _copy_dict(data.get("scenario_hook_flags", {}))
+	environment.scenario_sequence_state = ScenarioEngineScript.SequenceRuntimeScript.normalize_state(data.get("scenario_sequence_state", {}))
+	environment.scenario_sequence_projection = _copy_dict(data.get("scenario_sequence_projection", {}))
 	environment.environment_layer_schema_version = maxi(0, int(data.get("environment_layer_schema_version", 0)))
 	environment.current_layer_id = str(data.get("current_layer_id", "")).strip_edges()
 	environment.default_layer_id = str(data.get("default_layer_id", "")).strip_edges()
@@ -260,6 +264,9 @@ func to_dict() -> Dictionary:
 		result["scenario_presentation"] = scenario_presentation.duplicate(true)
 		result["scenario_exclusive_opportunity"] = scenario_exclusive_opportunity.duplicate(true)
 		result["scenario_hook_flags"] = scenario_hook_flags.duplicate(true)
+	if not scenario_sequence_state.is_empty():
+		result["scenario_sequence_state"] = scenario_sequence_state.duplicate(true)
+		result["scenario_sequence_projection"] = scenario_sequence_projection.duplicate(true)
 	if environment_layer_schema_version > 0 and not current_layer_id.is_empty():
 		result["environment_layer_schema_version"] = environment_layer_schema_version
 		result["current_layer_id"] = current_layer_id
