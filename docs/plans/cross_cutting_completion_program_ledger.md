@@ -150,3 +150,9 @@ their own detailed handoffs and test evidence.
   harness trees were stopped, both output directories were rejected, and a
   fresh check returned zero pusher runtime/compiler processes. HOST returned
   to HOLD while the deferred dispatcher is drained; no other task is released.
+- 2026-08-26: Canonical EV run 3 correctly stopped at preflight when another
+  deferred non-canonical full harness (`coin_pusher_ev_pusherv3_10_final_20260826`)
+  appeared first. Run 3 never opened its output directory. The exact PID 22888
+  tree was stopped and rejected, zero processes were verified, and the pusher
+  task ended its long-running turn in an idle HOLD state to cancel any remaining
+  task-owned queue before another observation window.
