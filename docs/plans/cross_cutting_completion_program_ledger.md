@@ -318,3 +318,23 @@ their own detailed handoffs and test evidence.
   preserved. Independent cumulative review was extended through both commit
   boundaries and must confirm the revert is complete. The remaining ~3.5-second
   budget gap must be solved elsewhere without changing thresholds or coverage.
+- 2026-08-26: Independent remediation review issued
+  `REJECT 838a595bf7ddf3facd77dc63217d704cbc706618` with one P1. The
+  hover-harness repair is correct, but Heat backoff trusted the reprieve result
+  marker without revalidating authoritative tutorial-run, Pal venue, Peek
+  action and incomplete-lesson state. A forged or stale marker could therefore
+  suppress barring outside the intended tutorial window, and the post-completion
+  test removed the marker before exercising the hostile case. Work returned to
+  `/root/fix06_4_blackjack_baseline` for authoritative eligibility checks and
+  marked negative fixtures. No rejected-head evidence or merge is accepted.
+- 2026-08-26: Independent cumulative pusher review issued
+  `ACCEPT 34314876aa4bd759da7db8aa5836833dff7de416` with no P0-P3. All 56
+  changed golden capture fields match the preserved exact-seed report; the four
+  ordinary-travel current-environment fields remain byte-identical. The
+  regenerator is explicit-write-gated to one fixed fixture, schemas/seeds/labels
+  are stable, and the byte deltas localize exactly to current/stored physically
+  settled Coin Pusher snapshots. The rejected blanket-cache commit and its
+  revert touch one test file, and tree IDs for `a3ae328e` and `34314876` are
+  identical, proving complete restoration of non-pusher per-seed coverage.
+  Runtime acceptance remains blocked on the Systems budget and fresh exact-head
+  gates; EV remains unreleased.
