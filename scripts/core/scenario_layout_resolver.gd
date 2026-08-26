@@ -125,6 +125,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	_validate_visual_interaction_consistency(_dict(semantic_state.get("interactions", {})), resolved_scenes, resolved_actors, errors)
 	_add_visual_authority(authority, resolved_scenes, "scene_object")
 	_add_visual_authority(authority, resolved_actors, "actor")
+	_seal_projection_coverage(authority, semantic_state, errors)
 	var interaction_audit := _validate_interactions(_dict(semantic_state.get("interactions", {})), authority, obstacles, base_records, environment, errors)
 	_validate_authority(authority, errors)
 	var authority_digest := _authority_digest(authority)
@@ -505,6 +506,8 @@ static func _add_visual_authority(authority: Dictionary, collection: Dictionary,
 		var presentation_object_id := identity if identity.begins_with("scenario::") else str(existing.get("presentation_object_id", semantic.get("presentation_object_id", identity))).strip_edges()
 		if presentation_object_id.is_empty():
 			presentation_object_id = identity
+		var presentation_visible := bool(semantic.get("visible", existing.get("presentation_visible", true)))
+		var presentation_interactive := bool(existing.get("presentation_interactive", false))
 		authority[identity] = _authority_record(
 			identity,
 			presentation_object_id,
@@ -514,7 +517,10 @@ static func _add_visual_authority(authority: Dictionary, collection: Dictionary,
 			visual_kind,
 			"semantic_visual",
 			_array(semantic.get("route_points", [])) if visual_kind == "actor" else [],
-			_dict(semantic.get("route_stage", {})) if visual_kind == "actor" else {}
+			_dict(semantic.get("route_stage", {})) if visual_kind == "actor" else {},
+			true,
+			presentation_visible,
+			presentation_interactive
 		)
 
 
@@ -536,13 +542,71 @@ static func _base_layout_authority(base_records: Array, errors: Array = []) -> D
 			_normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)),
 			int(record.get("scenario_z_order", record.get("z_order", 0))),
 			"base_record",
-			"sealed_base_record"
+			"sealed_base_record",
+			[],
+			{},
+			true,
+			bool(record.get("visible", true)),
+			bool(record.get("interactive", true))
 		)
 	return result
 
 
+static func _seal_projection_coverage(authority: Dictionary, semantic_state: Dictionary, errors: Array) -> void:
+	var scenes := _dict(semantic_state.get("scene_objects", {}))
+	var actors := _dict(semantic_state.get("actors", {}))
+	var interactions := _dict(semantic_state.get("interactions", {}))
+	var identities := authority.keys()
+	identities.sort()
+	for identity_value in identities:
+		var identity := str(identity_value)
+		var record := _dict(authority.get(identity_value, {}))
+		var presence_values: Dictionary = {}
+		var visual: Dictionary = {}
+		for collection_value in [scenes, actors]:
+			var collection := collection_value as Dictionary
+			if not collection.has(identity):
+				continue
+			var semantic := _dict(collection.get(identity, {}))
+			if semantic.is_empty():
+				continue
+			if typeof(semantic.get("present", true)) != TYPE_BOOL:
+				errors.append("Semantic visual %s has a non-boolean presentation presence contract." % identity)
+			else:
+				presence_values[bool(semantic.get("present", true))] = true
+			if visual.is_empty():
+				visual = semantic
+		var interaction := _dict(interactions.get(identity, {}))
+		if not interaction.is_empty():
+			if typeof(interaction.get("present", true)) != TYPE_BOOL:
+				errors.append("Semantic interaction %s has a non-boolean presentation presence contract." % identity)
+			else:
+				presence_values[bool(interaction.get("present", true))] = true
+		if presence_values.has(true) and presence_values.has(false):
+			errors.append("Semantic identity %s has conflicting live and tombstoned presentation presence." % identity)
+		var required := not presence_values.has(false)
+		var visible := bool(record.get("presentation_visible", true))
+		var interactive := bool(record.get("presentation_interactive", true))
+		if not visual.is_empty() and required:
+			if typeof(visual.get("visible", true)) != TYPE_BOOL:
+				errors.append("Semantic visual %s has a non-boolean canvas visibility contract." % identity)
+			else:
+				visible = bool(visual.get("visible", true))
+		if not interaction.is_empty():
+			interactive = required and bool(interaction.get("present", true))
+		elif not visual.is_empty() and str(visual.get("owner_namespace", "")) == "scenario":
+			interactive = false
+		if not required:
+			visible = false
+			interactive = false
+		record["presentation_required"] = required
+		record["presentation_visible"] = visible
+		record["presentation_interactive"] = interactive
+		authority[identity] = record
+
+
 static func _validate_authority(authority: Dictionary, errors: Array) -> void:
-	var expected_keys := ["actor_route_points", "actor_route_stage", "identity", "normalized_hit_rect", "presentation_object_id", "small_screen_rect", "source", "visual_kind", "z_order"]
+	var expected_keys := ["actor_route_points", "actor_route_stage", "identity", "normalized_hit_rect", "presentation_interactive", "presentation_object_id", "presentation_required", "presentation_visible", "small_screen_rect", "source", "visual_kind", "z_order"]
 	expected_keys.sort()
 	var presentation_identities: Dictionary = {}
 	var identities := authority.keys()
@@ -555,6 +619,10 @@ static func _validate_authority(authority: Dictionary, errors: Array) -> void:
 		if keys != expected_keys or str(record.get("identity", "")) != identity:
 			errors.append("Layout authority %s is not an exact closed semantic-identity record." % identity)
 			continue
+		if typeof(record.get("presentation_required")) != TYPE_BOOL or typeof(record.get("presentation_visible")) != TYPE_BOOL or typeof(record.get("presentation_interactive")) != TYPE_BOOL:
+			errors.append("Layout authority %s has a malformed sealed presentation coverage contract." % identity)
+		elif not bool(record.get("presentation_required", false)) and (bool(record.get("presentation_visible", false)) or bool(record.get("presentation_interactive", false))):
+			errors.append("Tombstoned layout authority %s cannot remain visible or interactive." % identity)
 		var presentation_object_id := str(record.get("presentation_object_id", ""))
 		if presentation_object_id.is_empty() or presentation_object_id != presentation_object_id.strip_edges():
 			errors.append("Layout authority %s has no exact canvas presentation identity." % identity)
@@ -615,13 +683,16 @@ static func _validate_actor_route_authority(identity: String, authority_record: 
 		errors.append("Actor layout authority %s route geometry or timing diverges from its sealed normal/small rectangles." % identity)
 
 
-static func _authority_record(identity: String, presentation_object_id: String, normal: Dictionary, small: Dictionary, z_order: int, visual_kind: String, source: String, actor_route_points: Array = [], actor_route_stage: Dictionary = {}) -> Dictionary:
+static func _authority_record(identity: String, presentation_object_id: String, normal: Dictionary, small: Dictionary, z_order: int, visual_kind: String, source: String, actor_route_points: Array = [], actor_route_stage: Dictionary = {}, presentation_required: bool = true, presentation_visible: bool = true, presentation_interactive: bool = true) -> Dictionary:
 	return {
 		"actor_route_points": actor_route_points.duplicate(true),
 		"actor_route_stage": actor_route_stage.duplicate(true),
 		"identity": identity,
 		"normalized_hit_rect": normal,
+		"presentation_interactive": presentation_interactive,
 		"presentation_object_id": presentation_object_id,
+		"presentation_required": presentation_required,
+		"presentation_visible": presentation_visible,
 		"small_screen_rect": small,
 		"z_order": z_order,
 		"visual_kind": visual_kind,

@@ -162,9 +162,13 @@ static func project_finalized_sequence_interaction_result(base_records: Array, f
 	var composed := _compose_projected_records(base_records, resolved_projection, authority, authority_digest)
 	if not bool(composed.get("ok", false)):
 		return projection_failure_result(base_records, _array(composed.get("errors", [])), _dict(finalized.get("layout_audit", {})))
+	var composed_records := _array(composed.get("records", []))
+	var coverage_errors := _projected_record_authority_errors(composed_records, authority, authority_digest, resolved_projection)
+	if not coverage_errors.is_empty():
+		return projection_failure_result(base_records, coverage_errors, _dict(finalized.get("layout_audit", {})))
 	return {
 		"ok": true,
-		"records": _array(composed.get("records", [])),
+		"records": composed_records,
 		"projection": resolved_projection,
 		"errors": [],
 		"warnings": _array(finalized.get("warnings", [])),
@@ -244,9 +248,18 @@ static func project_sequence_interaction_result(base_records: Array, projection:
 			_dict(prepared.get("layout_audit", {})),
 			_dict(prepared.get("fallback_authority", {}))
 		)
+	var composed_records := _array(composed.get("records", []))
+	var coverage_errors := _projected_record_authority_errors(composed_records, authority, authority_digest, resolved_projection)
+	if not coverage_errors.is_empty():
+		return projection_failure_result(
+			base_records,
+			coverage_errors,
+			_dict(prepared.get("layout_audit", {})),
+			_dict(prepared.get("fallback_authority", {}))
+		)
 	return {
 		"ok": true,
-		"records": _array(composed.get("records", [])),
+		"records": composed_records,
 		"projection": resolved_projection,
 		"errors": [],
 		"warnings": _array(prepared.get("warnings", [])),
@@ -543,7 +556,8 @@ static func committed_projection_status_result(run_state: Variant, projection_re
 			integrity_errors = _projected_record_authority_errors(
 				_array(projection_result.get("records", [])),
 				projected_authority,
-				projected_digest
+				projected_digest,
+				_dict(projection_result.get("projection", {}))
 			)
 		if committed_digest == projected_digest and integrity_errors.is_empty():
 			run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
@@ -560,11 +574,33 @@ static func committed_projection_status_result(run_state: Variant, projection_re
 	return projection_failure_result(trusted_base_records, projection_errors, audit)
 
 
-static func _projected_record_authority_errors(records: Array, authority: Dictionary, authority_digest: String) -> Array:
+static func _projected_record_authority_errors(records: Array, authority: Dictionary, authority_digest: String, projection: Dictionary) -> Array:
 	var errors: Array = []
 	if authority_digest.length() != 64 or _layout_authority_digest(authority) != authority_digest:
 		errors.append("Projected scenario records no longer match their sealed authority digest.")
 		return errors
+	errors.append_array(_semantic_projection_coverage_errors(projection, authority))
+	var expected_records: Dictionary = {}
+	var expected_presentation_ids: Dictionary = {}
+	var authority_identities := authority.keys()
+	authority_identities.sort()
+	for identity_value in authority_identities:
+		var identity := str(identity_value)
+		var sealed := _dict(authority.get(identity_value, {}))
+		if typeof(sealed.get("presentation_required")) != TYPE_BOOL or typeof(sealed.get("presentation_visible")) != TYPE_BOOL or typeof(sealed.get("presentation_interactive")) != TYPE_BOOL:
+			errors.append("Sealed presentation %s has malformed exact-coverage flags." % identity)
+			continue
+		var required := bool(sealed.get("presentation_required", false))
+		if not required:
+			if bool(sealed.get("presentation_visible", false)) or bool(sealed.get("presentation_interactive", false)):
+				errors.append("Sealed presentation tombstone %s remains visible or interactive." % identity)
+			continue
+		var presentation_object_id := str(sealed.get("presentation_object_id", ""))
+		if presentation_object_id.is_empty() or expected_presentation_ids.has(presentation_object_id):
+			errors.append("Required sealed presentation %s has an empty or aliased canvas identity." % identity)
+			continue
+		expected_records[identity] = presentation_object_id
+		expected_presentation_ids[presentation_object_id] = identity
 	var seen_identities: Dictionary = {}
 	var seen_presentation_ids: Dictionary = {}
 	for value in records:
@@ -572,8 +608,11 @@ static func _projected_record_authority_errors(records: Array, authority: Dictio
 		var identity := str(record.get("scenario_layout_authority_identity", ""))
 		var presentation_object_id := str(record.get("object_id", ""))
 		var owned_identity := "%s::%s" % [str(record.get("owner_namespace", "")), str(record.get("stable_object_id", ""))]
-		if not bool(record.get("scenario_layout_resolved", false)) or identity.is_empty() or identity != owned_identity or not authority.has(identity) or str(record.get("scenario_layout_authority_digest", "")) != authority_digest:
+		if typeof(record.get("scenario_layout_resolved")) != TYPE_BOOL or not bool(record.get("scenario_layout_resolved", false)) or identity.is_empty() or identity != owned_identity or not authority.has(identity) or str(record.get("scenario_layout_authority_digest", "")) != authority_digest:
 			errors.append("Projected record %s lost its correlated sealed layout authority." % str(record.get("object_id", "")))
+			continue
+		if not expected_records.has(identity):
+			errors.append("Projected record %s is extra or contradicts a sealed presentation tombstone." % presentation_object_id)
 			continue
 		if seen_identities.has(identity) or presentation_object_id.is_empty() or seen_presentation_ids.has(presentation_object_id):
 			errors.append("Projected record %s aliases another sealed canvas identity." % presentation_object_id)
@@ -581,6 +620,8 @@ static func _projected_record_authority_errors(records: Array, authority: Dictio
 		seen_identities[identity] = true
 		seen_presentation_ids[presentation_object_id] = true
 		var sealed := _dict(authority.get(identity, {}))
+		if typeof(record.get("visible", true)) != TYPE_BOOL or typeof(record.get("interactive", true)) != TYPE_BOOL:
+			errors.append("Projected record %s has malformed canvas presence flags." % presentation_object_id)
 		for pair in [
 			["object_id", record.get("object_id", ""), sealed.get("presentation_object_id", "")],
 			["normalized_rect", record.get("normalized_rect", {}), sealed.get("normalized_hit_rect", {})],
@@ -588,10 +629,88 @@ static func _projected_record_authority_errors(records: Array, authority: Dictio
 			["scenario_z_order", record.get("scenario_z_order", -1), sealed.get("z_order", -2)],
 			["actor_route_points", record.get("actor_route_points", []), sealed.get("actor_route_points", [])],
 			["actor_route_stage", record.get("actor_route_stage", {}), sealed.get("actor_route_stage", {})],
+			["visible", record.get("visible", true), sealed.get("presentation_visible", false)],
+			["interactive", record.get("interactive", true), sealed.get("presentation_interactive", false)],
 		]:
 			var values := pair as Array
 			if JSON.stringify(values[1]) != JSON.stringify(values[2]):
 				errors.append("Projected record %s %s diverged from sealed canvas authority." % [str(record.get("object_id", "")), str(values[0])])
+	var missing_identities := expected_records.keys()
+	missing_identities.sort()
+	for identity_value in missing_identities:
+		var identity := str(identity_value)
+		if not seen_identities.has(identity):
+			errors.append("Required sealed presentation %s (%s) is missing from projected records." % [identity, str(expected_records.get(identity, ""))])
+	return errors
+
+
+static func _semantic_projection_coverage_errors(projection: Dictionary, authority: Dictionary) -> Array:
+	var errors: Array = []
+	var semantic_state := _dict(projection.get("semantic_state", {}))
+	var scenes := _dict(semantic_state.get("scene_objects", {}))
+	var actors := _dict(semantic_state.get("actors", {}))
+	var interactions := _dict(semantic_state.get("interactions", {}))
+	var semantic_identities: Dictionary = {}
+	for collection_value in [scenes, actors, interactions]:
+		var collection := collection_value as Dictionary
+		for identity_value in collection.keys():
+			semantic_identities[str(identity_value)] = true
+	var identities := semantic_identities.keys()
+	identities.sort()
+	for identity_value in identities:
+		var identity := str(identity_value)
+		var visual_entries: Array = []
+		for collection_value in [scenes, actors]:
+			var collection := collection_value as Dictionary
+			if collection.has(identity):
+				visual_entries.append(_dict(collection.get(identity, {})))
+		if visual_entries.size() > 1:
+			errors.append("Semantic identity %s has multiple finalized visual presence contracts." % identity)
+		var visual := _dict(visual_entries[0]) if not visual_entries.is_empty() else {}
+		var interaction := _dict(interactions.get(identity, {}))
+		var presence_values: Dictionary = {}
+		var presence_entries := visual_entries.duplicate(true)
+		if not interaction.is_empty():
+			presence_entries.append(interaction)
+		for semantic_value in presence_entries:
+			var semantic := _dict(semantic_value)
+			var owned_identity := "%s::%s" % [str(semantic.get("owner_namespace", "")), str(semantic.get("stable_object_id", ""))]
+			if owned_identity != identity:
+				errors.append("Semantic coverage identity %s diverges from its finalized owner/stable identity." % identity)
+			if typeof(semantic.get("present", true)) != TYPE_BOOL:
+				errors.append("Semantic coverage identity %s has non-boolean presence." % identity)
+			else:
+				presence_values[bool(semantic.get("present", true))] = true
+		if presence_values.has(true) and presence_values.has(false):
+			errors.append("Semantic identity %s conflicts between live and tombstoned presentation entries." % identity)
+		var required := not presence_values.has(false)
+		if required and not authority.has(identity):
+			errors.append("Required semantic presentation %s has no sealed layout authority." % identity)
+			continue
+		if not authority.has(identity):
+			continue
+		var sealed := _dict(authority.get(identity, {}))
+		if required != bool(sealed.get("presentation_required", false)):
+			errors.append("Semantic identity %s presence diverged from sealed required-record coverage." % identity)
+		if not visual.is_empty() and required:
+			if typeof(visual.get("visible", true)) != TYPE_BOOL or bool(visual.get("visible", true)) != bool(sealed.get("presentation_visible", false)):
+				errors.append("Semantic visual %s visibility diverged from sealed canvas coverage." % identity)
+		if not interaction.is_empty():
+			var expected_interactive := required and bool(interaction.get("present", true))
+			if expected_interactive != bool(sealed.get("presentation_interactive", false)):
+				errors.append("Semantic interaction %s presence diverged from sealed canvas interactivity." % identity)
+		elif not visual.is_empty() and str(visual.get("owner_namespace", "")) == "scenario" and bool(sealed.get("presentation_interactive", true)):
+			errors.append("Scenario visual %s gained interactivity without a finalized interaction." % identity)
+	var sealed_identities := authority.keys()
+	sealed_identities.sort()
+	for identity_value in sealed_identities:
+		var identity := str(identity_value)
+		var sealed := _dict(authority.get(identity_value, {}))
+		if str(sealed.get("source", "")) != "semantic_visual":
+			continue
+		var visual_kind := str(sealed.get("visual_kind", ""))
+		if (visual_kind == "actor" and not actors.has(identity)) or (visual_kind == "scene_object" and not scenes.has(identity)):
+			errors.append("Sealed %s presentation %s is missing its finalized semantic visual." % [visual_kind, identity])
 	return errors
 
 
