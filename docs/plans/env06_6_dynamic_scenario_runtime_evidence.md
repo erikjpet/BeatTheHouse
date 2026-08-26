@@ -1,7 +1,8 @@
 # env06_6 Dynamic Scenario Runtime — Runtime and Evidence Report
 
-Status: implementation and static review in progress. This report does not mark
-`env06_6` complete and does not unblock `env06_7`.
+Status: executable evidence tooling IMPLEMENTED; host-dependent execution NOT
+RUN. This report does not mark `env06_6` complete and does not unblock
+`env06_7`.
 
 ## Production proof
 
@@ -97,23 +98,70 @@ reentry, expiry, and load seams. Operation batches are bounded and transactional
 the renderer consumes prepared projections. No new per-frame schema evaluation,
 catalog scan, or scene reconstruction is introduced by the proof or audit.
 
-The static repository validator's function census passed. Measured native/Web
-timing evidence remains pending because the shared Godot/compiler host is
-locked.
+The dedicated `tools/scenario_sequence_probe_main.tscn` entry instantiates the
+real `scenes/main.tscn`, prepares a detached production ContentLibrary, installs
+the generated delivery-day corner store, and drives only FoundationMain's
+authoritative action-token and event-response routes. It never manually flushes
+scenario facts. Branches restore the entire RunState so bankroll, heat,
+inventory, flags, story, and receipts cannot leak between outcomes.
+
+`tools/scenario_sequence_parity_performance.ps1` runs two isolated native
+processes and two fresh-profile Chrome Web processes at CPU4. The Web side uses
+a fresh release export and freshly compiled extension physically beneath the
+ignored output directory; root project/export configuration is hash-guarded.
+Canonical semantic traces exclude host metadata and timing data, while exact
+JSON and SHA-256 must match within and across platforms. Required nonzero rows
+cover content/schema/catalog/index preparation, command/request drain/event
+delivery, fact publish/flush and terminal cleanup, projection/layout,
+production save and FoundationMain load/rebuild, reentry, expiry, and steady
+prepared frames. Locked budgets are native transition p95/max `16/45 ms`,
+native prepared-frame p95 `16.6 ms`, Web CPU4 transition p95/max `120/1200 ms`,
+and Web prepared-frame p95 `120 ms`.
+
+Measured native/Web timing evidence remains NOT RUN because the shared
+Godot/compiler host is locked.
+
+## Executable visual, parity, and timing proof
+
+Windowed GL capture command:
+
+`powershell -NoProfile -ExecutionPolicy Bypass -File tools\scenario_sequence_visual_capture.ps1 -RequireGodot -OutDir .tmp\env06_6\visual_capture -TimeoutSec 600`
+
+The producer must write `manifest.json` and exactly one PNG for each of the 21
+authored capture ids. Every row records a byte-verified PNG SHA-256, dimensions,
+phase, status, outcome, visual-state fingerprint, and live assertions. The
+proof uses actual canvas layout and public hit geometry, the real TalkDock
+reservation, safe-exit/hit-center correlation, scenario text/non-color state,
+a production reduced-motion transition with exact readable feedback and no
+timed stage, and the exact enabled scenario target at logical `104x76` in
+small-screen mode. The four material outcome PNGs and visual-state hashes must
+be distinct.
+
+Parity/performance command:
+
+`powershell -NoProfile -ExecutionPolicy Bypass -File tools\scenario_sequence_parity_performance.ps1 -RequireGodot -Browser chrome -Cpu 4 -TimeoutMs 600000 -OutDir .tmp\env06_6\parity_performance`
+
+The producer must write two native reports, two Web reports, a fail-closed
+manifest, a transient Web project/build, fresh profiles, and complete logs
+beneath the requested ignored output directory. Browser console errors, page
+errors, or failed asset requests reject the Web report. Native processes direct
+distribution data, settings, autosaves, and evidence-slot I/O into unique
+output-owned directories; SaveService clears the isolated slot through its
+public contract.
 
 ## Gate ledger
 
 | Gate | Status |
 | --- | --- |
-| PowerShell syntax parsing and static JSON/object-envelope checks | PASS — object accepted; array, null, string, number, and boolean rejected by the object-package rule |
-| `powershell -NoProfile -ExecutionPolicy Bypass -File tools/validate_project.ps1 -Quiet` | PASS — exit 0 in 52.255 seconds on the full dirty tree; includes the static function census/helper shard |
+| PowerShell/Node syntax, static JSON/object-envelope checks, executable-tool hostile contracts | **PASS** - final nine-path pre-commit state, 2026-08-26 |
+| `powershell -NoProfile -ExecutionPolicy Bypass -File tools/validate_project.ps1 -Quiet` | **PASS** - 53.0 seconds on the final hardened code and contract state, 2026-08-26 |
 | Godot GDScript load/compile check | **DEFERRED — HOST LOCK** |
 | Foundation systems/content/UI/save/accessibility suites | **DEFERRED — HOST LOCK** |
 | `tools/scenario_sequence_audit.ps1 -RequireGodot -ExpectedCount 1` | **DEFERRED — HOST LOCK** |
-| Native/Web exact-sequence parity | **DEFERRED — HOST LOCK** |
+| `tools/scenario_sequence_parity_performance.ps1 -RequireGodot -Browser chrome -Cpu 4` exact native/Web trace | **IMPLEMENTED / NOT RUN - HOST LOCK** |
 | `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` | **DEFERRED — HOST LOCK** |
-| `tools/foundation_visual_qa.ps1` including phase/outcome/revisit/reduced-motion/small-screen/overlay captures | **DEFERRED — HOST LOCK** |
-| Native/Web performance measurements | **DEFERRED — HOST LOCK** |
+| `tools/scenario_sequence_visual_capture.ps1 -RequireGodot` exact 21-id windowed GL capture | **IMPLEMENTED / NOT RUN - HOST LOCK** |
+| Native/Web delivery transition and prepared-frame measurements | **IMPLEMENTED / NOT RUN - HOST LOCK** |
 
 No deferred row is a PASS. Completion, archival, board-row closure, and the
 `env06_7` unblock decision require the host-serialized gates and independent
