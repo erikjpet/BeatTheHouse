@@ -4963,6 +4963,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 	var fields: Dictionary = snapshot["fields"]
 	for field_name in [
 		"meta_session_active", "meta_session_location_id", "meta_last_panel_message", "dev_game_test_mode",
+		"environment_pause_started_msec", "environment_paused_total_msec", "talk_dock_avoid_sync_active", "item_found_talk_dock_suspended",
 		"current_game", "current_game_state_key", "game_exit_settle_active", "last_game_exit_final_projection_rendered",
 		"last_game_result", "last_environment_runtime_result", "last_item_result", "last_hook_result", "game_surface_ui_state",
 		"selected_action_category", "current_screen", "selected_action_id", "selected_action_kind", "selected_action_label", "selected_stake",
@@ -4993,6 +4994,8 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 	snapshot["world_map_controller_ref"] = world_map_overlay_controller
 	snapshot["world_map_controller"] = world_map_overlay_controller.export_state() if world_map_overlay_controller != null else {}
 	snapshot["coach"] = _coach_lifecycle_snapshot()
+	snapshot["talk_dock"] = _talk_dock_lifecycle_snapshot()
+	snapshot["talk_dock_canvases"] = _talk_dock_canvas_lifecycle_snapshot()
 	snapshot["event_popup_presentation"] = {
 		"title": event_choice_popup_title_label.text if event_choice_popup_title_label != null else "",
 		"summary": event_choice_popup_summary_label.text if event_choice_popup_summary_label != null else "",
@@ -5060,7 +5063,12 @@ func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	if environment_header != null:
 		var restored_focus_object := _interactable_object(selected_object_id) if not selected_object_id.is_empty() else {}
 		_refresh_world_header(restored_focus_object)
-	_sync_talk_dock_coach_avoid_rect()
+	var talk_dock_snapshot := _copy_dict(snapshot.get("talk_dock", {}))
+	if talk_dock_snapshot.is_empty():
+		_sync_talk_dock_coach_avoid_rect()
+	else:
+		_restore_talk_dock_lifecycle_snapshot(talk_dock_snapshot)
+	_restore_talk_dock_canvas_lifecycle_snapshot(_copy_dict(snapshot.get("talk_dock_canvases", {})))
 
 
 func _coach_lifecycle_snapshot() -> Dictionary:
@@ -5122,6 +5130,312 @@ func _restore_coach_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		coach_overlay.focus_layer.live_anchor_rect_valid = bool(snapshot.get("focus_live_anchor_rect_valid", false))
 		coach_overlay.focus_layer.visible = bool(snapshot.get("focus_visible", false))
 		coach_overlay.focus_layer.queue_redraw()
+
+
+func _talk_dock_lifecycle_snapshot() -> Dictionary:
+	if talk_dock == null:
+		return {}
+	var focus_owner: Control = talk_dock.get_viewport().gui_get_focus_owner() if talk_dock.is_inside_tree() else null
+	var choice_focus_path: Array = []
+	if focus_owner != null and talk_dock.choice_list != null and talk_dock.choice_list.is_ancestor_of(focus_owner):
+		for response_index in range(talk_dock.choice_list.get_child_count()):
+			var response := talk_dock.choice_list.get_child(response_index)
+			if response == focus_owner:
+				choice_focus_path = [response_index, -1]
+				break
+			if response.is_ancestor_of(focus_owner):
+				choice_focus_path = [response_index, response.get_children().find(focus_owner)]
+				break
+	var parent := talk_dock.get_parent()
+	return {
+		"ref": talk_dock,
+		"parent_ref": parent,
+		"parent_index": talk_dock.get_index() if parent != null else -1,
+		"entry": talk_dock.entry.duplicate(true),
+		"option": talk_dock.option.duplicate(true),
+		"queue_count": talk_dock.queue_count,
+		"expanded": talk_dock.expanded,
+		"armed_choice_id": talk_dock.armed_choice_id,
+		"reduce_motion": talk_dock.reduce_motion,
+		"small_screen_mode": talk_dock.small_screen_mode,
+		"conversation_active": talk_dock.conversation_active,
+		"full_body_text": talk_dock.full_body_text,
+		"reveal_elapsed": talk_dock.reveal_elapsed,
+		"typewriter_active": talk_dock.typewriter_active,
+		"rendered_entry_key": talk_dock.rendered_entry_key,
+		"last_occupied_rect": talk_dock.last_occupied_rect,
+		"avoid_global_rect": talk_dock.avoid_global_rect,
+		"reserved_body_line_count": talk_dock.reserved_body_line_count,
+		"locked_layout_side": talk_dock.locked_layout_side,
+		"locked_layout_vertical": talk_dock.locked_layout_vertical,
+		"layout_boundary_key": talk_dock.layout_boundary_key,
+		"layout_side_change_count": talk_dock.layout_side_change_count,
+		"layout_position_change_count": talk_dock.layout_position_change_count,
+		"entry_open_input_frame": talk_dock.entry_open_input_frame,
+		"rendered_response_icon_kinds": talk_dock.rendered_response_icon_kinds.duplicate(),
+		"processing": talk_dock.is_processing(),
+		"dock_control": _talk_dock_control_lifecycle_snapshot(talk_dock),
+		"panel_control": _talk_dock_control_lifecycle_snapshot(talk_dock.panel),
+		"portrait_panel_control": _talk_dock_control_lifecycle_snapshot(talk_dock.portrait_panel),
+		"portrait_model_control": _talk_dock_control_lifecycle_snapshot(talk_dock.portrait_model),
+		"collapsed_button_control": _talk_dock_control_lifecycle_snapshot(talk_dock.collapsed_button),
+		"collapse_button_control": _talk_dock_control_lifecycle_snapshot(talk_dock.collapse_button),
+		"header_control": _talk_dock_control_lifecycle_snapshot(talk_dock.header_row),
+		"speaker_control": _talk_dock_control_lifecycle_snapshot(talk_dock.speaker_label),
+		"summary_control": _talk_dock_control_lifecycle_snapshot(talk_dock.summary_label),
+		"body_control": _talk_dock_control_lifecycle_snapshot(talk_dock.body_label),
+		"choice_list_control": _talk_dock_control_lifecycle_snapshot(talk_dock.choice_list),
+		"choice_controls": _talk_dock_choice_lifecycle_snapshot(),
+		"urgency_bar_control": _talk_dock_control_lifecycle_snapshot(talk_dock.urgency_bar),
+		"badge_control": _talk_dock_control_lifecycle_snapshot(talk_dock.badge_label),
+		"urgency_control": _talk_dock_control_lifecycle_snapshot(talk_dock.urgency_label),
+		"collapsed_text": talk_dock.collapsed_button.text if talk_dock.collapsed_button != null else "",
+		"collapse_text": talk_dock.collapse_button.text if talk_dock.collapse_button != null else "",
+		"collapse_disabled": talk_dock.collapse_button.disabled if talk_dock.collapse_button != null else false,
+		"speaker_text": talk_dock.speaker_label.text if talk_dock.speaker_label != null else "",
+		"summary_text": talk_dock.summary_label.text if talk_dock.summary_label != null else "",
+		"body_text": talk_dock.body_label.text if talk_dock.body_label != null else "",
+		"body_visible_characters": talk_dock.body_label.visible_characters if talk_dock.body_label != null else -1,
+		"body_max_lines": talk_dock.body_label.max_lines_visible if talk_dock.body_label != null else 0,
+		"choice_columns": talk_dock.choice_list.columns if talk_dock.choice_list != null else 1,
+		"urgency_value": talk_dock.urgency_bar.value if talk_dock.urgency_bar != null else 0.0,
+		"badge_text": talk_dock.badge_label.text if talk_dock.badge_label != null else "",
+		"urgency_text": talk_dock.urgency_label.text if talk_dock.urgency_label != null else "",
+		"portrait_speaker": talk_dock.portrait_model.speaker.duplicate(true) if talk_dock.portrait_model != null else {},
+		"portrait_speaker_key": talk_dock.portrait_model.speaker_key if talk_dock.portrait_model != null else "",
+		"portrait_animation_clock": talk_dock.portrait_model.animation_clock if talk_dock.portrait_model != null else 0.0,
+		"portrait_animation_redraw_elapsed": talk_dock.portrait_model.animation_redraw_elapsed if talk_dock.portrait_model != null else 0.0,
+		"portrait_animation_redraw_count": talk_dock.portrait_model.animation_redraw_count if talk_dock.portrait_model != null else 0,
+		"portrait_animation_active": talk_dock.portrait_model.animation_active if talk_dock.portrait_model != null else false,
+		"portrait_reduce_motion": talk_dock.portrait_model.reduce_motion if talk_dock.portrait_model != null else false,
+		"portrait_processing": talk_dock.portrait_model.is_processing() if talk_dock.portrait_model != null else false,
+		"focus_ref": focus_owner,
+		"choice_focus_path": choice_focus_path,
+		"public_snapshot": talk_dock.current_snapshot(),
+	}
+
+
+func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
+	var restored_dock: Variant = snapshot.get("ref", null)
+	if not (restored_dock is TalkDock) or talk_dock != restored_dock:
+		return
+	var restored_parent: Variant = snapshot.get("parent_ref", null)
+	if restored_parent is Node and talk_dock.get_parent() == restored_parent:
+		var restored_index := clampi(int(snapshot.get("parent_index", talk_dock.get_index())), 0, maxi(0, (restored_parent as Node).get_child_count() - 1))
+		(restored_parent as Node).move_child(talk_dock, restored_index)
+	talk_dock.entry = _copy_dict(snapshot.get("entry", {}))
+	talk_dock.option = _copy_dict(snapshot.get("option", {}))
+	talk_dock.queue_count = int(snapshot.get("queue_count", 0))
+	talk_dock.expanded = bool(snapshot.get("expanded", false))
+	talk_dock.armed_choice_id = str(snapshot.get("armed_choice_id", ""))
+	talk_dock.reduce_motion = bool(snapshot.get("reduce_motion", false))
+	talk_dock.small_screen_mode = bool(snapshot.get("small_screen_mode", false))
+	talk_dock.conversation_active = bool(snapshot.get("conversation_active", false))
+	talk_dock.full_body_text = str(snapshot.get("full_body_text", ""))
+	talk_dock.reveal_elapsed = float(snapshot.get("reveal_elapsed", 0.0))
+	talk_dock.typewriter_active = bool(snapshot.get("typewriter_active", false))
+	talk_dock.rendered_entry_key = str(snapshot.get("rendered_entry_key", ""))
+	talk_dock.last_occupied_rect = snapshot.get("last_occupied_rect", Rect2()) as Rect2
+	talk_dock.avoid_global_rect = snapshot.get("avoid_global_rect", Rect2()) as Rect2
+	talk_dock.reserved_body_line_count = int(snapshot.get("reserved_body_line_count", 1))
+	talk_dock.locked_layout_side = str(snapshot.get("locked_layout_side", "left"))
+	talk_dock.locked_layout_vertical = str(snapshot.get("locked_layout_vertical", "bottom"))
+	talk_dock.layout_boundary_key = str(snapshot.get("layout_boundary_key", ""))
+	talk_dock.layout_side_change_count = int(snapshot.get("layout_side_change_count", 0))
+	talk_dock.layout_position_change_count = int(snapshot.get("layout_position_change_count", 0))
+	talk_dock.entry_open_input_frame = int(snapshot.get("entry_open_input_frame", -1))
+	# Recreate the selected option controls from the restored presentation data.
+	# Removing the failed hierarchy synchronously prevents queue_free children from
+	# appearing alongside the authoritative buttons until the next frame.
+	if talk_dock.choice_list != null:
+		for child in talk_dock.choice_list.get_children():
+			talk_dock.choice_list.remove_child(child)
+			child.queue_free()
+		talk_dock._render_choices()
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock, _copy_dict(snapshot.get("dock_control", {})))
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.panel, _copy_dict(snapshot.get("panel_control", {})))
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.portrait_panel, _copy_dict(snapshot.get("portrait_panel_control", {})))
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.portrait_model, _copy_dict(snapshot.get("portrait_model_control", {})))
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.collapsed_button, _copy_dict(snapshot.get("collapsed_button_control", {})))
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.collapse_button, _copy_dict(snapshot.get("collapse_button_control", {})))
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.header_row, _copy_dict(snapshot.get("header_control", {})))
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.speaker_label, _copy_dict(snapshot.get("speaker_control", {})))
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.summary_label, _copy_dict(snapshot.get("summary_control", {})))
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.body_label, _copy_dict(snapshot.get("body_control", {})))
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.choice_list, _copy_dict(snapshot.get("choice_list_control", {})))
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.urgency_bar, _copy_dict(snapshot.get("urgency_bar_control", {})))
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.badge_label, _copy_dict(snapshot.get("badge_control", {})))
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.urgency_label, _copy_dict(snapshot.get("urgency_control", {})))
+	if talk_dock.collapsed_button != null:
+		talk_dock.collapsed_button.text = str(snapshot.get("collapsed_text", ""))
+	if talk_dock.collapse_button != null:
+		talk_dock.collapse_button.text = str(snapshot.get("collapse_text", ""))
+		talk_dock.collapse_button.disabled = bool(snapshot.get("collapse_disabled", false))
+	if talk_dock.speaker_label != null:
+		talk_dock.speaker_label.text = str(snapshot.get("speaker_text", ""))
+	if talk_dock.summary_label != null:
+		talk_dock.summary_label.text = str(snapshot.get("summary_text", ""))
+	if talk_dock.body_label != null:
+		talk_dock.body_label.text = str(snapshot.get("body_text", ""))
+		talk_dock.body_label.visible_characters = int(snapshot.get("body_visible_characters", -1))
+		talk_dock.body_label.max_lines_visible = int(snapshot.get("body_max_lines", 0))
+	if talk_dock.choice_list != null:
+		talk_dock.choice_list.columns = int(snapshot.get("choice_columns", 1))
+		_restore_talk_dock_choice_lifecycle_snapshot(_copy_array(snapshot.get("choice_controls", [])))
+	if talk_dock.urgency_bar != null:
+		talk_dock.urgency_bar.value = float(snapshot.get("urgency_value", 0.0))
+	if talk_dock.badge_label != null:
+		talk_dock.badge_label.text = str(snapshot.get("badge_text", ""))
+	if talk_dock.urgency_label != null:
+		talk_dock.urgency_label.text = str(snapshot.get("urgency_text", ""))
+	talk_dock.rendered_response_icon_kinds.assign(_copy_array(snapshot.get("rendered_response_icon_kinds", [])))
+	if talk_dock.portrait_model != null:
+		talk_dock.portrait_model.speaker = _copy_dict(snapshot.get("portrait_speaker", {}))
+		talk_dock.portrait_model.speaker_key = str(snapshot.get("portrait_speaker_key", ""))
+		talk_dock.portrait_model.animation_clock = float(snapshot.get("portrait_animation_clock", 0.0))
+		talk_dock.portrait_model.animation_redraw_elapsed = float(snapshot.get("portrait_animation_redraw_elapsed", 0.0))
+		talk_dock.portrait_model.animation_redraw_count = int(snapshot.get("portrait_animation_redraw_count", 0))
+		talk_dock.portrait_model.animation_active = bool(snapshot.get("portrait_animation_active", false))
+		talk_dock.portrait_model.reduce_motion = bool(snapshot.get("portrait_reduce_motion", false))
+		talk_dock.portrait_model.set_process(bool(snapshot.get("portrait_processing", false)))
+	talk_dock.set_process(bool(snapshot.get("processing", false)))
+	var restored_focus: Variant = snapshot.get("focus_ref", null)
+	if restored_focus is Control and is_instance_valid(restored_focus) and not (restored_focus as Control).is_queued_for_deletion():
+		(restored_focus as Control).grab_focus()
+	else:
+		var choice_focus_path := _copy_array(snapshot.get("choice_focus_path", []))
+		if choice_focus_path.size() == 2 and talk_dock.choice_list != null:
+			var response_index := int(choice_focus_path[0])
+			var child_index := int(choice_focus_path[1])
+			if response_index >= 0 and response_index < talk_dock.choice_list.get_child_count():
+				var response := talk_dock.choice_list.get_child(response_index)
+				var focus_control: Variant = response if child_index < 0 else null
+				if child_index >= 0 and child_index < response.get_child_count():
+					focus_control = response.get_child(child_index)
+				if focus_control is Control:
+					(focus_control as Control).grab_focus()
+
+
+func _talk_dock_control_lifecycle_snapshot(control: Control) -> Dictionary:
+	if control == null:
+		return {}
+	return {
+		"position": control.position,
+		"size": control.size,
+		"custom_minimum_size": control.custom_minimum_size,
+		"anchor_left": control.anchor_left,
+		"anchor_top": control.anchor_top,
+		"anchor_right": control.anchor_right,
+		"anchor_bottom": control.anchor_bottom,
+		"offset_left": control.offset_left,
+		"offset_top": control.offset_top,
+		"offset_right": control.offset_right,
+		"offset_bottom": control.offset_bottom,
+		"visible": control.visible,
+		"modulate": control.modulate,
+		"self_modulate": control.self_modulate,
+		"scale": control.scale,
+		"rotation": control.rotation,
+		"pivot_offset": control.pivot_offset,
+		"mouse_filter": control.mouse_filter,
+		"focus_mode": control.focus_mode,
+		"tooltip_text": control.tooltip_text,
+		"z_index": control.z_index,
+	}
+
+
+func _restore_talk_dock_control_lifecycle_snapshot(control: Control, snapshot: Dictionary) -> void:
+	if control == null or snapshot.is_empty():
+		return
+	control.anchor_left = float(snapshot.get("anchor_left", control.anchor_left))
+	control.anchor_top = float(snapshot.get("anchor_top", control.anchor_top))
+	control.anchor_right = float(snapshot.get("anchor_right", control.anchor_right))
+	control.anchor_bottom = float(snapshot.get("anchor_bottom", control.anchor_bottom))
+	control.offset_left = float(snapshot.get("offset_left", control.offset_left))
+	control.offset_top = float(snapshot.get("offset_top", control.offset_top))
+	control.offset_right = float(snapshot.get("offset_right", control.offset_right))
+	control.offset_bottom = float(snapshot.get("offset_bottom", control.offset_bottom))
+	control.position = snapshot.get("position", control.position) as Vector2
+	control.size = snapshot.get("size", control.size) as Vector2
+	control.custom_minimum_size = snapshot.get("custom_minimum_size", control.custom_minimum_size) as Vector2
+	control.visible = bool(snapshot.get("visible", control.visible))
+	control.modulate = snapshot.get("modulate", control.modulate) as Color
+	control.self_modulate = snapshot.get("self_modulate", control.self_modulate) as Color
+	control.scale = snapshot.get("scale", control.scale) as Vector2
+	control.rotation = float(snapshot.get("rotation", control.rotation))
+	control.pivot_offset = snapshot.get("pivot_offset", control.pivot_offset) as Vector2
+	control.mouse_filter = int(snapshot.get("mouse_filter", control.mouse_filter))
+	control.focus_mode = int(snapshot.get("focus_mode", control.focus_mode))
+	control.tooltip_text = str(snapshot.get("tooltip_text", control.tooltip_text))
+	control.z_index = int(snapshot.get("z_index", control.z_index))
+
+
+func _talk_dock_choice_lifecycle_snapshot() -> Array:
+	var result: Array = []
+	if talk_dock == null or talk_dock.choice_list == null:
+		return result
+	for response_value in talk_dock.choice_list.get_children():
+		if not response_value is Control:
+			continue
+		var response := response_value as Control
+		var child_states: Array = []
+		for child_value in response.get_children():
+			if not child_value is Control:
+				continue
+			var child := child_value as Control
+			var child_state := {
+				"control": _talk_dock_control_lifecycle_snapshot(child),
+				"button_text": (child as Button).text if child is Button else "",
+				"button_disabled": (child as Button).disabled if child is Button else false,
+			}
+			child_states.append(child_state)
+		result.append({"control": _talk_dock_control_lifecycle_snapshot(response), "children": child_states})
+	return result
+
+
+func _restore_talk_dock_choice_lifecycle_snapshot(snapshot: Array) -> void:
+	if talk_dock == null or talk_dock.choice_list == null:
+		return
+	for response_index in range(mini(snapshot.size(), talk_dock.choice_list.get_child_count())):
+		var response_state := _copy_dict(snapshot[response_index])
+		var response_value := talk_dock.choice_list.get_child(response_index)
+		if not response_value is Control:
+			continue
+		_restore_talk_dock_control_lifecycle_snapshot(response_value as Control, _copy_dict(response_state.get("control", {})))
+		var child_states := _copy_array(response_state.get("children", []))
+		for child_index in range(mini(child_states.size(), response_value.get_child_count())):
+			var child_state := _copy_dict(child_states[child_index])
+			var child_value := response_value.get_child(child_index)
+			if not child_value is Control:
+				continue
+			_restore_talk_dock_control_lifecycle_snapshot(child_value as Control, _copy_dict(child_state.get("control", {})))
+			if child_value is Button:
+				(child_value as Button).text = str(child_state.get("button_text", ""))
+				(child_value as Button).disabled = bool(child_state.get("button_disabled", false))
+
+
+func _talk_dock_canvas_lifecycle_snapshot() -> Dictionary:
+	return {
+		"environment_ref": environment_canvas,
+		"environment_activity_paused": environment_canvas.environment_activity_paused if environment_canvas != null else false,
+		"environment_redraw_accumulator": environment_canvas.scene_idle_animation_redraw_accumulator if environment_canvas != null else 0.0,
+		"environment_reserved_rect": environment_canvas.reserved_overlay_global_rect if environment_canvas != null else Rect2(),
+		"game_surface_ref": game_surface_canvas,
+		"game_surface_activity_paused": game_surface_canvas.environment_activity_paused if game_surface_canvas != null else false,
+		"game_surface_pointer_pending": game_surface_canvas.captured_pointer_move_pending if game_surface_canvas != null else false,
+	}
+
+
+func _restore_talk_dock_canvas_lifecycle_snapshot(snapshot: Dictionary) -> void:
+	var restored_environment_canvas: Variant = snapshot.get("environment_ref", null)
+	if restored_environment_canvas != null and environment_canvas == restored_environment_canvas:
+		environment_canvas.environment_activity_paused = bool(snapshot.get("environment_activity_paused", false))
+		environment_canvas.scene_idle_animation_redraw_accumulator = float(snapshot.get("environment_redraw_accumulator", 0.0))
+		environment_canvas.reserved_overlay_global_rect = snapshot.get("environment_reserved_rect", Rect2()) as Rect2
+	var restored_game_surface_canvas: Variant = snapshot.get("game_surface_ref", null)
+	if restored_game_surface_canvas != null and game_surface_canvas == restored_game_surface_canvas:
+		game_surface_canvas.environment_activity_paused = bool(snapshot.get("game_surface_activity_paused", false))
+		game_surface_canvas.captured_pointer_move_pending = bool(snapshot.get("game_surface_pointer_pending", false))
 
 
 func _install_lifecycle_environment(environment: Dictionary) -> Dictionary:
