@@ -16,6 +16,7 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "foundation_systems_shards.ps1")
 . (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
+$script:PreparedFoundationSplitRunner = $null
 $suiteKey = $Suite.ToLowerInvariant()
 $foundationSuiteKey = $FoundationSuite.Trim().ToLowerInvariant()
 $validFoundationSuites = @(
@@ -196,21 +197,8 @@ function Convert-ProjectResourcePath {
     return "res://" + (Get-ProjectRelativePath $Path)
 }
 
-function New-SplitTestRunner {
-    param(
-        [string]$Name,
-        [string[]]$SourceRelativePaths
-    )
-    $generatedRoot = Join-Path $root ".tmp\generated_tests"
-    New-Item -ItemType Directory -Force -Path $generatedRoot | Out-Null
-    $destination = Join-Path $generatedRoot $Name
-    $lines = @(Get-SplitTestRunnerLines -ProjectRoot $root -SourceRelativePaths $SourceRelativePaths)
-    [System.IO.File]::WriteAllLines($destination, $lines)
-    return Convert-ProjectResourcePath $destination
-}
-
-function Get-FoundationSplitRunnerPath {
-    return New-SplitTestRunner -Name "foundation_check_split_runner.gd" -SourceRelativePaths @(
+function Get-FoundationSplitRunnerSourceRelativePaths {
+    return @(
         "scripts/tests/foundation/check_core_content.gd",
         "scripts/tests/foundation/check_slots_surfaces.gd",
         "scripts/tests/foundation/check_table_games.gd",
@@ -221,6 +209,34 @@ function Get-FoundationSplitRunnerPath {
         "scripts/tests/foundation/check_cage_environment_rework.gd",
         "scripts/tests/foundation/check_coin_pusher.gd"
     )
+}
+
+function Get-FoundationSplitRunnerPhysicalPath {
+    return Join-Path $root "generated_tests\foundation_check_split_runner.gd"
+}
+
+function Get-FoundationSplitRunnerIntendedBytes {
+    $lines = @(Get-SplitTestRunnerLines -ProjectRoot $root -SourceRelativePaths @(Get-FoundationSplitRunnerSourceRelativePaths))
+    return [byte[]](Get-SplitTestRunnerBytes -Lines $lines)
+}
+
+function Initialize-FoundationSplitRunner {
+    $physicalPath = Get-FoundationSplitRunnerPhysicalPath
+    $resourcePath = "res://generated_tests/foundation_check_split_runner.gd"
+    $intendedBytes = [byte[]](Get-FoundationSplitRunnerIntendedBytes)
+    $prepared = Set-SplitTestRunnerFile -DestinationPath $physicalPath -ResourcePath $resourcePath -IntendedBytes $intendedBytes
+    $verifiedPath = Get-VerifiedSplitTestRunnerResourcePath -PreparedState $prepared -ExpectedPath $physicalPath -ExpectedResourcePath $resourcePath -IntendedBytes $intendedBytes
+    if ($verifiedPath -cne $resourcePath) {
+        throw "Split-runner verification returned an unexpected resource path: $verifiedPath"
+    }
+    $script:PreparedFoundationSplitRunner = $prepared
+}
+
+function Get-VerifiedFoundationSplitRunnerPath {
+    $physicalPath = Get-FoundationSplitRunnerPhysicalPath
+    $resourcePath = "res://generated_tests/foundation_check_split_runner.gd"
+    $intendedBytes = [byte[]](Get-FoundationSplitRunnerIntendedBytes)
+    return Get-VerifiedSplitTestRunnerResourcePath -PreparedState $script:PreparedFoundationSplitRunner -ExpectedPath $physicalPath -ExpectedResourcePath $resourcePath -IntendedBytes $intendedBytes
 }
 
 function Get-UiSceneSplitRunnerPath {
@@ -543,7 +559,7 @@ function Invoke-GDScriptLoadCheck {
 function Invoke-FoundationSuite {
     param([string]$FoundationSuite, [int]$StageTimeoutSec = 0)
     $report = Convert-ReportResourcePath ("foundation_{0}.json" -f $FoundationSuite)
-    Invoke-GodotScript -Name ("foundation_{0}" -f $FoundationSuite) -ScriptPath (Get-FoundationSplitRunnerPath) -UserArgs @("--suite=$FoundationSuite", "--report=$report") -StageTimeoutSec $StageTimeoutSec
+    Invoke-GodotScript -Name ("foundation_{0}" -f $FoundationSuite) -ScriptPath (Get-VerifiedFoundationSplitRunnerPath) -UserArgs @("--suite=$FoundationSuite", "--report=$report") -StageTimeoutSec $StageTimeoutSec
 }
 
 function Enter-CheckGodotWorkspaceMutex {
@@ -616,9 +632,9 @@ function Invoke-FoundationSystemsSharded {
         throw "Invalid foundation systems shard plan: $(@($planCheck.errors) -join ' | ')"
     }
 
-    # Generate the composite source once, then copy it into each private
+    # Reverify the already prepared composite, then copy it into each private
     # project. No child traverses the parent report tree through res://.tmp.
-    $runnerResourcePath = Get-FoundationSplitRunnerPath
+    $runnerResourcePath = Get-VerifiedFoundationSplitRunnerPath
     if (-not $runnerResourcePath.StartsWith("res://")) {
         throw "Foundation split runner did not return a project resource path: $runnerResourcePath"
     }
@@ -942,6 +958,10 @@ if (-not $script:Godot) {
 }
 
 Assert-NoConcurrentProjectGodot
+
+if (Test-FoundationSplitRunnerPreparationRequired -Suite $suiteKey -FoundationSuite $foundationSuiteKey) {
+    Initialize-FoundationSplitRunner
+}
 
 if (-not $NoImport) {
     Invoke-GodotImport

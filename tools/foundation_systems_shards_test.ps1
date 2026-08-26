@@ -2,12 +2,24 @@ param([switch]$Quiet)
 
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "foundation_systems_shards.ps1")
+. (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
 
 function Assert-True {
     param([bool]$Condition, [string]$Message)
     if (-not $Condition) {
         throw $Message
     }
+}
+
+function Assert-Throws {
+    param([scriptblock]$Action, [string]$Message)
+    try {
+        & $Action | Out-Null
+    }
+    catch {
+        return $_.Exception
+    }
+    throw $Message
 }
 
 $productionPlan = Test-FoundationSystemsShardPlan -ExpectedIds (Get-FoundationSystemsCheckIds) -Shards (Get-FoundationSystemsShardPlan)
@@ -147,6 +159,183 @@ foreach ($field in $requiredLibraryFields) {
 }
 
 $checkGodotSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot "check_godot.ps1") -Raw
+$gitignoreSource = Get-Content -LiteralPath (Join-Path $projectRoot ".gitignore") -Raw
+
+$selectionMatrix = @(
+    [pscustomobject]@{ suite = "smoke"; foundation = ""; expected = $true },
+    [pscustomobject]@{ suite = "contract"; foundation = ""; expected = $true },
+    [pscustomobject]@{ suite = "full"; foundation = ""; expected = $true },
+    [pscustomobject]@{ suite = "audit"; foundation = ""; expected = $false }
+)
+foreach ($selection in $selectionMatrix) {
+    $actual = Test-FoundationSplitRunnerPreparationRequired -Suite $selection.suite -FoundationSuite $selection.foundation
+    Assert-True ($actual -eq $selection.expected) "Foundation split-runner top-level selection matrix drifted for Suite=$($selection.suite)."
+}
+$normalizedFoundationSuites = @(
+    "smoke", "contracts", "games", "systems", "slot", "slots", "slot_acceptance", "blackjack", "roulette",
+    "baccarat", "craps", "video_poker", "bar_dice", "crew_poker", "pull_tabs", "scratch_tickets", "coin_pusher", "audit", "all"
+)
+foreach ($topLevelSuite in @("smoke", "contract", "audit", "full")) {
+    foreach ($foundationSuite in $normalizedFoundationSuites) {
+        Assert-True (Test-FoundationSplitRunnerPreparationRequired -Suite $topLevelSuite -FoundationSuite $foundationSuite) "Normalized FoundationSuite '$foundationSuite' did not select the composite under Suite=$topLevelSuite."
+    }
+    Assert-True (-not (Test-FoundationSplitRunnerPreparationRequired -Suite $topLevelSuite -FoundationSuite "ui")) "UI-only FoundationSuite selected the Foundation composite under Suite=$topLevelSuite."
+}
+Assert-True (Test-FoundationSplitRunnerPreparationRequired -Suite "smoke" -FoundationSuite "contracts") "Normalized contract alias did not select the Foundation composite."
+Assert-True (Test-FoundationSplitRunnerPreparationRequired -Suite "smoke" -FoundationSuite "all") "Normalized full alias did not select the Foundation composite."
+foreach ($invalidSelection in @(
+    [pscustomobject]@{ suite = "Smoke"; foundation = "" },
+    [pscustomobject]@{ suite = "smoke "; foundation = "" },
+    [pscustomobject]@{ suite = "smoke"; foundation = "Blackjack" },
+    [pscustomobject]@{ suite = "smoke"; foundation = "blackjack " },
+    [pscustomobject]@{ suite = "smoke"; foundation = "contract" },
+    [pscustomobject]@{ suite = "smoke"; foundation = "full" },
+    [pscustomobject]@{ suite = "unknown"; foundation = "" },
+    [pscustomobject]@{ suite = "smoke"; foundation = "unknown" }
+)) {
+    Assert-Throws -Action { Test-FoundationSplitRunnerPreparationRequired -Suite $invalidSelection.suite -FoundationSuite $invalidSelection.foundation } -Message "Invalid or non-normalized split-runner selection was accepted: Suite=$($invalidSelection.suite), FoundationSuite=$($invalidSelection.foundation)." | Out-Null
+}
+Assert-True (-not (Get-Command Test-FoundationSplitRunnerPreparationRequired).Parameters.ContainsKey("NoImport")) "NoImport leaked into pure split-runner selection."
+Assert-True ($checkGodotSource.Contains('if ($foundationSuiteKey -eq "contract")') -and $checkGodotSource.Contains('$foundationSuiteKey = "contracts"') -and $checkGodotSource.Contains('elseif ($foundationSuiteKey -eq "full")') -and $checkGodotSource.Contains('$foundationSuiteKey = "all"')) "FoundationSuite alias normalization changed or moved behind split-runner selection."
+
+$expectedSplitSources = @(
+    "scripts/tests/foundation/check_core_content.gd",
+    "scripts/tests/foundation/check_slots_surfaces.gd",
+    "scripts/tests/foundation/check_table_games.gd",
+    "scripts/tests/foundation/check_items_events_world.gd",
+    "scripts/tests/foundation/check_delivery_runs.gd",
+    "scripts/tests/foundation/check_lenders_release_saves.gd",
+    "scripts/tests/foundation/check_scratch_tickets.gd",
+    "scripts/tests/foundation/check_cage_environment_rework.gd",
+    "scripts/tests/foundation/check_coin_pusher.gd"
+)
+$sourceFunctionMatch = [regex]::Match($checkGodotSource, '(?s)function Get-FoundationSplitRunnerSourceRelativePaths \{(.*?)(?=\r?\n\}\r?\n\r?\nfunction Get-FoundationSplitRunnerPhysicalPath)')
+Assert-True $sourceFunctionMatch.Success "Could not locate the canonical Foundation split-runner source manifest."
+$declaredSplitSources = @([regex]::Matches($sourceFunctionMatch.Groups[1].Value, '"(scripts/tests/foundation/[^\"]+\.gd)"') | ForEach-Object { $_.Groups[1].Value })
+Assert-True (($declaredSplitSources -join "|") -ceq ($expectedSplitSources -join "|")) "Canonical nine-source Foundation split-runner order changed."
+$splitLines = @(Get-SplitTestRunnerLines -ProjectRoot $projectRoot -SourceRelativePaths $expectedSplitSources)
+Assert-True ($splitLines.Count -eq 35084) "Canonical Foundation composite line count changed from 35,084."
+Assert-True ((Get-SplitTestRunnerSemanticSha256 -Lines $splitLines) -ceq "52e0bc8635f52ab39019edef4995a77a4d6662e937158475f6430071d2702e45") "Canonical Foundation composite semantic hash changed."
+$splitBytes = [byte[]](Get-SplitTestRunnerBytes -Lines $splitLines)
+Assert-True ($splitBytes.Length -eq 2308016) "Canonical Foundation composite exact byte length changed."
+Assert-True ((Get-SplitTestRunnerByteSha256 -Bytes $splitBytes) -ceq "19b60badb149eed8bad881ed95228223f168b54172407f0c6016686162ed8f19") "Canonical Foundation composite exact byte hash changed."
+Assert-True (-not ($splitBytes.Length -ge 3 -and $splitBytes[0] -eq 0xEF -and $splitBytes[1] -eq 0xBB -and $splitBytes[2] -eq 0xBF)) "Foundation composite unexpectedly contains a UTF-8 BOM."
+$splitText = (New-Object System.Text.UTF8Encoding($false)).GetString($splitBytes)
+Assert-True (-not [regex]::IsMatch($splitText, '(?<!\r)\n')) "Foundation composite contains a non-CRLF line ending."
+Assert-True ($splitText.EndsWith("`r`n")) "Foundation composite is missing its trailing CRLF newline."
+
+function Invoke-HostileSplitRunnerPublication {
+    param([string]$DestinationPath, [byte[]]$IntendedBytes)
+    $published = $null
+    $failure = $null
+    try {
+        $candidate = Set-SplitTestRunnerFile -DestinationPath $DestinationPath -ResourcePath "res://generated_tests/foundation_check_split_runner.gd" -IntendedBytes $IntendedBytes
+        Get-VerifiedSplitTestRunnerResourcePath -PreparedState $candidate -ExpectedPath $DestinationPath -ExpectedResourcePath "res://generated_tests/foundation_check_split_runner.gd" -IntendedBytes $IntendedBytes | Out-Null
+        $published = $candidate
+    }
+    catch {
+        $failure = $_.Exception
+    }
+    return [pscustomobject]@{ published = $published; failure = $failure }
+}
+
+$runnerLifecycleRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("bth_split_runner_" + [Guid]::NewGuid().ToString("N"))
+$runnerLifecycleFull = [System.IO.Path]::GetFullPath($runnerLifecycleRoot)
+$tempRootFull = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd([char[]]@([char]'\', [char]'/'))
+Assert-True $runnerLifecycleFull.StartsWith($tempRootFull + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase) "Split-runner hostile fixture escaped the OS temporary directory."
+try {
+    $runnerPath = Join-Path $runnerLifecycleRoot "generated_tests\foundation_check_split_runner.gd"
+    $fixtureBytes = [byte[]](Get-SplitTestRunnerBytes -Lines @("extends SceneTree", "func _init():", "`tquit(0)"))
+
+    $missingPreparation = Invoke-HostileSplitRunnerPublication -DestinationPath $runnerPath -IntendedBytes $fixtureBytes
+    Assert-True ($null -eq $missingPreparation.failure -and $null -ne $missingPreparation.published -and $missingPreparation.published.Wrote) "Missing split runner was not created and published after verification."
+    Assert-True (Test-SplitTestRunnerBytesEqual -Left ([System.IO.File]::ReadAllBytes($runnerPath)) -Right $fixtureBytes) "Created split runner does not contain the intended exact bytes."
+
+    $preservedTimestamp = [DateTime]::SpecifyKind([DateTime]::Parse("2024-01-02T03:04:06Z"), [DateTimeKind]::Utc)
+    [System.IO.File]::SetLastWriteTimeUtc($runnerPath, $preservedTimestamp)
+    $identicalPreparation = Invoke-HostileSplitRunnerPublication -DestinationPath $runnerPath -IntendedBytes $fixtureBytes
+    Assert-True ($null -eq $identicalPreparation.failure -and $null -ne $identicalPreparation.published -and -not $identicalPreparation.published.Wrote) "Byte-identical split runner was rewritten."
+    Assert-True (([System.IO.FileInfo]$runnerPath).LastWriteTimeUtc.Ticks -eq $preservedTimestamp.Ticks) "Byte-identical split runner did not preserve LastWriteTimeUtc."
+
+    [System.IO.File]::WriteAllBytes($runnerPath, [byte[]](Get-SplitTestRunnerBytes -Lines @("hostile changed bytes")))
+    [System.IO.File]::SetLastWriteTimeUtc($runnerPath, $preservedTimestamp)
+    $changedPreparation = Invoke-HostileSplitRunnerPublication -DestinationPath $runnerPath -IntendedBytes $fixtureBytes
+    Assert-True ($null -eq $changedPreparation.failure -and $null -ne $changedPreparation.published -and $changedPreparation.published.Wrote) "Changed split runner was not rewritten and published."
+    Assert-True (Test-SplitTestRunnerBytesEqual -Left ([System.IO.File]::ReadAllBytes($runnerPath)) -Right $fixtureBytes) "Changed split runner rewrite did not produce the intended exact bytes."
+    $prepared = $changedPreparation.published
+
+    Assert-Throws -Action { Get-VerifiedSplitTestRunnerResourcePath -PreparedState $null -ExpectedPath $runnerPath -ExpectedResourcePath $prepared.ResourcePath -IntendedBytes $fixtureBytes } -Message "Missing preparation state was accepted." | Out-Null
+    Assert-Throws -Action { Get-VerifiedSplitTestRunnerResourcePath -PreparedState $prepared -ExpectedPath (Join-Path $runnerLifecycleRoot "other.gd") -ExpectedResourcePath $prepared.ResourcePath -IntendedBytes $fixtureBytes } -Message "Prepared physical-path drift was accepted." | Out-Null
+    Assert-Throws -Action { Get-VerifiedSplitTestRunnerResourcePath -PreparedState $prepared -ExpectedPath $runnerPath -ExpectedResourcePath "res://generated_tests/other.gd" -IntendedBytes $fixtureBytes } -Message "Prepared resource-path drift was accepted." | Out-Null
+
+    $beforeSourceDriftBytes = [System.IO.File]::ReadAllBytes($runnerPath)
+    $beforeSourceDriftTimestamp = ([System.IO.FileInfo]$runnerPath).LastWriteTimeUtc
+    $sourceDriftBytes = [byte[]](Get-SplitTestRunnerBytes -Lines @("extends SceneTree", "# changed source"))
+    Assert-Throws -Action { Get-VerifiedSplitTestRunnerResourcePath -PreparedState $prepared -ExpectedPath $runnerPath -ExpectedResourcePath $prepared.ResourcePath -IntendedBytes $sourceDriftBytes } -Message "Post-preparation source drift was accepted." | Out-Null
+    Assert-True ((Test-SplitTestRunnerBytesEqual -Left ([System.IO.File]::ReadAllBytes($runnerPath)) -Right $beforeSourceDriftBytes) -and ([System.IO.FileInfo]$runnerPath).LastWriteTimeUtc.Ticks -eq $beforeSourceDriftTimestamp.Ticks) "Source-drift verification rewrote the prepared output."
+
+    $hostileOutputBytes = [byte[]](Get-SplitTestRunnerBytes -Lines @("extends SceneTree", "func hostile():", "`tpass"))
+    [System.IO.File]::WriteAllBytes($runnerPath, $hostileOutputBytes)
+    [System.IO.File]::SetLastWriteTimeUtc($runnerPath, $prepared.LastWriteTimeUtc)
+    Assert-Throws -Action { Get-VerifiedSplitTestRunnerResourcePath -PreparedState $prepared -ExpectedPath $runnerPath -ExpectedResourcePath $prepared.ResourcePath -IntendedBytes $fixtureBytes } -Message "Post-preparation output drift was accepted." | Out-Null
+    Assert-True (Test-SplitTestRunnerBytesEqual -Left ([System.IO.File]::ReadAllBytes($runnerPath)) -Right $hostileOutputBytes) "Output-drift verification silently rewrote the hostile output."
+
+    [System.IO.File]::WriteAllBytes($runnerPath, $fixtureBytes)
+    [System.IO.File]::SetLastWriteTimeUtc($runnerPath, $prepared.LastWriteTimeUtc.AddSeconds(5))
+    Assert-Throws -Action { Get-VerifiedSplitTestRunnerResourcePath -PreparedState $prepared -ExpectedPath $runnerPath -ExpectedResourcePath $prepared.ResourcePath -IntendedBytes $fixtureBytes } -Message "Post-preparation timestamp drift was accepted." | Out-Null
+    Assert-True (Test-SplitTestRunnerBytesEqual -Left ([System.IO.File]::ReadAllBytes($runnerPath)) -Right $fixtureBytes) "Timestamp-drift verification rewrote the prepared output."
+
+    Remove-Item -LiteralPath $runnerPath -Force
+    Assert-Throws -Action { Get-VerifiedSplitTestRunnerResourcePath -PreparedState $prepared -ExpectedPath $runnerPath -ExpectedResourcePath $prepared.ResourcePath -IntendedBytes $fixtureBytes } -Message "Missing prepared output was accepted." | Out-Null
+    Assert-True (-not (Test-Path -LiteralPath $runnerPath)) "Missing-output verification recreated the split runner."
+
+    $invalidParent = Join-Path $runnerLifecycleRoot "invalid_parent"
+    [System.IO.File]::WriteAllText($invalidParent, "not a directory")
+    $invalidPublication = Invoke-HostileSplitRunnerPublication -DestinationPath (Join-Path $invalidParent "runner.gd") -IntendedBytes $fixtureBytes
+    Assert-True ($null -ne $invalidPublication.failure -and $null -eq $invalidPublication.published) "Invalid split-runner destination published preparation state."
+
+    $readOnlyPath = Join-Path $runnerLifecycleRoot "readonly\runner.gd"
+    [System.IO.Directory]::CreateDirectory((Split-Path -Parent $readOnlyPath)) | Out-Null
+    [System.IO.File]::WriteAllBytes($readOnlyPath, [byte[]](Get-SplitTestRunnerBytes -Lines @("old")))
+    [System.IO.File]::SetAttributes($readOnlyPath, [System.IO.FileAttributes]::ReadOnly)
+    try {
+        $readOnlyPublication = Invoke-HostileSplitRunnerPublication -DestinationPath $readOnlyPath -IntendedBytes $fixtureBytes
+        Assert-True ($null -ne $readOnlyPublication.failure -and $null -eq $readOnlyPublication.published) "Unwritable split-runner destination published preparation state."
+    }
+    finally {
+        [System.IO.File]::SetAttributes($readOnlyPath, [System.IO.FileAttributes]::Normal)
+    }
+}
+finally {
+    if (Test-Path -LiteralPath $runnerLifecycleRoot) {
+        Remove-Item -LiteralPath $runnerLifecycleRoot -Recurse -Force
+    }
+}
+
+$executionStart = $checkGodotSource.LastIndexOf('$powerShellExe =')
+Assert-True ($executionStart -ge 0) "Could not locate check_godot execution sequence."
+$executionSource = $checkGodotSource.Substring($executionStart)
+$guardIndex = $executionSource.IndexOf('Assert-NoConcurrentProjectGodot')
+$prepareIndex = $executionSource.IndexOf('Initialize-FoundationSplitRunner')
+$importGuardIndex = $executionSource.IndexOf('if (-not $NoImport)')
+$importIndex = $executionSource.IndexOf('Invoke-GodotImport', $importGuardIndex)
+$loadIndex = $executionSource.IndexOf('Invoke-GDScriptLoadCheck')
+$suiteIndex = $executionSource.IndexOf('Invoke-FoundationSuite')
+Assert-True ($guardIndex -ge 0 -and $guardIndex -lt $prepareIndex -and $prepareIndex -lt $importGuardIndex -and $importGuardIndex -lt $importIndex -and $importIndex -lt $loadIndex -and $loadIndex -lt $suiteIndex) "Split-runner preparation is not ordered host guard < prepare < import < load < suite."
+Assert-True (([regex]::Matches($executionSource, '\bInitialize-FoundationSplitRunner\b')).Count -eq 1) "Foundation split runner is not prepared exactly once in the execution sequence."
+$preparationCallMatch = [regex]::Match($executionSource, 'Test-FoundationSplitRunnerPreparationRequired[^\r\n]+')
+Assert-True ($preparationCallMatch.Success -and -not $preparationCallMatch.Value.Contains('NoImport')) "NoImport changes split-runner preparation selection."
+$initializerMatch = [regex]::Match($checkGodotSource, '(?s)function Initialize-FoundationSplitRunner \{(.*?)(?=\r?\n\}\r?\n\r?\nfunction Get-VerifiedFoundationSplitRunnerPath)')
+Assert-True ($initializerMatch.Success -and $initializerMatch.Value.IndexOf('Set-SplitTestRunnerFile') -lt $initializerMatch.Value.IndexOf('Get-VerifiedSplitTestRunnerResourcePath') -and $initializerMatch.Value.IndexOf('Get-VerifiedSplitTestRunnerResourcePath') -lt $initializerMatch.Value.IndexOf('$script:PreparedFoundationSplitRunner = $prepared')) "Prepared path/hash/length/timestamp are published before reread verification."
+$ordinaryInvokerMatch = [regex]::Match($checkGodotSource, '(?s)function Invoke-FoundationSuite \{(.*?)(?=\r?\n\}\r?\n\r?\nfunction Enter-CheckGodotWorkspaceMutex)')
+$systemsInvokerMatch = [regex]::Match($checkGodotSource, '(?s)function Invoke-FoundationSystemsSharded \{(.*?)(?=\r?\n\}\r?\n\r?\nfunction Invoke-FoundationPerfSmoke)')
+Assert-True ($ordinaryInvokerMatch.Success -and $ordinaryInvokerMatch.Value.Contains('Get-VerifiedFoundationSplitRunnerPath')) "Ordinary Foundation suites bypass the verified prepared-runner accessor."
+Assert-True ($systemsInvokerMatch.Success -and $systemsInvokerMatch.Value.Contains('Get-VerifiedFoundationSplitRunnerPath')) "Sharded Systems bypasses the verified prepared-runner accessor."
+Assert-True (-not $checkGodotSource.Contains('Get-FoundationSplitRunnerPath') -and -not $checkGodotSource.Contains('New-SplitTestRunner') -and -not $checkGodotSource.Contains('.tmp\generated_tests')) "A focused or legacy split-runner resolver remains reachable."
+Assert-True ($checkGodotSource.Contains('res://generated_tests/foundation_check_split_runner.gd')) "Canonical generated Foundation resource path changed."
+Assert-True ($gitignoreSource -match '(?m)^/generated_tests/\s*$') "Canonical generated_tests directory is not ignored at the repository root."
+Assert-True (-not (Test-Path -LiteralPath (Join-Path $projectRoot "generated_tests\.gdignore"))) "generated_tests contains a forbidden .gdignore."
+Assert-True ($checkGodotSource.Contains('$FoundationSuiteBudgetMultiplier = 1.5') -and $checkGodotSource.Contains('"foundation_systems" = 29.141')) "Foundation Systems timing baseline or multiplier changed."
 $expectedOverrides = @("BTH_DISTRIBUTION_DATA_ROOT", "BTH_DISTRIBUTION_BUILD", "BTH_META_COLLECTION_PATH", "BTH_PROFILE_INVENTORY_PATH")
 Assert-True (((Get-FoundationShardClearedEnvironmentNames) -join "|") -eq ($expectedOverrides -join "|")) "Shard persistence override clearing list is incomplete or reordered."
 Assert-True ($checkGodotSource.Contains('foreach ($overrideName in Get-FoundationShardClearedEnvironmentNames)')) "Shard launcher does not consume the validated persistence override list."

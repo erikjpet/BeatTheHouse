@@ -4,6 +4,7 @@ docs/plans/0.3.2_function_census.md
 
 # Godot generated files
 .godot/
+/generated_tests/
 *.translation
 *.uid
 *.import
