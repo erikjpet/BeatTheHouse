@@ -1028,3 +1028,19 @@ their own detailed handoffs and test evidence.
   `a0d2b6ff` merge ancestry, final accepted pusher integration must first revert
   this new revert before merging final pusher, or replay the complete pusher
   content deliberately; a plain later merge would omit the original a0 base.
+- 2026-08-26: Primary created normal mainline-1 revert
+  `351e4eeaf788e69c7dc3c2430ce60d5f1d6467bc` on remediation; author then
+  committed mechanical full-runner pins as `37f10dda`. Mandatory self-review
+  issued `ACCEPT` for exact clean
+  `37f10ddaf8f654ee942b215b71cdcebde5be8f9c`. Stable patch IDs prove the
+  34-path revert is the exact inverse of the premature pusher merge; the second
+  commit changes exactly four full-pin literals. Full runner is now 34,909 lines,
+  semantic SHA `b00570931a02b28478d5c611d2202b1dd26c6dd143bc944a848baf72a86fb76c`,
+  2,293,595 bytes, SHA
+  `046565d1639f1a66466b4724c594c697074b084762f5aa2e469968aabe7d1147`.
+  Focused sources/helpers/output and all focused pins remain exact to `5776893c`.
+  Static AST, hostile contract (2.9s), project validation (50.3s), diff, inverse
+  patch, conflict and full hazard checks pass. Revert truthfully reopens the
+  pusher prompt/row on this line and removes 15 stale PNGs plus one manifest;
+  `codex/cross-board` remains separate and untouched. All prior runtime is
+  nontransferable; fresh exact-head review and runtime are pending.
