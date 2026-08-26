@@ -659,3 +659,16 @@ their own detailed handoffs and test evidence.
   325,484,434 bytes. The owner is adding only that one-line accepted project-
   scan hygiene dependency as a separate commit, then must repeat self-review and
   independent exact-head review. No budget change or unchanged retry is allowed.
+- 2026-08-26: `fix06_4` hygiene self-review completed on clean exact head
+  `54d8083a4faeb4d894078c6ffab3e876bcddddf0`. The sole new commit is a
+  provenance-preserving cherry-pick of accepted `e4a7be3f`; its one-line
+  `review_artifacts/.gdignore` blob is identical, and all four remediation blobs,
+  tests, runners, budgets and caches are unchanged. Runtime and offline capture
+  consumers use direct filesystem access and remain valid. No runtime ran;
+  independent combined-head review is in progress.
+- 2026-08-26: Depth's env06_6 P1 remediation self-review reports clean exact
+  head `a5ae1d8f2cf843ea7be7a562aea04c38638ec6b0`, a focused seven-path child
+  of rejected `c04cc200`; the full range from accepted boundary base `571a9243`
+  remains exactly the approved nine paths. Static validation and AST/Node/scope/
+  trace-map checks pass with no author P1/P2. Fresh independent exact-head review
+  is active; host, board, merge and formal acceptance remain withheld.
