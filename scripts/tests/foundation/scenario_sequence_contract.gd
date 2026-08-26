@@ -7,6 +7,7 @@ const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_run
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_extension_dispatch.gd")
+const ScenarioSequenceAuditScript := preload("res://tools/scenario_sequence_audit.gd")
 const ScenarioPresentationContractScript := preload("res://scripts/tests/foundation/scenario_presentation_contract.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
@@ -35,6 +36,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_definition_validation_receipt(failures)
 	_check_suppressed_sequence_compatibility(failures)
 	_check_transition_and_event_delivery(failures)
+	_check_rollout_growth_contract(library, failures)
 	_check_delivery_day_production_package(library, failures)
 	_check_material_projection(failures)
 	ScenarioPresentationContractScript.check(failures)
@@ -187,6 +189,64 @@ static func _check_interaction_identity(failures: Array) -> void:
 	var inaccessible_result := OperationRegistryScript.resolve_interactions(base, [inaccessible])
 	if bool(inaccessible_result.get("ok", true)) or _array(inaccessible_result.get("records", [])).size() != 1:
 		failures.append("Inaccessible interaction overlay did not fail closed without leaking a record.")
+	_check_competing_interaction_overlay_priorities(failures)
+
+
+static func _check_competing_interaction_overlay_priorities(failures: Array) -> void:
+	for mode_value in ["gate", "replace", "augment", "retarget"]:
+		var mode := str(mode_value)
+		var target_id := "priority_%s" % mode
+		var base := [_interaction_record("base", target_id, "Priority target", true)]
+		var overlays := [
+			_priority_overlay("event", mode, "base", target_id, "event"),
+			_priority_overlay("sweep", mode, "base", target_id, "sweep"),
+			_priority_overlay("scenario", mode, "base", target_id, "scenario"),
+		]
+		var reversed_overlays := overlays.duplicate(true)
+		reversed_overlays.reverse()
+		var resolved := OperationRegistryScript.resolve_interactions(base, overlays)
+		var reversed := OperationRegistryScript.resolve_interactions(base, reversed_overlays)
+		if JSON.stringify(resolved) != JSON.stringify(reversed):
+			failures.append("Competing %s overlays depended on caller order." % mode)
+		var accepted := _array(resolved.get("accepted_overlay_source_identities", []))
+		var records := _array(resolved.get("records", []))
+		if bool(resolved.get("ok", true)) or accepted != ["sweep::sweep_%s" % mode] or records.size() != 1:
+			failures.append("Competing %s overlays did not preserve only the sweep-priority winner." % mode)
+			continue
+		var record := _dict(records[0])
+		for private_key in ["effective_priority", "effective_owner_namespace", "effective_winner", "source_key", "accepted_overlay_source_identities"]:
+			if record.has(private_key):
+				failures.append("Competing %s overlay leaked reducer-private winner metadata %s." % [mode, private_key])
+		match mode:
+			"gate":
+				if bool(record.get("enabled", true)) or str(record.get("disabled_reason", "")) != "sweep wins gate":
+					failures.append("Lower-priority gate overwrote the sweep gate.")
+			"replace":
+				if OperationRegistryScript.identity_from(record) != "sweep::sweep_replace" or str(record.get("label", "")) != "sweep wins replace":
+					failures.append("Lower-priority replacement displaced the sweep replacement identity.")
+			"augment":
+				var action_ids: Array = []
+				for action_value in _array(record.get("available_actions", [])):
+					action_ids.append(str(_dict(action_value).get("id", "")))
+				if action_ids != ["use", "sweep_action"]:
+					failures.append("Lower-priority augment leaked into the winning action set: %s." % JSON.stringify(action_ids))
+			"retarget":
+				if str(record.get("source_id", "")) != "sweep_source":
+					failures.append("Lower-priority retarget overwrote the sweep retarget.")
+
+	var replacement := _priority_overlay("sweep", "replace", "base", "replacement_target", "sweep")
+	var replacement_challenger := _priority_overlay("scenario", "gate", "sweep", "sweep_replace", "scenario")
+	var replacement_result := OperationRegistryScript.resolve_interactions(
+		[_interaction_record("base", "replacement_target", "Replacement target", true)],
+		[replacement_challenger, replacement],
+	)
+	var replacement_records := _array(replacement_result.get("records", []))
+	if bool(replacement_result.get("ok", true)) \
+		or _array(replacement_result.get("accepted_overlay_source_identities", [])) != ["sweep::sweep_replace"] \
+		or replacement_records.size() != 1 \
+		or OperationRegistryScript.identity_from(_dict(replacement_records[0])) != "sweep::sweep_replace" \
+		or not _contains_text(_array(replacement_result.get("errors", [])), "owned by sweep"):
+		failures.append("Replacement winner precedence did not follow its public source identity.")
 
 
 static func _check_golden_operation_state(state: Dictionary, failures: Array) -> void:
@@ -1057,6 +1117,12 @@ static func _check_transition_and_event_delivery(failures: Array) -> void:
 	var reduced_delivery := SequenceRuntimeScript.drain_transitions(reduced_state, definition, true)
 	if not bool(reduced_delivery.get("ok", false)) or not _array(_dict(reduced_delivery.get("state", {})).get("active_stages", [])).is_empty():
 		failures.append("Reduced-motion transition delivery retained a timed visual stage.")
+	var legacy_observer_state := SequenceRuntimeScript.initial_state(definition, "bar_node", "legacy_event_observer")
+	var legacy_observer_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:legacy_observer", 1, 1, {"event_id": "fixture_event", "choice_id": "legacy_observed", "resolution_id": "", "resolved": true, "ok": true})
+	var legacy_observer_queued := SequenceRuntimeScript.enqueue_fact(legacy_observer_state, definition, legacy_observer_fact)
+	var legacy_observer_result := SequenceRuntimeScript.flush_facts(_dict(legacy_observer_queued.get("state", {})), definition, 1)
+	if not bool(legacy_observer_result.get("ok", false)) or _array(_dict(legacy_observer_result.get("state", {})).get("fact_receipts", [])) != ["event:legacy_observer"]:
+		failures.append("Broad uncorrelated event-result observer compatibility regressed.")
 	var bridged_definition := definition.duplicate(true)
 	var sequence := _dict(bridged_definition.get("sequence", {}))
 	var graph := _dict(sequence.get("phase_graph", {}))
@@ -1088,6 +1154,13 @@ static func _check_transition_and_event_delivery(failures: Array) -> void:
 		"handler": "increment_local",
 		"inputs": {"key": "pressure", "amount": 1},
 	}
+	sequence["fact_subscriptions"].append({
+		"fact_type": "event_result",
+		"payload_equals": {
+			"event_id": "fixture_event", "choice_id": "accept",
+			"resolution_id": "fixture_resolution", "resolved": true, "ok": true,
+		},
+	})
 	bridged_definition["sequence"] = sequence
 	var applied := SequenceRuntimeScript.apply_command(SequenceRuntimeScript.initial_state(bridged_definition, "bar_node", "event_seed"), bridged_definition, SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "event_bridge:1", {}, "scenario", "command_console"), {"available_funds": 2})
 	var drained := SequenceRuntimeScript.drain_event_requests(_dict(applied.get("state", {})), bridged_definition)
@@ -1159,6 +1232,69 @@ static func _check_transition_and_event_delivery(failures: Array) -> void:
 		failures.append("Scenario event bridge accepted an unmatched event-result correlation.")
 
 
+static func _check_rollout_growth_contract(library: ContentLibrary, failures: Array) -> void:
+	var delivery := library.scenario(DELIVERY_SCENARIO_ID)
+	if delivery.is_empty():
+		failures.append("Rollout-growth fixture could not load the invariant delivery proof.")
+		return
+	var other := _fixture_definition()
+	other["id"] = "aaa_rollout_other"
+	var reversed_definitions := [other, delivery]
+	var representative := SequenceCatalogScript.definition_for_id(reversed_definitions, DELIVERY_SCENARIO_ID)
+	var hostile_rows := ScenarioSequenceAuditScript.hostile_fixture_report_for_definitions(reversed_definitions)
+	if str(representative.get("id", "")) != DELIVERY_SCENARIO_ID or hostile_rows.size() != 10:
+		failures.append("Expanded audit did not select the invariant delivery proof independently of catalog order.")
+	else:
+		for hostile_value in hostile_rows:
+			var hostile := _dict(hostile_value)
+			if not bool(hostile.get("rejected", false)) or str(hostile.get("class", "")) == "fixture_source":
+				failures.append("Expanded audit hostile row did not reject: %s." % JSON.stringify(hostile))
+	var pair_report := ScenarioEngineScript.sequence_catalog_audit(reversed_definitions, 2, {})
+	if not ScenarioSequenceAuditScript.report_has_exact_shape(pair_report, 2) or int(pair_report.get("comparison_count", -1)) != 1:
+		failures.append("Expanded two-definition audit did not report its exact single pair.")
+	for missing_or_duplicate in [[other], [delivery, delivery]]:
+		var fixture_source_rows := ScenarioSequenceAuditScript.hostile_fixture_report_for_definitions(missing_or_duplicate)
+		if fixture_source_rows.size() != 1 or str(_dict(fixture_source_rows[0]).get("class", "")) != "fixture_source" or bool(_dict(fixture_source_rows[0]).get("rejected", true)):
+			failures.append("Missing/duplicate delivery representative did not fail with fixture_source.")
+	for rollout_count_value in [13, 55]:
+		var rollout_count := int(rollout_count_value)
+		var definitions: Array = []
+		for index in range(rollout_count):
+			var fixture := _fixture_definition()
+			fixture["id"] = "rollout_fixture_%02d" % index
+			fixture["sequence"]["sequence_signature"] = "rollout-fixture-%02d" % index
+			definitions.append(fixture)
+		var rollout_report := ScenarioEngineScript.sequence_catalog_audit(definitions, rollout_count, {})
+		if not ScenarioSequenceAuditScript.report_has_exact_shape(rollout_report, rollout_count):
+			failures.append("Scenario audit lost exact %d-definition/%d-pair reporting." % [rollout_count, int(rollout_count * (rollout_count - 1) / 2)])
+
+	var catalog := SequenceCatalogScript.load_catalog()
+	var proof_package := SequenceCatalogScript.package_for_scenario(DELIVERY_SCENARIO_ID, catalog)
+	if proof_package.is_empty():
+		failures.append("Rollout-growth fixture could not locate the invariant delivery package.")
+		return
+	var expanded_package := proof_package.duplicate(true)
+	expanded_package["scenario_ids"] = _array(proof_package.get("scenario_ids", [])) + ["future_shop_sequence"]
+	var expanded_catalog := {"ok": true, "packages": [
+		{"package_id": "future_other", "scenario_ids": ["future_other_sequence"]},
+		expanded_package,
+		{"package_id": "future_last", "scenario_ids": ["future_last_sequence"]},
+	]}
+	var expanded_match := SequenceCatalogScript.package_for_scenario(DELIVERY_SCENARIO_ID, expanded_catalog)
+	if str(expanded_match.get("package_id", "")) != str(proof_package.get("package_id", "")):
+		failures.append("Delivery proof package lookup overfit the catalog/package singleton shape.")
+	var duplicate_package := proof_package.duplicate(true)
+	duplicate_package["package_id"] = "duplicate_delivery_claim"
+	var duplicate_catalog := expanded_catalog.duplicate(true)
+	duplicate_catalog["packages"] = _array(expanded_catalog.get("packages", [])) + [duplicate_package]
+	if not SequenceCatalogScript.package_for_scenario(DELIVERY_SCENARIO_ID, duplicate_catalog).is_empty():
+		failures.append("Delivery proof package lookup accepted duplicate package claims.")
+	var repeated_claim := proof_package.duplicate(true)
+	repeated_claim["scenario_ids"] = [DELIVERY_SCENARIO_ID, DELIVERY_SCENARIO_ID]
+	if not SequenceCatalogScript.package_for_scenario(DELIVERY_SCENARIO_ID, {"ok": true, "packages": [repeated_claim, expanded_package]}).is_empty():
+		failures.append("Delivery proof package lookup ignored repeated in-package claims.")
+
+
 static func _check_delivery_day_production_package(library: ContentLibrary, failures: Array) -> void:
 	var raw_package: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/environments/scenario_sequences/env06_7_shops_streets.json"))
 	if typeof(raw_package) != TYPE_DICTIONARY or int(_dict(raw_package).get("schema_version", 0)) != 1 or _dict(raw_package).keys() != ["schema_version", "package_id", "handler_pack", "renderer_id", "scenarios"]:
@@ -1166,12 +1302,11 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 		return
 	var catalog := SequenceCatalogScript.load_catalog()
 	var definition := library.scenario(DELIVERY_SCENARIO_ID)
-	var packages := _array(catalog.get("packages", []))
-	if not bool(catalog.get("ok", false)) or _array(catalog.get("files", [])) != ["env06_7_shops_streets.json"] or packages.size() != 1:
-		failures.append("Delivery-day proof did not load as one committed object package: %s" % JSON.stringify(catalog))
+	var package := SequenceCatalogScript.package_for_scenario(DELIVERY_SCENARIO_ID, catalog)
+	if not bool(catalog.get("ok", false)) or package.is_empty() or _dict(catalog.get("overlays", {})).keys().count(DELIVERY_SCENARIO_ID) != 1:
+		failures.append("Delivery-day proof did not resolve to exactly one catalog definition/package: %s" % JSON.stringify(catalog))
 		return
-	var package := _dict(packages[0])
-	if str(package.get("package_id", "")) != "env06_7_shops_streets" or str(package.get("handler_pack", "")) != "shops_streets" or str(package.get("renderer_id", "")) != "shops_streets" or _array(package.get("scenario_ids", [])) != [DELIVERY_SCENARIO_ID]:
+	if str(package.get("package_id", "")) != "env06_7_shops_streets" or str(package.get("file_name", "")) != "env06_7_shops_streets.json" or str(package.get("handler_pack", "")) != "shops_streets" or str(package.get("renderer_id", "")) != "shops_streets" or _array(package.get("scenario_ids", [])).count(DELIVERY_SCENARIO_ID) != 1:
 		failures.append("Delivery-day package envelope/extension identity changed: %s" % JSON.stringify(package))
 	if definition.is_empty() or str(definition.get("sequence_package_id", "")) != "env06_7_shops_streets" or str(definition.get("sequence_handler_pack", "")) != "shops_streets" or str(definition.get("sequence_renderer_id", "")) != "shops_streets":
 		failures.append("ContentLibrary did not apply the committed delivery-day package exactly.")
@@ -1268,6 +1403,7 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 	for hostile_value in [
 		{"label": "unresolved", "payload": {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": DELIVERY_RESOLUTION_ID, "resolved": false, "ok": true}},
 		{"label": "failed", "payload": {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": DELIVERY_RESOLUTION_ID, "resolved": true, "ok": false}},
+		{"label": "unsupported_choice", "payload": {"event_id": DELIVERY_EVENT_ID, "choice_id": "invented_delivery_choice", "resolution_id": DELIVERY_RESOLUTION_ID, "resolved": true, "ok": true}},
 		{"label": "wrong_event_same_choice", "payload": {"event_id": "unrelated_delivery_event", "choice_id": "clear_the_aisle", "resolution_id": DELIVERY_RESOLUTION_ID, "resolved": true, "ok": true}},
 		{"label": "missing_resolution", "payload": {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": "", "resolved": true, "ok": true}},
 		{"label": "wrong_resolution", "payload": {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": "wrong_delivery_resolution", "resolved": true, "ok": true}},
@@ -1277,8 +1413,9 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 		var hostile_queued := SequenceRuntimeScript.enqueue_fact(delivered, definition, hostile_fact)
 		var hostile_result := SequenceRuntimeScript.flush_facts(_dict(hostile_queued.get("state", {})), definition, 1)
 		var hostile_state := _dict(hostile_result.get("state", {}))
-		if bool(hostile_result.get("ok", true)) or str(hostile_state.get("phase_id", "")) != "awaiting_stock" or not _array(hostile_state.get("fact_queue", [])).is_empty() or not _array(hostile_state.get("fact_receipts", [])).is_empty() or int(hostile_state.get("last_flushed_fact_serial", -1)) != int(delivered.get("last_flushed_fact_serial", -2)):
-			failures.append("Delivery %s event result poisoned or advanced the authoritative state." % str(hostile.get("label", "")))
+		if bool(hostile_result.get("ok", true)):
+			failures.append("Delivery %s event result was not rejected." % str(hostile.get("label", "")))
+		_check_rejected_delivery_fact_state(hostile_state, delivered, str(hostile.get("label", "")), failures)
 		var corrected_fact := SequenceRuntimeScript.fact("event_result", "event", DELIVERY_NODE_ID, "delivery:event:hostile_shared", 18, 1, {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": DELIVERY_RESOLUTION_ID, "resolved": true, "ok": true})
 		var corrected_queued := SequenceRuntimeScript.enqueue_fact(hostile_state, definition, corrected_fact)
 		var corrected_result := SequenceRuntimeScript.flush_facts(_dict(corrected_queued.get("state", {})), definition, 1)
@@ -1381,6 +1518,10 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 		var restored := _save_service_round_trip_state(expected, definition, "delivery_%s" % label, failures, "corner_store", DELIVERY_NODE_ID)
 		if not restored.is_empty() and JSON.stringify(restored) != JSON.stringify(expected):
 			failures.append("SaveService changed exact committed delivery-day state at %s." % label)
+		var restored_text := JSON.stringify(restored)
+		for private_key in ["accepted_overlay_source_identities", "effective_priority", "effective_owner_namespace", "effective_winner", "source_key"]:
+			if restored_text.contains(private_key):
+				failures.append("SaveService persisted reducer-private overlay metadata %s at %s." % [private_key, label])
 
 
 static func _delivery_base_event_record() -> Dictionary:
@@ -1394,6 +1535,19 @@ static func _delivery_event_record(state: Dictionary) -> Dictionary:
 		if OperationRegistryScript.identity_from(record) == "event::event:scenario_delivery_day_stock":
 			return record
 	return {}
+
+
+static func _check_rejected_delivery_fact_state(actual: Dictionary, expected: Dictionary, label: String, failures: Array) -> void:
+	for stable_key in [
+		"fact_queue", "fact_receipts", "fact_fingerprints", "last_flushed_fact_serial",
+		"phase_id", "status", "local_state", "objective_progress", "semantic_state",
+		"event_choice_receipts", "event_request_queue", "event_request_history",
+		"resolved_branches", "resolved_outcomes", "command_receipts", "operation_receipts",
+	]:
+		if JSON.stringify(actual.get(stable_key)) != JSON.stringify(expected.get(stable_key)):
+			failures.append("Delivery %s rejection changed authoritative %s." % [label, stable_key])
+	if int(actual.get("fact_serial_next", -1)) != int(expected.get("fact_serial_next", -2)) + 1:
+		failures.append("Delivery %s rejection did not preserve exactly one monotonic ingress allocation." % label)
 
 
 static func _has_delivery_overlay(state: Dictionary, stable_object_id: String) -> bool:
@@ -1656,6 +1810,22 @@ static func _interaction_record(owner: String, stable_id: String, label: String,
 		"min_target_size": 44,
 		"safe_exit": stable_id.contains("exit"),
 	}
+
+
+static func _priority_overlay(owner: String, mode: String, target_owner: String, target_id: String, marker: String) -> Dictionary:
+	var overlay := _interaction_record(owner, "%s_%s" % [owner, mode], "%s wins %s" % [marker, mode], true)
+	overlay["mode"] = mode
+	overlay["target_owner_namespace"] = target_owner
+	overlay["target_stable_object_id"] = target_id
+	match mode:
+		"gate":
+			overlay["enabled"] = marker != "sweep"
+			overlay["disabled_reason"] = "%s wins gate" % marker if not bool(overlay.get("enabled", true)) else ""
+		"augment":
+			overlay["available_actions"] = [{"id": "%s_action" % marker, "label": "%s action" % marker.capitalize(), "input_action": "confirm", "non_color_state": "ready"}]
+		"retarget":
+			overlay["source_id"] = "%s_source" % marker
+	return overlay
 
 
 static func _contains_text(values: Array, needle: String) -> bool:

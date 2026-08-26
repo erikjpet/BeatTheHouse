@@ -136,6 +136,31 @@ foreach ($relative in $requiredFiles) {
     }
 }
 
+$scenarioAuditSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_audit.gd") -Raw
+if ($scenarioAuditSource -match 'definitions\.size\(\)\s*==\s*1') {
+    $failures.Add("Scenario sequence audit must not require a singleton catalog for hostile fixtures.")
+}
+foreach ($requiredAuditSeam in @(
+    'HOSTILE_FIXTURE_SCENARIO_ID := "corner_store_delivery_day"',
+    'static func hostile_fixture_report_for_definitions',
+    'static func report_has_exact_shape'
+)) {
+    if (-not $scenarioAuditSource.Contains($requiredAuditSeam)) {
+        $failures.Add("Scenario sequence audit is missing rollout seam: $requiredAuditSeam")
+    }
+}
+$scenarioContractSource = Get-Content -LiteralPath (Join-Path $root "scripts/tests/foundation/scenario_sequence_contract.gd") -Raw
+foreach ($requiredGrowthProbe in @(
+    'for rollout_count_value in [13, 55]',
+    'hostile_fixture_report_for_definitions(reversed_definitions)',
+    'package_for_scenario(DELIVERY_SCENARIO_ID, expanded_catalog)',
+    '"label": "unsupported_choice"'
+)) {
+    if (-not $scenarioContractSource.Contains($requiredGrowthProbe)) {
+        $failures.Add("Scenario sequence contract is missing growth/authority probe: $requiredGrowthProbe")
+    }
+}
+
 $assetDimensions = @{
     "assets/art/environments/corner_store.png" = @(900, 430)
     "assets/art/environments/back_alley.png" = @(900, 430)

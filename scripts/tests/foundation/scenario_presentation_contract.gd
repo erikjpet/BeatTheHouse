@@ -20,6 +20,7 @@ class ActivationCapture:
 static func check(failures: Array) -> void:
 	_check_composed_actions_and_geometry(failures)
 	_check_small_screen_expansion(failures)
+	_check_competing_augment_presentation(failures)
 	_check_fail_closed_presentation(failures)
 
 
@@ -200,6 +201,57 @@ static func _check_fail_closed_presentation(failures: Array) -> void:
 	if canvas.keyboard_reachable_object_ids().has("scenario:presentation_error"):
 		failures.append("Fail-closed scenario presentation error became keyboard/controller actionable.")
 	canvas.free()
+
+
+static func _check_competing_augment_presentation(failures: Array) -> void:
+	var overlays: Array = []
+	for owner in ["event", "sweep", "scenario"]:
+		overlays.append({
+			"owner_namespace": owner,
+			"stable_object_id": "%s_route_augment" % owner,
+			"mode": "augment",
+			"target_owner_namespace": "traveler",
+			"target_stable_object_id": "travel:leave",
+			"available_actions": [{
+				"id": "%s_shortcut" % owner,
+				"label": "%s shortcut" % owner.capitalize(),
+				"input_action": "ui_accept",
+				"non_color_state": "ready",
+			}],
+		})
+	var prepared := {
+		"ok": true, "errors": [], "boundary_serial": 7,
+		"visual_objects": [], "active_stages": [], "interaction_overlays": overlays,
+	}
+	var composed := ScenarioSemanticViewModelScript.compose([_base_record()], prepared, {})
+	var record := _record_by_id(_array(composed.get("records", [])), "travel:leave")
+	var public_text := JSON.stringify(record)
+	if bool(composed.get("ok", true)) or record.is_empty():
+		failures.append("Competing augment presentation did not fail closed around its retained winner.")
+		return
+	for forbidden_action in ["event_shortcut", "scenario_shortcut"]:
+		if public_text.contains(forbidden_action):
+			failures.append("Rejected lower-priority augment leaked into public action surfaces: %s." % forbidden_action)
+		var token := "scenario_action:7:%s:%s_route_augment:%s" % [forbidden_action.trim_suffix("_shortcut"), forbidden_action.trim_suffix("_shortcut"), forbidden_action]
+		if not ScenarioSemanticViewModelScript.action_descriptor_for_token([record], token).is_empty():
+			failures.append("Rejected lower-priority augment retained a routable action token: %s." % forbidden_action)
+	var augmented_ids: Array = []
+	for action_value in _array(record.get("scenario_augmented_actions", [])):
+		augmented_ids.append(str(_dict(action_value).get("id", "")))
+	var augmented_inline_ids: Array = []
+	for action_value in _array(record.get("scenario_augmented_inline_actions", [])):
+		augmented_inline_ids.append(str(_dict(action_value).get("id", "")))
+	var inline_ids: Array = []
+	for action_value in _array(record.get("inline_actions", [])):
+		inline_ids.append(str(_dict(action_value).get("id", "")))
+	if augmented_ids != ["sweep_shortcut"] or augmented_inline_ids != ["sweep_shortcut"] or inline_ids != ["sweep_shortcut"]:
+		failures.append("Winning sweep augment did not exclusively own available/inline public actions.")
+	var sweep_token := "scenario_action:7:sweep:sweep_route_augment:sweep_shortcut"
+	if ScenarioSemanticViewModelScript.action_descriptor_for_token([record], sweep_token).is_empty():
+		failures.append("Accepted sweep augment lost its routable action token.")
+	for private_key in ["accepted_overlay_source_identities", "effective_priority", "effective_owner_namespace", "effective_winner", "source_key"]:
+		if public_text.contains(private_key):
+			failures.append("Composed interaction leaked reducer-private overlay metadata %s." % private_key)
 
 
 static func _prepared_snapshot() -> Dictionary:
