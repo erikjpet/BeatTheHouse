@@ -262,6 +262,10 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 	if run_state == null or not bool(result.get("ok", false)):
 		return
+	var rollback_run := run_state.to_dict()
+	var rollback_environment := run_state.current_environment.duplicate(true)
+	var rollback_world_map := run_state.world_map.duplicate(true)
+	var rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
 	var deltas: Dictionary = result.get("deltas", {})
 	var debt_settlement := _copy_dict(deltas.get("discounted_debt_settlement", {}))
 	if not debt_settlement.is_empty():
@@ -307,7 +311,17 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				result["message"] = "That Crew service is no longer available."
 				return
 			result["crew_service_result"] = service_result
-	run_state.advance_environment_turns(1)
+	var advance_result := run_state.advance_environment_turns(1)
+	if not bool(advance_result.get("ok", false)):
+		run_state.from_dict(rollback_run)
+		run_state.current_environment = rollback_environment
+		run_state.world_map = rollback_world_map
+		run_state.grand_casino_room_states = rollback_room_states
+		var advance_errors: Array = advance_result.get("errors", []) if typeof(advance_result.get("errors", [])) == TYPE_ARRAY else []
+		result["ok"] = false
+		result["message"] = str(advance_errors[0]) if not advance_errors.is_empty() else "The event boundary could not advance safely."
+		result["errors"] = advance_errors.duplicate(true)
+		return
 	GameModule.apply_result(run_state, result)
 	for hook in deltas.get("event_hooks", []):
 		if typeof(hook) != TYPE_DICTIONARY:

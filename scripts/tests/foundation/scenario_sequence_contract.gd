@@ -20,6 +20,7 @@ const DELIVERY_EVENT_ID := "scenario_delivery_day_stock"
 const DELIVERY_RESOLUTION_ID := "delivery_day_stock_resolution"
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
+const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RolloutManifestScript := preload("res://scripts/core/scenario_sequence_rollout_manifest.gd")
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
@@ -279,6 +280,82 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		var valid_overlay_command := _runtime_command(valid_overlay_state, definition, "prepare", str(valid_overlay_state.get("node_id", "")), str(valid_overlay_state.get("phase_id", "")), "valid:overlay:handler", {}, "scenario", "command_console")
 		if not bool(ScenarioEngineScript.sequence_command(valid_overlay_environment, definition, valid_overlay_command, {"available_funds": 10}).get("ok", false)):
 			failures.append("Authenticated authored interaction operation no longer authorized its exact handler action.")
+	var travel_generator := RunGeneratorScript.new(library)
+	for travel_kind_value in ["legacy", "world", "grand_room", "layer"]:
+		var travel_kind := str(travel_kind_value)
+		var departure_run := RunStateScript.new()
+		departure_run.current_environment = valid_authority_environment.duplicate(true)
+		var departure_state_before := _dict(departure_run.current_environment.get("scenario_sequence_state", {}))
+		var departure_receipt_count_before := _array(departure_state_before.get("fact_receipt_records", [])).size()
+		var committed_departure := travel_generator._commit_travel_departure(departure_run, "bar_node", "%s_target" % travel_kind, travel_kind)
+		var departure_state_after := _dict(departure_run.current_environment.get("scenario_sequence_state", {}))
+		var departure_receipts_after := _array(departure_state_after.get("fact_receipt_records", []))
+		var departure_envelope := _dict(_dict(departure_receipts_after.back()).get("envelope", {})) if not departure_receipts_after.is_empty() else {}
+		var departure_payload := _dict(departure_envelope.get("payload", {}))
+		if not bool(committed_departure.get("ok", false)) \
+				or departure_receipts_after.size() != departure_receipt_count_before + 1 \
+				or str(departure_envelope.get("fact_type", "")) != "travel_departed" \
+				or str(departure_payload.get("travel_kind", "")) != travel_kind \
+				or not _array(departure_state_after.get("fact_queue", [])).is_empty():
+			failures.append("The %s travel entry path did not commit exactly one flushed departure receipt." % travel_kind)
+	var cost_run := RunStateScript.new()
+	cost_run.current_environment = valid_authority_environment.duplicate(true)
+	cost_run.bankroll = 10
+	var cost_state := _dict(cost_run.current_environment.get("scenario_sequence_state", {}))
+	var cost_descriptor := SequenceRuntimeScript._command_descriptor(cost_state, definition, "scenario", "command_console", "prepare")
+	var accepted_cost := cost_run.scenario_sequence_command(
+		"prepare", "run_state:cost:once", {}, "scenario", "command_console",
+		str(cost_descriptor.get("action_origin_owner_namespace", "")),
+		str(cost_descriptor.get("action_origin_stable_object_id", "")),
+		str(cost_descriptor.get("action_origin_receipt_key", "")),
+		str(cost_descriptor.get("action_origin_boundary_id", "")),
+		str(cost_descriptor.get("action_origin_fingerprint", ""))
+	)
+	var bankroll_after_accept := cost_run.bankroll
+	var replayed_cost := cost_run.scenario_sequence_command(
+		"prepare", "run_state:cost:once", {}, "scenario", "command_console",
+		str(cost_descriptor.get("action_origin_owner_namespace", "")),
+		str(cost_descriptor.get("action_origin_stable_object_id", "")),
+		str(cost_descriptor.get("action_origin_receipt_key", "")),
+		str(cost_descriptor.get("action_origin_boundary_id", "")),
+		str(cost_descriptor.get("action_origin_fingerprint", ""))
+	)
+	var rejected_cost := cost_run.scenario_sequence_command(
+		"prepare", "run_state:cost:once", {"forged": true}, "scenario", "command_console",
+		str(cost_descriptor.get("action_origin_owner_namespace", "")),
+		str(cost_descriptor.get("action_origin_stable_object_id", "")),
+		str(cost_descriptor.get("action_origin_receipt_key", "")),
+		str(cost_descriptor.get("action_origin_boundary_id", "")),
+		str(cost_descriptor.get("action_origin_fingerprint", ""))
+	)
+	if not bool(accepted_cost.get("ok", false)) or bankroll_after_accept != 8 or not bool(replayed_cost.get("ok", false)) or not bool(replayed_cost.get("replayed", false)) or bool(rejected_cost.get("ok", true)) or cost_run.bankroll != bankroll_after_accept or accepted_cost.has("cost_applied"):
+		failures.append("RunState command cost was not charged exactly once on the first accepted receipt while replay/rejection remained free.")
+	var downstream_definition := definition.duplicate(true)
+	downstream_definition["sequence"]["phase_graph"]["phases"][0]["branches"] = [{"id": "blocked_prepare", "condition": {"type": "command", "command_id": "prepare"}, "next_phase": "aftermath"}]
+	downstream_definition["sequence"]["phase_graph"]["phases"][1]["entry_conditions"] = [{"type": "local_min", "key": "pressure", "value": 5}]
+	downstream_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(downstream_definition)
+	var downstream_run := RunStateScript.new()
+	downstream_run.current_environment = valid_authority_environment.duplicate(true)
+	downstream_run.current_environment["scenario_sequence_definition"] = downstream_definition
+	downstream_run.bankroll = 10
+	var downstream_state := _dict(downstream_run.current_environment.get("scenario_sequence_state", {}))
+	var downstream_descriptor := SequenceRuntimeScript._command_descriptor(downstream_state, downstream_definition, "scenario", "command_console", "prepare")
+	var downstream_failure := downstream_run.scenario_sequence_command(
+		"prepare", "run_state:cost:downstream_failure", {}, "scenario", "command_console",
+		str(downstream_descriptor.get("action_origin_owner_namespace", "")),
+		str(downstream_descriptor.get("action_origin_stable_object_id", "")),
+		str(downstream_descriptor.get("action_origin_receipt_key", "")),
+		str(downstream_descriptor.get("action_origin_boundary_id", "")),
+		str(downstream_descriptor.get("action_origin_fingerprint", ""))
+	)
+	if bool(downstream_failure.get("ok", true)) or downstream_run.bankroll != 10:
+		failures.append("A command rejected by a downstream phase boundary still charged its authored action cost.")
+	var refresh_failure_run := RunStateScript.new()
+	refresh_failure_run.current_environment = valid_authority_environment.duplicate(true)
+	var refresh_journal_before := SequenceRuntimeScript.content_fingerprint(refresh_failure_run.current_environment.get("scenario_sequence_state", {}))
+	var failed_refresh := refresh_failure_run.scenario_finalize_base_semantics([presentation, presentation], library)
+	if bool(failed_refresh.get("ok", true)) or refresh_failure_run.current_environment.has("scenario_semantic_ready") or SequenceRuntimeScript.content_fingerprint(refresh_failure_run.current_environment.get("scenario_sequence_state", {})) != refresh_journal_before:
+		failures.append("Failed live semantic refresh did not invalidate readiness while preserving the durable journal byte-for-byte.")
 	var invalidation_run := RunStateScript.new()
 	invalidation_run.current_environment = run_state.current_environment.duplicate(true)
 	var durable_before_invalidation := SequenceRuntimeScript.content_fingerprint(invalidation_run.current_environment.get("scenario_sequence_state", {}))
@@ -313,9 +390,11 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	failing_clock_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(failing_clock_definition)
 	failing_clock.current_environment["scenario_sequence_definition"] = failing_clock_definition
 	failing_clock.game_clock_minutes = 1439
+	var failing_clock_run_before := JSON.stringify(failing_clock.to_dict())
+	var failing_clock_environment_before := JSON.stringify(failing_clock.current_environment)
 	var failed_clock := failing_clock.advance_game_clock_minutes(1)
-	if bool(failed_clock.get("ok", true)) or failing_clock.game_clock_minutes != 1439:
-		failures.append("Failed night-end cleanup advanced the authoritative game clock instead of rolling back.")
+	if bool(failed_clock.get("ok", true)) or failing_clock.game_clock_minutes != 1439 or JSON.stringify(failing_clock.to_dict()) != failing_clock_run_before or JSON.stringify(failing_clock.current_environment) != failing_clock_environment_before:
+		failures.append("Failed night-end cleanup did not restore the authoritative run and live environment byte-for-byte.")
 	var failing_travel := RunStateScript.new()
 	failing_travel.current_environment = run_state.current_environment.duplicate(true)
 	var failing_travel_definition := failing_clock_definition.duplicate(true)
@@ -327,6 +406,53 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	var failed_install := failing_travel.set_environment({"id": "blocked_destination", "archetype_id": "motel", "world_node_id": "motel"})
 	if bool(travel_preflight.get("ok", true)) or bool(failed_install.get("ok", true)) or SequenceRuntimeScript.content_fingerprint(failing_travel.current_environment) != travel_state_before:
 		failures.append("Failed departure cleanup was not observable and atomic before environment replacement.")
+	var capacity_definition := definition.duplicate(true)
+	capacity_definition["sequence"]["expiry"] = {"boundary": "leave", "after": 2, "policy": "resume"}
+	capacity_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(capacity_definition)
+	var capacity_run := RunStateScript.new()
+	capacity_run.current_environment = valid_authority_environment.duplicate(true)
+	capacity_run.current_environment["scenario_sequence_definition"] = capacity_definition
+	capacity_run.world_map = {"version": 1, "start_node_id": "bar_node", "current_node_id": "bar_node", "revision": 0, "nodes": [], "edges": [], "visited_path": ["bar_node"], "runtime_ephemeral": {"nonce": 17}}
+	capacity_run.grand_casino_room_states = {"sentinel": {"id": "sentinel", "archetype_id": "bar", "scenario_sequence_projection": {"ephemeral": "preserve"}}}
+	var capacity_state := _dict(capacity_run.current_environment.get("scenario_sequence_state", {}))
+	while SequenceRuntimeScript._next_cause_ordinal(capacity_state) < SequenceRuntimeScript.MAX_RECEIPTS - 1:
+		var capacity_visit := SequenceRuntimeScript.record_visit(capacity_state, capacity_definition, "departure_capacity_%d" % SequenceRuntimeScript._next_cause_ordinal(capacity_state))
+		if not bool(capacity_visit.get("ok", false)):
+			failures.append("Production departure capacity fixture could not reach MAX_RECEIPTS - 1.")
+			break
+		capacity_state = _dict(capacity_visit.get("state", {}))
+	capacity_run.current_environment["scenario_sequence_state"] = capacity_state
+	var capacity_run_before := JSON.stringify(capacity_run.to_dict())
+	var capacity_environment_before := JSON.stringify(capacity_run.current_environment)
+	var capacity_world_map_before := JSON.stringify(capacity_run.world_map)
+	var capacity_room_states_before := JSON.stringify(capacity_run.grand_casino_room_states)
+	var capacity_departure := RunGeneratorScript.new(library).travel_environment_result(capacity_run, "motel")
+	if bool(capacity_departure.get("ok", true)) or JSON.stringify(capacity_run.to_dict()) != capacity_run_before or JSON.stringify(capacity_run.current_environment) != capacity_environment_before or JSON.stringify(capacity_run.world_map) != capacity_world_map_before or JSON.stringify(capacity_run.grand_casino_room_states) != capacity_room_states_before:
+		failures.append("MAX_RECEIPTS - 1 departure did not reserve departure-plus-expiry capacity before every travel mutation.")
+	var final_visit := SequenceRuntimeScript.record_visit(capacity_state, capacity_definition, "departure_capacity_final")
+	if not bool(final_visit.get("ok", false)):
+		failures.append("Production world-boundary capacity fixture could not fill its final causal receipt.")
+	else:
+		capacity_run.current_environment["scenario_sequence_state"] = _dict(final_visit.get("state", {}))
+		var boundary_run_before := JSON.stringify(capacity_run.to_dict())
+		var boundary_environment_before := JSON.stringify(capacity_run.current_environment)
+		var boundary_world_map_before := JSON.stringify(capacity_run.world_map)
+		var boundary_room_states_before := JSON.stringify(capacity_run.grand_casino_room_states)
+		var failed_world_boundary := capacity_run.advance_environment_turns(1)
+		if bool(failed_world_boundary.get("ok", true)) or JSON.stringify(capacity_run.to_dict()) != boundary_run_before or JSON.stringify(capacity_run.current_environment) != boundary_environment_before or JSON.stringify(capacity_run.world_map) != boundary_world_map_before or JSON.stringify(capacity_run.grand_casino_room_states) != boundary_room_states_before:
+			failures.append("Rejected production world-boundary enqueue/flush did not restore the run and live environment byte-for-byte.")
+	var future_saved_environment := RunStateScript._environment_for_persistent_storage(valid_authority_environment)
+	future_saved_environment["scenario_sequence_state"] = {"schema_version": SequenceRuntimeScript.STATE_SCHEMA_VERSION + 1, "scenario_id": str(definition.get("id", ""))}
+	var future_normalized := RunStateScript._normalize_environment(future_saved_environment)
+	var blocked_restore := RunStateScript.new()
+	blocked_restore.current_environment = future_normalized.duplicate(true)
+	var blocked_finalize := blocked_restore.scenario_finalize_base_semantics([presentation], library)
+	var instance_restore := EnvironmentInstanceScript.from_dict(future_saved_environment).to_dict()
+	var overbound_saved_environment := future_saved_environment.duplicate(true)
+	overbound_saved_environment["scenario_sequence_state"] = {"schema_version": SequenceRuntimeScript.STATE_SCHEMA_VERSION, "scenario_id": str(definition.get("id", "")), "hostile": "x".repeat(OperationRegistryScript.MAX_VARIANT_TEXT + 1)}
+	var overbound_normalized := RunStateScript._normalize_environment(overbound_saved_environment)
+	if str(future_normalized.get("scenario_sequence_migration_error", "")).is_empty() or future_normalized.has("scenario_sequence_state") or bool(blocked_finalize.get("ok", true)) or blocked_restore.current_environment.has("scenario_semantic_ready") or blocked_restore.current_environment.has("scenario_sequence_state") or str(instance_restore.get("scenario_sequence_migration_error", "")).is_empty() or instance_restore.has("scenario_sequence_state") or str(overbound_normalized.get("scenario_sequence_migration_error", "")).is_empty() or overbound_normalized.has("scenario_sequence_state"):
+		failures.append("Malformed, unsupported, or overbound persisted sequence state restarted instead of requiring explicit migration.")
 	var valid_proof_version := int(run_state.current_environment.get("scenario_semantic_inventory_version", 0))
 	var valid_proof_digest := str(run_state.current_environment.get("scenario_semantic_digest", ""))
 	var proof_type_cases := [
@@ -1529,6 +1655,29 @@ static func _check_receipt_reconstruction(failures: Array) -> void:
 	var rebuilt := ScenarioEngineScript._rebuild_receipted_semantic_mutations(state, definition, host_semantics)
 	if not bool(rebuilt.get("ok", false)) or _array(_dict(rebuilt.get("state", {})).get("resolved_branches", [])) != ["arrival:continue", "aftermath:finish"] or _array(_dict(rebuilt.get("state", {})).get("resolved_outcomes", [])) != ["repaired"]:
 		failures.append("Valid receipt journals did not reconstruct exact branch/outcome semantics: %s" % JSON.stringify(rebuilt.get("errors", [])))
+	var legacy_receipts := state.duplicate(true)
+	for legacy_record_index in range(_array(legacy_receipts.get("command_receipt_records", [])).size()):
+		var legacy_record := legacy_receipts["command_receipt_records"][legacy_record_index] as Dictionary
+		legacy_record.erase("causal_action_descriptor")
+		legacy_record.erase("causal_action_descriptor_fingerprint")
+	var migrated_receipts := SequenceRuntimeScript.normalize_state(legacy_receipts, definition)
+	var migrated_record_shape_valid := true
+	for record_value in _array(migrated_receipts.get("command_receipt_records", [])):
+		var migrated_record := _dict(record_value)
+		if migrated_record.size() != 6 or _dict(migrated_record.get("causal_action_descriptor", {})).is_empty() or str(migrated_record.get("causal_action_descriptor_fingerprint", "")) != SequenceRuntimeScript.content_fingerprint(migrated_record.get("causal_action_descriptor", {})):
+			migrated_record_shape_valid = false
+	var migrated_rebuild := ScenarioEngineScript._rebuild_receipted_semantic_mutations(migrated_receipts, definition, host_semantics)
+	if not migrated_record_shape_valid or not bool(migrated_rebuild.get("ok", false)) or SequenceRuntimeScript.content_fingerprint(_dict(migrated_rebuild.get("state", {})).get("command_receipt_records", [])) != SequenceRuntimeScript.content_fingerprint(state.get("command_receipt_records", [])):
+		failures.append("A valid pre-descriptor v2 command journal did not deterministically migrate to receipt-bound causal action descriptors.")
+	var malformed_migration := legacy_receipts.duplicate(true)
+	malformed_migration["command_receipt_records"][0]["envelope"]["action_origin_receipt_key"] = "forged_receipt_key"
+	var malformed_receipt_key := str(malformed_migration["command_receipt_records"][0].get("receipt_key", ""))
+	var malformed_envelope_fingerprint := SequenceRuntimeScript.content_fingerprint(malformed_migration["command_receipt_records"][0]["envelope"])
+	malformed_migration["command_receipt_records"][0]["fingerprint"] = malformed_envelope_fingerprint
+	malformed_migration["command_fingerprints"][malformed_receipt_key] = malformed_envelope_fingerprint
+	var malformed_normalized := SequenceRuntimeScript.normalize_state(malformed_migration, definition)
+	if bool(ScenarioEngineScript._rebuild_receipted_semantic_mutations(malformed_normalized, definition, host_semantics).get("ok", true)):
+		failures.append("A malformed pre-descriptor command journal migrated or replayed without an exact authored receipt binding.")
 	var forged_derived := state.duplicate(true)
 	forged_derived["resolved_branches"] = ["arrival:ghost"]
 	forged_derived["resolved_outcomes"] = ["broken"]
@@ -1694,6 +1843,16 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 			action_record = operation_record
 	if action_record.is_empty() or str(action.get("action_origin_receipt_key", "")) != str(action_record.get("receipt_key", "")) or str(action.get("action_origin_boundary_id", "")) != str(action_record.get("boundary_id", "")) or str(action.get("action_origin_fingerprint", "")) != str(action_record.get("fingerprint", "")):
 		failures.append("Interaction add actions did not inherit exact operation receipt provenance.")
+	var unavailable_state := initial.duplicate(true)
+	var unavailable_interaction := _dict(_dict(unavailable_state["semantic_state"].get("interactions", {})).get("scenario::command_console", {}))
+	unavailable_interaction["enabled"] = false
+	unavailable_interaction["available_actions"] = []
+	unavailable_state["semantic_state"]["interactions"]["scenario::command_console"] = unavailable_interaction
+	var causal_descriptor := SequenceRuntimeScript.causal_action_descriptor(initial, definition, prepare)
+	var unavailable_live_result := SequenceRuntimeScript.apply_command(unavailable_state, definition, prepare, {"available_funds": 10})
+	var historical_causal_result := SequenceRuntimeScript.apply_command(unavailable_state, definition, prepare, {"available_funds": 10, "causal_action_descriptor": causal_descriptor})
+	if bool(unavailable_live_result.get("ok", true)) or not bool(historical_causal_result.get("ok", false)):
+		failures.append("Historical command replay depended on current ephemeral interaction availability instead of its receipt-bound authored causal descriptor.")
 	var applied := SequenceRuntimeScript.apply_command(initial, definition, prepare, {"available_funds": 10})
 	var applied_state := _dict(applied.get("state", {}))
 	var cached := _dict(_dict(applied_state.get("command_results", {})).get("depth:prepare", {}))

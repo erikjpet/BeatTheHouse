@@ -629,13 +629,24 @@ func _advance_run_game_clock(delta: float) -> void:
 	var elapsed_minutes := int(floor(environment_clock_fractional_minutes))
 	if elapsed_minutes <= 0:
 		return
+	var clock_result := run_state.advance_game_clock_minutes(elapsed_minutes)
+	if not bool(clock_result.get("ok", false)):
+		return
 	environment_clock_fractional_minutes -= float(elapsed_minutes)
-	run_state.advance_game_clock_minutes(elapsed_minutes)
 	var boundary_changed := _apply_closing_time_clock_boundary()
 	if structured_hud != null:
 		structured_hud.render_clock(FoundationHudViewModelScript.clock_model(run_state))
 	if boundary_changed:
 		_refresh()
+
+
+func _advance_environment_turns_checked(amount: int = 1) -> bool:
+	var result := run_state.advance_environment_turns(amount)
+	if bool(result.get("ok", false)):
+		return true
+	_show_message(str(_array(result.get("errors", []))[0]) if not _array(result.get("errors", [])).is_empty() else "The world boundary could not advance safely.")
+	_refresh_runtime_environment_views()
+	return false
 
 
 func _input(event: InputEvent) -> void:
@@ -860,7 +871,8 @@ func _enter_grand_casino_duel_surface() -> bool:
 		return false
 	_reset_game_surface_runtime_state()
 	if str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
-		if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID):
+		var room_result := generator.enter_grand_casino_room_result(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
+		if not bool(room_result.get("ok", false)):
 			return false
 	var duel_game_ids := _string_array(run_state.current_environment.get("game_ids", []))
 	var local_flags := _copy_dict(run_state.current_environment.get("local_narrative_flags", {}))
@@ -1434,6 +1446,10 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 		return false
 	if _environment_runtime_state_is_foreground(environment_data, game_id, state_key, same_environment):
 		return false
+	# Snapshot only a due foreground-owned runtime tick. Scheduler scans are hot,
+	# and offscreen environments commit through their separate stored-state path.
+	var boundary_rollback_run := run_state.to_dict() if same_environment else {}
+	var boundary_rollback_environment := run_state.current_environment.duplicate(true) if same_environment else {}
 	var previous_state_key_context := game.transient_state_key_context()
 	game.set_transient_state_key_context(state_key)
 	var active_keys_value: Variant = environment_data.get("active_game_state_keys", null)
@@ -1479,7 +1495,12 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 	var commit_started_usec := Time.get_ticks_usec()
 	if not result.is_empty():
 		if bool(result.get("ok", false)):
-			run_state.advance_environment_turns(1)
+			if not _advance_environment_turns_checked(1):
+				run_state.from_dict(boundary_rollback_run)
+				run_state.current_environment = boundary_rollback_environment
+				game.set_transient_state_key_context(previous_state_key_context)
+				_refresh_runtime_environment_views()
+				return false
 			if bool(result.get("host_apply_result", false)):
 				GameModule.apply_result(run_state, result, rng)
 			_evaluate_run_terminal_state()
@@ -1897,10 +1918,11 @@ func _checkpoint_current_game_surface_ui_state() -> void:
 		current_game.checkpoint_surface_ui_state(_current_game_surface_ui_state(), run_state, run_state.current_environment)
 
 
-func _reset_game_surface_runtime_state() -> void:
+func _reset_game_surface_runtime_state(checkpoint_source: bool = true) -> void:
 	game_surface_session_generation += 1
 	_invalidate_deferred_embedded_action_refresh()
-	_checkpoint_current_game_surface_ui_state()
+	if checkpoint_source:
+		_checkpoint_current_game_surface_ui_state()
 	if current_game != null:
 		current_game.set_transient_state_key_context("")
 	if game_surface_canvas != null:
@@ -4069,6 +4091,8 @@ func _use_active_item(item_id: String) -> bool:
 	if current_game == null:
 		_show_message("That active item needs a game surface.")
 		return false
+	var boundary_rollback_run := run_state.to_dict()
+	var boundary_rollback_environment := run_state.current_environment.duplicate(true)
 	var command: Dictionary = current_game.active_item_command(item_id, run_state, run_state.current_environment, run_state.create_rng("active_item:%s" % item_id))
 	if not bool(command.get("handled", false)):
 		_show_message("%s has no use here." % str(detail.get("display_name", item_id)))
@@ -4077,7 +4101,11 @@ func _use_active_item(item_id: String) -> bool:
 	var result: Dictionary = command.get("result", {})
 	if not result.is_empty():
 		if bool(result.get("ok", false)):
-			run_state.advance_environment_turns(1)
+			if not _advance_environment_turns_checked(1):
+				run_state.from_dict(boundary_rollback_run)
+				run_state.current_environment = boundary_rollback_environment
+				_refresh_runtime_environment_views()
+				return false
 		GameModule.apply_result(run_state, result, run_state.create_rng("active_item_apply:%s" % item_id))
 		_play_result_drink_audio_cue(result)
 		last_item_result = result.duplicate(true)
@@ -4101,7 +4129,7 @@ func _use_global_active_item(item_id: String, detail: Dictionary) -> bool:
 		_show_message("Item definition is missing.")
 		_refresh()
 		return false
-	run_state.advance_environment_turns(1)
+	if not _advance_environment_turns_checked(1): return false
 	var item_effect := ItemEffectScript.new()
 	item_effect.setup(definition)
 	var result := item_effect.apply({
@@ -4499,6 +4527,8 @@ func use_game_environment_hook(game_id: String, hook_id: String, action_id: Stri
 		_show_message("That contact has nothing to do right now.")
 		_refresh()
 		return false
+	var boundary_rollback_run := run_state.to_dict()
+	var boundary_rollback_environment := run_state.current_environment.duplicate(true)
 	var rng := run_state.create_rng()
 	var command := game.environment_action_command(hook_id, resolved_action_id, run_state, run_state.current_environment, rng)
 	if command.is_empty() or not bool(command.get("handled", false)):
@@ -4511,7 +4541,11 @@ func use_game_environment_hook(game_id: String, hook_id: String, action_id: Stri
 		_refresh()
 		return true
 	if bool(result.get("ok", false)):
-		run_state.advance_environment_turns(1)
+		if not _advance_environment_turns_checked(1):
+			run_state.from_dict(boundary_rollback_run)
+			run_state.current_environment = boundary_rollback_environment
+			_refresh_runtime_environment_views()
+			return false
 		GameModule.apply_result(run_state, result, rng)
 		_play_result_drink_audio_cue(result)
 		_advance_alcohol_absorption()
@@ -4863,18 +4897,20 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_show_message("That interior casino door is not available.")
 		_refresh()
 		return
-	# Every successful travel entry point must acknowledge the same tutorial
-	# action before the environment changes. World-map travel already does this
-	# in its confirmation handler; room doors and direct exits arrive here
-	# without that handler. Resolving Pal's completed prompt now keeps it out of
-	# the normal ignored-conversation penalty collected below.
-	if coach_overlay != null:
-		var completed_travel_lesson_id := coach_overlay.active_lesson_id()
-		if coach_overlay.notify_action("travel:%s" % target_id) and not completed_travel_lesson_id.is_empty():
-			_advance_completed_tutorial_action_dialogue(completed_travel_lesson_id)
-	# Persist UI-local ticket reveals while the module still points at the
-	# environment where the tickets were purchased.
-	_reset_game_surface_runtime_state()
+	var departure_source_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges() if local_casino_room_move else run_state.current_world_node_id()
+	var departure_kind := "grand_room" if local_casino_room_move else "world"
+	var departure_preflight := run_state.scenario_preflight_environment_change(departure_source_id, target_id, departure_kind)
+	if not bool(departure_preflight.get("ok", false)):
+		_show_message(str(_array(departure_preflight.get("errors", []))[0]) if not _array(departure_preflight.get("errors", [])).is_empty() else "Travel could not begin safely.")
+		_refresh()
+		return
+	var rollback_environment := run_state.current_environment.duplicate(true)
+	var rollback_run := run_state.to_dict()
+	var rollback_world_map := run_state.world_map.duplicate(true)
+	var rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
+	# Preserve the source surface before generation/storage without clearing the
+	# live UI until every authoritative travel mutation has committed.
+	_checkpoint_current_game_surface_ui_state()
 	var previous_environment := RunState.environment_context_snapshot(run_state.current_environment)
 	ignored_talk_entries = _pending_talk_entries()
 	if world_map_overlay != null:
@@ -4911,20 +4947,50 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	route["departed_game_clock_minutes"] = departed_game_clock_minutes
 	previous_environment["departed_game_clock_minutes"] = departed_game_clock_minutes
 	run_state.current_environment["departed_game_clock_minutes"] = departed_game_clock_minutes
-	run_state.advance_game_clock_minutes(travel_minutes)
+	var clock_result := run_state.advance_game_clock_minutes(travel_minutes)
+	if not bool(clock_result.get("ok", false)):
+		run_state.from_dict(rollback_run)
+		run_state.current_environment = rollback_environment
+		run_state.world_map = rollback_world_map
+		run_state.grand_casino_room_states = rollback_room_states
+		_hide_travel_transition()
+		_show_message(str(_array(clock_result.get("errors", []))[0]) if not _array(clock_result.get("errors", [])).is_empty() else "Travel time could not advance safely.")
+		_refresh()
+		return
 	route["arrived_game_clock_minutes"] = maxi(departed_game_clock_minutes, run_state.game_clock_minutes)
+	var install_result: Dictionary
 	if local_casino_room_move:
-		if not generator.enter_grand_casino_room(run_state, target_id):
-			run_state.game_clock_minutes = departed_game_clock_minutes
+		install_result = generator.enter_grand_casino_room_result(run_state, target_id)
+		if not bool(install_result.get("ok", false)):
+			run_state.from_dict(rollback_run)
+			run_state.current_environment = rollback_environment
+			run_state.world_map = rollback_world_map
+			run_state.grand_casino_room_states = rollback_room_states
 			_hide_travel_transition()
-			_show_message("The interior casino room could not be prepared.")
+			_show_message(str(_array(install_result.get("errors", []))[0]) if not _array(install_result.get("errors", [])).is_empty() else "The interior casino room could not be prepared.")
 			_refresh()
 			return
 		if bool(choice_data.get("high_limit_buy_in", false)):
 			run_state.narrative_flags["grand_casino_high_limit_access"] = true
 			run_state.narrative_flags["grand_casino_high_limit_access_method"] = "cash_buy_in"
 	else:
-		generator.next_environment(run_state, target_id, true)
+		install_result = generator.travel_environment_result(run_state, target_id, true)
+		if not bool(install_result.get("ok", false)):
+			run_state.from_dict(rollback_run)
+			run_state.current_environment = rollback_environment
+			run_state.world_map = rollback_world_map
+			run_state.grand_casino_room_states = rollback_room_states
+			_hide_travel_transition()
+			_show_message(str(_array(install_result.get("errors", []))[0]) if not _array(install_result.get("errors", [])).is_empty() else "Travel destination could not be installed.")
+			_refresh()
+			return
+	# Tutorial and UI-local acknowledgements are committed only after the
+	# authoritative clock, departure journal, map cursor, and destination commit.
+	if coach_overlay != null:
+		var completed_travel_lesson_id := coach_overlay.active_lesson_id()
+		if coach_overlay.notify_action("travel:%s" % target_id) and not completed_travel_lesson_id.is_empty():
+			_advance_completed_tutorial_action_dialogue(completed_travel_lesson_id)
+	_reset_game_surface_runtime_state(false)
 	if not local_casino_room_move:
 		var numbers_travel_actions := run_state.advance_numbers_past_post_travel_actions(travel_minutes)
 		if numbers_travel_actions > 0:
@@ -8650,6 +8716,9 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		_pause_repeating_surface_action_for_wager_confirmation()
 		_show_wager_confirmation_popup(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state)
 		return
+	var boundary_rollback_run := run_state.to_dict()
+	var boundary_rollback_environment := run_state.current_environment.duplicate(true)
+	var boundary_rollback_deferred_failure := run_state.defer_next_bankroll_zero_failure
 	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state)
 	if confirmed_all_in_wager:
 		run_state.begin_deferred_bankroll_zero_resolution()
@@ -8695,7 +8764,12 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		debug_host_stage_started_usec = Time.get_ticks_usec()
 	if bool(result.get("ok", false)):
 		if not runtime_tick_in_progress:
-			run_state.advance_environment_turns(1)
+			if not _advance_environment_turns_checked(1):
+				run_state.from_dict(boundary_rollback_run)
+				run_state.current_environment = boundary_rollback_environment
+				run_state.defer_next_bankroll_zero_failure = boundary_rollback_deferred_failure
+				_refresh_runtime_environment_views()
+				return
 		if bool(result.get("host_apply_result", false)) and not runtime_tick_in_progress:
 			GameModule.apply_result(run_state, result, rng)
 		elif runtime_tick_in_progress:
@@ -8991,6 +9065,9 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 		_show_message("That background game is no longer available.")
 		_refresh()
 		return
+	var boundary_rollback_run := run_state.to_dict()
+	var boundary_rollback_environment := run_state.current_environment.duplicate(true)
+	var boundary_rollback_deferred_failure := run_state.defer_next_bankroll_zero_failure
 	var original_active_game_state_keys := _copy_dict(run_state.current_environment.get("active_game_state_keys", {}))
 	var previous_state_key_context := game.transient_state_key_context()
 	if not state_key.strip_edges().is_empty():
@@ -9005,7 +9082,13 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 	if confirmed_all_in_wager:
 		result["defer_bankroll_zero_failure"] = true
 	if bool(result.get("ok", false)):
-		run_state.advance_environment_turns(1)
+		if not _advance_environment_turns_checked(1):
+			run_state.from_dict(boundary_rollback_run)
+			run_state.current_environment = boundary_rollback_environment
+			run_state.defer_next_bankroll_zero_failure = boundary_rollback_deferred_failure
+			game.set_transient_state_key_context(previous_state_key_context)
+			_refresh_runtime_environment_views()
+			return
 		if bool(result.get("host_apply_result", false)):
 			GameModule.apply_result(run_state, result, rng)
 	elif confirmed_all_in_wager:
@@ -10385,6 +10468,8 @@ func _activate_cage_atm_action(object_id: String) -> bool:
 	var parts := object_id.split(":")
 	if parts.size() < 3:
 		return false
+	var rollback_run := run_state.to_dict()
+	var rollback_environment := run_state.current_environment.duplicate(true)
 	var result: Dictionary = {}
 	if str(parts[1]) == "borrow":
 		result = run_state.borrow_from_grand_casino_atm(int(parts[2]))
@@ -10393,7 +10478,11 @@ func _activate_cage_atm_action(object_id: String) -> bool:
 	else:
 		return false
 	if bool(result.get("ok", false)):
-		run_state.advance_environment_turns(1)
+		if not _advance_environment_turns_checked(1):
+			run_state.from_dict(rollback_run)
+			run_state.current_environment = rollback_environment
+			_refresh_runtime_environment_views()
+			return false
 		_autosave_foundation_run("Autosaved.")
 	_show_message(str(result.get("message", "The ATM declines the transaction.")))
 	_refresh_talk_dock()
@@ -10431,11 +10520,16 @@ func _start_linda_cage_services(object_data: Dictionary) -> bool:
 func _buy_cage_chips(amount: int) -> bool:
 	if run_state == null:
 		return false
+	var rollback_run := run_state.to_dict()
+	var rollback_environment := run_state.current_environment.duplicate(true)
 	var result := run_state.buy_grand_casino_chips(amount, run_state.grand_casino_chip_exchange_rate())
 	if bool(result.get("ok", false)):
-		if coach_overlay != null:
-			coach_overlay.notify_action("cage:buy_chips")
-		run_state.advance_environment_turns(1)
+		if not _advance_environment_turns_checked(1):
+			run_state.from_dict(rollback_run)
+			run_state.current_environment = rollback_environment
+			_refresh_runtime_environment_views()
+			return false
+		if coach_overlay != null: coach_overlay.notify_action("cage:buy_chips")
 		_autosave_foundation_run("Autosaved.")
 	_show_message(str(result.get("message", "The Cage could not complete that buy-in.")))
 	_refresh_talk_dock()
@@ -10446,11 +10540,16 @@ func _buy_cage_chips(amount: int) -> bool:
 func _cash_out_cage_chips() -> void:
 	if run_state == null:
 		return
+	var rollback_run := run_state.to_dict()
+	var rollback_environment := run_state.current_environment.duplicate(true)
 	var result := run_state.cash_out_grand_casino_chips(-1, run_state.grand_casino_chip_exchange_rate())
 	if bool(result.get("ok", false)):
-		if coach_overlay != null:
-			coach_overlay.notify_action("cage:cash_out")
-		run_state.advance_environment_turns(1)
+		if not _advance_environment_turns_checked(1):
+			run_state.from_dict(rollback_run)
+			run_state.current_environment = rollback_environment
+			_refresh_runtime_environment_views()
+			return
+		if coach_overlay != null: coach_overlay.notify_action("cage:cash_out")
 		_autosave_foundation_run("Autosaved.")
 	_show_message(str(result.get("message", "The Cage could not complete that cash-out.")))
 	_refresh_talk_dock()
@@ -10460,15 +10559,20 @@ func _cash_out_cage_chips() -> void:
 func _complete_cage_players_card_review() -> void:
 	if run_state == null or library == null:
 		return
+	var rollback_run := run_state.to_dict()
+	var rollback_environment := run_state.current_environment.duplicate(true)
 	var claim_result := run_state.claim_grand_casino_players_card_tier()
 	if not bool(claim_result.get("ok", false)):
 		_show_message(str(claim_result.get("message", "The Players Card tier is not ready.")))
 		_refresh_talk_dock()
 		return
-	if coach_overlay != null:
-		coach_overlay.notify_action("cage:review")
 	if not bool(claim_result.get("review_required", false)):
-		run_state.advance_environment_turns(1)
+		if not _advance_environment_turns_checked(1):
+			run_state.from_dict(rollback_run)
+			run_state.current_environment = rollback_environment
+			_refresh_runtime_environment_views()
+			return
+		if coach_overlay != null: coach_overlay.notify_action("cage:review")
 		_autosave_foundation_run("Autosaved.")
 		_show_message(str(claim_result.get("message", "Linda issues the next Players Card tier.")))
 		if run_state.is_tutorial_run() and str(claim_result.get("tier", "")) == RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE:
@@ -10480,6 +10584,7 @@ func _complete_cage_players_card_review() -> void:
 		_refresh_talk_dock()
 		_refresh_runtime_environment_views()
 		return
+	if coach_overlay != null: coach_overlay.notify_action("cage:review")
 	var dialogue_id := "tutorial_linda_gold_review" if run_state.is_tutorial_run() else "linda_gold_review"
 	if not start_dialogue(dialogue_id, {"source": "cage_gold_review", "source_object_id": "casino_fixture:cage_counter"}):
 		_show_message("Linda's Gold review is unavailable.")
@@ -10488,15 +10593,27 @@ func _complete_cage_players_card_review() -> void:
 func _use_cage_players_card_comp(comp_id: String) -> void:
 	if run_state == null:
 		return
+	var rollback_run := run_state.to_dict()
+	var rollback_environment := run_state.current_environment.duplicate(true)
 	var result := run_state.grand_casino_players_card_comp_result(comp_id)
 	if bool(result.get("ok", false)):
 		GameModule.apply_result(run_state, result)
 		_play_result_drink_audio_cue(result)
 		var duration_minutes := maxi(0, int(result.get("duration_minutes", 0)))
 		if duration_minutes > 0:
-			run_state.advance_game_clock_minutes(duration_minutes)
+			var clock_result := run_state.advance_game_clock_minutes(duration_minutes)
+			if not bool(clock_result.get("ok", false)):
+				run_state.from_dict(rollback_run)
+				run_state.current_environment = rollback_environment
+				_show_message(str(_array(clock_result.get("errors", []))[0]) if not _array(clock_result.get("errors", [])).is_empty() else "Time could not advance safely.")
+				_refresh_runtime_environment_views()
+				return
 		else:
-			run_state.advance_environment_turns(1)
+			if not _advance_environment_turns_checked(1):
+				run_state.from_dict(rollback_run)
+				run_state.current_environment = rollback_environment
+				_refresh_runtime_environment_views()
+				return
 		last_hook_result = result.duplicate(true)
 		_advance_alcohol_absorption()
 		_autosave_foundation_run("Autosaved.")

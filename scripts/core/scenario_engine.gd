@@ -187,9 +187,18 @@ static func ensure_sequence_state(environment: Dictionary, definition: Dictionar
 		return {}
 	if not bool(environment.get("scenario_semantic_ready", false)):
 		return {}
+	if not str(environment.get("scenario_sequence_migration_error", "")).is_empty():
+		environment["scenario_sequence_lifecycle_errors"] = [str(environment.get("scenario_sequence_migration_error", ""))]
+		environment.erase("scenario_semantic_ready")
+		return {}
 	var node_id := str(environment.get("world_node_id", environment.get("archetype_id", environment.get("id", "")))).strip_edges()
 	var host_semantics := sequence_host_semantics(environment)
 	var state := SequenceRuntimeScript.normalize_state(environment.get("scenario_sequence_state", {}), definition, host_semantics)
+	if state.is_empty() and environment.has("scenario_sequence_state"):
+		environment["scenario_sequence_migration_error"] = "Persisted dynamic room sequence state cannot be normalized; explicit migration is required."
+		environment["scenario_sequence_lifecycle_errors"] = [str(environment.get("scenario_sequence_migration_error", ""))]
+		environment.erase("scenario_semantic_ready")
+		return {}
 	if state.is_empty():
 		_capture_sequence_baseline(environment)
 		state = SequenceRuntimeScript.initial_state(definition, node_id, seed_token, host_semantics)
@@ -288,7 +297,8 @@ static func _validated_cause_records(state: Dictionary, definition: Dictionary, 
 	for record_index in range(command_records.size()):
 		var record := _copy_dict(command_records[record_index])
 		var envelope := _copy_dict(record.get("envelope", {}))
-		if record.size() != 4 or not _exact_string_fields(record, ["receipt_key", "fingerprint"]) or not _valid_sha256(str(record.get("fingerprint", ""))) or typeof(record.get("cause_ordinal")) != TYPE_INT or int(record.get("cause_ordinal", -1)) < 0 or envelope.size() != 13 or typeof(envelope.get("schema_version")) != TYPE_INT or int(envelope.get("schema_version", 0)) != SequenceRuntimeScript.COMMAND_SCHEMA_VERSION or typeof(envelope.get("payload")) != TYPE_DICTIONARY:
+		var causal_descriptor := _copy_dict(record.get("causal_action_descriptor", {}))
+		if record.size() != 6 or not _exact_string_fields(record, ["receipt_key", "fingerprint", "causal_action_descriptor_fingerprint"]) or not _valid_sha256(str(record.get("fingerprint", ""))) or not _valid_sha256(str(record.get("causal_action_descriptor_fingerprint", ""))) or typeof(record.get("cause_ordinal")) != TYPE_INT or int(record.get("cause_ordinal", -1)) < 0 or envelope.size() != 13 or typeof(envelope.get("schema_version")) != TYPE_INT or int(envelope.get("schema_version", 0)) != SequenceRuntimeScript.COMMAND_SCHEMA_VERSION or typeof(envelope.get("payload")) != TYPE_DICTIONARY or causal_descriptor.is_empty():
 			errors.append("scenario command receipt record is not closed and typed")
 			continue
 		var command_strings := ["command_id", "node_id", "expected_phase", "idempotency_key", "owner_namespace", "stable_object_id", "action_origin_owner_namespace", "action_origin_stable_object_id", "action_origin_receipt_key", "action_origin_boundary_id", "action_origin_fingerprint"]
@@ -298,7 +308,7 @@ static func _validated_cause_records(state: Dictionary, definition: Dictionary, 
 		var receipt_key := str(record.get("receipt_key", ""))
 		var fingerprint := SequenceRuntimeScript.content_fingerprint(envelope)
 		var cause_key := "command|%s" % receipt_key
-		if record_index >= command_receipts.size() or str(command_receipts[record_index]) != receipt_key or str(envelope.get("idempotency_key", "")) != receipt_key or str(envelope.get("node_id", "")) != str(state.get("node_id", "")) or SequenceSchemaScript.phase(definition, str(envelope.get("expected_phase", ""))).is_empty() or OperationRegistryScript.parse_owned_identity(OperationRegistryScript.identity(str(envelope.get("owner_namespace", "")), str(envelope.get("stable_object_id", "")))).is_empty() or str(record.get("fingerprint", "")) != fingerprint or str(command_fingerprints.get(receipt_key, "")) != fingerprint or causes.has(cause_key):
+		if record_index >= command_receipts.size() or str(command_receipts[record_index]) != receipt_key or str(envelope.get("idempotency_key", "")) != receipt_key or str(envelope.get("node_id", "")) != str(state.get("node_id", "")) or SequenceSchemaScript.phase(definition, str(envelope.get("expected_phase", ""))).is_empty() or OperationRegistryScript.parse_owned_identity(OperationRegistryScript.identity(str(envelope.get("owner_namespace", "")), str(envelope.get("stable_object_id", "")))).is_empty() or str(record.get("fingerprint", "")) != fingerprint or str(command_fingerprints.get(receipt_key, "")) != fingerprint or str(record.get("causal_action_descriptor_fingerprint", "")) != SequenceRuntimeScript.content_fingerprint(causal_descriptor) or not SequenceRuntimeScript.validate_causal_action_descriptor(state, definition, envelope, causal_descriptor).is_empty() or causes.has(cause_key):
 			errors.append("scenario command receipt record does not authenticate its exact envelope")
 			continue
 		validated_command_records.append(record)
@@ -448,7 +458,7 @@ static func _replay_causal_records(initial: Dictionary, definition: Dictionary, 
 		var record := _copy_dict(causal.get("record", {}))
 		var result: Dictionary = {}
 		if kind == "command":
-			result = SequenceRuntimeScript.apply_command(state, definition, _copy_dict(record.get("envelope", {})), {"available_funds": 9223372036854775807})
+			result = SequenceRuntimeScript.apply_command(state, definition, _copy_dict(record.get("envelope", {})), {"available_funds": 9223372036854775807, "causal_action_descriptor": _copy_dict(record.get("causal_action_descriptor", {}))})
 		elif kind == "visit":
 			result = SequenceRuntimeScript.record_visit(state, definition, str(record.get("visit_id", "")))
 		elif kind == "expiry":
