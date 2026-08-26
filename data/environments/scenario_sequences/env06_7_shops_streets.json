@@ -1,0 +1,1556 @@
+{
+  "schema_version": 1,
+  "package_id": "env06_7_shops_streets",
+  "handler_pack": "shops_streets",
+  "renderer_id": "shops_streets",
+  "scenarios": [
+    {
+      "scenario_id": "corner_store_delivery_day",
+      "sequence": {
+        "schema_version": 2,
+        "local_state_schema": {
+          "event_choice": {
+            "type": "string",
+            "default": ""
+          },
+          "sweep_active": {
+            "type": "bool",
+            "default": false
+          }
+        },
+        "phase_graph": {
+          "initial_phase": "arrival",
+          "phases": [
+            {
+              "id": "arrival",
+              "label": "Delivery blocks the aisle",
+              "arrival_feedback": "A delivery dolly waits beside mismarked cartons while the front-door lane remains visibly open.",
+              "exit_prompt": "The marked front-door lane is still clear if you leave the delivery alone.",
+              "entry_conditions": [
+                {
+                  "type": "always"
+                }
+              ],
+              "objective_ids": [
+                "sort_delivery"
+              ],
+              "advance_after_actions": 0,
+              "scene_ops": [
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_delivery_cartons",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_cartons",
+                  "object": {
+                    "label": "Mismarked delivery cartons",
+                    "role": "stock",
+                    "zone_id": "left",
+                    "bounds": {
+                      "w": 96,
+                      "h": 72
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "unsorted",
+                    "appearance": "mixed_labels"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_mismarked_crate",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "mismarked_crate",
+                  "object": {
+                    "label": "Crate with a damaged label",
+                    "role": "evidence",
+                    "zone_id": "background",
+                    "bounds": {
+                      "w": 52,
+                      "h": 52
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "unread",
+                    "appearance": "torn_label"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_delivery_event_gate",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_event_gate",
+                  "object": {
+                    "label": "Delivery manifest gate",
+                    "role": "workstation",
+                    "zone_id": "service_lane",
+                    "bounds": {
+                      "w": 64,
+                      "h": 56
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "inspectable",
+                    "appearance": "damaged_manifest"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_delivery_exit",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_exit",
+                  "object": {
+                    "label": "Clear front-door lane",
+                    "role": "exit",
+                    "zone_id": "exit_lane",
+                    "bounds": {
+                      "w": 72,
+                      "h": 80
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "clear",
+                    "appearance": "marked_lane"
+                  }
+                }
+              ],
+              "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "add",
+                  "receipt_id": "arrival_delivery_controls",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_exit",
+                  "interaction": {
+                    "owner_namespace": "scenario",
+                    "stable_object_id": "delivery_exit",
+                    "label": "Marked front-door lane",
+                    "state_label": "Exit clear",
+                    "prompt": "Ignore the cartons, refuse the request, or leave through the clear lane.",
+                    "enabled": true,
+                    "disabled_reason": "",
+                    "available_actions": [
+                      {
+                        "id": "ignore_delivery",
+                        "label": "Ignore the delivery",
+                        "input_action": "ui_down",
+                        "non_color_state": "ignore"
+                      },
+                      {
+                        "id": "refuse_sort",
+                        "label": "Refuse to sort the cartons",
+                        "input_action": "ui_cancel",
+                        "non_color_state": "refuse"
+                      }
+                    ],
+                    "input_actions": [
+                      "ui_down",
+                      "ui_cancel"
+                    ],
+                    "non_color_state": "exit_clear",
+                    "focus_order": 1,
+                    "hit_bounds": {
+                      "w": 64,
+                      "h": 64
+                    },
+                    "min_target_size": 44,
+                    "safe_exit": true
+                  }
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "add",
+                  "receipt_id": "arrival_delivery_event_controls",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_event_gate",
+                  "interaction": {
+                    "owner_namespace": "scenario",
+                    "stable_object_id": "delivery_event_gate",
+                    "label": "Damaged delivery manifest",
+                    "state_label": "Inspection ready",
+                    "prompt": "Inspect the damaged manifest before shifting any cartons.",
+                    "enabled": true,
+                    "disabled_reason": "",
+                    "available_actions": [
+                      {
+                        "id": "inspect_manifest",
+                        "label": "Inspect the damaged manifest",
+                        "input_action": "ui_accept",
+                        "non_color_state": "inspect",
+                        "handler": "publish_feedback",
+                        "inputs": {
+                          "message": "The damaged manifest identifies which cartons must move before the stock choice can be opened."
+                        }
+                      }
+                    ],
+                    "input_actions": [
+                      "ui_accept"
+                    ],
+                    "non_color_state": "manifest_ready",
+                    "focus_order": 2,
+                    "hit_bounds": {
+                      "w": 64,
+                      "h": 56
+                    },
+                    "min_target_size": 44,
+                    "safe_exit": false
+                  }
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "gate",
+                  "receipt_id": "arrival_gate_host_delivery_event",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_event_host_gate",
+                  "mode": "gate",
+                  "target_owner_namespace": "event",
+                  "target_stable_object_id": "event:scenario_delivery_day_stock",
+                  "enabled": false,
+                  "disabled_reason": "Inspect and sort the delivery before resolving its stock choice."
+                }
+              ],
+              "actor_ops": [
+                {
+                  "family": "actor_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_delivery_clerk",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_clerk",
+                  "actor": {
+                    "label": "Delivery clerk",
+                    "actor_id": "ada_corner_merchant",
+                    "anchor_id": "layout:shopkeeper:0",
+                    "behavior": "work",
+                    "route_id": "layout:shopkeeper:0",
+                    "pose": "checking_manifest"
+                  }
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_delivery_runner",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_runner",
+                  "actor": {
+                    "label": "Delivery runner",
+                    "actor_id": "priya_travel_merchant",
+                    "anchor_id": "layout:travel:1",
+                    "behavior": "work",
+                    "route_id": "zone:left",
+                    "pose": "unloading_dolly"
+                  }
+                }
+              ],
+              "transition_ops": [
+                {
+                  "family": "transition_ops",
+                  "op": "stage",
+                  "receipt_id": "arrival_delivery_stage",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_arrival",
+                  "channel": "room",
+                  "message": "The delivery clerk wheels mismarked cartons across the aisle while keeping the marked front-door lane open.",
+                  "stage_id": "delivery_arrival",
+                  "duration_boundaries": 1,
+                  "reduced_motion_message": "The delivery cartons are now beside the open front-door lane."
+                }
+              ],
+              "branches": [
+                {
+                  "id": "arrival_ignored",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "ignore_delivery"
+                  },
+                  "next_phase": "resolution"
+                },
+                {
+                  "id": "arrival_refused",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "refuse_sort"
+                  },
+                  "next_phase": "resolution"
+                },
+                {
+                  "id": "arrival_departed",
+                  "condition": {
+                    "type": "fact",
+                    "fact_type": "travel_departed"
+                  },
+                  "next_phase": "resolution"
+                },
+                {
+                  "id": "arrival_manifest_requested",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "inspect_manifest"
+                  },
+                  "next_phase": "sorting"
+                }
+              ]
+            },
+            {
+              "id": "sorting",
+              "label": "Reroute the delivery",
+              "arrival_feedback": "The clerk shifts the dolly aside, exposing the damaged label and a route for the mismarked cartons.",
+              "exit_prompt": "Ignore or refuse the delivery at the marked front-door lane while sorting begins.",
+              "entry_conditions": [],
+              "objective_ids": [
+                "sort_delivery"
+              ],
+              "advance_after_actions": 0,
+              "scene_ops": [
+                {
+                  "family": "scene_ops",
+                  "op": "move",
+                  "receipt_id": "sorting_reroute_delivery",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_cartons",
+                  "zone_id": "center"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "sorting_remove_delivery_event_gate",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_event_gate"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_appearance",
+                  "receipt_id": "sorting_expose_label",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "mismarked_crate",
+                  "appearance": "crushed_corner"
+                }
+              ],
+              "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "receipt_id": "sorting_remove_event_controls",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_event_gate"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "add",
+                  "receipt_id": "sorting_carton_controls",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_cartons",
+                  "interaction": {
+                    "owner_namespace": "scenario",
+                    "stable_object_id": "delivery_cartons",
+                    "label": "Mismarked cartons",
+                    "state_label": "Route exposed",
+                    "prompt": "Roll the mismarked cartons toward the open sorting station.",
+                    "enabled": true,
+                    "disabled_reason": "",
+                    "available_actions": [
+                      {
+                        "id": "shift_cartons",
+                        "label": "Reroute the cartons",
+                        "input_action": "ui_accept",
+                        "non_color_state": "reroute",
+                        "requires_objective_steps": [
+                          {
+                            "objective_id": "sort_delivery",
+                            "step_id": "inspect_manifest"
+                          }
+                        ]
+                      }
+                    ],
+                    "input_actions": [
+                      "ui_accept"
+                    ],
+                    "non_color_state": "route_ready",
+                    "focus_order": 2,
+                    "hit_bounds": {
+                      "w": 96,
+                      "h": 72
+                    },
+                    "min_target_size": 44,
+                    "safe_exit": false
+                  }
+                }
+              ],
+              "actor_ops": [
+                {
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "receipt_id": "sorting_reposition_clerk",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_clerk",
+                  "anchor_id": "layout:shopkeeper:0"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "receipt_id": "sorting_clerk_checks_labels",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_clerk",
+                  "pose": "checking_labels"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "receipt_id": "sorting_reposition_runner",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_runner",
+                  "zone_id": "left"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_route",
+                  "receipt_id": "sorting_route_runner_to_service_lane",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_runner",
+                  "route_id": "zone:service_lane"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "receipt_id": "sorting_runner_shifts_cartons",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_runner",
+                  "pose": "shifting_cartons"
+                }
+              ],
+              "transition_ops": [
+                {
+                  "family": "transition_ops",
+                  "op": "scene_change",
+                  "receipt_id": "sorting_delivery_change",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_sorting",
+                  "channel": "room",
+                  "message": "The cartons shift out of the center aisle and the clerk marks a safe route toward the sorting station.",
+                  "change_id": "delivery_sorting_route"
+                }
+              ],
+              "branches": [
+                {
+                  "id": "sorting_rerouted",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "shift_cartons"
+                  },
+                  "next_phase": "verification"
+                },
+                {
+                  "id": "sorting_ignored",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "ignore_delivery"
+                  },
+                  "next_phase": "resolution"
+                },
+                {
+                  "id": "sorting_refused",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "refuse_sort"
+                  },
+                  "next_phase": "resolution"
+                },
+                {
+                  "id": "sorting_departed",
+                  "condition": {
+                    "type": "fact",
+                    "fact_type": "travel_departed"
+                  },
+                  "next_phase": "resolution"
+                }
+              ]
+            },
+            {
+              "id": "verification",
+              "label": "Verify the mismarked lot",
+              "arrival_feedback": "A cleared shelf and the damaged label form a physical verification station beside the rerouted cartons.",
+              "exit_prompt": "The marked front-door lane remains open beside the verification shelf.",
+              "entry_conditions": [],
+              "objective_ids": [
+                "sort_delivery"
+              ],
+              "advance_after_actions": 0,
+              "scene_ops": [
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "verification_sorting_shelf",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "sorting_shelf",
+                  "object": {
+                    "label": "Delivery verification shelf",
+                    "role": "workstation",
+                    "zone_id": "right",
+                    "bounds": {
+                      "w": 72,
+                      "h": 56
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "awaiting_check",
+                    "appearance": "manifest_and_twine"
+                  }
+                }
+              ],
+              "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "receipt_id": "verification_remove_carton_controls",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_cartons"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "add",
+                  "receipt_id": "verification_sorting_controls",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "sorting_shelf",
+                  "interaction": {
+                    "owner_namespace": "scenario",
+                    "stable_object_id": "sorting_shelf",
+                    "label": "Delivery verification shelf",
+                    "state_label": "Manifest ready",
+                    "prompt": "Open the existing delivery-stock choice to verify this lot.",
+                    "enabled": true,
+                    "disabled_reason": "",
+                    "available_actions": [
+                      {
+                        "id": "request_stock_check",
+                        "label": "Check the delivery manifest",
+                        "input_action": "ui_accept",
+                        "non_color_state": "verify",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_delivery_day_stock",
+                          "resolution_id": "delivery_day_stock_resolution"
+                        },
+                        "requires_objective_steps": [
+                          {
+                            "objective_id": "sort_delivery",
+                            "step_id": "shift_cartons"
+                          }
+                        ]
+                      }
+                    ],
+                    "input_actions": [
+                      "ui_accept"
+                    ],
+                    "non_color_state": "verification_ready",
+                    "focus_order": 3,
+                    "hit_bounds": {
+                      "w": 72,
+                      "h": 56
+                    },
+                    "min_target_size": 44,
+                    "safe_exit": false
+                  }
+                }
+              ],
+              "actor_ops": [
+                {
+                  "family": "actor_ops",
+                  "op": "set_behavior",
+                  "receipt_id": "verification_clerk_working",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_clerk",
+                  "behavior": "work"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "receipt_id": "verification_clerk_points",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_clerk",
+                  "pose": "checking_manifest"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "receipt_id": "verification_reposition_runner",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_runner",
+                  "zone_id": "service_lane"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "receipt_id": "verification_runner_holds_twine",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_runner",
+                  "pose": "holding_twine"
+                }
+              ],
+              "transition_ops": [
+                {
+                  "family": "transition_ops",
+                  "op": "scene_change",
+                  "receipt_id": "verification_sorting_change",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_verification_change",
+                  "channel": "room",
+                  "message": "The rerouted cartons, damaged label, and manifest now meet at one readable verification station.",
+                  "change_id": "delivery_verification_ready"
+                }
+              ],
+              "branches": [
+                {
+                  "id": "verification_requested",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "request_stock_check"
+                  },
+                  "next_phase": "awaiting_stock"
+                },
+                {
+                  "id": "verification_ignored",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "ignore_delivery"
+                  },
+                  "next_phase": "resolution"
+                },
+                {
+                  "id": "verification_refused",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "refuse_sort"
+                  },
+                  "next_phase": "resolution"
+                },
+                {
+                  "id": "verification_departed",
+                  "condition": {
+                    "type": "fact",
+                    "fact_type": "travel_departed"
+                  },
+                  "next_phase": "resolution"
+                }
+              ]
+            },
+            {
+              "id": "awaiting_stock",
+              "label": "Await the stock decision",
+              "arrival_feedback": "The verification request is open; the clerk shifts beside the damaged carton while the legacy stock choice remains unresolved.",
+              "exit_prompt": "Ignore, refuse, or leave through the marked front-door lane while the stock decision is pending.",
+              "entry_conditions": [],
+              "objective_ids": [
+                "sort_delivery"
+              ],
+              "advance_after_actions": 0,
+              "scene_ops": [
+                {
+                  "family": "scene_ops",
+                  "op": "move",
+                  "receipt_id": "awaiting_stock_reposition_cartons",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_cartons",
+                  "zone_id": "background"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_state",
+                  "receipt_id": "awaiting_stock_mark_shelf",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "sorting_shelf",
+                  "state": "event_pending"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "move",
+                  "receipt_id": "awaiting_stock_move_crate",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "mismarked_crate",
+                  "zone_id": "foreground"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_appearance",
+                  "receipt_id": "awaiting_stock_expose_crate",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "mismarked_crate",
+                  "appearance": "manifest_open"
+                }
+              ],
+              "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "receipt_id": "awaiting_stock_remove_verification",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "sorting_shelf"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "gate",
+                  "receipt_id": "awaiting_stock_open_host_delivery_event",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_event_host_gate",
+                  "mode": "gate",
+                  "target_owner_namespace": "event",
+                  "target_stable_object_id": "event:scenario_delivery_day_stock",
+                  "enabled": true,
+                  "disabled_reason": ""
+                }
+              ],
+              "actor_ops": [
+                {
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "receipt_id": "awaiting_stock_clerk_repositions",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_clerk",
+                  "anchor_id": "layout:shopkeeper:0"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "receipt_id": "awaiting_stock_clerk_waits",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_clerk",
+                  "pose": "awaiting_choice"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "receipt_id": "awaiting_stock_reposition_runner",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_runner",
+                  "zone_id": "service_lane"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "receipt_id": "awaiting_stock_runner_waits",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_runner",
+                  "pose": "waiting_on_choice"
+                }
+              ],
+              "transition_ops": [
+                {
+                  "family": "transition_ops",
+                  "op": "stage",
+                  "receipt_id": "awaiting_stock_stage",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_stock_stage",
+                  "channel": "room",
+                  "message": "The verification shelf goes quiet while the correlated stock choice is delivered.",
+                  "stage_id": "delivery_awaiting_stock",
+                  "duration_boundaries": 1,
+                  "reduced_motion_message": "The clerk and cartons now wait beside the open manifest."
+                }
+              ],
+              "branches": [
+                {
+                  "id": "stock_cleared",
+                  "condition": {
+                    "type": "fact",
+                    "fact_type": "event_result",
+                    "payload_equals": {
+                      "event_id": "scenario_delivery_day_stock",
+                      "choice_id": "clear_the_aisle",
+                      "resolution_id": "delivery_day_stock_resolution",
+                      "resolved": true,
+                      "ok": true
+                    }
+                  },
+                  "next_phase": "resolution"
+                },
+                {
+                  "id": "stock_deal_taken",
+                  "condition": {
+                    "type": "fact",
+                    "fact_type": "event_result",
+                    "payload_equals": {
+                      "event_id": "scenario_delivery_day_stock",
+                      "choice_id": "take_the_deal",
+                      "resolution_id": "delivery_day_stock_resolution",
+                      "resolved": true,
+                      "ok": true
+                    }
+                  },
+                  "next_phase": "resolution"
+                },
+                {
+                  "id": "stock_ignored",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "ignore_delivery"
+                  },
+                  "next_phase": "resolution"
+                },
+                {
+                  "id": "stock_refused",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "refuse_sort"
+                  },
+                  "next_phase": "resolution"
+                },
+                {
+                  "id": "stock_departed",
+                  "condition": {
+                    "type": "fact",
+                    "fact_type": "travel_departed"
+                  },
+                  "next_phase": "resolution"
+                }
+              ]
+            },
+            {
+              "id": "resolution",
+              "label": "The delivery changes the store",
+              "arrival_feedback": "The delivery choice resolves into a persistent shelf, clerk, service, and route arrangement.",
+              "exit_prompt": "The marked front-door lane remains the clean exit in every delivery outcome.",
+              "terminal": true,
+              "entry_conditions": [],
+              "objective_ids": [],
+              "advance_after_actions": 0,
+              "scene_ops": [],
+              "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "gate",
+                  "receipt_id": "resolution_close_host_delivery_event",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_event_host_gate",
+                  "mode": "gate",
+                  "target_owner_namespace": "event",
+                  "target_stable_object_id": "event:scenario_delivery_day_stock",
+                  "enabled": false,
+                  "disabled_reason": "The delivery-stock choice is no longer independently available."
+                }
+              ],
+              "actor_ops": [],
+              "transition_ops": [
+                {
+                  "family": "transition_ops",
+                  "op": "feedback",
+                  "receipt_id": "resolution_delivery_feedback",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_resolution",
+                  "channel": "room",
+                  "message": "The delivery decision is now visible in the store and ready for revisit."
+                }
+              ],
+              "branches": [
+                {
+                  "id": "resolve_repaired",
+                  "condition": {
+                    "type": "fact",
+                    "fact_type": "event_result",
+                    "payload_equals": {
+                      "event_id": "scenario_delivery_day_stock",
+                      "choice_id": "clear_the_aisle",
+                      "resolution_id": "delivery_day_stock_resolution",
+                      "resolved": true,
+                      "ok": true
+                    }
+                  },
+                  "outcome": "repaired",
+                  "objective_outcomes": {
+                    "sort_delivery": "success"
+                  }
+                },
+                {
+                  "id": "resolve_broken",
+                  "condition": {
+                    "type": "fact",
+                    "fact_type": "event_result",
+                    "payload_equals": {
+                      "event_id": "scenario_delivery_day_stock",
+                      "choice_id": "take_the_deal",
+                      "resolution_id": "delivery_day_stock_resolution",
+                      "resolved": true,
+                      "ok": true
+                    }
+                  },
+                  "outcome": "broken",
+                  "objective_outcomes": {
+                    "sort_delivery": "failure"
+                  }
+                },
+                {
+                  "id": "resolve_refused",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "refuse_sort"
+                  },
+                  "outcome": "refused",
+                  "objective_outcomes": {
+                    "sort_delivery": "cancel"
+                  }
+                },
+                {
+                  "id": "resolve_ignored",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "ignore_delivery"
+                  },
+                  "outcome": "interrupted",
+                  "objective_outcomes": {
+                    "sort_delivery": "ignore"
+                  }
+                },
+                {
+                  "id": "resolve_departed",
+                  "condition": {
+                    "type": "fact",
+                    "fact_type": "travel_departed"
+                  },
+                  "outcome": "interrupted",
+                  "objective_outcomes": {
+                    "sort_delivery": "cancel"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "objectives": [
+          {
+            "id": "sort_delivery",
+            "label": "Sort the corner-store delivery",
+            "progress_label": "Delivery labels",
+            "steps": [
+              {
+                "id": "inspect_manifest",
+                "label": "Inspect the damaged label",
+                "kind": "command",
+                "command_id": "inspect_manifest"
+              },
+              {
+                "id": "shift_cartons",
+                "label": "Reroute the cartons to the verification shelf",
+                "kind": "command",
+                "command_id": "shift_cartons"
+              },
+              {
+                "id": "verify_stock",
+                "label": "Resolve the correlated delivery-stock choice",
+                "kind": "fact",
+                "fact_type": "event_result",
+                "payload_equals": {
+                  "event_id": "scenario_delivery_day_stock",
+                  "resolution_id": "delivery_day_stock_resolution",
+                  "resolved": true,
+                  "ok": true
+                }
+              }
+            ],
+            "outcomes": [
+              "success",
+              "failure",
+              "ignore",
+              "cancel"
+            ]
+          }
+        ],
+        "reentry_policy": {
+          "partial": "resume",
+          "terminal": "aftermath",
+          "expired": "expired"
+        },
+        "expiry": {
+          "boundary": "night_end",
+          "after": 1,
+          "policy": "ignore"
+        },
+        "cleanup": {
+          "operations": [
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_delivery_cartons",
+              "owner_namespace": "scenario",
+              "stable_object_id": "delivery_cartons"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_mismarked_crate",
+              "owner_namespace": "scenario",
+              "stable_object_id": "mismarked_crate"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_delivery_event_gate",
+              "owner_namespace": "scenario",
+              "stable_object_id": "delivery_event_gate"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_delivery_exit",
+              "owner_namespace": "scenario",
+              "stable_object_id": "delivery_exit"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_sorting_shelf",
+              "owner_namespace": "scenario",
+              "stable_object_id": "sorting_shelf"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_host_delivery_event_gate",
+              "owner_namespace": "scenario",
+              "stable_object_id": "delivery_event_host_gate"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "gate",
+              "receipt_id": "cleanup_install_terminal_delivery_event_gate",
+              "owner_namespace": "scenario",
+              "stable_object_id": "delivery_event_terminal_gate",
+              "mode": "gate",
+              "target_owner_namespace": "event",
+              "target_stable_object_id": "event:scenario_delivery_day_stock",
+              "enabled": false,
+              "disabled_reason": "This delivery can no longer open independent stock consequences."
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_delivery_event_controls",
+              "owner_namespace": "scenario",
+              "stable_object_id": "delivery_event_gate"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_delivery_controls",
+              "owner_namespace": "scenario",
+              "stable_object_id": "delivery_exit"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_carton_controls",
+              "owner_namespace": "scenario",
+              "stable_object_id": "delivery_cartons"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_sorting_controls",
+              "owner_namespace": "scenario",
+              "stable_object_id": "sorting_shelf"
+            },
+            {
+              "family": "actor_ops",
+              "op": "despawn",
+              "receipt_id": "cleanup_delivery_clerk",
+              "owner_namespace": "scenario",
+              "stable_object_id": "delivery_clerk"
+            },
+            {
+              "family": "actor_ops",
+              "op": "despawn",
+              "receipt_id": "cleanup_delivery_runner",
+              "owner_namespace": "scenario",
+              "stable_object_id": "delivery_runner"
+            }
+          ]
+        },
+        "aftermath": {
+          "repaired": {
+            "label": "Rack stocked and sorted",
+            "revisit_feedback": "The stocked rack is orderly, Ada is relieved, the cashier tip remains enabled, and the jazz-club route is open.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "op": "spawn",
+                "receipt_id": "aftermath_repaired_stock",
+                "owner_namespace": "scenario",
+                "stable_object_id": "stocked_rack",
+                "object": {
+                  "label": "Stocked rack",
+                  "role": "display",
+                  "zone_id": "center",
+                  "bounds": {
+                    "w": 68,
+                    "h": 54
+                  },
+                  "visible": true,
+                  "enabled": true,
+                  "state": "stocked",
+                  "appearance": "stocked_rack"
+                }
+              }
+            ],
+            "actor_ops": [
+              {
+                "family": "actor_ops",
+                "op": "spawn",
+                "receipt_id": "aftermath_repaired_ada",
+                "owner_namespace": "scenario",
+                "stable_object_id": "delivery_clerk",
+                "actor": {
+                  "label": "Ada at the reopened shelf",
+                  "actor_id": "ada_corner_merchant",
+                  "anchor_id": "layout:shopkeeper:0",
+                  "behavior": "work",
+                  "route_id": "layout:shopkeeper:0",
+                  "pose": "relieved"
+                }
+              }
+            ],
+            "interaction_ops": [
+              {
+                "family": "interaction_ops",
+                "op": "remove",
+                "receipt_id": "aftermath_repaired_remove_terminal_event_gate",
+                "owner_namespace": "scenario",
+                "stable_object_id": "delivery_event_terminal_gate"
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "op": "add",
+                "receipt_id": "aftermath_repaired_cashier_tip",
+                "owner_namespace": "scenario",
+                "stable_object_id": "cashier_tip",
+                "object": {
+                  "id": "cashier_tip",
+                  "label": "Cashier delivery tip",
+                  "enabled": true
+                }
+              }
+            ],
+            "route_ops": [
+              {
+                "family": "route_ops",
+                "op": "open",
+                "receipt_id": "aftermath_repaired_jazz_route",
+                "owner_namespace": "scenario",
+                "stable_object_id": "jazz_club"
+              }
+            ]
+          },
+          "broken": {
+            "label": "Torn carton remains",
+            "revisit_feedback": "A torn carton remains after Priya departs; the cashier tip is disabled and the bar route is closed.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "op": "spawn",
+                "receipt_id": "aftermath_broken_stock",
+                "owner_namespace": "scenario",
+                "stable_object_id": "torn_carton",
+                "object": {
+                  "label": "Torn carton",
+                  "role": "hazard",
+                  "zone_id": "left",
+                  "bounds": {
+                    "w": 78,
+                    "h": 58
+                  },
+                  "visible": true,
+                  "enabled": false,
+                  "state": "broken",
+                  "appearance": "torn_carton"
+                }
+              }
+            ],
+            "actor_ops": [],
+            "interaction_ops": [
+              {
+                "family": "interaction_ops",
+                "op": "remove",
+                "receipt_id": "aftermath_broken_remove_terminal_event_gate",
+                "owner_namespace": "scenario",
+                "stable_object_id": "delivery_event_terminal_gate"
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "op": "add",
+                "receipt_id": "aftermath_broken_cashier_tip",
+                "owner_namespace": "scenario",
+                "stable_object_id": "cashier_tip",
+                "object": {
+                  "id": "cashier_tip",
+                  "label": "Cashier delivery tip",
+                  "enabled": false,
+                  "disabled_reason": "Ada is documenting the crushed delivery instead of pricing an exit tip."
+                }
+              }
+            ],
+            "route_ops": [
+              {
+                "family": "route_ops",
+                "op": "close",
+                "receipt_id": "aftermath_broken_bar_route",
+                "owner_namespace": "scenario",
+                "stable_object_id": "bar",
+                "disabled_reason": "The damaged delivery blocks the route toward the bar."
+              }
+            ]
+          },
+          "refused": {
+            "label": "Delivery refused",
+            "revisit_feedback": "A sealed pallet remains under Ada's watch; the cashier tip is disabled and the pawn-shop route is closed.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "op": "spawn",
+                "receipt_id": "aftermath_refused_stock",
+                "owner_namespace": "scenario",
+                "stable_object_id": "sealed_pallet",
+                "object": {
+                  "label": "Sealed pallet",
+                  "role": "barrier",
+                  "zone_id": "center",
+                  "bounds": {
+                    "w": 74,
+                    "h": 56
+                  },
+                  "visible": true,
+                  "enabled": false,
+                  "state": "refused",
+                  "appearance": "sealed_pallet"
+                }
+              }
+            ],
+            "actor_ops": [
+              {
+                "family": "actor_ops",
+                "op": "spawn",
+                "receipt_id": "aftermath_refused_ada",
+                "owner_namespace": "scenario",
+                "stable_object_id": "delivery_clerk",
+                "actor": {
+                  "label": "Ada holding the return slip",
+                  "actor_id": "ada_corner_merchant",
+                  "anchor_id": "layout:shopkeeper:0",
+                  "behavior": "watch",
+                  "route_id": "layout:shopkeeper:0",
+                  "pose": "watching_return"
+                }
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "op": "add",
+                "receipt_id": "aftermath_refused_cashier_tip",
+                "owner_namespace": "scenario",
+                "stable_object_id": "cashier_tip",
+                "object": {
+                  "id": "cashier_tip",
+                  "label": "Cashier delivery tip",
+                  "enabled": false,
+                  "disabled_reason": "Ada is handling the return paperwork and will not sell the delivery tip."
+                }
+              }
+            ],
+            "route_ops": [
+              {
+                "family": "route_ops",
+                "op": "close",
+                "receipt_id": "aftermath_refused_pawn_route",
+                "owner_namespace": "scenario",
+                "stable_object_id": "pawn_shop",
+                "disabled_reason": "The return pickup occupies the pawn-shop route."
+              }
+            ]
+          },
+          "interrupted": {
+            "label": "Delivery interrupted",
+            "revisit_feedback": "An abandoned manifest remains after Priya departs; the cashier tip stays enabled and the gas-station casino route is closed.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "op": "spawn",
+                "receipt_id": "aftermath_interrupted_manifest",
+                "owner_namespace": "scenario",
+                "stable_object_id": "abandoned_manifest",
+                "object": {
+                  "label": "Abandoned manifest",
+                  "role": "evidence",
+                  "zone_id": "background",
+                  "bounds": {
+                    "w": 62,
+                    "h": 70
+                  },
+                  "visible": true,
+                  "enabled": false,
+                  "state": "abandoned",
+                  "appearance": "abandoned_manifest"
+                }
+              }
+            ],
+            "actor_ops": [],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "op": "add",
+                "receipt_id": "aftermath_interrupted_cashier_tip",
+                "owner_namespace": "scenario",
+                "stable_object_id": "cashier_tip",
+                "object": {
+                  "id": "cashier_tip",
+                  "label": "Cashier delivery tip",
+                  "enabled": true
+                }
+              }
+            ],
+            "route_ops": [
+              {
+                "family": "route_ops",
+                "op": "close",
+                "receipt_id": "aftermath_interrupted_casino_route",
+                "owner_namespace": "scenario",
+                "stable_object_id": "gas_station_casino",
+                "disabled_reason": "The interrupted unloading closes the casino route for this visit."
+              }
+            ]
+          }
+        },
+        "mechanic_tags": [
+          "delivery_sorting",
+          "spatial_reroute",
+          "event_bridge",
+          "legacy_choice_correlation",
+          "typed_manifest_state",
+          "travel_interrupt",
+          "sweep_coexistence",
+          "host_event_authority_gate"
+        ],
+        "sequence_signature": "inspect_then_reroute_then_verify_delivery_event_choice_to_four_spatial_service_route_aftermaths",
+        "owner_exceptions": [],
+        "fact_subscriptions": [
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_delivery_day_stock",
+              "choice_id": "clear_the_aisle",
+              "resolution_id": "delivery_day_stock_resolution",
+              "resolved": true,
+              "ok": true
+            },
+            "handler": "set_local",
+            "inputs": {
+              "key": "event_choice",
+              "value": "clear_the_aisle"
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_delivery_day_stock",
+              "choice_id": "take_the_deal",
+              "resolution_id": "delivery_day_stock_resolution",
+              "resolved": true,
+              "ok": true
+            },
+            "handler": "set_local",
+            "inputs": {
+              "key": "event_choice",
+              "value": "take_the_deal"
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_delivery_day_stock",
+              "resolution_id": "delivery_day_stock_resolution",
+              "resolved": true,
+              "ok": true
+            },
+            "handler": "publish_feedback",
+            "inputs": {
+              "message": "The clerk records the correlated manifest choice before sorting continues."
+            }
+          },
+          {
+            "fact_type": "travel_departed",
+            "handler": "publish_feedback",
+            "inputs": {
+              "message": "Leaving interrupts the delivery and preserves an abandoned-manifest aftermath."
+            }
+          },
+          {
+            "fact_type": "sweep_changed",
+            "handler": "set_local",
+            "inputs": {
+              "key": "sweep_active",
+              "value_from_payload": "active"
+            }
+          }
+        ],
+        "completion_contract": {
+          "arrival_readable": true,
+          "semantic_changes": true,
+          "scenario_interaction": true,
+          "action_boundaries": true,
+          "choice_or_failure": true,
+          "material_outcomes": true,
+          "revisit_coverage": true,
+          "world_connection": true,
+          "primary_verb": true,
+          "feedback_and_exit": true
+        }
+      },
+      "authoring": {
+        "arrival_summary": "A delivery dolly, mismarked cartons, and a damaged label create a readable sorting task without covering the front-door lane.",
+        "player_verbs": [
+          "inspect_manifest",
+          "shift_cartons",
+          "request_stock_check",
+          "ignore_delivery",
+          "refuse_sort"
+        ],
+        "world_connections": [
+          "delivery_stock_event",
+          "cashier_tip_service",
+          "delivery_day_rumor_anchor",
+          "delivery_twine_item",
+          "travel_interruption",
+          "sweep_pressure",
+          "host_event_authority"
+        ],
+        "references": {
+          "events": [
+            "scenario_delivery_day_stock"
+          ],
+          "services": [
+            "cashier_tip"
+          ],
+          "items": [
+            "delivery_twine"
+          ],
+          "actors": [
+            "ada_corner_merchant",
+            "priya_travel_merchant"
+          ],
+          "objects": [
+            "event::event:scenario_delivery_day_stock",
+            "service::shopkeeper:merchant",
+            "service::service:cashier_tip",
+            "base::travel:leave"
+          ]
+        },
+        "capture_ids": [
+          "arrival_delivery_blocked",
+          "sorting_aisle_rerouted",
+          "verification_station_ready",
+          "awaiting_stock_choice",
+          "resolution_repaired",
+          "resolution_broken",
+          "resolution_refused",
+          "resolution_interrupted",
+          "partial_revisit_awaiting_stock",
+          "terminal_revisit_repaired",
+          "terminal_revisit_broken",
+          "terminal_revisit_refused",
+          "terminal_revisit_interrupted",
+          "expired_revisit_night_end",
+          "reduced_motion_arrival",
+          "small_screen_104x76",
+          "obstruction_overlay_zero_overlap",
+          "hit_target_overlay_44_minimum",
+          "base_event_pre_request_gated",
+          "base_event_request_delivered",
+          "base_event_terminal_gated"
+        ],
+        "seed_evidence": {
+          "proof_seed": "corner_store_delivery_day_env06_6",
+          "expected_outcomes": [
+            "repaired",
+            "broken",
+            "refused",
+            "interrupted"
+          ],
+          "mid_sequence_phase": "awaiting_stock",
+          "expiry_boundary": "night_end",
+          "schema_envelope": "schema_v1_object_package",
+          "schema_object_recognition": true,
+          "seed_profiles": [
+            "tutorial",
+            "neutral",
+            "ordinary"
+          ],
+          "ordinary_seed_count": 20,
+          "hostile_command_cases": [
+            "wrong_phase",
+            "wrong_owner",
+            "wrong_object",
+            "unknown_command",
+            "missing_precondition",
+            "reused_receipt_conflict"
+          ],
+          "spatial_anchor_profile": "corner_store_exact_anchors",
+          "work_progression": "left_center_background",
+          "actor_progression": "priya_travel1_left_service_lane",
+          "minimum_target_size": 44,
+          "proof_viewport": "104x76",
+          "base_event_gate_cases": [
+            "arrival_click_disabled",
+            "sorting_click_disabled",
+            "verification_click_disabled",
+            "request_delivery_opens_event",
+            "early_result_cannot_enter_queue",
+            "pre_request_click_emits_no_event_result",
+            "pre_request_queue_remains_clean",
+            "refused_terminal_click_disabled",
+            "ignored_terminal_click_disabled",
+            "expired_terminal_click_disabled",
+            "post_terminal_consequences_blocked",
+            "post_refuse_no_legacy_consequences",
+            "post_ignore_no_legacy_consequences",
+            "post_expiry_no_legacy_consequences"
+          ],
+          "event_request_cases": [
+            "delivered_before_authority",
+            "wrong_event_rejected",
+            "wrong_resolution_rejected",
+            "unresolved_rejected",
+            "failed_rejected",
+            "unrelated_choice_rejected",
+            "replay_no_duplicate",
+            "pre_request_base_click_rejected",
+            "pre_request_flush_queue_unchanged"
+          ],
+          "coexistence_hosts": [
+            "event",
+            "service",
+            "traveler",
+            "sweep"
+          ],
+          "save_boundaries": [
+            "before_event_drain",
+            "after_event_drain",
+            "arrival",
+            "sorting",
+            "verification",
+            "awaiting_stock",
+            "resolution",
+            "outcome_repaired",
+            "outcome_broken",
+            "outcome_refused",
+            "outcome_interrupted"
+          ],
+          "cleanup_idempotent": true,
+          "reentry_idempotent": true,
+          "expiry_idempotent": true
+        },
+        "masked_visual_explanations": {}
+      }
+    }
+  ]
+}
