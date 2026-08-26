@@ -166,7 +166,7 @@ each stage builds on the last.
 | pusherv3_7 | `pusherv3_7_played_in_opening_stock_prompt.md` | DONE | pusherv3_6 | played-in opening stock and bounded early payouts | Codex | 2026-08-25 | 2026-08-25 | Deterministic 54/54/56-coin played-in beds, supported feature pieces, and bounded first-five-play payouts pass exact parity, full regression, visual, determinism, EV, and direct performance gates. |
 | pusherv3_8 | `pusherv3_8_coin_scale_lower_bed_and_edge_ramp_prompt.md` | DONE | pusherv3_7 | prior coin scale, extended lower bed, physical payout ramp | Codex | 2026-08-25 | 2026-08-25 | Original 40x32 flat coin artwork, smaller matching physics, extended lower bed, researched edge ramp, played-in stock, exact parity/determinism, visual, performance, and 200k-per-machine EV gates pass. |
 | pusherv3_9 | `pusherv3_9_contact_bed_and_opaque_edge_prompt.md` | DONE | pusherv3_8 | touching opening bed and solid payout-edge occlusion | Codex | 2026-08-25 | 2026-08-25 | All opening stock belongs to real contact clusters; a shallow physical incline and opaque foreground apron now hold and occlude the edge prime until coins visibly clear the shelf. Focused/full regression, parity, determinism, visual, performance, and 200k-per-machine EV gates pass. |
-| pusherv3_10 | `pusherv3_10_opening_plinko_nozzles_and_stack_physics_prompt.md` | TODO | pusherv3_9 | full-width settled openings, full Plinko subsystem, nozzle queues, clarified stack physics | — | — | — | Planning complete. Implementation waits on the owner's truncated stacked-coin wording and physical cup lifecycle ruling. |
+| pusherv3_10 | `pusherv3_10_opening_plinko_nozzles_and_stack_physics_prompt.md` | IN_PROGRESS | pusherv3_9 | full-width settled openings, full Plinko subsystem, nozzle queues, clarified stack physics | Codex | 2026-08-25 | — | Reopened after exact-contract audit: deterministic physical opening settlement, complete permanent acceptance fixtures, required scripted visual sequences, and a fresh 200k-paid-drop-per-machine EV audit remain mandatory before closure. |
 
 ### Wave D — Crew depth
 
@@ -250,13 +250,13 @@ What happens then is the owner's, not an agent's:
 
 ## Owner Questions (needs owner; do not guess)
 
-- **pusherv3_10 — stacked support sentence and Plinko cup lifecycle: OPEN
-  (2026-08-25).** The owner's final stack requirement ended at “when a coin is
-  stacked on other coins it should not move the other …”. Which bodies must not
-  move, under what contact/pusher conditions, and what should the upper coin do
-  instead? Also, after a physical Plinko cup awards its result, is its triggering
-  coin consumed, retained and later released, or immediately released onto the
-  pusher? These answers are required for correct impulse and conservation rules.
+- **pusherv3_10 — stacked support sentence and Plinko cup lifecycle: ANSWERED
+  (2026-08-25).** Only the pushing ledge supplies horizontal push force; a coin
+  landing across supports never spreads them, but it remains carried by their
+  motion. Supported landings are bad drops with negative audio; bed-level
+  landings receive a positive ding. Cups consume their triggering coin, and
+  multiplier cups enqueue children from that coin's source nozzle. Hard-to-reach
+  placement and bounded reproduction must protect flow and ROI.
 
 - **pusherv3_4 — Jackpot Ridge lock puck target: ANSWERED (2026-08-18).** The superseded variation
   design says a lock puck will “freeze a shelf one cycle.” The binding V3
@@ -2222,3 +2222,16 @@ What happens then is the owner's, not an agent's:
   coins per second. Codex added the complete staged plan and acceptance matrix.
   The owner's final stacked-coin sentence and cup post-capture lifecycle remain
   explicit owner questions and must not be guessed during implementation.
+- 2026-08-25 [pusherv3_10] Owner answered both blockers and Codex claimed the
+  implementation. Supported coins may not spread their supports but must remain
+  carried by the physical bed; good/bad stable landings receive distinct one-shot
+  feedback. Cups consume the trigger and multiplier awards feed visibly from the
+  same nozzle with rare, ROI-bounded chain potential.
+- 2026-08-25 [pusherv3_10] Completion audit reopened the row. The committed
+  opening generator still marked authored bodies asleep and erased transient
+  motion instead of executing the required deterministic settle/validation
+  pass. The committed evidence also omitted the fresh 200,000-paid-drop audit
+  per machine, the complete scripted visual sequence set, exact per-third
+  lower/upper/contact reporting, real multi-rate/reduced-motion input charging,
+  and the full one/two/three-support hostile fixture matrix. No DONE claim is
+  valid until those gates are implemented and rerun.
