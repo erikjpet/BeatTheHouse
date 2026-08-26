@@ -803,3 +803,16 @@ their own detailed handoffs and test evidence.
   committed clean head `114271b0ad952e72b6545d49e63aff0e67edd78a`.
   `env06_6` truthfully remains IN_PROGRESS: static head `a5ae1d8f` is accepted
   but all serialized host and independent visual gates remain pending.
+- 2026-08-26: Independent post-runtime diagnosis formally `REJECT 449b5ca6`
+  with one P1. The static guard proved only the selected ancestry, not all
+  compiler-visible cross-sibling providers: Items calls Delivery, Lenders calls
+  Cage, and Core calls Coin, while the current inheritance graph forks and Coin
+  starts directly at SceneTree. No existing tracked direct runner is standalone.
+  The single bounded superseding plan links Lenders through Delivery and Coin
+  through Cage, routes exact Blackjack to terminal Coin, requires the exact
+  all-nine chain once/in order, explicitly rejects the old incomplete candidates,
+  and pins the unchanged 35,084-line generated composite SHA. This is test-only;
+  it preserves the useful 449 resolver seam in transparent history and remains
+  subject to fresh self-review, exact-head review and two sub-budget runtime
+  passes. Pusher body and Systems hunks remain disjoint but the Coin line-one
+  topology must be preserved at integration.
