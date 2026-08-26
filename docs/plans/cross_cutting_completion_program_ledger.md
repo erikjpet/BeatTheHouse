@@ -420,6 +420,10 @@ their own detailed handoffs and test evidence.
   `fix06_4`; no new pusher or shared failure appeared. The dedicated Contracts
   suite is running as the authoritative shared-contract gate. EV remains
   unreleased.
+- 2026-08-26: Contracts stayed within budget and likewise found only the two
+  routed Blackjack presentation/tutorial failures, with no pusher or new
+  shared-contract regression. The dedicated UI gate is running to validate the
+  broader hold/accessibility surface. EV remains unreleased.
 - 2026-08-26: Depth immediately corrected that readiness claim after a
   read-only executable-gate audit reopened `env06_6` at `aa179f11` with three
   P1 evidence-harness gaps: no native/Web exact-sequence parity producer, no
