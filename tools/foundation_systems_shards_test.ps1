@@ -407,22 +407,36 @@ $scopeGuardText = $focusedInitBody.Substring($scopeGuardIndex, $bindFailuresInde
 Assert-True ($scopeGuardText.Contains('failures.append(scope_failure)') -and $scopeGuardText.Contains('push_error(scope_failure)') -and $scopeGuardText.Contains('quit(1)') -and $scopeGuardText.Contains('return')) "Focused Blackjack wrong-scope guard does not fail, push_error, quit nonzero and return."
 Assert-True ($suiteCallIndex -ge 0 -and $counterGuardIndex -gt $suiteCallIndex -and $counterGuardIndex -lt $focusedInitBody.IndexOf('var registered_check_ids:')) "Focused Blackjack does not require zero fatal-stub calls immediately after suite dispatch."
 
-$acceptedBlackjackRoots = @("_check_content", "_load_surface_contract_game", "_check_blackjack_surface_contract")
-$acceptedBlackjackClosure = @(Get-GDScriptFunctionClosure -FunctionBlocks $blackjackFocusedBlocks -Roots $acceptedBlackjackRoots)
-$reachableFatalStubs = @($requiredFatalStubs | Where-Object { $acceptedBlackjackClosure -contains $_ })
-Assert-True ($reachableFatalStubs.Count -eq 0) ("Focused Blackjack accepted callable closure reaches fatal omitted stubs: " + ($reachableFatalStubs -join ", "))
 $runSuiteBody = [string]::Join("`n", @($blackjackFocusedBlocks["_foundation_run_suite"].lines))
 $targetSuiteBranch = [regex]::Match($runSuiteBody, '(?s)\t\t_:\n\t\t\tif \["blackjack".*?(?=\n\t\t\telse:)')
 Assert-True $targetSuiteBranch.Success "Focused Blackjack could not prove the target-game dispatcher branch."
 $targetRegistrations = @([regex]::Matches($targetSuiteBranch.Value, '_foundation_run_check\([^\n]+') | ForEach-Object { $_.Value })
 Assert-True ($targetRegistrations.Count -eq 2 -and $targetRegistrations[0].Contains('"content"') -and $targetRegistrations[1].Contains('"%s_game_suite" % suite') -and $targetRegistrations[1].Contains('"_check_target_game_suite"')) "Focused Blackjack target-game registration order or callable changed."
+$targetRegistrationCallables = @($targetRegistrations | ForEach-Object {
+    $callableMatch = [regex]::Match($_, 'Callable\(self, "(?<callable>_[A-Za-z0-9_]+)"\)')
+    Assert-True $callableMatch.Success "Focused Blackjack target-game registration callable could not be derived."
+    $callableMatch.Groups["callable"].Value
+})
+Assert-True (($targetRegistrationCallables -join "|") -ceq "_check_content|_check_target_game_suite") "Focused Blackjack target-game registration callables changed."
 $derivedBlackjackCheckIds = @("content", ("{0}_game_suite" -f "blackjack"))
 Assert-True (($derivedBlackjackCheckIds -join "|") -ceq "content|blackjack_game_suite") "Focused Blackjack registered/executed check IDs are not exact or ordered."
+
+$targetGameSuiteBody = [string]::Join("`n", @($blackjackFocusedBlocks["_check_target_game_suite"].lines))
+$blackjackDispatcherBranch = [regex]::Match($targetGameSuiteBody, '(?ms)^\t\t"blackjack":\n(?<body>.*?)(?=^\t\t(?:"[^"]+"|_):\s*$)')
+Assert-True $blackjackDispatcherBranch.Success "Focused Blackjack could not derive the exact Blackjack dispatcher arm."
+$blackjackDispatcherCalls = @([regex]::Matches($blackjackDispatcherBranch.Groups["body"].Value, '(?<![A-Za-z0-9_])(?<call>_[A-Za-z][A-Za-z0-9_]*)\(') | ForEach-Object { $_.Groups["call"].Value })
+Assert-True (($blackjackDispatcherCalls -join "|") -ceq "_load_surface_contract_game|_check_blackjack_surface_contract") "Focused Blackjack dispatcher arm calls or order changed."
+$acceptedBlackjackRoots = @($targetRegistrationCallables | Where-Object { $_ -ne "_check_target_game_suite" }) + $blackjackDispatcherCalls
+Assert-True (($acceptedBlackjackRoots -join "|") -ceq "_check_content|_load_surface_contract_game|_check_blackjack_surface_contract") "Focused Blackjack accepted closure roots were not derived exactly from registration plus dispatcher arm."
+$acceptedBlackjackClosure = @(Get-GDScriptFunctionClosure -FunctionBlocks $blackjackFocusedBlocks -Roots $acceptedBlackjackRoots)
+$reachableFatalStubs = @($requiredFatalStubs | Where-Object { $acceptedBlackjackClosure -contains $_ })
+Assert-True ($reachableFatalStubs.Count -eq 0) ("Focused Blackjack accepted callable closure reaches fatal omitted stubs: " + ($reachableFatalStubs -join ", "))
 
 $selectedFocusedBodyHashes = [ordered]@{
     "_init" = "af47052dcece30bed849050a5dc0fd8ee58c1b11c9f21bf2f17539a479bee277"
     "_foundation_run_suite" = "47525ea1cae9582613ca85a540fc57dabadc0f47296ec053271631f6228f00ca"
     "_check_content" = "0288297615f46d1da9d2ac1e12b8ae6993f0781b0ea2bf6f1bc67a35c465577f"
+    "_check_target_game_suite" = "b95db52712b76d1e0050ff994b658d310194d838ecaa0b8c016d7274b0f32399"
     "_load_surface_contract_game" = "da0a481951558b71c7214f46bcd838dda293f5b57b48cbdb0b9ce089e1ee5dc6"
     "_check_blackjack_surface_contract" = "0caa5e36e9842793540aebc2b0685e4e3e6d501b8bb1e342103d3869375ff201"
     "_foundation_generated_focused_fatal_stub" = "80028f6d9f64aea087bdf6100ab67238eee45fcb347e9d99efab018c5219af6b"
