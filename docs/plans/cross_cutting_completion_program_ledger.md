@@ -301,3 +301,12 @@ their own detailed handoffs and test evidence.
   and non-pusher generation remains seed-specific. This verdict covers only
   `b1af103f`; exact head has advanced to `a3ae328e`, whose golden commits remain
   under separate cumulative review and runtime validation.
+- 2026-08-26: Systems on `a3ae328e` is assertion-clean, confirming the scoped
+  goldens, but remains 3.493 seconds over its immutable budget. The accepted
+  Coin Pusher-only cache recovered about seven seconds. The coordinator rejected
+  an unproven blanket all-game repeated-seed cache: non-pusher seed variation
+  was part of the accepted `b1af103f` evidence and cannot be traded for timing.
+  Any broader reuse must first prove exact game/context state byte-identity
+  across repeated seeds, or the author must optimize another seam while
+  preserving all per-seed generation and assertions. Budget and thresholds may
+  not be loosened; EV remains unreleased.
