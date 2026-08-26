@@ -17,6 +17,7 @@ $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "foundation_systems_shards.ps1")
 . (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
 $script:PreparedFoundationSplitRunner = $null
+$script:PreparedFoundationBlackjackSplitRunner = $null
 $suiteKey = $Suite.ToLowerInvariant()
 $foundationSuiteKey = $FoundationSuite.Trim().ToLowerInvariant()
 $validFoundationSuites = @(
@@ -237,6 +238,60 @@ function Get-VerifiedFoundationSplitRunnerPath {
     $resourcePath = "res://generated_tests/foundation_check_split_runner.gd"
     $intendedBytes = [byte[]](Get-FoundationSplitRunnerIntendedBytes)
     return Get-VerifiedSplitTestRunnerResourcePath -PreparedState $script:PreparedFoundationSplitRunner -ExpectedPath $physicalPath -ExpectedResourcePath $resourcePath -IntendedBytes $intendedBytes
+}
+
+function Get-FoundationBlackjackSplitRunnerSourceRelativePaths {
+    return @(
+        "scripts/tests/foundation/check_core_content.gd",
+        "scripts/tests/foundation/check_slots_surfaces.gd",
+        "scripts/tests/foundation/check_table_games.gd",
+        "scripts/tests/foundation/check_items_events_world.gd",
+        "scripts/tests/foundation/check_lenders_release_saves.gd"
+    )
+}
+
+function Get-FoundationBlackjackSplitRunnerPhysicalPath {
+    return Join-Path $root "generated_tests\foundation_blackjack_split_runner.gd"
+}
+
+function Get-FoundationBlackjackSplitRunnerIntendedBytes {
+    $sourceLines = @(Get-SplitTestRunnerLines -ProjectRoot $root -SourceRelativePaths @(Get-FoundationBlackjackSplitRunnerSourceRelativePaths))
+    $focusedLines = @(Get-BlackjackFocusedSplitTestRunnerLines -Lines $sourceLines)
+    return [byte[]](Get-SplitTestRunnerBytes -Lines $focusedLines)
+}
+
+function Initialize-FoundationBlackjackSplitRunner {
+    $physicalPath = Get-FoundationBlackjackSplitRunnerPhysicalPath
+    $resourcePath = "res://generated_tests/foundation_blackjack_split_runner.gd"
+    $intendedBytes = [byte[]](Get-FoundationBlackjackSplitRunnerIntendedBytes)
+    $prepared = Set-SplitTestRunnerFile -DestinationPath $physicalPath -ResourcePath $resourcePath -IntendedBytes $intendedBytes
+    $verifiedPath = Get-VerifiedSplitTestRunnerResourcePath -PreparedState $prepared -ExpectedPath $physicalPath -ExpectedResourcePath $resourcePath -IntendedBytes $intendedBytes
+    if ($verifiedPath -cne $resourcePath) {
+        throw "Focused split-runner verification returned an unexpected resource path: $verifiedPath"
+    }
+    $script:PreparedFoundationBlackjackSplitRunner = $prepared
+}
+
+function Get-VerifiedFoundationBlackjackSplitRunnerPath {
+    $physicalPath = Get-FoundationBlackjackSplitRunnerPhysicalPath
+    $resourcePath = "res://generated_tests/foundation_blackjack_split_runner.gd"
+    $intendedBytes = [byte[]](Get-FoundationBlackjackSplitRunnerIntendedBytes)
+    return Get-VerifiedSplitTestRunnerResourcePath -PreparedState $script:PreparedFoundationBlackjackSplitRunner -ExpectedPath $physicalPath -ExpectedResourcePath $resourcePath -IntendedBytes $intendedBytes
+}
+
+function Get-VerifiedFoundationSplitRunnerPathForSuite {
+    param([string]$FoundationSuite)
+
+    if ($FoundationSuite -cne $FoundationSuite.Trim().ToLowerInvariant()) {
+        throw "FoundationSuite must be normalized before runner access: '$FoundationSuite'."
+    }
+    if ($FoundationSuite -eq "blackjack") {
+        return Get-VerifiedFoundationBlackjackSplitRunnerPath
+    }
+    if ([string]::IsNullOrEmpty($FoundationSuite) -or $FoundationSuite -eq "ui" -or $script:FoundationSplitRunnerSuites -notcontains $FoundationSuite) {
+        throw "FoundationSuite '$FoundationSuite' has no ordinary Foundation runner."
+    }
+    return Get-VerifiedFoundationSplitRunnerPath
 }
 
 function Get-UiSceneSplitRunnerPath {
@@ -559,7 +614,7 @@ function Invoke-GDScriptLoadCheck {
 function Invoke-FoundationSuite {
     param([string]$FoundationSuite, [int]$StageTimeoutSec = 0)
     $report = Convert-ReportResourcePath ("foundation_{0}.json" -f $FoundationSuite)
-    Invoke-GodotScript -Name ("foundation_{0}" -f $FoundationSuite) -ScriptPath (Get-VerifiedFoundationSplitRunnerPath) -UserArgs @("--suite=$FoundationSuite", "--report=$report") -StageTimeoutSec $StageTimeoutSec
+    Invoke-GodotScript -Name ("foundation_{0}" -f $FoundationSuite) -ScriptPath (Get-VerifiedFoundationSplitRunnerPathForSuite -FoundationSuite $FoundationSuite) -UserArgs @("--suite=$FoundationSuite", "--report=$report") -StageTimeoutSec $StageTimeoutSec
 }
 
 function Enter-CheckGodotWorkspaceMutex {
@@ -959,8 +1014,11 @@ if (-not $script:Godot) {
 
 Assert-NoConcurrentProjectGodot
 
-if (Test-FoundationSplitRunnerPreparationRequired -Suite $suiteKey -FoundationSuite $foundationSuiteKey) {
-    Initialize-FoundationSplitRunner
+switch (Get-FoundationSplitRunnerPreparationKind -Suite $suiteKey -FoundationSuite $foundationSuiteKey) {
+    "blackjack" { Initialize-FoundationBlackjackSplitRunner }
+    "full" { Initialize-FoundationSplitRunner }
+    "none" { }
+    default { throw "Unknown Foundation split-runner preparation kind." }
 }
 
 if (-not $NoImport) {

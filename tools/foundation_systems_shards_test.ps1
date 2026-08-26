@@ -22,6 +22,74 @@ function Assert-Throws {
     throw $Message
 }
 
+function Get-GDScriptTopLevelFunctionBlocks {
+    param(
+        [AllowEmptyCollection()]
+        [string[]]$Lines,
+        [string]$SourceLabel
+    )
+
+    $result = [ordered]@{}
+    $starts = @()
+    for ($index = 0; $index -lt $Lines.Count; $index += 1) {
+        $match = [regex]::Match($Lines[$index], '^func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(')
+        if ($match.Success) {
+            $starts += [pscustomobject]@{ index = $index; name = $match.Groups[1].Value; signature = $Lines[$index] }
+        }
+    }
+    for ($startIndex = 0; $startIndex -lt $starts.Count; $startIndex += 1) {
+        $entry = $starts[$startIndex]
+        if ($result.Contains($entry.name)) {
+            throw "Duplicate top-level GDScript function '$($entry.name)' in $SourceLabel."
+        }
+        $blockStart = [int]$entry.index
+        $endIndex = if ($startIndex + 1 -lt $starts.Count) { [int]$starts[$startIndex + 1].index - 1 } else { $Lines.Count - 1 }
+        $result[$entry.name] = [pscustomobject]@{
+            name = [string]$entry.name
+            signature = [string]$entry.signature
+            lines = @($Lines[$blockStart..$endIndex])
+        }
+    }
+    return $result
+}
+
+function Get-NormalizedGDScriptSignature {
+    param([string]$Signature)
+    return ([regex]::Replace($Signature.Trim(), '\s+', ''))
+}
+
+function Get-GDScriptFunctionClosure {
+    param(
+        [System.Collections.IDictionary]$FunctionBlocks,
+        [string[]]$Roots
+    )
+
+    $visited = @{}
+    $pending = New-Object System.Collections.Generic.Queue[string]
+    foreach ($rootName in $Roots) {
+        if (-not $FunctionBlocks.Contains($rootName)) {
+            throw "GDScript closure root is missing: $rootName"
+        }
+        $pending.Enqueue($rootName)
+    }
+    while ($pending.Count -gt 0) {
+        $name = $pending.Dequeue()
+        if ($visited.ContainsKey($name)) {
+            continue
+        }
+        $visited[$name] = $true
+        $body = [string]::Join("`n", @($FunctionBlocks[$name].lines))
+        $tokens = @([regex]::Matches($body, '(?<![A-Za-z0-9_])(_[A-Za-z0-9_]+)\s*\(') | ForEach-Object { $_.Groups[1].Value })
+        $tokens += @([regex]::Matches($body, 'Callable\(self,\s*"(_[A-Za-z0-9_]+)"\)') | ForEach-Object { $_.Groups[1].Value })
+        foreach ($target in @($tokens | Sort-Object -Unique)) {
+            if ($FunctionBlocks.Contains($target) -and -not $visited.ContainsKey($target)) {
+                $pending.Enqueue($target)
+            }
+        }
+    }
+    return @($visited.Keys | Sort-Object)
+}
+
 $productionPlan = Test-FoundationSystemsShardPlan -ExpectedIds (Get-FoundationSystemsCheckIds) -Shards (Get-FoundationSystemsShardPlan)
 Assert-True $productionPlan.valid ("Production systems shard plan is invalid: " + (@($productionPlan.errors) -join " | "))
 
@@ -171,6 +239,23 @@ foreach ($selection in $selectionMatrix) {
     $actual = Test-FoundationSplitRunnerPreparationRequired -Suite $selection.suite -FoundationSuite $selection.foundation
     Assert-True ($actual -eq $selection.expected) "Foundation split-runner top-level selection matrix drifted for Suite=$($selection.suite)."
 }
+$preparationKindMatrix = @(
+    [pscustomobject]@{ suite = "smoke"; foundation = ""; expected = "full" },
+    [pscustomobject]@{ suite = "contract"; foundation = ""; expected = "full" },
+    [pscustomobject]@{ suite = "full"; foundation = ""; expected = "full" },
+    [pscustomobject]@{ suite = "audit"; foundation = ""; expected = "none" },
+    [pscustomobject]@{ suite = "smoke"; foundation = "ui"; expected = "none" },
+    [pscustomobject]@{ suite = "smoke"; foundation = "blackjack"; expected = "blackjack" },
+    [pscustomobject]@{ suite = "contract"; foundation = "blackjack"; expected = "blackjack" },
+    [pscustomobject]@{ suite = "audit"; foundation = "blackjack"; expected = "blackjack" },
+    [pscustomobject]@{ suite = "full"; foundation = "blackjack"; expected = "blackjack" },
+    [pscustomobject]@{ suite = "smoke"; foundation = "systems"; expected = "full" },
+    [pscustomobject]@{ suite = "audit"; foundation = "contracts"; expected = "full" }
+)
+foreach ($selection in $preparationKindMatrix) {
+    $actualKind = Get-FoundationSplitRunnerPreparationKind -Suite $selection.suite -FoundationSuite $selection.foundation
+    Assert-True ($actualKind -ceq $selection.expected) "Foundation split-runner preparation kind drifted for Suite=$($selection.suite), FoundationSuite=$($selection.foundation)."
+}
 $normalizedFoundationSuites = @(
     "smoke", "contracts", "games", "systems", "slot", "slots", "slot_acceptance", "blackjack", "roulette",
     "baccarat", "craps", "video_poker", "bar_dice", "crew_poker", "pull_tabs", "scratch_tickets", "coin_pusher", "audit", "all"
@@ -178,8 +263,11 @@ $normalizedFoundationSuites = @(
 foreach ($topLevelSuite in @("smoke", "contract", "audit", "full")) {
     foreach ($foundationSuite in $normalizedFoundationSuites) {
         Assert-True (Test-FoundationSplitRunnerPreparationRequired -Suite $topLevelSuite -FoundationSuite $foundationSuite) "Normalized FoundationSuite '$foundationSuite' did not select the composite under Suite=$topLevelSuite."
+        $expectedKind = if ($foundationSuite -eq "blackjack") { "blackjack" } else { "full" }
+        Assert-True ((Get-FoundationSplitRunnerPreparationKind -Suite $topLevelSuite -FoundationSuite $foundationSuite) -ceq $expectedKind) "Normalized FoundationSuite '$foundationSuite' selected the wrong composite kind under Suite=$topLevelSuite."
     }
     Assert-True (-not (Test-FoundationSplitRunnerPreparationRequired -Suite $topLevelSuite -FoundationSuite "ui")) "UI-only FoundationSuite selected the Foundation composite under Suite=$topLevelSuite."
+    Assert-True ((Get-FoundationSplitRunnerPreparationKind -Suite $topLevelSuite -FoundationSuite "ui") -ceq "none") "UI-only FoundationSuite selected a prepared composite under Suite=$topLevelSuite."
 }
 Assert-True (Test-FoundationSplitRunnerPreparationRequired -Suite "smoke" -FoundationSuite "contracts") "Normalized contract alias did not select the Foundation composite."
 Assert-True (Test-FoundationSplitRunnerPreparationRequired -Suite "smoke" -FoundationSuite "all") "Normalized full alias did not select the Foundation composite."
@@ -196,6 +284,7 @@ foreach ($invalidSelection in @(
     Assert-Throws -Action { Test-FoundationSplitRunnerPreparationRequired -Suite $invalidSelection.suite -FoundationSuite $invalidSelection.foundation } -Message "Invalid or non-normalized split-runner selection was accepted: Suite=$($invalidSelection.suite), FoundationSuite=$($invalidSelection.foundation)." | Out-Null
 }
 Assert-True (-not (Get-Command Test-FoundationSplitRunnerPreparationRequired).Parameters.ContainsKey("NoImport")) "NoImport leaked into pure split-runner selection."
+Assert-True (-not (Get-Command Get-FoundationSplitRunnerPreparationKind).Parameters.ContainsKey("NoImport")) "NoImport leaked into pure split-runner routing."
 Assert-True ($checkGodotSource.Contains('if ($foundationSuiteKey -eq "contract")') -and $checkGodotSource.Contains('$foundationSuiteKey = "contracts"') -and $checkGodotSource.Contains('elseif ($foundationSuiteKey -eq "full")') -and $checkGodotSource.Contains('$foundationSuiteKey = "all"')) "FoundationSuite alias normalization changed or moved behind split-runner selection."
 
 $expectedSplitSources = @(
@@ -223,6 +312,126 @@ Assert-True (-not ($splitBytes.Length -ge 3 -and $splitBytes[0] -eq 0xEF -and $s
 $splitText = (New-Object System.Text.UTF8Encoding($false)).GetString($splitBytes)
 Assert-True (-not [regex]::IsMatch($splitText, '(?<!\r)\n')) "Foundation composite contains a non-CRLF line ending."
 Assert-True ($splitText.EndsWith("`r`n")) "Foundation composite is missing its trailing CRLF newline."
+
+$expectedBlackjackSplitSources = @(
+    "scripts/tests/foundation/check_core_content.gd",
+    "scripts/tests/foundation/check_slots_surfaces.gd",
+    "scripts/tests/foundation/check_table_games.gd",
+    "scripts/tests/foundation/check_items_events_world.gd",
+    "scripts/tests/foundation/check_lenders_release_saves.gd"
+)
+$expectedBlackjackOmittedSources = @(
+    "scripts/tests/foundation/check_delivery_runs.gd",
+    "scripts/tests/foundation/check_scratch_tickets.gd",
+    "scripts/tests/foundation/check_cage_environment_rework.gd",
+    "scripts/tests/foundation/check_coin_pusher.gd"
+)
+$focusedSourceFunctionMatch = [regex]::Match($checkGodotSource, '(?s)function Get-FoundationBlackjackSplitRunnerSourceRelativePaths \{(.*?)(?=\r?\n\}\r?\n\r?\nfunction Get-FoundationBlackjackSplitRunnerPhysicalPath)')
+Assert-True $focusedSourceFunctionMatch.Success "Could not locate the focused Blackjack source manifest."
+$declaredBlackjackSplitSources = @([regex]::Matches($focusedSourceFunctionMatch.Groups[1].Value, '"(scripts/tests/foundation/[^\"]+\.gd)"') | ForEach-Object { $_.Groups[1].Value })
+Assert-True (($declaredBlackjackSplitSources -join "|") -ceq ($expectedBlackjackSplitSources -join "|")) "Focused Blackjack five-source order changed."
+$derivedOmittedSources = @($expectedSplitSources | Where-Object { $expectedBlackjackSplitSources -notcontains $_ })
+Assert-True (($derivedOmittedSources -join "|") -ceq ($expectedBlackjackOmittedSources -join "|")) "Focused Blackjack included/omitted manifest partition changed."
+
+$blackjackBaseLines = @(Get-SplitTestRunnerLines -ProjectRoot $projectRoot -SourceRelativePaths $expectedBlackjackSplitSources)
+$blackjackFocusedLines = @(Get-BlackjackFocusedSplitTestRunnerLines -Lines $blackjackBaseLines)
+$blackjackFocusedBytes = [byte[]](Get-SplitTestRunnerBytes -Lines $blackjackFocusedLines)
+Assert-True ($blackjackFocusedLines.Count -eq 30464) "Focused Blackjack composite line count changed from 30,464."
+Assert-True ((Get-SplitTestRunnerSemanticSha256 -Lines $blackjackFocusedLines) -ceq "c2f8bd89822c9c883dd7f0f43be8be0d3b910a43f764369106a4b7a12d4a6f42") "Focused Blackjack semantic hash changed."
+Assert-True ($blackjackFocusedBytes.Length -eq 1968001) "Focused Blackjack exact byte length changed from 1,968,001."
+Assert-True ((Get-SplitTestRunnerByteSha256 -Bytes $blackjackFocusedBytes) -ceq "126f0c33468e6d4b84ae17de784aa2d1270cf22994356b8be9dadfb46a44b43f") "Focused Blackjack exact byte hash changed."
+Assert-True (-not ($blackjackFocusedBytes.Length -ge 3 -and $blackjackFocusedBytes[0] -eq 0xEF -and $blackjackFocusedBytes[1] -eq 0xBB -and $blackjackFocusedBytes[2] -eq 0xBF)) "Focused Blackjack composite unexpectedly contains a UTF-8 BOM."
+$blackjackFocusedDiskText = (New-Object System.Text.UTF8Encoding($false)).GetString($blackjackFocusedBytes)
+Assert-True (-not [regex]::IsMatch($blackjackFocusedDiskText, '(?<!\r)\n')) "Focused Blackjack composite contains a non-CRLF line ending."
+Assert-True ($blackjackFocusedDiskText.EndsWith("`r`n")) "Focused Blackjack composite is missing its trailing CRLF newline."
+$blackjackFocusedText = [string]::Join("`n", $blackjackFocusedLines)
+$blackjackBaseText = [string]::Join("`n", $blackjackBaseLines)
+$blackjackBaseBlocks = Get-GDScriptTopLevelFunctionBlocks -Lines $blackjackBaseLines -SourceLabel "focused Blackjack base"
+$blackjackFocusedBlocks = Get-GDScriptTopLevelFunctionBlocks -Lines $blackjackFocusedLines -SourceLabel "focused Blackjack generated runner"
+
+$omittedLines = @(Get-SplitTestRunnerLines -ProjectRoot $projectRoot -SourceRelativePaths $expectedBlackjackOmittedSources)
+$omittedBlocks = Get-GDScriptTopLevelFunctionBlocks -Lines $omittedLines -SourceLabel "focused Blackjack omitted sources"
+$requiredFatalStubs = @(
+    "_check_delivery_framework",
+    "_delivery_complete_all_targets",
+    "_check_scratch_tickets_surface_contract",
+    "_check_cage_environment_rework",
+    "_check_coin_pusher_contract"
+)
+$referencedOmittedFunctions = @($omittedBlocks.Keys | Where-Object { [regex]::IsMatch($blackjackBaseText, "(?<![A-Za-z0-9_])$([regex]::Escape([string]$_))(?![A-Za-z0-9_])") } | Sort-Object)
+Assert-True (($referencedOmittedFunctions -join "|") -ceq ((@($requiredFatalStubs | Sort-Object)) -join "|")) "Focused Blackjack token-wide omitted-function intersection is not exactly the five reviewed fatal seams."
+
+$omittedNonFunctionDeclarations = @()
+foreach ($line in $omittedLines) {
+    $declarationMatch = [regex]::Match($line, '^(?:const|var|class_name|class)\s+([A-Za-z_][A-Za-z0-9_]*)')
+    if ($declarationMatch.Success) {
+        $omittedNonFunctionDeclarations += $declarationMatch.Groups[1].Value
+    }
+}
+$referencedOmittedDeclarations = @($omittedNonFunctionDeclarations | Sort-Object -Unique | Where-Object { [regex]::IsMatch($blackjackBaseText, "(?<![A-Za-z0-9_])$([regex]::Escape([string]$_))(?![A-Za-z0-9_])") })
+Assert-True ($referencedOmittedDeclarations.Count -eq 0) ("Focused Blackjack retained omitted const/var/class references: " + ($referencedOmittedDeclarations -join ", "))
+
+$expectedInjectedFunctions = @($requiredFatalStubs + "_foundation_generated_focused_fatal_stub" | Sort-Object)
+$actualInjectedFunctions = @($blackjackFocusedBlocks.Keys | Where-Object { -not $blackjackBaseBlocks.Contains($_) } | Sort-Object)
+Assert-True (($actualInjectedFunctions -join "|") -ceq ($expectedInjectedFunctions -join "|")) "Focused Blackjack injected functions are not exactly one fatal helper plus five reviewed stubs."
+foreach ($stubName in $requiredFatalStubs) {
+    Assert-True ($omittedBlocks.Contains($stubName) -and $blackjackFocusedBlocks.Contains($stubName)) "Focused Blackjack fatal stub signature source is missing: $stubName"
+    $sourceSignature = Get-NormalizedGDScriptSignature -Signature $omittedBlocks[$stubName].signature
+    $stubSignature = Get-NormalizedGDScriptSignature -Signature $blackjackFocusedBlocks[$stubName].signature
+    Assert-True ($sourceSignature -ceq $stubSignature) "Focused Blackjack fatal stub signature drifted from its omitted source: $stubName"
+    $stubBody = [string]::Join("`n", @($blackjackFocusedBlocks[$stubName].lines))
+    Assert-True (([regex]::Matches($stubBody, "_foundation_generated_focused_fatal_stub\(`"$([regex]::Escape($stubName))`"\)")).Count -eq 1) "Focused Blackjack fatal stub does not invoke the fatal helper exactly once: $stubName"
+    if ($omittedBlocks[$stubName].signature -match '->\s*bool:') {
+        Assert-True (([regex]::Matches($stubBody, '(?m)^\treturn false\s*$')).Count -eq 1) "Focused Blackjack bool fatal stub does not return false exactly once: $stubName"
+    }
+    else {
+        Assert-True (-not [regex]::IsMatch($stubBody, '(?m)^\treturn\s+')) "Focused Blackjack void fatal stub unexpectedly returns a value: $stubName"
+    }
+}
+$fatalHelperBody = [string]::Join("`n", @($blackjackFocusedBlocks["_foundation_generated_focused_fatal_stub"].lines))
+Assert-True (([regex]::Matches($fatalHelperBody, '_foundation_generated_focused_stub_call_count \+= 1')).Count -eq 1) "Focused Blackjack fatal helper does not increment exactly once."
+Assert-True (([regex]::Matches($fatalHelperBody, '_foundation_generated_focused_failures_ref\.append\(failure\)')).Count -eq 1) "Focused Blackjack fatal helper does not append through the bound failures reference exactly once."
+Assert-True (([regex]::Matches($fatalHelperBody, 'push_error\(failure\)')).Count -eq 1) "Focused Blackjack fatal helper does not push_error exactly once."
+
+Assert-True (([regex]::Matches($blackjackFocusedText, '(?m)^const FOUNDATION_GENERATED_FOCUSED_SUITE := "blackjack"$')).Count -eq 1) "Focused Blackjack scope constant is missing or duplicated."
+Assert-True (([regex]::Matches($blackjackFocusedText, '(?m)^var _foundation_generated_focused_stub_call_count := 0$')).Count -eq 1) "Focused Blackjack stub counter is missing or duplicated."
+Assert-True (([regex]::Matches($blackjackFocusedText, '(?m)^var _foundation_generated_focused_failures_ref: Array = \[\]$')).Count -eq 1) "Focused Blackjack bound-failures reference is missing or duplicated."
+$focusedInitBody = [string]::Join("`n", @($blackjackFocusedBlocks["_init"].lines))
+$scopeGuardIndex = $focusedInitBody.IndexOf('if _foundation_active_suite != FOUNDATION_GENERATED_FOCUSED_SUITE:')
+$bindFailuresIndex = $focusedInitBody.IndexOf('_foundation_generated_focused_failures_ref = failures')
+$libraryWorkIndex = $focusedInitBody.IndexOf('ContentLibraryScript.new()')
+$suiteCallIndex = $focusedInitBody.IndexOf('_foundation_run_suite(_foundation_active_suite, content_library, fixture_library, failures, report)')
+$counterGuardIndex = $focusedInitBody.IndexOf('if _foundation_generated_focused_stub_call_count != 0:')
+Assert-True ($scopeGuardIndex -gt $focusedInitBody.IndexOf('var report := _foundation_report(_foundation_active_suite)') -and $scopeGuardIndex -lt $bindFailuresIndex -and $bindFailuresIndex -lt $libraryWorkIndex) "Focused Blackjack scope rejection/bound-failures guard is not before library work."
+$scopeGuardText = $focusedInitBody.Substring($scopeGuardIndex, $bindFailuresIndex - $scopeGuardIndex)
+Assert-True ($scopeGuardText.Contains('failures.append(scope_failure)') -and $scopeGuardText.Contains('push_error(scope_failure)') -and $scopeGuardText.Contains('quit(1)') -and $scopeGuardText.Contains('return')) "Focused Blackjack wrong-scope guard does not fail, push_error, quit nonzero and return."
+Assert-True ($suiteCallIndex -ge 0 -and $counterGuardIndex -gt $suiteCallIndex -and $counterGuardIndex -lt $focusedInitBody.IndexOf('var registered_check_ids:')) "Focused Blackjack does not require zero fatal-stub calls immediately after suite dispatch."
+
+$acceptedBlackjackRoots = @("_check_content", "_load_surface_contract_game", "_check_blackjack_surface_contract")
+$acceptedBlackjackClosure = @(Get-GDScriptFunctionClosure -FunctionBlocks $blackjackFocusedBlocks -Roots $acceptedBlackjackRoots)
+$reachableFatalStubs = @($requiredFatalStubs | Where-Object { $acceptedBlackjackClosure -contains $_ })
+Assert-True ($reachableFatalStubs.Count -eq 0) ("Focused Blackjack accepted callable closure reaches fatal omitted stubs: " + ($reachableFatalStubs -join ", "))
+$runSuiteBody = [string]::Join("`n", @($blackjackFocusedBlocks["_foundation_run_suite"].lines))
+$targetSuiteBranch = [regex]::Match($runSuiteBody, '(?s)\t\t_:\n\t\t\tif \["blackjack".*?(?=\n\t\t\telse:)')
+Assert-True $targetSuiteBranch.Success "Focused Blackjack could not prove the target-game dispatcher branch."
+$targetRegistrations = @([regex]::Matches($targetSuiteBranch.Value, '_foundation_run_check\([^\n]+') | ForEach-Object { $_.Value })
+Assert-True ($targetRegistrations.Count -eq 2 -and $targetRegistrations[0].Contains('"content"') -and $targetRegistrations[1].Contains('"%s_game_suite" % suite') -and $targetRegistrations[1].Contains('"_check_target_game_suite"')) "Focused Blackjack target-game registration order or callable changed."
+$derivedBlackjackCheckIds = @("content", ("{0}_game_suite" -f "blackjack"))
+Assert-True (($derivedBlackjackCheckIds -join "|") -ceq "content|blackjack_game_suite") "Focused Blackjack registered/executed check IDs are not exact or ordered."
+
+$selectedFocusedBodyHashes = [ordered]@{
+    "_init" = "af47052dcece30bed849050a5dc0fd8ee58c1b11c9f21bf2f17539a479bee277"
+    "_foundation_run_suite" = "47525ea1cae9582613ca85a540fc57dabadc0f47296ec053271631f6228f00ca"
+    "_check_content" = "0288297615f46d1da9d2ac1e12b8ae6993f0781b0ea2bf6f1bc67a35c465577f"
+    "_load_surface_contract_game" = "da0a481951558b71c7214f46bcd838dda293f5b57b48cbdb0b9ce089e1ee5dc6"
+    "_check_blackjack_surface_contract" = "0caa5e36e9842793540aebc2b0685e4e3e6d501b8bb1e342103d3869375ff201"
+    "_foundation_generated_focused_fatal_stub" = "80028f6d9f64aea087bdf6100ab67238eee45fcb347e9d99efab018c5219af6b"
+}
+foreach ($functionName in $selectedFocusedBodyHashes.Keys) {
+    Assert-True ($blackjackFocusedBlocks.Contains($functionName)) "Focused Blackjack selected body is missing: $functionName"
+    $actualBodyHash = Get-SplitTestRunnerSemanticSha256 -Lines @($blackjackFocusedBlocks[$functionName].lines)
+    Assert-True ($actualBodyHash -ceq $selectedFocusedBodyHashes[$functionName]) "Focused Blackjack selected body hash changed: $functionName"
+}
 
 function Invoke-HostileSplitRunnerPublication {
     param([string]$DestinationPath, [byte[]]$IntendedBytes)
@@ -263,6 +472,14 @@ try {
     Assert-True ($null -eq $changedPreparation.failure -and $null -ne $changedPreparation.published -and $changedPreparation.published.Wrote) "Changed split runner was not rewritten and published."
     Assert-True (Test-SplitTestRunnerBytesEqual -Left ([System.IO.File]::ReadAllBytes($runnerPath)) -Right $fixtureBytes) "Changed split runner rewrite did not produce the intended exact bytes."
     $prepared = $changedPreparation.published
+
+    $focusedRunnerPath = Join-Path $runnerLifecycleRoot "generated_tests\foundation_blackjack_split_runner.gd"
+    $focusedFixtureBytes = [byte[]](Get-SplitTestRunnerBytes -Lines @("extends SceneTree", "# focused"))
+    $focusedPrepared = Set-SplitTestRunnerFile -DestinationPath $focusedRunnerPath -ResourcePath "res://generated_tests/foundation_blackjack_split_runner.gd" -IntendedBytes $focusedFixtureBytes
+    Get-VerifiedSplitTestRunnerResourcePath -PreparedState $focusedPrepared -ExpectedPath $focusedRunnerPath -ExpectedResourcePath $focusedPrepared.ResourcePath -IntendedBytes $focusedFixtureBytes | Out-Null
+    Assert-Throws -Action { Get-VerifiedSplitTestRunnerResourcePath -PreparedState $null -ExpectedPath $focusedRunnerPath -ExpectedResourcePath $focusedPrepared.ResourcePath -IntendedBytes $focusedFixtureBytes } -Message "Missing focused preparation state was accepted." | Out-Null
+    Assert-Throws -Action { Get-VerifiedSplitTestRunnerResourcePath -PreparedState $prepared -ExpectedPath $focusedRunnerPath -ExpectedResourcePath $focusedPrepared.ResourcePath -IntendedBytes $focusedFixtureBytes } -Message "Full prepared state crossed into the focused accessor." | Out-Null
+    Assert-Throws -Action { Get-VerifiedSplitTestRunnerResourcePath -PreparedState $focusedPrepared -ExpectedPath $runnerPath -ExpectedResourcePath $prepared.ResourcePath -IntendedBytes $fixtureBytes } -Message "Focused prepared state crossed into the full accessor." | Out-Null
 
     Assert-Throws -Action { Get-VerifiedSplitTestRunnerResourcePath -PreparedState $null -ExpectedPath $runnerPath -ExpectedResourcePath $prepared.ResourcePath -IntendedBytes $fixtureBytes } -Message "Missing preparation state was accepted." | Out-Null
     Assert-Throws -Action { Get-VerifiedSplitTestRunnerResourcePath -PreparedState $prepared -ExpectedPath (Join-Path $runnerLifecycleRoot "other.gd") -ExpectedResourcePath $prepared.ResourcePath -IntendedBytes $fixtureBytes } -Message "Prepared physical-path drift was accepted." | Out-Null
@@ -316,23 +533,33 @@ $executionStart = $checkGodotSource.LastIndexOf('$powerShellExe =')
 Assert-True ($executionStart -ge 0) "Could not locate check_godot execution sequence."
 $executionSource = $checkGodotSource.Substring($executionStart)
 $guardIndex = $executionSource.IndexOf('Assert-NoConcurrentProjectGodot')
-$prepareIndex = $executionSource.IndexOf('Initialize-FoundationSplitRunner')
+$preparationRouteIndex = $executionSource.IndexOf('switch (Get-FoundationSplitRunnerPreparationKind')
+$focusedPrepareIndex = $executionSource.IndexOf('Initialize-FoundationBlackjackSplitRunner', $preparationRouteIndex)
+$fullPrepareIndex = $executionSource.IndexOf('Initialize-FoundationSplitRunner', $preparationRouteIndex)
 $importGuardIndex = $executionSource.IndexOf('if (-not $NoImport)')
 $importIndex = $executionSource.IndexOf('Invoke-GodotImport', $importGuardIndex)
 $loadIndex = $executionSource.IndexOf('Invoke-GDScriptLoadCheck')
 $suiteIndex = $executionSource.IndexOf('Invoke-FoundationSuite')
-Assert-True ($guardIndex -ge 0 -and $guardIndex -lt $prepareIndex -and $prepareIndex -lt $importGuardIndex -and $importGuardIndex -lt $importIndex -and $importIndex -lt $loadIndex -and $loadIndex -lt $suiteIndex) "Split-runner preparation is not ordered host guard < prepare < import < load < suite."
+Assert-True ($guardIndex -ge 0 -and $guardIndex -lt $preparationRouteIndex -and $preparationRouteIndex -lt $focusedPrepareIndex -and $preparationRouteIndex -lt $fullPrepareIndex -and $focusedPrepareIndex -lt $importGuardIndex -and $fullPrepareIndex -lt $importGuardIndex -and $importGuardIndex -lt $importIndex -and $importIndex -lt $loadIndex -and $loadIndex -lt $suiteIndex) "Split-runner preparation is not ordered host guard < exact route < one producer < import < load < suite."
 Assert-True (([regex]::Matches($executionSource, '\bInitialize-FoundationSplitRunner\b')).Count -eq 1) "Foundation split runner is not prepared exactly once in the execution sequence."
-$preparationCallMatch = [regex]::Match($executionSource, 'Test-FoundationSplitRunnerPreparationRequired[^\r\n]+')
-Assert-True ($preparationCallMatch.Success -and -not $preparationCallMatch.Value.Contains('NoImport')) "NoImport changes split-runner preparation selection."
+Assert-True (([regex]::Matches($executionSource, '\bInitialize-FoundationBlackjackSplitRunner\b')).Count -eq 1) "Focused Blackjack split runner is not prepared exactly once in the execution sequence."
+$preparationCallMatch = [regex]::Match($executionSource, 'Get-FoundationSplitRunnerPreparationKind[^\r\n]+')
+Assert-True ($preparationCallMatch.Success -and -not $preparationCallMatch.Value.Contains('NoImport')) "NoImport changes split-runner preparation routing."
+Assert-True ($executionSource.Contains('"blackjack" { Initialize-FoundationBlackjackSplitRunner }') -and $executionSource.Contains('"full" { Initialize-FoundationSplitRunner }') -and $executionSource.Contains('"none" { }')) "Execution sequence does not route focused/full/none preparation exactly."
 $initializerMatch = [regex]::Match($checkGodotSource, '(?s)function Initialize-FoundationSplitRunner \{(.*?)(?=\r?\n\}\r?\n\r?\nfunction Get-VerifiedFoundationSplitRunnerPath)')
 Assert-True ($initializerMatch.Success -and $initializerMatch.Value.IndexOf('Set-SplitTestRunnerFile') -lt $initializerMatch.Value.IndexOf('Get-VerifiedSplitTestRunnerResourcePath') -and $initializerMatch.Value.IndexOf('Get-VerifiedSplitTestRunnerResourcePath') -lt $initializerMatch.Value.IndexOf('$script:PreparedFoundationSplitRunner = $prepared')) "Prepared path/hash/length/timestamp are published before reread verification."
+$focusedInitializerMatch = [regex]::Match($checkGodotSource, '(?s)function Initialize-FoundationBlackjackSplitRunner \{(.*?)(?=\r?\n\}\r?\n\r?\nfunction Get-VerifiedFoundationBlackjackSplitRunnerPath)')
+Assert-True ($focusedInitializerMatch.Success -and $focusedInitializerMatch.Value.IndexOf('Set-SplitTestRunnerFile') -lt $focusedInitializerMatch.Value.IndexOf('Get-VerifiedSplitTestRunnerResourcePath') -and $focusedInitializerMatch.Value.IndexOf('Get-VerifiedSplitTestRunnerResourcePath') -lt $focusedInitializerMatch.Value.IndexOf('$script:PreparedFoundationBlackjackSplitRunner = $prepared')) "Focused prepared path/hash/length/timestamp are published before reread verification."
 $ordinaryInvokerMatch = [regex]::Match($checkGodotSource, '(?s)function Invoke-FoundationSuite \{(.*?)(?=\r?\n\}\r?\n\r?\nfunction Enter-CheckGodotWorkspaceMutex)')
 $systemsInvokerMatch = [regex]::Match($checkGodotSource, '(?s)function Invoke-FoundationSystemsSharded \{(.*?)(?=\r?\n\}\r?\n\r?\nfunction Invoke-FoundationPerfSmoke)')
-Assert-True ($ordinaryInvokerMatch.Success -and $ordinaryInvokerMatch.Value.Contains('Get-VerifiedFoundationSplitRunnerPath')) "Ordinary Foundation suites bypass the verified prepared-runner accessor."
-Assert-True ($systemsInvokerMatch.Success -and $systemsInvokerMatch.Value.Contains('Get-VerifiedFoundationSplitRunnerPath')) "Sharded Systems bypasses the verified prepared-runner accessor."
+Assert-True ($ordinaryInvokerMatch.Success -and $ordinaryInvokerMatch.Value.Contains('Get-VerifiedFoundationSplitRunnerPathForSuite -FoundationSuite $FoundationSuite')) "Ordinary Foundation suites bypass exact focused/full accessor routing."
+Assert-True ($systemsInvokerMatch.Success -and $systemsInvokerMatch.Value.Contains('Get-VerifiedFoundationSplitRunnerPath') -and -not $systemsInvokerMatch.Value.Contains('Get-VerifiedFoundationBlackjackSplitRunnerPath') -and -not $systemsInvokerMatch.Value.Contains('Get-VerifiedFoundationSplitRunnerPathForSuite')) "Sharded Systems does not exclusively consume the verified full runner."
+$runnerAccessorMatch = [regex]::Match($checkGodotSource, '(?s)function Get-VerifiedFoundationSplitRunnerPathForSuite \{(.*?)(?=\r?\n\}\r?\n\r?\nfunction Get-UiSceneSplitRunnerPath)')
+Assert-True ($runnerAccessorMatch.Success -and $runnerAccessorMatch.Value.Contains('if ($FoundationSuite -eq "blackjack")') -and $runnerAccessorMatch.Value.Contains('return Get-VerifiedFoundationBlackjackSplitRunnerPath') -and $runnerAccessorMatch.Value.Contains('return Get-VerifiedFoundationSplitRunnerPath') -and $runnerAccessorMatch.Value.IndexOf('return Get-VerifiedFoundationBlackjackSplitRunnerPath') -lt $runnerAccessorMatch.Value.IndexOf('return Get-VerifiedFoundationSplitRunnerPath')) "Ordinary Foundation accessor does not route exact Blackjack to focused and every other valid suite to full."
+Assert-True ($checkGodotSource.Contains('$script:PreparedFoundationSplitRunner = $null') -and $checkGodotSource.Contains('$script:PreparedFoundationBlackjackSplitRunner = $null')) "Full and focused prepared states are not independently initialized."
 Assert-True (-not $checkGodotSource.Contains('Get-FoundationSplitRunnerPath') -and -not $checkGodotSource.Contains('New-SplitTestRunner') -and -not $checkGodotSource.Contains('.tmp\generated_tests')) "A focused or legacy split-runner resolver remains reachable."
 Assert-True ($checkGodotSource.Contains('res://generated_tests/foundation_check_split_runner.gd')) "Canonical generated Foundation resource path changed."
+Assert-True ($checkGodotSource.Contains('res://generated_tests/foundation_blackjack_split_runner.gd')) "Canonical focused Blackjack resource path changed."
 Assert-True ($gitignoreSource -match '(?m)^/generated_tests/\s*$') "Canonical generated_tests directory is not ignored at the repository root."
 Assert-True (-not (Test-Path -LiteralPath (Join-Path $projectRoot "generated_tests\.gdignore"))) "generated_tests contains a forbidden .gdignore."
 Assert-True ($checkGodotSource.Contains('$FoundationSuiteBudgetMultiplier = 1.5') -and $checkGodotSource.Contains('"foundation_systems" = 29.141')) "Foundation Systems timing baseline or multiplier changed."
