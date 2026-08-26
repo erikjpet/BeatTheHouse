@@ -59,6 +59,28 @@ const DISCARD_ARM_DISTANCE := 120.0
 const DISCARD_DROP_DISTANCE := 190.0
 const MACHINE_STATE_VERSION := 4
 const REGION_LAYOUT_VERSION := RegionModelScript.LAYOUT_VERSION
+const CROSSWORD_LAYOUT_SLOTS := [
+	{"dir": "across", "x": 1, "y": 1, "length": 4},
+	{"dir": "down", "x": 4, "y": 1, "length": 5},
+	{"dir": "across", "x": 4, "y": 4, "length": 4},
+	{"dir": "down", "x": 6, "y": 3, "length": 4},
+	{"dir": "across", "x": 2, "y": 7, "length": 4},
+	{"dir": "across", "x": 1, "y": 9, "length": 4},
+	{"dir": "down", "x": 9, "y": 2, "length": 5},
+]
+const CROSSWORD_CHAINS := [
+	["CASH", "HOUSE", "SLOT", "GOLD"],
+	["DEAL", "LIGHT", "HAND", "ANTE"],
+	["CARD", "DAILY", "LUCK", "ACES"],
+	["INKS", "SUITS", "TYPE", "SPIN"],
+	["REEL", "LUCKY", "KING", "ANTE"],
+	["CALL", "LIGHT", "HAND", "ANTE"],
+	["DICE", "ENTRY", "REEL", "DEAL"],
+]
+const CROSSWORD_FREE_FOUR_WORDS := ["PAIR", "CITY", "RACE", "GRID", "CLUE", "PAGE", "READ", "PLAY", "ROAD", "ROLL", "TELL", "TILE"]
+const CROSSWORD_FREE_FIVE_WORDS := ["VAULT", "RAISE", "ROYAL", "TOKEN", "CHIPS", "CARDS", "DEALS", "SPINS", "REELS", "COINS", "HANDS", "PAIRS", "CALLS", "LOANS", "CLUES"]
+const CROSSWORD_PUZZLE_CYCLE := 13860
+const CROSSWORD_LETTERS := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 var active_ticket_rect := DEFAULT_TICKET_RECT
 
@@ -961,7 +983,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 func _roll_ticket(ticket_type: Dictionary, rng: RngStream, luck_modifier: int, purchase_key: String, initialize_mask: bool = true) -> Dictionary:
 	var prize := _weighted_prize(ticket_type, rng, luck_modifier)
 	var mechanic := _copy_dict(ticket_type.get("mechanic", {}))
-	var content := _build_mechanic_content(str(mechanic.get("type", "")), mechanic, prize, rng)
+	var content := _build_mechanic_content(str(mechanic.get("type", "")), mechanic, prize, rng, purchase_key)
 	var ticket_id := "%s:%s:%s" % [str(ticket_type.get("id", "ticket")), purchase_key, str(rng.randi_range(100000, 999999))]
 	var ticket := {
 		"id": ticket_id,
@@ -1014,7 +1036,7 @@ func _ensure_ticket_regions(ticket: Dictionary) -> void:
 func _sections_from_regions(regions: Array) -> Array:
 	return MaskScript.sections_from_regions(regions)
 
-func _build_mechanic_content(mechanic_type: String, mechanic: Dictionary, prize: Dictionary, rng: RngStream) -> Dictionary:
+func _build_mechanic_content(mechanic_type: String, mechanic: Dictionary, prize: Dictionary, rng: RngStream, generation_key: String = "") -> Dictionary:
 	match mechanic_type:
 		"match_two_of_three":
 			return _build_two_fer_content(mechanic, prize, rng)
@@ -1023,7 +1045,7 @@ func _build_mechanic_content(mechanic_type: String, mechanic: Dictionary, prize:
 		"tic_tac_toe":
 			return _build_tic_tac_gold_content(prize, rng)
 		"crossword":
-			return _build_crossword_content(mechanic, prize, rng)
+			return _build_crossword_content(mechanic, prize, rng, generation_key)
 		"bingo":
 			return _build_bingo_content(prize, rng)
 		"beat_dealer_poker":
@@ -1114,36 +1136,29 @@ func _build_tic_tac_gold_content(prize: Dictionary, rng: RngStream) -> Dictionar
 	return {"spots": spots, "marks": marks, "completed_lines": completed, "line_prizes": line_prizes, "bonus": bonus, "bonus_prize": bonus_prize, "print_variant": rng.randi_range(1000, 9999)}
 
 
-func _build_crossword_content(mechanic: Dictionary, prize: Dictionary, rng: RngStream) -> Dictionary:
-	var words := _crossword_layout_words(_string_array(mechanic.get("words", [])))
-	var completion_order := words.duplicate(false)
-	_shuffle_array(completion_order, rng)
-	var completed_count := clampi(int(prize.get("word_count", 0)), 0, words.size())
+func _build_crossword_content(mechanic: Dictionary, prize: Dictionary, rng: RngStream, generation_key: String = "") -> Dictionary:
+	var puzzle_index := _crossword_puzzle_index(generation_key, rng)
+	var words := _crossword_layout_words(puzzle_index)
+	var layout := _crossword_layout_entries(words)
+	var requested_count := clampi(int(prize.get("word_count", 0)), 0, words.size())
+	var valid_completed_sets := _crossword_valid_completed_sets(words, requested_count)
+	if valid_completed_sets.is_empty():
+		push_error("Crossword puzzle %d cannot represent exactly %d completed words." % [puzzle_index, requested_count])
+		return {"spots": []}
+	var selected_words: Array = valid_completed_sets[rng.randi_range(0, valid_completed_sets.size() - 1)]
+	var bank := _crossword_letter_bank(words, selected_words, rng)
 	var completed_words: Array = []
-	for index in range(completed_count):
-		completed_words.append(completion_order[index])
-	var bank: Array = []
-	for word_value in completed_words:
-		for character_index in range(str(word_value).length()):
-			var letter := str(word_value).substr(character_index, 1)
-			if not bank.has(letter):
-				bank.append(letter)
-	var fillers: Array = []
-	for filler_index in range("ETAOINSHRDLUCMFWYP".length()):
-		fillers.append("ETAOINSHRDLUCMFWYP".substr(filler_index, 1))
-	_shuffle_array(fillers, rng)
-	for filler_value in fillers:
-		var filler := str(filler_value)
-		if not bank.has(filler):
-			bank.append(filler)
-		if bank.size() >= 18:
-			break
-	_shuffle_array(bank, rng)
+	for word_value in words:
+		if _crossword_word_complete(str(word_value), bank):
+			completed_words.append(str(word_value))
+	var completed_count := completed_words.size()
+	if completed_count != requested_count:
+		push_error("Crossword puzzle %d printed %d completed words but prize requires %d." % [puzzle_index, completed_count, requested_count])
 	var spots: Array = []
 	for index in range(bank.size()):
 		spots.append({"index": spots.size(), "section_id": "letter_bank", "letter": str(bank[index]), "bank_index": index, "role": "bank_letter"})
 	var cell_map: Dictionary = {}
-	for entry in _crossword_layout_entries(words):
+	for entry in layout:
 		var word := str(entry.get("word", ""))
 		var across := str(entry.get("dir", "")) == "across"
 		for letter_index in range(word.length()):
@@ -1167,34 +1182,141 @@ func _build_crossword_content(mechanic: Dictionary, prize: Dictionary, rng: RngS
 		cell["section_id"] = "crossword"
 		cell["role"] = "crossword_cell"
 		spots.append(cell)
-	return {"spots": spots, "letter_bank": bank, "words": words, "completed_words": completed_words, "word_count": completed_count, "legend": _copy_dict(mechanic.get("legend", {})), "crossword_layout": _crossword_layout_entries(words)}
+	return {
+		"spots": spots,
+		"letter_bank": bank,
+		"words": words,
+		"completed_words": completed_words,
+		"word_count": completed_count,
+		"legend": _copy_dict(mechanic.get("legend", {})),
+		"crossword_layout": layout,
+		"puzzle_id": "crossword-%05d" % puzzle_index,
+		"puzzle_generation": "procedural_unique_v1",
+	}
 
 
-func _crossword_layout_words(fallback_words: Array) -> Array:
-	var configured := _string_array(fallback_words)
-	var defaults := ["CASH", "HOUSE", "SLOT", "GOLD", "LUCK", "RISK", "VAULT"]
-	var words: Array = []
-	for default_word in defaults:
-		words.append(default_word if configured.has(default_word) else default_word)
+func _crossword_puzzle_index(generation_key: String, rng: RngStream) -> int:
+	if generation_key.is_empty():
+		return rng.randi_range(0, CROSSWORD_PUZZLE_CYCLE - 1) if rng != null else 0
+	var separator := generation_key.rfind(":")
+	if separator >= 0:
+		var suffix := generation_key.substr(separator + 1)
+		if suffix.is_valid_int():
+			var namespace := generation_key.left(separator)
+			var namespace_offset := posmod(RunState.text_to_seed(namespace), CROSSWORD_PUZZLE_CYCLE)
+			return posmod(namespace_offset + int(suffix), CROSSWORD_PUZZLE_CYCLE)
+	return posmod(RunState.text_to_seed(generation_key), CROSSWORD_PUZZLE_CYCLE)
+
+
+func _crossword_layout_words(puzzle_index: int) -> Array:
+	var cursor := posmod(puzzle_index, CROSSWORD_PUZZLE_CYCLE)
+	var chain_index := cursor % CROSSWORD_CHAINS.size()
+	cursor = floori(float(cursor) / float(CROSSWORD_CHAINS.size()))
+	var first_free_index := cursor % CROSSWORD_FREE_FOUR_WORDS.size()
+	cursor = floori(float(cursor) / float(CROSSWORD_FREE_FOUR_WORDS.size()))
+	var second_free_index := cursor % (CROSSWORD_FREE_FOUR_WORDS.size() - 1)
+	if second_free_index >= first_free_index:
+		second_free_index += 1
+	cursor = floori(float(cursor) / float(CROSSWORD_FREE_FOUR_WORDS.size() - 1))
+	var five_letter_index := cursor % CROSSWORD_FREE_FIVE_WORDS.size()
+	var words: Array = (CROSSWORD_CHAINS[chain_index] as Array).duplicate(false)
+	words.append(CROSSWORD_FREE_FOUR_WORDS[first_free_index])
+	words.append(CROSSWORD_FREE_FOUR_WORDS[second_free_index])
+	words.append(CROSSWORD_FREE_FIVE_WORDS[five_letter_index])
 	return words
 
 
 func _crossword_layout_entries(words: Array) -> Array:
-	var wanted := _string_array(words)
-	var entries := [
-		{"word": "CASH", "dir": "across", "x": 1, "y": 1},
-		{"word": "HOUSE", "dir": "down", "x": 4, "y": 1},
-		{"word": "SLOT", "dir": "across", "x": 4, "y": 4},
-		{"word": "GOLD", "dir": "down", "x": 6, "y": 3},
-		{"word": "LUCK", "dir": "across", "x": 2, "y": 7},
-		{"word": "RISK", "dir": "across", "x": 1, "y": 9},
-		{"word": "VAULT", "dir": "down", "x": 9, "y": 2},
-	]
 	var result: Array = []
-	for entry in entries:
-		if wanted.has(str((entry as Dictionary).get("word", ""))):
-			result.append((entry as Dictionary).duplicate(true))
+	for index in range(mini(words.size(), CROSSWORD_LAYOUT_SLOTS.size())):
+		var entry: Dictionary = (CROSSWORD_LAYOUT_SLOTS[index] as Dictionary).duplicate(true)
+		var word := str(words[index])
+		if word.length() != int(entry.get("length", 0)):
+			push_error("Crossword puzzle word %s does not fit layout slot %d." % [word, index])
+		entry["word"] = word
+		entry.erase("length")
+		result.append(entry)
 	return result
+
+
+func _crossword_valid_completed_sets(words: Array, completed_count: int) -> Array:
+	var result: Array = []
+	for selection_mask in range(1 << words.size()):
+		var selected_words: Array = []
+		for word_index in range(words.size()):
+			if (selection_mask & (1 << word_index)) != 0:
+				selected_words.append(str(words[word_index]))
+		if selected_words.size() != completed_count:
+			continue
+		var required_letters := _crossword_letter_set(selected_words)
+		if required_letters.size() > 18:
+			continue
+		var exact := true
+		for word_value in words:
+			var word := str(word_value)
+			if selected_words.has(word):
+				continue
+			var has_blocker := false
+			for letter_index in range(word.length()):
+				if not required_letters.has(word.substr(letter_index, 1)):
+					has_blocker = true
+					break
+			if not has_blocker:
+				exact = false
+				break
+		if exact:
+			result.append(selected_words)
+	return result
+
+
+func _crossword_letter_bank(words: Array, completed_words: Array, rng: RngStream) -> Array:
+	var required_letters := _crossword_letter_set(completed_words)
+	var blocked_letters := {}
+	for word_value in words:
+		var word := str(word_value)
+		if completed_words.has(word):
+			continue
+		var blocker_candidates: Array = []
+		for letter_index in range(word.length()):
+			var letter := word.substr(letter_index, 1)
+			if not required_letters.has(letter) and not blocker_candidates.has(letter):
+				blocker_candidates.append(letter)
+		_shuffle_array(blocker_candidates, rng)
+		if blocker_candidates.is_empty():
+			push_error("Crossword word %s has no letter available to keep it incomplete." % word)
+			continue
+		blocked_letters[str(blocker_candidates[0])] = true
+	var bank: Array = required_letters.keys()
+	var fillers: Array = []
+	for letter_index in range(CROSSWORD_LETTERS.length()):
+		var letter := CROSSWORD_LETTERS.substr(letter_index, 1)
+		if not required_letters.has(letter) and not blocked_letters.has(letter):
+			fillers.append(letter)
+	_shuffle_array(fillers, rng)
+	for filler_value in fillers:
+		if bank.size() >= 18:
+			break
+		bank.append(str(filler_value))
+	if bank.size() != 18:
+		push_error("Crossword letter bank contains %d letters instead of 18." % bank.size())
+	_shuffle_array(bank, rng)
+	return bank
+
+
+func _crossword_letter_set(words: Array) -> Dictionary:
+	var letters := {}
+	for word_value in words:
+		var word := str(word_value)
+		for letter_index in range(word.length()):
+			letters[word.substr(letter_index, 1)] = true
+	return letters
+
+
+func _crossword_word_complete(word: String, bank: Array) -> bool:
+	for letter_index in range(word.length()):
+		if not bank.has(word.substr(letter_index, 1)):
+			return false
+	return true
 
 
 func _build_bingo_content(prize: Dictionary, rng: RngStream) -> Dictionary:

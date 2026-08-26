@@ -1849,6 +1849,29 @@ func _check_scratch_ticket_selected_slot_purchase(app: Control) -> bool:
 	run_state.bankroll = 100000
 	var machine: Dictionary = game.call("_ensure_machine_state", run_state, run_state.current_environment, true)
 	var stock: Array = machine.get("stock", []) if typeof(machine.get("stock", [])) == TYPE_ARRAY else []
+	var ticket_types: Array = game.call("_ticket_types")
+	var expected_type_ids := {}
+	for ticket_type_value in ticket_types:
+		if typeof(ticket_type_value) == TYPE_DICTIONARY:
+			expected_type_ids[str((ticket_type_value as Dictionary).get("id", ""))] = true
+	var stocked_type_ids := {}
+	for slot_value in stock:
+		if typeof(slot_value) != TYPE_DICTIONARY:
+			continue
+		var practice_slot: Dictionary = slot_value
+		var practice_type_id := str(practice_slot.get("type_id", ""))
+		stocked_type_ids[practice_type_id] = true
+		if int(practice_slot.get("remaining", 0)) != 100 or int(practice_slot.get("capacity", 0)) != 100:
+			push_error("Scratch practice stock did not provide 100 copies of %s." % practice_type_id)
+			return false
+	var all_ticket_types_stocked := expected_type_ids.size() == 7 and stocked_type_ids.size() == expected_type_ids.size()
+	for expected_type_id in expected_type_ids:
+		if not stocked_type_ids.has(expected_type_id):
+			all_ticket_types_stocked = false
+			break
+	if not all_ticket_types_stocked:
+		push_error("Scratch practice stock did not cover all seven ticket types: expected=%s actual=%s." % [expected_type_ids.keys(), stocked_type_ids.keys()])
+		return false
 	if stock.size() < 2 or typeof(stock[0]) != TYPE_DICTIONARY or typeof(stock[1]) != TYPE_DICTIONARY:
 		push_error("Scratch selected-slot purchase fixture did not expose two vending rows.")
 		return false

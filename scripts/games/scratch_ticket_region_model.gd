@@ -1,7 +1,7 @@
 class_name ScratchTicketRegionModel
 extends RefCounted
 
-const LAYOUT_VERSION := 9
+const LAYOUT_VERSION := 10
 const REGION_DATA_PATH := "res://data/games/scratch_ticket_regions.json"
 const ART_ROOT := "res://assets/art/scratch_tickets/layers/"
 const MECHANIC_INSET_CELLS := 1.0

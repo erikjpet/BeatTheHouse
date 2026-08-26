@@ -71,6 +71,7 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_purchase_and_input(game, run_state, environment, failures)
 	_check_scratch_render_layers(game, failures)
 	_check_scratch_instance_uniqueness(game, failures)
+	_check_crossword_procedural_generation(game, failures)
 	_check_scratch_shared_card_renderer(failures)
 	_check_scratch_pre_reveal_privacy(game, failures)
 	_check_scratch_determinism(game, failures)
@@ -106,6 +107,9 @@ func _check_scratch_measured_region_data(failures: Array) -> void:
 		failures.append("Scratch measured region data does not match the runtime layout version.")
 	var source_art: Dictionary = data.get("source_art", {}) if typeof(data.get("source_art", {})) == TYPE_DICTIONARY else {}
 	var region_tables: Dictionary = data.get("regions", {}) if typeof(data.get("regions", {})) == TYPE_DICTIONARY else {}
+	var alignment_status: Dictionary = data.get("alignment_status", {}) if typeof(data.get("alignment_status", {})) == TYPE_DICTIONARY else {}
+	if str(alignment_status.get("crossword_corner", "")) != "measured_procedural" or _dict_array(region_tables.get("crossword_corner", [])).size() != 45:
+		failures.append("Crossword Corner does not use its measured 18-letter/27-cell procedural layout table.")
 	for type_id in SCRATCH_IDS:
 		var source: Dictionary = source_art.get(type_id, {}) if typeof(source_art.get(type_id, {})) == TYPE_DICTIONARY else {}
 		var art_path := "res://assets/art/scratch_tickets/layers/%s" % str(source.get("file", ""))
@@ -245,6 +249,75 @@ func _check_scratch_instance_uniqueness(game: GameModule, failures: Array) -> vo
 			signatures[JSON.stringify(content)] = true
 		if signatures.size() < 3:
 			failures.append("Scratch %s same-payout generation produced only %d visibly distinct results across five seeded instances." % [type_id, signatures.size()])
+
+
+func _check_crossword_procedural_generation(game: GameModule, failures: Array) -> void:
+	var definition: Dictionary = game.call("_ticket_type", "crossword_corner")
+	var mechanic: Dictionary = definition.get("mechanic", {}) if typeof(definition.get("mechanic", {})) == TYPE_DICTIONARY else {}
+	if str(mechanic.get("puzzle_generation", "")) != "procedural_unique_v1" or int(mechanic.get("unique_puzzle_cycle", 0)) < 100:
+		failures.append("Crossword Corner does not declare its procedural per-ticket puzzle contract.")
+		return
+	var prize_table := _dict_array(definition.get("prize_table", []))
+	var puzzle_ids := {}
+	var word_signatures := {}
+	for ticket_index in range(100):
+		var prize: Dictionary = prize_table[ticket_index % prize_table.size()]
+		var content: Dictionary = game.call("_build_mechanic_content", "crossword", mechanic, prize, _scratch_rng("crossword-unique:%d" % ticket_index), "practice_crossword:%d" % (ticket_index + 1))
+		var puzzle_id := str(content.get("puzzle_id", ""))
+		var words: Array = content.get("words", []) if typeof(content.get("words", [])) == TYPE_ARRAY else []
+		var bank: Array = content.get("letter_bank", []) if typeof(content.get("letter_bank", [])) == TYPE_ARRAY else []
+		var layout := _dict_array(content.get("crossword_layout", []))
+		var spots := _dict_array(content.get("spots", []))
+		if puzzle_id.is_empty() or words.size() != 7 or bank.size() != 18 or layout.size() != 7 or spots.size() != 45:
+			failures.append("Crossword procedural ticket %d did not print one complete 7-word/18-letter puzzle." % ticket_index)
+			return
+		puzzle_ids[puzzle_id] = true
+		word_signatures[JSON.stringify(words)] = true
+		var actual_completed: Array = []
+		for word_value in words:
+			var word := str(word_value)
+			var complete := true
+			for letter_index in range(word.length()):
+				if not bank.has(word.substr(letter_index, 1)):
+					complete = false
+					break
+			if complete:
+				actual_completed.append(word)
+		if actual_completed.size() != int(prize.get("word_count", -1)) or actual_completed.size() != int(content.get("word_count", -1)):
+			failures.append("Crossword procedural ticket %d letter bank completed %d words instead of exactly %d." % [ticket_index, actual_completed.size(), int(prize.get("word_count", -1))])
+			return
+		var cell_letters := {}
+		for spot in spots:
+			if str(spot.get("section_id", "")) == "crossword":
+				cell_letters["%d,%d" % [int(spot.get("column", -1)), int(spot.get("row", -1))]] = str(spot.get("letter", ""))
+		for entry in layout:
+			var word := str(entry.get("word", ""))
+			var across := str(entry.get("dir", "")) == "across"
+			for letter_index in range(word.length()):
+				var column := int(entry.get("x", 0)) + (letter_index if across else 0)
+				var row := int(entry.get("y", 0)) + (0 if across else letter_index)
+				if str(cell_letters.get("%d,%d" % [column, row], "")) != word.substr(letter_index, 1):
+					failures.append("Crossword procedural ticket %d printed grid disagrees with word %s." % [ticket_index, word])
+					return
+		var fixture := {"mechanic": mechanic, "mechanic_result": content}
+		if int(game.call("_evaluate_mechanic", fixture)) != int(prize.get("payout", -1)):
+			failures.append("Crossword procedural ticket %d changed its authored payout." % ticket_index)
+			return
+	if puzzle_ids.size() != 100 or word_signatures.size() != 100:
+		failures.append("Crossword Corner repeated a puzzle within 100 sequential ticket generations: ids=%d words=%d." % [puzzle_ids.size(), word_signatures.size()])
+		return
+	var rendered_ticket: Dictionary = game.call("_roll_ticket", definition, _scratch_rng("crossword-region-reconcile"), 0, "practice_crossword:101")
+	var rendered_spots := _dict_array(rendered_ticket.get("spots", []))
+	var rendered_regions := _dict_array(rendered_ticket.get("scratch_regions", []))
+	if rendered_regions.size() != rendered_spots.size():
+		failures.append("Crossword procedural ticket printed/scratch region counts do not reconcile.")
+		return
+	for region_index in range(rendered_regions.size()):
+		var region: Dictionary = rendered_regions[region_index]
+		var spot_index := int(region.get("spot_index", -1))
+		if spot_index < 0 or spot_index >= rendered_spots.size() or str(region.get("section_id", "")) != str((rendered_spots[spot_index] as Dictionary).get("section_id", "")):
+			failures.append("Crossword procedural ticket region %d does not cover its printed mechanic cell." % region_index)
+			return
 
 
 func _check_scratch_shared_card_renderer(failures: Array) -> void:
@@ -725,8 +798,12 @@ func _check_scratch_stale_region_upgrade(game: GameModule, failures: Array) -> v
 		failures.append("Scratch stale-region upgrade could not build a ticket fixture.")
 		return
 	var stale_first: Dictionary = old_regions[0]
+	var expected_progress := 0.42
 	stale_first["art_rect"] = [0.0, 0.0, 1.0, 1.0]
 	stale_first["layout_version"] = 8
+	stale_first["coverage"] = expected_progress
+	stale_first["revealed"] = false
+	stale_first["mask_remaining_units"] = roundi(float(stale_first.get("sample_total", 0)) * 255.0 * (1.0 - expected_progress))
 	old_regions[0] = stale_first
 	ticket["scratch_regions"] = old_regions
 	ticket["region_layout_version"] = 8
@@ -740,17 +817,47 @@ func _check_scratch_stale_region_upgrade(game: GameModule, failures: Array) -> v
 	var regions := _dict_array(active.get("scratch_regions", []))
 	var expected := _dict_array(game.call("_ticket_art_regions", active))
 	if int(upgraded.get("version", 0)) < 3 or int(active.get("region_layout_version", 0)) != ScratchRegionModelScript.LAYOUT_VERSION:
-		failures.append("Scratch v8-to-v9 region upgrade did not stamp the current machine/ticket layout version.")
+		failures.append("Scratch v8-to-current region upgrade did not stamp the current machine/ticket layout version.")
 	if int(active.get("payout", -1)) != original_payout or str(active.get("outcome_id", "")) != original_outcome:
 		failures.append("Scratch stale-region upgrade changed the fixed-at-purchase outcome.")
 	if regions.size() != expected.size():
 		failures.append("Scratch stale-region upgrade rebuilt %d regions; expected %d." % [regions.size(), expected.size()])
 	elif not _scratch_rect_values_equal((regions[0] as Dictionary).get("art_rect", []), (expected[0] as Dictionary).get("art_rect", [])):
 		failures.append("Scratch stale-region upgrade kept obsolete art_rect values.")
+	elif absf(float((regions[0] as Dictionary).get("coverage", 0.0)) - expected_progress) > 0.01 or bool((regions[0] as Dictionary).get("revealed", false)):
+		failures.append("Scratch v8-to-current region upgrade did not preserve partial per-well scratch progress.")
 	var surface := game.surface_state(run_state, environment, {})
 	var harness := SurfaceHarness.new()
 	harness.setup(surface)
 	game.draw_surface(harness, surface, {"contract_harness": true})
+	var crossword_environment := _scratch_environment("scratch_crossword_v9_region_upgrade")
+	var crossword_ticket: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", "crossword_corner"), run_state.create_rng("scratch_crossword_v9_ticket"), 0, "crossword-v9-upgrade")
+	var crossword_outcome_json := JSON.stringify(crossword_ticket.get("mechanic_result", {}))
+	var crossword_payout := int(crossword_ticket.get("payout", -1))
+	var crossword_regions := _dict_array(crossword_ticket.get("scratch_regions", []))
+	var crossword_progress := 0.37
+	var stale_crossword_region: Dictionary = crossword_regions[0]
+	stale_crossword_region["art_rect"] = [0.0, 0.0, 1.0, 1.0]
+	stale_crossword_region["layout_version"] = 9
+	stale_crossword_region["coverage"] = crossword_progress
+	stale_crossword_region["revealed"] = false
+	stale_crossword_region["mask_remaining_units"] = roundi(float(stale_crossword_region.get("sample_total", 0)) * 255.0 * (1.0 - crossword_progress))
+	crossword_regions[0] = stale_crossword_region
+	crossword_ticket["scratch_regions"] = crossword_regions
+	crossword_ticket["region_layout_version"] = 9
+	var crossword_machine: Dictionary = game.generate_environment_state(run_state, crossword_environment, run_state.create_rng("scratch_crossword_v9_stock"))
+	crossword_machine["active_ticket"] = crossword_ticket
+	crossword_environment["game_states"] = {"scratch_tickets": crossword_machine}
+	run_state.current_environment = crossword_environment
+	var upgraded_crossword_machine: Dictionary = game.call("_ensure_machine_state", run_state, crossword_environment, true)
+	var upgraded_crossword: Dictionary = upgraded_crossword_machine.get("active_ticket", {}) if typeof(upgraded_crossword_machine.get("active_ticket", {})) == TYPE_DICTIONARY else {}
+	var upgraded_crossword_regions := _dict_array(upgraded_crossword.get("scratch_regions", []))
+	if int(upgraded_crossword.get("region_layout_version", 0)) != ScratchRegionModelScript.LAYOUT_VERSION:
+		failures.append("Scratch Crossword v9-to-v10 region upgrade did not stamp layout v10.")
+	elif JSON.stringify(upgraded_crossword.get("mechanic_result", {})) != crossword_outcome_json or int(upgraded_crossword.get("payout", -1)) != crossword_payout:
+		failures.append("Scratch Crossword v9-to-v10 region upgrade changed its generated puzzle or payout.")
+	elif upgraded_crossword_regions.is_empty() or absf(float((upgraded_crossword_regions[0] as Dictionary).get("coverage", 0.0)) - crossword_progress) > 0.01:
+		failures.append("Scratch Crossword v9-to-v10 region upgrade did not preserve partial scratch progress.")
 
 
 func _scratch_rect_values_equal(left_value: Variant, right_value: Variant) -> bool:

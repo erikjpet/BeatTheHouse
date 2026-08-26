@@ -478,6 +478,8 @@ static func game_test_environment(host: Variant, game_id: String, game: GameModu
 		rng.configure(1)
 	var generated = game.generate_environment_state(host.run_state, environment, rng.fork("game_state:%s" % game_id))
 	if not generated.is_empty():
+		if game_id == "scratch_tickets":
+			_set_scratch_ticket_practice_stock(generated)
 		var state_overrides = host._copy_dict(overrides.get("game_state", {}))
 		if state_overrides.is_empty() and not overrides.has("environment"):
 			state_overrides = overrides
@@ -488,6 +490,21 @@ static func game_test_environment(host: Variant, game_id: String, game: GameModu
 		environment["game_states"] = states
 	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
 	return environment
+
+
+static func _set_scratch_ticket_practice_stock(machine_state: Dictionary) -> void:
+	var stock_value: Variant = machine_state.get("stock", [])
+	if typeof(stock_value) != TYPE_ARRAY:
+		return
+	var stock: Array = stock_value
+	for index in range(stock.size()):
+		if typeof(stock[index]) != TYPE_DICTIONARY:
+			continue
+		var slot: Dictionary = stock[index]
+		slot["capacity"] = 100
+		slot["remaining"] = 100
+		stock[index] = slot
+	machine_state["stock"] = stock
 
 
 static func game_entry_preview(host: Variant, game_id: String) -> Dictionary:
