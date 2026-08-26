@@ -166,6 +166,7 @@ each stage builds on the last.
 | pusherv3_7 | `pusherv3_7_played_in_opening_stock_prompt.md` | DONE | pusherv3_6 | played-in opening stock and bounded early payouts | Codex | 2026-08-25 | 2026-08-25 | Deterministic 54/54/56-coin played-in beds, supported feature pieces, and bounded first-five-play payouts pass exact parity, full regression, visual, determinism, EV, and direct performance gates. |
 | pusherv3_8 | `pusherv3_8_coin_scale_lower_bed_and_edge_ramp_prompt.md` | DONE | pusherv3_7 | prior coin scale, extended lower bed, physical payout ramp | Codex | 2026-08-25 | 2026-08-25 | Original 40x32 flat coin artwork, smaller matching physics, extended lower bed, researched edge ramp, played-in stock, exact parity/determinism, visual, performance, and 200k-per-machine EV gates pass. |
 | pusherv3_9 | `pusherv3_9_contact_bed_and_opaque_edge_prompt.md` | DONE | pusherv3_8 | touching opening bed and solid payout-edge occlusion | Codex | 2026-08-25 | 2026-08-25 | All opening stock belongs to real contact clusters; a shallow physical incline and opaque foreground apron now hold and occlude the edge prime until coins visibly clear the shelf. Focused/full regression, parity, determinism, visual, performance, and 200k-per-machine EV gates pass. |
+| pusherv3_10 | `pusherv3_10_opening_plinko_nozzles_and_stack_physics_prompt.md` | TODO | pusherv3_9 | full-width settled openings, full Plinko subsystem, nozzle queues, clarified stack physics | — | — | — | Planning complete. Implementation waits on the owner's truncated stacked-coin wording and physical cup lifecycle ruling. |
 
 ### Wave D — Crew depth
 
@@ -226,6 +227,14 @@ What happens then is the owner's, not an agent's:
   `voice06_1` and `release06_1` unpark there, in that order.
 
 ## Owner Questions (needs owner; do not guess)
+
+- **pusherv3_10 — stacked support sentence and Plinko cup lifecycle: OPEN
+  (2026-08-25).** The owner's final stack requirement ended at “when a coin is
+  stacked on other coins it should not move the other …”. Which bodies must not
+  move, under what contact/pusher conditions, and what should the upper coin do
+  instead? Also, after a physical Plinko cup awards its result, is its triggering
+  coin consumed, retained and later released, or immediately released onto the
+  pusher? These answers are required for correct impulse and conservation rules.
 
 - **pusherv3_4 — Jackpot Ridge lock puck target: ANSWERED (2026-08-18).** The superseded variation
   design says a lock puck will “freeze a shelf one cycle.” The binding V3
@@ -2173,3 +2182,10 @@ What happens then is the owner's, not an agent's:
   clearing it. Exact native/Web parity, 510-checkpoint determinism, all-machine
   actual-GL visual QA, direct performance, 24-check foundation regression, and
   200k accepted plays per machine all pass.
+- 2026-08-25 [pusherv3_10] Owner requested a full-width, deterministically
+  settled and idle opening state; a taller dense delivery board promoted into a
+  complete Plinko subsystem with physical Ridge/Vault bonus cups; selectable
+  static and rail nozzles; and deterministic tap/hold queued dropping at 10
+  coins per second. Codex added the complete staged plan and acceptance matrix.
+  The owner's final stacked-coin sentence and cup post-capture lifecycle remain
+  explicit owner questions and must not be guessed during implementation.
