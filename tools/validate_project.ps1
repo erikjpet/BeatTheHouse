@@ -73,6 +73,12 @@ $requiredFiles = @(
     "tools/foundation_visual_qa.gd",
     "tools/scenario_sequence_audit.ps1",
     "tools/scenario_sequence_audit.gd",
+    "tools/scenario_sequence_probe_support.gd",
+    "tools/scenario_sequence_probe_main.gd",
+    "tools/scenario_sequence_probe_main.tscn",
+    "tools/scenario_sequence_visual_capture.ps1",
+    "tools/scenario_sequence_web_capture.mjs",
+    "tools/scenario_sequence_parity_performance.ps1",
     "data/art/art_manifest.json",
     "data/art/attribute_glyphs.json",
     "data/environments/archetypes.json",
@@ -161,6 +167,93 @@ foreach ($requiredGrowthProbe in @(
     if (-not $scenarioContractSource.Contains($requiredGrowthProbe)) {
         $failures.Add("Scenario sequence contract is missing growth/authority probe: $requiredGrowthProbe")
     }
+}
+$scenarioEvidenceFiles = @(
+    "tools/scenario_sequence_probe_support.gd",
+    "tools/scenario_sequence_probe_main.gd",
+    "tools/scenario_sequence_probe_main.tscn",
+    "tools/scenario_sequence_visual_capture.ps1",
+    "tools/scenario_sequence_web_capture.mjs",
+    "tools/scenario_sequence_parity_performance.ps1"
+)
+foreach ($relative in $scenarioEvidenceFiles) {
+    if (-not (Test-Path -LiteralPath (Join-Path $root $relative) -PathType Leaf)) {
+        $failures.Add("Executable scenario evidence file is missing: $relative")
+    }
+}
+foreach ($relative in @("tools/scenario_sequence_visual_capture.ps1", "tools/scenario_sequence_parity_performance.ps1")) {
+    $parseTokens = $null
+    $parseErrors = $null
+    [void][System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root $relative), [ref]$parseTokens, [ref]$parseErrors)
+    foreach ($parseError in @($parseErrors)) {
+        $failures.Add("Executable scenario evidence PowerShell syntax error in $relative`: $($parseError.Message)")
+    }
+}
+$scenarioProbeSupportSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_probe_support.gd") -Raw
+$scenarioProbeMainSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_probe_main.gd") -Raw
+$scenarioProbeSceneSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_probe_main.tscn") -Raw
+$scenarioVisualWrapperSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_visual_capture.ps1") -Raw
+$scenarioWebCaptureSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_web_capture.mjs") -Raw
+$scenarioParityWrapperSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_parity_performance.ps1") -Raw
+foreach ($requiredEvidenceSeam in @(
+    'PACKAGE_PATH := "res://data/environments/scenario_sequences/env06_7_shops_streets.json"',
+    'SCENARIO_ID := "corner_store_delivery_day"',
+    'PROOF_SEED := "corner_store_delivery_day_env06_6"',
+    'static func canonical_semantic_sha256',
+    'static func validate_probe_report',
+    'static func validate_capture_manifest',
+    'REQUIRED_PERFORMANCE_ROWS'
+)) {
+    if (-not $scenarioProbeSupportSource.Contains($requiredEvidenceSeam)) {
+        $failures.Add("Scenario evidence support is missing fail-closed authority: $requiredEvidenceSeam")
+    }
+}
+foreach ($requiredMainSeam in @(
+    'extends Node',
+    'res://scenes/main.tscn',
+    'start_foundation_run", ProbeSupport.PROOF_SEED, {}, false',
+    'current_environment_view_snapshot',
+    'activate_interactable_object',
+    'global_rect_for_object',
+    'object_id_at_local_position',
+    'scenario_reenter_current',
+    'scenario_apply_expiry',
+    'RenderingServer.frame_post_draw',
+    'current_environment_result_feedback_snapshot',
+    'environment_reserved_global_rect',
+    'load_foundation_run',
+    'ENV06_6_SEQUENCE_PROBE='
+)) {
+    if (-not $scenarioProbeMainSource.Contains($requiredMainSeam)) {
+        $failures.Add("Scenario evidence main scene is missing production seam: $requiredMainSeam")
+    }
+}
+if ($scenarioProbeMainSource.Contains('scenario_flush_facts') -or $scenarioProbeMainSource.Contains('_interactable_object_view_list')) {
+    $failures.Add("Scenario evidence main scene must not manually flush facts or use the private interactable list.")
+}
+if (-not $scenarioProbeSceneSource.Contains('type="Node"') -or -not $scenarioProbeSceneSource.Contains('scenario_sequence_probe_main.gd')) {
+    $failures.Add("Scenario evidence entry scene must attach the Node-backed probe script.")
+}
+if ($scenarioVisualWrapperSource.Contains('"--headless"') -or -not $scenarioVisualWrapperSource.Contains('scenario_sequence_probe_main.tscn') -or -not $scenarioVisualWrapperSource.Contains('Get-FileHash') -or -not $scenarioVisualWrapperSource.Contains('BTH_DISTRIBUTION_DATA_ROOT')) {
+    $failures.Add("Scenario visual wrapper must be direct, windowed, isolated, and byte-hash fail-closed.")
+}
+foreach ($requiredWebSeam in @('launchPersistentContext', 'Emulation.setCPUThrottlingRate', 'pageerror', 'requestfailed', 'ENV06_6_SEQUENCE_PROBE=')) {
+    if (-not $scenarioWebCaptureSource.Contains($requiredWebSeam)) {
+        $failures.Add("Scenario Web capture is missing fail-closed browser seam: $requiredWebSeam")
+    }
+}
+foreach ($requiredParitySeam in @(
+    'native_process_1', 'native_process_2', 'web_process_1', 'web_process_2', 'native_web_semantic_exact',
+    'transientAddon', 'BTH_DISTRIBUTION_DATA_ROOT', 'run_transient_scons.py',
+    'Copy-Item -LiteralPath $canonicalAddon', 'Required Windows host library is unavailable',
+    'Get-ChildItem -LiteralPath (Join-Path $transientAddon "bin") -Filter "*.wasm"'
+)) {
+    if (-not $scenarioParityWrapperSource.Contains($requiredParitySeam)) {
+        $failures.Add("Scenario parity/performance wrapper is missing acceptance seam: $requiredParitySeam")
+    }
+}
+if ($scenarioParityWrapperSource.Contains('tools\build_native_solver.ps1') -or $scenarioParityWrapperSource.Contains('Join-Path $root "addons"')) {
+    $failures.Add("Scenario parity/performance Web build must keep compiler outputs inside its ignored OutDir.")
 }
 $scenarioPresentationSource = Get-Content -LiteralPath (Join-Path $root "scripts/tests/foundation/scenario_presentation_contract.gd") -Raw
 foreach ($requiredOverlayProbe in @('collision_overlay', 'z_equal_augment', 'sweep_unique')) {

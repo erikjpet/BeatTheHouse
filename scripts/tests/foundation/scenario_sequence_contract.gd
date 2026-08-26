@@ -8,6 +8,7 @@ const EnvironmentInstanceScript := preload("res://scripts/core/environment_insta
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_extension_dispatch.gd")
 const ScenarioSequenceAuditScript := preload("res://tools/scenario_sequence_audit.gd")
+const ScenarioSequenceProbeSupportScript := preload("res://tools/scenario_sequence_probe_support.gd")
 const ScenarioPresentationContractScript := preload("res://scripts/tests/foundation/scenario_presentation_contract.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
@@ -39,6 +40,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_transition_and_event_delivery(failures)
 	_check_rollout_growth_contract(library, failures)
 	_check_delivery_day_production_package(library, failures)
+	_check_executable_evidence_contract(failures)
 	_check_material_projection(failures)
 	ScenarioPresentationContractScript.check(failures)
 
@@ -1573,6 +1575,119 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 
 static func _delivery_base_event_record() -> Dictionary:
 	return _interaction_record("event", "event:scenario_delivery_day_stock", "Delivery stock", true)
+
+
+static func _check_executable_evidence_contract(failures: Array) -> void:
+	var contract := ScenarioSequenceProbeSupportScript.production_contract()
+	if not bool(contract.get("ok", false)) \
+		or _array(contract.get("capture_ids", [])) != ScenarioSequenceProbeSupportScript.EXPECTED_CAPTURE_IDS \
+		or _array(contract.get("phase_ids", [])) != ScenarioSequenceProbeSupportScript.EXPECTED_PHASES:
+		failures.append("Executable evidence support does not pin the production delivery-day contract exactly: %s" % JSON.stringify(contract.get("failures", [])))
+
+	var named_rows: Dictionary = {}
+	for row_id in ScenarioSequenceProbeSupportScript.REQUIRED_PERFORMANCE_ROWS:
+		named_rows[row_id] = ScenarioSequenceProbeSupportScript.timing_summary([1.0])
+	var valid_report := {
+		"schema": "env06_6_scenario_sequence_probe_v1",
+		"ok": true,
+		"platform": "Windows",
+		"scenario_id": DELIVERY_SCENARIO_ID,
+		"seed": ScenarioSequenceProbeSupportScript.PROOF_SEED,
+		"semantic": {"capture_ids": ScenarioSequenceProbeSupportScript.EXPECTED_CAPTURE_IDS, "outcomes": ScenarioSequenceProbeSupportScript.EXPECTED_OUTCOMES, "checkpoints": [{"label": "arrival", "phase_id": "arrival"}]},
+		"performance": {
+			"named_rows": named_rows,
+			"missing_rows": [],
+			"transition": ScenarioSequenceProbeSupportScript.timing_summary([1.0]),
+			"prepared_frame": ScenarioSequenceProbeSupportScript.timing_summary([1.0]),
+			"failed_transitions": 0,
+			"missing_transitions": 0,
+			"steady_frame": {"unchanged": true},
+		},
+		"failures": [],
+	}
+	valid_report["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(valid_report)
+	if not ScenarioSequenceProbeSupportScript.validate_probe_report(valid_report, "Windows").is_empty():
+		failures.append("Valid executable probe report was rejected.")
+	var timing_only := valid_report.duplicate(true)
+	timing_only["performance"]["transition"]["max_ms"] = 2.0
+	if ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(timing_only) != str(valid_report.get("semantic_sha256", "")):
+		failures.append("Executable probe canonical hash includes timing data.")
+	var semantic_mutation := valid_report.duplicate(true)
+	semantic_mutation["semantic"]["checkpoints"][0]["phase_id"] = "sorting"
+	if ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(semantic_mutation) == str(valid_report.get("semantic_sha256", "")):
+		failures.append("Executable probe canonical hash ignored semantic trace data.")
+	if ScenarioSequenceProbeSupportScript.validate_probe_report(semantic_mutation, "Windows").is_empty():
+		failures.append("Executable probe validator accepted a stale semantic hash.")
+	var missing_row := valid_report.duplicate(true)
+	missing_row["performance"]["named_rows"].erase("load_rebuild")
+	missing_row["performance"]["missing_rows"] = ["load_rebuild"]
+	if ScenarioSequenceProbeSupportScript.validate_probe_report(missing_row, "Windows").is_empty():
+		failures.append("Executable probe validator accepted a missing required performance row.")
+	var over_budget := valid_report.duplicate(true)
+	over_budget["performance"]["transition"]["p95_ms"] = 16.001
+	if ScenarioSequenceProbeSupportScript.validate_probe_report(over_budget, "Windows").is_empty():
+		failures.append("Executable probe validator accepted an over-budget native transition.")
+
+	var outcome_by_capture := {
+		"resolution_repaired": "repaired",
+		"resolution_broken": "broken",
+		"resolution_refused": "refused",
+		"resolution_interrupted": "interrupted",
+	}
+	var capture_rows: Array = []
+	for capture_id_value in ScenarioSequenceProbeSupportScript.EXPECTED_CAPTURE_IDS:
+		var capture_id := str(capture_id_value)
+		var outcome := str(outcome_by_capture.get(capture_id, ""))
+		capture_rows.append({
+			"capture_id": capture_id,
+			"file": "%s.png" % capture_id,
+			"png_sha256": ("png:%s" % capture_id).sha256_text(),
+			"width": 1280,
+			"height": 720,
+			"image_format": "png",
+			"status": "aftermath" if not outcome.is_empty() else "active",
+			"outcomes": [outcome] if not outcome.is_empty() else [],
+			"visual_state_sha256": ("state:%s" % capture_id).sha256_text(),
+			"live_assertions_passed": true,
+		})
+	var valid_manifest := {
+		"schema": "env06_6_scenario_sequence_capture_manifest_v1",
+		"passed": true,
+		"failures": [],
+		"capture_ids": ScenarioSequenceProbeSupportScript.EXPECTED_CAPTURE_IDS,
+		"captures": capture_rows,
+	}
+	if not ScenarioSequenceProbeSupportScript.validate_capture_manifest(valid_manifest).is_empty():
+		failures.append("Valid executable visual manifest was rejected.")
+	var duplicate_capture := valid_manifest.duplicate(true)
+	duplicate_capture["captures"].append(_dict(duplicate_capture["captures"][0]).duplicate(true))
+	if ScenarioSequenceProbeSupportScript.validate_capture_manifest(duplicate_capture).is_empty():
+		failures.append("Executable visual validator accepted a duplicate capture id.")
+	var weak_capture := valid_manifest.duplicate(true)
+	weak_capture["captures"][15]["live_assertions_passed"] = false
+	if ScenarioSequenceProbeSupportScript.validate_capture_manifest(weak_capture).is_empty():
+		failures.append("Executable visual validator accepted failed small-screen live assertions.")
+
+	var main_source := FileAccess.get_file_as_string("res://tools/scenario_sequence_probe_main.gd")
+	var scene_source := FileAccess.get_file_as_string("res://tools/scenario_sequence_probe_main.tscn")
+	var visual_source := FileAccess.get_file_as_string("res://tools/scenario_sequence_visual_capture.ps1")
+	var web_source := FileAccess.get_file_as_string("res://tools/scenario_sequence_web_capture.mjs")
+	var parity_source := FileAccess.get_file_as_string("res://tools/scenario_sequence_parity_performance.ps1")
+	if not main_source.begins_with("extends Node") or main_source.find("res://scenes/main.tscn") < 0 or main_source.find("activate_interactable_object") < 0 or main_source.find("global_rect_for_object") < 0 or main_source.find("RenderingServer.frame_post_draw") < 0 or main_source.find("scenario_flush_facts") >= 0:
+		failures.append("Executable evidence main scene lost a production seam or introduced manual fact flushing.")
+	if scene_source.find("type=\"Node\"") < 0 or scene_source.find("scenario_sequence_probe_main.gd") < 0:
+		failures.append("Executable evidence scene is not a Node-backed dedicated entry scene.")
+	if visual_source.find("scenario_sequence_probe_main.tscn") < 0 or visual_source.find("--headless") >= 0 or visual_source.find("Get-FileHash") < 0:
+		failures.append("Executable visual wrapper is not direct, windowed, and byte-hash fail-closed.")
+	if web_source.find("Emulation.setCPUThrottlingRate") < 0 or web_source.find("pageerror") < 0 or web_source.find("requestfailed") < 0:
+		failures.append("Executable Web capture lost CPU4 or browser-error authority.")
+	if parity_source.find("native_process_1") < 0 \
+		or parity_source.find("web_process_1") < 0 \
+		or parity_source.find("native_web_semantic_exact") < 0 \
+		or parity_source.find("Copy-Item -LiteralPath $canonicalAddon") < 0 \
+		or parity_source.find("Required Windows host library is unavailable") < 0 \
+		or parity_source.find("Get-ChildItem -LiteralPath (Join-Path $transientAddon \"bin\") -Filter \"*.wasm\"") < 0:
+		failures.append("Executable parity wrapper lost two-process exactness or transient build authority.")
 
 
 static func _check_delivery_event_module_resolution_boundary(library: ContentLibrary, definition: Dictionary, delivered: Dictionary, failures: Array) -> void:
