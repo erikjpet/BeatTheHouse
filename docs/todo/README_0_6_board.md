@@ -166,7 +166,7 @@ each stage builds on the last.
 | pusherv3_7 | `pusherv3_7_played_in_opening_stock_prompt.md` | DONE | pusherv3_6 | played-in opening stock and bounded early payouts | Codex | 2026-08-25 | 2026-08-25 | Deterministic 54/54/56-coin played-in beds, supported feature pieces, and bounded first-five-play payouts pass exact parity, full regression, visual, determinism, EV, and direct performance gates. |
 | pusherv3_8 | `pusherv3_8_coin_scale_lower_bed_and_edge_ramp_prompt.md` | DONE | pusherv3_7 | prior coin scale, extended lower bed, physical payout ramp | Codex | 2026-08-25 | 2026-08-25 | Original 40x32 flat coin artwork, smaller matching physics, extended lower bed, researched edge ramp, played-in stock, exact parity/determinism, visual, performance, and 200k-per-machine EV gates pass. |
 | pusherv3_9 | `pusherv3_9_contact_bed_and_opaque_edge_prompt.md` | DONE | pusherv3_8 | touching opening bed and solid payout-edge occlusion | Codex | 2026-08-25 | 2026-08-25 | All opening stock belongs to real contact clusters; a shallow physical incline and opaque foreground apron now hold and occlude the edge prime until coins visibly clear the shelf. Focused/full regression, parity, determinism, visual, performance, and 200k-per-machine EV gates pass. |
-| pusherv3_10 | `../todone/pusherv3_10_opening_plinko_nozzles_and_stack_physics_prompt.md` | DONE | pusherv3_9 | full-width settled openings, full Plinko subsystem, nozzle queues, clarified stack physics | Codex | 2026-08-25 | 2026-08-25 | Quiet full-width openings, five-position dense-Plinko traversal metrics, rare reachable Ridge/Vault cups, same-nozzle bounded chains, tap/hold FIFO nozzles, unilateral carried stack supports, exact native/Web parity, actual-GL QA, and native performance pass. |
+| pusherv3_10 | `pusherv3_10_opening_plinko_nozzles_and_stack_physics_prompt.md` | IN_PROGRESS | pusherv3_9 | full-width settled openings, full Plinko subsystem, nozzle queues, clarified stack physics | Codex | 2026-08-25 | — | Reopened after exact-contract audit: deterministic physical opening settlement, complete permanent acceptance fixtures, required scripted visual sequences, and a fresh 200k-paid-drop-per-machine EV audit remain mandatory before closure. |
 
 ### Wave D — Crew depth
 
@@ -1605,6 +1605,15 @@ What happens then is the owner's, not an agent's:
   unchanged solver digest remain before integration.
 
 ## Work Log
+
+- 2026-08-25 [pusherv3_10] Completion audit reopened the row. The committed
+  opening generator still marked authored bodies asleep and erased transient
+  motion instead of executing the required deterministic settle/validation
+  pass. The committed evidence also omitted the fresh 200,000-paid-drop audit
+  per machine, the complete scripted visual sequence set, exact per-third
+  lower/upper/contact reporting, real multi-rate/reduced-motion input charging,
+  and the full one/two/three-support hostile fixture matrix. No DONE claim is
+  valid until those gates are implemented and rerun.
 
 - 2026-08-18 [content06_1] Owner selected the already-verified within-run
   souvenir interpretation. PM completed and archived the row; `playtest06_1`
