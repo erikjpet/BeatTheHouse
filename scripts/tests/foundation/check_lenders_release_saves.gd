@@ -1,4 +1,4 @@
-extends "res://scripts/tests/foundation/check_items_events_world.gd"
+extends "res://scripts/tests/foundation/check_delivery_runs.gd"
 
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const RunReportTimelineCanvasScript := preload("res://scripts/ui/run_report_timeline_canvas.gd")
