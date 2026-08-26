@@ -148,17 +148,6 @@ static func project_finalized_sequence_interaction_result(base_records: Array, f
 	var actor_authority_errors := _finalized_actor_authority_errors(semantic_state, authority)
 	if not actor_authority_errors.is_empty():
 		return projection_failure_result(base_records, actor_authority_errors, layout_audit)
-	if not semantic_state.has("interactions") and not semantic_state.has("scene_objects") and not semantic_state.has("actors"):
-		return {
-			"ok": true,
-			"records": base_records.duplicate(true),
-			"projection": resolved_projection,
-			"errors": [],
-			"warnings": _array(finalized.get("warnings", [])),
-			"layout_authority": authority,
-			"layout_authority_digest": authority_digest,
-			"layout_audit": _dict(finalized.get("layout_audit", {})),
-		}
 	var composed := _compose_projected_records(base_records, resolved_projection, authority, authority_digest)
 	if not bool(composed.get("ok", false)):
 		return projection_failure_result(base_records, _array(composed.get("errors", [])), _dict(finalized.get("layout_audit", {})))
@@ -587,7 +576,7 @@ static func _projected_record_authority_errors(records: Array, authority: Dictio
 	for identity_value in authority_identities:
 		var identity := str(identity_value)
 		var sealed := _dict(authority.get(identity_value, {}))
-		if typeof(sealed.get("presentation_required")) != TYPE_BOOL or typeof(sealed.get("presentation_visible")) != TYPE_BOOL or typeof(sealed.get("presentation_interactive")) != TYPE_BOOL:
+		if typeof(sealed.get("presentation_required")) != TYPE_BOOL or typeof(sealed.get("presentation_visible")) != TYPE_BOOL or typeof(sealed.get("presentation_interactive")) != TYPE_BOOL or typeof(sealed.get("semantic_scene_object_member")) != TYPE_BOOL or typeof(sealed.get("semantic_actor_member")) != TYPE_BOOL or typeof(sealed.get("semantic_interaction_member")) != TYPE_BOOL:
 			errors.append("Sealed presentation %s has malformed exact-coverage flags." % identity)
 			continue
 		var required := bool(sealed.get("presentation_required", false))
@@ -684,10 +673,8 @@ static func _semantic_projection_coverage_errors(projection: Dictionary, authori
 		if presence_values.has(true) and presence_values.has(false):
 			errors.append("Semantic identity %s conflicts between live and tombstoned presentation entries." % identity)
 		var required := not presence_values.has(false)
-		if required and not authority.has(identity):
-			errors.append("Required semantic presentation %s has no sealed layout authority." % identity)
-			continue
 		if not authority.has(identity):
+			errors.append("Semantic presentation %s has no sealed collection-membership authority." % identity)
 			continue
 		var sealed := _dict(authority.get(identity, {}))
 		if required != bool(sealed.get("presentation_required", false)):
@@ -706,11 +693,14 @@ static func _semantic_projection_coverage_errors(projection: Dictionary, authori
 	for identity_value in sealed_identities:
 		var identity := str(identity_value)
 		var sealed := _dict(authority.get(identity_value, {}))
-		if str(sealed.get("source", "")) != "semantic_visual":
-			continue
-		var visual_kind := str(sealed.get("visual_kind", ""))
-		if (visual_kind == "actor" and not actors.has(identity)) or (visual_kind == "scene_object" and not scenes.has(identity)):
-			errors.append("Sealed %s presentation %s is missing its finalized semantic visual." % [visual_kind, identity])
+		for membership_value in [
+			["scene-object", scenes.has(identity), bool(sealed.get("semantic_scene_object_member", false))],
+			["actor", actors.has(identity), bool(sealed.get("semantic_actor_member", false))],
+			["interaction", interactions.has(identity), bool(sealed.get("semantic_interaction_member", false))],
+		]:
+			var membership := membership_value as Array
+			if bool(membership[1]) != bool(membership[2]):
+				errors.append("Semantic %s collection membership for %s diverged from sealed coverage." % [str(membership[0]), identity])
 	return errors
 
 

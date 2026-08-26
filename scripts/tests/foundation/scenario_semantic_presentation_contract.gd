@@ -22,6 +22,7 @@ static func check(library: Variant, failures: Array) -> void:
 	_check_atomic_finalization_layout(library, failures)
 	_check_finalized_accessibility(library, failures)
 	_check_finalized_actor_route(library, failures)
+	_check_sealed_semantic_collection_membership(library, failures)
 	_check_committed_projection_mismatch(library, failures)
 	_check_atomic_projection_failures(failures)
 
@@ -310,6 +311,81 @@ static func _check_committed_projection_mismatch(library: Variant, failures: Arr
 	if not _object(_array(view.get("objects", [])), "scenario::command_console").is_empty() or canvas.object_id_at_local_position(failure_rect.get_center()) != "scenario::presentation_failure":
 		failures.append("Public canvas consumed stale replay projection records during committed-digest rejection.")
 	canvas.free()
+
+
+static func _check_sealed_semantic_collection_membership(library: Variant, failures: Array) -> void:
+	# These hostile cases stop at the public commit gate: no canvas/node is
+	# instantiated, and rejection must preserve the causal sequence journal.
+	var trusted_base := [_production_presentation()]
+	for tombstone_case_value in [["scene_ops", "scene_objects", "semantic_scene_object_member"], ["interaction_ops", "interactions", "semantic_interaction_member"]]:
+		var tombstone_case := tombstone_case_value as Array
+		var family := str(tombstone_case[0])
+		var collection_key := str(tombstone_case[1])
+		var membership_key := str(tombstone_case[2])
+		var definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+		var removal := {
+			"family": family,
+			"op": "remove",
+			"receipt_id": "sealed_membership_remove_%s" % collection_key,
+			"owner_namespace": "game",
+			"stable_object_id": "game:slot",
+		}
+		definition["sequence"]["phase_graph"]["phases"][0][family].append(removal.duplicate(true))
+		var cleanup_removal := removal.duplicate(true)
+		cleanup_removal["receipt_id"] = "cleanup_sealed_membership_remove_%s" % collection_key
+		definition["sequence"]["cleanup"]["operations"].append(cleanup_removal)
+		_reseal_definition(definition)
+		var run_state := RunStateScript.new()
+		run_state.current_environment = _finalization_environment(definition)
+		run_state.scenario_prepare_semantic_finalization()
+		var finalized := run_state.scenario_finalize_base_semantics(trusted_base, library, _production_layout_context())
+		var projected := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), finalized)
+		var base_authority := _dict(_dict(finalized.get("layout_authority", {})).get("game::game:slot", {}))
+		if not bool(finalized.get("ok", false)) or not bool(projected.get("ok", false)) or str(base_authority.get("source", "")) != "sealed_base_record" or not bool(base_authority.get(membership_key, false)) or bool(base_authority.get("presentation_required", true)) or not _record(_array(projected.get("records", [])), "game:slot").is_empty():
+			failures.append("Finalized %s base tombstone did not seal exact collection membership before the hostile pre-canvas check: %s" % [collection_key, JSON.stringify(finalized.get("errors", []))])
+			continue
+		var committed_environment := run_state.current_environment.duplicate(true)
+		var forged := projected.duplicate(true)
+		forged["projection"]["semantic_state"][collection_key].erase("game::game:slot")
+		var forged_before := JSON.stringify(forged)
+		var causal_before := JSON.stringify(run_state.current_environment.get("scenario_sequence_state", {}))
+		var rejected := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, forged, trusted_base)
+		var rejected_records := _array(rejected.get("records", []))
+		if bool(rejected.get("ok", true)) or _record(rejected_records, "game:slot").is_empty() or not _record(rejected_records, "scenario::command_console").is_empty() or _record(rejected_records, "scenario::presentation_failure").is_empty() or _records_have_scenario_actions(rejected_records) or JSON.stringify(forged) != forged_before or JSON.stringify(run_state.current_environment.get("scenario_sequence_state", {})) != causal_before:
+			failures.append("Erasing a finalized %s base tombstone escaped sealed membership or mutated the hostile pre-canvas input." % collection_key)
+		run_state.current_environment = committed_environment
+
+	var live_definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	var live_run_state := RunStateScript.new()
+	live_run_state.current_environment = _finalization_environment(live_definition)
+	live_run_state.scenario_prepare_semantic_finalization()
+	var live_finalized := live_run_state.scenario_finalize_base_semantics(trusted_base, library, _production_layout_context())
+	var live_projected := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(live_finalized.get("records", [])), live_finalized)
+	var live_committed_environment := live_run_state.current_environment.duplicate(true)
+	if not bool(live_finalized.get("ok", false)) or not bool(live_projected.get("ok", false)):
+		failures.append("Live base semantic insertion fixture did not finalize before hostile membership checks.")
+		return
+	for insertion_collection_value in ["scene_objects", "actors", "interactions"]:
+		var insertion_collection := str(insertion_collection_value)
+		live_run_state.current_environment = live_committed_environment.duplicate(true)
+		var forged := live_projected.duplicate(true)
+		var inserted := {
+			"owner_namespace": "game",
+			"stable_object_id": "game:slot",
+			"present": true,
+			"visible": true,
+		}
+		if insertion_collection == "interactions":
+			inserted["enabled"] = true
+			inserted["available_actions"] = [{"id": "enter_game", "label": "Enter"}]
+		forged["projection"]["semantic_state"][insertion_collection]["game::game:slot"] = inserted
+		var forged_before := JSON.stringify(forged)
+		var causal_before := JSON.stringify(live_run_state.current_environment.get("scenario_sequence_state", {}))
+		var rejected := EnvironmentInteractionControllerScript.committed_projection_status_result(live_run_state, forged, trusted_base)
+		var rejected_records := _array(rejected.get("records", []))
+		if bool(rejected.get("ok", true)) or _record(rejected_records, "game:slot").is_empty() or not _record(rejected_records, "scenario::command_console").is_empty() or _record(rejected_records, "scenario::presentation_failure").is_empty() or _records_have_scenario_actions(rejected_records) or JSON.stringify(forged) != forged_before or JSON.stringify(live_run_state.current_environment.get("scenario_sequence_state", {})) != causal_before:
+			failures.append("Inserting a matching live base %s entry escaped sealed membership or mutated the hostile pre-canvas input." % insertion_collection)
+	live_run_state.current_environment = live_committed_environment
 
 
 static func _check_finalized_accessibility(library: Variant, failures: Array) -> void:
