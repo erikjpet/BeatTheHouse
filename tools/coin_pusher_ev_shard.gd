@@ -92,7 +92,6 @@ func _run() -> void:
 	var opening_tray_coin_value := 0
 	var feature_tray_count := 0
 	var feature_gutter_count := 0
-	var target_accounting := {"captures": {}, "consumed_by_origin": {"paid_coin": 0, "opening_coin": 0, "feature": 0}, "instant_payout_value": 0, "bonus_drop_award_count": 0}
 	var physically_banked_fragment_ids: Array[String] = []
 	var drop_rng := root_rng.fork("accepted_inserts")
 	var event_rng := root_rng.fork("physical_events")
@@ -119,7 +118,6 @@ func _run() -> void:
 			feature_tray_count += int(relief_accounting["feature_count"])
 			_append_unique_strings(physically_banked_fragment_ids, relief.get("fragment_ids", []))
 			feature_gutter_count += int(relief.get("feature_gutter_count", 0))
-			_accumulate_target_accounting(target_accounting, relief.get("target_accounting", {}))
 			continue
 		var period_ticks := maxi(1, int((definition.get("stroke", {}) as Dictionary).get("period_ticks", 240)))
 		var phase_bin := clampi(int(int(simulation.get("phase_fp", 0)) * PHASE_BIN_COUNT / (period_ticks * Solver.FP)), 0, PHASE_BIN_COUNT - 1)
@@ -132,7 +130,6 @@ func _run() -> void:
 		invariant_failures += 0 if bool(advanced.get("invariants_ok", false)) else 1
 		_append_unique_strings(physically_banked_fragment_ids, advanced.get("fragment_ids", []))
 		feature_gutter_count += int(advanced.get("feature_gutter_count", 0))
-		_accumulate_target_accounting(target_accounting, advanced.get("target_accounting", {}))
 		if player_accepted % 128 == 0:
 			var accounting := _drain_tray(simulation, game)
 			base_tray_coin_count += int(accounting["coin_count"])
@@ -154,16 +151,16 @@ func _run() -> void:
 	var gutter_origin := _ledger_origin_counts(simulation.get("gutter_ledger", []))
 	var feature_insert_count := int(simulation.get("accepted_inserts", 0)) - player_accepted
 	var origin_by_kind_reconciliation := {
-		"paid_coin": {"origin": player_accepted, "terminal": base_tray_coin_count + int(ending_origin.get("paid_coin", 0)) + int(gutter_origin.get("paid_coin", 0)) + int((target_accounting["consumed_by_origin"] as Dictionary).get("paid_coin", 0))},
-		"opening_coin": {"origin": opening_origin, "terminal": opening_tray_coin_count + int(ending_origin.get("opening_coin", 0)) + int(gutter_origin.get("opening_coin", 0)) + int((target_accounting["consumed_by_origin"] as Dictionary).get("opening_coin", 0))},
-		"feature": {"origin": feature_insert_count, "terminal": feature_tray_count + int(ending_origin.get("feature", 0)) + int(gutter_origin.get("feature", 0)) + int((target_accounting["consumed_by_origin"] as Dictionary).get("feature", 0))},
+		"paid_coin": {"origin": player_accepted, "terminal": base_tray_coin_count + int(ending_origin.get("paid_coin", 0)) + int(gutter_origin.get("paid_coin", 0))},
+		"opening_coin": {"origin": opening_origin, "terminal": opening_tray_coin_count + int(ending_origin.get("opening_coin", 0)) + int(gutter_origin.get("opening_coin", 0))},
+		"feature": {"origin": feature_insert_count, "terminal": feature_tray_count + int(ending_origin.get("feature", 0)) + int(gutter_origin.get("feature", 0))},
 	}
 	var origin_by_kind_ok := true
 	for reconciliation_value in origin_by_kind_reconciliation.values():
 		var reconciliation: Dictionary = reconciliation_value
 		origin_by_kind_ok = origin_by_kind_ok and int(reconciliation.get("origin", -1)) == int(reconciliation.get("terminal", -2))
 	var origin := int(simulation.get("opening_body_count", 0)) + int(simulation.get("accepted_inserts", 0))
-	var terminal := (simulation.get("bodies", []) as Array).size() + (simulation.get("tray_ledger", []) as Array).size() + (simulation.get("gutter_ledger", []) as Array).size() + int(simulation.get("collected_count", 0)) + int(simulation.get("cup_consumed_count", 0))
+	var terminal := (simulation.get("bodies", []) as Array).size() + (simulation.get("tray_ledger", []) as Array).size() + (simulation.get("gutter_ledger", []) as Array).size() + int(simulation.get("collected_count", 0))
 	var drop_cost := maxi(1, int((definition.get("coins", {}) as Dictionary).get("drop_cost", 1)))
 	var wagered := player_accepted * drop_cost
 	var physical_roi := float(base_tray_coin_value) / float(maxi(1, wagered))
@@ -210,8 +207,6 @@ func _run() -> void:
 			"gutter_by_origin": gutter_origin,
 			"gutter_count": (simulation.get("gutter_ledger", []) as Array).size(),
 			"collected_count": int(simulation.get("collected_count", 0)),
-			"cup_consumed_count": int(simulation.get("cup_consumed_count", 0)),
-			"cup_consumed_by_origin": (target_accounting["consumed_by_origin"] as Dictionary).duplicate(true),
 			"origin_count": origin,
 			"terminal_count": terminal,
 			"conservation_ok": conservation_ok,
@@ -234,10 +229,6 @@ func _run() -> void:
 			"ridge_credited_roi": credited_roi,
 			"feature_tray_count_excluded_from_base_roi": feature_tray_count,
 			"feature_gutter_count": feature_gutter_count,
-			"plinko_target_capture_counts": (target_accounting["captures"] as Dictionary).duplicate(true),
-			"plinko_target_instant_payout_value_excluded_from_base_roi": int(target_accounting["instant_payout_value"]),
-			"plinko_target_bonus_drop_award_count_excluded_from_base_roi": int(target_accounting["bonus_drop_award_count"]),
-			"plinko_target_value_merged_into_physical_roi": false,
 			"physically_banked_fragments_excluded_from_base_roi": physically_banked_fragment_ids.size(),
 			"physically_banked_fragment_ids": physically_banked_fragment_ids,
 			"vault_banked_fragments_before_options": vault_banked_before_options,
@@ -374,32 +365,7 @@ func _advance_and_consume(game, machine: Dictionary, rng: RngStream, ticks: int)
 	var simulation: Dictionary = machine["simulation"]
 	var stepped := Solver.step_ticks(simulation, {"motor_enabled": true}, ticks)
 	var events: Array = stepped.get("events", []) if typeof(stepped.get("events", [])) == TYPE_ARRAY else []
-	# This harness measures paid physical ROI. Cup-funded children and instant
-	# payouts are recorded as separate feature value, never injected into the base
-	# pile or allowed to accumulate as an unserviced live-session queue.
-	var physical_events: Array = []
-	var target_accounting := {"captures": {}, "consumed_by_origin": {"paid_coin": 0, "opening_coin": 0, "feature": 0}, "instant_payout_value": 0, "bonus_drop_award_count": 0}
-	for event_value in events:
-		if typeof(event_value) != TYPE_DICTIONARY:
-			continue
-		var event: Dictionary = event_value
-		if str(event.get("kind", "")) != "plinko_cup":
-			physical_events.append(event)
-			continue
-		var target_id := str(event.get("target_id", ""))
-		var captures: Dictionary = target_accounting["captures"]
-		captures[target_id] = int(captures.get(target_id, 0)) + 1
-		var metadata: Dictionary = event.get("metadata", {}) if typeof(event.get("metadata", {})) == TYPE_DICTIONARY else {}
-		var provenance: Dictionary = metadata.get("provenance", {}) if typeof(metadata.get("provenance", {})) == TYPE_DICTIONARY else {}
-		var origin_key := "feature" if bool(event.get("bonus_origin", false)) or bool(metadata.get("bonus_origin", false)) else "paid_coin" if provenance.has("ev_shard") else "opening_coin"
-		var consumed: Dictionary = target_accounting["consumed_by_origin"]
-		consumed[origin_key] = int(consumed.get(origin_key, 0)) + 1
-		var reward: Dictionary = event.get("reward", {}) if typeof(event.get("reward", {})) == TYPE_DICTIONARY else {}
-		if str(reward.get("kind", "")) == "instant_payout":
-			target_accounting["instant_payout_value"] = int(target_accounting["instant_payout_value"]) + maxi(0, int(reward.get("value", 0)))
-		elif str(reward.get("kind", "")) == "drop_multiplier":
-			target_accounting["bonus_drop_award_count"] = int(target_accounting["bonus_drop_award_count"]) + maxi(0, int(reward.get("count", 0)))
-	game.call("_consume_physics_events", null, machine, physical_events, rng)
+	game.call("_consume_physics_events", null, machine, events, rng)
 	var fragment_ids: Array[String] = []
 	var feature_gutter_count := 0
 	for event_value in events:
@@ -416,19 +382,7 @@ func _advance_and_consume(game, machine: Dictionary, rng: RngStream, ticks: int)
 		if body_kind != "coin" and outcome == "gutter":
 			feature_gutter_count += 1
 	var invariants: Dictionary = stepped.get("invariants", {}) if typeof(stepped.get("invariants", {})) == TYPE_DICTIONARY else {}
-	return {"invariants_ok": bool(invariants.get("energy_ok", false)) and bool(invariants.get("conservation_ok", false)), "fragment_ids": fragment_ids, "feature_gutter_count": feature_gutter_count, "target_accounting": target_accounting}
-
-
-func _accumulate_target_accounting(total: Dictionary, delta_value: Variant) -> void:
-	if typeof(delta_value) != TYPE_DICTIONARY:
-		return
-	var delta: Dictionary = delta_value
-	for target_id in (delta.get("captures", {}) as Dictionary):
-		(total["captures"] as Dictionary)[target_id] = int((total["captures"] as Dictionary).get(target_id, 0)) + int((delta["captures"] as Dictionary)[target_id])
-	for origin_key in (delta.get("consumed_by_origin", {}) as Dictionary):
-		(total["consumed_by_origin"] as Dictionary)[origin_key] = int((total["consumed_by_origin"] as Dictionary).get(origin_key, 0)) + int((delta["consumed_by_origin"] as Dictionary)[origin_key])
-	total["instant_payout_value"] = int(total["instant_payout_value"]) + int(delta.get("instant_payout_value", 0))
-	total["bonus_drop_award_count"] = int(total["bonus_drop_award_count"]) + int(delta.get("bonus_drop_award_count", 0))
+	return {"invariants_ok": bool(invariants.get("energy_ok", false)) and bool(invariants.get("conservation_ok", false)), "fragment_ids": fragment_ids, "feature_gutter_count": feature_gutter_count}
 
 
 func _append_unique_strings(target: Array[String], values: Variant) -> void:

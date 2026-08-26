@@ -257,7 +257,6 @@ func _draw_playfield(surface, state: Dictionary, colors: Dictionary, cabinet: Di
 	surface.draw_line(top_face_left, top_face_right, colors["light"], 2.0)
 	_draw_gutters(surface, geometry, colors)
 	_draw_delivery_pegs(surface, apparatus, geometry, colors)
-	_draw_delivery_targets(surface, apparatus, geometry, colors)
 	_draw_interpolated_bodies(surface, state, colors, cabinet)
 	# The steel front apron is foreground hardware. Drawing its opaque face after
 	# the coin batch hides a coin while it is still behind the shelf edge; the
@@ -313,23 +312,6 @@ func _draw_delivery_pegs(surface, apparatus: Dictionary, geometry: Dictionary, c
 		# pixel-art pin keeps the readable body/highlight with two submissions.
 		_draw_filled_peg_ellipse(surface, point, radius.x, radius.y, colors["trim"])
 		_draw_filled_peg_ellipse(surface, point - Vector2(1, 1), radius.x * 0.42, radius.y * 0.42, colors["light"])
-
-
-func _draw_delivery_targets(surface, apparatus: Dictionary, geometry: Dictionary, colors: Dictionary) -> void:
-	var board := _delivery_board(apparatus, geometry)
-	var targets: Array = apparatus.get("targets", []) if typeof(apparatus.get("targets", [])) == TYPE_ARRAY else []
-	for target_value in targets:
-		if typeof(target_value) != TYPE_DICTIONARY:
-			continue
-		var target: Dictionary = target_value
-		var center := _project_delivery_board_point(board, float(target.get("x", 0)), float(target.get("z", board.get("z_bottom", 3600))))
-		var mouth_radius := maxf(1.0, float(target.get("mouth_radius", 2200)))
-		var rx := center.distance_to(_project_delivery_board_point(board, float(target.get("x", 0)) + mouth_radius, float(target.get("z", 0))))
-		var reward: Dictionary = target.get("reward", {}) if typeof(target.get("reward", {})) == TYPE_DICTIONARY else {}
-		var label := "%dX" % int(reward.get("count", 0)) if str(reward.get("kind", "")) == "drop_multiplier" else str(target.get("label", "CUP"))
-		surface.draw_circle(center, maxf(5.0, rx + 4.0), colors["trim"])
-		surface.draw_circle(center, maxf(3.0, rx), Color("#06090c"))
-		surface.surface_label_centered(label, Rect2(center - Vector2(18, 7), Vector2(36, 14)), 9, colors["light"])
 
 
 func _draw_filled_peg_ellipse(surface, center: Vector2, rx: float, ry: float, color: Color) -> void:
@@ -563,13 +545,10 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	surface.draw_circle(Vector2(576, 374), 19.0, colors["trim"].darkened(0.20))
 	surface.draw_circle(Vector2(576, 374), 15.0, colors["side"])
 	surface.draw_line(Vector2(566, 374), Vector2(586, 374), Color("#020305"), 5.0)
-	var queued := maxi(0, int(state.get("coin_pusher_drop_queue_count", 0)))
-	var charging := maxi(0, int(state.get("coin_pusher_drop_charge_count", 0)))
-	var drop_label := "HOLD %d" % charging if charging > 0 else "QUEUE %d" % queued if queued > 0 else "DROP / HOLD"
-	surface.surface_label_centered(drop_label, Rect2(538, 391, 76, 9), 8, colors["light"])
+	surface.surface_label_centered("DROP", Rect2(546, 391, 60, 9), 8, colors["light"])
 	var drop_enabled := _binding_enabled(bindings, "coin_pusher_drop")
 	if drop_enabled:
-		surface.surface_add_drag_hit(slot_rect, "coin_pusher_drop_charge")
+		surface.surface_add_hit(slot_rect, "coin_pusher_drop")
 	var nudge_rect := Rect2(620, 352, 88, 48)
 	var nudge_enabled := _binding_enabled(bindings, "coin_pusher_nudge")
 	var nudge_hovered: bool = nudge_enabled and bool(surface.surface_region_hovered("coin_pusher_nudge"))
@@ -662,7 +641,7 @@ func _hardware_actions(state: Dictionary) -> Array:
 	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
 	var bindings: Dictionary = state.get("surface_action_bindings", {}) if typeof(state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
 	var actions: Array = []
-	for action in ["coin_pusher_drop", "coin_pusher_drop_charge", "coin_pusher_skill_stop", "coin_pusher_collect", "coin_pusher_nudge"]:
+	for action in ["coin_pusher_drop", "coin_pusher_skill_stop", "coin_pusher_collect", "coin_pusher_nudge"]:
 		if _binding_enabled(bindings, action):
 			actions.append(action)
 	if str(apparatus.get("type", "rail_slot")) == "hole_set":
@@ -687,7 +666,7 @@ func _hardware_actions(state: Dictionary) -> Array:
 
 func _hardware_catalog(state: Dictionary) -> Array:
 	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
-	var result: Array = ["coin_pusher_drop", "coin_pusher_drop_charge", "coin_pusher_skill_stop", "coin_pusher_collect", "coin_pusher_nudge"]
+	var result: Array = ["coin_pusher_drop", "coin_pusher_skill_stop", "coin_pusher_collect", "coin_pusher_nudge"]
 	if str(apparatus.get("type", "rail_slot")) == "hole_set":
 		for hole_index in range((apparatus.get("holes", []) as Array).size() if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else 0):
 			result.append("coin_pusher_hole_%d" % hole_index)
@@ -901,9 +880,7 @@ func _project_delivery_board_point(board: Dictionary, x: float, z: float) -> Vec
 	var landing := _project_f(x, float(board.get("y", SCHEMA_DEFAULT_BACK_Y)), z_bottom)
 	# Leave room for the largest selected entry control so the release hardware
 	# remains fully inside the glass instead of bleeding into the backglass.
-	# Keep the full-height Plinko field visually dominant while retaining enough
-	# glass clearance for the largest nozzle control at the board crown.
-	var top_y := PLAYFIELD_RECT.position.y + COIN_RY + 10.0
+	var top_y := PLAYFIELD_RECT.position.y + COIN_RY + 12.0
 	return Vector2(landing.x, lerpf(landing.y, top_y, t))
 
 

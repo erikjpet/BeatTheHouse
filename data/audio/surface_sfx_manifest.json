@@ -12,9 +12,6 @@
       "event_classes": {
         "impact_metal": "coin_pusher_coin_metal",
         "impact_stack": "coin_pusher_coin_stack",
-        "good_drop": "coin_pusher_chirp",
-        "bad_drop": "coin_pusher_coin_stack",
-        "plinko_cup": "coin_pusher_tray",
         "slide": "coin_pusher_slide",
         "mass_slide": "coin_pusher_slide",
         "plate_clink": "coin_pusher_coin_metal",

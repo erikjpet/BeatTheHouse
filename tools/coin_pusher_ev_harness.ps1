@@ -165,14 +165,6 @@ foreach ($machine in $machines) {
     $creditedValue = [int64](($reports | ForEach-Object { $_.economy.ridge_credited_coin_tray_value } | Measure-Object -Sum).Sum)
 	$endingPaidValue = [int64](($reports | ForEach-Object { $_.economy.ending_active_paid_coin_value } | Measure-Object -Sum).Sum)
     $fragments = [int64](($reports | ForEach-Object { $_.economy.physically_banked_fragments_excluded_from_base_roi } | Measure-Object -Sum).Sum)
-    $targetInstantValue = [int64](($reports | ForEach-Object { $_.economy.plinko_target_instant_payout_value_excluded_from_base_roi } | Measure-Object -Sum).Sum)
-    $targetBonusDrops = [int64](($reports | ForEach-Object { $_.economy.plinko_target_bonus_drop_award_count_excluded_from_base_roi } | Measure-Object -Sum).Sum)
-    $targetCaptureCounts = @{}
-    foreach ($report in $reports) {
-        foreach ($property in $report.economy.plinko_target_capture_counts.PSObject.Properties) {
-            $targetCaptureCounts[$property.Name] = [int64]$targetCaptureCounts[$property.Name] + [int64]$property.Value
-        }
-    }
     $physicalRoi = if ($wagered -gt 0) { [double]$physicalValue / [double]$wagered } else { 0.0 }
     $creditedRoi = if ($wagered -gt 0) { [double]$creditedValue / [double]$wagered } else { 0.0 }
 	$stockAdjustedUpper = if ($wagered -gt 0) { [double]($physicalValue + $endingPaidValue) / [double]$wagered } else { 0.0 }
@@ -215,8 +207,6 @@ foreach ($machine in $machines) {
         vault_option_value_not_merged = $machine -ne "vault_drop" -or @($reports | Where-Object { $_.economy.vault_option_value_merged_into_physical_roi }).Count -eq 0
         vault_physical_fragment_ids_reconciled = $machine -ne "vault_drop" -or @($reports | Where-Object { -not $_.economy.vault_option_value_sampling.physical_id_count_reconciled -or -not $_.economy.vault_option_value_sampling.token_balance_reconciled -or -not $_.assertions.vault_physical_fragment_ids_reconciled -or -not $_.assertions.vault_option_token_balance_reconciled }).Count -eq 0
         ridge_credit_reported_separately = $machine -ne "jackpot_ridge" -or $creditedValue -ge $physicalValue
-        plinko_target_value_reported_separately = @($reports | Where-Object { $_.economy.plinko_target_value_merged_into_physical_roi }).Count -eq 0
-        authored_plinko_targets_reached = $machine -eq "quarter_falls" -or ($targetCaptureCounts.Count -ge 2 -and @($targetCaptureCounts.Values | Where-Object { $_ -le 0 }).Count -eq 0)
     }
     $machineReports.Add([ordered]@{
         machine_id = $machine
@@ -232,10 +222,6 @@ foreach ($machine in $machines) {
         ridge_credited_coin_tray_value = $creditedValue
         ridge_credited_roi = $creditedRoi
         physically_banked_fragments = $fragments
-        plinko_target_capture_counts = $targetCaptureCounts
-        plinko_target_instant_payout_value_excluded_from_base_roi = $targetInstantValue
-        plinko_target_bonus_drop_award_count_excluded_from_base_roi = $targetBonusDrops
-        plinko_target_value_merged_into_physical_roi = $false
         vault_option_value_sampling = if ($machine -eq "vault_drop") {
             [ordered]@{
                 method = "production_state_physically_banked_fragment_chain_v1"
@@ -285,7 +271,6 @@ $finalReport = [ordered]@{
         vault_fragment_and_option_value_separate = $true
         vault_option_value_uses_only_physically_banked_fragment_ids_and_real_subgame_actions = $true
         ridge_credited_roi_separate = $true
-        plinko_target_capture_and_reward_value_separate = $true
     }
     elapsed_seconds = ((Get-Date) - $startedAt).TotalSeconds
     process_failures = $processFailures
