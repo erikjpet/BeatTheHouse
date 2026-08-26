@@ -10643,6 +10643,17 @@ func _render_foundation_snapshots() -> void:
 	if game_surface_canvas != null:
 		game_surface_canvas.set_game_module(current_game)
 		if game_visible:
+			# A realtime module's first boundary is an entry anchor, not a gameplay
+			# tick. Apply it before the initial render so the module clock, host
+			# throttle, and canvas timestamp all begin from the same authored instant.
+			if last_game_surface_realtime_refresh_msec <= 0 \
+					and bool(game_snapshot.get("surface_realtime_state_refresh", false)):
+				var entry_msec := int(game_snapshot.get("surface_time_msec", _environment_simulation_time_msec()))
+				var entry_patch := _game_surface_realtime_state_patch(entry_msec, game_snapshot)
+				if not entry_patch.is_empty():
+					for entry_key in entry_patch.keys():
+						game_snapshot[entry_key] = entry_patch[entry_key]
+					last_game_surface_realtime_refresh_msec = entry_msec
 			game_surface_canvas.render_game_snapshot(game_snapshot)
 	if cheat_dock != null:
 		cheat_dock.render(game_snapshot)
