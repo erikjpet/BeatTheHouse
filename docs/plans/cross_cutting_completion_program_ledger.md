@@ -479,3 +479,17 @@ their own detailed handoffs and test evidence.
   snapshots and the requirement that future realtime entry patches stay
   idempotent. Affected non-EV runtime reruns may begin only after an exclusive
   zero-process host preflight; EV remains unreleased.
+- 2026-08-26: Fresh UI on accepted `4d8a789f` proved both repaired pusher
+  assertions no longer fail, then stopped on one later ordinary-delivery
+  whole-state hash mismatch. Validation and exhaustive load passed; UI stayed
+  within budget, the branch remained clean and the host returned to zero. The
+  earlier no-Godot invocation is rejected. Independent read-only diagnosis
+  classified the failure as P2 pusherv3_10 fixture drift, not a UI product
+  regression: only `current_environment.game_states.coin_pusher.settled_state`
+  and its duplicated visited-node world-map subtree changed after physical
+  settlement (`phase_fp`, `coin_blob` and current lifecycle/schema fields).
+  Route, story, RNG, economy, node and town outputs remain exact. The accepted
+  parent had short-circuited before this assertion. The pusher owner must make a
+  scoped, truthfully attributed two-hash refresh with path-level proof, then
+  repeat self-review and independent exact-head review before any runtime rerun.
+  HOST and EV are held.
