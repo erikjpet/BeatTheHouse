@@ -1,4 +1,4 @@
-Status: TODO — 2026-08-25
+Status: IN_PROGRESS — 2026-08-25
 Board row: `pusherv3_10` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — pusherv3_10: Full-Width Resting Openings, Full Plinko, Drop Nozzles, and Stack Physics
@@ -24,10 +24,15 @@ Follow-up to archived
   coin; a three-second hold queues 30 coins to the selected nozzle. Static
   delivery points remain selectable nozzles, while rail-mounted nozzles remain
   movable during an active queued drop.
-- Stacked coins still have unrealistic support and movement behavior. The
-  owner's final description ended at: “when a coin is stacked on other coins
-  it should not move the other”. Preserve this as an unresolved requirement;
-  do not infer the missing object or intended exception.
+- Stacked coins still have unrealistic support and movement behavior. A coin
+  landing across two or more coins must never push its supports apart. Only the
+  machine's pushing ledge creates horizontal bed pressure. The supported coin
+  must nevertheless remain physically carried by the supporting bed and moving
+  shelf instead of sticking in world space.
+- A top-layer landing is deliberately a bad drop: it receives negative audio
+  and normally produces a poor push result because it sits above the pressure
+  layer. A bed-level landing that joins the driven layer receives a satisfying
+  positive ding so the player can learn placement quality from immediate sound.
 
 ## Product outcome
 
@@ -96,6 +101,15 @@ joining the pusher bed or resolving a variant-specific physical target.
   value must have explicit origins and conservation accounting. A cup may not
   duplicate the triggering coin or silently merge feature value into physical
   coin-to-tray ROI.
+- A cup consumes its triggering coin. Multiplier drop cups enqueue their award
+  through the same nozzle id that emitted that coin; for example, a `5x` cup
+  consumes one coin and enqueues five new nozzle drops. Those children retain
+  explicit chain parent/depth/origin data, may trigger further cups, and must be
+  processed through the normal visible feed rather than materializing at once.
+- Place multiplier cups in physically difficult regions and bound their reach,
+  chain depth, expected reproduction rate, and contribution to return. Long
+  satisfying chains are valid rare outcomes; a supercritical or easily aimed
+  loop that overwhelms machine flow or ROI is not.
 - Target reachability and frequency must be tunable in data and measured from
   every legal nozzle position. No cup may be unreachable, guaranteed, or
   exploitable by parking a rail nozzle at one coordinate.
@@ -142,11 +156,20 @@ joining the pusher bed or resolving a variant-specific physical target.
 - Instrument support graphs, contact impulses, and horizontal velocity transfer
   for a coin resting on one, two, and three supporting coins; reproduce the
   owner's reported motion before changing the solver.
+- A falling or settling supported coin may resolve its own penetration, slide,
+  rotate, or fall, but may not apply horizontal separation impulse to its support
+  coins. Pusher-led bed contact remains the sole source of horizontal drive.
+- Support motion must advect the upper coin through real contacts: when its two-
+  coin bridge or shelf moves, the top coin moves with it subject to friction and
+  gravity. It must not freeze, pin itself to an old coordinate, or ignore a shelf
+  sweep until it suddenly ejects.
+- Classify the first stable landing as `bed_level_good` or `supported_bad` from
+  the actual support graph. Emit one positive ding for a good landing and one
+  negative sound for a bad landing; never replay either sound continuously while
+  contact persists. Store the classification on the coin for diagnostics and
+  use it to prove the corresponding good/poor pressure-layer outcome.
 - Preserve gravity, friction, local contact-only pressure, non-perfect piles,
   and deterministic reference/native parity.
-- Do not implement a rule based on the owner's truncated sentence until the
-  missing behavior is clarified. Record the answered wording in this prompt
-  before completing this section.
 
 ## Planned implementation phases
 
@@ -165,8 +188,9 @@ joining the pusher bed or resolving a variant-specific physical target.
 5. **Nozzle and batching system:** Add the data schema, selection UI, rail/static
    controls, deterministic charge gesture, bankroll reservation, emission FIFO,
    sound/animation, and save migration.
-6. **Stack solver correction:** Complete only after the owner supplies the end
-   of the stacked-coin requirement; implement against recorded support traces.
+6. **Stack solver correction and landing feedback:** Remove support-separation
+   impulses, preserve carried upper-body motion, classify stable landings, and
+   implement one-shot positive/negative feedback against recorded traces.
 7. **Composition and tuning:** Tune opening stock, peg/target distributions,
    queue cadence, accessibility, physical ROI, feature value, and performance
    together rather than validating each subsystem only in isolation.
@@ -199,13 +223,15 @@ joining the pusher bed or resolving a variant-specific physical target.
   stock, and confidence intervals separately; all existing authored bands must
   remain green without folding bonus value into the physical return.
 
-## Owner clarification required
+## Owner rulings
 
-- Complete the truncated stacked-coin sentence: “when a coin is stacked on
-  other coins it should not move the other …”. Specify which bodies must not
-  move, under what contact or pusher conditions, and what motion the top coin
-  should exhibit instead.
-- Confirm whether a coin physically captured by a Plinko cup is consumed by the
-  target, held and later released to the pusher, or immediately released after
-  awarding. This determines conservation and double-award behavior; it must not
-  be guessed during implementation.
+- **Stack support (2026-08-25):** A coin landing on two or more other coins never
+  pushes those supporting coins. Only the pushing ledge supplies horizontal
+  pushing force. The upper coin still moves with its supports or sweeping shelf
+  and must not become stuck in world space. Supported top-layer drops are bad
+  drops with poor push results and negative audio; bed-level drops receive a
+  satisfying positive ding.
+- **Cup lifecycle (2026-08-25):** A cup consumes the triggering coin. A multiplier
+  cup enqueues its awarded drops from the triggering coin's source nozzle, so
+  rare deterministic chains are possible. Cup placement and capture probability
+  must keep chain reproduction and total ROI within safe authored limits.
