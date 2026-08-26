@@ -943,3 +943,19 @@ their own detailed handoffs and test evidence.
   `contracts` invocation to fail before any check, alongside exact green focused
   IDs and timing. Pusher integration must rederive both pins while preserving
   its full-runner Systems schedule/result logic.
+- 2026-08-26: Mandatory author self-review issued static-scope `ACCEPT` for
+  exact clean focused-bundle head
+  `cf8f5a0342c560c47582f78479b363d3c7a2840f`, with runtime withheld and no
+  exceptions. One commit changes exactly three tool paths (+452/-13); tracked
+  GDScript, full-runner producer/accessor/pins, registrations, assertions,
+  budgets, validator, product/data/native/scenes/docs and release surfaces are
+  unchanged. The focused output is pinned at 30,464 lines, semantic SHA
+  `c2f8bd89822c9c883dd7f0f43be8be0d3b910a43f764369106a4b7a12d4a6f42`,
+  1,968,001 UTF-8/no-BOM/CRLF bytes and exact SHA
+  `126f0c33468e6d4b84ae17de784aa2d1270cf22994356b8be9dadfb46a44b43f`.
+  Branch-aware closure reaches 136 included functions and no fatal stub; exact
+  route/state/accessor, wrong-scope, cross-state, signature, omitted-symbol,
+  body-hash and full-runner invariants pass. PowerShell AST, hostile contract,
+  project validation (49.4s) and diff checks pass; worktree/index are clean and
+  zero runtime/compiler processes ran. Prior ignored full-runner output remains
+  rejected non-evidence. A fresh nonauthor exact-head static review is active.
