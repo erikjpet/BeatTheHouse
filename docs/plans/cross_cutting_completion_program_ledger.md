@@ -512,3 +512,12 @@ their own detailed handoffs and test evidence.
   fail-closed. No production, budget, runner, timeout or suite-selection change
   occurred. A fresh UI rerun may start only after zero-process preflight; EV
   remains unreleased.
+- 2026-08-26: Fresh exact-head UI passed on clean accepted `4b03f439` with
+  zero failures/stderr. Validation (48.976s), exhaustive load (24.787s), the
+  full UI scene runner (55.595s against 124.851s), Dave's bus encounter,
+  inventory spatial UI/main integration and ui05 design-system stages all
+  passed. The repaired pusher clock/hit-region assertions and strict refreshed
+  delivery baseline pass together. Checkout and host returned clean/zero. The
+  affected focused Coin Pusher/hold/accessibility and Systems confirmations are
+  next; broader non-EV scheduling will be reassessed against Wave 1 before
+  parity/performance work. EV remains unreleased.
