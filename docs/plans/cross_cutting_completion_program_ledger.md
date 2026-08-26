@@ -372,3 +372,13 @@ their own detailed handoffs and test evidence.
   55 merged checks with zero stderr at 42.262 seconds under the unchanged
   43.712-second budget. Independent exact-head review is in progress; committed
   head runtime evidence and EV remain unreleased.
+- 2026-08-26: Independent exact-head review issued
+  `ACCEPT e4a7be3f369fc62bc5017918f03784238fb253e6` with no P0-P3. The
+  one-file marker removes exactly 1,094 evidence-derived cache files
+  (196,903,569 bytes) with no unrelated cache change; no ResourceLoader/runtime
+  dependency or external UID reference exists, direct filesystem capture tools
+  remain valid, and existing exports already excluded the subtree. All accepted
+  guard/native/test blobs are unchanged. Because the provisional Systems margin
+  is only 1.451 seconds, the coordinator issued
+  `HOST RELEASE: PUSHERV3_10 NON-EV` for a clean exact-head Systems rerun and the
+  remaining serial battery. EV is still explicitly unreleased.
