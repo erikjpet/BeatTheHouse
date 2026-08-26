@@ -730,3 +730,10 @@ their own detailed handoffs and test evidence.
   One depth owner must retain the entire exclusive slot and preserve all
   head-specific artifacts. Depth remains queued behind Wave 1/shared
   remediation and has not received a host release.
+- 2026-08-26: The rejected fingerprint optimization was reverted by normal
+  history on clean `fix06_4` head
+  `90d87174199e6b6fad5c280171145cf4519dce89`. Author self-review ACCEPT:
+  the full tree and `check_core_content.gd` blob are exactly identical to
+  previously accepted `54d8083a`; static parser, harness-contract, project
+  validator and diff checks pass. Fresh and recoverable backup caches remain
+  intact, no runtime ran, and independent exact-head revert review is pending.
