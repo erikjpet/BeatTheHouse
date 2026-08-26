@@ -240,6 +240,9 @@ class SurfaceHarness:
 	func surface_region_hovered(action: String, index: int = -1) -> bool:
 		return hovered_action == action and (index < 0 or hovered_index == index)
 
+	func surface_hovered_index(action: String) -> int:
+		return hovered_index if hovered_action == action else -1
+
 	func surface_native_action_selected(action: String) -> bool:
 		return (surface_state.get("native_selected_surface_actions", []) as Array).has(action)
 
@@ -283,11 +286,16 @@ class SurfaceHarness:
 	func surface_add_hit(rect: Rect2, action: String, index: int = -1, expand_touch_hit: bool = true) -> void:
 		hit_regions.append({"rect": rect, "action": action, "index": index, "exact": not expand_touch_hit})
 
-	func surface_add_invisible_hit(rect: Rect2, action: String, index: int = -1) -> void:
-		surface_add_hit(rect, action, index)
+	func surface_add_invisible_hit(rect: Rect2, action: String, index: int = -1, expand_touch_hit: bool = true) -> void:
+		surface_add_hit(rect, action, index, expand_touch_hit)
 
 	func surface_add_exact_hit(rect: Rect2, action: String, index: int = -1) -> void:
 		surface_add_hit(rect, action, index, false)
+
+	func surface_add_exact_hover_hit(rect: Rect2, action: String, index: int = -1) -> void:
+		surface_add_hit(rect, action, index, false)
+		if not hit_regions.is_empty():
+			(hit_regions[-1] as Dictionary)["activate_on_hover"] = true
 
 	func surface_add_cached_exact_hits(_cache_key: String, rect_sources: Array, action: String) -> void:
 		for index in range(rect_sources.size()):
@@ -305,7 +313,7 @@ class SurfaceHarness:
 				surface_add_exact_hit(rect, action, index)
 
 	func surface_add_exact_invisible_hit(rect: Rect2, action: String, index: int = -1) -> void:
-		surface_add_invisible_hit(rect, action, index)
+		surface_add_invisible_hit(rect, action, index, false)
 
 	func surface_add_drag_hit(rect: Rect2, action: String, index: int = -1) -> void:
 		hit_regions.append({"rect": rect, "action": action, "index": index, "drag": true, "exact": true})
@@ -321,6 +329,9 @@ class SurfaceHarness:
 		draw_texture_rect_count += 1
 
 	func draw_circle(_position: Vector2, _radius: float, _color: Color, _filled: bool = true, _width: float = -1.0, _antialiased: bool = false) -> void:
+		pass
+
+	func draw_arc(_center: Vector2, _radius: float, _start_angle: float, _end_angle: float, _point_count: int, _color: Color, _width: float = -1.0, _antialiased: bool = false) -> void:
 		pass
 
 	func draw_line(_from: Vector2, _to: Vector2, _color: Color, _width: float = -1.0, _antialiased: bool = false) -> void:

@@ -147,6 +147,16 @@ foreach ($field in $requiredLibraryFields) {
 }
 
 $checkGodotSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot "check_godot.ps1") -Raw
+$validateProjectSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot "validate_project.ps1") -Raw
+$surfaceGuardDirectPattern = [regex]'\bsurface\s*\.\s*((?:surface|draw)_[A-Za-z0-9_]+)\s*\('
+$surfaceGuardDynamicPattern = [regex]'\bsurface\s*\.\s*(?:call|has_method)\s*\(\s*["''](surface_[A-Za-z0-9_]+)["'']'
+Assert-True ($validateProjectSource.Contains('$directSurfaceCallPattern = [regex]') -and $validateProjectSource.Contains('$dynamicSurfaceCallPattern = [regex]') -and $validateProjectSource.Contains('foreach ($callMatch in @($directSurfaceCallPattern.Matches($gameSource)) + @($dynamicSurfaceCallPattern.Matches($gameSource)))')) "Static SurfaceHarness parity guard patterns changed without updating their hostile contract."
+Assert-True ($surfaceGuardDirectPattern.Match('surface.surface_add_exact_hover_hit(rect, "action")').Groups[1].Value -eq "surface_add_exact_hover_hit") "Static SurfaceHarness parity guard missed a direct surface call."
+Assert-True ($surfaceGuardDirectPattern.Match('surface . draw_arc(center, radius)').Groups[1].Value -eq "draw_arc") "Static SurfaceHarness parity guard missed a whitespace-separated draw call."
+Assert-True ($surfaceGuardDynamicPattern.Match('surface.call("surface_runtime_status")').Groups[1].Value -eq "surface_runtime_status") "Static SurfaceHarness parity guard missed a literal dynamic call."
+Assert-True ($surfaceGuardDynamicPattern.Match("surface.has_method('surface_runtime_status')").Groups[1].Value -eq "surface_runtime_status") "Static SurfaceHarness parity guard missed a literal has_method call."
+Assert-True (-not $surfaceGuardDirectPattern.IsMatch('surface_alias.surface_add_exact_hover_hit(rect, "action")')) "Static SurfaceHarness parity guard exceeded its documented surface-identifier scope."
+Assert-True (-not $surfaceGuardDynamicPattern.IsMatch('surface.call(method_name)')) "Static SurfaceHarness parity guard treated a computed method name as discoverable."
 $expectedOverrides = @("BTH_DISTRIBUTION_DATA_ROOT", "BTH_DISTRIBUTION_BUILD", "BTH_META_COLLECTION_PATH", "BTH_PROFILE_INVENTORY_PATH")
 Assert-True (((Get-FoundationShardClearedEnvironmentNames) -join "|") -eq ($expectedOverrides -join "|")) "Shard persistence override clearing list is incomplete or reordered."
 Assert-True ($checkGodotSource.Contains('foreach ($overrideName in Get-FoundationShardClearedEnvironmentNames)')) "Shard launcher does not consume the validated persistence override list."
