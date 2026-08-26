@@ -409,6 +409,12 @@ their own detailed handoffs and test evidence.
   clean wrapper exit. A fresh standalone 12-context opening audit is running
   from stable zero and must terminate explicitly; no provisional report is
   being reused. EV remains unreleased.
+- 2026-08-26: The fresh opening audit completed and passed all 12 contexts on
+  `e4a7be3f`: three machines by four seeds, every lower/upper and
+  left/center/right region occupied and contacted, eight physical settle ticks,
+  zero awake/unsupported/tray/gutter/kinetic residue, and five parked periods
+  byte-stable on each machine's seed-zero context. Full Foundation is now
+  running serially. EV remains unreleased.
 - 2026-08-26: Depth immediately corrected that readiness claim after a
   read-only executable-gate audit reopened `env06_6` at `aa179f11` with three
   P1 evidence-harness gaps: no native/Web exact-sequence parity producer, no
