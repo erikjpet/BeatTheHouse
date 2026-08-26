@@ -61,6 +61,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_selected_offer_catalog_and_generation(library, failures)
 	_check_exclusive_catalog_and_generation(library, failures)
 	_check_exclusive_pool_and_choices(library, failures)
+	_check_event_guarantees_and_choice_authority(library, failures)
 	_check_rare_route_catalog(library, failures)
 	_check_rare_route_materialization(library, failures)
 	_check_semantic_zone_shapes(library, failures)
@@ -76,6 +77,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_consumed_dynamic_source_binding(failures)
 	_check_record_contract(library, failures)
 	_check_digest_contract(library, failures)
+	_check_closed_inventory_envelope(library, failures)
 	_check_diagnostic_codes(library, failures)
 	_check_diagnostic_messages(library, failures)
 	_check_static_golden_examples(library, failures)
@@ -152,6 +154,60 @@ static func _check_exclusive_pool_and_choices(library: ContentLibrary, failures:
 	var inventory := _dict(catalog.get("inventory", {}))
 	if _array(_dict(inventory.get("possible", {})).get("interactions", [])).has("event::event:scenario_street_craps_circle"):
 		failures.append("Scenario-exclusive event leaked into the possible-only pool after being guaranteed.")
+
+
+static func _check_event_guarantees_and_choice_authority(library: ContentLibrary, failures: Array) -> void:
+	var partial := {
+		"id": "event_availability_fixture",
+		"layout": {},
+		"event_pool": ["back_alley_offer", "parking_lot_tip"],
+		"required_event_ids": ["back_alley_offer"],
+		"event_scopes": ["shop"],
+		"event_count": [1, 1],
+	}
+	var partial_inventory := EnvironmentSemanticInventoryScript.for_archetype(partial, library)
+	var partial_guaranteed := EnvironmentSemanticInventoryScript.guaranteed_collections(partial_inventory)
+	var partial_possible := EnvironmentSemanticInventoryScript.possible_collections(partial_inventory)
+	var required_identity := "event::event:back_alley_offer"
+	var optional_identity := "event::event:parking_lot_tip"
+	for collection_key in ["scene_objects", "interactions"]:
+		if not _array(partial_guaranteed.get(collection_key, [])).has(required_identity) or _array(partial_possible.get(collection_key, [])).has(required_identity):
+			failures.append("required_event_ids did not guarantee exact rendered %s authority." % collection_key)
+		if not _array(partial_possible.get(collection_key, [])).has(optional_identity) or _array(partial_guaranteed.get(collection_key, [])).has(optional_identity):
+			failures.append("Partially selected event pool did not retain optional %s authority." % collection_key)
+	var guaranteed_choices := EnvironmentSemanticInventoryScript.event_choice_index(EnvironmentSemanticInventoryScript.guaranteed_event_ids(partial, library), library)
+	if not guaranteed_choices.has("back_alley_offer") or guaranteed_choices.has("parking_lot_tip"):
+		failures.append("Static event-choice authority did not distinguish required and optional-absent events.")
+	var full := partial.duplicate(true)
+	full["event_count"] = [2, 2]
+	var full_guaranteed := EnvironmentSemanticInventoryScript.guaranteed_collections(EnvironmentSemanticInventoryScript.for_archetype(full, library))
+	for identity in [required_identity, optional_identity]:
+		if not _array(full_guaranteed.get("interactions", [])).has(identity): failures.append("Full-pool minimum event count did not guarantee %s." % identity)
+	var scenario_catalog := library.scenario_target_catalog(library.scenario("back_alley_street_craps"))
+	var scenario_choices := _dict(scenario_catalog.get("event_choices", {}))
+	if not scenario_choices.has("scenario_street_craps_circle") or scenario_choices.has("back_alley_offer") or scenario_choices.has("parking_lot_tip"):
+		failures.append("Scenario target catalog authorized an optional-absent event choice or lost its exact exclusive event.")
+	var unique_library := FixtureLibrary.new()
+	unique_library.events_by_id = {
+		"shared_a": {"id": "shared_a", "interaction_mode": "interactable", "scopes": ["any"], "unique_object_class": "shared_fixture", "payload": {"choices": [{"id": "a"}]}},
+		"shared_b": {"id": "shared_b", "interaction_mode": "interactable", "scopes": ["any"], "unique_object_class": "shared_fixture", "payload": {"choices": [{"id": "b"}]}},
+		"wrong_scope": {"id": "wrong_scope", "interaction_mode": "interactable", "scopes": ["club"], "payload": {"choices": [{"id": "wrong"}]}},
+	}
+	var shared := {"id": "shared_unique_fixture", "layout": {}, "event_pool": ["shared_a", "shared_b"], "required_event_ids": ["shared_a"], "event_scopes": ["shop"], "event_count": [2, 2]}
+	if not EnvironmentSemanticInventoryScript.guaranteed_event_ids(shared, unique_library).is_empty():
+		failures.append("Shared non-duplicable event class was over-guaranteed after unique-object filtering.")
+	var shared_inventory := EnvironmentSemanticInventoryScript.for_archetype(shared, unique_library)
+	var shared_possible := EnvironmentSemanticInventoryScript.possible_collections(shared_inventory)
+	for identity in ["event::event:shared_a", "event::event:shared_b"]:
+		if not _array(shared_possible.get("interactions", [])).has(identity): failures.append("Shared unique-class candidate %s was not retained as possible-only." % identity)
+	var exclusive_shared := shared.duplicate(true)
+	exclusive_shared["scenario_exclusive_opportunity"] = {"event_id": "shared_a"}
+	var exclusive_shared_guaranteed := EnvironmentSemanticInventoryScript.guaranteed_collections(EnvironmentSemanticInventoryScript.for_archetype(exclusive_shared, unique_library))
+	if not _array(exclusive_shared_guaranteed.get("interactions", [])).has("event::event:shared_a"):
+		failures.append("Post-filter scenario-exclusive event lost guaranteed authority under a shared unique class.")
+	var wrong_scope := {"id": "wrong_scope_fixture", "layout": {}, "event_pool": ["wrong_scope"], "required_event_ids": ["wrong_scope"], "event_scopes": ["shop"], "event_count": [1, 1]}
+	if not EnvironmentSemanticInventoryScript.guaranteed_event_ids(wrong_scope, unique_library).is_empty():
+		failures.append("Required event outside the generated scope candidate pool was over-guaranteed.")
 
 
 static func _check_rare_route_catalog(library: ContentLibrary, failures: Array) -> void:
@@ -639,6 +695,62 @@ static func _check_digest_contract(library: ContentLibrary, failures: Array) -> 
 		tampered["records"] = records
 	if EnvironmentSemanticInventoryScript.validate(tampered).is_empty() or not EnvironmentSemanticInventoryScript.exact_collections(tampered).is_empty():
 		failures.append("Semantic inventory digest did not reject record tampering.")
+
+
+static func _check_closed_inventory_envelope(library: ContentLibrary, failures: Array) -> void:
+	var catalog := library.scenario_target_catalog(library.scenario("pawn_shop_estate_lot_day"))
+	var control := _dict(catalog.get("inventory", {}))
+	if control.is_empty() or not EnvironmentSemanticInventoryScript.validate(control).is_empty():
+		failures.append("Closed-envelope hostile matrix could not establish a valid catalog control proof.")
+		return
+	var first_provenance_key := str(_dict(control.get("provenance", {})).keys()[0])
+	var hostile_cases: Array = []
+	var open_envelope := control.duplicate(true)
+	open_envelope["forged_authority"] = true
+	hostile_cases.append(["open proof envelope", open_envelope])
+	var open_collections := control.duplicate(true)
+	open_collections["guaranteed"]["forged_collection"] = []
+	hostile_cases.append(["open collection map", open_collections])
+	var malformed_collection := control.duplicate(true)
+	malformed_collection["guaranteed"]["games"] = "game::forged"
+	hostile_cases.append(["malformed collection type", malformed_collection])
+	var open_provenance := control.duplicate(true)
+	open_provenance["provenance"][first_provenance_key]["forged_source"] = true
+	hostile_cases.append(["open provenance record", open_provenance])
+	var malformed_provenance := control.duplicate(true)
+	malformed_provenance["provenance"][first_provenance_key]["source_field"] = 17
+	hostile_cases.append(["malformed provenance type", malformed_provenance])
+	var unknown_presentation := control.duplicate(true)
+	unknown_presentation["presentation_ids"]["interactions|base::forged"] = "forged"
+	hostile_cases.append(["unknown presentation authority", unknown_presentation])
+	for hostile_value in hostile_cases:
+		var hostile := hostile_value as Array
+		var candidate := _dict(hostile[1])
+		candidate["digest"] = EnvironmentSemanticInventoryScript._digest(candidate)
+		if EnvironmentSemanticInventoryScript.validate(candidate).is_empty() or not EnvironmentSemanticInventoryScript.guaranteed_collections(candidate).is_empty() or not EnvironmentSemanticInventoryScript.possible_collections(candidate).is_empty():
+			failures.append("Correctly rehashed %s bypassed closed semantic inventory validation." % str(hostile[0]))
+	var exact := EnvironmentSemanticInventoryScript.for_instance(_exact_environment(), library, [_interaction_record("game", "game:slot", "game:slot")])
+	if not EnvironmentSemanticInventoryScript.validate(exact).is_empty():
+		failures.append("Closed-envelope hostile matrix could not establish a valid instance control proof.")
+	else:
+		var open_source := exact.duplicate(true)
+		open_source["source_provenance"]["forged_source"] = true
+		open_source["digest"] = EnvironmentSemanticInventoryScript._digest(open_source)
+		if EnvironmentSemanticInventoryScript.validate(open_source).is_empty() or not EnvironmentSemanticInventoryScript.exact_collections(open_source).is_empty():
+			failures.append("Correctly rehashed open instance source_provenance bypassed exact validation.")
+		var open_authority := exact.duplicate(true)
+		open_authority["source_provenance"]["base_interaction_authority"][0]["forged_source"] = true
+		open_authority["digest"] = EnvironmentSemanticInventoryScript._digest(open_authority)
+		if EnvironmentSemanticInventoryScript.validate(open_authority).is_empty() or not EnvironmentSemanticInventoryScript.exact_collections(open_authority).is_empty():
+			failures.append("Correctly rehashed open base-interaction authority record bypassed exact validation.")
+	var unknown := library.scenario_target_catalog({"id": "unknown_catalog_fixture", "archetype_id": "missing_archetype"})
+	if not _contains_text(_array(unknown.get("errors", [])), "unknown archetype") or not _dict(unknown.get("guaranteed", {})).is_empty() or not _dict(unknown.get("possible", {})).is_empty():
+		failures.append("Public scenario target catalog failed open for an unknown archetype.")
+	var wrong_layer_definition := library.scenario("back_alley_street_craps")
+	wrong_layer_definition["layer_id"] = "missing_layer"
+	var wrong_layer := library.scenario_target_catalog(wrong_layer_definition)
+	if not _contains_text(_array(wrong_layer.get("errors", [])), "layer") or not _dict(wrong_layer.get("guaranteed", {})).is_empty() or not _dict(wrong_layer.get("possible", {})).is_empty():
+		failures.append("Public scenario target catalog failed open for an unknown layer.")
 
 
 static func _check_diagnostic_codes(library: ContentLibrary, failures: Array) -> void:
