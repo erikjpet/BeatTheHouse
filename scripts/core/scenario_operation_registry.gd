@@ -201,6 +201,7 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 			}
 	var ordered_overlays := overlay_records.duplicate(true)
 	ordered_overlays.sort_custom(Callable(ScenarioOperationRegistry, "_sort_interaction_overlay"))
+	var accepted_overlay_source_identities: Array = []
 	for overlay_value in ordered_overlays:
 		if typeof(overlay_value) != TYPE_DICTIONARY:
 			continue
@@ -251,18 +252,28 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 				target["source_id"] = str(overlay.get("source_id", target.get("source_id", "")))
 				records[target_key] = target
 				records.erase(source_key)
-		effective_winners[target_key] = {
+		var effective_key := target_key
+		if mode == "replace":
+			effective_winners.erase(target_key)
+			effective_key = source_key
+		effective_winners[effective_key] = {
 			"priority": priority,
 			"owner_namespace": str(overlay.get("owner_namespace", "")),
 			"source_key": source_key,
 		}
+		accepted_overlay_source_identities.append(source_key)
 	var result: Array = []
 	var keys := records.keys()
 	keys.sort()
 	for key_value in keys:
 		if not tainted.has(str(key_value)):
 			result.append((records.get(key_value, {}) as Dictionary).duplicate(true))
-	return {"ok": errors.is_empty(), "records": result, "errors": errors}
+	return {
+		"ok": errors.is_empty(),
+		"records": result,
+		"errors": errors,
+		"accepted_overlay_source_identities": accepted_overlay_source_identities,
+	}
 
 
 static func _ingest_interaction_record(records: Dictionary, tainted: Dictionary, errors: Array, source_value: Variant, overlay: bool) -> void:
