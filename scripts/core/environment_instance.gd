@@ -7,6 +7,7 @@ const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioOperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
+const EnvironmentEventResolverScript := preload("res://scripts/core/environment_event_resolver.gd")
 
 const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const GENERATED_LAYOUT_VERSION := 11
@@ -678,62 +679,7 @@ static func _pick_events(archetype: Dictionary, rng: RngStream, library: Content
 	if library == null:
 		var fallback_events := _pick_ids(archetype.get("event_pool", []), archetype.get("event_count", 1), rng)
 		return rng.pick_many(fallback_events, fallback_events.size())
-	var pool: Array = archetype.get("event_pool", [])
-	var scopes: Array = archetype.get("event_scopes", [])
-	var candidates: Array = []
-	for event in library.events:
-		var event_id: String = event.get("id", "")
-		if event_id.is_empty():
-			continue
-		if str(event.get("interaction_mode", "interactable")) != "interactable":
-			continue
-		if not pool.is_empty() and not pool.has(event_id):
-			continue
-		if _event_fits(event, scopes):
-			candidates.append(event_id)
-	var required_events: Array = []
-	for required_id in _string_array(archetype.get("required_event_ids", [])):
-		if candidates.has(required_id):
-			required_events.append(required_id)
-	var picked_events := _filter_unique_event_ids(_pick_ids_with_required(candidates, archetype.get("event_count", 1), required_events, rng), library)
-	return rng.pick_many(picked_events, picked_events.size())
-
-
-static func _filter_unique_event_ids(event_ids: Array, library: ContentLibrary) -> Array:
-	if library == null:
-		return event_ids
-	var result: Array = []
-	var class_indexes: Dictionary = {}
-	for event_id_value in event_ids:
-		var event_id := str(event_id_value).strip_edges()
-		if event_id.is_empty():
-			continue
-		var event := library.event(event_id)
-		var unique_class := str(event.get("unique_object_class", "")).strip_edges()
-		if unique_class.is_empty() or bool(event.get("allow_duplicate_unique_class", false)):
-			result.append(event_id)
-			continue
-		if not class_indexes.has(unique_class):
-			class_indexes[unique_class] = result.size()
-			result.append(event_id)
-			continue
-		var existing_index := int(class_indexes[unique_class])
-		var existing_id := str(result[existing_index])
-		var existing := library.event(existing_id)
-		if int(event.get("unique_object_priority", 0)) > int(existing.get("unique_object_priority", 0)):
-			result[existing_index] = event_id
-	return result
-
-
-# Checks whether an event can appear in the environment scopes.
-static func _event_fits(event: Dictionary, scopes: Array) -> bool:
-	var event_scopes: Array = event.get("scopes", [])
-	if event_scopes.has("any"):
-		return true
-	for scope in scopes:
-		if event_scopes.has(scope):
-			return true
-	return false
+	return EnvironmentEventResolverScript.select_ids(archetype, library.events, rng)
 
 
 # Picks a fixed or ranged number of unique ids from a pool.
