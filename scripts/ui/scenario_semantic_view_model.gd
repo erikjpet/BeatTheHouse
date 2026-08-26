@@ -36,7 +36,10 @@ static func compose(base_records: Array, prepared: Dictionary, selection: Dictio
 	for resolved_value in _array(resolution.get("records", [])):
 		var resolved := _dict(resolved_value)
 		resolved_by_identity[OperationRegistryScript.identity_from(resolved)] = resolved
-	var augment_lookup := _augment_lookup(_array(prepared.get("interaction_overlays", [])))
+	var augment_lookup := _augment_lookup(
+		_array(prepared.get("interaction_overlays", [])),
+		_array(resolution.get("accepted_overlay_source_identities", [])),
+	)
 	var result: Array = []
 	for identity in base_order:
 		if not resolved_by_identity.has(identity):
@@ -303,11 +306,12 @@ static func _visual_lookup(values: Array) -> Dictionary:
 	return result
 
 
-static func _augment_lookup(values: Array) -> Dictionary:
+static func _augment_lookup(values: Array, accepted_source_identities: Array) -> Dictionary:
 	var result: Dictionary = {}
 	for value in values:
 		var overlay := _dict(value)
 		if str(overlay.get("mode", "add")) != "augment": continue
+		if not accepted_source_identities.has(OperationRegistryScript.identity_from(overlay)): continue
 		var target := OperationRegistryScript.identity(str(overlay.get("target_owner_namespace", "")), str(overlay.get("target_stable_object_id", "")))
 		var entries := _array(result.get(target, []))
 		entries.append(overlay)
