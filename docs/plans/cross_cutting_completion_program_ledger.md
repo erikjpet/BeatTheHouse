@@ -714,3 +714,19 @@ their own detailed handoffs and test evidence.
   assertion, suite, budget, production, fix06_4 coverage or runner changed.
   Runtime timing is the only residual risk; two fresh focused passes are required
   before Contracts/full smoke.
+- 2026-08-26: Runtime rejected the reviewed `cddfb851` fingerprint
+  optimization. On the exact clean head both Blackjack checks still passed with
+  zero failures/stderr, but the focused wrapper remained a hard red at 18.393
+  seconds versus the immutable 17.790-second cap. Run 2, Contracts and full
+  smoke correctly did not start; the host returned to zero. The optimization
+  will be reverted by a normal commit. A fresh independent read-only diagnosis
+  is auditing a narrower suite-specific Foundation runner startup seam before
+  any replacement edit or host release.
+- 2026-08-26: Depth pinned the eventual `env06_6` serialized host runbook for
+  accepted static head `a5ae1d8f`: static validation; full Foundation; exact
+  scenario audit; watchdog-bounded ten-seed determinism; broad visual QA; exact
+  21-PNG windowed capture; two native plus two fresh Web parity/performance runs
+  with transient Web build/export; then independent review of all 21 images.
+  One depth owner must retain the entire exclusive slot and preserve all
+  head-specific artifacts. Depth remains queued behind Wave 1/shared
+  remediation and has not received a host release.
