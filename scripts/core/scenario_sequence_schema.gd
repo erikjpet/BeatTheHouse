@@ -16,6 +16,36 @@ const FACT_TYPES := [
 	"crew_changed", "crew_job_changed", "heat_changed", "heat_band_changed",
 	"town_transition", "sweep_changed", "world_boundary", "scenario_command",
 ]
+const FACT_PREDICATE_FIELDS := {
+	"game_result": ["game_id", "action_id", "won", "ended", "bankroll_delta", "chips_delta", "applied_heat_delta"],
+	"event_result": ["event_id", "choice_id", "resolution_id", "resolved", "ok"],
+	"service_result": ["kind", "service_id", "ok", "action_id"],
+	"travel_departed": ["source_id", "target_id", "travel_kind"],
+	"travel_arrived": ["source_id", "target_id", "travel_kind"],
+	"crew_changed": ["member_id", "change", "value"],
+	"crew_job_changed": ["job_id", "definition_id", "member_id", "status", "outcome"],
+	"heat_changed": ["previous", "current", "applied_delta", "source"],
+	"heat_band_changed": ["previous_band", "current_band", "current", "source"],
+	"town_transition": ["action_index", "weather", "day_type", "happening_ids"],
+	"sweep_changed": ["action_index", "node_id", "segment_index", "active"],
+	"world_boundary": ["amount", "action_index"],
+	"scenario_command": ["command_id", "receipt_id"],
+}
+const FACT_PREDICATE_FIELD_TYPES := {
+	"game_result": {"game_id": TYPE_STRING, "action_id": TYPE_STRING, "won": TYPE_BOOL, "ended": TYPE_BOOL, "bankroll_delta": TYPE_INT, "chips_delta": TYPE_INT, "applied_heat_delta": TYPE_INT},
+	"event_result": {"event_id": TYPE_STRING, "choice_id": TYPE_STRING, "resolution_id": TYPE_STRING, "resolved": TYPE_BOOL, "ok": TYPE_BOOL},
+	"service_result": {"kind": TYPE_STRING, "service_id": TYPE_STRING, "ok": TYPE_BOOL, "action_id": TYPE_STRING},
+	"travel_departed": {"source_id": TYPE_STRING, "target_id": TYPE_STRING, "travel_kind": TYPE_STRING},
+	"travel_arrived": {"source_id": TYPE_STRING, "target_id": TYPE_STRING, "travel_kind": TYPE_STRING},
+	"crew_changed": {"member_id": TYPE_STRING, "change": TYPE_STRING, "value": -1},
+	"crew_job_changed": {"job_id": TYPE_STRING, "definition_id": TYPE_STRING, "member_id": TYPE_STRING, "status": TYPE_STRING, "outcome": TYPE_STRING},
+	"heat_changed": {"previous": TYPE_INT, "current": TYPE_INT, "applied_delta": TYPE_INT, "source": TYPE_STRING},
+	"heat_band_changed": {"previous_band": TYPE_STRING, "current_band": TYPE_STRING, "current": TYPE_INT, "source": TYPE_STRING},
+	"town_transition": {"action_index": TYPE_INT, "weather": TYPE_STRING, "day_type": TYPE_STRING, "happening_ids": TYPE_ARRAY},
+	"sweep_changed": {"action_index": TYPE_INT, "node_id": TYPE_STRING, "segment_index": TYPE_INT, "active": TYPE_BOOL},
+	"world_boundary": {"amount": TYPE_INT, "action_index": TYPE_INT},
+	"scenario_command": {"command_id": TYPE_STRING, "receipt_id": TYPE_STRING},
+}
 const ALLOWED_SEQUENCE_KEYS := [
 	"schema_version", "local_state_schema", "phase_graph", "objectives",
 	"reentry_policy", "expiry", "cleanup", "aftermath", "mechanic_tags",
@@ -40,9 +70,9 @@ const MAX_TOTAL_VALUES := 4096
 const MAX_TEXT_LENGTH := 512
 const PHASE_KEYS := ["id", "label", "arrival_feedback", "exit_prompt", "terminal", "entry_conditions", "objective_ids", "advance_after_actions", "scene_ops", "interaction_ops", "actor_ops", "transition_ops", "branches"]
 const BRANCH_KEYS := ["id", "condition", "next_phase", "outcome", "objective_outcomes"]
-const CONDITION_KEYS := ["type", "command_id", "fact_type", "key", "value", "objective_id", "step_id", "outcome", "receipt_id"]
+const CONDITION_KEYS := ["type", "command_id", "fact_type", "payload_equals", "key", "value", "objective_id", "step_id", "outcome", "receipt_id"]
 const OBJECTIVE_KEYS := ["id", "label", "progress_label", "steps", "outcomes"]
-const STEP_KEYS := ["id", "label", "kind", "command_id", "fact_type"]
+const STEP_KEYS := ["id", "label", "kind", "command_id", "fact_type", "payload_equals"]
 const AFTERMATH_KEYS := ["label", "revisit_feedback", "scene_ops", "interaction_ops", "actor_ops", "service_ops", "game_ops", "route_ops"]
 
 
@@ -503,6 +533,8 @@ static func _validate_objectives(label: String, objectives: Array, errors: Array
 				errors.append("%s objective %s step %s requires command_id." % [label, objective_id, step_id])
 			elif kind == "fact" and not FACT_TYPES.has(str(step.get("fact_type", ""))):
 				errors.append("%s objective %s step %s requires registered fact_type." % [label, objective_id, step_id])
+			elif kind == "fact":
+				_validate_fact_payload_predicate("%s objective %s step %s" % [label, objective_id, step_id], str(step.get("fact_type", "")), step.get("payload_equals", {}), errors)
 		var objective_outcomes := _string_array(objective.get("outcomes", []))
 		if objective_outcomes.is_empty():
 			errors.append("%s objective %s requires outcomes." % [label, objective_id])
@@ -694,6 +726,8 @@ static func _validate_action_refs(label: String, action: Dictionary, local_ids: 
 static func _validate_handler_input_refs(label: String, handler_id: String, inputs: Dictionary, local_ids: Dictionary, objective_steps: Dictionary, errors: Array) -> void:
 	if handler_id in ["set_local", "increment_local"] and not local_ids.has(str(inputs.get("key", ""))):
 		errors.append("%s handler references unknown local state %s." % [label, str(inputs.get("key", ""))])
+	elif handler_id == "event_bridge" and (not _valid_id(str(inputs.get("event_id", ""))) or not _valid_id(str(inputs.get("resolution_id", "")))):
+		errors.append("%s event_bridge requires non-empty stable event_id and resolution_id." % label)
 	elif handler_id in ["complete_objective_step", "resolve_objective"]:
 		var objective_id := str(inputs.get("objective_id", ""))
 		if handler_id == "resolve_objective":
@@ -1009,21 +1043,27 @@ static func _validate_fact_subscriptions(label: String, subscriptions: Array, op
 			var fact_type := str(subscription_value).strip_edges()
 			if not FACT_TYPES.has(fact_type):
 				errors.append("%s fact subscription references unregistered fact type %s." % [label, fact_type])
+			elif fact_type == "event_result":
+				errors.append("%s event_result fact subscription requires a dictionary with payload_equals.event_id." % label)
 			continue
 		if typeof(subscription_value) != TYPE_DICTIONARY:
 			errors.append("%s fact subscription must be a fact id or dictionary." % label)
 			continue
 		var subscription := subscription_value as Dictionary
-		_append_unknown_keys("%s fact subscription" % label, subscription, ["fact_type", "handler", "inputs"], errors)
+		_append_unknown_keys("%s fact subscription" % label, subscription, ["fact_type", "payload_equals", "handler", "inputs"], errors)
 		var fact_type := str(subscription.get("fact_type", "")).strip_edges()
 		if not FACT_TYPES.has(fact_type):
 			errors.append("%s fact subscription references unregistered fact type %s." % [label, fact_type])
+		else:
+			_validate_fact_payload_predicate("%s fact subscription" % label, fact_type, subscription.get("payload_equals", {}), errors)
 		var handler_id := str(subscription.get("handler", "")).strip_edges()
 		var handlers := operation_registry.call("registered_handlers") as Dictionary if operation_registry != null and operation_registry.has_method("registered_handlers") else {}
-		if not handlers.has(handler_id):
+		if not handler_id.is_empty() and not handlers.has(handler_id):
 			errors.append("%s fact subscription references unregistered handler %s." % [label, handler_id])
 		if typeof(subscription.get("inputs", {})) != TYPE_DICTIONARY:
 			errors.append("%s fact subscription inputs must be a dictionary." % label)
+		elif handler_id.is_empty() and not _dict(subscription.get("inputs", {})).is_empty():
+			errors.append("%s fact subscription cannot declare inputs without a handler." % label)
 		elif handlers.has(handler_id):
 			var inputs := _dict(subscription.get("inputs", {}))
 			var expected := _array(_dict(handlers.get(handler_id, {})).get("inputs", []))
@@ -1055,6 +1095,8 @@ static func _validate_condition(label: String, condition: Dictionary, errors: Ar
 		errors.append("%s command condition requires command_id." % label)
 	elif type_id == "fact" and not FACT_TYPES.has(str(condition.get("fact_type", "")).strip_edges()):
 		errors.append("%s fact condition requires a registered fact_type." % label)
+	elif type_id == "fact":
+		_validate_fact_payload_predicate(label, str(condition.get("fact_type", "")), condition.get("payload_equals", {}), errors)
 	elif ["local_equals", "local_min"].has(type_id) and not _valid_id(str(condition.get("key", ""))):
 		errors.append("%s local condition requires key." % label)
 	elif type_id == "objective" and (not _valid_id(str(condition.get("objective_id", ""))) or not _valid_id(str(condition.get("step_id", "")))):
@@ -1063,6 +1105,48 @@ static func _validate_condition(label: String, condition: Dictionary, errors: Ar
 		errors.append("%s outcome condition requires outcome." % label)
 	elif type_id == "receipt" and not _valid_receipt_id(str(condition.get("receipt_id", ""))):
 		errors.append("%s receipt condition requires scoped receipt_id." % label)
+
+
+static func _validate_fact_payload_predicate(label: String, fact_type: String, value: Variant, errors: Array) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		errors.append("%s payload_equals must be a dictionary." % label)
+		return
+	var predicate := value as Dictionary
+	if predicate.size() > 8:
+		errors.append("%s payload_equals exceeds 8 fields." % label)
+	var allowed := _array(FACT_PREDICATE_FIELDS.get(fact_type, []))
+	var field_types := _dict(FACT_PREDICATE_FIELD_TYPES.get(fact_type, {}))
+	for key_value in predicate.keys():
+		var key := str(key_value)
+		if not allowed.has(key):
+			errors.append("%s payload_equals references unknown %s field %s." % [label, fact_type, key])
+		var expected_type := int(field_types.get(key, -1))
+		if expected_type >= 0 and typeof(predicate.get(key_value)) != expected_type:
+			errors.append("%s payload_equals.%s has the wrong type for %s." % [label, key, fact_type])
+		elif fact_type == "town_transition" and key == "happening_ids" and _string_array(predicate.get(key_value, [])).size() != _array(predicate.get(key_value, [])).size():
+			errors.append("%s payload_equals.happening_ids must contain unique stable strings." % label)
+		elif not _bounded_predicate_value(predicate.get(key_value)):
+			errors.append("%s payload_equals.%s is not a bounded scalar or scalar array." % [label, key])
+	if fact_type == "event_result":
+		if not predicate.has("event_id") or typeof(predicate.get("event_id")) != TYPE_STRING or str(predicate.get("event_id", "")).strip_edges().is_empty():
+			errors.append("%s event_result requires payload_equals.event_id." % label)
+		if predicate.has("resolution_id") and (typeof(predicate.get("resolution_id")) != TYPE_STRING or str(predicate.get("resolution_id", "")).strip_edges().is_empty()):
+			errors.append("%s event_result payload_equals.resolution_id must be a non-empty string when present." % label)
+
+
+static func _bounded_predicate_value(value: Variant) -> bool:
+	if typeof(value) in [TYPE_BOOL, TYPE_INT, TYPE_FLOAT]:
+		return true
+	if typeof(value) == TYPE_STRING:
+		return not str(value).strip_edges().is_empty() and str(value).length() <= 128
+	if typeof(value) != TYPE_ARRAY or (value as Array).size() > 16:
+		return false
+	for item_value in value as Array:
+		if typeof(item_value) not in [TYPE_BOOL, TYPE_INT, TYPE_FLOAT, TYPE_STRING]:
+			return false
+		if typeof(item_value) == TYPE_STRING and (str(item_value).strip_edges().is_empty() or str(item_value).length() > 128):
+			return false
+	return true
 
 
 static func _validate_no_executable_strings(label: String, value: Variant, errors: Array, path: String = "") -> void:

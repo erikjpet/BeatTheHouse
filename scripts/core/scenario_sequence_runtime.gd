@@ -648,6 +648,8 @@ static func _apply_fact(state: Dictionary, definition: Dictionary, fact_value: D
 	var original := state.duplicate(true)
 	var fact_type := str(fact_value.get("fact_type", ""))
 	var payload := _dict(fact_value.get("payload", {}))
+	if fact_type == "event_result" and not _event_fact_is_authorized(next, definition, payload):
+		return {"ok": false, "state": original, "errors": ["scenario event_result does not match an authored payload predicate or delivered event request"]}
 	var skip_phase_boundary := fact_type == "world_boundary" and int(next.get("phase_boundary_grace", 0)) > 0
 	if skip_phase_boundary:
 		next["phase_boundary_grace"] = 0
@@ -657,11 +659,16 @@ static func _apply_fact(state: Dictionary, definition: Dictionary, fact_value: D
 			continue
 		if str(subscription.get("fact_type", "")) != fact_type:
 			continue
+		if not _payload_predicate_matches(_dict(subscription.get("payload_equals", {})), payload):
+			continue
+		var handler_id := str(subscription.get("handler", "")).strip_edges()
+		if handler_id.is_empty():
+			continue
 		var inputs := _dict(subscription.get("inputs", {}))
 		var payload_key := str(inputs.get("value_from_payload", "")).strip_edges()
 		if not payload_key.is_empty():
 			inputs["value"] = payload.get(payload_key)
-		var handler_result := _run_handler(next, definition, str(subscription.get("handler", "")), inputs, fact_value)
+		var handler_result := _run_handler(next, definition, handler_id, inputs, fact_value)
 		if not bool(handler_result.get("ok", false)):
 			return handler_result
 		next = _dict(handler_result.get("state", next))
@@ -672,7 +679,7 @@ static func _apply_fact(state: Dictionary, definition: Dictionary, fact_value: D
 			continue
 		for step_value in _array(objective.get("steps", [])):
 			var step := _dict(step_value)
-			if str(step.get("kind", "")) == "fact" and str(step.get("fact_type", "")) == fact_type:
+			if str(step.get("kind", "")) == "fact" and str(step.get("fact_type", "")) == fact_type and _payload_predicate_matches(_dict(step.get("payload_equals", {})), payload):
 				next = _complete_objective_step(next, definition, str(objective.get("id", "")), str(step.get("id", "")))
 			elif str(step.get("kind", "")) == "world_boundary" and fact_type == "world_boundary" and not skip_phase_boundary:
 				next = _complete_objective_step(next, definition, str(objective.get("id", "")), str(step.get("id", "")))
@@ -746,7 +753,7 @@ static func _condition_matches(condition: Dictionary, state: Dictionary, trigger
 	match str(condition.get("type", "")):
 		"always": return true
 		"command": return str(trigger.get("kind", "")) == "command" and str(trigger.get("command_id", "")) == str(condition.get("command_id", ""))
-		"fact": return str(trigger.get("kind", "")) == "fact" and str(trigger.get("fact_type", "")) == str(condition.get("fact_type", ""))
+		"fact": return str(trigger.get("kind", "")) == "fact" and str(trigger.get("fact_type", "")) == str(condition.get("fact_type", "")) and _payload_predicate_matches(_dict(condition.get("payload_equals", {})), _dict(trigger.get("payload", {})))
 		"local_equals": return _dict(state.get("local_state", {})).get(str(condition.get("key", ""))) == condition.get("value")
 		"local_min": return int(_dict(state.get("local_state", {})).get(str(condition.get("key", "")), 0)) >= int(condition.get("value", 0))
 		"objective": return _objective_step_complete(state, str(condition.get("objective_id", "")), str(condition.get("step_id", "")))
@@ -1047,6 +1054,60 @@ static func _event_resolution_was_requested(state: Dictionary, event_id: String,
 		if str(request.get("event_id", "")) == event_id and str(request.get("resolution_id", "")) == resolution_id:
 			return true
 	return false
+
+
+static func _event_fact_is_authorized(state: Dictionary, definition: Dictionary, payload: Dictionary) -> bool:
+	var event_id := str(payload.get("event_id", "")).strip_edges()
+	var resolution_id := str(payload.get("resolution_id", "")).strip_edges()
+	if event_id.is_empty():
+		return false
+	if _event_request_was_delivered(state, event_id):
+		return not resolution_id.is_empty() and not _event_resolution_was_consumed(state, resolution_id) and _event_resolution_was_requested(state, event_id, resolution_id)
+	if not resolution_id.is_empty():
+		return not _event_resolution_was_consumed(state, resolution_id) and _event_resolution_was_requested(state, event_id, resolution_id)
+	var authored := SequenceSchemaScript.sequence(definition)
+	for subscription_value in _array(authored.get("fact_subscriptions", [])):
+		var subscription := _dict(subscription_value)
+		if str(subscription.get("fact_type", "")) == "event_result" and _payload_predicate_matches(_dict(subscription.get("payload_equals", {})), payload):
+			return true
+	for phase_value in _array(_dict(authored.get("phase_graph", {})).get("phases", [])):
+		var phase_data := _dict(phase_value)
+		for condition_value in _array(phase_data.get("entry_conditions", [])):
+			var condition := _dict(condition_value)
+			if str(condition.get("type", "")) == "fact" and str(condition.get("fact_type", "")) == "event_result" and _payload_predicate_matches(_dict(condition.get("payload_equals", {})), payload):
+				return true
+		for branch_value in _array(phase_data.get("branches", [])):
+			var condition := _dict(_dict(branch_value).get("condition", {}))
+			if str(condition.get("type", "")) == "fact" and str(condition.get("fact_type", "")) == "event_result" and _payload_predicate_matches(_dict(condition.get("payload_equals", {})), payload):
+				return true
+	for objective_value in _array(authored.get("objectives", [])):
+		for step_value in _array(_dict(objective_value).get("steps", [])):
+			var step := _dict(step_value)
+			if str(step.get("kind", "")) == "fact" and str(step.get("fact_type", "")) == "event_result" and _payload_predicate_matches(_dict(step.get("payload_equals", {})), payload):
+				return true
+	return false
+
+
+static func _event_request_was_delivered(state: Dictionary, event_id: String) -> bool:
+	for value in _bounded_records(state.get("event_request_history", []), MAX_RECEIPTS):
+		if str(_dict(value).get("event_id", "")) == event_id:
+			return true
+	return false
+
+
+static func _event_resolution_was_consumed(state: Dictionary, resolution_id: String) -> bool:
+	var prefix := "%s:" % resolution_id
+	for receipt_value in _string_array(state.get("event_choice_receipts", [])):
+		if str(receipt_value).begins_with(prefix):
+			return true
+	return false
+
+
+static func _payload_predicate_matches(predicate: Dictionary, payload: Dictionary) -> bool:
+	for key_value in predicate.keys():
+		if not payload.has(key_value) or payload.get(key_value) != predicate.get(key_value):
+			return false
+	return true
 
 
 static func _unexpired_stages(value: Variant, boundary_serial: int) -> Array:
