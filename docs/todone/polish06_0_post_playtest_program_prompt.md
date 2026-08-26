@@ -1,5 +1,11 @@
-Status: TODO (delivers a parked program; performs no polish work)
+Status: DONE (deliverables remain PARKED; performs no polish work)
 Board row: `polish06_0` in `docs/todo/README_0_6_board.md`
+
+Execution Record (2026-08-26): implementation head `be14c1ce471d4bb4cb8b633a2fc76a34c397de47`
+was independently accepted with no P0-P3 and merged non-fast-forward as
+`dba53fb5`. The parked program, triage/tuning/cleanup prompts and release
+templates were delivered; no generated row was started and no release activity
+occurred.
 
 # Agent Prompt — 0.6 polish06_0: The Second Half of 0.6
 
