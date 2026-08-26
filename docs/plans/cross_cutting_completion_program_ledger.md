@@ -743,3 +743,16 @@ their own detailed handoffs and test evidence.
   match to accepted `54d8083a`; the restored Foundation blob is identical to
   that accepted head and distinct from rejected `cddfb851`. Runtime remains
   held while the replacement suite-runner strategy is diagnosed read-only.
+- 2026-08-26: Independent runner-strategy review rejected the proposed
+  two-source Blackjack composite with one P1: removing the table file's
+  inheritance leaves executed content/Blackjack checks dependent on helpers in
+  Slots, Items/World and Lenders, so the shortcut would fault before meaningful
+  acceptance. The bounded accepted implementation direction routes only exact
+  normalized `blackjack` to the existing tracked
+  `check_lenders_release_saves.gd` inheritance closure; every other suite and
+  Systems retain the unchanged nine-source composite. Fail-closed static
+  contracts must prove exact routing, complete acyclic in-repo inheritance,
+  required helpers, unchanged full order and Systems behavior. This edits
+  disjoint `check_godot.ps1` hunks from accepted pusher `30ee954d`; both must be
+  preserved semantically at integration. Runtime remains held through commit,
+  self-review and fresh exact-head independent review.
