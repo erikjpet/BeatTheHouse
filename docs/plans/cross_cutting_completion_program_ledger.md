@@ -387,3 +387,9 @@ their own detailed handoffs and test evidence.
   cap. The author is verifying stable-zero cleanup and proceeding serially to
   exact-head Windows debug/release and Web debug/release builds. EV remains
   unreleased.
+- 2026-08-26: All four exact-head builds passed and left the pusher worktree
+  clean: Windows debug `54BBA8...E2E599`, Windows release
+  `616C1C...75DF7`, Web debug `3B1B42...0B915C`, and Web release
+  `9D4C85...F8116`. Fresh import, exhaustive parsing and the focused Coin
+  Pusher suite are running serially before a separate opening audit. EV remains
+  unreleased.
