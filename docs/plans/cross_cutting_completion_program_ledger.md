@@ -424,6 +424,15 @@ their own detailed handoffs and test evidence.
   routed Blackjack presentation/tutorial failures, with no pusher or new
   shared-contract regression. The dedicated UI gate is running to validate the
   broader hold/accessibility surface. EV remains unreleased.
+- 2026-08-26: UI on clean `e4a7be3f` failed two pusher-owned assertions in
+  12.940 seconds, under budget. The owned canvas invariant lacked only
+  `drop_hit_region`. The realtime case showed successful current-state
+  progression (`live 0->1`, alpha `0.0->0.62`, stamp equal to canvas time) but
+  began with `before_time=-1`, so the product initialization/test ownership
+  seam is under diagnosis. The generated runner compiled; no duplicate-stub or
+  unrelated UI failure occurred. The author must fix the authoritative seam,
+  strengthen negative coverage, self-review and obtain a new exact-head review
+  before rerunning affected gates. EV remains unreleased.
 - 2026-08-26: Depth immediately corrected that readiness claim after a
   read-only executable-gate audit reopened `env06_6` at `aa179f11` with three
   P1 evidence-harness gaps: no native/Web exact-sequence parity producer, no
