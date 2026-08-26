@@ -77,7 +77,7 @@ struct Geo {
           coin_h = 950, coin_m = 1000, coin_value = 1, jitter = 300,
           velocity_jitter = 0,
           ceiling = 600;
-  Array pegs;
+  Array pegs, targets;
 };
 Geo geometry(const Dictionary &s) {
   Geo g;
@@ -110,6 +110,7 @@ Geo geometry(const Dictionary &s) {
   g.velocity_jitter = std::max<int64_t>(0, a.get("release_velocity_jitter", 0));
   g.ceiling = clampi(d.get("ceiling", g.ceiling), 1, HARD_CEILING);
   g.pegs = a.get("pegs", Array());
+  g.targets = a.get("targets", Array());
   return g;
 }
 int64_t face_y(const Geo &g, int64_t phase) {
@@ -124,9 +125,10 @@ struct Body {
   String id, kind, rest, support, peg_key, exit_state;
   int64_t x = 0, y = 0, z = 0, vx = 0, vy = 0, vz = 0, xr = 0, yr = 0, zr = 0,
           r = 2350, h = 950, m = 1000, sleep_ticks = 0, fall_start_z = 0,
-          exit_start_tick = -1;
+          exit_start_tick = -1, support_anchor_x = 0, support_anchor_y = 0;
   bool sleeping = false, carried = false, plate_blocked = false,
-       pending_deposit = false, has_fall_start = false, peg_contact = false;
+       pending_deposit = false, has_fall_start = false, peg_contact = false,
+       has_support_anchor = false;
 };
 bool z_overlap(const Body &l, const Body &r) {
   return l.z < r.z + r.h && r.z < l.z + l.h;
@@ -244,6 +246,9 @@ struct Kernel {
       q.rest = r.get("rest_state", "falling");
       q.support = r.get("support_kind", "");
       q.support_ids = r.get("support_ids", Array());
+      q.has_support_anchor = r.has("support_anchor_x") && r.has("support_anchor_y");
+      q.support_anchor_x = r.get("support_anchor_x", 0);
+      q.support_anchor_y = r.get("support_anchor_y", 0);
       q.exit_state = r.get("exit_state", "");
       q.exit_start_tick = r.get("exit_start_tick", -1);
       q.carried = r.get("carried_sleep", false);
@@ -599,16 +604,20 @@ struct Kernel {
     bool lawake = !l.sleeping, rawake = !r.sleeping;
     bool lmoving = std::abs(l.vx) + std::abs(l.vy) + std::abs(l.vz) >= SLEEP_SPEED;
     bool rmoving = std::abs(r.vx) + std::abs(r.vy) + std::abs(r.vz) >= SLEEP_SPEED;
+    bool lincoming = l.rest == "falling";
+    bool rincoming = r.rest == "falling";
+    bool unilateral_l = lincoming && !rincoming, unilateral_r = rincoming && !lincoming;
     // A merely not-yet-asleep resting body must not perpetually wake an
     // overlapping sleeper. Only meaningful motion propagates an awake island.
-    if (lawake && lmoving && !rawake)
+    if (lawake && lmoving && !rawake && !unilateral_l)
       wake(r);
-    else if (rawake && rmoving && !lawake)
+    else if (rawake && rmoving && !lawake && !unilateral_r)
       wake(l);
     int64_t d = std::max<int64_t>(1, isqrt(ds)), nx = divi(dx * FP, d),
             ny = divi(dy * FP, d),
             corr = divi(std::max<int64_t>(0, mn - d - SLOP) * BETA, FP),
-            il = divi(FP * FP, l.m), ir = divi(FP * FP, r.m),
+            il = unilateral_r ? 0 : divi(FP * FP, l.m),
+            ir = unilateral_l ? 0 : divi(FP * FP, r.m),
             sum = std::max<int64_t>(1, il + ir), lc = divi(corr * il, sum),
             rc = corr - lc;
     l.x -= divi(nx * lc, FP);
@@ -649,8 +658,10 @@ struct Kernel {
       }
     }
     if (changed) {
-      wake(l);
-      wake(r);
+      if (!unilateral_r)
+        wake(l);
+      if (!unilateral_l)
+        wake(r);
     }
     return true;
   }
@@ -742,7 +753,8 @@ struct Kernel {
       int64_t surface_z = q.y >= f ? g.top : deck_surface_z(q.y);
       String surface = q.y >= f ? String("platform") : String("deck");
       bool stable = q.z <= surface_z + SUPPORT_TOL;
-      int64_t support_top = surface_z, count = 0, cx = 0, cy = 0;
+      int64_t support_top = surface_z, count = 0, cx = 0, cy = 0,
+              support_position_x = 0, support_position_y = 0;
       bool centered = false, xlo = false, xhi = false, ylo = false, yhi = false,
            top_carried = false;
       Array support_ids;
@@ -769,7 +781,7 @@ struct Kernel {
               support_top = top;
               count = 0;
               centered = xlo = xhi = ylo = yhi = false;
-              cx = cy = 0;
+              cx = cy = support_position_x = support_position_y = 0;
               top_carried = false;
               support_ids = Array();
             }
@@ -782,6 +794,8 @@ struct Kernel {
             yhi |= dy >= -SUPPORT_MARGIN;
             cx += dx;
             cy += dy;
+            support_position_x += s.x;
+            support_position_y += s.y;
             bool carried = s.carried || s.support == "platform";
             top_carried |= carried;
           }
@@ -810,6 +824,11 @@ struct Kernel {
         q.carried =
             q.support == "platform" || (q.support == "body" && top_carried);
         q.support_ids = q.support == "body" ? support_ids : Array();
+        q.has_support_anchor = q.support == "body";
+        if (q.has_support_anchor) {
+          q.support_anchor_x = divi(support_position_x, count);
+          q.support_anchor_y = divi(support_position_y, count);
+        }
         q.rest = "resting";
         if (falling) {
           Dictionary e;
@@ -819,6 +838,10 @@ struct Kernel {
           e["support_root"] = q.support == "platform" || (q.support == "body" && top_carried) ? String("platform") : String("deck");
           bool first_support = bool(q.meta.get("inserted", false)) && !bool(q.meta.get("first_support_recorded", false));
           e["first_support"] = first_support;
+          String landing_quality = first_support ? (q.support == "body" ? String("supported_bad") : String("bed_level_good")) : String();
+          e["landing_quality"] = landing_quality;
+          if (first_support)
+            q.meta["landing_quality"] = landing_quality;
           e["fall_height"] = std::max<int64_t>(0, fall_start - support_top);
           e["impact_speed"] = impact_speed;
           e["impact_class"] = impact_speed >= HARD_IMPACT_SPEED ? String("hard") : String("soft");
@@ -844,6 +867,7 @@ struct Kernel {
           q.pending_deposit = true;
         q.support = "";
         q.support_ids = Array();
+        q.has_support_anchor = false;
         q.carried = false;
         q.rest = "falling";
         q.sleep_ticks = 0;
@@ -858,6 +882,75 @@ struct Kernel {
       }
     }
     return nestle_work;
+  }
+  void plinko_targets() {
+    if (g.targets.is_empty())
+      return;
+    for (int i = int(b.size()) - 1; i >= 0; --i) {
+      Body &q = b[i];
+      if (terminal(q) || q.kind != "coin" || q.rest != "falling" ||
+          std::abs(q.y - g.drop_y) > q.r)
+        continue;
+      for (int target_index = 0; target_index < g.targets.size(); ++target_index) {
+        Dictionary target = g.targets[target_index];
+        String target_id = target.get("id", "");
+        Dictionary last_capture = state.get("target_last_capture", Dictionary());
+        int64_t cooldown = std::max<int64_t>(0, target.get("cooldown_ticks", 0));
+        if (last_capture.has(target_id) && int64_t(state.get("tick", 0)) - int64_t(last_capture[target_id]) < cooldown)
+          continue;
+        int64_t mouth = std::max<int64_t>(1, target.get("mouth_radius", target.get("radius", 2200)));
+        int64_t dx = q.x - int64_t(target.get("x", 0));
+        int64_t dz = q.z - int64_t(target.get("z", 0));
+        if (dx * dx + dz * dz > mouth * mouth)
+          continue;
+        int64_t value = std::max<int64_t>(0, q.meta.get("value", 1));
+        state["cup_consumed_count"] = int64_t(state.get("cup_consumed_count", 0)) + 1;
+        state["cup_consumed_value"] = int64_t(state.get("cup_consumed_value", 0)) + value;
+        last_capture[target_id] = state.get("tick", 0);
+        state["target_last_capture"] = last_capture;
+        Dictionary e;
+        e["kind"] = "plinko_cup";
+        e["target_id"] = target_id;
+        e["body_id"] = q.id;
+        e["x"] = q.x;
+        e["z"] = q.z;
+        e["reward"] = target.get("reward", Dictionary());
+        e["metadata"] = q.meta.duplicate(true);
+        e["tick"] = state.get("tick", 0);
+        events.append(e);
+        b.erase(b.begin() + i);
+        break;
+      }
+    }
+  }
+  void advect_supported() {
+    for (Body &q : b) {
+      if (terminal(q) || q.support != "body" || q.carried || !q.has_support_anchor || q.support_ids.is_empty())
+        continue;
+      int64_t cx = 0, cy = 0, count = 0;
+      for (int id_index = 0; id_index < q.support_ids.size(); ++id_index) {
+        String wanted = q.support_ids[id_index];
+        for (const Body &support : b) {
+          if (support.id != wanted || terminal(support))
+            continue;
+          cx += support.x;
+          cy += support.y;
+          ++count;
+          break;
+        }
+      }
+      if (!count)
+        continue;
+      cx = divi(cx, count);
+      cy = divi(cy, count);
+      int64_t dx = cx - q.support_anchor_x, dy = cy - q.support_anchor_y;
+      q.x += dx;
+      q.y += dy;
+      q.support_anchor_x = cx;
+      q.support_anchor_y = cy;
+      if (dx || dy)
+        wake(q);
+    }
   }
   void exits() {
     for (int i = (int)b.size() - 1; i >= 0; --i) {
@@ -938,7 +1031,7 @@ struct Kernel {
     }
   }
   void add_drop(Object *rng, int64_t x, int64_t density,
-                const Dictionary &provenance = Dictionary()) {
+                const Dictionary &provenance = Dictionary(), bool bonus_origin = false) {
     if ((int64_t)b.size() >= g.ceiling) {
       state["refused_inserts"] = int64_t(state.get("refused_inserts", 0)) + 1;
       Dictionary e;
@@ -979,7 +1072,10 @@ struct Kernel {
       if (dx * dx + dy * dy <= wake_sq)
         wake(near);
     }
-    state["accepted_inserts"] = int64_t(state.get("accepted_inserts", 0)) + 1;
+    if (bonus_origin)
+      state["external_origin_count"] = int64_t(state.get("external_origin_count", 0)) + 1;
+    else
+      state["accepted_inserts"] = int64_t(state.get("accepted_inserts", 0)) + 1;
     Dictionary e;
     e["kind"] = "insert";
     e["body_id"] = q.id;
@@ -1008,7 +1104,8 @@ struct Kernel {
         Variant rv = config.get("rng", Variant());
         Object *rng = rv.get_type() == Variant::OBJECT ? (Object *)rv : nullptr;
         add_drop(rng, in.get("x", state.get("carriage_x", g.width / 2)),
-                 in.get("density", 1), in.get("provenance", Dictionary()));
+                 in.get("density", 1), in.get("provenance", Dictionary()),
+                 in.get("bonus_origin", false));
       } else if (k == "carriage") {
         Dictionary def = state.get("machine_definition", Dictionary());
         Dictionary apparatus = def.get("apparatus", Dictionary());
@@ -1101,6 +1198,13 @@ struct Kernel {
       r["rest_state"] = q.rest;
       r["support_kind"] = q.support;
       r["support_ids"] = q.support_ids;
+      if (q.has_support_anchor) {
+        r["support_anchor_x"] = q.support_anchor_x;
+        r["support_anchor_y"] = q.support_anchor_y;
+      } else {
+        r.erase("support_anchor_x");
+        r.erase("support_anchor_y");
+      }
       r["carried_sleep"] = q.carried;
       r["plate_blocked"] = q.plate_blocked;
       if (!q.peg_key.is_empty())
@@ -1154,6 +1258,7 @@ struct Kernel {
       integrate();
       int64_t gravity_work = std::max<int64_t>(0, energy() - gravity_before);
       int64_t peg_work = pegs();
+      plinko_targets();
       grid.rebuild(b);
       int64_t nestle_work = resolve_supports(newf, grid);
       for (int pass = 0; pass < PASSES; ++pass) {
@@ -1179,6 +1284,7 @@ struct Kernel {
             ++collisions;
         platform_work += static_contacts(statics, newf, delta);
       }
+      advect_supported();
       grid.rebuild(b);
       nestle_work += resolve_supports(newf, grid);
       for (Body &q : b)
@@ -1191,17 +1297,19 @@ struct Kernel {
       int64_t tick_tray = Array(state.get("tray_ledger", Array())).size();
       int64_t tick_gutter = Array(state.get("gutter_ledger", Array())).size();
       int64_t tick_collected = int64_t(state.get("collected_count", 0));
+      int64_t tick_cup_consumed = int64_t(state.get("cup_consumed_count", 0));
       int64_t tick_origin = int64_t(state.get("opening_body_count", 0)) +
                             int64_t(state.get("accepted_inserts", 0)) +
                             int64_t(state.get("external_origin_count", 0));
       conservation_ok &=
-          int64_t(b.size()) + tick_tray + tick_gutter + tick_collected == tick_origin;
+          int64_t(b.size()) + tick_tray + tick_gutter + tick_collected + tick_cup_consumed == tick_origin;
     }
     write();
     int64_t active = b.size(),
             tray = Array(state.get("tray_ledger", Array())).size(),
             gutter = Array(state.get("gutter_ledger", Array())).size(),
             collected = int64_t(state.get("collected_count", 0)),
+            cup_consumed = int64_t(state.get("cup_consumed_count", 0)),
             origin = int64_t(state.get("opening_body_count", 0)) +
                      int64_t(state.get("accepted_inserts", 0)) +
                      int64_t(state.get("external_origin_count", 0));
@@ -1212,6 +1320,7 @@ struct Kernel {
     inv["tray"] = tray;
     inv["gutter"] = gutter;
     inv["collected"] = collected;
+    inv["cup_consumed"] = cup_consumed;
     inv["origin"] = origin;
     inv["refused"] = state.get("refused_inserts", 0);
     state["last_invariants"] = inv;

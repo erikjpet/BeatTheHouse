@@ -22,7 +22,7 @@ Dictionary CoinPusherNativeCore::solver_contract() const {
 	value["state_version"] = 3;
 	value["fixed_hz"] = 60;
 	value["fixed_point_scale"] = 1000;
-	value["geometry_amendment"] = "6.2";
+	value["geometry_amendment"] = "6.3";
 	value["contact_normal"] = "radial_euclidean";
 	value["collision_passes"] = 6;
 	value["hard_body_ceiling"] = 600;

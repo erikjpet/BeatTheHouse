@@ -3,7 +3,8 @@ param(
     [string]$Platform = "Windows",
     [ValidateSet("template_debug", "template_release")]
     [string]$Target = "template_debug",
-    [string]$GodotPath = ""
+    [string]$GodotPath = "",
+    [string]$OutputPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -70,6 +71,9 @@ try {
     )
     if ($Platform -eq "Windows") {
         $arguments += @("use_mingw=yes", "use_llvm=yes", "mingw_prefix=$mingw")
+    }
+    if ($OutputPath) {
+        $arguments += "output_path=$OutputPath"
     }
     $env:BTH_NATIVE_SCONS_WHEEL = $wheel
     $env:BTH_NATIVE_SCONS_ARGUMENTS = ConvertTo-Json -Compress $arguments
