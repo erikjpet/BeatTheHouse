@@ -27,8 +27,8 @@ const GRAVITY := CoinPusherSolverScript.GRAVITY
 const HARD_IMPACT_SPEED := CoinPusherSolverScript.HARD_IMPACT_SPEED
 
 
-static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, opening_bodies: int = 0) -> Dictionary:
-	return CoinPusherSolverScript.create_machine(seed_rng, machine_definition, opening_bodies)
+static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, opening_bodies: int = 0, capture_opening_report: bool = false) -> Dictionary:
+	return CoinPusherSolverScript.create_machine(seed_rng, machine_definition, opening_bodies, capture_opening_report)
 
 
 static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1, provenance: Dictionary = {}, bonus_origin: bool = false) -> Dictionary:
