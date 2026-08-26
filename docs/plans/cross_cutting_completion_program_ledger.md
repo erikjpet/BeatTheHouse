@@ -737,3 +737,9 @@ their own detailed handoffs and test evidence.
   previously accepted `54d8083a`; static parser, harness-contract, project
   validator and diff checks pass. Fresh and recoverable backup caches remain
   intact, no runtime ran, and independent exact-head revert review is pending.
+- 2026-08-26: Independent exact-head review issued
+  `ACCEPT 90d87174199e6b6fad5c280171145cf4519dce89` with no P0-P3. The
+  reviewer confirmed normal revert history, clean status and an exact full-tree
+  match to accepted `54d8083a`; the restored Foundation blob is identical to
+  that accepted head and distinct from rejected `cddfb851`. Runtime remains
+  held while the replacement suite-runner strategy is diagnosed read-only.
