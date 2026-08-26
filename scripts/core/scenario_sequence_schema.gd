@@ -19,7 +19,7 @@ const FACT_TYPES := [
 const ALLOWED_SEQUENCE_KEYS := [
 	"schema_version", "local_state_schema", "phase_graph", "objectives",
 	"reentry_policy", "expiry", "cleanup", "aftermath", "mechanic_tags",
-	"sequence_signature", "owner_exceptions", "fact_subscriptions",
+	"sequence_signature", "owner_exceptions", "fact_subscriptions", "completion_contract",
 ]
 const ALLOWED_EXCEPTION_ROWS := [
 	"arrival_readable", "semantic_changes", "scenario_interaction", "action_boundaries",
@@ -39,7 +39,7 @@ const MAX_DATA_DEPTH := 12
 const MAX_TOTAL_VALUES := 4096
 const MAX_TEXT_LENGTH := 512
 const PHASE_KEYS := ["id", "label", "arrival_feedback", "exit_prompt", "terminal", "entry_conditions", "objective_ids", "advance_after_actions", "scene_ops", "interaction_ops", "actor_ops", "transition_ops", "branches"]
-const BRANCH_KEYS := ["id", "condition", "next_phase", "outcome"]
+const BRANCH_KEYS := ["id", "condition", "next_phase", "outcome", "objective_outcomes"]
 const CONDITION_KEYS := ["type", "command_id", "fact_type", "key", "value", "objective_id", "step_id", "outcome", "receipt_id"]
 const OBJECTIVE_KEYS := ["id", "label", "progress_label", "steps", "outcomes"]
 const STEP_KEYS := ["id", "label", "kind", "command_id", "fact_type"]
@@ -75,6 +75,7 @@ static func validate_definition(definition: Dictionary, operation_registry: Vari
 	_validate_aftermath(label, _dict(authored.get("aftermath", {})), reachable_outcomes, operation_registry, errors)
 	_validate_fact_subscriptions(label, _array(authored.get("fact_subscriptions", [])), operation_registry, errors)
 	_validate_tags_and_exceptions(label, authored, errors)
+	_validate_completion_contract(label, _dict(authored.get("completion_contract", {})), errors)
 	_validate_no_executable_strings(label, authored, errors)
 	return errors
 
@@ -153,6 +154,7 @@ static func normalized_signature(definition: Dictionary) -> Dictionary:
 			branches.append({
 				"condition": _normalized_condition_feature(condition),
 				"edge": "phase" if not str(branch.get("next_phase", "")).is_empty() else "outcome",
+				"objective_outcomes": _sorted_strings(_dict(branch.get("objective_outcomes", {})).values()),
 			})
 		branches.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
 		phase_features.append({
@@ -346,6 +348,8 @@ static func _validate_phase_graph(label: String, graph: Dictionary, operation_re
 			else:
 				branch_ids[branch_id] = phase_id
 			_validate_condition("%s phase %s branch" % [label, phase_id], _dict(branch.get("condition", {})), errors)
+			if branch.has("objective_outcomes") and typeof(branch.get("objective_outcomes")) != TYPE_DICTIONARY:
+				errors.append("%s phase %s branch %s objective_outcomes must be a dictionary." % [label, phase_id, branch_id])
 	var initial_id := str(graph.get("initial_phase", "")).strip_edges()
 	if initial_id.is_empty() or not ids.has(initial_id):
 		errors.append("%s initial_phase is missing or unknown: %s." % [label, initial_id])
@@ -591,7 +595,13 @@ static func _validate_cross_references(label: String, authored: Dictionary, reac
 		for condition_value in _array(phase_data.get("entry_conditions", [])):
 			_validate_condition_refs("%s phase %s entry" % [label, phase_id], _dict(condition_value), local_ids, objective_steps, reachable_outcomes, subscribed_facts, authored_receipts, errors)
 		for branch_value in _array(phase_data.get("branches", [])):
-			_validate_condition_refs("%s phase %s branch" % [label, phase_id], _dict(_dict(branch_value).get("condition", {})), local_ids, objective_steps, reachable_outcomes, subscribed_facts, authored_receipts, errors)
+			var branch := _dict(branch_value)
+			_validate_condition_refs("%s phase %s branch" % [label, phase_id], _dict(branch.get("condition", {})), local_ids, objective_steps, reachable_outcomes, subscribed_facts, authored_receipts, errors)
+			for objective_id_value in _dict(branch.get("objective_outcomes", {})).keys():
+				var objective_id := str(objective_id_value)
+				var objective_outcome := str(_dict(branch.get("objective_outcomes", {})).get(objective_id_value, ""))
+				if not objective_steps.has(objective_id) or not OBJECTIVE_OUTCOMES.has(objective_outcome):
+					errors.append("%s phase %s branch references invalid objective outcome %s/%s." % [label, phase_id, objective_id, objective_outcome])
 		for operation_value in _array(phase_data.get("interaction_ops", [])):
 			var interaction := _dict(_dict(operation_value).get("interaction", {}))
 			for action_value in _array(interaction.get("available_actions", _dict(operation_value).get("available_actions", []))):
@@ -649,11 +659,15 @@ static func _validate_action_refs(label: String, action: Dictionary, local_ids: 
 static func _validate_handler_input_refs(label: String, handler_id: String, inputs: Dictionary, local_ids: Dictionary, objective_steps: Dictionary, errors: Array) -> void:
 	if handler_id in ["set_local", "increment_local"] and not local_ids.has(str(inputs.get("key", ""))):
 		errors.append("%s handler references unknown local state %s." % [label, str(inputs.get("key", ""))])
-	elif handler_id == "complete_objective_step":
+	elif handler_id in ["complete_objective_step", "resolve_objective"]:
 		var objective_id := str(inputs.get("objective_id", ""))
-		var step_id := str(inputs.get("step_id", ""))
-		if not objective_steps.has(objective_id) or not _dict(objective_steps.get(objective_id, {})).has(step_id):
-			errors.append("%s handler references unknown objective step %s/%s." % [label, objective_id, step_id])
+		if handler_id == "resolve_objective":
+			if not objective_steps.has(objective_id) or not OBJECTIVE_OUTCOMES.has(str(inputs.get("outcome", ""))):
+				errors.append("%s handler references invalid objective outcome %s/%s." % [label, objective_id, str(inputs.get("outcome", ""))])
+		else:
+			var step_id := str(inputs.get("step_id", ""))
+			if not objective_steps.has(objective_id) or not _dict(objective_steps.get(objective_id, {})).has(step_id):
+				errors.append("%s handler references unknown objective step %s/%s." % [label, objective_id, step_id])
 
 
 static func _reachable_outcomes(graph: Dictionary) -> Array:
@@ -823,6 +837,14 @@ static func _validate_tags_and_exceptions(label: String, authored: Dictionary, e
 		_append_unknown_keys("%s owner exception" % label, exception, ["row", "reason", "owner", "approved_on"], errors)
 		if not ALLOWED_EXCEPTION_ROWS.has(str(exception.get("row", ""))) or str(exception.get("reason", "")).strip_edges().is_empty() or str(exception.get("owner", "")).strip_edges().is_empty() or str(exception.get("approved_on", "")).strip_edges().is_empty():
 			errors.append("%s owner exception must name row, reason, owner, and approved_on." % label)
+
+
+static func _validate_completion_contract(label: String, contract: Dictionary, errors: Array) -> void:
+	_append_unknown_keys("%s completion_contract" % label, contract, ALLOWED_EXCEPTION_ROWS, errors)
+	for row_value in ALLOWED_EXCEPTION_ROWS:
+		var row := str(row_value)
+		if not contract.has(row) or typeof(contract.get(row)) != TYPE_BOOL or not bool(contract.get(row, false)):
+			errors.append("%s completion_contract.%s must be explicitly true." % [label, row])
 
 
 static func _validate_fact_subscriptions(label: String, subscriptions: Array, operation_registry: Variant, errors: Array) -> void:

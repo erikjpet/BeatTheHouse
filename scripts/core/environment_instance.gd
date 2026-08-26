@@ -59,6 +59,7 @@ var scenario_exclusive_opportunity: Dictionary = {}
 var scenario_hook_flags: Dictionary = {}
 var scenario_sequence_state: Dictionary = {}
 var scenario_sequence_projection: Dictionary = {}
+var scenario_sequence_migration: Dictionary = {}
 var environment_layer_schema_version: int = 0
 var current_layer_id: String = ""
 var default_layer_id: String = ""
@@ -195,6 +196,7 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.scenario_hook_flags = _copy_dict(data.get("scenario_hook_flags", {}))
 	environment.scenario_sequence_state = ScenarioEngineScript.SequenceRuntimeScript.normalize_state(data.get("scenario_sequence_state", {}))
 	environment.scenario_sequence_projection = _copy_dict(data.get("scenario_sequence_projection", {}))
+	environment.scenario_sequence_migration = _copy_dict(data.get("scenario_sequence_migration", {}))
 	environment.environment_layer_schema_version = maxi(0, int(data.get("environment_layer_schema_version", 0)))
 	environment.current_layer_id = str(data.get("current_layer_id", "")).strip_edges()
 	environment.default_layer_id = str(data.get("default_layer_id", "")).strip_edges()
@@ -267,6 +269,8 @@ func to_dict() -> Dictionary:
 	if not scenario_sequence_state.is_empty():
 		result["scenario_sequence_state"] = scenario_sequence_state.duplicate(true)
 		result["scenario_sequence_projection"] = scenario_sequence_projection.duplicate(true)
+	if not scenario_sequence_migration.is_empty():
+		result["scenario_sequence_migration"] = scenario_sequence_migration.duplicate(true)
 	if environment_layer_schema_version > 0 and not current_layer_id.is_empty():
 		result["environment_layer_schema_version"] = environment_layer_schema_version
 		result["current_layer_id"] = current_layer_id

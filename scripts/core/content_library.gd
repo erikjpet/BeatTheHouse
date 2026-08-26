@@ -5,10 +5,12 @@ extends RefCounted
 
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const ScenarioSequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 
 const ENVIRONMENT_ARCHETYPES_PATH := "res://data/environments/archetypes.json"
 const ENVIRONMENT_SCENARIOS_PATH := "res://data/environments/scenarios.json"
+const ENVIRONMENT_SCENARIO_SEQUENCES_PATH := "res://data/environments/scenario_sequences"
 const GAMES_PATH := "res://data/games/games.json"
 const SCRATCH_TICKETS_PATH := "res://data/games/scratch_tickets.json"
 const ITEMS_PATH := "res://data/items/items.json"
@@ -43,6 +45,7 @@ static var _music_wav_info_cache_misses := 0
 
 var environment_archetypes: Array = []
 var environment_scenarios: Dictionary = {}
+var scenario_sequence_catalog: Dictionary = {}
 var games: Array = []
 var scratch_ticket_types: Array = []
 var items: Array = []
@@ -82,6 +85,7 @@ static func required_pack_paths() -> Dictionary:
 	return {
 		"environment_archetypes": ENVIRONMENT_ARCHETYPES_PATH,
 		"environment_scenarios": ENVIRONMENT_SCENARIOS_PATH,
+		"environment_scenario_sequences": ENVIRONMENT_SCENARIO_SEQUENCES_PATH,
 		"games": GAMES_PATH,
 		"scratch_ticket_types": SCRATCH_TICKETS_PATH,
 		"items": ITEMS_PATH,
@@ -115,6 +119,9 @@ func load(run_validation: bool = true) -> Dictionary:
 	validation_complete = false
 	environment_archetypes = _load_array(ENVIRONMENT_ARCHETYPES_PATH, true)
 	environment_scenarios = _load_dictionary(ENVIRONMENT_SCENARIOS_PATH, true)
+	scenario_sequence_catalog = ScenarioSequenceCatalogScript.load_catalog(ENVIRONMENT_SCENARIO_SEQUENCES_PATH)
+	for failure_value in scenario_sequence_catalog.get("failures", []):
+		_load_errors.append(str(failure_value))
 	games = _load_array(GAMES_PATH, true)
 	scratch_ticket_types = _load_array(SCRATCH_TICKETS_PATH, true)
 	items = _load_array(ITEMS_PATH, true)
@@ -152,6 +159,7 @@ func load(run_validation: bool = true) -> Dictionary:
 	return {
 		"environment_archetypes": environment_archetypes,
 		"environment_scenarios": environment_scenarios,
+		"scenario_sequence_catalog": scenario_sequence_catalog,
 		"games": games,
 		"scratch_ticket_types": scratch_ticket_types,
 		"items": items,
@@ -604,7 +612,13 @@ func environment_archetype(archetype_id: String) -> Dictionary:
 # Returns scenario definitions for an archetype in authored order.
 func scenarios_for_archetype(archetype_id: String) -> Array:
 	var value: Variant = environment_scenarios.get(archetype_id, [])
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for definition_value in value as Array:
+		if typeof(definition_value) == TYPE_DICTIONARY:
+			result.append(ScenarioSequenceCatalogScript.apply_overlay(definition_value as Dictionary, scenario_sequence_catalog))
+	return result
 
 
 # Finds one scenario definition without regenerating any environment state.
@@ -617,7 +631,7 @@ func scenario(scenario_id: String) -> Dictionary:
 			continue
 		for scenario_value in pool_value as Array:
 			if typeof(scenario_value) == TYPE_DICTIONARY and str((scenario_value as Dictionary).get("id", "")) == wanted:
-				return (scenario_value as Dictionary).duplicate(true)
+				return ScenarioSequenceCatalogScript.apply_overlay(scenario_value as Dictionary, scenario_sequence_catalog)
 	return {}
 
 
@@ -3232,6 +3246,7 @@ func _validate_scenario_definitions() -> void:
 	var service_ids := _ids_for(services)
 	var game_ids := _ids_for(games)
 	var item_ids := _ids_for(items)
+	var character_ids := _ids_for(characters)
 	var seen_ids: Dictionary = {}
 	for archetype_key_value in environment_scenarios.keys():
 		var archetype_key := str(archetype_key_value).strip_edges()
@@ -3246,7 +3261,7 @@ func _validate_scenario_definitions() -> void:
 			if typeof(scenario_value) != TYPE_DICTIONARY:
 				validation_errors.append("environment_scenarios %s[%d] must be a dictionary." % [archetype_key, index])
 				continue
-			var definition: Dictionary = scenario_value
+			var definition := ScenarioSequenceCatalogScript.apply_overlay(scenario_value as Dictionary, scenario_sequence_catalog)
 			var scenario_id := str(definition.get("id", "")).strip_edges()
 			var declared_archetype := str(definition.get("archetype_id", "")).strip_edges()
 			if scenario_id.is_empty():
@@ -3287,6 +3302,20 @@ func _validate_scenario_definitions() -> void:
 				elif int(advance_value) < 0 or (phase_index < phases.size() - 1 and int(advance_value) <= 0):
 					validation_errors.append("environment_scenarios %s phase[%d] advance_after_actions is not sane." % [scenario_id, phase_index])
 				_validate_scenario_mutations(scenario_id, "phase[%d].mutations" % phase_index, phase.get("mutations", {}), event_ids, service_ids, game_ids, item_ids)
+			if definition.has("sequence"):
+				validation_errors.append_array(ScenarioEngineScript.validate_sequence_definition(definition, {
+					"archetype_ids": archetype_ids,
+					"event_ids": event_ids,
+					"service_ids": service_ids,
+					"game_ids": game_ids,
+					"item_ids": item_ids,
+					"actor_ids": character_ids,
+					"archetype": environment_archetype(archetype_key),
+				}))
+	var overlay_ids := _as_dict(scenario_sequence_catalog.get("overlays", {})).keys()
+	for overlay_id_value in overlay_ids:
+		if not seen_ids.has(str(overlay_id_value)):
+			validation_errors.append("scenario sequence overlay references unknown legacy scenario: %s" % str(overlay_id_value))
 
 
 func _validate_scenario_mutations(scenario_id: String, label: String, value: Variant, event_ids: Dictionary, service_ids: Dictionary, game_ids: Dictionary, item_ids: Dictionary) -> void:
