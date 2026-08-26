@@ -787,3 +787,12 @@ their own detailed handoffs and test evidence.
   hostile contracts and project validation pass; pusher `30ee954d` remains
   cleanly disjoint. Runtime-only residual risk now requires two focused passes
   below 17.790 seconds with exact check IDs, then Contracts and full Smoke.
+- 2026-08-26: Runtime rejected reviewed focused-runner head `449b5ca6` before
+  any Foundation check executed. The exact focused stage was fast at 7.238
+  seconds but emitted three parse stderr issues: the tracked Lenders script has
+  a compile-time call to `_check_cage_environment_rework()` from the later Cage
+  sibling, so the reviewed five-file inheritance closure is not standalone.
+  No report/check IDs were produced; run 2, Contracts and Smoke correctly did
+  not start. The branch remains clean and host returned to zero. The candidate
+  must be reverted or superseded only after a fresh bounded dependency review;
+  unchanged reruns are forbidden.
