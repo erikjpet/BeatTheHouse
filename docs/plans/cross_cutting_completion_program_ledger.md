@@ -959,3 +959,16 @@ their own detailed handoffs and test evidence.
   project validation (49.4s) and diff checks pass; worktree/index are clean and
   zero runtime/compiler processes ran. Prior ignored full-runner output remains
   rejected non-evidence. A fresh nonauthor exact-head static review is active.
+- 2026-08-26: Independent exact-head review issued `REJECT cf8f5a03` with one
+  P2 and no P0/P1/P3. Implementation scope, ASTs, hostile contracts, diff and
+  project validation (~51s) all pass, and focused/full state separation,
+  routing, cross-state rejection and lifecycle wiring were nonblocking. The
+  permanent closure proof is incomplete: its accepted Blackjack roots are
+  hardcoded instead of derived in exact order from the actual `blackjack` arm
+  of `_check_target_game_suite`, and the dispatcher body is not independently
+  pinned. A future omitted fatal call could therefore evade the closure guard
+  if aggregate hashes were deliberately refreshed. Remediation is restricted
+  to the hostile contract: extract/assert the exact dispatcher-arm roots and
+  order, traverse from those derived roots, and pin the dispatcher body. No
+  runtime or broader edit is authorized; fresh self-review and exact-head
+  independent review are required.
