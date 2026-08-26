@@ -342,6 +342,8 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var entry_live_machine: Dictionary = entry_live_machines.get(entry_live_key, {}) if typeof(entry_live_machines.get(entry_live_key, {})) == TYPE_DICTIONARY else {}
 	var entry_live_session: Dictionary = entry_live_machine.get("live_session", {}) if typeof(entry_live_machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var entry_session_clock := int(entry_live_session.get("last_clock_msec", -1))
+	var entry_session_bodies: Variant = entry_live_session.get("presentation_current_bodies", [])
+	var entry_session_view_serial := int(entry_live_session.get("presentation_view_serial", -1))
 	var pre_action_tell_rung := int(pre_action_canvas_state.get("coin_pusher_tell_rung", -1))
 	var pre_action_locked := bool(pre_action_canvas_state.get("coin_pusher_locked", false))
 	var pre_action_preferences: Dictionary = probe.get("game_surface_ui_state") if typeof(probe.get("game_surface_ui_state")) == TYPE_DICTIONARY else {}
@@ -490,6 +492,13 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		"entry_clock_anchored": pre_action_surface_time >= 0 \
 				and entry_host_stamp == pre_action_surface_time \
 				and entry_session_clock == pre_action_surface_time,
+		# Entry must transfer the live session's already-built opening projection,
+		# not regenerate or republish another 300-body array before the first tick.
+		"entry_body_projection_reused": typeof(entry_session_bodies) == TYPE_ARRAY \
+				and (entry_session_bodies as Array).size() == int(pre_action_canvas_state.get("coin_pusher_body_count", -1)) \
+				and bool(pre_action_canvas_state.get("coin_pusher_entry_body_projection_reused", false)) \
+				and entry_session_view_serial == 0 \
+				and int(pre_action_canvas_state.get("coin_pusher_ticks_advanced", -1)) == 0,
 		"interpolation_alpha_bounded": float(action_canvas_state.get("coin_pusher_interpolation_alpha", -1.0)) >= 0.0 \
 				and float(action_canvas_state.get("coin_pusher_interpolation_alpha", 2.0)) <= 1.0,
 		"tell_rung_unchanged": int(action_canvas_state.get("coin_pusher_tell_rung", -2)) == pre_action_tell_rung,
@@ -628,6 +637,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			and success_stamp > surface_time_before \
 			and int(realtime_canvas_state.get("surface_time_msec", -1)) == success_stamp \
 			and int(realtime_canvas_state.get("coin_pusher_liveness_ticks", -1)) > liveness_before \
+			and int(realtime_canvas_state.get("coin_pusher_liveness_ticks", -1)) > 0 \
 			and realtime_ticks_advanced > 0 \
 			and realtime_phase_fp != pre_action_phase_fp \
 			and typeof(realtime_bodies) == TYPE_ARRAY and typeof(realtime_previous_bodies) == TYPE_ARRAY \

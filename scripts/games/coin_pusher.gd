@@ -540,6 +540,30 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	return patch
 
 
+func surface_realtime_entry_anchor_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary) -> Dictionary:
+	# Entry already built the complete 300-body surface from this live session.
+	# Anchor its clock without asking the realtime projector to publish those same
+	# bodies a second time. A missing/incomplete session fails back to the normal
+	# realtime path in FoundationMain.
+	if _machine_busy(environment) or str(current_surface_state.get("game_id", "")) != get_id() \
+			or int(current_surface_state.get("coin_pusher_body_count", 0)) <= 0:
+		return {}
+	var key := _live_key(run_state, environment)
+	if not _live_machines.has(key):
+		return {}
+	var machine: Dictionary = _live_machines[key]
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	if session.is_empty() or not bool(session.get("open", false)) or int(session.get("last_clock_msec", -1)) >= 0:
+		return {}
+	var advanced := CoinPusherLiveSessionScript.advance(machine, int(ui_state.get("surface_time_msec", 0)))
+	if int(advanced.get("ticks", -1)) != 0 or not (advanced.get("events", []) as Array).is_empty():
+		return {}
+	return {
+		"surface_realtime_state_refresh": true,
+		"coin_pusher_ticks_advanced": 0,
+	}
+
+
 func checkpoint_surface_ui_state(_ui_state: Dictionary, _run_state: RunState, environment: Dictionary) -> void:
 	var key := _live_key(_run_state, environment)
 	if not _live_machines.has(key):
@@ -916,7 +940,12 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), definition)
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
-	var body_views := CoinPusherSolverScript.body_views(simulation)
+	# `begin()` already created the authoritative opening projection. Reuse it on
+	# live entry; headless catalog reads without a session still project normally.
+	var body_views: Array = session.get("presentation_current_bodies", []) if typeof(session.get("presentation_current_bodies", [])) == TYPE_ARRAY else []
+	var body_projection_reused := not body_views.is_empty()
+	if body_views.is_empty() and not (simulation.get("bodies", []) as Array).is_empty():
+		body_views = CoinPusherSolverScript.body_views(simulation)
 	var variation_id := str(machine.get("variation_id", _variation_id()))
 	var feature_kind := "rider" if variation_id == "quarter_falls" else "puck" if variation_id == "jackpot_ridge" else "fragment"
 	var feature_views := _feature_views(machine, feature_kind)
@@ -948,6 +977,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_solver_version": int(simulation.get("version", 0)),
 		"coin_pusher_body_count": (simulation.get("bodies", []) as Array).size(),
 		"coin_pusher_bodies": body_views,
+		"coin_pusher_entry_body_projection_reused": body_projection_reused,
 		"coin_pusher_previous_bodies": session.get("presentation_previous_bodies", body_views),
 		"coin_pusher_presentation_view_serial": int(session.get("presentation_view_serial", 0)),
 		"coin_pusher_interpolation_alpha": clampf(float(int(session.get("accumulator_units", 0))) / 1000.0, 0.0, 1.0),
