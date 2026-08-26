@@ -188,3 +188,11 @@ their own detailed handoffs and test evidence.
   advanced to clean `4c57270b1532d69a1a02671dfe57eaa8c0880f03`.
   Independent delta review returned STATIC ACCEPT FOR RUNTIME with no new
   P0-P3 finding; focused and clean-terminal opening reruns remain pending.
+- 2026-08-26: Runtime showed that direct engine notification injection still
+  did not exercise the scripted headless visibility branch. The author replaced
+  the inadequate fixture-only approach with a generic visibility-state seam:
+  production notification handling delegates `is_visible_in_tree()` and a false
+  state cancels the existing captured hold. Exact head advanced to clean
+  `08e1f2fc2a0aecf70ba35ee3f0278d8ecb4cbfad`. Independent production-delta
+  review returned STATIC ACCEPT FOR RUNTIME with no new P0-P3 finding; the
+  focused suite is being rerun and prior evidence/board P3s remain open.
