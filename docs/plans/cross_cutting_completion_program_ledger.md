@@ -1105,3 +1105,15 @@ their own detailed handoffs and test evidence.
   2 is a later pusher-owned fail-fast at contract entry; approach 3 is a central
   native preflight, but it collides with active pusher `check_godot.ps1` work.
   No budget/assertion weakening or foreign/v3.10 binary copying is allowed.
+- 2026-08-26: Exact-f072 generic Windows debug native build passes in 485.6s
+  with locked Godot 4.6 (`89cea1439`), LLVM-MinGW 22.1.8, godot-cpp
+  `58d1de72` and SCons 4.10.1. Descriptor matches template SHA
+  `72EE625D...BC9861`; sole binary is 812,544 bytes, SHA
+  `3CC7567A...66FBCB79`, with no foreign/v3.10 output. Immediate native smoke
+  correctly red-stopped in 21.7s (`available=false`, `gdscript_v3`, one exact
+  backend failure) because the direct script launch preceded normal import and
+  `.godot/extension_list.cfg` was absent. Contract retry and Smoke were not
+  launched; exact tracked head remains clean and host returned to zero/HOLD.
+  This is a deterministic extension-registration lifecycle prerequisite, not a
+  flaky rerun: next safe step is normal import, require the extension list to
+  name the exact descriptor, then run one fresh native smoke before Contract.
