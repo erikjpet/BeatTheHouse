@@ -1621,9 +1621,7 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary, run_state: RunState, environment: Dictionary, rng: RngStream, result_msec: int = 0) -> Dictionary:
 	var table_stake := _session_stake(maxi(1, int(session.get("selected_stake", session.get("locked_stake", 1)))), session)
 	var tutorial_practice_protected := run_state != null \
-		and run_state.is_tutorial_run() \
-		and str(environment.get("archetype_id", "")) == "small_underground_casino" \
-		and not bool(table.get("tutorial_count_completed", false))
+		and run_state.blackjack_tutorial_peek_reprieve_eligible("peek_hole_card", environment)
 	var first_tutorial_warning := tutorial_practice_protected \
 		and not bool(run_state.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false))
 	# Every caught Peek before the real counting lesson is complete keeps the

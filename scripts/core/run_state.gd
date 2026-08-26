@@ -3009,11 +3009,32 @@ func blackjack_suspicion_delta_before_backoff(amount: int) -> int:
 	return mini(amount, BLACKJACK_BACKOFF_HEAT - suspicion_level())
 
 
+# Returns whether the live run, venue, table, and canonical resolved action still
+# qualify for Pal's protected tutorial Peek. Both Blackjack result emission and
+# generic Heat backoff enforcement use this predicate so the policy cannot drift.
+func blackjack_tutorial_peek_reprieve_eligible(action_id: String, environment: Dictionary = {}) -> bool:
+	if action_id != "peek_hole_card" or not is_tutorial_run():
+		return false
+	var source := current_environment if environment.is_empty() else environment
+	if str(source.get("archetype_id", "")) != TIER_TWO_UNDERGROUND_SOURCE_ID:
+		return false
+	var game_states := _copy_dict(source.get("game_states", {}))
+	var table_value: Variant = game_states.get("blackjack", null)
+	if typeof(table_value) != TYPE_DICTIONARY or (table_value as Dictionary).is_empty():
+		return false
+	return not bool((table_value as Dictionary).get("tutorial_count_completed", false))
+
+
 # Converts the first blackjack result at 90 Heat into a persistent location
 # backoff. The result seam calls this only after the canonical heat delta lands.
 func apply_blackjack_heat_backoff(result: Dictionary) -> Dictionary:
 	var game_id := str(result.get("game_id", result.get("source_id", "")))
-	if game_id != "blackjack" or suspicion_level() < BLACKJACK_BACKOFF_HEAT or current_environment.is_empty():
+	if game_id != "blackjack" \
+			or suspicion_level() < BLACKJACK_BACKOFF_HEAT \
+			or current_environment.is_empty():
+		return {}
+	if bool(result.get("blackjack_tutorial_peek_reprieve", false)) \
+			and blackjack_tutorial_peek_reprieve_eligible(str(result.get("action_id", ""))):
 		return {}
 	var game_states := _copy_dict(current_environment.get("game_states", {}))
 	var table := _copy_dict(game_states.get("blackjack", {}))

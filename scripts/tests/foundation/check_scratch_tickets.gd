@@ -87,6 +87,7 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_stock(game, failures)
 	_check_scratch_restock(game, failures)
 	_check_scratch_scalper(game, failures)
+	_check_scratch_practice_inventory(game, failures)
 	_check_scratch_collection_completion(game, failures)
 	_check_scratch_single_remaining_purchase(game, failures)
 	_check_scratch_rtp(game, failures)
@@ -1080,6 +1081,46 @@ func _check_scratch_scalper(game: GameModule, failures: Array) -> void:
 	var tutorial_hooks := game.environment_interactable_objects(tutorial_run, tutorial_environment)
 	if not _scratch_hook(tutorial_hooks, "scratch_ticket_scalper").is_empty():
 		failures.append("Scratch scalper intruded on the guided tutorial run.")
+
+
+func _check_scratch_practice_inventory(game: GameModule, failures: Array) -> void:
+	var practice_run: RunState = RunStateScript.new()
+	practice_run.start_new("SCRATCH-NON-TUTORIAL-PRACTICE-STOCK")
+	if practice_run.is_tutorial_run():
+		failures.append("Scratch practice-stock regression did not use a non-tutorial run.")
+		return
+	var practice_environment := _scratch_environment("scratch_non_tutorial_practice_stock")
+	practice_environment["local_narrative_flags"] = {"practice_session": true}
+	practice_environment["entered_game_clock_minutes"] = practice_run.game_clock_minutes
+	practice_run.current_environment = practice_environment
+	var machine: Dictionary = game.call("_ensure_machine_state", practice_run, practice_environment, true)
+	# Exercise the live refresh seam against a hostile stale encounter. Practice
+	# owns locked inventory even though its run is deliberately not a tutorial.
+	machine["scalper_present"] = true
+	machine["scalper_knows_schedule"] = true
+	machine["scalper_visit_token"] = "stale-practice-visit"
+	practice_environment["game_states"] = {"scratch_tickets": machine}
+	machine = game.call("_ensure_machine_state", practice_run, practice_environment, true)
+	var stock := _dict_array(machine.get("stock", []))
+	var stock_total := 0
+	var exact_rows := stock.size() == SCRATCH_IDS.size()
+	var stocked_type_ids := {}
+	for slot_value in stock:
+		var slot: Dictionary = slot_value
+		stocked_type_ids[str(slot.get("type_id", ""))] = true
+		var remaining := int(slot.get("remaining", -1))
+		var capacity := int(slot.get("capacity", -1))
+		stock_total += maxi(0, remaining)
+		exact_rows = exact_rows and remaining == 100 and capacity == 100
+	for type_id in SCRATCH_IDS:
+		exact_rows = exact_rows and stocked_type_ids.has(type_id)
+	var expected_visit_token := str(game.call("_scratch_visit_token", practice_run, practice_environment))
+	if not exact_rows or stock_total != 700:
+		failures.append("Scratch non-tutorial practice refresh did not preserve all seven locked 100/100 stock rows (rows=%d total=%d)." % [stock.size(), stock_total])
+	if bool(machine.get("scalper_present", false)) or bool(machine.get("scalper_knows_schedule", false)):
+		failures.append("Scratch scalper survived the non-tutorial practice refresh and could clear locked inventory.")
+	if expected_visit_token.is_empty() or str(machine.get("scalper_visit_token", "")) != expected_visit_token:
+		failures.append("Scratch practice scalper suppression did not preserve visit-token semantics.")
 
 
 func _scratch_hook(hooks: Array, hook_id: String) -> Dictionary:

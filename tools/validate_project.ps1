@@ -621,6 +621,47 @@ $foundationTestFiles += @(Get-ChildItem -LiteralPath (Join-Path $root "scripts/t
 $foundationTestFiles += @(Get-ChildItem -LiteralPath (Join-Path $root "scripts/tests/ui_scene") -Filter "*.gd" | ForEach-Object { Get-ProjectRelativePath $_.FullName })
 $foundationCheckFiles = @(Get-ChildItem -LiteralPath (Join-Path $root "scripts/tests/foundation") -Filter "*.gd" | ForEach-Object { Get-ProjectRelativePath $_.FullName })
 $uiSceneCheckFiles = @(Get-ChildItem -LiteralPath (Join-Path $root "scripts/tests/ui_scene") -Filter "*.gd" | ForEach-Object { Get-ProjectRelativePath $_.FullName })
+
+# Game surface modules render against the real canvas in production and the
+# compact SurfaceHarness in Foundation checks. Keep every directly reachable
+# surface/draw call represented in the harness so production API growth cannot
+# turn a Contract run into a late RefCounted method-not-found failure.
+$surfaceHarnessPath = Join-Path $root "scripts/tests/foundation/check_core_content.gd"
+$surfaceHarnessSource = [System.IO.File]::ReadAllText($surfaceHarnessPath)
+$surfaceHarnessBlock = [regex]::Match($surfaceHarnessSource, '(?ms)^class SurfaceHarness:\r?\n(?<body>.*?)(?=^[^\t\r\n])')
+if (-not $surfaceHarnessBlock.Success) {
+    $failures.Add("Could not locate the Foundation SurfaceHarness class body.")
+} else {
+    $surfaceHarnessMethods = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+    foreach ($methodMatch in [regex]::Matches($surfaceHarnessBlock.Groups['body'].Value, '(?m)^\tfunc\s+([A-Za-z0-9_]+)\s*\(')) {
+        [void]$surfaceHarnessMethods.Add($methodMatch.Groups[1].Value)
+    }
+    $requiredSurfaceMethods = New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.HashSet[string]]' ([System.StringComparer]::Ordinal)
+    $directSurfaceCallPattern = [regex]'\bsurface\s*\.\s*((?:surface|draw)_[A-Za-z0-9_]+)\s*\('
+    $dynamicSurfaceCallPattern = [regex]'\bsurface\s*\.\s*(?:call|has_method)\s*\(\s*["''](surface_[A-Za-z0-9_]+)["'']'
+    foreach ($gameScript in Get-ChildItem -LiteralPath (Join-Path $root "scripts/games") -Filter "*.gd" -File -Recurse) {
+        $gameSource = [System.IO.File]::ReadAllText($gameScript.FullName)
+        foreach ($callMatch in @($directSurfaceCallPattern.Matches($gameSource)) + @($dynamicSurfaceCallPattern.Matches($gameSource))) {
+            $methodName = $callMatch.Groups[1].Value
+            if (-not $requiredSurfaceMethods.ContainsKey($methodName)) {
+                $requiredSurfaceMethods[$methodName] = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+            }
+            [void]$requiredSurfaceMethods[$methodName].Add((Get-ProjectRelativePath $gameScript.FullName))
+        }
+    }
+    foreach ($methodName in @($requiredSurfaceMethods.Keys | Sort-Object)) {
+        if (-not $surfaceHarnessMethods.Contains($methodName)) {
+            $sources = @($requiredSurfaceMethods[$methodName] | Sort-Object)
+            $failures.Add("SurfaceHarness is missing game-called method $methodName (sources=$($sources -join ', ')).")
+        }
+    }
+    if (-not $surfaceHarnessSource.Contains('surface_add_invisible_hit(rect, action, index, false)')) {
+        $failures.Add("SurfaceHarness exact-invisible hits must disable touch-target expansion.")
+    }
+    if (-not $surfaceHarnessSource.Contains('return hovered_index if hovered_action == action else -1')) {
+        $failures.Add("SurfaceHarness hovered-index lookup must mirror GameSurfaceCanvas semantics.")
+    }
+}
 $forbiddenFoundationTestTokens = @(
     "RuntimeContentScript",
     "runtime_content.gd",
