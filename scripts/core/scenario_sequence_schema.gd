@@ -104,6 +104,7 @@ static func validate_definition(definition: Dictionary, operation_registry: Vari
 	_validate_cross_references(label, authored, reachable_outcomes, errors)
 	_validate_aftermath(label, _dict(authored.get("aftermath", {})), reachable_outcomes, operation_registry, errors)
 	_validate_fact_subscriptions(label, _array(authored.get("fact_subscriptions", [])), operation_registry, errors)
+	_validate_event_bridge_authorizers(label, authored, errors)
 	_validate_tags_and_exceptions(label, authored, errors)
 	_validate_completion_contract(label, _dict(authored.get("completion_contract", {})), definition, errors)
 	_validate_cross_family_identity_collisions(label, authored, errors)
@@ -737,6 +738,68 @@ static func _validate_handler_input_refs(label: String, handler_id: String, inpu
 			var step_id := str(inputs.get("step_id", ""))
 			if not objective_steps.has(objective_id) or not _dict(objective_steps.get(objective_id, {})).has(step_id):
 				errors.append("%s handler references unknown objective step %s/%s." % [label, objective_id, step_id])
+
+
+static func _validate_event_bridge_authorizers(label: String, authored: Dictionary, errors: Array) -> void:
+	var bridges: Dictionary = {}
+	var predicates: Array = []
+	var graph := _dict(authored.get("phase_graph", {}))
+	for phase_value in _array(graph.get("phases", [])):
+		var phase := _dict(phase_value)
+		for operation_value in _array(phase.get("interaction_ops", [])):
+			var operation := _dict(operation_value)
+			var interaction := _dict(operation.get("interaction", {}))
+			for action_value in _array(interaction.get("available_actions", operation.get("available_actions", []))):
+				var action := _dict(action_value)
+				if str(action.get("handler", "")) == "event_bridge":
+					_track_event_bridge(_dict(action.get("inputs", {})), bridges)
+		for condition_value in _array(phase.get("entry_conditions", [])):
+			_append_event_result_predicate(_dict(condition_value), predicates)
+		for branch_value in _array(phase.get("branches", [])):
+			_append_event_result_predicate(_dict(_dict(branch_value).get("condition", {})), predicates)
+	for subscription_value in _array(authored.get("fact_subscriptions", [])):
+		var subscription := _dict(subscription_value)
+		if str(subscription.get("fact_type", "")) == "event_result":
+			predicates.append(_dict(subscription.get("payload_equals", {})))
+		if str(subscription.get("handler", "")) == "event_bridge":
+			_track_event_bridge(_dict(subscription.get("inputs", {})), bridges)
+	for objective_value in _array(authored.get("objectives", [])):
+		for step_value in _array(_dict(objective_value).get("steps", [])):
+			var step := _dict(step_value)
+			if str(step.get("kind", "")) == "fact" and str(step.get("fact_type", "")) == "event_result":
+				predicates.append(_dict(step.get("payload_equals", {})))
+	var bridge_keys := bridges.keys()
+	bridge_keys.sort()
+	for bridge_key_value in bridge_keys:
+		var bridge := _dict(bridges.get(bridge_key_value, {}))
+		var authorized := false
+		for predicate_value in predicates:
+			if _is_exact_event_bridge_authorizer(_dict(predicate_value), str(bridge.get("event_id", "")), str(bridge.get("resolution_id", ""))):
+				authorized = true
+				break
+		if not authorized:
+			errors.append("%s event_bridge %s/%s requires an exact event_result authorizer with event_id, choice_id, resolution_id, resolved, and ok." % [label, str(bridge.get("event_id", "")), str(bridge.get("resolution_id", ""))])
+
+
+static func _track_event_bridge(inputs: Dictionary, bridges: Dictionary) -> void:
+	var event_id := str(inputs.get("event_id", "")).strip_edges()
+	var resolution_id := str(inputs.get("resolution_id", "")).strip_edges()
+	if not _valid_id(event_id) or not _valid_id(resolution_id):
+		return
+	bridges["%s::%s" % [event_id, resolution_id]] = {"event_id": event_id, "resolution_id": resolution_id}
+
+
+static func _append_event_result_predicate(condition: Dictionary, predicates: Array) -> void:
+	if str(condition.get("type", "")) == "fact" and str(condition.get("fact_type", "")) == "event_result":
+		predicates.append(_dict(condition.get("payload_equals", {})))
+
+
+static func _is_exact_event_bridge_authorizer(predicate: Dictionary, event_id: String, resolution_id: String) -> bool:
+	return str(predicate.get("event_id", "")) == event_id \
+		and str(predicate.get("resolution_id", "")) == resolution_id \
+		and predicate.has("choice_id") and typeof(predicate.get("choice_id")) == TYPE_STRING and not str(predicate.get("choice_id", "")).strip_edges().is_empty() \
+		and predicate.has("resolved") and typeof(predicate.get("resolved")) == TYPE_BOOL \
+		and predicate.has("ok") and typeof(predicate.get("ok")) == TYPE_BOOL
 
 
 static func _reachable_outcomes(graph: Dictionary) -> Array:
