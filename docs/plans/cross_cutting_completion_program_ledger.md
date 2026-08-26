@@ -568,3 +568,19 @@ their own detailed handoffs and test evidence.
   untracked audit files, clean diff check and zero Godot/compiler processes.
   `HOST RELEASE: BALANCE06_1` authorizes only its prompt-required serial audit
   and validation gates. Meta, pusher and depth remain held.
+- 2026-08-26: Balance's first smoke stopped before audit execution because the
+  new child tool redeclared inherited `DEFAULT_SEED_PREFIX`; the scoped owned
+  rename to `AUDIT_DEFAULT_SEED_PREFIX` passed static checks. Its immediate
+  retry then exposed an environmental preflight omission: the isolated worktree
+  had no `.godot` directory or global script-class cache, so the existing parent
+  probe and all global RunState/GameModule types were unresolved. No second code
+  defect or audit assertion ran. Balance retains the rename, makes no further
+  edit, and is initializing the project cache with canonical Godot before one
+  fresh smoke retry under the same exclusive slot.
+- 2026-08-26: Depth independent exact-head review `REJECT c04cc200` with two P1
+  findings and no P2: obstruction capture enables two scenario interactions and
+  cannot guarantee the required arrival state, while report validation accepts
+  any nonempty semantic-checkpoint list rather than the exact ordered/unique
+  21-checkpoint trace (the positive fixture contains only one). Static validation
+  still passed. Depth is making a bounded same-nine-file static remediation;
+  formal acceptance, host eligibility, merge and board changes remain withheld.
