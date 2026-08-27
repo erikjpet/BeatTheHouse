@@ -6,13 +6,17 @@ import process from "node:process";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 
+const args = parseArgs(process.argv.slice(2));
+if (boolArg(args.selfTestConsolePolicy ?? args["self-test-console-policy"] ?? false)) {
+  runConsolePolicySelfTest();
+  process.exit(0);
+}
+
 const workspacePlaywrightPackage = path.resolve(".tmp/l02_playwright/package.json");
 const requireFromPlaywrightInstall = fs.existsSync(workspacePlaywrightPackage)
   ? createRequire(pathToFileURL(workspacePlaywrightPackage))
   : createRequire(import.meta.url);
 const { chromium, firefox } = requireFromPlaywrightInstall("playwright");
-
-const args = parseArgs(process.argv.slice(2));
 const browserName = String(args.browser ?? "chrome");
 const url = String(args.url ?? "http://127.0.0.1:8060/?bth_perf=1&bth_perf_plan=l02&bth_perf_auto_quit=1");
 const outputPath = String(args.out ?? ".tmp/l02_baseline/web_report.json");
@@ -96,11 +100,7 @@ try {
   page.on("console", (message) => {
     const text = message.text();
     if (message.type() === "warning" || message.type() === "error" || text.includes("Blocking on the main thread")) {
-      const classification = message.type() === "error"
-        ? "error"
-        : text.includes("Blocking on the main thread")
-          ? "main_thread_blocking_warning"
-          : "warning";
+      const classification = classifyConsoleEntry(message.type(), text);
       startupConsole.push({ type: message.type(), classification, text, wall_msec: Date.now() - started });
     }
     if (text.startsWith("__BTH_READY_PAGE_MSEC__ ")) {
@@ -210,6 +210,43 @@ function boolArg(value) {
   }
   const raw = String(value ?? "").trim().toLowerCase();
   return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+}
+
+function classifyConsoleEntry(type, text) {
+  const messageType = String(type ?? "");
+  const messageText = String(text ?? "");
+  if (messageType === "error") {
+    return "error";
+  }
+  if (messageText.includes("Blocking on the main thread")) {
+    return "main_thread_blocking_warning";
+  }
+  if (messageType === "warning"
+      && messageText.includes("The AudioContext was not allowed to start")
+      && messageText.includes("after a user gesture")) {
+    return "expected_audio_autoplay_warning";
+  }
+  return "unclassified_warning";
+}
+
+function runConsolePolicySelfTest() {
+  const cases = [
+    ["warning", "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page.", "expected_audio_autoplay_warning"],
+    ["warning", "hostile unexpected warning", "unclassified_warning"],
+    ["log", "Blocking on the main thread is very dangerous. See https://emscripten.org/docs/porting/pthreads.html", "main_thread_blocking_warning"],
+    ["error", "hostile browser error", "error"],
+  ];
+  for (const [type, text, expected] of cases) {
+    const actual = classifyConsoleEntry(type, text);
+    if (actual !== expected) {
+      throw new Error(`Console policy self-test failed: expected ${expected}, got ${actual}.`);
+    }
+  }
+  const allowed = cases.filter(([type, text]) => classifyConsoleEntry(type, text) === "expected_audio_autoplay_warning");
+  if (allowed.length !== 1) {
+    throw new Error(`Console policy self-test failed: expected exactly one allowed warning, got ${allowed.length}.`);
+  }
+  console.log("Console policy self-test passed (expected autoplay only; hostile warning/error/blocking rejected).");
 }
 
 function safeJson(text) {

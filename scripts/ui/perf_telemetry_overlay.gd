@@ -418,24 +418,28 @@ func _run_coin_pusher_plan() -> void:
 		["coin_pusher_carriage_left", "coin_pusher_active_carriage"],
 		["coin_pusher_skill_stop", "coin_pusher_active_skill_stop"],
 		["coin_pusher_skill_stop", "coin_pusher_active_skill_release"],
-		["coin_pusher_collect", "coin_pusher_active_collect"],
 	]:
-		if str(action_value[0]) == "coin_pusher_collect" and not _seed_coin_pusher_collect_fixture(run_state, game):
-			mark_event("coin_pusher_collect_seed_failed")
-			dump_report()
-			await _quit_after_report_flush()
-			return
 		await _measure_coin_pusher_action(str(action_value[0]), str(action_value[1]), fixture)
+	# COLLECT receives a fresh authoritative fixture. Earlier action windows may
+	# legitimately move or consume bodies, so seeding their derivative live state
+	# cannot prove the binding 300-origin conservation law.
+	if not await _reinstall_coin_pusher_fixture(run_state, game):
+		mark_event("coin_pusher_collect_fixture_failed")
+		dump_report()
+		await _quit_after_report_flush()
+		return
+	var collect_fixture := _coin_pusher_fixture_identity(run_state, game)
+	mark_event("coin_pusher_collect_fixture_identity", collect_fixture)
+	if not _seed_coin_pusher_collect_fixture(run_state, game):
+		mark_event("coin_pusher_collect_seed_failed")
+		dump_report()
+		await _quit_after_report_flush()
+		return
+	await _measure_coin_pusher_action("coin_pusher_collect", "coin_pusher_active_collect", collect_fixture)
 	# The active-action sequence is allowed to consume or move fixture bodies.
 	# Reinstall and re-enter the identical durable 300-body fixture so reduced-
 	# motion evidence cannot silently measure a depleted derivative state.
-	app.back_to_environment()
-	var reduced_fixture_ready := await _wait_for_coin_pusher_exit()
-	if reduced_fixture_ready:
-		reduced_fixture_ready = _install_coin_pusher_fixture(run_state, game)
-	if reduced_fixture_ready:
-		reduced_fixture_ready = bool(app.call("enter_game", "coin_pusher"))
-	if not reduced_fixture_ready:
+	if not await _reinstall_coin_pusher_fixture(run_state, game):
 		mark_event("coin_pusher_reduced_fixture_failed")
 		dump_report()
 		await _quit_after_report_flush()
@@ -457,6 +461,18 @@ func _wait_for_coin_pusher_exit() -> bool:
 			return true
 		await get_tree().process_frame
 	return false
+
+
+func _reinstall_coin_pusher_fixture(run_state: RunState, game: GameModule) -> bool:
+	app.back_to_environment()
+	if not await _wait_for_coin_pusher_exit():
+		return false
+	if not _install_coin_pusher_fixture(run_state, game):
+		return false
+	if not bool(app.call("enter_game", "coin_pusher")):
+		return false
+	await _wait_frames(4)
+	return true
 
 
 func _coin_pusher_machine_definition(game: GameModule) -> Dictionary:
@@ -543,9 +559,11 @@ func _seed_coin_pusher_collect_fixture(run_state: RunState, game: GameModule) ->
 	app.call("_refresh")
 	mark_event("coin_pusher_collect_seed", {
 		"body_id": str(seeded_body.get("id", "")),
+		"origin_body_count": bodies.size() + tray.size(),
 		"tray_count": tray.size(),
 		"tray_value": 3,
 		"active_body_count": bodies.size(),
+		"conserved_body_count": bodies.size() + tray.size(),
 	})
 	return bodies.size() == COIN_PUSHER_FIXTURE_BODY_COUNT - 1 and tray.size() == 1
 

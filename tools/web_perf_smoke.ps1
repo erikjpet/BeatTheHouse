@@ -243,10 +243,10 @@ if ($Plan -eq "coin_pusher") {
     Assert-Condition -Condition (@($reportEnvelope.page_errors).Count -eq 0) -Message "Coin Pusher browser probe captured a page error." -Failures $failures
     Assert-Condition -Condition (@($reportEnvelope.request_failures).Count -eq 0) -Message "Coin Pusher browser probe captured a failed request." -Failures $failures
     Assert-Condition -Condition (@($reportEnvelope.failed_responses).Count -eq 0) -Message "Coin Pusher browser probe captured an HTTP failure response." -Failures $failures
-    $startupErrors = @($reportEnvelope.startup_console | Where-Object { [string]$_.type -eq "error" })
-    $unclassifiedStartupConsole = @($reportEnvelope.startup_console | Where-Object { [string]::IsNullOrWhiteSpace([string]$_.classification) })
+    $startupErrors = @($reportEnvelope.startup_console | Where-Object { [string]$_.type -eq "error" -or [string]$_.classification -eq "error" })
+    $unexpectedStartupConsole = @($reportEnvelope.startup_console | Where-Object { [string]$_.classification -ne "expected_audio_autoplay_warning" })
     Assert-Condition -Condition ($startupErrors.Count -eq 0) -Message "Coin Pusher browser probe captured a startup console error." -Failures $failures
-    Assert-Condition -Condition ($unclassifiedStartupConsole.Count -eq 0) -Message "Coin Pusher browser probe captured an unclassified startup warning/error." -Failures $failures
+    Assert-Condition -Condition ($unexpectedStartupConsole.Count -eq 0) -Message "Coin Pusher browser probe captured an unexpected or unclassified startup warning/error." -Failures $failures
     Assert-Condition -Condition ([int]$reportEnvelope.viewport.inner_width -gt 0 -and [int]$reportEnvelope.viewport.inner_height -gt 0) -Message "Coin Pusher browser viewport identity was missing." -Failures $failures
     Assert-Condition -Condition ([string]$report.build_identity.source_commit -eq $sourceCommit) -Message "Runtime source commit identity did not match the exported source commit." -Failures $failures
     Assert-Condition -Condition ([string]$report.build_identity.export_sha256 -eq $exportSha256) -Message "Runtime Web export identity did not match the served export." -Failures $failures
@@ -269,6 +269,18 @@ if ($Plan -eq "coin_pusher") {
         $reducedFixture = $reducedFixtureEvents[0].data
         Assert-Condition -Condition ([string]$reducedFixture.fixture_seed -eq [string]$fixture.fixture_seed -and [string]$reducedFixture.rng_namespace -eq [string]$fixture.rng_namespace -and [string]$reducedFixture.rng_fork -eq [string]$fixture.rng_fork) -Message "Coin Pusher reduced-motion reinstall did not use the identical deterministic fixture identity." -Failures $failures
         Assert-Condition -Condition ([int]$reducedFixture.body_count -eq 300 -and [string]$reducedFixture.variation_id -eq "quarter_falls") -Message "Coin Pusher reduced-motion reinstall did not re-enter the exact 300-body Quarter Falls fixture." -Failures $failures
+    }
+    $collectFixtureEvents = @($report.events | Where-Object { [string]$_.id -eq "coin_pusher_collect_fixture_identity" })
+    $collectSeedEvents = @($report.events | Where-Object { [string]$_.id -eq "coin_pusher_collect_seed" })
+    Assert-Condition -Condition ($collectFixtureEvents.Count -eq 1) -Message "Coin Pusher report did not contain exactly one COLLECT fixture reinstall identity event." -Failures $failures
+    Assert-Condition -Condition ($collectSeedEvents.Count -eq 1) -Message "Coin Pusher report did not contain exactly one COLLECT conservation seed event." -Failures $failures
+    if ($collectFixtureEvents.Count -eq 1) {
+        $collectFixture = $collectFixtureEvents[0].data
+        Assert-Condition -Condition ([int]$collectFixture.body_count -eq 300 -and [string]$collectFixture.variation_id -eq "quarter_falls") -Message "Coin Pusher COLLECT fixture did not begin from a fresh exact 300-body Quarter Falls fixture." -Failures $failures
+    }
+    if ($collectSeedEvents.Count -eq 1) {
+        $collectSeed = $collectSeedEvents[0].data
+        Assert-Condition -Condition ([int]$collectSeed.origin_body_count -eq 300 -and [int]$collectSeed.active_body_count -eq 299 -and [int]$collectSeed.tray_count -eq 1 -and [int]$collectSeed.conserved_body_count -eq 300) -Message "Coin Pusher COLLECT seed did not conserve the exact 300-origin fixture as 299 active bodies plus one tray body." -Failures $failures
     }
 
     if ($scenariosByName.ContainsKey("coin_pusher_idle")) {
@@ -341,6 +353,7 @@ if ($Plan -eq "coin_pusher") {
     }
     if ($scenariosByName.ContainsKey("coin_pusher_active_collect")) {
         $collect = $scenariosByName["coin_pusher_active_collect"].tags
+        Assert-Condition -Condition ([int]$collect.body_count_before + [int]$collect.tray_count_before -eq 300) -Message "Web COLLECT action did not execute from the exact 300-origin conserved fixture." -Failures $failures
         Assert-Condition -Condition ([int]$collect.tray_count_before -eq 1 -and [int]$collect.tray_value_before -eq 3) -Message "Web COLLECT did not begin from the meaningful seeded tray result." -Failures $failures
         Assert-Condition -Condition ([int]$collect.tray_count_after -eq 0 -and [int]$collect.tray_value_after -eq 0) -Message "Accepted Web COLLECT did not empty the seeded tray." -Failures $failures
         Assert-Condition -Condition ([int]$collect.bankroll_after -eq [int]$collect.bankroll_before + 3) -Message "Accepted Web COLLECT did not credit the seeded tray value." -Failures $failures
