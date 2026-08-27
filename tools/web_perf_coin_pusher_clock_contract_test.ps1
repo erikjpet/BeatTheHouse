@@ -47,6 +47,13 @@ $negativeChannelObservation.conservation = $validObservation.conservation.PSObje
 $negativeChannelObservation.conservation.gutter = -1
 $negativeChannelObservation.conservation.tray = 5
 Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $negativeChannelObservation)) -Message "Negative conservation channel was accepted."
+$missingZeroChannelObservation = $validObservation.PSObject.Copy()
+$missingZeroChannelObservation.conservation = $validObservation.conservation.PSObject.Copy()
+$missingZeroChannelObservation.conservation.PSObject.Properties.Remove("cup_consumed")
+Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $missingZeroChannelObservation)) -Message "Missing zero-valued conservation channel was accepted."
+$missingZeroBoundaryObservation = $validObservation.PSObject.Copy()
+$missingZeroBoundaryObservation.PSObject.Properties.Remove("boundary_tray_count")
+Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $missingZeroBoundaryObservation)) -Message "Missing zero-valued reinstall boundary field was accepted."
 
 $reducedBoundary = [pscustomobject]@{ body_count = 296; tray_count = 2; liveness_ticks = 48; conservation = $validObservation.conservation }
 $reducedFixture = [pscustomobject]@{ body_count = 300 }
@@ -104,5 +111,8 @@ $wrongAfterTerminal.conservation_after = $validCollect.conservation_after.PSObje
 $wrongAfterTerminal.conservation_after.collected = 2
 $wrongAfterTerminal.conservation_after.gutter = 1
 Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting -Tags $wrongAfterTerminal).valid) -Message "COLLECT post-window terminal-channel mutation was accepted."
+$missingCollectZeroBoundary = $validCollect.PSObject.Copy()
+$missingCollectZeroBoundary.PSObject.Properties.Remove("tray_count_at_accept")
+Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting -Tags $missingCollectZeroBoundary).valid) -Message "Missing zero-valued COLLECT boundary field was accepted."
 
 Write-Host "Coin Pusher Web clock contract self-test passed."
