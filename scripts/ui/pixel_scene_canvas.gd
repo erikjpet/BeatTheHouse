@@ -2283,13 +2283,13 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 			})
 	var ids: Dictionary = {}
 	for object_value in objects:
-		ids[str(_copy_dict(object_value).get("id", ""))] = true
-	var render_snapshot := _copy_dict(snapshot.get("scenario_render_snapshot", {}))
+		ids[str(_copy_dictionary(object_value).get("id", ""))] = true
+	var render_snapshot := _copy_dictionary(snapshot.get("scenario_render_snapshot", {}))
 	if not bool(render_snapshot.get("ok", false)):
 		objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
 		return objects
 	for stage_index in range(_copy_array(render_snapshot.get("active_stages", [])).size()):
-		var stage := _copy_dict(_copy_array(render_snapshot.get("active_stages", []))[stage_index])
+		var stage := _copy_dictionary(_copy_array(render_snapshot.get("active_stages", []))[stage_index])
 		var stage_id := str(stage.get("stage_id", "stage_%d" % stage_index))
 		var stage_object_id := "scenario:stage:%s" % stage_id
 		if ids.has(stage_object_id): continue
@@ -2303,7 +2303,7 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 		}]))
 		ids[stage_object_id] = true
 	for visual_value in _copy_array(render_snapshot.get("visual_objects", [])):
-		var visual := _copy_dict(visual_value)
+		var visual := _copy_dictionary(visual_value)
 		var object_id := str(visual.get("object_id", ""))
 		if object_id.is_empty() or ids.has(object_id) or not bool(visual.get("visible", true)):
 			continue
@@ -2389,8 +2389,6 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"available_actions": _copy_array(record.get("available_actions", [])),
 			"inline_actions": _copy_array(record.get("inline_actions", [])),
 			"confirm_action_id": str(record.get("confirm_action_id", "")),
-			"owner_namespace": str(record.get("owner_namespace", "")),
-			"stable_object_id": str(record.get("stable_object_id", "")),
 			"scenario_owner_namespace": str(record.get("scenario_owner_namespace", "")),
 			"scenario_stable_object_id": str(record.get("scenario_stable_object_id", "")),
 			"scenario_command_id": str(record.get("scenario_command_id", "")),
@@ -2401,7 +2399,6 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"behavior": str(record.get("behavior", "")),
 			"route_id": str(record.get("route_id", "")),
 			"route_points": _copy_array(record.get("route_points", [])),
-			"small_screen_rect": _copy_dict(record.get("small_screen_rect", {})),
 			"non_color_state": str(record.get("non_color_state", "")),
 			"z_order": int(record.get("z_order", 0)),
 			"z_order_explicit": bool(record.get("z_order_explicit", record.has("z_order"))),
@@ -3215,7 +3212,7 @@ func _activate_selected_info_action_by_index() -> bool:
 func _activate_selected_info_action_for_authored_input(event: InputEvent) -> bool:
 	var entries := _selected_info_action_entries_from_info(_selected_object_info())
 	for index in range(entries.size()):
-		var entry := _copy_dict(entries[index])
+		var entry := _copy_dictionary(entries[index])
 		var input_action := str(entry.get("input_action", "")).strip_edges()
 		if input_action.is_empty() or not InputMap.has_action(input_action):
 			continue
@@ -3243,14 +3240,14 @@ func keyboard_reachable_object_ids() -> Array:
 	var ids: Array = []
 	var candidates: Array = []
 	for object_value in _active_scene_objects():
-		var object_data := _copy_dict(object_value)
+		var object_data := _copy_dictionary(object_value)
 		if not bool(object_data.get("interactive", true)) or not bool(object_data.get("visible", true)):
 			continue
 		var object_id := str(object_data.get("id", "")).strip_edges()
 		if not object_id.is_empty(): candidates.append(object_data)
 	candidates.sort_custom(Callable(PixelSceneCanvas, "_sort_keyboard_objects"))
 	for candidate_value in candidates:
-		ids.append(str(_copy_dict(candidate_value).get("id", "")))
+		ids.append(str(_copy_dictionary(candidate_value).get("id", "")))
 	return ids
 
 

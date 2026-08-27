@@ -213,12 +213,13 @@ foreach ($requiredEvidenceSeam in @(
     }
 }
 foreach ($requiredObstructionAuthority in @(
-    '"scenario:scenario:delivery_event_gate"',
-    '"scenario:scenario:delivery_exit"',
+    '"scenario::delivery_event_gate"',
+    '"scenario::delivery_exit"',
     '["inspect_manifest"]',
     '["ignore_delivery", "refuse_sort"]',
-    '"workstation" if not expected_safe_exit else "exit"',
-    'emit_object_id.ends_with(expected_token_suffix)'
+    '"semantic_role", record.get("role", "")',
+    'action_origin_receipt_key',
+    'action_origin_fingerprint'
 )) {
     if (-not $scenarioProbeSupportSource.Contains($requiredObstructionAuthority)) {
         $failures.Add("Scenario obstruction support lost exact production target/action authority: $requiredObstructionAuthority")

@@ -2745,7 +2745,7 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	var applied := SequenceRuntimeScript.apply_command(initial, definition, prepare, {"available_funds": 10})
 	var applied_state := _dict(applied.get("state", {}))
 	var cached := _dict(_dict(applied_state.get("command_results", {})).get("depth:prepare", {}))
-	var exact_command_result_keys := ["changed", "command_id", "ok", "outcomes", "phase_id", "receipt_id", "replayed", "state", "status"]
+	var exact_command_result_keys := ["boundary_serial", "changed", "command_id", "cost", "ok", "outcomes", "phase_id", "receipt_id", "replayed", "state", "status"]
 	var applied_keys := applied.keys()
 	var cached_keys := cached.keys()
 	applied_keys.sort()
@@ -3802,6 +3802,11 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 	var sequence := SequenceSchemaScript.sequence(definition)
 	if SequenceSchemaScript.phase_ids(definition) != ["arrival", "sorting", "verification", "awaiting_stock", "resolution"]:
 		failures.append("Committed delivery-day phase graph identity/order changed.")
+	var declared_zones := _array(_dict(sequence.get("declared_targets", {})).get("zones", []))
+	if declared_zones != ["base::zone:background", "base::zone:center", "base::zone:exit_lane", "base::zone:foreground", "base::zone:left", "base::zone:right", "base::zone:service_lane"]:
+		failures.append("Committed delivery-day sequence does not declare every exact base zone used by its spatial operations.")
+	if _array(_dict(sequence.get("declared_targets", {})).get("anchors", [])) != ["base::anchor:delivery_clerk", "base::anchor:delivery_clerk_work", "base::anchor:delivery_manifest", "base::anchor:delivery_runner_route", "base::anchor:delivery_verification_shelf", "base::anchor:travel_1"]:
+		failures.append("Committed delivery-day sequence does not declare its exact base actor anchors.")
 	var authoring := _dict(definition.get("sequence_authoring", {}))
 	var references := _dict(authoring.get("references", {}))
 	if _array(references.get("events", [])) != [DELIVERY_EVENT_ID] \

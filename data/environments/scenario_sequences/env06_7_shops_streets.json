@@ -85,6 +85,7 @@
                   "object": {
                     "label": "Delivery manifest gate",
                     "role": "workstation",
+                    "anchor_id": "delivery_manifest",
                     "zone_id": "service_lane",
                     "bounds": {
                       "w": 64,
@@ -224,9 +225,9 @@
                   "actor": {
                     "label": "Delivery clerk",
                     "actor_id": "ada_corner_merchant",
-                    "anchor_id": "layout:shopkeeper:0",
+                    "anchor_id": "delivery_clerk",
                     "behavior": "work",
-                    "route_id": "layout:shopkeeper:0",
+                    "route_id": "delivery_clerk",
                     "pose": "checking_manifest"
                   }
                 },
@@ -239,9 +240,9 @@
                   "actor": {
                     "label": "Delivery runner",
                     "actor_id": "priya_travel_merchant",
-                    "anchor_id": "layout:travel:1",
+                    "anchor_id": "travel_1",
                     "behavior": "work",
-                    "route_id": "zone:left",
+                    "route_id": "delivery_runner_route",
                     "pose": "unloading_dolly"
                   }
                 }
@@ -388,7 +389,7 @@
                   "receipt_id": "sorting_reposition_clerk",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_clerk",
-                  "anchor_id": "layout:shopkeeper:0"
+                  "anchor_id": "delivery_clerk_work"
                 },
                 {
                   "family": "actor_ops",
@@ -490,6 +491,7 @@
                   "object": {
                     "label": "Delivery verification shelf",
                     "role": "workstation",
+                    "anchor_id": "delivery_verification_shelf",
                     "zone_id": "right",
                     "bounds": {
                       "w": 72,
@@ -699,7 +701,7 @@
                   "receipt_id": "awaiting_stock_clerk_repositions",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_clerk",
-                  "anchor_id": "layout:shopkeeper:0"
+                  "anchor_id": "delivery_clerk_work"
                 },
                 {
                   "family": "actor_ops",
@@ -1067,9 +1069,9 @@
                 "actor": {
                   "label": "Ada at the reopened shelf",
                   "actor_id": "ada_corner_merchant",
-                  "anchor_id": "layout:shopkeeper:0",
+                  "anchor_id": "delivery_clerk_work",
                   "behavior": "work",
-                  "route_id": "layout:shopkeeper:0",
+                  "route_id": "delivery_clerk",
                   "pose": "relieved"
                 }
               }
@@ -1214,9 +1216,9 @@
                 "actor": {
                   "label": "Ada holding the return slip",
                   "actor_id": "ada_corner_merchant",
-                  "anchor_id": "layout:shopkeeper:0",
+                  "anchor_id": "delivery_clerk_work",
                   "behavior": "watch",
-                  "route_id": "layout:shopkeeper:0",
+                  "route_id": "delivery_clerk",
                   "pose": "watching_return"
                 }
               }
@@ -1337,7 +1339,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "eedfb859d3859f32b086a2f74d0e9e6e886732ca59fc74eb288e8f88ef08b351",
+  "sequence_signature": "741dd575dd34d10c8dc7b7f330843c770f003fefe77f684e9cf5545a1954d2e0",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1352,8 +1354,23 @@
             "base::world:gas_station_casino",
             "base::world:pawn_shop"
           ],
-          "anchors": [],
-          "zones": []
+          "anchors": [
+            "base::anchor:delivery_clerk",
+            "base::anchor:delivery_clerk_work",
+            "base::anchor:delivery_manifest",
+            "base::anchor:delivery_runner_route",
+            "base::anchor:delivery_verification_shelf",
+            "base::anchor:travel_1"
+          ],
+          "zones": [
+            "base::zone:background",
+            "base::zone:center",
+            "base::zone:exit_lane",
+            "base::zone:foreground",
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:service_lane"
+          ]
         },
         "fact_subscriptions": [
           {

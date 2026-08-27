@@ -256,6 +256,8 @@ static func _rebuild_receipted_semantic_mutations(state_value: Dictionary, defin
 	errors.append_array(_copy_array(expiry_validation.get("errors", [])))
 	var visit_validation := _validated_visit_records(state)
 	errors.append_array(_copy_array(visit_validation.get("errors", [])))
+	var delivery_validation := _validated_event_request_deliveries(state)
+	errors.append_array(_copy_array(delivery_validation.get("errors", [])))
 	if not errors.is_empty(): return {"ok": false, "errors": errors}
 	var causal_records := _copy_array(cause_validation.get("ordered_records", []))
 	causal_records.append_array(_copy_array(expiry_validation.get("ordered_records", [])))
@@ -268,7 +270,7 @@ static func _rebuild_receipted_semantic_mutations(state_value: Dictionary, defin
 	var replay := SequenceRuntimeScript.initial_state(definition, str(state.get("node_id", "")), str(state.get("seed_token", "")), host_semantics)
 	if replay.is_empty() or str(replay.get("status", "")) == SequenceRuntimeScript.STATUS_CLEANED:
 		return {"ok": false, "errors": ["scenario causal replay could not initialize trusted host semantics"]}
-	var replay_result := _replay_causal_records(replay, definition, causal_records, _copy_array(cause_validation.get("fact_batch_records", [])))
+	var replay_result := _replay_causal_records(replay, definition, causal_records, _copy_array(cause_validation.get("fact_batch_records", [])), _copy_array(delivery_validation.get("history", [])), _copy_array(delivery_validation.get("receipts", [])))
 	if not bool(replay_result.get("ok", false)):
 		return {"ok": false, "errors": _copy_array(replay_result.get("errors", []))}
 	replay = _copy_dict(replay_result.get("state", replay))
@@ -284,6 +286,23 @@ static func _rebuild_receipted_semantic_mutations(state_value: Dictionary, defin
 	semantic["transition_queue"] = []
 	replay["semantic_state"] = semantic
 	return {"ok": true, "state": replay, "errors": []}
+
+
+static func _validated_event_request_deliveries(state: Dictionary) -> Dictionary:
+	var errors: Array = []
+	var history := _copy_array(state.get("event_request_history", []))
+	var receipts := _copy_array(state.get("event_request_delivery_receipts", []))
+	var seen: Dictionary = {}
+	if history.size() != receipts.size():
+		errors.append("scenario event-request delivery history and receipts differ in size")
+	for index in range(history.size()):
+		var request := _copy_dict(history[index])
+		var request_id := str(request.get("request_id", "")).strip_edges()
+		if request_id.is_empty() or index >= receipts.size() or typeof(receipts[index]) != TYPE_STRING or str(receipts[index]) != request_id or seen.has(request_id):
+			errors.append("scenario event-request delivery history is not exactly authenticated by ordered receipts")
+			continue
+		seen[request_id] = true
+	return {"history": history, "receipts": receipts, "errors": errors}
 
 
 static func _validated_cause_records(state: Dictionary, definition: Dictionary, host_semantics: Dictionary) -> Dictionary:
@@ -416,8 +435,12 @@ static func _validated_expiry_boundary_records(state: Dictionary, definition: Di
 	return {"ordered_records": ordered_records, "errors": errors}
 
 
-static func _replay_causal_records(initial: Dictionary, definition: Dictionary, causal_records: Array, fact_batch_records: Array) -> Dictionary:
+static func _replay_causal_records(initial: Dictionary, definition: Dictionary, causal_records: Array, fact_batch_records: Array, delivered_history: Array = [], delivery_receipts: Array = []) -> Dictionary:
 	var state := initial.duplicate(true)
+	var initial_delivery_restore := _restore_replayed_event_request_deliveries(state, delivered_history, delivery_receipts)
+	if not bool(initial_delivery_restore.get("ok", false)):
+		return {"ok": false, "state": initial, "errors": _copy_array(initial_delivery_restore.get("errors", []))}
+	state = _copy_dict(initial_delivery_restore.get("state", state))
 	var record_index := 0
 	var expected_fact_batch_ordinal := 0
 	while record_index < causal_records.size():
@@ -450,6 +473,10 @@ static func _replay_causal_records(initial: Dictionary, definition: Dictionary, 
 			if not bool(flushed.get("ok", false)):
 				return {"ok": false, "state": initial, "errors": ["scenario causal replay rejected a journaled fact batch: %s" % JSON.stringify(flushed.get("errors", []))]}
 			state = _copy_dict(flushed.get("state", state))
+			var fact_delivery_restore := _restore_replayed_event_request_deliveries(state, delivered_history, delivery_receipts)
+			if not bool(fact_delivery_restore.get("ok", false)):
+				return {"ok": false, "state": initial, "errors": _copy_array(fact_delivery_restore.get("errors", []))}
+			state = _copy_dict(fact_delivery_restore.get("state", state))
 			var replayed_batches := _copy_array(state.get("fact_flush_batch_records", []))
 			if replayed_batches.is_empty() or SequenceRuntimeScript.content_fingerprint(replayed_batches.back()) != SequenceRuntimeScript.content_fingerprint(batch):
 				return {"ok": false, "state": initial, "errors": ["scenario causal replay did not reproduce the exact authenticated fact batch delimiter"]}
@@ -468,9 +495,45 @@ static func _replay_causal_records(initial: Dictionary, definition: Dictionary, 
 		if not bool(result.get("ok", false)):
 			return {"ok": false, "state": initial, "errors": ["scenario causal replay rejected a journaled %s: %s" % [kind, JSON.stringify(result.get("errors", []))]]}
 		state = _copy_dict(result.get("state", state))
+		var delivery_restore := _restore_replayed_event_request_deliveries(state, delivered_history, delivery_receipts)
+		if not bool(delivery_restore.get("ok", false)):
+			return {"ok": false, "state": initial, "errors": _copy_array(delivery_restore.get("errors", []))}
+		state = _copy_dict(delivery_restore.get("state", state))
 		record_index += 1
 	if expected_fact_batch_ordinal != fact_batch_records.size():
 		return {"ok": false, "state": initial, "errors": ["scenario causal replay did not consume every authenticated fact batch delimiter"]}
+	if SequenceRuntimeScript.content_fingerprint(state.get("event_request_history", [])) != SequenceRuntimeScript.content_fingerprint(delivered_history) or SequenceRuntimeScript.content_fingerprint(state.get("event_request_delivery_receipts", [])) != SequenceRuntimeScript.content_fingerprint(delivery_receipts):
+		return {"ok": false, "state": initial, "errors": ["scenario causal replay did not restore every authenticated event-request delivery"]}
+	return {"ok": true, "state": state, "errors": []}
+
+
+static func _restore_replayed_event_request_deliveries(state_value: Dictionary, delivered_history: Array, delivery_receipts: Array) -> Dictionary:
+	var state := state_value.duplicate(true)
+	var restored_history := _copy_array(state.get("event_request_history", []))
+	var restored_receipts := _copy_array(state.get("event_request_delivery_receipts", []))
+	if restored_history.size() != restored_receipts.size() or restored_history.size() > delivered_history.size():
+		return {"ok": false, "state": state_value, "errors": ["scenario replayed event-request delivery prefix is invalid"]}
+	var queue := _copy_array(state.get("event_request_queue", []))
+	while restored_history.size() < delivered_history.size():
+		var index := restored_history.size()
+		var expected := _copy_dict(delivered_history[index])
+		var expected_id := str(delivery_receipts[index]) if index < delivery_receipts.size() else ""
+		var queue_index := -1
+		for candidate_index in range(queue.size()):
+			if str(_copy_dict(queue[candidate_index]).get("request_id", "")) == expected_id:
+				queue_index = candidate_index
+				break
+		if queue_index < 0:
+			break
+		var replayed_request := _copy_dict(queue[queue_index])
+		if SequenceRuntimeScript.content_fingerprint(replayed_request) != SequenceRuntimeScript.content_fingerprint(expected):
+			return {"ok": false, "state": state_value, "errors": ["scenario replayed event request differs from its authenticated delivery history"]}
+		queue.remove_at(queue_index)
+		restored_history.append(expected)
+		restored_receipts.append(expected_id)
+	state["event_request_queue"] = queue
+	state["event_request_history"] = restored_history
+	state["event_request_delivery_receipts"] = restored_receipts
 	return {"ok": true, "state": state, "errors": []}
 
 
@@ -899,6 +962,7 @@ static func _clear_environment_sequence(environment: Dictionary) -> void:
 		"scenario_sequence_migration", "scenario_sequence_definition",
 		"scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids",
 		"scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers",
+		"scenario_sequence_base_layout_object_rects",
 		"scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority",
 		"scenario_layout_audit", "scenario_layout_authority_digest",
 	]:
@@ -1001,6 +1065,8 @@ static func _capture_sequence_baseline(environment: Dictionary) -> void:
 		environment["scenario_sequence_base_travel_hooks"] = _string_array(environment.get("travel_hooks", []))
 	if not environment.has("scenario_sequence_base_game_modifiers"):
 		environment["scenario_sequence_base_game_modifiers"] = _copy_dict(environment.get("scenario_game_modifiers", {}))
+	if not environment.has("scenario_sequence_base_layout_object_rects"):
+		environment["scenario_sequence_base_layout_object_rects"] = _copy_dict(_copy_dict(environment.get("layout", {})).get("object_rects", {}))
 
 
 static func _materialize_sequence_services_games_routes(environment: Dictionary, projection: Dictionary) -> void:
@@ -1085,6 +1151,8 @@ static func validate_sequence_definition(definition: Dictionary, references: Dic
 			"archetype_id": archetype_id,
 			"world_node_id": "validation_%s" % scenario_id,
 			"layout": _copy_dict(archetype.get("layout", {})),
+			"semantic_zones": _copy_dict(archetype.get("semantic_zones", {})),
+			"semantic_anchors": _copy_dict(archetype.get("semantic_anchors", {})),
 			"travel_hooks": _copy_array(archetype.get("travel_hooks", [])),
 			"next_archetypes": _copy_array(archetype.get("next_archetypes", [])),
 		}
@@ -1151,7 +1219,11 @@ static func _sequence_operations(definition: Dictionary) -> Array:
 
 static func _sequence_anchor_exists(archetype: Dictionary, anchor_kind: String, anchor: String) -> bool:
 	if anchor_kind == "zone_id":
+		if _copy_dict(archetype.get("semantic_zones", {})).has(anchor):
+			return true
 		return anchor in ["left", "right", "center", "foreground", "background", "exit_lane", "service_lane"]
+	if _copy_dict(archetype.get("semantic_anchors", {})).has(anchor):
+		return true
 	var parts := anchor.split(":", false)
 	if parts.size() != 3 or str(parts[0]) != "layout" or not str(parts[2]).is_valid_int():
 		return false

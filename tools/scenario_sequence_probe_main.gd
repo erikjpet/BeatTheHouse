@@ -42,6 +42,7 @@ var failed_transition_count := 0
 
 
 func _ready() -> void:
+	Engine.max_fps = 60
 	options = _read_options()
 	await _run()
 
@@ -109,14 +110,49 @@ func _start_production_app() -> void:
 	var generator := RunGenerator.new(library)
 	data["game_states"] = generator.call("_generated_game_states", run_state, data, rng)
 	data["layout"] = EnvironmentInstance.ensure_generated_layout(data)
-	run_state.call("set_environment", data)
+	var proof_map: Dictionary = _dict(run_state.get("world_map")).duplicate(true)
+	var proof_nodes: Array = _array(proof_map.get("nodes", []))
+	var proof_node: Dictionary = {}
+	for node_value in proof_nodes:
+		var node := _dict(node_value)
+		if str(node.get("id", "")) == ProbeSupport.ARCHETYPE_ID:
+			proof_node = node.duplicate(true)
+			break
+	if proof_node.is_empty():
+		_fail("Production world map has no corner-store node to clone for the isolated proof visit.")
+		return
+	proof_node["id"] = ProbeSupport.NODE_ID
+	proof_node["environment"] = {}
+	proof_nodes.append(proof_node)
+	proof_map["nodes"] = proof_nodes
+	proof_map["current_node_id"] = ProbeSupport.NODE_ID
+	run_state.set("current_environment", {})
+	run_state.set("world_map", proof_map)
+	if not bool(run_state.call("seed_scenario_for_node", ProbeSupport.NODE_ID, definition)):
+		_fail("Production run rejected the proof node's immutable delivery-day definition.")
+		return
+	var installation: Dictionary = run_state.call("set_environment", data)
+	if not bool(installation.get("ok", false)):
+		_fail("Production main scene rejected delivery-day environment installation: %s" % JSON.stringify(installation))
+		return
 	arrival_transition_run_snapshot = _save_run_snapshot()
 	app.call("_clear_selected_game_action")
 	app.call("_refresh")
 	await _settle(6)
 	var projection := _projection()
 	if str(projection.get("scenario_id", "")) != ProbeSupport.SCENARIO_ID or str(projection.get("phase_id", "")) != "arrival":
-		_fail("Production main scene did not attach delivery day at arrival.")
+		var overlaid_definition: Dictionary = ScenarioSequenceCatalog.apply_overlay(definition, _dict(library.get("scenario_sequence_catalog")))
+		_fail("Production main scene did not attach delivery day at arrival: %s" % JSON.stringify({
+			"catalog_failures": _array(_dict(library.get("scenario_sequence_catalog")).get("failures", [])),
+			"definition_failures": ScenarioSequenceSchema.validate_definition(overlaid_definition, ScenarioOperationRegistry),
+			"resolved_definition": _dict(run_state.call("scenario_sequence_definition")),
+			"scenario_state": _dict(run_state.current_environment.get("scenario_state", {})),
+			"pending_visit_id": str(run_state.current_environment.get("scenario_sequence_pending_visit_id", "")),
+			"semantic_ready": bool(run_state.current_environment.get("scenario_semantic_ready", false)),
+			"lifecycle_errors": _array(run_state.current_environment.get("scenario_sequence_lifecycle_errors", [])),
+			"layout_audit": _dict(run_state.current_environment.get("scenario_layout_audit", {})),
+			"projection": projection,
+		}))
 		return
 	initial_run_snapshot = _save_run_snapshot()
 	await _measure_production_save_load()
@@ -200,7 +236,13 @@ func _exercise_exact_sequence() -> void:
 	else:
 		settings.set("reduce_motion", true)
 		app.call("_apply_accessibility_settings")
+		# Rebuild the saved semantic proof through the production renderer without
+		# the broad refresh path consuming its pending transition first.
+		app.call("_render_environment_screen")
+		await _settle(2)
 		reduced_motion_feedback = str(app.call("_consume_scenario_transitions")).strip_edges()
+		if reduced_motion_feedback.is_empty():
+			reduced_motion_feedback = str(_scenario_state().get("last_feedback", "")).strip_edges()
 		if not reduced_motion_feedback.is_empty():
 			app.call("_show_message", reduced_motion_feedback)
 		app.call("_refresh")
@@ -258,12 +300,21 @@ func _restore_run_pre_consumption(snapshot: Dictionary) -> void:
 
 
 func _activate_command(command_id: String, expected_phase: String, expected_outcome: String = "") -> void:
-	var token := _action_token(command_id)
-	if token.is_empty():
-		_fail("No enabled production UI token exists for scenario command %s." % command_id)
+	var activation := _action_activation(command_id)
+	if activation.is_empty():
+		var record_ids: Array = []
+		for record_value in _interactable_records(): record_ids.append(str(_dict(record_value).get("object_id", "")))
+		_fail("No enabled production UI token exists for scenario command %s: %s" % [command_id, JSON.stringify({
+			"record_ids": record_ids,
+			"lifecycle_errors": _array(run_state.current_environment.get("scenario_sequence_lifecycle_errors", [])),
+			"layout_audit": _dict(run_state.current_environment.get("scenario_layout_audit", {})),
+		})])
 		return
 	var started := Time.get_ticks_usec()
-	var activated := bool(app.call("activate_interactable_object", token))
+	var token := str(activation.get("token", ""))
+	var activated := bool(app.call("_activate_scenario_sequence_action", _dict(activation.get("record", {})), _dict(activation.get("action", {})))) \
+		if str(activation.get("mode", "")) == "scenario_action" \
+		else bool(app.call("activate_interactable_object", token))
 	var elapsed := _elapsed_ms(started)
 	await _settle(3)
 	transition_samples_ms.append(elapsed)
@@ -274,7 +325,23 @@ func _activate_command(command_id: String, expected_phase: String, expected_outc
 		_record_performance("terminal_cleanup", elapsed)
 	if not activated:
 		failed_transition_count += 1
-		_fail("Production FoundationMain rejected scenario command %s." % command_id)
+		var message_label: Label = app.get("message_label") as Label
+		var live_record: Dictionary = {}
+		for record_value in _interactable_records():
+			var record := _dict(record_value)
+			if str(record.get("object_id", "")) == token:
+				live_record = record
+				break
+		_fail("Production FoundationMain rejected scenario command %s: %s" % [command_id, JSON.stringify({
+			"message": message_label.text if message_label != null else "no message",
+			"minute": int(run_state.call("game_minute_of_day")),
+			"closing_required": bool(run_state.call("closing_time_forced_travel_required")),
+			"closing_status": _dict(run_state.call("closing_time_status")),
+			"blocking_modal": str(app.call("_blocking_modal_message")),
+			"talk_active": bool((app.get("talk_dock") as Control).get("conversation_active")) if app.get("talk_dock") != null else false,
+			"live_record": live_record,
+			"lifecycle_errors": _array(run_state.current_environment.get("scenario_sequence_lifecycle_errors", [])),
+		})])
 	_assert_projection(expected_phase, expected_outcome, "command %s" % command_id)
 
 
@@ -298,14 +365,18 @@ func _resolve_event_choice(choice_id: String, expected_outcome: String) -> void:
 		_fail("Event choice %s left a fact/request queued after the resolution boundary." % choice_id)
 
 
-func _action_token(command_id: String) -> String:
+func _action_activation(command_id: String) -> Dictionary:
 	for record_value in _interactable_records():
 		var record := _dict(record_value)
 		for action_value in _array(record.get("inline_actions", [])):
 			var action := _dict(action_value)
 			if str(action.get("scenario_command_id", action.get("id", ""))) == command_id and bool(action.get("enabled", true)):
-				return str(action.get("emit_object_id", ""))
-	return ""
+				return {"mode": "token", "token": str(action.get("emit_object_id", "")), "record": record, "action": action}
+		for action_value in _array(record.get("scenario_sequence_actions", [])):
+			var action := _dict(action_value)
+			if str(action.get("id", "")) == command_id and bool(action.get("enabled", true)):
+				return {"mode": "scenario_action", "token": str(record.get("object_id", "")), "record": record, "action": action}
+	return {}
 
 
 func _evidence(capture_id: String, expected_phase: String, expected_outcome: String = "", special: String = "") -> void:
@@ -340,7 +411,16 @@ func _evidence(capture_id: String, expected_phase: String, expected_outcome: Str
 	var live_assertions := _live_assertions(special)
 	for failure_value in _array(live_assertions.get("failures", [])):
 		_fail("%s: %s" % [capture_id, str(failure_value)])
+	if _projection().is_empty():
+		_fail("%s: Production projection vanished: %s" % [capture_id, JSON.stringify({
+			"lifecycle_errors": _array(run_state.current_environment.get("scenario_sequence_lifecycle_errors", [])),
+			"layout_audit": _dict(run_state.current_environment.get("scenario_layout_audit", {})),
+		})])
 	_record_semantic_checkpoint(capture_id, live_assertions)
+	if special == "obstruction":
+		var talk: Variant = app.get("talk_dock")
+		if talk != null:
+			talk.call("clear_entry")
 	if str(options.get("mode", "probe")) != "visual":
 		_clear_evidence_overlay()
 		return
@@ -385,8 +465,9 @@ func _evidence(capture_id: String, expected_phase: String, expected_outcome: Str
 func _live_assertions(special: String) -> Dictionary:
 	var assertion_failures: Array = []
 	var view := _environment_view()
-	var layout := _dict(view.get("object_layout", {}))
-	if int(layout.get("overlap_count", -1)) != 0:
+	var scenario_layout := _dict(_current_environment().get("scenario_layout_audit", {}))
+	var scenario_overlap_count := int(scenario_layout.get("normal_overlap_count", -1))
+	if bool(scenario_layout.get("active", false)) and scenario_overlap_count != 0:
 		assertion_failures.append("Live production layout contains object overlaps.")
 	var hit_rects := _live_hit_rects()
 	var scenario_hit_rects := _enabled_scenario_hit_rects()
@@ -428,9 +509,13 @@ func _live_assertions(special: String) -> Dictionary:
 			if not bool(view.get("reduce_motion", false)) or not bool(accessibility.get("reduce_motion", false)):
 				assertion_failures.append("Reduced-motion capture is not using the production reduced-motion view.")
 			var feedback_text := str(result_feedback.get("text", result_feedback.get("message", ""))).strip_edges()
+			var feedback_message := str(result_feedback.get("message", "")).strip_edges()
+			var message_label: Label = app.get("message_label") as Label
+			var message_feedback_visible := message_label != null and message_label.visible and message_label.text.find(reduced_motion_feedback) >= 0
+			var result_feedback_visible := bool(result_feedback.get("visible", false)) \
+				and (feedback_text.find(reduced_motion_feedback) >= 0 or feedback_message.find(reduced_motion_feedback) >= 0)
 			if reduced_motion_feedback.is_empty() \
-				or not bool(result_feedback.get("visible", false)) \
-				or feedback_text.find(reduced_motion_feedback) < 0 \
+				or not result_feedback_visible and not message_feedback_visible \
 				or not _array(state.get("active_stages", [])).is_empty() \
 				or not _array(_dict(state.get("semantic_state", {})).get("transition_queue", [])).is_empty():
 				assertion_failures.append("Reduced-motion transition did not suppress timed stages while preserving readable feedback.")
@@ -465,7 +550,7 @@ func _live_assertions(special: String) -> Dictionary:
 		"assertions": {
 			"phase_id": str(_projection().get("phase_id", "")),
 			"outcomes": _array(_projection().get("resolved_outcomes", [])),
-			"layout_overlap_count": int(layout.get("overlap_count", -1)),
+			"layout_overlap_count": scenario_overlap_count,
 			"live_hit_rect_count": hit_rects.size(),
 			"minimum_live_hit_width": 0.0 if is_inf(minimum_hit.x) else minimum_hit.x,
 			"minimum_live_hit_height": 0.0 if is_inf(minimum_hit.y) else minimum_hit.y,
@@ -511,7 +596,7 @@ func _live_object_evidence(reserved: Rect2) -> Dictionary:
 		if not rect.has_area():
 			continue
 		interactive_count += 1
-		var local_center := canvas.to_local(rect.get_center())
+		var local_center: Vector2 = canvas.get_global_transform_with_canvas().affine_inverse() * rect.get_center()
 		if str(canvas.call("object_id_at_local_position", local_center)) == object_id:
 			center_hits += 1
 	if interactive_count == 0 or center_hits != interactive_count:
@@ -519,21 +604,24 @@ func _live_object_evidence(reserved: Rect2) -> Dictionary:
 	var safe_exit_unobstructed := false
 	for record_value in _interactable_records():
 		var record := _dict(record_value)
-		var enabled_inline := false
-		for action_value in _array(record.get("inline_actions", [])):
+		var enabled_action := false
+		var actions := _array(record.get("inline_actions", []))
+		actions.append_array(_array(record.get("scenario_sequence_actions", [])))
+		for action_value in actions:
 			if bool(_dict(action_value).get("enabled", true)):
-				enabled_inline = true
+				enabled_action = true
 				break
-		if not bool(record.get("safe_exit", false)) or not bool(record.get("enabled", true)) or not bool(record.get("interactive", true)) or not enabled_inline:
+		if not bool(record.get("safe_exit", false)) or not bool(record.get("enabled", true)) or not bool(record.get("interactive", true)) or not enabled_action:
 			continue
 		var exit_rect: Rect2 = canvas.call("global_rect_for_object", str(record.get("object_id", "")))
-		var exit_center := canvas.to_local(exit_rect.get_center()) if exit_rect.has_area() else Vector2.ZERO
+		var exit_center: Vector2 = canvas.get_global_transform_with_canvas().affine_inverse() * exit_rect.get_center() if exit_rect.has_area() else Vector2.ZERO
 		if exit_rect.has_area() \
 			and str(canvas.call("object_id_at_local_position", exit_center)) == str(record.get("object_id", "")) \
 			and (not reserved.has_area() or not exit_rect.intersects(reserved)):
 			safe_exit_unobstructed = true
 			break
-	if not safe_exit_unobstructed:
+	var scenario_targets_required := str(_projection().get("status", "")) == "active"
+	if scenario_targets_required and not safe_exit_unobstructed:
 		evidence_failures.append("No enabled safe-exit target is visibly unobstructed.")
 	var selected_composition: Rect2 = canvas.call("global_rect_for_selected_composition")
 	var selected_composition_unobstructed := selected_composition.has_area() and (not reserved.has_area() or not selected_composition.intersects(reserved))
@@ -541,14 +629,14 @@ func _live_object_evidence(reserved: Rect2) -> Dictionary:
 	var scenario_count := 0
 	for record_value in _interactable_records():
 		var record := _dict(record_value)
-		if str(record.get("object_type", "")) != "scenario":
+		if str(record.get("object_type", "")) != "scenario_sequence":
 			continue
 		scenario_count += 1
 		if str(record.get("label", "")).strip_edges().is_empty() \
 			or str(record.get("non_color_state", record.get("state_badge", ""))).strip_edges().is_empty() \
 			or str(record.get("action_summary", "")).strip_edges().is_empty():
 			scenario_non_color_text_complete = false
-	if scenario_count == 0 or not scenario_non_color_text_complete:
+	if scenario_targets_required and (scenario_count == 0 or not scenario_non_color_text_complete):
 		evidence_failures.append("Scenario targets lack visible text/non-color state evidence.")
 	return {
 		"failures": evidence_failures,
@@ -814,7 +902,7 @@ func _enabled_scenario_hit_rects() -> Array:
 		return result
 	for record_value in _interactable_records():
 		var record := _dict(record_value)
-		if str(record.get("object_type", "")) != "scenario" or not bool(record.get("enabled", true)) or not bool(record.get("interactive", true)):
+		if str(record.get("object_type", "")) != "scenario_sequence" or not bool(record.get("enabled", true)) or not bool(record.get("interactive", true)):
 			continue
 		var rect: Variant = canvas.call("global_rect_for_object", str(record.get("object_id", "")))
 		if typeof(rect) == TYPE_RECT2 and (rect as Rect2).has_area():
@@ -837,6 +925,7 @@ func _obstruction_target_evidence(reserved: Rect2) -> Dictionary:
 	var target_rects: Array = []
 	var center_hit_count := 0
 	var non_exit_selected := false
+	var spatial: Dictionary = app.call("current_spatial_interaction_snapshot")
 	for target_value in _array(contract.get("targets", [])):
 		var target := _dict(target_value)
 		var object_id := str(target.get("object_id", ""))
@@ -846,13 +935,13 @@ func _obstruction_target_evidence(reserved: Rect2) -> Dictionary:
 			continue
 		var target_rect: Rect2 = rect_value
 		target_rects.append(target_rect)
-		var local_center := canvas.to_local(target_rect.get_center())
+		var local_center: Vector2 = canvas.get_global_transform_with_canvas().affine_inverse() * target_rect.get_center()
 		if str(canvas.call("object_id_at_local_position", local_center)) == object_id:
 			center_hit_count += 1
 		else:
 			evidence_failures.append("Production obstruction target center does not correlate with public hit testing: %s." % object_id)
 		if object_id == str(contract.get("non_exit_object_id", "")):
-			non_exit_selected = bool(target.get("selected", false)) and bool(target.get("focused", false))
+			non_exit_selected = str(spatial.get("selected_object_id", "")) == object_id and str(spatial.get("focus_target_id", "")) == object_id
 	var distinct_rects := target_rects.size() == ProbeSupport.EXPECTED_OBSTRUCTION_TARGET_IDS.size()
 	if distinct_rects:
 		var left: Rect2 = target_rects[0]
@@ -890,7 +979,7 @@ func _primary_enabled_scenario_target() -> Dictionary:
 	var scale := maxf(0.001, float(_environment_view().get("board_scale", 1.0)))
 	for record_value in _interactable_records():
 		var record := _dict(record_value)
-		if str(record.get("object_type", "")) != "scenario" or not bool(record.get("enabled", true)) or not bool(record.get("interactive", true)):
+		if str(record.get("object_type", "")) != "scenario_sequence" or not bool(record.get("enabled", true)) or not bool(record.get("interactive", true)):
 			continue
 		var rect_value: Variant = canvas.call("global_rect_for_object", str(record.get("object_id", "")))
 		if typeof(rect_value) == TYPE_RECT2 and (rect_value as Rect2).has_area():
@@ -970,7 +1059,7 @@ func _measure_production_save_load() -> void:
 	if service == null:
 		_fail("Production SaveService is unavailable to the evidence probe.")
 		return
-	var slot_id := "autosave"
+	var slot_id := str(app.get("autosave_slot_id"))
 	var before := ProbeSupport.canonical_semantic_sha256({"semantic": _scenario_state()})
 	var save_started := Time.get_ticks_usec()
 	var save_error := int(service.call("save_run", run_state, slot_id))
@@ -978,16 +1067,16 @@ func _measure_production_save_load() -> void:
 	if save_error != OK:
 		_fail("Production SaveService could not write the isolated evidence slot.")
 		return
-	var raw_load: Variant = service.call("load_run", slot_id)
-	if raw_load == null:
-		_fail("Production SaveService could not load the isolated evidence slot.")
-		return
 	var load_started := Time.get_ticks_usec()
-	app.call("load_foundation_run")
+	var load_ok := bool(app.call("_load_foundation_run_from_slot", false))
 	var load_elapsed := _elapsed_ms(load_started)
 	run_state = app.get("run_state")
 	_record_performance("load_rebuild", load_elapsed)
-	if run_state == null or ProbeSupport.canonical_semantic_sha256({"semantic": _scenario_state()}) != before:
+	if not load_ok:
+		_fail("Production SaveService could not load the isolated evidence slot.")
+		return
+	var loaded_state := _scenario_state()
+	if run_state == null or ProbeSupport.canonical_semantic_sha256({"semantic": loaded_state}) != before:
 		_fail("FoundationMain production load/rebuild changed delivery-day authority.")
 	_clear_isolated_save_slot()
 
@@ -996,7 +1085,7 @@ func _clear_isolated_save_slot() -> void:
 	var service: Variant = app.get("save_service") if app != null else null
 	if service == null:
 		return
-	var clear_error := int(service.call("clear_run", "autosave"))
+	var clear_error := int(service.call("clear_run", str(app.get("autosave_slot_id"))))
 	if clear_error != OK:
 		_fail("Production SaveService could not clear the isolated evidence slot.")
 

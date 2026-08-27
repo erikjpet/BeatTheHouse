@@ -411,6 +411,9 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 				var target := (records.get(target_key, {}) as Dictionary).duplicate(true)
 				target["enabled"] = bool(overlay.get("enabled", false))
 				target["disabled_reason"] = str(overlay.get("disabled_reason", "Unavailable during this room sequence.")) if not bool(target.get("enabled", false)) else ""
+				if not bool(target.get("enabled", false)):
+					target["available_actions"] = []
+					target["input_actions"] = []
 				records[target_key] = target
 				records.erase(source_key)
 			"augment":
@@ -586,6 +589,9 @@ static func _apply_operation(state: Dictionary, family: String, operation: Dicti
 			"gate":
 				current["enabled"] = bool(operation.get("enabled", false))
 				current["disabled_reason"] = str(operation.get("disabled_reason", "Unavailable.")) if not bool(current.get("enabled", false)) else ""
+				if family == "interaction_ops" and not bool(current.get("enabled", false)):
+					current["available_actions"] = []
+					current["input_actions"] = []
 			"retarget": current["source_id"] = str(operation.get("source_id", current.get("source_id", "")))
 			"set_modifier": current["modifier"] = _dict(operation.get("modifier", {}))
 			"open":

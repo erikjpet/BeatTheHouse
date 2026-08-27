@@ -1,6 +1,8 @@
 class_name FoundationMain
 extends Control
 
+const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
+
 # Thin UI shell for the README foundation runtime.
 
 const DEFAULT_SEED := "FOUNDATION-UI-SEED"
@@ -650,7 +652,7 @@ func _advance_environment_turns_checked(amount: int = 1) -> bool:
 	var result := run_state.advance_environment_turns(amount)
 	if bool(result.get("ok", false)):
 		return true
-	_show_message(str(_array(result.get("errors", []))[0]) if not _array(result.get("errors", [])).is_empty() else "The world boundary could not advance safely.")
+	_show_message(str(_copy_array(result.get("errors", []))[0]) if not _copy_array(result.get("errors", [])).is_empty() else "The world boundary could not advance safely.")
 	_refresh_runtime_environment_views()
 	return false
 
@@ -2269,7 +2271,8 @@ func _confirm_meta_world_map_travel() -> Dictionary:
 
 # Selects an event choice without mutating simulation state.
 func select_event_choice(event_id: String, choice_id: String) -> bool:
-	if _guard_player_input_route():
+	var visible_popup_choice := _event_choice_popup_is_visible() and _event_choice_popup_allows_event_resolution(event_id)
+	if not visible_popup_choice and _guard_player_input_route():
 		return false
 	var event_option := _eligible_event_option(event_id)
 	if event_option.is_empty():
@@ -5622,7 +5625,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	var departure_kind := "grand_room" if local_casino_room_move else "world"
 	var departure_preflight := run_state.scenario_preflight_environment_change(departure_source_id, target_id, departure_kind)
 	if not bool(departure_preflight.get("ok", false)):
-		var departure_errors := _array(departure_preflight.get("errors", []))
+		var departure_errors := _copy_array(departure_preflight.get("errors", []))
 		var departure_error := str(departure_errors[0]) if not departure_errors.is_empty() else "Travel could not begin safely."
 		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		_show_message(departure_error)
@@ -5649,8 +5652,8 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	_show_message("Traveling to %s..." % target_label)
 	if not web_atomic_travel:
 		_refresh()
-	if not web_atomic_travel and _should_yield_for_travel_transition():
-		await get_tree().process_frame
+	# The result-returning lifecycle boundary must remain synchronous so callers
+	# can atomically commit or roll back the complete travel transaction.
 	var route_risk := {} if local_casino_room_move else run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
 	var force_walk := bool(choice_data.get("force_walk_fallback", false))
@@ -5669,7 +5672,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	var clock_result := run_state.advance_game_clock_minutes(travel_minutes)
 	if not bool(clock_result.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
-		var clock_errors := _array(clock_result.get("errors", []))
+		var clock_errors := _copy_array(clock_result.get("errors", []))
 		var clock_error := str(clock_errors[0]) if not clock_errors.is_empty() else "Travel time could not advance safely."
 		_show_message(clock_error)
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
@@ -5680,7 +5683,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		install_result = generator.enter_grand_casino_room_result(run_state, target_id)
 		if not bool(install_result.get("ok", false)):
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
-			var room_errors := _array(install_result.get("errors", []))
+			var room_errors := _copy_array(install_result.get("errors", []))
 			var room_error := str(room_errors[0]) if not room_errors.is_empty() else "The interior casino room could not be prepared."
 			_show_message(room_error)
 			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
@@ -5692,7 +5695,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		install_result = generator.travel_environment_result(run_state, target_id, true)
 		if not bool(install_result.get("ok", false)):
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
-			var install_errors := _array(install_result.get("errors", []))
+			var install_errors := _copy_array(install_result.get("errors", []))
 			var install_error := str(install_errors[0]) if not install_errors.is_empty() else "Travel destination could not be installed."
 			_show_message(install_error)
 			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
@@ -5776,8 +5779,6 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_refresh()
 	if not web_atomic_travel and travel_transition_active:
 		_update_travel_transition("Arrived at %s" % destination_name, "The room is ready.")
-		if _should_yield_for_travel_transition():
-			await get_tree().process_frame
 	_hide_travel_transition()
 	_queue_normal_grand_host_greeting(previous_environment)
 	var travel_context := {
@@ -10711,7 +10712,11 @@ func activate_interactable_object(object_id: String) -> bool:
 
 
 func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, caller_rollback: Dictionary) -> bool:
-	if _guard_player_input_route(false, object_id):
+	# A visible event popup is itself the modal contract owner. Its sealed
+	# response tokens must reach the event resolver while every unrelated room
+	# interaction remains blocked by the ordinary input guard.
+	var visible_event_response := object_id.begins_with("event_response:") and _event_choice_popup_is_visible()
+	if not visible_event_response and _guard_player_input_route(false, object_id):
 		return false
 	if _is_meta_session():
 		var meta_action_ok := _activate_meta_interactable_object(object_id)
@@ -10928,20 +10933,25 @@ func _activate_scenario_action(owner_namespace: String, stable_object_id: String
 
 
 func _activate_scenario_sequence_action(object_data: Dictionary, action: Dictionary) -> bool:
-	if run_state == null or not _guard_player_input_route(): return false
+	if run_state == null:
+		return false
+	if _guard_player_input_route():
+		return false
 	var action_id := str(action.get("id", ""))
-	if action_id.is_empty(): return false
+	if action_id.is_empty():
+		return false
 	var sequence_state := _copy_dict(run_state.current_environment.get("scenario_sequence_state", {}))
 	var receipt_ordinal := _copy_array(sequence_state.get("command_receipts", [])).size()
 	var visit_id := str(run_state.current_environment.get("environment_visit_id", "visit"))
 	var receipt_id := "scenario:%s:%s:%s:%d" % [visit_id, str(object_data.get("object_id", "interaction")), action_id, receipt_ordinal]
+	var host_availability := _scenario_host_interaction_availability()
 	var result := run_state.scenario_sequence_command(
 		action_id,
 		receipt_id,
 		{},
 		str(object_data.get("owner_namespace", "")),
 		str(object_data.get("stable_object_id", "")),
-		_scenario_host_interaction_availability(),
+		host_availability,
 		str(action.get("action_origin_owner_namespace", object_data.get("owner_namespace", ""))),
 		str(action.get("action_origin_stable_object_id", object_data.get("stable_object_id", ""))),
 		str(action.get("action_origin_receipt_key", "")),
@@ -10953,7 +10963,11 @@ func _activate_scenario_sequence_action(object_data: Dictionary, action: Diction
 		_show_message(str(errors[0]) if not errors.is_empty() else "That room action is no longer available.")
 		_refresh()
 		return false
-	var feedback := str(_copy_dict(result.get("state", {})).get("last_feedback", ""))
+	_consume_scenario_event_requests()
+	var transition_message := _consume_scenario_transitions()
+	var feedback := transition_message
+	if feedback.is_empty():
+		feedback = str(_copy_dict(result.get("state", {})).get("last_feedback", ""))
 	if not feedback.is_empty(): _show_message(feedback)
 	_autosave_foundation_run("Scenario progress saved.")
 	_refresh()
@@ -11380,7 +11394,7 @@ func _use_cage_players_card_comp(comp_id: String) -> void:
 			if not bool(clock_result.get("ok", false)):
 				run_state.from_dict(rollback_run)
 				run_state.current_environment = rollback_environment
-				_show_message(str(_array(clock_result.get("errors", []))[0]) if not _array(clock_result.get("errors", [])).is_empty() else "Time could not advance safely.")
+				_show_message(str(_copy_array(clock_result.get("errors", []))[0]) if not _copy_array(clock_result.get("errors", [])).is_empty() else "Time could not advance safely.")
 				_refresh_runtime_environment_views()
 				return
 		else:

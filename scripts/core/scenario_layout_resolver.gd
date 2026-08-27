@@ -280,6 +280,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	var errors: Array = []
 	var warnings: Array = []
 	var occupied := _base_occupied_records(base_records)
+	var context := _layout_context(environment)
 	var base_by_identity := _base_records_by_identity(base_records)
 	var authority := _base_layout_authority(base_records, errors)
 	var collision_adjustments := 0
@@ -333,7 +334,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	_validate_visual_identity_uniqueness(resolved_scenes, resolved_actors, errors)
 	_assign_z_order(resolved_scenes, resolved_actors)
 	var obstacles := _scenario_obstacles(resolved_scenes)
-	_validate_visual_access(resolved_scenes, resolved_actors, obstacles, base_records, environment, errors)
+	_validate_visual_access(resolved_scenes, resolved_actors, obstacles, _dict(semantic_state.get("interactions", {})), base_records, environment, errors)
 	_validate_actor_routes(resolved_actors, obstacles, occupied, environment, errors)
 	_validate_visual_interaction_consistency(_dict(semantic_state.get("interactions", {})), resolved_scenes, resolved_actors, errors)
 	_add_visual_authority(authority, resolved_scenes, "scene_object")
@@ -344,7 +345,6 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	var authority_digest := _authority_digest(authority)
 	semantic_state["layout_authority_digest"] = authority_digest
 	resolved_projection["semantic_state"] = semantic_state
-	var context := _layout_context(environment)
 	_validate_layout_context(context, errors)
 	var audit := {
 		"active": true,
@@ -478,7 +478,7 @@ static func _resolve_visual(
 	return result
 
 
-static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obstacles: Array, base_records: Array, environment: Dictionary, errors: Array) -> void:
+static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obstacles: Array, interactions: Dictionary, base_records: Array, environment: Dictionary, errors: Array) -> void:
 	var overlay := _context_overlay_rect(_layout_context(environment))
 	var normal_labels: Array = []
 	var small_labels: Array = []
@@ -503,7 +503,7 @@ static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obst
 			var small_rect := _pixel_rect(_dict(semantic.get("small_screen_rect", {})))
 			var label_rect := _label_rect(rect, str(semantic.get("label", "")))
 			var small_label_rect := _label_rect(small_rect, str(semantic.get("label", "")))
-			if overlay.has_area() and (rect.intersects(overlay) or small_rect.intersects(overlay) or label_rect.intersects(overlay) or small_label_rect.intersects(overlay)):
+			if interactions.has(identity) and overlay.has_area() and (rect.intersects(overlay) or small_rect.intersects(overlay) or label_rect.intersects(overlay) or small_label_rect.intersects(overlay)):
 				errors.append("Scenario visual %s collides with the reserved TalkDock overlay." % identity)
 			normal_labels.append({"identity": identity, "rect": label_rect, "scenario": true})
 			small_labels.append({"identity": identity, "rect": small_label_rect, "scenario": true})
@@ -512,10 +512,25 @@ static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obst
 				errors.append("Scenario obstacle %s blocks the mandatory player access lane in normal or expanded small-screen layout." % identity)
 	_validate_label_entries(normal_labels, "normal", errors)
 	_validate_label_entries(small_labels, "expanded small-screen", errors)
-	if not obstacles.is_empty() and not _path_reachable(WALK_LANE.get_center(), Vector2(BOARD_SIZE.x * 0.5, BOARD_SIZE.y * 0.5), obstacles):
+	if not obstacles.is_empty() and not _room_path_reachable(obstacles):
 		errors.append("Scenario obstruction leaves no reachable route from the player access lane into the room.")
-	if not obstacles.is_empty() and not _path_reachable(WALK_LANE.get_center(), Vector2(BOARD_SIZE.x * 0.5, BOARD_SIZE.y * 0.5), obstacles, "", "small_rect"):
+	if not obstacles.is_empty() and not _room_path_reachable(obstacles, "small_rect"):
 		errors.append("Expanded small-screen scenario obstruction leaves no reachable route from the player access lane into the room.")
+
+
+static func _room_path_reachable(obstacles: Array, rect_key: String = "rect") -> bool:
+	# The room is an area, not the single center pixel. Prove that at least one
+	# interior approach remains reachable when a legitimate fixture occupies the
+	# center, while a complete blockade still fails every target.
+	for goal in [
+		Vector2(BOARD_SIZE.x * 0.5, BOARD_SIZE.y * 0.5),
+		Vector2(BOARD_SIZE.x * 0.35, BOARD_SIZE.y * 0.5),
+		Vector2(BOARD_SIZE.x * 0.65, BOARD_SIZE.y * 0.5),
+		Vector2(BOARD_SIZE.x * 0.5, BOARD_SIZE.y * 0.35),
+	]:
+		if _path_reachable(WALK_LANE.get_center(), goal, obstacles, "", rect_key):
+			return true
+	return false
 
 
 static func _validate_label_entries(entries: Array, layout_label: String, errors: Array) -> void:
@@ -589,7 +604,7 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 		var authority_record := _dict(authority.get(identity, {}))
 		var rect := _pixel_rect(_dict(authority_record.get("normalized_hit_rect", {})))
 		var small_rect := _pixel_rect(_dict(authority_record.get("small_screen_rect", {})))
-		if overlay.has_area() and (rect.intersects(overlay) or small_rect.intersects(overlay) or _label_rect(rect, str(interaction.get("label", ""))).intersects(overlay) or _label_rect(small_rect, str(interaction.get("label", ""))).intersects(overlay)):
+		if bool(interaction.get("enabled", false)) and overlay.has_area() and (rect.intersects(overlay) or small_rect.intersects(overlay) or _label_rect(rect, str(interaction.get("label", ""))).intersects(overlay) or _label_rect(small_rect, str(interaction.get("label", ""))).intersects(overlay)):
 			errors.append("Scenario interaction %s collides with the reserved TalkDock overlay." % identity)
 		active_targets.append({
 			"identity": identity,

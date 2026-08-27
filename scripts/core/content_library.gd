@@ -621,7 +621,7 @@ func scenarios_for_archetype(archetype_id: String) -> Array:
 		return result
 	for definition_value in value as Array:
 		if typeof(definition_value) == TYPE_DICTIONARY:
-			result.append(ScenarioSequenceCatalogScript.apply_overlay(definition_value as Dictionary, scenario_sequence_catalog))
+			result.append(_scenario_with_runtime_validation_receipt(definition_value as Dictionary))
 	return result
 
 
@@ -635,8 +635,21 @@ func scenario(scenario_id: String) -> Dictionary:
 			continue
 		for scenario_value in pool_value as Array:
 			if typeof(scenario_value) == TYPE_DICTIONARY and str((scenario_value as Dictionary).get("id", "")) == wanted:
-				return ScenarioSequenceCatalogScript.apply_overlay(scenario_value as Dictionary, scenario_sequence_catalog)
+				return _scenario_with_runtime_validation_receipt(scenario_value as Dictionary)
 	return {}
+
+
+func _scenario_with_runtime_validation_receipt(definition: Dictionary) -> Dictionary:
+	var result := ScenarioSequenceCatalogScript.apply_overlay(definition, scenario_sequence_catalog)
+	# The staged load validates sequence overlays against the exact independent
+	# semantic target inventory. Runtime has no ContentLibrary at its migration
+	# seam, so complete deferred validation at the first sequence lookup and carry
+	# only that all-green receipt forward. Non-sequence startup remains deferred.
+	if ScenarioSequenceSchemaScript.is_sequence(result) and not validation_complete:
+		validate()
+	if validation_complete and validation_errors.is_empty() and ScenarioSequenceSchemaScript.is_sequence(result):
+		result[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
+	return result
 
 
 # Finds a game definition by id.

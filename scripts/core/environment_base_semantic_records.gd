@@ -83,6 +83,7 @@ static func from_interactable_records(records_value: Array) -> Dictionary:
 				if source_action.has(optional_key): action[optional_key] = _copy(source_action.get(optional_key))
 			actions.append(action)
 		var enabled := bool(source.get("enabled", false))
+		if not enabled: actions = []
 		if enabled and actions.is_empty(): enabled = false
 		var disabled_reason := str(source.get("disabled_reason", ""))
 		if not enabled and disabled_reason.strip_edges().is_empty(): disabled_reason = "No action is currently available."
@@ -98,6 +99,8 @@ static func from_interactable_records(records_value: Array) -> Dictionary:
 		var prompt := str(source.get("prompt", "")).strip_edges()
 		if prompt.is_empty(): prompt = str(source.get("action_summary", "")).strip_edges()
 		if prompt.is_empty(): prompt = "Choose an action."
+		var non_color_state := str(source.get("non_color_state", "")).strip_edges()
+		if non_color_state.is_empty(): non_color_state = "open" if enabled else "closed"
 		var interaction := {
 			"owner_namespace": str(parsed.get("owner_namespace", "")),
 			"stable_object_id": str(parsed.get("stable_object_id", "")),
@@ -112,7 +115,7 @@ static func from_interactable_records(records_value: Array) -> Dictionary:
 			"disabled_reason": disabled_reason,
 			"available_actions": actions,
 			"input_actions": _action_inputs(actions),
-			"non_color_state": str(source.get("non_color_state", "open" if enabled else "closed")),
+			"non_color_state": non_color_state,
 			"focus_order": index,
 			"hit_bounds": bounds,
 			"normalized_hit_rect": _dict(geometry.get("normalized_hit_rect", {})),

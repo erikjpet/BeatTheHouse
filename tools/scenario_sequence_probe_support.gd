@@ -38,8 +38,8 @@ const EXPECTED_CAPTURE_IDS := [
 	"base_event_terminal_gated",
 ]
 const EXPECTED_OBSTRUCTION_TARGET_IDS := [
-	"scenario:scenario:delivery_event_gate",
-	"scenario:scenario:delivery_exit",
+	"scenario::delivery_event_gate",
+	"scenario::delivery_exit",
 ]
 const EXPECTED_TRACE_ROWS := [
 	{"label": "arrival_delivery_blocked", "phase_id": "arrival", "status": "active", "outcomes": []},
@@ -156,10 +156,10 @@ static func obstruction_target_contract(records_value: Variant) -> Dictionary:
 		var expected_stable_id := "delivery_event_gate" if object_id == EXPECTED_OBSTRUCTION_TARGET_IDS[0] else "delivery_exit"
 		var expected_safe_exit := object_id == EXPECTED_OBSTRUCTION_TARGET_IDS[1]
 		var expected_role := "workstation" if not expected_safe_exit else "exit"
-		if str(record.get("object_type", "")) != "scenario" \
+		if str(record.get("object_type", "")) != "scenario_sequence" \
 			or str(record.get("owner_namespace", "")) != "scenario" \
 			or str(record.get("stable_object_id", "")) != expected_stable_id \
-			or str(record.get("role", "")) != expected_role:
+			or str(record.get("semantic_role", record.get("role", ""))) != expected_role:
 			failures.append("Production obstruction target %s lost its scenario identity." % object_id)
 		if not bool(record.get("enabled", false)) or not bool(record.get("interactive", false)):
 			failures.append("Production obstruction target %s is not enabled and interactive." % object_id)
@@ -167,20 +167,21 @@ static func obstruction_target_contract(records_value: Variant) -> Dictionary:
 			failures.append("Production obstruction target %s has incorrect safe-exit authority." % object_id)
 		var expected_command_ids := ["inspect_manifest"] if not expected_safe_exit else ["ignore_delivery", "refuse_sort"]
 		var enabled_command_ids: Array = []
-		for action_value in _array(record.get("inline_actions", [])):
+		for action_value in _array(record.get("scenario_sequence_actions", [])):
 			var action := _dict(action_value)
-			if not bool(action.get("enabled", false)):
+			if not bool(action.get("enabled", true)):
 				continue
-			var command_id := str(action.get("scenario_command_id", ""))
-			var emit_object_id := str(action.get("emit_object_id", ""))
-			var expected_token_suffix := ":scenario:%s:%s" % [expected_stable_id, command_id]
+			var command_id := str(action.get("id", ""))
 			enabled_command_ids.append(command_id)
 			if command_id.is_empty() \
-				or not emit_object_id.begins_with("scenario_action:") \
-				or not emit_object_id.ends_with(expected_token_suffix):
-				failures.append("Production obstruction target %s contains an enabled action without exact token authority." % object_id)
+				or str(action.get("action_origin_owner_namespace", "")) != "scenario" \
+				or str(action.get("action_origin_stable_object_id", "")) != expected_stable_id \
+				or str(action.get("action_origin_receipt_key", "")).is_empty() \
+				or str(action.get("action_origin_boundary_id", "")).is_empty() \
+				or str(action.get("action_origin_fingerprint", "")).length() != 64:
+				failures.append("Production obstruction target %s contains an enabled action without exact sealed origin authority." % object_id)
 		if enabled_command_ids != expected_command_ids:
-			failures.append("Production obstruction target %s lost its exact enabled tokenized scenario actions." % object_id)
+			failures.append("Production obstruction target %s lost its exact enabled scenario actions." % object_id)
 		by_id[object_id] = record.duplicate(true)
 	var targets: Array = []
 	for expected_id_value in EXPECTED_OBSTRUCTION_TARGET_IDS:

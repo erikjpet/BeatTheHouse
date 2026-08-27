@@ -457,8 +457,6 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"decorative": not interactive,
 		"source_id": str(source.get("source_id", "")),
 		"parent_id": str(source.get("parent_id", "")),
-		"owner_namespace": str(source.get("owner_namespace", "")),
-		"stable_object_id": str(source.get("stable_object_id", "")),
 		"scenario_owner_namespace": str(source.get("scenario_owner_namespace", "")),
 		"scenario_stable_object_id": str(source.get("scenario_stable_object_id", "")),
 		"scenario_command_id": str(source.get("scenario_command_id", "")),

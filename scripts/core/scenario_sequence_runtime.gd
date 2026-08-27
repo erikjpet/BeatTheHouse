@@ -78,7 +78,7 @@ const STATUS_AFTERMATH := "aftermath"
 const STATUS_CLEANED := "cleaned"
 const MAX_FACT_QUEUE := 128
 const MAX_RECEIPTS := 256
-const COMMAND_RESULT_KEYS := ["ok", "replayed", "receipt_id", "command_id", "phase_id", "status", "outcomes", "changed", "state"]
+const COMMAND_RESULT_KEYS := ["ok", "replayed", "receipt_id", "command_id", "phase_id", "status", "boundary_serial", "outcomes", "changed", "cost", "state"]
 
 
 static func initial_state(definition: Dictionary, node_id: String, seed_token: String = "", host_semantics: Dictionary = {}) -> Dictionary:
@@ -220,7 +220,7 @@ static func normalize_state(value: Variant, definition: Dictionary = {}, trusted
 		"cleanup_content_fingerprint": str(source.get("cleanup_content_fingerprint", "")),
 		"event_correlations": [],
 		"visit_receipts": _bounded_strings(source.get("visit_receipts", []), MAX_RECEIPTS),
-		"visit_receipt_records": _bounded_records(source.get("visit_receipt_records", []), MAX_RECEIPTS),
+		"visit_receipt_records": _normalized_integer_record_fields(source.get("visit_receipt_records", []), ["cause_ordinal"]),
 		"expiry_receipts": _bounded_strings(source.get("expiry_receipts", []), MAX_RECEIPTS),
 		"expiry_counts": _normalize_expiry_counts(source.get("expiry_counts", {})),
 		"event_choice_receipts": _bounded_strings(source.get("event_choice_receipts", []), MAX_RECEIPTS),
@@ -250,6 +250,8 @@ static func normalize_state(value: Variant, definition: Dictionary = {}, trusted
 		return {}
 	state["event_correlations"] = _normalized_event_correlations(source.get("event_correlations", []), _dict(_dict(state.get("semantic_state", {})).get("event_choices", {})))
 	var semantic := _dict(state.get("semantic_state", {}))
+	semantic["operation_receipt_records"] = _normalized_integer_record_fields(semantic.get("operation_receipt_records", []), ["boundary_ordinal", "operation_index"])
+	state["semantic_state"] = semantic
 	if _array(semantic.get("transition_queue", [])).size() > OperationRegistryScript.MAX_TRANSITION_QUEUE or _string_array(semantic.get("operation_receipts", [])).size() > OperationRegistryScript.MAX_OPERATION_RECEIPTS:
 		state["status"] = STATUS_CLEANED
 	if not definition.is_empty() and not SequenceSchemaScript.phase_ids(definition).has(str(state.get("phase_id", ""))) and str(state.get("status", "")) == STATUS_ACTIVE:
@@ -1340,6 +1342,8 @@ static func _apply_cleanup(state: Dictionary, definition: Dictionary, reason: St
 			var family := str(operation.get("family", ""))
 			if not OperationRegistryScript.OP_FAMILIES.has(family):
 				return {"ok": false, "state": state, "errors": ["scenario cleanup contains unregistered family %s" % family]}
+			if _cleanup_target_absence_is_receipted(semantic, state, definition, family, operation):
+				continue
 			var operations := _array(by_family.get(family, []))
 			operations.append(operation)
 			by_family[family] = operations
@@ -1362,6 +1366,43 @@ static func _apply_cleanup(state: Dictionary, definition: Dictionary, reason: St
 	_trim_dictionary_to_receipts(cleanup_fingerprints, receipts)
 	next["cleanup_fingerprints"] = cleanup_fingerprints
 	return {"ok": true, "state": next, "errors": [], "replayed": false}
+
+
+static func _cleanup_target_absence_is_receipted(semantic: Dictionary, state: Dictionary, definition: Dictionary, family: String, cleanup_operation: Dictionary) -> bool:
+	var op_id := str(cleanup_operation.get("op", ""))
+	if op_id not in ["remove", "despawn"]:
+		return false
+	var collection_key := {
+		"scene_ops": "scene_objects",
+		"interaction_ops": "interactions",
+		"actor_ops": "actors",
+		"service_ops": "services",
+		"game_ops": "games",
+		"route_ops": "routes",
+	}.get(family, "") as String
+	var identity := OperationRegistryScript.identity_from(cleanup_operation)
+	if collection_key.is_empty() or identity.is_empty() or _dict(semantic.get(collection_key, {})).has(identity):
+		return false
+	if _dict(_dict(semantic.get("tombstones", {})).get(collection_key, {})).has(identity):
+		return true
+	var receipted_authored_ids: Dictionary = {}
+	for record_value in _array(_dict(state.get("semantic_state", {})).get("operation_receipt_records", [])):
+		var record := _dict(record_value)
+		if str(record.get("family", "")) == family:
+			receipted_authored_ids[str(record.get("authored_receipt_id", ""))] = true
+	var authored_scenario_identity := false
+	for phase_value in _array(_dict(SequenceSchemaScript.sequence(definition).get("phase_graph", {})).get("phases", [])):
+		for operation_value in _array(_dict(phase_value).get(family, [])):
+			var operation := _dict(operation_value)
+			if str(operation.get("owner_namespace", "")) == "scenario" \
+			and str(operation.get("op", "")) not in ["remove", "despawn"] \
+			and OperationRegistryScript.identity_from(operation) == identity:
+				authored_scenario_identity = true
+			if receipted_authored_ids.has(str(operation.get("receipt_id", ""))) \
+			and str(operation.get("op", "")) in ["remove", "despawn"] \
+			and OperationRegistryScript.identity_from(operation) == identity:
+				return true
+	return authored_scenario_identity and str(cleanup_operation.get("owner_namespace", "")) == "scenario"
 
 
 static func _complete_command_objective_steps(state: Dictionary, definition: Dictionary, command_id: String) -> Dictionary:
@@ -1565,14 +1606,20 @@ static func _normalized_command_results(value: Variant, receipts_value: Variant,
 
 
 static func _valid_cached_command_result(value: Dictionary, receipt_id: String, command_value: Dictionary) -> bool:
-	if value.size() != COMMAND_RESULT_KEYS.size(): return false
+	if value.size() != COMMAND_RESULT_KEYS.size():
+		return false
 	for key_value in value.keys():
-		if not COMMAND_RESULT_KEYS.has(str(key_value)): return false
+		if not COMMAND_RESULT_KEYS.has(str(key_value)):
+			return false
 	if typeof(value.get("ok")) != TYPE_BOOL or not bool(value.get("ok", false)): return false
 	if typeof(value.get("replayed")) != TYPE_BOOL or bool(value.get("replayed", true)): return false
 	if typeof(value.get("changed")) != TYPE_BOOL: return false
+	if typeof(value.get("boundary_serial")) != TYPE_INT or int(value.get("boundary_serial", -1)) < 0: return false
+	if typeof(value.get("cost")) != TYPE_INT or int(value.get("cost", -1)) < 0:
+		return false
 	for key in ["receipt_id", "command_id", "phase_id", "status"]:
-		if typeof(value.get(key)) != TYPE_STRING or not _valid_persisted_text(str(value.get(key, ""))): return false
+		if typeof(value.get(key)) != TYPE_STRING or not _valid_persisted_text(str(value.get(key, ""))):
+			return false
 	if str(value.get("receipt_id", "")) != receipt_id or str(command_value.get("idempotency_key", "")) != receipt_id or str(value.get("command_id", "")) != str(command_value.get("command_id", "")): return false
 	if typeof(value.get("state")) != TYPE_DICTIONARY or not _dict(value.get("state", {})).is_empty(): return false
 	if str(value.get("status", "")) not in [STATUS_ACTIVE, STATUS_AFTERMATH, STATUS_CLEANED]: return false
@@ -1999,6 +2046,18 @@ static func _bounded_records(value: Variant, _limit: int) -> Array:
 	for record_value in _array(value):
 		if typeof(record_value) == TYPE_DICTIONARY:
 			result.append((record_value as Dictionary).duplicate(true))
+	return result
+
+
+static func _normalized_integer_record_fields(value: Variant, fields: Array) -> Array:
+	var result := _bounded_records(value, MAX_RECEIPTS)
+	for record_value in result:
+		var record := record_value as Dictionary
+		for field_value in fields:
+			var field := str(field_value)
+			var raw: Variant = record.get(field)
+			if typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
+				record[field] = int(raw)
 	return result
 
 

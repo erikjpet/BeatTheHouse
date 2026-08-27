@@ -406,7 +406,7 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary,
 	var owned_identity := "%s::%s" % [str(semantic.get("owner_namespace", "")), str(semantic.get("stable_object_id", ""))]
 	var presentation_id := owned_identity if scenario_owned else str(semantic.get("presentation_object_id", result.get("object_id", "")))
 	result["object_id"] = presentation_id
-	result["object_type"] = str(result.get("object_type", "scenario_sequence" if scenario_owned else "info"))
+	result["object_type"] = "scenario_sequence" if scenario_owned else str(result.get("object_type", "info"))
 	result["visual_type"] = str(result.get("visual_type", "fixture"))
 	result["source_id"] = str(semantic.get("source_id", result.get("source_id", semantic.get("stable_object_id", ""))))
 	result["owner_namespace"] = str(semantic.get("owner_namespace", ""))
@@ -420,6 +420,9 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary,
 	result["disabled_reason"] = str(semantic.get("disabled_reason", ""))
 	result["non_color_state"] = str(semantic.get("non_color_state", result.get("non_color_state", "available")))
 	result["focus_order"] = int(semantic.get("focus_order", result.get("focus_order", 0)))
+	result["safe_exit"] = bool(semantic.get("safe_exit", result.get("safe_exit", false)))
+	result["alternate_exit"] = bool(semantic.get("alternate_exit", result.get("alternate_exit", false)))
+	result["input_actions"] = _array(semantic.get("input_actions", result.get("input_actions", [])))
 	result = _apply_layout_authority(result, authority, authority_digest)
 	var actions := _array(semantic.get("available_actions", []))
 	result["available_actions"] = actions
