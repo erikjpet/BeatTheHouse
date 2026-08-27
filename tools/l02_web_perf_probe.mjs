@@ -51,6 +51,9 @@ const started = Date.now();
 let navigationStarted = 0;
 let readyPageMsec = 0;
 const startupConsole = [];
+const pageErrors = [];
+const requestFailures = [];
+const failedResponses = [];
 
 try {
   context = await browserType.launchPersistentContext(profileDir, launchOptions);
@@ -59,6 +62,27 @@ try {
     const cdp = await context.newCDPSession(page);
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpuRate });
   }
+  page.on("pageerror", (error) => {
+    pageErrors.push({ message: String(error?.message ?? error), wall_msec: Date.now() - started });
+  });
+  page.on("requestfailed", (request) => {
+    requestFailures.push({
+      url: request.url(),
+      method: request.method(),
+      failure: String(request.failure()?.errorText ?? "request failed"),
+      wall_msec: Date.now() - started,
+    });
+  });
+  page.on("response", (response) => {
+    if (response.status() >= 400) {
+      failedResponses.push({
+        url: response.url(),
+        status: response.status(),
+        status_text: response.statusText(),
+        wall_msec: Date.now() - started,
+      });
+    }
+  });
   await page.addInitScript(() => {
     const originalLog = console.log.bind(console);
     console.log = (...values) => {
@@ -123,6 +147,15 @@ try {
       decoded_bytes: entry.decodedBodySize,
     })).sort((left, right) => right.duration_msec - left.duration_msec),
   }));
+  const viewportIdentity = await page.evaluate(() => ({
+    inner_width: window.innerWidth,
+    inner_height: window.innerHeight,
+    outer_width: window.outerWidth,
+    outer_height: window.outerHeight,
+    device_pixel_ratio: window.devicePixelRatio,
+    screen_width: window.screen.width,
+    screen_height: window.screen.height,
+  }));
   const output = {
     browser: browserName,
     browser_version: browserVersion,
@@ -134,6 +167,10 @@ try {
     ready,
     startup_timing: startupTiming,
     startup_console: startupConsole,
+    page_errors: pageErrors,
+    request_failures: requestFailures,
+    failed_responses: failedResponses,
+    viewport: viewportIdentity,
     wall_msec: Date.now() - started,
     report,
   };
