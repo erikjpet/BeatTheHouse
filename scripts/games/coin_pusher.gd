@@ -202,6 +202,7 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 				"coin_pusher_carriage_x": selected_x,
 			},
 		}, true)
+	var immediate_patch: Dictionary = {}
 	match surface_action:
 		"coin_pusher_drop":
 			if _drop_refused(machine):
@@ -215,18 +216,23 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 			var requested := int(simulation.get("carriage_x", 50000)) + direction * speed
 			var actual := CoinPusherSolverScript.set_carriage(simulation, requested)
 			CoinPusherLiveSessionScript.queue_input(machine, {"kind": "carriage", "x": actual})
+			immediate_patch["coin_pusher_carriage_x"] = actual
+			immediate_patch["coin_pusher_selected_hole"] = int(simulation.get("selected_hole", 0))
 		SKILL_STOP_ACTION:
 			var simulation := _simulation(machine)
 			var engaged := not bool(simulation.get("skill_stop_engaged", false))
 			var resume_rate := _variation_motor_rate_fp(machine)
 			CoinPusherSolverScript.set_skill_stop(simulation, engaged, resume_rate)
 			CoinPusherLiveSessionScript.queue_input(machine, {"kind": "skill_stop", "engaged": engaged, "resume_rate_fp": resume_rate})
+			immediate_patch["coin_pusher_skill_stop_engaged"] = engaged
+			immediate_patch["coin_pusher_motor_rate_fp"] = int(simulation.get("motor_rate_fp", 0))
 		COLLECT_ACTION:
 			return _collect_surface_command(run_state, environment, machine)
 		_:
 			return {"handled": false}
 	_write_live_durable(run_state, environment, machine, false)
-	return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": _v3_headless_surface_state(machine)}, true)
+	immediate_patch.merge(_surface_action_view_patch(machine, run_state, environment, _ui_state), false)
+	return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": immediate_patch}, true)
 
 
 func surface_pointer_uses_lightweight_ui_state(surface_action: String) -> bool:
@@ -1318,7 +1324,10 @@ func _collect_surface_command(run_state: RunState, environment: Dictionary, mach
 	GameModule.apply_result(run_state, result)
 	_write_live_durable(run_state, environment, machine, false)
 	_register_pile_rumor(run_state, environment, machine)
-	return GameModule.surface_command({"handled": true, "environment_changed": true, "message": message, "surface_state_patch": _v3_headless_surface_state(machine), "preserve_surface_ui_state": true}, true)
+	var patch := _surface_action_view_patch(machine, run_state, environment)
+	patch["coin_pusher_collected_count"] = int(simulation.get("collected_count", 0))
+	patch["coin_pusher_collected_value"] = int(simulation.get("collected_value", 0))
+	return GameModule.surface_command({"handled": true, "environment_changed": true, "message": message, "surface_state_patch": patch, "preserve_surface_ui_state": true}, true)
 
 
 func _resolve_live_nudge(run_state: RunState, environment: Dictionary, machine: Dictionary, ui_state: Dictionary) -> Dictionary:
