@@ -1387,11 +1387,11 @@ struct Kernel {
     out["events"] = events;
     out["metrics"] = m;
     out["invariants"] = inv;
-    if (capture_previous) {
+    auto presentation_views = [](const std::vector<Body> &source) {
       Array views;
-      views.resize(presentation_previous.size());
-      for (int64_t i = 0; i < int64_t(presentation_previous.size()); ++i) {
-        const Body &q = presentation_previous[size_t(i)];
+      views.resize(source.size());
+      for (int64_t i = 0; i < int64_t(source.size()); ++i) {
+        const Body &q = source[size_t(i)];
         Dictionary view;
         view["id"] = q.id;
         view["kind"] = q.kind;
@@ -1406,8 +1406,15 @@ struct Kernel {
                                                        : String();
         views[i] = view;
       }
-      out["presentation_previous_bodies"] = views;
+      return views;
+    };
+    if (capture_previous) {
+      out["presentation_previous_bodies"] = presentation_views(presentation_previous);
       out["presentation_previous_face_y"] = presentation_previous_face_y;
+    }
+    if (bool(config.get("capture_current_views", false))) {
+      out["presentation_current_bodies"] = presentation_views(b);
+      out["presentation_current_face_y"] = int64_t(state.get("face_y", face_y(g, 0)));
     }
     return out;
   }

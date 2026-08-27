@@ -8,8 +8,11 @@ const FIXED_HZ := 60
 const MAX_CATCH_UP_TICKS := 4
 const MAX_SETTLE_TICKS := 1200
 
+static var _native_cache_generation := 0
+
 
 static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int) -> Dictionary:
+	_native_cache_generation += 1
 	if typeof(machine.get("simulation", {})) != TYPE_DICTIONARY \
 			or str((machine.get("simulation", {}) as Dictionary).get("schema", "")) != CoinPusherSolverScript.SCHEMA:
 		var snapshot: Dictionary = machine.get("settled_state", {}) if typeof(machine.get("settled_state", {})) == TYPE_DICTIONARY else {}
@@ -72,7 +75,9 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		"presentation_current_face_y": int(simulation.get("face_y", 0)),
 		"presentation_view_serial": 0,
 		"presentation_audio_serial": 0,
-		"native_cache_key": "live:%s" % seed,
+		# A fresh authority gets a new generation even when deterministic fixture
+		# re-entry deliberately reuses the same seed.
+		"native_cache_key": "live:%s:%s" % [seed, _native_cache_generation],
 		"native_cache_reset": true,
 	}
 	return machine["live_session"]
@@ -384,6 +389,7 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 		previous_views = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
 	var native_batch := CoinPusherSolverScript.native_live_batch_supported()
 	var remaining := safe_tick_count
+	var final_result: Dictionary = {}
 	while remaining > 0:
 		var tick_value := int(simulation.get("tick", 0))
 		if safe_tick_count > 1 and not native_batch and remaining == 1:
@@ -414,7 +420,9 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 			"live_cache_key": str(session.get("native_cache_key", "")) if native_batch else "",
 			"live_cache_reset": bool(session.get("native_cache_reset", false)),
 			"capture_previous_views": native_batch and safe_tick_count > 1 and is_final_chunk,
+			"capture_current_views": native_batch and is_final_chunk,
 		}, chunk_ticks)
+		final_result = result
 		session["native_cache_reset"] = false
 		all_events.append_array(result.get("events", []))
 		if native_batch and safe_tick_count > 1 and is_final_chunk:
@@ -422,12 +430,12 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 			previous_face_y = int(result.get("presentation_previous_face_y", simulation.get("previous_face_y", 0)))
 		remaining -= chunk_ticks
 	if safe_tick_count > 0:
-		var current_views := _presentation_body_views(simulation)
+		var current_views: Array = final_result.get("presentation_current_bodies", []) if native_batch and typeof(final_result.get("presentation_current_bodies", [])) == TYPE_ARRAY else _presentation_body_views(simulation)
 		session["presentation_previous_bodies"] = previous_views
 		session["presentation_current_bodies"] = current_views
 		session["presentation_feature_count"] = _presentation_feature_count(current_views)
 		session["presentation_previous_face_y"] = previous_face_y
-		session["presentation_current_face_y"] = int(simulation.get("face_y", 0))
+		session["presentation_current_face_y"] = int(final_result.get("presentation_current_face_y", simulation.get("face_y", 0))) if native_batch else int(simulation.get("face_y", 0))
 		session["presentation_view_serial"] = int(session.get("presentation_view_serial", 0)) + safe_tick_count
 	session["rng"] = rng.snapshot()
 	session["liveness_ticks"] = int(session.get("liveness_ticks", 0)) + safe_tick_count
