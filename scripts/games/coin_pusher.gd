@@ -32,6 +32,12 @@ const V3_HEADLESS_MESSAGE := "The pusher hums continuously. Time the rail, stop 
 var _live_machines: Dictionary = {}
 var _exit_settle_active := false
 var _renderer := CoinPusherRendererScript.new()
+var _machine_definition_cache: Dictionary = {}
+
+
+func setup(p_definition: Dictionary, p_library: ContentLibrary = null) -> void:
+	super.setup(p_definition, p_library)
+	_machine_definition_cache.clear()
 
 
 func gameplay_model() -> String:
@@ -961,6 +967,10 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 	var geometry: Dictionary = (definition.get("geometry", {}) as Dictionary).duplicate(true) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
 	var apparatus: Dictionary = (definition.get("apparatus", {}) as Dictionary).duplicate(true) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
 	apparatus["drop_y"] = int(geometry.get("drop_y", CoinPusherSolverScript.DROP_Y))
+	# Static-cache dependencies are authored/reinstall state, not live-frame
+	# state. Fingerprint them while constructing the complete snapshot so the
+	# shipped Web renderer never serializes these nested dictionaries per draw.
+	var static_content_key := JSON.stringify([cabinet, geometry, apparatus], "", true).sha256_text()
 	var tell_rung := clampi(int(machine.get("tell_rung", 0)), 0, _tell_labels().size() - 1)
 	if not session.is_empty():
 		session["presentation_binding_signature"] = _realtime_binding_signature(machine, simulation, tray)
@@ -1013,6 +1023,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_cabinet": cabinet,
 		"coin_pusher_geometry": geometry,
 		"coin_pusher_apparatus": apparatus,
+		"coin_pusher_static_content_key": static_content_key,
 		"coin_pusher_coin_height": int((definition.get("coins", {}) as Dictionary).get("height", CoinPusherSolverScript.COIN_HEIGHT)) if typeof(definition.get("coins", {})) == TYPE_DICTIONARY else CoinPusherSolverScript.COIN_HEIGHT,
 		"coin_pusher_coin_radius": int((definition.get("coins", {}) as Dictionary).get("radius", CoinPusherSolverScript.COIN_RADIUS)) if typeof(definition.get("coins", {})) == TYPE_DICTIONARY else CoinPusherSolverScript.COIN_RADIUS,
 		"coin_pusher_ridge_multiplier": JackpotRidgeScript.payout_multiplier(variation_state) if variation_id == "jackpot_ridge" else 1,
@@ -1069,6 +1080,7 @@ func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = 
 		"coin_pusher_drop_queue_count": _queued_drop_count(machine),
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
+		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
 		"coin_pusher_last_step_metrics": simulation.get("last_step_metrics", {}),
 		"coin_pusher_liveness_ticks": int(session.get("liveness_ticks", 0)),
 		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
@@ -1146,6 +1158,7 @@ func _surface_action_view_patch(machine: Dictionary, run_state: RunState, enviro
 		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
+		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
 		"native_selected_surface_actions": _native_surface_actions(machine),
 		"surface_action_bindings": _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment),
 	}
@@ -2096,14 +2109,18 @@ func _tuning() -> Dictionary:
 
 
 func _machine_definition(variation_id: String = "") -> Dictionary:
+	var selected := variation_id.strip_edges()
+	var cache_key := selected if not selected.is_empty() else "__base__"
+	if _machine_definition_cache.has(cache_key):
+		return _machine_definition_cache[cache_key]
 	var value: Variant = definition.get("coin_pusher_machine", {})
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
 	var base: Dictionary = (value as Dictionary).duplicate(true)
 	var machines: Dictionary = base.get("machines", {}) if typeof(base.get("machines", {})) == TYPE_DICTIONARY else {}
 	base.erase("machines")
-	var selected := variation_id.strip_edges()
 	if selected.is_empty() or selected == str(base.get("machine_id", "quarter_falls")):
+		_machine_definition_cache[cache_key] = base
 		return base
 	var override: Dictionary = machines.get(selected, {}) if typeof(machines.get(selected, {})) == TYPE_DICTIONARY else {}
 	for key in override.keys():
@@ -2113,6 +2130,7 @@ func _machine_definition(variation_id: String = "") -> Dictionary:
 		sub_game.merge(override.get("sub_game", {}), true)
 	base["sub_game"] = sub_game
 	base["cabinet"] = _resolved_cabinet(selected)
+	_machine_definition_cache[cache_key] = base
 	return base
 
 

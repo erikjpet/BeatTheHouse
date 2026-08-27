@@ -537,17 +537,22 @@ func _prepare_static_cache(surface, state: Dictionary) -> bool:
 	var effective_font: Font = surface.get_theme_default_font()
 	_bind_static_cache_font(effective_font)
 	var font_identity: int = effective_font.get_instance_id() if effective_font != null else 0
-	var key := JSON.stringify([
-		DESIGN_SIZE,
-		cache_pixel_size,
-		board_rect,
-		transform.get("scale", Vector2.ONE),
+	# The full snapshot owns the nested static-content fingerprint. Keep the
+	# live draw key scalar-only: serializing the authored peg/apparatus trees on
+	# every Web draw was itself a material part of the measured draw callback.
+	var key := "%d:%d|%.3f:%.3f:%.3f:%.3f|%.4f:%.4f|%d|%s|%d" % [
+		cache_pixel_size.x,
+		cache_pixel_size.y,
+		board_rect.position.x,
+		board_rect.position.y,
+		board_rect.size.x,
+		board_rect.size.y,
+		(transform.get("scale", Vector2.ONE) as Vector2).x,
+		(transform.get("scale", Vector2.ONE) as Vector2).y,
 		font_identity,
-		state.get("coin_pusher_cabinet", {}),
-		state.get("coin_pusher_geometry", {}),
-		state.get("coin_pusher_apparatus", {}),
-		bool(state.get("coin_pusher_locked", false)),
-	], "", true)
+		str(state.get("coin_pusher_static_content_key", "missing")),
+		1 if bool(state.get("coin_pusher_locked", false)) else 0,
+	]
 	if _static_cache_viewports.is_empty():
 		var canvas_script: Script = load("res://scripts/games/coin_pusher/coin_pusher_static_cache_canvas.gd")
 		for layer_index in range(3):
