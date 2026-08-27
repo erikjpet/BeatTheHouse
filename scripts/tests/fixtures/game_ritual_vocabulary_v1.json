@@ -1,0 +1,395 @@
+{
+  "contract": "game_ritual/1",
+  "ritual_id": "example_table.standard_session",
+  "initial_phase": "open",
+  "ritual_phases": [
+    {
+      "id": "open",
+      "entry_conditions": [],
+      "permitted_actions": [
+        "commit.place",
+        "commit.correct",
+        "commit.remove",
+        "commit.undo",
+        "commit.clear",
+        "commit.repeat",
+        "commit.rebet",
+        "commit.confirm"
+      ],
+      "entry_operations": [],
+      "transitions": [
+        {
+          "id": "open_to_committed",
+          "condition": {
+            "kind": "accepted_action",
+            "action_id": "commit.confirm"
+          },
+          "next_phase": "committed",
+          "operations": [
+            {
+              "family": "actor",
+              "verb": "set_pose",
+              "target": "staff.primary",
+              "state": "offer"
+            }
+          ]
+        }
+      ],
+      "terminal": false
+    },
+    {
+      "id": "committed",
+      "entry_conditions": [
+        {
+          "kind": "receipt_present",
+          "receipt_kind": "commitment"
+        }
+      ],
+      "permitted_actions": [
+        "play.primary"
+      ],
+      "entry_operations": [],
+      "transitions": [
+        {
+          "id": "committed_to_resolving",
+          "condition": {
+            "kind": "accepted_action",
+            "action_id": "play.primary"
+          },
+          "next_phase": "resolving",
+          "operations": [
+            {
+              "family": "object",
+              "verb": "set_visual_state",
+              "target": "apparatus.primary",
+              "state": "active"
+            }
+          ]
+        }
+      ],
+      "terminal": false
+    },
+    {
+      "id": "resolving",
+      "entry_conditions": [
+        {
+          "kind": "authoritative_result_present"
+        }
+      ],
+      "permitted_actions": [
+        "resolution.acknowledge"
+      ],
+      "entry_operations": [
+        {
+          "family": "actor",
+          "verb": "set_behavior",
+          "target": "staff.primary",
+          "state": "reacting"
+        }
+      ],
+      "transitions": [
+        {
+          "id": "resolving_to_open",
+          "condition": {
+            "kind": "accepted_action",
+            "action_id": "resolution.acknowledge"
+          },
+          "next_phase": "open",
+          "operations": [
+            {
+              "family": "object",
+              "verb": "set_visual_state",
+              "target": "apparatus.primary",
+              "state": "idle"
+            }
+          ]
+        }
+      ],
+      "terminal": false
+    }
+  ],
+  "staged_commitment": {
+    "pending_collection": "pending_items",
+    "working_collection": "working_items",
+    "resolution_collection": "item_resolutions",
+    "funds_authority": "game_rules",
+    "actions": [
+      {
+        "id": "commit.place",
+        "effect": "add_or_increment_one"
+      },
+      {
+        "id": "commit.correct",
+        "effect": "replace_one_pending_amount"
+      },
+      {
+        "id": "commit.remove",
+        "effect": "remove_one_pending_item"
+      },
+      {
+        "id": "commit.undo",
+        "effect": "reverse_last_pending_edit"
+      },
+      {
+        "id": "commit.clear",
+        "effect": "remove_all_pending_items"
+      },
+      {
+        "id": "commit.repeat",
+        "effect": "copy_last_eligible_commitment"
+      },
+      {
+        "id": "commit.rebet",
+        "effect": "copy_eligible_resolved_items"
+      },
+      {
+        "id": "commit.confirm",
+        "effect": "authorize_pending_set"
+      }
+    ],
+    "readable_totals": [
+      "available_funds",
+      "pending_total",
+      "at_risk_total",
+      "returned_stake",
+      "payout",
+      "net_change"
+    ]
+  },
+  "pointer_verbs": [
+    {
+      "id": "place_primary",
+      "verb": "place",
+      "source_region": "player.reserve",
+      "target_regions": [
+        "layout.primary"
+      ],
+      "bounds": {
+        "space": "design",
+        "min_distance": 0,
+        "max_distance": 320
+      },
+      "phases": [
+        "open"
+      ],
+      "accepted_action": "commit.place",
+      "rejection": "return_to_source",
+      "rejection_effects": [],
+      "equivalents": {
+        "keyboard": {
+          "action": "commit.place",
+          "target_selection": "focus"
+        },
+        "controller": {
+          "action": "commit.place",
+          "target_selection": "focus"
+        },
+        "reduced_motion": {
+          "action": "commit.place",
+          "travel": "instant"
+        }
+      }
+    }
+  ],
+  "actors": [
+    {
+      "id": "staff.primary",
+      "role": "staff",
+      "anchor": "station.primary",
+      "poses": [
+        "idle",
+        "offer",
+        "attend",
+        "resolve"
+      ],
+      "behavior_states": [
+        "idle",
+        "working",
+        "watching",
+        "reacting"
+      ],
+      "initial_pose": "idle",
+      "initial_behavior": "idle",
+      "fact_reactions": []
+    }
+  ],
+  "scene_objects": [
+    {
+      "id": "apparatus.primary",
+      "anchor": "layout.center",
+      "bounds": {
+        "space": "design",
+        "x": 280,
+        "y": 90,
+        "w": 340,
+        "h": 180
+      },
+      "z_layer": "gameplay",
+      "visual_states": [
+        "idle",
+        "active",
+        "resolved"
+      ],
+      "functional_states": [
+        "enabled",
+        "blocked"
+      ],
+      "initial_visual_state": "idle",
+      "initial_functional_state": "enabled",
+      "hit_regions": [
+        {
+          "id": "layout.primary",
+          "bounds": {
+            "space": "design",
+            "x": 320,
+            "y": 140,
+            "w": 220,
+            "h": 96
+          },
+          "minimum_touch_target": 42
+        }
+      ],
+      "text_safety_regions": []
+    }
+  ],
+  "energy": {
+    "initial_tier": "quiet",
+    "tiers": [
+      {
+        "id": "quiet",
+        "actor_operations": [],
+        "object_operations": [
+          {
+            "target": "apparatus.primary",
+            "state": "idle"
+          }
+        ],
+        "interaction_operations": [],
+        "audio_cues": []
+      },
+      {
+        "id": "engaged",
+        "actor_operations": [
+          {
+            "target": "staff.primary",
+            "behavior": "watching"
+          }
+        ],
+        "object_operations": [],
+        "interaction_operations": [],
+        "audio_cues": []
+      }
+    ]
+  },
+  "game_facts": [
+    {
+      "id": "session.started",
+      "version": 1,
+      "boundary": "action",
+      "visibility": "public",
+      "payload": {
+        "session_id": "string"
+      }
+    },
+    {
+      "id": "commitment.accepted",
+      "version": 1,
+      "boundary": "action",
+      "visibility": "public",
+      "payload": {
+        "commitment_id": "string",
+        "at_risk_total": "int"
+      }
+    },
+    {
+      "id": "resolution.completed",
+      "version": 1,
+      "boundary": "action",
+      "visibility": "public",
+      "payload": {
+        "result_id": "string",
+        "net_change": "int"
+      }
+    },
+    {
+      "id": "session.ended",
+      "version": 1,
+      "boundary": "action",
+      "visibility": "public",
+      "payload": {
+        "session_id": "string"
+      }
+    }
+  ],
+  "ritual_persistence": {
+    "authoritative_serialized": [
+      "contract",
+      "ritual_id",
+      "phase_id",
+      "pending_items",
+      "working_items",
+      "item_resolutions",
+      "authoritative_result_refs",
+      "actor_states",
+      "object_states",
+      "energy_tier",
+      "handler_state",
+      "receipts",
+      "fingerprints"
+    ],
+    "derived_projection": [
+      "prepared_layout",
+      "prepared_render_model"
+    ],
+    "transient_presentation": [
+      "pointer_path",
+      "hover",
+      "animation_progress"
+    ],
+    "one_shot_receipted": [
+      "transition_cues",
+      "audio_cues",
+      "dialogue_cues"
+    ],
+    "save_boundaries": [
+      "action"
+    ],
+    "restore_policy": "restore_legal_phase_without_replay"
+  },
+  "handler_registry": [
+    {
+      "id": "play.primary",
+      "version": 1,
+      "inputs": {
+        "commitment_id": "string"
+      },
+      "outputs": {
+        "result_id": "string"
+      },
+      "authority": "game_rules",
+      "persisted_state": [
+        "authoritative_result_refs"
+      ],
+      "transient_state": [],
+      "rng": {
+        "owner": "game_rules",
+        "stream": "run",
+        "consumption": "fixed_by_authoritative_action"
+      },
+      "emitted_facts": [
+        "resolution.completed"
+      ],
+      "rejection": "side_effect_free"
+    }
+  ],
+  "declared_targets": {
+    "anchors": [
+      "station.primary",
+      "layout.center"
+    ],
+    "regions": [
+      "player.reserve",
+      "layout.primary"
+    ]
+  }
+}
