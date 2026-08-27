@@ -1652,3 +1652,10 @@ below to jump to a row's history.
   252.197/247.542/240.187/245.767s. Because attempt 01 is noneligible, no
   five-eligible-run decision median exists, no stale-baseline candidate is
   claimed and no baseline, multiplier or cap changed.
+- 2026-08-27 [fix06_18] The clean env06_6 accepted-head filtered-content run at
+  `c373bb52786bb51ac44f2e4cddf5fd8e4b536b39` exposed exactly eleven public
+  scenario caller rollback failures after the deferred runner finally executed
+  them inside a ready `SceneTree`. Seven UI paths also emitted detached-focus
+  diagnostics. The defect is routed independently as `fix06_18`; env06_6 does
+  not absorb caller runtime changes. Exact evidence hashes and the closed
+  transaction invariant are recorded in the row prompt.
