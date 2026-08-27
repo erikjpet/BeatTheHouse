@@ -835,3 +835,8 @@ below to jump to a row's history.
   on the isolated depth-program integration line. Initial runtime, catalog,
   Craps, and poker audits precede implementation; consumer branches may not
   base before independent acceptance and integration of the runtime head.
+
+- 2026-08-26 [pusherv3_11] Claimed the genuine V3 program closure audit on
+  exact landed V3/fix base `59db0882`. Entangled source `554773c6` contains
+  only a static HELD row, is 14 commits ahead and 62 behind this base, and is
+  retained untouched as provenance; no source payload will be transplanted.
