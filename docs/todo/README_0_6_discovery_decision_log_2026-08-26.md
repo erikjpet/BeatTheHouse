@@ -1637,11 +1637,18 @@ below to jump to a row's history.
   stale-baseline candidate requiring owner authorization; it never changes the
   cap automatically. Historical results remain context, not series members.
 
-- 2026-08-26 [fix06_5] The predeclared series concluded INCONCLUSIVE at its
-  first numbered attempt. Exact source/host/Godot/native identities qualified,
+- 2026-08-26 [fix06_5] The predeclared series locked an INCONCLUSIVE final
+  classification at its first numbered attempt. Exact source/host/Godot/native
+  identities qualified,
   and a retained red idle sample was followed by an eligible 60-second sample
   (median 6.760%, nearest-rank p95 12.368%). Attempt 01 passed validation in
   49.157s, then the child PowerShell process could not locate Godot and exited
-  before Contract. The attempt is noneligible and was neither discarded nor
-  replaced; attempts 02–05 were not run. No median exists, no stale-baseline
-  candidate is claimed and no baseline, multiplier or cap changed.
+  before Contract. These shell values are operator-observed and not independently
+  raw-verifiable because the outer transcript was not retained. The attempt is
+  noneligible and was neither discarded nor replaced. Independent review
+  correctly found attempts 02–05 still had to run once each. They completed
+  after eligible idle prechecks and cooldowns with 16/16 checks green, zero
+  stderr/timeouts and `native_v3`; all four were timing-only reds at
+  252.197/247.542/240.187/245.767s. Because attempt 01 is noneligible, no
+  five-eligible-run decision median exists, no stale-baseline candidate is
+  claimed and no baseline, multiplier or cap changed.

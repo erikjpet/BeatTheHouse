@@ -1,4 +1,4 @@
-Status: IN PROGRESS — execution concluded INCONCLUSIVE; result record awaits independent review and landing
+Status: IN PROGRESS — five attempts executed; INCONCLUSIVE result awaits independent review and landing
 Board row: `fix06_5` in `docs/todo/README_0_6_board.md`
 
 # fix06_5 — Contract Suite Timing Measurement
@@ -170,19 +170,43 @@ precheck was eligible: 60 samples, median `6.76016865331285%`, nearest-rank p95
 before and after.
 
 Numbered attempt 01 then ran the exact predeclared command, including mandatory
-`-KeepGoing`, once from `22:14:41.3296803-05:00` through
-`22:15:30.8813904-05:00`. Static validation passed in `49.157s`, after which the
-runner exited 1 before import with `Godot was not found`. The child PowerShell
-process had not received an explicit `GODOT_BIN`, while the detached clean
-worktree deliberately had no ignored `.tools` installation. Therefore attempt
-01 is **not timing-eligible** and provides no Contract duration. Per the locked
-no-replacement rule, it was not repeated or discarded; attempts 02–05 were not
-run and no median was computed.
+`-KeepGoing`, once. The orchestrating shell displayed start
+`22:14:41.3296803-05:00`, end `22:15:30.8813904-05:00`, validation PASS in
+`49.157s`, wrapper exit 1 and `Godot was not found` before import. Those values
+are operator-observed: no outer wrapper transcript was preserved, and the
+retained `run_01` directory contains only zero-byte validation stdout/stderr,
+so they are not independently verifiable from raw attempt artifacts. The child
+PowerShell process had not received an explicit `GODOT_BIN`, while the detached
+clean worktree deliberately had no ignored `.tools` installation. Attempt 01
+is therefore **not timing-eligible** and provides no Contract duration. It was
+not repeated or discarded. Independent review correctly found that the five-run
+method still required attempts 02–05 once each even though attempt 01 already
+locked the final classification as INCONCLUSIVE. All four later attempts ran
+exactly once after fresh eligible prechecks and at least 120 seconds of cooldown.
 
-The series classification is **INCONCLUSIVE**. It neither supports the existing
-guard nor creates a stale-baseline candidate. The baseline, multiplier, cap,
+| Attempt | Precheck median / p95 / max | Validation / import / load | Contract stage | Functional result | Eligibility |
+| --- | --- | --- | --- | --- | --- |
+| 01 | `6.760% / 12.368% / 22.042%` | operator-observed `49.157s / not reached / not reached` | not reached | not reached | noneligible; missing Godot path |
+| 02 | `6.789% / 14.924% / 18.792%` | `48.111 / 17.820 / 24.359s` | `252.197s`, exit 126 | 16/16 pass, zero stderr, `native_v3` | eligible timing red |
+| 03 | `4.917% / 21.440% / 89.506%` | `46.402 / 16.779 / 22.931s` | `247.542s`, exit 126 | 16/16 pass, zero stderr, `native_v3` | eligible timing red |
+| 04 | `0.511% / 5.098% / 7.192%` | `46.072 / 16.580 / 22.919s` | `240.187s`, exit 126 | 16/16 pass, zero stderr, `native_v3` | eligible timing red |
+| 05 | `0.694% / 5.898% / 7.613%` | `46.004 / 16.975 / 23.005s` | `245.767s`, exit 126 | 16/16 pass, zero stderr, `native_v3` | eligible timing red |
+
+Before attempt 01, a separate red precheck was retained at median `7.376%`,
+p95 `93.198%` and max `94.845%`; it did not consume an attempt. For attempt 02,
+two other agents performed static source/RCA work after the attempt began until
+the PM paused them. They ran no Godot, test, import, export, capture, native
+compile or other timed job, so this disclosed activity does not violate the
+literal timed-job exclusion. Attempts 03–05 ran with those agents paused.
+
+The final series classification is **INCONCLUSIVE** because attempt 01 was
+noneligible. Attempts 02–05 were all timing-eligible reds at `252.197`,
+`247.542`, `240.187` and `245.767s`, respectively, but the decision rule
+requires five eligible attempts. No five-value decision median is computed.
+The series cannot support the existing guard or create a stale-baseline
+candidate. The baseline, multiplier, cap,
 runner, tests and product remain unchanged. Machine-readable details are in
 [`docs/plans/evidence/fix06_5/result.json`](../plans/evidence/fix06_5/result.json);
-ignored raw samples, qualification output and the incomplete run directory are
+ignored raw samples, qualification output, outer transcripts and run directories are
 preserved under `.tmp/fix06_5_contract_timing/` in both the detached measurement
 worktree and the row worktree.
