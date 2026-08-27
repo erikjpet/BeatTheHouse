@@ -5,7 +5,7 @@ contains the historical Discovery & Decision Log moved verbatim by
 `board06_1`. Future scope discoveries, deviations and decisions append
 here; task state, protocol and owner questions remain on the active board.
 
-Preserved entries: **174**; current entries: **178**. Use the exact find token
+Preserved entries: **174**; current entries: **179**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -46,6 +46,7 @@ below to jump to a row's history.
 | `fix06_2/crew06_5 visual QA` | 1 | `[fix06_2/crew06_5 visual QA]` |
 | `fix06_2/integrated systems` | 1 | `[fix06_2/integrated systems]` |
 | `fix06_3` | 1 | `[fix06_3]` |
+| `fix06_6` | 1 | `[fix06_6]` |
 | `integrated UI` | 1 | `[integrated UI]` |
 | `push06_1` | 6 | `[push06_1]` |
 | `pusher` | 2 | `[pusher]` |
@@ -1601,3 +1602,17 @@ below to jump to a row's history.
   owns at least five runs on an otherwise idle host with every result, date,
   host and method recorded before any rebaseline. The cap was not changed and
   the red does not block subsequent rows.
+
+- 2026-08-26 [fix06_6] Read-only audit classified the inherited delivery
+  full-state UI red as a stale fixture, not a product regression. At exact head
+  `908b14bb`, only the full environment/map hashes differed; route, RNG,
+  economy, clock, heat, node and story outputs remained exact. Three retained
+  lifecycle phases were byte-identical with delivery inactive and empty, and
+  the eight recursive changes were mirrored solely below authored Coin Pusher
+  persisted state. Owner-authorized refresh `f9eaebbf` changed only the two
+  inline hashes and provenance comment, was accepted and landed with `fix06_4`
+  at `9a2022ae`, and remained covered by later green exact-main Smoke. The
+  launcher’s separate-row obligation can be closed by documentation only, but
+  remains open until that closeout is independently accepted, landed on main,
+  checked post-land and recorded. No new refresh, product correction, recapture
+  or runtime gate is justified.
