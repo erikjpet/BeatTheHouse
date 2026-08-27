@@ -73,7 +73,7 @@ static func prepare(environment: Dictionary, projection: Dictionary) -> Dictiona
 		var right_z := int(right.get("z_order", 0))
 		return str(left.get("semantic_identity", "")) < str(right.get("semantic_identity", "")) if left_z == right_z else left_z < right_z
 	)
-	return {
+	var response := {
 		"schema_version": 1,
 		"scenario_id": str(projection.get("scenario_id", "")),
 		"phase_id": str(projection.get("phase_id", "")),
@@ -95,6 +95,14 @@ static func prepare(environment: Dictionary, projection: Dictionary) -> Dictiona
 			"interaction_count": _dict(semantic_state.get("interactions", {})).size(),
 		},
 	}
+	if not errors.is_empty():
+		for key in ["visual_objects", "interaction_overlays", "services", "games", "routes", "active_stages"]:
+			response[key] = []
+		var failed_audit := _dict(response.get("layout_audit", {}))
+		failed_audit["visual_count"] = 0
+		failed_audit["interaction_count"] = 0
+		response["layout_audit"] = failed_audit
+	return response
 
 
 static func _prepare_extension_visual(environment: Dictionary, semantic_state: Dictionary, semantic: Dictionary, actor: bool, errors: Array) -> Dictionary:

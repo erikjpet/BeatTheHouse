@@ -3,6 +3,7 @@ extends RefCounted
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
+const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_extension_dispatch.gd")
 
 const BOARD_SIZE := Vector2(900.0, 430.0)
 const SCENARIO_OBJECT_ID := "scenario:scenario:console:night"
@@ -20,6 +21,7 @@ class ActivationCapture:
 static func check(failures: Array) -> void:
 	_check_composed_actions_and_geometry(failures)
 	_check_small_screen_expansion(failures)
+	_check_renderer_failure_payload_is_empty(failures)
 	_check_competing_augment_presentation(failures)
 	_check_fail_closed_presentation(failures)
 
@@ -147,6 +149,74 @@ static func _check_small_screen_expansion(failures: Array) -> void:
 	if consumed_rect.size.x < 104.0 or consumed_rect.size.y < 76.0 or canvas.object_id_at_local_position(consumed_rect.get_center()) != "scenario:scenario:edge_exit":
 		failures.append("Canvas did not consume the resolver's expanded/clamped small-screen hit geometry.")
 	canvas.free()
+
+
+static func _check_renderer_failure_payload_is_empty(failures: Array) -> void:
+	var environment := {
+		"id": "validation_corner_store_delivery_day",
+		"layout": {"object_rects": {}},
+		"semantic_anchors": {"delivery_clerk": {"position": [180.0, 180.0]}},
+		"semantic_zones": {},
+	}
+	var projection := {
+		"scenario_id": "corner_store_delivery_day",
+		"phase_id": "arrival",
+		"status": "active",
+		"boundary_serial": 3,
+		"active_stages": [{"stage_id": "HOSTILE_PUBLIC_SENTINEL"}],
+		"semantic_state": {
+			"scene_objects": {
+				"scenario::missing_scene": {
+					"owner_namespace": "scenario", "stable_object_id": "missing_scene",
+					"label": "HOSTILE_PUBLIC_SENTINEL", "anchor_id": "missing_anchor",
+				},
+			},
+			"actors": {
+				"scenario::delivery_clerk": {
+					"owner_namespace": "scenario", "stable_object_id": "delivery_clerk",
+					"label": "Delivery clerk", "anchor_id": "delivery_clerk",
+					"route_id": "delivery_clerk",
+				},
+			},
+			"interactions": {
+				"scenario::leaked_interaction": {
+					"owner_namespace": "scenario", "stable_object_id": "leaked_interaction",
+					"label": "HOSTILE_PUBLIC_SENTINEL", "mode": "add",
+				},
+			},
+			"services": {"service::leaked": {"id": "HOSTILE_PUBLIC_SENTINEL"}},
+			"games": {"game::leaked": {"id": "HOSTILE_PUBLIC_SENTINEL"}},
+			"routes": {"base::world:leaked": {"id": "HOSTILE_PUBLIC_SENTINEL"}},
+		},
+	}
+	var environment_fingerprint := JSON.stringify(environment)
+	var projection_fingerprint := JSON.stringify(projection)
+	var prepared := ScenarioLayoutResolverScript.prepare(environment, projection)
+	if bool(prepared.get("ok", true)) or not _contains_text(_array(prepared.get("errors", [])), "unresolved anchor or zone") \
+		or not _contains_text(_array(prepared.get("errors", [])), "unresolved route"):
+		failures.append("Hostile Delivery Day renderer fixture did not preserve its typed scene/actor resolution errors.")
+	for key in ["visual_objects", "interaction_overlays", "services", "games", "routes", "active_stages"]:
+		if not _array(prepared.get(key, [])).is_empty():
+			failures.append("Failed scenario renderer retained public %s payload." % key)
+	var audit := _dict(prepared.get("layout_audit", {}))
+	if int(audit.get("visual_count", -1)) != 0 or int(audit.get("interaction_count", -1)) != 0:
+		failures.append("Failed scenario renderer audit reported unpublished presentation payload.")
+	if str(prepared.get("scenario_id", "")) != "corner_store_delivery_day" or str(prepared.get("phase_id", "")) != "arrival" \
+		or str(prepared.get("status", "")) != "active" or int(prepared.get("boundary_serial", -1)) != 3 \
+		or typeof(prepared.get("errors", [])) != TYPE_ARRAY or typeof(prepared.get("warnings", [])) != TYPE_ARRAY \
+		or typeof(prepared.get("layout_audit", {})) != TYPE_DICTIONARY:
+		failures.append("Failed scenario renderer discarded typed diagnostics or safe snapshot metadata.")
+	if JSON.stringify(prepared).contains("HOSTILE_PUBLIC_SENTINEL"):
+		failures.append("Failed scenario renderer leaked rejected presentation content outside its public collections.")
+	if JSON.stringify(environment) != environment_fingerprint or JSON.stringify(projection) != projection_fingerprint:
+		failures.append("Failed scenario renderer mutated caller-owned environment or projection input.")
+	var dispatched := ScenarioExtensionDispatchScript.prepare_render({}, environment, projection)
+	if bool(dispatched.get("ok", true)) or not _contains_text(_array(dispatched.get("errors", [])), "unresolved route") \
+		or _contains_text(_array(dispatched.get("errors", [])), "failure must publish no visuals or interactions"):
+		failures.append("Renderer dispatch replaced the resolver's typed failure with a generic payload-impurity error.")
+	for key in ["visual_objects", "interaction_overlays", "services", "games", "routes", "active_stages"]:
+		if not _array(dispatched.get(key, [])).is_empty():
+			failures.append("Renderer dispatch retained failed %s payload." % key)
 
 
 static func _check_fail_closed_presentation(failures: Array) -> void:
@@ -420,3 +490,10 @@ static func _dict(value: Variant) -> Dictionary:
 
 static func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+
+
+static func _contains_text(values: Array, needle: String) -> bool:
+	for value in values:
+		if str(value).contains(needle):
+			return true
+	return false
