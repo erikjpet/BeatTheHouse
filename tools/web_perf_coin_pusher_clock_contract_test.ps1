@@ -16,24 +16,54 @@ $validObservation = [pscustomobject]@{
     observed_tray_count = 4
     liveness_before = 0
     liveness_after = 32
+    conservation = [pscustomobject]@{
+        active = 296; tray = 2; gutter = 2; collected = 0; cup_consumed = 0
+        origin = 300; accounted = 300; conservation_ok = $true; solver_conservation_ok = $true
+    }
 }
 Assert-ClockContract -Condition (Test-CoinPusherReinstallClockObservation -Observation $validObservation) -Message "Valid live reinstall observation was rejected."
 $frozenObservation = $validObservation.PSObject.Copy()
 $frozenObservation.liveness_after = 0
 Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $frozenObservation)) -Message "Frozen reinstall observation was accepted."
 $fabricatedObservation = $validObservation.PSObject.Copy()
-$fabricatedObservation.observed_tray_count = 5
+$fabricatedObservation.conservation = $validObservation.conservation.PSObject.Copy()
+$fabricatedObservation.conservation.tray = 3
+$fabricatedObservation.conservation.accounted = 301
 Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $fabricatedObservation)) -Message "Fabricated reinstall body was accepted."
+$lostObservation = $validObservation.PSObject.Copy()
+$lostObservation.conservation = $validObservation.conservation.PSObject.Copy()
+$lostObservation.conservation.gutter = 1
+$lostObservation.conservation.accounted = 299
+Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $lostObservation)) -Message "Lost reinstall body was accepted."
+
+$reducedBoundary = [pscustomobject]@{ body_count = 296; tray_count = 2; conservation = $validObservation.conservation }
+$reducedFixture = [pscustomobject]@{ body_count = 300 }
+$reducedScenario = [pscustomobject]@{ body_count_before = 296; conservation_before = $validObservation.conservation }
+Assert-ClockContract -Condition (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixture -Boundary $reducedBoundary -ScenarioTags $reducedScenario) -Message "Known 300-boundary/296-sample transition was rejected."
 
 $validCollect = [pscustomobject]@{
     body_count_at_accept = 299
     body_count_after = 295
     tray_count_at_accept = 0
     tray_count_after = 2
+    tray_value_at_accept = 0
+    conservation_at_accept = [pscustomobject]@{
+        active = 299; tray = 0; gutter = 0; collected = 1; cup_consumed = 0
+        origin = 300; accounted = 300; conservation_ok = $true; solver_conservation_ok = $true
+    }
+    conservation_after = [pscustomobject]@{
+        active = 295; tray = 2; gutter = 2; collected = 1; cup_consumed = 0
+        origin = 300; accounted = 300; conservation_ok = $true; solver_conservation_ok = $true
+    }
 }
 Assert-ClockContract -Condition ([bool](Get-CoinPusherPostCollectAccounting -Tags $validCollect).valid) -Message "Legitimate post-COLLECT exits were rejected."
 $fabricatedCollect = $validCollect.PSObject.Copy()
 $fabricatedCollect.tray_count_after = 5
 Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting -Tags $fabricatedCollect).valid) -Message "Fabricated post-COLLECT tray result was accepted."
+$droppedCollect = $validCollect.PSObject.Copy()
+$droppedCollect.conservation_after = $validCollect.conservation_after.PSObject.Copy()
+$droppedCollect.conservation_after.gutter = 1
+$droppedCollect.conservation_after.accounted = 299
+Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting -Tags $droppedCollect).valid) -Message "Dropped post-COLLECT outcome channel was accepted."
 
 Write-Host "Coin Pusher Web clock contract self-test passed."
