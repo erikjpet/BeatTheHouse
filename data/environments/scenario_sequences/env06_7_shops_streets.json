@@ -157,7 +157,8 @@
                       "h": 64
                     },
                     "min_target_size": 44,
-                    "safe_exit": true
+                    "safe_exit": true,
+                    "alternate_exit": false
                   }
                 },
                 {
@@ -196,7 +197,8 @@
                       "h": 56
                     },
                     "min_target_size": 44,
-                    "safe_exit": false
+                    "safe_exit": false,
+                    "alternate_exit": false
                   }
                 },
                 {
@@ -374,7 +376,8 @@
                       "h": 72
                     },
                     "min_target_size": 44,
-                    "safe_exit": false
+                    "safe_exit": false,
+                    "alternate_exit": false
                   }
                 }
               ],
@@ -405,11 +408,11 @@
                 },
                 {
                   "family": "actor_ops",
-                  "op": "set_route",
+                  "op": "set_position",
                   "receipt_id": "sorting_route_runner_to_service_lane",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_runner",
-                  "route_id": "zone:service_lane"
+                  "zone_id": "service_lane"
                 },
                 {
                   "family": "actor_ops",
@@ -550,7 +553,8 @@
                       "h": 56
                     },
                     "min_target_size": 44,
-                    "safe_exit": false
+                    "safe_exit": false,
+                    "alternate_exit": false
                   }
                 }
               ],
@@ -686,18 +690,6 @@
                   "receipt_id": "awaiting_stock_remove_verification",
                   "owner_namespace": "scenario",
                   "stable_object_id": "sorting_shelf"
-                },
-                {
-                  "family": "interaction_ops",
-                  "op": "gate",
-                  "receipt_id": "awaiting_stock_keep_host_delivery_event_gated",
-                  "owner_namespace": "scenario",
-                  "stable_object_id": "delivery_event_host_gate",
-                  "mode": "gate",
-                  "target_owner_namespace": "event",
-                  "target_stable_object_id": "event:scenario_delivery_day_stock",
-                  "enabled": false,
-                  "disabled_reason": "The delivered scenario request owns this stock choice; the base card stays gated."
                 }
               ],
               "actor_ops": [
@@ -815,20 +807,7 @@
               "objective_ids": [],
               "advance_after_actions": 0,
               "scene_ops": [],
-              "interaction_ops": [
-                {
-                  "family": "interaction_ops",
-                  "op": "gate",
-                  "receipt_id": "resolution_close_host_delivery_event",
-                  "owner_namespace": "scenario",
-                  "stable_object_id": "delivery_event_host_gate",
-                  "mode": "gate",
-                  "target_owner_namespace": "event",
-                  "target_stable_object_id": "event:scenario_delivery_day_stock",
-                  "enabled": false,
-                  "disabled_reason": "The delivery-stock choice is no longer independently available."
-                }
-              ],
+              "interaction_ops": [],
               "actor_ops": [],
               "transition_ops": [
                 {
@@ -1010,18 +989,6 @@
             },
             {
               "family": "interaction_ops",
-              "op": "gate",
-              "receipt_id": "cleanup_install_terminal_delivery_event_gate",
-              "owner_namespace": "scenario",
-              "stable_object_id": "delivery_event_terminal_gate",
-              "mode": "gate",
-              "target_owner_namespace": "event",
-              "target_stable_object_id": "event:scenario_delivery_day_stock",
-              "enabled": false,
-              "disabled_reason": "This delivery can no longer open independent stock consequences."
-            },
-            {
-              "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_delivery_event_controls",
               "owner_namespace": "scenario",
@@ -1110,10 +1077,15 @@
             "interaction_ops": [
               {
                 "family": "interaction_ops",
-                "op": "remove",
-                "receipt_id": "aftermath_repaired_remove_terminal_event_gate",
+                "op": "gate",
+                "receipt_id": "aftermath_repaired_terminal_event_gate",
                 "owner_namespace": "scenario",
-                "stable_object_id": "delivery_event_terminal_gate"
+                "stable_object_id": "delivery_event_terminal_gate",
+                "mode": "gate",
+                "target_owner_namespace": "event",
+                "target_stable_object_id": "event:scenario_delivery_day_stock",
+                "enabled": false,
+                "disabled_reason": "This delivery has already been resolved."
               }
             ],
             "service_ops": [
@@ -1133,10 +1105,11 @@
             "route_ops": [
               {
                 "family": "route_ops",
-                "op": "open",
+                "op": "retarget",
                 "receipt_id": "aftermath_repaired_jazz_route",
-                "owner_namespace": "scenario",
-                "stable_object_id": "jazz_club"
+                "owner_namespace": "base",
+                "stable_object_id": "world:bar",
+                "source_id": "jazz_club"
               }
             ]
           },
@@ -1169,10 +1142,15 @@
             "interaction_ops": [
               {
                 "family": "interaction_ops",
-                "op": "remove",
-                "receipt_id": "aftermath_broken_remove_terminal_event_gate",
+                "op": "gate",
+                "receipt_id": "aftermath_broken_terminal_event_gate",
                 "owner_namespace": "scenario",
-                "stable_object_id": "delivery_event_terminal_gate"
+                "stable_object_id": "delivery_event_terminal_gate",
+                "mode": "gate",
+                "target_owner_namespace": "event",
+                "target_stable_object_id": "event:scenario_delivery_day_stock",
+                "enabled": false,
+                "disabled_reason": "This delivery has already been resolved."
               }
             ],
             "service_ops": [
@@ -1195,8 +1173,8 @@
                 "family": "route_ops",
                 "op": "close",
                 "receipt_id": "aftermath_broken_bar_route",
-                "owner_namespace": "scenario",
-                "stable_object_id": "bar",
+                "owner_namespace": "base",
+                "stable_object_id": "world:bar",
                 "disabled_reason": "The damaged delivery blocks the route toward the bar."
               }
             ]
@@ -1243,6 +1221,20 @@
                 }
               }
             ],
+            "interaction_ops": [
+              {
+                "family": "interaction_ops",
+                "op": "gate",
+                "receipt_id": "aftermath_refused_terminal_event_gate",
+                "owner_namespace": "scenario",
+                "stable_object_id": "delivery_event_terminal_gate",
+                "mode": "gate",
+                "target_owner_namespace": "event",
+                "target_stable_object_id": "event:scenario_delivery_day_stock",
+                "enabled": false,
+                "disabled_reason": "This delivery has already been resolved."
+              }
+            ],
             "service_ops": [
               {
                 "family": "service_ops",
@@ -1263,8 +1255,8 @@
                 "family": "route_ops",
                 "op": "close",
                 "receipt_id": "aftermath_refused_pawn_route",
-                "owner_namespace": "scenario",
-                "stable_object_id": "pawn_shop",
+                "owner_namespace": "base",
+                "stable_object_id": "world:pawn_shop",
                 "disabled_reason": "The return pickup occupies the pawn-shop route."
               }
             ]
@@ -1295,6 +1287,20 @@
               }
             ],
             "actor_ops": [],
+            "interaction_ops": [
+              {
+                "family": "interaction_ops",
+                "op": "gate",
+                "receipt_id": "aftermath_interrupted_terminal_event_gate",
+                "owner_namespace": "scenario",
+                "stable_object_id": "delivery_event_terminal_gate",
+                "mode": "gate",
+                "target_owner_namespace": "event",
+                "target_stable_object_id": "event:scenario_delivery_day_stock",
+                "enabled": false,
+                "disabled_reason": "This delivery has already been resolved."
+              }
+            ],
             "service_ops": [
               {
                 "family": "service_ops",
@@ -1314,8 +1320,8 @@
                 "family": "route_ops",
                 "op": "close",
                 "receipt_id": "aftermath_interrupted_casino_route",
-                "owner_namespace": "scenario",
-                "stable_object_id": "gas_station_casino",
+                "owner_namespace": "base",
+                "stable_object_id": "world:gas_station_casino",
                 "disabled_reason": "The interrupted unloading closes the casino route for this visit."
               }
             ]
@@ -1331,8 +1337,24 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "inspect_then_reroute_then_verify_delivery_event_choice_to_four_spatial_service_route_aftermaths",
+        "sequence_signature": "4b5042e486767c0cae5f10c3c7ba6256e889e0af06e1c469fd702b16c4cc2007",
         "owner_exceptions": [],
+        "declared_targets": {
+          "scene_objects": [],
+          "interactions": [
+            "event::event:scenario_delivery_day_stock"
+          ],
+          "actors": [],
+          "services": [],
+          "games": [],
+          "routes": [
+            "base::world:bar",
+            "base::world:gas_station_casino",
+            "base::world:pawn_shop"
+          ],
+          "anchors": [],
+          "zones": []
+        },
         "fact_subscriptions": [
           {
             "fact_type": "event_result",
@@ -1438,12 +1460,15 @@
             "ada_corner_merchant",
             "priya_travel_merchant"
           ],
-          "objects": [
-            "event::event:scenario_delivery_day_stock",
-            "service::shopkeeper:merchant",
-            "service::service:cashier_tip",
-            "base::travel:leave"
-          ]
+            "objects": [
+              "event::event:scenario_delivery_day_stock",
+              "service::shopkeeper:merchant",
+              "service::service:cashier_tip",
+              "base::travel:leave",
+              "base::world:bar",
+              "base::world:gas_station_casino",
+              "base::world:pawn_shop"
+            ]
         },
         "capture_ids": [
           "arrival_delivery_blocked",

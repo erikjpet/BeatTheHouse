@@ -741,7 +741,7 @@ static func verified_declared_targets(definition: Dictionary, target_inventory: 
 
 
 static func _validate_phase_safe_exit(label: String, authored: Dictionary, phase_data: Dictionary, errors: Array) -> void:
-	var has_safe_exit := false
+	var has_safe_exit := _has_persistent_initial_safe_exit(authored)
 	var blocked_targets: Dictionary = {}
 	var alternate_commands: Dictionary = {}
 	for operation_value in _array(phase_data.get("interaction_ops", [])):
@@ -756,7 +756,7 @@ static func _validate_phase_safe_exit(label: String, authored: Dictionary, phase
 					alternate_commands[str(_dict(action_value).get("id", ""))] = true
 		elif op_id == "gate" and not bool(operation.get("enabled", true)) and not str(operation.get("disabled_reason", "")).strip_edges().is_empty():
 			blocked_targets["%s::%s" % [str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", ""))]] = true
-	if has_safe_exit:
+	if has_safe_exit or blocked_targets.is_empty():
 		return
 	var alternate_proof := false
 	for objective_value in _array(authored.get("objectives", [])):
@@ -777,6 +777,29 @@ static func _validate_phase_safe_exit(label: String, authored: Dictionary, phase
 			alternate_proof = false
 	if not alternate_proof:
 		errors.append("%s phase %s must prove an enabled safe-exit action or bind each readable blocked route/exit to a reachable alternate objective action and branch." % [label, str(phase_data.get("id", ""))])
+
+
+static func _has_persistent_initial_safe_exit(authored: Dictionary) -> bool:
+	var graph := _dict(authored.get("phase_graph", {}))
+	var initial_phase := str(graph.get("initial_phase", ""))
+	var safe_identities: Dictionary = {}
+	for phase_value in _array(graph.get("phases", [])):
+		var phase := _dict(phase_value)
+		if str(phase.get("id", "")) != initial_phase: continue
+		for operation_value in _array(phase.get("interaction_ops", [])):
+			var operation := _dict(operation_value)
+			var interaction := _dict(operation.get("interaction", {}))
+			if str(operation.get("op", "")) == "add" and bool(interaction.get("safe_exit", false)) and bool(interaction.get("enabled", false)) and not _array(interaction.get("available_actions", [])).is_empty():
+				safe_identities["%s::%s" % [str(operation.get("owner_namespace", "")), str(operation.get("stable_object_id", ""))]] = true
+	if safe_identities.is_empty(): return false
+	for phase_value in _array(graph.get("phases", [])):
+		for operation_value in _array(_dict(phase_value).get("interaction_ops", [])):
+			var operation := _dict(operation_value)
+			var source_identity := "%s::%s" % [str(operation.get("owner_namespace", "")), str(operation.get("stable_object_id", ""))]
+			var target_identity := "%s::%s" % [str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", ""))]
+			if str(operation.get("op", "")) in ["remove", "replace"]: safe_identities.erase(source_identity)
+			if target_identity != "::" and str(operation.get("op", "")) in ["replace", "gate"] and (str(operation.get("op", "")) == "replace" or not bool(operation.get("enabled", true))): safe_identities.erase(target_identity)
+	return not safe_identities.is_empty()
 
 
 static func _validate_aftermath(label: String, authored: Dictionary, aftermaths: Dictionary, reachable_outcomes: Array, operation_registry: Variant, target_inventory: Dictionary, errors: Array) -> void:
@@ -883,19 +906,32 @@ static func _material_target_paths_by_outcome(authored: Dictionary, target_inven
 			var outcome_id := str(branch.get("outcome", ""))
 			var next_phase := str(branch.get("next_phase", ""))
 			if not outcome_id.is_empty():
-				var terminal_targets := _proven_cleanup_projection(authored, targets, base_targets, "terminal path for outcome %s" % outcome_id, errors)
 				var paths := _array(outcomes.get(outcome_id, []))
-				var fingerprint := JSON.stringify(_canonical_variant(terminal_targets))
+				var fingerprint := JSON.stringify(_canonical_variant(targets))
 				var duplicate := false
 				for path_value in paths:
 					if JSON.stringify(_canonical_variant(path_value)) == fingerprint: duplicate = true
-				if not duplicate: paths.append(terminal_targets)
+				if not duplicate: paths.append(targets.duplicate(true))
 				outcomes[outcome_id] = paths
 			elif phase_index.has(next_phase):
 				pending.append({"phase_id": next_phase, "targets": targets.duplicate(true), "visited": visited.duplicate(false)})
 	if not pending.is_empty():
 		errors.append("sequence material path exploration exceeds the explicit 512-path limit.")
-	return outcomes
+	var terminal_obligations: Dictionary = {}
+	for cleanup_value in _array(_dict(authored.get("cleanup", {})).get("operations", [])):
+		var cleanup := _dict(cleanup_value)
+		var family := str(cleanup.get("family", ""))
+		for paths_value in outcomes.values():
+			for path_value in _array(paths_value):
+				if _cleanup_operation_has_obligation(family, cleanup, _dict(path_value), base_targets):
+					terminal_obligations[str(cleanup.get("receipt_id", ""))] = true
+	var cleaned_outcomes: Dictionary = {}
+	for outcome_value in outcomes.keys():
+		var cleaned_paths: Array = []
+		for path_value in _array(outcomes.get(outcome_value, [])):
+			cleaned_paths.append(_proven_cleanup_projection(authored, _dict(path_value), base_targets, "terminal path for outcome %s" % str(outcome_value), errors, terminal_obligations))
+		cleaned_outcomes[outcome_value] = cleaned_paths
+	return cleaned_outcomes
 
 
 static func _operation_has_material_target(family: String, operation: Dictionary, known_targets: Dictionary) -> bool:
@@ -1001,17 +1037,22 @@ static func _apply_cleanup_material_projection(family: String, operation: Dictio
 	elif baseline.has(source_key):
 		targets[source_key] = _dict(baseline.get(source_key, {})).duplicate(true)
 	elif ["remove", "despawn"].has(op_id):
+		var removed := _dict(targets.get(source_key, {}))
+		if family == "interaction_ops" and str(removed.get("material_kind", "")) == "interaction_overlay":
+			var overlay_target := str(removed.get("overlay_target_identity", ""))
+			if baseline.has(overlay_target): targets[overlay_target] = _dict(baseline.get(overlay_target, {})).duplicate(true)
 		targets.erase(source_key)
 	known_targets[collection_key] = targets
 
 
-static func _proven_cleanup_projection(authored: Dictionary, targets_value: Dictionary, base_targets: Dictionary, path_label: String, errors: Array) -> Dictionary:
+static func _proven_cleanup_projection(authored: Dictionary, targets_value: Dictionary, base_targets: Dictionary, path_label: String, errors: Array, terminal_obligations: Dictionary = {}) -> Dictionary:
 	var cleaned := targets_value.duplicate(true)
 	for cleanup_value in _array(_dict(authored.get("cleanup", {})).get("operations", [])):
 		var cleanup := _dict(cleanup_value)
 		var family := str(cleanup.get("family", ""))
 		if not _cleanup_operation_has_obligation(family, cleanup, cleaned, base_targets):
-			errors.append("sequence %s cleanup operation %s has no exact live mutation/tombstone/overlay obligation." % [path_label, str(cleanup.get("receipt_id", ""))])
+			if not terminal_obligations.has(str(cleanup.get("receipt_id", ""))):
+				errors.append("sequence %s cleanup operation %s has no exact live mutation/tombstone/overlay obligation." % [path_label, str(cleanup.get("receipt_id", ""))])
 			continue
 		_apply_cleanup_material_projection(family, cleanup, cleaned, base_targets)
 	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes"]:

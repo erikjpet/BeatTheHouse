@@ -1041,8 +1041,8 @@ static func _materialize_sequence_services_games_routes(environment: Dictionary,
 	environment["travel_hooks"] = routes
 
 
-static func validate_sequence_definition(definition: Dictionary, references: Dictionary = {}) -> Array:
-	var errors := SequenceSchemaScript.validate_definition(definition, OperationRegistryScript)
+static func validate_sequence_definition(definition: Dictionary, references: Dictionary = {}, target_inventory: Dictionary = {}) -> Array:
+	var errors := SequenceSchemaScript.validate_definition(definition, OperationRegistryScript, target_inventory)
 	if not SequenceSchemaScript.is_sequence(definition):
 		return errors
 	var scenario_id := str(definition.get("id", ""))
@@ -1088,7 +1088,10 @@ static func validate_sequence_definition(definition: Dictionary, references: Dic
 			"travel_hooks": _copy_array(archetype.get("travel_hooks", [])),
 			"next_archetypes": _copy_array(archetype.get("next_archetypes", [])),
 		}
-		var initial := SequenceRuntimeScript.initial_state(definition, str(layout_environment.get("world_node_id", "")), "content_validation")
+		var initial := SequenceRuntimeScript.initial_state(definition, str(layout_environment.get("world_node_id", "")), "content_validation", {
+			"target_inventory": target_inventory,
+			"event_choices": _copy_dict(target_inventory.get("event_choices", {})),
+		})
 		var prepared := ScenarioExtensionDispatchScript.prepare_render(definition, layout_environment, SequenceRuntimeScript.public_projection(initial, definition))
 		if not bool(prepared.get("ok", false)):
 			for layout_error_value in _copy_array(prepared.get("errors", [])):
@@ -1096,8 +1099,8 @@ static func validate_sequence_definition(definition: Dictionary, references: Dic
 	return errors
 
 
-static func sequence_catalog_audit(definitions: Array, expected_count: int, masked_visual_explanations: Dictionary = {}) -> Dictionary:
-	return SequenceSchemaScript.catalog_uniqueness_report(definitions, expected_count, OperationRegistryScript, masked_visual_explanations)
+static func sequence_catalog_audit(definitions: Array, expected_count: int, masked_visual_explanations: Dictionary = {}, target_inventories: Dictionary = {}) -> Dictionary:
+	return SequenceSchemaScript.catalog_uniqueness_report(definitions, expected_count, OperationRegistryScript, masked_visual_explanations, target_inventories)
 
 
 static func _without_sequence_overlay(definition: Dictionary) -> Dictionary:

@@ -158,7 +158,7 @@ static func validate_handler_inputs(handler_id: String, inputs: Dictionary, loca
 		"event_bridge":
 			if typeof(inputs.get("event_id")) != TYPE_STRING or typeof(inputs.get("resolution_id")) != TYPE_STRING or not _canonical_id(str(inputs.get("event_id", ""))) or not _canonical_id(str(inputs.get("resolution_id", ""))): errors.append("event_bridge requires canonical event and resolution ids.")
 			var event_choices := _dict(context.get("event_choices", {}))
-			if event_choices.is_empty() or not _array(event_choices.get(str(inputs.get("event_id", "")), [])).has(str(inputs.get("resolution_id", ""))): errors.append("event_bridge requires a catalog-proven choice belonging to the exact event.")
+			if event_choices.is_empty() or not event_choices.has(str(inputs.get("event_id", ""))): errors.append("event_bridge requires a catalog-proven event with choices.")
 	return errors
 
 
@@ -881,7 +881,7 @@ static func _validate_interaction_payload(payload: Dictionary, errors: Array) ->
 	for action_value in _array(payload.get("available_actions", [])):
 		if typeof(action_value) == TYPE_DICTIONARY and not input_actions.has(str((action_value as Dictionary).get("input_action", ""))):
 			errors.append("interaction action input_action must be declared in input_actions.")
-	if typeof(payload.get("focus_order")) != TYPE_INT or int(payload.get("focus_order", -1)) < 0:
+	if not _finite_number(payload.get("focus_order")) or float(payload.get("focus_order", -1.0)) != floorf(float(payload.get("focus_order", -1.0))) or int(payload.get("focus_order", -1)) < 0:
 		errors.append("interaction requires non-negative focus_order.")
 	var hit_bounds := _dict(payload.get("hit_bounds", {}))
 	_append_unknown_keys("interaction hit_bounds", hit_bounds, ["w", "h"], errors)

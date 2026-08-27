@@ -2143,7 +2143,9 @@ func _validate_art_asset(label: String, entry: Dictionary) -> void:
 	if not asset_path.begins_with("res://assets/art/"):
 		validation_errors.append("%s asset_path must stay under res://assets/art/." % label)
 		return
-	if not ResourceLoader.exists(asset_path):
+	# Source-art validation must not depend on whether this checkout's editor
+	# import cache finished before a headless content/audit run.
+	if not FileAccess.file_exists(asset_path):
 		validation_errors.append("%s references missing asset_path: %s" % [label, asset_path])
 
 
@@ -3324,6 +3326,7 @@ func _validate_scenario_definitions() -> void:
 	var character_ids := _ids_for(characters)
 	var seen_ids: Dictionary = {}
 	var sequence_definitions: Array = []
+	var target_inventories: Dictionary = {}
 	var masked_visual_explanations: Dictionary = {}
 	var rollout_definitions: Array = []
 	for archetype_key_value in environment_scenarios.keys():
@@ -3383,6 +3386,13 @@ func _validate_scenario_definitions() -> void:
 				_validate_scenario_mutations(scenario_id, "phase[%d].mutations" % phase_index, phase.get("mutations", {}), event_ids, service_ids, game_ids, item_ids)
 			if definition.has("sequence"):
 				sequence_definitions.append(definition.duplicate(true))
+				var sequence_target_catalog := scenario_target_catalog(definition)
+				if sequence_target_catalog.is_empty() or not _copy_array(sequence_target_catalog.get("errors", [])).is_empty():
+					validation_errors.append_array(scenario_target_catalog_messages(scenario_id, sequence_target_catalog))
+				else:
+					var sequence_target_inventory := _as_dict(sequence_target_catalog.get("guaranteed", {})).duplicate(true)
+					sequence_target_inventory["event_choices"] = _as_dict(sequence_target_catalog.get("event_choices", {}))
+					target_inventories[scenario_id] = sequence_target_inventory
 				for pair_key_value in _as_dict(_as_dict(definition.get("sequence_authoring", {})).get("masked_visual_explanations", {})).keys():
 					masked_visual_explanations[str(pair_key_value)] = str(_as_dict(_as_dict(definition.get("sequence_authoring", {})).get("masked_visual_explanations", {})).get(pair_key_value, ""))
 				validation_errors.append_array(ScenarioEngineScript.validate_sequence_definition(definition, {
@@ -3393,7 +3403,7 @@ func _validate_scenario_definitions() -> void:
 					"item_ids": item_ids,
 					"actor_ids": character_ids,
 					"archetype": environment_archetype(archetype_key),
-				}))
+				}, _as_dict(target_inventories.get(scenario_id, {}))))
 	var overlay_ids := _as_dict(scenario_sequence_catalog.get("overlays", {})).keys()
 	for overlay_id_value in overlay_ids:
 		if not seen_ids.has(str(overlay_id_value)):
@@ -3402,8 +3412,20 @@ func _validate_scenario_definitions() -> void:
 	# The strict env06_7 completion gate calls the same report with expected_count
 	# 55 (and therefore exactly 1,485 comparisons); env06_6's production proof
 	# intentionally runs with expected_count 1 without pretending rollout is done.
+	for definition_value in rollout_definitions:
+		if typeof(definition_value) != TYPE_DICTIONARY: continue
+		var definition := definition_value as Dictionary
+		var scenario_id := str(definition.get("id", ""))
+		if target_inventories.has(scenario_id): continue
+		var target_catalog := scenario_target_catalog(definition)
+		if target_catalog.is_empty() or not _copy_array(target_catalog.get("errors", [])).is_empty():
+			validation_errors.append_array(scenario_target_catalog_messages(scenario_id, target_catalog))
+			continue
+		var target_inventory := _as_dict(target_catalog.get("guaranteed", {})).duplicate(true)
+		target_inventory["event_choices"] = _as_dict(target_catalog.get("event_choices", {}))
+		target_inventories[scenario_id] = target_inventory
 	if not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty():
-		var uniqueness_audit := ScenarioEngineScript.sequence_catalog_audit(sequence_definitions, sequence_definitions.size(), masked_visual_explanations)
+		var uniqueness_audit := ScenarioEngineScript.sequence_catalog_audit(sequence_definitions, sequence_definitions.size(), masked_visual_explanations, target_inventories)
 		scenario_sequence_catalog["uniqueness_audit"] = uniqueness_audit
 		for failure_value in _copy_array(uniqueness_audit.get("failures", [])):
 			validation_errors.append(str(failure_value))
@@ -3412,18 +3434,6 @@ func _validate_scenario_definitions() -> void:
 	var rollout_ids := ScenarioSequenceRolloutManifestScript.expected_ids()
 	if ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT != 55 or rollout_ids.size() != ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT:
 		validation_errors.append("scenario sequence rollout manifest must contain exactly 55 catalog ids.")
-	var target_inventories: Dictionary = {}
-	for definition_value in rollout_definitions:
-		if typeof(definition_value) != TYPE_DICTIONARY: continue
-		var definition := definition_value as Dictionary
-		var scenario_id := str(definition.get("id", ""))
-		var target_catalog := scenario_target_catalog(definition)
-		if target_catalog.is_empty() or not _copy_array(target_catalog.get("errors", [])).is_empty():
-			validation_errors.append_array(scenario_target_catalog_messages(scenario_id, target_catalog))
-			continue
-		var target_inventory := _as_dict(target_catalog.get("guaranteed", {})).duplicate(true)
-		target_inventory["event_choices"] = _as_dict(target_catalog.get("event_choices", {}))
-		target_inventories[scenario_id] = target_inventory
 	var rollout_report := ScenarioSequenceSchemaScript.catalog_rollout_report(rollout_definitions, rollout_ids, ScenarioOperationRegistryScript, {}, ScenarioSequenceRolloutManifestScript.required_sequence_ids(), target_inventories)
 	validation_errors.append_array(_copy_array(rollout_report.get("failures", [])))
 	validation_warnings.append_array(_copy_array(rollout_report.get("warnings", [])))
