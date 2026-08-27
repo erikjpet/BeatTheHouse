@@ -24,6 +24,35 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+function ConvertTo-WindowsProcessArgument {
+    param([AllowEmptyString()][Parameter(Mandatory = $true)][string]$Argument)
+
+    if ($Argument.Length -gt 0 -and $Argument -notmatch '[\s"]') {
+        return $Argument
+    }
+    $quoted = [System.Text.StringBuilder]::new()
+    [void]$quoted.Append('"')
+    $backslashes = 0
+    foreach ($character in $Argument.ToCharArray()) {
+        if ($character -eq '\') {
+            $backslashes += 1
+            continue
+        }
+        if ($character -eq '"') {
+            for ($index = 0; $index -lt (($backslashes * 2) + 1); $index += 1) { [void]$quoted.Append('\') }
+            [void]$quoted.Append('"')
+        }
+        else {
+            for ($index = 0; $index -lt $backslashes; $index += 1) { [void]$quoted.Append('\') }
+            [void]$quoted.Append($character)
+        }
+        $backslashes = 0
+    }
+    for ($index = 0; $index -lt ($backslashes * 2); $index += 1) { [void]$quoted.Append('\') }
+    [void]$quoted.Append('"')
+    return $quoted.ToString()
+}
+
 $root = Split-Path -Parent $PSScriptRoot
 $webDir = if ([string]::IsNullOrWhiteSpace($ServeRoot)) { Join-Path $root "builds/web" } else { [System.IO.Path]::GetFullPath($ServeRoot) }
 $workspaceRoot = [System.IO.Path]::GetFullPath($root)
@@ -46,7 +75,9 @@ $python = (Get-Command python -ErrorAction Stop).Source
 $serverScript = Join-Path $PSScriptRoot "serve_web_server.py"
 $serverProcess = $null
 try {
-    $serverProcess = Start-Process -FilePath $python -ArgumentList @($serverScript, "--port", [string]$Port, "--root", $webDir) -PassThru -NoNewWindow
+    $serverArguments = @($serverScript, "--port", [string]$Port, "--root", $webDir)
+    $quotedServerArguments = @($serverArguments | ForEach-Object { ConvertTo-WindowsProcessArgument -Argument ([string]$_) })
+    $serverProcess = Start-Process -FilePath $python -ArgumentList $quotedServerArguments -PassThru -NoNewWindow
     if (-not [string]::IsNullOrWhiteSpace($OwnershipFile)) {
         if ([string]::IsNullOrWhiteSpace($OwnershipNonce)) {
             throw "An ownership file requires a nonempty ownership nonce."

@@ -1,3 +1,38 @@
+function ConvertTo-WindowsProcessArgument {
+    param([AllowEmptyString()][Parameter(Mandatory = $true)][string]$Argument)
+
+    if ($Argument.Length -gt 0 -and $Argument -notmatch '[\s"]') {
+        return $Argument
+    }
+    $quoted = [System.Text.StringBuilder]::new()
+    [void]$quoted.Append('"')
+    $backslashes = 0
+    foreach ($character in $Argument.ToCharArray()) {
+        if ($character -eq '\') {
+            $backslashes += 1
+            continue
+        }
+        if ($character -eq '"') {
+            for ($index = 0; $index -lt (($backslashes * 2) + 1); $index += 1) {
+                [void]$quoted.Append('\')
+            }
+            [void]$quoted.Append('"')
+        }
+        else {
+            for ($index = 0; $index -lt $backslashes; $index += 1) {
+                [void]$quoted.Append('\')
+            }
+            [void]$quoted.Append($character)
+        }
+        $backslashes = 0
+    }
+    for ($index = 0; $index -lt ($backslashes * 2); $index += 1) {
+        [void]$quoted.Append('\')
+    }
+    [void]$quoted.Append('"')
+    return $quoted.ToString()
+}
+
 function Get-ProcessStartUtcTicks {
     param([Parameter(Mandatory = $true)][int]$ProcessId)
 
@@ -13,10 +48,11 @@ function Get-ExactServerChild {
     )
 
     $expectedScript = [System.IO.Path]::GetFullPath($ServerScript)
+    $expectedScriptPattern = "*{0}*" -f [System.Management.Automation.WildcardPattern]::Escape($expectedScript)
     $matches = @(Get-CimInstance Win32_Process -ErrorAction Stop | Where-Object {
         [int]$_.ParentProcessId -eq $WrapperProcessId -and
         [string]$_.Name -like "python*" -and
-        [string]$_.CommandLine -like "*$expectedScript*" -and
+        [string]$_.CommandLine -like $expectedScriptPattern -and
         [string]$_.CommandLine -like "*--port $Port*"
     })
     if ($matches.Count -ne 1) {
@@ -77,7 +113,8 @@ function Start-OwnedWebServer {
         "-Port", [string]$Port, "-ServeRoot", $ServeRoot, "-NoBrowser",
         "-OwnershipFile", $OwnershipFile, "-OwnershipNonce", $nonce
     )
-    $wrapper = Start-Process -FilePath (Get-Command powershell -ErrorAction Stop).Source -ArgumentList $arguments -WindowStyle Hidden -PassThru -RedirectStandardOutput $StandardOutput -RedirectStandardError $StandardError
+    $quotedArguments = @($arguments | ForEach-Object { ConvertTo-WindowsProcessArgument -Argument ([string]$_) })
+    $wrapper = Start-Process -FilePath (Get-Command powershell -ErrorAction Stop).Source -ArgumentList $quotedArguments -WindowStyle Hidden -PassThru -RedirectStandardOutput $StandardOutput -RedirectStandardError $StandardError
     $launch = [pscustomobject]@{
         Wrapper = $wrapper
         WrapperStartUtcTicks = $wrapper.StartTime.ToUniversalTime().Ticks

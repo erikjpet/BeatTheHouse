@@ -16,15 +16,42 @@ function Get-FreeLoopbackPort {
     finally { $listener.Stop() }
 }
 
+function Get-CopyablePythonExecutable {
+    $command = Get-Command python -ErrorAction Stop
+    $item = Get-Item -LiteralPath $command.Source -ErrorAction SilentlyContinue
+    if ($null -ne $item -and $item.Length -gt 0) { return $item.FullName }
+    $launcher = Get-Command py -ErrorAction SilentlyContinue
+    if ($null -ne $launcher) {
+        $priorErrorPreference = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        $launcherRows = @(& $launcher.Source -0p 2>$null)
+        $ErrorActionPreference = $priorErrorPreference
+        foreach ($row in $launcherRows) {
+            if ([string]$row -notmatch '-(?<version>[0-9]+\.[0-9]+)') { continue }
+            $ErrorActionPreference = "Continue"
+            $candidate = (& $launcher.Source ("-{0}" -f $Matches.version) -c "import sys;print(sys.executable)" 2>$null | Select-Object -First 1)
+            $ErrorActionPreference = $priorErrorPreference
+            $candidateItem = Get-Item -LiteralPath ([string]$candidate).Trim() -ErrorAction SilentlyContinue
+            if ($null -ne $candidateItem -and $candidateItem.Length -gt 0) { return $candidateItem.FullName }
+        }
+    }
+    throw "Focused spaced-runtime coverage could not locate a copyable Python executable."
+}
+
 function Start-TestServer {
-    param([string]$Name)
+    param(
+        [string]$Name,
+        [string]$ServeScript = (Join-Path $PSScriptRoot "serve_web.ps1"),
+        [string]$ServerScript = (Join-Path $PSScriptRoot "serve_web_server.py"),
+        [string]$Root = $serveRoot
+    )
     $caseDirectory = Join-Path $testRoot $Name
     New-Item -ItemType Directory -Force -Path $caseDirectory | Out-Null
     $ownershipFile = Join-Path $caseDirectory "ownership.json"
     return Start-OwnedWebServer `
-        -ServeScript (Join-Path $PSScriptRoot "serve_web.ps1") `
-        -ServerScript (Join-Path $PSScriptRoot "serve_web_server.py") `
-        -ServeRoot $serveRoot `
+        -ServeScript $ServeScript `
+        -ServerScript $ServerScript `
+        -ServeRoot $Root `
         -Port (Get-FreeLoopbackPort) `
         -OwnershipFile $ownershipFile `
         -StandardOutput (Join-Path $caseDirectory "stdout.txt") `
@@ -36,6 +63,8 @@ $serveRoot = Join-Path $testRoot "site"
 New-Item -ItemType Directory -Force -Path $serveRoot | Out-Null
 Set-Content -LiteralPath (Join-Path $serveRoot "index.html") -Value "fix06_16 lifecycle fixture" -Encoding utf8
 
+$python = (Get-Command python -ErrorAction Stop).Source
+$copyablePython = Get-CopyablePythonExecutable
 $sleepCommand = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes("Start-Sleep -Seconds 120"))
 $unrelated = Start-Process -FilePath (Get-Command powershell -ErrorAction Stop).Source -ArgumentList @("-NoProfile", "-EncodedCommand", $sleepCommand) -PassThru -WindowStyle Hidden
 $unrelatedTicks = $unrelated.StartTime.ToUniversalTime().Ticks
@@ -102,6 +131,47 @@ try {
 
     $unrelatedAfterAll = Get-Process -Id $unrelated.Id -ErrorAction SilentlyContinue
     Assert-Test -Condition ($null -ne $unrelatedAfterAll -and $unrelatedAfterAll.StartTime.ToUniversalTime().Ticks -eq $unrelatedTicks) -Message "An unrelated process did not survive the lifecycle suite."
+
+    # Both native launch boundaries must preserve every spaced path as one arg.
+    $spacedToolRoot = Join-Path $testRoot "tool scripts with spaces"
+    $spacedServeRoot = Join-Path $testRoot "served root with spaces"
+    $spacedPythonRoot = Join-Path $testRoot "python runtime with spaces"
+    New-Item -ItemType Directory -Force -Path $spacedToolRoot, $spacedServeRoot, $spacedPythonRoot | Out-Null
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot "serve_web.ps1") -Destination $spacedToolRoot
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot "serve_web_server.py") -Destination $spacedToolRoot
+    Copy-Item -LiteralPath $copyablePython -Destination (Join-Path $spacedPythonRoot "python.exe")
+    Set-Content -LiteralPath (Join-Path $spacedServeRoot "index.html") -Value "spaced lifecycle fixture" -Encoding utf8
+    $originalPath = $env:Path
+    $originalPythonHome = $env:PYTHONHOME
+    try {
+        $copyablePythonRoot = Split-Path -Parent $copyablePython
+        $env:Path = "$spacedPythonRoot;$copyablePythonRoot;$originalPath"
+        $env:PYTHONHOME = $copyablePythonRoot
+        $spaced = Start-TestServer -Name "ownership and logs with spaces" -ServeScript (Join-Path $spacedToolRoot "serve_web.ps1") -ServerScript (Join-Path $spacedToolRoot "serve_web_server.py") -Root $spacedServeRoot
+        $ownedPids.Add([int]$spaced.Record.server_pid)
+        try {
+            $deadline = (Get-Date).AddSeconds(10)
+            $response = $null
+            while ((Get-Date) -lt $deadline -and $null -eq $response) {
+                try { $response = Invoke-WebRequest -Uri ("http://127.0.0.1:{0}/" -f $spaced.Port) -UseBasicParsing -TimeoutSec 2 }
+                catch { Start-Sleep -Milliseconds 100 }
+            }
+            Assert-Test -Condition ($null -ne $response -and [string]$response.Content -like "*spaced lifecycle fixture*") -Message "Spaced serve-root did not return the exact fixture."
+            Assert-Test -Condition ([string]$response.Headers["Cross-Origin-Opener-Policy"] -eq "same-origin") -Message "Spaced server lost the opener isolation header."
+            Assert-Test -Condition ([string]$response.Headers["Cross-Origin-Embedder-Policy"] -eq "require-corp") -Message "Spaced server lost the embedder isolation header."
+            Assert-Test -Condition (Test-Path -LiteralPath $spaced.OwnershipFile) -Message "Spaced ownership path was not published."
+            Assert-OwnedWebServerListener -Launch $spaced
+        }
+        finally { Stop-OwnedWebServer -Launch $spaced }
+    }
+    finally {
+        $env:Path = $originalPath
+        $env:PYTHONHOME = $originalPythonHome
+    }
+    Assert-Test -Condition ($null -eq (Get-Process -Id ([int]$spaced.Record.server_pid) -ErrorAction SilentlyContinue)) -Message "Spaced-path server child survived cleanup."
+    Assert-Test -Condition (@(Get-NetTCPConnection -State Listen -LocalPort $spaced.Port -ErrorAction SilentlyContinue).Count -eq 0) -Message "Spaced-path listener survived cleanup."
+    $unrelatedAfterSpaces = Get-Process -Id $unrelated.Id -ErrorAction SilentlyContinue
+    Assert-Test -Condition ($null -ne $unrelatedAfterSpaces -and $unrelatedAfterSpaces.StartTime.ToUniversalTime().Ticks -eq $unrelatedTicks) -Message "Spaced-path cleanup stopped the unrelated process."
     Write-Host "Web server lifecycle hostile tests passed."
 }
 finally {

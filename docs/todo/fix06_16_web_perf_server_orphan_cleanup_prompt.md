@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — implementation and self-review complete; independent exact-head review pending
+Status: IN_PROGRESS — rejected head `239ead2a` remediated; independent exact-head re-review pending
 Board row: `fix06_16` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_16: Web performance server orphan cleanup
@@ -80,3 +80,31 @@ locked `fix06_13` shipped-Web run.
   console policy and product behavior are byte-identical to the exact base.
   No gameplay, RNG, payout, odds, wager, economy, geometry, tuning, migration,
   version, package, release or remote operation occurred.
+
+## Independent rejection and remediation — 2026-08-27
+
+- Independent review rejected exact head
+  `239ead2a854ecd46a2ac70fa4f192da4439b6ba2` at P2 because both native
+  `Start-Process` boundaries passed unquoted argument arrays. Windows
+  PowerShell joins those arrays into a command line, so spaces in the workspace,
+  server-script, serve-root or ownership paths could split valid arguments and
+  defeat deterministic launch/cleanup. The lifecycle design and locked-scope
+  compliance otherwise remained accepted.
+- The remediation applies Windows `CommandLineToArgvW`-compatible quoting at
+  both boundaries, including empty arguments, embedded quotes and terminal
+  backslashes. It does not change server behavior, evidence or cleanup policy.
+- The hostile non-Web suite now runs a copied Python executable from `python
+  runtime with spaces`, copies the real PowerShell wrapper and Python server
+  under `tool scripts with spaces`, serves `served root with spaces`,
+  and writes its ownership record plus stdout/stderr under `ownership and logs
+  with spaces`. It proves the exact fixture content and both required isolation
+  headers, ownership publication, exact process/listener cleanup and unrelated
+  process survival. Two intermediate harness attempts failed before launching
+  that server: 17.0s exposed an undefined copy-source variable, then 17.2s
+  proved the Windows App Execution Alias is intentionally non-copyable. The
+  harness now discovers a real installed Python executable deterministically;
+  the complete expanded suite passed in 18.6s. All four PowerShell files parsed
+  with zero errors and final static validation passed in 48.7s. No browser,
+  export or Web timing ran. After escaping wildcard metacharacters in the exact
+  server-script command-line matcher, the final combined hostile/static rerun
+  passed in 64.9s.

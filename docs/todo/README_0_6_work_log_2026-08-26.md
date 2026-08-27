@@ -1072,3 +1072,29 @@ below to jump to a row's history.
   combined focused/static invocation completed in 61.9s. Ignored lifecycle
   artifacts remain under `.tmp/fix06_16_lifecycle_test_<nonce>/`. The consumed
   fix06_14 evidence and all locked Web/product/economy contracts are unchanged.
+
+- 2026-08-27 [fix06_16] INDEPENDENT REJECT P2 / WINDOWS ARGUMENT QUOTING
+  REMEDIATED; RE-REVIEW PENDING. Independent review rejected exact head
+  `239ead2a854ecd46a2ac70fa4f192da4439b6ba2`: both native `Start-Process`
+  boundaries relied on Windows PowerShell joining unquoted argument arrays, so
+  valid spaced workspace/script/root/ownership paths could split and undermine
+  deterministic ownership. The rejected head remains reachable and its
+  otherwise accepted lifecycle evidence is preserved.
+
+  Both launch boundaries now use Windows-native quoting that handles empty
+  arguments, embedded quotes and terminal backslashes. The expanded hostile
+  non-Web test runs a copied Python executable under `python runtime with
+  spaces`, copies the real wrapper and Python server beneath `tool scripts with
+  spaces`, serves `served root with spaces`, and places its ownership,
+  stdout and stderr paths under `ownership and logs with spaces`. It proves the
+  exact fixture content, COOP/COEP isolation headers, ownership publication,
+  exact process/listener cleanup and unrelated-process survival. Two expanded
+  harness attempts failed before server launch in 17.0/17.2s: the first found
+  an undefined copy-source variable and the second proved the Windows App
+  Execution Alias cannot be copied. Deterministic discovery of a real installed
+  Python executable corrected the harness. The complete suite passed in 18.6s,
+  all four relevant PowerShell files parsed with zero errors, and final static
+  validation passed in 48.7s. No browser, export, Web timing, retained evidence
+  replacement or locked-contract change occurred. After escaping wildcard
+  metacharacters in the exact-script matcher, the final combined hostile/static
+  rerun passed in 64.9s.
