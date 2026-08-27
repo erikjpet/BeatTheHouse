@@ -30,6 +30,8 @@ static func snapshot_signature(run_state: RunState) -> String:
 		str(environment.get("scenario_id", "")),
 		str(environment.get("scenario_phase_index", 0)),
 		str(environment.get("scenario_presentation", {})),
+		str(environment.get("scenario_sequence_projection", {})),
+		str(environment.get("scenario_render_snapshot", {})),
 		str(environment.get("crew_presence", [])),
 		str(environment.get("home_containers", [])),
 		str(environment.get("cage_gift_shop_state", {})),
@@ -68,6 +70,8 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	snapshot["reduce_motion"] = bool(data.get("reduce_motion", false))
 	snapshot["high_contrast"] = bool(data.get("high_contrast", false))
 	snapshot["accessibility"] = data.get("accessibility", {})
+	snapshot["scenario_layout_audit"] = _copy_dict(data.get("scenario_layout_audit", {}))
+	snapshot["scenario_layout_authority_digest"] = str(data.get("scenario_layout_authority_digest", ""))
 	snapshot["alcoholic_level"] = run_state.alcoholic_level
 	snapshot["baseline_luck"] = run_state.baseline_luck
 	snapshot["luck_modifier"] = run_state.effective_luck()
@@ -444,7 +448,7 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 	var enabled := bool(source.get("enabled", true))
 	var interactive := bool(source.get("interactive", true))
 	var object_id := str(source.get("object_id", ""))
-	return {
+	var result := {
 		"object_id": object_id,
 		"object_type": str(source.get("object_type", "info")),
 		"visual_type": str(source.get("visual_type", source.get("object_type", "info"))),
@@ -453,6 +457,11 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"decorative": not interactive,
 		"source_id": str(source.get("source_id", "")),
 		"parent_id": str(source.get("parent_id", "")),
+		"owner_namespace": str(source.get("owner_namespace", "")),
+		"stable_object_id": str(source.get("stable_object_id", "")),
+		"scenario_owner_namespace": str(source.get("scenario_owner_namespace", "")),
+		"scenario_stable_object_id": str(source.get("scenario_stable_object_id", "")),
+		"scenario_command_id": str(source.get("scenario_command_id", "")),
 		"label": str(source.get("label", "")),
 		"short_description": str(source.get("short_description", "")),
 		"identity_summary": str(source.get("identity_summary", "")),
@@ -477,6 +486,20 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"visual_state": _copy_dict(source.get("visual_state", {})),
 		"character_actor": _copy_dict(source.get("character_actor", {})),
 		"state_badge": str(source.get("state_badge", "")),
+		"non_color_state": str(source.get("non_color_state", "")),
+		"safe_exit": bool(source.get("safe_exit", false)),
+		"focus_order": maxi(0, int(source.get("focus_order", 0))),
+		"role": str(source.get("role", "")),
+		"state": str(source.get("state", "")),
+		"appearance": str(source.get("appearance", "")),
+		"pose": str(source.get("pose", "")),
+		"behavior": str(source.get("behavior", "")),
+		"route_id": str(source.get("route_id", "")),
+		"route_points": _copy_array(source.get("route_points", [])),
+		"small_screen_rect": _copy_dict(source.get("small_screen_rect", {})),
+		"z_order": int(source.get("z_order", 0)),
+		"z_order_explicit": source.has("z_order"),
+		"visible": bool(source.get("visible", true)),
 		"visual_key": str(source.get("visual_key", "")),
 		"prop": str(source.get("prop", "")),
 		"surface": str(source.get("surface", "")),
@@ -492,6 +515,7 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"focused": object_id == str(selection.get("focus_target_id", "")),
 		"selected": object_id == str(selection.get("selected_object_id", "")),
 	}
+	return result
 
 
 static func character_identity_summary(speaker: Dictionary) -> String:
