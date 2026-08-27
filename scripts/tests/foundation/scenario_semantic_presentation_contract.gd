@@ -262,7 +262,9 @@ static func _check_collision_adjusted_renderer_authority(failures: Array) -> voi
 	}
 	var resolved := ScenarioLayoutResolverScript.resolve(base_records, projection, environment)
 	var renderer := ScenarioLayoutResolverScript.sealed_renderer_snapshot(resolved)
-	var semantic := _dict(_dict(_dict(resolved.get("projection", {})).get("semantic_state", {})).get("scene_objects", {})).get("scenario::adjusted_prop", {})
+	var projection_semantic := _dict(_dict(resolved.get("projection", {})).get("semantic_state", {}))
+	var semantic_scene_objects := _dict(projection_semantic.get("scene_objects", {}))
+	var semantic := _dict(semantic_scene_objects.get("scenario::adjusted_prop", {}))
 	var authority := _dict(_dict(resolved.get("layout_authority", {})).get("scenario::adjusted_prop", {}))
 	var visual: Dictionary = {}
 	for visual_value in _array(renderer.get("visual_objects", [])):

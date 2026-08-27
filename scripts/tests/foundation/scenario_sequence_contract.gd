@@ -1081,8 +1081,10 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	cost_run.bankroll = 10
 	var cost_state := _dict(cost_run.current_environment.get("scenario_sequence_state", {}))
 	var cost_descriptor := SequenceRuntimeScript._command_descriptor(cost_state, definition, "scenario", "command_console", "prepare")
+	var cost_host_availability := {"scenario::command_console": true}
 	var accepted_cost := cost_run.scenario_sequence_command(
 		"prepare", "run_state:cost:once", {}, "scenario", "command_console",
+		cost_host_availability,
 		str(cost_descriptor.get("action_origin_owner_namespace", "")),
 		str(cost_descriptor.get("action_origin_stable_object_id", "")),
 		str(cost_descriptor.get("action_origin_receipt_key", "")),
@@ -1092,6 +1094,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	var bankroll_after_accept := cost_run.bankroll
 	var replayed_cost := cost_run.scenario_sequence_command(
 		"prepare", "run_state:cost:once", {}, "scenario", "command_console",
+		cost_host_availability,
 		str(cost_descriptor.get("action_origin_owner_namespace", "")),
 		str(cost_descriptor.get("action_origin_stable_object_id", "")),
 		str(cost_descriptor.get("action_origin_receipt_key", "")),
@@ -1100,6 +1103,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	)
 	var rejected_cost := cost_run.scenario_sequence_command(
 		"prepare", "run_state:cost:once", {"forged": true}, "scenario", "command_console",
+		cost_host_availability,
 		str(cost_descriptor.get("action_origin_owner_namespace", "")),
 		str(cost_descriptor.get("action_origin_stable_object_id", "")),
 		str(cost_descriptor.get("action_origin_receipt_key", "")),
@@ -1120,6 +1124,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	var downstream_descriptor := SequenceRuntimeScript._command_descriptor(downstream_state, downstream_definition, "scenario", "command_console", "prepare")
 	var downstream_failure := downstream_run.scenario_sequence_command(
 		"prepare", "run_state:cost:downstream_failure", {}, "scenario", "command_console",
+		cost_host_availability,
 		str(downstream_descriptor.get("action_origin_owner_namespace", "")),
 		str(downstream_descriptor.get("action_origin_stable_object_id", "")),
 		str(downstream_descriptor.get("action_origin_receipt_key", "")),
@@ -1453,6 +1458,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		{},
 		"scenario",
 		"command_console",
+		{"scenario::command_console": true},
 		str(progressed_donor_descriptor.get("action_origin_owner_namespace", "")),
 		str(progressed_donor_descriptor.get("action_origin_stable_object_id", "")),
 		str(progressed_donor_descriptor.get("action_origin_receipt_key", "")),
@@ -3098,7 +3104,7 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	if not _contains_text(SequenceSchemaScript.validate_definition(path_explosion, OperationRegistryScript, _fixture_target_inventory(path_explosion)), "512-path limit"):
 		failures.append("Sequence material proof silently truncated exploration beyond 512 paths.")
 
-	var expired := SequenceRuntimeScript.apply_expiry(sequence_state, definition, "night_end", 9)
+	var expired := SequenceRuntimeScript.apply_expiry(initial, definition, "night_end", 9)
 	var expired_state := _dict(expired.get("state", {}))
 	if not bool(expired.get("ok", false)) or not bool(expired.get("expired", false)) or str(expired_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED:
 		failures.append("Source-room expiry did not clean the active sequence before persistence.")
@@ -3830,7 +3836,7 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 	if not bool(sorting_result.get("ok", false)) or str(sorting.get("phase_id", "")) != "sorting" or not bool(verification_result.get("ok", false)) or str(verification.get("phase_id", "")) != "verification":
 		failures.append("Committed delivery-day inspect/shift objective path did not reach verification.")
 		return
-	var hostile_sorting := SequenceRuntimeScript._enter_phase(arrival, definition, "sorting", "hostile_precondition", false)
+	var hostile_sorting := SequenceRuntimeScript._enter_phase(arrival, definition, "sorting", "hostile_precondition", {})
 	var hostile_commands := [
 		{"label": "wrong owner", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command("inspect_manifest", DELIVERY_NODE_ID, "arrival", "delivery:hostile:owner", {}, "event", "delivery_event_gate"), {})},
 		{"label": "wrong object", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command("inspect_manifest", DELIVERY_NODE_ID, "arrival", "delivery:hostile:object", {}, "scenario", "wrong_manifest"), {})},
@@ -3994,7 +4000,7 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 	# Resolution is transaction-internal in production: accepted facts enter it
 	# and select an outcome in the same bounded graph evaluation. Enter it through
 	# the runtime's own phase transaction to prove its exact serialization shape.
-	var resolution_snapshot := SequenceRuntimeScript._enter_phase(delivered, definition, "resolution", "persistence_probe", false)
+	var resolution_snapshot := SequenceRuntimeScript._enter_phase(delivered, definition, "resolution", "persistence_probe", {})
 	var checkpoints := {
 		"arrival": arrival, "sorting": sorting, "verification": verification,
 		"awaiting_before_request_drain": before_drain, "awaiting_after_request_drain": delivered,
@@ -4894,8 +4900,6 @@ static func _runtime_definition() -> Dictionary:
 		{"fact_type": "event_result", "payload_equals": {"event_id": "fixture_event"}},
 		{"fact_type": "heat_changed", "handler": "set_local", "inputs": {"key": "pressure", "value_from_payload": "current"}},
 	]
-	var cleanup := _dict(sequence.get("cleanup", {}))
-	var cleanup_operations := _array(cleanup.get("operations", []))
 	cleanup_operations.append({"family": "interaction_ops", "op": "remove", "receipt_id": "cleanup_command_console", "owner_namespace": "scenario", "stable_object_id": "command_console"})
 	cleanup["operations"] = cleanup_operations
 	sequence["cleanup"] = cleanup

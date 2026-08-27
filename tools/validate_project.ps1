@@ -168,6 +168,21 @@ foreach ($requiredGrowthProbe in @(
         $failures.Add("Scenario sequence contract is missing growth/authority probe: $requiredGrowthProbe")
     }
 }
+$runtimeDefinitionMatch = [regex]::Match(
+    $scenarioContractSource,
+    '(?ms)^static func _runtime_definition\(\) -> Dictionary:\r?\n(?<body>.*?)(?=^static func )'
+)
+if (-not $runtimeDefinitionMatch.Success) {
+    $failures.Add("Scenario sequence contract is missing _runtime_definition for focused static validation.")
+} else {
+    $runtimeDefinitionBody = $runtimeDefinitionMatch.Groups['body'].Value
+    foreach ($declaration in @('cleanup', 'cleanup_operations')) {
+        $declarationCount = [regex]::Matches($runtimeDefinitionBody, "(?m)^`tvar $declaration(?:\s|:)").Count
+        if ($declarationCount -ne 1) {
+            $failures.Add("Scenario sequence _runtime_definition must declare $declaration exactly once (found $declarationCount).")
+        }
+    }
+}
 $scenarioEvidenceFiles = @(
     "tools/scenario_sequence_probe_support.gd",
     "tools/scenario_sequence_probe_main.gd",
