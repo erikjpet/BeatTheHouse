@@ -54,6 +54,11 @@ if (-not $godot) {
     if ($command) { $godot = $command.Source }
 }
 if (-not $godot) { throw "Godot was not found. Set GODOT_BIN or install the project-local toolchain." }
+$godotWorker = $godot
+if ($godotWorker.EndsWith("_console.exe", [System.StringComparison]::OrdinalIgnoreCase)) {
+    $directWorker = $godotWorker.Substring(0, $godotWorker.Length - "_console.exe".Length) + ".exe"
+    if (Test-Path -LiteralPath $directWorker) { $godotWorker = $directWorker }
+}
 
 $jobs = [System.Collections.Generic.List[object]]::new()
 $baseAccepted = [math]::Floor($AcceptedPerMachine / $ShardsPerMachine)
@@ -73,6 +78,7 @@ foreach ($machine in $machines) {
             ExitCode = $null
             PeakWorkingSetBytes = 0L
             Report = $null
+            FailureReport = $null
             FailureKind = ""
             FailureDetail = ""
         })
@@ -88,6 +94,23 @@ function Read-EvShardReport([object]$Job) {
     }
     catch {
         return [pscustomobject]@{ Ok = $false; Report = $null; Kind = "malformed_json"; Detail = $_.Exception.Message }
+    }
+    if ($null -ne $report -and $report.schema -eq "coin_pusher_v3_physical_ev_shard_failure_v1") {
+        try {
+            $reportedShard = [int]$report.shard_index
+        }
+        catch {
+            return [pscustomobject]@{ Ok = $false; Report = $null; FailureReport = $null; Kind = "identity_mismatch"; Detail = "Shard failure JSON index is not an integer." }
+        }
+        if ($report.machine_id -ne $Job.Machine -or $reportedShard -ne [int]$Job.Shard) {
+            return [pscustomobject]@{ Ok = $false; Report = $null; FailureReport = $null; Kind = "identity_mismatch"; Detail = "Shard failure JSON machine/index does not match the launched job." }
+        }
+        $failureKind = [string]$report.failure_kind
+        $failureDetail = [string]$report.failure_detail
+        if (-not $failureKind -or -not $failureDetail) {
+            return [pscustomobject]@{ Ok = $false; Report = $null; FailureReport = $null; Kind = "incomplete_failure_json"; Detail = "Shard failure JSON must include failure_kind and failure_detail." }
+        }
+        return [pscustomobject]@{ Ok = $false; Report = $null; FailureReport = $report; Kind = $failureKind; Detail = $failureDetail }
     }
     if ($null -eq $report -or $report.schema -ne "coin_pusher_v3_physical_ev_shard_v2") {
         return [pscustomobject]@{ Ok = $false; Report = $null; Kind = "invalid_schema"; Detail = "Expected coin_pusher_v3_physical_ev_shard_v2." }
@@ -135,6 +158,7 @@ if ($AggregateOnly) {
             $job.Report = $parsed.Report
         }
         else {
+            $job.FailureReport = $parsed.FailureReport
             $job.FailureKind = $parsed.Kind
             $job.FailureDetail = $parsed.Detail
         }
@@ -162,6 +186,7 @@ else {
                     $job.Report = $parsed.Report
                 }
                 else {
+                    $job.FailureReport = $parsed.FailureReport
                     $job.FailureKind = $parsed.Kind
                     $job.FailureDetail = $parsed.Detail
                 }
@@ -173,7 +198,7 @@ else {
                 $job.Process = $null
                 $completed.Add($job)
                 $running.RemoveAt($index)
-                Write-Host ("EV shard {0}/{1} machine={2} shard={3} exit={4} report_valid={5} peak_working_set_mb={6:N1}" -f $completed.Count, $jobs.Count, $job.Machine, $job.Shard, $job.ExitCode, $parsed.Ok, ([double]$job.PeakWorkingSetBytes / 1MB))
+                Write-Host ("EV shard {0}/{1} machine={2} shard={3} exit={4} report_valid={5} failure_report_valid={6} peak_working_set_mb={7:N1}" -f $completed.Count, $jobs.Count, $job.Machine, $job.Shard, $job.ExitCode, $parsed.Ok, ($job.FailureReport -ne $null), ([double]$job.PeakWorkingSetBytes / 1MB))
                 if ($job.ExitCode -ne 0 -or -not $parsed.Ok) {
                     $launchStopped = $true
                 }
@@ -188,7 +213,7 @@ else {
                     "--accepted=$($job.Accepted)", "--out=$resourceOut"
                 )
                 try {
-                    $job.Process = Start-Process -FilePath $godot -ArgumentList $arguments -WorkingDirectory $projectRoot -WindowStyle Hidden -RedirectStandardOutput $job.Stdout -RedirectStandardError $job.Stderr -PassThru
+                    $job.Process = Start-Process -FilePath $godotWorker -ArgumentList $arguments -WorkingDirectory $projectRoot -WindowStyle Hidden -RedirectStandardOutput $job.Stdout -RedirectStandardError $job.Stderr -PassThru
                     $running.Add($job)
                 }
                 catch {
@@ -503,6 +528,13 @@ $finalReport = [ordered]@{
         vault_option_value_uses_only_physically_banked_fragment_ids_and_real_subgame_actions = $true
         ridge_credited_roi_separate = $true
         plinko_target_capture_and_reward_value_separate = $true
+        fail_closed_after_consecutive_refusals_without_accept = 4096
+    }
+    engine = [ordered]@{
+        configured_path = $godot
+        configured_sha256 = (Get-FileHash -LiteralPath $godot -Algorithm SHA256).Hash.ToLowerInvariant()
+        worker_path = $godotWorker
+        worker_sha256 = (Get-FileHash -LiteralPath $godotWorker -Algorithm SHA256).Hash.ToLowerInvariant()
     }
     elapsed_seconds = ((Get-Date) - $startedAt).TotalSeconds
     scheduler_failure = $schedulerFailure
@@ -515,6 +547,8 @@ $finalReport = [ordered]@{
             exit_code = $_.ExitCode
             peak_working_set_bytes = $_.PeakWorkingSetBytes
             report_valid = $_.Report -ne $null
+            failure_report_valid = $_.FailureReport -ne $null
+            failure_report = $_.FailureReport
             failure_kind = $_.FailureKind
             failure_detail = $_.FailureDetail
         }
