@@ -1,4 +1,4 @@
-Status: PARKED — awaits `fix06_14` clock/evidence correction
+Status: INTEGRATION REVIEW PENDING — no browser/export/locked Web run before exact-head acceptance
 Board row: `fix06_13` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_13: Coin Pusher shipped-Web performance defect
@@ -114,3 +114,53 @@ Lifecycle addendum: `fix06_16` must land before that new locked shipped-Web run
 is consumed. It owns deterministic cleanup of the exact launched Web server
 process tree exposed by the completed `fix06_14` qualification; it does not
 reopen or replace any retained performance result.
+
+## Current-main integration record — 2026-08-27
+
+The accepted source implementation `7ec148e4d9a6096627fa26e1afee508e5b1c0b25`
+was semantically applied onto current-main base
+`7108269b784609e3e328b053a7207c3c872f3054` rather than merging its entangled,
+behind provenance branch. Current `fix06_14` clock evidence and `fix06_16`
+server lifecycle semantics were preserved. The exact integration candidate is
+`cce1c8dfee30e4503e70352da7fbdbd98e675687`, tree
+`593d738a64e8ab417064d108287d57862611389f`. It is not accepted or landed
+until a fresh independent exact-head review completes.
+
+Native recovery used independently inventoried exact base and integration
+godot-cpp roots at `58d1de720b8ffe9f8ffcdfe3a85148582cfd2e74`, tree
+`30de0418f57e5d167bd9c9dd933a4e55331270cb`, API/interface SHA-256
+`00A3AD6D...C9BEED` / `34D7058F...E090F0`. The qualifying base DLL
+`CBA7E97E...1B911` loaded as `native_v3` with `live_batch=false`. Interrupted
+shared-root DLLs `4E3731A3...0E213`, `3F7EFC36...E4EDF5` and
+`70E9597E...F4AC79`, plus nonqualified clean build `F6864BE7...C6C2`, remain
+diagnostic-only and cannot support acceptance. The final qualified dependency
+archive is byte-identical before/after remediation at
+`6D60CC01...9C64C7A`, 64,389,406 bytes and 1,075 members including exactly one
+`menu_button` object. The descriptor-bound remediation DLL is
+`31FF8C0D74D2C48F7CE807A06F6862246F52AA73443CC69BE685C76011A2B8A8`.
+
+The current-main first focused/native/Contract runs exposed a process-static
+`LiveKernelCache` retaining one `RngStream` after backend lifetime. The cache
+is now instance-owned RAII with an out-of-line destructor. Unkeyed calls still
+use a temporary kernel and do not disturb a keyed continuation; same-key calls
+resume; reset/key replacement destroys the prior kernel; backend release frees
+the final retained configuration. A strict WeakRef contract proves keyed
+retention, replacement release and backend-scope release. Rejected test-only
+heads `522da981` and `9ea59d1f` remain reachable: their first runs were void for
+warnings-as-errors type inference and same-scope GDScript temporary lifetime,
+respectively. Exact `cce1c8df` ABI/lifetime evidence is green with empty stderr.
+
+Exact-head non-Web results are retained, not selected: focused Coin Pusher is
+green at 47.032/16.768/23.694/165.422s; 10-seed determinism is green for 510
+checkpoints with combined hash `194847706` and byte-identical report SHA-256
+`A420E34B...94B0D`; lifecycle is green; static cache is 53/53 with 24/24
+visually equivalent pixel pairs. Contract is functionally green 16/16 with
+empty stderr but timing-red at 273.538s > 230.391s and remains routed to the
+existing timing defect. Smoke stops at the already-routed stale delivery UI
+golden. Native performance is fully green for Coin Pusher but has an unrelated
+Scratch resolve maximum 12.046ms > 6.000ms; its separate accepted `fix06_17`
+route is queued at `2b07f701` and is not included here. No cap or test changed.
+The owner-specified pre-fix Web parity references repeat exactly but
+do not match the current machine definitions and are retained as inapplicable
+red evidence, not a product remediation target. No browser, Web export or
+locked timing run occurred during integration.

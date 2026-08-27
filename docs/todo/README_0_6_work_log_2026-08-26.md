@@ -1190,3 +1190,82 @@ below to jump to a row's history.
   unpark only to semantic current-main integration, current-main gates,
   independent exact-head review and exactly one new locked shipped-Web run.
   This closeout did not change or run fix06_13.
+
+- 2026-08-27 [fix06_13 current-main integration] INDEPENDENT REVIEW PENDING.
+  Accepted source implementation `7ec148e4d9a6096627fa26e1afee508e5b1c0b25`
+  and review/docs `718af3da7176abfaec9f9dbc10884454298a9872` were
+  semantically replayed onto current-main base `7108269b` without merging the
+  entangled, behind source branch. Current fix06_14 clock/fixture evidence and
+  fix06_16 owned server lifecycle remain intact. Exact review candidate is
+  `cce1c8dfee30e4503e70352da7fbdbd98e675687`, tree `593d738a`.
+
+  Native supply was established before gates. Fresh pre-inventoried base and
+  integration godot-cpp roots used exact commit `58d1de72`, tree `30de0418`,
+  API/interface hashes `00A3AD6D...C9BEED` / `34D7058F...E090F0`, clang
+  22.1.8 `A8B7A614...C94E85`, Python 3.12.10 `4D6F5F81...D469859A` and
+  SCons 4.10.1 wheel `BD9D1C52...4E7126`. Qualifying base built in 210s:
+  archive `ACF58FBE...B925AC`, 1,075 members with `menu_button`; DLL
+  `CBA7E97E...1B911`, basic `native_v3`, `live_batch=false`. Its first minimal
+  harness attempt remains a setup red because `.godot/extension_list.cfg` was
+  absent; the corrected authenticated load passed with identical pre/post DLL
+  hash. Qualifying integration built in 208.4s: archive `6D60CC01...9C64C7A`,
+  1,075 complete members; DLL `2CAF4641...4312E`, live batch authenticated.
+  Interrupted shared-root DLLs `4E3731A3...0E213`, `3F7EFC36...E4EDF5`,
+  `70E9597E...F4AC79` and nonqualified build `F6864BE7...C6C2` remain retained
+  diagnostic evidence only. Their earlier source/TU hypotheses were invalidated
+  by the discovered incomplete shared godot-cpp object archive.
+
+  First current-main focused Coin Pusher functionally passed but its fail-closed
+  stderr check found exactly one leaked ObjectDB instance and one retained
+  resource. Native performance and the first determinism process reproduced
+  the signature; direct parity did not. Independent audit identified the
+  row-owned process-static `LiveKernelCache*` retaining
+  `Kernel.config -> RngStream`. Commit `522da981` made the cache backend-instance
+  RAII with an out-of-line destructor. Unkeyed calls still use a temporary
+  kernel without disturbing keyed continuation; same key resumes; reset/key
+  replacement destroys the old kernel; backend release destroys the final
+  cache. The rebuilt DLL is `31FF8C0D...2B8A8`, 862,720 bytes. Its dependency
+  archive remained byte-identical `6D60CC01...9C64C7A` with the same 1,075
+  members; only the tool-written mtime changed.
+
+  Strict WeakRef coverage retains the keyed RNG, releases it on replacement,
+  retains the replacement, then proves backend-scope release. Rejected
+  test-only head `522da981` produced a warnings-as-errors parse red before
+  native execution because WeakRef inference was not explicit. Head `9ea59d1f`
+  was also rejected because a same-scope GDScript temporary delayed the
+  destructor observation. Both first results are preserved. Exact `cce1c8df`
+  actual_3 passed ABI, live batch and cache lifetime with manifest/stdout hashes
+  `06FA683F...DFB8C4` / `A807C1BB...B221BF`, empty stderr and unchanged DLL.
+
+  Exact-head focused Coin Pusher passed validation/import/load/suite in
+  47.032/16.768/23.694/165.422s, native solver p95 3.549ms, summary
+  `0748179F...FC2B9C`, empty stderr. Determinism passed two independent
+  processes, 10 seeds/510 checkpoints, combined hash `194847706`; both reports
+  are byte-identical SHA-256 `A420E34B...94B0D`, stderr empty. Lifecycle passed
+  in 32.260s, stdout `02CE0666...F421F`, stderr empty. Static cache passed 53/53
+  checks and 24/24 cached/uncached production-canvas pairs; report/manifest
+  `5F6C136B...F41514` / `FFCE8B06...1417F5`.
+
+  Every red remains explicit. Contract validation/import/load passed
+  50.436/17.821/24.930s and all 16 checks passed with empty stderr, but the
+  273.538s suite exceeded immutable 230.391s; summary `B2A86913...24C6E`,
+  routed to the existing marginal timing defect without rerun or cap change.
+  Smoke validation/import/load/Foundation passed 49.277/17.831/24.843/37.467s,
+  then UI stopped on the already-routed stale delivery ordinary-travel golden;
+  summary `BB147568...BD3918`. Native performance was fully green for Coin
+  Pusher: solver 3.493ms; DROP/carriage/stop/release/COLLECT frame p95
+  9.505/8.344/8.938/8.140/9.331ms, draw 4.166/4.284/4.327/3.962/4.102ms,
+  resolve 6.873/1.274/1.267/1.266/1.946ms and liveness 28/53/78/103/127.
+  The same run measured unrelated Scratch resolve max 12.046ms > 6.000ms;
+  report `4195D724...090EA`; the separate accepted `fix06_17` route is queued
+  at `2b07f701` and was not copied or edited here. No rerun occurred.
+
+  Owner-specified accepted pre-fix Web references were consumed read-only with
+  no export/browser: both repeated exact payload `1d60cc83...e67f179`, while
+  current Windows native repeated exact `17822461...6a1bb`. Definitions and
+  machine outcomes differ, so manifest `6844897C...3F078` is retained red and
+  classified inapplicable to the current machine definitions, not a product
+  remediation target. No browser, Web export, locked timing, remote, release,
+  economy, payout, odds, wager math, RNG stream, schema or migration change ran.
+  Fresh independent review of the exact documentation closeout head is required
+  before one locked shipped-Web run may be consumed.
