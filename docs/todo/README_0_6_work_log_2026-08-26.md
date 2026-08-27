@@ -975,3 +975,53 @@ below to jump to a row's history.
   PowerShell parsing, adversarial clock self-test and `git diff --check` passed.
   No floor, cadence, liveness, cap, sample, fixture, product tuning, Web rerun,
   main or remote change occurred.
+
+- 2026-08-27 [fix06_14] EXACT-HEAD QUALIFICATION ROW-OWNED GREEN / FINAL DOC
+  REVIEW PENDING at `dba07c1a5c675e07cb9a3dc2956889d67086df2a`; no same-head
+  rerun occurred. Setup-only invocation actual_1 failed before export/browser
+  because `GODOT_BIN` was absent; no report exists. Launcher stdout/stderr
+  SHA-256 were
+  `93D81FA8C0529A7C803B794BE32CFB51B552C9170F0E778F4991C1DD026AD200` /
+  `B46E35CC71D60F1CF7FA803030A05BD61A09E56CC097261C8019BE305575486C`.
+  Actual measurement actual_2 used canonical Godot 4.6 SHA-256
+  `FC759F9D296FE54F09AB66D41DF6DDD2D278493B0E71109F6688EF029AD271AE`,
+  fresh export, Chrome 151, CPU throttle 4, port 18117 and exact source identity.
+  Export aggregate was
+  `E0C3B16FAA466C12B15007C894E781EE7927E70AE13B9D03F0D4AFC4E1085CD4`;
+  generated Web native
+  `31D60D25AD00969A9F7DD115AD7B5E4DC8F1CC4795514DF309A2526F1452C8FB`.
+  Report/summary SHA-256 were
+  `AD63B6D1044EF6EBD5C11300B2C9D1BBB6AB42A1793F249F287D9AD6AFD40B39` /
+  `433A1A79E6FEDA7143A50646572538FA03225DAD1DEC1DE0C493B30911500718`;
+  launcher stdout/stderr
+  `65D8C47016FA6645070AE51CFDD2DE9C338598B0FE4F0EA7A8504ED9DB30421B` /
+  `1D3A7E0E190601A1EB05D3E208BC4CE76B7EC6F61D9BA723D9698E54A2B67DB9`;
+  server stdout/stderr
+  `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855` /
+  `D4319AC01A494C1231A3304EA19D4161CDC074CC80BB52698AF6C6265435C016`.
+
+  All eight scenarios completed. Every row-owned fixture, conservation,
+  COLLECT, reduced-motion schema/draw/solver and scheduler assertion passed.
+  Idle scheduler elapsed/redraw was 15,971ms/16; reduced motion was 0ms/0 with
+  120 real draws. The summary has exactly 20 failures, all retained `fix06_13`
+  performance reds. Ready was 20.318s. Frame p95 milliseconds were menu/idle/
+  DROP/carriage/stop/release/COLLECT/reduced
+  133.333/145.180/143.178/141.855/136.135/141.632/140.458/135.750. Draw p95
+  idle/DROP/carriage/stop/release/COLLECT/reduced was
+  50.620/44.905/43.660/33.920/34.905/37.685/32.270. Resolve milliseconds were
+  61.500/42.095/44.525/41.720/46.230. No cap or evidence condition changed.
+
+  The wrapper wrote report and summary, but outer orchestration remained alive
+  until 904s because orphan Python PID 39916 retained port 18117. The PM stopped
+  that exact PID and verified process/listener clear. This is routed as new
+  docs-only row `fix06_16`; no consumed-head code changed and no Web rerun
+  occurred. fix06_14 is row-owned green but awaits exact-head documentation
+  review, main landing and proportionate post-land verification.
+
+  Exact-head native gates also passed on canonical Godot 4.6 with the ignored
+  Windows native DLL SHA-256
+  `1052770B5A96057928F67A72159D8A31B89D5591EAB7A64F07F8FCAE458E83F5`.
+  Validation/import/GDScript-load/focused Foundation Coin Pusher durations were
+  48.214/17.835/24.644/164.306s; every stage had zero failures and no stderr
+  issue. `.tmp/fix06_14_dba07c1a_coin_pusher_gate/summary.json` SHA-256 was
+  `E3F66C060752BC43FBB08798252E3269AD7C303C1C5909E7294C267A116A229A`.

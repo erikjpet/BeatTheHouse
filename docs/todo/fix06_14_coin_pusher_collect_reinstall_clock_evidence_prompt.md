@@ -1,4 +1,4 @@
-Status: IN PROGRESS / INTEGRATION REVIEW PENDING
+Status: IN PROGRESS / FINAL DOC REVIEW PENDING
 Board row: `fix06_14` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_14: Coin Pusher COLLECT/reinstall production-clock evidence
@@ -49,3 +49,45 @@ window and leave two new tray bodies. A fresh reinstall likewise advances to
 - No gameplay, RNG, payout, odds, wager, economy, geometry, tuning, schema or
   migration change.
 - Preserve all red and green results and exact build identity.
+
+## Current-main qualification closeout — 2026-08-27
+
+Exact candidate `dba07c1a5c675e07cb9a3dc2956889d67086df2a` consumed one
+fresh-export Chrome 151 CPU-4 qualification on `DESKTOP-1950ULQ`; no same-head
+rerun occurred. A setup-only first invocation failed before export and browser
+because `GODOT_BIN` was absent. The measured invocation used canonical Godot
+4.6 SHA-256
+`FC759F9D296FE54F09AB66D41DF6DDD2D278493B0E71109F6688EF029AD271AE`,
+port 18117, export aggregate
+`E0C3B16FAA466C12B15007C894E781EE7927E70AE13B9D03F0D4AFC4E1085CD4`
+and generated Web native
+`31D60D25AD00969A9F7DD115AD7B5E4DC8F1CC4795514DF309A2526F1452C8FB`.
+
+All eight scenarios completed. Every row-owned exact fixture, full-channel
+conservation, COLLECT action-acceptance/terminal accounting, reduced-motion
+schema, production draw, solver-liveness and scheduler assertion passed. Idle
+recorded 15,971ms of exact production scheduler demand and 16 redraws; reduced
+motion recorded zero scheduler time/redraws while preserving 120 real draws.
+The summary contains exactly 20 failures, all readiness/frame/draw/resolve
+performance reds retained for `fix06_13`; this row changed no cap and did not
+rerun.
+
+The same exact head also passed canonical Godot 4.6 native validation, import,
+GDScript load and focused Foundation Coin Pusher in
+48.214/17.835/24.644/164.306s. Every stage had zero failures and no stderr
+issue, using the ignored Windows native DLL SHA-256
+`1052770B5A96057928F67A72159D8A31B89D5591EAB7A64F07F8FCAE458E83F5`.
+The gate summary at
+`.tmp/fix06_14_dba07c1a_coin_pusher_gate/summary.json` has SHA-256
+`E3F66C060752BC43FBB08798252E3269AD7C303C1C5909E7294C267A116A229A`.
+
+The wrapper wrote its complete report and summary before outer orchestration
+remained alive until 904s because `serve_web.ps1` left Python PID 39916 on port
+18117. The PM stopped only that exact PID and verified the process/listener
+clear. This lifecycle issue is routed without changing the consumed head as
+`fix06_16`; it must close before the next locked `fix06_13` run. Exact hashes
+and every timing are preserved in the canonical ledger and dated work log.
+
+fix06_14 is row-owned green but remains IN PROGRESS until this documentation
+head receives independent review, lands on `main`, and passes proportionate
+post-land verification.

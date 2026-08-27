@@ -109,3 +109,8 @@ accepted candidate onto the exact current `main`, run the required current-main
 gates, obtain independent review of that exact integration head, and consume
 one new locked shipped-Web run. Until all four steps complete, `fix06_13` is not
 DONE, not landed and not accepted on `main`.
+
+Lifecycle addendum: `fix06_16` must land before that new locked shipped-Web run
+is consumed. It owns deterministic cleanup of the exact launched Web server
+process tree exposed by the completed `fix06_14` qualification; it does not
+reopen or replace any retained performance result.
