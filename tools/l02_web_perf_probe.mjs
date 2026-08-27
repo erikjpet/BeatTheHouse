@@ -96,7 +96,12 @@ try {
   page.on("console", (message) => {
     const text = message.text();
     if (message.type() === "warning" || message.type() === "error" || text.includes("Blocking on the main thread")) {
-      startupConsole.push({ type: message.type(), text, wall_msec: Date.now() - started });
+      const classification = message.type() === "error"
+        ? "error"
+        : text.includes("Blocking on the main thread")
+          ? "main_thread_blocking_warning"
+          : "warning";
+      startupConsole.push({ type: message.type(), classification, text, wall_msec: Date.now() - started });
     }
     if (text.startsWith("__BTH_READY_PAGE_MSEC__ ")) {
       readyPageMsec = Number(text.slice("__BTH_READY_PAGE_MSEC__ ".length)) || 0;

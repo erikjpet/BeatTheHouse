@@ -243,6 +243,10 @@ if ($Plan -eq "coin_pusher") {
     Assert-Condition -Condition (@($reportEnvelope.page_errors).Count -eq 0) -Message "Coin Pusher browser probe captured a page error." -Failures $failures
     Assert-Condition -Condition (@($reportEnvelope.request_failures).Count -eq 0) -Message "Coin Pusher browser probe captured a failed request." -Failures $failures
     Assert-Condition -Condition (@($reportEnvelope.failed_responses).Count -eq 0) -Message "Coin Pusher browser probe captured an HTTP failure response." -Failures $failures
+    $startupErrors = @($reportEnvelope.startup_console | Where-Object { [string]$_.type -eq "error" })
+    $unclassifiedStartupConsole = @($reportEnvelope.startup_console | Where-Object { [string]::IsNullOrWhiteSpace([string]$_.classification) })
+    Assert-Condition -Condition ($startupErrors.Count -eq 0) -Message "Coin Pusher browser probe captured a startup console error." -Failures $failures
+    Assert-Condition -Condition ($unclassifiedStartupConsole.Count -eq 0) -Message "Coin Pusher browser probe captured an unclassified startup warning/error." -Failures $failures
     Assert-Condition -Condition ([int]$reportEnvelope.viewport.inner_width -gt 0 -and [int]$reportEnvelope.viewport.inner_height -gt 0) -Message "Coin Pusher browser viewport identity was missing." -Failures $failures
     Assert-Condition -Condition ([string]$report.build_identity.source_commit -eq $sourceCommit) -Message "Runtime source commit identity did not match the exported source commit." -Failures $failures
     Assert-Condition -Condition ([string]$report.build_identity.export_sha256 -eq $exportSha256) -Message "Runtime Web export identity did not match the served export." -Failures $failures
@@ -258,6 +262,13 @@ if ($Plan -eq "coin_pusher") {
         Assert-Condition -Condition ([int]$fixture.body_count -eq 300 -and [int]$fixture.machine_ceiling -ge 300 -and [int]$fixture.solver_fixed_hz -eq 60) -Message "Coin Pusher Web fixture was not the exact 300-body, 60 Hz production fixture." -Failures $failures
         Assert-Condition -Condition ([string]$fixture.platform -eq "web") -Message "Coin Pusher fixture did not execute in the Web runtime." -Failures $failures
         Assert-Condition -Condition ([string]$fixture.source_commit -eq $sourceCommit -and [string]$fixture.export_sha256 -eq $exportSha256) -Message "Coin Pusher fixture identity did not preserve source/export hashes." -Failures $failures
+    }
+    $reducedFixtureEvents = @($report.events | Where-Object { [string]$_.id -eq "coin_pusher_reduced_fixture_identity" })
+    Assert-Condition -Condition ($reducedFixtureEvents.Count -eq 1) -Message "Coin Pusher report did not contain exactly one reduced-motion fixture reinstall identity event." -Failures $failures
+    if ($fixtureEvents.Count -eq 1 -and $reducedFixtureEvents.Count -eq 1) {
+        $reducedFixture = $reducedFixtureEvents[0].data
+        Assert-Condition -Condition ([string]$reducedFixture.fixture_seed -eq [string]$fixture.fixture_seed -and [string]$reducedFixture.rng_namespace -eq [string]$fixture.rng_namespace -and [string]$reducedFixture.rng_fork -eq [string]$fixture.rng_fork) -Message "Coin Pusher reduced-motion reinstall did not use the identical deterministic fixture identity." -Failures $failures
+        Assert-Condition -Condition ([int]$reducedFixture.body_count -eq 300 -and [string]$reducedFixture.variation_id -eq "quarter_falls") -Message "Coin Pusher reduced-motion reinstall did not re-enter the exact 300-body Quarter Falls fixture." -Failures $failures
     }
 
     if ($scenariosByName.ContainsKey("coin_pusher_idle")) {
@@ -278,7 +289,8 @@ if ($Plan -eq "coin_pusher") {
         $reduced = $scenariosByName["coin_pusher_reduced_motion"]
         Assert-Condition -Condition ([int]$reduced.frame_time_ms.count -ge 120) -Message "Coin Pusher reduced-motion sample contained fewer than 120 frames." -Failures $failures
         Assert-Condition -Condition ([int]$reduced.tags.solver_liveness_delta -gt 0) -Message "Coin Pusher reduced motion froze solver liveness." -Failures $failures
-        Assert-Condition -Condition ([int]$reduced.tags.body_count_before -gt 0 -and [int]$reduced.tags.body_count_after -gt 0) -Message "Coin Pusher reduced-motion sample lost the production body surface." -Failures $failures
+        Assert-Condition -Condition ([int]$reduced.tags.body_count_before -eq 300) -Message "Coin Pusher reduced-motion sample did not begin from the reinstalled exact 300-body fixture." -Failures $failures
+        Assert-Condition -Condition ([int]$reduced.tags.body_count_after -gt 0) -Message "Coin Pusher reduced-motion sample lost the production body surface." -Failures $failures
     }
 
     $actionScenarios = @(
@@ -310,6 +322,25 @@ if ($Plan -eq "coin_pusher") {
         Assert-Condition -Condition ([int]$drop.environment_turns_after -eq [int]$drop.environment_turns_before + 1) -Message "Accepted Web DROP did not advance exactly one environment turn." -Failures $failures
         Assert-Condition -Condition ([int]$drop.story_entries_after -eq [int]$drop.story_entries_before + 1) -Message "Accepted Web DROP did not add exactly one story entry." -Failures $failures
         Assert-Condition -Condition ([int]$drop.bankroll_delta -eq -1 -and [bool]$drop.action_patch_present) -Message "Accepted Web DROP did not retain native consequence/patch semantics." -Failures $failures
+    }
+    if ($scenariosByName.ContainsKey("coin_pusher_active_carriage")) {
+        $carriage = $scenariosByName["coin_pusher_active_carriage"].tags
+        Assert-Condition -Condition (([int]$carriage.carriage_x_after -ne [int]$carriage.carriage_x_before) -or ([int]$carriage.selected_hole_after -ne [int]$carriage.selected_hole_before)) -Message "Accepted Web carriage/hole action did not change carriage position or selected hole." -Failures $failures
+    }
+    if ($scenariosByName.ContainsKey("coin_pusher_active_skill_stop")) {
+        $skillStop = $scenariosByName["coin_pusher_active_skill_stop"].tags
+        Assert-Condition -Condition ((-not [bool]$skillStop.skill_stop_before) -and [bool]$skillStop.skill_stop_after) -Message "Accepted Web SKILL STOP did not transition false to true." -Failures $failures
+    }
+    if ($scenariosByName.ContainsKey("coin_pusher_active_skill_release")) {
+        $skillRelease = $scenariosByName["coin_pusher_active_skill_release"].tags
+        Assert-Condition -Condition ([bool]$skillRelease.skill_stop_before -and (-not [bool]$skillRelease.skill_stop_after)) -Message "Accepted Web RELEASE did not transition true to false." -Failures $failures
+    }
+    if ($scenariosByName.ContainsKey("coin_pusher_active_collect")) {
+        $collect = $scenariosByName["coin_pusher_active_collect"].tags
+        Assert-Condition -Condition ([int]$collect.tray_count_before -eq 1 -and [int]$collect.tray_value_before -eq 3) -Message "Web COLLECT did not begin from the meaningful seeded tray result." -Failures $failures
+        Assert-Condition -Condition ([int]$collect.tray_count_after -eq 0 -and [int]$collect.tray_value_after -eq 0) -Message "Accepted Web COLLECT did not empty the seeded tray." -Failures $failures
+        Assert-Condition -Condition ([int]$collect.bankroll_after -eq [int]$collect.bankroll_before + 3) -Message "Accepted Web COLLECT did not credit the seeded tray value." -Failures $failures
+        Assert-Condition -Condition ([int]$collect.story_entries_after -eq [int]$collect.story_entries_before + 1) -Message "Accepted Web COLLECT did not add its production story entry." -Failures $failures
     }
 }
 

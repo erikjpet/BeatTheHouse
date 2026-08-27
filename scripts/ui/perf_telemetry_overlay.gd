@@ -420,9 +420,31 @@ func _run_coin_pusher_plan() -> void:
 		["coin_pusher_skill_stop", "coin_pusher_active_skill_release"],
 		["coin_pusher_collect", "coin_pusher_active_collect"],
 	]:
+		if str(action_value[0]) == "coin_pusher_collect" and not _seed_coin_pusher_collect_fixture(run_state, game):
+			mark_event("coin_pusher_collect_seed_failed")
+			dump_report()
+			await _quit_after_report_flush()
+			return
 		await _measure_coin_pusher_action(str(action_value[0]), str(action_value[1]), fixture)
+	# The active-action sequence is allowed to consume or move fixture bodies.
+	# Reinstall and re-enter the identical durable 300-body fixture so reduced-
+	# motion evidence cannot silently measure a depleted derivative state.
+	app.back_to_environment()
+	var reduced_fixture_ready := await _wait_for_coin_pusher_exit()
+	if reduced_fixture_ready:
+		reduced_fixture_ready = _install_coin_pusher_fixture(run_state, game)
+	if reduced_fixture_ready:
+		reduced_fixture_ready = bool(app.call("enter_game", "coin_pusher"))
+	if not reduced_fixture_ready:
+		mark_event("coin_pusher_reduced_fixture_failed")
+		dump_report()
+		await _quit_after_report_flush()
+		return
+	await _wait_frames(4)
+	var reduced_fixture := _coin_pusher_fixture_identity(run_state, game)
+	mark_event("coin_pusher_reduced_fixture_identity", reduced_fixture)
 	await _set_coin_pusher_reduce_motion(true)
-	await _measure_coin_pusher_idle("coin_pusher_reduced_motion", true, fixture)
+	await _measure_coin_pusher_idle("coin_pusher_reduced_motion", true, reduced_fixture)
 	await _set_coin_pusher_reduce_motion(false)
 	l02_driver_complete = true
 	dump_report()
@@ -490,6 +512,38 @@ func _coin_pusher_fixture_identity(run_state: RunState, game: GameModule) -> Dic
 		"export_sha256": str(runtime_options.get("bth_perf_export_sha256", "")),
 		"environment_id": str(run_state.current_environment.get("id", "")),
 	}
+
+
+func _seed_coin_pusher_collect_fixture(run_state: RunState, game: GameModule) -> bool:
+	var machine := game.call("_ensure_machine_state", run_state, run_state.current_environment, true) as Dictionary
+	var simulation_value: Variant = game.call("_simulation", machine)
+	if typeof(simulation_value) != TYPE_DICTIONARY:
+		return false
+	var simulation: Dictionary = simulation_value
+	var bodies: Array = simulation.get("bodies", []) if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else []
+	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+	if bodies.is_empty() or not tray.is_empty():
+		return false
+	# Preserve the 300-origin conservation law: move one deterministic fixture
+	# coin into the tray instead of fabricating a 301st outcome.
+	var seeded_body: Dictionary = bodies.pop_back() as Dictionary
+	tray.append({
+		"body_id": str(seeded_body.get("id", "web_perf_collect_seed")),
+		"kind": "coin",
+		"value": 3,
+		"item_id": "",
+		"provenance": {},
+	})
+	simulation["bodies"] = bodies
+	simulation["tray_ledger"] = tray
+	app.call("_refresh")
+	mark_event("coin_pusher_collect_seed", {
+		"body_id": str(seeded_body.get("id", "")),
+		"tray_count": tray.size(),
+		"tray_value": 3,
+		"active_body_count": bodies.size(),
+	})
+	return bodies.size() == COIN_PUSHER_FIXTURE_BODY_COUNT - 1 and tray.size() == 1
 
 
 func _coin_pusher_canvas() -> Control:
@@ -573,6 +627,16 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	current_tags["solver_liveness_after"] = int(after_state.get("coin_pusher_liveness_ticks", 0))
 	current_tags["body_count_before"] = int(before_state.get("coin_pusher_body_count", -1))
 	current_tags["body_count_after"] = int(after_state.get("coin_pusher_body_count", -1))
+	current_tags["carriage_x_before"] = int(before_state.get("coin_pusher_carriage_x", -1))
+	current_tags["carriage_x_after"] = int(after_state.get("coin_pusher_carriage_x", -1))
+	current_tags["selected_hole_before"] = int(before_state.get("coin_pusher_selected_hole", -1))
+	current_tags["selected_hole_after"] = int(after_state.get("coin_pusher_selected_hole", -1))
+	current_tags["skill_stop_before"] = bool(before_state.get("coin_pusher_skill_stop_engaged", false))
+	current_tags["skill_stop_after"] = bool(after_state.get("coin_pusher_skill_stop_engaged", false))
+	current_tags["tray_count_before"] = int(before_state.get("coin_pusher_tray_count", -1))
+	current_tags["tray_count_after"] = int(after_state.get("coin_pusher_tray_count", -1))
+	current_tags["tray_value_before"] = int(before_state.get("coin_pusher_tray_value", -1))
+	current_tags["tray_value_after"] = int(after_state.get("coin_pusher_tray_value", -1))
 	current_tags["bankroll_before"] = bankroll_before
 	current_tags["bankroll_after"] = run_state.bankroll if run_state != null else 0
 	current_tags["environment_turns_before"] = turns_before
