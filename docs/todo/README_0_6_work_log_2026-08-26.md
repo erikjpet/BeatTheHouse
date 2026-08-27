@@ -6,7 +6,7 @@ contains the historical Work Log moved verbatim by
 claim, block, completion and unblock entries append here; task state and
 the binding protocol remain on the active board.
 
-Preserved entries: **124**; current entries: **133**. Use the exact find token
+Preserved entries: **124**; current entries: **134**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -45,6 +45,7 @@ below to jump to a row's history.
 | `fix06_2 reopening` | 1 | `[fix06_2 reopening]` |
 | `fix06_2/crew06_5` | 2 | `[fix06_2/crew06_5]` |
 | `fix06_3` | 2 | `[fix06_3]` |
+| `fix06_5` | 1 | `[fix06_5]` |
 | `fix06_6` | 2 | `[fix06_6]` |
 | `polish06_0` | 1 | `[polish06_0]` |
 | `push06_1` | 1 | `[push06_1]` |
@@ -867,3 +868,11 @@ below to jump to a row's history.
   owner’s modified source/test files, untracked prompts and `review_artifacts/`
   remained untouched. No product, test, golden, capture, Godot, release or
   remote action occurred.
+
+- 2026-08-26 [fix06_5] CLAIMED from exact main `e75f2c3d`, with measurements
+  pinned to that same source head/tree. The binding prompt and machine-readable
+  predeclaration fix five serialized, non-replaceable attempts on one objectively
+  qualified idle host with one Godot/native identity. Every result must be
+  retained; the median rule may support the cap or produce only a stale-baseline
+  candidate requiring owner authorization. No Godot run, tooling/baseline/cap
+  change, product action or stale-baseline conclusion occurred in this claim.
