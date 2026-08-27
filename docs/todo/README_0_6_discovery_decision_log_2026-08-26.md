@@ -1652,3 +1652,13 @@ below to jump to a row's history.
   252.197/247.542/240.187/245.767s. Because attempt 01 is noneligible, no
   five-eligible-run decision median exists, no stale-baseline candidate is
   claimed and no baseline, multiplier or cap changed.
+
+- 2026-08-27 [fix06_14] Routed from fix06_13 iteration-3 locked Web evidence.
+  The accepted 300-origin fixture legitimately advances from 300 active bodies
+  to 296 during normal production-clock idle on baseline and optimized heads.
+  COLLECT starts at the exact conserved 299 active + one seeded tray body, but
+  new physical exits create two new tray bodies during the locked after-window;
+  reinstall also advances before identity capture. This is an evidence/clock
+  synchronization contradiction, not permission to suppress gameplay motion
+  or weaken the harness. Retained report SHA-256
+  `FAD397C558C5E57208EA203BE5044F3E00544CD3DA883B415A66BDF0CE8F5587`.

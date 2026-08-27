@@ -896,3 +896,8 @@ below to jump to a row's history.
   prohibited timed job. No five-eligible-run decision median, stale-baseline
   finding, cap change or product/test/tool change resulted. Raw evidence remains in both
   retained fix06_5 worktrees under `.tmp/fix06_5_contract_timing/`.
+
+- 2026-08-27 [fix06_14] ROUTED / TODO from fix06_13. Unclaimed; depends on the
+  fix06_13 disposition. Owns only the Coin Pusher COLLECT/reinstall
+  production-clock evidence boundary. Locked harness, gameplay motion and all
+  performance caps remain unchanged.
