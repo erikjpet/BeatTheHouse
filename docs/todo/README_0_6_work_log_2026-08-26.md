@@ -6,7 +6,7 @@ contains the historical Work Log moved verbatim by
 claim, block, completion and unblock entries append here; task state and
 the binding protocol remain on the active board.
 
-Preserved entries: **124**; current entries: **132**. Use the exact find token
+Preserved entries: **124**; current entries: **133**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -45,7 +45,7 @@ below to jump to a row's history.
 | `fix06_2 reopening` | 1 | `[fix06_2 reopening]` |
 | `fix06_2/crew06_5` | 2 | `[fix06_2/crew06_5]` |
 | `fix06_3` | 2 | `[fix06_3]` |
-| `fix06_6` | 1 | `[fix06_6]` |
+| `fix06_6` | 2 | `[fix06_6]` |
 | `polish06_0` | 1 | `[polish06_0]` |
 | `push06_1` | 1 | `[push06_1]` |
 | `push06_2` | 1 | `[push06_2]` |
@@ -857,3 +857,13 @@ below to jump to a row's history.
   `34803412` was independently rejected P1 for claiming DONE before acceptance
   and landing. The row remains IN_PROGRESS pending independent acceptance,
   PM-controlled main landing, post-land documentation check and final record.
+
+- 2026-08-26 [fix06_6] DONE. Feynman (`/root/fix06_collect_impl`) independently
+  accepted the corrected five-document head
+  `b323f841ca0023493a54e1118abc32fe51208c63`. It landed on main at
+  `fe0c76d9e0843794d9b771f0e20075138f0bf6e0`; both commits resolve to tree
+  `0f954d2ad30f769b96196737aff8cc1f1723238f`. Exact post-land static validation
+  passed in 77.967s and the same reviewer returned post-land ACCEPT. The primary
+  owner’s modified source/test files, untracked prompts and `review_artifacts/`
+  remained untouched. No product, test, golden, capture, Godot, release or
+  remote action occurred.

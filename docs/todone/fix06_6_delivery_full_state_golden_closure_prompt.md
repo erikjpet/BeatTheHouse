@@ -1,4 +1,4 @@
-Status: IN PROGRESS — historical product disposition verified; separate-route closure pending acceptance and landing
+Status: DONE — independently accepted, landed and post-land accepted
 
 # fix06_6 — Delivery Full-State Golden Closure
 
@@ -45,13 +45,17 @@ disposition, not authority to refresh another golden or change product code.
 
 The inherited failure was a stale fixture, not a delivery product regression.
 Its remediation was absorbed visibly into `fix06_4` under explicit owner
-authorization, independently reviewed, landed and verified. That historical
-product disposition is complete, but the launcher’s separate routing obligation
-remains open until this documentation closeout is independently accepted,
-landed, checked on post-land main and recorded.
+authorization, independently reviewed, landed and verified. The five-document
+closeout at `b323f841ca0023493a54e1118abc32fe51208c63` was independently accepted
+by Feynman (`/root/fix06_collect_impl`), landed on main at
+`fe0c76d9e0843794d9b771f0e20075138f0bf6e0`, and post-land accepted by the
+same reviewer. Accepted and landed trees are identical at
+`0f954d2ad30f769b96196737aff8cc1f1723238f`; static validation passed on exact
+post-land main in 77.967s. The launcher’s separate routing obligation is closed.
 
-Do not edit code, tests, goldens, data or budgets for this row. Do not launch
-Godot, regenerate evidence or recapture visuals. Do not perform release,
-version, packaging or remote actions. Independent review of this five-document
-closeout, PM-controlled main landing, proportionate post-land documentation
-check and final ledger/board record are the remaining process steps.
+No code, test, golden, data, budget, Godot evidence, capture, release, version,
+package or remote action was part of this closeout. Primary-worktree owner
+changes in `scripts/core/run_state.gd` and
+`scripts/tests/foundation/check_lenders_release_saves.gd`, the untracked owner
+prompts and all `review_artifacts/` remained untouched. Final board, ledger and
+dated-log records now preserve the accepted and post-land disposition.
