@@ -1057,3 +1057,41 @@ below to jump to a row's history.
   / `70BEBB6DFCF9E8433EFFF62020097E383BF79207772D8DBD1E631558004AE50A`.
   Iteration 8 begins with non-timing attribution of the remaining renderer and
   per-patch redraw costs before any further product edit.
+
+- 2026-08-27 [fix06_13] ITERATION 8 ATTRIBUTION, REVIEW REJECT, REMEDIATION.
+  The retained c914 report attributes the remaining shipped-Web frame cost to
+  41-60ms p95 foundation snapshot builds plus 30-35ms p95 canvas draws. Each
+  120-frame scenario recorded 120 realtime state calls and 120 draws but only
+  seven maintained scheduler redraws: `apply_surface_state_patch()` was forcing
+  every realtime authority patch to bypass the scheduler.
+
+  Candidate `c26667896d85a383c8306df1e185de8ae7647e28` made Coin Pusher
+  realtime patches state-authoritative but scheduler-owned and kept ordinary
+  action/dirty patches immediate. Independent review rejected it because the
+  entry-anchor marker could merge into the initial/public snapshot and reduced
+  motion returns before scheduler work, leaving no post-reset real canvas draw.
+  Remediated candidate `7ec148e4d9a6096627fa26e1afee508e5b1c0b25`
+  (tree `28cb3a04844755c5838523ccb4be946813577379`) removes the marker
+  from the entry anchor, consumes it defensively at both canvas boundaries, and
+  requests one real reduced-motion measurement draw after counter reset while
+  preserving animation-scheduler delta zero. Contract tests cover entry/public
+  non-leak, authoritative deferred state, immediate action redraw, and the
+  reduced-motion one-shot. An exploratory 4 FPS key existed only uncommitted
+  during one native non-Web suite invocation and was removed before commit or
+  evidence. No cadence, tuning, cap, sample, fixture, gameplay, RNG, economy,
+  schema or migration changed. No locked timing ran.
+
+  Exact-head focused validation/import/load/Coin Pusher passed in
+  49.322/16.813/23.821/175.169 seconds; summary SHA-256
+  `7D0988B0C4178EDDC4130F5E78289CE77969A6A574766BF026094B67A2C84A06`.
+  Static cache passed 53/53 checks and 24/24 visual pairs; report/manifest
+  `3E9D838661F4150CD4CC99A2865C532C3C643F3552160FDA7A71E531383E7681`
+  / `9F69A0688D1917329EFD6D8D3E35670D42FEBD91CE059DA31B013DD95D5C0632`.
+  Shipped-Web native live parity passed with report/manifest
+  `666C0337D4F8ACF459557E8ACD64CFA06DE67B87767E1E67B787D9B4E155021D`
+  / `4245003E4220E69A715D957D8AB42617B96CAC6402BEC8CF1AC32D4EF5E7C1D8`,
+  unchanged parity payload
+  `4e5a5ec32a6a00e9c73cb56631e977f5be918aaa040b2814fda6006e1e8c532f`
+  and Web native
+  `04D41797748BBECD308A761DF3895311CC3A085ABE86580CF1226BAA0ADC2F47`.
+  Independent re-review remains mandatory before any locked performance run.
