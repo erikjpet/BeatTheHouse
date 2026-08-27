@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — evidence-runner remediation accepted; exact 200k-per-machine verification and landing remain
+Status: PARKED - evidence runner accepted; persistent-machine liveness requires owner decision `fix06_12`
 Board row: `fix06_10` in `docs/todo/README_0_6_board.md`
 
 # fix06_10 — Coin Pusher EV Evidence Runner OOM
@@ -66,6 +66,34 @@ Reviewer `/root/fix10_review` returned
 6. Land only after exact-head evidence and independent acceptance. Then perform
    the proportionate post-land runner/static check and record the main head.
 
-This row remains IN_PROGRESS until the full 200k-per-machine evidence completes,
-the accepted payload lands on main, and the post-land record is written. No
-release, version, packaging, publication or remote action belongs to this row.
+This row cannot become DONE until full 200k-per-machine evidence completes, an
+accepted payload lands on main, and a post-land record is written. Its final
+parking record below prevents further work without an owner ruling. No release,
+version, packaging, publication or remote action belongs to this row.
+
+## 2026-08-26 final parking record
+
+The runner-only work is independently accepted at exact fix06_10 head
+`861d2d40a40c27bcde7fe67c0b8e0912c38567f9` and exact fix06_11 head
+`745051323f90ffcd7839b5dbfab0074f5553b290`. Their accepted integration is
+`ab584b0b965301e523b173d477491b19f125d1ac`.
+
+On that exact clean integration, project validation, editor import and native
+smoke passed. The smoke used `native_v3`; descriptor, UID and native DLL
+SHA-256 values were respectively `72EE625D61257DCBD65400E57F39077EADEDD3C265C25C83F68BC2F8EFBC9861`,
+`F606704CBF202403DE82CBFD19B4160889346206EAD1D96E86C6A452B0C3A06A` and
+`1052770B5A96057928F67A72159D8A31B89D5591EAB7A64F07F8FCAE458E83F5`.
+
+The one authorized exact run stopped deterministically on Quarter Falls shard
+00 after 530 accepted inserts followed by 4,096 consecutive ceiling refusals.
+The retained state was active 600, tray 0 and gutter 80 on `native_v3`; direct
+worker peak was 575,750,144 bytes. The structured failure is not an EV-band
+verdict. All 23 remaining shards are explicitly unstarted and no rerun occurred.
+The retained output directory is
+`D:\bth-f10\.tmp\fix06_11_integrated_ev_200k_exact_2026-08-26_23-33-19`;
+manifest SHA-256 is
+`5CD255D329BDDC99A90336C98B8200FD0F8B0DE5C91558EC3D0CF45B329C8791`.
+
+No runner-only change can restore accepted-insert liveness under the locked
+persistent/no-reset policy. This row is therefore PARKED, not DONE, and routes
+only to the owner decision in `fix06_12_coin_pusher_persistent_liveness_owner_decision_prompt.md`.

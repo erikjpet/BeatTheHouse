@@ -1652,3 +1652,12 @@ below to jump to a row's history.
   252.197/247.542/240.187/245.767s. Because attempt 01 is noneligible, no
   five-eligible-run decision median exists, no stale-baseline candidate is
   claimed and no baseline, multiplier or cap changed.
+
+- 2026-08-26 [fix06_12] OWNER DECISION REQUIRED. Accepted runner evidence at
+  `ab584b0b` proves Quarter Falls reaches its production 600-body ceiling after
+  530 accepted inserts and then produces no tray or gutter exit across 4,096
+  refused attempts / 81,920 motor-enabled ticks. To restore persistent-machine
+  accepted-insert liveness, the owner must authorize one of: physics, geometry,
+  capacity-ceiling, policy, reset, or other design changes. Every option changes
+  locked pusher behavior and may change EV. The PM will not select among them.
+  Until an explicit ruling exists, exact pusher EV verification remains PARKED.

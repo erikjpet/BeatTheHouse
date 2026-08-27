@@ -896,3 +896,12 @@ below to jump to a row's history.
   prohibited timed job. No five-eligible-run decision median, stale-baseline
   finding, cap change or product/test/tool change resulted. Raw evidence remains in both
   retained fix06_5 worktrees under `.tmp/fix06_5_contract_timing/`.
+
+- 2026-08-26 [fix06_10/fix06_11] PARKED. Runner-only heads `861d2d40` and
+  `74505132` were accepted and assembled at `ab584b0b`. Exact-head validation,
+  import and `native_v3` smoke passed. The single exact attempt failed closed
+  on QF00 after 530 accepted inserts and 4,096 consecutive refusals with active
+  600/tray 0/gutter 80; direct-worker peak was 575,750,144 bytes. All 23 pending
+  shards are marked unstarted and no rerun occurred. This is not an EV-band
+  verdict. Restoring liveness requires an owner-authorized behavior change
+  routed to `fix06_12`; no product or release action occurred.
