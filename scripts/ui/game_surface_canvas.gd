@@ -311,10 +311,12 @@ func reset_performance_counters() -> void:
 	perf_runtime_status_calls = 0
 	perf_draw_frame_usec_samples = []
 	surface_animation_redraw_count = 0
+	if surface_game_module != null and surface_game_module.has_method("reset_renderer_performance_counters"):
+		surface_game_module.call("reset_renderer_performance_counters")
 
 
 func performance_counters() -> Dictionary:
-	return {
+	var result := {
 		"full_snapshot_calls": perf_full_snapshot_calls,
 		"runtime_status_calls": perf_runtime_status_calls,
 		"surface_animation_redraw_count": surface_animation_redraw_count,
@@ -324,6 +326,9 @@ func performance_counters() -> Dictionary:
 		"draw_p95_ms": _draw_percentile_ms(0.95),
 		"draw_max_ms": _draw_max_ms(),
 	}
+	if surface_game_module != null and surface_game_module.has_method("renderer_performance_counters"):
+		result["renderer_stage_usec_samples"] = surface_game_module.call("renderer_performance_counters")
+	return result
 
 
 func performance_live_status() -> Dictionary:

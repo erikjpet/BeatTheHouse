@@ -410,6 +410,7 @@ func _run_coin_pusher_plan() -> void:
 		await _quit_after_report_flush()
 		return
 	await _wait_frames(4)
+	_enable_coin_pusher_stage_diagnostic()
 	var fixture := _coin_pusher_fixture_identity(run_state, game)
 	mark_event("coin_pusher_fixture_identity", fixture)
 	await _measure_coin_pusher_idle("coin_pusher_idle", false, fixture)
@@ -472,7 +473,16 @@ func _reinstall_coin_pusher_fixture(run_state: RunState, game: GameModule) -> bo
 	if not bool(app.call("enter_game", "coin_pusher")):
 		return false
 	await _wait_frames(4)
+	_enable_coin_pusher_stage_diagnostic()
 	return true
+
+
+func _enable_coin_pusher_stage_diagnostic() -> void:
+	if not _option_bool(runtime_options, "bth_perf_coin_pusher_stage_diagnostic", false):
+		return
+	var canvas := _coin_pusher_canvas()
+	if canvas != null and canvas.has_method("apply_surface_state_patch"):
+		canvas.call("apply_surface_state_patch", {"coin_pusher_perf_stage_capture": true})
 
 
 func _coin_pusher_machine_definition(game: GameModule) -> Dictionary:
