@@ -896,3 +896,15 @@ below to jump to a row's history.
   prohibited timed job. No five-eligible-run decision median, stale-baseline
   finding, cap change or product/test/tool change resulted. Raw evidence remains in both
   retained fix06_5 worktrees under `.tmp/fix06_5_contract_timing/`.
+
+- 2026-08-27 [fix06_15] ROUTED from the `env06_6` shared full gate. Exact
+  provenance `c507475d` split the monolithic Foundation release suite, but the
+  retained direct `check_core_content.gd` load now emits 668 parser errors: 592
+  unresolved-call occurrences cover 102 unique helpers/checks owned by later
+  sibling scripts and unreachable from the root caller. The TODO row requires
+  coherent ownership/routing or shared helpers, exact pre/post check inventory,
+  and production-engine parser coverage without weakening, deleting,
+  duplicating, filtering or skipping any check. It changes no product, design,
+  economy, RNG, schema or migration contract. `env06_6` shared full-gate
+  acceptance depends on the routed repair. Raw red evidence remains at
+  `D:\bth-env6\.tmp\env06_6_runtime_fix\direct_check_core.log`.
