@@ -1,0 +1,166 @@
+{
+  "vocabulary_source": {
+    "commit": "749390ce",
+    "path": "docs/todo/env06_6_runtime_vocabulary_and_delivery_handoff.md"
+  },
+  "boundary": {
+    "boundary_id": "boundary.command.b0001",
+    "kind": "command",
+    "ritual_id": "example_table.standard_session",
+    "session_id": "session.example_01",
+    "phase_id": "open",
+    "ordinal": 1,
+    "cause_receipt_key": "receipt:command:0001"
+  },
+  "command": {
+    "envelope_version": 1,
+    "ritual_id": "example_table.standard_session",
+    "session_id": "session.example_01",
+    "command_id": "command.commit_0001",
+    "action_id": "commit.place",
+    "expected_phase": "open",
+    "source_id": "player.reserve",
+    "target_id": "layout.primary",
+    "parameters": {
+      "item_id": "pending.item_01",
+      "amount": 5
+    },
+    "authenticated_action": {
+      "action_id": "commit.place",
+      "origin_owner_id": "example_table.standard_session",
+      "origin_stable_id": "action.commit_place",
+      "operation_receipt_key": "receipt:operation:action_commit_place",
+      "boundary_id": "boundary.phase_entry.b0001",
+      "content_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    "boundary": {
+      "boundary_id": "boundary.command.b0001",
+      "kind": "command",
+      "ritual_id": "example_table.standard_session",
+      "session_id": "session.example_01",
+      "phase_id": "open",
+      "ordinal": 1,
+      "cause_receipt_key": "receipt:command:0001"
+    },
+    "receipt_key": "receipt:command:0001",
+    "content_fingerprint": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "result": {
+    "envelope_version": 1,
+    "ok": true,
+    "ritual_id": "example_table.standard_session",
+    "session_id": "session.example_01",
+    "command_id": "command.commit_0001",
+    "phase_before": "open",
+    "phase_after": "open",
+    "authoritative_result_ref": "result.commit_0001",
+    "state_receipts": [
+      "receipt:state:commit_0001"
+    ],
+    "operation_receipts": [],
+    "fact_receipts": [],
+    "boundary": {
+      "boundary_id": "boundary.command.b0001",
+      "kind": "command",
+      "ritual_id": "example_table.standard_session",
+      "session_id": "session.example_01",
+      "phase_id": "open",
+      "ordinal": 1,
+      "cause_receipt_key": "receipt:command:0001"
+    },
+    "receipt_key": "receipt:command:0001",
+    "content_fingerprint": "2222222222222222222222222222222222222222222222222222222222222222",
+    "public_projection": {
+      "phase_id": "open",
+      "pending_total": 5,
+      "at_risk_total": 0
+    }
+  },
+  "rejection": {
+    "envelope_version": 1,
+    "ok": false,
+    "ritual_id": "example_table.standard_session",
+    "session_id": "session.example_01",
+    "command_id": "command.commit_0002",
+    "phase": "open",
+    "error_code": "out_of_bounds",
+    "public_message": "Return the piece to its starting area.",
+    "retryable": true,
+    "return_policy": "return_to_source",
+    "boundary": {
+      "boundary_id": "boundary.command.b0001",
+      "kind": "command",
+      "ritual_id": "example_table.standard_session",
+      "session_id": "session.example_01",
+      "phase_id": "open",
+      "ordinal": 1,
+      "cause_receipt_key": "receipt:command:0002"
+    },
+    "receipt_key": "receipt:command:0002",
+    "content_fingerprint": "3333333333333333333333333333333333333333333333333333333333333333",
+    "public_projection": {
+      "phase_id": "open",
+      "pending_total": 5,
+      "at_risk_total": 0
+    }
+  },
+  "fact": {
+    "envelope_version": 1,
+    "fact_id": "fact.commitment_0001",
+    "fact_type": "commitment.accepted",
+    "fact_version": 1,
+    "payload": {
+      "commitment_id": "commitment.example_01",
+      "at_risk_total": 5
+    },
+    "visibility": "public",
+    "boundary": {
+      "boundary_id": "boundary.command.b0003",
+      "kind": "command",
+      "ritual_id": "example_table.standard_session",
+      "session_id": "session.example_01",
+      "phase_id": "committed",
+      "ordinal": 2,
+      "cause_receipt_key": "receipt:command:0003"
+    },
+    "receipt_key": "receipt:fact:commitment_0001",
+    "content_fingerprint": "4444444444444444444444444444444444444444444444444444444444444444"
+  },
+  "operation": {
+    "envelope_version": 1,
+    "operation_id": "staff_offer",
+    "family": "actor_ops",
+    "verb": "set_pose",
+    "source_owner_id": "example_table.standard_session",
+    "target_id": "staff.primary",
+    "arguments": {
+      "pose": "offer"
+    }
+  },
+  "operation_result": {
+    "envelope_version": 1,
+    "operation_id": "staff_offer",
+    "family": "actor_ops",
+    "verb": "set_pose",
+    "target_id": "staff.primary",
+    "boundary": {
+      "boundary_id": "boundary.phase_entry.b0002",
+      "kind": "phase_entry",
+      "ritual_id": "example_table.standard_session",
+      "session_id": "session.example_01",
+      "phase_id": "committed",
+      "ordinal": 2,
+      "cause_receipt_key": "receipt:command:0003"
+    },
+    "receipt_key": "receipt:operation:staff_offer",
+    "content_fingerprint": "5555555555555555555555555555555555555555555555555555555555555555",
+    "applied": true
+  },
+  "receipt": {
+    "receipt_key": "receipt:operation:staff_offer",
+    "content_fingerprint": "5555555555555555555555555555555555555555555555555555555555555555",
+    "boundary_id": "boundary.phase_entry.b0002",
+    "envelope_kind": "operation",
+    "status": "accepted"
+  }
+}

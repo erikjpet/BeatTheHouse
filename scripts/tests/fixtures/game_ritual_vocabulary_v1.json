@@ -27,10 +27,14 @@
           "next_phase": "committed",
           "operations": [
             {
-              "family": "actor",
+              "operation_id": "staff_offer",
+              "family": "actor_ops",
               "verb": "set_pose",
-              "target": "staff.primary",
-              "state": "offer"
+              "source_owner_id": "example_table.standard_session",
+              "target_id": "staff.primary",
+              "arguments": {
+                "pose": "offer"
+              }
             }
           ]
         }
@@ -59,10 +63,15 @@
           "next_phase": "resolving",
           "operations": [
             {
-              "family": "object",
-              "verb": "set_visual_state",
-              "target": "apparatus.primary",
-              "state": "active"
+              "operation_id": "apparatus_activate",
+              "family": "scene_ops",
+              "verb": "set_state",
+              "source_owner_id": "example_table.standard_session",
+              "target_id": "apparatus.primary",
+              "arguments": {
+                "state_slot": "visual",
+                "state": "active"
+              }
             }
           ]
         }
@@ -81,10 +90,14 @@
       ],
       "entry_operations": [
         {
-          "family": "actor",
+          "operation_id": "staff_react",
+          "family": "actor_ops",
           "verb": "set_behavior",
-          "target": "staff.primary",
-          "state": "reacting"
+          "source_owner_id": "example_table.standard_session",
+          "target_id": "staff.primary",
+          "arguments": {
+            "behavior": "reacting"
+          }
         }
       ],
       "transitions": [
@@ -97,10 +110,15 @@
           "next_phase": "open",
           "operations": [
             {
-              "family": "object",
-              "verb": "set_visual_state",
-              "target": "apparatus.primary",
-              "state": "idle"
+              "operation_id": "apparatus_reset",
+              "family": "scene_ops",
+              "verb": "set_state",
+              "source_owner_id": "example_table.standard_session",
+              "target_id": "apparatus.primary",
+              "arguments": {
+                "state_slot": "visual",
+                "state": "idle"
+              }
             }
           ]
         }
@@ -177,16 +195,17 @@
       "rejection_effects": [],
       "equivalents": {
         "keyboard": {
-          "action": "commit.place",
+          "action_id": "commit.place",
           "target_selection": "focus"
         },
         "controller": {
-          "action": "commit.place",
+          "action_id": "commit.place",
           "target_selection": "focus"
         },
         "reduced_motion": {
-          "action": "commit.place",
-          "travel": "instant"
+          "action_id": "commit.place",
+          "target_selection": "focus",
+          "staging": "instant"
         }
       }
     }
@@ -260,8 +279,15 @@
         "actor_operations": [],
         "object_operations": [
           {
-            "target": "apparatus.primary",
-            "state": "idle"
+            "operation_id": "energy_quiet_apparatus",
+            "family": "scene_ops",
+            "verb": "set_state",
+            "source_owner_id": "example_table.standard_session",
+            "target_id": "apparatus.primary",
+            "arguments": {
+              "state_slot": "visual",
+              "state": "idle"
+            }
           }
         ],
         "interaction_operations": [],
@@ -271,8 +297,14 @@
         "id": "engaged",
         "actor_operations": [
           {
-            "target": "staff.primary",
-            "behavior": "watching"
+            "operation_id": "energy_engaged_staff",
+            "family": "actor_ops",
+            "verb": "set_behavior",
+            "source_owner_id": "example_table.standard_session",
+            "target_id": "staff.primary",
+            "arguments": {
+              "behavior": "watching"
+            }
           }
         ],
         "object_operations": [],
@@ -283,8 +315,8 @@
   },
   "game_facts": [
     {
-      "id": "session.started",
-      "version": 1,
+      "fact_type": "session.started",
+      "fact_version": 1,
       "boundary": "action",
       "visibility": "public",
       "payload": {
@@ -292,8 +324,8 @@
       }
     },
     {
-      "id": "commitment.accepted",
-      "version": 1,
+      "fact_type": "commitment.accepted",
+      "fact_version": 1,
       "boundary": "action",
       "visibility": "public",
       "payload": {
@@ -302,8 +334,8 @@
       }
     },
     {
-      "id": "resolution.completed",
-      "version": 1,
+      "fact_type": "resolution.completed",
+      "fact_version": 1,
       "boundary": "action",
       "visibility": "public",
       "payload": {
@@ -312,8 +344,8 @@
       }
     },
     {
-      "id": "session.ended",
-      "version": 1,
+      "fact_type": "session.ended",
+      "fact_version": 1,
       "boundary": "action",
       "visibility": "public",
       "payload": {
@@ -358,7 +390,7 @@
   },
   "handler_registry": [
     {
-      "id": "play.primary",
+      "handler_id": "play.primary",
       "version": 1,
       "inputs": {
         "commitment_id": "string"
@@ -390,6 +422,7 @@
     "regions": [
       "player.reserve",
       "layout.primary"
-    ]
+    ],
+    "sealed_host_targets": []
   }
 }

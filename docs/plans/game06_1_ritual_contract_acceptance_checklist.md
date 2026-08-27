@@ -143,26 +143,41 @@ from an implementation rather than specified, or weakened to match a schedule.
   validation test are independently accepted. They do not wait for a reference
   implementation to land.
 
-## Binding fields currently unresolved pending the env06_6 specification
+## Frozen env06_6 mapping ledger
 
-The structure above is intentionally nonbinding until the promised handoff
-settles these exact fields:
+Normative source: commit `749390ce`,
+`D:\bth-env6\docs\todo\env06_6_runtime_vocabulary_and_delivery_handoff.md`.
+The reviewer must verify all fourteen mappings against that exact source:
 
-1. canonical envelope names and required fields for command, result, fact,
-   operation, boundary, receipt, and rejection;
-2. stable-id grammar, namespaces, and ownership;
-3. phase/transition condition vocabulary and exactly-once boundary semantics;
-4. operation-family names, allowed generic verbs, and target/state fields;
-5. actor/object/interactable state vocabularies and registry extension rules;
-6. anchors, regions, bounds, z-order, and text-safety shapes;
-7. persistence split and receipt/fingerprint replay policy;
-8. safe-boundary fact types, payload typing, and versioning;
-9. handler input/output/RNG/persistence contract;
-10. rejection and validation-error taxonomy;
-11. schema versioning, migration, and unknown-field policy;
-12. cross-runtime mapping and separation rules;
-13. equivalent-action and reduced-motion fields;
-14. authority, privacy, and public-projection markers.
+1. `ENV-VOCAB-01` — closed command, result, rejection, fact, operation, and
+   receipt envelopes: contract §3.2;
+2. `ENV-VOCAB-02` — local/qualified id grammar, namespace ownership, sealed
+   host references, and collision rejection: contract §3.1;
+3. `ENV-VOCAB-03` — durable boundary/cause vocabulary and exactly-once
+   semantics: contract §3.3;
+4. `ENV-VOCAB-04` — closed condition kinds and the four generic operation
+   families/verb allowlists: contract §3.4;
+5. `ENV-VOCAB-05` — bounded actor/object/interaction states, owned creation,
+   sealed host authority, and tombstones: contract §3.5;
+6. `ENV-VOCAB-06` — semantic anchors/zones, design-space rectangles, layout,
+   reachability, z-order, text safety, and fail-closed projection: contract §3.6;
+7. `ENV-VOCAB-07` — receipts, canonical fingerprints, replay conflict, atomic
+   failure, and persistence: contract §3.3/12;
+8. `ENV-VOCAB-08` — public typed versioned action-boundary facts: contract §3.7;
+9. `ENV-VOCAB-09` — closed handler I/O, authority, persistence, RNG, emissions,
+   and transactional behavior: contract §3.7;
+10. `ENV-VOCAB-10` — closed rejection/error taxonomy and side-effect-free
+    records: contract §3.8;
+11. `ENV-VOCAB-11` — strict versions, unknown-field rejection, authenticated
+    migration, and invalid-restore behavior: contract §3.9;
+12. `ENV-VOCAB-12` — facts/operations-only cross-runtime mapping with no import
+    of scenario lifecycle: contract §13;
+13. `ENV-VOCAB-13` — keyboard/controller/reduced-motion equivalent-action
+    shapes and invariant outcomes: contract §3.8;
+14. `ENV-VOCAB-14` — private-by-default authority, reveal boundaries, closed
+    public projections, and authenticated actions: contract §3.9.
 
-No implementation-derived value may fill these fields before the written
-env06_6 vocabulary specification is accepted.
+No value in this ledger was harvested from product implementation. Independent
+review must still reject any mapping that weakens the normative handoff or
+imports scenario objectives, reentry, expiry, cleanup, aftermath, route
+authority, or command-entry world-boundary grace into game ritual lifecycle.

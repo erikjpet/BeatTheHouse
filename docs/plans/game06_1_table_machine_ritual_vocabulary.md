@@ -1,8 +1,10 @@
 # game06_1 Table and Machine Ritual Vocabulary
 
-Status: contract draft; product implementation is forbidden until independent acceptance  
+Status: contract candidate; product implementation is forbidden until independent acceptance
 Contract version: `game_ritual/1`  
 Checklist: `docs/plans/game06_1_ritual_contract_acceptance_checklist.md`
+Normative shared-vocabulary source: `749390ce`,
+`D:\bth-env6\docs\todo\env06_6_runtime_vocabulary_and_delivery_handoff.md`
 
 ## 1. Purpose and authority
 
@@ -19,14 +21,16 @@ shared ritual code.
 
 The binding authorities are, in order:
 
-1. accepted env06_6 VOCABULARY SPECIFICATION for cross-runtime primitives;
+1. env06_6 runtime vocabulary handoff at exact accepted commit `749390ce` for
+   cross-runtime primitives;
 2. `game06_1_table_machine_ritual_runtime_prompt.md`;
 3. `craps06_3_craps_depth_rework_prompt.md` as a required conformance consumer;
 4. current production seams where they do not contradict the authorities above.
 
-The env06_6 vocabulary handoff has not yet been supplied. Section 13 enumerates
-the fields that remain deliberately unresolved. No value observed in the
-env06_6 implementation is binding until it appears in the accepted handoff.
+The env06_6 vocabulary handoff defines behavior rather than filenames or a
+preferred implementation. Sections 3.1–3.9 and 13 freeze the game-side closed
+records and mappings derived from that behavior. Product implementation remains
+outside this contract-authoring package.
 
 ## 2. Non-negotiable invariants
 
@@ -78,14 +82,243 @@ separate schemas; mutable state must never be written back into a definition.
 
 ### 3.1 Identifier rules
 
-All ids are stable lowercase semantic ids. The exact grammar, namespace
-separator, cross-runtime ownership rules, and collision behavior are pending
-`ENV-VOCAB-02`. Until resolved, examples in this document are illustrative and
-must not be copied into production as an id parser.
+All ids are stable lowercase semantic ids. A local id is one atom matching
+`^[a-z][a-z0-9_]{0,63}$`. A qualified id contains two or more local-id atoms
+joined by `.` and is at most 192 characters. Definitions own their local phase,
+transition, actor, object, region, action, and handler namespaces. Cross-runtime
+references use qualified ids and must resolve through declared targets or an
+exact sealed host inventory bound to the current room and layer. A catalog id or
+caller string is never evidence that a live identity exists. Duplicate ids,
+cross-kind collisions inside one definition, ambiguous references, and unsealed
+host references reject. This resolves `ENV-VOCAB-02`.
 
 References must resolve within the definition or an explicitly declared,
 allowlisted registry. Display labels are not ids and may change without save
 migration.
+
+### 3.2 Closed envelopes (`ENV-VOCAB-01`)
+
+Every runtime record is a closed dictionary. Unknown fields, missing required
+fields, wrong types, noncanonical ids, unsafe strings, and over-limit arrays
+reject before mutation. The shared game envelopes are:
+
+```text
+RitualCommand {
+  envelope_version, ritual_id, session_id, command_id, action_id,
+  expected_phase, source_id, target_id, parameters,
+  authenticated_action, boundary, receipt_key, content_fingerprint
+}
+RitualResult {
+  envelope_version, ok=true, ritual_id, session_id, command_id,
+  phase_before, phase_after, authoritative_result_ref,
+  state_receipts, operation_receipts, fact_receipts,
+  boundary, receipt_key, content_fingerprint, public_projection
+}
+RitualRejection {
+  envelope_version, ok=false, ritual_id, session_id, command_id,
+  phase, error_code, public_message, retryable, return_policy,
+  boundary, receipt_key, content_fingerprint, public_projection
+}
+GameFact {
+  envelope_version, fact_id, fact_type, fact_version, payload,
+  visibility=public, boundary, receipt_key, content_fingerprint
+}
+RitualOperation {
+  envelope_version, operation_id, family, verb, source_owner_id,
+  target_id, arguments
+}
+OperationResult {
+  envelope_version, operation_id, family, verb, target_id,
+  boundary, receipt_key, content_fingerprint, applied
+}
+ReceiptRecord {
+  receipt_key, content_fingerprint, boundary_id, envelope_kind, status
+}
+```
+
+`authenticated_action` is the current live resolved action descriptor obtained
+from trusted surface state. It includes origin owner/stable identity, operation
+receipt, boundary id, and fingerprint. Caller-supplied origin fields are compared
+to that record and never establish authority. `parameters` and `payload` are
+closed against the declared action/fact schema. `public_projection` contains
+only allowlisted public fields and never durable authority.
+
+### 3.3 Boundary, cause, receipt, and replay (`ENV-VOCAB-03/07`)
+
+The game boundary record is:
+
+```text
+RitualBoundary {
+  boundary_id, kind, ritual_id, session_id, phase_id, ordinal,
+  cause_receipt_key
+}
+```
+
+`kind` is one of `phase_entry`, `fact_flush`, `command`, `cleanup`, or
+`aftermath_application`. The last two exist only for game-session teardown and a
+game's already-authoritative terminal material result; they do not import
+scenario cleanup or scenario aftermath lifecycle. `ordinal` is a durable,
+monotonic session counter advanced only by an accepted authoritative boundary.
+
+A cause is exactly one accepted `RitualCommand` or `GameFact`. Its receipt key
+and fingerprint are copied into the boundary. A receipt key is path-safe lower
+ASCII matching `^[a-z0-9][a-z0-9_.:-]{0,191}$`. A content fingerprint is the
+lowercase 64-hex SHA-256 of the canonical closed envelope excluding the
+fingerprint field. Canonicalization sorts dictionary keys, preserves authored
+array order, uses explicit integer/boolean/string types, and forbids NaN,
+infinity, resources, objects, and executable values.
+
+The exact same receipt key plus fingerprint returns the cached result. The same
+receipt key with different canonical content returns
+`receipt_content_conflict` without mutation. Rejected ingress does not advance
+the boundary ordinal and creates no accepted operation/fact/transition receipt.
+Atomic failure preserves authoritative pre-state except a separately declared
+bounded rejected-ingress diagnostic that is never game authority.
+
+### 3.4 Conditions and operation families (`ENV-VOCAB-04`)
+
+Condition records are closed and use exactly one `kind`:
+
+- `accepted_action` — matches one action id in the current command cause;
+- `fact` — matches one declared public fact type and closed payload predicate;
+- `receipt_present` — matches one exact receipt kind/key/fingerprint;
+- `authoritative_result_present` — matches a trusted game-owned result ref;
+- `public_state_equals` — matches an allowlisted public state key/value.
+
+Conditions cannot inspect private state, hidden outcomes, wall-clock time,
+frame count, raw input paths, or renderer geometry. Branches are evaluated in
+authored order; more than one matching transition at one boundary is an
+`ambiguous_transition` validation failure.
+
+The shared operation families and generic verbs are:
+
+- `scene_ops`: `spawn`, `replace`, `remove`, `move`, `set_position`,
+  `set_visibility`, `set_enabled`, `set_state`, `set_appearance`;
+- `interaction_ops`: `add`, `remove`, `replace`, `gate`, `augment`, `retarget`;
+- `actor_ops`: `spawn`, `despawn`, `replace`, `set_position`, `set_route`,
+  `set_pose`, `set_behavior`;
+- `transition_ops`: `feedback`, `stage`, `sound`, `music`, `scene_change`.
+
+Every authored operation has `operation_id`, `family`, `verb`,
+`source_owner_id`, `target_id`, and closed `arguments`. An operation registry
+binds each family/verb to an input schema, output schema, target kind, creation
+or existing-target rule, and atomic apply behavior. A definition cannot invent
+a verb. No family or verb selects a game id or rules path.
+
+`interaction_ops.augment` contributes actions to the authoritative target; its
+source overlay never becomes an independent host action. Arbitration is stable
+owner-priority order and fails closed on ambiguous winners, cycles, spoofed
+origins, unavailable hosts, or lower-priority override attempts.
+
+### 3.5 Actor, object, and interaction state (`ENV-VOCAB-05`)
+
+Actor, object, and interaction state sets are bounded arrays declared by the
+owning definition. Initial states must belong to those sets. Operations may set
+only a declared state. Shared code understands identity, family, state slot,
+anchor, and bounds; the meaning of a content state remains game-owned.
+
+Spawn/add creates a live identity only when the definition owns that identity.
+A modifier cannot manufacture a missing host identity. A host-owned target must
+resolve through a sealed immutable inventory bound to the exact surface,
+room/layer context, source provenance, and digest. Unknown, ambiguous, stale,
+cross-context, or unsealed targets reject. Removal creates a replay-safe
+tombstone owned by the same source and cannot erase unrelated host state.
+
+Actor persistent semantics are identity, bounded pose/behavior, and authored
+route/anchor request. Resolved points, collision adjustments, z-order, and
+motion staging are derived. Object persistent semantics are identity, bounded
+visual/functional state, and authored anchor request. Hit geometry is derived
+from validated layout authority.
+
+### 3.6 Anchors, regions, bounds, and layout (`ENV-VOCAB-06`)
+
+An anchor is a qualified semantic id resolved from the definition or exact
+sealed host inventory. A zone is an anchor plus a closed design-space rectangle
+and optional bounded placement policy. A rectangle is
+`{space="design", x:int, y:int, w:int, h:int}` with positive `w/h`; values must
+fall inside the declared design canvas. Runtime screen coordinates never enter
+authority.
+
+Interactive regions additionally declare `region_id`, `owner_id`,
+`minimum_touch_target`, `z_layer`, `enabled`, `reachable`, and optional
+`text_safety_regions`. The layout resolver consumes validated final base records
+and the successful sealed semantic result exactly once. It checks bounds,
+reachability, overlap/arbitration, z-order, protected text, small-screen policy,
+reduced motion, touch size, and color-independent distinguishability.
+Presentation geometry is derived, not persisted.
+
+If layout or renderer preparation fails, the public ritual presentation fails
+closed: actor/object/interaction/hit-region/active-stage collections are empty;
+typed errors and safe non-content metadata may remain. Partial or hidden payload
+must not escape.
+
+### 3.7 Facts and handlers (`ENV-VOCAB-08/09`)
+
+Every fact declaration freezes a qualified `fact_type`, positive
+`fact_version`, closed typed payload schema, `boundary=action`, and
+`visibility=public`. A publisher produces `GameFact` only after its authoritative
+boundary commits. Facts cannot expose hidden/revealed-later state, reducer
+journals, inventory seals/digests, private actor state, future outcomes, or
+unrevealed results. Consumers respond at their own next safe boundary.
+
+Every handler registry entry freezes `handler_id`, positive version, permitted
+actions/operations, closed typed/bounded input, closed typed/bounded output,
+field authority, persisted state, transient state, emitted facts/operations,
+rejection behavior, and retry policy. RNG is either `none` or names a trusted
+game-rules stream plus a fixed action-boundary consumption rule. Handler data
+cannot contain scripts, classes, reflection targets, raw node paths, executable
+strings, or unallowlisted resources. Handler mutation, transition, fact
+publication, and receipts commit transactionally.
+
+### 3.8 Rejection taxonomy and equivalent actions (`ENV-VOCAB-10/13`)
+
+`error_code` is one of:
+
+`invalid_envelope`, `unsupported_version`, `invalid_id`, `unknown_reference`,
+`stale_phase`, `action_not_permitted`, `disabled_action`, `blocked_action`,
+`unavailable_source`, `unavailable_target`, `unsealed_authority`,
+`authority_mismatch`, `ambiguous_target`, `invalid_parameters`,
+`incomplete_gesture`, `out_of_bounds`, `inaccessible_target`,
+`precondition_failed`, `insufficient_funds`, `receipt_content_conflict`,
+`handler_rejected`, `invalid_restore`, `ambiguous_transition`, or
+`internal_fail_closed`.
+
+A `RitualRejection` always has `ok=false`, the current legal phase, a safe public
+message, `retryable`, and `return_policy` (`none`, `return_to_source`, or
+`restore_focus`). It has no authoritative result ref and empty public mutation
+collections. Gesture errors always return without charge, phase advance, RNG,
+facts, or accepted receipts.
+
+Every pointer verb's `equivalents` is closed and contains:
+
+- `keyboard`: `{action_id, target_selection}`;
+- `controller`: `{action_id, target_selection}`;
+- `reduced_motion`: `{action_id, target_selection, staging}`.
+
+All three use the same semantic action/target validation and authoritative
+handler as the pointer path. `target_selection` is `focus`, `cycle`, or
+`direct_semantic`; `staging` is `instant`, `short`, or `authored_text`. Reduced
+motion may change only presentation staging, never outcome, action availability,
+receipt order, or durable duration-boundary semantics.
+
+### 3.9 Versioning, migration, and projection (`ENV-VOCAB-11/14`)
+
+Definitions use exact `contract=game_ritual/1`; envelopes use
+`envelope_version=1`; facts and handlers carry their own positive versions.
+Unknown definition/envelope fields reject. A newer major version requires an
+explicit validator and migration. Migration may reconstruct authority only from
+already durable authenticated records and matching fingerprints; it cannot use
+caller assertions, catalog possibility, renderer snapshots, or projection data.
+Invalid or ambiguous migration returns `invalid_restore` and preserves the
+pre-migration save.
+
+Persistent state is private authority unless a schema field is explicitly
+marked `public`. `secret_until_reveal` is private until an authoritative reveal
+boundary emits a public value. Public projections are freshly derived from
+validated persistent authority using a closed allowlist. Consumers use only the
+public projection and authenticated action descriptors; private local state,
+hidden results, journals, tombstones, seals/digests, and fingerprints are never
+presentation or gameplay shortcuts.
 
 ## 4. Ritual phases and transitions
 
@@ -123,8 +356,9 @@ Requirements:
 - Committed and settled are distinct authority states. No input trace can enter
   settlement twice for one authoritative result.
 
-The canonical condition and operation envelope names remain pending
-`ENV-VOCAB-01`, `ENV-VOCAB-03`, and `ENV-VOCAB-04`.
+Canonical conditions, boundaries, causes, and operation envelopes are frozen in
+Sections 3.2–3.5, resolving `ENV-VOCAB-01`, `ENV-VOCAB-03`, and
+`ENV-VOCAB-04`.
 
 ## 5. Staged commitment
 
@@ -205,7 +439,8 @@ invalid gestures return a rejection and stage a harmless return. Rejection
 cannot consume funds, RNG, phase progress, facts, or one-shot operations.
 
 The binding coordinate/bounds shape, equivalent-action fields, and rejection
-taxonomy remain pending `ENV-VOCAB-06`, `ENV-VOCAB-10`, and `ENV-VOCAB-13`.
+taxonomy are frozen in Sections 3.6, 3.8, and 6, resolving `ENV-VOCAB-06`,
+`ENV-VOCAB-10`, and `ENV-VOCAB-13`.
 
 ## 7. Actors and scene objects
 
@@ -257,7 +492,8 @@ prepared render model, a hit region, a functional route, or an interactable.
 The layout validator checks bounds, semantic-anchor resolution, interactive
 reachability, z-order, protected text regions, minimum touch targets,
 small-screen layout, reduced-motion state, and non-color-only distinguishability.
-Exact common shapes remain pending `ENV-VOCAB-05` and `ENV-VOCAB-06`.
+The common bounded-state and layout shapes are frozen in Sections 3.5 and 3.6,
+resolving `ENV-VOCAB-05` and `ENV-VOCAB-06`.
 
 ## 8. Energy
 
@@ -311,8 +547,9 @@ hidden outcome, future result, private actor state, or unrevealed information.
 Facts are notifications, not direct mutation access. Consumers respond at their
 next safe boundary. A fact receipt prevents duplicate publication across retry,
 save/load, and revisit. Canonical fact envelopes, payload typing, visibility
-markers, and receipt semantics remain pending `ENV-VOCAB-01`, `ENV-VOCAB-07`,
-`ENV-VOCAB-08`, and `ENV-VOCAB-14`.
+markers, and receipt semantics are frozen in Sections 3.2, 3.3, 3.7, and 3.9,
+resolving `ENV-VOCAB-01`, `ENV-VOCAB-07`, `ENV-VOCAB-08`, and
+`ENV-VOCAB-14`.
 
 ## 10. Command/result boundary
 
@@ -334,8 +571,9 @@ Receipt reuse with a different fingerprint rejects without mutation. Validation
 and rejection are deterministic and consume no game RNG. Complex behavior is an
 allowlisted handler, not an arbitrary target string.
 
-Canonical field names and error codes remain pending `ENV-VOCAB-01`,
-`ENV-VOCAB-07`, and `ENV-VOCAB-10`.
+Canonical field names, receipts, fingerprints, and error codes are frozen in
+Sections 3.2, 3.3, and 3.8, resolving `ENV-VOCAB-01`, `ENV-VOCAB-07`, and
+`ENV-VOCAB-10`.
 
 ## 11. Handler registry
 
@@ -352,8 +590,8 @@ Each `handler_registry` entry declares:
 - rejection behavior and whether retry is legal.
 
 Handlers cannot name scripts, classes, reflection targets, raw nodes, or
-unallowlisted resources in authored data. The binding handler shape remains
-pending `ENV-VOCAB-09`.
+unallowlisted resources in authored data. Section 3.7 freezes the binding
+handler shape, resolving `ENV-VOCAB-09`.
 
 ## 12. Ritual persistence and restore
 
@@ -376,16 +614,16 @@ save restores according to the declared boundary policy without rerolling or
 charging.
 
 Unknown fields, version migration, receipt retention, fingerprinting, and
-invalid-save behavior remain pending `ENV-VOCAB-07` and `ENV-VOCAB-11`.
+invalid-save behavior are frozen in Sections 3.3 and 3.9, resolving
+`ENV-VOCAB-07` and `ENV-VOCAB-11`.
 
-## 13. Cross-runtime mapping (pending env06_6 handoff)
+## 13. Cross-runtime mapping
 
 Game rituals and environment scenarios share primitives but not lifecycle
 ownership. A game ritual owns game phases and game commitments. A scenario owns
 room objectives, reentry/expiry, and aftermath. Neither directly mutates the
 other. They communicate through typed facts and declared operations at safe
-boundaries. The normative separation and mapping rules remain pending
-`ENV-VOCAB-12`.
+boundaries. This strict separation resolves `ENV-VOCAB-12`.
 
 The final contract must contain a normative mapping table for:
 
@@ -402,10 +640,11 @@ The final contract must contain a normative mapping table for:
 | replay protection | receipt + fingerprint | `ENV-VOCAB-07` |
 | accessible alternate input | equivalent action | `ENV-VOCAB-13` |
 
-These mappings are unresolved, not implementation gaps. The accepted env06_6
-specification must settle all fourteen fields listed in the checklist before
-this document can become accepted and before Family 1 product implementation
-starts.
+These mappings are frozen against the normative behavior in handoff `749390ce`.
+They do not import scenario objectives, reentry, expiry, cleanup, aftermath,
+room-route authority, or command-entry world-boundary grace into the game ritual
+lifecycle. Family 1 product implementation starts only after independent review
+accepts this exact contract and its validation test.
 
 ## 14. Worked neutral example
 
@@ -464,8 +703,8 @@ The validation test must fail loudly for at least:
 - receipt ambiguity or fingerprint mismatch policy omission;
 - a game-specific identifier or branch in shared vocabulary.
 
-The error-code namespace and canonical rejection records remain pending
-`ENV-VOCAB-10`.
+Section 3.8 freezes the error-code namespace and canonical rejection record,
+resolving `ENV-VOCAB-10`.
 
 ## 17. Implementation obligations after acceptance
 
