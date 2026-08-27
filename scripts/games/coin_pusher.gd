@@ -555,6 +555,10 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	patch["coin_pusher_audio_events"] = audio_events
 	patch["coin_pusher_audio_serial"] = int(presentation_session.get("presentation_audio_serial", 0))
 	patch["surface_realtime_state_refresh"] = true
+	# The Web canvas owns a measured low-detail presentation cadence. Solver
+	# patches still land every tick, but they must not bypass that scheduler and
+	# force a complete 300-body draw for every 16 ms authority refresh.
+	patch["surface_defer_patch_redraw"] = true
 	patch["coin_pusher_ticks_advanced"] = int(advanced.get("ticks", 0))
 	patch["request_foundation_autosave"] = request_autosave
 	return patch
@@ -580,6 +584,7 @@ func surface_realtime_entry_anchor_patch(run_state: RunState, environment: Dicti
 		return {}
 	return {
 		"surface_realtime_state_refresh": true,
+		"surface_defer_patch_redraw": true,
 		"coin_pusher_ticks_advanced": 0,
 	}
 
