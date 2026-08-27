@@ -1,4 +1,4 @@
-Status: IN PROGRESS / REVIEW PENDING
+Status: IN PROGRESS / INTEGRATION REVIEW PENDING
 Board row: `fix06_14` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_14: Coin Pusher COLLECT/reinstall production-clock evidence
