@@ -1030,3 +1030,30 @@ below to jump to a row's history.
   49.196/19.054/24.924/167.283 seconds, summary
   `FEE4F6C3AA39E5ABCA79A4F3BAC41D1FB34B1C712C8CC494D6BBA5D30A730C09`.
   Independent re-review and idle-host clearance remain required before timing.
+
+- 2026-08-27 [fix06_13] ACCEPTED `c914546f` CONSUMED RED. The single
+  authorized locked invocation used a fresh export, Chrome 151.0.7922.174,
+  CPU throttle 4, 1280x720 and authenticated port 18078. All eight scenarios
+  were captured; the PID/token-owned process tree and listener were fully
+  released. Browser ready was 20.518 seconds. Frame/draw/resolve values in ms:
+  idle 80.447/35.415/-; DROP 127.022/31.755/35.705; carriage
+  84.893/32.415/6.420; skill stop 83.048/29.945/6.585; skill release
+  90.578/34.300/6.600; COLLECT 88.555/30.375/10.870; reduced motion
+  75.153/29.880/-. Idle redraw count was 7 against floor 8. COLLECT began with
+  tray count/value 1/3 but ended 2/2, and reduced reinstall was observed at 296
+  bodies with zero presentation redraw. These semantic contradictions remain
+  routed through `fix06_14`; they are not suppressed or used to excuse the
+  performance red. This head will not be rerun.
+
+  Retained directory `.tmp/fix06_13_locked_c914546f_actual_1`; report/summary
+  SHA-256 `601F1E9FB4E55A8226962BD4504B954B0AFD70FCE76F485DD5B5DCB03F879C25`
+  / `64E75F36E5E4730FEE8E6011C8C94D27AA3A1A0F1C11B29C75CDDF0CB2A45E56`;
+  fresh-export aggregate
+  `4821DE90F7266EBD48FE30345D404AEE00B2B0D879108A05C8898379F7DE627A`;
+  PCK `08AF27F58466F24FD851518B76F7DFA881559220340195A4B369F1B4193A52D9`;
+  Web native `04D41797748BBECD308A761DF3895311CC3A085ABE86580CF1226BAA0ADC2F47`;
+  server stdout/stderr
+  `89CA2C9E0F8BE46B63E6E93DA163B6AEB91A67D7AB7A272C8278629E10FEE83B`
+  / `70BEBB6DFCF9E8433EFFF62020097E383BF79207772D8DBD1E631558004AE50A`.
+  Iteration 8 begins with non-timing attribution of the remaining renderer and
+  per-patch redraw costs before any further product edit.
