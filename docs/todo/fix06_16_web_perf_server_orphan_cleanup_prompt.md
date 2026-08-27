@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — rejected head `239ead2a` remediated; independent exact-head re-review pending
+Status: IN_PROGRESS — rejected heads `239ead2a` and `e92fab10` remediated; independent exact-head re-review pending
 Board row: `fix06_16` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_16: Web performance server orphan cleanup
@@ -108,3 +108,34 @@ locked `fix06_13` shipped-Web run.
   export or Web timing ran. After escaping wildcard metacharacters in the exact
   server-script command-line matcher, the final combined hostile/static rerun
   passed in 64.9s.
+
+## Expected-shutdown classification rejection and remediation — 2026-08-27
+
+- Independent re-review rejected exact head
+  `e92fab108f5c4e7128f2ff9340d064ac6fb40a72` at P2. The outer helper
+  intentionally terminated the exact Python child, but `serve_web.ps1` could
+  classify that expected cleanup as spontaneous failure and emit `Local Web
+  server exited with code .` because no shutdown intent crossed the process
+  boundary. Unexpected child failure handling otherwise remained fail-closed.
+- Cleanup now publishes the launch nonce atomically to the exact ownership
+  record's shutdown path before terminating the verified child. The wrapper
+  accepts only that matching nonce as expected shutdown; any child exit without
+  it throws an explicit unexpected-exit error, including a concrete exit-code
+  identity. Cleanup gives the wrapper five bounded seconds to consume the marker
+  and exit normally before exact-PID fallback termination.
+- Production-path hostile assertions require success, assertion failure, probe
+  failure, host interruption and a shutdown-requested already-exited child to
+  leave no lifecycle stderr. The one real HTTP request permits only its exact
+  loopback `GET /` 200 access-log line. A separate unrequested child termination
+  must put `Local Web server exited unexpectedly with code ...` in wrapper
+  stderr. The first expanded assertion run reached all cases but rejected the
+  normal HTTP access line in 24.8s; after narrowing that explicit allowance, the
+  complete suite passed in 24.6s. Final parser coverage passed 4/4 and static
+  validation passed in 48.6s. No browser, export or Web timing ran.
+- Exact-diff self-review then closed a shutdown-ordering race: a new shutdown
+  marker now requires the verified child to still be alive, so cleanup cannot
+  retroactively excuse a spontaneous exit between ownership reads. Only an
+  already-present matching marker permits deterministic cleanup after the child
+  exits. The unexpected-exit test now requires both wrapper stderr failure and
+  cleanup failure; the full hostile suite passed again in 24.8s.
+  Final parser coverage passed 4/4 and static validation passed in 48.2s.

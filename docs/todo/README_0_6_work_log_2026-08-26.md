@@ -1098,3 +1098,30 @@ below to jump to a row's history.
   replacement or locked-contract change occurred. After escaping wildcard
   metacharacters in the exact-script matcher, the final combined hostile/static
   rerun passed in 64.9s.
+
+- 2026-08-27 [fix06_16] INDEPENDENT REJECT P2 / EXPECTED SHUTDOWN
+  CLASSIFICATION REMEDIATED; RE-REVIEW PENDING. Independent review rejected
+  exact head `e92fab108f5c4e7128f2ff9340d064ac6fb40a72`: cleanup deliberately killed
+  the exact Python child, but no shutdown intent crossed to `serve_web.ps1`, so
+  expected cleanup could produce a blank-code lifecycle error. The rejected
+  head and all earlier results remain reachable and retained.
+
+  The exact launch nonce is now written atomically to the ownership-bound
+  shutdown path before child termination. Only that nonce makes the wrapper
+  accept the exit as expected; an unrequested exit emits an explicit failure.
+  Cleanup gives the wrapper five bounded seconds to exit normally before exact-
+  PID fallback. Production-path hostile checks require clean lifecycle stderr
+  for success, assertion/probe failure, host interruption and requested
+  already-exited cleanup, while a separate unrequested termination must report
+  failure. The first expanded run (24.8s) rejected Python's normal loopback GET
+  access log; the test now allows only that exact 200 line and passed completely
+  in 24.6s. Final parser coverage passed 4/4 and static validation passed in
+  48.6s. No browser, export, Web timing or locked-contract change occurred.
+
+  Exact-diff self-review then found a shutdown-order race: cleanup could publish
+  a new marker after an unrequested child exit raced between ownership reads.
+  New-marker publication now requires the exact child still live; only a marker
+  already carrying the matching nonce permits deterministic exited-child
+  cleanup. The unexpected-exit case requires wrapper stderr and cleanup both to
+  fail closed. The full hostile suite passed again in 24.8s; final parser
+  coverage passed 4/4 and static validation passed in 48.2s.

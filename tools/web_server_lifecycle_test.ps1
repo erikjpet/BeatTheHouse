@@ -58,6 +58,16 @@ function Start-TestServer {
         -StandardError (Join-Path $caseDirectory "stderr.txt")
 }
 
+function Assert-CleanLifecycleStderr {
+    param($Launch, [string]$CaseName, [switch]$AllowHttpAccessLog)
+    $stderr = if (Test-Path -LiteralPath $Launch.StandardError) { Get-Content -LiteralPath $Launch.StandardError -Raw } else { "" }
+    $unexpectedLines = @([string]$stderr -split "`r?`n" | Where-Object {
+        -not [string]::IsNullOrWhiteSpace($_) -and
+        (-not $AllowHttpAccessLog -or [string]$_ -notmatch '^127\.0\.0\.1 - - \[.*\] "GET / HTTP/1\.1" 200 -$')
+    })
+    Assert-Test -Condition ($unexpectedLines.Count -eq 0) -Message "$CaseName emitted unexpected lifecycle stderr: $stderr"
+}
+
 $testRoot = Join-Path $root (".tmp/fix06_16_lifecycle_test_{0}" -f [guid]::NewGuid().ToString("N"))
 $serveRoot = Join-Path $testRoot "site"
 New-Item -ItemType Directory -Force -Path $serveRoot | Out-Null
@@ -88,6 +98,7 @@ try {
         }
         Assert-Test -Condition ($null -eq (Get-Process -Id ([int]$launch.Record.server_pid) -ErrorAction SilentlyContinue)) -Message "$caseName left its exact Python child alive."
         Assert-Test -Condition (@(Get-NetTCPConnection -State Listen -LocalPort $launch.Port -ErrorAction SilentlyContinue).Count -eq 0) -Message "$caseName left its listener alive."
+        Assert-CleanLifecycleStderr -Launch $launch -CaseName $caseName
     }
 
     # Host interruption: the wrapper can be gone before outer cleanup begins.
@@ -98,14 +109,17 @@ try {
     Assert-Test -Condition ($null -ne (Get-Process -Id ([int]$interrupted.Record.server_pid) -ErrorAction SilentlyContinue)) -Message "Host interruption fixture did not preserve the orphan reproduction."
     Stop-OwnedWebServer -Launch $interrupted
     Assert-Test -Condition ($null -eq (Get-Process -Id ([int]$interrupted.Record.server_pid) -ErrorAction SilentlyContinue)) -Message "Host interruption cleanup left its exact child alive."
+    Assert-CleanLifecycleStderr -Launch $interrupted -CaseName "host interruption"
 
     # Missing/already-exited child is deterministic and still closes the wrapper.
     $exited = Start-TestServer -Name "already_exited"
     $ownedPids.Add([int]$exited.Record.server_pid)
+    Request-OwnedWebServerShutdown -Launch $exited
     Stop-Process -Id ([int]$exited.Record.server_pid) -Force
     Wait-Process -Id ([int]$exited.Record.server_pid) -Timeout 5 -ErrorAction SilentlyContinue
     Stop-OwnedWebServer -Launch $exited
     Assert-Test -Condition ($null -eq (Get-Process -Id $exited.Wrapper.Id -ErrorAction SilentlyContinue)) -Message "Already-exited child left its wrapper alive."
+    Assert-CleanLifecycleStderr -Launch $exited -CaseName "already-exited expected cleanup"
 
     # A hostile cached record cannot redirect cleanup to an unrelated process.
     $hostile = Start-TestServer -Name "hostile_record"
@@ -115,6 +129,19 @@ try {
     Stop-OwnedWebServer -Launch $hostile
     $unrelatedAfter = Get-Process -Id $unrelated.Id -ErrorAction SilentlyContinue
     Assert-Test -Condition ($null -ne $unrelatedAfter -and $unrelatedAfter.StartTime.ToUniversalTime().Ticks -eq $unrelatedTicks) -Message "Hostile cached ownership redirected cleanup to an unrelated process."
+
+    # A child exit without the nonce-bound shutdown request remains a failure.
+    $unexpected = Start-TestServer -Name "unexpected_exit"
+    $ownedPids.Add([int]$unexpected.Record.server_pid)
+    Stop-Process -Id ([int]$unexpected.Record.server_pid) -Force
+    Wait-Process -Id ([int]$unexpected.Record.server_pid) -Timeout 5 -ErrorAction SilentlyContinue
+    Wait-Process -Id $unexpected.Wrapper.Id -Timeout 5 -ErrorAction SilentlyContinue
+    $unexpectedStderr = Get-Content -LiteralPath $unexpected.StandardError -Raw
+    Assert-Test -Condition ([string]$unexpectedStderr -like "*Local Web server exited unexpectedly with code*") -Message "Unexpected child exit did not fail closed through serve_web stderr."
+    $unexpectedCleanupFailed = $false
+    try { Stop-OwnedWebServer -Launch $unexpected }
+    catch { $unexpectedCleanupFailed = $_.Exception.Message -like "*Could not publish exact owned Web server shutdown intent*" }
+    Assert-Test -Condition $unexpectedCleanupFailed -Message "Unexpected already-exited child was retroactively classified as requested shutdown."
 
     # Cleanup must report failure if its exact owned listener survives a stop.
     $sticky = Start-TestServer -Name "sticky_listener"
@@ -170,6 +197,7 @@ try {
     }
     Assert-Test -Condition ($null -eq (Get-Process -Id ([int]$spaced.Record.server_pid) -ErrorAction SilentlyContinue)) -Message "Spaced-path server child survived cleanup."
     Assert-Test -Condition (@(Get-NetTCPConnection -State Listen -LocalPort $spaced.Port -ErrorAction SilentlyContinue).Count -eq 0) -Message "Spaced-path listener survived cleanup."
+    Assert-CleanLifecycleStderr -Launch $spaced -CaseName "spaced-path cleanup" -AllowHttpAccessLog
     $unrelatedAfterSpaces = Get-Process -Id $unrelated.Id -ErrorAction SilentlyContinue
     Assert-Test -Condition ($null -ne $unrelatedAfterSpaces -and $unrelatedAfterSpaces.StartTime.ToUniversalTime().Ticks -eq $unrelatedTicks) -Message "Spaced-path cleanup stopped the unrelated process."
     Write-Host "Web server lifecycle hostile tests passed."

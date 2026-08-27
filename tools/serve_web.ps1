@@ -20,7 +20,8 @@ param(
     [string]$ServeRoot = "",
     [switch]$NoBrowser,
     [string]$OwnershipFile = "",
-    [string]$OwnershipNonce = ""
+    [string]$OwnershipNonce = "",
+    [string]$ShutdownFile = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -79,8 +80,8 @@ try {
     $quotedServerArguments = @($serverArguments | ForEach-Object { ConvertTo-WindowsProcessArgument -Argument ([string]$_) })
     $serverProcess = Start-Process -FilePath $python -ArgumentList $quotedServerArguments -PassThru -NoNewWindow
     if (-not [string]::IsNullOrWhiteSpace($OwnershipFile)) {
-        if ([string]::IsNullOrWhiteSpace($OwnershipNonce)) {
-            throw "An ownership file requires a nonempty ownership nonce."
+        if ([string]::IsNullOrWhiteSpace($OwnershipNonce) -or [string]::IsNullOrWhiteSpace($ShutdownFile)) {
+            throw "An ownership file requires a nonempty ownership nonce and shutdown path."
         }
         $ownershipPath = [System.IO.Path]::GetFullPath($OwnershipFile)
         $ownership = [ordered]@{
@@ -92,14 +93,21 @@ try {
             port = $Port
             serve_root = $webDir
             server_script = $serverScript
+            shutdown_file = [System.IO.Path]::GetFullPath($ShutdownFile)
         }
         $temporaryOwnershipPath = "$ownershipPath.$PID.tmp"
         $ownership | ConvertTo-Json | Set-Content -LiteralPath $temporaryOwnershipPath -Encoding utf8
         Move-Item -LiteralPath $temporaryOwnershipPath -Destination $ownershipPath
     }
     Wait-Process -Id $serverProcess.Id
-    if ($serverProcess.ExitCode -ne 0) {
-        throw "Local Web server exited with code $($serverProcess.ExitCode)."
+    $serverProcess.Refresh()
+    $expectedShutdown = $false
+    if (-not [string]::IsNullOrWhiteSpace($OwnershipFile) -and (Test-Path -LiteralPath $ShutdownFile)) {
+        $expectedShutdown = [string](Get-Content -LiteralPath $ShutdownFile -Raw) -eq $OwnershipNonce
+    }
+    if (-not $expectedShutdown) {
+        $exitIdentity = if ($serverProcess.HasExited) { [string]$serverProcess.ExitCode } else { "unknown" }
+        throw "Local Web server exited unexpectedly with code $exitIdentity."
     }
 }
 finally {

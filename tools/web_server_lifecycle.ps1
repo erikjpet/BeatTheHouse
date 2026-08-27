@@ -107,11 +107,16 @@ function Start-OwnedWebServer {
     if (Test-Path -LiteralPath $OwnershipFile) {
         throw "Refusing to reuse an existing Web server ownership record: $OwnershipFile"
     }
+    $shutdownFile = "$OwnershipFile.shutdown"
+    if (Test-Path -LiteralPath $shutdownFile) {
+        throw "Refusing to reuse an existing Web server shutdown record: $shutdownFile"
+    }
     $nonce = [guid]::NewGuid().ToString("N")
     $arguments = @(
         "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $ServeScript,
         "-Port", [string]$Port, "-ServeRoot", $ServeRoot, "-NoBrowser",
-        "-OwnershipFile", $OwnershipFile, "-OwnershipNonce", $nonce
+        "-OwnershipFile", $OwnershipFile, "-OwnershipNonce", $nonce,
+        "-ShutdownFile", $shutdownFile
     )
     $quotedArguments = @($arguments | ForEach-Object { ConvertTo-WindowsProcessArgument -Argument ([string]$_) })
     $wrapper = Start-Process -FilePath (Get-Command powershell -ErrorAction Stop).Source -ArgumentList $quotedArguments -WindowStyle Hidden -PassThru -RedirectStandardOutput $StandardOutput -RedirectStandardError $StandardError
@@ -120,8 +125,11 @@ function Start-OwnedWebServer {
         WrapperStartUtcTicks = $wrapper.StartTime.ToUniversalTime().Ticks
         OwnershipFile = $OwnershipFile
         OwnershipNonce = $nonce
+        ShutdownFile = $shutdownFile
         ServerScript = $ServerScript
         Port = $Port
+        StandardOutput = $StandardOutput
+        StandardError = $StandardError
         Record = $null
     }
     try {
@@ -139,6 +147,23 @@ function Start-OwnedWebServer {
         try { Stop-OwnedWebServer -Launch $launch } catch { }
         throw
     }
+}
+
+function Request-OwnedWebServerShutdown {
+    param([Parameter(Mandatory = $true)]$Launch)
+
+    $shutdownAlreadyRequested = Test-Path -LiteralPath $Launch.ShutdownFile
+    $record = Read-OwnedWebServerRecord -OwnershipFile $Launch.OwnershipFile -OwnershipNonce $Launch.OwnershipNonce -WrapperProcessId $Launch.Wrapper.Id -ServerScript $Launch.ServerScript -Port $Launch.Port -AllowExited:$shutdownAlreadyRequested
+    if ([string]$record.shutdown_file -ne [System.IO.Path]::GetFullPath($Launch.ShutdownFile)) {
+        throw "Owned Web server shutdown record did not match its launch identity."
+    }
+    if ($shutdownAlreadyRequested) {
+        if ([string](Get-Content -LiteralPath $Launch.ShutdownFile -Raw) -eq $Launch.OwnershipNonce) { return }
+        throw "Owned Web server shutdown path already contained a different identity."
+    }
+    $temporaryShutdownPath = "$($Launch.ShutdownFile).$PID.tmp"
+    Set-Content -LiteralPath $temporaryShutdownPath -Value $Launch.OwnershipNonce -NoNewline -Encoding ascii
+    Move-Item -LiteralPath $temporaryShutdownPath -Destination $Launch.ShutdownFile
 }
 
 function Assert-OwnedWebServerListener {
@@ -178,6 +203,12 @@ function Stop-OwnedWebServer {
     }
 
     if ($null -ne $record) {
+        try {
+            Request-OwnedWebServerShutdown -Launch $Launch
+        }
+        catch {
+            $failures.Add("Could not publish exact owned Web server shutdown intent: $($_.Exception.Message)")
+        }
         $serverProcess = Get-Process -Id ([int]$record.server_pid) -ErrorAction SilentlyContinue
         if ($null -ne $serverProcess) {
             $actualTicks = $serverProcess.StartTime.ToUniversalTime().Ticks
@@ -205,10 +236,14 @@ function Stop-OwnedWebServer {
             $failures.Add("Refused to stop reused wrapper PID $($Launch.Wrapper.Id).")
         }
         else {
-            Stop-Process -Id $Launch.Wrapper.Id -Force -ErrorAction SilentlyContinue
             try { Wait-Process -Id $Launch.Wrapper.Id -Timeout 5 -ErrorAction Stop } catch { }
-            if ($null -ne (Get-Process -Id $Launch.Wrapper.Id -ErrorAction SilentlyContinue)) {
-                $failures.Add("Exact launched wrapper PID $($Launch.Wrapper.Id) remained alive after cleanup.")
+            $wrapperProcess = Get-Process -Id $Launch.Wrapper.Id -ErrorAction SilentlyContinue
+            if ($null -ne $wrapperProcess) {
+                Stop-Process -Id $Launch.Wrapper.Id -Force -ErrorAction SilentlyContinue
+                try { Wait-Process -Id $Launch.Wrapper.Id -Timeout 5 -ErrorAction Stop } catch { }
+                if ($null -ne (Get-Process -Id $Launch.Wrapper.Id -ErrorAction SilentlyContinue)) {
+                    $failures.Add("Exact launched wrapper PID $($Launch.Wrapper.Id) remained alive after cleanup.")
+                }
             }
         }
     }
