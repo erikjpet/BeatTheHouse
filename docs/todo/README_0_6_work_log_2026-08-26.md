@@ -1050,3 +1050,122 @@ below to jump to a row's history.
   `C597F0FD471239418E31215FAAFE11A0D942653DD2DBB2ACB6D943BABEAC11DD`.
   fix06_14 is landed/post-land green/DONE. fix06_13 remains PARKED behind TODO
   fix06_16; no Web evidence or performance cap was changed or rerun.
+
+- 2026-08-27 [fix06_16] CLAIM / BOUNDED REPRODUCTION / IMPLEMENTATION;
+  INDEPENDENT REVIEW PENDING. From exact current-main base
+  `f0637b8c1dcb4dbc9d979d0f89a1ee811865a90a`, the row reproduced the orphan
+  without a browser, export or Web timing run: stopping exact wrapper PID 2380
+  left its direct Python child PID 12964 alive and listening on loopback port
+  64488; only those exact PIDs were then stopped. The old pipeline attributed
+  ownership only to PowerShell and did not preserve the Python listener handle.
+
+  The remediation explicitly launches the unchanged isolation-header Python
+  server and atomically records a nonce-bound wrapper/child PID, UTC start
+  identity, direct parent, exact script/root and port. The performance wrapper
+  revalidates that identity, requires the exact child to own the listener,
+  stops child before wrapper on success or any unwind, and fails if that exact
+  process/listener survives. It never selects or terminates by broad name,
+  wildcard or port alone. Focused hostile tests passed twice across success,
+  assertion/probe failure, host interruption, already-exited child, hostile
+  cached-record mutation, unrelated-process survival and mocked failed
+  termination. Static foundation architecture validation passed; the final
+  combined focused/static invocation completed in 61.9s. Ignored lifecycle
+  artifacts remain under `.tmp/fix06_16_lifecycle_test_<nonce>/`. The consumed
+  fix06_14 evidence and all locked Web/product/economy contracts are unchanged.
+
+- 2026-08-27 [fix06_16] INDEPENDENT REJECT P2 / WINDOWS ARGUMENT QUOTING
+  REMEDIATED; RE-REVIEW PENDING. Independent review rejected exact head
+  `239ead2a854ecd46a2ac70fa4f192da4439b6ba2`: both native `Start-Process`
+  boundaries relied on Windows PowerShell joining unquoted argument arrays, so
+  valid spaced workspace/script/root/ownership paths could split and undermine
+  deterministic ownership. The rejected head remains reachable and its
+  otherwise accepted lifecycle evidence is preserved.
+
+  Both launch boundaries now use Windows-native quoting that handles empty
+  arguments, embedded quotes and terminal backslashes. The expanded hostile
+  non-Web test runs a copied Python executable under `python runtime with
+  spaces`, copies the real wrapper and Python server beneath `tool scripts with
+  spaces`, serves `served root with spaces`, and places its ownership,
+  stdout and stderr paths under `ownership and logs with spaces`. It proves the
+  exact fixture content, COOP/COEP isolation headers, ownership publication,
+  exact process/listener cleanup and unrelated-process survival. Two expanded
+  harness attempts failed before server launch in 17.0/17.2s: the first found
+  an undefined copy-source variable and the second proved the Windows App
+  Execution Alias cannot be copied. Deterministic discovery of a real installed
+  Python executable corrected the harness. The complete suite passed in 18.6s,
+  all four relevant PowerShell files parsed with zero errors, and final static
+  validation passed in 48.7s. No browser, export, Web timing, retained evidence
+  replacement or locked-contract change occurred. After escaping wildcard
+  metacharacters in the exact-script matcher, the final combined hostile/static
+  rerun passed in 64.9s.
+
+- 2026-08-27 [fix06_16] INDEPENDENT REJECT P2 / EXPECTED SHUTDOWN
+  CLASSIFICATION REMEDIATED; RE-REVIEW PENDING. Independent review rejected
+  exact head `e92fab108f5c4e7128f2ff9340d064ac6fb40a72`: cleanup deliberately killed
+  the exact Python child, but no shutdown intent crossed to `serve_web.ps1`, so
+  expected cleanup could produce a blank-code lifecycle error. The rejected
+  head and all earlier results remain reachable and retained.
+
+  The exact launch nonce is now written atomically to the ownership-bound
+  shutdown path before child termination. Only that nonce makes the wrapper
+  accept the exit as expected; an unrequested exit emits an explicit failure.
+  Cleanup gives the wrapper five bounded seconds to exit normally before exact-
+  PID fallback. Production-path hostile checks require clean lifecycle stderr
+  for success, assertion/probe failure, host interruption and requested
+  already-exited cleanup, while a separate unrequested termination must report
+  failure. The first expanded run (24.8s) rejected Python's normal loopback GET
+  access log; the test now allows only that exact 200 line and passed completely
+  in 24.6s. Final parser coverage passed 4/4 and static validation passed in
+  48.6s. No browser, export, Web timing or locked-contract change occurred.
+
+  Exact-diff self-review then found a shutdown-order race: cleanup could publish
+  a new marker after an unrequested child exit raced between ownership reads.
+  New-marker publication now requires the exact child still live; only a marker
+  already carrying the matching nonce permits deterministic exited-child
+  cleanup. The unexpected-exit case requires wrapper stderr and cleanup both to
+  fail closed. The full hostile suite passed again in 24.8s; final parser
+  coverage passed 4/4 and static validation passed in 48.2s.
+
+- 2026-08-27 [fix06_16] INDEPENDENT REJECT P1/P1/P3 / CHILD ACK AND
+  FALLBACK IDENTITY REMEDIATED; RE-REVIEW PENDING. Independent review rejected
+  `672cdd25b65ed715e2fd0528d1771c1a7997e384`: the one-way marker retained a
+  check-to-publication death race; wrapper PID/start identity was not rechecked
+  immediately after its bounded wait before fallback stop; and unavailable exit
+  identity needed explicit `unknown`. All rejected heads remain reachable.
+
+  The exact Python child now receives nonce-bound request/acknowledgement paths
+  and atomically acknowledges while live. Cleanup requires that child-authored
+  acknowledgement plus the same PID/start identity before termination; wrapper
+  acceptance requires both matching files. An injected hook kills the child
+  after verification but before publication and proves no ack, unexpected
+  wrapper stderr and cleanup failure. Wrapper fallback now re-resolves start
+  identity immediately; an injected unrelated replacement is refused and
+  survives. Exit assertions accept only integer or literal `unknown`. Parser
+  4/4, Python compilation and the full hostile suite passed in a 21.2s combined
+  invocation; static validation passed in 48.5s. After final PID+start-tick
+  hardening, the combined hostile/static rerun passed in 69.6s, parser/Python
+  compilation passed and residual lifecycle-process count was zero. No browser,
+  export, Web timing or locked-contract change occurred.
+
+  Exact-head self-review additionally bound the child acknowledgement payload
+  to nonce plus child PID; both parent and wrapper reject any different writer
+  identity. The final complete hostile/static rerun passed in 68.9s.
+
+- 2026-08-27 [fix06_16] INDEPENDENT REJECT P2 / PID-REUSE TEST ISOLATION
+  REMEDIATED; RE-REVIEW PENDING. Review rejected exact head
+  `057f26f015da21a609373f4a293f8e85caf8f697` because the hostile resolver
+  changed wrapper PID and StartTime together, so numeric-PID comparison alone
+  could satisfy the test. Production behavior remained accepted.
+
+  The resolver now injects the original wrapper numeric PID with an unrelated
+  live process's different StartTime. A safe fallback-termination hook records
+  targets rather than killing them. Assertions require no recorded termination,
+  separately prove the unrelated PID was never targeted, and prove its process
+  survives. Removing the StartTime guard therefore fails deterministically.
+  The hostile suite passed in 20.9s and static validation passed in 47.0s. No
+  browser, export, Web timing or locked-contract change occurred.
+
+  A separate safe-recorder cleanup boundary now presents the actual unrelated
+  live process identity, requires zero calls and explicit exclusion of its PID,
+  and again proves it survives. The final hostile/static rerun with both
+  isolated identity cases passed in 79.6s.
