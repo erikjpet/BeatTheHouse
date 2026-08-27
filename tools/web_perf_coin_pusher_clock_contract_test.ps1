@@ -42,6 +42,11 @@ $missingInvariantObservation = $validObservation.PSObject.Copy()
 $missingInvariantObservation.conservation = $validObservation.conservation.PSObject.Copy()
 $missingInvariantObservation.conservation.solver_invariants_present = $false
 Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $missingInvariantObservation)) -Message "Missing solver conservation invariant was accepted."
+$negativeChannelObservation = $validObservation.PSObject.Copy()
+$negativeChannelObservation.conservation = $validObservation.conservation.PSObject.Copy()
+$negativeChannelObservation.conservation.gutter = -1
+$negativeChannelObservation.conservation.tray = 5
+Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $negativeChannelObservation)) -Message "Negative conservation channel was accepted."
 
 $reducedBoundary = [pscustomobject]@{ body_count = 296; tray_count = 2; liveness_ticks = 48; conservation = $validObservation.conservation }
 $reducedFixture = [pscustomobject]@{ body_count = 300 }
@@ -56,6 +61,8 @@ Assert-ClockContract -Condition (-not (Test-CoinPusherReducedSampleBoundary -Fix
 $reducedLivenessMismatch = $reducedScenario.PSObject.Copy()
 $reducedLivenessMismatch.solver_liveness_before = 49
 Assert-ClockContract -Condition (-not (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixture -Boundary $reducedBoundary -ScenarioTags $reducedLivenessMismatch)) -Message "Reduced sample liveness-boundary mismatch was accepted."
+$reducedAfterMismatch = [pscustomobject]@{ body_count_after = 295; tray_count_after = 2; conservation_after = $validObservation.conservation }
+Assert-ClockContract -Condition (-not (Test-CoinPusherSurfaceConservationBinding -BodyCount $reducedAfterMismatch.body_count_after -TrayCount $reducedAfterMismatch.tray_count_after -Snapshot $reducedAfterMismatch.conservation_after -ExpectedOrigin 300)) -Message "Reduced after-state surface/conservation mismatch was accepted."
 
 $validCollect = [pscustomobject]@{
     body_count_at_accept = 299
@@ -87,5 +94,15 @@ Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting
 $collectAfterMismatch = $validCollect.PSObject.Copy()
 $collectAfterMismatch.tray_count_after = 1
 Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting -Tags $collectAfterMismatch).valid) -Message "COLLECT post-window surface/conservation mismatch was accepted."
+$wrongAcceptTerminal = $validCollect.PSObject.Copy()
+$wrongAcceptTerminal.conservation_at_accept = $validCollect.conservation_at_accept.PSObject.Copy()
+$wrongAcceptTerminal.conservation_at_accept.gutter = 1
+$wrongAcceptTerminal.conservation_at_accept.collected = 0
+Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting -Tags $wrongAcceptTerminal).valid) -Message "COLLECT acceptance with the wrong terminal channel was accepted."
+$wrongAfterTerminal = $validCollect.PSObject.Copy()
+$wrongAfterTerminal.conservation_after = $validCollect.conservation_after.PSObject.Copy()
+$wrongAfterTerminal.conservation_after.collected = 2
+$wrongAfterTerminal.conservation_after.gutter = 1
+Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting -Tags $wrongAfterTerminal).valid) -Message "COLLECT post-window terminal-channel mutation was accepted."
 
 Write-Host "Coin Pusher Web clock contract self-test passed."
