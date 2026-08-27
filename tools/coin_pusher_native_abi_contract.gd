@@ -54,10 +54,21 @@ func _init() -> void:
 
 
 func _cache_lifetime_contract() -> bool:
+	var released_weak := _exercise_cache_replacement()
+	if released_weak == null:
+		return false
+	if released_weak.get_ref() != null:
+		_fail("Releasing the native backend did not release its live kernel cache.")
+		return false
+	print("COIN_PUSHER_NATIVE_ABI_STAGE cache_lifetime_released")
+	return true
+
+
+func _exercise_cache_replacement() -> WeakRef:
 	var native: Object = ClassDB.instantiate("CoinPusherNativeCore")
 	if native == null:
 		_fail("Cache-lifetime native backend could not be instantiated.")
-		return false
+		return null
 	var state := {
 		"schema": "coin_pusher_machine_v3",
 		"version": 3,
@@ -78,7 +89,7 @@ func _cache_lifetime_contract() -> bool:
 	first_rng = null
 	if first_weak.get_ref() == null:
 		_fail("Live kernel cache did not retain its keyed per-call configuration.")
-		return false
+		return null
 
 	var second_rng := RngStream.new()
 	second_rng.configure(202)
@@ -94,17 +105,11 @@ func _cache_lifetime_contract() -> bool:
 	second_rng = null
 	if first_weak.get_ref() != null:
 		_fail("Replacing the live kernel cache retained the prior configuration.")
-		return false
+		return null
 	if second_weak.get_ref() == null:
 		_fail("Replacement live kernel cache did not retain its keyed configuration.")
-		return false
-
-	native = null
-	if second_weak.get_ref() != null:
-		_fail("Releasing the native backend did not release its live kernel cache.")
-		return false
-	print("COIN_PUSHER_NATIVE_ABI_STAGE cache_lifetime_released")
-	return true
+		return null
+	return second_weak
 
 
 func _fail(message: String) -> void:
