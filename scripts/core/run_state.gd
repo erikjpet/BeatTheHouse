@@ -1945,12 +1945,15 @@ func _scenario_semantic_ready() -> bool:
 	var layout_authority := _copy_dict(current_environment.get("scenario_layout_authority", {}))
 	var renderer_snapshot := _copy_dict(current_environment.get("scenario_render_snapshot", {}))
 	var projection_semantic := _copy_dict(_copy_dict(current_environment.get("scenario_sequence_projection", {})).get("semantic_state", {}))
+	var passive_layout := not bool(layout_audit.get("active", true))
 	if typeof(current_environment.get("scenario_semantic_inventory_version")) != TYPE_INT \
 		or typeof(current_environment.get("scenario_semantic_digest")) != TYPE_STRING \
 		or typeof(current_environment.get("scenario_semantic_action_digest")) != TYPE_STRING \
 		or not bool(layout_audit.get("valid", false)) \
 		or not ScenarioSequenceRuntimeScript._valid_sha256(layout_digest) \
-		or layout_authority.is_empty() \
+		or (layout_authority.is_empty() and not passive_layout) \
+		or (passive_layout and (not layout_authority.is_empty() or not bool(layout_audit.get("sealed_passive", false)) or not bool(renderer_snapshot.get("sealed_passive", false)) or str(renderer_snapshot.get("presentation_mode", "")) != "passive")) \
+		or (not passive_layout and bool(renderer_snapshot.get("sealed_passive", false))) \
 		or not bool(renderer_snapshot.get("ok", false)) \
 		or str(layout_audit.get("authority_digest", "")) != layout_digest \
 		or str(renderer_snapshot.get("layout_authority_digest", "")) != layout_digest \

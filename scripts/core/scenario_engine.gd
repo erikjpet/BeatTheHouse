@@ -1034,8 +1034,9 @@ static func _materialize_sequence_services_games_routes(environment: Dictionary,
 	for value in _copy_dict(semantic.get("routes", {})).values():
 		var record := _copy_dict(value)
 		var route_id := str(record.get("stable_object_id", "")).strip_edges()
-		var source_id := str(record.get("source_id", route_id)).strip_edges()
+		var source_id := str(record.get("source_id", route_id.trim_prefix("world:"))).strip_edges()
 		if not route_id.is_empty(): routes.erase(route_id)
+		if not source_id.is_empty(): routes.erase(source_id)
 		if bool(record.get("enabled", true)) and not source_id.is_empty() and not routes.has(source_id): routes.append(source_id)
 	environment["travel_hooks"] = routes
 

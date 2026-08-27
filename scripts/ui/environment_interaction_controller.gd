@@ -128,7 +128,15 @@ static func project_finalized_sequence_interaction_result(base_records: Array, f
 	var authority := _dict(finalized.get("layout_authority", {}))
 	var authority_digest := str(finalized.get("layout_authority_digest", ""))
 	var layout_audit := _dict(finalized.get("layout_audit", {}))
-	if authority.is_empty() and authority_digest.is_empty() and not bool(layout_audit.get("active", false)):
+	if authority.is_empty() and not bool(layout_audit.get("active", false)):
+		if authority_digest.length() != 64 \
+			or _layout_authority_digest(authority) != authority_digest \
+			or str(semantic_state.get("layout_authority_digest", "")) != authority_digest \
+			or str(layout_audit.get("authority_digest", "")) != authority_digest \
+			or not bool(layout_audit.get("valid", false)) \
+			or not bool(layout_audit.get("sealed_passive", false)) \
+			or not _semantic_projection_coverage_errors(resolved_projection, authority).is_empty():
+			return projection_failure_result(base_records, ["Passive scenario layout authority failed closed digest correlation."], layout_audit)
 		return {
 			"ok": true,
 			"records": base_records.duplicate(true),
@@ -136,7 +144,7 @@ static func project_finalized_sequence_interaction_result(base_records: Array, f
 			"errors": [],
 			"warnings": _array(finalized.get("warnings", [])),
 			"layout_authority": {},
-			"layout_authority_digest": "",
+			"layout_authority_digest": authority_digest,
 			"layout_audit": layout_audit,
 		}
 	if authority_digest.length() != 64 \
@@ -539,7 +547,12 @@ static func committed_projection_status_result(run_state: Variant, projection_re
 		var committed_digest := str(run_state.current_environment.get("scenario_layout_authority_digest", ""))
 		var projected_digest := str(projection_result.get("layout_authority_digest", ""))
 		var projected_authority := _dict(projection_result.get("layout_authority", {}))
-		var passive_projection := projected_authority.is_empty() and projected_digest.is_empty() and not bool(audit.get("active", false))
+		var passive_projection := projected_authority.is_empty() \
+			and not bool(audit.get("active", false)) \
+			and bool(audit.get("valid", false)) \
+			and bool(audit.get("sealed_passive", false)) \
+			and projected_digest.length() == 64 \
+			and _layout_authority_digest(projected_authority) == projected_digest
 		var integrity_errors: Array = []
 		if not passive_projection:
 			integrity_errors = _projected_record_authority_errors(

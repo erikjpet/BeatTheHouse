@@ -9,6 +9,7 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
+const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const ScenarioSequenceContractScript := preload("res://scripts/tests/foundation/scenario_sequence_contract.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 
@@ -22,6 +23,7 @@ static func check(library: Variant, failures: Array) -> void:
 	_check_finalized_canvas_authority(library, failures)
 	_check_atomic_finalization_layout(library, failures)
 	_check_atomic_post_operation_layout(library, failures)
+	_check_passive_atomic_commits(library, failures)
 	_check_collision_adjusted_renderer_authority(failures)
 	_check_finalized_accessibility(library, failures)
 	_check_finalized_actor_route(library, failures)
@@ -150,6 +152,91 @@ static func _check_atomic_post_operation_layout(library: Variant, failures: Arra
 	var reentry_result := run_state.scenario_sequence_apply_reentry("visit_hostile_layout")
 	if bool(reentry_result.get("ok", true)) or JSON.stringify(run_state.current_environment) != hostile_before or not _contains_text(_array(reentry_result.get("errors", [])), "overlay"):
 		failures.append("Reentry retained visit/journal or environment mutations after post-layout validation rejected the candidate.")
+
+
+static func _check_passive_atomic_commits(library: Variant, failures: Array) -> void:
+	var expiry_definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	expiry_definition["sequence"]["expiry"] = {"boundary": "night_end", "after": 1, "policy": "cleanup"}
+	expiry_definition["sequence"]["cleanup"]["operations"].append({
+		"family": "interaction_ops", "op": "remove", "receipt_id": "cleanup_fixture_interaction",
+		"owner_namespace": "scenario", "stable_object_id": "fixture_100",
+	})
+	_reseal_definition(expiry_definition)
+	var expiry_run := RunStateScript.new()
+	expiry_run.current_environment = _finalization_environment(expiry_definition)
+	expiry_run.scenario_prepare_semantic_finalization()
+	var expiry_finalized := expiry_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	var expiry_before := JSON.stringify(expiry_run.current_environment)
+	var expiry_result := expiry_run.scenario_sequence_apply_expiry_boundary("night_end", 1)
+	var expiry_environment := expiry_run.current_environment
+	var expiry_projection := _dict(expiry_environment.get("scenario_sequence_projection", {}))
+	var expiry_semantic := _dict(expiry_projection.get("semantic_state", {}))
+	var expiry_snapshot := _dict(expiry_environment.get("scenario_render_snapshot", {}))
+	var expiry_audit := _dict(expiry_environment.get("scenario_layout_audit", {}))
+	var expiry_digest := str(expiry_environment.get("scenario_layout_authority_digest", ""))
+	var expiry_public := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result([_production_presentation()], expiry_result)
+	var expiry_committed := EnvironmentInteractionControllerScript.committed_projection_status_result(expiry_run, expiry_public, [_production_presentation()])
+	if not bool(expiry_finalized.get("ok", false)) or not bool(expiry_result.get("ok", false)) or JSON.stringify(expiry_environment) == expiry_before \
+		or str(_dict(expiry_environment.get("scenario_sequence_state", {})).get("status", "")) != ScenarioSequenceRuntimeScript.STATUS_CLEANED \
+		or not _presentation_collections_empty(expiry_semantic) or not _dict(expiry_environment.get("scenario_layout_authority", {})).is_empty() \
+		or bool(expiry_audit.get("active", true)) or not bool(expiry_audit.get("valid", false)) or not bool(expiry_audit.get("sealed_passive", false)) \
+		or not bool(expiry_snapshot.get("ok", false)) or not bool(expiry_snapshot.get("sealed_passive", false)) or str(expiry_snapshot.get("presentation_mode", "")) != "passive" \
+		or not ScenarioSequenceRuntimeScript._valid_sha256(expiry_digest) \
+		or str(expiry_audit.get("authority_digest", "")) != expiry_digest or str(expiry_snapshot.get("layout_authority_digest", "")) != expiry_digest \
+		or str(expiry_semantic.get("layout_authority_digest", "")) != expiry_digest or expiry_run.scenario_sequence_projection().is_empty() \
+		or not bool(expiry_public.get("ok", false)) or not bool(expiry_committed.get("ok", false)) or _array(expiry_committed.get("records", [])).size() != 1 \
+		or JSON.stringify(expiry_environment.get("scenario_sequence_state", {})) != JSON.stringify(expiry_result.get("state", {})) \
+		or JSON.stringify(expiry_projection) != JSON.stringify(expiry_result.get("projection", {})) \
+		or JSON.stringify(expiry_environment.get("service_ids", [])) != JSON.stringify(["house_drink"]) \
+		or JSON.stringify(expiry_environment.get("game_ids", [])) != JSON.stringify(["slot"]) \
+		or JSON.stringify(expiry_environment.get("travel_hooks", [])) != JSON.stringify(["bar"]):
+		failures.append("Integrated RunState cleanup expiry did not atomically commit a closed passive renderer snapshot and correlated empty authority.")
+
+	var aftermath_definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	var arrival := _dict(aftermath_definition["sequence"]["phase_graph"]["phases"][0])
+	arrival["terminal"] = true
+	arrival["advance_after_actions"] = 0
+	arrival["branches"] = [{"id": "passive_aftermath", "condition": {"type": "command", "command_id": "refuse"}, "outcome": "refused"}]
+	aftermath_definition["sequence"]["phase_graph"]["phases"] = [arrival]
+	aftermath_definition["sequence"]["cleanup"]["operations"] = [
+		{"family": "scene_ops", "op": "remove", "receipt_id": "cleanup_aftermath_fixture_scene", "owner_namespace": "scenario", "stable_object_id": "fixture_100"},
+		{"family": "scene_ops", "op": "remove", "receipt_id": "cleanup_aftermath_command_scene", "owner_namespace": "scenario", "stable_object_id": "command_console"},
+		{"family": "interaction_ops", "op": "remove", "receipt_id": "cleanup_aftermath_fixture_interaction", "owner_namespace": "scenario", "stable_object_id": "fixture_100"},
+		{"family": "interaction_ops", "op": "remove", "receipt_id": "cleanup_aftermath_command_interaction", "owner_namespace": "scenario", "stable_object_id": "command_console"},
+	]
+	aftermath_definition["sequence"]["aftermath"] = {"refused": {
+		"label": "Closed hooks", "revisit_feedback": "Only the room hooks change.", "scene_ops": [], "interaction_ops": [], "actor_ops": [],
+		"service_ops": [{"family": "service_ops", "op": "gate", "receipt_id": "passive_service_gate", "owner_namespace": "service", "stable_object_id": "house_drink", "enabled": false, "disabled_reason": "Closed by aftermath."}],
+		"game_ops": [{"family": "game_ops", "op": "gate", "receipt_id": "passive_game_gate", "owner_namespace": "game", "stable_object_id": "slot", "enabled": false, "disabled_reason": "Closed by aftermath."}],
+		"route_ops": [{"family": "route_ops", "op": "close", "receipt_id": "passive_route_close", "owner_namespace": "base", "stable_object_id": "world:bar", "disabled_reason": "Closed by aftermath."}],
+	}}
+	aftermath_definition["sequence"]["declared_targets"] = {
+		"scene_objects": [], "interactions": [], "actors": [],
+		"services": ["service::house_drink"], "games": ["game::slot"], "routes": ["base::world:bar"],
+		"anchors": ["base::anchor:bar_floor_100", "base::anchor:bar_actor"], "zones": [],
+	}
+	_reseal_definition(aftermath_definition)
+	var aftermath_run := RunStateScript.new()
+	aftermath_run.bankroll = 37
+	aftermath_run.current_environment = _finalization_environment(aftermath_definition)
+	aftermath_run.scenario_prepare_semantic_finalization()
+	var aftermath_finalized := aftermath_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	var aftermath_result := aftermath_run.scenario_sequence_command("refuse", "passive_aftermath_refuse", {}, "scenario", "command_console", {"scenario::command_console": true})
+	var aftermath_environment := aftermath_run.current_environment
+	var aftermath_projection := _dict(aftermath_environment.get("scenario_sequence_projection", {}))
+	var aftermath_semantic := _dict(aftermath_projection.get("semantic_state", {}))
+	var aftermath_snapshot := _dict(aftermath_environment.get("scenario_render_snapshot", {}))
+	if not bool(aftermath_finalized.get("ok", false)) or not bool(aftermath_result.get("ok", false)) \
+		or not _presentation_collections_empty(aftermath_semantic) or _dict(aftermath_semantic.get("services", {})).is_empty() \
+		or _dict(aftermath_semantic.get("games", {})).is_empty() or _dict(aftermath_semantic.get("routes", {})).is_empty() \
+		or not bool(aftermath_snapshot.get("sealed_passive", false)) or not _array(aftermath_snapshot.get("visual_objects", [])).is_empty() \
+		or not _array(aftermath_snapshot.get("interaction_overlays", [])).is_empty() or _array(aftermath_snapshot.get("services", [])).is_empty() \
+		or _array(aftermath_snapshot.get("games", [])).is_empty() or _array(aftermath_snapshot.get("routes", [])).is_empty() \
+		or _array(aftermath_environment.get("service_ids", [])).has("house_drink") or _array(aftermath_environment.get("game_ids", [])).has("slot") \
+		or _array(aftermath_environment.get("travel_hooks", [])).has("bar") or aftermath_run.bankroll != 37 \
+		or JSON.stringify(aftermath_environment.get("scenario_sequence_state", {})) != JSON.stringify(aftermath_result.get("state", {})) \
+		or JSON.stringify(aftermath_projection) != JSON.stringify(aftermath_result.get("projection", {})):
+		failures.append("Integrated RunState service/game/route-only aftermath did not commit materialized hooks and passive rendering as one candidate.")
 
 
 static func _check_collision_adjusted_renderer_authority(failures: Array) -> void:
@@ -1010,6 +1097,13 @@ static func _production_layout_context() -> Dictionary:
 		"reduce_motion": false,
 		"production_canvas": true,
 	}
+
+
+static func _presentation_collections_empty(semantic: Dictionary) -> bool:
+	for key in ["scene_objects", "actors", "interactions"]:
+		if not _dict(semantic.get(key, {})).is_empty():
+			return false
+	return true
 
 
 static func _command_visual(definition: Dictionary) -> Dictionary:

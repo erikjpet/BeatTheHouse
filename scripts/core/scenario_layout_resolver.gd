@@ -170,8 +170,12 @@ static func sealed_renderer_snapshot(layout_result: Dictionary) -> Dictionary:
 	var semantic_state := _dict(projection.get("semantic_state", {}))
 	var authority := _dict(layout_result.get("layout_authority", {}))
 	var authority_digest := str(layout_result.get("layout_authority_digest", ""))
+	var layout_audit := _dict(layout_result.get("layout_audit", {}))
+	var sealed_passive := not bool(layout_audit.get("active", true))
 	if not _valid_sha256(authority_digest) or _authority_digest(authority) != authority_digest:
 		return {"ok": false, "errors": ["Scenario renderer authority digest is missing or stale."]}
+	if sealed_passive and (not authority.is_empty() or _has_active_presentation(semantic_state)):
+		return {"ok": false, "errors": ["Scenario passive renderer snapshot contains active presentation authority."]}
 	var visuals: Array = []
 	for family_value in [
 		[semantic_state.get("scene_objects", {}), false],
@@ -226,6 +230,8 @@ static func sealed_renderer_snapshot(layout_result: Dictionary) -> Dictionary:
 		"boundary_serial": maxi(0, int(projection.get("boundary_serial", 0))),
 		"ok": true,
 		"errors": [],
+		"presentation_mode": "passive" if sealed_passive else "active",
+		"sealed_passive": sealed_passive,
 		"warnings": _array(layout_result.get("warnings", [])),
 		"visual_objects": visuals,
 		"interaction_overlays": _ordered_semantic_values(_dict(semantic_state.get("interactions", {}))),
@@ -235,7 +241,7 @@ static func sealed_renderer_snapshot(layout_result: Dictionary) -> Dictionary:
 		"active_stages": _array(projection.get("active_stages", [])),
 		"layout_authority": authority,
 		"layout_authority_digest": authority_digest,
-		"layout_audit": _dict(layout_result.get("layout_audit", {})),
+		"layout_audit": layout_audit,
 	}
 
 
@@ -244,19 +250,27 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	var resolved_projection := projection.duplicate(true)
 	var passive_audit := {
 		"active": false,
+		"valid": true,
 		"visual_count": 0,
 		"collision_adjustment_count": 0,
 		"board_size": _size_snapshot(BOARD_SIZE),
 		"small_screen_target": _size_snapshot(SMALL_SCREEN_TARGET),
 	}
 	if not _has_active_presentation(semantic_state):
+		var passive_authority: Dictionary = {}
+		var passive_digest := _authority_digest(passive_authority)
+		semantic_state["layout_authority_digest"] = passive_digest
+		resolved_projection["semantic_state"] = semantic_state
+		passive_audit["sealed_passive"] = true
+		passive_audit["authority_count"] = 0
+		passive_audit["authority_digest"] = passive_digest
 		return {
 			"ok": true,
 			"projection": resolved_projection,
 			"errors": [],
 			"warnings": [],
-			"layout_authority": {},
-			"layout_authority_digest": "",
+			"layout_authority": passive_authority,
+			"layout_authority_digest": passive_digest,
 			"fallback_authority": _fallback_authority(),
 			"layout_audit": passive_audit,
 		}
