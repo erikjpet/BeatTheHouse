@@ -4,6 +4,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot "web_perf_server_helpers.ps1")
 $absoluteOutDir = Join-Path $root $OutDir
 if (Test-Path -LiteralPath $absoluteOutDir) {
     throw "Refusing to overwrite Web performance server-ownership evidence: $absoluteOutDir"
@@ -53,51 +54,56 @@ if ([string]$failure.error -notmatch "already in use") {
     throw "Occupied-port failure manifest did not explain the ownership collision."
 }
 
-$serverToken = [guid]::NewGuid().ToString("N")
-$serverStdout = Join-Path $absoluteOutDir "owned_server_stdout.txt"
-$serverStderr = Join-Path $absoluteOutDir "owned_server_stderr.txt"
-$serverArgs = @(
-    "-ExecutionPolicy", "Bypass",
-    "-File", (Join-Path $PSScriptRoot "serve_web.ps1"),
-    "-Port", [string]$port,
-    "-ServerToken", $serverToken,
-    "-NoBrowser"
-)
-$server = $null
-try {
-    $server = Start-Process -FilePath (Get-Command powershell -ErrorAction Stop).Source -ArgumentList $serverArgs -PassThru `
-        -RedirectStandardOutput $serverStdout -RedirectStandardError $serverStderr -WindowStyle Hidden
-    $deadline = (Get-Date).AddSeconds(10)
-    $authenticated = $false
-    while ((Get-Date) -lt $deadline) {
-        if ($server.HasExited) {
-            throw "Owned test server exited before authentication."
-        }
-        try {
-            $response = Invoke-WebRequest -Uri "http://127.0.0.1:$port/" -UseBasicParsing -TimeoutSec 2
-            $authenticated = [string]$response.Headers["X-BTH-Server-Token"] -eq $serverToken
-            if ($authenticated) {
-                break
-            }
-        }
-        catch {
-            Start-Sleep -Milliseconds 100
+function Invoke-OwnedLifecycleCase {
+    param([string]$CaseName, [bool]$InjectFailure)
+    $portProbe = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
+    $portProbe.Start()
+    $casePort = ([System.Net.IPEndPoint]$portProbe.LocalEndpoint).Port
+    $portProbe.Stop()
+    $serverToken = [guid]::NewGuid().ToString("N")
+    $serverStdout = Join-Path $absoluteOutDir ("{0}_server_stdout.txt" -f $CaseName)
+    $serverStderr = Join-Path $absoluteOutDir ("{0}_server_stderr.txt" -f $CaseName)
+    $serverArgs = @(
+        "-ExecutionPolicy", "Bypass",
+        "-File", (Join-Path $PSScriptRoot "serve_web.ps1"),
+        "-Port", [string]$casePort,
+        "-ServerToken", $serverToken,
+        "-NoBrowser"
+    )
+    $server = $null
+    $injectedCaught = $false
+    try {
+        $server = Start-Process -FilePath (Get-Command powershell -ErrorAction Stop).Source -ArgumentList $serverArgs -PassThru `
+            -RedirectStandardOutput $serverStdout -RedirectStandardError $serverStderr -WindowStyle Hidden
+        Wait-ForOwnedWebServer -Url "http://127.0.0.1:$casePort/" -TimeoutSec 10 -ExpectedToken $serverToken -ServerProcess $server
+        if ($InjectFailure) {
+            throw "Injected owned-server lifecycle failure."
         }
     }
-    if (-not $authenticated) {
-        throw "Owned test server did not return its unique authentication token."
+    catch {
+        if (-not $InjectFailure -or $_.Exception.Message -ne "Injected owned-server lifecycle failure.") {
+            throw
+        }
+        $injectedCaught = $true
     }
+    finally {
+        if ($server -ne $null) {
+            Stop-OwnedWebServerProcessTree -RootProcessId $server.Id -ServerToken $serverToken
+        }
+    }
+    if ($InjectFailure -and -not $injectedCaught) {
+        throw "Failure lifecycle case did not execute its injected failure."
+    }
+    $escapedToken = [regex]::Escape($serverToken)
+    $remaining = @(Get-CimInstance Win32_Process | Where-Object { [string]$_.CommandLine -match $escapedToken })
+    if ($remaining.Count -ne 0) {
+        throw "$CaseName left an owned token-bearing child process."
+    }
+    Assert-TcpPortAvailable -Port $casePort
 }
-finally {
-    if ($server -ne $null) {
-        Get-CimInstance Win32_Process | Where-Object { $_.ParentProcessId -eq $server.Id } | ForEach-Object {
-            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
-        }
-        if (-not $server.HasExited) {
-            Stop-Process -Id $server.Id -Force -ErrorAction SilentlyContinue
-        }
-    }
-}
+
+Invoke-OwnedLifecycleCase -CaseName "success" -InjectFailure $false
+Invoke-OwnedLifecycleCase -CaseName "failure" -InjectFailure $true
 
 Write-Host "Web performance server ownership test passed."
 Write-Host ("Failure manifest: {0}" -f $failurePath)
