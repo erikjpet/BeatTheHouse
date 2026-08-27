@@ -129,12 +129,14 @@ func _elevated_coin_count(state: Dictionary, definition: Dictionary) -> int:
 func _capture_upper_row(variation_id: String, definition: Dictionary) -> Dictionary:
 	var period := maxi(1, int((definition.get("stroke", {}) as Dictionary).get("period_ticks", 240)))
 	var opening_snapshot := _production_opening_snapshot()
-	var state := _restore_production_opening("plan94:%s:upper:idle" % variation_id, definition)
+	var branch_seed := "plan94:%s:upper:production" % variation_id
+	var state := _restore_production_opening(branch_seed, definition)
 	if state.is_empty() or opening_snapshot.is_empty():
 		return {"id": "upper_row_join", "passed": false, "files": [], "reason": "production_opening_restore_failed"}
 	var before_views := Solver.body_views(state)
 	var before_record := _record(state)
 	var opening_ids := _body_id_set(before_views)
+	var branch_session_identity := _upper_row_session_identity()
 	var idle_before := _upper_row_control_digest(state)
 	var bankroll_before_idle := active_run_state.bankroll
 	var story_before_idle := active_run_state.story_log_entry_count()
@@ -155,11 +157,14 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 	var idle_file := "%s_upper_row_idle_control.png" % variation_id
 	var idle_saved := await _save_record_strip(idle_file, variation_id, definition, [before_record, idle_record], false)
 
-	state = _restore_production_opening("plan94:%s:upper:drop" % variation_id, definition)
+	state = _restore_production_opening(branch_seed, definition)
 	if state.is_empty():
 		return {"id": "upper_row_join", "passed": false, "files": [idle_file], "reason": "production_drop_restore_failed", "idle_control_passed": idle_unchanged and idle_exact_ticks and idle_saved}
 	var restored_views := Solver.body_views(state)
-	var baseline_reproduced := restored_views == before_views and _sha256(_production_opening_snapshot()) == _sha256(opening_snapshot)
+	var restored_session_identity := _upper_row_session_identity()
+	var baseline_reproduced := restored_views == before_views \
+		and restored_session_identity == branch_session_identity \
+		and _sha256(_production_opening_snapshot()) == _sha256(opening_snapshot)
 	var stimulus_before := _record(state)
 	var queue_before := (active_machine.get("drop_queue", []) as Array).size()
 	var accepted_before := int(state.get("accepted_inserts", 0))
@@ -267,6 +272,8 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 		"idle_control_passed": idle_unchanged and idle_exact_ticks and idle_saved,
 		"idle_control": {"start": idle_before, "end": idle_after, "events": idle_events, "exact_ticks": idle_exact_ticks, "file_saved": idle_saved},
 		"baseline_reproduced": baseline_reproduced,
+		"baseline_session_identity": branch_session_identity,
+		"restored_session_identity": restored_session_identity,
 		"selected_nozzle_id": selected_nozzle_id,
 		"paid_drop_cost": paid_drop_cost,
 		"drop_committed": drop_committed,
@@ -751,6 +758,18 @@ func _upper_row_control_digest(state: Dictionary) -> Dictionary:
 		"accepted_inserts": int(state.get("accepted_inserts", 0)),
 		"collected_count": int(state.get("collected_count", 0)),
 		"collected_value": int(state.get("collected_value", 0)),
+	}
+
+
+func _upper_row_session_identity() -> Dictionary:
+	var session: Dictionary = active_machine.get("live_session", {}) if typeof(active_machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	return {
+		"start_snapshot_sha256": _sha256(session.get("start_snapshot", {})),
+		"rng_sha256": _sha256(session.get("rng", {})),
+		"input_trace_sha256": _sha256(session.get("input_trace", [])),
+		"input_cursor": int(session.get("input_cursor", -1)),
+		"accumulator_units": int(session.get("accumulator_units", -1)),
+		"last_clock_msec": int(session.get("last_clock_msec", -1)),
 	}
 
 
