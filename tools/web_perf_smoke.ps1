@@ -17,6 +17,7 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "web_perf_coin_pusher_clock_contract.ps1")
+. (Join-Path $PSScriptRoot "web_server_lifecycle.ps1")
 $trackedStatus = @(& git -C $root status --short --untracked-files=no)
 if ($Plan -eq "coin_pusher" -and $trackedStatus.Count -gt 0) {
     throw "Coin Pusher Web performance evidence requires a clean tracked source tree so its commit identity is exact."
@@ -152,16 +153,12 @@ $exportSha256 = [string]$webExportIdentity.aggregate_sha256
 
 $serverStdout = Join-Path $outDir "serve_web.stdout.txt"
 $serverStderr = Join-Path $outDir "serve_web.stderr.txt"
-$serverArgs = @(
-    "-ExecutionPolicy", "Bypass",
-    "-File", (Join-Path $PSScriptRoot "serve_web.ps1"),
-    "-Port", [string]$Port,
-    "-NoBrowser"
-)
+$serverOwnership = Join-Path $outDir ("serve_web.ownership.{0}.json" -f [guid]::NewGuid().ToString("N"))
 $server = $null
 try {
-    $server = Start-Process -FilePath (Get-Command powershell -ErrorAction Stop).Source -ArgumentList $serverArgs -WindowStyle Hidden -PassThru -RedirectStandardOutput $serverStdout -RedirectStandardError $serverStderr
+    $server = Start-OwnedWebServer -ServeScript (Join-Path $PSScriptRoot "serve_web.ps1") -ServerScript (Join-Path $PSScriptRoot "serve_web_server.py") -ServeRoot (Join-Path $root "builds/web") -Port $Port -OwnershipFile $serverOwnership -StandardOutput $serverStdout -StandardError $serverStderr
     Wait-ForWebServer -Url "http://127.0.0.1:$Port/" -TimeoutSec 30
+    Assert-OwnedWebServerListener -Launch $server
     $headless = if ($Headed) { "false" } else { "true" }
     $url = "http://127.0.0.1:$Port/?bth_perf=1&bth_perf_plan=$Plan&bth_perf_auto_quit=1&bth_perf_frames=$Frames&bth_perf_active_frames=$ActiveFrames&bth_perf_memory_seconds=$MemorySeconds&bth_perf_source_commit=$sourceCommit&bth_perf_export_sha256=$exportSha256"
     $profile = Join-Path $root (".tmp/web_perf_smoke/{0}_profile" -f $Browser)
@@ -183,8 +180,8 @@ try {
     }
 }
 finally {
-    if ($server -ne $null -and -not $server.HasExited) {
-        Stop-Process -Id $server.Id -Force -ErrorAction SilentlyContinue
+    if ($server -ne $null) {
+        Stop-OwnedWebServer -Launch $server
     }
 }
 

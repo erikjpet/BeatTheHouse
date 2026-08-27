@@ -1050,3 +1050,25 @@ below to jump to a row's history.
   `C597F0FD471239418E31215FAAFE11A0D942653DD2DBB2ACB6D943BABEAC11DD`.
   fix06_14 is landed/post-land green/DONE. fix06_13 remains PARKED behind TODO
   fix06_16; no Web evidence or performance cap was changed or rerun.
+
+- 2026-08-27 [fix06_16] CLAIM / BOUNDED REPRODUCTION / IMPLEMENTATION;
+  INDEPENDENT REVIEW PENDING. From exact current-main base
+  `f0637b8c1dcb4dbc9d979d0f89a1ee811865a90a`, the row reproduced the orphan
+  without a browser, export or Web timing run: stopping exact wrapper PID 2380
+  left its direct Python child PID 12964 alive and listening on loopback port
+  64488; only those exact PIDs were then stopped. The old pipeline attributed
+  ownership only to PowerShell and did not preserve the Python listener handle.
+
+  The remediation explicitly launches the unchanged isolation-header Python
+  server and atomically records a nonce-bound wrapper/child PID, UTC start
+  identity, direct parent, exact script/root and port. The performance wrapper
+  revalidates that identity, requires the exact child to own the listener,
+  stops child before wrapper on success or any unwind, and fails if that exact
+  process/listener survives. It never selects or terminates by broad name,
+  wildcard or port alone. Focused hostile tests passed twice across success,
+  assertion/probe failure, host interruption, already-exited child, hostile
+  cached-record mutation, unrelated-process survival and mocked failed
+  termination. Static foundation architecture validation passed; the final
+  combined focused/static invocation completed in 61.9s. Ignored lifecycle
+  artifacts remain under `.tmp/fix06_16_lifecycle_test_<nonce>/`. The consumed
+  fix06_14 evidence and all locked Web/product/economy contracts are unchanged.

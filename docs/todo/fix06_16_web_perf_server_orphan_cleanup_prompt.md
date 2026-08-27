@@ -1,4 +1,4 @@
-Status: TODO
+Status: IN_PROGRESS — implementation and self-review complete; independent exact-head review pending
 Board row: `fix06_16` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_16: Web performance server orphan cleanup
@@ -46,3 +46,37 @@ for this row.
 Preserve every lifecycle artifact and exact process/port identity. Commit
 logically, self-review, obtain independent review, and land before the next
 locked `fix06_13` shipped-Web run.
+
+## Implementation record — 2026-08-27
+
+- Exact base: `f0637b8c1dcb4dbc9d979d0f89a1ee811865a90a` on
+  `codex/land06-fix06_16` in `D:\bth-f14-int`.
+- Bounded non-Web reproduction used the retained existing local export only as
+  static server content. Stopping exact wrapper PID 2380 left its direct Python
+  child PID 12964 alive and listening on loopback port 64488. The test then
+  stopped only those exact PIDs and verified the listener absent. No browser,
+  export, Coin Pusher plan or Web timing ran.
+- Attribution: the old wrapper retained only the `serve_web.ps1` PowerShell
+  handle. That script piped source into Python, so force-stopping the wrapper
+  did not terminate or identify the Python listener.
+- Remediation: `serve_web.ps1` now explicitly launches the extracted
+  isolation-header server, records a nonce-bound wrapper/server PID, UTC start
+  identity, direct-parent relation, exact script, root and port atomically, and
+  owns its child in `finally`. `web_perf_smoke.ps1` uses the shared lifecycle
+  helper to re-read and verify that record, require the exact child to own the
+  expected listener, stop child before wrapper on every unwind, and fail if the
+  exact PID or its listener remains. Port is verification context only; no
+  process is selected or terminated by port, wildcard or broad process name.
+- Hostile focused coverage proves success, assertion-failure, probe-failure and
+  host-interruption cleanup; deterministic already-exited-child handling;
+  unrelated process survival; cached-record tampering cannot redirect cleanup;
+  and mocked termination failure reports both the surviving exact process and
+  listener. The suite passed twice, most recently in 16.8s. Static foundation
+  architecture validation passed in the same invocation (61.9s total).
+- Retained test artifacts are under ignored
+  `.tmp/fix06_16_lifecycle_test_<nonce>/` paths. The immutable `fix06_14`
+  qualification, its report/summary and all earlier evidence remain untouched.
+- Locked Web caps, fixtures, samples, actions, throttling, scenarios, schema,
+  console policy and product behavior are byte-identical to the exact base.
+  No gameplay, RNG, payout, odds, wager, economy, geometry, tuning, migration,
+  version, package, release or remote operation occurred.
