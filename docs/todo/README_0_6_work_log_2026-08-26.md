@@ -848,10 +848,12 @@ below to jump to a row's history.
   Craps, and poker audits precede implementation; consumer branches may not
   base before independent acceptance and integration of the runtime head.
 
-- 2026-08-26 [fix06_6] CLAIMED AND CLOSED as a documentation-only historical
-  disposition from exact main `a48f0d38`. The owner-authorized two-hash refresh
+- 2026-08-26 [fix06_6] CLAIMED; documentation closure implemented from exact
+  main `a48f0d38`. The owner-authorized two-hash refresh
   `f9eaebbf` was already independently accepted within `fix06_4`, landed at
   `9a2022ae`, and followed by green post-land UI/Smoke evidence, including the
   later zero-failure full native Smoke at `7c748f5b`. This row changes no code,
-  test, golden, product, capture or budget and runs no Godot gate; independent
-  review and PM landing apply only to its five-document closeout.
+  test, golden, product, capture or budget and runs no Godot gate. Initial head
+  `34803412` was independently rejected P1 for claiming DONE before acceptance
+  and landing. The row remains IN_PROGRESS pending independent acceptance,
+  PM-controlled main landing, post-land documentation check and final record.

@@ -1612,5 +1612,7 @@ below to jump to a row's history.
   persisted state. Owner-authorized refresh `f9eaebbf` changed only the two
   inline hashes and provenance comment, was accepted and landed with `fix06_4`
   at `9a2022ae`, and remained covered by later green exact-main Smoke. The
-  launcher’s separate-row obligation is closed by documentation only; no new
-  refresh, product correction, recapture or runtime gate is justified.
+  launcher’s separate-row obligation can be closed by documentation only, but
+  remains open until that closeout is independently accepted, landed on main,
+  checked post-land and recorded. No new refresh, product correction, recapture
+  or runtime gate is justified.

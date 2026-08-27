@@ -1,12 +1,14 @@
-Status: DONE — historical remediation verified; documentation closeout awaits landing
+Status: IN PROGRESS — historical product disposition verified; separate-route closure pending acceptance and landing
 
 # fix06_6 — Delivery Full-State Golden Closure
 
 ## Purpose
 
-Close the stale delivery full-state UI golden that the 0.6 landing program
-required the PM to route separately. This is a documentation-only disposition,
-not authority to refresh another golden or change product code.
+Record the stale delivery full-state UI golden that the 0.6 landing program
+required the PM to route separately, then close that route only after this
+documentation receives independent acceptance, lands on main, passes its
+post-land check and records the result. This is a documentation-only
+disposition, not authority to refresh another golden or change product code.
 
 ## Binding evidence
 
@@ -43,11 +45,13 @@ not authority to refresh another golden or change product code.
 
 The inherited failure was a stale fixture, not a delivery product regression.
 Its remediation was absorbed visibly into `fix06_4` under explicit owner
-authorization, independently reviewed, landed and verified. `fix06_6` therefore
-closes the launcher’s separate routing obligation without changing or rerunning
-the accepted implementation.
+authorization, independently reviewed, landed and verified. That historical
+product disposition is complete, but the launcher’s separate routing obligation
+remains open until this documentation closeout is independently accepted,
+landed, checked on post-land main and recorded.
 
 Do not edit code, tests, goldens, data or budgets for this row. Do not launch
 Godot, regenerate evidence or recapture visuals. Do not perform release,
 version, packaging or remote actions. Independent review of this five-document
-closeout and a PM-controlled landing are the only remaining process steps.
+closeout, PM-controlled main landing, proportionate post-land documentation
+check and final ledger/board record are the remaining process steps.
