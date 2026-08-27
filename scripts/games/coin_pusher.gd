@@ -584,7 +584,6 @@ func surface_realtime_entry_anchor_patch(run_state: RunState, environment: Dicti
 		return {}
 	return {
 		"surface_realtime_state_refresh": true,
-		"surface_defer_patch_redraw": true,
 		"coin_pusher_ticks_advanced": 0,
 	}
 

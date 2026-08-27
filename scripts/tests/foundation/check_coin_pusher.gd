@@ -54,8 +54,11 @@ func _check_pusher_v3_realtime_redraw_ownership(failures: Array) -> void:
 		"game_id": "coin_pusher",
 		"surface_renderer": "coin_pusher",
 		"surface_animates_idle": true,
+		"surface_defer_patch_redraw": true,
 		"coin_pusher_body_count": 1,
 	})
+	if (canvas.call("realtime_surface_state") as Dictionary).has("surface_defer_patch_redraw"):
+		failures.append("Coin Pusher entry render leaked redraw-policy metadata into public canvas state.")
 	canvas.call("reset_performance_counters")
 	canvas.call("apply_surface_state_patch", {
 		"surface_defer_patch_redraw": true,
@@ -73,6 +76,12 @@ func _check_pusher_v3_realtime_redraw_ownership(failures: Array) -> void:
 	var action_counters: Dictionary = canvas.call("performance_counters")
 	if int(action_counters.get("patch_redraw_requests", 0)) != 1:
 		failures.append("Coin Pusher action-visible dirty patch did not request an immediate redraw.")
+	canvas.call("apply_surface_state_patch", {"reduce_motion": true})
+	canvas.call("reset_performance_counters")
+	var reduced_counters: Dictionary = canvas.call("performance_counters")
+	if int(reduced_counters.get("surface_animation_redraw_count", -1)) != 0 \
+			or int(reduced_counters.get("reduced_motion_measurement_redraw_requests", 0)) != 1:
+		failures.append("Coin Pusher reduced-motion measurement did not request exactly one real dirty draw while keeping the animation scheduler frozen.")
 	canvas.free()
 
 
@@ -380,6 +389,9 @@ func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary
 	for required_cue in ["coin_pusher_coin_stack", "coin_pusher_slide", "coin_pusher_coin_metal", "coin_pusher_tray", "coin_pusher_gutter"]:
 		if not audio_cues.has(required_cue):
 			failures.append("Coin Pusher V3 physics-audio event map omitted %s: %s." % [required_cue, JSON.stringify(audio_schedule)])
+	var entry_anchor: Dictionary = game.surface_realtime_entry_anchor_patch(run_state, environment, {"surface_time_msec": 0}, initial)
+	if entry_anchor.has("surface_defer_patch_redraw"):
+		failures.append("Coin Pusher production entry-anchor patch leaked transient redraw-policy metadata into snapshot assembly.")
 	var first_patch: Dictionary = game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": 1}, initial)
 	var second_patch: Dictionary = game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": 35}, first_patch)
 	var previous: Array = second_patch.get("coin_pusher_previous_bodies", []) if typeof(second_patch.get("coin_pusher_previous_bodies", [])) == TYPE_ARRAY else []
