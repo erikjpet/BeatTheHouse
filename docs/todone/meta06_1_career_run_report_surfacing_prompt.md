@@ -1,5 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `meta06_1` in `docs/todo/README_0_6_board.md`
+
+## Execution Record
+
+- **Accepted source:** `27dc4be05b70e0ef213222aad9422de0f6cb2c5f` on `codex/land06-meta06_1`; independent reviewer ACCEPT.
+- **Integration and landing:** clean no-conflict `--no-ff` merge `12e127c992ac86bbfdddbc8b11ffe4e52a7f61a8`, with parents prior main `ff2d4e14116f073e50152c8b645a5e3496b3ead2` and accepted source `27dc4be0`. Review Pool returned `ACCEPT 12e127c992ac86bbfdddbc8b11ffe4e52a7f61a8`.
+- **Verification:** exact integration Contract passed 16/16 checks and Foundation `all` passed 24/24 checks with zero functional failures or stderr. Their wrappers retained timing-only reds at 264.852s versus 230.391s and 291.395s versus 230.652s; no cap changed. UI reached the inherited inactive-delivery hermetic baseline mismatch. A clean-parent control at `ff2d4e14` produced the byte-identical expected/actual payload, proving the merge introduced no digest change; the outstanding env06_6/P1 owns that red.
+- **Preservation:** primary dirty `run_state.gd` and lender-save test bytes retained identical SHA-256 values before and after the local main ref advance. No `.tmp/`, `.tools/`, `review_artifacts/`, remote, release, version or packaging state was modified by the landing.
 
 # Agent Prompt — 0.6 meta06_1: Career, Run Report and Meta Surfacing of 0.6
 
