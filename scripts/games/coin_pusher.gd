@@ -1930,7 +1930,7 @@ func _variation_intro(variation_id: String) -> String:
 	match variation_id:
 		"jackpot_ridge": return "Jackpot Ridge carries pucks through a pile built for sequencing, locks, and lane jams."
 		"vault_drop": return "The Vault Drop carries key fragments toward a town-fed progressive."
-	return "Quarter Falls shoves two shelves under a pile that remembers every coin."
+	return "Quarter Falls moves one platform under a pile that remembers every coin."
 
 
 func _register_pile_rumor(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
