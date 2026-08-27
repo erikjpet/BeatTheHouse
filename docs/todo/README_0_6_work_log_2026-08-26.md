@@ -896,3 +896,36 @@ below to jump to a row's history.
   prohibited timed job. No five-eligible-run decision median, stale-baseline
   finding, cap change or product/test/tool change resulted. Raw evidence remains in both
   retained fix06_5 worktrees under `.tmp/fix06_5_contract_timing/`.
+
+- 2026-08-27 [fix06_14] CURRENT-MAIN QUALIFICATION CONSUMED RED at exact
+  integration head `161680e877b32604f3ed3f953d2a8cde5e66f82e`; no same-head
+  rerun occurred. The setup-only first invocation fresh-exported successfully,
+  then its absolute `-Out` launcher failed before the browser because the
+  resulting directory path was unsupported. Its stdout/stderr remain at
+  `.tmp/fix06_14_qualification_161680e8_actual_1`, SHA-256
+  `8E40E3BE4BD1DB0503A21DE4A6CB0BFB0E4FD8D60DF8A64ADCF84F930F3ADE99` /
+  `2F2206C7DF01D2512B12CC0B22ADE97C17B4BBB008B24594DFBE5A37C49D6C3F`.
+  The subsequent measured invocation explicitly used `-SkipExport`, so its
+  result is retained but ineligible as the binding fresh-export gate. Chrome
+  151 on `DESKTOP-1950ULQ`, CPU throttle 4, captured only six scenarios and
+  ready 20.338s against 20s. Frame/draw/resolve milliseconds were menu
+  137.605/-/-, idle 140.905/48.270/-, DROP 141.667/47.485/52.920,
+  carriage 143.978/46.425/68.930, skill stop 140.080/42.565/41.640 and
+  skill release 136.628/34.505/41.855. COLLECT and reduced motion were absent,
+  as were all their new boundary events. The report/summary remain at
+  `.tmp/fix06_14_qualification_161680e8_eligible_actual_1`, SHA-256
+  `E84E372D471704435BDF08A3F59B2EAC5B65864CDB917269615B53BC6EBAF360` /
+  `FD157D19F911D5BCCD0E23CA61E33A1EC7D86FEC2FC7D2CC2329B4BB3A0352D8`;
+  served export aggregate `F7CFFCA6A9DE10EBAF32DE151F5341D4C3EA8B98485B2908C6724573B303C38B`,
+  generated Web native `31D60D25AD00969A9F7DD115AD7B5E4DC8F1CC4795514DF309A2526F1452C8FB`.
+  Raw chronology attributes the missing tail: skill release ended at 75.776s,
+  then `coin_pusher_collect_fixture_failed` was the only later event at
+  114.537s. The 38.761s gap exhausted the fixed 240-frame production-exit poll
+  before `_reinstall_coin_pusher_fixture` could return, so COLLECT/reduced were
+  never executed. Remediation `0a3bba4faf30f8bfee6bdea477e80a3886341a49`
+  extends only that setup poll to 600 CPU-throttled frames; locked fixture,
+  actions and 120/60-frame samples are unchanged. It also validates a nonempty,
+  relative, in-repository unique JSON `-Out` before export, preventing another
+  setup-only export consumption. Static validation passed in 51.3s; PowerShell
+  parsing and the focused adversarial self-test pass. The next allowed Web run must be one direct invocation without
+  `-SkipExport` and with a new relative unique output path; none ran here.
