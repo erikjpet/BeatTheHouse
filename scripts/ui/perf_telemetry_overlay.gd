@@ -7,6 +7,8 @@ extends Control
 const SlotStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const SlotPinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
+const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
+const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 
 const REQUIRED_GAME_IDS := [
 	"pull_tabs",
@@ -36,6 +38,10 @@ const OVERLAY_REFRESH_STRIDE_FRAMES := 15
 const WEB_HEAP_SAMPLE_STRIDE_FRAMES := 60
 const REPORT_PREFIX := "BTH_PERF_REPORT "
 const READY_PREFIX := "BTH_PERF_READY "
+const COIN_PUSHER_FIXTURE_SEED := "practice:coin_pusher_full_cap"
+const COIN_PUSHER_FIXTURE_BODY_COUNT := 300
+const COIN_PUSHER_IDLE_SAMPLE_FRAMES := 120
+const COIN_PUSHER_ACTION_SAMPLE_FRAMES := 60
 
 var app: FoundationMain
 var runtime_options: Dictionary = {}
@@ -147,6 +153,8 @@ func configure(owner: FoundationMain) -> void:
 		call_deferred("_run_la6_plan")
 	elif plan_id == "grand_casino":
 		call_deferred("_run_grand_casino_plan")
+	elif plan_id == "coin_pusher":
+		call_deferred("_run_coin_pusher_plan")
 
 
 func configure_for_probe(owner: FoundationMain, overlay_visible: bool) -> void:
@@ -226,6 +234,10 @@ func dump_report() -> Dictionary:
 		"scenarios": scenario_records,
 		"events": telemetry_events,
 		"telemetry_overhead": _overhead_stats(),
+		"build_identity": {
+			"source_commit": str(runtime_options.get("bth_perf_source_commit", "")),
+			"export_sha256": str(runtime_options.get("bth_perf_export_sha256", "")),
+		},
 	}
 	_write_report_file(report)
 	_emit_console(REPORT_PREFIX, report)
@@ -356,6 +368,327 @@ func _publish_grand_casino_browser_summary() -> void:
 	}
 	var title := "BTH_GC_REPORT " + JSON.stringify(summary)
 	JavaScriptBridge.eval("document.title = %s;" % JSON.stringify(title), true)
+
+
+func _run_coin_pusher_plan() -> void:
+	if l02_driver_started:
+		return
+	l02_driver_started = true
+	await _wait_frames(8)
+	_end_scenario()
+	if app == null:
+		mark_event("coin_pusher_missing_app")
+		dump_report()
+		await _quit_after_report_flush()
+		return
+	app.start_game_test_session("coin_pusher")
+	await _wait_frames(4)
+	var run_state: RunState = app.get("run_state") as RunState
+	var game: GameModule = app.get("current_game") as GameModule
+	if run_state == null or game == null:
+		mark_event("coin_pusher_fixture_failed", {"reason": "missing_runtime"})
+		dump_report()
+		await _quit_after_report_flush()
+		return
+	# start_game_test_session opens the ordinary 150-body practice machine. Exit
+	# it through the production boundary first so that transient live state cannot
+	# shadow the durable 300-body fixture installed below.
+	app.back_to_environment()
+	if not await _wait_for_coin_pusher_exit():
+		mark_event("coin_pusher_fixture_failed", {"reason": "initial_exit_timeout"})
+		dump_report()
+		await _quit_after_report_flush()
+		return
+	if not _install_coin_pusher_fixture(run_state, game):
+		mark_event("coin_pusher_fixture_failed")
+		dump_report()
+		await _quit_after_report_flush()
+		return
+	if not bool(app.call("enter_game", "coin_pusher")):
+		mark_event("coin_pusher_enter_failed")
+		dump_report()
+		await _quit_after_report_flush()
+		return
+	await _wait_frames(4)
+	var fixture := _coin_pusher_fixture_identity(run_state, game)
+	mark_event("coin_pusher_fixture_identity", fixture)
+	await _measure_coin_pusher_idle("coin_pusher_idle", false, fixture)
+	for action_value in [
+		["coin_pusher_drop", "coin_pusher_active_drop"],
+		["coin_pusher_carriage_left", "coin_pusher_active_carriage"],
+		["coin_pusher_skill_stop", "coin_pusher_active_skill_stop"],
+		["coin_pusher_skill_stop", "coin_pusher_active_skill_release"],
+	]:
+		await _measure_coin_pusher_action(str(action_value[0]), str(action_value[1]), fixture)
+	# COLLECT receives a fresh authoritative fixture. Earlier action windows may
+	# legitimately move or consume bodies, so seeding their derivative live state
+	# cannot prove the binding 300-origin conservation law.
+	if not await _reinstall_coin_pusher_fixture(run_state, game):
+		mark_event("coin_pusher_collect_fixture_failed")
+		dump_report()
+		await _quit_after_report_flush()
+		return
+	var collect_fixture := _coin_pusher_fixture_identity(run_state, game)
+	mark_event("coin_pusher_collect_fixture_identity", collect_fixture)
+	if not _seed_coin_pusher_collect_fixture(run_state, game):
+		mark_event("coin_pusher_collect_seed_failed")
+		dump_report()
+		await _quit_after_report_flush()
+		return
+	await _measure_coin_pusher_action("coin_pusher_collect", "coin_pusher_active_collect", collect_fixture)
+	# The active-action sequence is allowed to consume or move fixture bodies.
+	# Reinstall and re-enter the identical durable 300-body fixture so reduced-
+	# motion evidence cannot silently measure a depleted derivative state.
+	if not await _reinstall_coin_pusher_fixture(run_state, game):
+		mark_event("coin_pusher_reduced_fixture_failed")
+		dump_report()
+		await _quit_after_report_flush()
+		return
+	await _wait_frames(4)
+	var reduced_fixture := _coin_pusher_fixture_identity(run_state, game)
+	mark_event("coin_pusher_reduced_fixture_identity", reduced_fixture)
+	await _set_coin_pusher_reduce_motion(true)
+	await _measure_coin_pusher_idle("coin_pusher_reduced_motion", true, reduced_fixture)
+	await _set_coin_pusher_reduce_motion(false)
+	l02_driver_complete = true
+	dump_report()
+	await _quit_after_report_flush()
+
+
+func _wait_for_coin_pusher_exit() -> bool:
+	for _frame_index in range(240):
+		if not bool(app.get("game_exit_settle_active")):
+			return true
+		await get_tree().process_frame
+	return false
+
+
+func _reinstall_coin_pusher_fixture(run_state: RunState, game: GameModule) -> bool:
+	app.back_to_environment()
+	if not await _wait_for_coin_pusher_exit():
+		return false
+	if not _install_coin_pusher_fixture(run_state, game):
+		return false
+	if not bool(app.call("enter_game", "coin_pusher")):
+		return false
+	await _wait_frames(4)
+	return true
+
+
+func _coin_pusher_machine_definition(game: GameModule) -> Dictionary:
+	var value: Variant = game.call("_machine_definition")
+	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+
+
+# This intentionally mirrors foundation_performance_probe's maintained native
+# 300-body Quarter Falls fixture: same seed namespace, fork, production solver
+# API, durable snapshot and real cabinet entry path.
+func _install_coin_pusher_fixture(run_state: RunState, game: GameModule) -> bool:
+	var machine_definition := _coin_pusher_machine_definition(game)
+	var fixture_rng := run_state.create_rng("performance_coin_pusher_full_cap").fork("bodies:%d" % COIN_PUSHER_FIXTURE_BODY_COUNT)
+	var simulation := CoinPusherSolverScript.create_machine(fixture_rng, machine_definition, COIN_PUSHER_FIXTURE_BODY_COUNT)
+	var machine := game.call("_ensure_machine_state", run_state, run_state.current_environment, true) as Dictionary
+	machine["variation_id"] = "quarter_falls"
+	machine["variation_state"] = {}
+	machine["simulation"] = simulation
+	machine["riders"] = []
+	machine["locked_down"] = false
+	machine["staff_watch_memory"] = false
+	machine["alarm_tolerance_remaining"] = 100
+	machine["tell_rung"] = 0
+	game.call("_sync_physical_features", machine)
+	machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(simulation, machine)
+	machine.erase("simulation")
+	machine.erase("live_session")
+	game.call("_write_machine_state", run_state.current_environment, machine)
+	app.call("_refresh")
+	return CoinPusherSolverScript.coin_count(simulation) == COIN_PUSHER_FIXTURE_BODY_COUNT \
+		and int(machine_definition.get("ceiling", 0)) >= COIN_PUSHER_FIXTURE_BODY_COUNT \
+		and int(simulation.get("fixed_hz", 0)) == CoinPusherSolverScript.FIXED_HZ
+
+
+func _coin_pusher_fixture_identity(run_state: RunState, game: GameModule) -> Dictionary:
+	var canvas := app.get("game_surface_canvas") as Control
+	var state: Dictionary = canvas.call("realtime_surface_state") if canvas != null and canvas.has_method("realtime_surface_state") else {}
+	var definition := _coin_pusher_machine_definition(game)
+	return {
+		"fixture_seed": COIN_PUSHER_FIXTURE_SEED,
+		"rng_namespace": "performance_coin_pusher_full_cap",
+		"rng_fork": "bodies:%d" % COIN_PUSHER_FIXTURE_BODY_COUNT,
+		"fixture_api": "CoinPusherSolverScript.create_machine",
+		"snapshot_api": "CoinPusherLiveSessionScript.make_snapshot",
+		"variation_id": "quarter_falls",
+		"cabinet_scope": "Quarter Falls shared V3 cabinet/render/live-session path",
+		"body_count": int(state.get("coin_pusher_body_count", -1)),
+		"machine_ceiling": int(definition.get("ceiling", 0)),
+		"solver_fixed_hz": 60,
+		"solver_backend": CoinPusherSolverScript.last_step_backend_for_test(),
+		"platform": _platform_label(),
+		"source_commit": str(runtime_options.get("bth_perf_source_commit", "")),
+		"export_sha256": str(runtime_options.get("bth_perf_export_sha256", "")),
+		"environment_id": str(run_state.current_environment.get("id", "")),
+	}
+
+
+func _seed_coin_pusher_collect_fixture(run_state: RunState, game: GameModule) -> bool:
+	# Once the cabinet is entered, the transient live machine is authoritative;
+	# the durable row deliberately no longer carries a simulation dictionary.
+	var machine := game.call("_ensure_live_machine", run_state, run_state.current_environment) as Dictionary
+	var simulation_value: Variant = game.call("_simulation", machine)
+	if typeof(simulation_value) != TYPE_DICTIONARY:
+		return false
+	var simulation: Dictionary = simulation_value
+	var bodies: Array = simulation.get("bodies", []) if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else []
+	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+	if bodies.is_empty() or not tray.is_empty():
+		return false
+	# Preserve the 300-origin conservation law: move one deterministic fixture
+	# coin into the tray instead of fabricating a 301st outcome.
+	var seeded_body: Dictionary = bodies.pop_back() as Dictionary
+	tray.append({
+		"body_id": str(seeded_body.get("id", "web_perf_collect_seed")),
+		"kind": "coin",
+		"value": 3,
+		"item_id": "",
+		"provenance": {},
+	})
+	simulation["bodies"] = bodies
+	simulation["tray_ledger"] = tray
+	# Refresh from that same live authority so the sampled before-state observes
+	# the seeded tray rather than a stale durable projection.
+	app.call("_refresh")
+	mark_event("coin_pusher_collect_seed", {
+		"body_id": str(seeded_body.get("id", "")),
+		"origin_body_count": bodies.size() + tray.size(),
+		"tray_count": tray.size(),
+		"tray_value": 3,
+		"active_body_count": bodies.size(),
+		"conserved_body_count": bodies.size() + tray.size(),
+	})
+	return bodies.size() == COIN_PUSHER_FIXTURE_BODY_COUNT - 1 and tray.size() == 1
+
+
+func _coin_pusher_canvas() -> Control:
+	return app.get("game_surface_canvas") as Control if app != null else null
+
+
+func _coin_pusher_canvas_counters(canvas: Control) -> Dictionary:
+	if canvas != null and canvas.has_method("performance_counters"):
+		var counters := (canvas.call("performance_counters") as Dictionary).duplicate(true)
+		var samples: Array = counters.get("draw_frame_usec_samples", []) if typeof(counters.get("draw_frame_usec_samples", [])) == TYPE_ARRAY else []
+		counters["draw_sample_count"] = samples.size()
+		return counters
+	return {}
+
+
+func _coin_pusher_surface_state(canvas: Control) -> Dictionary:
+	if canvas != null and canvas.has_method("realtime_surface_state"):
+		return (canvas.call("realtime_surface_state") as Dictionary).duplicate(true)
+	return {}
+
+
+func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dictionary) -> void:
+	var canvas := _coin_pusher_canvas()
+	if canvas != null and canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var before_state := _coin_pusher_surface_state(canvas)
+	var before_counters := _coin_pusher_canvas_counters(canvas)
+	_begin_scenario(name, {
+		"surface": "coin_pusher",
+		"mode": "reduced_motion" if reduced_motion else "settled_idle",
+		"fixture": fixture.duplicate(true),
+	})
+	await _wait_frames(maxi(scenario_frames, COIN_PUSHER_IDLE_SAMPLE_FRAMES))
+	var after_state := _coin_pusher_surface_state(canvas)
+	var after_counters := _coin_pusher_canvas_counters(canvas)
+	current_tags["canvas_before"] = before_counters
+	current_tags["canvas_after"] = after_counters
+	current_tags["redraw_delta"] = int(after_counters.get("surface_animation_redraw_count", 0)) - int(before_counters.get("surface_animation_redraw_count", 0))
+	current_tags["solver_liveness_before"] = int(before_state.get("coin_pusher_liveness_ticks", 0))
+	current_tags["solver_liveness_after"] = int(after_state.get("coin_pusher_liveness_ticks", 0))
+	current_tags["solver_liveness_delta"] = int(after_state.get("coin_pusher_liveness_ticks", 0)) - int(before_state.get("coin_pusher_liveness_ticks", 0))
+	current_tags["body_count_before"] = int(before_state.get("coin_pusher_body_count", -1))
+	current_tags["body_count_after"] = int(after_state.get("coin_pusher_body_count", -1))
+	current_tags["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
+	_end_scenario()
+
+
+func _measure_coin_pusher_action(surface_action: String, name: String, fixture: Dictionary) -> void:
+	var canvas := _coin_pusher_canvas()
+	if canvas != null and canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var before_state := _coin_pusher_surface_state(canvas)
+	var before_counters := _coin_pusher_canvas_counters(canvas)
+	var run_state: RunState = app.get("run_state") as RunState
+	var bankroll_before := run_state.bankroll if run_state != null else 0
+	var turns_before := int(run_state.current_environment.get("turns", 0)) if run_state != null else 0
+	var story_before := run_state.story_log_entry_count() if run_state != null else 0
+	var fallback_before := int(app.get("embedded_full_snapshot_fallback_count"))
+	_begin_scenario(name, {
+		"surface": "coin_pusher",
+		"mode": "active",
+		"surface_action": surface_action,
+		"fixture": fixture.duplicate(true),
+	})
+	var call_start_usec := Time.get_ticks_usec()
+	var handled := bool(app.call("_handle_module_surface_action", surface_action, 0, true))
+	var resolve_call_ms := float(Time.get_ticks_usec() - call_start_usec) / 1000.0
+	await _wait_frames(maxi(active_frames, COIN_PUSHER_ACTION_SAMPLE_FRAMES))
+	var after_state := _coin_pusher_surface_state(canvas)
+	var after_counters := _coin_pusher_canvas_counters(canvas)
+	var result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
+	var metrics: Dictionary = result.get("coin_pusher_solver_metrics", {}) if typeof(result.get("coin_pusher_solver_metrics", {})) == TYPE_DICTIONARY else {}
+	current_tags["handled"] = handled
+	current_tags["resolve_call_ms"] = resolve_call_ms
+	current_tags["canvas_before"] = before_counters
+	current_tags["canvas_after"] = after_counters
+	current_tags["redraw_delta"] = int(after_counters.get("surface_animation_redraw_count", 0)) - int(before_counters.get("surface_animation_redraw_count", 0))
+	current_tags["input_trace_before"] = int(before_state.get("coin_pusher_input_trace_count", 0))
+	current_tags["input_trace_after"] = int(after_state.get("coin_pusher_input_trace_count", 0))
+	current_tags["solver_liveness_before"] = int(before_state.get("coin_pusher_liveness_ticks", 0))
+	current_tags["solver_liveness_after"] = int(after_state.get("coin_pusher_liveness_ticks", 0))
+	current_tags["body_count_before"] = int(before_state.get("coin_pusher_body_count", -1))
+	current_tags["body_count_after"] = int(after_state.get("coin_pusher_body_count", -1))
+	current_tags["carriage_x_before"] = int(before_state.get("coin_pusher_carriage_x", -1))
+	current_tags["carriage_x_after"] = int(after_state.get("coin_pusher_carriage_x", -1))
+	current_tags["selected_hole_before"] = int(before_state.get("coin_pusher_selected_hole", -1))
+	current_tags["selected_hole_after"] = int(after_state.get("coin_pusher_selected_hole", -1))
+	current_tags["skill_stop_before"] = bool(before_state.get("coin_pusher_skill_stop_engaged", false))
+	current_tags["skill_stop_after"] = bool(after_state.get("coin_pusher_skill_stop_engaged", false))
+	current_tags["tray_count_before"] = int(before_state.get("coin_pusher_tray_count", -1))
+	current_tags["tray_count_after"] = int(after_state.get("coin_pusher_tray_count", -1))
+	current_tags["tray_value_before"] = int(before_state.get("coin_pusher_tray_value", -1))
+	current_tags["tray_value_after"] = int(after_state.get("coin_pusher_tray_value", -1))
+	current_tags["bankroll_before"] = bankroll_before
+	current_tags["bankroll_after"] = run_state.bankroll if run_state != null else 0
+	current_tags["environment_turns_before"] = turns_before
+	current_tags["environment_turns_after"] = int(run_state.current_environment.get("turns", 0)) if run_state != null else 0
+	current_tags["story_entries_before"] = story_before
+	current_tags["story_entries_after"] = run_state.story_log_entry_count() if run_state != null else 0
+	current_tags["host_full_snapshot_fallbacks"] = int(app.get("embedded_full_snapshot_fallback_count")) - fallback_before
+	current_tags["full_snapshot_calls"] = int(after_counters.get("full_snapshot_calls", 0))
+	current_tags["physical_motion_seen"] = int(after_state.get("coin_pusher_liveness_ticks", 0)) > int(before_state.get("coin_pusher_liveness_ticks", 0)) \
+		or int(after_state.get("coin_pusher_phase_fp", 0)) != int(before_state.get("coin_pusher_phase_fp", 0)) \
+		or int(metrics.get("awake_count", 0)) > 0 or int(metrics.get("collision_count", 0)) > 0
+	current_tags["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
+	current_tags["surface_ui_preserved"] = _coin_pusher_free_controls_present(after_state)
+	current_tags["bankroll_delta"] = int(result.get("bankroll_delta", 0))
+	current_tags["action_patch_present"] = typeof(result.get("surface_action_view_patch", {})) == TYPE_DICTIONARY and not (result.get("surface_action_view_patch", {}) as Dictionary).is_empty()
+	_end_scenario()
+
+
+func _coin_pusher_free_controls_present(surface_state: Dictionary) -> bool:
+	var bindings: Dictionary = surface_state.get("surface_action_bindings", {}) if typeof(surface_state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
+	return bindings.has("coin_pusher_carriage_left") and bindings.has("coin_pusher_carriage_right") \
+		and bindings.has("coin_pusher_skill_stop") and bindings.has("coin_pusher_collect")
+
+
+func _set_coin_pusher_reduce_motion(enabled: bool) -> void:
+	var settings: Variant = app.get("user_settings") if app != null else null
+	if settings != null:
+		settings.set("reduce_motion", enabled)
+	app.call("_refresh")
+	await _wait_frames(4)
 
 
 func _measure_corner_store() -> void:
@@ -1021,7 +1354,11 @@ func _liveness_counter_snapshot() -> Dictionary:
 		return {"game_surface": {}, "environment_scene": {}}
 	var game_status: Dictionary = {}
 	var game_canvas := app.get("game_surface_canvas") as Control
-	if game_canvas != null and game_canvas.has_method("performance_live_status"):
+	if game_canvas != null and game_canvas.has_method("performance_counters"):
+		game_status = game_canvas.call("performance_counters")
+		var draw_samples: Array = game_status.get("draw_frame_usec_samples", []) if typeof(game_status.get("draw_frame_usec_samples", [])) == TYPE_ARRAY else []
+		game_status["draw_sample_count"] = draw_samples.size()
+	elif game_canvas != null and game_canvas.has_method("performance_live_status"):
 		game_status = game_canvas.call("performance_live_status")
 	var environment_status: Dictionary = {}
 	var environment_canvas := app.get("environment_canvas") as Control
