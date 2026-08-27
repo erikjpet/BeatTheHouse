@@ -28,11 +28,16 @@ if (-not $node) {
 }
 $outPath = Resolve-WebPerfEvidencePath -Root $root -Out $Out
 $outDir = Split-Path -Parent $outPath
+$failurePath = [System.IO.Path]::ChangeExtension($outPath, ".failure.json")
+$diagnosticPath = [System.IO.Path]::ChangeExtension($outPath, ".diagnostic.json")
 if (Test-Path -LiteralPath $outPath) {
     if ($Plan -eq "coin_pusher") {
         throw "Refusing to overwrite retained Coin Pusher Web performance evidence: $outPath"
     }
     Remove-Item -LiteralPath $outPath -Force
+}
+if ($Plan -eq "coin_pusher" -and ((Test-Path -LiteralPath $failurePath) -or (Test-Path -LiteralPath $diagnosticPath))) {
+    throw "Refusing to overwrite retained Coin Pusher Web performance diagnostics beside: $outPath"
 }
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
@@ -171,6 +176,7 @@ try {
         "--timeout-ms=$TimeoutMs",
         "--url=$url",
         "--out=$outPath",
+        "--diagnostic-out=$diagnosticPath",
         "--profile=$profile",
         "--cold-cache=$coldCache"
     )
@@ -178,6 +184,38 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "L0.2 web perf probe failed with exit code $LASTEXITCODE."
     }
+}
+catch {
+    if (-not (Test-Path -LiteralPath $failurePath)) {
+        $reportCaptured = $false
+        if (Test-Path -LiteralPath $outPath) {
+            try {
+                $capturedEnvelope = Get-Content -LiteralPath $outPath -Raw | ConvertFrom-Json
+                $reportCaptured = $null -ne $capturedEnvelope.report
+            }
+            catch { $reportCaptured = $false }
+        }
+        [ordered]@{
+            tool = "web_perf_smoke"
+            status = if ($reportCaptured) { "report_captured_probe_failed" } else { "failed_before_report" }
+            captured_at = (Get-Date).ToString("o")
+            source_commit = $sourceCommit
+            export = $webExportIdentity
+            browser = $Browser
+            cpu_throttle_rate = $Cpu
+            port = $Port
+            server_wrapper_pid = if ($server -ne $null) { $server.Wrapper.Id } else { 0 }
+            server_pid = if ($server -ne $null -and $server.Record -ne $null) { [int]$server.Record.server_pid } else { 0 }
+            server_ownership = $serverOwnership
+            report_captured = $reportCaptured
+            report = $outPath
+            probe_diagnostic = $diagnosticPath
+            server_stdout = $serverStdout
+            server_stderr = $serverStderr
+            error = $_.Exception.Message
+        } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $failurePath -Encoding UTF8
+    }
+    throw
 }
 finally {
     if ($server -ne $null) {
@@ -413,6 +451,9 @@ $summary = [ordered]@{
     scenario_frame_p95_budgets_ms = $frameP95BudgetsMs
     scenario_memory_delta_budget_bytes = $scenarioMemoryDeltaBudgetBytes
     source_commit = $sourceCommit
+    server_wrapper_pid = if ($server -ne $null) { $server.Wrapper.Id } else { 0 }
+    server_pid = if ($server -ne $null -and $server.Record -ne $null) { [int]$server.Record.server_pid } else { 0 }
+    server_ownership = $serverOwnership
     fresh_export = (-not $SkipExport)
     web_export_identity = $webExportIdentity
     browser_version = [string]$reportEnvelope.browser_version
