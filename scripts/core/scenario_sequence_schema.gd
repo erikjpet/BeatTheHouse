@@ -1652,7 +1652,7 @@ static func _validate_fact_subscriptions(label: String, subscriptions: Array, op
 			_validate_fact_payload_predicate("%s fact subscription" % label, fact_type, subscription.get("payload_equals", {}), errors)
 		var handler_id := str(subscription.get("handler", ""))
 		var handlers := operation_registry.call("registered_handlers") as Dictionary if operation_registry != null and operation_registry.has_method("registered_handlers") else {}
-		if handler_id != handler_id.strip_edges() or not handlers.has(handler_id):
+		if handler_id != handler_id.strip_edges() or (not handler_id.is_empty() and not handlers.has(handler_id)):
 			errors.append("%s fact subscription references unregistered handler %s." % [label, handler_id])
 		if typeof(subscription.get("inputs", {})) != TYPE_DICTIONARY:
 			errors.append("%s fact subscription inputs must be a dictionary." % label)

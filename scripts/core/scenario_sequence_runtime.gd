@@ -828,6 +828,18 @@ static func public_projection(state_value: Dictionary, definition: Dictionary = 
 	var state := normalize_state(state_value, definition)
 	if state.is_empty():
 		return {}
+	var public_semantics := OperationRegistryScript.public_semantic_state(_dict(state.get("semantic_state", {})))
+	var public_interactions := _dict(public_semantics.get("interactions", {}))
+	for identity_value in public_interactions.keys():
+		var interaction := _dict(public_interactions.get(identity_value, {}))
+		var available_actions: Array = []
+		for action_value in _array(interaction.get("available_actions", [])):
+			var action := _dict(action_value)
+			if _action_preconditions_publicly_available(state, definition, action):
+				available_actions.append(action)
+		interaction["available_actions"] = available_actions
+		public_interactions[identity_value] = interaction
+	public_semantics["interactions"] = public_interactions
 	return {
 		"scenario_id": str(state.get("scenario_id", "")),
 		"node_id": str(state.get("node_id", "")),
@@ -838,11 +850,30 @@ static func public_projection(state_value: Dictionary, definition: Dictionary = 
 		"local_state": SequenceSchemaScript.public_local_state(definition, state.get("local_state", {})),
 		"resolved_outcomes": _string_array(state.get("resolved_outcomes", [])),
 		"last_feedback": str(state.get("last_feedback", "")),
-		"semantic_state": OperationRegistryScript.public_semantic_state(_dict(state.get("semantic_state", {}))),
+		"semantic_state": public_semantics,
 		"pending_transition_count": _array(_dict(state.get("semantic_state", {})).get("transition_queue", [])).size(),
 		"active_stages": _public_active_stage_dtos(state.get("active_stages", [])),
 		"pending_event_request_count": _array(state.get("event_request_queue", [])).size(),
 	}
+
+
+# Presentation may suppress only an action whose unmet requirement is itself
+# public. Private local state remains undisclosed and is enforced only by
+# authenticated command ingress.
+static func _action_preconditions_publicly_available(state: Dictionary, definition: Dictionary, action: Dictionary) -> bool:
+	for requirement_value in _array(action.get("requires_objective_steps", [])):
+		var requirement := _dict(requirement_value)
+		if not _objective_step_complete(state, str(requirement.get("objective_id", "")), str(requirement.get("step_id", ""))):
+			return false
+	var local_schema := _dict(SequenceSchemaScript.sequence(definition).get("local_state_schema", {}))
+	var local_state := _dict(state.get("local_state", {}))
+	for requirement_value in _array(action.get("requires_local", [])):
+		var requirement := _dict(requirement_value)
+		var key := str(requirement.get("key", ""))
+		var field_schema := _dict(local_schema.get(key, {}))
+		if str(field_schema.get("visibility", "private")) == "public" and local_state.get(key) != requirement.get("equals"):
+			return false
+	return true
 
 
 static func _validate_command(state: Dictionary, definition: Dictionary, command_value: Dictionary, context: Dictionary) -> Array:

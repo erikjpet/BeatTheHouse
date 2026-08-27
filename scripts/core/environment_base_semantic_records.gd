@@ -6,6 +6,56 @@ const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const DYNAMIC_SOURCE_FIELDS := ["active_delivery_run.handoff_pending_node_id", "numbers_state.venue_status", "numbers_state.silas_presence", "crew_presence", "game_ids.environment_interactable_objects", "game_ids.environment_interactable_objects.dialogue_id"]
 
 
+# Produces the deterministic, environment-owned presentation subset needed to
+# seal sequence authorization before any UI exists. Live UI may refresh labels,
+# availability, and action descriptors later, but it must resolve to the same
+# declared semantic identities.
+static func authoritative_interactable_records(environment: Dictionary, library: Variant) -> Dictionary:
+	if library == null:
+		return {"ok": false, "records": [], "errors": ["authoritative base semantic production requires ContentLibrary."]}
+	var object_rects := _dict(_dict(environment.get("layout", {})).get("object_rects", {}))
+	var records: Array = []
+	var errors: Array = []
+	for object_id_value in object_rects.keys():
+		var object_id := str(object_id_value).strip_edges()
+		var parts := object_id.split(":", false)
+		if parts.size() != 2:
+			continue
+		var domain := str(parts[0])
+		var source_id := str(parts[1])
+		var object_type := domain
+		if domain not in ["game", "event", "service", "lender", "travel"]:
+			continue
+		var definition: Dictionary = {}
+		match domain:
+			"game": definition = _dict(library.call("game", source_id)) if library.has_method("game") else {}
+			"event": definition = _dict(library.call("event", source_id)) if library.has_method("event") else {}
+			"service": definition = _dict(library.call("service", source_id)) if library.has_method("service") else {}
+			"lender": definition = _dict(library.call("lender", source_id)) if library.has_method("lender") else {}
+			"travel": definition = {"display_name": "Leave"} if source_id == "leave" else (_dict(library.call("route", source_id)) if library.has_method("route") else {})
+		if definition.is_empty():
+			errors.append("authoritative base semantic source %s is not catalog-backed." % object_id)
+			continue
+		var rect := _dict(object_rects.get(object_id, {}))
+		for rect_key in ["x", "y", "w", "h"]:
+			if not _finite_number(rect.get(rect_key)):
+				errors.append("authoritative base semantic source %s has malformed layout geometry." % object_id)
+				break
+		if not errors.is_empty() and str(errors[-1]).contains(object_id):
+			continue
+		records.append({
+			"object_id": object_id,
+			"object_type": object_type,
+			"source_id": source_id,
+			"label": str(definition.get("display_name", definition.get("label", source_id.replace("_", " ").capitalize()))),
+			"enabled": true,
+			"disabled_reason": "",
+			"available_actions": [{"id": "interact", "label": "Interact", "input_action": "confirm", "non_color_state": "available"}],
+			"focus_rect": rect,
+		})
+	return {"ok": errors.is_empty(), "records": records if errors.is_empty() else [], "errors": errors}
+
+
 static func stamp_interactable_records(records_value: Array, environment: Dictionary, library: Variant, producer_context: Dictionary = {}) -> Dictionary:
 	var records: Array = []
 	var errors: Array = []

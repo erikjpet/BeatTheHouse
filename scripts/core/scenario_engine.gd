@@ -167,6 +167,11 @@ static func migrate_environment_sequence(environment: Dictionary, preferred: Dic
 	# exactly alone. Once an overlay exists, migration is deterministic and in-place.
 	if not SequenceSchemaScript.is_sequence(definition):
 		return {"ok": true, "changed": false, "active": false, "scenario_id": scenario_id, "definition": definition}
+	# Dynamic state, its migration receipt, and semantic authority are one atomic
+	# installation. Until finalization seals the exact room inventory, legacy
+	# phase/mutation fields remain the only active contract and stay byte-identical.
+	if not bool(environment.get("scenario_semantic_ready", false)):
+		return {"ok": true, "changed": false, "active": false, "pending": true, "scenario_id": scenario_id, "definition": definition}
 	var before := JSON.stringify(environment)
 	var migration := {
 		"schema_version": SequenceRuntimeScript.STATE_SCHEMA_VERSION,
@@ -215,8 +220,13 @@ static func ensure_sequence_state(environment: Dictionary, definition: Dictionar
 					node_binding_failed = true
 			else:
 				node_binding_failed = true
+				var quarantine_cleanup := SequenceRuntimeScript._apply_cleanup(state, definition, "node_binding_mismatch")
+				if bool(quarantine_cleanup.get("ok", false)):
+					state = _copy_dict(quarantine_cleanup.get("state", state))
 				state["status"] = SequenceRuntimeScript.STATUS_CLEANED
 				state["errors"] = ["scenario progressed sequence state is bound to another world node; explicit migration is required"]
+				if not bool(quarantine_cleanup.get("ok", false)):
+					state["errors"].append_array(_copy_array(quarantine_cleanup.get("errors", [])))
 		if not node_binding_failed and not _copy_array(host_semantics.get("inventory_errors", [])).is_empty():
 			state["status"] = SequenceRuntimeScript.STATUS_CLEANED
 			state["errors"] = _copy_array(host_semantics.get("inventory_errors", []))
@@ -848,6 +858,9 @@ static func sequence_command(environment: Dictionary, definition: Dictionary, co
 	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
+	var quarantine := _node_binding_quarantine_result(state)
+	if not quarantine.is_empty():
+		return _commit_sequence_candidate(environment, candidate, definition, quarantine)
 	var dispatched := ScenarioExtensionDispatchScript.prepare_command(definition, command, context)
 	if not bool(dispatched.get("ok", false)):
 		return {"ok": false, "errors": _copy_array(dispatched.get("errors", [])), "state": state}
@@ -861,8 +874,18 @@ static func enqueue_sequence_fact(environment: Dictionary, definition: Dictionar
 	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
+	var quarantine := _node_binding_quarantine_result(state)
+	if not quarantine.is_empty():
+		return _commit_sequence_candidate(environment, candidate, definition, quarantine)
 	var result := SequenceRuntimeScript.enqueue_fact(state, definition, fact)
 	return _commit_sequence_candidate(environment, candidate, definition, result)
+
+
+static func _node_binding_quarantine_result(state: Dictionary) -> Dictionary:
+	var binding_error := "scenario progressed sequence state is bound to another world node; explicit migration is required"
+	if str(state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or not _copy_array(state.get("errors", [])).has(binding_error):
+		return {}
+	return {"ok": false, "quarantine_kind": "node_binding", "errors": _copy_array(state.get("errors", [])), "state": state.duplicate(true)}
 
 
 static func flush_sequence_facts(environment: Dictionary, definition: Dictionary, boundary_serial: int) -> Dictionary:

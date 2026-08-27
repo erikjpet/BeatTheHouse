@@ -274,6 +274,12 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 			if fingerprints.has(authoritative_receipt) and str(fingerprints.get(authoritative_receipt, "")) != fingerprint:
 				errors.append("operation receipt %s was reused for conflicting content." % authoritative_receipt)
 			pending.append({"operation": candidate.duplicate(true), "receipt_id": authoritative_receipt, "authored_receipt_id": authored_receipt, "fingerprint": fingerprint, "operation_index": index})
+			# An exact structural receipt plus content fingerprint authenticates a
+			# replay against the state that already contains its result. Do not run
+			# create/live-target validation a second time; conflicting fingerprints
+			# remain errors above and every new receipt is validated below.
+			if existing_receipts.has(authoritative_receipt) and str(fingerprints.get(authoritative_receipt, "")) == fingerprint:
+				continue
 		_validate_and_track_target(family, candidate, known_targets, errors)
 	var new_receipt_count := 0
 	for pending_value in pending:
@@ -902,7 +908,7 @@ static func _validate_interaction_payload(payload: Dictionary, errors: Array) ->
 		errors.append("interaction must declare safe_exit semantics.")
 	if not payload.has("alternate_exit") or typeof(payload.get("alternate_exit")) != TYPE_BOOL:
 		errors.append("interaction must declare alternate_exit semantics.")
-	elif bool(payload.get("safe_exit", false)) and bool(payload.get("alternate_exit", false)):
+	elif typeof(payload.get("safe_exit")) == TYPE_BOOL and bool(payload.get("safe_exit", false)) and bool(payload.get("alternate_exit", false)):
 		errors.append("interaction cannot be both a safe exit and an alternate exit objective.")
 
 
