@@ -6,7 +6,7 @@ contains the historical Work Log moved verbatim by
 claim, block, completion and unblock entries append here; task state and
 the binding protocol remain on the active board.
 
-Preserved entries: **124**; current entries: **130**. Use the exact find token
+Preserved entries: **124**; current entries: **131**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -14,6 +14,7 @@ below to jump to a row's history.
 | Row/tag | Entries | Find token |
 | --- | ---: | --- |
 | `art06_1` | 4 | `[art06_1]` |
+| `balance06_1` | 1 | `[balance06_1]` |
 | `board` | 1 | `[board]` |
 | `board06_1` | 4 | `[board06_1]` |
 | `chain06_1` | 1 | `[chain06_1]` |
@@ -830,6 +831,16 @@ below to jump to a row's history.
 - 2026-08-26 [board06_1] DONE. Independent review accepted `bf4fbc46`; the exact three-document semantic payload landed through integration `3c8139ce` to main `70eaaf80`. The split preserves 170/170 decisions and all 124 historical work entries, with current entries now 129; links, indexes, program rows and owner-question verdicts were verified. Post-land validation and corrected native-backed Smoke passed. The ignored owner UID and all owner artifacts were untouched; cleanup remains pending while evidence worktrees are retained.
 
 - 2026-08-26 [polish06_0] DONE. The accepted four-commit semantic payload landed as 11 source-identical planning documents through integration `7f5a989f` to main `cabf2fea`; post-land static validation and full native-backed Smoke passed. The program document, triage/tuning/cleanup prompts and release templates remain PARKED and non-claimable until the owner explicitly opens the polish pass. No version, package, release, remote or product action occurred; owner files and retained evidence remain untouched.
+
+- 2026-08-26 [balance06_1] DONE for its explicitly accepted partial scope. The
+  opt-in eight-playstyle audit prototype, honest report and hash-manifested small
+  evidence archive landed at `7c748f5b` from accepted head `7967a1e1`; Systems,
+  opt-in smoke, byte-identical determinism and full native-backed Smoke passed.
+  Contract completed all functional checks but retained a 259.847s timing-only
+  red routed to `fix06_5`. The full multi-seed/terminal/600k-EV audit, findings
+  and proposals remain NOT STARTED in the ordered `balance06_1-follow-on` after
+  Families 1 and 2. No tuning or product/economy change occurred; source and all
+  interrupted/red/green evidence remain retained.
 
 - 2026-08-25 [env06_6] Primary integrator claimed the dynamic scenario runtime
   on the isolated depth-program integration line. Initial runtime, catalog,
