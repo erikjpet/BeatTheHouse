@@ -876,3 +876,15 @@ below to jump to a row's history.
   retained; the median rule may support the cap or produce only a stale-baseline
   candidate requiring owner authorization. No Godot run, tooling/baseline/cap
   change, product action or stale-baseline conclusion occurred in this claim.
+
+- 2026-08-26 [fix06_5] EXECUTION INCONCLUSIVE pending review/landing. A clean
+  detached worktree at exact `e75f2c3d` / tree `099eeb0` received the accepted
+  ignored addon without rebuild; import and native smoke passed on
+  `native_v3`. Candidate precheck 01 was retained red (median 7.376%, p95
+  93.198%); retry 02 passed (median 6.760%, p95 12.368%). Numbered attempt 01
+  ran once with mandatory `-KeepGoing`; validation passed in 49.157s before the
+  child PowerShell process failed to locate Godot, wrapper exit 1. The attempt
+  is noneligible, is preserved, and the binding no-replacement rule stopped
+  attempts 02–05. No Contract duration, median, stale-baseline finding, cap
+  change or product/test/tool change resulted. Raw evidence remains in both
+  retained fix06_5 worktrees under `.tmp/fix06_5_contract_timing/`.
