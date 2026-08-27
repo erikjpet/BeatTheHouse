@@ -896,3 +896,132 @@ below to jump to a row's history.
   prohibited timed job. No five-eligible-run decision median, stale-baseline
   finding, cap change or product/test/tool change resulted. Raw evidence remains in both
   retained fix06_5 worktrees under `.tmp/fix06_5_contract_timing/`.
+
+- 2026-08-27 [fix06_14] CURRENT-MAIN QUALIFICATION CONSUMED RED at exact
+  integration head `161680e877b32604f3ed3f953d2a8cde5e66f82e`; no same-head
+  rerun occurred. The setup-only first invocation fresh-exported successfully,
+  then its absolute `-Out` launcher failed before the browser because the
+  resulting directory path was unsupported. Its stdout/stderr remain at
+  `.tmp/fix06_14_qualification_161680e8_actual_1`, SHA-256
+  `8E40E3BE4BD1DB0503A21DE4A6CB0BFB0E4FD8D60DF8A64ADCF84F930F3ADE99` /
+  `2F2206C7DF01D2512B12CC0B22ADE97C17B4BBB008B24594DFBE5A37C49D6C3F`.
+  The subsequent measured invocation explicitly used `-SkipExport`, so its
+  result is retained but ineligible as the binding fresh-export gate. Chrome
+  151 on `DESKTOP-1950ULQ`, CPU throttle 4, captured only six scenarios and
+  ready 20.338s against 20s. Frame/draw/resolve milliseconds were menu
+  137.605/-/-, idle 140.905/48.270/-, DROP 141.667/47.485/52.920,
+  carriage 143.978/46.425/68.930, skill stop 140.080/42.565/41.640 and
+  skill release 136.628/34.505/41.855. COLLECT and reduced motion were absent,
+  as were all their new boundary events. The report/summary remain at
+  `.tmp/fix06_14_qualification_161680e8_eligible_actual_1`, SHA-256
+  `E84E372D471704435BDF08A3F59B2EAC5B65864CDB917269615B53BC6EBAF360` /
+  `FD157D19F911D5BCCD0E23CA61E33A1EC7D86FEC2FC7D2CC2329B4BB3A0352D8`;
+  served export aggregate `F7CFFCA6A9DE10EBAF32DE151F5341D4C3EA8B98485B2908C6724573B303C38B`,
+  generated Web native `31D60D25AD00969A9F7DD115AD7B5E4DC8F1CC4795514DF309A2526F1452C8FB`.
+  Raw chronology attributes the missing tail: skill release ended at 75.776s,
+  then `coin_pusher_collect_fixture_failed` was the only later event at
+  114.537s. The 38.761s gap exhausted the fixed 240-frame production-exit poll
+  before `_reinstall_coin_pusher_fixture` could return, so COLLECT/reduced were
+  never executed. Remediation `0a3bba4faf30f8bfee6bdea477e80a3886341a49`
+  extends only that setup poll to 600 CPU-throttled frames; locked fixture,
+  actions and 120/60-frame samples are unchanged. It also validates a nonempty,
+  relative, in-repository unique JSON `-Out` before export, preventing another
+  setup-only export consumption. Static validation passed in 51.3s; PowerShell
+  parsing and the focused adversarial self-test pass. The next allowed Web run must be one direct invocation without
+  `-SkipExport` and with a new relative unique output path; none ran here.
+
+- 2026-08-27 [fix06_14] SOLE FRESH CURRENT-MAIN QUALIFICATION CONSUMED RED
+  at exact `ac70b7ebd0f569f31aece0bbbc57115fd02053b3`; no same-head
+  rerun occurred. One direct invocation used a new relative unique output,
+  fresh-exported, cleaned candidate server port 18116 / PID 11484, and left no
+  listener. Chrome 151 on `DESKTOP-1950ULQ`, CPU throttle 4, captured all eight
+  scenarios. Export aggregate SHA-256 was
+  `44D4BDC5A10D28FF36A8EE17D16EE27276B4DABCE76125E09EECFF920353DA8B`;
+  generated Web native was
+  `31D60D25AD00969A9F7DD115AD7B5E4DC8F1CC4795514DF309A2526F1452C8FB`.
+  Report/summary SHA-256 were
+  `E851380F1B729618AEF3EE3172281BC33DBF0C15CF5D950755F35F747F62A116` /
+  `88C306BDB080E39D80DFA0F47EF5D577D88268286F8D065FCA6ACDCB66070C16`.
+  Launcher stdout/stderr were
+  `3D6F7B477BCF2E7A3096D7A66D314508C85374512D3F691DDBE42AECF0A18553` /
+  `D4645323A8FA7DADCBB2227629B6356B389D1D9FBD2EB8F6DDD7DF3DCFBFAE06`;
+  server stdout/stderr were
+  `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855` /
+  `9849A8E2B6FBFFF18C2C039CB9597DA4BBBFB5221BAD7DC04A83D84048837CFA`.
+  Ready was 20.795s. Frame/draw/resolve milliseconds were menu 147.528/-/-,
+  idle 143.188/59.650/-, DROP 142.523/47.125/70.080, carriage
+  142.053/50.570/71.335, skill stop 144.444/48.515/55.730, skill release
+  141.667/46.015/45.980, COLLECT 147.160/40.370/76.690 and reduced motion
+  139.602/43.375/-. These readiness/performance reds remain owned by
+  `fix06_13`. Every new fixture, conservation, COLLECT terminal, reduced schema,
+  production draw and solver-liveness assertion passed. The sole row-owned red
+  was idle redraw count 16 below a floor of 18 computed from the scenario's
+  18.174s duration.
+
+  Diagnosis proved that duration included synchronous memory/monitor capture
+  before the sample plus surface state, two conservation snapshots and counter
+  capture afterward. Those operations never enter the production redraw
+  scheduler; the 120 sampled frames averaged 131.964ms (~15.836s) and the live
+  scheduler correctly delivered 16 one-hertz redraws. Remediation
+  `87196bd760fc523f263bc53c9da797a60baf3e59` exposes a reset-scoped
+  `surface_animation_scheduler_elapsed_msec` counter incremented only by the
+  real main-redraw scheduler and binds the unchanged 1 Hz floor to that clock.
+  Missing elapsed evidence fails closed; 18.174s/16 remains rejected, while
+  16.000s/16 is accepted. A production canvas test proves exact 200ms
+  accumulation and zero after counter reset. Static validation passed in 46.0s;
+  focused Blackjack validation/import/load/Foundation passed in
+  46.167/16.968/23.439/17.656s, report SHA-256
+  `D0CA80E30E2CA898E82173AE6DD5F61BAFCEC58A8552597FF561C0B78BF2629B`.
+  PowerShell parsing, adversarial clock self-test and `git diff --check` passed.
+  No floor, cadence, liveness, cap, sample, fixture, product tuning, Web rerun,
+  main or remote change occurred.
+
+- 2026-08-27 [fix06_14] EXACT-HEAD QUALIFICATION ROW-OWNED GREEN / FINAL DOC
+  REVIEW PENDING at `dba07c1a5c675e07cb9a3dc2956889d67086df2a`; no same-head
+  rerun occurred. Setup-only invocation actual_1 failed before export/browser
+  because `GODOT_BIN` was absent; no report exists. Launcher stdout/stderr
+  SHA-256 were
+  `93D81FA8C0529A7C803B794BE32CFB51B552C9170F0E778F4991C1DD026AD200` /
+  `B46E35CC71D60F1CF7FA803030A05BD61A09E56CC097261C8019BE305575486C`.
+  Actual measurement actual_2 used canonical Godot 4.6 SHA-256
+  `FC759F9D296FE54F09AB66D41DF6DDD2D278493B0E71109F6688EF029AD271AE`,
+  fresh export, Chrome 151, CPU throttle 4, port 18117 and exact source identity.
+  Export aggregate was
+  `E0C3B16FAA466C12B15007C894E781EE7927E70AE13B9D03F0D4AFC4E1085CD4`;
+  generated Web native
+  `31D60D25AD00969A9F7DD115AD7B5E4DC8F1CC4795514DF309A2526F1452C8FB`.
+  Report/summary SHA-256 were
+  `AD63B6D1044EF6EBD5C11300B2C9D1BBB6AB42A1793F249F287D9AD6AFD40B39` /
+  `433A1A79E6FEDA7143A50646572538FA03225DAD1DEC1DE0C493B30911500718`;
+  launcher stdout/stderr
+  `65D8C47016FA6645070AE51CFDD2DE9C338598B0FE4F0EA7A8504ED9DB30421B` /
+  `1D3A7E0E190601A1EB05D3E208BC4CE76B7EC6F61D9BA723D9698E54A2B67DB9`;
+  server stdout/stderr
+  `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855` /
+  `D4319AC01A494C1231A3304EA19D4161CDC074CC80BB52698AF6C6265435C016`.
+
+  All eight scenarios completed. Every row-owned fixture, conservation,
+  COLLECT, reduced-motion schema/draw/solver and scheduler assertion passed.
+  Idle scheduler elapsed/redraw was 15,971ms/16; reduced motion was 0ms/0 with
+  120 real draws. The summary has exactly 20 failures, all retained `fix06_13`
+  performance reds. Ready was 20.318s. Frame p95 milliseconds were menu/idle/
+  DROP/carriage/stop/release/COLLECT/reduced
+  133.333/145.180/143.178/141.855/136.135/141.632/140.458/135.750. Draw p95
+  idle/DROP/carriage/stop/release/COLLECT/reduced was
+  50.620/44.905/43.660/33.920/34.905/37.685/32.270. Resolve milliseconds were
+  61.500/42.095/44.525/41.720/46.230. No cap or evidence condition changed.
+
+  The wrapper wrote report and summary, but outer orchestration remained alive
+  until 904s because orphan Python PID 39916 retained port 18117. The PM stopped
+  that exact PID and verified process/listener clear. This is routed as new
+  docs-only row `fix06_16`; no consumed-head code changed and no Web rerun
+  occurred. fix06_14 is row-owned green but awaits exact-head documentation
+  review, main landing and proportionate post-land verification.
+
+  Exact-head native gates also passed on canonical Godot 4.6 with the ignored
+  Windows native DLL SHA-256
+  `1052770B5A96057928F67A72159D8A31B89D5591EAB7A64F07F8FCAE458E83F5`.
+  Validation/import/GDScript-load/focused Foundation Coin Pusher durations were
+  48.214/17.835/24.644/164.306s; every stage had zero failures and no stderr
+  issue. `.tmp/fix06_14_dba07c1a_coin_pusher_gate/summary.json` SHA-256 was
+  `E3F66C060752BC43FBB08798252E3269AD7C303C1C5909E7294C267A116A229A`.
