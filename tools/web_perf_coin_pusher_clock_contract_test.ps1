@@ -9,6 +9,16 @@ function Assert-ClockContract {
 Assert-ClockContract -Condition ((Get-CoinPusherRequiredIdleRedraws -DurationMsec 7587) -eq 7) -Message "Slow-frame 1 Hz floor did not use elapsed wall time."
 Assert-ClockContract -Condition ((Get-CoinPusherRequiredIdleRedraws -DurationMsec 400) -eq 1) -Message "Idle redraw floor lost its positive liveness minimum."
 
+$pathRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
+$validEvidencePath = Resolve-WebPerfEvidencePath -Root $pathRoot -Out ".tmp/fix06_14_unique/report.json"
+Assert-ClockContract -Condition ($validEvidencePath -eq [System.IO.Path]::GetFullPath((Join-Path $pathRoot ".tmp/fix06_14_unique/report.json"))) -Message "Valid relative evidence path was not resolved beneath the repository root."
+foreach ($invalidOut in @("", (Join-Path $pathRoot "absolute.json"), "../escaped.json", ".tmp/not-json.txt")) {
+    $rejected = $false
+    try { Resolve-WebPerfEvidencePath -Root $pathRoot -Out $invalidOut | Out-Null }
+    catch { $rejected = $true }
+    Assert-ClockContract -Condition $rejected -Message "Invalid evidence output path was accepted: '$invalidOut'."
+}
+
 $validObservation = [pscustomobject]@{
     boundary_body_count = 300
     boundary_tray_count = 0

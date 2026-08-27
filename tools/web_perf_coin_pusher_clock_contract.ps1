@@ -1,3 +1,23 @@
+function Resolve-WebPerfEvidencePath {
+    param([string]$Root, [string]$Out)
+    if ([string]::IsNullOrWhiteSpace($Out)) {
+        throw "Web performance evidence output must be a non-empty relative path."
+    }
+    if ([System.IO.Path]::IsPathRooted($Out)) {
+        throw "Web performance evidence output must be relative to the repository root: $Out"
+    }
+    $rootPath = [System.IO.Path]::GetFullPath($Root).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    $candidate = [System.IO.Path]::GetFullPath((Join-Path $rootPath $Out))
+    $rootPrefix = $rootPath + [System.IO.Path]::DirectorySeparatorChar
+    if (-not $candidate.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Web performance evidence output escaped the repository root: $Out"
+    }
+    if ([System.IO.Path]::GetExtension($candidate) -ne ".json") {
+        throw "Web performance evidence output must name a JSON report: $Out"
+    }
+    return $candidate
+}
+
 function Test-CoinPusherPropertiesPresent {
     param([object]$Value, [string[]]$Names)
     if ($null -eq $Value) { return $false }

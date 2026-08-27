@@ -42,6 +42,10 @@ const COIN_PUSHER_FIXTURE_SEED := "practice:coin_pusher_full_cap"
 const COIN_PUSHER_FIXTURE_BODY_COUNT := 300
 const COIN_PUSHER_IDLE_SAMPLE_FRAMES := 120
 const COIN_PUSHER_ACTION_SAMPLE_FRAMES := 60
+# CPU-throttled shipped Web frames can leave a substantial live-session
+# accumulator for the production chunked-exit path to drain. This bound affects
+# setup synchronization only; locked measurement windows remain unchanged.
+const COIN_PUSHER_EXIT_WAIT_FRAMES := 600
 
 var app: FoundationMain
 var runtime_options: Dictionary = {}
@@ -466,7 +470,7 @@ func _run_coin_pusher_plan() -> void:
 
 
 func _wait_for_coin_pusher_exit() -> bool:
-	for _frame_index in range(240):
+	for _frame_index in range(COIN_PUSHER_EXIT_WAIT_FRAMES):
 		if not bool(app.get("game_exit_settle_active")):
 			return true
 		await get_tree().process_frame

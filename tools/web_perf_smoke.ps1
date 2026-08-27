@@ -25,6 +25,15 @@ $node = Get-Command node -ErrorAction SilentlyContinue
 if (-not $node) {
     throw "Node.js was not found on PATH. The web perf smoke uses tools/l02_web_perf_probe.mjs."
 }
+$outPath = Resolve-WebPerfEvidencePath -Root $root -Out $Out
+$outDir = Split-Path -Parent $outPath
+if (Test-Path -LiteralPath $outPath) {
+    if ($Plan -eq "coin_pusher") {
+        throw "Refusing to overwrite retained Coin Pusher Web performance evidence: $outPath"
+    }
+    Remove-Item -LiteralPath $outPath -Force
+}
+New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
 $frameP95BudgetsMs = @{
     "menu_idle" = 180.0
@@ -141,15 +150,6 @@ if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($sourceCommit)) {
 $webExportIdentity = Get-WebExportIdentity -WebDirectory (Join-Path $root "builds/web")
 $exportSha256 = [string]$webExportIdentity.aggregate_sha256
 
-$outPath = Join-Path $root $Out
-$outDir = Split-Path -Parent $outPath
-New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-if (Test-Path -LiteralPath $outPath) {
-    if ($Plan -eq "coin_pusher") {
-        throw "Refusing to overwrite retained Coin Pusher Web performance evidence: $outPath"
-    }
-    Remove-Item -LiteralPath $outPath -Force
-}
 $serverStdout = Join-Path $outDir "serve_web.stdout.txt"
 $serverStderr = Join-Path $outDir "serve_web.stderr.txt"
 $serverArgs = @(
