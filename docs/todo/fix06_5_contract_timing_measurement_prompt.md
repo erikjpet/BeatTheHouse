@@ -101,8 +101,12 @@ Report all five in attempt order, not sorted order.
 A numbered attempt is timing-eligible only when it uses every locked identity,
 reaches the Contract result, completes all 16 functional checks with zero
 assertion/script/stderr failures, does not time out and identifies
-`native_v3`. Exit `126` caused only by the unchanged suite-time cap remains an
-eligible timing result. No other nonzero exit is timing-eligible.
+`native_v3`. A timing red remains eligible only when the
+`foundation_contracts` stage itself records `exit_code = 126` and that unchanged
+stage-time cap is the sole failed-stage reason. The outer `check_godot.ps1`
+wrapper exit `1` is timing-eligible if and only if that sole stage-126 budget
+result caused it while all functional, stderr, timeout and identity predicates
+above remain green. No other nonzero stage or wrapper exit is timing-eligible.
 
 - If any of the five attempts is not timing-eligible, preserve it and classify
   the five-run timing conclusion as **INCONCLUSIVE**. Route the functional,

@@ -47,8 +47,11 @@
     "functional_failures_max": 0,
     "stderr_issues_max": 0,
     "timed_out": false,
-    "budget_only_exit_code_allowed": 126,
-    "other_nonzero_exit_allowed": false
+    "foundation_contracts_stage_exit_code_for_timing_red": 126,
+    "foundation_contracts_stage_126_must_be_sole_failed_stage_reason": true,
+    "wrapper_exit_code_allowed_for_sole_stage_126_budget_red": 1,
+    "wrapper_exit_code_1_allowed_if_and_only_if_sole_stage_126_budget_red": true,
+    "other_nonzero_stage_or_wrapper_exit_allowed": false
   },
   "decision_rule": {
     "median_method": "sort_ascending_and_use_value_3_of_5_without_precomparison_rounding",
