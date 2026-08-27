@@ -18,6 +18,7 @@ param(
     [int]$Port = 8060,
     [Alias("Root")]
     [string]$ServeRoot = "",
+    [string]$ServerToken = "",
     [switch]$NoBrowser
 )
 
@@ -42,6 +43,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 port = int(sys.argv[1])
 directory = sys.argv[2]
+server_token = sys.argv[3]
 
 class IsolatedHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -50,6 +52,8 @@ class IsolatedHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Cross-Origin-Opener-Policy", "same-origin")
         self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
+        if server_token:
+            self.send_header("X-BTH-Server-Token", server_token)
         super().end_headers()
 
     def copyfile(self, source, outputfile):
@@ -59,9 +63,9 @@ class IsolatedHandler(SimpleHTTPRequestHandler):
         except ConnectionError:
             pass
 
-print(f"Serving {directory}")
-print(f"  http://127.0.0.1:{port}  (required GDExtension isolation headers)")
-print("  Ctrl+C to stop.")
+print(f"Serving {directory}", flush=True)
+print(f"  http://127.0.0.1:{port}  (required GDExtension isolation headers)", flush=True)
+print("  Ctrl+C to stop.", flush=True)
 HTTPServer(("127.0.0.1", port), IsolatedHandler).serve_forever()
 '@
 
@@ -69,4 +73,4 @@ if (-not $NoBrowser) {
     Start-Process "http://127.0.0.1:$Port"
 }
 
-$server | python - $Port $webDir
+$server | python - $Port $webDir $ServerToken

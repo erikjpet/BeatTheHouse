@@ -20,6 +20,7 @@ const { chromium, firefox } = requireFromPlaywrightInstall("playwright");
 const browserName = String(args.browser ?? "chrome");
 const url = String(args.url ?? "http://127.0.0.1:8060/?bth_perf=1&bth_perf_plan=l02&bth_perf_auto_quit=1");
 const outputPath = String(args.out ?? ".tmp/l02_baseline/web_report.json");
+const diagnosticPath = String(args.diagnosticOut ?? args["diagnostic-out"] ?? `${outputPath}.diagnostic.json`);
 const profileDir = String(args.profile ?? `.tmp/l02_playwright/${browserName}_profile`);
 const timeoutMs = Number(args.timeoutMs ?? args["timeout-ms"] ?? 900000);
 const cpuRate = Number(args.cpu ?? 1);
@@ -49,6 +50,7 @@ if (browserName === "chrome") {
 }
 
 let context;
+let page;
 let report = null;
 let ready = null;
 const started = Date.now();
@@ -61,7 +63,7 @@ const failedResponses = [];
 
 try {
   context = await browserType.launchPersistentContext(profileDir, launchOptions);
-  const page = context.pages()[0] ?? await context.newPage();
+  page = context.pages()[0] ?? await context.newPage();
   if (browserName === "chrome" && cpuRate > 1) {
     const cdp = await context.newCDPSession(page);
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpuRate });
@@ -181,6 +183,32 @@ try {
   };
   fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));
   console.log(`${readyOnly ? "Web startup" : "L0.2 web perf"} report written to ${outputPath}`);
+} catch (error) {
+  const diagnostic = {
+    status: "failed_before_report",
+    captured_at: new Date().toISOString(),
+    browser: browserName,
+    cpu_throttle_rate: cpuRate,
+    url,
+    cold_cache: coldCache,
+    ready_only: readyOnly,
+    timeout_ms: timeoutMs,
+    wall_msec: Date.now() - started,
+    ready,
+    report_captured: report !== null,
+    startup_console: startupConsole,
+    page_errors: pageErrors,
+    request_failures: requestFailures,
+    failed_responses: failedResponses,
+    page_url: page && !page.isClosed() ? page.url() : "",
+    error: String(error?.stack ?? error),
+  };
+  if (!fs.existsSync(diagnosticPath)) {
+    fs.mkdirSync(path.dirname(diagnosticPath), { recursive: true });
+    fs.writeFileSync(diagnosticPath, JSON.stringify(diagnostic, null, 2));
+    console.error(`Web perf failure diagnostic written to ${diagnosticPath}`);
+  }
+  throw error;
 } finally {
   if (context) {
     await context.close();

@@ -950,3 +950,36 @@ below to jump to a row's history.
   Iterations 2-4 exposed the COLLECT/reinstall production-clock contradiction
   now owned unchanged by `fix06_14`; that routed evidence defect does not turn
   any performance red green.
+
+- 2026-08-27 [fix06_13] EXACT CANDIDATE `5c6df79a` CONSUMED RED BEFORE ANY
+  METRIC. Its first actual eligible invocation used the accepted Chrome 151 /
+  CPU-throttle-4 / fresh-export command and ended after 625.3 seconds with
+  wrapper exit 1: the 600-second browser probe never received
+  `BTH_PERF_REPORT`. It produced no timing report, summary, metric or browser
+  envelope, so no performance value may be inferred. The exact fresh export is
+  retained with aggregate SHA-256
+  `FFB47D5320DA11B528B100C0C82CD0AE35BF8A80BFEC6A6AB4742B5236DFE0BA`
+  (11 files), native side module
+  `04D41797748BBECD308A761DF3895311CC3A085ABE86580CF1226BAA0ADC2F47`,
+  `index.html` `0D4CF3BD35EC09427AE2C4C9E8A32FAF7803F6BD4D60EFDA62AE84194E4C3A27`,
+  PCK `95F66D88058D0FCF87F8AFBF05301ABB50AA3F25EB1E13BD57CCCB1F3A0D83ED`,
+  side WASM `7AC56DD814AB3E4AA54588BAB771ECA69C6B66B57C1459DE62DCAA9B45B01987`
+  and index WASM `9C50D494628B80586F585292048331268076B74C403BCB066519F8CE2102CC35`.
+  Both server capture
+  files were empty (SHA-256 `E3B0C442...B855`). The retained result manifest is
+  `.tmp/fix06_13_locked_5c6df79a_actual_1/manifest.json`, SHA-256
+  `A865BDA21FDF14932F8BF80930432C73BF3B0EDF9222A6D3CDCE9CCAE6E8831C`.
+  The exact head will not be rerun.
+
+  Iteration-6 diagnosis proved that port 8072 was already owned by an unrelated
+  primary-tree Python server, PID 19348, created 2026-08-04 and serving
+  `D:\Projects\Beat-The-House\builds\web`; two sibling stale processes were
+  also present. The wrapper did not detect that its candidate server exited on
+  bind, and its readiness check accepted any successful HTTP responder. The
+  browser therefore measured neither the identified candidate export nor a
+  valid candidate run. The smallest remediation is test-infrastructure only:
+  require an unused loopback port, authenticate the owned server with a unique
+  response token, fail if that process exits, and retain unique wrapper and
+  browser diagnostic JSON on every pre-report failure. It changes no runtime
+  product, cap, sample count, redraw, liveness, fixture, gameplay, RNG, economy,
+  tuning, geometry, schema or migration.

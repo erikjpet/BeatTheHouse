@@ -76,13 +76,31 @@ $cornerStoreOpenBudgetMs = 1200
 $telemetryOverheadAvgBudgetMs = 0.1
 $scenarioMemoryDeltaBudgetBytes = 128MB
 
+function Assert-TcpPortAvailable {
+    param([int]$Port)
+    $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $Port)
+    try {
+        $listener.Start()
+    }
+    catch {
+        throw "Refusing to start Web performance evidence: 127.0.0.1:$Port is already in use. Choose an unused port so the measured export is unambiguous."
+    }
+    finally {
+        $listener.Stop()
+    }
+}
+
 function Wait-ForWebServer {
-    param([string]$Url, [int]$TimeoutSec)
+    param([string]$Url, [int]$TimeoutSec, [string]$ExpectedToken, [System.Diagnostics.Process]$ServerProcess)
     $deadline = (Get-Date).AddSeconds($TimeoutSec)
     while ((Get-Date) -lt $deadline) {
+        if ($ServerProcess.HasExited) {
+            throw "Owned Web server exited before it became ready (exit code $($ServerProcess.ExitCode))."
+        }
         try {
             $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 2
-            if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) {
+            $actualToken = [string]$response.Headers["X-BTH-Server-Token"]
+            if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500 -and $actualToken -eq $ExpectedToken) {
                 return
             }
         }
@@ -151,16 +169,24 @@ if (Test-Path -LiteralPath $outPath) {
 }
 $serverStdout = Join-Path $outDir "serve_web.stdout.txt"
 $serverStderr = Join-Path $outDir "serve_web.stderr.txt"
+$failurePath = [System.IO.Path]::ChangeExtension($outPath, ".failure.json")
+$diagnosticPath = [System.IO.Path]::ChangeExtension($outPath, ".diagnostic.json")
+if ($Plan -eq "coin_pusher" -and ((Test-Path -LiteralPath $failurePath) -or (Test-Path -LiteralPath $diagnosticPath))) {
+    throw "Refusing to overwrite retained Coin Pusher Web performance diagnostics beside: $outPath"
+}
+$serverToken = [guid]::NewGuid().ToString("N")
 $serverArgs = @(
     "-ExecutionPolicy", "Bypass",
     "-File", (Join-Path $PSScriptRoot "serve_web.ps1"),
     "-Port", [string]$Port,
+    "-ServerToken", $serverToken,
     "-NoBrowser"
 )
 $server = $null
 try {
+    Assert-TcpPortAvailable -Port $Port
     $server = Start-Process -FilePath (Get-Command powershell -ErrorAction Stop).Source -ArgumentList $serverArgs -WindowStyle Hidden -PassThru -RedirectStandardOutput $serverStdout -RedirectStandardError $serverStderr
-    Wait-ForWebServer -Url "http://127.0.0.1:$Port/" -TimeoutSec 30
+    Wait-ForWebServer -Url "http://127.0.0.1:$Port/" -TimeoutSec 30 -ExpectedToken $serverToken -ServerProcess $server
     $headless = if ($Headed) { "false" } else { "true" }
     $url = "http://127.0.0.1:$Port/?bth_perf=1&bth_perf_plan=$Plan&bth_perf_auto_quit=1&bth_perf_frames=$Frames&bth_perf_active_frames=$ActiveFrames&bth_perf_memory_seconds=$MemorySeconds&bth_perf_source_commit=$sourceCommit&bth_perf_export_sha256=$exportSha256"
     $profile = Join-Path $root (".tmp/web_perf_smoke/{0}_profile" -f $Browser)
@@ -173,6 +199,7 @@ try {
         "--timeout-ms=$TimeoutMs",
         "--url=$url",
         "--out=$outPath",
+        "--diagnostic-out=$diagnosticPath",
         "--profile=$profile",
         "--cold-cache=$coldCache"
     )
@@ -180,6 +207,26 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "L0.2 web perf probe failed with exit code $LASTEXITCODE."
     }
+}
+catch {
+    if (-not (Test-Path -LiteralPath $failurePath)) {
+        [ordered]@{
+            tool = "web_perf_smoke"
+            status = "failed_before_report"
+            captured_at = (Get-Date).ToString("o")
+            source_commit = $sourceCommit
+            export = $webExportIdentity
+            browser = $Browser
+            cpu_throttle_rate = $Cpu
+            port = $Port
+            report = $outPath
+            probe_diagnostic = $diagnosticPath
+            server_stdout = $serverStdout
+            server_stderr = $serverStderr
+            error = $_.Exception.Message
+        } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $failurePath -Encoding UTF8
+    }
+    throw
 }
 finally {
     if ($server -ne $null -and -not $server.HasExited) {
