@@ -13,12 +13,12 @@ $validObservation = [pscustomobject]@{
     boundary_body_count = 300
     boundary_tray_count = 0
     observed_body_count = 296
-    observed_tray_count = 4
+    observed_tray_count = 2
     liveness_before = 0
     liveness_after = 32
     conservation = [pscustomobject]@{
         active = 296; tray = 2; gutter = 2; collected = 0; cup_consumed = 0
-        origin = 300; accounted = 300; conservation_ok = $true; solver_conservation_ok = $true
+        origin = 300; accounted = 300; conservation_ok = $true; solver_invariants_present = $true; solver_conservation_ok = $true
     }
 }
 Assert-ClockContract -Condition (Test-CoinPusherReinstallClockObservation -Observation $validObservation) -Message "Valid live reinstall observation was rejected."
@@ -35,11 +35,27 @@ $lostObservation.conservation = $validObservation.conservation.PSObject.Copy()
 $lostObservation.conservation.gutter = 1
 $lostObservation.conservation.accounted = 299
 Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $lostObservation)) -Message "Lost reinstall body was accepted."
+$mismatchedObservation = $validObservation.PSObject.Copy()
+$mismatchedObservation.observed_body_count = 295
+Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $mismatchedObservation)) -Message "Reinstall surface/conservation body mismatch was accepted."
+$missingInvariantObservation = $validObservation.PSObject.Copy()
+$missingInvariantObservation.conservation = $validObservation.conservation.PSObject.Copy()
+$missingInvariantObservation.conservation.solver_invariants_present = $false
+Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $missingInvariantObservation)) -Message "Missing solver conservation invariant was accepted."
 
-$reducedBoundary = [pscustomobject]@{ body_count = 296; tray_count = 2; conservation = $validObservation.conservation }
+$reducedBoundary = [pscustomobject]@{ body_count = 296; tray_count = 2; liveness_ticks = 48; conservation = $validObservation.conservation }
 $reducedFixture = [pscustomobject]@{ body_count = 300 }
-$reducedScenario = [pscustomobject]@{ body_count_before = 296; conservation_before = $validObservation.conservation }
+$reducedScenario = [pscustomobject]@{ body_count_before = 296; tray_count_before = 2; solver_liveness_before = 48; conservation_before = $validObservation.conservation }
 Assert-ClockContract -Condition (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixture -Boundary $reducedBoundary -ScenarioTags $reducedScenario) -Message "Known 300-boundary/296-sample transition was rejected."
+$reducedCountMismatch = $reducedScenario.PSObject.Copy()
+$reducedCountMismatch.body_count_before = 295
+Assert-ClockContract -Condition (-not (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixture -Boundary $reducedBoundary -ScenarioTags $reducedCountMismatch)) -Message "Reduced sample body-count mismatch was accepted."
+$reducedTrayMismatch = $reducedScenario.PSObject.Copy()
+$reducedTrayMismatch.tray_count_before = 1
+Assert-ClockContract -Condition (-not (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixture -Boundary $reducedBoundary -ScenarioTags $reducedTrayMismatch)) -Message "Reduced sample tray-count mismatch was accepted."
+$reducedLivenessMismatch = $reducedScenario.PSObject.Copy()
+$reducedLivenessMismatch.solver_liveness_before = 49
+Assert-ClockContract -Condition (-not (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixture -Boundary $reducedBoundary -ScenarioTags $reducedLivenessMismatch)) -Message "Reduced sample liveness-boundary mismatch was accepted."
 
 $validCollect = [pscustomobject]@{
     body_count_at_accept = 299
@@ -49,11 +65,11 @@ $validCollect = [pscustomobject]@{
     tray_value_at_accept = 0
     conservation_at_accept = [pscustomobject]@{
         active = 299; tray = 0; gutter = 0; collected = 1; cup_consumed = 0
-        origin = 300; accounted = 300; conservation_ok = $true; solver_conservation_ok = $true
+        origin = 300; accounted = 300; conservation_ok = $true; solver_invariants_present = $true; solver_conservation_ok = $true
     }
     conservation_after = [pscustomobject]@{
         active = 295; tray = 2; gutter = 2; collected = 1; cup_consumed = 0
-        origin = 300; accounted = 300; conservation_ok = $true; solver_conservation_ok = $true
+        origin = 300; accounted = 300; conservation_ok = $true; solver_invariants_present = $true; solver_conservation_ok = $true
     }
 }
 Assert-ClockContract -Condition ([bool](Get-CoinPusherPostCollectAccounting -Tags $validCollect).valid) -Message "Legitimate post-COLLECT exits were rejected."
@@ -65,5 +81,11 @@ $droppedCollect.conservation_after = $validCollect.conservation_after.PSObject.C
 $droppedCollect.conservation_after.gutter = 1
 $droppedCollect.conservation_after.accounted = 299
 Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting -Tags $droppedCollect).valid) -Message "Dropped post-COLLECT outcome channel was accepted."
+$collectAcceptMismatch = $validCollect.PSObject.Copy()
+$collectAcceptMismatch.body_count_at_accept = 298
+Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting -Tags $collectAcceptMismatch).valid) -Message "COLLECT acceptance surface/conservation mismatch was accepted."
+$collectAfterMismatch = $validCollect.PSObject.Copy()
+$collectAfterMismatch.tray_count_after = 1
+Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting -Tags $collectAfterMismatch).valid) -Message "COLLECT post-window surface/conservation mismatch was accepted."
 
 Write-Host "Coin Pusher Web clock contract self-test passed."

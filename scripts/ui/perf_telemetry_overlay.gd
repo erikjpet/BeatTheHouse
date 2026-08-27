@@ -575,6 +575,7 @@ func _coin_pusher_conservation_snapshot(run_state: RunState, game: GameModule) -
 		+ int(simulation.get("external_origin_count", 0))
 	var accounted := active + tray + gutter + collected + cup_consumed
 	var invariants: Dictionary = simulation.get("last_invariants", {}) if typeof(simulation.get("last_invariants", {})) == TYPE_DICTIONARY else {}
+	var solver_invariants_present := invariants.has("conservation_ok")
 	return {
 		"active": active,
 		"tray": tray,
@@ -584,7 +585,8 @@ func _coin_pusher_conservation_snapshot(run_state: RunState, game: GameModule) -
 		"origin": origin,
 		"accounted": accounted,
 		"conservation_ok": accounted == origin,
-		"solver_conservation_ok": bool(invariants.get("conservation_ok", accounted == origin)),
+		"solver_invariants_present": solver_invariants_present,
+		"solver_conservation_ok": bool(invariants.get("conservation_ok", false)),
 	}
 
 
@@ -671,6 +673,8 @@ func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dict
 	current_tags["solver_liveness_delta"] = int(after_state.get("coin_pusher_liveness_ticks", 0)) - int(before_state.get("coin_pusher_liveness_ticks", 0))
 	current_tags["body_count_before"] = int(before_state.get("coin_pusher_body_count", -1))
 	current_tags["body_count_after"] = int(after_state.get("coin_pusher_body_count", -1))
+	current_tags["tray_count_before"] = int(before_state.get("coin_pusher_tray_count", -1))
+	current_tags["tray_count_after"] = int(after_state.get("coin_pusher_tray_count", -1))
 	current_tags["conservation_before"] = conservation_before
 	current_tags["conservation_after"] = conservation_after
 	current_tags["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
