@@ -22,6 +22,7 @@ const PEG_OCTAGON := [
 	Vector2(0.0, -1.0), Vector2(0.70710678, -0.70710678),
 ]
 const BATCH_CAPACITY := 600
+const MULTIMESH_BUFFER_STRIDE := 12
 # Match the pre-expansion 17x12 coin artwork exactly. The 68 px atlas belonged
 # to the temporary 31 px radius; retaining it with a 17 px ellipse compressed
 # the textured quad horizontally and made flat coins read as upright circles.
@@ -42,7 +43,7 @@ var _coin_mesh: QuadMesh
 var _sorted_body_cache: Array = []
 var _sorted_body_cache_key := ""
 var _sorted_body_cache_source: Array = []
-var _coin_instance_color_cache: Array = []
+var _coin_multimesh_buffer := PackedFloat32Array()
 var _palette_cache_key := ""
 var _palette_cache: Dictionary = {}
 var _world_width := SCHEMA_DEFAULT_WIDTH
@@ -392,10 +393,23 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 		var depth_scale := lerpf(1.0, REAR_WIDTH_FACTOR, clampf(y / _world_back_y, 0.0, 1.0))
 		var radius_scale := float(body.get("radius", int(_coin_radius))) / _coin_radius
 		var visual_scale := depth_scale * radius_scale
-		_coin_multimesh.set_instance_transform_2d(instance_index, Transform2D(rotation, Vector2(visual_scale, visual_scale), 0.0, point))
-		if _coin_instance_color_cache[instance_index] != body_color:
-			_coin_multimesh.set_instance_color(instance_index, body_color)
-			_coin_instance_color_cache[instance_index] = body_color
+		var transform := Transform2D(rotation, Vector2(visual_scale, visual_scale), 0.0, point)
+		var buffer_offset := instance_index * MULTIMESH_BUFFER_STRIDE
+		# RenderingServer's 2D MultiMesh buffer is two padded matrix rows,
+		# followed by vertex color. Populate all instances locally, then cross the
+		# Web rendering boundary once below.
+		_coin_multimesh_buffer[buffer_offset] = transform.x.x
+		_coin_multimesh_buffer[buffer_offset + 1] = transform.y.x
+		_coin_multimesh_buffer[buffer_offset + 2] = 0.0
+		_coin_multimesh_buffer[buffer_offset + 3] = transform.origin.x
+		_coin_multimesh_buffer[buffer_offset + 4] = transform.x.y
+		_coin_multimesh_buffer[buffer_offset + 5] = transform.y.y
+		_coin_multimesh_buffer[buffer_offset + 6] = 0.0
+		_coin_multimesh_buffer[buffer_offset + 7] = transform.origin.y
+		_coin_multimesh_buffer[buffer_offset + 8] = body_color.r
+		_coin_multimesh_buffer[buffer_offset + 9] = body_color.g
+		_coin_multimesh_buffer[buffer_offset + 10] = body_color.b
+		_coin_multimesh_buffer[buffer_offset + 11] = body_color.a
 		if falling:
 			var shadow_point := _project_delivery_board_point(board, x, z) if on_delivery_board and z > board_z_bottom + _coin_height else _project_f(x, y, board_z_bottom)
 			airborne_shadows.append({"point": shadow_point, "scale": visual_scale})
@@ -407,6 +421,7 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 		_draw_ellipse(surface, (shadow.get("point", Vector2.ZERO) as Vector2) + AIRBORNE_SHADOW_OFFSET, COIN_RX * 0.94 * shadow_scale, COIN_RY * 0.76 * shadow_scale, Color(0, 0, 0, 0.80), 0)
 	# One ordered batch is the exact depth order above; seeded rotation variants
 	# are per instance and never repartition or reorder overlapping bodies.
+	_coin_multimesh.buffer = _coin_multimesh_buffer
 	surface.surface_present_multimesh_batch(_coin_multimesh, _coin_texture, null, DESIGN_SIZE)
 	for feature_value in feature_labels:
 		var feature: Dictionary = feature_value
@@ -500,8 +515,7 @@ func _new_coin_multimesh() -> MultiMesh:
 	result.instance_count = BATCH_CAPACITY
 	result.visible_instance_count = 0
 	result.mesh = _coin_mesh
-	_coin_instance_color_cache.resize(BATCH_CAPACITY)
-	_coin_instance_color_cache.fill(Color(-1, -1, -1, -1))
+	_coin_multimesh_buffer.resize(BATCH_CAPACITY * MULTIMESH_BUFFER_STRIDE)
 	return result
 
 

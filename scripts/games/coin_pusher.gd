@@ -1215,11 +1215,15 @@ func _write_live_durable(run_state: RunState, environment: Dictionary, live_mach
 		live_machine["v2_migration_logged"] = true
 		if run_state != null:
 			run_state.log_story({"type": "coin_pusher_v2_migrated", "game_id": get_id(), "environment_id": str(environment.get("id", "")), "tray_value": int(live_machine.get("tray_value", 0)), "message": "The rebuilt pusher carries the old tray forward and reseeds its changed playfield."})
-	var durable := live_machine.duplicate(true)
+	# The live simulation is intentionally transient. Filter it before the deep
+	# copy so a UI action does not clone hundreds of solver body dictionaries
+	# only to discard them on the next two lines.
+	var durable := live_machine.duplicate(false)
 	if update_snapshot and _has_v3_simulation(live_machine):
 		durable["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(live_machine), live_machine)
 	durable.erase("simulation")
 	durable.erase("live_session")
+	durable = durable.duplicate(true)
 	_write_machine_state(environment, durable)
 
 
