@@ -1,3 +1,13 @@
+function Test-CoinPusherPropertiesPresent {
+    param([object]$Value, [string[]]$Names)
+    if ($null -eq $Value) { return $false }
+    foreach ($name in $Names) {
+        $property = $Value.PSObject.Properties[$name]
+        if ($null -eq $property -or $null -eq $property.Value) { return $false }
+    }
+    return $true
+}
+
 function Get-CoinPusherRequiredIdleRedraws {
     param([double]$DurationMsec)
     return [Math]::Max(1, [Math]::Floor(([Math]::Max(0.0, $DurationMsec)) / 1000.0))
@@ -5,7 +15,8 @@ function Get-CoinPusherRequiredIdleRedraws {
 
 function Test-CoinPusherReinstallClockObservation {
     param([object]$Observation)
-    return [int]$Observation.boundary_body_count -eq 300 `
+    return (Test-CoinPusherPropertiesPresent -Value $Observation -Names @("boundary_body_count", "boundary_tray_count", "liveness_before", "liveness_after", "observed_body_count", "observed_tray_count", "conservation")) `
+        -and [int]$Observation.boundary_body_count -eq 300 `
         -and [int]$Observation.boundary_tray_count -eq 0 `
         -and [int]$Observation.liveness_after -gt [int]$Observation.liveness_before `
         -and [int]$Observation.observed_body_count -gt 0 `
@@ -16,6 +27,9 @@ function Test-CoinPusherReinstallClockObservation {
 
 function Test-CoinPusherConservationSnapshot {
     param([object]$Snapshot, [int]$ExpectedOrigin = 300)
+    if (-not (Test-CoinPusherPropertiesPresent -Value $Snapshot -Names @("active", "tray", "gutter", "collected", "cup_consumed", "origin", "accounted", "conservation_ok", "solver_invariants_present", "solver_conservation_ok"))) {
+        return $false
+    }
     $accounted = [int]$Snapshot.active + [int]$Snapshot.tray + [int]$Snapshot.gutter + [int]$Snapshot.collected + [int]$Snapshot.cup_consumed
     return [int]$Snapshot.active -ge 0 `
         -and [int]$Snapshot.tray -ge 0 `
@@ -41,7 +55,10 @@ function Test-CoinPusherSurfaceConservationBinding {
 
 function Test-CoinPusherReducedSampleBoundary {
     param([object]$Fixture, [object]$Boundary, [object]$ScenarioTags)
-    return [int]$Fixture.body_count -eq 300 `
+    return (Test-CoinPusherPropertiesPresent -Value $Fixture -Names @("body_count")) `
+        -and (Test-CoinPusherPropertiesPresent -Value $Boundary -Names @("body_count", "tray_count", "liveness_ticks", "conservation")) `
+        -and (Test-CoinPusherPropertiesPresent -Value $ScenarioTags -Names @("body_count_before", "tray_count_before", "solver_liveness_before", "conservation_before")) `
+        -and [int]$Fixture.body_count -eq 300 `
         -and [int]$Boundary.body_count -eq [int]$ScenarioTags.body_count_before `
         -and [int]$Boundary.tray_count -eq [int]$ScenarioTags.tray_count_before `
         -and [int]$Boundary.liveness_ticks -eq [int]$ScenarioTags.solver_liveness_before `
@@ -51,6 +68,10 @@ function Test-CoinPusherReducedSampleBoundary {
 
 function Get-CoinPusherPostCollectAccounting {
     param([object]$Tags)
+    $requiredTags = @("body_count_at_accept", "body_count_after", "tray_count_at_accept", "tray_count_after", "tray_value_at_accept", "conservation_at_accept", "conservation_after")
+    if (-not (Test-CoinPusherPropertiesPresent -Value $Tags -Names $requiredTags)) {
+        return [ordered]@{ body_delta = 0; tray_delta = 0; gutter_delta = 0; valid = $false }
+    }
     $bodyDelta = [int]$Tags.body_count_at_accept - [int]$Tags.body_count_after
     $trayDelta = [int]$Tags.tray_count_after - [int]$Tags.tray_count_at_accept
     $gutterDelta = [int]$Tags.conservation_after.gutter - [int]$Tags.conservation_at_accept.gutter
