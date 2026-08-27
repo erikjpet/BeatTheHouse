@@ -993,10 +993,8 @@ static func receipt_bound_causal_action_descriptor(state: Dictionary, definition
 			break
 	if receipt_record.is_empty() or str(receipt_record.get("family", "")) != "interaction_ops" or str(receipt_record.get("boundary_id", "")) != boundary_id or str(receipt_record.get("fingerprint", "")) != operation_fingerprint:
 		return {}
-	for operation_value in _array(SequenceSchemaScript.phase(definition, str(command_value.get("expected_phase", ""))).get("interaction_ops", [])):
-		var operation := _dict(operation_value)
-		if str(operation.get("receipt_id", "")) != str(receipt_record.get("authored_receipt_id", "")) or OperationRegistryScript.operation_fingerprint(operation) != operation_fingerprint:
-			continue
+	var operation := _authored_interaction_operation_for_receipt(definition, receipt_record)
+	if not operation.is_empty():
 		var interaction := _dict(operation.get("interaction", {}))
 		for action_value in _array(interaction.get("available_actions", operation.get("available_actions", []))):
 			var action := _dict(action_value).duplicate(true)
@@ -1840,10 +1838,8 @@ static func _authored_action_origin_matches(state: Dictionary, definition: Dicti
 			break
 	if receipt_record.is_empty() or str(receipt_record.get("family", "")) != "interaction_ops" or str(receipt_record.get("boundary_id", "")) != boundary_id or str(receipt_record.get("fingerprint", "")) != fingerprint:
 		return false
-	for operation_value in _array(SequenceSchemaScript.phase(definition, str(state.get("phase_id", ""))).get("interaction_ops", [])):
-		var operation := _dict(operation_value)
-		if str(operation.get("receipt_id", "")) != str(receipt_record.get("authored_receipt_id", "")) or OperationRegistryScript.operation_fingerprint(operation) != fingerprint:
-			continue
+	var operation := _authored_interaction_operation_for_receipt(definition, receipt_record)
+	if not operation.is_empty():
 		var interaction := _dict(operation.get("interaction", {}))
 		var target_owner := str(operation.get("target_owner_namespace", interaction.get("owner_namespace", operation.get("owner_namespace", "")))) if str(operation.get("op", "")) == "augment" else str(interaction.get("owner_namespace", operation.get("owner_namespace", "")))
 		var target_stable := str(operation.get("target_stable_object_id", interaction.get("stable_object_id", operation.get("stable_object_id", "")))) if str(operation.get("op", "")) == "augment" else str(interaction.get("stable_object_id", operation.get("stable_object_id", "")))
@@ -1858,6 +1854,34 @@ static func _authored_action_origin_matches(state: Dictionary, definition: Dicti
 				and str(action.get("action_origin_owner_namespace", "")) == str(operation.get("owner_namespace", interaction.get("owner_namespace", ""))) \
 				and str(action.get("action_origin_stable_object_id", "")) == str(operation.get("stable_object_id", interaction.get("stable_object_id", "")))
 	return false
+
+
+static func _authored_interaction_operation_for_receipt(definition: Dictionary, receipt_record: Dictionary) -> Dictionary:
+	if str(receipt_record.get("family", "")) != "interaction_ops" or str(receipt_record.get("boundary_kind", "")) != "phase":
+		return {}
+	var operation_index := int(receipt_record.get("operation_index", -1))
+	var authored_receipt_id := str(receipt_record.get("authored_receipt_id", ""))
+	var fingerprint := str(receipt_record.get("fingerprint", ""))
+	var boundary_id := str(receipt_record.get("boundary_id", ""))
+	var source_ref := str(receipt_record.get("source_ref", ""))
+	if operation_index < 0 or authored_receipt_id.is_empty() or not _valid_sha256(fingerprint):
+		return {}
+	var matched: Dictionary = {}
+	for phase_value in _array(_dict(SequenceSchemaScript.sequence(definition).get("phase_graph", {})).get("phases", [])):
+		var phase_data := _dict(phase_value)
+		var phase_id := str(phase_data.get("id", ""))
+		if phase_id.is_empty() or not source_ref.begins_with("%s:" % phase_id) or not boundary_id.contains(":phase:%s:" % phase_id):
+			continue
+		var operations := _array(phase_data.get("interaction_ops", []))
+		if operation_index >= operations.size():
+			continue
+		var candidate := _dict(operations[operation_index])
+		if str(candidate.get("receipt_id", "")) != authored_receipt_id or OperationRegistryScript.operation_fingerprint(candidate) != fingerprint:
+			continue
+		if not matched.is_empty():
+			return {}
+		matched = candidate
+	return matched
 
 
 static func _command_precondition_errors(state: Dictionary, action: Dictionary) -> Array:
