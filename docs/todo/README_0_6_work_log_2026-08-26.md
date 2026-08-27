@@ -6,7 +6,7 @@ contains the historical Work Log moved verbatim by
 claim, block, completion and unblock entries append here; task state and
 the binding protocol remain on the active board.
 
-Preserved entries: **124**; current entries: **134**. Use the exact find token
+Preserved entries: **124**; current entries: **135**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -45,7 +45,7 @@ below to jump to a row's history.
 | `fix06_2 reopening` | 1 | `[fix06_2 reopening]` |
 | `fix06_2/crew06_5` | 2 | `[fix06_2/crew06_5]` |
 | `fix06_3` | 2 | `[fix06_3]` |
-| `fix06_5` | 1 | `[fix06_5]` |
+| `fix06_5` | 2 | `[fix06_5]` |
 | `fix06_6` | 2 | `[fix06_6]` |
 | `polish06_0` | 1 | `[polish06_0]` |
 | `push06_1` | 1 | `[push06_1]` |
