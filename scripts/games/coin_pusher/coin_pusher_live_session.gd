@@ -377,25 +377,39 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 	var safe_tick_count := maxi(0, tick_count)
 	var previous_views: Array = []
 	var previous_face_y := int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
-	for tick_index in range(safe_tick_count):
-		# Only the final consecutive tick pair is visible. Catch-up ticks still run
-		# one-by-one for exact input/event/RNG semantics, but do not allocate and
-		# discard a 300-body public projection after every intermediate step.
-		if tick_index == safe_tick_count - 1:
-			var current_views: Variant = session.get("presentation_current_bodies", [])
-			previous_views = current_views if safe_tick_count == 1 and typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
-			previous_face_y = int(simulation.get("face_y", 0))
+	if safe_tick_count == 1:
+		var current_views: Variant = session.get("presentation_current_bodies", [])
+		previous_views = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
+	var remaining := safe_tick_count
+	while remaining > 0:
 		var tick_value := int(simulation.get("tick", 0))
+		if safe_tick_count > 1 and remaining == 1:
+			previous_views = _presentation_body_views(simulation)
+			previous_face_y = int(simulation.get("face_y", 0))
 		_release_due_drop(machine, simulation, tick_value)
+		# A queued release is an authored tick boundary. Batch only up to that
+		# boundary so the queue produces the same one-release-per-tick trace.
+		var chunk_ticks := remaining
+		if remaining > 1:
+			chunk_ticks = remaining - 1
+		var queue: Array = machine.get("drop_queue", []) if typeof(machine.get("drop_queue", [])) == TYPE_ARRAY else []
+		if not queue.is_empty() and typeof(queue[0]) == TYPE_DICTIONARY:
+			var next_emit_tick := int((queue[0] as Dictionary).get("next_emit_tick", tick_value))
+			chunk_ticks = mini(chunk_ticks, 1 if next_emit_tick <= tick_value else next_emit_tick - tick_value)
 		var trace_slice: Array = []
 		var cursor := int(session.get("input_cursor", 0))
 		var trace: Array = session.get("input_trace", [])
-		while cursor < trace.size() and int((trace[cursor] as Dictionary).get("tick", -1)) == tick_value:
+		while cursor < trace.size() and int((trace[cursor] as Dictionary).get("tick", -1)) < tick_value + chunk_ticks:
 			trace_slice.append(trace[cursor])
 			cursor += 1
 		session["input_cursor"] = cursor
-		var result := CoinPusherSolverScript.step_ticks(simulation, {"input_trace": trace_slice, "rng": rng, "motor_enabled": bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false))}, 1)
+		var result := CoinPusherSolverScript.step_ticks(simulation, {
+			"input_trace": trace_slice,
+			"rng": rng,
+			"motor_enabled": bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false)),
+		}, chunk_ticks)
 		all_events.append_array(result.get("events", []))
+		remaining -= chunk_ticks
 	if safe_tick_count > 0:
 		var current_views := _presentation_body_views(simulation)
 		session["presentation_previous_bodies"] = previous_views
