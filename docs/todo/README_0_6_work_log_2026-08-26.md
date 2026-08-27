@@ -6,7 +6,7 @@ contains the historical Work Log moved verbatim by
 claim, block, completion and unblock entries append here; task state and
 the binding protocol remain on the active board.
 
-Preserved entries: **124**; current entries: **135**. Use the exact find token
+Preserved entries: **124**; current entries: **146**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -47,6 +47,7 @@ below to jump to a row's history.
 | `fix06_3` | 2 | `[fix06_3]` |
 | `fix06_5` | 2 | `[fix06_5]` |
 | `fix06_6` | 2 | `[fix06_6]` |
+| `fix06_17` | 1 | `[fix06_17]` |
 | `polish06_0` | 1 | `[polish06_0]` |
 | `push06_1` | 1 | `[push06_1]` |
 | `push06_2` | 1 | `[push06_2]` |
@@ -1190,3 +1191,15 @@ below to jump to a row's history.
   unpark only to semantic current-main integration, current-main gates,
   independent exact-head review and exactly one new locked shipped-Web run.
   This closeout did not change or run fix06_13.
+
+- 2026-08-27 [fix06_17] ROUTED / TODO; nonblocking for `fix06_13`. Read-only
+  audit of exact candidate `cce1c8df` retained native performance actual_1
+  verified report SHA-256 `4195D724...6090EA` and exactly one failure: Scratch
+  resolve max `12.046/6.000 ms`, while avg/p95 were green at
+  `2.34789583333333/3.734 ms`. Historical isolated 12 ms spikes and multiple
+  green five-run series support measurement/tail variance, not a reproduced
+  product regression; the red remains open for a predeclared five-run idle-host
+  classification and cannot be waived. Every Coin Pusher metric was green on
+  descriptor-selected `native_v3` DLL `31FF8C0D...B8A8`, with zero full-
+  snapshot/fallback counts. No timing/browser rerun, cap/test/product change,
+  evidence replacement, release, remote or owner-artifact action occurred.
