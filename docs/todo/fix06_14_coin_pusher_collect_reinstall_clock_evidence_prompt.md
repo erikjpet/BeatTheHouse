@@ -1,4 +1,4 @@
-Status: IN PROGRESS / FINAL DOC REVIEW PENDING
+Status: DONE
 Board row: `fix06_14` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_14: Coin Pusher COLLECT/reinstall production-clock evidence
@@ -88,6 +88,36 @@ clear. This lifecycle issue is routed without changing the consumed head as
 `fix06_16`; it must close before the next locked `fix06_13` run. Exact hashes
 and every timing are preserved in the canonical ledger and dated work log.
 
-fix06_14 is row-owned green but remains IN PROGRESS until this documentation
-head receives independent review, lands on `main`, and passes proportionate
-post-land verification.
+At that stage fix06_14 was row-owned green but remained IN PROGRESS pending
+independent documentation review, main landing and proportionate post-land
+verification. The completed results follow.
+
+## Main landing and post-land verification — 2026-08-27
+
+Main merge `616b5a76eceaf0133e4ac70b34ca5b13e39b30df` has parents
+`7cd6a5cb7a7c6c20875587bb6dade08bf221cbdc` and
+`5917baf2d4d557c2ee2512530706e5c69295722b`. The owner working tree and its WIP
+were untouched.
+
+The first post-land gate ran in disposable `D:\bth-f14-post`. Validation passed
+in 51.033s, then import failed environmentally in 43.037s with exit 127 and 74
+stderr issues because D: had only 270,336 bytes free. Its summary was preserved
+before removing only the disposable worktree at
+`.tmp/fix06_14_postland_616b5a76_coin_pusher_gate_disk_full_red/summary.json`,
+SHA-256
+`2C7BD60F8390E4BF40BCDAB37079080D6800C0CD4606DFB00406A6F522A20CBB`.
+Removing that worktree restored 1,054,285,824 bytes free.
+
+This branch was then fast-forwarded only to exact main `616b5a76`. The single
+corrected retry used the same ignored Windows native DLL SHA-256
+`1052770B5A96057928F67A72159D8A31B89D5591EAB7A64F07F8FCAE458E83F5`.
+Validation/import/GDScript load/focused Foundation Coin Pusher passed in
+47.832/17.645/23.346/164.588s with zero failures and zero stderr issues. The
+summary at
+`.tmp/fix06_14_postland_616b5a76_coin_pusher_gate_corrected/summary.json` has
+SHA-256
+`C597F0FD471239418E31215FAAFE11A0D942653DD2DBB2ACB6D943BABEAC11DD`.
+
+fix06_14 is DONE, landed and post-land green. `fix06_13` remains parked behind
+TODO lifecycle row `fix06_16`; neither retained Web evidence nor any cap was
+changed or rerun.
