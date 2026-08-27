@@ -1,6 +1,7 @@
 class_name CoinPusherRenderer
 extends RefCounted
 
+const CoinPusherSolverAPI := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const DESIGN_SIZE := Vector2(900, 430)
 const CABINET_RECT := Rect2(34, 18, 832, 400)
 const MARQUEE_RECT := Rect2(170, 4, 560, 38)
@@ -346,6 +347,8 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 	var current: Array = state.get("coin_pusher_bodies", []) if typeof(state.get("coin_pusher_bodies", [])) == TYPE_ARRAY else []
 	var previous: Array = state.get("coin_pusher_previous_bodies", []) if typeof(state.get("coin_pusher_previous_bodies", [])) == TYPE_ARRAY else []
 	var alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
+	if _draw_native_interpolated_bodies(surface, state, cabinet, current, previous, alpha):
+		return
 	var aligned_previous := alpha < 0.999 and _body_order_matches(current, previous)
 	var previous_by_id := {}
 	if alpha < 0.999 and not aligned_previous:
@@ -427,6 +430,41 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 		var label := str(labels.get(kind, kind.left(1).to_upper()))
 		if not label.is_empty():
 			surface.surface_reel_symbol_label(label, Rect2(point - Vector2(9, 8), Vector2(18, 16)), 10, Color("#111722"))
+
+
+func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dictionary, current: Array, previous: Array, alpha: float) -> bool:
+	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var body_colors: Dictionary = cabinet.get("body_colors", {}) if typeof(cabinet.get("body_colors", {})) == TYPE_DICTIONARY else {}
+	var batch := CoinPusherSolverAPI.native_live_render_batch({
+		"world_width": _world_width,
+		"world_back_y": _world_back_y,
+		"coin_height": _coin_height,
+		"coin_radius": _coin_radius,
+		"board": _delivery_board(apparatus, geometry),
+		"body_colors": body_colors,
+	}, current, previous, alpha)
+	if batch.is_empty() or typeof(batch.get("buffer", null)) != TYPE_PACKED_FLOAT32_ARRAY:
+		return false
+	var count := int(batch.get("count", 0))
+	if _coin_multimesh.instance_count != count:
+		_coin_multimesh.instance_count = count
+	_coin_multimesh.visible_instance_count = count
+	for shadow_value in batch.get("shadows", []):
+		var shadow: Dictionary = shadow_value
+		var shadow_scale := float(shadow.get("scale", 1.0))
+		_draw_ellipse(surface, (shadow.get("point", Vector2.ZERO) as Vector2) + AIRBORNE_SHADOW_OFFSET, COIN_RX * 0.94 * shadow_scale, COIN_RY * 0.76 * shadow_scale, Color(0, 0, 0, 0.80), 0)
+	_coin_multimesh.buffer = batch["buffer"] as PackedFloat32Array
+	surface.surface_present_multimesh_batch(_coin_multimesh, _coin_texture, null, DESIGN_SIZE)
+	var labels: Dictionary = cabinet.get("body_labels", {}) if typeof(cabinet.get("body_labels", {})) == TYPE_DICTIONARY else {}
+	for feature_value in batch.get("features", []):
+		var feature: Dictionary = feature_value
+		var point: Vector2 = feature["point"]
+		var kind := str(feature.get("kind", ""))
+		var label := str(labels.get(kind, kind.left(1).to_upper()))
+		if not label.is_empty():
+			surface.surface_reel_symbol_label(label, Rect2(point - Vector2(9, 8), Vector2(18, 16)), 10, Color("#111722"))
+	return true
 
 
 func _depth_sorted_body_indices(bodies: Array, presentation_view_serial: int) -> Array:

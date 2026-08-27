@@ -55,6 +55,7 @@ static func _run_contract() -> Dictionary:
 		"live_cache_key": "contract:a",
 		"live_cache_reset": true,
 		"capture_previous_views": true,
+		"capture_current_views": true,
 	}, 5)
 	var reference_result := Solver.step_ticks_reference_for_test(reference_state, {
 		"input_trace": first_trace,
@@ -72,6 +73,8 @@ static func _run_contract() -> Dictionary:
 	_assert_equal("first cached RNG boundary", native_rng.snapshot(), reference_rng.snapshot(), failures)
 	_assert_equal("pre-final presentation bodies", native_result.get("presentation_previous_bodies", []), _presentation_views(previous_reference), failures)
 	_assert_equal("pre-final presentation face", int(native_result.get("presentation_previous_face_y", -1)), int(previous_reference.get("face_y", -2)), failures)
+	_assert_equal("current presentation bodies", native_result.get("presentation_current_bodies", []), _presentation_views(reference_state), failures)
+	_assert_equal("current presentation face", int(native_result.get("presentation_current_face_y", -1)), int(reference_state.get("face_y", -2)), failures)
 
 	# An ordinary production solver call has no live key. It must neither consume
 	# nor replace the retained live kernel used by the following continuation.
@@ -138,6 +141,25 @@ static func _run_contract() -> Dictionary:
 	}, 2)
 	_assert_equal("key switch reloads exact supplied state", Solver.canonical_digest(native_state), Solver.canonical_digest(reference_state), failures)
 	_assert_equal("key switch continuation physics events", _physics_events(third_native.get("events", [])), _physics_events(third_reference.get("events", [])), failures)
+
+	# A deterministic fixture can create a brand-new authority with the same
+	# logical cache key. Its explicit reset must discard the retained vector even
+	# when body count and tick happen to match the prior machine.
+	var replacement := Solver.create_machine(_rng("LIVE-BATCH-REPLACEMENT"), definition, 18)
+	var replacement_reference: Dictionary = replacement.duplicate(true)
+	var replacement_tick := int(replacement.get("tick", 0))
+	var replacement_trace := [{"tick": replacement_tick, "kind": "nudge", "x": -500, "y": -500}]
+	var replacement_native: Dictionary = native.call("step_ticks", replacement, {
+		"input_trace": replacement_trace,
+		"motor_enabled": false,
+		"live_cache_key": "contract:a",
+		"live_cache_reset": true,
+		"capture_current_views": true,
+	}, 2)
+	var replacement_reference_result := Solver.step_ticks_reference_for_test(replacement_reference, {"input_trace": replacement_trace, "motor_enabled": false}, 2)
+	_assert_equal("same-key generation reset state", Solver.canonical_digest(replacement), Solver.canonical_digest(replacement_reference), failures)
+	_assert_equal("same-key generation reset physics events", _physics_events(replacement_native.get("events", [])), _physics_events(replacement_reference_result.get("events", [])), failures)
+	_assert_equal("same-key generation current presentation", replacement_native.get("presentation_current_bodies", []), _presentation_views(replacement_reference), failures)
 
 	var payload := {
 		"native_final": Solver.canonical_digest(native_state),

@@ -55,6 +55,10 @@ static func native_live_batch_supported() -> bool:
 	return CoinPusherSolverScript.native_live_batch_supported()
 
 
+static func native_live_render_batch(config: Dictionary, current: Array, previous: Array, alpha: float) -> Dictionary:
+	return CoinPusherSolverScript.native_live_render_batch(config, current, previous, alpha)
+
+
 static func replay_input_trace(snapshot: Dictionary, rng: RngStream, trace: Array, ticks: int) -> Dictionary:
 	return CoinPusherSolverScript.replay_input_trace(snapshot, rng, trace, ticks)
 
