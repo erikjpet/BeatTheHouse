@@ -9,6 +9,11 @@ const CORNER_STORE_ID := "corner_store"
 const GAS_CASINO_ID := "gas_station_casino"
 const UNDERGROUND_CASINO_ID := "small_underground_casino"
 const GRAND_CASINO_ID := "grand_casino"
+const RELEASE_REPORTING_COUNTER_KEYS := [
+	"crew_path_runs", "crew_members_met", "crew_jobs_completed", "crew_jobs_abandoned", "crew_turn_resolutions",
+	"nights_survived", "scenarios_experienced", "notable_aftermath_outcomes", "sweeps_encountered", "rumors_proved_true",
+	"numbers_slips_placed", "numbers_hits", "numbers_rig_runs", "delivery_runs_completed", "delivery_packages_lost",
+]
 
 
 static func environment_open_status(run_state: RunState, archetype: Dictionary, minute_of_day: int) -> Dictionary:
@@ -121,7 +126,9 @@ static func should_auto_start(profile: Variant, meta_snapshot: Dictionary) -> bo
 			return false
 	for field_name in ["challenge_completions", "daily_runs", "lifetime_stats", "act_seam"]:
 		var value: Variant = profile.get(field_name)
-		if typeof(value) == TYPE_DICTIONARY and _dictionary_has_progress(value):
+		if typeof(value) == TYPE_DICTIONARY and (
+				_lifetime_stats_has_progress(value) if field_name == "lifetime_stats" else _dictionary_has_progress(value)
+		):
 			return false
 	for field_name in ["owned_instances", "unopened_bags", "loadout"]:
 		var value: Variant = meta_snapshot.get(field_name, [])
@@ -131,6 +138,41 @@ static func should_auto_start(profile: Variant, meta_snapshot: Dictionary) -> bo
 		return false
 	if str(meta_snapshot.get("housing_tier", "back_alley")) != "back_alley":
 		return false
+	return true
+
+
+static func _lifetime_stats_has_progress(value: Dictionary) -> bool:
+	var remaining := value.duplicate(true)
+	var release_value: Variant = remaining.get("release_0_6", {})
+	remaining.erase("release_0_6")
+	if _dictionary_has_progress(remaining):
+		return true
+	if typeof(release_value) != TYPE_DICTIONARY:
+		return true
+	return not _release_reporting_is_canonical_default(release_value as Dictionary)
+
+
+static func _release_reporting_is_canonical_default(release: Dictionary) -> bool:
+	# Only ProfileInventory's exact schema-5 zero shape is neutral. Unknown keys
+	# are forward-compatible evidence of activity and conservatively block the
+	# one-time automatic tutorial even when their values look empty.
+	if release.size() != RELEASE_REPORTING_COUNTER_KEYS.size() + 3:
+		return false
+	if not release.has("highest_crew_standing") \
+			or typeof(release.get("highest_crew_standing")) != TYPE_STRING \
+			or str(release.get("highest_crew_standing")) != "stranger":
+		return false
+	if not release.has("crew_member_ids_met") \
+			or typeof(release.get("crew_member_ids_met")) != TYPE_ARRAY \
+			or not (release.get("crew_member_ids_met") as Array).is_empty():
+		return false
+	if not release.has("crew_members_met_unique") \
+			or typeof(release.get("crew_members_met_unique")) != TYPE_INT \
+			or int(release.get("crew_members_met_unique")) != 0:
+		return false
+	for key in RELEASE_REPORTING_COUNTER_KEYS:
+		if not release.has(key) or typeof(release.get(key)) != TYPE_INT or int(release.get(key)) != 0:
+			return false
 	return true
 
 

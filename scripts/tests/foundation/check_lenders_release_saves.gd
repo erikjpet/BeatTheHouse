@@ -119,6 +119,138 @@ class EmbeddedRefreshProbeHost:
 
 
 func _check_run_report_foundation(failures: Array) -> void:
+	var outcome_registry := RunReportViewModelScript.load_outcome_registry()
+	var terminal_cases: Array = []
+	var failure_reasons := RunStateScript.terminal_failure_reasons()
+	var expected_failure_reasons := [
+		RunStateScript.FAILURE_BANKROLL_ZERO,
+		RunStateScript.FAILURE_STRANDED,
+		RunStateScript.FAILURE_POLICE_CAPTURE,
+		RunStateScript.FAILURE_CASINO_TAKEN_OUT_BACK,
+		RunStateScript.FAILURE_ABANDONED,
+	]
+	if failure_reasons != expected_failure_reasons:
+		failures.append("Terminal report registry did not cover all five producible failure reasons: %s." % JSON.stringify(failure_reasons))
+	for failure_reason in failure_reasons:
+		terminal_cases.append({"status": RunStateScript.RUN_STATUS_FAILED, "reason": str(failure_reason)})
+	for definition_value in RunStateScript.terminal_victory_route_definitions():
+		var definition: Dictionary = definition_value
+		var runtime_route := str(definition.get("runtime_id", ""))
+		var profile_route := str(definition.get("profile_id", ""))
+		var production_run: RunState = RunStateScript.new()
+		production_run.start_new("META06-ROUTE-%s" % profile_route)
+		production_run.run_status = RunStateScript.RUN_STATUS_ENDED
+		production_run.narrative_flags["demo_victory"] = true
+		production_run.narrative_flags["demo_victory_route"] = runtime_route
+		if str(production_run.act_two_seam_payload().get("victory_route", "")) != profile_route:
+			failures.append("Terminal route registry diverged from the production Act-seam path: %s." % JSON.stringify(definition))
+		if runtime_route == RunStateScript.CREW_HEIST_ROUTE:
+			for heist_outcome in RunStateScript.terminal_crew_heist_outcomes():
+				terminal_cases.append({"status": RunStateScript.RUN_STATUS_ENDED, "route": runtime_route, "heist_outcome": str(heist_outcome)})
+		else:
+			terminal_cases.append({"status": RunStateScript.RUN_STATUS_ENDED, "route": runtime_route})
+	var report_aliases := RunStateScript.terminal_report_route_aliases()
+	var report_alias_ids: Array = report_aliases.keys()
+	report_alias_ids.sort()
+	for alias_value in report_alias_ids:
+		terminal_cases.append({"status": RunStateScript.RUN_STATUS_ENDED, "route": str(alias_value), "report_only": true})
+	for terminal_case in terminal_cases:
+		var terminal_data := {
+			"run_status": str(terminal_case.get("status", "")),
+			"run_failure_reason": str(terminal_case.get("reason", "")),
+			"run_failure_message": "",
+			"narrative_flags": {
+				"demo_victory": str(terminal_case.get("status", "")) == RunStateScript.RUN_STATUS_ENDED,
+				"demo_victory_route": str(terminal_case.get("route", "")),
+				"crew_heist_outcome": str(terminal_case.get("heist_outcome", "")),
+			},
+			"current_environment": {"display_name": "Terminal Fixture"},
+			"game_clock_minutes": RunStateScript.GAME_CLOCK_START_MINUTE,
+		}
+		var terminal_outcome := RunReportViewModelScript.build_outcome(terminal_data, outcome_registry)
+		if str(terminal_outcome.get("title", "")).is_empty() or str(terminal_outcome.get("how", "")).is_empty() or str(terminal_outcome.get("icon_path", "")).is_empty() or not ResourceLoader.exists(str(terminal_outcome.get("icon_path", ""))):
+			failures.append("Run report did not map a finished-run route to complete renderable copy: %s -> %s." % [JSON.stringify(terminal_case), JSON.stringify(terminal_outcome)])
+
+	var ledger_fixture := {
+		"run_status": RunStateScript.RUN_STATUS_FAILED,
+		"game_clock_minutes": RunStateScript.GAME_CLOCK_START_MINUTE + 3000,
+		"narrative_flags": {"profile_games_played": {"craps": 3, "coin_pusher": 2, "crew_draw_poker": 4}, "profile_delivery_runs_completed": 2, "profile_delivery_packages_lost": 1},
+		"crew_state": {
+			"trust": {"crew_rook": 20, "crew_lucky": 40},
+			"jobs": {"job_good": {"status": "resolved", "outcome": "success"}, "job_left": {"status": "resolved", "outcome": "abandoned"}},
+			"crew_heist": {"plan_id": "the_count", "status": "setup", "x": {"m": "crew_lucky", "w": 9, "e": ["pattern"], "c": false}},
+		},
+		"world_map": {
+			"visited_path": ["bar", "corner_store"],
+			"nodes": [
+				{"id": "bar", "environment": {"scenario_state": {"id": "bar_wake", "display_name": "The Wake"}}},
+				{"id": "corner_store", "environment": {"scenario_state": {"id": "corner_store_aftermath", "display_name": "The Aftermath"}}},
+			],
+		},
+		"current_environment": {"world_node_id": "corner_store", "scenario_state": {"id": "corner_store_aftermath", "display_name": "The Aftermath"}},
+		"story_log": [
+			{"type": "police_sweep_encounter"},
+			{"type": "event", "event_id": "scenario_aftermath_fence_offer", "choice_id": "take"},
+		],
+		"town_state": {"living_world": {"heard_by_node": {"corner_store": {"id": "rumor:scenario:corner_store"}, "pawn_shop": {"id": "rumor:scenario:pawn_shop"}}}},
+		"numbers_state": {
+			"slips": [{"status": "settled", "won": true}, {"status": "settled", "won": false}, {"status": "confiscated"}],
+			"fix_state": {"status": "completed"},
+		},
+	}
+	var failed_ledger := RunReportViewModelScript.build_release_ledger(ledger_fixture)
+	var failed_ledger_text := JSON.stringify(failed_ledger).to_lower()
+	if failed_ledger_text.contains("the turn") or failed_ledger_text.contains("traitor") or failed_ledger_text.contains("grievance") or failed_ledger_text.contains("pattern") or failed_ledger_text.contains("\"w\":9"):
+		failures.append("Unresolved/failed run ledger leaked Turn or hidden heist state: %s." % JSON.stringify(failed_ledger))
+	var failed_world := _copy_dict(failed_ledger.get("world", {}))
+	var failed_numbers := _copy_dict(failed_ledger.get("numbers", {}))
+	if _copy_array(failed_world.get("scenarios", [])).size() != 2 or _copy_array(failed_world.get("notable_outcomes", [])).size() != 1 or int(failed_world.get("sweeps_encountered", 0)) != 1 or int(failed_world.get("rumors_proved_true", 0)) != 1 \
+		or int(failed_numbers.get("slips_placed", 0)) != 3 or int(failed_numbers.get("hits", 0)) != 1 or not bool(failed_numbers.get("rig_route_used", false)) or _copy_array(failed_ledger.get("games", [])).size() != 3:
+		failures.append("Run report did not aggregate the complete visible 0.6 ledger at terminal boundary: %s." % JSON.stringify(failed_ledger))
+	var midnight_ledger := RunReportViewModelScript.build_release_ledger({"game_clock_minutes": 1440})
+	if int(_copy_dict(midnight_ledger.get("world", {})).get("nights_survived", 0)) != 1:
+		failures.append("Run report did not record the first survived night at the existing calendar-day boundary.")
+	var meeting_run: RunState = RunStateScript.new()
+	meeting_run.start_new("META06-MEETING-BOUNDARY")
+	meeting_run.crew_trust_by_member["crew_rook"] = CrewStateModelScript.rank_threshold("marker")
+	meeting_run.crew_trust_by_member["crew_lucky"] = CrewStateModelScript.rank_threshold("associate")
+	meeting_run.crew_trust_by_member["crew_bishop"] = CrewStateModelScript.rank_threshold("marker") - 1
+	var production_met: Array = meeting_run.call("_crew_heist_met_members")
+	var reported_members := _copy_array(_copy_dict(RunReportViewModelScript.build_release_ledger(meeting_run.to_dict()).get("crew", {})).get("members_met", []))
+	var reported_member_ids: Array = []
+	for member in reported_members:
+		reported_member_ids.append(str(_copy_dict(member).get("id", "")))
+	if reported_member_ids != production_met or reported_member_ids != ["crew_rook", "crew_lucky"]:
+		failures.append("Run report member detection diverged from the production rank!=stranger meeting boundary: production=%s report=%s." % [JSON.stringify(production_met), JSON.stringify(reported_member_ids)])
+	var completed_ledger_fixture := ledger_fixture.duplicate(true)
+	completed_ledger_fixture["run_status"] = RunStateScript.RUN_STATUS_ENDED
+	completed_ledger_fixture["narrative_flags"]["demo_victory"] = true
+	completed_ledger_fixture["narrative_flags"]["demo_victory_route"] = "crew_heist"
+	completed_ledger_fixture["narrative_flags"]["demo_victory_message"] = "The Turn broke the score. The crew left before the room could count twice."
+	completed_ledger_fixture["crew_state"]["crew_heist"]["status"] = "completed"
+	var completed_ledger := RunReportViewModelScript.build_release_ledger(completed_ledger_fixture)
+	if not str(_copy_dict(completed_ledger.get("crew", {})).get("turn_resolution", "")).contains("The Turn"):
+		failures.append("A completed heist did not surface its contract-approved ending-only Turn resolution.")
+
+	var delivery_reporting_run: RunState = RunStateScript.new()
+	delivery_reporting_run.start_new("META06-DELIVERY-REPORTING")
+	delivery_reporting_run.active_delivery_run = {"status": "resolved", "world_applied": false, "mode": "package", "run_id": "fixture:success", "resolution": {"outcome": "success", "reason": "delivered"}, "consumer_payload": {}}
+	delivery_reporting_run._apply_delivery_resolution()
+	delivery_reporting_run._apply_delivery_resolution()
+	delivery_reporting_run.active_delivery_run = {"status": "resolved", "world_applied": false, "mode": "multi_stop", "run_id": "fixture:loss", "resolution": {"outcome": "failure", "reason": "swept"}, "consumer_payload": {}}
+	delivery_reporting_run._apply_delivery_resolution()
+	delivery_reporting_run.active_delivery_run = {"status": "resolved", "world_applied": false, "mode": "getaway", "run_id": "heist:fixture:getaway", "resolution": {"outcome": "success", "reason": "escaped"}, "consumer_payload": {}}
+	delivery_reporting_run._apply_delivery_resolution()
+	delivery_reporting_run.active_delivery_run = {"status": "resolved", "world_applied": false, "mode": "hold", "run_id": "fixture:lookout", "resolution": {"outcome": "failure", "reason": "attention"}, "consumer_payload": {}}
+	delivery_reporting_run._apply_delivery_resolution()
+	if int(delivery_reporting_run.narrative_flags.get("profile_delivery_runs_completed", 0)) != 1 or int(delivery_reporting_run.narrative_flags.get("profile_delivery_packages_lost", 0)) != 1:
+		failures.append("Delivery reporting counters were not idempotent or counted a lookout/getaway as a package route.")
+	var delivery_round_trip := delivery_reporting_run.to_dict()
+	var delivery_restored: RunState = RunStateScript.new()
+	delivery_restored.from_dict(delivery_round_trip)
+	if int(delivery_restored.narrative_flags.get("profile_delivery_runs_completed", 0)) != 1 or int(delivery_restored.narrative_flags.get("profile_delivery_packages_lost", 0)) != 1:
+		failures.append("Delivery reporting counters did not survive run save/load.")
+
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("RUN-REPORT-FOUNDATION")
 	run_state.set_environment({"id": "bar_fixture", "world_node_id": "bar", "archetype_id": "bar", "display_name": "Fixture Bar"})
