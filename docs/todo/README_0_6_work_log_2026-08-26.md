@@ -47,6 +47,8 @@ below to jump to a row's history.
 | `fix06_3` | 2 | `[fix06_3]` |
 | `fix06_5` | 2 | `[fix06_5]` |
 | `fix06_6` | 2 | `[fix06_6]` |
+| `fix06_14` | 4 | `[fix06_14]` |
+| `fix06_16` | 6 | `[fix06_16]` |
 | `fix06_17` | 1 | `[fix06_17]` |
 | `polish06_0` | 1 | `[polish06_0]` |
 | `push06_1` | 1 | `[push06_1]` |
@@ -1196,10 +1198,13 @@ below to jump to a row's history.
   audit of exact candidate `cce1c8df` retained native performance actual_1
   verified report SHA-256 `4195D724...6090EA` and exactly one failure: Scratch
   resolve max `12.046/6.000 ms`, while avg/p95 were green at
-  `2.34789583333333/3.734 ms`. Historical isolated 12 ms spikes and multiple
-  green five-run series support measurement/tail variance, not a reproduced
-  product regression; the red remains open for a predeclared five-run idle-host
-  classification and cannot be waived. Every Coin Pusher metric was green on
-  descriptor-selected `native_v3` DLL `31FF8C0D...B8A8`, with zero full-
-  snapshot/fallback counts. No timing/browser rerun, cap/test/product change,
-  evidence replacement, release, remote or owner-artifact action occurred.
+  `2.34789583333333/3.734 ms`. Historical evidence includes a max-only
+  `2.66772916666667/4.901/12.652 ms` red and a broadly slow
+  `5.565/11.716/12.621 ms` run; the latter is not an isolated maximum. Multiple
+  green five-run series still support measurement/timing variance rather than a
+  reproduced product regression. Every red remains open for a predeclared
+  five-run idle-host classification and cannot be waived. Every Coin Pusher
+  metric was green on descriptor-selected `native_v3` DLL
+  `31FF8C0D...B8A8`, with zero full-snapshot/fallback counts. No timing/browser
+  rerun, cap/test/product change, evidence replacement, release, remote or
+  owner-artifact action occurred.

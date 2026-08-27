@@ -1,4 +1,4 @@
-Status: TODO / ROUTED — nonblocking measurement-classification defect
+Status: TODO — ROUTED as a nonblocking measurement-classification defect
 Board row: `fix06_17` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_17: Scratch resolve tail-timing classification
@@ -43,14 +43,16 @@ contains exactly one failure, so this unrelated Scratch result does not block
 ## Current classification
 
 The retained evidence supports **measurement/tail-latency variance, not a
-reproduced Scratch product regression**. Historical retained runs include
-isolated Scratch maxima of `12.652 ms` and `12.621 ms`, while the five-run
-classification series after the accepted renderer work measured maxima
+reproduced Scratch product regression**. Historical retained runs include one
+max-only red at avg/p95/max `2.66772916666667/4.901/12.652 ms`, but the other
+roughly 12 ms observation was a broadly slow run at
+`5.565/11.716/12.621 ms`, not an isolated maximum. The five-run classification
+series after the accepted renderer work measured maxima
 `4.235/4.093/4.102/3.975/3.831 ms`, and another five-run series measured
 `4.530/4.352/4.570/4.351/4.330 ms`. The current average and p95 are green and
-only one of 48 samples produced the max red. The recurring isolated spike is
-still a real guard failure and therefore remains routed here; it is not waived
-or reclassified green.
+only one of 48 samples produced the max red. This mixed tail/whole-run timing
+variance still contains real guard failures and therefore remains routed here;
+it is not waived or reclassified green.
 
 ## Required work
 
