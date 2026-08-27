@@ -5,13 +5,14 @@ contains the historical Discovery & Decision Log moved verbatim by
 `board06_1`. Future scope discoveries, deviations and decisions append
 here; task state, protocol and owner questions remain on the active board.
 
-Preserved entries: **174**; current entries: **177**. Use the exact find token
+Preserved entries: **174**; current entries: **178**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
 
 | Row/tag | Entries | Find token |
 | --- | ---: | --- |
+| `balance06_1/fix06_5` | 1 | `[balance06_1/fix06_5]` |
 | `board` | 5 | `[board]` |
 | `board06_1` | 3 | `[board06_1]` |
 | `content06_1` | 6 | `[content06_1]` |
@@ -1592,3 +1593,11 @@ below to jump to a row's history.
   `scripts/core/streets_run_model.gd.uid` is absent from the clean branch and
   exists only as pre-existing user state outside it, so this row will not delete
   or stage that user-owned file.
+
+- 2026-08-26 [balance06_1/fix06_5] Exact landed main `7c748f5b` completed all
+  16 Contract checks with zero assertions or stderr on `native_v3`, but the
+  wrapper measured 259.847s against the unchanged 230.391s budget. This is a
+  timing-measurement defect, not a balance-row functional failure: `fix06_5`
+  owns at least five runs on an otherwise idle host with every result, date,
+  host and method recorded before any rebaseline. The cap was not changed and
+  the red does not block subsequent rows.

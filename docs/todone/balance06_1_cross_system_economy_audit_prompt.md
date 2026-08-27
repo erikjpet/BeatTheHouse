@@ -1,5 +1,15 @@
-Status: TODO
+Status: DONE (accepted partial audit prototype and evidence archive; full audit remains a separately ordered follow-on)
 Board row: `balance06_1` in `docs/todo/README_0_6_board.md`
+
+## Execution Record
+
+- **Completed:** 2026-08-26
+- **Source and landing:** Finalized provenance head `1c0dec3b1e091939cccc8295b9a218be2aa42b96`; independently accepted clean semantic head `7967a1e1fbe563dbf8008d0e64048c46f4dcecaf`; main merge `7c748f5bba4409491e35eddc97793d6ec90da711`.
+- **Landing method:** The behind source branch was preserved as provenance and not merged wholesale. Its net payload landed as the two opt-in harness files plus 62 report, handoff and evidence paths. The three large supersedable raw `n=1` JSONs were omitted while their hashes, reproduction commands, immutable source commit and retained ignored originals remain recorded.
+- **Independent review:** Final post-land review returned `ACCEPT 7c748f5bba4409491e35eddc97793d6ec90da711` with no findings. Review confirmed no product, economy, RNG, schema or migration change and no weakened/default-suite test path.
+- **Post-land verification:** The exact ignored native addon was supplied and both Contract and full Smoke reported `native_v3`. Contract completed all 16 functional checks with zero failures/stderr but measured 259.847s against the unchanged 230.391s budget; this timing-only red is routed as `fix06_5`. Systems passed all 55 checks in 130.423s total. The eight-playstyle opt-in smoke passed at eight actions; the 208-action determinism outputs were byte-identical at SHA-256 `F5812EB31021889F939E2E2F8B43F4A601A6BD1036D230699196639C82F404E2`; full Smoke passed every stage in 231.036s summed stage time.
+- **Scope boundary:** This DONE verdict is deliberately limited to the runnable opt-in prototype, honest partial report and complete small-evidence archive. The 64-seed-per-playstyle distributions, uncensored terminal-run evidence, historical numeric comparison, 600k-drop pusher EV run, ranked findings and proposals remain NOT STARTED and are retained as the ordered `balance06_1-follow-on` after Families 1 and 2.
+- **Custody:** The initial interrupted Contract attempt and the precondition/interrupted Systems attempt are retained beside the corrected runs. Source, landing, verification and ignored evidence worktrees remain retained; no cleanup, remote, release, version or packaging action occurred, and primary owner WIP was untouched.
 
 # Agent Prompt — 0.6 balance06_1: Cross-System Economy and Difficulty Audit
 
