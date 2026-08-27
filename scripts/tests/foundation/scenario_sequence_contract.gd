@@ -1950,6 +1950,10 @@ static func _check_competing_interaction_overlay_priorities(failures: Array) -> 
 			_priority_overlay("sweep", mode, "base", target_id, "sweep"),
 			_priority_overlay("scenario", mode, "base", target_id, "scenario"),
 		]
+		if mode == "augment":
+			overlays[1]["operation_receipt_key"] = "priority:fixture:interaction_ops:sweep_augment"
+			overlays[1]["operation_boundary_id"] = "priority:fixture:phase:augment"
+			overlays[1]["operation_fingerprint"] = "a".repeat(64)
 		var reversed_overlays := overlays.duplicate(true)
 		reversed_overlays.reverse()
 		var resolved := OperationRegistryScript.resolve_interactions(base, overlays)
@@ -1985,7 +1989,13 @@ static func _check_competing_interaction_overlay_priorities(failures: Array) -> 
 				var action_ids: Array = []
 				for action_value in _array(record.get("available_actions", [])):
 					action_ids.append(str(_dict(action_value).get("id", "")))
-				if action_ids != ["use", "sweep_action"]:
+				var winner_action := _dict(_array(record.get("available_actions", []))[1])
+				var reloaded_action := _dict(_array(_dict(_array(reloaded.get("records", []))[0]).get("available_actions", []))[1])
+				if action_ids != ["use", "sweep_action"] \
+					or str(winner_action.get("action_origin_receipt_key", "")) != "priority:fixture:interaction_ops:sweep_augment" \
+					or str(winner_action.get("action_origin_boundary_id", "")) != "priority:fixture:phase:augment" \
+					or str(winner_action.get("action_origin_fingerprint", "")) != "a".repeat(64) \
+					or reloaded_action != winner_action:
 					failures.append("Lower-priority augment leaked into the winning action set: %s." % JSON.stringify(action_ids))
 			"retarget":
 				if str(record.get("source_id", "")) != "sweep_source":
