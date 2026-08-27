@@ -125,6 +125,14 @@ func _run() -> void:
 	_check(str(dynamic.get("key", "")) == static_key, "dynamic_state_preserves_static_key")
 	_check(int(dynamic.get("rebuild_serial", 0)) == static_serial, "dynamic_state_does_not_rebuild_static_layer")
 
+	var content_before := _cache_state(renderer)
+	reentry_canvas.call("apply_surface_state_patch", {"coin_pusher_static_content_key": str(snapshot.get("coin_pusher_static_content_key", "")) + ":contract_mutation"})
+	await _frames(5)
+	var content_after := _cache_state(renderer)
+	observations["content_after"] = content_after
+	_check(str(content_after.get("key", "")) != str(content_before.get("key", "")), "static_content_fingerprint_invalidates")
+	_check(int(content_after.get("render_serial", 0)) > int(content_before.get("render_serial", 0)), "static_content_fingerprint_rebuilt")
+
 	var locked_before := _cache_state(renderer)
 	reentry_canvas.call("apply_surface_state_patch", {"coin_pusher_locked": not bool(snapshot.get("coin_pusher_locked", false))})
 	await _frames(5)
