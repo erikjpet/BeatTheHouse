@@ -533,7 +533,7 @@
                         "handler": "event_bridge",
                         "inputs": {
                           "event_id": "scenario_delivery_day_stock",
-                          "resolution_id": "delivery_day_stock_resolution"
+                          "resolution_id": "clear_the_aisle"
                         },
                         "requires_objective_steps": [
                           {
@@ -749,7 +749,7 @@
                     "payload_equals": {
                       "event_id": "scenario_delivery_day_stock",
                       "choice_id": "clear_the_aisle",
-                      "resolution_id": "delivery_day_stock_resolution",
+                      "resolution_id": "clear_the_aisle",
                       "resolved": true,
                       "ok": true
                     }
@@ -764,7 +764,7 @@
                     "payload_equals": {
                       "event_id": "scenario_delivery_day_stock",
                       "choice_id": "take_the_deal",
-                      "resolution_id": "delivery_day_stock_resolution",
+                      "resolution_id": "clear_the_aisle",
                       "resolved": true,
                       "ok": true
                     }
@@ -829,7 +829,7 @@
                     "payload_equals": {
                       "event_id": "scenario_delivery_day_stock",
                       "choice_id": "clear_the_aisle",
-                      "resolution_id": "delivery_day_stock_resolution",
+                      "resolution_id": "clear_the_aisle",
                       "resolved": true,
                       "ok": true
                     }
@@ -847,7 +847,7 @@
                     "payload_equals": {
                       "event_id": "scenario_delivery_day_stock",
                       "choice_id": "take_the_deal",
-                      "resolution_id": "delivery_day_stock_resolution",
+                      "resolution_id": "clear_the_aisle",
                       "resolved": true,
                       "ok": true
                     }
@@ -919,7 +919,7 @@
                 "fact_type": "event_result",
                 "payload_equals": {
                   "event_id": "scenario_delivery_day_stock",
-                  "resolution_id": "delivery_day_stock_resolution",
+                  "resolution_id": "clear_the_aisle",
                   "resolved": true,
                   "ok": true
                 }
@@ -1337,7 +1337,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "4b5042e486767c0cae5f10c3c7ba6256e889e0af06e1c469fd702b16c4cc2007",
+        "sequence_signature": "eedfb859d3859f32b086a2f74d0e9e6e886732ca59fc74eb288e8f88ef08b351",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1361,7 +1361,7 @@
             "payload_equals": {
               "event_id": "scenario_delivery_day_stock",
               "choice_id": "clear_the_aisle",
-              "resolution_id": "delivery_day_stock_resolution",
+              "resolution_id": "clear_the_aisle",
               "resolved": true,
               "ok": true
             },
@@ -1376,7 +1376,7 @@
             "payload_equals": {
               "event_id": "scenario_delivery_day_stock",
               "choice_id": "take_the_deal",
-              "resolution_id": "delivery_day_stock_resolution",
+              "resolution_id": "clear_the_aisle",
               "resolved": true,
               "ok": true
             },
@@ -1390,7 +1390,7 @@
             "fact_type": "event_result",
             "payload_equals": {
               "event_id": "scenario_delivery_day_stock",
-              "resolution_id": "delivery_day_stock_resolution",
+              "resolution_id": "clear_the_aisle",
               "resolved": true,
               "ok": true
             },

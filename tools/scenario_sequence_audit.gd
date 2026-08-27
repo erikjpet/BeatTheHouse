@@ -350,6 +350,35 @@ static func _hostile_fixture_report(definition: Dictionary, target_inventory: Di
 	var evidence_errors := ScenarioEngineScript.validate_sequence_definition(missing_evidence, {})
 	result.append({"class": "missing_evidence", "rejected": _contains(evidence_errors, "requires capture_ids and seed_evidence"), "diagnostic": _matching(evidence_errors, "requires capture_ids and seed_evidence")})
 
+	var invalid_event_choice := definition.duplicate(true)
+	var invalid_choice_phases := _phases(invalid_event_choice)
+	var invalid_choice_authored := false
+	for phase_index in range(invalid_choice_phases.size()):
+		var invalid_choice_phase := _dict(invalid_choice_phases[phase_index])
+		var invalid_choice_operations := _array(invalid_choice_phase.get("interaction_ops", []))
+		for operation_index in range(invalid_choice_operations.size()):
+			var invalid_choice_operation := _dict(invalid_choice_operations[operation_index])
+			var invalid_choice_interaction := _dict(invalid_choice_operation.get("interaction", {}))
+			var invalid_choice_actions := _array(invalid_choice_interaction.get("available_actions", []))
+			for action_index in range(invalid_choice_actions.size()):
+				var invalid_choice_action := _dict(invalid_choice_actions[action_index])
+				if str(invalid_choice_action.get("handler", "")) != "event_bridge":
+					continue
+				invalid_choice_action["inputs"]["resolution_id"] = "hostile_missing_choice"
+				invalid_choice_actions[action_index] = invalid_choice_action
+				invalid_choice_authored = true
+			invalid_choice_interaction["available_actions"] = invalid_choice_actions
+			invalid_choice_operation["interaction"] = invalid_choice_interaction
+			invalid_choice_operations[operation_index] = invalid_choice_operation
+		invalid_choice_phase["interaction_ops"] = invalid_choice_operations
+		invalid_choice_phases[phase_index] = invalid_choice_phase
+	_set_phases(invalid_event_choice, invalid_choice_phases)
+	var invalid_choice_rejection := _schema_rejection("invalid_event_choice_membership", invalid_event_choice, "catalog-proven choice belonging to the exact event", target_inventory)
+	if not invalid_choice_authored:
+		invalid_choice_rejection["rejected"] = false
+		invalid_choice_rejection["diagnostic"] = "fixture could not find the representative event_bridge action"
+	result.append(invalid_choice_rejection)
+
 	var orphan_result := OperationRegistryScript.resolve_interactions([], [{
 		"owner_namespace": "scenario", "stable_object_id": "hostile_orphan_hit_region",
 		"presentation_object_id": "scenario::hostile_orphan_hit_region", "label": "Hostile orphan",

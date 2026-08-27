@@ -9,7 +9,7 @@ const SCENARIO_ID := "corner_store_delivery_day"
 const ARCHETYPE_ID := "corner_store"
 const NODE_ID := "corner_store_delivery_day_node"
 const EVENT_ID := "scenario_delivery_day_stock"
-const RESOLUTION_ID := "delivery_day_stock_resolution"
+const RESOLUTION_ID := "clear_the_aisle"
 const PROOF_SEED := "corner_store_delivery_day_env06_6"
 
 const EXPECTED_PHASES := ["arrival", "sorting", "verification", "awaiting_stock", "resolution"]

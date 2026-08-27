@@ -158,7 +158,7 @@ static func validate_handler_inputs(handler_id: String, inputs: Dictionary, loca
 		"event_bridge":
 			if typeof(inputs.get("event_id")) != TYPE_STRING or typeof(inputs.get("resolution_id")) != TYPE_STRING or not _canonical_id(str(inputs.get("event_id", ""))) or not _canonical_id(str(inputs.get("resolution_id", ""))): errors.append("event_bridge requires canonical event and resolution ids.")
 			var event_choices := _dict(context.get("event_choices", {}))
-			if event_choices.is_empty() or not event_choices.has(str(inputs.get("event_id", ""))): errors.append("event_bridge requires a catalog-proven event with choices.")
+			if event_choices.is_empty() or not _array(event_choices.get(str(inputs.get("event_id", "")), [])).has(str(inputs.get("resolution_id", ""))): errors.append("event_bridge requires a catalog-proven choice belonging to the exact event.")
 	return errors
 
 
