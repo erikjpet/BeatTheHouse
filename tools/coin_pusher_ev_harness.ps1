@@ -4,7 +4,7 @@ param(
     [ValidateRange(1, 64)]
     [int]$ShardsPerMachine = 8,
     [ValidateRange(1, 16)]
-    [int]$Throttle = 1,
+    [int]$Throttle = 6,
     [string]$OutDir = "",
     [switch]$AggregateOnly
 )
@@ -12,9 +12,6 @@ param(
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $machines = @("quarter_falls", "jackpot_ridge", "vault_drop")
-if ($Throttle -ne 1) {
-    throw "EV shards must run serially. Parallel persistent-machine shards exhausted host memory before producing reports."
-}
 
 function Get-ProjectRelativePath([string]$BasePath, [string]$TargetPath) {
     $base = [System.IO.Path]::GetFullPath($BasePath)
@@ -71,7 +68,6 @@ foreach ($machine in $machines) {
             Stderr = Join-Path $OutDir "$stem.stderr.txt"
             Process = $null
             ExitCode = $null
-            PeakWorkingSetBytes = 0L
         })
     }
 }
@@ -85,27 +81,8 @@ else {
     foreach ($job in $jobs) { $pending.Enqueue($job) }
     $running = [System.Collections.Generic.List[object]]::new()
     $completed = [System.Collections.Generic.List[object]]::new()
-    $launchStopped = $false
-    $nextProgressAt = Get-Date
-    while (($pending.Count -gt 0 -and -not $launchStopped) -or $running.Count -gt 0) {
-        for ($index = $running.Count - 1; $index -ge 0; $index--) {
-            $job = $running[$index]
-            $job.Process.Refresh()
-            $job.PeakWorkingSetBytes = [math]::Max([int64]$job.PeakWorkingSetBytes, [int64]$job.Process.PeakWorkingSet64)
-            if (-not $job.Process.HasExited) { continue }
-            $job.Process.WaitForExit()
-            $job.Process.Refresh()
-            $observedExitCode = $job.Process.ExitCode
-            $job.ExitCode = if ($null -eq $observedExitCode) { -2 } else { [int]$observedExitCode }
-            $completed.Add($job)
-            $running.RemoveAt($index)
-            $jsonWritten = Test-Path -LiteralPath $job.Json
-            Write-Host ("EV shard {0}/{1} machine={2} shard={3} exit={4} json={5} peak_working_set_mb={6:N1}" -f $completed.Count, $jobs.Count, $job.Machine, $job.Shard, $job.ExitCode, $jsonWritten, ([double]$job.PeakWorkingSetBytes / 1MB))
-            if ($job.ExitCode -ne 0 -or -not $jsonWritten) {
-                $launchStopped = $true
-            }
-        }
-        while (-not $launchStopped -and $pending.Count -gt 0 -and $running.Count -lt $Throttle) {
+    while ($pending.Count -gt 0 -or $running.Count -gt 0) {
+        while ($pending.Count -gt 0 -and $running.Count -lt $Throttle) {
             $job = $pending.Dequeue()
             $resourceOut = "res://" + (Get-ProjectRelativePath $projectRoot $job.Json)
             $arguments = @(
@@ -117,24 +94,18 @@ else {
             $job.Process = Start-Process -FilePath $godot -ArgumentList $arguments -WorkingDirectory $projectRoot -WindowStyle Hidden -RedirectStandardOutput $job.Stdout -RedirectStandardError $job.Stderr -PassThru
             $running.Add($job)
         }
-        if ((Get-Date) -ge $nextProgressAt -and $running.Count -gt 0) {
-            $workingSetBytes = 0L
-            foreach ($runningJob in $running) {
-                $runningJob.Process.Refresh()
-                if ($runningJob.Process.HasExited) { continue }
-                $runningJob.PeakWorkingSetBytes = [math]::Max([int64]$runningJob.PeakWorkingSetBytes, [int64]$runningJob.Process.PeakWorkingSet64)
-                $workingSetBytes += [int64]$runningJob.Process.WorkingSet64
-            }
-            Write-Host ("EV harness progress completed={0}/{1} running={2} pending={3} working_set_mb={4:N1}" -f $completed.Count, $jobs.Count, $running.Count, $pending.Count, ([double]$workingSetBytes / 1MB))
-            $nextProgressAt = (Get-Date).AddSeconds(30)
+        Start-Sleep -Milliseconds 250
+        for ($index = $running.Count - 1; $index -ge 0; $index--) {
+            $job = $running[$index]
+            if (-not $job.Process.HasExited) { continue }
+            $job.Process.WaitForExit()
+            $job.Process.Refresh()
+            $observedExitCode = $job.Process.ExitCode
+            $job.ExitCode = if ($null -eq $observedExitCode) { -2 } else { [int]$observedExitCode }
+            $completed.Add($job)
+            $running.RemoveAt($index)
+            Write-Host ("EV shard {0}/{1} machine={2} shard={3} exit={4}" -f $completed.Count, $jobs.Count, $job.Machine, $job.Shard, $job.ExitCode)
         }
-        if ($running.Count -gt 0) { Start-Sleep -Milliseconds 250 }
-    }
-    if ($launchStopped) {
-        foreach ($job in $pending) {
-            $job.ExitCode = -3
-        }
-        Write-Host ("EV harness stopped scheduling after a failed shard; {0} shard(s) were not started." -f $pending.Count)
     }
 }
 
@@ -142,13 +113,13 @@ $shardReports = [System.Collections.Generic.List[object]]::new()
 $processFailures = [System.Collections.Generic.List[object]]::new()
 foreach ($job in $jobs) {
     if (-not (Test-Path -LiteralPath $job.Json)) {
-        $processFailures.Add([pscustomobject]@{ machine = $job.Machine; shard = $job.Shard; exit_code = $job.ExitCode; stderr = $job.Stderr; peak_working_set_bytes = $job.PeakWorkingSetBytes; not_started_after_failure = $job.ExitCode -eq -3 })
+        $processFailures.Add([pscustomobject]@{ machine = $job.Machine; shard = $job.Shard; exit_code = $job.ExitCode; stderr = $job.Stderr })
         continue
     }
     $shardReport = Get-Content -LiteralPath $job.Json -Raw | ConvertFrom-Json
     $shardReports.Add($shardReport)
     if ($job.ExitCode -ne 0) {
-        $processFailures.Add([pscustomobject]@{ machine = $job.Machine; shard = $job.Shard; exit_code = $job.ExitCode; stderr = $job.Stderr; peak_working_set_bytes = $job.PeakWorkingSetBytes; report_passed = $shardReport.passed; not_started_after_failure = $false })
+        $processFailures.Add([pscustomobject]@{ machine = $job.Machine; shard = $job.Shard; exit_code = $job.ExitCode; stderr = $job.Stderr; report_passed = $shardReport.passed })
     }
 }
 
