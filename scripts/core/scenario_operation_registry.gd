@@ -374,13 +374,6 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 		var claims := _string_array(target_claims.get(target_key, []))
 		claims.append(source_key)
 		target_claims[target_key] = claims
-	for target_key_value in target_claims.keys():
-		var claims := _string_array(target_claims.get(target_key_value, []))
-		if claims.size() <= 1:
-			continue
-		errors.append("interactions %s compete for target %s." % [JSON.stringify(claims), str(target_key_value)])
-		for source_key_value in claims:
-			records.erase(str(source_key_value))
 	for overlay_value in ordered_overlays:
 		if typeof(overlay_value) != TYPE_DICTIONARY:
 			continue
@@ -392,7 +385,11 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 		if mode == "add":
 			continue
 		var target_key := identity(str(overlay.get("target_owner_namespace", "")), str(overlay.get("target_stable_object_id", "")))
-		if _string_array(target_claims.get(target_key, [])).size() > 1:
+		var competing_claims := _string_array(target_claims.get(target_key, []))
+		if competing_claims.size() > 1 and source_key != str(competing_claims[0]):
+			var winner_source := str(competing_claims[0])
+			errors.append("interaction target claim loser %s cannot override %s; canonical winner is %s." % [source_key, target_key, winner_source])
+			records.erase(source_key)
 			continue
 		var priority := int(OWNER_PRIORITY.get(str(overlay.get("owner_namespace", "")), -1))
 		var effective_winner := _dict(effective_winners.get(target_key, {}))

@@ -1931,8 +1931,12 @@ static func _check_interaction_identity(failures: Array) -> void:
 	competing["stable_object_id"] = "exit_gate_two"
 	var competing_result := OperationRegistryScript.resolve_interactions(base, [gate, competing])
 	var competing_records := _array(competing_result.get("records", []))
-	if bool(competing_result.get("ok", true)) or competing_records.size() != 1 or not bool(_dict(competing_records[0]).get("enabled", false)):
-		failures.append("Competing interaction overlays did not fail closed before mutating their shared target.")
+	if bool(competing_result.get("ok", true)) \
+		or competing_records.size() != 1 \
+		or bool(_dict(competing_records[0]).get("enabled", true)) \
+		or _array(competing_result.get("accepted_overlay_source_identities", [])) != ["scenario::exit_gate"] \
+		or not _contains_text(_array(competing_result.get("errors", [])), "target claim loser scenario::exit_gate_two"):
+		failures.append("Equal-priority competing overlays did not retain only the canonical first winner with a typed loser error.")
 	_check_competing_interaction_overlay_priorities(failures)
 
 
@@ -1952,9 +1956,18 @@ static func _check_competing_interaction_overlay_priorities(failures: Array) -> 
 		var reversed := OperationRegistryScript.resolve_interactions(base, reversed_overlays)
 		if JSON.stringify(resolved) != JSON.stringify(reversed):
 			failures.append("Competing %s overlays depended on caller order." % mode)
+		var reloaded_value: Variant = JSON.parse_string(JSON.stringify(resolved))
+		var reloaded := _dict(reloaded_value)
+		if reloaded.is_empty() \
+			or _array(reloaded.get("errors", [])) != _array(resolved.get("errors", [])) \
+			or _array(reloaded.get("accepted_overlay_source_identities", [])) != _array(resolved.get("accepted_overlay_source_identities", [])) \
+			or _array(reloaded.get("records", [])).size() != _array(resolved.get("records", [])).size() \
+			or OperationRegistryScript.identity_from(_dict(_array(reloaded.get("records", []))[0])) != OperationRegistryScript.identity_from(_dict(_array(resolved.get("records", []))[0])):
+			failures.append("Competing %s overlay arbitration did not survive an exact save/reload round trip." % mode)
 		var accepted := _array(resolved.get("accepted_overlay_source_identities", []))
 		var records := _array(resolved.get("records", []))
-		if bool(resolved.get("ok", true)) or accepted != ["sweep::sweep_%s" % mode] or records.size() != 1:
+		if bool(resolved.get("ok", true)) or accepted != ["sweep::sweep_%s" % mode] or records.size() != 1 \
+			or not _contains_text(_array(resolved.get("errors", [])), "canonical winner is sweep::sweep_%s" % mode):
 			failures.append("Competing %s overlays did not preserve only the sweep-priority winner." % mode)
 			continue
 		var record := _dict(records[0])
@@ -2021,7 +2034,7 @@ static func _check_competing_interaction_overlay_priorities(failures: Array) -> 
 		or bool(equal_forward.get("ok", true)) \
 		or _array(equal_forward.get("accepted_overlay_source_identities", [])) != ["scenario::a_equal_augment"] \
 		or _array(equal_record.get("available_actions", [])).size() != 2 \
-		or not _contains_text(_array(equal_forward.get("errors", [])), "duplicate_action collides"):
+		or not _contains_text(_array(equal_forward.get("errors", [])), "target claim loser scenario::z_equal_augment"):
 		failures.append("Same-priority duplicate augment action did not preserve the deterministic first winner/error.")
 
 

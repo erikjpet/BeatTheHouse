@@ -737,7 +737,7 @@ static func _check_public_removal_tombstones(failures: Array) -> void:
 		"receipt_id": "remove_door",
 		"owner_namespace": "base",
 		"stable_object_id": "door",
-	}], "presentation:phase:remove")
+	}], "presentation:fixture:phase:remove")
 	var public_state := OperationRegistryScript.public_semantic_state(_dict(removed.get("state", {})))
 	var tombstone := _dict(_dict(public_state.get("interactions", {})).get(identity, {}))
 	if not bool(removed.get("ok", false)) or tombstone != {
