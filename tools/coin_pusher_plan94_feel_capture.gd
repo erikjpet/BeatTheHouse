@@ -185,6 +185,8 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 	var landing_tick := -1
 	var landing_record := {}
 	var landing_neighbor_views: Array = []
+	var landing_phase_fp := -1
+	var landing_face_y := -1
 	var terminal_before_support := false
 	var emitted := false
 	var exact_live_ticks := true
@@ -204,6 +206,8 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 			if str(event.get("body_id", "")) == body_id and bool(event.get("first_support", false)):
 				first_support_event = event.duplicate(true)
 				landing_tick = int(state.get("tick", -1))
+				landing_phase_fp = int(state.get("phase_fp", -1))
+				landing_face_y = int(state.get("face_y", -1))
 				landing_record = _record(state, [], result.get("events", []))
 				landing_neighbor_views = _upper_row_local_neighbors(Solver.body_views(state), body_id, opening_ids)
 		if not first_support_event.is_empty() or terminal_before_support:
@@ -216,6 +220,9 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 			exact_live_ticks = exact_live_ticks and bool(result.get("exact_one_tick", false))
 			post_landing_events.append_array(result.get("events", []))
 	var final_views := Solver.body_views(state)
+	var final_phase_fp := int(state.get("phase_fp", -2))
+	var final_face_y := int(state.get("face_y", -2))
+	var phase_matched := landing_phase_fp >= 0 and final_phase_fp == landing_phase_fp and final_face_y == landing_face_y
 	var final_y := _body_y_for_ids(final_views, _body_ids(landing_neighbor_views))
 	var advanced_ids: Array = []
 	var neighbor_forward_deltas := {}
@@ -246,7 +253,7 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 	var passed := idle_unchanged and idle_exact_ticks and idle_saved \
 		and baseline_reproduced and drop_committed and emitted \
 		and int(state.get("accepted_inserts", 0)) == accepted_before + 1 \
-		and exact_live_ticks and joined_platform_row \
+		and exact_live_ticks and joined_platform_row and phase_matched \
 		and not advanced_ids.is_empty() \
 		and not final_tracked.is_empty() and str(final_tracked.get("support_root", "")) == "platform" \
 		and join_saved
@@ -268,6 +275,11 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 		"tracked_body_id": body_id,
 		"drop_emitted": emitted,
 		"landing_tick": landing_tick,
+		"landing_phase_fp": landing_phase_fp,
+		"landing_face_y": landing_face_y,
+		"final_phase_fp": final_phase_fp,
+		"final_face_y": final_face_y,
+		"phase_matched": phase_matched,
 		"terminal_before_support": terminal_before_support,
 		"tracked_pre_landing_events": pre_landing_events,
 		"first_support_event": first_support_event,
