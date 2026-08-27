@@ -1001,3 +1001,32 @@ below to jump to a row's history.
   48.814/17.816/25.024/172.233 seconds; summary
   `0A64A594F0C217D64241085B233AABF3FA642FBF4D8FFF0C9EE0A6590ED3DCBE`.
   No locked timing ran; independent review and host clearance remain mandatory.
+
+- 2026-08-27 [fix06_13] ITERATION 7 after independent REJECT of `69d2e696`.
+  The reviewer found that iteration 6 could discard or mislabel an already
+  captured `BTH_PERF_REPORT` if later user-agent/startup/viewport enrichment
+  failed, and that production cleanup stopped only the PowerShell parent rather
+  than proving teardown of its child server. Candidate
+  `1f879107b813bfa8014036a9c077fce77f27c033` (tree
+  `20c2674158950f867d4b7c68f896f64720022c0a`) atomically retains the full
+  envelope at report capture, classifies post-capture enrichment failure, and
+  tears down only the root-PID/per-run-token-owned process tree with a bounded
+  wait. Deterministic shared-helper tests prove full report custody and both
+  successful and failed server teardown with port release and zero owned child.
+  No timing or product behavior changed.
+
+  Exact custody report/diagnostic SHA-256 are
+  `EA6FDFE3608F5F99C399910C4E39ADF9AFA6389BE06FB07F88C782940BEB6EDD`
+  / `40F3C6ED3CD708C8F232B1B081C94E35AFC3AAAE603D5851A5C4261CC046A3E6`;
+  ownership manifest `7D7165B39EDFD8486F7C5ADC00C682C23A314DC969574650C19D683B2779966A`.
+  Web native semantics passed with report/manifest
+  `5286AFFD0AFFA4590E6161AA0A09E9D7B81F75128E56ECBA101B69ED6E1266BA`
+  / `46A859DF579EF8A6BA6E0B89851FF1AD744CE8EA105E5079471F58B3369D113B`
+  and unchanged parity payload `4e5a5ec32a6a00e9c73cb56631e977f5be918aaa040b2814fda6006e1e8c532f`.
+  Static cache passed 53/53 checks and 24/24 visual pairs, report/manifest
+  `B4D8FC9F9E2F3D1303BB5ACF5143CC82E818604D3D309ED5495470C00DB10DD4`
+  / `9B27A90D0DEDC61C235A7E5A441467757889953D58EBC4489213BC643506E9AC`.
+  Focused validation/import/load/Coin Pusher passed in
+  49.196/19.054/24.924/167.283 seconds, summary
+  `FEE4F6C3AA39E5ABCA79A4F3BAC41D1FB34B1C712C8CC494D6BBA5D30A730C09`.
+  Independent re-review and idle-host clearance remain required before timing.
