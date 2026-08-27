@@ -160,6 +160,85 @@ static func _ordered_semantic_values(value: Dictionary) -> Array:
 	return result
 
 
+# Renderer snapshot derived only from a successful sealed layout result. It
+# copies the exact draw/hit geometry and authority digest instead of resolving
+# a second presentation candidate.
+static func sealed_renderer_snapshot(layout_result: Dictionary) -> Dictionary:
+	if not bool(layout_result.get("ok", false)):
+		return {"ok": false, "errors": _array(layout_result.get("errors", ["Scenario renderer requires sealed layout authority."]))}
+	var projection := _dict(layout_result.get("projection", {}))
+	var semantic_state := _dict(projection.get("semantic_state", {}))
+	var authority := _dict(layout_result.get("layout_authority", {}))
+	var authority_digest := str(layout_result.get("layout_authority_digest", ""))
+	if not _valid_sha256(authority_digest) or _authority_digest(authority) != authority_digest:
+		return {"ok": false, "errors": ["Scenario renderer authority digest is missing or stale."]}
+	var visuals: Array = []
+	for family_value in [
+		[semantic_state.get("scene_objects", {}), false],
+		[semantic_state.get("actors", {}), true],
+	]:
+		var family := _dict((family_value as Array)[0])
+		var actor := bool((family_value as Array)[1])
+		var identities := family.keys()
+		identities.sort()
+		for identity_value in identities:
+			var identity := str(identity_value)
+			var semantic := _dict(family.get(identity_value, {}))
+			var sealed := _dict(authority.get(identity, {}))
+			if semantic.is_empty() or not bool(semantic.get("present", true)):
+				continue
+			if sealed.is_empty() or str(sealed.get("identity", "")) != identity:
+				return {"ok": false, "errors": ["Scenario renderer visual %s has no exact sealed authority." % identity]}
+			visuals.append({
+				"object_id": str(sealed.get("presentation_object_id", identity)),
+				"object_type": "scenario_actor" if actor else "scenario_object",
+				"visual_type": "scenario_actor" if actor else "scenario_object",
+				"source_id": str(semantic.get("actor_id", semantic.get("stable_object_id", ""))),
+				"label": str(semantic.get("label", "")),
+				"short_description": str(semantic.get("behavior", semantic.get("role", "Room object"))).replace("_", " ").capitalize(),
+				"presence": "scenario",
+				"interactive": bool(sealed.get("presentation_interactive", false)),
+				"decorative": not bool(sealed.get("presentation_interactive", false)),
+				"enabled": bool(semantic.get("enabled", true)),
+				"visible": bool(sealed.get("presentation_visible", true)),
+				"normalized_rect": _dict(sealed.get("normalized_hit_rect", {})),
+				"focus_rect": _dict(sealed.get("normalized_hit_rect", {})),
+				"small_screen_rect": _dict(sealed.get("small_screen_rect", {})),
+				"owner_namespace": str(semantic.get("owner_namespace", "")),
+				"stable_object_id": str(semantic.get("stable_object_id", "")),
+				"semantic_identity": identity,
+				"role": str(semantic.get("role", "actor" if actor else "prop")),
+				"state": str(semantic.get("state", "")),
+				"appearance": str(semantic.get("appearance", "")),
+				"pose": str(semantic.get("pose", "idle")),
+				"behavior": str(semantic.get("behavior", "idle")),
+				"route_id": str(semantic.get("route_id", "")),
+				"route_points": _array(sealed.get("actor_route_points", [])),
+				"z_order": int(sealed.get("z_order", 0)),
+				"scenario_layout_authority_identity": identity,
+				"scenario_layout_authority_digest": authority_digest,
+			})
+	return {
+		"schema_version": 2,
+		"scenario_id": str(projection.get("scenario_id", "")),
+		"phase_id": str(projection.get("phase_id", "")),
+		"status": str(projection.get("status", "")),
+		"boundary_serial": maxi(0, int(projection.get("boundary_serial", 0))),
+		"ok": true,
+		"errors": [],
+		"warnings": _array(layout_result.get("warnings", [])),
+		"visual_objects": visuals,
+		"interaction_overlays": _ordered_semantic_values(_dict(semantic_state.get("interactions", {}))),
+		"services": _ordered_semantic_values(_dict(semantic_state.get("services", {}))),
+		"games": _ordered_semantic_values(_dict(semantic_state.get("games", {}))),
+		"routes": _ordered_semantic_values(_dict(semantic_state.get("routes", {}))),
+		"active_stages": _array(projection.get("active_stages", [])),
+		"layout_authority": authority,
+		"layout_authority_digest": authority_digest,
+		"layout_audit": _dict(layout_result.get("layout_audit", {})),
+	}
+
+
 static func resolve(base_records: Array, projection: Dictionary, environment: Dictionary = {}) -> Dictionary:
 	var semantic_state := _dict(projection.get("semantic_state", {}))
 	var resolved_projection := projection.duplicate(true)
@@ -1167,6 +1246,16 @@ static func _finite_point(point: Vector2) -> bool:
 
 static func _finite_number(value: Variant) -> bool:
 	return typeof(value) in [TYPE_INT, TYPE_FLOAT] and is_finite(float(value))
+
+
+static func _valid_sha256(value: String) -> bool:
+	if value.length() != 64 or value != value.to_lower():
+		return false
+	for index in range(value.length()):
+		var code := value.unicode_at(index)
+		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102):
+			return false
+	return true
 
 
 static func _point(value: Variant) -> Vector2:

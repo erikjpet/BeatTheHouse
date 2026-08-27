@@ -1626,19 +1626,15 @@ static func _check_public_projection_privacy(failures: Array) -> void:
 	state["local_state"]["pressure"] = 3
 	state["local_state"]["protected_exit"] = true
 	var semantic := _dict(state.get("semantic_state", {}))
-	semantic["transition_queue"] = [{
-		"family": "transition_ops", "op": "feedback", "receipt_id": "hidden_transition_receipt",
-		"operation_receipt_key": "hidden_operation_receipt", "operation_fingerprint": "f".repeat(64),
-		"message": "Visible feedback",
-	}]
-	semantic["operation_receipts"] = ["hidden_operation_receipt"]
-	semantic["operation_receipt_records"] = [{"receipt_key": "hidden_operation_receipt", "boundary_id": "hidden_boundary"}]
-	semantic["operation_fingerprints"] = {"hidden_operation_receipt": "f".repeat(64)}
-	state["semantic_state"] = semantic
+	var transition_operation := _operation_fixture("transition_ops", "feedback", 777)
+	transition_operation["message"] = "Visible feedback"
+	var applied := OperationRegistryScript.apply_operations(semantic, "transition_ops", [transition_operation], "privacy:node:phase:arrival")
+	state["semantic_state"] = _dict(applied.get("state", semantic))
+	state["active_stages"] = [{"stage_id": "visible_stage", "message": "Visible stage", "started_boundary": 1, "expires_boundary": 2, "receipt_id": "hidden_stage_receipt", "operation_fingerprint": "f".repeat(64)}]
 	var projection := SequenceRuntimeScript.public_projection(state, definition)
 	var public_semantic := _dict(projection.get("semantic_state", {}))
 	var public_text := JSON.stringify(projection)
-	if _dict(projection.get("local_state", {})) != {"pressure": 3} or public_semantic.has("transition_queue") or public_semantic.has("operation_receipts") or public_semantic.has("operation_receipt_records") or public_text.contains("hidden_operation_receipt") or public_text.contains("hidden_transition_receipt") or int(projection.get("pending_transition_count", -1)) != 1:
+	if not bool(applied.get("ok", false)) or _dict(projection.get("local_state", {})) != {"pressure": 3} or public_semantic.has("transition_queue") or public_semantic.has("operation_receipts") or public_semantic.has("operation_receipt_records") or public_text.contains("transition_feedback_777") or public_text.contains("hidden_stage_receipt") or int(projection.get("pending_transition_count", -1)) != 1:
 		failures.append("Public sequence projection leaked private branch state or operation queue/receipt metadata instead of exposing only opted-in local state and pending counts.")
 	var drained := SequenceRuntimeScript.drain_transitions(state, definition)
 	var delivered := _dict(_array(drained.get("transitions", []))[0]) if not _array(drained.get("transitions", [])).is_empty() else {}

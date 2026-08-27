@@ -6,6 +6,7 @@ const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_sche
 const SequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_extension_dispatch.gd")
+const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const VALIDATED_SEQUENCE_MARKER := "__scenario_sequence_runtime_validated"
 const SEQUENCE_SUPPRESSION_KEY := "sequence_suppressed"
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
@@ -240,7 +241,6 @@ static func ensure_sequence_state(environment: Dictionary, definition: Dictionar
 			else:
 				state = _copy_dict(rebuilt.get("state", state))
 	environment["scenario_sequence_state"] = state
-	_refresh_sequence_snapshots(environment, definition)
 	return state.duplicate(true)
 
 
@@ -742,31 +742,24 @@ static func _append_unique_text(values: Array, value: String) -> void:
 
 
 static func sequence_record_visit(environment: Dictionary, definition: Dictionary, visit_id: String) -> Dictionary:
-	var state := ensure_sequence_state(environment, definition)
+	var candidate := environment.duplicate(true)
+	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty(): return {"ok": false, "errors": ["No dynamic room sequence is active."]}
-	return _commit_sequence_lifecycle_result(environment, definition, SequenceRuntimeScript.record_visit(state, definition, visit_id))
+	return _commit_sequence_candidate(environment, candidate, definition, SequenceRuntimeScript.record_visit(state, definition, visit_id))
 
 
 static func sequence_apply_reentry(environment: Dictionary, definition: Dictionary, visit_id: String) -> Dictionary:
-	var state := ensure_sequence_state(environment, definition)
+	var candidate := environment.duplicate(true)
+	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty(): return {"ok": false, "errors": ["No dynamic room sequence is active."]}
-	return _commit_sequence_lifecycle_result(environment, definition, SequenceRuntimeScript.apply_reentry(state, definition, visit_id, sequence_host_semantics(environment)))
+	return _commit_sequence_candidate(environment, candidate, definition, SequenceRuntimeScript.apply_reentry(state, definition, visit_id, sequence_host_semantics(candidate)))
 
 
 static func sequence_apply_expiry_boundary(environment: Dictionary, definition: Dictionary, boundary: String, amount: int = 1) -> Dictionary:
-	var state := ensure_sequence_state(environment, definition)
+	var candidate := environment.duplicate(true)
+	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty(): return {"ok": false, "errors": ["No dynamic room sequence is active."]}
-	return _commit_sequence_lifecycle_result(environment, definition, SequenceRuntimeScript.apply_expiry_boundary(state, definition, boundary, amount))
-
-
-static func _commit_sequence_lifecycle_result(environment: Dictionary, definition: Dictionary, result_value: Dictionary) -> Dictionary:
-	var result := result_value.duplicate(true)
-	if not bool(result.get("ok", false)): return result
-	var next := _copy_dict(result.get("state", {}))
-	environment["scenario_sequence_state"] = next
-	environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(next, definition)
-	result["state"] = next.duplicate(true)
-	return result
+	return _commit_sequence_candidate(environment, candidate, definition, SequenceRuntimeScript.apply_expiry_boundary(state, definition, boundary, amount))
 
 
 static func sequence_host_semantics(environment: Dictionary) -> Dictionary:
@@ -788,44 +781,35 @@ static func sequence_host_semantics(environment: Dictionary) -> Dictionary:
 
 static func sequence_command(environment: Dictionary, definition: Dictionary, command: Dictionary, context: Dictionary = {}) -> Dictionary:
 	definition = sequence_definition_for_environment(environment, definition)
-	var state := ensure_sequence_state(environment, definition)
+	var candidate := environment.duplicate(true)
+	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
 	var dispatched := ScenarioExtensionDispatchScript.prepare_command(definition, command, context)
 	if not bool(dispatched.get("ok", false)):
 		return {"ok": false, "errors": _copy_array(dispatched.get("errors", [])), "state": state}
 	var result := SequenceRuntimeScript.apply_command(state, definition, _copy_dict(dispatched.get("command", command)), _copy_dict(dispatched.get("context", context)))
-	var next := _copy_dict(result.get("state", state))
-	environment["scenario_sequence_state"] = next
-	_refresh_sequence_snapshots(environment, definition)
-	result["state"] = next.duplicate(true)
-	return result
+	return _commit_sequence_candidate(environment, candidate, definition, result)
 
 
 static func enqueue_sequence_fact(environment: Dictionary, definition: Dictionary, fact: Dictionary) -> Dictionary:
 	definition = sequence_definition_for_environment(environment, definition)
-	var state := ensure_sequence_state(environment, definition)
+	var candidate := environment.duplicate(true)
+	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
 	var result := SequenceRuntimeScript.enqueue_fact(state, definition, fact)
-	var next := _copy_dict(result.get("state", state))
-	environment["scenario_sequence_state"] = next
-	_refresh_sequence_snapshots(environment, definition)
-	result["state"] = next.duplicate(true)
-	return result
+	return _commit_sequence_candidate(environment, candidate, definition, result)
 
 
 static func flush_sequence_facts(environment: Dictionary, definition: Dictionary, boundary_serial: int) -> Dictionary:
 	definition = sequence_definition_for_environment(environment, definition)
-	var state := ensure_sequence_state(environment, definition)
+	var candidate := environment.duplicate(true)
+	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
 	var result := SequenceRuntimeScript.flush_facts(state, definition, boundary_serial)
-	var next := _copy_dict(result.get("state", state))
-	environment["scenario_sequence_state"] = next
-	_refresh_sequence_snapshots(environment, definition)
-	result["state"] = next.duplicate(true)
-	return result
+	return _commit_sequence_candidate(environment, candidate, definition, result)
 
 
 static func sequence_projection(environment: Dictionary, definition: Dictionary = {}) -> Dictionary:
@@ -842,50 +826,42 @@ static func sequence_projection(environment: Dictionary, definition: Dictionary 
 
 static func sequence_reentry(environment: Dictionary, definition: Dictionary, visit_id: String) -> Dictionary:
 	definition = sequence_definition_for_environment(environment, definition)
-	var state := ensure_sequence_state(environment, definition)
+	var candidate := environment.duplicate(true)
+	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "inactive": true, "errors": []}
-	var result := SequenceRuntimeScript.apply_reentry(state, definition, visit_id, sequence_host_semantics(environment))
-	if bool(result.get("ok", false)):
-		environment["scenario_sequence_state"] = _copy_dict(result.get("state", state))
-		_refresh_sequence_snapshots(environment, definition)
-	return result
+	var result := SequenceRuntimeScript.apply_reentry(state, definition, visit_id, sequence_host_semantics(candidate))
+	return _commit_sequence_candidate(environment, candidate, definition, result)
 
 
 static func sequence_expiry(environment: Dictionary, definition: Dictionary, boundary: String, boundary_serial: int) -> Dictionary:
 	definition = sequence_definition_for_environment(environment, definition)
-	var state := ensure_sequence_state(environment, definition)
+	var candidate := environment.duplicate(true)
+	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "inactive": true, "errors": []}
 	var result := SequenceRuntimeScript.apply_expiry(state, definition, boundary, boundary_serial)
-	if bool(result.get("ok", false)):
-		environment["scenario_sequence_state"] = _copy_dict(result.get("state", state))
-		_refresh_sequence_snapshots(environment, definition)
-	return result
+	return _commit_sequence_candidate(environment, candidate, definition, result)
 
 
 static func drain_sequence_transitions(environment: Dictionary, definition: Dictionary, reduced_motion: bool = false) -> Dictionary:
 	definition = sequence_definition_for_environment(environment, definition)
-	var state := ensure_sequence_state(environment, definition)
+	var candidate := environment.duplicate(true)
+	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "inactive": true, "transitions": [], "errors": []}
 	var result := SequenceRuntimeScript.drain_transitions(state, definition, reduced_motion)
-	if bool(result.get("ok", false)):
-		environment["scenario_sequence_state"] = _copy_dict(result.get("state", state))
-		_refresh_sequence_snapshots(environment, definition)
-	return result
+	return _commit_sequence_candidate(environment, candidate, definition, result)
 
 
 static func drain_sequence_event_requests(environment: Dictionary, definition: Dictionary) -> Dictionary:
 	definition = sequence_definition_for_environment(environment, definition)
-	var state := ensure_sequence_state(environment, definition)
+	var candidate := environment.duplicate(true)
+	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "inactive": true, "requests": [], "errors": []}
 	var result := SequenceRuntimeScript.drain_event_requests(state, definition)
-	if bool(result.get("ok", false)):
-		environment["scenario_sequence_state"] = _copy_dict(result.get("state", state))
-		_refresh_sequence_snapshots(environment, definition)
-	return result
+	return _commit_sequence_candidate(environment, candidate, definition, result)
 
 
 static func refresh_sequence_snapshots(environment: Dictionary, definition: Dictionary = {}) -> Dictionary:
@@ -923,6 +899,8 @@ static func _clear_environment_sequence(environment: Dictionary) -> void:
 		"scenario_sequence_migration", "scenario_sequence_definition",
 		"scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids",
 		"scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers",
+		"scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority",
+		"scenario_layout_audit", "scenario_layout_authority_digest",
 	]:
 		environment.erase(key)
 
@@ -930,15 +908,88 @@ static func _clear_environment_sequence(environment: Dictionary) -> void:
 static func _refresh_sequence_snapshots(environment: Dictionary, definition: Dictionary) -> Dictionary:
 	var state := SequenceRuntimeScript.normalize_state(environment.get("scenario_sequence_state", {}), definition)
 	if state.is_empty():
-		environment.erase("scenario_sequence_projection")
-		environment.erase("scenario_render_snapshot")
-		return {}
-	var projection := SequenceRuntimeScript.public_projection(state, definition)
-	_materialize_sequence_services_games_routes(environment, projection)
-	var render_snapshot := ScenarioExtensionDispatchScript.prepare_render(definition, environment, projection)
-	environment["scenario_sequence_projection"] = projection
-	environment["scenario_render_snapshot"] = render_snapshot
-	return render_snapshot.duplicate(true)
+		return {"ok": false, "errors": ["Scenario snapshot refresh requires normalized state."]}
+	var candidate := environment.duplicate(true)
+	var committed := _commit_sequence_candidate(environment, candidate, definition, {"ok": true, "state": state, "errors": []})
+	if not bool(committed.get("ok", false)):
+		return {"ok": false, "errors": _copy_array(committed.get("errors", []))}
+	return _copy_dict(environment.get("scenario_render_snapshot", {}))
+
+
+static func _commit_sequence_candidate(environment: Dictionary, candidate_value: Dictionary, definition: Dictionary, result_value: Dictionary) -> Dictionary:
+	var result := result_value.duplicate(true)
+	if not bool(result.get("ok", false)):
+		var rejected_state := _copy_dict(result.get("state", {}))
+		if str(rejected_state.get("status", "")) == SequenceRuntimeScript.STATUS_CLEANED and str(_copy_dict(environment.get("scenario_sequence_state", {})).get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED:
+			var rejected_candidate := candidate_value.duplicate(true)
+			rejected_candidate["scenario_sequence_state"] = rejected_state
+			environment.clear()
+			environment.merge(rejected_candidate, true)
+		return result
+	var candidate := candidate_value.duplicate(true)
+	var next := _copy_dict(result.get("state", {}))
+	if next.is_empty():
+		return _sequence_candidate_failure(environment, result, ["Scenario operation produced no authoritative next state."])
+	candidate["scenario_sequence_state"] = next
+	var projection := SequenceRuntimeScript.public_projection(next, definition)
+	if projection.is_empty():
+		return _sequence_candidate_failure(environment, result, ["Scenario operation produced no public projection."])
+	if not bool(candidate.get("scenario_semantic_ready", false)):
+		return _sequence_candidate_failure(environment, result, ["Scenario post-operation layout requires finalized semantic records."])
+	if typeof(candidate.get("scenario_layout_base_records")) != TYPE_ARRAY or typeof(candidate.get("scenario_layout_context", {})) != TYPE_DICTIONARY:
+		return _sequence_candidate_failure(environment, result, ["Scenario post-operation layout authority inputs are missing."])
+	var layout_environment := candidate.duplicate(true)
+	var layout_context := _copy_dict(candidate.get("scenario_layout_context", {}))
+	if not layout_context.is_empty():
+		layout_environment["_scenario_layout_context"] = layout_context
+	var layout_result := ScenarioLayoutResolverScript.resolve(_copy_array(candidate.get("scenario_layout_base_records", [])), projection, layout_environment)
+	if not bool(layout_result.get("ok", false)):
+		return _sequence_candidate_failure(environment, result, _copy_array(layout_result.get("errors", ["Scenario post-operation layout validation failed closed."])))
+	var sealed_projection := _copy_dict(layout_result.get("projection", {}))
+	var renderer_snapshot := ScenarioLayoutResolverScript.sealed_renderer_snapshot(layout_result)
+	if not bool(renderer_snapshot.get("ok", false)):
+		return _sequence_candidate_failure(environment, result, _copy_array(renderer_snapshot.get("errors", ["Scenario post-operation renderer validation failed closed."])))
+	var authority_digest := str(layout_result.get("layout_authority_digest", ""))
+	if authority_digest.is_empty() or str(renderer_snapshot.get("layout_authority_digest", "")) != authority_digest:
+		return _sequence_candidate_failure(environment, result, ["Scenario post-operation renderer authority diverged from sealed layout geometry."])
+	candidate["scenario_sequence_projection"] = sealed_projection
+	candidate["scenario_layout_authority"] = _copy_dict(layout_result.get("layout_authority", {}))
+	candidate["scenario_layout_audit"] = _copy_dict(layout_result.get("layout_audit", {}))
+	candidate["scenario_layout_authority_digest"] = authority_digest
+	candidate["scenario_render_snapshot"] = renderer_snapshot
+	_materialize_sequence_services_games_routes(candidate, sealed_projection)
+	environment.clear()
+	environment.merge(candidate, true)
+	result["state"] = next.duplicate(true)
+	result["projection"] = sealed_projection.duplicate(true)
+	result["layout_authority"] = _copy_dict(layout_result.get("layout_authority", {}))
+	result["layout_authority_digest"] = authority_digest
+	result["layout_audit"] = _copy_dict(layout_result.get("layout_audit", {}))
+	result["renderer_snapshot"] = renderer_snapshot.duplicate(true)
+	result["warnings"] = _copy_array(layout_result.get("warnings", []))
+	return result
+
+
+static func _sequence_candidate_failure(environment: Dictionary, result_value: Dictionary, errors_value: Array) -> Dictionary:
+	var result := result_value.duplicate(true)
+	var errors: Array = []
+	for value in errors_value:
+		var message := str(value).strip_edges()
+		if not message.is_empty() and not errors.has(message):
+			errors.append(message)
+	if errors.is_empty():
+		errors.append("Scenario post-operation candidate failed closed.")
+	result["ok"] = false
+	result["errors"] = errors
+	result["state"] = _copy_dict(environment.get("scenario_sequence_state", {}))
+	for collection_key in ["processed", "requests", "transitions"]:
+		if result.has(collection_key):
+			result[collection_key] = []
+	if result.has("cost"):
+		result["cost"] = 0
+	if result.has("applied"):
+		result["applied"] = false
+	return result
 
 
 static func _capture_sequence_baseline(environment: Dictionary) -> void:

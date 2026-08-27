@@ -752,6 +752,19 @@ static func _public_transition_dto(value: Dictionary) -> Dictionary:
 	return result
 
 
+static func _public_active_stage_dtos(value: Variant) -> Array:
+	var result: Array = []
+	for stage_value in _bounded_records(value, MAX_RECEIPTS):
+		var stage := _dict(stage_value)
+		result.append({
+			"stage_id": str(stage.get("stage_id", "")),
+			"message": str(stage.get("message", "")),
+			"started_boundary": maxi(0, int(stage.get("started_boundary", 0))),
+			"expires_boundary": maxi(0, int(stage.get("expires_boundary", 0))),
+		})
+	return result
+
+
 static func drain_event_requests(state_value: Dictionary, definition: Dictionary) -> Dictionary:
 	var state := normalize_state(state_value, definition)
 	if state.is_empty():
@@ -825,7 +838,7 @@ static func public_projection(state_value: Dictionary, definition: Dictionary = 
 		"last_feedback": str(state.get("last_feedback", "")),
 		"semantic_state": OperationRegistryScript.public_semantic_state(_dict(state.get("semantic_state", {}))),
 		"pending_transition_count": _array(_dict(state.get("semantic_state", {})).get("transition_queue", [])).size(),
-		"active_stages": _bounded_records(state.get("active_stages", []), MAX_RECEIPTS),
+		"active_stages": _public_active_stage_dtos(state.get("active_stages", [])),
 		"pending_event_request_count": _array(state.get("event_request_queue", [])).size(),
 	}
 

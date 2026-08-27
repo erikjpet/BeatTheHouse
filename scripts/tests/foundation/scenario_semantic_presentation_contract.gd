@@ -10,6 +10,7 @@ const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environ
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const ScenarioSequenceContractScript := preload("res://scripts/tests/foundation/scenario_sequence_contract.gd")
+const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 
 const BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const SMALL_SCREEN_TARGET := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
@@ -20,6 +21,8 @@ static func check(library: Variant, failures: Array) -> void:
 	_check_public_removal_tombstones(failures)
 	_check_finalized_canvas_authority(library, failures)
 	_check_atomic_finalization_layout(library, failures)
+	_check_atomic_post_operation_layout(library, failures)
+	_check_collision_adjusted_renderer_authority(failures)
 	_check_finalized_accessibility(library, failures)
 	_check_finalized_actor_route(library, failures)
 	_check_sealed_semantic_collection_membership(library, failures)
@@ -109,6 +112,79 @@ static func _check_atomic_finalization_layout(library: Variant, failures: Array)
 	var invalidated := valid_run.scenario_reject_layout_projection(["fixture projection mismatch"], {"valid": false})
 	if not bool(finalized.get("ok", false)) or bool(invalidated.get("ok", true)) or valid_run.current_environment.has("scenario_semantic_ready") or not _dict(valid_run.current_environment.get("scenario_sequence_projection", {})).is_empty() or str(valid_run.current_environment.get("scenario_layout_authority_digest", "x")) != "" or JSON.stringify(valid_run.current_environment.get("scenario_sequence_state", {})) != causal_before:
 		failures.append("Post-finalization projection rejection did not invalidate ephemeral authority while preserving the durable causal journal.")
+
+
+static func _check_atomic_post_operation_layout(library: Variant, failures: Array) -> void:
+	var definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	var run_state := RunStateScript.new()
+	run_state.bankroll = 41
+	run_state.current_environment = _finalization_environment(definition)
+	run_state.scenario_prepare_semantic_finalization()
+	var finalized := run_state.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	if not bool(finalized.get("ok", false)):
+		failures.append("Post-operation atomic-layout fixture could not finalize its valid arrival phase.")
+		return
+	# The authored next phase creates fixture_104 at bar_floor_104, which this
+	# production environment exposes during finalization and then loses before
+	# the command. Runtime mutation,
+	# receipt journaling, cost, materialization, and rendering must reject as one.
+	var hostile_anchors := _dict(run_state.current_environment.get("semantic_anchors", {}))
+	hostile_anchors.erase("bar_floor_104")
+	run_state.current_environment["semantic_anchors"] = hostile_anchors
+	var environment_before := JSON.stringify(run_state.current_environment)
+	var journal_before := JSON.stringify(run_state.current_environment.get("scenario_sequence_state", {}))
+	var bankroll_before := run_state.bankroll
+	var rejected := run_state.scenario_sequence_command("prepare", "atomic_layout_prepare", {}, "scenario", "command_console", {"scenario::command_console": true})
+	if bool(rejected.get("ok", true)) or JSON.stringify(run_state.current_environment) != environment_before or JSON.stringify(run_state.current_environment.get("scenario_sequence_state", {})) != journal_before or run_state.bankroll != bankroll_before:
+		failures.append("Invalid next-phase layout did not roll back the environment, causal journal, and bankroll byte-for-byte as one post-operation candidate.")
+	var hostile_context := _production_layout_context()
+	hostile_context["reserved_overlay_board_rect"] = {"x": 0.0, "y": 0.0, "w": BOARD_SIZE.x, "h": BOARD_SIZE.y}
+	run_state.current_environment["scenario_layout_context"] = hostile_context
+	var hostile_before := JSON.stringify(run_state.current_environment)
+	var fact_result := run_state.scenario_enqueue_fact("heat_changed", "fixture", {"previous": 1, "current": 2, "applied_delta": 1, "source": "fixture"}, "hostile_layout_fact")
+	if bool(fact_result.get("ok", true)) or JSON.stringify(run_state.current_environment) != hostile_before or not _contains_text(_array(fact_result.get("errors", [])), "overlay"):
+		failures.append("Fact ingress retained queue/journal or environment mutations after post-layout validation rejected the candidate.")
+	var expiry_result := run_state.scenario_sequence_apply_expiry_boundary("night_end", 1)
+	if bool(expiry_result.get("ok", true)) or JSON.stringify(run_state.current_environment) != hostile_before or not _contains_text(_array(expiry_result.get("errors", [])), "overlay"):
+		failures.append("Expiry retained cleanup/journal or environment mutations after post-layout validation rejected the candidate.")
+	var reentry_result := run_state.scenario_sequence_apply_reentry("visit_hostile_layout")
+	if bool(reentry_result.get("ok", true)) or JSON.stringify(run_state.current_environment) != hostile_before or not _contains_text(_array(reentry_result.get("errors", [])), "overlay"):
+		failures.append("Reentry retained visit/journal or environment mutations after post-layout validation rejected the candidate.")
+
+
+static func _check_collision_adjusted_renderer_authority(failures: Array) -> void:
+	var base_records := [{
+		"object_id": "fixture:base_block", "object_type": "fixture", "owner_namespace": "base", "stable_object_id": "base_block",
+		"label": "Base block", "visible": true, "interactive": false,
+		"normalized_rect": {"x": 0.2, "y": 0.2, "w": 0.08, "h": 0.12},
+	}]
+	var projection := {
+		"scenario_id": "collision_authority_fixture", "phase_id": "arrival", "status": "active", "boundary_serial": 1,
+		"semantic_state": {
+			"scene_objects": {"scenario::adjusted_prop": {
+				"owner_namespace": "scenario", "stable_object_id": "adjusted_prop", "present": true,
+				"label": "Adjusted prop", "role": "stock", "zone_id": "collision_zone", "bounds": {"w": 72, "h": 52},
+				"visible": true, "enabled": true,
+			}},
+			"actors": {}, "interactions": {}, "services": {}, "games": {}, "routes": {},
+		},
+	}
+	var environment := {
+		"semantic_zones": {"collision_zone": {"bounds": [180.0, 86.0, 72.0, 52.0]}},
+		"_scenario_layout_context": _production_layout_context(),
+	}
+	var resolved := ScenarioLayoutResolverScript.resolve(base_records, projection, environment)
+	var renderer := ScenarioLayoutResolverScript.sealed_renderer_snapshot(resolved)
+	var semantic := _dict(_dict(_dict(resolved.get("projection", {})).get("semantic_state", {})).get("scene_objects", {})).get("scenario::adjusted_prop", {})
+	var authority := _dict(_dict(resolved.get("layout_authority", {})).get("scenario::adjusted_prop", {}))
+	var visual: Dictionary = {}
+	for visual_value in _array(renderer.get("visual_objects", [])):
+		if str(_dict(visual_value).get("semantic_identity", "")) == "scenario::adjusted_prop":
+			visual = _dict(visual_value)
+	var semantic_rect := _dict(_dict(semantic).get("normalized_hit_rect", {}))
+	var authority_rect := _dict(authority.get("normalized_hit_rect", {}))
+	if not bool(resolved.get("ok", false)) or not bool(renderer.get("ok", false)) or not bool(_dict(semantic).get("collision_adjusted", false)) or semantic_rect != authority_rect or _dict(visual.get("normalized_rect", {})) != authority_rect or _dict(visual.get("focus_rect", {})) != authority_rect or _dict(visual.get("small_screen_rect", {})) != _dict(authority.get("small_screen_rect", {})):
+		failures.append("Collision-adjusted scenario geometry diverged between semantic hit state, sealed authority, and renderer draw/focus rectangles.")
 
 
 static func _check_finalized_actor_route(library: Variant, failures: Array) -> void:
@@ -906,6 +982,7 @@ static func _finalization_environment(definition: Dictionary) -> Dictionary:
 		"next_archetypes": [],
 		"semantic_anchors": {
 			"bar_floor_100": {"position": [90.0, 120.0]},
+			"bar_floor_104": {"position": [420.0, 240.0]},
 			"bar_actor": {"position": [180.0, 120.0]},
 		},
 		"layout": {"object_rects": {"game:slot": {"x": 0.1, "y": 0.1, "w": 0.12, "h": 0.18}}},
