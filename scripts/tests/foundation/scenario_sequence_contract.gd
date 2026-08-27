@@ -2333,7 +2333,7 @@ static func _check_lifecycle_commands(failures: Array) -> void:
 		["wrong node", SequenceRuntimeScript.command("prepare", "other_node", "arrival", "bad:node", {}, "scenario", "command_console")],
 		["stale", SequenceRuntimeScript.command("prepare", "bar_node", "later", "bad:phase", {}, "scenario", "command_console")],
 		["identity", SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "bad:owner", {}, "intruder", "command_console")],
-		["absent interaction", SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "bad:absent", {}, "scenario", "absent_console")],
+		["missing interaction", SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "bad:absent", {}, "scenario", "absent_console")],
 		["unavailable", SequenceRuntimeScript.command("invented", "bar_node", "arrival", "bad:action", {}, "scenario", "command_console")],
 	]
 	var missing_key := SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "", {}, "scenario", "command_console")
@@ -2344,7 +2344,7 @@ static func _check_lifecycle_commands(failures: Array) -> void:
 	for fixture_value in hostile_commands:
 		var fixture := fixture_value as Array
 		var rejected := SequenceRuntimeScript.apply_command(initial, definition, fixture[1] as Dictionary, {"available_funds": 10})
-		if bool(rejected.get("ok", true)) or not _contains_text(_array(rejected.get("errors", [])), str(fixture[0])):
+		if bool(rejected.get("ok", true)) or not _contains_text(_array(rejected.get("errors", [])), str(fixture[0])) or JSON.stringify(rejected.get("state", {})) != JSON.stringify(initial):
 			failures.append("Sequence command hostile case was not rejected for %s." % str(fixture[0]))
 	var unaffordable := SequenceRuntimeScript.apply_command(initial, definition, prepare, {"available_funds": 1})
 	if bool(unaffordable.get("ok", true)) or not _contains_text(_array(unaffordable.get("errors", [])), "not payable"):
@@ -2361,20 +2361,40 @@ static func _check_lifecycle_commands(failures: Array) -> void:
 
 
 static func _check_mutually_exclusive_branch_cleanup(failures: Array) -> void:
+	var hostile_definition := _runtime_definition()
+	var hostile_state := _prepared_fixture_state(hostile_definition, "broken_missing_target", failures)
+	var hostile_fact := SequenceRuntimeScript.fact("heat_changed", "heat", "bar_node", "branch:broken:missing", 1, 1, _fact_payload("heat_changed"))
+	var hostile_queued := SequenceRuntimeScript.enqueue_fact(hostile_state, hostile_definition, hostile_fact)
+	var hostile_queued_state := _dict(hostile_queued.get("state", {}))
+	var hostile_result := SequenceRuntimeScript.flush_facts(hostile_queued_state, hostile_definition, 1)
+	if not bool(hostile_queued.get("ok", false)) or bool(hostile_queued.get("duplicate", true)) or not _array(hostile_queued.get("errors", [])).is_empty() or bool(hostile_result.get("ok", true)) or not _contains_text(_array(hostile_result.get("errors", [])), "missing scenario identity scenario::fixture_102") or JSON.stringify(hostile_result.get("state", {})) != JSON.stringify(hostile_queued_state):
+		failures.append("Missing aftermath target hostile fixture was not rejected atomically with its typed error.")
+
 	var definition := _runtime_definition()
+	var phases := _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", []))
+	var complication := _dict(phases[1])
+	complication["scene_ops"] = _array(complication.get("scene_ops", [])) + [_operation_fixture("scene_ops", "spawn", 102)]
+	phases[1] = complication
+	definition["sequence"]["phase_graph"]["phases"] = phases
+	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
 	var broken_state := _prepared_fixture_state(definition, "broken_seed", failures)
 	var broken_fact := SequenceRuntimeScript.fact("heat_changed", "heat", "bar_node", "branch:broken", 1, 1, _fact_payload("heat_changed"))
 	var broken_queued := SequenceRuntimeScript.enqueue_fact(broken_state, definition, broken_fact)
 	var broken_result := SequenceRuntimeScript.flush_facts(_dict(broken_queued.get("state", {})), definition, 1)
+	var broken_final := _dict(broken_result.get("state", {}))
+	var branch_records := _array(broken_final.get("branch_resolution_records", []))
+	if not bool(broken_queued.get("ok", false)) or bool(broken_queued.get("duplicate", true)) or not _array(broken_queued.get("errors", [])).is_empty() or not bool(broken_result.get("ok", false)) or not _array(broken_result.get("errors", [])).is_empty() or _array(broken_result.get("processed", [])) != ["branch:broken"] or _array(broken_final.get("fact_receipts", [])) != ["branch:broken"] or branch_records.size() != 2 or str(_dict(branch_records[0]).get("branch_id", "")) != "continue" or str(_dict(branch_records[0]).get("trigger_kind", "")) != "command" or str(_dict(branch_records[1]).get("branch_id", "")) != "break" or str(_dict(branch_records[1]).get("trigger_kind", "")) != "fact" or str(_dict(branch_records[1]).get("trigger_receipt_key", "")) != "branch:broken":
+		failures.append("Broken branch did not preserve its exact enqueue/flush/receipt/two-branch causal record.")
 	_check_clean_branch_state(_dict(broken_result.get("state", {})), definition, "broken", "scenario::fixture_102", failures)
 
-	var refused_state := _prepared_fixture_state(definition, "refused_seed", failures)
-	var refused_command := _runtime_command(refused_state, definition, "refuse", "bar_node", "complication", "branch:refused", {}, "scenario", "command_console")
-	var refused_result := SequenceRuntimeScript.apply_command(refused_state, definition, refused_command, {"available_funds": 0})
+	var refused_definition := _runtime_definition()
+	var refused_state := _prepared_fixture_state(refused_definition, "refused_seed", failures)
+	var refused_command := _runtime_command(refused_state, refused_definition, "refuse", "bar_node", "complication", "branch:refused", {}, "scenario", "command_console")
+	var refused_result := SequenceRuntimeScript.apply_command(refused_state, refused_definition, refused_command, {"available_funds": 0})
 	if not bool(refused_result.get("ok", false)):
 		failures.append("Refused terminal branch could not be exercised: %s" % JSON.stringify(refused_result.get("errors", [])))
 	else:
-		_check_clean_branch_state(_dict(refused_result.get("state", {})), definition, "refused", "scenario::fixture_103", failures)
+		_check_clean_branch_state(_dict(refused_result.get("state", {})), refused_definition, "refused", "scenario::fixture_103", failures)
 
 
 static func _check_boundary_provenance(failures: Array) -> void:
@@ -2406,6 +2426,7 @@ static func _check_boundary_provenance(failures: Array) -> void:
 	graph["phases"] = phases
 	sequence["phase_graph"] = graph
 	fact_definition["sequence"] = sequence
+	fact_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(fact_definition)
 	var fact_state := SequenceRuntimeScript.initial_state(fact_definition, "bar_node", "fact_boundary_seed", _fixture_host_semantics(fact_definition))
 	var travel_fact := SequenceRuntimeScript.fact("travel_arrived", "travel", "bar_node", "fact:travel:1", 1, 1, {"source_id": "street", "target_id": "bar_node", "travel_kind": "walk"})
 	var travel_queued := SequenceRuntimeScript.enqueue_fact(fact_state, fact_definition, travel_fact)
@@ -2431,7 +2452,10 @@ static func _check_augment_availability(failures: Array) -> void:
 	graph["phases"] = phases
 	sequence["phase_graph"] = graph
 	definition["sequence"] = sequence
-	var state := SequenceRuntimeScript.initial_state(definition, "bar_node", "augment_seed", _fixture_host_semantics(definition))
+	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
+	var host_semantics := _fixture_host_semantics(definition)
+	host_semantics["base_interactions"] = [_interaction_record("base", "fixture_target_5", "Fixture target 5", true)]
+	var state := SequenceRuntimeScript.initial_state(definition, "bar_node", "augment_seed", host_semantics)
 	var command := _runtime_command(state, definition, "fixture_action", "bar_node", "arrival", "augment:fixture:1", {}, "scenario", "fixture_5")
 	var target_identity := "base::fixture_target_5"
 	var disabled_availability: Dictionary = {}
