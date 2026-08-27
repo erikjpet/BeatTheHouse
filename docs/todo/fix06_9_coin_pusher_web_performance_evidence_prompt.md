@@ -1,4 +1,4 @@
-Status: IN PROGRESS
+Status: PARKED — awaits `fix06_13`
 Board row: `fix06_9` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_9: shipped-cap Coin Pusher Web performance evidence
