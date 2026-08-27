@@ -17,7 +17,14 @@ function Test-CoinPusherReinstallClockObservation {
 function Test-CoinPusherConservationSnapshot {
     param([object]$Snapshot, [int]$ExpectedOrigin = 300)
     $accounted = [int]$Snapshot.active + [int]$Snapshot.tray + [int]$Snapshot.gutter + [int]$Snapshot.collected + [int]$Snapshot.cup_consumed
-    return [int]$Snapshot.origin -eq $ExpectedOrigin `
+    return [int]$Snapshot.active -ge 0 `
+        -and [int]$Snapshot.tray -ge 0 `
+        -and [int]$Snapshot.gutter -ge 0 `
+        -and [int]$Snapshot.collected -ge 0 `
+        -and [int]$Snapshot.cup_consumed -ge 0 `
+        -and [int]$Snapshot.origin -ge 0 `
+        -and [int]$Snapshot.accounted -ge 0 `
+        -and [int]$Snapshot.origin -eq $ExpectedOrigin `
         -and [int]$Snapshot.accounted -eq $accounted `
         -and $accounted -eq $ExpectedOrigin `
         -and [bool]$Snapshot.conservation_ok `
@@ -25,38 +32,46 @@ function Test-CoinPusherConservationSnapshot {
         -and [bool]$Snapshot.solver_conservation_ok
 }
 
+function Test-CoinPusherSurfaceConservationBinding {
+    param([int]$BodyCount, [int]$TrayCount, [object]$Snapshot, [int]$ExpectedOrigin = 300)
+    return $BodyCount -eq [int]$Snapshot.active `
+        -and $TrayCount -eq [int]$Snapshot.tray `
+        -and (Test-CoinPusherConservationSnapshot -Snapshot $Snapshot -ExpectedOrigin $ExpectedOrigin)
+}
+
 function Test-CoinPusherReducedSampleBoundary {
     param([object]$Fixture, [object]$Boundary, [object]$ScenarioTags)
     return [int]$Fixture.body_count -eq 300 `
         -and [int]$Boundary.body_count -eq [int]$ScenarioTags.body_count_before `
-        -and [int]$Boundary.body_count -eq [int]$Boundary.conservation.active `
         -and [int]$Boundary.tray_count -eq [int]$ScenarioTags.tray_count_before `
-        -and [int]$Boundary.tray_count -eq [int]$Boundary.conservation.tray `
         -and [int]$Boundary.liveness_ticks -eq [int]$ScenarioTags.solver_liveness_before `
-        -and [int]$ScenarioTags.body_count_before -eq [int]$ScenarioTags.conservation_before.active `
-        -and [int]$ScenarioTags.tray_count_before -eq [int]$ScenarioTags.conservation_before.tray `
-        -and (Test-CoinPusherConservationSnapshot -Snapshot $Boundary.conservation -ExpectedOrigin 300) `
-        -and (Test-CoinPusherConservationSnapshot -Snapshot $ScenarioTags.conservation_before -ExpectedOrigin 300)
+        -and (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$Boundary.body_count) -TrayCount ([int]$Boundary.tray_count) -Snapshot $Boundary.conservation -ExpectedOrigin 300) `
+        -and (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$ScenarioTags.body_count_before) -TrayCount ([int]$ScenarioTags.tray_count_before) -Snapshot $ScenarioTags.conservation_before -ExpectedOrigin 300)
 }
 
 function Get-CoinPusherPostCollectAccounting {
     param([object]$Tags)
     $bodyDelta = [int]$Tags.body_count_at_accept - [int]$Tags.body_count_after
     $trayDelta = [int]$Tags.tray_count_after - [int]$Tags.tray_count_at_accept
+    $gutterDelta = [int]$Tags.conservation_after.gutter - [int]$Tags.conservation_at_accept.gutter
     return [ordered]@{
         body_delta = $bodyDelta
         tray_delta = $trayDelta
+        gutter_delta = $gutterDelta
         valid = [int]$Tags.tray_count_at_accept -eq 0 `
             -and [int]$Tags.tray_value_at_accept -eq 0 `
-            -and [int]$Tags.body_count_at_accept -gt 0 `
-            -and [int]$Tags.body_count_at_accept -eq [int]$Tags.conservation_at_accept.active `
-            -and [int]$Tags.tray_count_at_accept -eq [int]$Tags.conservation_at_accept.tray `
-            -and [int]$Tags.body_count_after -eq [int]$Tags.conservation_after.active `
-            -and [int]$Tags.tray_count_after -eq [int]$Tags.conservation_after.tray `
+            -and [int]$Tags.conservation_at_accept.active -eq 299 `
+            -and [int]$Tags.conservation_at_accept.tray -eq 0 `
+            -and [int]$Tags.conservation_at_accept.gutter -eq 0 `
+            -and [int]$Tags.conservation_at_accept.collected -eq 1 `
+            -and [int]$Tags.conservation_at_accept.cup_consumed -eq 0 `
+            -and (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$Tags.body_count_at_accept) -TrayCount ([int]$Tags.tray_count_at_accept) -Snapshot $Tags.conservation_at_accept -ExpectedOrigin 300) `
+            -and (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$Tags.body_count_after) -TrayCount ([int]$Tags.tray_count_after) -Snapshot $Tags.conservation_after -ExpectedOrigin 300) `
             -and $bodyDelta -ge 0 `
             -and $trayDelta -ge 0 `
-            -and $trayDelta -le $bodyDelta `
-            -and (Test-CoinPusherConservationSnapshot -Snapshot $Tags.conservation_at_accept -ExpectedOrigin 300) `
-            -and (Test-CoinPusherConservationSnapshot -Snapshot $Tags.conservation_after -ExpectedOrigin 300)
+            -and $gutterDelta -ge 0 `
+            -and $bodyDelta -eq $trayDelta + $gutterDelta `
+            -and [int]$Tags.conservation_after.collected -eq [int]$Tags.conservation_at_accept.collected `
+            -and [int]$Tags.conservation_after.cup_consumed -eq [int]$Tags.conservation_at_accept.cup_consumed
     }
 }
