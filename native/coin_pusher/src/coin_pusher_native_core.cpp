@@ -10,8 +10,11 @@ void CoinPusherNativeCore::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("solver_contract"), &CoinPusherNativeCore::solver_contract);
 	ClassDB::bind_method(D_METHOD("divi", "numerator", "denominator"), &CoinPusherNativeCore::divi);
 	ClassDB::bind_method(D_METHOD("can_step", "state", "config"), &CoinPusherNativeCore::can_step);
+	ClassDB::bind_method(D_METHOD("supports_live_batch_capture"), &CoinPusherNativeCore::supports_live_batch_capture);
 	ClassDB::bind_method(D_METHOD("step_ticks", "state", "config", "tick_count"), &CoinPusherNativeCore::step_ticks);
 }
+
+bool CoinPusherNativeCore::supports_live_batch_capture() const { return true; }
 
 String CoinPusherNativeCore::backend_id() const { return "coin_pusher_native_integer_v3"; }
 

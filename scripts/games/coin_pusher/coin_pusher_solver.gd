@@ -452,6 +452,11 @@ static func native_backend_available_for_test() -> bool:
 	return _native_solver_backend() != null
 
 
+static func native_live_batch_supported() -> bool:
+	var native := _native_solver_backend()
+	return native != null and native.has_method("supports_live_batch_capture") and bool(native.call("supports_live_batch_capture"))
+
+
 static func last_step_backend_for_test() -> String:
 	return _last_step_backend
 

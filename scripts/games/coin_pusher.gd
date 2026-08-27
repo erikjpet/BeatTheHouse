@@ -1223,7 +1223,17 @@ func _write_live_durable(run_state: RunState, environment: Dictionary, live_mach
 		durable["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(live_machine), live_machine)
 	durable.erase("simulation")
 	durable.erase("live_session")
-	durable = durable.duplicate(true)
+	# The settled snapshot is immutable during an open live session and Packed
+	# arrays are copy-on-write. Reuse that large value; copy every other mutable
+	# composite before publishing the durable machine.
+	for key_value in durable.keys():
+		if str(key_value) == "settled_state":
+			continue
+		var value: Variant = durable[key_value]
+		if typeof(value) == TYPE_DICTIONARY:
+			durable[key_value] = (value as Dictionary).duplicate(true)
+		elif typeof(value) == TYPE_ARRAY:
+			durable[key_value] = (value as Array).duplicate(true)
 	_write_machine_state(environment, durable)
 
 

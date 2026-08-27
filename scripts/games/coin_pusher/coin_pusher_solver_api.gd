@@ -51,6 +51,10 @@ static func step_ticks_reference_for_test(state: Dictionary, config: Dictionary,
 	return CoinPusherSolverScript.step_ticks_reference_for_test(state, config, tick_count)
 
 
+static func native_live_batch_supported() -> bool:
+	return CoinPusherSolverScript.native_live_batch_supported()
+
+
 static func replay_input_trace(snapshot: Dictionary, rng: RngStream, trace: Array, ticks: int) -> Dictionary:
 	return CoinPusherSolverScript.replay_input_trace(snapshot, rng, trace, ticks)
 
