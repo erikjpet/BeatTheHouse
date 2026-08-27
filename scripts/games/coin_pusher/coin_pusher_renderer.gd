@@ -49,11 +49,13 @@ var _world_width := SCHEMA_DEFAULT_WIDTH
 var _world_back_y := SCHEMA_DEFAULT_BACK_Y
 var _coin_height := SCHEMA_DEFAULT_COIN_HEIGHT
 var _coin_radius := SCHEMA_DEFAULT_COIN_RADIUS
+var _web_profile_samples: Array = []
 
 
 func draw(surface, state: Dictionary) -> bool:
 	if str(state.get("surface_renderer", "")) != "coin_pusher":
 		return false
+	var profile_started := Time.get_ticks_usec()
 	_ensure_coin_batch()
 	_configure_projection(state)
 	surface.surface_begin_design_space(DESIGN_SIZE)
@@ -61,13 +63,34 @@ func draw(surface, state: Dictionary) -> bool:
 	var colors := _colors(cabinet)
 	if bool(state.get("coin_pusher_locked", false)):
 		colors = _locked_colors(colors)
+	var body_started := Time.get_ticks_usec()
 	_draw_floor_and_shell(surface, cabinet, colors)
 	_draw_backglass(surface, state, cabinet, colors)
+	var shell_usec := Time.get_ticks_usec() - body_started
+	body_started = Time.get_ticks_usec()
 	_draw_playfield(surface, state, colors, cabinet)
+	var playfield_usec := Time.get_ticks_usec() - body_started
+	body_started = Time.get_ticks_usec()
 	_draw_glass(surface, colors)
 	_draw_hardware(surface, state, colors)
 	surface.surface_end_design_space()
+	_web_profile_samples.append({
+		"total_usec": Time.get_ticks_usec() - profile_started,
+		"shell_backglass_usec": shell_usec,
+		"playfield_usec": playfield_usec,
+		"glass_hardware_usec": Time.get_ticks_usec() - body_started,
+	})
+	if _web_profile_samples.size() > 256:
+		_web_profile_samples.pop_front()
 	return true
+
+
+func reset_web_profile_for_test() -> void:
+	_web_profile_samples = []
+
+
+func web_profile_for_test() -> Array:
+	return _web_profile_samples.duplicate(true)
 
 
 func render_signature(state: Dictionary) -> Dictionary:
