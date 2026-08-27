@@ -1,4 +1,4 @@
-Status: IN PROGRESS — five-run idle-host measurement predeclared; no run executed
+Status: IN PROGRESS — execution concluded INCONCLUSIVE; result record awaits independent review and landing
 Board row: `fix06_5` in `docs/todo/README_0_6_board.md`
 
 # fix06_5 — Contract Suite Timing Measurement
@@ -151,3 +151,38 @@ independent implementation/evidence review, land only the accepted docs/evidence
 payload, repeat a proportionate post-land documentation/evidence check and then
 update the board and ledger. The row remains IN_PROGRESS until those steps are
 complete.
+
+## Execution result — 2026-08-26
+
+The accepted native addon was copied without rebuild into a detached clean
+worktree at exact source `e75f2c3d` / tree `099eeb0`. On host
+`DESKTOP-1950ULQ` (Windows 10 build 19045, i9-9900K, 16 logical processors,
+68,653,654,016 bytes installed memory), Godot
+`4.6.stable.official.89cea1439` at SHA-256 `FC759F9D...AD271AE` imported with
+exit 0 and the native smoke passed with backend `native_v3`. The power plan was
+Balanced (`381b4222-f694-41f0-9685-ff5bb260df2e`) on a desktop with no battery
+detected.
+
+The first candidate idle sample was retained as red: 60 samples, median
+`7.37561761081066%`, nearest-rank p95 `93.1980750662089%`. Its replacement
+precheck was eligible: 60 samples, median `6.76016865331285%`, nearest-rank p95
+`12.368124562579%`, maximum `22.0422867475001%`, with zero Godot processes
+before and after.
+
+Numbered attempt 01 then ran the exact predeclared command, including mandatory
+`-KeepGoing`, once from `22:14:41.3296803-05:00` through
+`22:15:30.8813904-05:00`. Static validation passed in `49.157s`, after which the
+runner exited 1 before import with `Godot was not found`. The child PowerShell
+process had not received an explicit `GODOT_BIN`, while the detached clean
+worktree deliberately had no ignored `.tools` installation. Therefore attempt
+01 is **not timing-eligible** and provides no Contract duration. Per the locked
+no-replacement rule, it was not repeated or discarded; attempts 02–05 were not
+run and no median was computed.
+
+The series classification is **INCONCLUSIVE**. It neither supports the existing
+guard nor creates a stale-baseline candidate. The baseline, multiplier, cap,
+runner, tests and product remain unchanged. Machine-readable details are in
+[`docs/plans/evidence/fix06_5/result.json`](../plans/evidence/fix06_5/result.json);
+ignored raw samples, qualification output and the incomplete run directory are
+preserved under `.tmp/fix06_5_contract_timing/` in both the detached measurement
+worktree and the row worktree.

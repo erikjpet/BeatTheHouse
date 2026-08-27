@@ -1636,3 +1636,12 @@ below to jump to a row's history.
   against unchanged 230.391s either supports the guard or creates a
   stale-baseline candidate requiring owner authorization; it never changes the
   cap automatically. Historical results remain context, not series members.
+
+- 2026-08-26 [fix06_5] The predeclared series concluded INCONCLUSIVE at its
+  first numbered attempt. Exact source/host/Godot/native identities qualified,
+  and a retained red idle sample was followed by an eligible 60-second sample
+  (median 6.760%, nearest-rank p95 12.368%). Attempt 01 passed validation in
+  49.157s, then the child PowerShell process could not locate Godot and exited
+  before Contract. The attempt is noneligible and was neither discarded nor
+  replaced; attempts 02–05 were not run. No median exists, no stale-baseline
+  candidate is claimed and no baseline, multiplier or cap changed.
