@@ -1,7 +1,7 @@
 # program06_0 Depth Rows — Cross-file Ownership Audit
 
-Status: Review Pool static audit and proposed matrix; the program director is
-the only authority that binds or changes assignments
+Status: Review Pool static audit with program-director assignments recorded;
+the program director is the only authority that changes assignments
 
 Audited immutable checklist heads:
 
@@ -29,8 +29,7 @@ Required split: the craps squad owns game authority and publishes public facts;
 Package A owns the room sequence and responds through env06_6 at a safe
 boundary. Neither may duplicate the other's state machine or write the other's
 files. The env assembly owner alone integrates the monolithic scenario catalog
-and owns the combined sequence dossier. A director-named composition-test owner
-must own the one cross-seam fixture.
+and owns the combined sequence dossier and the one cross-seam fixture.
 
 ### O2 — Poker debt-court and raid-jitters overlap env Package D
 
@@ -70,10 +69,13 @@ At least these current files are natural collision points:
 - `tools/foundation_determinism_probe.gd`
 - `tools/foundation_visual_qa.gd`
 
-Each must have one named integrator. Squads author uniquely named definitions,
-fixtures, tools, or exact patch requests; they do not concurrently edit a
-monolith. Gate Service runs harnesses but does not repair them. Defect Triage or
-a director-designated test integrator owns shared harness changes.
+The director assigns `data/games/games.json`, `check_table_games.gd`, and the
+master table-game probes exclusively to the future game06_1 implementation and
+Family 1 shared-runtime integrator through `game06_7`. The env06_7 assembly
+owner exclusively owns the scenario catalog/index and all five cross-seam
+fixtures. Squads author uniquely named definitions, fixtures, tools, or exact
+patch manifests; they do not concurrently edit a monolith. Gate Service runs
+harnesses but does not repair them.
 
 ### O5 — Shared game surface and environment render paths need retained owners
 
@@ -89,7 +91,8 @@ cannot become row-squad property merely because a row needs them:
 - `scripts/core/environment_instance.gd`
 - `scripts/ui/pixel_scene_canvas.gd`
 
-Shared game ritual/runtime files remain with the game06_1 implementation owner.
+Shared game ritual/runtime files remain with the future game06_1 implementation
+and Family 1 shared-runtime integrator.
 Scenario runtime/schema/renderer files remain with the env06_6 owner. A row
 submits a bounded adapter request; a director-recorded transfer is required
 before any other writer touches one.
@@ -100,11 +103,11 @@ The parallel former-PM lane exclusively owns crew/world models and the
 EventModule crew seam. `crew06_10` must not directly edit
 `crew_state_model.gd`, `crew_recruitment_model.gd`, `crew_play_model.gd`,
 `crew_heist_model.gd`, `crew_turn_model.gd`, `police_sweep_model.gd`, or other
-assigned crew model adapters. `crew_poker_model.gd` must be explicitly assigned:
-the safe default is retained other-lane custody, with the poker squad authoring
-`data/crew/poker.json` and a bounded model-adapter request.
+assigned crew model adapters. `crew_poker_model.gd` remains exclusively in that
+other lane; the poker squad authors `data/crew/poker.json` and consumes the
+public seam or submits a bounded handoff request.
 
-## 2. Proposed row/package ownership
+## 2. Recorded row/package ownership
 
 | Owner | Exclusive product/content scope | Must not edit |
 | --- | --- | --- |
@@ -115,35 +118,34 @@ the safe default is retained other-lane custody, with the poker squad authoring
 | env Package C | Unique definitions/dossiers/fixtures/assets for Bar and Jazz Club | Game modules, audio runtime, scenario monolith/index, env runtime, crew/world models |
 | env Package D | Unique definitions/dossiers/fixtures/assets for Underground and Lounge; room side of poker Debt Court/Raid Jitters | Poker game/model/data, scenario monolith/index, env runtime, crew/world models |
 | env Package E | Unique definitions/dossiers/fixtures/assets for Delta Queen and Grand Casino; room side of casino audit | Craps/other game modules, scenario monolith/index, env runtime, travel/crew models |
-| env06_7 Assembly owner | `data/environments/scenarios.json`, scenario indexes/loaders if assigned, 55-id machine dossier, global uniqueness/reachability report, archetype contact sheets, cross-package composition fixtures | Package implementation rewrites, env06_6 runtime/schema changes, game/crew/world authority |
-| game06_1 runtime owner | Shared ritual validator/runtime, `game_module.gd`, table visuals/canvas/controller adapter work, shared game layout/actor/object seams, shared game test registration | Game-specific rules/content, scenario runtime, crew/world models |
+| env06_7 Assembly owner | `data/environments/scenarios.json`, scenario indexes/loaders, `pixel_scene_canvas.gd`, 55-id machine dossier, global uniqueness/reachability report, archetype contact sheets, and all five cross-seam fixtures/combined dossiers | Package implementation rewrites, env06_6 runtime/schema changes, game/crew/world authority |
+| Future game06_1 implementation / Family 1 shared-runtime integrator | Shared ritual validator/runtime, `game_module.gd`, table visuals/canvas/controller adapter work, shared game layout/actor/object seams, `data/games/games.json`, `check_table_games.gd`, and master table-game probes through `game06_7` | Game-specific rules/content, scenario runtime, crew/world models |
 | env06_6 owner | Scenario runtime/schema/renderer adapters, env-specific shared test registration, sealed room/layer authority | Authored 55 scenario conversions, game rules, crew/world models outside its lane |
 | Parallel former-PM lane | Crew/world models, EventModule crew seam, Turn/sweep/itinerary/job adapters | Game rules/surfaces, env06_7 content packages, program board/main |
-| Audio squad (`audio06_1`) | Shared audio manifest/runtime and cross-row cue integration | Game/scenario authority and tuning |
-| Director-designated game catalog integrator | `data/games/games.json` and its shared validation/index work | Game implementation beyond mechanical integration of accepted slices |
-| Director-designated Foundation integrator / Defect Triage | Shared Foundation aggregators and probe harnesses | Row product fixes unless routed inline under that row |
+| Audio squad (`audio06_1`) | Shared audio manifest/runtime and cross-row cue integration; rows may emit existing semantic cues only | Game/scenario authority and tuning |
+| Defect Triage | Non-table shared Foundation infrastructure not assigned above | Row product fixes unless routed inline under that row |
 | Gate Service | Native-plugin identity, warm runners, immutable gate evidence | Product, harness, golden, budget, or test repair |
 | Program director / Landing Coordinator | `main`, board, assignment order, landing records; exact accepted payload extraction | Product implementation or acceptance review |
 
 ## 3. Path-level matrix for known collision points
 
-| Path or family | Proposed sole writer | Inputs accepted from other squads |
+| Path or family | Assigned sole writer | Inputs accepted from other squads |
 | --- | --- | --- |
 | `scripts/games/craps.gd`, `scripts/games/craps/**` | Craps squad | Accepted game06_1 adapter API; public env facts only |
 | `scripts/games/crew_draw_poker.gd` | Crew Poker squad | Accepted game06_1 adapter API; public crew/env facts only |
 | `data/crew/poker.json` | Crew Poker squad | Policy/voice constraints and model validation contract from other lane |
-| `scripts/core/crew_poker_model.gd` | Parallel former-PM lane unless director transfers it | Bounded schema/API request from Crew Poker squad |
+| `scripts/core/crew_poker_model.gd` | Parallel former-PM lane exclusively | Public-seam consumption or explicit handoff request from Crew Poker squad |
 | Listed crew/world models + EventModule crew seam | Parallel former-PM lane | Typed adapter requests only |
 | `data/environments/scenarios.json` | env06_7 Assembly owner | Accepted package definitions/patch manifests |
-| Scenario indexes/loaders | env06_7 Assembly owner, unless env06_6 owner retains a named file | Package manifests; no direct package edits |
+| Scenario indexes/loaders | env06_7 Assembly owner | Package manifests; no direct package edits |
 | `scripts/core/scenario_engine.gd`, `environment_instance.gd` | env06_6 owner | Bounded defects/adapters routed through director |
-| `scripts/ui/pixel_scene_canvas.gd` scenario projection paths | env06_6 owner or one director-named renderer integrator | Semantic operation/asset requirements from packages |
-| `data/games/games.json` | Director-designated game catalog integrator | Accepted row-specific data fragments/patch requests |
-| `game_module.gd`, `table_game_visuals.gd`, `game_surface_canvas.gd`, game controller seams | game06_1 runtime owner | Accepted consumer conformance requirements and adapter requests |
-| Shared audio manifests/runtime | `audio06_1` owner | Named cue requests with semantic events from rows/packages |
-| `check_table_games.gd` and shared game-suite registration | game06_1 owner or director-designated Foundation integrator | Uniquely named row fixtures plus registration request |
-| Scenario shared suite/uniqueness runner | env06_7 Assembly owner or director-designated Foundation integrator | Package-local fixtures/dossiers |
-| Determinism/visual/performance master probes | Foundation integrator / Defect Triage | Focused row tools and trace/capture adapters |
+| `scripts/ui/pixel_scene_canvas.gd` | env06_7 Assembly owner | Semantic operation/asset seam manifests from packages/craps/crew |
+| `data/games/games.json` | Future game06_1 implementation / Family 1 shared-runtime integrator through `game06_7` | Accepted row-specific data fragments/patch manifests |
+| `game_module.gd`, `table_game_visuals.gd`, `game_surface_canvas.gd`, game controller seams | Future game06_1 implementation / Family 1 shared-runtime integrator | Accepted consumer conformance requirements and adapter requests |
+| Shared audio manifests/runtime | `audio06_1` owner | Rows emit existing semantic cues; new cue/routing requests wait for audio06_1 |
+| `check_table_games.gd` and master table-game probes | Future game06_1 implementation / Family 1 shared-runtime integrator through `game06_7` | Uniquely named row fixtures plus patch manifests |
+| Scenario shared suite/uniqueness runner and all five cross-seam fixtures | env06_7 Assembly owner | Package-local fixtures/dossiers and seam manifests |
+| Non-table shared determinism/visual/performance infrastructure | Defect Triage unless separately assigned | Focused row tools and trace/capture manifests |
 | Row-focused tools/tests/captures with unique filenames | Owning row/package squad | None; references only accepted public seams |
 | `.tmp/`, `.tools/`, `review_artifacts/` | Owner property; no staging owner | Evidence may be referenced by hash/path, never staged/moved/removed |
 | `docs/todo/README_0_6_board.md`, `main` | Program director / Landing Coordinator | Handoff status only; squads do not edit |
@@ -152,35 +154,30 @@ the safe default is retained other-lane custody, with the poker squad authoring
 
 | Combined feature | Game/row authority | Environment/other-lane authority | One integration owner needed |
 | --- | --- | --- | --- |
-| Street Craps | wagers, dice, throw phases, settlement, training, public facts | Package A: chalk, lookout, crowd, routes, relocation/dispersal, aftermath | env assembly for combined dossier; director names fixture owner |
-| Casino audit craps | dice/wagers/table ritual/energy/public cheat result after reveal | Package E: auditors, room route, service/game availability, casino aftermath | env assembly for scenario dossier; director names fixture owner |
-| Poker Debt Court | hands, betting, between-hand pause/resume, public session facts | Package D: hearing, duties, actors, routes, ruling aftermath; other lane supplies public crew adapter | env assembly for dossier; director names fixture owner |
-| Poker Raid Jitters | live-hand safe boundary, hidden-card protection, resume/abort settlement policy | Package D: knock, hide/clear/reopen, actors/doors/routes/aftermath; sweep state from other-lane public adapter | env assembly for dossier; director names fixture owner |
-| Poker roster/itinerary | seat selection from authenticated public availability; no direct model mutation | Other lane owns residence, itinerary, active jobs, Turn and sweep authority | Director names cross-lane adapter owner/test fixture |
+| Street Craps | wagers, dice, throw phases, settlement, training, public facts | Package A: chalk, lookout, crowd, routes, relocation/dispersal, aftermath | env assembly owns combined dossier and cross-seam fixture |
+| Casino audit craps | dice/wagers/table ritual/energy/public cheat result after reveal | Package E: auditors, room route, service/game availability, casino aftermath | env assembly owns combined dossier and cross-seam fixture |
+| Poker Debt Court | hands, betting, between-hand pause/resume, public session facts | Package D: hearing, duties, actors, routes, ruling aftermath; other lane supplies public crew adapter | env assembly owns combined dossier and cross-seam fixture |
+| Poker Raid Jitters | live-hand safe boundary, hidden-card protection, resume/abort settlement policy | Package D: knock, hide/clear/reopen, actors/doors/routes/aftermath; sweep state from other-lane public adapter | env assembly owns combined dossier and cross-seam fixture |
+| Poker roster/itinerary | seat selection from authenticated public availability; no direct model mutation | Other lane owns residence, itinerary, active jobs, Turn and sweep authority | env assembly owns cross-seam fixture; other lane owns adapter |
 | Game energy -> room reaction | Game computes and publishes public tier fact | env scenario applies actor/object/interactable operations at next safe boundary | env assembly owns composition evidence |
 
-## 5. Decisions required before product edits
+## 5. Binding director decisions
 
-The Review Pool recommends the director record these smallest decisions in the
-assignment order:
+1. The future game06_1 implementation and Family 1 shared-runtime integrator is
+   sole writer for `data/games/games.json`, `check_table_games.gd`, and master
+   table-game probes through `game06_7`. Consumer squads submit patch manifests
+   and uniquely named fixtures; they never edit those shared files.
+2. The env06_7 assembly owner is sole writer for all five cross-seam fixtures,
+   their combined dossiers, scenario catalog/index files, and
+   `pixel_scene_canvas.gd`. Packages, craps, and Crew Poker submit seam manifests.
+3. `crew_poker_model.gd` remains exclusively in the parallel former-PM lane.
+   crew06_10 consumes its public seam or requests a handoff and never edits it.
+4. Shared audio manifest/routing changes are deferred exclusively to
+   `audio06_1`. Rows may emit existing semantic cues only.
 
-1. Name the sole `data/games/games.json` integrator. Until named, craps and Crew
-   Poker squads prepare row-local data fragments or exact patch requests only.
-2. Confirm `crew_poker_model.gd` remains with the parallel former-PM lane, or
-   record one explicit temporary transfer with start/end commit. No concurrent
-   ownership is valid.
-3. Name the sole writer for `check_table_games.gd` and the master determinism,
-   visual, and performance probes.
-4. Name one owner for each cross-seam composition fixture: Street Craps, casino
-   audit craps, Poker Debt Court, Poker Raid Jitters, and roster/job conflict.
-5. Confirm whether `pixel_scene_canvas.gd` stays with env06_6 or transfers to a
-   singular renderer integrator for env06_7; packages and Crew Poker never own
-   it directly.
-6. Confirm shared audio cue requests route exclusively through `audio06_1`.
-
-These are assignment decisions, not design blockers. Audit/test authoring and
-row-local work can continue while an integrator is named, but no unowned shared
-file may be edited.
+These decisions are not blockers to row-local audit/test work. They prohibit
+unrecorded shared-file edits and remain binding until the director records a
+replacement assignment.
 
 ## 6. Handoff enforcement
 
