@@ -1612,7 +1612,9 @@ below to jump to a row's history.
   persisted state. Owner-authorized refresh `f9eaebbf` changed only the two
   inline hashes and provenance comment, was accepted and landed with `fix06_4`
   at `9a2022ae`, and remained covered by later green exact-main Smoke. The
-  launcher’s separate-row obligation can be closed by documentation only, but
-  remains open until that closeout is independently accepted, landed on main,
-  checked post-land and recorded. No new refresh, product correction, recapture
-  or runtime gate is justified.
+  launcher’s separate-row obligation was closed by documentation only:
+  Feynman (`/root/fix06_collect_impl`) accepted `b323f841`, exact tree-equivalent
+  main merge `fe0c76d9` passed static validation in 77.967s, and the same
+  reviewer returned post-land ACCEPT. No new refresh, product correction,
+  recapture or runtime gate was justified, and all primary owner work remained
+  untouched.
