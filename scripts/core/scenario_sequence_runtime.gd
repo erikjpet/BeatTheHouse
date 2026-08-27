@@ -725,7 +725,7 @@ static func drain_transitions(state_value: Dictionary, definition: Dictionary, r
 		if reduced_motion and str(presentation.get("op", "")) == "stage":
 			presentation["message"] = str(presentation.get("reduced_motion_message", presentation.get("message", "")))
 			presentation["duration_boundaries"] = 0
-		emitted.append(presentation)
+		emitted.append(_public_transition_dto(presentation))
 		delivered.append(receipt_id)
 		if str(presentation.get("op", "")) == "stage" and int(presentation.get("duration_boundaries", 0)) > 0:
 			var stage := presentation.duplicate(true)
@@ -739,6 +739,19 @@ static func drain_transitions(state_value: Dictionary, definition: Dictionary, r
 	return {"ok": true, "state": state, "transitions": emitted, "errors": []}
 
 
+static func _public_transition_dto(value: Dictionary) -> Dictionary:
+	var result := {
+		"op": str(value.get("op", "feedback")),
+		"message": str(value.get("message", "")),
+		"duration_boundaries": maxi(0, int(value.get("duration_boundaries", 0))),
+	}
+	if not str(value.get("stage_id", "")).strip_edges().is_empty():
+		result["stage_id"] = str(value.get("stage_id", ""))
+	if not str(value.get("cue_id", "")).strip_edges().is_empty():
+		result["cue_id"] = str(value.get("cue_id", ""))
+	return result
+
+
 static func drain_event_requests(state_value: Dictionary, definition: Dictionary) -> Dictionary:
 	var state := normalize_state(state_value, definition)
 	if state.is_empty():
@@ -750,7 +763,10 @@ static func drain_event_requests(state_value: Dictionary, definition: Dictionary
 		var request := _dict(request_value)
 		var request_id := str(request.get("request_id", "")).strip_edges()
 		if request_id.is_empty() or delivered.has(request_id): continue
-		emitted.append(request)
+		emitted.append({
+			"event_id": str(request.get("event_id", "")),
+			"resolution_id": str(request.get("resolution_id", "")),
+		})
 		history.append(request)
 		delivered.append(request_id)
 	state["event_request_queue"] = []
@@ -804,7 +820,7 @@ static func public_projection(state_value: Dictionary, definition: Dictionary = 
 		"status": str(state.get("status", "")),
 		"boundary_serial": maxi(0, int(state.get("boundary_serial", 0))),
 		"objectives": _public_objectives(state, definition),
-		"local_state": _dict(state.get("local_state", {})),
+		"local_state": SequenceSchemaScript.public_local_state(definition, state.get("local_state", {})),
 		"resolved_outcomes": _string_array(state.get("resolved_outcomes", [])),
 		"last_feedback": str(state.get("last_feedback", "")),
 		"semantic_state": OperationRegistryScript.public_semantic_state(_dict(state.get("semantic_state", {}))),

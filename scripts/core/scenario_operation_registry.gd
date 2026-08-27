@@ -56,7 +56,7 @@ const MAX_VARIANT_TEXT := 512
 const MAX_VARIANT_COLLECTION := 512
 const MIN_TARGET_SIZE := 44.0
 const COMMON_OPERATION_KEYS := ["family", "op", "receipt_id", "owner_namespace", "stable_object_id"]
-const PUBLIC_SEMANTIC_KEYS := ["actors", "games", "interactions", "routes", "scene_objects", "services", "transition_queue"]
+const PUBLIC_SEMANTIC_KEYS := ["actors", "games", "interactions", "routes", "scene_objects", "services"]
 
 
 static func identity(owner_namespace: String, stable_object_id: String) -> String:
@@ -702,7 +702,6 @@ static func public_semantic_state(state_value: Dictionary) -> Dictionary:
 		"routes": _public_collection_with_tombstones(resolved, "routes"),
 		"scene_objects": _public_collection_with_tombstones(resolved, "scene_objects"),
 		"services": _public_collection_with_tombstones(resolved, "services"),
-		"transition_queue": _array(resolved.get("transition_queue", [])),
 	}
 
 

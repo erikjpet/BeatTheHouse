@@ -241,6 +241,7 @@ class LifecycleCageShortcutProbe:
 
 static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_schema(failures)
+	_check_public_projection_privacy(failures)
 	_check_catalog_rollout(library, failures)
 	_check_registered_operations(failures)
 	_check_interaction_identity(failures)
@@ -1614,6 +1615,35 @@ static func _check_schema(failures: Array) -> void:
 	var exact_count := SequenceSchemaScript.catalog_uniqueness_report([definition], 2, OperationRegistryScript, {}, {str(definition.get("id", "")): _fixture_target_inventory(definition)})
 	if bool(exact_count.get("ok", true)) or not _contains_text(_array(exact_count.get("failures", [])), "expected 2"):
 		failures.append("Sequence rollout audit did not enforce exact catalog count.")
+
+
+static func _check_public_projection_privacy(failures: Array) -> void:
+	var definition := _fixture_definition()
+	definition["sequence"]["local_state_schema"]["pressure"]["visibility"] = "public"
+	definition["sequence"]["local_state_schema"]["protected_exit"]["visibility"] = "private"
+	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
+	var state := SequenceRuntimeScript.initial_state(definition, "bar_node", "privacy_fixture", _fixture_host_semantics(definition))
+	state["local_state"]["pressure"] = 3
+	state["local_state"]["protected_exit"] = true
+	var semantic := _dict(state.get("semantic_state", {}))
+	semantic["transition_queue"] = [{
+		"family": "transition_ops", "op": "feedback", "receipt_id": "hidden_transition_receipt",
+		"operation_receipt_key": "hidden_operation_receipt", "operation_fingerprint": "f".repeat(64),
+		"message": "Visible feedback",
+	}]
+	semantic["operation_receipts"] = ["hidden_operation_receipt"]
+	semantic["operation_receipt_records"] = [{"receipt_key": "hidden_operation_receipt", "boundary_id": "hidden_boundary"}]
+	semantic["operation_fingerprints"] = {"hidden_operation_receipt": "f".repeat(64)}
+	state["semantic_state"] = semantic
+	var projection := SequenceRuntimeScript.public_projection(state, definition)
+	var public_semantic := _dict(projection.get("semantic_state", {}))
+	var public_text := JSON.stringify(projection)
+	if _dict(projection.get("local_state", {})) != {"pressure": 3} or public_semantic.has("transition_queue") or public_semantic.has("operation_receipts") or public_semantic.has("operation_receipt_records") or public_text.contains("hidden_operation_receipt") or public_text.contains("hidden_transition_receipt") or int(projection.get("pending_transition_count", -1)) != 1:
+		failures.append("Public sequence projection leaked private branch state or operation queue/receipt metadata instead of exposing only opted-in local state and pending counts.")
+	var drained := SequenceRuntimeScript.drain_transitions(state, definition)
+	var delivered := _dict(_array(drained.get("transitions", []))[0]) if not _array(drained.get("transitions", [])).is_empty() else {}
+	if not bool(drained.get("ok", false)) or delivered != {"op": "feedback", "message": "Visible feedback", "duration_boundaries": 0} or JSON.stringify(delivered).contains("receipt"):
+		failures.append("Delivered transition projection did not use the closed public DTO or leaked its internal receipt metadata.")
 
 
 static func _check_registered_operations(failures: Array) -> void:
@@ -4994,8 +5024,8 @@ static func _fixture_definition() -> Dictionary:
 		"sequence": {
 			"schema_version": 2,
 			"local_state_schema": {
-				"pressure": {"type": "int", "default": 0, "min": 0, "max": 5},
-				"protected_exit": {"type": "bool", "default": false},
+				"pressure": {"type": "int", "default": 0, "min": 0, "max": 5, "visibility": "public"},
+				"protected_exit": {"type": "bool", "default": false, "visibility": "private"},
 				"side": {"type": "enum", "default": "none", "values": ["none", "left", "right"]},
 			},
 			"phase_graph": {

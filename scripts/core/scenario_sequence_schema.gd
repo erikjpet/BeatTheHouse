@@ -164,6 +164,21 @@ static func normalize_local_state(definition: Dictionary, value: Variant) -> Dic
 	return result
 
 
+# Local fields are private unless the authored schema opts them into the public
+# projection. This keeps newly added branch/control state runtime-owned.
+static func public_local_state(definition: Dictionary, value: Variant) -> Dictionary:
+	var normalized := normalize_local_state(definition, value)
+	var fields := _dict(sequence(definition).get("local_state_schema", {}))
+	var result: Dictionary = {}
+	var keys := fields.keys()
+	keys.sort()
+	for key_value in keys:
+		var field_id := str(key_value)
+		if str(_dict(fields.get(key_value, {})).get("visibility", "private")) == "public":
+			result[field_id] = normalized.get(field_id)
+	return result
+
+
 static func phase_ids(definition: Dictionary) -> Array:
 	var result: Array = []
 	for phase_value in _array(_dict(sequence(definition).get("phase_graph", {})).get("phases", [])):
@@ -444,12 +459,14 @@ static func _validate_local_state_schema(label: String, fields: Dictionary, erro
 			continue
 		var field := _dict(fields.get(field_value, {}))
 		var type_id := str(field.get("type", "")) if typeof(field.get("type")) == TYPE_STRING else ""
-		var allowed_keys := ["type", "default"]
+		var allowed_keys := ["type", "default", "visibility"]
 		if type_id == "enum": allowed_keys.append("values")
 		if type_id in ["int", "float"] and (field.has("min") or field.has("max")): allowed_keys.append_array(["min", "max"])
 		_append_unknown_keys("%s local field %s" % [label, field_id], field, allowed_keys, errors)
 		if not LOCAL_TYPES.has(type_id):
 			errors.append("%s local field %s has unsupported type %s." % [label, field_id, type_id])
+		elif str(field.get("visibility", "private")) not in ["private", "public"]:
+			errors.append("%s local field %s visibility must be private or public." % [label, field_id])
 		elif type_id in ["int", "float"] and field.has("min") != field.has("max"):
 			errors.append("%s local field %s must declare both min and max or neither." % [label, field_id])
 		elif type_id == "enum" and not _canonical_string_values(field.get("values", [])):
