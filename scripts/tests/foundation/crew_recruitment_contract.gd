@@ -12,7 +12,7 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const IGNORED_BASELINE_PATH := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
-const IGNORED_BASELINE_CHANGE_COMMIT := "a0d2b6ff7155484830909728f3051f587dc5dc4d"
+const IGNORED_BASELINE_CHANGE_COMMIT := "b466aa7a9d191197480ac8c47b2ed725f24b8431"
 const JSON_EXACT_INTEGER_LIMIT := 9007199254740991.0
 
 
