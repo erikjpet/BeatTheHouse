@@ -118,7 +118,7 @@ static func _check_small_screen_expansion(failures: Array) -> void:
 			"label": "Edge exit", "state_label": "Open", "prompt": "Leave through the edge exit.",
 			"enabled": true, "disabled_reason": "", "available_actions": [{"id": "leave", "label": "Leave", "input_action": "ui_accept", "non_color_state": "ready"}],
 			"input_actions": ["ui_accept"], "non_color_state": "open", "focus_order": 1,
-			"hit_bounds": {"w": 44.0, "h": 44.0}, "min_target_size": 44.0, "safe_exit": true,
+			"hit_bounds": {"w": 44.0, "h": 44.0}, "min_target_size": 44.0, "safe_exit": true, "alternate_exit": false,
 		}},
 	}
 	var prepared := ScenarioLayoutResolverScript.prepare({"layout": {"game_spots": [{"x": 890.0, "y": 420.0}]}}, {"scenario_id": "small_screen_fixture", "phase_id": "arrival", "status": "active", "semantic_state": semantic})
@@ -330,6 +330,7 @@ static func _prepared_snapshot() -> Dictionary:
 			"hit_bounds": {"w": 60.0, "h": 52.0},
 			"min_target_size": 44.0,
 			"safe_exit": true,
+			"alternate_exit": false,
 		}],
 		"visual_objects": [{
 			"object_id": SCENARIO_OBJECT_ID,
@@ -381,6 +382,7 @@ static func _base_record() -> Dictionary:
 		"inline_actions": [],
 		"confirm_action_id": "confirm_travel",
 		"safe_exit": true,
+		"alternate_exit": false,
 		"focus_order": 20,
 	}
 

@@ -1171,9 +1171,9 @@ static func _append_cleanup(definition: Dictionary, family: String, stable_id: S
 static func _configure_alternate_exit_proof(definition: Dictionary) -> void:
 	var phase: Dictionary = definition["sequence"]["phase_graph"]["phases"][0]
 	phase["objective_ids"] = ["clear_exit"]
-	phase["branches"] = [{"id": "continue", "condition": {"type": "command", "command_id": "prepare"}, "next_phase": "aftermath"}]
+	phase["branches"] = [{"id": "continue", "condition": {"type": "command", "command_id": "prepare"}, "next_phase": "complication"}]
 	var interaction_ops: Array = phase.get("interaction_ops", [])
-	interaction_ops.append({
+	var gate_operation := {
 		"family": "interaction_ops",
 		"op": "gate",
 		"receipt_id": "interaction_gate_declared_exit",
@@ -1184,8 +1184,18 @@ static func _configure_alternate_exit_proof(definition: Dictionary) -> void:
 		"target_stable_object_id": "game:slot",
 		"enabled": false,
 		"disabled_reason": "The ordinary route is blocked.",
-	})
+	}
+	interaction_ops.append(gate_operation)
 	phase["interaction_ops"] = interaction_ops
+	var cleanup_operation := gate_operation.duplicate(true)
+	cleanup_operation["receipt_id"] = "cleanup_declared_exit_gate"
+	cleanup_operation["op"] = "remove"
+	for overlay_key in ["mode", "target_owner_namespace", "target_stable_object_id", "enabled", "disabled_reason"]:
+		cleanup_operation.erase(overlay_key)
+	var cleanup: Dictionary = definition["sequence"]["cleanup"]
+	var cleanup_operations: Array = cleanup.get("operations", [])
+	cleanup_operations.append(cleanup_operation)
+	cleanup["operations"] = cleanup_operations
 
 
 static func _reseal_definition(definition: Dictionary) -> void:
