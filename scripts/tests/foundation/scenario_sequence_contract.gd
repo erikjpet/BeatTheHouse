@@ -2373,21 +2373,15 @@ static func _check_mutually_exclusive_branch_cleanup(failures: Array) -> void:
 		failures.append("Missing aftermath target hostile fixture was not rejected atomically with its typed error.")
 
 	var definition := _runtime_definition()
-	var phases := _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", []))
-	var complication := _dict(phases[1])
-	var complication_branches := _array(complication.get("branches", []))
-	complication_branches[0] = {"id": "complication_broken_terminal", "condition": {"type": "fact", "fact_type": "heat_changed"}, "outcome": "broken"}
-	complication["branches"] = complication_branches
-	phases[1] = complication
-	definition["sequence"]["phase_graph"]["phases"] = phases
-	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
 	var broken_state := _with_live_aftermath_authority(_prepared_fixture_state(definition, "broken_seed", failures), "broken")
+	var prior_branch_records := _array(broken_state.get("branch_resolution_records", []))
 	var broken_fact := SequenceRuntimeScript.fact("heat_changed", "heat", "bar_node", "branch:broken", 1, 1, _fact_payload("heat_changed"))
 	var broken_queued := SequenceRuntimeScript.enqueue_fact(broken_state, definition, broken_fact)
 	var broken_result := SequenceRuntimeScript.flush_facts(_dict(broken_queued.get("state", {})), definition, 1)
 	var broken_final := _dict(broken_result.get("state", {}))
 	var branch_records := _array(broken_final.get("branch_resolution_records", []))
-	if not bool(broken_queued.get("ok", false)) or bool(broken_queued.get("duplicate", true)) or not _array(broken_queued.get("errors", [])).is_empty() or not bool(broken_result.get("ok", false)) or not _array(broken_result.get("errors", [])).is_empty() or _array(broken_result.get("processed", [])) != ["branch:broken"] or _array(broken_final.get("fact_receipts", [])) != ["branch:broken"] or branch_records.size() != 2 or str(_dict(branch_records[0]).get("branch_id", "")) != "continue" or str(_dict(branch_records[0]).get("trigger_kind", "")) != "command" or str(_dict(branch_records[1]).get("branch_id", "")) != "complication_broken_terminal" or str(_dict(branch_records[1]).get("trigger_kind", "")) != "fact" or str(_dict(branch_records[1]).get("trigger_receipt_key", "")) != "branch:broken":
+	var new_branch_records := branch_records.slice(prior_branch_records.size())
+	if not bool(broken_queued.get("ok", false)) or bool(broken_queued.get("duplicate", true)) or not _array(broken_queued.get("errors", [])).is_empty() or not bool(broken_result.get("ok", false)) or not _array(broken_result.get("errors", [])).is_empty() or _array(broken_result.get("processed", [])) != ["branch:broken"] or _array(broken_final.get("fact_receipts", [])) != ["branch:broken"] or prior_branch_records.size() != 1 or str(_dict(prior_branch_records[0]).get("branch_id", "")) != "continue" or str(_dict(prior_branch_records[0]).get("trigger_kind", "")) != "command" or new_branch_records.size() != 2 or str(_dict(new_branch_records[0]).get("branch_id", "")) != "complication_break" or str(_dict(new_branch_records[0]).get("trigger_kind", "")) != "fact" or str(_dict(new_branch_records[0]).get("trigger_receipt_key", "")) != "branch:broken" or str(_dict(new_branch_records[1]).get("branch_id", "")) != "break" or str(_dict(new_branch_records[1]).get("trigger_kind", "")) != "fact" or str(_dict(new_branch_records[1]).get("trigger_receipt_key", "")) != "branch:broken":
 		failures.append("Broken branch did not preserve its exact enqueue/flush/receipt/two-branch causal record.")
 	_check_clean_branch_state(_dict(broken_result.get("state", {})), definition, "broken", "scenario::fixture_102", failures)
 
@@ -2424,12 +2418,12 @@ static func _check_boundary_provenance(failures: Array) -> void:
 	arrival["branches"] = [{"id": "travel_into_complication", "condition": {"type": "fact", "fact_type": "travel_arrived"}, "next_phase": "complication"}]
 	phases[0] = arrival
 	var complication := _dict(phases[1])
-	complication["branches"] = []
+	complication["branches"] = [{"id": "fact_boundary_settle", "condition": {"type": "fact", "fact_type": "world_boundary"}, "next_phase": "aftermath"}]
 	complication["advance_after_actions"] = 1
 	phases[1] = complication
 	graph["phases"] = phases
 	sequence["phase_graph"] = graph
-	sequence["fact_subscriptions"] = _array(sequence.get("fact_subscriptions", [])) + ["travel_arrived"]
+	sequence["fact_subscriptions"] = _array(sequence.get("fact_subscriptions", [])) + ["travel_arrived", "world_boundary"]
 	fact_definition["sequence"] = sequence
 	fact_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(fact_definition)
 	var fact_state := SequenceRuntimeScript.initial_state(fact_definition, "bar_node", "fact_boundary_seed", _fixture_host_semantics(fact_definition))
@@ -2452,13 +2446,21 @@ static func _check_augment_availability(failures: Array) -> void:
 	var graph := _dict(sequence.get("phase_graph", {}))
 	var phases := _array(graph.get("phases", []))
 	var arrival := _dict(phases[0])
-	arrival["interaction_ops"] = _array(arrival.get("interaction_ops", [])) + [_operation_fixture("interaction_ops", "augment", 5)]
+	var augment_operation := _operation_fixture("interaction_ops", "augment", 5)
+	arrival["interaction_ops"] = _array(arrival.get("interaction_ops", [])) + [augment_operation]
 	phases[0] = arrival
 	graph["phases"] = phases
 	sequence["phase_graph"] = graph
 	var declared_targets := _dict(sequence.get("declared_targets", {}))
 	declared_targets["interactions"] = _array(declared_targets.get("interactions", [])) + ["base::fixture_target_5"]
 	sequence["declared_targets"] = declared_targets
+	var cleanup := _dict(sequence.get("cleanup", {}))
+	var cleanup_operations := _array(cleanup.get("operations", []))
+	var cleanup_augment := augment_operation.duplicate(true)
+	cleanup_augment["receipt_id"] = "cleanup_augment_fixture_5"
+	cleanup_operations.append(cleanup_augment)
+	cleanup["operations"] = cleanup_operations
+	sequence["cleanup"] = cleanup
 	definition["sequence"] = sequence
 	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
 	var host_semantics := _fixture_host_semantics(definition)
