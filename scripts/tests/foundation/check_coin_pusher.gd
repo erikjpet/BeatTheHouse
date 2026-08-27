@@ -19,6 +19,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_played_in_opening_state(library, game_definition, failures)
 	_check_pusher_v3_plinko_bounce_and_variance(machine_definition, failures)
 	_check_pusher_v3_alive_cabinet(library, machine_definition, failures)
+	_check_pusher_v3_realtime_redraw_ownership(failures)
 	_check_pusher_v3_presentation_view(machine_definition, failures)
 	_check_pusher_v3_rejected_mechanics_deleted(failures)
 	_check_pusher_v3_landing_skill(machine_definition, failures)
@@ -45,6 +46,34 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_items_alarm_and_rumor(library, failures)
 	_check_pusher_v3_generated_rider_production(library, failures)
 	_check_pusher_v3_solver_performance(machine_definition, failures)
+
+
+func _check_pusher_v3_realtime_redraw_ownership(failures: Array) -> void:
+	var canvas: Control = PusherGameSurfaceCanvasScript.new()
+	canvas.call("render_game_snapshot", {
+		"game_id": "coin_pusher",
+		"surface_renderer": "coin_pusher",
+		"surface_animates_idle": true,
+		"coin_pusher_body_count": 1,
+	})
+	canvas.call("reset_performance_counters")
+	canvas.call("apply_surface_state_patch", {
+		"surface_defer_patch_redraw": true,
+		"coin_pusher_body_count": 2,
+	})
+	var deferred_state: Dictionary = canvas.call("realtime_surface_state")
+	var deferred_counters: Dictionary = canvas.call("performance_counters")
+	if int(deferred_state.get("coin_pusher_body_count", 0)) != 2:
+		failures.append("Coin Pusher deferred realtime patch did not update the authoritative canvas state.")
+	if deferred_state.has("surface_defer_patch_redraw"):
+		failures.append("Coin Pusher redraw-policy metadata leaked into render state.")
+	if int(deferred_counters.get("patch_redraw_requests", -1)) != 0:
+		failures.append("Coin Pusher deferred realtime patch bypassed the maintained redraw scheduler.")
+	canvas.call("apply_surface_state_patch", {"coin_pusher_carriage_x": 55000})
+	var action_counters: Dictionary = canvas.call("performance_counters")
+	if int(action_counters.get("patch_redraw_requests", 0)) != 1:
+		failures.append("Coin Pusher action-visible dirty patch did not request an immediate redraw.")
+	canvas.free()
 
 
 func _check_pusher_v3_10_idle_queue_cups_and_stack(library: ContentLibrary, game_definition: Dictionary, machine: Dictionary, failures: Array) -> void:
