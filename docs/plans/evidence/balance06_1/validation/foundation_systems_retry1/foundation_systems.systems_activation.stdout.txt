@@ -1,0 +1,5 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+FOUNDATION_CHECK_START id=game_activation_class_guard suite=systems
+FOUNDATION_CHECK_DONE id=game_activation_class_guard duration_msec=20008 failures=0
+Foundation Godot checks passed. suite=systems checks=1 report=D:/Projects/Beat-The-House-worktrees/cross-balance/.tmp/balance06_1/foundation_systems_retry1/foundation_systems.systems_activation.json
