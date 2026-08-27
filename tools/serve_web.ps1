@@ -77,6 +77,11 @@ $serverScript = Join-Path $PSScriptRoot "serve_web_server.py"
 $serverProcess = $null
 try {
     $serverArguments = @($serverScript, "--port", [string]$Port, "--root", $webDir)
+    $shutdownAckFile = ""
+    if (-not [string]::IsNullOrWhiteSpace($OwnershipFile)) {
+        $shutdownAckFile = "$ShutdownFile.ack"
+        $serverArguments += @("--shutdown-file", $ShutdownFile, "--shutdown-ack-file", $shutdownAckFile, "--shutdown-nonce", $OwnershipNonce)
+    }
     $quotedServerArguments = @($serverArguments | ForEach-Object { ConvertTo-WindowsProcessArgument -Argument ([string]$_) })
     $serverProcess = Start-Process -FilePath $python -ArgumentList $quotedServerArguments -PassThru -NoNewWindow
     if (-not [string]::IsNullOrWhiteSpace($OwnershipFile)) {
@@ -94,6 +99,7 @@ try {
             serve_root = $webDir
             server_script = $serverScript
             shutdown_file = [System.IO.Path]::GetFullPath($ShutdownFile)
+            shutdown_ack_file = [System.IO.Path]::GetFullPath($shutdownAckFile)
         }
         $temporaryOwnershipPath = "$ownershipPath.$PID.tmp"
         $ownership | ConvertTo-Json | Set-Content -LiteralPath $temporaryOwnershipPath -Encoding utf8
@@ -102,11 +108,21 @@ try {
     Wait-Process -Id $serverProcess.Id
     $serverProcess.Refresh()
     $expectedShutdown = $false
-    if (-not [string]::IsNullOrWhiteSpace($OwnershipFile) -and (Test-Path -LiteralPath $ShutdownFile)) {
-        $expectedShutdown = [string](Get-Content -LiteralPath $ShutdownFile -Raw) -eq $OwnershipNonce
+    if (-not [string]::IsNullOrWhiteSpace($OwnershipFile) -and (Test-Path -LiteralPath $ShutdownFile) -and (Test-Path -LiteralPath $shutdownAckFile)) {
+        $expectedAcknowledgement = "{0}:{1}" -f $OwnershipNonce, $serverProcess.Id
+        $expectedShutdown = (
+            [string](Get-Content -LiteralPath $ShutdownFile -Raw) -eq $OwnershipNonce -and
+            [string](Get-Content -LiteralPath $shutdownAckFile -Raw) -eq $expectedAcknowledgement
+        )
     }
     if (-not $expectedShutdown) {
-        $exitIdentity = if ($serverProcess.HasExited) { [string]$serverProcess.ExitCode } else { "unknown" }
+        $exitIdentity = "unknown"
+        if ($serverProcess.HasExited) {
+            try {
+                if ($null -ne $serverProcess.ExitCode) { $exitIdentity = [string]$serverProcess.ExitCode }
+            }
+            catch { $exitIdentity = "unknown" }
+        }
         throw "Local Web server exited unexpectedly with code $exitIdentity."
     }
 }

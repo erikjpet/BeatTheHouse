@@ -137,22 +137,53 @@ try {
     Wait-Process -Id ([int]$unexpected.Record.server_pid) -Timeout 5 -ErrorAction SilentlyContinue
     Wait-Process -Id $unexpected.Wrapper.Id -Timeout 5 -ErrorAction SilentlyContinue
     $unexpectedStderr = Get-Content -LiteralPath $unexpected.StandardError -Raw
-    Assert-Test -Condition ([string]$unexpectedStderr -like "*Local Web server exited unexpectedly with code*") -Message "Unexpected child exit did not fail closed through serve_web stderr."
+    Assert-Test -Condition ([string]$unexpectedStderr -match 'Local Web server exited unexpectedly with code (unknown|-?[0-9]+)\.') -Message "Unexpected child exit did not fail closed with a numeric or explicit unknown identity through serve_web stderr."
     $unexpectedCleanupFailed = $false
     try { Stop-OwnedWebServer -Launch $unexpected }
     catch { $unexpectedCleanupFailed = $_.Exception.Message -like "*Could not publish exact owned Web server shutdown intent*" }
     Assert-Test -Condition $unexpectedCleanupFailed -Message "Unexpected already-exited child was retroactively classified as requested shutdown."
 
+    # Deterministically kill the child after identity check but before request
+    # publication. No child acknowledgement means the wrapper must reject it.
+    $requestRace = Start-TestServer -Name "request_publication_race"
+    $ownedPids.Add([int]$requestRace.Record.server_pid)
+    $requestRaceFailed = $false
+    try {
+        Request-OwnedWebServerShutdown -Launch $requestRace -BeforeShutdownPublication {
+            param($raceLaunch)
+            Stop-Process -Id ([int]$raceLaunch.Record.server_pid) -Force
+            Wait-Process -Id ([int]$raceLaunch.Record.server_pid) -Timeout 5 -ErrorAction SilentlyContinue
+        }
+    }
+    catch { $requestRaceFailed = $_.Exception.Message -like "*before acknowledging shutdown*" }
+    Assert-Test -Condition $requestRaceFailed -Message "Check-to-publication race was accepted without a live-child acknowledgement."
+    Wait-Process -Id $requestRace.Wrapper.Id -Timeout 5 -ErrorAction SilentlyContinue
+    $requestRaceStderr = Get-Content -LiteralPath $requestRace.StandardError -Raw
+    Assert-Test -Condition ([string]$requestRaceStderr -match 'Local Web server exited unexpectedly with code (unknown|-?[0-9]+)\.') -Message "Check-to-publication race did not remain an unexpected wrapper failure."
+    Assert-Test -Condition (-not (Test-Path -LiteralPath $requestRace.ShutdownAckFile)) -Message "Exited child fabricated a shutdown acknowledgement."
+    try { Stop-OwnedWebServer -Launch $requestRace } catch { }
+
     # Cleanup must report failure if its exact owned listener survives a stop.
     $sticky = Start-TestServer -Name "sticky_listener"
     $ownedPids.Add([int]$sticky.Record.server_pid)
     $stickyFailedClosed = $false
+    $wrapperReuseProtected = $false
     & {
         function Stop-Process { param([int]$Id, [switch]$Force, $ErrorAction) }
-        try { Stop-OwnedWebServer -Launch $sticky }
-        catch { $script:stickyFailedClosed = $_.Exception.Message -like "*remained alive*" -and $_.Exception.Message -like "*still owns listener*" }
+        try {
+            Stop-OwnedWebServer -Launch $sticky -WrapperFallbackProcessResolver {
+                param($ignoredProcessId)
+                return Get-Process -Id $unrelated.Id -ErrorAction Stop
+            }
+        }
+        catch {
+            $script:stickyFailedClosed = $_.Exception.Message -like "*remained alive*" -and $_.Exception.Message -like "*still owns listener*"
+            $script:wrapperReuseProtected = $_.Exception.Message -like "*changed identity*"
+        }
     }
     Assert-Test -Condition $stickyFailedClosed -Message "Cleanup silently succeeded while the exact owned listener remained."
+    Assert-Test -Condition $wrapperReuseProtected -Message "Wrapper fallback did not reject the injected PID-reuse identity."
+    Assert-Test -Condition ($null -ne (Get-Process -Id $unrelated.Id -ErrorAction SilentlyContinue)) -Message "Injected wrapper PID-reuse boundary stopped the unrelated replacement."
     Microsoft.PowerShell.Management\Stop-Process -Id ([int]$sticky.Record.server_pid) -Force -ErrorAction SilentlyContinue
     Microsoft.PowerShell.Management\Stop-Process -Id $sticky.Wrapper.Id -Force -ErrorAction SilentlyContinue
 

@@ -108,8 +108,12 @@ function Start-OwnedWebServer {
         throw "Refusing to reuse an existing Web server ownership record: $OwnershipFile"
     }
     $shutdownFile = "$OwnershipFile.shutdown"
+    $shutdownAckFile = "$shutdownFile.ack"
     if (Test-Path -LiteralPath $shutdownFile) {
         throw "Refusing to reuse an existing Web server shutdown record: $shutdownFile"
+    }
+    if (Test-Path -LiteralPath $shutdownAckFile) {
+        throw "Refusing to reuse an existing Web server shutdown acknowledgement: $shutdownAckFile"
     }
     $nonce = [guid]::NewGuid().ToString("N")
     $arguments = @(
@@ -126,6 +130,7 @@ function Start-OwnedWebServer {
         OwnershipFile = $OwnershipFile
         OwnershipNonce = $nonce
         ShutdownFile = $shutdownFile
+        ShutdownAckFile = $shutdownAckFile
         ServerScript = $ServerScript
         Port = $Port
         StandardOutput = $StandardOutput
@@ -150,20 +155,52 @@ function Start-OwnedWebServer {
 }
 
 function Request-OwnedWebServerShutdown {
-    param([Parameter(Mandatory = $true)]$Launch)
+    param(
+        [Parameter(Mandatory = $true)]$Launch,
+        [scriptblock]$BeforeShutdownPublication
+    )
 
     $shutdownAlreadyRequested = Test-Path -LiteralPath $Launch.ShutdownFile
     $record = Read-OwnedWebServerRecord -OwnershipFile $Launch.OwnershipFile -OwnershipNonce $Launch.OwnershipNonce -WrapperProcessId $Launch.Wrapper.Id -ServerScript $Launch.ServerScript -Port $Launch.Port -AllowExited:$shutdownAlreadyRequested
     if ([string]$record.shutdown_file -ne [System.IO.Path]::GetFullPath($Launch.ShutdownFile)) {
         throw "Owned Web server shutdown record did not match its launch identity."
     }
-    if ($shutdownAlreadyRequested) {
-        if ([string](Get-Content -LiteralPath $Launch.ShutdownFile -Raw) -eq $Launch.OwnershipNonce) { return }
-        throw "Owned Web server shutdown path already contained a different identity."
+    if ([string]$record.shutdown_ack_file -ne [System.IO.Path]::GetFullPath($Launch.ShutdownAckFile)) {
+        throw "Owned Web server shutdown acknowledgement did not match its launch identity."
     }
-    $temporaryShutdownPath = "$($Launch.ShutdownFile).$PID.tmp"
-    Set-Content -LiteralPath $temporaryShutdownPath -Value $Launch.OwnershipNonce -NoNewline -Encoding ascii
-    Move-Item -LiteralPath $temporaryShutdownPath -Destination $Launch.ShutdownFile
+    if ($shutdownAlreadyRequested) {
+        if ([string](Get-Content -LiteralPath $Launch.ShutdownFile -Raw) -ne $Launch.OwnershipNonce) {
+            throw "Owned Web server shutdown path already contained a different identity."
+        }
+    }
+    else {
+        if ($null -ne $BeforeShutdownPublication) { & $BeforeShutdownPublication $Launch }
+        $temporaryShutdownPath = "$($Launch.ShutdownFile).$PID.tmp"
+        Set-Content -LiteralPath $temporaryShutdownPath -Value $Launch.OwnershipNonce -NoNewline -Encoding ascii
+        Move-Item -LiteralPath $temporaryShutdownPath -Destination $Launch.ShutdownFile
+    }
+
+    $deadline = (Get-Date).AddSeconds(5)
+    $expectedAcknowledgement = "{0}:{1}" -f $Launch.OwnershipNonce, [int]$record.server_pid
+    while ((Get-Date) -lt $deadline) {
+        if (Test-Path -LiteralPath $Launch.ShutdownAckFile) {
+            if ([string](Get-Content -LiteralPath $Launch.ShutdownAckFile -Raw) -ne $expectedAcknowledgement) {
+                throw "Owned Web server shutdown acknowledgement contained a different identity."
+            }
+            $serverProcess = Get-Process -Id ([int]$record.server_pid) -ErrorAction SilentlyContinue
+            if ($null -eq $serverProcess -and $shutdownAlreadyRequested) { return }
+            if ($null -eq $serverProcess -or $serverProcess.StartTime.ToUniversalTime().Ticks -ne [int64]$record.server_start_utc_ticks) {
+                throw "Owned Web server exited or changed identity before acknowledged termination."
+            }
+            return
+        }
+        $serverProcess = Get-Process -Id ([int]$record.server_pid) -ErrorAction SilentlyContinue
+        if ($null -eq $serverProcess -or $serverProcess.StartTime.ToUniversalTime().Ticks -ne [int64]$record.server_start_utc_ticks) {
+            throw "Owned Web server exited or changed identity before acknowledging shutdown."
+        }
+        Start-Sleep -Milliseconds 20
+    }
+    throw "Exact owned Web server did not acknowledge shutdown within 5 seconds."
 }
 
 function Assert-OwnedWebServerListener {
@@ -178,7 +215,10 @@ function Assert-OwnedWebServerListener {
 }
 
 function Stop-OwnedWebServer {
-    param([Parameter(Mandatory = $true)]$Launch)
+    param(
+        [Parameter(Mandatory = $true)]$Launch,
+        [scriptblock]$WrapperFallbackProcessResolver
+    )
 
     $failures = [System.Collections.Generic.List[string]]::new()
     $record = $null
@@ -237,12 +277,22 @@ function Stop-OwnedWebServer {
         }
         else {
             try { Wait-Process -Id $Launch.Wrapper.Id -Timeout 5 -ErrorAction Stop } catch { }
-            $wrapperProcess = Get-Process -Id $Launch.Wrapper.Id -ErrorAction SilentlyContinue
+            $wrapperProcess = if ($null -ne $WrapperFallbackProcessResolver) {
+                & $WrapperFallbackProcessResolver $Launch.Wrapper.Id
+            }
+            else {
+                Get-Process -Id $Launch.Wrapper.Id -ErrorAction SilentlyContinue
+            }
             if ($null -ne $wrapperProcess) {
-                Stop-Process -Id $Launch.Wrapper.Id -Force -ErrorAction SilentlyContinue
-                try { Wait-Process -Id $Launch.Wrapper.Id -Timeout 5 -ErrorAction Stop } catch { }
-                if ($null -ne (Get-Process -Id $Launch.Wrapper.Id -ErrorAction SilentlyContinue)) {
-                    $failures.Add("Exact launched wrapper PID $($Launch.Wrapper.Id) remained alive after cleanup.")
+                if ([int]$wrapperProcess.Id -ne [int]$Launch.Wrapper.Id -or $wrapperProcess.StartTime.ToUniversalTime().Ticks -ne [int64]$Launch.WrapperStartUtcTicks) {
+                    $failures.Add("Refused fallback termination because wrapper PID $($Launch.Wrapper.Id) changed identity.")
+                }
+                else {
+                    Stop-Process -Id $Launch.Wrapper.Id -Force -ErrorAction SilentlyContinue
+                    try { Wait-Process -Id $Launch.Wrapper.Id -Timeout 5 -ErrorAction Stop } catch { }
+                    if ($null -ne (Get-Process -Id $Launch.Wrapper.Id -ErrorAction SilentlyContinue)) {
+                        $failures.Add("Exact launched wrapper PID $($Launch.Wrapper.Id) remained alive after cleanup.")
+                    }
                 }
             }
         }

@@ -1125,3 +1125,28 @@ below to jump to a row's history.
   cleanup. The unexpected-exit case requires wrapper stderr and cleanup both to
   fail closed. The full hostile suite passed again in 24.8s; final parser
   coverage passed 4/4 and static validation passed in 48.2s.
+
+- 2026-08-27 [fix06_16] INDEPENDENT REJECT P1/P1/P3 / CHILD ACK AND
+  FALLBACK IDENTITY REMEDIATED; RE-REVIEW PENDING. Independent review rejected
+  `672cdd25b65ed715e2fd0528d1771c1a7997e384`: the one-way marker retained a
+  check-to-publication death race; wrapper PID/start identity was not rechecked
+  immediately after its bounded wait before fallback stop; and unavailable exit
+  identity needed explicit `unknown`. All rejected heads remain reachable.
+
+  The exact Python child now receives nonce-bound request/acknowledgement paths
+  and atomically acknowledges while live. Cleanup requires that child-authored
+  acknowledgement plus the same PID/start identity before termination; wrapper
+  acceptance requires both matching files. An injected hook kills the child
+  after verification but before publication and proves no ack, unexpected
+  wrapper stderr and cleanup failure. Wrapper fallback now re-resolves start
+  identity immediately; an injected unrelated replacement is refused and
+  survives. Exit assertions accept only integer or literal `unknown`. Parser
+  4/4, Python compilation and the full hostile suite passed in a 21.2s combined
+  invocation; static validation passed in 48.5s. After final PID+start-tick
+  hardening, the combined hostile/static rerun passed in 69.6s, parser/Python
+  compilation passed and residual lifecycle-process count was zero. No browser,
+  export, Web timing or locked-contract change occurred.
+
+  Exact-head self-review additionally bound the child acknowledgement payload
+  to nonce plus child PID; both parent and wrapper reject any different writer
+  identity. The final complete hostile/static rerun passed in 68.9s.

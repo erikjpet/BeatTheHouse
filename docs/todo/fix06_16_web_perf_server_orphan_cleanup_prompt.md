@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — rejected heads `239ead2a` and `e92fab10` remediated; independent exact-head re-review pending
+Status: IN_PROGRESS — rejected heads `239ead2a`, `e92fab10` and `672cdd25` remediated; independent exact-head re-review pending
 Board row: `fix06_16` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_16: Web performance server orphan cleanup
@@ -139,3 +139,36 @@ locked `fix06_13` shipped-Web run.
   exits. The unexpected-exit test now requires both wrapper stderr failure and
   cleanup failure; the full hostile suite passed again in 24.8s.
   Final parser coverage passed 4/4 and static validation passed in 48.2s.
+
+## Child acknowledgement and fallback identity rejection — 2026-08-27
+
+- Independent re-review rejected exact head
+  `672cdd25b65ed715e2fd0528d1771c1a7997e384` with two lifecycle findings.
+  P1: the exact child could die after parent identity verification but before
+  request-marker publication, letting a one-way marker misclassify that
+  spontaneous exit as expected. P1: wrapper identity was checked before its
+  five-second graceful wait but not immediately before fallback termination,
+  leaving a PID-reuse window. P3: unavailable exit identity could still render
+  ambiguously and must be the literal `unknown`, not claimed as concrete.
+- The server now receives the nonce-bound request and acknowledgement paths.
+  Its exact live Python process polls the request and atomically writes the
+  matching acknowledgement. Cleanup will not terminate until it observes that
+  child-authored acknowledgement and revalidates the child PID/start identity.
+  The wrapper classifies shutdown as expected only when both exact request and
+  acknowledgement match. A deterministic hook kills the child after the first
+  identity check but before publication; no acknowledgement appears, wrapper
+  stderr remains unexpected-exit failure and cleanup also fails closed.
+- After the bounded wrapper wait, cleanup resolves the PID again and immediately
+  compares UTC start ticks before fallback termination. The hostile resolver
+  injects an unrelated live process as a reused identity; cleanup refuses the
+  stop and proves that unrelated process survives. Unexpected-exit assertions
+  accept only an integer exit code or the explicit literal `unknown`.
+- PowerShell parsing passed 4/4, Python compilation passed and the complete
+  hostile suite passed in the 21.2s combined invocation. Static validation
+  passed in 48.5s. After final PID+start-tick comparison hardening, the complete
+  hostile/static rerun passed in 69.6s; parser 4/4 and Python compilation passed,
+  with zero residual lifecycle processes. No browser, export, Web timing or
+  locked-scope change ran.
+- Exact-head self-review bound the acknowledgement payload itself to both nonce
+  and child PID; parent and wrapper reject any other writer/identity. The final
+  complete hostile/static rerun passed in 68.9s.
