@@ -6,9 +6,10 @@ document neither claims that row nor authorizes edits outside the other lane's
 exclusive crew/world ownership.  
 Authority: `docs/todo/world06_1_crew_sequence_adapter_prompt.md`, the Family 2
 launcher, the program prompt, and the landed hidden-state contracts.  
-Contract dependency: the accepted `env06_6` vocabulary specification. Until
-that handoff exists, every item marked **BINDING PENDING** is intentionally
-unresolved and must not be inferred from an implementation branch.
+Contract dependency: the normative behavior handoff at env branch commit
+`749390ce`. It is not env06_6 product acceptance. Concrete spellings and APIs
+left unspecified there must not be inferred from unaccepted product head
+`06459402` (whose retained content report has 78 failures).
 
 ## Independent acceptance rule
 
@@ -25,8 +26,8 @@ rejection regardless of other results.
   plugin hash, commands, durations, and evidence paths.
 - [ ] The adapter consumes the independently accepted vocabulary specification,
   not names reverse-engineered from `env06_6` product code.
-- [ ] All **BINDING PENDING** fields in the adapter specification are resolved by
-  a written `env06_6` handoff or an explicit owner decision before code review.
+- [ ] Every concrete binding left unspecified by the behavior vocabulary is
+  declared by the reviewed adapter implementation before code review.
 - [ ] No crew/world model contract, tuning value, economy value, outcome ladder,
   clue rate, grievance weight, or hidden resolution rule changed.
 
@@ -54,8 +55,8 @@ rejection regardless of other results.
 - [ ] Definitions contain no arbitrary code, reflection target, raw node path,
   unallowlisted resource path, screen coordinate, model method name, or hidden
   semantic name.
-- [ ] Handler ids, fact ids, operation ids, ownership ids, outcome channels, and
-  receipt shapes exactly match the accepted vocabulary. **BINDING PENDING**
+- [ ] Handlers, facts, operations, ownership, outcomes, and receipts implement
+  the handoff's closed, bounded, canonical, path-safe vocabulary.
 - [ ] The same validator rejects invalid scenario-catalog and crew-sourced
   definitions consistently; source location does not create a weaker path.
 - [ ] Conflicting scene/object/interaction/actor ownership, unowned outcomes,
@@ -72,8 +73,8 @@ rejection regardless of other results.
 - [ ] Precedence is deterministic and narrow: compatible operations compose;
   exclusive writes to the same semantic property are validation errors rather
   than last-writer-wins behavior.
-- [ ] Object/property conflict keys and overlay/namespace fields use accepted
-  `env06_6` identifiers. **BINDING PENDING**
+- [ ] Object/property conflicts use exact owned identities and sealed host
+  authority; caller hints and priority cannot manufacture authority.
 - [ ] Ordinary travel, event, game, service, traveler, Police Sweep, and base
   environment functionality remain available at every mountable node.
 - [ ] A composed save/load round trip is byte/semantic stable and does not replay
@@ -94,8 +95,8 @@ rejection regardless of other results.
 - [ ] Outcome receipts are stable, persisted, owner-scoped, and idempotent; trust,
   grievance, job/delivery state, heat, cash/costs, and aftermath each apply
   exactly once.
-- [ ] Receipt id shape, lifecycle state ids, replay response, and cleanup marker
-  names match accepted `env06_6` bindings. **BINDING PENDING**
+- [ ] Receipts bind an exact boundary and canonical content fingerprint; changed
+  content under a reused receipt rejects and cleanup/replay is transactional.
 - [ ] Interactions retained in `EventModule` are byte/behavior compatible, and
   conversion can proceed one interaction at a time.
 
@@ -197,4 +198,3 @@ rejection regardless of other results.
 - [ ] BLOCKED — only for an unresolved owner decision or missing authoritative
   vocabulary handoff; the report names the exact binding and compatible work
   already completed.
-
