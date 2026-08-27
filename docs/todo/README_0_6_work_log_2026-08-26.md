@@ -1190,3 +1190,5 @@ below to jump to a row's history.
   unpark only to semantic current-main integration, current-main gates,
   independent exact-head review and exactly one new locked shipped-Web run.
   This closeout did not change or run fix06_13.
+* 2026-08-27 — `game06_1` CONTRACT CLAIM: `/root/contract_author_game` began the program §3 up-front ritual vocabulary specification and validation-test package before `craps06_3` implementation. Product implementation is not claimed. The promised `env06_6` VOCABULARY SPECIFICATION is not yet present and is being chased; neutral checklist/schema work continues without waiting.
+* 2026-08-27 — `world06_1` CONTRACT-AUTHOR LANE START: `/root/contract_author_world` began the program §3 adapter specification/checklist package without claiming the product row or any crew/world file. The product row remains exclusively owned and claimable by the parallel former-PM lane. The promised `env06_6` VOCABULARY SPECIFICATION is still absent, so all binding runtime terms remain explicitly unresolved rather than inferred from implementation.

@@ -266,7 +266,7 @@ rows can run in parallel without colliding in both files.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| game06_1 | `game06_1_table_machine_ritual_runtime_prompt.md` | TODO | craps06_3 | game06_2..7 | — | — | — | Ritual/phase/actor/pointer vocabulary. Must re-express the landed craps ritual with no craps special-case in shared code. |
+| game06_1 | `game06_1_table_machine_ritual_runtime_prompt.md` | IN_PROGRESS | contract specification authored before implementation (program §3 override); implementation still consumes craps06_3 | game06_2..7 | /root/contract_author_game (contract only) | 2026-08-27 | — | Shared ritual/phase/actor/pointer vocabulary specification and validation test are being authored up front; product implementation remains separately assignable after independent contract acceptance. No craps special-case is permitted in shared code. |
 | game06_2 | `game06_2_blackjack_depth_prompt.md` | TODO | game06_1 | game06_7 | — | — | — | 7000 lines, most-integrated game. Consumer audit before any settlement edit. |
 | game06_3 | `game06_3_baccarat_roulette_depth_prompt.md` | TODO | game06_1 | depth parity | — | — | — | Baccarat ceremony and squeeze; roulette wheel, ball and layout chip placement. |
 | game06_4 | `game06_4_machine_games_depth_prompt.md` | TODO | game06_1 | depth parity | — | — | — | Cabinet, credits, handle, hand-pay. Per-frame deep copies forbidden — slot watchdog precedent. |
