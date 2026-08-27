@@ -426,6 +426,14 @@ func renderer_signature(state: Dictionary) -> Dictionary:
 	return _renderer.render_signature(state)
 
 
+func reset_renderer_performance_counters() -> void:
+	_renderer.reset_performance_stage_counters()
+
+
+func renderer_performance_counters() -> Dictionary:
+	return _renderer.performance_stage_counters()
+
+
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
 

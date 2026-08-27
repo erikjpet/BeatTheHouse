@@ -62,11 +62,14 @@ var _world_width := SCHEMA_DEFAULT_WIDTH
 var _world_back_y := SCHEMA_DEFAULT_BACK_Y
 var _coin_height := SCHEMA_DEFAULT_COIN_HEIGHT
 var _coin_radius := SCHEMA_DEFAULT_COIN_RADIUS
+var _perf_stage_samples: Dictionary = {}
 
 
 func draw(surface, state: Dictionary) -> bool:
 	if str(state.get("surface_renderer", "")) != "coin_pusher":
 		return false
+	var capture_stages := bool(state.get("coin_pusher_perf_stage_capture", false))
+	var stage_started_usec := Time.get_ticks_usec() if capture_stages else 0
 	_ensure_coin_batch()
 	_configure_projection(state)
 	surface.surface_begin_design_space(DESIGN_SIZE)
@@ -75,22 +78,51 @@ func draw(surface, state: Dictionary) -> bool:
 	if bool(state.get("coin_pusher_locked", false)):
 		colors = _locked_colors(colors)
 	var static_cached := _prepare_static_cache(surface, state)
+	stage_started_usec = _capture_perf_stage("setup_cache", stage_started_usec, capture_stages)
 	if not static_cached:
 		_draw_floor_and_shell(surface, cabinet, colors)
 	else:
 		_draw_static_cache_texture(surface, 0)
+	stage_started_usec = _capture_perf_stage("shell", stage_started_usec, capture_stages)
 	_draw_backglass(surface, state, cabinet, colors)
+	stage_started_usec = _capture_perf_stage("backglass", stage_started_usec, capture_stages)
 	if not static_cached:
 		_draw_playfield(surface, state, colors, cabinet)
+		stage_started_usec = _capture_perf_stage("playfield_uncached", stage_started_usec, capture_stages)
 	else:
 		_draw_static_cache_texture(surface, 1)
+		stage_started_usec = _capture_perf_stage("static_pre", stage_started_usec, capture_stages)
 		_draw_playfield(surface, state, colors, cabinet, false, true, false, false)
+		stage_started_usec = _capture_perf_stage("platform", stage_started_usec, capture_stages)
 		_draw_static_cache_texture(surface, 2)
+		stage_started_usec = _capture_perf_stage("static_post", stage_started_usec, capture_stages)
 		_draw_playfield(surface, state, colors, cabinet, false, false, false, true)
+		stage_started_usec = _capture_perf_stage("bodies", stage_started_usec, capture_stages)
 	_draw_glass(surface, colors)
+	stage_started_usec = _capture_perf_stage("glass", stage_started_usec, capture_stages)
 	_draw_hardware(surface, state, colors)
+	stage_started_usec = _capture_perf_stage("hardware", stage_started_usec, capture_stages)
 	surface.surface_end_design_space()
+	_capture_perf_stage("end_design_space", stage_started_usec, capture_stages)
 	return true
+
+
+func reset_performance_stage_counters() -> void:
+	_perf_stage_samples.clear()
+
+
+func performance_stage_counters() -> Dictionary:
+	return _perf_stage_samples.duplicate(true)
+
+
+func _capture_perf_stage(stage_id: String, started_usec: int, enabled: bool) -> int:
+	if not enabled:
+		return 0
+	var finished_usec := Time.get_ticks_usec()
+	var samples: Array = _perf_stage_samples.get(stage_id, [])
+	samples.append(finished_usec - started_usec)
+	_perf_stage_samples[stage_id] = samples
+	return finished_usec
 
 
 func render_signature(state: Dictionary) -> Dictionary:
