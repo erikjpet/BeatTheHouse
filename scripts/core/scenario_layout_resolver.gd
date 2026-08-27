@@ -1184,13 +1184,6 @@ static func _resolve_route_center(environment: Dictionary, semantic_state: Dicti
 
 
 static func _resolve_route_center_result(environment: Dictionary, semantic_state: Dictionary, route_id: String) -> Dictionary:
-	var routes := _dict(semantic_state.get("routes", {}))
-	var route := _dict(routes.get(route_id, {}))
-	for candidate_value in [str(route.get("source_id", "")), str(route.get("stable_object_id", "")), route_id.get_slice("::", 1)]:
-		var candidate := str(candidate_value)
-		var center := _resolve_center(environment, candidate, candidate)
-		if center.x >= 0.0:
-			return {"ok": true, "center": center, "error": ""}
 	var parsed := OperationRegistryScript.parse_owned_identity(route_id)
 	var stable_id := str(parsed.get("stable_object_id", ""))
 	var alias := stable_id.get_slice(":", stable_id.get_slice_count(":") - 1)
@@ -1202,7 +1195,13 @@ static func _resolve_route_center_result(environment: Dictionary, semantic_state
 		return {"ok": false, "center": Vector2(-1.0, -1.0), "error": "unknown sealed route/anchor alias %s" % alias}
 	if route_matches.size() != 1 or str(route_matches[0]) != route_id or anchor_matches.size() != 1:
 		return {"ok": false, "center": Vector2(-1.0, -1.0), "error": "ambiguous sealed route/anchor alias %s" % alias}
-	var aliased_center := _resolve_center(environment, alias, alias)
+	var sealed_anchor := str(anchor_matches[0])
+	var sealed_anchor_parsed := OperationRegistryScript.parse_owned_identity(sealed_anchor)
+	var sealed_anchor_stable_id := str(sealed_anchor_parsed.get("stable_object_id", ""))
+	var sealed_anchor_alias := sealed_anchor_stable_id.get_slice(":", sealed_anchor_stable_id.get_slice_count(":") - 1)
+	if sealed_anchor_parsed.is_empty() or sealed_anchor_alias != alias:
+		return {"ok": false, "center": Vector2(-1.0, -1.0), "error": "unknown sealed route/anchor alias %s" % alias}
+	var aliased_center := _resolve_center(environment, sealed_anchor_alias, sealed_anchor_alias)
 	if not _finite_point(aliased_center) or aliased_center.x < 0.0:
 		return {"ok": false, "center": Vector2(-1.0, -1.0), "error": "unknown sealed route/anchor alias %s" % alias}
 	return {"ok": true, "center": aliased_center, "error": ""}

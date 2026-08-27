@@ -456,36 +456,54 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 
 static func _check_route_endpoint_alias_contract(failures: Array) -> void:
 	var environment := _sealed_route_environment(false, true)
-	var semantic := {}
+	var semantic_variants := [
+		{"routes": {"base::world:bar": {"source_id": "hostile_source", "stable_object_id": ""}}},
+		{"routes": {"base::world:bar": {"source_id": "", "stable_object_id": "hostile_stable"}}},
+		{"routes": {"base::world:bar": {"source_id": "", "stable_object_id": ""}}},
+	]
 	var before := JSON.stringify(environment)
-	var resolved := ScenarioLayoutResolverScript._resolve_route_center_result(environment, semantic, "base::world:bar")
 	var saved_environment_value: Variant = JSON.parse_string(JSON.stringify(environment))
-	var saved_semantic_value: Variant = JSON.parse_string(JSON.stringify(semantic))
 	var restored_environment := _dict(saved_environment_value)
 	var original_inventory := _dict(environment.get("scenario_semantic_inventory", {}))
 	var restored_inventory := _dict(restored_environment.get("scenario_semantic_inventory", {}))
 	restored_inventory["schema_version"] = int(restored_inventory.get("schema_version", 0))
 	restored_environment["scenario_semantic_inventory"] = restored_inventory
+	var restored_before := JSON.stringify(restored_environment)
 	var restored_valid := EnvironmentSemanticInventoryScript.validate(restored_inventory).is_empty() \
 		and str(restored_inventory.get("digest", "")) == str(original_inventory.get("digest", "")) \
 		and EnvironmentSemanticInventoryScript.exact_collections(restored_inventory) == EnvironmentSemanticInventoryScript.exact_collections(original_inventory)
-	var restored := ScenarioLayoutResolverScript._resolve_route_center_result(restored_environment, _dict(saved_semantic_value), "base::world:bar")
 	var unknown_environment := _sealed_route_environment(false, false)
-	var unknown := ScenarioLayoutResolverScript._resolve_route_center_result(unknown_environment, semantic, "base::world:bar")
 	var ambiguous_environment := _sealed_route_environment(true, true)
-	var ambiguous := ScenarioLayoutResolverScript._resolve_route_center_result(ambiguous_environment, semantic, "base::world:bar")
-	var public_keys := resolved.keys()
-	public_keys.sort()
-	if not bool(resolved.get("ok", false)) \
-		or resolved.get("center", Vector2.ZERO) != Vector2(860.0, 390.0) \
-		or not restored_valid \
-		or not bool(restored.get("ok", false)) \
-		or restored.get("center", Vector2.ZERO) != Vector2(860.0, 390.0) \
-		or bool(unknown.get("ok", true)) or not str(unknown.get("error", "")).contains("unknown sealed route/anchor alias bar") \
-		or bool(ambiguous.get("ok", true)) or not str(ambiguous.get("error", "")).contains("ambiguous sealed route/anchor alias bar") \
-		or public_keys != ["center", "error", "ok"] \
-		or JSON.stringify(environment) != before:
-		failures.append("Sealed route endpoint aliases were not exact, unique, save/reload stable, typed on rejection, and hidden-state safe.")
+	var unknown_before := JSON.stringify(unknown_environment)
+	var ambiguous_before := JSON.stringify(ambiguous_environment)
+	for semantic_value in semantic_variants:
+		var semantic := _dict(semantic_value)
+		var semantic_before := JSON.stringify(semantic)
+		var resolved := ScenarioLayoutResolverScript._resolve_route_center_result(environment, semantic, "base::world:bar")
+		var restored_semantic_value: Variant = JSON.parse_string(JSON.stringify(semantic))
+		var restored := ScenarioLayoutResolverScript._resolve_route_center_result(restored_environment, _dict(restored_semantic_value), "base::world:bar")
+		var unknown := ScenarioLayoutResolverScript._resolve_route_center_result(unknown_environment, semantic, "base::world:bar")
+		var ambiguous := ScenarioLayoutResolverScript._resolve_route_center_result(ambiguous_environment, semantic, "base::world:bar")
+		var public_keys := resolved.keys()
+		public_keys.sort()
+		var restored_keys := restored.keys()
+		restored_keys.sort()
+		var unknown_keys := unknown.keys()
+		unknown_keys.sort()
+		var ambiguous_keys := ambiguous.keys()
+		ambiguous_keys.sort()
+		if not bool(resolved.get("ok", false)) \
+			or resolved.get("center", Vector2.ZERO) != Vector2(860.0, 390.0) \
+			or not restored_valid \
+			or not bool(restored.get("ok", false)) \
+			or restored.get("center", Vector2.ZERO) != Vector2(860.0, 390.0) \
+			or bool(unknown.get("ok", true)) or not str(unknown.get("error", "")).contains("unknown sealed route/anchor alias bar") \
+			or bool(ambiguous.get("ok", true)) or not str(ambiguous.get("error", "")).contains("ambiguous sealed route/anchor alias bar") \
+			or public_keys != ["center", "error", "ok"] or restored_keys != public_keys or unknown_keys != public_keys or ambiguous_keys != public_keys \
+			or JSON.stringify(semantic) != semantic_before:
+			failures.append("Populated semantic route candidates bypassed exact, unique, save/reload-stable sealed route/anchor authority.")
+	if JSON.stringify(environment) != before or JSON.stringify(restored_environment) != restored_before or JSON.stringify(unknown_environment) != unknown_before or JSON.stringify(ambiguous_environment) != ambiguous_before:
+		failures.append("Sealed route endpoint resolution mutated its exact, unknown, or ambiguous authority input.")
 
 
 static func _sealed_route_environment(ambiguous_route: bool, include_anchor: bool) -> Dictionary:
@@ -499,6 +517,11 @@ static func _sealed_route_environment(ambiguous_route: bool, include_anchor: boo
 		"semantic_anchors": {"bar": {"position": [860.0, 390.0]}} if include_anchor else {},
 	}
 	environment["scenario_semantic_inventory"] = EnvironmentSemanticInventoryScript.for_instance(environment, null, [], [])
+	var live_anchors := _dict(environment.get("semantic_anchors", {}))
+	live_anchors["hostile_source"] = {"position": [110.0, 110.0]}
+	live_anchors["hostile_stable"] = {"position": [220.0, 220.0]}
+	live_anchors["world:bar"] = {"position": [330.0, 330.0]}
+	environment["semantic_anchors"] = live_anchors
 	return environment
 
 
