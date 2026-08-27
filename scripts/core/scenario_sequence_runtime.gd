@@ -896,8 +896,6 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 	var stable_object_id := str(command_value.get("stable_object_id", ""))
 	if OperationRegistryScript.parse_owned_identity(OperationRegistryScript.identity(owner_namespace, stable_object_id)).is_empty():
 		errors.append("scenario command requires interaction identity")
-	elif owner_namespace != "scenario":
-		errors.append("scenario command cannot spoof another owner namespace")
 	var command_id := str(command_value.get("command_id", ""))
 	if not _canonical_id(command_id) or not _phase_command_ids(state, definition, str(state.get("phase_id", ""))).has(command_id):
 		errors.append("scenario command is unavailable in the current phase")
@@ -918,6 +916,19 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 			"action_origin_boundary_id": str(_dict(causal_descriptor.get("action", {})).get("action_origin_boundary_id", "")),
 			"action_origin_fingerprint": str(_dict(causal_descriptor.get("action", {})).get("action_origin_fingerprint", "")),
 		}
+	if owner_namespace != "scenario":
+		var external_action := _dict(descriptor.get("action", {}))
+		var sealed_scenario_origin := bool(descriptor.get("action_present", false)) \
+			and str(external_action.get("action_origin_owner_namespace", "")) == "scenario" \
+			and _authored_action_origin_matches(state, definition, owner_namespace, stable_object_id, external_action)
+		if not sealed_scenario_origin:
+			errors.append("scenario command cannot spoof another owner namespace")
+		else:
+			var addressed_identity := OperationRegistryScript.identity(owner_namespace, stable_object_id)
+			var availability := _dict(context.get("host_interaction_availability", {}))
+			descriptor["interaction_enabled"] = availability.has(addressed_identity) \
+				and typeof(availability.get(addressed_identity)) == TYPE_BOOL \
+				and bool(availability.get(addressed_identity, false))
 	if not bool(descriptor.get("identity_present", false)):
 		errors.append("scenario command targets a missing interaction identity")
 	else:
