@@ -11,6 +11,10 @@ if (boolArg(args.selfTestConsolePolicy ?? args["self-test-console-policy"] ?? fa
   runConsolePolicySelfTest();
   process.exit(0);
 }
+if (args["self-test-post-capture-failure"]) {
+  runPostCaptureFailureSelfTest(String(args["self-test-post-capture-failure"]));
+  process.exit(0);
+}
 
 const workspacePlaywrightPackage = path.resolve(".tmp/l02_playwright/package.json");
 const requireFromPlaywrightInstall = fs.existsSync(workspacePlaywrightPackage)
@@ -118,6 +122,13 @@ try {
       console.log(text);
     } else if (text.startsWith("BTH_PERF_REPORT ")) {
       report = safeJson(text.slice("BTH_PERF_REPORT ".length));
+      atomicWriteJson(outputPath, makeProbeEnvelope({
+        status: "report_captured",
+        enrichment: { status: "pending" },
+        browserName, cpuRate, url, coldCache, readyOnly, ready,
+        startupConsole, pageErrors, requestFailures, failedResponses,
+        wallMsec: Date.now() - started, report,
+      }));
       console.log(`BTH_PERF_REPORT_CAPTURED scenarios=${report?.scenario_count ?? "?"}`);
     } else if (text.includes("BTH_PERF")) {
       console.log(text);
@@ -164,6 +175,8 @@ try {
     screen_height: window.screen.height,
   }));
   const output = {
+    status: "complete",
+    enrichment: { status: "complete" },
     browser: browserName,
     browser_version: browserVersion,
     user_agent: userAgent,
@@ -181,33 +194,16 @@ try {
     wall_msec: Date.now() - started,
     report,
   };
-  fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));
+  atomicWriteJson(outputPath, output);
   console.log(`${readyOnly ? "Web startup" : "L0.2 web perf"} report written to ${outputPath}`);
 } catch (error) {
-  const diagnostic = {
-    status: "failed_before_report",
-    captured_at: new Date().toISOString(),
-    browser: browserName,
-    cpu_throttle_rate: cpuRate,
-    url,
-    cold_cache: coldCache,
-    ready_only: readyOnly,
-    timeout_ms: timeoutMs,
-    wall_msec: Date.now() - started,
-    ready,
-    report_captured: report !== null,
-    startup_console: startupConsole,
-    page_errors: pageErrors,
-    request_failures: requestFailures,
-    failed_responses: failedResponses,
-    page_url: page && !page.isClosed() ? page.url() : "",
-    error: String(error?.stack ?? error),
-  };
-  if (!fs.existsSync(diagnosticPath)) {
-    fs.mkdirSync(path.dirname(diagnosticPath), { recursive: true });
-    fs.writeFileSync(diagnosticPath, JSON.stringify(diagnostic, null, 2));
-    console.error(`Web perf failure diagnostic written to ${diagnosticPath}`);
-  }
+  retainProbeFailure({
+    outputPath, diagnosticPath, error, browserName, cpuRate, url, coldCache,
+    readyOnly, timeoutMs, ready, report, startupConsole, pageErrors,
+    requestFailures, failedResponses, wallMsec: Date.now() - started,
+    pageUrl: page && !page.isClosed() ? page.url() : "",
+  });
+  console.error(`Web perf failure diagnostic written to ${diagnosticPath}`);
   throw error;
 } finally {
   if (context) {
@@ -275,6 +271,115 @@ function runConsolePolicySelfTest() {
     throw new Error(`Console policy self-test failed: expected exactly one allowed warning, got ${allowed.length}.`);
   }
   console.log("Console policy self-test passed (expected autoplay only; hostile warning/error/blocking rejected).");
+}
+
+function makeProbeEnvelope({
+  status, enrichment, browserName, cpuRate, url, coldCache, readyOnly, ready,
+  startupConsole, pageErrors, requestFailures, failedResponses, wallMsec, report,
+}) {
+  return {
+    status,
+    enrichment,
+    browser: browserName,
+    cpu_throttle_rate: cpuRate,
+    url,
+    cold_cache: coldCache,
+    ready_only: readyOnly,
+    ready,
+    startup_console: startupConsole,
+    page_errors: pageErrors,
+    request_failures: requestFailures,
+    failed_responses: failedResponses,
+    wall_msec: wallMsec,
+    report,
+  };
+}
+
+function atomicWriteJson(filePath, value) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const temporaryPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  fs.writeFileSync(temporaryPath, JSON.stringify(value, null, 2));
+  fs.renameSync(temporaryPath, filePath);
+}
+
+function retainProbeFailure({
+  outputPath, diagnosticPath, error, browserName, cpuRate, url, coldCache,
+  readyOnly, timeoutMs, ready, report, startupConsole, pageErrors,
+  requestFailures, failedResponses, wallMsec, pageUrl,
+}) {
+  const reportCaptured = report !== null;
+  const errorText = String(error?.stack ?? error);
+  if (reportCaptured) {
+    atomicWriteJson(outputPath, makeProbeEnvelope({
+      status: "report_captured_enrichment_failed",
+      enrichment: { status: "failed", error: errorText },
+      browserName, cpuRate, url, coldCache, readyOnly, ready,
+      startupConsole, pageErrors, requestFailures, failedResponses,
+      wallMsec, report,
+    }));
+  }
+  const diagnostic = {
+    status: reportCaptured ? "report_captured_enrichment_failed" : "failed_before_report",
+    captured_at: new Date().toISOString(),
+    browser: browserName,
+    cpu_throttle_rate: cpuRate,
+    url,
+    cold_cache: coldCache,
+    ready_only: readyOnly,
+    timeout_ms: timeoutMs,
+    wall_msec: wallMsec,
+    ready,
+    report_captured: reportCaptured,
+    startup_console: startupConsole,
+    page_errors: pageErrors,
+    request_failures: requestFailures,
+    failed_responses: failedResponses,
+    page_url: pageUrl,
+    error: errorText,
+  };
+  if (!fs.existsSync(diagnosticPath)) {
+    atomicWriteJson(diagnosticPath, diagnostic);
+  }
+  return diagnostic;
+}
+
+function runPostCaptureFailureSelfTest(outDir) {
+  const absoluteOutDir = path.resolve(outDir);
+  if (fs.existsSync(absoluteOutDir)) {
+    throw new Error(`Refusing to overwrite post-capture failure self-test evidence: ${absoluteOutDir}`);
+  }
+  fs.mkdirSync(absoluteOutDir, { recursive: true });
+  const output = path.join(absoluteOutDir, "report.json");
+  const diagnostic = path.join(absoluteOutDir, "report.diagnostic.json");
+  const sampleReport = { schema: "post_capture_failure_self_test", scenario_count: 1, scenarios: [{ name: "retained" }] };
+  const common = {
+    browserName: "self-test", cpuRate: 4, url: "self-test://captured", coldCache: true,
+    readyOnly: false, ready: { wall_msec: 1 }, startupConsole: [], pageErrors: [],
+    requestFailures: [], failedResponses: [], wallMsec: 2, report: sampleReport,
+  };
+  atomicWriteJson(output, makeProbeEnvelope({
+    ...common, status: "report_captured", enrichment: { status: "pending" },
+  }));
+  const enrichmentError = new Error("injected post-capture enrichment failure");
+  retainProbeFailure({
+    outputPath: output, diagnosticPath: diagnostic, error: enrichmentError,
+    browserName: common.browserName, cpuRate: common.cpuRate, url: common.url,
+    coldCache: common.coldCache, readyOnly: common.readyOnly, timeoutMs: 3,
+    ready: common.ready, report: common.report, startupConsole: common.startupConsole,
+    pageErrors: common.pageErrors, requestFailures: common.requestFailures,
+    failedResponses: common.failedResponses, wallMsec: common.wallMsec, pageUrl: common.url,
+  });
+  const retained = JSON.parse(fs.readFileSync(output, "utf8"));
+  const retainedDiagnostic = JSON.parse(fs.readFileSync(diagnostic, "utf8"));
+  if (retained.status !== "report_captured_enrichment_failed"
+      || retained.enrichment?.status !== "failed"
+      || retained.report?.scenario_count !== 1
+      || retained.report?.scenarios?.[0]?.name !== "retained"
+      || retainedDiagnostic.status !== "report_captured_enrichment_failed"
+      || retainedDiagnostic.report_captured !== true) {
+    throw new Error("Post-capture failure self-test did not retain and classify the captured report atomically.");
+  }
+  console.log(`Post-capture failure self-test passed: ${output}`);
 }
 
 function safeJson(text) {
