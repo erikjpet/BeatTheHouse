@@ -5100,8 +5100,11 @@ static func _fixture_definition() -> Dictionary:
 			},
 		},
 	}
+	assert(_array(definition["sequence"]["phase_graph"]["phases"]).size() >= 3, "Sequence fixture requires arrival, complication, and aftermath phases.")
+	assert(not _array(definition["sequence"]["phase_graph"]["phases"][0].get("interaction_ops", [])).is_empty(), "Sequence fixture arrival requires its authored safe-exit interaction.")
+	assert(not _array(definition["sequence"]["phase_graph"]["phases"][2].get("interaction_ops", [])).is_empty(), "Sequence fixture aftermath requires its authored safe-exit interaction.")
 	definition["sequence"]["phase_graph"]["phases"][0]["interaction_ops"][0]["interaction"]["safe_exit"] = true
-	definition["sequence"]["phase_graph"]["phases"][1]["interaction_ops"][0]["interaction"]["safe_exit"] = true
+	definition["sequence"]["phase_graph"]["phases"][2]["interaction_ops"][0]["interaction"]["safe_exit"] = true
 	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
 	return definition
 
