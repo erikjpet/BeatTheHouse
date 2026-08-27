@@ -2352,8 +2352,9 @@ static func _check_lifecycle_commands(failures: Array) -> void:
 	var finish_too_soon := _runtime_command(initial, definition, "finish", "bar_node", "arrival", "command:finish:early", {}, "scenario", "command_console")
 	if bool(SequenceRuntimeScript.apply_command(initial, definition, finish_too_soon, {"available_funds": 10}).get("ok", true)):
 		failures.append("Sequence command skipped an authored objective precondition.")
-	var finish := _runtime_command(applied_state, definition, "finish", "bar_node", "arrival", "command:finish:1", {}, "scenario", "command_console")
-	var finished := SequenceRuntimeScript.apply_command(applied_state, definition, finish, {"available_funds": 10})
+	var repaired_state := _with_live_aftermath_authority(applied_state, "repaired")
+	var finish := _runtime_command(repaired_state, definition, "finish", "bar_node", "complication", "command:finish:1", {}, "scenario", "command_console")
+	var finished := SequenceRuntimeScript.apply_command(repaired_state, definition, finish, {"available_funds": 10})
 	if not bool(finished.get("ok", false)) or str(_dict(finished.get("state", {})).get("phase_id", "")) != "aftermath":
 		failures.append("Explicit command branch did not enter the authored next phase.")
 	else:
@@ -2367,28 +2368,31 @@ static func _check_mutually_exclusive_branch_cleanup(failures: Array) -> void:
 	var hostile_queued := SequenceRuntimeScript.enqueue_fact(hostile_state, hostile_definition, hostile_fact)
 	var hostile_queued_state := _dict(hostile_queued.get("state", {}))
 	var hostile_result := SequenceRuntimeScript.flush_facts(hostile_queued_state, hostile_definition, 1)
-	if not bool(hostile_queued.get("ok", false)) or bool(hostile_queued.get("duplicate", true)) or not _array(hostile_queued.get("errors", [])).is_empty() or bool(hostile_result.get("ok", true)) or not _contains_text(_array(hostile_result.get("errors", [])), "missing scenario identity scenario::fixture_102") or JSON.stringify(hostile_result.get("state", {})) != JSON.stringify(hostile_queued_state):
+	var hostile_rejected_state := _dict(hostile_result.get("state", {}))
+	if not bool(hostile_queued.get("ok", false)) or bool(hostile_queued.get("duplicate", true)) or not _array(hostile_queued.get("errors", [])).is_empty() or bool(hostile_result.get("ok", true)) or not _contains_text(_array(hostile_result.get("errors", [])), "missing scenario identity scenario::fixture_102") or not _array(hostile_result.get("processed", [])).is_empty() or not _array(hostile_rejected_state.get("fact_queue", [])).is_empty() or JSON.stringify(hostile_rejected_state.get("fact_receipts", [])) != JSON.stringify(hostile_state.get("fact_receipts", [])) or JSON.stringify(hostile_rejected_state.get("branch_resolution_records", [])) != JSON.stringify(hostile_state.get("branch_resolution_records", [])) or JSON.stringify(hostile_rejected_state.get("semantic_state", {})) != JSON.stringify(hostile_state.get("semantic_state", {})) or JSON.stringify(hostile_rejected_state.get("local_state", {})) != JSON.stringify(hostile_state.get("local_state", {})) or str(hostile_rejected_state.get("status", "")) != str(hostile_state.get("status", "")) or str(hostile_rejected_state.get("phase_id", "")) != str(hostile_state.get("phase_id", "")):
 		failures.append("Missing aftermath target hostile fixture was not rejected atomically with its typed error.")
 
 	var definition := _runtime_definition()
 	var phases := _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", []))
 	var complication := _dict(phases[1])
-	complication["scene_ops"] = _array(complication.get("scene_ops", [])) + [_operation_fixture("scene_ops", "spawn", 102)]
+	var complication_branches := _array(complication.get("branches", []))
+	complication_branches[0] = {"id": "complication_broken_terminal", "condition": {"type": "fact", "fact_type": "heat_changed"}, "outcome": "broken"}
+	complication["branches"] = complication_branches
 	phases[1] = complication
 	definition["sequence"]["phase_graph"]["phases"] = phases
 	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
-	var broken_state := _prepared_fixture_state(definition, "broken_seed", failures)
+	var broken_state := _with_live_aftermath_authority(_prepared_fixture_state(definition, "broken_seed", failures), "broken")
 	var broken_fact := SequenceRuntimeScript.fact("heat_changed", "heat", "bar_node", "branch:broken", 1, 1, _fact_payload("heat_changed"))
 	var broken_queued := SequenceRuntimeScript.enqueue_fact(broken_state, definition, broken_fact)
 	var broken_result := SequenceRuntimeScript.flush_facts(_dict(broken_queued.get("state", {})), definition, 1)
 	var broken_final := _dict(broken_result.get("state", {}))
 	var branch_records := _array(broken_final.get("branch_resolution_records", []))
-	if not bool(broken_queued.get("ok", false)) or bool(broken_queued.get("duplicate", true)) or not _array(broken_queued.get("errors", [])).is_empty() or not bool(broken_result.get("ok", false)) or not _array(broken_result.get("errors", [])).is_empty() or _array(broken_result.get("processed", [])) != ["branch:broken"] or _array(broken_final.get("fact_receipts", [])) != ["branch:broken"] or branch_records.size() != 2 or str(_dict(branch_records[0]).get("branch_id", "")) != "continue" or str(_dict(branch_records[0]).get("trigger_kind", "")) != "command" or str(_dict(branch_records[1]).get("branch_id", "")) != "break" or str(_dict(branch_records[1]).get("trigger_kind", "")) != "fact" or str(_dict(branch_records[1]).get("trigger_receipt_key", "")) != "branch:broken":
+	if not bool(broken_queued.get("ok", false)) or bool(broken_queued.get("duplicate", true)) or not _array(broken_queued.get("errors", [])).is_empty() or not bool(broken_result.get("ok", false)) or not _array(broken_result.get("errors", [])).is_empty() or _array(broken_result.get("processed", [])) != ["branch:broken"] or _array(broken_final.get("fact_receipts", [])) != ["branch:broken"] or branch_records.size() != 2 or str(_dict(branch_records[0]).get("branch_id", "")) != "continue" or str(_dict(branch_records[0]).get("trigger_kind", "")) != "command" or str(_dict(branch_records[1]).get("branch_id", "")) != "complication_broken_terminal" or str(_dict(branch_records[1]).get("trigger_kind", "")) != "fact" or str(_dict(branch_records[1]).get("trigger_receipt_key", "")) != "branch:broken":
 		failures.append("Broken branch did not preserve its exact enqueue/flush/receipt/two-branch causal record.")
 	_check_clean_branch_state(_dict(broken_result.get("state", {})), definition, "broken", "scenario::fixture_102", failures)
 
 	var refused_definition := _runtime_definition()
-	var refused_state := _prepared_fixture_state(refused_definition, "refused_seed", failures)
+	var refused_state := _with_live_aftermath_authority(_prepared_fixture_state(refused_definition, "refused_seed", failures), "refused")
 	var refused_command := _runtime_command(refused_state, refused_definition, "refuse", "bar_node", "complication", "branch:refused", {}, "scenario", "command_console")
 	var refused_result := SequenceRuntimeScript.apply_command(refused_state, refused_definition, refused_command, {"available_funds": 0})
 	if not bool(refused_result.get("ok", false)):
@@ -2425,6 +2429,7 @@ static func _check_boundary_provenance(failures: Array) -> void:
 	phases[1] = complication
 	graph["phases"] = phases
 	sequence["phase_graph"] = graph
+	sequence["fact_subscriptions"] = _array(sequence.get("fact_subscriptions", [])) + ["travel_arrived"]
 	fact_definition["sequence"] = sequence
 	fact_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(fact_definition)
 	var fact_state := SequenceRuntimeScript.initial_state(fact_definition, "bar_node", "fact_boundary_seed", _fixture_host_semantics(fact_definition))
@@ -2451,12 +2456,18 @@ static func _check_augment_availability(failures: Array) -> void:
 	phases[0] = arrival
 	graph["phases"] = phases
 	sequence["phase_graph"] = graph
+	var declared_targets := _dict(sequence.get("declared_targets", {}))
+	declared_targets["interactions"] = _array(declared_targets.get("interactions", [])) + ["base::fixture_target_5"]
+	sequence["declared_targets"] = declared_targets
 	definition["sequence"] = sequence
 	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
 	var host_semantics := _fixture_host_semantics(definition)
+	var target_inventory := _dict(host_semantics.get("target_inventory", {}))
+	target_inventory["interactions"] = _array(target_inventory.get("interactions", [])) + ["base::fixture_target_5"]
+	host_semantics["target_inventory"] = target_inventory
 	host_semantics["base_interactions"] = [_interaction_record("base", "fixture_target_5", "Fixture target 5", true)]
 	var state := SequenceRuntimeScript.initial_state(definition, "bar_node", "augment_seed", host_semantics)
-	var command := _runtime_command(state, definition, "fixture_action", "bar_node", "arrival", "augment:fixture:1", {}, "scenario", "fixture_5")
+	var command := _runtime_command(state, definition, "fixture_action", "bar_node", "arrival", "augment:fixture:1", {}, "base", "fixture_target_5")
 	var target_identity := "base::fixture_target_5"
 	var disabled_availability: Dictionary = {}
 	disabled_availability[target_identity] = false
@@ -2478,6 +2489,29 @@ static func _prepared_fixture_state(definition: Dictionary, seed_token: String, 
 	if not bool(result.get("ok", false)) or str(prepared.get("phase_id", "")) != "complication" or str(prepared.get("status", "")) != SequenceRuntimeScript.STATUS_ACTIVE:
 		failures.append("Terminal branch fixture did not reach complication through the public command API: %s" % JSON.stringify(result.get("errors", [])))
 	return prepared
+
+
+static func _with_live_aftermath_authority(state_value: Dictionary, outcome: String) -> Dictionary:
+	var state := state_value.duplicate(true)
+	var semantic := _dict(state.get("semantic_state", {}))
+	match outcome:
+		"repaired", "broken":
+			var suffix := "101" if outcome == "repaired" else "102"
+			var scene_objects := _dict(semantic.get("scene_objects", {}))
+			scene_objects["scenario::fixture_%s" % suffix] = {"owner_namespace": "scenario", "stable_object_id": "fixture_%s" % suffix, "anchor_id": "bar_floor_100", "state": "baseline", "appearance": "baseline"}
+			semantic["scene_objects"] = scene_objects
+			var routes := _dict(semantic.get("routes", {}))
+			routes["scenario::fixture_%s" % suffix] = {"owner_namespace": "scenario", "stable_object_id": "fixture_%s" % suffix, "enabled": true, "source_id": "fixture_%s" % suffix}
+			semantic["routes"] = routes
+		"refused":
+			var actors := _dict(semantic.get("actors", {}))
+			actors["scenario::fixture_103"] = {"owner_namespace": "scenario", "stable_object_id": "fixture_103", "actor_id": "actor_fixture", "behavior": "idle"}
+			semantic["actors"] = actors
+			var services := _dict(semantic.get("services", {}))
+			services["scenario::fixture_103"] = {"owner_namespace": "scenario", "stable_object_id": "fixture_103", "id": "fixture_103", "label": "Fixture service", "enabled": true}
+			semantic["services"] = services
+	state["semantic_state"] = OperationRegistryScript.normalize_semantic_state(semantic)
+	return state
 
 
 static func _check_clean_branch_state(state: Dictionary, definition: Dictionary, outcome: String, aftermath_identity: String, failures: Array) -> void:
