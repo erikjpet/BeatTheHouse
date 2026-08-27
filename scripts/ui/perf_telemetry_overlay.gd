@@ -451,6 +451,13 @@ func _run_coin_pusher_plan() -> void:
 	mark_event("coin_pusher_reduced_fixture_identity", reduced_fixture)
 	mark_event("coin_pusher_reduced_fixture_observation", reduced_reinstall.get("observation", {}))
 	await _set_coin_pusher_reduce_motion(true)
+	var reduced_sample_state := _coin_pusher_surface_state(_coin_pusher_canvas())
+	mark_event("coin_pusher_reduced_sample_boundary", {
+		"body_count": int(reduced_sample_state.get("coin_pusher_body_count", -1)),
+		"tray_count": int(reduced_sample_state.get("coin_pusher_tray_count", -1)),
+		"liveness_ticks": int(reduced_sample_state.get("coin_pusher_liveness_ticks", 0)),
+		"conservation": _coin_pusher_conservation_snapshot(run_state, game),
+	})
 	await _measure_coin_pusher_idle("coin_pusher_reduced_motion", true, reduced_fixture)
 	await _set_coin_pusher_reduce_motion(false)
 	l02_driver_complete = true
@@ -482,6 +489,7 @@ func _reinstall_coin_pusher_fixture(run_state: RunState, game: GameModule) -> Di
 	var boundary_state := _coin_pusher_surface_state(canvas)
 	await _wait_frames(4)
 	var observed_state := _coin_pusher_surface_state(canvas)
+	var conservation := _coin_pusher_conservation_snapshot(run_state, game)
 	return {
 		"fixture": fixture,
 		"observation": {
@@ -491,6 +499,7 @@ func _reinstall_coin_pusher_fixture(run_state: RunState, game: GameModule) -> Di
 			"observed_tray_count": int(observed_state.get("coin_pusher_tray_count", -1)),
 			"liveness_before": int(boundary_state.get("coin_pusher_liveness_ticks", 0)),
 			"liveness_after": int(observed_state.get("coin_pusher_liveness_ticks", 0)),
+			"conservation": conservation,
 		},
 	}
 
@@ -547,6 +556,35 @@ func _coin_pusher_fixture_identity(run_state: RunState, game: GameModule) -> Dic
 		"source_commit": str(runtime_options.get("bth_perf_source_commit", "")),
 		"export_sha256": str(runtime_options.get("bth_perf_export_sha256", "")),
 		"environment_id": str(run_state.current_environment.get("id", "")),
+	}
+
+
+func _coin_pusher_conservation_snapshot(run_state: RunState, game: GameModule) -> Dictionary:
+	var machine := game.call("_ensure_live_machine", run_state, run_state.current_environment) as Dictionary
+	var simulation_value: Variant = game.call("_simulation", machine)
+	if typeof(simulation_value) != TYPE_DICTIONARY:
+		return {}
+	var simulation: Dictionary = simulation_value
+	var active := (simulation.get("bodies", []) as Array).size() if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else -1
+	var tray := (simulation.get("tray_ledger", []) as Array).size() if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else -1
+	var gutter := (simulation.get("gutter_ledger", []) as Array).size() if typeof(simulation.get("gutter_ledger", [])) == TYPE_ARRAY else -1
+	var collected := int(simulation.get("collected_count", -1))
+	var cup_consumed := int(simulation.get("cup_consumed_count", -1))
+	var origin := int(simulation.get("opening_body_count", -1)) \
+		+ int(simulation.get("accepted_inserts", 0)) \
+		+ int(simulation.get("external_origin_count", 0))
+	var accounted := active + tray + gutter + collected + cup_consumed
+	var invariants: Dictionary = simulation.get("last_invariants", {}) if typeof(simulation.get("last_invariants", {})) == TYPE_DICTIONARY else {}
+	return {
+		"active": active,
+		"tray": tray,
+		"gutter": gutter,
+		"collected": collected,
+		"cup_consumed": cup_consumed,
+		"origin": origin,
+		"accounted": accounted,
+		"conservation_ok": accounted == origin,
+		"solver_conservation_ok": bool(invariants.get("conservation_ok", accounted == origin)),
 	}
 
 
@@ -612,6 +650,9 @@ func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dict
 	if canvas != null and canvas.has_method("reset_performance_counters"):
 		canvas.call("reset_performance_counters")
 	var before_state := _coin_pusher_surface_state(canvas)
+	var run_state: RunState = app.get("run_state") as RunState
+	var game: GameModule = app.get("current_game") as GameModule
+	var conservation_before := _coin_pusher_conservation_snapshot(run_state, game) if run_state != null and game != null else {}
 	var before_counters := _coin_pusher_canvas_counters(canvas)
 	_begin_scenario(name, {
 		"surface": "coin_pusher",
@@ -620,6 +661,7 @@ func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dict
 	})
 	await _wait_frames(maxi(scenario_frames, COIN_PUSHER_IDLE_SAMPLE_FRAMES))
 	var after_state := _coin_pusher_surface_state(canvas)
+	var conservation_after := _coin_pusher_conservation_snapshot(run_state, game) if run_state != null and game != null else {}
 	var after_counters := _coin_pusher_canvas_counters(canvas)
 	current_tags["canvas_before"] = before_counters
 	current_tags["canvas_after"] = after_counters
@@ -629,6 +671,8 @@ func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dict
 	current_tags["solver_liveness_delta"] = int(after_state.get("coin_pusher_liveness_ticks", 0)) - int(before_state.get("coin_pusher_liveness_ticks", 0))
 	current_tags["body_count_before"] = int(before_state.get("coin_pusher_body_count", -1))
 	current_tags["body_count_after"] = int(after_state.get("coin_pusher_body_count", -1))
+	current_tags["conservation_before"] = conservation_before
+	current_tags["conservation_after"] = conservation_after
 	current_tags["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
 	_end_scenario()
 
@@ -640,6 +684,7 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	var before_state := _coin_pusher_surface_state(canvas)
 	var before_counters := _coin_pusher_canvas_counters(canvas)
 	var run_state: RunState = app.get("run_state") as RunState
+	var game: GameModule = app.get("current_game") as GameModule
 	var bankroll_before := run_state.bankroll if run_state != null else 0
 	var turns_before := int(run_state.current_environment.get("turns", 0)) if run_state != null else 0
 	var story_before := run_state.story_log_entry_count() if run_state != null else 0
@@ -657,8 +702,10 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	# distinct boundaries. Retain both so later legitimate exits cannot overwrite
 	# proof of what the accepted action itself did.
 	var accepted_state := _coin_pusher_surface_state(canvas)
+	var accepted_conservation := _coin_pusher_conservation_snapshot(run_state, game) if run_state != null else {}
 	await _wait_frames(maxi(active_frames, COIN_PUSHER_ACTION_SAMPLE_FRAMES))
 	var after_state := _coin_pusher_surface_state(canvas)
+	var after_conservation := _coin_pusher_conservation_snapshot(run_state, game) if run_state != null else {}
 	var after_counters := _coin_pusher_canvas_counters(canvas)
 	var result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
 	var metrics: Dictionary = result.get("coin_pusher_solver_metrics", {}) if typeof(result.get("coin_pusher_solver_metrics", {})) == TYPE_DICTIONARY else {}
@@ -686,6 +733,8 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	current_tags["body_count_at_accept"] = int(accepted_state.get("coin_pusher_body_count", -1))
 	current_tags["tray_count_at_accept"] = int(accepted_state.get("coin_pusher_tray_count", -1))
 	current_tags["tray_value_at_accept"] = int(accepted_state.get("coin_pusher_tray_value", -1))
+	current_tags["conservation_at_accept"] = accepted_conservation
+	current_tags["conservation_after"] = after_conservation
 	current_tags["bankroll_before"] = bankroll_before
 	current_tags["bankroll_after"] = run_state.bankroll if run_state != null else 0
 	current_tags["environment_turns_before"] = turns_before
