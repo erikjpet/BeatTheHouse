@@ -2,6 +2,7 @@ class_name ScenarioLayoutResolver
 extends RefCounted
 
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
+const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 
 const BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const SMALL_SCREEN_TARGET := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
@@ -38,6 +39,125 @@ const LAYOUT_SPOT_FIELDS := {
 	"shopkeeper": "shopkeeper_spots",
 	"game_hook": "game_hook_spots",
 }
+
+
+# Compatibility projection used by the renderer-extension seam. Production
+# interaction composition uses resolve(), which additionally seals geometry to
+# the finalized base-record authority.
+static func prepare(environment: Dictionary, projection: Dictionary) -> Dictionary:
+	if projection.is_empty():
+		return {}
+	var semantic_state := _dict(projection.get("semantic_state", {}))
+	var errors: Array = []
+	var visuals: Array = []
+	for family_value in [
+		[semantic_state.get("scene_objects", {}), false],
+		[semantic_state.get("actors", {}), true],
+	]:
+		var family := _dict((family_value as Array)[0])
+		var actor := bool((family_value as Array)[1])
+		var identities := family.keys()
+		identities.sort()
+		for identity_value in identities:
+			var semantic := _dict(family.get(identity_value, {}))
+			if semantic.is_empty() or not bool(semantic.get("present", true)):
+				continue
+			var visual := _prepare_extension_visual(environment, semantic_state, semantic, actor, errors)
+			if not visual.is_empty():
+				visuals.append(visual)
+	visuals.sort_custom(func(a: Variant, b: Variant) -> bool:
+		var left := _dict(a)
+		var right := _dict(b)
+		var left_z := int(left.get("z_order", 0))
+		var right_z := int(right.get("z_order", 0))
+		return str(left.get("semantic_identity", "")) < str(right.get("semantic_identity", "")) if left_z == right_z else left_z < right_z
+	)
+	return {
+		"schema_version": 1,
+		"scenario_id": str(projection.get("scenario_id", "")),
+		"phase_id": str(projection.get("phase_id", "")),
+		"status": str(projection.get("status", "")),
+		"boundary_serial": maxi(0, int(projection.get("boundary_serial", 0))),
+		"ok": errors.is_empty(),
+		"errors": errors,
+		"warnings": [],
+		"visual_objects": visuals,
+		"interaction_overlays": _ordered_semantic_values(_dict(semantic_state.get("interactions", {}))),
+		"services": _ordered_semantic_values(_dict(semantic_state.get("services", {}))),
+		"games": _ordered_semantic_values(_dict(semantic_state.get("games", {}))),
+		"routes": _ordered_semantic_values(_dict(semantic_state.get("routes", {}))),
+		"active_stages": _array(projection.get("active_stages", [])),
+		"layout_audit": {
+			"board_size": _size_snapshot(BOARD_SIZE),
+			"small_screen_target": _size_snapshot(SMALL_SCREEN_TARGET),
+			"visual_count": visuals.size(),
+			"interaction_count": _dict(semantic_state.get("interactions", {})).size(),
+		},
+	}
+
+
+static func _prepare_extension_visual(environment: Dictionary, semantic_state: Dictionary, semantic: Dictionary, actor: bool, errors: Array) -> Dictionary:
+	var identity := OperationRegistryScript.identity_from(semantic)
+	var label := str(semantic.get("label", "")).strip_edges()
+	if identity == "::" or label.is_empty():
+		errors.append("Scenario visual is missing its stable identity or accessible label.")
+		return {}
+	var center := _resolve_center(environment, str(semantic.get("anchor_id", "")), str(semantic.get("zone_id", "")))
+	if not _finite_point(center) or center.x < 0.0:
+		errors.append("Scenario visual %s references an unresolved anchor or zone." % identity)
+		return {}
+	var bounds := _dict(semantic.get("bounds", {}))
+	var size := Vector2(float(bounds.get("w", DEFAULT_ACTOR_SIZE.x if actor else DEFAULT_SCENE_SIZE.x)), float(bounds.get("h", DEFAULT_ACTOR_SIZE.y if actor else DEFAULT_SCENE_SIZE.y)))
+	if not _finite_point(size) or size.x < MIN_SCENE_SIZE.x or size.y < MIN_SCENE_SIZE.y:
+		errors.append("Scenario visual %s has out-of-bounds semantic dimensions." % identity)
+		return {}
+	var route_points: Array = []
+	if actor and not str(semantic.get("route_id", "")).strip_edges().is_empty():
+		var route_center := _resolve_route_center(environment, semantic_state, str(semantic.get("route_id", "")))
+		if _finite_point(route_center) and route_center.x >= 0.0:
+			route_points = [_normalized_point(center), _normalized_point(route_center)]
+		else:
+			errors.append("Scenario actor %s references an unresolved route." % identity)
+	var rect := _clamp_inside_board(Rect2(center - size * 0.5, size))
+	var owner := str(semantic.get("owner_namespace", ""))
+	var stable_id := str(semantic.get("stable_object_id", ""))
+	return {
+		"object_id": "scenario:%s:%s" % [owner, stable_id],
+		"object_type": "scenario_actor" if actor else "scenario_object",
+		"visual_type": "scenario_actor" if actor else "scenario_object",
+		"source_id": str(semantic.get("actor_id", stable_id)),
+		"label": label,
+		"short_description": str(semantic.get("behavior", semantic.get("role", "Room object"))).replace("_", " ").capitalize(),
+		"presence": "scenario",
+		"interactive": false,
+		"decorative": true,
+		"enabled": bool(semantic.get("enabled", true)),
+		"visible": bool(semantic.get("visible", true)),
+		"normalized_rect": _normalized_rect(rect),
+		"focus_rect": _normalized_rect(rect),
+		"small_screen_rect": _normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)),
+		"owner_namespace": owner,
+		"stable_object_id": stable_id,
+		"semantic_identity": identity,
+		"role": str(semantic.get("role", "actor" if actor else "prop")),
+		"state": str(semantic.get("state", "")),
+		"appearance": str(semantic.get("appearance", "")),
+		"pose": str(semantic.get("pose", "idle")),
+		"behavior": str(semantic.get("behavior", "idle")),
+		"route_id": str(semantic.get("route_id", "")),
+		"route_points": route_points,
+		"non_color_state": str(semantic.get("non_color_state", semantic.get("state", "present"))),
+		"z_order": int(round(rect.get_center().y)) + (20 if actor else 0),
+	}
+
+
+static func _ordered_semantic_values(value: Dictionary) -> Array:
+	var result: Array = []
+	var keys := value.keys()
+	keys.sort()
+	for key in keys:
+		result.append(_dict(value.get(key, {})))
+	return result
 
 
 static func resolve(base_records: Array, projection: Dictionary, environment: Dictionary = {}) -> Dictionary:
