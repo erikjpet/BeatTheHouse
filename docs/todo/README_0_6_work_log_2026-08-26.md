@@ -6,7 +6,7 @@ contains the historical Work Log moved verbatim by
 claim, block, completion and unblock entries append here; task state and
 the binding protocol remain on the active board.
 
-Preserved entries: **124**; current entries: **131**. Use the exact find token
+Preserved entries: **124**; current entries: **132**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -45,6 +45,7 @@ below to jump to a row's history.
 | `fix06_2 reopening` | 1 | `[fix06_2 reopening]` |
 | `fix06_2/crew06_5` | 2 | `[fix06_2/crew06_5]` |
 | `fix06_3` | 2 | `[fix06_3]` |
+| `fix06_6` | 1 | `[fix06_6]` |
 | `polish06_0` | 1 | `[polish06_0]` |
 | `push06_1` | 1 | `[push06_1]` |
 | `push06_2` | 1 | `[push06_2]` |
@@ -846,3 +847,11 @@ below to jump to a row's history.
   on the isolated depth-program integration line. Initial runtime, catalog,
   Craps, and poker audits precede implementation; consumer branches may not
   base before independent acceptance and integration of the runtime head.
+
+- 2026-08-26 [fix06_6] CLAIMED AND CLOSED as a documentation-only historical
+  disposition from exact main `a48f0d38`. The owner-authorized two-hash refresh
+  `f9eaebbf` was already independently accepted within `fix06_4`, landed at
+  `9a2022ae`, and followed by green post-land UI/Smoke evidence, including the
+  later zero-failure full native Smoke at `7c748f5b`. This row changes no code,
+  test, golden, product, capture or budget and runs no Godot gate; independent
+  review and PM landing apply only to its five-document closeout.
