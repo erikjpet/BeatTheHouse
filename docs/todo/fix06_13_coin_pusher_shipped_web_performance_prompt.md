@@ -1,4 +1,4 @@
-Status: TODO
+Status: IN PROGRESS
 Board row: `fix06_13` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_13: Coin Pusher shipped-Web performance defect
