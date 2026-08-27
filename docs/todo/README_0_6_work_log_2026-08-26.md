@@ -929,3 +929,49 @@ below to jump to a row's history.
   setup-only export consumption. Static validation passed in 51.3s; PowerShell
   parsing and the focused adversarial self-test pass. The next allowed Web run must be one direct invocation without
   `-SkipExport` and with a new relative unique output path; none ran here.
+
+- 2026-08-27 [fix06_14] SOLE FRESH CURRENT-MAIN QUALIFICATION CONSUMED RED
+  at exact `ac70b7ebd0f569f31aece0bbbc57115fd02053b3`; no same-head
+  rerun occurred. One direct invocation used a new relative unique output,
+  fresh-exported, cleaned candidate server port 18116 / PID 11484, and left no
+  listener. Chrome 151 on `DESKTOP-1950ULQ`, CPU throttle 4, captured all eight
+  scenarios. Export aggregate SHA-256 was
+  `44D4BDC5A10D28FF36A8EE17D16EE27276B4DABCE76125E09EECFF920353DA8B`;
+  generated Web native was
+  `31D60D25AD00969A9F7DD115AD7B5E4DC8F1CC4795514DF309A2526F1452C8FB`.
+  Report/summary SHA-256 were
+  `E851380F1B729618AEF3EE3172281BC33DBF0C15CF5D950755F35F747F62A116` /
+  `88C306BDB080E39D80DFA0F47EF5D577D88268286F8D065FCA6ACDCB66070C16`.
+  Launcher stdout/stderr were
+  `3D6F7B477BCF2E7A3096D7A66D314508C85374512D3F691DDBE42AECF0A18553` /
+  `D4645323A8FA7DADCBB2227629B6356B389D1D9FBD2EB8F6DDD7DF3DCFBFAE06`;
+  server stdout/stderr were
+  `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855` /
+  `9849A8E2B6FBFFF18C2C039CB9597DA4BBBFB5221BAD7DC04A83D84048837CFA`.
+  Ready was 20.795s. Frame/draw/resolve milliseconds were menu 147.528/-/-,
+  idle 143.188/59.650/-, DROP 142.523/47.125/70.080, carriage
+  142.053/50.570/71.335, skill stop 144.444/48.515/55.730, skill release
+  141.667/46.015/45.980, COLLECT 147.160/40.370/76.690 and reduced motion
+  139.602/43.375/-. These readiness/performance reds remain owned by
+  `fix06_13`. Every new fixture, conservation, COLLECT terminal, reduced schema,
+  production draw and solver-liveness assertion passed. The sole row-owned red
+  was idle redraw count 16 below a floor of 18 computed from the scenario's
+  18.174s duration.
+
+  Diagnosis proved that duration included synchronous memory/monitor capture
+  before the sample plus surface state, two conservation snapshots and counter
+  capture afterward. Those operations never enter the production redraw
+  scheduler; the 120 sampled frames averaged 131.964ms (~15.836s) and the live
+  scheduler correctly delivered 16 one-hertz redraws. Remediation
+  `87196bd760fc523f263bc53c9da797a60baf3e59` exposes a reset-scoped
+  `surface_animation_scheduler_elapsed_msec` counter incremented only by the
+  real main-redraw scheduler and binds the unchanged 1 Hz floor to that clock.
+  Missing elapsed evidence fails closed; 18.174s/16 remains rejected, while
+  16.000s/16 is accepted. A production canvas test proves exact 200ms
+  accumulation and zero after counter reset. Static validation passed in 46.0s;
+  focused Blackjack validation/import/load/Foundation passed in
+  46.167/16.968/23.439/17.656s, report SHA-256
+  `D0CA80E30E2CA898E82173AE6DD5F61BAFCEC58A8552597FF561C0B78BF2629B`.
+  PowerShell parsing, adversarial clock self-test and `git diff --check` passed.
+  No floor, cadence, liveness, cap, sample, fixture, product tuning, Web rerun,
+  main or remote change occurred.
