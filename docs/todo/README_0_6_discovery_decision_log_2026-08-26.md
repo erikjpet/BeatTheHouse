@@ -5,7 +5,7 @@ contains the historical Discovery & Decision Log moved verbatim by
 `board06_1`. Future scope discoveries, deviations and decisions append
 here; task state, protocol and owner questions remain on the active board.
 
-Preserved entries: **174**; current entries: **179**. Use the exact find token
+Preserved entries: **174**; current entries: **180**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -46,7 +46,7 @@ below to jump to a row's history.
 | `fix06_2/crew06_5 visual QA` | 1 | `[fix06_2/crew06_5 visual QA]` |
 | `fix06_2/integrated systems` | 1 | `[fix06_2/integrated systems]` |
 | `fix06_3` | 1 | `[fix06_3]` |
-| `fix06_6` | 1 | `[fix06_6]` |
+| `fix06_6` | 2 | `[fix06_6]` |
 | `integrated UI` | 1 | `[integrated UI]` |
 | `push06_1` | 6 | `[push06_1]` |
 | `pusher` | 2 | `[pusher]` |
@@ -1612,9 +1612,17 @@ below to jump to a row's history.
   persisted state. Owner-authorized refresh `f9eaebbf` changed only the two
   inline hashes and provenance comment, was accepted and landed with `fix06_4`
   at `9a2022ae`, and remained covered by later green exact-main Smoke. The
-  launcher’s separate-row obligation was closed by documentation only:
-  Feynman (`/root/fix06_collect_impl`) accepted `b323f841`, exact tree-equivalent
-  main merge `fe0c76d9` passed static validation in 77.967s, and the same
-  reviewer returned post-land ACCEPT. No new refresh, product correction,
-  recapture or runtime gate was justified, and all primary owner work remained
-  untouched.
+  launcher’s separate-row obligation can be closed by documentation only, but
+  remains open until that closeout is independently accepted, landed on main,
+  checked post-land and recorded. No new refresh, product correction, recapture
+  or runtime gate is justified.
+
+- 2026-08-26 [fix06_6] FINAL DISPOSITION. Feynman
+  (`/root/fix06_collect_impl`) independently accepted corrected closeout head
+  `b323f841ca0023493a54e1118abc32fe51208c63`; it landed on main at
+  `fe0c76d9e0843794d9b771f0e20075138f0bf6e0`, and the same reviewer returned
+  post-land ACCEPT after exact-main static validation passed in 77.967s.
+  Accepted and landed commits resolve to identical tree
+  `0f954d2ad30f769b96196737aff8cc1f1723238f`. The launcher’s separate routing
+  obligation is closed without product, test, golden, capture or runtime-gate
+  changes, and primary owner work remained untouched.
