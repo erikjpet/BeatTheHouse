@@ -397,7 +397,19 @@ class HostileInputAllInFixtureGame:
 
 
 # Runs fixture checks and exits with a process code.
+class FoundationRunnerReadySentinel:
+	extends Node
+	var ready_seen := false
+
+	func _ready() -> void:
+		ready_seen = true
+
+
 func _init() -> void:
+	call_deferred("_foundation_init_after_tree_ready")
+
+
+func _foundation_init_after_tree_ready() -> void:
 	var options := _foundation_options()
 	if bool(options.get("list", false)):
 		_foundation_print_suite_list()
@@ -405,6 +417,11 @@ func _init() -> void:
 		return
 	_foundation_active_suite = str(options.get("suite", "contracts"))
 	var failures: Array = []
+	var ready_sentinel := FoundationRunnerReadySentinel.new()
+	root.add_child(ready_sentinel)
+	if not ready_sentinel.ready_seen:
+		failures.append("Foundation runner deferred start did not attach nodes through _ready.")
+	ready_sentinel.free()
 	var report := _foundation_report(_foundation_active_suite)
 	var requested_check_ids: Array = options.get("check_ids", [])
 	for check_id_value in requested_check_ids:
@@ -775,7 +792,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	PunchlineLayerContractScript.check(library, failures)
 	Tier2ScenarioContractScript.check(library, failures)
 	ScenarioBacklogContractScript.check(library, failures)
-	ScenarioSequenceContractScript.check(library, failures)
+	ScenarioSequenceContractScript.check(library, failures, self)
 	ScenarioSemanticPresentationContractScript.check(library, failures)
 	EnvironmentSemanticInventoryContractScript.check(library, failures)
 
@@ -956,6 +973,10 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	phase_run.set_environment(phased)
 	if str(phase_run.current_environment.get("scenario_id", "")) != "bar_fight_night" or str(_copy_dict(phase_run.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "UNDERCARD STARTS SOON.":
 		failures.append("Selected scenario was not applied at environment generation time.")
+	var legacy_before_dynamic_probe := JSON.stringify(phase_run.current_environment)
+	var legacy_dynamic_probe := phase_run.scenario_enqueue_fact("world_boundary", "scenario", {"amount": 1, "action_index": 1}, "legacy:inactive")
+	if not bool(legacy_dynamic_probe.get("inactive", false)) or bool(legacy_dynamic_probe.get("ok", true)) or not _copy_array(legacy_dynamic_probe.get("errors", [])).is_empty() or JSON.stringify(phase_run.current_environment) != legacy_before_dynamic_probe:
+		failures.append("A nonempty legacy scenario definition did not bypass dynamic fact ingress byte-identically.")
 	phase_run.advance_environment_turns(1)
 	if int(phase_run.current_environment.get("scenario_phase_index", -1)) != 0 or int(phase_run.current_environment.get("scenario_phase_action_counter", -1)) != 1:
 		failures.append("Scenario phase advanced before its authored action boundary.")
