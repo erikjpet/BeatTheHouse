@@ -133,7 +133,7 @@ static func package_for_scenario(scenario_id: String, catalog: Dictionary = {}) 
 	var source := _default_catalog() if catalog.is_empty() else catalog
 	if wanted.is_empty() or not bool(source.get("ok", false)):
 		return {}
-	var match: Dictionary = {}
+	var matched_package: Dictionary = {}
 	var claim_count := 0
 	for package_value in _array(source.get("packages", [])):
 		var package := _dict(package_value)
@@ -142,26 +142,26 @@ static func package_for_scenario(scenario_id: String, catalog: Dictionary = {}) 
 		if package_claims == 0:
 			continue
 		claim_count += package_claims
-		if package_claims == 1 and match.is_empty():
-			match = package
+		if package_claims == 1 and matched_package.is_empty():
+			matched_package = package
 	# Arbitrary/synthetic catalogs receive the same fail-closed uniqueness
 	# guarantee as load_catalog, without assuming a singleton rollout.
-	return match if claim_count == 1 else {}
+	return matched_package if claim_count == 1 else {}
 
 
 static func definition_for_id(definitions: Array, scenario_id: String) -> Dictionary:
 	var wanted := scenario_id.strip_edges()
 	if wanted.is_empty():
 		return {}
-	var match: Dictionary = {}
+	var matched_definition: Dictionary = {}
 	for definition_value in definitions:
 		var definition := _dict(definition_value)
 		if str(definition.get("id", "")).strip_edges() != wanted:
 			continue
-		if not match.is_empty():
+		if not matched_definition.is_empty():
 			return {}
-		match = definition
-	return match
+		matched_definition = definition
+	return matched_definition
 
 
 static func apply_overlay(definition: Dictionary, catalog: Dictionary = {}) -> Dictionary:
