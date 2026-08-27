@@ -22,7 +22,9 @@
     "same_godot_binary_required": true,
     "same_native_addon_required": true,
     "cooldown_seconds": 120,
-    "command_template": "powershell -NoProfile -ExecutionPolicy Bypass -File tools\\check_godot.ps1 -RequireGodot -Suite Contract -FoundationSuite contracts -TimeoutSec 600 -ReportDir .tmp\\fix06_5_contract_timing\\run_0N"
+    "command_template": "powershell -NoProfile -ExecutionPolicy Bypass -File tools\\check_godot.ps1 -RequireGodot -KeepGoing -Suite Contract -FoundationSuite contracts -TimeoutSec 600 -ReportDir .tmp\\fix06_5_contract_timing\\run_0N",
+    "keep_going_required_for_normal_foundation_suite_aggregation_and_wrapper_exit_normalization": true,
+    "foundation_suite_contracts_early_return_prevents_broader_contract_stages": true
   },
   "idle_precheck": {
     "cpu_counter": "\\Processor(_Total)\\% Processor Time",
@@ -51,6 +53,7 @@
     "foundation_contracts_stage_126_must_be_sole_failed_stage_reason": true,
     "wrapper_exit_code_allowed_for_sole_stage_126_budget_red": 1,
     "wrapper_exit_code_1_allowed_if_and_only_if_sole_stage_126_budget_red": true,
+    "keep_going_required": true,
     "other_nonzero_stage_or_wrapper_exit_allowed": false
   },
   "decision_rule": {
