@@ -1152,14 +1152,14 @@ static func _sequence_anchor_exists(archetype: Dictionary, anchor_kind: String, 
 	var parts := anchor.split(":", false)
 	if parts.size() != 3 or str(parts[0]) != "layout" or not str(parts[2]).is_valid_int():
 		return false
-	var field := {
+	var field: String = str({
 		"game": "game_spots", "event": "event_spots", "item": "item_spots",
 		"service": "service_spots", "lender": "lender_spots", "travel": "travel_spots",
 		"shopkeeper": "shopkeeper_spots", "game_hook": "game_hook_spots",
-	}.get(str(parts[1]), "")
-	if str(field).is_empty():
+	}.get(str(parts[1]), ""))
+	if field.is_empty():
 		return false
-	return int(parts[2]) >= 0 and int(parts[2]) < _copy_array(_copy_dict(archetype.get("layout", {})).get(str(field), [])).size()
+	return int(parts[2]) >= 0 and int(parts[2]) < _copy_array(_copy_dict(archetype.get("layout", {})).get(field, [])).size()
 
 
 static func _sequence_state_can_bind_initial_node(state: Dictionary, environment: Dictionary, definition: Dictionary = {}, host_semantics: Dictionary = {}) -> bool:
