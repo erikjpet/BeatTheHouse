@@ -10,6 +10,7 @@ const DEFAULT_ACCEPTED := 25000
 const POLICY_TICKS := 20
 const PHASE_BIN_COUNT := 12
 const RAIL_FRACTIONS := [0, 250, 500, 750, 1000]
+const PROGRESS_ATTEMPT_INTERVAL := 256
 
 var machine_id := "quarter_falls"
 var shard_index := 0
@@ -107,6 +108,7 @@ func _run() -> void:
 		var dropped: Dictionary = Solver.add_coin(simulation, drop_rng, int(simulation.get("carriage_x", _definition_width(definition) / 2)), 1, {"ev_shard": shard_index, "ev_insert": player_accepted})
 		if not bool(dropped.get("accepted", false)):
 			player_refused += 1
+			_print_progress_if_due(started_usec, simulation, player_accepted, player_refused)
 			var relief := _advance_and_consume(game, machine, event_rng, POLICY_TICKS)
 			progression_ticks += POLICY_TICKS
 			invariant_failures += 0 if bool(relief.get("invariants_ok", false)) else 1
@@ -126,6 +128,7 @@ func _run() -> void:
 		phase_bins[phase_bin] = int(phase_bins[phase_bin]) + 1
 		apparatus_counts[apparatus_label] = int(apparatus_counts.get(apparatus_label, 0)) + 1
 		player_accepted += 1
+		_print_progress_if_due(started_usec, simulation, player_accepted, player_refused)
 		machine["action_count"] = player_accepted
 		var advanced := _advance_and_consume(game, machine, event_rng, POLICY_TICKS)
 		progression_ticks += POLICY_TICKS
@@ -495,6 +498,23 @@ func _policy_descriptor(definition: Dictionary) -> Dictionary:
 		"tail_progression": "no favorable tail; unresolved active paid stock is reported as a conservative identified ROI interval",
 		"apparatus_type": str((definition.get("apparatus", {}) as Dictionary).get("type", "")),
 	}
+
+
+func _print_progress_if_due(started_usec: int, simulation: Dictionary, accepted: int, refused: int) -> void:
+	var attempts := accepted + refused
+	if attempts <= 0 or attempts % PROGRESS_ATTEMPT_INTERVAL != 0:
+		return
+	print("COIN_PUSHER_EV_SHARD_PROGRESS machine=%s shard=%d accepted=%d/%d refused=%d active=%d tray=%d gutter=%d elapsed_seconds=%.3f" % [
+		machine_id,
+		shard_index,
+		accepted,
+		accepted_target,
+		refused,
+		(simulation.get("bodies", []) as Array).size(),
+		(simulation.get("tray_ledger", []) as Array).size(),
+		(simulation.get("gutter_ledger", []) as Array).size(),
+		float(Time.get_ticks_usec() - started_usec) / 1000000.0,
+	])
 
 
 func _body_kind_counts(values: Array) -> Dictionary:
