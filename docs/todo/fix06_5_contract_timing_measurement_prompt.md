@@ -82,13 +82,23 @@ Run attempts 01 through 05 serially, in that order, with no sixth attempt:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools\check_godot.ps1 `
-  -RequireGodot -Suite Contract -FoundationSuite contracts -TimeoutSec 600 `
-  -ReportDir .tmp\fix06_5_contract_timing\run_0N
+  -RequireGodot -KeepGoing -Suite Contract -FoundationSuite contracts `
+  -TimeoutSec 600 -ReportDir .tmp\fix06_5_contract_timing\run_0N
 ```
 
 Replace `0N` only with `01`, `02`, `03`, `04` or `05`. Do not add
 `-AllowConcurrentGodot`, `-NoImport`, change the timeout, or change any source,
 runner setting or host identity between attempts.
+
+`-KeepGoing` is mandatory here. Without it, a budget-only stage red exits the
+wrapper from the stage helper with that stage's `126` after writing its immediate
+summary, instead of reaching normal FoundationSuite aggregation. With it, the
+wrapper preserves the same stage artifacts, reaches the dedicated aggregate
+summary path and returns wrapper exit `1` for any recorded failed stage. Because
+`-FoundationSuite contracts` takes the wrapper's dedicated FoundationSuite
+branch and exits after its summary, `-KeepGoing` does not launch the broader
+`-Suite Contract` stages. The prerequisite validation, import and script-load
+stages still run and must be green for a timing result to be eligible.
 
 For every attempt preserve the full report directory and record: start/end
 timestamp, precheck data, command, process exit, all stage durations,
@@ -106,7 +116,9 @@ assertion/script/stderr failures, does not time out and identifies
 stage-time cap is the sole failed-stage reason. The outer `check_godot.ps1`
 wrapper exit `1` is timing-eligible if and only if that sole stage-126 budget
 result caused it while all functional, stderr, timeout and identity predicates
-above remain green. No other nonzero stage or wrapper exit is timing-eligible.
+above remain green. Every attempt must include the predeclared `-KeepGoing`;
+wrapper exit `126` from an early stage exit is not timing-eligible. No other
+nonzero stage or wrapper exit is timing-eligible.
 
 - If any of the five attempts is not timing-eligible, preserve it and classify
   the five-run timing conclusion as **INCONCLUSIVE**. Route the functional,
