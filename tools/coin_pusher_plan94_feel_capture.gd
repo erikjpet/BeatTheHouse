@@ -774,21 +774,28 @@ func _upper_row_local_neighbors(views: Array, tracked_body_id: String, opening_i
 	var tracked := _body_from_views(views, tracked_body_id)
 	if tracked.is_empty():
 		return []
+	var support_ids := {}
+	for support_id in tracked.get("support_ids", []):
+		support_ids[str(support_id)] = true
 	var result: Array = []
 	for body_value in views:
 		if typeof(body_value) != TYPE_DICTIONARY:
 			continue
 		var body: Dictionary = body_value
 		var body_id := str(body.get("id", ""))
-		if body_id == tracked_body_id or not opening_ids.has(body_id) \
+		if body_id == tracked_body_id or support_ids.has(body_id) or not opening_ids.has(body_id) \
 				or str(body.get("kind", "")) != "coin" \
 				or str(body.get("support_root", "")) != "platform":
 			continue
 		var dx := int(body.get("x", 0)) - int(tracked.get("x", 0))
 		var dy := int(body.get("y", 0)) - int(tracked.get("y", 0))
 		var contact_distance := int(body.get("radius", 2350)) + int(tracked.get("radius", 2350)) + 120
-		var same_upper_topology := absi(int(body.get("z", 0)) - int(tracked.get("z", 0))) <= maxi(int(body.get("height", 950)), int(tracked.get("height", 950))) + 100
-		if same_upper_topology and dx * dx + dy * dy <= contact_distance * contact_distance:
+		# A body directly underneath the drop proves support, not "beside the row."
+		# Require a neighboring coin on the same local tier; modest z tolerance
+		# allows an irregular physical bed without admitting a full stacked layer.
+		var tier_tolerance := maxi(100, int(mini(int(body.get("height", 950)), int(tracked.get("height", 950))) / 2))
+		var same_upper_tier := absi(int(body.get("z", 0)) - int(tracked.get("z", 0))) <= tier_tolerance
+		if same_upper_tier and dx * dx + dy * dy <= contact_distance * contact_distance:
 			result.append(body.duplicate(true))
 	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("id", "")) < str(b.get("id", "")))
 	return result
