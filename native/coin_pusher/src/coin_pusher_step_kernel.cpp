@@ -1420,11 +1420,15 @@ struct Kernel {
   }
 };
 
-struct LiveKernelCache {
+} // namespace
+
+struct CoinPusherNativeCore::LiveKernelCache {
   String key;
   std::unique_ptr<Kernel> kernel;
 };
-} // namespace
+
+CoinPusherNativeCore::CoinPusherNativeCore() = default;
+CoinPusherNativeCore::~CoinPusherNativeCore() = default;
 
 bool CoinPusherNativeCore::can_step(const Dictionary &state,
                                     const Dictionary &) const {
@@ -1437,17 +1441,17 @@ Dictionary CoinPusherNativeCore::step_ticks(Dictionary state,
                                             int64_t tick_count) const {
   String cache_key = config.get("live_cache_key", "");
   if (!cache_key.is_empty()) {
-    static LiveKernelCache *live_cache = nullptr;
     bool reset = bool(config.get("live_cache_reset", false));
-    if (!live_cache)
-      live_cache = new LiveKernelCache;
-    if (reset || !live_cache->kernel || live_cache->key != cache_key) {
-      live_cache->key = cache_key;
-      live_cache->kernel = std::make_unique<Kernel>(state, config);
-      return live_cache->kernel->run(tick_count);
+    if (!live_kernel_cache_)
+      live_kernel_cache_ = std::make_unique<LiveKernelCache>();
+    if (reset || !live_kernel_cache_->kernel ||
+        live_kernel_cache_->key != cache_key) {
+      live_kernel_cache_->key = cache_key;
+      live_kernel_cache_->kernel = std::make_unique<Kernel>(state, config);
+      return live_kernel_cache_->kernel->run(tick_count);
     }
-    live_cache->kernel->resume(state, config);
-    return live_cache->kernel->run(tick_count, false);
+    live_kernel_cache_->kernel->resume(state, config);
+    return live_kernel_cache_->kernel->run(tick_count, false);
   }
   Kernel k(state, config);
   return k.run(tick_count);

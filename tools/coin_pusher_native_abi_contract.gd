@@ -1,5 +1,7 @@
 extends SceneTree
 
+const RngStream := preload("res://scripts/core/rng_stream.gd")
+
 
 func _init() -> void:
 	var expect_live_batch := true
@@ -44,9 +46,65 @@ func _init() -> void:
 	if typeof(batch) != TYPE_DICTIONARY or int((batch as Dictionary).get("count", -1)) != 0:
 		_fail("Live batch ABI did not return an empty deterministic batch.")
 		return
+	if not _cache_lifetime_contract():
+		return
 	print("COIN_PUSHER_NATIVE_ABI_STAGE methods_bound")
 	print("COIN_PUSHER_NATIVE_ABI_CONTRACT PASS backend=native_v3 live_batch=true platform=%s" % OS.get_name())
 	quit(0)
+
+
+func _cache_lifetime_contract() -> bool:
+	var native: Object = ClassDB.instantiate("CoinPusherNativeCore")
+	if native == null:
+		_fail("Cache-lifetime native backend could not be instantiated.")
+		return false
+	var state := {
+		"schema": "coin_pusher_machine_v3",
+		"version": 3,
+		"tick": 0,
+		"bodies": [],
+	}
+	var first_rng := RngStream.new()
+	first_rng.configure(101)
+	var first_weak := weakref(first_rng)
+	var first_config := {
+		"live_cache_key": "abi-lifetime:first",
+		"live_cache_reset": true,
+		"rng": first_rng,
+	}
+	var first_result: Variant = native.call("step_ticks", state.duplicate(true), first_config, 0)
+	first_result = null
+	first_config = {}
+	first_rng = null
+	if first_weak.get_ref() == null:
+		_fail("Live kernel cache did not retain its keyed per-call configuration.")
+		return false
+
+	var second_rng := RngStream.new()
+	second_rng.configure(202)
+	var second_weak := weakref(second_rng)
+	var second_config := {
+		"live_cache_key": "abi-lifetime:second",
+		"live_cache_reset": true,
+		"rng": second_rng,
+	}
+	var second_result: Variant = native.call("step_ticks", state.duplicate(true), second_config, 0)
+	second_result = null
+	second_config = {}
+	second_rng = null
+	if first_weak.get_ref() != null:
+		_fail("Replacing the live kernel cache retained the prior configuration.")
+		return false
+	if second_weak.get_ref() == null:
+		_fail("Replacement live kernel cache did not retain its keyed configuration.")
+		return false
+
+	native = null
+	if second_weak.get_ref() != null:
+		_fail("Releasing the native backend did not release its live kernel cache.")
+		return false
+	print("COIN_PUSHER_NATIVE_ABI_STAGE cache_lifetime_released")
+	return true
 
 
 func _fail(message: String) -> void:

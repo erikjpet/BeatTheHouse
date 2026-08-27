@@ -7,16 +7,22 @@
 #include <godot_cpp/variant/string.hpp>
 
 #include <cstdint>
+#include <memory>
 
 namespace godot {
 
 class CoinPusherNativeCore : public RefCounted {
 	GDCLASS(CoinPusherNativeCore, RefCounted)
 
+	struct LiveKernelCache;
+	mutable std::unique_ptr<LiveKernelCache> live_kernel_cache_;
+
 protected:
 	static void _bind_methods();
 
 public:
+	CoinPusherNativeCore();
+	~CoinPusherNativeCore() override;
 	String backend_id() const;
 	Dictionary solver_contract() const;
 	int64_t divi(int64_t numerator, int64_t denominator) const;
