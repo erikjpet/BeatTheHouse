@@ -12,6 +12,12 @@ param(
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $machines = @("quarter_falls", "jackpot_ridge", "vault_drop")
+$runnerSchema = "coin_pusher_ev_runner_provenance_v1"
+$runnerVersion = "fix06_11_v2"
+$guardSchema = "coin_pusher_ev_no_progress_guard_v1"
+$guardKind = "deterministic_consecutive_refusal_limit"
+$guardLimit = 4096
+$policyTicks = 20
 if ($Throttle -ne 1) {
     throw "EV shards must run serially. Parallel persistent-machine shards exhausted host memory before producing reports."
 }
@@ -53,11 +59,49 @@ if (-not $godot) {
     $command = Get-Command godot -ErrorAction SilentlyContinue
     if ($command) { $godot = $command.Source }
 }
-if (-not $godot) { throw "Godot was not found. Set GODOT_BIN or install the project-local toolchain." }
-$godotWorker = $godot
-if ($godotWorker.EndsWith("_console.exe", [System.StringComparison]::OrdinalIgnoreCase)) {
-    $directWorker = $godotWorker.Substring(0, $godotWorker.Length - "_console.exe".Length) + ".exe"
-    if (Test-Path -LiteralPath $directWorker) { $godotWorker = $directWorker }
+$godotWorker = ""
+$enginePreflightFailure = ""
+$runnerProvenance = [ordered]@{
+    schema = $runnerSchema
+    runner_version = $runnerVersion
+    status = "unverified"
+    guard = [ordered]@{ schema = $guardSchema; kind = $guardKind; limit = $guardLimit; ticks_after_each_refusal = $policyTicks }
+    engine = [ordered]@{ configured_path = ""; configured_sha256 = ""; worker_path = ""; worker_sha256 = "" }
+}
+if (-not $AggregateOnly) {
+    try {
+        if (-not $godot) { throw "Godot was not found. Set GODOT_BIN or install the project-local toolchain." }
+        $configuredPath = [System.IO.Path]::GetFullPath($godot)
+        if (-not (Test-Path -LiteralPath $configuredPath -PathType Leaf)) { throw "Configured Godot executable does not exist: $configuredPath" }
+        $godotWorker = $configuredPath
+        if ($godotWorker.EndsWith("_console.exe", [System.StringComparison]::OrdinalIgnoreCase)) {
+            $godotWorker = $godotWorker.Substring(0, $godotWorker.Length - "_console.exe".Length) + ".exe"
+        }
+        if (-not (Test-Path -LiteralPath $godotWorker -PathType Leaf)) { throw "Resolved Godot worker executable does not exist: $godotWorker" }
+        $runnerProvenance.engine.configured_path = $configuredPath
+        $runnerProvenance.engine.configured_sha256 = (Get-FileHash -LiteralPath $configuredPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
+        $runnerProvenance.engine.worker_path = $godotWorker
+        $runnerProvenance.engine.worker_sha256 = (Get-FileHash -LiteralPath $godotWorker -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
+        $runnerProvenance.status = "verified"
+    }
+    catch {
+        $enginePreflightFailure = $_.Exception.Message
+        $runnerProvenance.status = "preflight_failed"
+    }
+}
+
+function Get-RunnerProvenanceError([object]$Provenance) {
+    if ($null -eq $Provenance) { return "Missing runner_provenance." }
+    if ([string]$Provenance.schema -ne $runnerSchema -or [string]$Provenance.runner_version -ne $runnerVersion -or [string]$Provenance.status -ne "verified") { return "Unsupported or unverified runner provenance schema/version/status." }
+    if ($null -eq $Provenance.guard -or [string]$Provenance.guard.schema -ne $guardSchema -or [string]$Provenance.guard.kind -ne $guardKind -or [int]$Provenance.guard.limit -ne $guardLimit -or [int]$Provenance.guard.ticks_after_each_refusal -ne $policyTicks) { return "Incompatible no-progress guard provenance." }
+    if ($null -eq $Provenance.engine) { return "Missing engine provenance." }
+    foreach ($name in @("configured_path", "worker_path")) {
+        if ([string]::IsNullOrWhiteSpace([string]$Provenance.engine.$name)) { return "Engine provenance is missing $name." }
+    }
+    foreach ($name in @("configured_sha256", "worker_sha256")) {
+        if ([string]$Provenance.engine.$name -notmatch "^[0-9a-fA-F]{64}$") { return "Engine provenance has an invalid $name." }
+    }
+    return ""
 }
 
 $jobs = [System.Collections.Generic.List[object]]::new()
@@ -96,19 +140,38 @@ function Read-EvShardReport([object]$Job) {
         return [pscustomobject]@{ Ok = $false; Report = $null; Kind = "malformed_json"; Detail = $_.Exception.Message }
     }
     if ($null -ne $report -and $report.schema -eq "coin_pusher_v3_physical_ev_shard_failure_v1") {
+        $requiredFailureProperties = @("machine_id", "shard_index", "passed", "accepted_target", "accepted_player_inserts", "refused_attempts_returned", "consecutive_refusals_without_accept", "failure_kind", "failure_detail", "guard", "state", "solver_backend", "policy_sha256", "geometry_sha256", "elapsed_seconds", "runner_provenance")
+        $missingFailureProperties = @($requiredFailureProperties | Where-Object { $report.PSObject.Properties.Name -notcontains $_ })
+        if ($missingFailureProperties.Count -gt 0) {
+            return [pscustomobject]@{ Ok = $false; Report = $null; FailureReport = $null; Kind = "incomplete_failure_json"; Detail = "Missing required failure properties: $($missingFailureProperties -join ', ')" }
+        }
         try {
             $reportedShard = [int]$report.shard_index
+            $reportedTarget = [int64]$report.accepted_target
+            $reportedAccepted = [int64]$report.accepted_player_inserts
+            $reportedRefused = [int64]$report.refused_attempts_returned
+            $reportedConsecutive = [int64]$report.consecutive_refusals_without_accept
+            $reportedElapsed = [double]$report.elapsed_seconds
         }
         catch {
-            return [pscustomobject]@{ Ok = $false; Report = $null; FailureReport = $null; Kind = "identity_mismatch"; Detail = "Shard failure JSON index is not an integer." }
+            return [pscustomobject]@{ Ok = $false; Report = $null; FailureReport = $null; Kind = "invalid_failure_json"; Detail = "Shard failure JSON counters, index, or elapsed time are not numeric." }
         }
         if ($report.machine_id -ne $Job.Machine -or $reportedShard -ne [int]$Job.Shard) {
             return [pscustomobject]@{ Ok = $false; Report = $null; FailureReport = $null; Kind = "identity_mismatch"; Detail = "Shard failure JSON machine/index does not match the launched job." }
         }
+        if (-not ($report.passed -is [bool]) -or $report.passed -or $reportedTarget -ne [int64]$Job.Accepted -or $reportedAccepted -lt 0 -or $reportedAccepted -ge $reportedTarget -or $reportedRefused -lt 0 -or $reportedConsecutive -le 0 -or $reportedConsecutive -gt $reportedRefused -or $reportedElapsed -lt 0) {
+            return [pscustomobject]@{ Ok = $false; Report = $null; FailureReport = $null; Kind = "invalid_failure_json"; Detail = "Shard failure JSON has inconsistent passed/counter/target/elapsed values." }
+        }
         $failureKind = [string]$report.failure_kind
         $failureDetail = [string]$report.failure_detail
-        if (-not $failureKind -or -not $failureDetail) {
-            return [pscustomobject]@{ Ok = $false; Report = $null; FailureReport = $null; Kind = "incomplete_failure_json"; Detail = "Shard failure JSON must include failure_kind and failure_detail." }
+        $requiredStateProperties = @("active", "tray", "gutter", "solver_accepted_inserts_including_features", "solver_refused_inserts")
+        $missingStateProperties = if ($null -ne $report.state) { @($requiredStateProperties | Where-Object { $report.state.PSObject.Properties.Name -notcontains $_ }) } else { $requiredStateProperties }
+        $guardValid = $null -ne $report.guard -and [string]$report.guard.schema -eq $guardSchema -and [string]$report.guard.kind -eq $guardKind -and [int]$report.guard.limit -eq $guardLimit -and [int]$report.guard.ticks_after_each_refusal -eq $policyTicks
+        $stateValid = $missingStateProperties.Count -eq 0 -and [int64]$report.state.active -ge 0 -and [int64]$report.state.tray -ge 0 -and [int64]$report.state.gutter -ge 0 -and [int64]$report.state.solver_accepted_inserts_including_features -ge $reportedAccepted -and [int64]$report.state.solver_refused_inserts -ge $reportedRefused
+        $provenanceError = Get-RunnerProvenanceError $report.runner_provenance
+        if ($failureKind -ne "no_accepted_progress" -or -not $failureDetail -or -not $guardValid -or -not $stateValid -or -not [string]$report.solver_backend -or [string]$report.policy_sha256 -notmatch "^[0-9a-fA-F]{64}$" -or [string]$report.geometry_sha256 -notmatch "^[0-9a-fA-F]{64}$" -or $provenanceError) {
+            $detail = if ($provenanceError) { $provenanceError } else { "Shard failure JSON has invalid required failure detail/state/backend/hash fields." }
+            return [pscustomobject]@{ Ok = $false; Report = $null; FailureReport = $null; Kind = "invalid_failure_json"; Detail = $detail }
         }
         return [pscustomobject]@{ Ok = $false; Report = $null; FailureReport = $report; Kind = $failureKind; Detail = $failureDetail }
     }
@@ -124,11 +187,14 @@ function Read-EvShardReport([object]$Job) {
     if ($report.machine_id -ne $Job.Machine -or $reportedShard -ne [int]$Job.Shard) {
         return [pscustomobject]@{ Ok = $false; Report = $null; Kind = "identity_mismatch"; Detail = "Shard JSON machine/index does not match the launched job." }
     }
-    $requiredProperties = @("accepted_player_inserts", "accounting", "assertions", "coverage", "economy", "geometry_sha256", "passed", "policy_sha256")
+    $requiredProperties = @("accepted_player_inserts", "accounting", "assertions", "coverage", "economy", "geometry_sha256", "passed", "policy_sha256", "runner_provenance")
     $missingProperties = @($requiredProperties | Where-Object { $report.PSObject.Properties.Name -notcontains $_ })
     if ($missingProperties.Count -gt 0) {
-        return [pscustomobject]@{ Ok = $false; Report = $null; Kind = "incomplete_json"; Detail = "Missing required properties: $($missingProperties -join ', ')" }
+        $kind = if ($missingProperties -contains "runner_provenance") { "incompatible_legacy_evidence" } else { "incomplete_json" }
+        return [pscustomobject]@{ Ok = $false; Report = $null; Kind = $kind; Detail = "Missing required properties: $($missingProperties -join ', ')" }
     }
+    $provenanceError = Get-RunnerProvenanceError $report.runner_provenance
+    if ($provenanceError) { return [pscustomobject]@{ Ok = $false; Report = $null; Kind = "incompatible_runner_provenance"; Detail = $provenanceError } }
     return [pscustomobject]@{ Ok = $true; Report = $report; Kind = ""; Detail = "" }
 }
 
@@ -150,6 +216,7 @@ if (-not $AggregateOnly) {
 $startedAt = Get-Date
 $completed = [System.Collections.Generic.List[object]]::new()
 $schedulerFailure = ""
+$runnerProvenanceBase64 = if (-not $AggregateOnly -and -not $enginePreflightFailure) { [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($runnerProvenance | ConvertTo-Json -Depth 8 -Compress))) } else { "" }
 if ($AggregateOnly) {
     foreach ($job in $jobs) {
         $job.ExitCode = if (Test-Path -LiteralPath $job.Json) { 0 } else { -1 }
@@ -163,6 +230,23 @@ if ($AggregateOnly) {
             $job.FailureDetail = $parsed.Detail
         }
     }
+}
+elseif ($enginePreflightFailure) {
+    $schedulerFailure = "Engine provenance preflight failed: $enginePreflightFailure"
+    foreach ($job in $jobs) {
+        $job.ExitCode = -8
+        $job.FailureKind = "engine_preflight_failed"
+        $job.FailureDetail = $schedulerFailure
+    }
+    $recoveryReport = [ordered]@{
+        schema = "coin_pusher_v3_physical_ev_execution_failure_v1"
+        generated_at = (Get-Date).ToUniversalTime().ToString("o")
+        scheduler_failure = $schedulerFailure
+        runner_provenance = $runnerProvenance
+        stopped_children = @()
+        jobs = @($jobs | ForEach-Object { [ordered]@{ machine = $_.Machine; shard = $_.Shard; exit_code = $_.ExitCode; peak_working_set_bytes = $_.PeakWorkingSetBytes; failure_kind = $_.FailureKind; failure_detail = $_.FailureDetail } })
+    }
+    $recoveryReport | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $OutDir "execution_failure.json") -Encoding utf8
 }
 else {
     $pending = [System.Collections.Generic.Queue[object]]::new()
@@ -210,7 +294,8 @@ else {
                     "--headless", "--path", $projectRoot,
                     "--script", "res://tools/coin_pusher_ev_shard.gd", "--",
                     "--machine=$($job.Machine)", "--shard=$($job.Shard)",
-                    "--accepted=$($job.Accepted)", "--out=$resourceOut"
+                    "--accepted=$($job.Accepted)", "--out=$resourceOut",
+                    "--runner-provenance-base64=$runnerProvenanceBase64"
                 )
                 try {
                     $job.Process = Start-Process -FilePath $godotWorker -ArgumentList $arguments -WorkingDirectory $projectRoot -WindowStyle Hidden -RedirectStandardOutput $job.Stdout -RedirectStandardError $job.Stderr -PassThru
@@ -290,11 +375,12 @@ else {
             $job.FailureKind = "not_started_after_failure"
             $job.FailureDetail = "The scheduler stopped before this shard was launched."
         }
-        if ($cleanupRecords.Count -gt 0 -or $schedulerFailure) {
+        if ($cleanupRecords.Count -gt 0 -or $schedulerFailure -or $launchStopped) {
             $recoveryReport = [ordered]@{
                 schema = "coin_pusher_v3_physical_ev_execution_failure_v1"
                 generated_at = (Get-Date).ToUniversalTime().ToString("o")
                 scheduler_failure = $schedulerFailure
+                runner_provenance = $runnerProvenance
                 stopped_children = @($cleanupRecords)
                 jobs = @($jobs | ForEach-Object { [ordered]@{ machine = $_.Machine; shard = $_.Shard; exit_code = $_.ExitCode; peak_working_set_bytes = $_.PeakWorkingSetBytes; failure_kind = $_.FailureKind; failure_detail = $_.FailureDetail } })
             }
@@ -363,6 +449,10 @@ function Get-Dispersion([double[]]$Values) {
 $machineReports = [System.Collections.Generic.List[object]]::new()
 $aggregationFailure = ""
 try {
+if ($AggregateOnly) {
+    $provenanceKeys = @($shardReports | ForEach-Object { $_.runner_provenance | ConvertTo-Json -Depth 8 -Compress } | Sort-Object -Unique)
+    if ($shardReports.Count -gt 0 -and $provenanceKeys.Count -ne 1) { throw "AggregateOnly evidence contains mixed runner/guard/engine provenance." }
+}
 foreach ($machine in $machines) {
     $reports = @($shardReports | Where-Object machine_id -eq $machine | Sort-Object shard_index)
     $shardHashes = [ordered]@{}
@@ -509,6 +599,16 @@ finally {
 }
 
 $overallPassed = $processFailures.Count -eq 0 -and $machineReports.Count -eq $machines.Count -and @($machineReports | Where-Object { -not $_.passed }).Count -eq 0
+$manifestRunnerProvenance = $runnerProvenance
+if ($AggregateOnly) {
+    $aggregateProvenances = @($shardReports | ForEach-Object { $_.runner_provenance | ConvertTo-Json -Depth 8 -Compress } | Sort-Object -Unique)
+    if ($shardReports.Count -eq $jobs.Count -and $aggregateProvenances.Count -eq 1) {
+        $manifestRunnerProvenance = $shardReports[0].runner_provenance
+    }
+    else {
+        $manifestRunnerProvenance = [ordered]@{ schema = $runnerSchema; runner_version = ""; status = "incompatible_or_missing_aggregate_evidence"; source = "aggregate_reports"; guard = $null; engine = $null }
+    }
+}
 $finalReport = [ordered]@{
     schema = "coin_pusher_v3_physical_ev_harness_v2"
     generated_at = (Get-Date).ToUniversalTime().ToString("o")
@@ -528,14 +628,10 @@ $finalReport = [ordered]@{
         vault_option_value_uses_only_physically_banked_fragment_ids_and_real_subgame_actions = $true
         ridge_credited_roi_separate = $true
         plinko_target_capture_and_reward_value_separate = $true
-        fail_closed_after_consecutive_refusals_without_accept = 4096
+        fail_closed_after_consecutive_refusals_without_accept = if ($manifestRunnerProvenance.guard) { [int]$manifestRunnerProvenance.guard.limit } else { $null }
     }
-    engine = [ordered]@{
-        configured_path = $godot
-        configured_sha256 = (Get-FileHash -LiteralPath $godot -Algorithm SHA256).Hash.ToLowerInvariant()
-        worker_path = $godotWorker
-        worker_sha256 = (Get-FileHash -LiteralPath $godotWorker -Algorithm SHA256).Hash.ToLowerInvariant()
-    }
+    runner_provenance = $manifestRunnerProvenance
+    engine = $manifestRunnerProvenance.engine
     elapsed_seconds = ((Get-Date) - $startedAt).TotalSeconds
     scheduler_failure = $schedulerFailure
     aggregation_failure = $aggregationFailure
