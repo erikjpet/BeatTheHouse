@@ -1112,8 +1112,8 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 			var normal_rect := _dict(complication_authority.get("normalized_hit_rect", {}))
 			var small_rect := _dict(complication_authority.get("small_screen_rect", {}))
 			var complication_scene := _dict(_dict(_dict(valid_overlay_run.current_environment.get("scenario_sequence_state", {})).get("semantic_state", {})).get("scene_objects", {}))
-			if str(_dict(complication_scene.get("game::game:slot", {})).get("state", "")) != "blocked" or float(normal_rect.get("w", 0.0)) <= 0.0 or float(normal_rect.get("h", 0.0)) <= 0.0 or float(small_rect.get("w", 0.0)) <= 0.0 or float(small_rect.get("h", 0.0)) <= 0.0:
-				failures.append("Authenticated lifecycle command did not apply the complication slot state with sealed normal and expanded small-screen authority.")
+			if str(_dict(complication_scene.get("scenario::fixture_100", {})).get("state", "")) != "blocked" or float(normal_rect.get("w", 0.0)) <= 0.0 or float(normal_rect.get("h", 0.0)) <= 0.0 or float(small_rect.get("w", 0.0)) <= 0.0 or float(small_rect.get("h", 0.0)) <= 0.0:
+				failures.append("Authenticated lifecycle command did not apply the complication fixture state with sealed normal and expanded small-screen authority.")
 	var cost_run := RunStateScript.new()
 	cost_run.current_environment = valid_authority_environment.duplicate(true)
 	cost_run.bankroll = 10
@@ -5278,8 +5278,8 @@ static func _fixture_definition() -> Dictionary:
 	assert(not _array(definition["sequence"]["phase_graph"]["phases"][0].get("interaction_ops", [])).is_empty(), "Sequence fixture arrival requires its authored safe-exit interaction.")
 	assert(not _array(definition["sequence"]["phase_graph"]["phases"][2].get("interaction_ops", [])).is_empty(), "Sequence fixture aftermath requires its authored safe-exit interaction.")
 	var complication_operation := _operation_fixture("scene_ops", "set_state", 104)
-	complication_operation["owner_namespace"] = "game"
-	complication_operation["stable_object_id"] = "game:slot"
+	complication_operation["owner_namespace"] = "scenario"
+	complication_operation["stable_object_id"] = "fixture_100"
 	complication_operation["state"] = "blocked"
 	definition["sequence"]["phase_graph"]["phases"][1]["scene_ops"] = [complication_operation]
 	var cleanup_operations := _array(definition["sequence"]["cleanup"].get("operations", []))
@@ -5287,7 +5287,6 @@ static func _fixture_definition() -> Dictionary:
 		var cleanup_operation := _dict(cleanup_operations[cleanup_index])
 		if str(cleanup_operation.get("family", "")) == "scene_ops" and str(cleanup_operation.get("stable_object_id", "")) == "fixture_104":
 			cleanup_operations.remove_at(cleanup_index)
-	cleanup_operations.append({"family": "scene_ops", "op": "set_state", "receipt_id": "cleanup_complication_slot_state", "owner_namespace": "game", "stable_object_id": "game:slot", "state": "ready"})
 	definition["sequence"]["cleanup"]["operations"] = cleanup_operations
 	definition["sequence"]["phase_graph"]["phases"][0]["interaction_ops"][0]["interaction"]["safe_exit"] = true
 	definition["sequence"]["phase_graph"]["phases"][2]["interaction_ops"][0]["interaction"]["safe_exit"] = true
