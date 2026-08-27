@@ -18,6 +18,7 @@ var shard_index := 0
 var accepted_target := DEFAULT_ACCEPTED
 var out_path := "res://.tmp/coin_pusher_ev_shard.json"
 var gutter_x_override := -1
+var runner_provenance := {}
 var failed := false
 
 
@@ -33,11 +34,21 @@ func _init() -> void:
 			out_path = argument.trim_prefix("--out=").strip_edges()
 		elif argument.begins_with("--gutter-x="):
 			gutter_x_override = int(argument.trim_prefix("--gutter-x="))
+		elif argument.begins_with("--runner-provenance-base64="):
+			var encoded := argument.trim_prefix("--runner-provenance-base64=").strip_edges()
+			var decoded := Marshalls.base64_to_raw(encoded).get_string_from_utf8()
+			var parsed: Variant = JSON.parse_string(decoded)
+			if typeof(parsed) == TYPE_DICTIONARY:
+				runner_provenance = parsed as Dictionary
 	call_deferred("_run")
 
 
 func _run() -> void:
 	var started_usec := Time.get_ticks_usec()
+	if runner_provenance.is_empty():
+		push_error("EV shard requires harness-bound runner provenance.")
+		quit(1)
+		return
 	var library = ContentLibraryScript.new()
 	library.load(false)
 	var game = CoinPusherGame.new()
@@ -205,6 +216,7 @@ func _run() -> void:
 		"policy": policy,
 		"policy_sha256": policy_hash,
 		"geometry_sha256": geometry_hash,
+		"runner_provenance": runner_provenance.duplicate(true),
 		"coverage": {"phase_bins": phase_bins, "apparatus": apparatus_counts, "complete": coverage_ok},
 		"accounting": {
 			"opening_origin_count": opening_origin,
@@ -537,6 +549,7 @@ func _finish_liveness_failure(started_usec: int, simulation: Dictionary, accepte
 		"failure_kind": "no_accepted_progress",
 		"failure_detail": detail,
 		"guard": {
+			"schema": "coin_pusher_ev_no_progress_guard_v1",
 			"kind": "deterministic_consecutive_refusal_limit",
 			"limit": MAX_CONSECUTIVE_REFUSALS_WITHOUT_ACCEPT,
 			"ticks_after_each_refusal": POLICY_TICKS,
@@ -551,6 +564,7 @@ func _finish_liveness_failure(started_usec: int, simulation: Dictionary, accepte
 		"solver_backend": Solver.last_step_backend_for_test(),
 		"policy_sha256": policy_hash,
 		"geometry_sha256": geometry_hash,
+		"runner_provenance": runner_provenance.duplicate(true),
 		"elapsed_seconds": float(Time.get_ticks_usec() - started_usec) / 1000000.0,
 		"passed": false,
 	})
