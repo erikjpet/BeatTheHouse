@@ -134,7 +134,7 @@ static func advance(machine: Dictionary, now_msec: int) -> Dictionary:
 	var stepped := _step_traced_ticks(machine, due)
 	units -= due * 1000
 	session["accumulator_units"] = units
-	return {"ticks": due, "events": stepped.get("events", []), "backlog_ticks": units / 1000, "web_profile": stepped.get("web_profile", {})}
+	return {"ticks": due, "events": stepped.get("events", []), "backlog_ticks": units / 1000}
 
 
 static func begin_chunked_settle(machine: Dictionary) -> Dictionary:
@@ -370,7 +370,6 @@ static func _session_rng(session: Dictionary) -> RngStream:
 
 
 static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictionary:
-	var profile_started := Time.get_ticks_usec()
 	var session: Dictionary = machine.get("live_session", {})
 	var simulation: Dictionary = machine.get("simulation", {})
 	var rng := _session_rng(session)
@@ -378,18 +377,13 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 	var safe_tick_count := maxi(0, tick_count)
 	var previous_views: Array = []
 	var previous_face_y := int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
-	var solver_call_usec := 0
-	var native_kernel_usec := 0
-	var presentation_projection_usec := 0
 	for tick_index in range(safe_tick_count):
 		# Only the final consecutive tick pair is visible. Catch-up ticks still run
 		# one-by-one for exact input/event/RNG semantics, but do not allocate and
 		# discard a 300-body public projection after every intermediate step.
 		if tick_index == safe_tick_count - 1:
 			var current_views: Variant = session.get("presentation_current_bodies", [])
-			var previous_projection_started := Time.get_ticks_usec()
 			previous_views = current_views if safe_tick_count == 1 and typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
-			presentation_projection_usec += Time.get_ticks_usec() - previous_projection_started
 			previous_face_y = int(simulation.get("face_y", 0))
 		var tick_value := int(simulation.get("tick", 0))
 		_release_due_drop(machine, simulation, tick_value)
@@ -400,16 +394,10 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 			trace_slice.append(trace[cursor])
 			cursor += 1
 		session["input_cursor"] = cursor
-		var solver_started := Time.get_ticks_usec()
 		var result := CoinPusherSolverScript.step_ticks(simulation, {"input_trace": trace_slice, "rng": rng, "motor_enabled": bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false))}, 1)
-		solver_call_usec += Time.get_ticks_usec() - solver_started
-		var metrics: Dictionary = result.get("metrics", {}) if typeof(result.get("metrics", {})) == TYPE_DICTIONARY else {}
-		native_kernel_usec += int(metrics.get("elapsed_usec", 0))
 		all_events.append_array(result.get("events", []))
 	if safe_tick_count > 0:
-		var current_projection_started := Time.get_ticks_usec()
 		var current_views := _presentation_body_views(simulation)
-		presentation_projection_usec += Time.get_ticks_usec() - current_projection_started
 		session["presentation_previous_bodies"] = previous_views
 		session["presentation_current_bodies"] = current_views
 		session["presentation_feature_count"] = _presentation_feature_count(current_views)
@@ -418,13 +406,7 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 		session["presentation_view_serial"] = int(session.get("presentation_view_serial", 0)) + safe_tick_count
 	session["rng"] = rng.snapshot()
 	session["liveness_ticks"] = int(session.get("liveness_ticks", 0)) + safe_tick_count
-	return {"events": all_events, "web_profile": {
-		"total_usec": Time.get_ticks_usec() - profile_started,
-		"solver_call_usec": solver_call_usec,
-		"native_kernel_usec": native_kernel_usec,
-		"presentation_projection_usec": presentation_projection_usec,
-		"tick_count": safe_tick_count,
-	}}
+	return {"events": all_events}
 
 
 static func _release_due_drop(machine: Dictionary, simulation: Dictionary, tick_value: int) -> void:

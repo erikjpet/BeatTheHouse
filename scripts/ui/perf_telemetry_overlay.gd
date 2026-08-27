@@ -587,23 +587,7 @@ func _coin_pusher_surface_state(canvas: Control) -> Dictionary:
 	return {}
 
 
-func _reset_coin_pusher_pipeline_profile() -> void:
-	var run_state: RunState = app.get("run_state") as RunState if app != null else null
-	var game: Variant = app.get("current_game") if app != null else null
-	if run_state != null and game != null and game.has_method("reset_web_profile_for_test"):
-		game.call("reset_web_profile_for_test", run_state, run_state.current_environment)
-
-
-func _coin_pusher_pipeline_profile() -> Dictionary:
-	var run_state: RunState = app.get("run_state") as RunState if app != null else null
-	var game: Variant = app.get("current_game") if app != null else null
-	if run_state != null and game != null and game.has_method("web_profile_for_test"):
-		return (game.call("web_profile_for_test", run_state, run_state.current_environment) as Dictionary).duplicate(true)
-	return {}
-
-
 func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dictionary) -> void:
-	_reset_coin_pusher_pipeline_profile()
 	var canvas := _coin_pusher_canvas()
 	if canvas != null and canvas.has_method("reset_performance_counters"):
 		canvas.call("reset_performance_counters")
@@ -626,12 +610,10 @@ func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dict
 	current_tags["body_count_before"] = int(before_state.get("coin_pusher_body_count", -1))
 	current_tags["body_count_after"] = int(after_state.get("coin_pusher_body_count", -1))
 	current_tags["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
-	current_tags["pipeline_profile"] = _coin_pusher_pipeline_profile()
 	_end_scenario()
 
 
 func _measure_coin_pusher_action(surface_action: String, name: String, fixture: Dictionary) -> void:
-	_reset_coin_pusher_pipeline_profile()
 	var canvas := _coin_pusher_canvas()
 	if canvas != null and canvas.has_method("reset_performance_counters"):
 		canvas.call("reset_performance_counters")
@@ -689,7 +671,6 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 		or int(after_state.get("coin_pusher_phase_fp", 0)) != int(before_state.get("coin_pusher_phase_fp", 0)) \
 		or int(metrics.get("awake_count", 0)) > 0 or int(metrics.get("collision_count", 0)) > 0
 	current_tags["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
-	current_tags["pipeline_profile"] = _coin_pusher_pipeline_profile()
 	current_tags["surface_ui_preserved"] = _coin_pusher_free_controls_present(after_state)
 	current_tags["bankroll_delta"] = int(result.get("bankroll_delta", 0))
 	current_tags["action_patch_present"] = typeof(result.get("surface_action_view_patch", {})) == TYPE_DICTIONARY and not (result.get("surface_action_view_patch", {}) as Dictionary).is_empty()

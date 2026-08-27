@@ -414,23 +414,6 @@ func renderer_signature(state: Dictionary) -> Dictionary:
 	return _renderer.render_signature(state)
 
 
-func reset_web_profile_for_test(run_state: RunState, environment: Dictionary) -> void:
-	_renderer.reset_web_profile_for_test()
-	var key := _live_key(run_state, environment)
-	if _live_machines.has(key):
-		var session: Dictionary = (_live_machines[key] as Dictionary).get("live_session", {})
-		session["web_profile_realtime_samples"] = []
-
-
-func web_profile_for_test(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var realtime_samples: Array = []
-	var key := _live_key(run_state, environment)
-	if _live_machines.has(key):
-		var session: Dictionary = (_live_machines[key] as Dictionary).get("live_session", {})
-		realtime_samples = (session.get("web_profile_realtime_samples", []) as Array).duplicate(true)
-	return {"renderer": _renderer.web_profile_for_test(), "realtime": realtime_samples}
-
-
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
 
@@ -512,15 +495,12 @@ func deterministic_state_digest(environment: Dictionary) -> String:
 
 
 func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, _current_surface_state: Dictionary) -> Dictionary:
-	var profile_started := Time.get_ticks_usec()
 	if _machine_busy(environment):
 		# Occupancy is a hard absence boundary: project the durable snapshot, but
 		# never open a live session or advance one tick behind the patron's back.
 		return _v3_headless_surface_state(_read_machine_state(run_state, environment), run_state, environment, ui_state)
 	var machine := _ensure_live_machine(run_state, environment)
-	var advance_started := Time.get_ticks_usec()
 	var advanced := CoinPusherLiveSessionScript.advance(machine, int(ui_state.get("surface_time_msec", 0)))
-	var advance_usec := Time.get_ticks_usec() - advance_started
 	var physics_events: Array = advanced.get("events", []) if typeof(advanced.get("events", [])) == TYPE_ARRAY else []
 	_consume_live_physics_events(run_state, machine, physics_events)
 	if physics_events.any(func(event: Variant) -> bool: return typeof(event) == TYPE_DICTIONARY and str((event as Dictionary).get("kind", "")) in ["tray", "gutter"]):
@@ -543,9 +523,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	# Realtime owns only fields that can actually change while the player watches.
 	# Rebuilding the complete entry snapshot here duplicated catalog, economy,
 	# cabinet, geometry, and body projection work on every rendered frame.
-	var projection_started := Time.get_ticks_usec()
 	var patch := _v3_realtime_presentation_patch(machine, run_state, environment)
-	var projection_patch_usec := Time.get_ticks_usec() - projection_started
 	if ui_state.has("coin_pusher_drop_charge_started_tick"):
 		var held_ticks := maxi(0, int(_simulation(machine).get("tick", 0)) - int(ui_state.get("coin_pusher_drop_charge_started_tick", 0)))
 		patch["coin_pusher_drop_charge_count"] = clampi(maxi(1, held_ticks / 6), 1, 60)
@@ -559,17 +537,6 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	patch["surface_realtime_state_refresh"] = true
 	patch["coin_pusher_ticks_advanced"] = int(advanced.get("ticks", 0))
 	patch["request_foundation_autosave"] = request_autosave
-	var profile_samples: Array = presentation_session.get("web_profile_realtime_samples", []) if typeof(presentation_session.get("web_profile_realtime_samples", [])) == TYPE_ARRAY else []
-	profile_samples.append({
-		"total_usec": Time.get_ticks_usec() - profile_started,
-		"advance_usec": advance_usec,
-		"projection_patch_usec": projection_patch_usec,
-		"ticks": int(advanced.get("ticks", 0)),
-		"step": advanced.get("web_profile", {}),
-	})
-	if profile_samples.size() > 256:
-		profile_samples.pop_front()
-	presentation_session["web_profile_realtime_samples"] = profile_samples
 	return patch
 
 
