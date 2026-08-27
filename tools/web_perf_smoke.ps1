@@ -287,10 +287,14 @@ if ($Plan -eq "coin_pusher") {
 
     if ($scenariosByName.ContainsKey("coin_pusher_reduced_motion")) {
         $reduced = $scenariosByName["coin_pusher_reduced_motion"]
+        $reducedDraw = $reduced.tags.canvas_after
         Assert-Condition -Condition ([int]$reduced.frame_time_ms.count -ge 120) -Message "Coin Pusher reduced-motion sample contained fewer than 120 frames." -Failures $failures
         Assert-Condition -Condition ([int]$reduced.tags.solver_liveness_delta -gt 0) -Message "Coin Pusher reduced motion froze solver liveness." -Failures $failures
         Assert-Condition -Condition ([int]$reduced.tags.body_count_before -eq 300) -Message "Coin Pusher reduced-motion sample did not begin from the reinstalled exact 300-body fixture." -Failures $failures
         Assert-Condition -Condition ([int]$reduced.tags.body_count_after -gt 0) -Message "Coin Pusher reduced-motion sample lost the production body surface." -Failures $failures
+        Assert-Condition -Condition ([int]$reduced.tags.redraw_delta -gt 0) -Message "Coin Pusher reduced motion recorded no live canvas redraw." -Failures $failures
+        Assert-Condition -Condition ([int]$reducedDraw.draw_sample_count -gt 0) -Message "Coin Pusher reduced motion recorded no canvas draw sample." -Failures $failures
+        Assert-Condition -Condition ([double]$reducedDraw.draw_p95_ms -le 5.0) -Message ("Coin Pusher reduced-motion draw p95 {0:N3}ms exceeded 5.000ms." -f [double]$reducedDraw.draw_p95_ms) -Failures $failures
     }
 
     $actionScenarios = @(
