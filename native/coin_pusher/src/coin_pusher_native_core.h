@@ -20,6 +20,7 @@ public:
 	Dictionary solver_contract() const;
 	int64_t divi(int64_t numerator, int64_t denominator) const;
 	bool can_step(const Dictionary &state, const Dictionary &config) const;
+	bool supports_live_batch_capture() const;
 	Dictionary step_ticks(Dictionary state, const Dictionary &config, int64_t tick_count) const;
 };
 

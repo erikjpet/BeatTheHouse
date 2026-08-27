@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource path="res://tools/coin_pusher_native_live_batch_contract.gd" type="Script" id="1"]
+
+[node name="CoinPusherNativeLiveBatchContract" type="Node"]
+script = ExtResource("1")

@@ -72,6 +72,8 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		"presentation_current_face_y": int(simulation.get("face_y", 0)),
 		"presentation_view_serial": 0,
 		"presentation_audio_serial": 0,
+		"native_cache_key": "live:%s" % seed,
+		"native_cache_reset": true,
 	}
 	return machine["live_session"]
 
@@ -380,17 +382,18 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 	if safe_tick_count == 1:
 		var current_views: Variant = session.get("presentation_current_bodies", [])
 		previous_views = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
+	var native_batch := CoinPusherSolverScript.native_live_batch_supported()
 	var remaining := safe_tick_count
 	while remaining > 0:
 		var tick_value := int(simulation.get("tick", 0))
-		if safe_tick_count > 1 and remaining == 1:
+		if safe_tick_count > 1 and not native_batch and remaining == 1:
 			previous_views = _presentation_body_views(simulation)
 			previous_face_y = int(simulation.get("face_y", 0))
 		_release_due_drop(machine, simulation, tick_value)
 		# A queued release is an authored tick boundary. Batch only up to that
 		# boundary so the queue produces the same one-release-per-tick trace.
 		var chunk_ticks := remaining
-		if remaining > 1:
+		if remaining > 1 and not native_batch:
 			chunk_ticks = remaining - 1
 		var queue: Array = machine.get("drop_queue", []) if typeof(machine.get("drop_queue", [])) == TYPE_ARRAY else []
 		if not queue.is_empty() and typeof(queue[0]) == TYPE_DICTIONARY:
@@ -403,12 +406,20 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 			trace_slice.append(trace[cursor])
 			cursor += 1
 		session["input_cursor"] = cursor
+		var is_final_chunk := chunk_ticks == remaining
 		var result := CoinPusherSolverScript.step_ticks(simulation, {
 			"input_trace": trace_slice,
 			"rng": rng,
 			"motor_enabled": bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false)),
+			"live_cache_key": str(session.get("native_cache_key", "")) if native_batch else "",
+			"live_cache_reset": bool(session.get("native_cache_reset", false)),
+			"capture_previous_views": native_batch and safe_tick_count > 1 and is_final_chunk,
 		}, chunk_ticks)
+		session["native_cache_reset"] = false
 		all_events.append_array(result.get("events", []))
+		if native_batch and safe_tick_count > 1 and is_final_chunk:
+			previous_views = result.get("presentation_previous_bodies", []) if typeof(result.get("presentation_previous_bodies", [])) == TYPE_ARRAY else []
+			previous_face_y = int(result.get("presentation_previous_face_y", simulation.get("previous_face_y", 0)))
 		remaining -= chunk_ticks
 	if safe_tick_count > 0:
 		var current_views := _presentation_body_views(simulation)
