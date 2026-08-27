@@ -4894,11 +4894,19 @@ func _check_idle_animation_liveness_contract(surface: Dictionary, label: String,
 		canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
 	var after_snapshot: Dictionary = canvas.call("surface_runtime_status")
 	var after_redraw_count := int(after_snapshot.get("surface_animation_redraw_count", 0))
+	var performance_counters: Dictionary = canvas.call("performance_counters") if canvas.has_method("performance_counters") else {}
 	var second_sample := _idle_animation_sample_from_canvas(canvas)
 	if after_redraw_count <= before_redraw_count:
 		failures.append("%s idle animation did not schedule redraws with zero input." % label)
 	if first_sample == second_sample:
 		failures.append("%s idle animation sample did not advance over simulated time." % label)
+	if int(performance_counters.get("surface_animation_scheduler_elapsed_msec", -1)) != 200:
+		failures.append("%s idle animation scheduler evidence did not record the exact 200ms production-path interval." % label)
+	if canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+		var reset_counters: Dictionary = canvas.call("performance_counters") if canvas.has_method("performance_counters") else {}
+		if int(reset_counters.get("surface_animation_scheduler_elapsed_msec", -1)) != 0:
+			failures.append("%s idle animation scheduler evidence did not reset at the measurement boundary." % label)
 	root.remove_child(canvas)
 	canvas.free()
 

@@ -33,6 +33,16 @@ function Get-CoinPusherRequiredIdleRedraws {
     return [Math]::Max(1, [Math]::Floor(([Math]::Max(0.0, $DurationMsec)) / 1000.0))
 }
 
+function Test-CoinPusherIdleSchedulerEvidence {
+    param([object]$Counters)
+    if (-not (Test-CoinPusherPropertiesPresent -Value $Counters -Names @("surface_animation_scheduler_elapsed_msec", "surface_animation_redraw_count"))) {
+        return $false
+    }
+    $elapsedMsec = [double]$Counters.surface_animation_scheduler_elapsed_msec
+    $requiredRedraws = Get-CoinPusherRequiredIdleRedraws -DurationMsec $elapsedMsec
+    return $elapsedMsec -gt 0.0 -and [int]$Counters.surface_animation_redraw_count -ge $requiredRedraws
+}
+
 function Test-CoinPusherReinstallClockObservation {
     param([object]$Observation)
     return (Test-CoinPusherPropertiesPresent -Value $Observation -Names @("boundary_body_count", "boundary_tray_count", "liveness_before", "liveness_after", "observed_body_count", "observed_tray_count", "conservation")) `

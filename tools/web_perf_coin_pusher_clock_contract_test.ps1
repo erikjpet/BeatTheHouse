@@ -8,6 +8,12 @@ function Assert-ClockContract {
 
 Assert-ClockContract -Condition ((Get-CoinPusherRequiredIdleRedraws -DurationMsec 7587) -eq 7) -Message "Slow-frame 1 Hz floor did not use elapsed wall time."
 Assert-ClockContract -Condition ((Get-CoinPusherRequiredIdleRedraws -DurationMsec 400) -eq 1) -Message "Idle redraw floor lost its positive liveness minimum."
+$validSchedulerEvidence = [pscustomobject]@{ surface_animation_scheduler_elapsed_msec = 16000; surface_animation_redraw_count = 16 }
+Assert-ClockContract -Condition (Test-CoinPusherIdleSchedulerEvidence -Counters $validSchedulerEvidence) -Message "Exact production scheduler cadence was rejected."
+$underCadenceSchedulerEvidence = [pscustomobject]@{ surface_animation_scheduler_elapsed_msec = 18174; surface_animation_redraw_count = 16 }
+Assert-ClockContract -Condition (-not (Test-CoinPusherIdleSchedulerEvidence -Counters $underCadenceSchedulerEvidence)) -Message "A real two-redraw scheduler deficit was accepted."
+$missingSchedulerElapsed = [pscustomobject]@{ surface_animation_redraw_count = 16 }
+Assert-ClockContract -Condition (-not (Test-CoinPusherIdleSchedulerEvidence -Counters $missingSchedulerElapsed)) -Message "Missing production scheduler elapsed time was accepted."
 
 $pathRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 $validEvidencePath = Resolve-WebPerfEvidencePath -Root $pathRoot -Out ".tmp/fix06_14_unique/report.json"

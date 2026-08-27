@@ -88,6 +88,7 @@ var last_touch_press_msec: int = -100000
 var last_touch_press_position := Vector2(-100000.0, -100000.0)
 var surface_animation_redraw_accumulator := 0.0
 var surface_animation_redraw_count := 0
+var perf_surface_animation_scheduler_elapsed_sec := 0.0
 var surface_animation_handoff_until_msec := 0
 var surface_render_elapsed_sec := 0.0
 var surface_simulation_clock_msec := 0.0
@@ -141,6 +142,7 @@ func clear_runtime_state() -> void:
 	perf_draw_frame_usec_samples = []
 	surface_animation_redraw_accumulator = 0.0
 	surface_animation_redraw_count = 0
+	perf_surface_animation_scheduler_elapsed_sec = 0.0
 	surface_animation_handoff_until_msec = 0
 	surface_render_elapsed_sec = 0.0
 	surface_simulation_clock_msec = 0.0
@@ -311,6 +313,7 @@ func reset_performance_counters() -> void:
 	perf_runtime_status_calls = 0
 	perf_draw_frame_usec_samples = []
 	surface_animation_redraw_count = 0
+	perf_surface_animation_scheduler_elapsed_sec = 0.0
 
 
 func performance_counters() -> Dictionary:
@@ -318,6 +321,7 @@ func performance_counters() -> Dictionary:
 		"full_snapshot_calls": perf_full_snapshot_calls,
 		"runtime_status_calls": perf_runtime_status_calls,
 		"surface_animation_redraw_count": surface_animation_redraw_count,
+		"surface_animation_scheduler_elapsed_msec": maxi(0, int(round(perf_surface_animation_scheduler_elapsed_sec * 1000.0))),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
 		"draw_frame_usec_samples": perf_draw_frame_usec_samples.duplicate(),
 		"draw_avg_ms": _draw_average_ms(),
@@ -1148,6 +1152,7 @@ func _schedule_surface_animation_redraws(delta: float) -> void:
 	var redraw_demand := _surface_animation_redraw_demand()
 	var main_redraw := bool(redraw_demand.get("main", false))
 	if main_redraw:
+		perf_surface_animation_scheduler_elapsed_sec += maxf(0.0, delta)
 		if _surface_animation_redraw_due(delta):
 			queue_redraw()
 	elif continuous_redraw_was_active:

@@ -306,13 +306,16 @@ if ($Plan -eq "coin_pusher") {
         $idle = $scenariosByName["coin_pusher_idle"]
         $idleFrames = [int]$idle.frame_time_ms.count
         $idleDraw = $idle.tags.canvas_after
-        # The production scheduler is wall-clock based. CPU throttling makes 120
-        # sampled frames substantially longer than two nominal seconds, so a
-        # frame-derived floor measures a different clock. Preserve the 1 Hz
-        # minimum against the scenario's actual elapsed wall time.
-        $requiredRedraws = Get-CoinPusherRequiredIdleRedraws -DurationMsec ([double]$idle.duration_msec)
+        # Bind the 1 Hz floor to the reset-scoped production scheduler clock.
+        # Scenario duration also contains synchronous pre/post evidence capture
+        # outside the sampled process frames and therefore is not this clock.
+        $schedulerEvidencePresent = Test-CoinPusherPropertiesPresent -Value $idleDraw -Names @("surface_animation_scheduler_elapsed_msec", "surface_animation_redraw_count")
         Assert-Condition -Condition ($idleFrames -ge 120) -Message "Coin Pusher normal idle sampled fewer than 120 frames." -Failures $failures
-        Assert-Condition -Condition ([int]$idle.tags.redraw_delta -ge $requiredRedraws) -Message ("Coin Pusher idle redraw delta {0} was below the scaled floor {1}." -f [int]$idle.tags.redraw_delta, $requiredRedraws) -Failures $failures
+        Assert-Condition -Condition $schedulerEvidencePresent -Message "Coin Pusher idle omitted the production scheduler elapsed-time evidence." -Failures $failures
+        if ($schedulerEvidencePresent) {
+            $requiredRedraws = Get-CoinPusherRequiredIdleRedraws -DurationMsec ([double]$idleDraw.surface_animation_scheduler_elapsed_msec)
+            Assert-Condition -Condition (Test-CoinPusherIdleSchedulerEvidence -Counters $idleDraw) -Message ("Coin Pusher idle redraw delta {0} was below the production scheduler floor {1} for {2}ms." -f [int]$idleDraw.surface_animation_redraw_count, $requiredRedraws, [int]$idleDraw.surface_animation_scheduler_elapsed_msec) -Failures $failures
+        }
         Assert-Condition -Condition ([int]$idleDraw.draw_sample_count -gt 0) -Message "Coin Pusher normal idle produced no surface draw samples despite required liveness." -Failures $failures
         Assert-Condition -Condition ([double]$idleDraw.draw_p95_ms -le 5.0) -Message ("Coin Pusher idle draw p95 {0:N3}ms exceeded 5.000ms." -f [double]$idleDraw.draw_p95_ms) -Failures $failures
         Assert-Condition -Condition ([int]$idle.tags.solver_liveness_delta -gt 0) -Message "Coin Pusher normal idle solver liveness did not advance." -Failures $failures
