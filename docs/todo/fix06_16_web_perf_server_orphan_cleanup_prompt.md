@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — rejected heads through `057f26f0` remediated; independent exact-head re-review pending
+Status: DONE — accepted, landed and exact-main post-land green
 Board row: `fix06_16` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_16: Web performance server orphan cleanup
@@ -193,3 +193,24 @@ locked `fix06_13` shipped-Web run.
   process identity, separately requires zero termination calls and exclusion of
   its PID, and again proves it survives. The final complete hostile/static rerun
   with both isolated identity cases passed in 79.6s.
+
+## Final acceptance, landing and post-land closeout — 2026-08-27
+
+- `/root/fix06_16_review` returned `ACCEPT` on exact candidate
+  `b38f3e35ed2d8b696e93c4f75ea673760ca4c337`. Every earlier rejected head and
+  finding above remains reachable and unchanged.
+- Main merge `53f6ed2d6702d141a82c675e89141f79886ad836` has exact parents current-main
+  base `f0637b8c1dcb4dbc9d979d0f89a1ee811865a90a` and accepted head
+  `b38f3e35ed2d8b696e93c4f75ea673760ca4c337`.
+- On exact main `53f6ed2d`, the full non-Web lifecycle suite passed and static
+  foundation validation passed. Lifecycle stdout SHA-256 is
+  `A31FFEB9AE8E5DAAECD338CFA032A532A8195F60F9EB8666D8750058EA2EDE82`.
+  Lifecycle stderr and validation stdout/stderr are all empty, each SHA-256
+  `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`.
+  Exact process audit found zero residual lifecycle processes.
+- No browser, Web timing, export, retained-evidence replacement, cap, fixture,
+  gameplay, economy, version, release or remote action occurred. `fix06_16` is
+  DONE. Its dependency is cleared: `fix06_13` may now unpark only to semantic
+  current-main integration, current-main gates, exact-head independent review
+  and its one new locked shipped-Web run. This closeout does not change or run
+  `fix06_13`.
