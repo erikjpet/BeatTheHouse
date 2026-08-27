@@ -5,7 +5,7 @@ contains the historical Discovery & Decision Log moved verbatim by
 `board06_1`. Future scope discoveries, deviations and decisions append
 here; task state, protocol and owner questions remain on the active board.
 
-Preserved entries: **174**; current entries: **181**. Use the exact find token
+Preserved entries: **174**; current entries: **182**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -46,7 +46,7 @@ below to jump to a row's history.
 | `fix06_2/crew06_5 visual QA` | 1 | `[fix06_2/crew06_5 visual QA]` |
 | `fix06_2/integrated systems` | 1 | `[fix06_2/integrated systems]` |
 | `fix06_3` | 1 | `[fix06_3]` |
-| `fix06_5` | 1 | `[fix06_5]` |
+| `fix06_5` | 2 | `[fix06_5]` |
 | `fix06_6` | 2 | `[fix06_6]` |
 | `integrated UI` | 1 | `[integrated UI]` |
 | `push06_1` | 6 | `[push06_1]` |
