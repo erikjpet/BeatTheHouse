@@ -1,4 +1,4 @@
-Status: IN PROGRESS — five attempts executed; INCONCLUSIVE result awaits independent review and landing
+Status: DONE — INCONCLUSIVE result independently accepted, landed and post-land verified
 Board row: `fix06_5` in `docs/todo/README_0_6_board.md`
 
 # fix06_5 — Contract Suite Timing Measurement
@@ -210,3 +210,25 @@ runner, tests and product remain unchanged. Machine-readable details are in
 ignored raw samples, qualification output, outer transcripts and run directories are
 preserved under `.tmp/fix06_5_contract_timing/` in both the detached measurement
 worktree and the row worktree.
+
+## Closeout
+
+The final documentation/evidence source was accepted at
+`c4e364f79fe8862dc2d7a44635d2572c1a1b2eed`, staged without semantic change at
+integration `87fa674e0e2f1f12532b1784296796402c13994b`, and landed on main at
+`4ade3ac393ee6624865b6ddf2855637aa894e210`. Independent post-land reviewer
+`/root/fix05_rereview` returned PASS on the exact landed state.
+
+Rejected head `c94a9b5e` remains preserved with its two P1 findings: attempt 01
+needed explicit operator-observed/raw-unverifiable disclosure, and attempts
+02–05 still had to run once despite the already-INCONCLUSIVE classification.
+Rejected head `6d5437c5` remains preserved with its P2 companion-log count
+finding; the accepted head corrected only those four numeric counts.
+
+The final result remains **INCONCLUSIVE**: attempt 01 is noneligible, so there
+is no five-eligible-run decision median. Eligible attempts 02–05 measured
+`252.197`, `247.542`, `240.187` and `245.767s`; each completed all 16 checks
+with zero functional/stderr/timeout failures on `native_v3`, and each exceeded
+the unchanged `230.391s` cap solely through stage exit 126. No baseline, cap,
+runner, test or product change was made. Both raw-evidence worktrees remain
+retained.
