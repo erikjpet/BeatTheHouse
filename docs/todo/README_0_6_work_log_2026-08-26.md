@@ -1150,3 +1150,22 @@ below to jump to a row's history.
   Exact-head self-review additionally bound the child acknowledgement payload
   to nonce plus child PID; both parent and wrapper reject any different writer
   identity. The final complete hostile/static rerun passed in 68.9s.
+
+- 2026-08-27 [fix06_16] INDEPENDENT REJECT P2 / PID-REUSE TEST ISOLATION
+  REMEDIATED; RE-REVIEW PENDING. Review rejected exact head
+  `057f26f015da21a609373f4a293f8e85caf8f697` because the hostile resolver
+  changed wrapper PID and StartTime together, so numeric-PID comparison alone
+  could satisfy the test. Production behavior remained accepted.
+
+  The resolver now injects the original wrapper numeric PID with an unrelated
+  live process's different StartTime. A safe fallback-termination hook records
+  targets rather than killing them. Assertions require no recorded termination,
+  separately prove the unrelated PID was never targeted, and prove its process
+  survives. Removing the StartTime guard therefore fails deterministically.
+  The hostile suite passed in 20.9s and static validation passed in 47.0s. No
+  browser, export, Web timing or locked-contract change occurred.
+
+  A separate safe-recorder cleanup boundary now presents the actual unrelated
+  live process identity, requires zero calls and explicit exclusion of its PID,
+  and again proves it survives. The final hostile/static rerun with both
+  isolated identity cases passed in 79.6s.

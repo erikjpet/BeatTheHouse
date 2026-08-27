@@ -217,7 +217,8 @@ function Assert-OwnedWebServerListener {
 function Stop-OwnedWebServer {
     param(
         [Parameter(Mandatory = $true)]$Launch,
-        [scriptblock]$WrapperFallbackProcessResolver
+        [scriptblock]$WrapperFallbackProcessResolver,
+        [scriptblock]$WrapperFallbackTerminator
     )
 
     $failures = [System.Collections.Generic.List[string]]::new()
@@ -288,7 +289,12 @@ function Stop-OwnedWebServer {
                     $failures.Add("Refused fallback termination because wrapper PID $($Launch.Wrapper.Id) changed identity.")
                 }
                 else {
-                    Stop-Process -Id $Launch.Wrapper.Id -Force -ErrorAction SilentlyContinue
+                    if ($null -ne $WrapperFallbackTerminator) {
+                        & $WrapperFallbackTerminator $Launch.Wrapper.Id
+                    }
+                    else {
+                        Stop-Process -Id $Launch.Wrapper.Id -Force -ErrorAction SilentlyContinue
+                    }
                     try { Wait-Process -Id $Launch.Wrapper.Id -Timeout 5 -ErrorAction Stop } catch { }
                     if ($null -ne (Get-Process -Id $Launch.Wrapper.Id -ErrorAction SilentlyContinue)) {
                         $failures.Add("Exact launched wrapper PID $($Launch.Wrapper.Id) remained alive after cleanup.")

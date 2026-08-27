@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — rejected heads `239ead2a`, `e92fab10` and `672cdd25` remediated; independent exact-head re-review pending
+Status: IN_PROGRESS — rejected heads through `057f26f0` remediated; independent exact-head re-review pending
 Board row: `fix06_16` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_16: Web performance server orphan cleanup
@@ -172,3 +172,24 @@ locked `fix06_13` shipped-Web run.
 - Exact-head self-review bound the acknowledgement payload itself to both nonce
   and child PID; parent and wrapper reject any other writer/identity. The final
   complete hostile/static rerun passed in 68.9s.
+
+## PID-reuse test isolation rejection and remediation — 2026-08-27
+
+- Independent re-review rejected exact head
+  `057f26f015da21a609373f4a293f8e85caf8f697` at P2 for test coverage only.
+  Production revalidated both wrapper PID and start time, but the hostile
+  resolver changed both values. The test could therefore pass on numeric-PID
+  mismatch alone and did not prove the start-time comparison independently.
+- The resolver now returns the original wrapper numeric PID with an unrelated
+  live process's different start time. A test-only fallback terminator records
+  requested target IDs instead of killing them. The corrected test requires
+  zero recorded termination calls, separately requires that the unrelated PID
+  was never targeted, and proves the unrelated process remains live. Removing
+  the start-time comparison would invoke the recorder and fail deterministically.
+- The full hostile suite passed in 20.9s and static validation passed in 47.0s.
+  Production behavior is unchanged except for the inert injectable terminator
+  boundary used only by the hostile test. No browser, export or Web timing ran.
+- A second independent safe-recorder boundary presents the actual unrelated live
+  process identity, separately requires zero termination calls and exclusion of
+  its PID, and again proves it survives. The final complete hostile/static rerun
+  with both isolated identity cases passed in 79.6s.

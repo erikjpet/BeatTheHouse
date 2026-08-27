@@ -168,21 +168,42 @@ try {
     $ownedPids.Add([int]$sticky.Record.server_pid)
     $stickyFailedClosed = $false
     $wrapperReuseProtected = $false
+    $fallbackTerminationTargets = [System.Collections.Generic.List[int]]::new()
+    $unrelatedTerminationTargets = [System.Collections.Generic.List[int]]::new()
     & {
         function Stop-Process { param([int]$Id, [switch]$Force, $ErrorAction) }
         try {
             Stop-OwnedWebServer -Launch $sticky -WrapperFallbackProcessResolver {
                 param($ignoredProcessId)
-                return Get-Process -Id $unrelated.Id -ErrorAction Stop
+                return [pscustomobject]@{
+                    Id = $sticky.Wrapper.Id
+                    StartTime = (Get-Process -Id $unrelated.Id -ErrorAction Stop).StartTime
+                }
+            } -WrapperFallbackTerminator {
+                param($terminationTarget)
+                $fallbackTerminationTargets.Add([int]$terminationTarget)
             }
         }
         catch {
             $script:stickyFailedClosed = $_.Exception.Message -like "*remained alive*" -and $_.Exception.Message -like "*still owns listener*"
             $script:wrapperReuseProtected = $_.Exception.Message -like "*changed identity*"
         }
+        try {
+            Stop-OwnedWebServer -Launch $sticky -WrapperFallbackProcessResolver {
+                param($ignoredProcessId)
+                return Get-Process -Id $unrelated.Id -ErrorAction Stop
+            } -WrapperFallbackTerminator {
+                param($terminationTarget)
+                $unrelatedTerminationTargets.Add([int]$terminationTarget)
+            }
+        }
+        catch { }
     }
     Assert-Test -Condition $stickyFailedClosed -Message "Cleanup silently succeeded while the exact owned listener remained."
     Assert-Test -Condition $wrapperReuseProtected -Message "Wrapper fallback did not reject the injected PID-reuse identity."
+    Assert-Test -Condition ($fallbackTerminationTargets.Count -eq 0) -Message "StartTime-mismatched wrapper identity reached fallback termination."
+    Assert-Test -Condition ($unrelatedTerminationTargets.Count -eq 0) -Message "Unrelated live process identity reached fallback termination."
+    Assert-Test -Condition (-not $unrelatedTerminationTargets.Contains([int]$unrelated.Id)) -Message "Fallback termination targeted an unrelated live process."
     Assert-Test -Condition ($null -ne (Get-Process -Id $unrelated.Id -ErrorAction SilentlyContinue)) -Message "Injected wrapper PID-reuse boundary stopped the unrelated replacement."
     Microsoft.PowerShell.Management\Stop-Process -Id ([int]$sticky.Record.server_pid) -Force -ErrorAction SilentlyContinue
     Microsoft.PowerShell.Management\Stop-Process -Id $sticky.Wrapper.Id -Force -ErrorAction SilentlyContinue
