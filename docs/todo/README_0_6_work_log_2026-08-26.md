@@ -1025,3 +1025,28 @@ below to jump to a row's history.
   48.214/17.835/24.644/164.306s; every stage had zero failures and no stderr
   issue. `.tmp/fix06_14_dba07c1a_coin_pusher_gate/summary.json` SHA-256 was
   `E3F66C060752BC43FBB08798252E3269AD7C303C1C5909E7294C267A116A229A`.
+
+- 2026-08-27 [fix06_14] LANDED / POST-LAND GREEN / DONE. Main merge
+  `616b5a76eceaf0133e4ac70b34ca5b13e39b30df` joined parents
+  `7cd6a5cb7a7c6c20875587bb6dade08bf221cbdc` and
+  `5917baf2d4d557c2ee2512530706e5c69295722b`; owner WIP remained untouched.
+  The first post-land gate in disposable `D:\bth-f14-post` retained an
+  environmental red: validation passed in 51.033s, then import failed in
+  43.037s with exit 127 and 74 stderr issues because D: had only 270,336 bytes
+  free. The summary was moved before removing only that disposable worktree;
+  D: free space became 1,054,285,824 bytes. Preserved summary
+  `.tmp/fix06_14_postland_616b5a76_coin_pusher_gate_disk_full_red/summary.json`
+  SHA-256 was
+  `2C7BD60F8390E4BF40BCDAB37079080D6800C0CD4606DFB00406A6F522A20CBB`.
+
+  The integration branch then fast-forwarded only to exact main `616b5a76`.
+  One corrected retry used the same ignored Windows native DLL SHA-256
+  `1052770B5A96057928F67A72159D8A31B89D5591EAB7A64F07F8FCAE458E83F5`.
+  Validation/import/GDScript-load/focused Foundation Coin Pusher passed in
+  47.832/17.645/23.346/164.588s with zero failures and zero stderr issues.
+  Corrected summary
+  `.tmp/fix06_14_postland_616b5a76_coin_pusher_gate_corrected/summary.json`
+  SHA-256 was
+  `C597F0FD471239418E31215FAAFE11A0D942653DD2DBB2ACB6D943BABEAC11DD`.
+  fix06_14 is landed/post-land green/DONE. fix06_13 remains PARKED behind TODO
+  fix06_16; no Web evidence or performance cap was changed or rerun.
