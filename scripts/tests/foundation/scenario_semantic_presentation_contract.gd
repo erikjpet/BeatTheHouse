@@ -12,6 +12,7 @@ const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_seque
 const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const ScenarioSequenceContractScript := preload("res://scripts/tests/foundation/scenario_sequence_contract.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
+const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 
 const BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const SMALL_SCREEN_TARGET := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
@@ -27,6 +28,7 @@ static func check(library: Variant, failures: Array) -> void:
 	_check_collision_adjusted_renderer_authority(failures)
 	_check_finalized_accessibility(library, failures)
 	_check_finalized_actor_route(library, failures)
+	_check_route_endpoint_alias_contract(failures)
 	_check_sealed_semantic_collection_membership(library, failures)
 	_check_committed_projection_mismatch(library, failures)
 	_check_atomic_projection_failures(failures)
@@ -278,6 +280,7 @@ static func _check_collision_adjusted_renderer_authority(failures: Array) -> voi
 
 static func _check_finalized_actor_route(library: Variant, failures: Array) -> void:
 	var definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	definition["sequence"]["declared_targets"]["anchors"].append("base::anchor:bar")
 	var phase: Dictionary = definition["sequence"]["phase_graph"]["phases"][0]
 	var actor_ops: Array = phase.get("actor_ops", [])
 	actor_ops.append({
@@ -449,6 +452,54 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 			failures.append("Public canvas draw/hit routing exposed projected actor mutation %s before consuming the explicit failure result." % projected_mutation)
 	forged_canvas.free()
 	run_state.current_environment = committed_environment
+
+
+static func _check_route_endpoint_alias_contract(failures: Array) -> void:
+	var environment := _sealed_route_environment(false, true)
+	var semantic := {}
+	var before := JSON.stringify(environment)
+	var resolved := ScenarioLayoutResolverScript._resolve_route_center_result(environment, semantic, "base::world:bar")
+	var saved_environment_value: Variant = JSON.parse_string(JSON.stringify(environment))
+	var saved_semantic_value: Variant = JSON.parse_string(JSON.stringify(semantic))
+	var restored_environment := _dict(saved_environment_value)
+	var original_inventory := _dict(environment.get("scenario_semantic_inventory", {}))
+	var restored_inventory := _dict(restored_environment.get("scenario_semantic_inventory", {}))
+	restored_inventory["schema_version"] = int(restored_inventory.get("schema_version", 0))
+	restored_environment["scenario_semantic_inventory"] = restored_inventory
+	var restored_valid := EnvironmentSemanticInventoryScript.validate(restored_inventory).is_empty() \
+		and str(restored_inventory.get("digest", "")) == str(original_inventory.get("digest", "")) \
+		and EnvironmentSemanticInventoryScript.exact_collections(restored_inventory) == EnvironmentSemanticInventoryScript.exact_collections(original_inventory)
+	var restored := ScenarioLayoutResolverScript._resolve_route_center_result(restored_environment, _dict(saved_semantic_value), "base::world:bar")
+	var unknown_environment := _sealed_route_environment(false, false)
+	var unknown := ScenarioLayoutResolverScript._resolve_route_center_result(unknown_environment, semantic, "base::world:bar")
+	var ambiguous_environment := _sealed_route_environment(true, true)
+	var ambiguous := ScenarioLayoutResolverScript._resolve_route_center_result(ambiguous_environment, semantic, "base::world:bar")
+	var public_keys := resolved.keys()
+	public_keys.sort()
+	if not bool(resolved.get("ok", false)) \
+		or resolved.get("center", Vector2.ZERO) != Vector2(860.0, 390.0) \
+		or not restored_valid \
+		or not bool(restored.get("ok", false)) \
+		or restored.get("center", Vector2.ZERO) != Vector2(860.0, 390.0) \
+		or bool(unknown.get("ok", true)) or not str(unknown.get("error", "")).contains("unknown sealed route/anchor alias bar") \
+		or bool(ambiguous.get("ok", true)) or not str(ambiguous.get("error", "")).contains("ambiguous sealed route/anchor alias bar") \
+		or public_keys != ["center", "error", "ok"] \
+		or JSON.stringify(environment) != before:
+		failures.append("Sealed route endpoint aliases were not exact, unique, save/reload stable, typed on rejection, and hidden-state safe.")
+
+
+static func _sealed_route_environment(ambiguous_route: bool, include_anchor: bool) -> Dictionary:
+	var environment := {
+		"id": "route_alias_fixture",
+		"current_layer_id": "",
+		"world_node_id": "route_alias_fixture",
+		"travel_hooks": ["bar"],
+		"layer_ids": ["bar"] if ambiguous_route else [],
+		"layer_transitions": [{"target_layer_id": "bar"}] if ambiguous_route else [],
+		"semantic_anchors": {"bar": {"position": [860.0, 390.0]}} if include_anchor else {},
+	}
+	environment["scenario_semantic_inventory"] = EnvironmentSemanticInventoryScript.for_instance(environment, null, [], [])
+	return environment
 
 
 static func _check_committed_projection_mismatch(library: Variant, failures: Array) -> void:

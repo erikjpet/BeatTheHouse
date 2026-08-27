@@ -3,6 +3,7 @@ extends RefCounted
 
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
+const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 
 const BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const SMALL_SCREEN_TARGET := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
@@ -113,11 +114,12 @@ static func _prepare_extension_visual(environment: Dictionary, semantic_state: D
 		return {}
 	var route_points: Array = []
 	if actor and not str(semantic.get("route_id", "")).strip_edges().is_empty():
-		var route_center := _resolve_route_center(environment, semantic_state, str(semantic.get("route_id", "")))
-		if _finite_point(route_center) and route_center.x >= 0.0:
+		var route_resolution := _resolve_route_center_result(environment, semantic_state, str(semantic.get("route_id", "")))
+		var route_center: Vector2 = route_resolution.get("center", Vector2(-1.0, -1.0))
+		if bool(route_resolution.get("ok", false)) and _finite_point(route_center) and route_center.x >= 0.0:
 			route_points = [_normalized_point(center), _normalized_point(route_center)]
 		else:
-			errors.append("Scenario actor %s references an unresolved route." % identity)
+			errors.append("Scenario actor %s references an unresolved route: %s" % [identity, str(route_resolution.get("error", "unknown route endpoint"))])
 	var rect := _clamp_inside_board(Rect2(center - size * 0.5, size))
 	var owner := str(semantic.get("owner_namespace", ""))
 	var stable_id := str(semantic.get("stable_object_id", ""))
@@ -447,9 +449,10 @@ static func _resolve_visual(
 			errors.append("Scenario actor %s behavior %s requires a resolved room route." % [identity, behavior])
 			return {}
 		if not route_id.is_empty():
-			var route_center := _resolve_route_center(environment, semantic_state, route_id)
-			if not _finite_point(route_center) or route_center.x < 0.0:
-				errors.append("Scenario actor %s route %s has no room-space endpoint." % [identity, route_id])
+			var route_resolution := _resolve_route_center_result(environment, semantic_state, route_id)
+			var route_center: Vector2 = route_resolution.get("center", Vector2(-1.0, -1.0))
+			if not bool(route_resolution.get("ok", false)) or not _finite_point(route_center) or route_center.x < 0.0:
+				errors.append("Scenario actor %s route %s has no room-space endpoint: %s" % [identity, route_id, str(route_resolution.get("error", "unknown route endpoint"))])
 				return {}
 			route_points = [_normalized_point(pixel_rect.get_center()), _normalized_point(route_center)]
 			var route_endpoint_rect := Rect2(route_center - pixel_rect.size * 0.5, pixel_rect.size)
@@ -1176,14 +1179,45 @@ static func _resolve_center(environment: Dictionary, anchor_id: String, zone_id:
 
 
 static func _resolve_route_center(environment: Dictionary, semantic_state: Dictionary, route_id: String) -> Vector2:
+	var result := _resolve_route_center_result(environment, semantic_state, route_id)
+	return result.get("center", Vector2(-1.0, -1.0)) if bool(result.get("ok", false)) else Vector2(-1.0, -1.0)
+
+
+static func _resolve_route_center_result(environment: Dictionary, semantic_state: Dictionary, route_id: String) -> Dictionary:
 	var routes := _dict(semantic_state.get("routes", {}))
 	var route := _dict(routes.get(route_id, {}))
 	for candidate_value in [str(route.get("source_id", "")), str(route.get("stable_object_id", "")), route_id.get_slice("::", 1)]:
 		var candidate := str(candidate_value)
 		var center := _resolve_center(environment, candidate, candidate)
 		if center.x >= 0.0:
-			return center
-	return Vector2(-1.0, -1.0)
+			return {"ok": true, "center": center, "error": ""}
+	var parsed := OperationRegistryScript.parse_owned_identity(route_id)
+	var stable_id := str(parsed.get("stable_object_id", ""))
+	var alias := stable_id.get_slice(":", stable_id.get_slice_count(":") - 1)
+	var sealed_inventory := _dict(environment.get("scenario_semantic_inventory", {}))
+	var inventory := EnvironmentSemanticInventoryScript.exact_collections(sealed_inventory)
+	var route_matches := _inventory_alias_matches(_array(inventory.get("routes", [])), alias)
+	var anchor_matches := _inventory_alias_matches(_array(inventory.get("anchors", [])), alias)
+	if parsed.is_empty() or alias.is_empty() or route_matches.is_empty() or anchor_matches.is_empty():
+		return {"ok": false, "center": Vector2(-1.0, -1.0), "error": "unknown sealed route/anchor alias %s" % alias}
+	if route_matches.size() != 1 or str(route_matches[0]) != route_id or anchor_matches.size() != 1:
+		return {"ok": false, "center": Vector2(-1.0, -1.0), "error": "ambiguous sealed route/anchor alias %s" % alias}
+	var aliased_center := _resolve_center(environment, alias, alias)
+	if not _finite_point(aliased_center) or aliased_center.x < 0.0:
+		return {"ok": false, "center": Vector2(-1.0, -1.0), "error": "unknown sealed route/anchor alias %s" % alias}
+	return {"ok": true, "center": aliased_center, "error": ""}
+
+
+static func _inventory_alias_matches(values: Array, alias: String) -> Array:
+	var matches: Array = []
+	for value in values:
+		var identity_value := str(value)
+		var parsed := OperationRegistryScript.parse_owned_identity(identity_value)
+		var stable_id := str(parsed.get("stable_object_id", ""))
+		if not parsed.is_empty() and stable_id.get_slice(":", stable_id.get_slice_count(":") - 1) == alias:
+			matches.append(identity_value)
+	matches.sort()
+	return matches
 
 
 static func _base_records_by_identity(base_records: Array) -> Dictionary:

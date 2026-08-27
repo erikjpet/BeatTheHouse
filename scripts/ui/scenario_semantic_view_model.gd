@@ -149,6 +149,7 @@ static func _base_semantic_record(record: Dictionary) -> Dictionary:
 		"hit_bounds": {"w": hit_w, "h": hit_h},
 		"min_target_size": OperationRegistryScript.MIN_TARGET_SIZE,
 		"safe_exit": str(record.get("object_type", "")) == "travel",
+		"alternate_exit": bool(record.get("alternate_exit", false)),
 		"source_id": str(record.get("source_id", "")),
 	}
 
