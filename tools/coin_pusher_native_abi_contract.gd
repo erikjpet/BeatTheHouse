@@ -66,7 +66,7 @@ func _cache_lifetime_contract() -> bool:
 	}
 	var first_rng := RngStream.new()
 	first_rng.configure(101)
-	var first_weak := weakref(first_rng)
+	var first_weak: WeakRef = weakref(first_rng)
 	var first_config := {
 		"live_cache_key": "abi-lifetime:first",
 		"live_cache_reset": true,
@@ -82,7 +82,7 @@ func _cache_lifetime_contract() -> bool:
 
 	var second_rng := RngStream.new()
 	second_rng.configure(202)
-	var second_weak := weakref(second_rng)
+	var second_weak: WeakRef = weakref(second_rng)
 	var second_config := {
 		"live_cache_key": "abi-lifetime:second",
 		"live_cache_reset": true,
