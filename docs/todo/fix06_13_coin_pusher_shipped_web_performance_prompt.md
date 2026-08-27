@@ -1,4 +1,4 @@
-Status: TODO
+Status: PARKED — awaits `fix06_14` clock/evidence correction
 Board row: `fix06_13` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_13: Coin Pusher shipped-Web performance defect
@@ -72,3 +72,45 @@ permission to weaken the gate.
 Commit logically, self-review the complete diff, obtain independent
 implementation and evidence review, and land only after exact-head and
 post-land gates are green.
+
+## Parking record — 2026-08-27
+
+The current accepted work remains off-main on `codex/land06-fix06_13`:
+implementation `7ec148e4d9a6096627fa26e1afee508e5b1c0b25`, exact independent
+review/docs head `718af3da7176abfaec9f9dbc10884454298a9872`. This parking record
+does not transplant product, tools or tests and does not claim acceptance on
+`main`.
+
+The sole locked run consumed from accepted head
+`c914546f0a6e9e2a0728b593c1c51e166c4a16ad` remains RED: ready 20.518s;
+frame/draw/resolve milliseconds were idle 80.447/35.415/-, DROP
+127.022/31.755/35.705, carriage 84.893/32.415/6.420, skill stop
+83.048/29.945/6.585, release 90.578/34.300/6.600, COLLECT
+88.555/30.375/10.870 and reduced 75.153/29.880/-. Idle redraw was 7 below
+the floor of 8; COLLECT finished at tray count/value 2/2 after starting 1/3;
+reduced reinstall was observed at 296 bodies with zero presentation redraw.
+No same-head rerun occurred.
+
+The consumed evidence remains at `.tmp/fix06_13_locked_c914546f_actual_1`.
+SHA-256 identities: report
+`601F1E9FB4E55A8226962BD4504B954B0AFD70FCE76F485DD5B5DCB03F879C25`,
+summary `64E75F36E5E4730FEE8E6011C8C94D27AA3A1A0F1C11B29C75CDDF0CB2A45E56`,
+fresh export `4821DE90F7266EBD48FE30345D404AEE00B2B0D879108A05C8898379F7DE627A`,
+PCK `08AF27F58466F24FD851518B76F7DFA881559220340195A4B369F1B4193A52D9`,
+Web native `04D41797748BBECD308A761DF3895311CC3A085ABE86580CF1226BAA0ADC2F47`,
+server stdout `89CA2C9E0F8BE46B63E6E93DA163B6AEB91A67D7AB7A272C8278629E10FEE83B`
+and stderr `70BEBB6DFCF9E8433EFFF62020097E383BF79207772D8DBD1E631558004AE50A`.
+The accepted source head's canonical ledger and dated work log preserve every
+earlier reproduction, profile, iteration red, rejected head, evidence path and
+hash; none is replaced by this summary.
+
+Exact unpark condition: `fix06_14` lands first. Then semantically integrate the
+accepted candidate onto the exact current `main`, run the required current-main
+gates, obtain independent review of that exact integration head, and consume
+one new locked shipped-Web run. Until all four steps complete, `fix06_13` is not
+DONE, not landed and not accepted on `main`.
+
+Lifecycle addendum: `fix06_16` must land before that new locked shipped-Web run
+is consumed. It owns deterministic cleanup of the exact launched Web server
+process tree exposed by the completed `fix06_14` qualification; it does not
+reopen or replace any retained performance result.
