@@ -515,7 +515,9 @@ func _coin_pusher_fixture_identity(run_state: RunState, game: GameModule) -> Dic
 
 
 func _seed_coin_pusher_collect_fixture(run_state: RunState, game: GameModule) -> bool:
-	var machine := game.call("_ensure_machine_state", run_state, run_state.current_environment, true) as Dictionary
+	# Once the cabinet is entered, the transient live machine is authoritative;
+	# the durable row deliberately no longer carries a simulation dictionary.
+	var machine := game.call("_ensure_live_machine", run_state, run_state.current_environment) as Dictionary
 	var simulation_value: Variant = game.call("_simulation", machine)
 	if typeof(simulation_value) != TYPE_DICTIONARY:
 		return false
@@ -536,6 +538,8 @@ func _seed_coin_pusher_collect_fixture(run_state: RunState, game: GameModule) ->
 	})
 	simulation["bodies"] = bodies
 	simulation["tray_ledger"] = tray
+	# Refresh from that same live authority so the sampled before-state observes
+	# the seeded tray rather than a stale durable projection.
 	app.call("_refresh")
 	mark_event("coin_pusher_collect_seed", {
 		"body_id": str(seeded_body.get("id", "")),
