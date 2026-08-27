@@ -983,3 +983,21 @@ below to jump to a row's history.
   browser diagnostic JSON on every pre-report failure. It changes no runtime
   product, cap, sample count, redraw, liveness, fixture, gameplay, RNG, economy,
   tuning, geometry, schema or migration.
+
+  Iteration 6 is committed at `20a0c6fb906f70077780db6c3233d2905554d30b`
+  (tree `53efc8bdf250786bae1f63792cec4591f9d8dedd`). Exact-head ownership
+  and browser fail-path diagnostics passed; retained manifests have SHA-256
+  `57FB35704F5911B41C922D99856E002C143ED2A2018186B685AD67FCE993CCF5`
+  and `1C21B2C26978E8E318D1DA2E3F5A3308C1034159185B00C4945FF2914ABEF5E1`.
+  Web native semantics passed on Chrome 151 with report/manifest
+  `DD3E3D3B2D99C11987D0DC7911753FEED01D3BD92B386BA196480209D5EA9237`
+  / `83E419E328D9ADD8E5FCFD0DB44D970C7E75D8F0654EB66C8A877CE2370721F8`,
+  unchanged payload `4e5a5ec32a6a00e9c73cb56631e977f5be918aaa040b2814fda6006e1e8c532f`
+  and native `04D41797748BBECD308A761DF3895311CC3A085ABE86580CF1226BAA0ADC2F47`.
+  Static cache passed 53/53 checks and 24/24 visual pairs; report/manifest
+  `A42C3C8E6828C2DE45F05B21B2D8532EB7FD7C63EDDE5125446A85CE42B67F6C`
+  / `E69B3DBD297264F8BADBFC439D148FA1BABCC18ABB4736D73F4BAE2A363381EF`.
+  Focused validation/import/load/Coin Pusher passed in
+  48.814/17.816/25.024/172.233 seconds; summary
+  `0A64A594F0C217D64241085B233AABF3FA642FBF4D8FFF0C9EE0A6590ED3DCBE`.
+  No locked timing ran; independent review and host clearance remain mandatory.
