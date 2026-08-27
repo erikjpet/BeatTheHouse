@@ -65,6 +65,7 @@ The normative JSON-like shape is:
   "ritual_id": "example_table.standard_session",
   "initial_phase": "open",
   "ritual_phases": [],
+  "action_declarations": [],
   "staged_commitment": {},
   "pointer_verbs": [],
   "actors": [],
@@ -104,18 +105,18 @@ reject before mutation. The shared game envelopes are:
 
 ```text
 RitualCommand {
-  envelope_version, ritual_id, session_id, command_id, action_id,
+  envelope_version, ritual_id, session_id, command_id, request_key, action_id,
   expected_phase, source_id, target_id, parameters,
   authenticated_action, boundary, receipt_key, content_fingerprint
 }
 RitualResult {
-  envelope_version, ok=true, ritual_id, session_id, command_id,
+  envelope_version, ok=true, ritual_id, session_id, command_id, request_key,
   phase_before, phase_after, authoritative_result_ref,
   state_receipts, operation_receipts, fact_receipts,
   boundary, receipt_key, content_fingerprint, public_projection
 }
 RitualRejection {
-  envelope_version, ok=false, ritual_id, session_id, command_id,
+  envelope_version, ok=false, ritual_id, session_id, command_id, request_key,
   phase, error_code, public_message, retryable, return_policy,
   boundary, receipt_key, content_fingerprint, public_projection
 }
@@ -133,6 +134,10 @@ OperationResult {
 }
 ReceiptRecord {
   receipt_key, content_fingerprint, boundary_id, envelope_kind, status
+}
+RequestCacheRecord {
+  request_key, command_receipt_key, command_content_fingerprint,
+  response_receipt_key, response_content_fingerprint, status
 }
 ```
 
@@ -163,14 +168,27 @@ monotonic session counter advanced only by an accepted authoritative boundary.
 A cause is exactly one accepted `RitualCommand` or `GameFact`. Its receipt key
 and fingerprint are copied into the boundary. A receipt key is path-safe lower
 ASCII matching `^[a-z0-9][a-z0-9_.:-]{0,191}$`. A content fingerprint is the
-lowercase 64-hex SHA-256 of the canonical closed envelope excluding the
-fingerprint field. Canonicalization sorts dictionary keys, preserves authored
-array order, uses explicit integer/boolean/string types, and forbids NaN,
-infinity, resources, objects, and executable values.
+lowercase 64-hex SHA-256 of the canonical closed envelope excluding only its
+`content_fingerprint` field. Canonicalization is UTF-8 JSON with keys sorted by
+ordinal code point, no insignificant whitespace, authored array order
+preserved, JSON-escaped strings, lowercase `true`/`false`/`null`, and invariant
+base-10 numbers. Types are not coerced: `1`, `1.0`, `"1"`, and `true` are
+distinct. NaN, infinity, resources, objects, and executable values reject.
 
-The exact same receipt key plus fingerprint returns the cached result. The same
-receipt key with different canonical content returns
-`receipt_content_conflict` without mutation. Rejected ingress does not advance
+`request_key` is request/cache identity, not an envelope receipt and not a
+content fingerprint. It uses the receipt-key grammar and indexes one command
+request. `RequestCacheRecord` binds that request to the command's own receipt
+and canonical fingerprint and, after resolution, to exactly one response
+envelope's own receipt and canonical fingerprint. Command, result, and rejection
+receipts are distinct keys because one receipt key identifies exactly one closed
+envelope. Their fingerprints are independently calculated from their respective
+envelopes and are never copied from the command.
+
+Repeating a request key with the identical command receipt and canonical command
+fingerprint returns the response named by the cache record. Reusing a request
+key with different command content, or reusing any receipt key for a different
+envelope kind/content, returns `receipt_content_conflict` without mutation.
+Rejected ingress does not advance
 the boundary ordinal and creates no accepted operation/fact/transition receipt.
 Atomic failure preserves authoritative pre-state except a separately declared
 bounded rejected-ingress diagnostic that is never game authority.
@@ -181,7 +199,9 @@ Condition records are closed and use exactly one `kind`:
 
 - `accepted_action` — matches one action id in the current command cause;
 - `fact` — matches one declared public fact type and closed payload predicate;
-- `receipt_present` — matches one exact receipt kind/key/fingerprint;
+- `receipt_present` — closed record `{kind, receipt_kind, receipt_key,
+  content_fingerprint}` and matches only an accepted receipt whose envelope kind,
+  exact key, and exact canonical fingerprint all match;
 - `authoritative_result_present` — matches a trusted game-owned result ref;
 - `public_state_equals` — matches an allowlisted public state key/value.
 
@@ -335,11 +355,12 @@ ids (`bool`, `int`, `float`, `string`, `qualified_id`, `string_array`, or
 | transition | `id`, `condition`, `next_phase`, `operations` | — |
 | condition: accepted action | `kind`, `action_id` | — |
 | condition: fact | `kind`, `fact_type`, `payload_equals` | — |
-| condition: receipt | `kind`, `receipt_kind` | — |
+| condition: receipt | `kind`, `receipt_kind`, `receipt_key`, `content_fingerprint` | — |
 | condition: authoritative result | `kind` | — |
 | condition: public state | `kind`, `key`, `value` | — |
 | staged commitment | `pending_collection`, `working_collection`, `resolution_collection`, `funds_authority`, `actions`, `readable_totals` | — |
 | commitment action | `id`, `effect` | — |
+| action declaration | `action_id`, `handler_id`, `parameters` | — |
 | pointer verb | `id`, `verb`, `source_region`, `target_regions`, `bounds`, `phases`, `accepted_action`, `rejection`, `rejection_effects`, `equivalents` | — |
 | pointer bounds | `space`, `min_distance`, `max_distance` | — |
 | equivalents | `keyboard`, `controller`, `reduced_motion` | — |
@@ -355,7 +376,7 @@ ids (`bool`, `int`, `float`, `string`, `qualified_id`, `string_array`, or
 | energy tier | `id`, `actor_operations`, `object_operations`, `interaction_operations`, `audio_cues` | — |
 | fact declaration | `fact_type`, `fact_version`, `boundary`, `visibility`, `payload` | — |
 | ritual persistence | `authoritative_serialized`, `derived_projection`, `transient_presentation`, `one_shot_receipted`, `save_boundaries`, `restore_policy` | — |
-| handler | `handler_id`, `version`, `inputs`, `outputs`, `authority`, `persisted_state`, `transient_state`, `rng`, `emitted_facts`, `rejection` | — |
+| handler | `handler_id`, `version`, `accepted_actions`, `accepted_operations`, `inputs`, `outputs`, `authority`, `persisted_state`, `transient_state`, `rng`, `emitted_facts`, `rejection` | — |
 | handler RNG | `owner`, `stream`, `consumption` | — |
 | declared targets | `anchors`, `regions`, `sealed_host_targets` | — |
 
@@ -375,6 +396,14 @@ fact payload schemas, handler I/O schemas, and public projections are not open
 records: each is checked against its declaring closed schema or projection
 allowlist. The validation test contains an unknown-field rejection fixture for
 every nested record family above and for every runtime envelope family.
+
+`action_declarations` is the single closed parameter authority. Every action
+named by a phase, staged commitment, pointer equivalent, or handler appears
+exactly once. `parameters` maps local field ids to registered type ids; the map
+is closed and every listed field is required. An action with no parameters
+declares `{}`. Unknown, missing, or wrong-typed command parameters reject as
+`invalid_parameters`. Each declaration names exactly one registered handler,
+and that handler must list the action in `accepted_actions`.
 
 ## 4. Ritual phases and transitions
 
@@ -622,8 +651,11 @@ returns an accepted result or a typed rejection. Its validation order is:
 8. authoritative mutation;
 9. result, transition, operation, and fact receipt production.
 
-An identical receipt and identical canonical command returns the cached result.
-Receipt reuse with a different fingerprint rejects without mutation. Validation
+An identical request key and identical canonical command fingerprint returns the
+response named by `RequestCacheRecord`. Each command/result/rejection keeps its
+own receipt key and independently calculated canonical fingerprint. Request-key
+reuse with changed command content, or receipt-key reuse for another envelope,
+rejects without mutation. Validation
 and rejection are deterministic and consume no game RNG. Complex behavior is an
 allowlisted handler, not an arbitrary target string.
 
@@ -636,7 +668,9 @@ Sections 3.2, 3.3, and 3.8, resolving `ENV-VOCAB-01`, `ENV-VOCAB-07`, and
 Each `handler_registry` entry declares:
 
 - stable allowlisted handler id and version;
-- accepted action/operation ids;
+- closed `accepted_actions` and `accepted_operations` arrays; every id resolves
+  to exactly one action declaration or authored operation, and no action or
+  operation is accepted by two handlers;
 - typed and bounded input;
 - typed and bounded output;
 - authoritative owner of each mutated field;

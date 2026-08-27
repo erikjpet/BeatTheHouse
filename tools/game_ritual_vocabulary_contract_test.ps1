@@ -53,12 +53,87 @@ function Add-ClosedShapeErrors {
     }
 }
 
+function Test-ReceiptCondition {
+    param([System.Collections.Generic.List[string]]$Errors, $Condition)
+    if ([string]$Condition.receipt_kind -notin @("command", "result", "rejection", "fact", "operation", "state", "transition", "phase_entry", "cleanup", "aftermath")) {
+        Add-Error $Errors "receipt condition has unknown receipt kind"
+    }
+    if ([string]$Condition.receipt_key -cnotmatch '^[a-z0-9][a-z0-9_.:-]{0,191}$') {
+        Add-Error $Errors "receipt condition has invalid exact receipt key"
+    }
+    if ([string]$Condition.content_fingerprint -cnotmatch '^[0-9a-f]{64}$') {
+        Add-Error $Errors "receipt condition has invalid exact fingerprint"
+    }
+}
+
+function ConvertTo-CanonicalJson {
+    param($Value)
+    if ($null -eq $Value) { return "null" }
+    if ($Value -is [string]) { return ($Value | ConvertTo-Json -Compress) }
+    if ($Value -is [bool]) { return $(if ($Value) { "true" } else { "false" }) }
+    if ($Value -is [byte] -or $Value -is [sbyte] -or $Value -is [int16] -or $Value -is [uint16] -or $Value -is [int32] -or $Value -is [uint32] -or $Value -is [int64] -or $Value -is [uint64]) {
+        return $Value.ToString([System.Globalization.CultureInfo]::InvariantCulture)
+    }
+    if ($Value -is [single] -or $Value -is [double] -or $Value -is [decimal]) {
+        $number = [double]$Value
+        if ([double]::IsNaN($number) -or [double]::IsInfinity($number)) { throw "noncanonical number" }
+        return $number.ToString("R", [System.Globalization.CultureInfo]::InvariantCulture)
+    }
+    if ($Value -is [System.Array]) {
+        $items = @($Value | ForEach-Object { ConvertTo-CanonicalJson $_ })
+        return "[" + ($items -join ",") + "]"
+    }
+    $names = @(Property-Names $Value | Sort-Object -CaseSensitive)
+    if ($names.Count -gt 0 -or $Value -is [pscustomobject]) {
+        $members = foreach ($name in $names) {
+            (ConvertTo-CanonicalJson ([string]$name)) + ":" + (ConvertTo-CanonicalJson $Value.$name)
+        }
+        return "{" + (@($members) -join ",") + "}"
+    }
+    throw "unsupported canonical value type: $($Value.GetType().FullName)"
+}
+
+function Get-CanonicalFingerprint {
+    param($Envelope)
+    $copy = Copy-Definition $Envelope
+    $copy.PSObject.Properties.Remove("content_fingerprint")
+    $canonical = ConvertTo-CanonicalJson $copy
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($canonical)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { $hash = $sha.ComputeHash($bytes) } finally { $sha.Dispose() }
+    return ([System.BitConverter]::ToString($hash).Replace("-", "")).ToLowerInvariant()
+}
+
+function Test-CanonicalFingerprint {
+    param([System.Collections.Generic.List[string]]$Errors, [string]$Label, $Envelope)
+    if ([string]$Envelope.content_fingerprint -cnotmatch '^[0-9a-f]{64}$') {
+        Add-Error $Errors "$Label invalid content fingerprint"
+        return
+    }
+    $actual = Get-CanonicalFingerprint $Envelope
+    if ([string]$Envelope.content_fingerprint -cne $actual) { Add-Error $Errors "$Label canonical fingerprint mismatch" }
+}
+
+function Test-DeclaredValueType {
+    param($Value, [string]$Type)
+    switch ($Type) {
+        "bool" { return $Value -is [bool] }
+        "int" { return $Value -is [int64] -or $Value -is [int32] }
+        "float" { return $Value -is [double] -or $Value -is [single] -or $Value -is [decimal] }
+        "string" { return $Value -is [string] }
+        "qualified_id" { return $Value -is [string] -and (Test-QualifiedId ([string]$Value)) }
+        "string_array" { return $Value -is [System.Array] -and @($Value | Where-Object { $_ -isnot [string] }).Count -eq 0 }
+        "int_array" { return $Value -is [System.Array] -and @($Value | Where-Object { $_ -isnot [int64] -and $_ -isnot [int32] }).Count -eq 0 }
+        default { return $false }
+    }
+}
+
 function Test-RitualDefinition {
     param([Parameter(Mandatory)]$Definition)
 
     $errors = [System.Collections.Generic.List[string]]::new()
     $allowedTop = @(
-        "contract", "ritual_id", "initial_phase", "ritual_phases",
+        "contract", "ritual_id", "initial_phase", "ritual_phases", "action_declarations",
         "staged_commitment", "pointer_verbs", "actors", "scene_objects",
         "energy", "game_facts", "ritual_persistence", "handler_registry",
         "declared_targets"
@@ -87,13 +162,16 @@ function Test-RitualDefinition {
             $conditionFields = @{
                 accepted_action = @("kind", "action_id")
                 fact = @("kind", "fact_type", "payload_equals")
-                receipt_present = @("kind", "receipt_kind")
+                receipt_present = @("kind", "receipt_kind", "receipt_key", "content_fingerprint")
                 authoritative_result_present = @("kind")
                 public_state_equals = @("kind", "key", "value")
             }
             $kind = [string]$condition.kind
             if (-not $conditionFields.ContainsKey($kind)) { Add-Error $errors "unknown condition kind: $kind" }
-            else { Add-ClosedShapeErrors $errors "condition" $condition $conditionFields[$kind] }
+            else {
+                Add-ClosedShapeErrors $errors "condition" $condition $conditionFields[$kind]
+                if ($kind -eq "receipt_present") { Test-ReceiptCondition $errors $condition }
+            }
         }
     }
     if ($phaseById.Count -eq 0) { Add-Error $errors "ritual_phases must not be empty" }
@@ -117,13 +195,16 @@ function Test-RitualDefinition {
             $transitionConditionFields = @{
                 accepted_action = @("kind", "action_id")
                 fact = @("kind", "fact_type", "payload_equals")
-                receipt_present = @("kind", "receipt_kind")
+                receipt_present = @("kind", "receipt_kind", "receipt_key", "content_fingerprint")
                 authoritative_result_present = @("kind")
                 public_state_equals = @("kind", "key", "value")
             }
             $transitionKind = [string]$transition.condition.kind
             if (-not $transitionConditionFields.ContainsKey($transitionKind)) { Add-Error $errors "unknown transition condition kind: $transitionKind" }
             else { Add-ClosedShapeErrors $errors "transition condition" $transition.condition $transitionConditionFields[$transitionKind] }
+            if ($transitionKind -eq "receipt_present") {
+                Test-ReceiptCondition $errors $transition.condition
+            }
             if (-not (Test-LocalId ([string]$transition.id))) { Add-Error $errors "transition id must be a local id" }
             $next = [string]$transition.next_phase
             if (-not $phaseById.ContainsKey($next)) {
@@ -149,6 +230,22 @@ function Test-RitualDefinition {
         if (-not $reachable.Contains($phaseId)) { Add-Error $errors "unreachable phase: $phaseId" }
     }
 
+    $actionById = @{}
+    foreach ($declaration in @($Definition.action_declarations)) {
+        Add-ClosedShapeErrors $errors "action declaration" $declaration @("action_id", "handler_id", "parameters")
+        $actionId = [string]$declaration.action_id
+        if (-not (Test-QualifiedId $actionId)) { Add-Error $errors "action declaration id must be qualified" }
+        elseif ($actionById.ContainsKey($actionId)) { Add-Error $errors "duplicate action declaration: $actionId" }
+        else { $actionById[$actionId] = $declaration }
+        if (-not (Test-QualifiedId ([string]$declaration.handler_id))) { Add-Error $errors "action declaration handler id must be qualified" }
+        foreach ($parameterName in (Property-Names $declaration.parameters)) {
+            if (-not (Test-LocalId $parameterName)) { Add-Error $errors "action parameter name must be a local id" }
+            if ([string]$declaration.parameters.$parameterName -notin @("bool", "int", "float", "string", "qualified_id", "string_array", "int_array")) {
+                Add-Error $errors "action parameter type is not registered"
+            }
+        }
+    }
+
     Add-ClosedShapeErrors $errors "staged commitment" $Definition.staged_commitment @("pending_collection", "working_collection", "resolution_collection", "funds_authority", "actions", "readable_totals")
     foreach ($commitAction in @($Definition.staged_commitment.actions)) {
         Add-ClosedShapeErrors $errors "commitment action" $commitAction @("id", "effect")
@@ -170,6 +267,13 @@ function Test-RitualDefinition {
     $allActions = [System.Collections.Generic.HashSet[string]]::new()
     foreach ($phase in @($Definition.ritual_phases)) {
         foreach ($action in @($phase.permitted_actions)) { [void]$allActions.Add([string]$action) }
+    }
+    foreach ($action in $commitActions) { [void]$allActions.Add([string]$action) }
+    foreach ($action in $allActions) {
+        if (-not $actionById.ContainsKey([string]$action)) { Add-Error $errors "permitted action lacks declaration: $action" }
+    }
+    foreach ($action in $actionById.Keys) {
+        if (-not $allActions.Contains([string]$action)) { Add-Error $errors "action declaration is not used by any phase: $action" }
     }
     foreach ($verb in @($Definition.pointer_verbs)) {
         Add-ClosedShapeErrors $errors "pointer verb" $verb @("id", "verb", "source_region", "target_regions", "bounds", "phases", "accepted_action", "rejection", "rejection_effects", "equivalents")
@@ -275,10 +379,16 @@ function Test-RitualDefinition {
         }
     }
 
+    $handlerById = @{}
+    $actionHandlerBindings = @{}
+    $operationHandlerBindings = @{}
     foreach ($handler in @($Definition.handler_registry)) {
-        Add-ClosedShapeErrors $errors "handler" $handler @("handler_id", "version", "inputs", "outputs", "authority", "persisted_state", "transient_state", "rng", "emitted_facts", "rejection")
+        Add-ClosedShapeErrors $errors "handler" $handler @("handler_id", "version", "accepted_actions", "accepted_operations", "inputs", "outputs", "authority", "persisted_state", "transient_state", "rng", "emitted_facts", "rejection")
         Add-ClosedShapeErrors $errors "handler rng" $handler.rng @("owner", "stream", "consumption")
-        if (-not (Test-QualifiedId ([string]$handler.handler_id))) { Add-Error $errors "handler id must be a qualified id" }
+        $handlerId = [string]$handler.handler_id
+        if (-not (Test-QualifiedId $handlerId)) { Add-Error $errors "handler id must be a qualified id" }
+        elseif ($handlerById.ContainsKey($handlerId)) { Add-Error $errors "duplicate handler id: $handlerId" }
+        else { $handlerById[$handlerId] = $handler }
         foreach ($key in @("inputs", "outputs", "authority", "persisted_state", "transient_state", "rng", "rejection")) {
             if ($key -notin (Property-Names $handler)) { Add-Error $errors "handler is missing contract field: $key" }
         }
@@ -288,6 +398,22 @@ function Test-RitualDefinition {
                 if ([string]$handler.$schemaName.$schemaKey -notin @("bool", "int", "float", "string", "qualified_id", "string_array", "int_array")) { Add-Error $errors "handler $schemaName type is not registered" }
             }
         }
+        foreach ($actionId in @($handler.accepted_actions)) {
+            $actionId = [string]$actionId
+            if (-not $actionById.ContainsKey($actionId)) { Add-Error $errors "handler accepts undeclared action: $actionId" }
+            elseif ([string]$actionById[$actionId].handler_id -ne $handlerId) { Add-Error $errors "action declaration handler mismatch: $actionId" }
+            if ($actionHandlerBindings.ContainsKey($actionId)) { Add-Error $errors "action accepted by multiple handlers: $actionId" }
+            else { $actionHandlerBindings[$actionId] = $handlerId }
+        }
+        foreach ($operationId in @($handler.accepted_operations)) {
+            $operationId = [string]$operationId
+            if ($operationHandlerBindings.ContainsKey($operationId)) { Add-Error $errors "operation accepted by multiple handlers: $operationId" }
+            else { $operationHandlerBindings[$operationId] = $handlerId }
+        }
+    }
+    foreach ($actionId in $actionById.Keys) {
+        if (-not $handlerById.ContainsKey([string]$actionById[$actionId].handler_id)) { Add-Error $errors "action declaration references unknown handler: $actionId" }
+        if (-not $actionHandlerBindings.ContainsKey($actionId)) { Add-Error $errors "action is not accepted by its handler: $actionId" }
     }
 
     $operationFamilies = @{
@@ -304,9 +430,11 @@ function Test-RitualDefinition {
     foreach ($tier in @($Definition.energy.tiers)) {
         $allOperations += @($tier.actor_operations) + @($tier.object_operations) + @($tier.interaction_operations)
     }
+    $authoredOperationIds = [System.Collections.Generic.HashSet[string]]::new()
     foreach ($operation in $allOperations) {
         Add-ClosedShapeErrors $errors "operation" $operation @("operation_id", "family", "verb", "source_owner_id", "target_id", "arguments")
         if (-not (Test-LocalId ([string]$operation.operation_id))) { Add-Error $errors "operation id must be a local id" }
+        elseif (-not $authoredOperationIds.Add([string]$operation.operation_id)) { Add-Error $errors "duplicate operation id: $($operation.operation_id)" }
         $family = [string]$operation.family
         if (-not $operationFamilies.ContainsKey($family)) {
             Add-Error $errors "unknown operation family: $family"
@@ -349,6 +477,12 @@ function Test-RitualDefinition {
             Add-ClosedShapeErrors $errors "operation arguments $operationKey" $operation.arguments $argumentShapes[$operationKey]
         }
     }
+    foreach ($operationId in $authoredOperationIds) {
+        if (-not $operationHandlerBindings.ContainsKey([string]$operationId)) { Add-Error $errors "authored operation lacks handler binding: $operationId" }
+    }
+    foreach ($operationId in $operationHandlerBindings.Keys) {
+        if (-not $authoredOperationIds.Contains([string]$operationId)) { Add-Error $errors "handler accepts unknown operation: $operationId" }
+    }
 
     foreach ($requiredPersistence in @("authoritative_serialized", "derived_projection", "transient_presentation", "one_shot_receipted", "save_boundaries", "restore_policy")) {
         if ($requiredPersistence -notin (Property-Names $Definition.ritual_persistence)) {
@@ -373,9 +507,9 @@ function Test-RitualDefinition {
 }
 
 function Test-EnvelopeFixture {
-    param([Parameter(Mandatory)]$Fixture)
+    param([Parameter(Mandatory)]$Fixture, [Parameter(Mandatory)]$Definition)
     $errors = [System.Collections.Generic.List[string]]::new()
-    Add-ClosedShapeErrors $errors "envelope fixture" $Fixture @("vocabulary_source", "boundary", "command", "result", "rejection", "fact", "operation", "operation_result", "receipt")
+    Add-ClosedShapeErrors $errors "envelope fixture" $Fixture @("vocabulary_source", "boundary", "command", "result", "rejection", "fact", "operation", "operation_result", "receipt", "request_cache")
     Add-ClosedShapeErrors $errors "vocabulary source" $Fixture.vocabulary_source @("commit", "path")
     if ([string]$Fixture.vocabulary_source.commit -ne "749390ce") { Add-Error $errors "vocabulary source commit mismatch" }
     if ([string]$Fixture.vocabulary_source.path -ne "docs/todo/env06_6_runtime_vocabulary_and_delivery_handoff.md") { Add-Error $errors "vocabulary source path mismatch" }
@@ -391,21 +525,42 @@ function Test-EnvelopeFixture {
         if ([int]$boundary.ordinal -lt 1) { Add-Error $errors "boundary ordinal must be positive" }
     }
 
-    $fingerprinted = @($Fixture.command, $Fixture.result, $Fixture.rejection, $Fixture.fact, $Fixture.operation_result, $Fixture.receipt)
+    $fingerprinted = @($Fixture.command, $Fixture.result, $Fixture.rejection, $Fixture.fact, $Fixture.operation_result)
+    $receiptOwners = @{}
     foreach ($record in $fingerprinted) {
         if ([string]$record.receipt_key -cnotmatch '^[a-z0-9][a-z0-9_.:-]{0,191}$') { Add-Error $errors "invalid receipt key" }
-        if ([string]$record.content_fingerprint -cnotmatch '^[0-9a-f]{64}$') { Add-Error $errors "invalid content fingerprint" }
+        $receiptKey = [string]$record.receipt_key
+        if ($receiptOwners.ContainsKey($receiptKey)) { Add-Error $errors "one receipt key identifies multiple envelopes: $receiptKey" }
+        else { $receiptOwners[$receiptKey] = $record }
     }
 
-    Add-ClosedShapeErrors $errors "command" $Fixture.command @("envelope_version", "ritual_id", "session_id", "command_id", "action_id", "expected_phase", "source_id", "target_id", "parameters", "authenticated_action", "boundary", "receipt_key", "content_fingerprint")
+    Test-CanonicalFingerprint $errors "command" $Fixture.command
+    Test-CanonicalFingerprint $errors "result" $Fixture.result
+    Test-CanonicalFingerprint $errors "rejection" $Fixture.rejection
+    Test-CanonicalFingerprint $errors "fact" $Fixture.fact
+    Test-CanonicalFingerprint $errors "operation result" $Fixture.operation_result
+
+    Add-ClosedShapeErrors $errors "command" $Fixture.command @("envelope_version", "ritual_id", "session_id", "command_id", "request_key", "action_id", "expected_phase", "source_id", "target_id", "parameters", "authenticated_action", "boundary", "receipt_key", "content_fingerprint")
     Add-ClosedShapeErrors $errors "authenticated action" $Fixture.command.authenticated_action @("action_id", "origin_owner_id", "origin_stable_id", "operation_receipt_key", "boundary_id", "content_fingerprint")
     if ([int]$Fixture.command.envelope_version -ne 1) { Add-Error $errors "command envelope version must be 1" }
     if (-not (Test-QualifiedId ([string]$Fixture.command.action_id))) { Add-Error $errors "command action id must be qualified" }
 
-    Add-ClosedShapeErrors $errors "result" $Fixture.result @("envelope_version", "ok", "ritual_id", "session_id", "command_id", "phase_before", "phase_after", "authoritative_result_ref", "state_receipts", "operation_receipts", "fact_receipts", "boundary", "receipt_key", "content_fingerprint", "public_projection")
+    $actionDeclaration = @($Definition.action_declarations | Where-Object { [string]$_.action_id -eq [string]$Fixture.command.action_id })
+    if ($actionDeclaration.Count -ne 1) { Add-Error $errors "command action must resolve to one declaration" }
+    else {
+        $schema = $actionDeclaration[0].parameters
+        Add-ClosedShapeErrors $errors "command parameters" $Fixture.command.parameters @(Property-Names $schema)
+        foreach ($parameterName in (Property-Names $schema)) {
+            if (-not (Test-DeclaredValueType $Fixture.command.parameters.$parameterName ([string]$schema.$parameterName))) {
+                Add-Error $errors "command parameter has wrong declared type: $parameterName"
+            }
+        }
+    }
+
+    Add-ClosedShapeErrors $errors "result" $Fixture.result @("envelope_version", "ok", "ritual_id", "session_id", "command_id", "request_key", "phase_before", "phase_after", "authoritative_result_ref", "state_receipts", "operation_receipts", "fact_receipts", "boundary", "receipt_key", "content_fingerprint", "public_projection")
     if (-not [bool]$Fixture.result.ok) { Add-Error $errors "result must be accepted" }
 
-    Add-ClosedShapeErrors $errors "rejection" $Fixture.rejection @("envelope_version", "ok", "ritual_id", "session_id", "command_id", "phase", "error_code", "public_message", "retryable", "return_policy", "boundary", "receipt_key", "content_fingerprint", "public_projection")
+    Add-ClosedShapeErrors $errors "rejection" $Fixture.rejection @("envelope_version", "ok", "ritual_id", "session_id", "command_id", "request_key", "phase", "error_code", "public_message", "retryable", "return_policy", "boundary", "receipt_key", "content_fingerprint", "public_projection")
     if ([bool]$Fixture.rejection.ok) { Add-Error $errors "rejection must have ok=false" }
     $errorCodes = @("invalid_envelope", "unsupported_version", "invalid_id", "unknown_reference", "stale_phase", "action_not_permitted", "disabled_action", "blocked_action", "unavailable_source", "unavailable_target", "unsealed_authority", "authority_mismatch", "ambiguous_target", "invalid_parameters", "incomplete_gesture", "out_of_bounds", "inaccessible_target", "precondition_failed", "insufficient_funds", "receipt_content_conflict", "handler_rejected", "invalid_restore", "ambiguous_transition", "internal_fail_closed")
     if ([string]$Fixture.rejection.error_code -notin $errorCodes) { Add-Error $errors "unknown rejection code" }
@@ -420,6 +575,28 @@ function Test-EnvelopeFixture {
     if ([string]$Fixture.operation.family -notin @("scene_ops", "interaction_ops", "actor_ops", "transition_ops")) { Add-Error $errors "unknown operation family" }
     Add-ClosedShapeErrors $errors "operation result" $Fixture.operation_result @("envelope_version", "operation_id", "family", "verb", "target_id", "boundary", "receipt_key", "content_fingerprint", "applied")
     Add-ClosedShapeErrors $errors "receipt" $Fixture.receipt @("receipt_key", "content_fingerprint", "boundary_id", "envelope_kind", "status")
+    Add-ClosedShapeErrors $errors "request cache" $Fixture.request_cache @("request_key", "command_receipt_key", "command_content_fingerprint", "response_receipt_key", "response_content_fingerprint", "status")
+    if ([string]$Fixture.request_cache.status -notin @("pending", "resolved", "rejected")) { Add-Error $errors "request cache has unknown status" }
+    foreach ($cacheFingerprint in @($Fixture.request_cache.command_content_fingerprint, $Fixture.request_cache.response_content_fingerprint)) {
+        if ([string]$cacheFingerprint -cnotmatch '^[0-9a-f]{64}$') { Add-Error $errors "request cache has invalid envelope fingerprint" }
+    }
+    foreach ($requestKey in @($Fixture.command.request_key, $Fixture.result.request_key, $Fixture.rejection.request_key, $Fixture.request_cache.request_key)) {
+        if ([string]$requestKey -cnotmatch '^[a-z0-9][a-z0-9_.:-]{0,191}$') { Add-Error $errors "invalid request key" }
+    }
+    if ([string]$Fixture.command.request_key -cne [string]$Fixture.result.request_key) { Add-Error $errors "result request identity does not match command" }
+    if ([string]$Fixture.command.receipt_key -ceq [string]$Fixture.result.receipt_key) { Add-Error $errors "command and result must own distinct receipt keys" }
+    if ([string]$Fixture.request_cache.request_key -cne [string]$Fixture.command.request_key -or
+        [string]$Fixture.request_cache.command_receipt_key -cne [string]$Fixture.command.receipt_key -or
+        [string]$Fixture.request_cache.command_content_fingerprint -cne [string]$Fixture.command.content_fingerprint -or
+        [string]$Fixture.request_cache.response_receipt_key -cne [string]$Fixture.result.receipt_key -or
+        [string]$Fixture.request_cache.response_content_fingerprint -cne [string]$Fixture.result.content_fingerprint) {
+        Add-Error $errors "request cache does not bind exact command and response envelopes"
+    }
+    if ([string]$Fixture.receipt.receipt_key -cne [string]$Fixture.operation_result.receipt_key -or
+        [string]$Fixture.receipt.content_fingerprint -cne [string]$Fixture.operation_result.content_fingerprint -or
+        [string]$Fixture.receipt.envelope_kind -cne "operation") {
+        Add-Error $errors "receipt record does not identify exactly one operation envelope"
+    }
     return @($errors)
 }
 
@@ -439,8 +616,8 @@ function Assert-Rejected {
 }
 
 function Assert-EnvelopeRejected {
-    param([string]$Name, $Fixture, [string]$Expected)
-    $errors = @(Test-EnvelopeFixture $Fixture)
+    param([string]$Name, $Fixture, $Definition, [string]$Expected)
+    $errors = @(Test-EnvelopeFixture $Fixture $Definition)
     if ($errors.Count -eq 0) { throw "$Name expected envelope rejection but passed" }
     if (($errors -join "`n").IndexOf($Expected, [System.StringComparison]::OrdinalIgnoreCase) -lt 0) {
         throw "$Name expected '$Expected'; got: $($errors -join '; ')"
@@ -455,7 +632,7 @@ if (-not (Test-Path -LiteralPath $checklistPath)) { throw "Missing checklist: $c
 $definition = Get-Content -LiteralPath $fixturePath -Raw | ConvertFrom-Json
 Assert-NoErrors "worked example" $definition
 $envelopes = Get-Content -LiteralPath $envelopeFixturePath -Raw | ConvertFrom-Json
-$envelopeErrors = @(Test-EnvelopeFixture $envelopes)
+$envelopeErrors = @(Test-EnvelopeFixture $envelopes $definition)
 if ($envelopeErrors.Count -ne 0) { throw "shared envelope fixture expected no errors; got: $($envelopeErrors -join '; ')" }
 
 $negativeCount = 0
@@ -525,8 +702,45 @@ $bad = Copy-Definition $definition
 $bad.ritual_persistence.authoritative_serialized = @($bad.ritual_persistence.authoritative_serialized | Where-Object { $_ -ne "receipts" })
 Assert-Rejected "missing receipts" $bad "authoritative persistence is missing: receipts"; $negativeCount++
 
+$bad = Copy-Definition $definition
+$bad.ritual_phases[1].entry_conditions[0].PSObject.Properties.Remove("receipt_key")
+Assert-Rejected "receipt condition missing exact key" $bad "condition missing field: receipt_key"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.ritual_phases[1].entry_conditions[0].receipt_kind = "commitment"
+Assert-Rejected "receipt condition open kind" $bad "unknown receipt kind"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.ritual_phases[1].entry_conditions[0].receipt_key = "UPPER/unsafe"
+Assert-Rejected "receipt condition malformed key" $bad "invalid exact receipt key"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.ritual_phases[1].entry_conditions[0].content_fingerprint = "same-key-is-not-enough"
+Assert-Rejected "receipt condition malformed fingerprint" $bad "invalid exact fingerprint"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.ritual_phases[0].permitted_actions += @("undeclared.action")
+Assert-Rejected "undeclared permitted action" $bad "permitted action lacks declaration"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.action_declarations[0].parameters.amount = "variant"
+Assert-Rejected "open action parameter type" $bad "action parameter type is not registered"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.handler_registry[0].accepted_actions = @($bad.handler_registry[0].accepted_actions | Where-Object { $_ -ne "commit.place" })
+Assert-Rejected "handler omits declared action" $bad "action is not accepted by its handler"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.handler_registry[0].accepted_operations += @("unknown_operation")
+Assert-Rejected "handler accepts unknown operation" $bad "handler accepts unknown operation"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.handler_registry[1].accepted_operations += @("staff_offer")
+Assert-Rejected "operation bound to two handlers" $bad "operation accepted by multiple handlers"; $negativeCount++
+
 $unknownFieldCases = @(
     @{ name = "phase"; expected = "phase unknown field"; mutate = { param($x) $x.ritual_phases[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "action declaration"; expected = "action declaration unknown field"; mutate = { param($x) $x.action_declarations[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
     @{ name = "condition"; expected = "condition unknown field"; mutate = { param($x) $x.ritual_phases[1].entry_conditions[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
     @{ name = "transition"; expected = "transition unknown field"; mutate = { param($x) $x.ritual_phases[0].transitions[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
     @{ name = "transition condition"; expected = "transition condition unknown field"; mutate = { param($x) $x.ritual_phases[0].transitions[0].condition | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
@@ -563,23 +777,47 @@ foreach ($case in $unknownFieldCases) {
 
 $badEnvelope = Copy-Definition $envelopes
 $badEnvelope.command | Add-Member -NotePropertyName caller_authority -NotePropertyValue $true
-Assert-EnvelopeRejected "open command envelope" $badEnvelope "command unknown field"; $negativeCount++
+Assert-EnvelopeRejected "open command envelope" $badEnvelope $definition "command unknown field"; $negativeCount++
 
 $badEnvelope = Copy-Definition $envelopes
-$badEnvelope.receipt.content_fingerprint = "not-a-fingerprint"
-Assert-EnvelopeRejected "invalid receipt fingerprint" $badEnvelope "invalid content fingerprint"; $negativeCount++
+$badEnvelope.operation_result.content_fingerprint = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+Assert-EnvelopeRejected "invalid receipt fingerprint" $badEnvelope $definition "canonical fingerprint mismatch"; $negativeCount++
+
+$badEnvelope = Copy-Definition $envelopes
+$badEnvelope.command.parameters | Add-Member -NotePropertyName caller_hint -NotePropertyValue 1
+Assert-EnvelopeRejected "open action parameters" $badEnvelope $definition "command parameters unknown field"; $negativeCount++
+
+$badEnvelope = Copy-Definition $envelopes
+$badEnvelope.command.parameters.PSObject.Properties.Remove("amount")
+Assert-EnvelopeRejected "missing action parameter" $badEnvelope $definition "command parameters missing field"; $negativeCount++
+
+$badEnvelope = Copy-Definition $envelopes
+$badEnvelope.command.parameters.amount = "5"
+Assert-EnvelopeRejected "wrong action parameter type" $badEnvelope $definition "wrong declared type"; $negativeCount++
+
+$badEnvelope = Copy-Definition $envelopes
+$badEnvelope.result.receipt_key = $badEnvelope.command.receipt_key
+Assert-EnvelopeRejected "command/result receipt alias" $badEnvelope $definition "distinct receipt keys"; $negativeCount++
+
+$badEnvelope = Copy-Definition $envelopes
+$badEnvelope.result.content_fingerprint = $badEnvelope.command.content_fingerprint
+Assert-EnvelopeRejected "copied command fingerprint on result" $badEnvelope $definition "result canonical fingerprint mismatch"; $negativeCount++
+
+$badEnvelope = Copy-Definition $envelopes
+$badEnvelope.request_cache.response_receipt_key = "receipt:result:wrong"
+Assert-EnvelopeRejected "request cache wrong response" $badEnvelope $definition "request cache does not bind"; $negativeCount++
 
 $badEnvelope = Copy-Definition $envelopes
 $badEnvelope.rejection.error_code = "game_specific_error"
-Assert-EnvelopeRejected "open error taxonomy" $badEnvelope "unknown rejection code"; $negativeCount++
+Assert-EnvelopeRejected "open error taxonomy" $badEnvelope $definition "unknown rejection code"; $negativeCount++
 
 $badEnvelope = Copy-Definition $envelopes
 $badEnvelope.fact.visibility = "private"
-Assert-EnvelopeRejected "private outward fact" $badEnvelope "fact visibility must be public"; $negativeCount++
+Assert-EnvelopeRejected "private outward fact" $badEnvelope $definition "fact visibility must be public"; $negativeCount++
 
 $badEnvelope = Copy-Definition $envelopes
 $badEnvelope.command.authenticated_action.PSObject.Properties.Remove("content_fingerprint")
-Assert-EnvelopeRejected "unauthenticated action" $badEnvelope "authenticated action missing field"; $negativeCount++
+Assert-EnvelopeRejected "unauthenticated action" $badEnvelope $definition "authenticated action missing field"; $negativeCount++
 
 $envelopeUnknownCases = @(
     @{ name = "vocabulary source"; expected = "vocabulary source unknown field"; mutate = { param($x) $x.vocabulary_source | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
@@ -589,14 +827,24 @@ $envelopeUnknownCases = @(
     @{ name = "fact"; expected = "fact unknown field"; mutate = { param($x) $x.fact | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
     @{ name = "operation envelope"; expected = "operation envelope unknown field"; mutate = { param($x) $x.operation | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
     @{ name = "operation result"; expected = "operation result unknown field"; mutate = { param($x) $x.operation_result | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
-    @{ name = "receipt"; expected = "receipt unknown field"; mutate = { param($x) $x.receipt | Add-Member -NotePropertyName extra -NotePropertyValue $true } }
+    @{ name = "receipt"; expected = "receipt unknown field"; mutate = { param($x) $x.receipt | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "request cache"; expected = "request cache unknown field"; mutate = { param($x) $x.request_cache | Add-Member -NotePropertyName extra -NotePropertyValue $true } }
 )
 foreach ($case in $envelopeUnknownCases) {
     $badEnvelope = Copy-Definition $envelopes
     & $case.mutate $badEnvelope
-    Assert-EnvelopeRejected "nested envelope unknown field $($case.name)" $badEnvelope $case.expected
+    Assert-EnvelopeRejected "nested envelope unknown field $($case.name)" $badEnvelope $definition $case.expected
     $negativeCount++
 }
+
+$canonicalCommand = ConvertTo-CanonicalJson $envelopes.command
+$reorderedCommand = [pscustomobject][ordered]@{}
+foreach ($name in @((Property-Names $envelopes.command) | Sort-Object -CaseSensitive -Descending)) {
+    $reorderedCommand | Add-Member -NotePropertyName $name -NotePropertyValue $envelopes.command.$name
+}
+if ((ConvertTo-CanonicalJson $reorderedCommand) -cne $canonicalCommand) { throw "Canonical semantics depend on dictionary insertion order" }
+if ((ConvertTo-CanonicalJson 1) -ceq (ConvertTo-CanonicalJson "1")) { throw "Canonical semantics coerce integer and string" }
+if ((ConvertTo-CanonicalJson @("a", "b")) -ceq (ConvertTo-CanonicalJson @("b", "a"))) { throw "Canonical semantics do not preserve authored array order" }
 
 $contractText = Get-Content -LiteralPath $contractPath -Raw
 $checklistText = Get-Content -LiteralPath $checklistPath -Raw

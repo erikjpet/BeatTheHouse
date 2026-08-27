@@ -79,13 +79,21 @@ from an implementation rather than specified, or weakened to match a schedule.
   receipt/fingerprint, and idempotency before mutation.
 - [ ] Command, result, rejection, fact, operation, transition, and receipt shapes
   use the accepted shared vocabulary and specify required/optional fields.
-- [ ] Identical receipt plus identical command returns the cached result; receipt
-  reuse with a different fingerprint fails without mutation.
+- [ ] Request/cache identity is a separate `request_key`. Repeating it with the
+  identical canonical command fingerprint returns the bound response; command,
+  result, and rejection each own distinct receipt keys and independently
+  calculated canonical fingerprints. Any request or receipt conflict fails
+  without mutation.
+- [ ] `receipt_present` is closed and requires exact receipt kind, key, and
+  canonical fingerprint; missing, malformed, partial, or wrong-kind matches
+  reject.
 - [ ] Facts publish only at named safe action boundaries and are typed and
   versioned. Presentation never rerolls, reorders, or changes authoritative
   outcomes.
-- [ ] Handlers declare allowlisted id, typed input, typed output, persistence,
-  deterministic RNG ownership/consumption, side effects, and failure behavior.
+- [ ] Every phase/staged/pointer action has one closed action declaration and
+  parameter schema. Handlers declare allowlisted id, exact accepted action and
+  operation ids, typed input/output, persistence, deterministic RNG
+  ownership/consumption, side effects, and failure behavior.
 
 ## Persistence, restore, and compatibility
 
@@ -119,7 +127,10 @@ from an implementation rather than specified, or weakened to match a schedule.
   or duplicate transitions, unbound actions, unbound pointer equivalents,
   charge-capable rejection paths, missing actor states, missing object bounds,
   metadata-only props, music/text-only energy, unsafe executable references,
-  invalid ids/targets, receipt ambiguity, and persistence omissions.
+  invalid ids/targets, partial receipt conditions, malformed exact receipt
+  identity, open/missing/wrong-typed action parameters, handler binding gaps,
+  request/cache aliasing, copied envelope fingerprints, canonical-order/type
+  errors, receipt ambiguity, and persistence omissions.
 - [ ] Every nested definition and runtime-envelope record family has a frozen
   required/optional field shape, rejects unknown fields, and has a focused
   unknown-field negative fixture; declared payload/I/O maps validate ids and

@@ -46,7 +46,9 @@
       "entry_conditions": [
         {
           "kind": "receipt_present",
-          "receipt_kind": "commitment"
+          "receipt_kind": "state",
+          "receipt_key": "receipt:state:commit_0001",
+          "content_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         }
       ],
       "permitted_actions": [
@@ -125,6 +127,18 @@
       ],
       "terminal": false
     }
+  ],
+  "action_declarations": [
+    {"action_id": "commit.place", "handler_id": "commitment.edit", "parameters": {"item_id": "qualified_id", "amount": "int"}},
+    {"action_id": "commit.correct", "handler_id": "commitment.edit", "parameters": {"item_id": "qualified_id", "amount": "int"}},
+    {"action_id": "commit.remove", "handler_id": "commitment.edit", "parameters": {"item_id": "qualified_id"}},
+    {"action_id": "commit.undo", "handler_id": "commitment.edit", "parameters": {}},
+    {"action_id": "commit.clear", "handler_id": "commitment.edit", "parameters": {}},
+    {"action_id": "commit.repeat", "handler_id": "commitment.edit", "parameters": {}},
+    {"action_id": "commit.rebet", "handler_id": "commitment.edit", "parameters": {}},
+    {"action_id": "commit.confirm", "handler_id": "commitment.edit", "parameters": {}},
+    {"action_id": "play.primary", "handler_id": "play.primary", "parameters": {"commitment_id": "string"}},
+    {"action_id": "resolution.acknowledge", "handler_id": "resolution.ack", "parameters": {}}
   ],
   "staged_commitment": {
     "pending_collection": "pending_items",
@@ -408,8 +422,24 @@
   },
   "handler_registry": [
     {
+      "handler_id": "commitment.edit",
+      "version": 1,
+      "accepted_actions": ["commit.place", "commit.correct", "commit.remove", "commit.undo", "commit.clear", "commit.repeat", "commit.rebet", "commit.confirm"],
+      "accepted_operations": ["staff_offer"],
+      "inputs": {"item_id": "qualified_id", "amount": "int"},
+      "outputs": {"pending_total": "int"},
+      "authority": "game_rules",
+      "persisted_state": ["pending_items"],
+      "transient_state": [],
+      "rng": {"owner": "none", "stream": "none", "consumption": "none"},
+      "emitted_facts": ["commitment.accepted"],
+      "rejection": "side_effect_free"
+    },
+    {
       "handler_id": "play.primary",
       "version": 1,
+      "accepted_actions": ["play.primary"],
+      "accepted_operations": ["apparatus_activate", "staff_react"],
       "inputs": {
         "commitment_id": "string"
       },
@@ -429,6 +459,34 @@
       "emitted_facts": [
         "resolution.completed"
       ],
+      "rejection": "side_effect_free"
+    },
+    {
+      "handler_id": "resolution.ack",
+      "version": 1,
+      "accepted_actions": ["resolution.acknowledge"],
+      "accepted_operations": ["apparatus_reset"],
+      "inputs": {},
+      "outputs": {},
+      "authority": "game_rules",
+      "persisted_state": [],
+      "transient_state": [],
+      "rng": {"owner": "none", "stream": "none", "consumption": "none"},
+      "emitted_facts": ["session.ended"],
+      "rejection": "side_effect_free"
+    },
+    {
+      "handler_id": "energy.project",
+      "version": 1,
+      "accepted_actions": [],
+      "accepted_operations": ["energy_quiet_apparatus", "energy_engaged_staff"],
+      "inputs": {"tier_id": "string"},
+      "outputs": {},
+      "authority": "ritual_projection",
+      "persisted_state": ["energy_tier"],
+      "transient_state": [],
+      "rng": {"owner": "none", "stream": "none", "consumption": "none"},
+      "emitted_facts": [],
       "rejection": "side_effect_free"
     }
   ],
