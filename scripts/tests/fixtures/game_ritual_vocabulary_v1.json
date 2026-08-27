@@ -229,7 +229,14 @@
       ],
       "initial_pose": "idle",
       "initial_behavior": "idle",
-      "fact_reactions": []
+      "fact_reactions": [
+        {
+          "fact_type": "resolution.completed",
+          "operation_ids": [
+            "staff_react"
+          ]
+        }
+      ]
     }
   ],
   "scene_objects": [
@@ -268,7 +275,18 @@
           "minimum_touch_target": 42
         }
       ],
-      "text_safety_regions": []
+      "text_safety_regions": [
+        {
+          "id": "text.hud",
+          "bounds": {
+            "space": "design",
+            "x": 20,
+            "y": 20,
+            "w": 240,
+            "h": 48
+          }
+        }
+      ]
     }
   ],
   "energy": {
@@ -421,7 +439,8 @@
     ],
     "regions": [
       "player.reserve",
-      "layout.primary"
+      "layout.primary",
+      "text.hud"
     ],
     "sealed_host_targets": []
   }

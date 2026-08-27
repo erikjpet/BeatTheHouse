@@ -320,6 +320,62 @@ public projection and authenticated action descriptors; private local state,
 hidden results, journals, tombstones, seals/digests, and fingerprints are never
 presentation or gameplay shortcuts.
 
+### 3.10 Closed nested-definition ledger
+
+Every record below rejects unknown fields. “Optional” means the field may be
+absent; when present it is still typed and bounded. An empty collection is
+explicit, not omitted. User-defined schema maps are the only keyed extension
+points: their keys follow local-id grammar and their values are registered type
+ids (`bool`, `int`, `float`, `string`, `qualified_id`, `string_array`, or
+`int_array`).
+
+| Record | Required fields | Optional fields |
+| --- | --- | --- |
+| phase | `id`, `entry_conditions`, `permitted_actions`, `entry_operations`, `transitions`, `terminal` | — |
+| transition | `id`, `condition`, `next_phase`, `operations` | — |
+| condition: accepted action | `kind`, `action_id` | — |
+| condition: fact | `kind`, `fact_type`, `payload_equals` | — |
+| condition: receipt | `kind`, `receipt_kind` | — |
+| condition: authoritative result | `kind` | — |
+| condition: public state | `kind`, `key`, `value` | — |
+| staged commitment | `pending_collection`, `working_collection`, `resolution_collection`, `funds_authority`, `actions`, `readable_totals` | — |
+| commitment action | `id`, `effect` | — |
+| pointer verb | `id`, `verb`, `source_region`, `target_regions`, `bounds`, `phases`, `accepted_action`, `rejection`, `rejection_effects`, `equivalents` | — |
+| pointer bounds | `space`, `min_distance`, `max_distance` | — |
+| equivalents | `keyboard`, `controller`, `reduced_motion` | — |
+| keyboard/controller equivalent | `action_id`, `target_selection` | — |
+| reduced-motion equivalent | `action_id`, `target_selection`, `staging` | — |
+| actor | `id`, `role`, `anchor`, `poses`, `behavior_states`, `initial_pose`, `initial_behavior`, `fact_reactions` | — |
+| actor fact reaction | `fact_type`, `operation_ids` | — |
+| scene object | `id`, `anchor`, `bounds`, `z_layer`, `visual_states`, `functional_states`, `initial_visual_state`, `initial_functional_state`, `hit_regions`, `text_safety_regions` | — |
+| design rectangle | `space`, `x`, `y`, `w`, `h` | — |
+| hit region | `id`, `bounds`, `minimum_touch_target` | — |
+| text-safety region | `id`, `bounds` | — |
+| energy | `initial_tier`, `tiers` | — |
+| energy tier | `id`, `actor_operations`, `object_operations`, `interaction_operations`, `audio_cues` | — |
+| fact declaration | `fact_type`, `fact_version`, `boundary`, `visibility`, `payload` | — |
+| ritual persistence | `authoritative_serialized`, `derived_projection`, `transient_presentation`, `one_shot_receipted`, `save_boundaries`, `restore_policy` | — |
+| handler | `handler_id`, `version`, `inputs`, `outputs`, `authority`, `persisted_state`, `transient_state`, `rng`, `emitted_facts`, `rejection` | — |
+| handler RNG | `owner`, `stream`, `consumption` | — |
+| declared targets | `anchors`, `regions`, `sealed_host_targets` | — |
+
+Every authored operation record requires exactly `operation_id`, `family`,
+`verb`, `source_owner_id`, `target_id`, and `arguments`. Argument records are
+also closed:
+
+| Family | Verb → exact argument fields |
+| --- | --- |
+| `scene_ops` | `spawn` → `anchor_id, zone_id, state`; `replace` → `replacement_id`; `remove` → `reason`; `move` → `anchor_id, zone_id`; `set_position` → `anchor_id`; `set_visibility` → `visible`; `set_enabled` → `enabled`; `set_state` → `state_slot, state`; `set_appearance` → `appearance` |
+| `interaction_ops` | `add` → `anchor_id, actions, enabled, safe_exit, alternate_exit`; `remove` → `reason`; `replace` → `replacement_id`; `gate` → `enabled, reason`; `augment` → `actions`; `retarget` → `target_id` |
+| `actor_ops` | `spawn` → `anchor_id, pose, behavior, route_request_id`; `despawn` → `reason`; `replace` → `replacement_id`; `set_position` → `anchor_id`; `set_route` → `route_request_id`; `set_pose` → `pose`; `set_behavior` → `behavior` |
+| `transition_ops` | `feedback` → `message`; `stage` → `stage_id, duration_boundaries, reduced_motion_text`; `sound`/`music` → `cue_id`; `scene_change` → `scene_state_id` |
+
+Closed runtime-envelope shapes are fixed separately in §3.2–3.3. Parameters,
+fact payload schemas, handler I/O schemas, and public projections are not open
+records: each is checked against its declaring closed schema or projection
+allowlist. The validation test contains an unknown-field rejection fixture for
+every nested record family above and for every runtime envelope family.
+
 ## 4. Ritual phases and transitions
 
 `ritual_phases` is a nonempty array of records:
@@ -660,25 +716,32 @@ rules engine or a game-specific branch.
 
 ## 15. Consumer conformance
 
-Acceptance requires specification-only conformance matrices for:
+These twelve concrete matrices use only definition content and the closed
+registries above. Names in this table are consumer-owned ids, not shared
+branches.
 
-- ordinary staffed table ritual;
-- high-energy table ritual;
-- security-attention table ritual;
-- ordinary informal/street ritual;
-- interrupted/relocated informal ritual;
-- blackjack;
-- baccarat;
-- roulette;
-- machine games;
-- counter games;
-- bar dice;
-- the showdown duel.
+| Consumer package | Ritual phases | Actors | Scene objects | Generic pointer/action verbs | Persisted boundary state | Registered handlers |
+| --- | --- | --- | --- | --- | --- | --- |
+| ordinary staffed casino table | `betting → dice_offered → aiming_throw → bounce_read → dealer_settlement → betting` | stickperson, two base dealers, box/pit presence, bounded crowd | table, dice pair, working chips, point puck, rail | place/correct/remove/undo/clear/repeat/rebet/confirm; flick or equivalent auto-throw | point state, pending/working wagers, offered dice, authoritative roll ref, phase and settlement receipts | authoritative throw, legal-wager check, itemized settlement |
+| hot/high-stakes table | ordinary phases plus `attention_call` before the next offer | ordinary staff plus pit boss at rail and expanded onlookers | high-stakes marker, opened/blocked rail regions, security position | same verbs; energy uses actor/object/interaction operations | ordinary state plus energy tier, attention fact receipt, moved actor/object states | ordinary handlers plus energy projection and attention publication |
+| security/audit table | `betting → audit_hold → dice_offered → throw → read → dealer_settlement` | dealers, pit boss, security observer, reduced crowd | audit marker, held service, security rail position, table apparatus | place/remove/confirm/flick; gate/retarget interaction operations | held/open service state, attention/heat fact receipts, authoritative roll/settlement refs | ordinary throw/settlement plus audit gate and public attention fact |
+| ordinary street circle | `arrival → cash_commit → dice_offered → throw → read → cash_settlement → cash_commit` | participants, mechanical shooter, lookout, spectators | chalk circle, cash ring, dice, lookout post | place/correct/remove/undo/clear/confirm/flick | cash commitments, working stake, roll ref, phase/settlement receipts | cash-only legality, authoritative throw, cash conservation settlement |
+| interrupted/relocated street circle | `arrival → cash_commit → warning → break_up → escape_or_relocate → terminal_session` | participants, lookout, approaching pressure actor | original circle, alternate circle request, recoverable cash ring, exit interaction | place/remove/confirm before warning; direct-semantic escape/relocate after warning | unresolved-stake recovery, warning receipt, chosen terminal session result, relocation/dispersal public fact | stake recovery, escape/relocate command, public dispersal/relocation fact; scenario runtime alone owns room aftermath |
+| blackjack | `wagering → initial_deal → player_turn → dealer_procedure → settlement → wagering` | dealer, neighbours, pit/security attention | shoe, hand regions, dealer hole-card region, chips, discard rack | place/correct/remove/undo/clear/repeat/rebet/confirm; reveal/hold where authored | shoe/result authority remains game-owned; wager items, hand refs, legal phase, reveal and settlement receipts | authoritative deal, player action, dealer procedure, cheat attempt/result, itemized settlement |
+| baccarat | `wagering → deal → squeeze_or_reveal → third_card_procedure → settlement → wagering` | dealer, neighbours, attention actor | shoe, player/banker hand regions, squeeze card, chips | place/correct/remove/undo/clear/repeat/rebet/confirm/reveal/drag | wager set, authoritative hand refs, squeeze public progress, phase/result/settlement receipts | authoritative deal/third-card rules, bounded squeeze presentation, settlement |
+| roulette | `wagering → commitments_closed → wheel_spin → ball_read → settlement → wagering` | croupier, neighbours, pit/security attention | wheel, ball, semantic betting layout, placed chips, marker | place/correct/remove/undo/clear/repeat/rebet/confirm; flick/hold only as presentation-equivalent spin inputs | itemized wagers, authoritative pocket ref, wheel/ball presentation phase, settlement receipts | wager legality, authoritative spin, chip collection/payout, attention fact |
+| machine games | `credits → commitment → activation → outcome_staging → payout_or_handpay → credits` | attendant, neighbours, security/hand-pay staff | cabinet, credit meter, primary control, outcome machinery, hand-pay lamp | place/confirm/hold or direct-semantic activate; reveal for authored bonus surfaces | credits/commitment refs, authoritative result, bonus substate, hand-pay and payout receipts | authoritative activation, bonus resolver, payout/hand-pay, cheat facts |
+| counter games | `browse → select → commitment → reveal_or_process → settlement → file_or_repeat` | clerk, neighbours, attention actor | rack, counter, selected item, payment region, reveal/process surface | place/correct/remove/undo/clear/confirm/reveal/drag | selected item, paid commitment, authoritative result, partial reveal/process progress, settlement/file receipts | inventory selection, purchase authority, reveal/process result, payout/file |
+| bar dice | `arrival → cash_commit → dice_offered → throw → read → settlement → warning_or_repeat → exit` | participants, mechanical shooter, lookout, bar staff | cash circle, dice, offer point, lookout position, exit interaction | place/correct/remove/undo/clear/confirm/flick/direct-semantic exit | cash stake, authoritative roll, warning phase, recovered stakes, settlement/exit receipts | cash legality, authoritative throw, settlement, warning/dispersal fact publication |
+| Rourke showdown duel | `confrontation → commitment → response → reveal → outcome_staging → exit` | Rourke, player representation, bounded witnesses/security | showdown table, evidence/stakes objects, response regions, exit | place/confirm/reveal/direct-semantic response | shipped duel inputs, authoritative outcome-ladder ref, reveal boundary, selected ending and outcome receipts | existing outcome-ladder authority adapter, response resolver, reveal/ending staging |
 
-Each matrix names only definition content: phases, semantic actors/objects,
-generic verbs, facts, persistence points, and registered handlers. If any
-consumer needs a new shared game-id branch, the contract is rejected and must be
-redesigned before implementation.
+The five table/street packages demonstrate that the reference depth rework can
+be expressed without a special shared branch. The seven Family 1 packages show
+the same for every downstream game family. Consumer handlers retain rules and
+outcome authority; the shared runtime sees only registered ids, closed inputs,
+semantic operations, receipts, and public facts. If implementation discovers a
+need for a new shared game-id branch, this contract is rejected and redesigned
+before that branch is written.
 
 ## 16. Validation errors
 
@@ -706,7 +769,42 @@ The validation test must fail loudly for at least:
 Section 3.8 freezes the error-code namespace and canonical rejection record,
 resolving `ENV-VOCAB-10`.
 
-## 17. Implementation obligations after acceptance
+## 17. Current seam inventory and binding constraints
+
+This inventory records the actual pre-implementation seams at base head
+`7108269b`. It is evidence of compatibility cost, not permission to copy open
+dictionaries into the new contract.
+
+| Source seam | Current behavior | Contract constraint |
+| --- | --- | --- |
+| `scripts/core/game_module.gd::surface_state` | returns optional display/input state; its comment explicitly keeps simulation in `resolve/apply_result` | ritual projection remains display/input only; authoritative results stay game-rules-owned |
+| `GameModule::draw_surface` | concrete module receives the canvas only as draw/hit host and owns game-specific composition | shared runtime prepares generic actor/object records; it never draws or branches on a game id |
+| `surface_action_command` + `surface_command` | legacy click adapter returns normalized `handled`, UI state, selected/action ids, resolve flags, stake hints, preservation, and message fields | later adapter must translate an accepted closed ritual result into this seam without widening the ritual envelope or changing unadopted modules |
+| `surface_pointer_command` | receives semantic surface action/index, `begin/move/end`, design-space position, UI state, run, and environment; default is unhandled | pointer vocabulary preserves design-space input and semantic targets; canvas `cancel` is a side-effect-free abort/return, never an authoritative action |
+| lightweight pointer/auto seams | pointer and auto paths may opt into small UI-state key sets to avoid repeated deep copies | ritual adoption cannot make full state copies or schema evaluation per pointer sample/frame |
+| save/exit seams | `checkpoint_surface_ui_state`, save-specific checkpoint, `foundation_save_ready`, and chunked exit settle separate dismissal, autosave readiness, and bounded settle | persistence policy composes with these boundaries; it does not serialize transient pointer paths or dismiss an unsettled authoritative activity |
+| `surface_spec` | normalizes shared renderer/life/cast/control, animation, audio, block, label, result, and preference fields while allowing module payload | ritual projection is opt-in and additive; all eleven unadopted games retain existing `surface_spec` output/behavior |
+| animation channels | `surface_animation_channel` carries id, active id, duration/start, active/restart, and metadata; canvas owns elapsed presentation | ritual staging reuses these channels; authoritative phase/result never depends on elapsed wall-clock animation |
+| deterministic action time | `GameModule.deterministic_time_msec` prefers explicit surface simulation time and otherwise run simulation time | authoritative outcomes and phase boundaries use run/action authority, not `Time.get_ticks_msec()` |
+| `scripts/games/table_game_visuals.gd` | procedurally draws room/table/dealer/patrons/timer; `dealer_focus_for_state` derives gaze/attention and currently uses ticks for presentation | actor anchors/poses generalize this layer, but current time-based gaze remains presentation-only and cannot drive ritual facts, behavior authority, or outcomes |
+| table patron/dealer state | existing dictionaries already carry dealer profile/focus, holding-card, patron positions/animation offsets, attention and room note | adopted definitions map prepared bounded actor states to these render inputs; unadopted dictionary behavior remains byte-compatible |
+| `scripts/ui/game_surface_canvas.gd` snapshot | shallow snapshot ingestion, state patching, board/design-space conversion, hit snapshots, animation status, and performance counters | prepared ritual projection is applied at boundaries; no second renderer authority or persisted geometry is created |
+| canvas hit registry | click/invisible/exact/hover/cached/drag/hold hit records use rect/action/index plus bounded flags; touch expansion and reverse z-hit traversal already exist | semantic regions compile into these hit records after layout validation; action descriptors must remain authenticated separately from caller hit data |
+| canvas capture/equivalence | drag emits begin/move/end/cancel; keyboard hold emits begin/end at region center; action binding/block reasons are generic | keyboard/controller/reduced-motion equivalents share one semantic action and target validation; focus loss/cancel never charges or advances |
+| canvas reduced motion | suppresses/shortens animation demand and effects while preserving surface state and input | reduced motion may substitute staging only; phase, ordering, availability, facts, and durable boundaries are unchanged |
+| settings/accessibility | `UserSettings` exposes `reduce_motion` and `high_contrast`; canvas expands touch targets and supports keyboard focus/confirm | layout validator must prove touch size, focus access, high-contrast/non-color-only distinctions, reduced motion, and controller-equivalent actions |
+| `scripts/games/scratch_tickets.gd` | adopted evidence for drag/reveal cost: pointer segments mutate UI-local drag state, bounded scratch samples, audio loops/cues, animation channels, and only resolve through nominated legal actions | the new contract must express reveal/drag/rejection without retrofitting or changing this unadopted module; per-sample presentation cannot become generic authority |
+| Scratch persistence | machine/active-ticket state is environment/run-owned; partial physical UI checkpoints survive travel/save, while result settlement is a separate legal action | ritual persistence must separate partial presentation/object progress from authoritative settlement and suppress replayed payout/audio |
+| `scripts/games/coin_pusher.gd` | adopted evidence for hold/drag/live-loop cost: pointer charge/carriage/drop commands, realtime state patches, motion signature/liveness, and solver-owned results | the contract reuses semantic place/hold and liveness channels but does not absorb continuous solver behavior into generic ritual phases |
+| Coin Pusher save/exit | live machine reaches `durable_ready`; dismissal uses chunked settle and a compact settled snapshot; save checkpoint may wait | ritual save readiness must respect game-owned settle policy and cannot persist a derived live render snapshot as authority |
+| `performance_liveness_guard.gd` | requires an enabled metric, advancing liveness counter, minimum advance, and elapsed time before accepting a cost | every adopted animated surface supplies an advancing liveness counter; idle cost `0.000` without liveness evidence fails |
+| `RunState` save boundary | `to_save_snapshot` owns deep-copy/normalization; restore migrates saved records and preserves game/environment ownership | ritual serialization is a bounded member of the existing save, migration, and environment snapshot boundary; projections, seals, and private journals never round-trip as caller authority |
+
+The implementation reviewer must compare these seams again at its actual base
+head. Any changed production API updates the adapter plan, not the frozen
+semantic invariants.
+
+## 18. Implementation obligations after acceptance
 
 The later implementation squad, not this contract-authoring package, must:
 

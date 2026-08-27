@@ -120,6 +120,10 @@ from an implementation rather than specified, or weakened to match a schedule.
   charge-capable rejection paths, missing actor states, missing object bounds,
   metadata-only props, music/text-only energy, unsafe executable references,
   invalid ids/targets, receipt ambiguity, and persistence omissions.
+- [ ] Every nested definition and runtime-envelope record family has a frozen
+  required/optional field shape, rejects unknown fields, and has a focused
+  unknown-field negative fixture; declared payload/I/O maps validate ids and
+  registered value types rather than accepting arbitrary records.
 - [ ] A static neutrality scan proves shared contract vocabulary and fixtures
   contain no craps id, special-case switch, or rules term.
 - [ ] A consumer conformance matrix shows how ordinary casino craps, hot table,
@@ -129,6 +133,9 @@ from an implementation rather than specified, or weakened to match a schedule.
 - [ ] A Family 1 matrix shows blackjack, baccarat, roulette, machine games,
   counter games, bar dice, and the duel can each name phases, actors, objects,
   verbs, and persistence using only the contract and bounded extension points.
+- [ ] The current-seam inventory cites actual GameModule, table visual/canvas,
+  Scratch Tickets, Coin Pusher, accessibility, save/restore, and liveness APIs
+  and records the compatibility constraint each imposes.
 - [ ] The validation command, duration, exit code, and exact tested commit are
   recorded.
 

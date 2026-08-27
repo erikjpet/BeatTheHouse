@@ -74,6 +74,7 @@ function Test-RitualDefinition {
 
     $phaseById = @{}
     foreach ($phase in @($Definition.ritual_phases)) {
+        Add-ClosedShapeErrors $errors "phase" $phase @("id", "entry_conditions", "permitted_actions", "entry_operations", "transitions", "terminal")
         $phaseId = [string]$phase.id
         if (-not (Test-LocalId $phaseId)) {
             Add-Error $errors "phase id must be a local id"
@@ -81,6 +82,18 @@ function Test-RitualDefinition {
             Add-Error $errors "duplicate phase id: $phaseId"
         } else {
             $phaseById[$phaseId] = $phase
+        }
+        foreach ($condition in @($phase.entry_conditions)) {
+            $conditionFields = @{
+                accepted_action = @("kind", "action_id")
+                fact = @("kind", "fact_type", "payload_equals")
+                receipt_present = @("kind", "receipt_kind")
+                authoritative_result_present = @("kind")
+                public_state_equals = @("kind", "key", "value")
+            }
+            $kind = [string]$condition.kind
+            if (-not $conditionFields.ContainsKey($kind)) { Add-Error $errors "unknown condition kind: $kind" }
+            else { Add-ClosedShapeErrors $errors "condition" $condition $conditionFields[$kind] }
         }
     }
     if ($phaseById.Count -eq 0) { Add-Error $errors "ritual_phases must not be empty" }
@@ -100,6 +113,17 @@ function Test-RitualDefinition {
         $permitted = @($phase.permitted_actions)
         $transitionKeys = [System.Collections.Generic.HashSet[string]]::new()
         foreach ($transition in @($phase.transitions)) {
+            Add-ClosedShapeErrors $errors "transition" $transition @("id", "condition", "next_phase", "operations")
+            $transitionConditionFields = @{
+                accepted_action = @("kind", "action_id")
+                fact = @("kind", "fact_type", "payload_equals")
+                receipt_present = @("kind", "receipt_kind")
+                authoritative_result_present = @("kind")
+                public_state_equals = @("kind", "key", "value")
+            }
+            $transitionKind = [string]$transition.condition.kind
+            if (-not $transitionConditionFields.ContainsKey($transitionKind)) { Add-Error $errors "unknown transition condition kind: $transitionKind" }
+            else { Add-ClosedShapeErrors $errors "transition condition" $transition.condition $transitionConditionFields[$transitionKind] }
             if (-not (Test-LocalId ([string]$transition.id))) { Add-Error $errors "transition id must be a local id" }
             $next = [string]$transition.next_phase
             if (-not $phaseById.ContainsKey($next)) {
@@ -125,6 +149,10 @@ function Test-RitualDefinition {
         if (-not $reachable.Contains($phaseId)) { Add-Error $errors "unreachable phase: $phaseId" }
     }
 
+    Add-ClosedShapeErrors $errors "staged commitment" $Definition.staged_commitment @("pending_collection", "working_collection", "resolution_collection", "funds_authority", "actions", "readable_totals")
+    foreach ($commitAction in @($Definition.staged_commitment.actions)) {
+        Add-ClosedShapeErrors $errors "commitment action" $commitAction @("id", "effect")
+    }
     $commitActions = @($Definition.staged_commitment.actions | ForEach-Object { [string]$_.id })
     if ("commit.confirm" -notin $commitActions) { Add-Error $errors "staged commitment requires confirm" }
     if (("commit.remove" -notin $commitActions) -and ("commit.correct" -notin $commitActions)) {
@@ -144,6 +172,12 @@ function Test-RitualDefinition {
         foreach ($action in @($phase.permitted_actions)) { [void]$allActions.Add([string]$action) }
     }
     foreach ($verb in @($Definition.pointer_verbs)) {
+        Add-ClosedShapeErrors $errors "pointer verb" $verb @("id", "verb", "source_region", "target_regions", "bounds", "phases", "accepted_action", "rejection", "rejection_effects", "equivalents")
+        Add-ClosedShapeErrors $errors "pointer bounds" $verb.bounds @("space", "min_distance", "max_distance")
+        Add-ClosedShapeErrors $errors "pointer equivalents" $verb.equivalents @("keyboard", "controller", "reduced_motion")
+        Add-ClosedShapeErrors $errors "keyboard equivalent" $verb.equivalents.keyboard @("action_id", "target_selection")
+        Add-ClosedShapeErrors $errors "controller equivalent" $verb.equivalents.controller @("action_id", "target_selection")
+        Add-ClosedShapeErrors $errors "reduced motion equivalent" $verb.equivalents.reduced_motion @("action_id", "target_selection", "staging")
         if ([string]$verb.verb -notin @("drag", "hold", "flick", "place", "reveal")) {
             Add-Error $errors "unregistered pointer verb: $($verb.verb)"
         }
@@ -183,16 +217,22 @@ function Test-RitualDefinition {
 
     $actorIds = [System.Collections.Generic.HashSet[string]]::new()
     foreach ($actor in @($Definition.actors)) {
+        Add-ClosedShapeErrors $errors "actor" $actor @("id", "role", "anchor", "poses", "behavior_states", "initial_pose", "initial_behavior", "fact_reactions")
         [void]$actorIds.Add([string]$actor.id)
         if ([string]::IsNullOrWhiteSpace([string]$actor.anchor)) { Add-Error $errors "actor anchor is required" }
         if (@($actor.poses).Count -eq 0) { Add-Error $errors "actor poses must be bounded and nonempty" }
         if (@($actor.behavior_states).Count -eq 0) { Add-Error $errors "actor behavior states must be bounded and nonempty" }
         if ([string]$actor.initial_pose -notin @($actor.poses)) { Add-Error $errors "actor initial pose is not declared" }
         if ([string]$actor.initial_behavior -notin @($actor.behavior_states)) { Add-Error $errors "actor initial behavior is not declared" }
+        foreach ($reaction in @($actor.fact_reactions)) {
+            Add-ClosedShapeErrors $errors "actor fact reaction" $reaction @("fact_type", "operation_ids")
+        }
     }
 
     $objectIds = [System.Collections.Generic.HashSet[string]]::new()
     foreach ($object in @($Definition.scene_objects)) {
+        Add-ClosedShapeErrors $errors "scene object" $object @("id", "anchor", "bounds", "z_layer", "visual_states", "functional_states", "initial_visual_state", "initial_functional_state", "hit_regions", "text_safety_regions")
+        Add-ClosedShapeErrors $errors "scene object bounds" $object.bounds @("space", "x", "y", "w", "h")
         [void]$objectIds.Add([string]$object.id)
         if ([string]::IsNullOrWhiteSpace([string]$object.anchor)) { Add-Error $errors "scene object anchor is required" }
         if ($null -eq $object.bounds -or [int]$object.bounds.w -le 0 -or [int]$object.bounds.h -le 0) {
@@ -202,29 +242,51 @@ function Test-RitualDefinition {
             Add-Error $errors "metadata-only scene object is forbidden"
         }
         foreach ($region in @($object.hit_regions)) {
+            Add-ClosedShapeErrors $errors "hit region" $region @("id", "bounds", "minimum_touch_target")
+            Add-ClosedShapeErrors $errors "hit region bounds" $region.bounds @("space", "x", "y", "w", "h")
             if ([int]$region.bounds.w -le 0 -or [int]$region.bounds.h -le 0) {
                 Add-Error $errors "hit region requires positive bounds"
             }
         }
+        foreach ($region in @($object.text_safety_regions)) {
+            Add-ClosedShapeErrors $errors "text safety region" $region @("id", "bounds")
+            Add-ClosedShapeErrors $errors "text safety bounds" $region.bounds @("space", "x", "y", "w", "h")
+            if ([int]$region.bounds.w -le 0 -or [int]$region.bounds.h -le 0) { Add-Error $errors "text safety region requires positive bounds" }
+        }
     }
 
+    Add-ClosedShapeErrors $errors "energy" $Definition.energy @("initial_tier", "tiers")
     foreach ($tier in @($Definition.energy.tiers)) {
+        Add-ClosedShapeErrors $errors "energy tier" $tier @("id", "actor_operations", "object_operations", "interaction_operations", "audio_cues")
         $materialCount = @($tier.actor_operations).Count + @($tier.object_operations).Count + @($tier.interaction_operations).Count
         if ($materialCount -eq 0) { Add-Error $errors "energy tier must change actor, object, or interactable: $($tier.id)" }
     }
 
     foreach ($fact in @($Definition.game_facts)) {
+        Add-ClosedShapeErrors $errors "fact declaration" $fact @("fact_type", "fact_version", "boundary", "visibility", "payload")
         if (-not (Test-QualifiedId ([string]$fact.fact_type))) { Add-Error $errors "fact type must be a qualified id" }
         if ([int]$fact.fact_version -lt 1) { Add-Error $errors "fact version must be positive" }
         if ([string]$fact.boundary -ne "action") { Add-Error $errors "fact must publish at an action boundary" }
         if ([string]$fact.visibility -ne "public") { Add-Error $errors "fixture fact must have public visibility" }
         if (@(Property-Names $fact.payload).Count -eq 0) { Add-Error $errors "fact payload must be typed" }
+        foreach ($payloadKey in (Property-Names $fact.payload)) {
+            if (-not (Test-LocalId $payloadKey)) { Add-Error $errors "fact payload key must be a local id" }
+            if ([string]$fact.payload.$payloadKey -notin @("bool", "int", "float", "string", "qualified_id", "string_array", "int_array")) { Add-Error $errors "fact payload type is not registered" }
+        }
     }
 
     foreach ($handler in @($Definition.handler_registry)) {
+        Add-ClosedShapeErrors $errors "handler" $handler @("handler_id", "version", "inputs", "outputs", "authority", "persisted_state", "transient_state", "rng", "emitted_facts", "rejection")
+        Add-ClosedShapeErrors $errors "handler rng" $handler.rng @("owner", "stream", "consumption")
         if (-not (Test-QualifiedId ([string]$handler.handler_id))) { Add-Error $errors "handler id must be a qualified id" }
         foreach ($key in @("inputs", "outputs", "authority", "persisted_state", "transient_state", "rng", "rejection")) {
             if ($key -notin (Property-Names $handler)) { Add-Error $errors "handler is missing contract field: $key" }
+        }
+        foreach ($schemaName in @("inputs", "outputs")) {
+            foreach ($schemaKey in (Property-Names $handler.$schemaName)) {
+                if (-not (Test-LocalId $schemaKey)) { Add-Error $errors "handler $schemaName key must be a local id" }
+                if ([string]$handler.$schemaName.$schemaKey -notin @("bool", "int", "float", "string", "qualified_id", "string_array", "int_array")) { Add-Error $errors "handler $schemaName type is not registered" }
+            }
         }
     }
 
@@ -253,6 +315,39 @@ function Test-RitualDefinition {
         }
         if (-not (Test-QualifiedId ([string]$operation.source_owner_id))) { Add-Error $errors "operation source owner must be qualified" }
         if (-not (Test-QualifiedId ([string]$operation.target_id))) { Add-Error $errors "operation target must be qualified" }
+        $argumentShapes = @{
+            "scene_ops.spawn" = @("anchor_id", "zone_id", "state")
+            "scene_ops.replace" = @("replacement_id")
+            "scene_ops.remove" = @("reason")
+            "scene_ops.move" = @("anchor_id", "zone_id")
+            "scene_ops.set_position" = @("anchor_id")
+            "scene_ops.set_visibility" = @("visible")
+            "scene_ops.set_enabled" = @("enabled")
+            "scene_ops.set_state" = @("state_slot", "state")
+            "scene_ops.set_appearance" = @("appearance")
+            "interaction_ops.add" = @("anchor_id", "actions", "enabled", "safe_exit", "alternate_exit")
+            "interaction_ops.remove" = @("reason")
+            "interaction_ops.replace" = @("replacement_id")
+            "interaction_ops.gate" = @("enabled", "reason")
+            "interaction_ops.augment" = @("actions")
+            "interaction_ops.retarget" = @("target_id")
+            "actor_ops.spawn" = @("anchor_id", "pose", "behavior", "route_request_id")
+            "actor_ops.despawn" = @("reason")
+            "actor_ops.replace" = @("replacement_id")
+            "actor_ops.set_position" = @("anchor_id")
+            "actor_ops.set_route" = @("route_request_id")
+            "actor_ops.set_pose" = @("pose")
+            "actor_ops.set_behavior" = @("behavior")
+            "transition_ops.feedback" = @("message")
+            "transition_ops.stage" = @("stage_id", "duration_boundaries", "reduced_motion_text")
+            "transition_ops.sound" = @("cue_id")
+            "transition_ops.music" = @("cue_id")
+            "transition_ops.scene_change" = @("scene_state_id")
+        }
+        $operationKey = "$family.$($operation.verb)"
+        if ($argumentShapes.ContainsKey($operationKey)) {
+            Add-ClosedShapeErrors $errors "operation arguments $operationKey" $operation.arguments $argumentShapes[$operationKey]
+        }
     }
 
     foreach ($requiredPersistence in @("authoritative_serialized", "derived_projection", "transient_presentation", "one_shot_receipted", "save_boundaries", "restore_policy")) {
@@ -260,6 +355,8 @@ function Test-RitualDefinition {
             Add-Error $errors "persistence is missing: $requiredPersistence"
         }
     }
+    Add-ClosedShapeErrors $errors "ritual persistence" $Definition.ritual_persistence @("authoritative_serialized", "derived_projection", "transient_presentation", "one_shot_receipted", "save_boundaries", "restore_policy")
+    Add-ClosedShapeErrors $errors "declared targets" $Definition.declared_targets @("anchors", "regions", "sealed_host_targets")
     foreach ($receiptField in @("phase_id", "authoritative_result_refs", "receipts", "fingerprints")) {
         if ($receiptField -notin @($Definition.ritual_persistence.authoritative_serialized)) {
             Add-Error $errors "authoritative persistence is missing: $receiptField"
@@ -279,6 +376,7 @@ function Test-EnvelopeFixture {
     param([Parameter(Mandatory)]$Fixture)
     $errors = [System.Collections.Generic.List[string]]::new()
     Add-ClosedShapeErrors $errors "envelope fixture" $Fixture @("vocabulary_source", "boundary", "command", "result", "rejection", "fact", "operation", "operation_result", "receipt")
+    Add-ClosedShapeErrors $errors "vocabulary source" $Fixture.vocabulary_source @("commit", "path")
     if ([string]$Fixture.vocabulary_source.commit -ne "749390ce") { Add-Error $errors "vocabulary source commit mismatch" }
     if ([string]$Fixture.vocabulary_source.path -ne "docs/todo/env06_6_runtime_vocabulary_and_delivery_handoff.md") { Add-Error $errors "vocabulary source path mismatch" }
 
@@ -427,6 +525,42 @@ $bad = Copy-Definition $definition
 $bad.ritual_persistence.authoritative_serialized = @($bad.ritual_persistence.authoritative_serialized | Where-Object { $_ -ne "receipts" })
 Assert-Rejected "missing receipts" $bad "authoritative persistence is missing: receipts"; $negativeCount++
 
+$unknownFieldCases = @(
+    @{ name = "phase"; expected = "phase unknown field"; mutate = { param($x) $x.ritual_phases[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "condition"; expected = "condition unknown field"; mutate = { param($x) $x.ritual_phases[1].entry_conditions[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "transition"; expected = "transition unknown field"; mutate = { param($x) $x.ritual_phases[0].transitions[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "transition condition"; expected = "transition condition unknown field"; mutate = { param($x) $x.ritual_phases[0].transitions[0].condition | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "staged commitment"; expected = "staged commitment unknown field"; mutate = { param($x) $x.staged_commitment | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "commitment action"; expected = "commitment action unknown field"; mutate = { param($x) $x.staged_commitment.actions[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "pointer verb"; expected = "pointer verb unknown field"; mutate = { param($x) $x.pointer_verbs[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "pointer bounds"; expected = "pointer bounds unknown field"; mutate = { param($x) $x.pointer_verbs[0].bounds | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "pointer equivalents"; expected = "pointer equivalents unknown field"; mutate = { param($x) $x.pointer_verbs[0].equivalents | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "equivalent action"; expected = "keyboard equivalent unknown field"; mutate = { param($x) $x.pointer_verbs[0].equivalents.keyboard | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "actor"; expected = "actor unknown field"; mutate = { param($x) $x.actors[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "actor fact reaction"; expected = "actor fact reaction unknown field"; mutate = { param($x) $x.actors[0].fact_reactions[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "scene object"; expected = "scene object unknown field"; mutate = { param($x) $x.scene_objects[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "scene object bounds"; expected = "scene object bounds unknown field"; mutate = { param($x) $x.scene_objects[0].bounds | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "hit region"; expected = "hit region unknown field"; mutate = { param($x) $x.scene_objects[0].hit_regions[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "hit region bounds"; expected = "hit region bounds unknown field"; mutate = { param($x) $x.scene_objects[0].hit_regions[0].bounds | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "text safety region"; expected = "text safety region unknown field"; mutate = { param($x) $x.scene_objects[0].text_safety_regions[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "text safety bounds"; expected = "text safety bounds unknown field"; mutate = { param($x) $x.scene_objects[0].text_safety_regions[0].bounds | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "energy"; expected = "energy unknown field"; mutate = { param($x) $x.energy | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "energy tier"; expected = "energy tier unknown field"; mutate = { param($x) $x.energy.tiers[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "operation"; expected = "operation unknown field"; mutate = { param($x) $x.ritual_phases[0].transitions[0].operations[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "operation arguments"; expected = "operation arguments actor_ops.set_pose unknown field"; mutate = { param($x) $x.ritual_phases[0].transitions[0].operations[0].arguments | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "fact declaration"; expected = "fact declaration unknown field"; mutate = { param($x) $x.game_facts[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "persistence"; expected = "ritual persistence unknown field"; mutate = { param($x) $x.ritual_persistence | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "handler"; expected = "handler unknown field"; mutate = { param($x) $x.handler_registry[0] | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "handler rng"; expected = "handler rng unknown field"; mutate = { param($x) $x.handler_registry[0].rng | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "declared targets"; expected = "declared targets unknown field"; mutate = { param($x) $x.declared_targets | Add-Member -NotePropertyName extra -NotePropertyValue $true } }
+)
+foreach ($case in $unknownFieldCases) {
+    $bad = Copy-Definition $definition
+    & $case.mutate $bad
+    Assert-Rejected "nested unknown field $($case.name)" $bad $case.expected
+    $negativeCount++
+}
+
 $badEnvelope = Copy-Definition $envelopes
 $badEnvelope.command | Add-Member -NotePropertyName caller_authority -NotePropertyValue $true
 Assert-EnvelopeRejected "open command envelope" $badEnvelope "command unknown field"; $negativeCount++
@@ -447,12 +581,61 @@ $badEnvelope = Copy-Definition $envelopes
 $badEnvelope.command.authenticated_action.PSObject.Properties.Remove("content_fingerprint")
 Assert-EnvelopeRejected "unauthenticated action" $badEnvelope "authenticated action missing field"; $negativeCount++
 
+$envelopeUnknownCases = @(
+    @{ name = "vocabulary source"; expected = "vocabulary source unknown field"; mutate = { param($x) $x.vocabulary_source | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "boundary"; expected = "boundary unknown field"; mutate = { param($x) $x.boundary | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "result"; expected = "result unknown field"; mutate = { param($x) $x.result | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "rejection"; expected = "rejection unknown field"; mutate = { param($x) $x.rejection | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "fact"; expected = "fact unknown field"; mutate = { param($x) $x.fact | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "operation envelope"; expected = "operation envelope unknown field"; mutate = { param($x) $x.operation | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "operation result"; expected = "operation result unknown field"; mutate = { param($x) $x.operation_result | Add-Member -NotePropertyName extra -NotePropertyValue $true } },
+    @{ name = "receipt"; expected = "receipt unknown field"; mutate = { param($x) $x.receipt | Add-Member -NotePropertyName extra -NotePropertyValue $true } }
+)
+foreach ($case in $envelopeUnknownCases) {
+    $badEnvelope = Copy-Definition $envelopes
+    & $case.mutate $badEnvelope
+    Assert-EnvelopeRejected "nested envelope unknown field $($case.name)" $badEnvelope $case.expected
+    $negativeCount++
+}
+
 $contractText = Get-Content -LiteralPath $contractPath -Raw
 $checklistText = Get-Content -LiteralPath $checklistPath -Raw
 for ($index = 1; $index -le 14; $index++) {
     $marker = "ENV-VOCAB-{0:D2}" -f $index
     if (-not ($contractText.Contains($marker) -or $checklistText.Contains($marker))) {
         throw "Missing frozen handoff mapping marker: $marker"
+    }
+}
+
+$consumerMarkers = @(
+    "ordinary staffed casino table", "hot/high-stakes table",
+    "security/audit table", "ordinary street circle",
+    "interrupted/relocated street circle", "blackjack", "baccarat",
+    "roulette", "machine games", "counter games", "bar dice",
+    "Rourke showdown duel"
+)
+foreach ($consumer in $consumerMarkers) {
+    if ($contractText.IndexOf("| $consumer |", [System.StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        throw "Missing concrete consumer matrix row: $consumer"
+    }
+}
+
+$seamMarkers = @(
+    "scripts/core/game_module.gd::surface_state",
+    "GameModule::draw_surface",
+    "surface_action_command",
+    "surface_pointer_command",
+    "checkpoint_surface_ui_state",
+    "scripts/games/table_game_visuals.gd",
+    "scripts/ui/game_surface_canvas.gd",
+    "scripts/games/scratch_tickets.gd",
+    "scripts/games/coin_pusher.gd",
+    "performance_liveness_guard.gd",
+    "RunState"
+)
+foreach ($seam in $seamMarkers) {
+    if ($contractText.IndexOf($seam, [System.StringComparison]::OrdinalIgnoreCase) -lt 0) {
+        throw "Missing current seam inventory entry: $seam"
     }
 }
 
