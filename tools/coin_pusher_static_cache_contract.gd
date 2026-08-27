@@ -3,11 +3,15 @@ extends SceneTree
 const MainScene := preload("res://scenes/main.tscn")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const DESIGN_SIZE := Vector2(900, 430)
-const REPORT_PATH := "res://.tmp/fix06_13_static_cache_contract/report.json"
 
 var failures: Array[String] = []
 var checks: Array[Dictionary] = []
 var observations: Dictionary = {}
+var report_path := ""
+var artifact_dir := ""
+var source_head := ""
+var source_tree := ""
+var build_identity := ""
 
 
 func _init() -> void:
@@ -15,6 +19,18 @@ func _init() -> void:
 
 
 func _run() -> void:
+	_parse_args()
+	if report_path.is_empty() or source_head.is_empty() or source_tree.is_empty() or build_identity.is_empty():
+		failures.append("required_identity_arguments")
+		_finish()
+		return
+	var absolute_report := ProjectSettings.globalize_path(report_path)
+	if FileAccess.file_exists(absolute_report):
+		failures.append("refuse_report_overwrite")
+		print("COIN_PUSHER_STATIC_CACHE_CONTRACT_REFUSED existing_report=%s" % absolute_report)
+		quit(2)
+		return
+	artifact_dir = report_path.get_base_dir().path_join("pixel_pairs")
 	root.size = Vector2i(1280, 720)
 	var app: Control = MainScene.instantiate()
 	app.set("continuous_environment_clock_enabled", false)
@@ -141,7 +157,163 @@ func _run() -> void:
 	_check(str(locked_after.get("key", "")) != str(locked_before.get("key", "")), "locked_palette_invalidates")
 	_check(int(locked_after.get("render_serial", 0)) > int(locked_before.get("render_serial", 0)), "locked_palette_rebuilt")
 
+	# Compare actual pixels from the production GameSurfaceCanvas at the shipped
+	# 1280x720 viewport. The matrix crosses every authored variation with normal
+	# and reduced motion, locked and unlocked palettes, and grounded/airborne
+	# bodies so shadows are exercised rather than inferred from command order.
+	reentry_canvas.queue_free()
+	await _frames(2)
+	var production_rect: Rect2 = production_canvas.get_global_rect()
+	var comparison_viewport := SubViewport.new()
+	comparison_viewport.name = "CoinPusherShippedPixelParityViewport"
+	comparison_viewport.size = Vector2i(1280, 720)
+	comparison_viewport.disable_3d = true
+	comparison_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	root.add_child(comparison_viewport)
+	var comparison_canvas: Control = GameSurfaceCanvasScript.new()
+	comparison_canvas.name = "CoinPusherPixelParitySurface"
+	comparison_canvas.position = production_rect.position
+	comparison_canvas.size = production_rect.size
+	comparison_viewport.add_child(comparison_canvas)
+	comparison_canvas.call("set_game_module", game)
+	var pixel_pairs: Array = []
+	for variation_id in ["quarter_falls", "jackpot_ridge", "vault_drop"]:
+		for reduce_motion in [false, true]:
+			for locked in [false, true]:
+				for airborne in [false, true]:
+					var case_id := "%s_%s_%s_%s" % [variation_id, "reduced" if reduce_motion else "normal", "locked" if locked else "unlocked", "airborne" if airborne else "grounded"]
+					var case_state := _pixel_case_state(game, snapshot, variation_id, reduce_motion, locked, airborne)
+					var pair := await _capture_pixel_pair(comparison_viewport, comparison_canvas, renderer, case_state, case_id)
+					pixel_pairs.append(pair)
+					_check(bool(pair.get("visually_equivalent", false)), "pixel_pair_%s" % case_id)
+	observations["pixel_pairs"] = pixel_pairs
+
 	_finish()
+
+
+func _parse_args() -> void:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--report="):
+			report_path = argument.trim_prefix("--report=")
+		elif argument.begins_with("--source-head="):
+			source_head = argument.trim_prefix("--source-head=")
+		elif argument.begins_with("--source-tree="):
+			source_tree = argument.trim_prefix("--source-tree=")
+		elif argument.begins_with("--build-identity="):
+			build_identity = argument.trim_prefix("--build-identity=")
+
+
+func _pixel_case_state(game: GameModule, snapshot: Dictionary, variation_id: String, reduce_motion: bool, locked: bool, airborne: bool) -> Dictionary:
+	var result := snapshot.duplicate(true)
+	var machine_definition: Dictionary = game.call("_machine_definition", variation_id)
+	var geometry: Dictionary = (machine_definition.get("geometry", {}) as Dictionary).duplicate(true)
+	var apparatus: Dictionary = (machine_definition.get("apparatus", {}) as Dictionary).duplicate(true)
+	apparatus["drop_y"] = int(geometry.get("drop_y", 73000))
+	var cabinet: Dictionary = game.call("_resolved_cabinet", variation_id)
+	result["coin_pusher_variation_id"] = variation_id
+	result["coin_pusher_cabinet"] = cabinet
+	result["coin_pusher_geometry"] = geometry
+	result["coin_pusher_apparatus"] = apparatus
+	result["coin_pusher_static_content_key"] = JSON.stringify([cabinet, geometry, apparatus], "", true).sha256_text()
+	result["coin_pusher_coin_height"] = int((machine_definition.get("coins", {}) as Dictionary).get("height", 950))
+	result["coin_pusher_coin_radius"] = int((machine_definition.get("coins", {}) as Dictionary).get("radius", 2350))
+	result["reduce_motion"] = reduce_motion
+	result["coin_pusher_locked"] = locked
+	if airborne:
+		var current: Array = result.get("coin_pusher_bodies", []).duplicate(true)
+		var previous: Array = result.get("coin_pusher_previous_bodies", current).duplicate(true)
+		if not current.is_empty() and typeof(current[0]) == TYPE_DICTIONARY:
+			(current[0] as Dictionary)["rest_state"] = "falling"
+			(current[0] as Dictionary)["z"] = maxi(12000, int((current[0] as Dictionary).get("z", 0)) + 8000)
+		if not previous.is_empty() and typeof(previous[0]) == TYPE_DICTIONARY:
+			(previous[0] as Dictionary)["rest_state"] = "falling"
+			(previous[0] as Dictionary)["z"] = maxi(10000, int((previous[0] as Dictionary).get("z", 0)) + 6000)
+		result["coin_pusher_bodies"] = current
+		result["coin_pusher_previous_bodies"] = previous
+	return result
+
+
+func _capture_pixel_pair(viewport: SubViewport, canvas: Control, renderer: RefCounted, state: Dictionary, case_id: String) -> Dictionary:
+	var uncached_state := state.duplicate(true)
+	uncached_state["coin_pusher_static_cache_test"] = false
+	canvas.call("render_game_snapshot", uncached_state)
+	canvas.queue_redraw()
+	await _frames(3)
+	await RenderingServer.frame_post_draw
+	var uncached := viewport.get_texture().get_image()
+	var uncached_path := artifact_dir.path_join(case_id + "_uncached.png")
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(artifact_dir))
+	uncached.save_png(ProjectSettings.globalize_path(uncached_path))
+
+	var cached_state := state.duplicate(true)
+	cached_state["coin_pusher_static_cache_test"] = true
+	canvas.call("render_game_snapshot", cached_state)
+	canvas.queue_redraw()
+	for _index in range(12):
+		await process_frame
+		if bool(_cache_state(renderer).get("active", false)):
+			break
+	canvas.queue_redraw()
+	await _frames(3)
+	await RenderingServer.frame_post_draw
+	var cached := viewport.get_texture().get_image()
+	var cached_path := artifact_dir.path_join(case_id + "_cached.png")
+	cached.save_png(ProjectSettings.globalize_path(cached_path))
+
+	var uncached_bytes := uncached.get_data()
+	var cached_bytes := cached.get_data()
+	var differing_bytes := 0
+	var max_channel_delta := 0
+	var absolute_delta_sum := 0
+	var pixels_over_two := 0
+	var pixels_over_sixteen := 0
+	var difference_bounds := Rect2i()
+	if uncached_bytes.size() != cached_bytes.size():
+		differing_bytes = maxi(uncached_bytes.size(), cached_bytes.size())
+		max_channel_delta = 255
+	else:
+		for pixel_index in range(uncached_bytes.size() / 4):
+			var pixel_max := 0
+			for channel in range(4):
+				var byte_index := pixel_index * 4 + channel
+				var delta := absi(int(uncached_bytes[byte_index]) - int(cached_bytes[byte_index]))
+				absolute_delta_sum += delta
+				if delta > 0:
+					differing_bytes += 1
+					max_channel_delta = maxi(max_channel_delta, delta)
+					pixel_max = maxi(pixel_max, delta)
+			if pixel_max > 2:
+				pixels_over_two += 1
+				var point := Vector2i(pixel_index % uncached.get_width(), pixel_index / uncached.get_width())
+				difference_bounds = Rect2i(point, Vector2i.ONE) if difference_bounds.size == Vector2i.ZERO else difference_bounds.expand(point)
+			if pixel_max > 16:
+				pixels_over_sixteen += 1
+	var mean_absolute_channel_delta := float(absolute_delta_sum) / float(maxi(1, uncached_bytes.size()))
+	# Transparent static layers are rendered once and then alpha-composited;
+	# their premultiplication quantization can differ from direct drawing by a
+	# few channel levels. Bound both aggregate error and larger edge outliers.
+	var visually_equivalent := uncached_bytes.size() == cached_bytes.size() \
+		and mean_absolute_channel_delta <= 0.10 \
+		and pixels_over_two <= 1 \
+		and pixels_over_sixteen <= 1
+	return {
+		"case_id": case_id,
+		"viewport_size": {"width": viewport.size.x, "height": viewport.size.y},
+		"surface_rect": {"x": canvas.position.x, "y": canvas.position.y, "width": canvas.size.x, "height": canvas.size.y},
+		"uncached_png": uncached_path,
+		"uncached_sha256": FileAccess.get_sha256(ProjectSettings.globalize_path(uncached_path)),
+		"cached_png": cached_path,
+		"cached_sha256": FileAccess.get_sha256(ProjectSettings.globalize_path(cached_path)),
+		"byte_count": uncached_bytes.size(),
+		"differing_bytes": differing_bytes,
+		"max_channel_delta": max_channel_delta,
+		"mean_absolute_channel_delta": mean_absolute_channel_delta,
+		"pixels_over_two": pixels_over_two,
+		"pixels_over_sixteen": pixels_over_sixteen,
+		"difference_bounds_over_two": difference_bounds,
+		"exact_match": differing_bytes == 0,
+		"visually_equivalent": visually_equivalent,
+	}
 
 
 func _cache_state(renderer: RefCounted) -> Dictionary:
@@ -162,6 +334,10 @@ func _frames(count: int) -> void:
 func _finish() -> void:
 	var report := {
 		"tool": "coin_pusher_static_cache_contract",
+		"schema": "coin_pusher_static_cache_contract_v2",
+		"source_head": source_head,
+		"source_tree": source_tree,
+		"build_identity": build_identity,
 		"production_draw_path": true,
 		"design_size": {"width": int(DESIGN_SIZE.x), "height": int(DESIGN_SIZE.y)},
 		"passed": failures.is_empty(),
@@ -169,8 +345,12 @@ func _finish() -> void:
 		"checks": checks,
 		"observations": observations,
 	}
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(REPORT_PATH.get_base_dir()))
-	var file := FileAccess.open(REPORT_PATH, FileAccess.WRITE)
+	if report_path.is_empty():
+		print("COIN_PUSHER_STATIC_CACHE_CONTRACT_FAIL %s" % JSON.stringify(report))
+		quit(1)
+		return
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(report_path.get_base_dir()))
+	var file := FileAccess.open(report_path, FileAccess.WRITE)
 	if file != null:
 		file.store_string(JSON.stringify(report, "\t") + "\n")
 		file.close()

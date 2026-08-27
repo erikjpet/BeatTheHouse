@@ -901,3 +901,52 @@ below to jump to a row's history.
   fix06_13 disposition. Owns only the Coin Pusher COLLECT/reinstall
   production-clock evidence boundary. Locked harness, gameplay motion and all
   performance caps remain unchanged.
+
+- 2026-08-27 [fix06_13] RETAINED SHIPPED-WEB CHAIN through iteration 4. Every
+  run used `DESKTOP-1950ULQ`, Chrome `151.0.7922.174`, 1280x720, DPR 1, CPU
+  throttle 4, cold profile and a fresh export. Values below are frame p95 /
+  draw p95 / synchronous resolve in milliseconds (`-` means not applicable or
+  the scenario did not run). No cap, fixture, sample, liveness or result was
+  weakened, discarded or replaced.
+
+  | source / evidence | idle | DROP | carriage | stop | release | COLLECT | reduced | browser ready |
+  | --- | --- | --- | --- | --- | --- | --- | --- | ---: |
+  | accepted first red `54e6398a` | 144.142 / 53.865 / - | 144.035 / 54.550 / 68.300 | 142.143 / 52.380 / 45.390 | 145.250 / 52.400 / 91.355 | 142.577 / 53.080 / 54.985 | did not run | did not run | 20,536 |
+  | reproduction `a5853676` | 143.167 / 51.755 / - | 143.743 / 50.815 / 54.255 | 142.697 / 50.120 / 42.100 | 145.542 / 47.015 / 55.895 | 141.823 / 52.220 / 41.500 | did not run | did not run | 20,319 |
+  | first post-fix `ecaecdc2` | 138.757 / 53.235 / - | 140.755 / 55.220 / 43.540 | 143.235 / 47.530 / 33.215 | 144.165 / 56.890 / 32.355 | 141.227 / 46.375 / 28.675 | did not run | did not run | 21,235 |
+  | iteration 2 `d23d14bd` | 110.163 / 51.845 / - | 133.333 / 51.165 / 49.030 | 126.568 / 50.510 / 29.045 | 114.057 / 57.145 / 29.955 | 125.227 / 54.410 / 28.045 | 116.667 / 50.210 / 34.180 | 103.864 / 46.385 / - | 20,661 |
+  | iteration 3 `d899b18f` | 101.945 / 44.975 / - | 128.100 / 45.220 / 46.420 | 111.580 / 38.975 / 46.760 | 102.865 / 45.385 / 31.750 | 105.720 / 40.265 / 35.100 | 120.195 / 46.000 / 32.660 | 96.118 / 41.390 / - | 21,095 |
+  | iteration 4 `6df55c9a` | 89.978 / 36.720 / - | 116.667 / 30.365 / 39.135 | 94.375 / 33.320 / 25.910 | 96.734 / 35.340 / 14.830 | 98.503 / 33.585 / 9.225 | 94.588 / 31.700 / 12.060 | 77.280 / 30.925 / - | 20,606 |
+
+  Exact retained identities: accepted first-red report
+  `F0E0E9B5D3644F7F46EF2AF765130150BA65966A7585FBBE875B7347E389F715`,
+  summary `C37473DAE93DF456E0DACC25E65AB6C3A3F2CD3757CBC2E3454E8D315C7AAC88`,
+  export `0EB384022F02D3889EBD2B022F959E3F4223310B901BF21A101501934D29E2F6`;
+  reproduction report
+  `DBB0E289CF7D099E4B1E4A8850C5D587A9E29A46D5745B60DBC7C374F37A62BC`,
+  summary `A76F229CD202B2801490F6AA126B1B3DC14CE6CB762C2F95935C74D301F21E5B`,
+  export `48BBA2F1FF9AE89343820316D277515F4F55CD433159F2520523D1A7268AFEBC`;
+  first-post-fix report
+  `D929249584BE17371EA16652826852BCEE4807E7B46C34A7BCD1EF0AC6CC12DA`
+  and export `1B3117F09C315F929FD1BE06E075FC259EE53297871F7176D35188ADD697B9DB`
+  (that invocation produced no separate summary); iteration-2 report
+  `EDC1D1116F0D50654CCB5705A0128426DF113FA599D22C3271E49671A602C89B`,
+  summary `21693510D1A27AABA4EDF2CCF1ACC297500F3E04519EB410946723DA9E1B2EB8`,
+  export `F55F8994DB02E530528000D127DF7A89D735289187CA5FAEBE92BA6A7C0D6F4E`;
+  iteration-3 report
+  `FAD397C558C5E57208EA203BE5044F3E00544CD3DA883B415A66BDF0CE8F5587`,
+  summary `9DB812313AD99FA8E8B15D06FC4D94C1DC307C03C4424F580B706096506D5A8F`,
+  export `23215B9486A5B38682645DD30D97E04E0C854A2C728B3E78FDDD9C4B63FB8A63`;
+  iteration-4 report
+  `5E314766B2A730307B3D6A100E91B1ED9861CC02F33457FB9451C74469A8C053`,
+  summary `D4686F5A57BECEFA0EA6EEFDDDC4582A8F9683E43B83A393D80E0E10F435513F`,
+  export `1E870EE3B1054B2765063A267F2061754F3BFE0C67B49AF139119B154406597F`.
+  Reproduction/first-post-fix/iteration-2 Web-native hashes were respectively
+  `6E1085974B1FEFBD4BF5008EB4EDB2A4451BA871F663568848939CDC7F3D9344`,
+  not separately emitted, and
+  `93EBE3B81C57BD5415A20E0C3FDDCFDCA02B8493B5FDB436914F0DB9AB72A4C5`;
+  iterations 3-4 used
+  `04D41797748BBECD308A761DF3895311CC3A085ABE86580CF1226BAA0ADC2F47`.
+  Iterations 2-4 exposed the COLLECT/reinstall production-clock contradiction
+  now owned unchanged by `fix06_14`; that routed evidence defect does not turn
+  any performance red green.
