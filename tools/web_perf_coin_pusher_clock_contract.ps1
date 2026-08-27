@@ -66,6 +66,14 @@ function Test-CoinPusherReducedSampleBoundary {
         -and (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$ScenarioTags.body_count_before) -TrayCount ([int]$ScenarioTags.tray_count_before) -Snapshot $ScenarioTags.conservation_before -ExpectedOrigin 300)
 }
 
+function Test-CoinPusherReducedEvidenceSchema {
+    param([object]$Scenario)
+    if (-not (Test-CoinPusherPropertiesPresent -Value $Scenario -Names @("frame_time_ms", "tags"))) { return $false }
+    if (-not (Test-CoinPusherPropertiesPresent -Value $Scenario.frame_time_ms -Names @("count"))) { return $false }
+    if (-not (Test-CoinPusherPropertiesPresent -Value $Scenario.tags -Names @("solver_liveness_delta", "solver_liveness_before", "body_count_before", "body_count_after", "tray_count_before", "tray_count_after", "conservation_before", "conservation_after", "redraw_delta", "canvas_after"))) { return $false }
+    return Test-CoinPusherPropertiesPresent -Value $Scenario.tags.canvas_after -Names @("surface_animation_liveness_active", "draw_sample_count", "draw_p95_ms")
+}
+
 function Get-CoinPusherPostCollectAccounting {
     param([object]$Tags)
     $requiredTags = @("body_count_at_accept", "body_count_after", "tray_count_at_accept", "tray_count_after", "tray_value_at_accept", "conservation_at_accept", "conservation_after")

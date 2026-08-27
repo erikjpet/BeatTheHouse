@@ -322,17 +322,21 @@ if ($Plan -eq "coin_pusher") {
 
     if ($scenariosByName.ContainsKey("coin_pusher_reduced_motion")) {
         $reduced = $scenariosByName["coin_pusher_reduced_motion"]
-        $reducedDraw = $reduced.tags.canvas_after
-        Assert-Condition -Condition ([int]$reduced.frame_time_ms.count -ge 120) -Message "Coin Pusher reduced-motion sample contained fewer than 120 frames." -Failures $failures
-        Assert-Condition -Condition ([int]$reduced.tags.solver_liveness_delta -gt 0) -Message "Coin Pusher reduced motion froze solver liveness." -Failures $failures
-        if ($reducedFixtureEvents.Count -eq 1 -and $reducedSampleBoundaryEvents.Count -eq 1) {
-            Assert-Condition -Condition (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixtureEvents[0].data -Boundary $reducedSampleBoundaryEvents[0].data -ScenarioTags $reduced.tags) -Message "Coin Pusher reduced-motion sample was not linked to the exact-300 reinstall boundary with conserved live setup motion." -Failures $failures
+        $reducedSchemaPresent = Test-CoinPusherReducedEvidenceSchema -Scenario $reduced
+        Assert-Condition -Condition $reducedSchemaPresent -Message "Coin Pusher reduced-motion evidence omitted a required after-state, scheduler or draw field." -Failures $failures
+        if ($reducedSchemaPresent) {
+            $reducedDraw = $reduced.tags.canvas_after
+            Assert-Condition -Condition ([int]$reduced.frame_time_ms.count -ge 120) -Message "Coin Pusher reduced-motion sample contained fewer than 120 frames." -Failures $failures
+            Assert-Condition -Condition ([int]$reduced.tags.solver_liveness_delta -gt 0) -Message "Coin Pusher reduced motion froze solver liveness." -Failures $failures
+            if ($reducedFixtureEvents.Count -eq 1 -and $reducedSampleBoundaryEvents.Count -eq 1) {
+                Assert-Condition -Condition (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixtureEvents[0].data -Boundary $reducedSampleBoundaryEvents[0].data -ScenarioTags $reduced.tags) -Message "Coin Pusher reduced-motion sample was not linked to the exact-300 reinstall boundary with conserved live setup motion." -Failures $failures
+            }
+            Assert-Condition -Condition ([int]$reduced.tags.body_count_after -gt 0) -Message "Coin Pusher reduced-motion sample lost the production body surface." -Failures $failures
+            Assert-Condition -Condition (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$reduced.tags.body_count_after) -TrayCount ([int]$reduced.tags.tray_count_after) -Snapshot $reduced.tags.conservation_after -ExpectedOrigin 300) -Message "Coin Pusher reduced-motion after-state did not bind its surface counts to every conserved production outcome channel." -Failures $failures
+            Assert-Condition -Condition ([int]$reduced.tags.redraw_delta -eq 0 -and (-not [bool]$reducedDraw.surface_animation_liveness_active)) -Message "Coin Pusher reduced motion unexpectedly advanced the presentation-animation scheduler." -Failures $failures
+            Assert-Condition -Condition ([int]$reducedDraw.draw_sample_count -gt 0) -Message "Coin Pusher reduced motion recorded no canvas draw sample." -Failures $failures
+            Assert-Condition -Condition ([double]$reducedDraw.draw_p95_ms -le 5.0) -Message ("Coin Pusher reduced-motion draw p95 {0:N3}ms exceeded 5.000ms." -f [double]$reducedDraw.draw_p95_ms) -Failures $failures
         }
-        Assert-Condition -Condition ([int]$reduced.tags.body_count_after -gt 0) -Message "Coin Pusher reduced-motion sample lost the production body surface." -Failures $failures
-        Assert-Condition -Condition (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$reduced.tags.body_count_after) -TrayCount ([int]$reduced.tags.tray_count_after) -Snapshot $reduced.tags.conservation_after -ExpectedOrigin 300) -Message "Coin Pusher reduced-motion after-state did not bind its surface counts to every conserved production outcome channel." -Failures $failures
-        Assert-Condition -Condition ([int]$reduced.tags.redraw_delta -eq 0 -and (-not [bool]$reducedDraw.surface_animation_liveness_active)) -Message "Coin Pusher reduced motion unexpectedly advanced the presentation-animation scheduler." -Failures $failures
-        Assert-Condition -Condition ([int]$reducedDraw.draw_sample_count -gt 0) -Message "Coin Pusher reduced motion recorded no canvas draw sample." -Failures $failures
-        Assert-Condition -Condition ([double]$reducedDraw.draw_p95_ms -le 5.0) -Message ("Coin Pusher reduced-motion draw p95 {0:N3}ms exceeded 5.000ms." -f [double]$reducedDraw.draw_p95_ms) -Failures $failures
     }
 
     $actionScenarios = @(

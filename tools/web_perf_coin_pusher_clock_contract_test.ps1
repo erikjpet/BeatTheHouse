@@ -70,6 +70,32 @@ $reducedLivenessMismatch.solver_liveness_before = 49
 Assert-ClockContract -Condition (-not (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixture -Boundary $reducedBoundary -ScenarioTags $reducedLivenessMismatch)) -Message "Reduced sample liveness-boundary mismatch was accepted."
 $reducedAfterMismatch = [pscustomobject]@{ body_count_after = 295; tray_count_after = 2; conservation_after = $validObservation.conservation }
 Assert-ClockContract -Condition (-not (Test-CoinPusherSurfaceConservationBinding -BodyCount $reducedAfterMismatch.body_count_after -TrayCount $reducedAfterMismatch.tray_count_after -Snapshot $reducedAfterMismatch.conservation_after -ExpectedOrigin 300)) -Message "Reduced after-state surface/conservation mismatch was accepted."
+$validReducedEvidence = [pscustomobject]@{
+    frame_time_ms = [pscustomobject]@{ count = 120 }
+    tags = [pscustomobject]@{
+        solver_liveness_delta = 480; solver_liveness_before = 48
+        body_count_before = 296; body_count_after = 290
+        tray_count_before = 2; tray_count_after = 0
+        conservation_before = $validObservation.conservation
+        conservation_after = $validObservation.conservation
+        redraw_delta = 0
+        canvas_after = [pscustomobject]@{ surface_animation_liveness_active = $false; draw_sample_count = 120; draw_p95_ms = 4.5 }
+    }
+}
+Assert-ClockContract -Condition (Test-CoinPusherReducedEvidenceSchema -Scenario $validReducedEvidence) -Message "Complete reduced evidence schema was rejected."
+$missingReducedTrayAfter = $validReducedEvidence.PSObject.Copy()
+$missingReducedTrayAfter.tags = $validReducedEvidence.tags.PSObject.Copy()
+$missingReducedTrayAfter.tags.PSObject.Properties.Remove("tray_count_after")
+Assert-ClockContract -Condition (-not (Test-CoinPusherReducedEvidenceSchema -Scenario $missingReducedTrayAfter)) -Message "Missing zero-valued reduced tray-after field was accepted."
+$missingReducedScheduler = $validReducedEvidence.PSObject.Copy()
+$missingReducedScheduler.tags = $validReducedEvidence.tags.PSObject.Copy()
+$missingReducedScheduler.tags.PSObject.Properties.Remove("redraw_delta")
+Assert-ClockContract -Condition (-not (Test-CoinPusherReducedEvidenceSchema -Scenario $missingReducedScheduler)) -Message "Missing reduced scheduler field was accepted."
+$missingReducedDraw = $validReducedEvidence.PSObject.Copy()
+$missingReducedDraw.tags = $validReducedEvidence.tags.PSObject.Copy()
+$missingReducedDraw.tags.canvas_after = $validReducedEvidence.tags.canvas_after.PSObject.Copy()
+$missingReducedDraw.tags.canvas_after.PSObject.Properties.Remove("draw_sample_count")
+Assert-ClockContract -Condition (-not (Test-CoinPusherReducedEvidenceSchema -Scenario $missingReducedDraw)) -Message "Missing reduced draw field was accepted."
 
 $validCollect = [pscustomobject]@{
     body_count_at_accept = 299
