@@ -6,7 +6,7 @@ contains the historical Work Log moved verbatim by
 claim, block, completion and unblock entries append here; task state and
 the binding protocol remain on the active board.
 
-Preserved entries: **124**; current entries: **133**. Use the exact find token
+Preserved entries: **124**; current entries: **135**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -45,6 +45,7 @@ below to jump to a row's history.
 | `fix06_2 reopening` | 1 | `[fix06_2 reopening]` |
 | `fix06_2/crew06_5` | 2 | `[fix06_2/crew06_5]` |
 | `fix06_3` | 2 | `[fix06_3]` |
+| `fix06_5` | 2 | `[fix06_5]` |
 | `fix06_6` | 2 | `[fix06_6]` |
 | `polish06_0` | 1 | `[polish06_0]` |
 | `push06_1` | 1 | `[push06_1]` |
@@ -867,3 +868,31 @@ below to jump to a row's history.
   owner’s modified source/test files, untracked prompts and `review_artifacts/`
   remained untouched. No product, test, golden, capture, Godot, release or
   remote action occurred.
+
+- 2026-08-26 [fix06_5] CLAIMED from exact main `e75f2c3d`, with measurements
+  pinned to that same source head/tree. The binding prompt and machine-readable
+  predeclaration fix five serialized, non-replaceable attempts on one objectively
+  qualified idle host with one Godot/native identity. Every result must be
+  retained; the median rule may support the cap or produce only a stale-baseline
+  candidate requiring owner authorization. No Godot run, tooling/baseline/cap
+  change, product action or stale-baseline conclusion occurred in this claim.
+
+- 2026-08-26 [fix06_5] EXECUTION COMPLETE; final classification INCONCLUSIVE
+  pending review and landing. A clean
+  detached worktree at exact `e75f2c3d` / tree `099eeb0` received the accepted
+  ignored addon without rebuild; import and native smoke passed on
+  `native_v3`. Candidate precheck 01 was retained red (median 7.376%, p95
+  93.198%); retry 02 passed (median 6.760%, p95 12.368%). Numbered attempt 01
+  ran once with mandatory `-KeepGoing`; validation passed in 49.157s before the
+  child PowerShell process failed to locate Godot, wrapper exit 1. Those values
+  are operator-observed and not independently raw-verifiable because no outer
+  transcript was retained. The attempt is noneligible and is preserved without
+  replacement. Independent review correctly found attempts 02–05 remained
+  mandatory. All four completed once after eligible idle prechecks and at least
+  120 seconds of cooldown. Their Contract stage values were, in attempt order,
+  252.197/247.542/240.187/245.767s; each was a sole stage-126 timing red with
+  wrapper exit 1, 16/16 functional checks green, zero stderr/timeouts and
+  `native_v3`. The disclosed static-only agent activity during attempt 02 ran no
+  prohibited timed job. No five-eligible-run decision median, stale-baseline
+  finding, cap change or product/test/tool change resulted. Raw evidence remains in both
+  retained fix06_5 worktrees under `.tmp/fix06_5_contract_timing/`.

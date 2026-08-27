@@ -5,7 +5,7 @@ contains the historical Discovery & Decision Log moved verbatim by
 `board06_1`. Future scope discoveries, deviations and decisions append
 here; task state, protocol and owner questions remain on the active board.
 
-Preserved entries: **174**; current entries: **180**. Use the exact find token
+Preserved entries: **174**; current entries: **182**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -46,6 +46,7 @@ below to jump to a row's history.
 | `fix06_2/crew06_5 visual QA` | 1 | `[fix06_2/crew06_5 visual QA]` |
 | `fix06_2/integrated systems` | 1 | `[fix06_2/integrated systems]` |
 | `fix06_3` | 1 | `[fix06_3]` |
+| `fix06_5` | 2 | `[fix06_5]` |
 | `fix06_6` | 2 | `[fix06_6]` |
 | `integrated UI` | 1 | `[integrated UI]` |
 | `push06_1` | 6 | `[push06_1]` |
@@ -1626,3 +1627,28 @@ below to jump to a row's history.
   `0f954d2ad30f769b96196737aff8cc1f1723238f`. The launcher’s separate routing
   obligation is closed without product, test, golden, capture or runtime-gate
   changes, and primary owner work remained untouched.
+
+- 2026-08-26 [fix06_5] The timing question is now predeclared rather than
+  inferred from mixed host conditions. Five attempts only will use exact source
+  `e75f2c3d`, one clean tree, host, Godot binary and accepted `native_v3` addon;
+  objective idle prechecks gate attempt start and no numbered attempt may be
+  replaced. All five must be functionally green to classify timing. Their median
+  against unchanged 230.391s either supports the guard or creates a
+  stale-baseline candidate requiring owner authorization; it never changes the
+  cap automatically. Historical results remain context, not series members.
+
+- 2026-08-26 [fix06_5] The predeclared series locked an INCONCLUSIVE final
+  classification at its first numbered attempt. Exact source/host/Godot/native
+  identities qualified,
+  and a retained red idle sample was followed by an eligible 60-second sample
+  (median 6.760%, nearest-rank p95 12.368%). Attempt 01 passed validation in
+  49.157s, then the child PowerShell process could not locate Godot and exited
+  before Contract. These shell values are operator-observed and not independently
+  raw-verifiable because the outer transcript was not retained. The attempt is
+  noneligible and was neither discarded nor replaced. Independent review
+  correctly found attempts 02–05 still had to run once each. They completed
+  after eligible idle prechecks and cooldowns with 16/16 checks green, zero
+  stderr/timeouts and `native_v3`; all four were timing-only reds at
+  252.197/247.542/240.187/245.767s. Because attempt 01 is noneligible, no
+  five-eligible-run decision median exists, no stale-baseline candidate is
+  claimed and no baseline, multiplier or cap changed.
