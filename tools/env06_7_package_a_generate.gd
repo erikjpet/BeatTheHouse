@@ -2,6 +2,7 @@ extends SceneTree
 
 const SequenceSchema := preload("res://scripts/core/scenario_sequence_schema.gd")
 const OperationRegistry := preload("res://scripts/core/scenario_operation_registry.gd")
+const SequenceCatalog := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const PACKAGE_PATH := "res://data/environments/scenario_sequences/env06_7_shops_streets.json"
 
 const CONFIGS := [
@@ -31,7 +32,9 @@ func _init() -> void:
 		var entry := entry_value as Dictionary
 		if str(entry.get("scenario_id", "")) == "corner_store_delivery_day": retained.append(entry)
 	for config in CONFIGS:
-		var entry := _entry(config)
+		# Calculate from the exact JSON type envelope that production reloads;
+		# Godot's JSON parser normalizes authored number types.
+		var entry := JSON.parse_string(JSON.stringify(_entry(config))) as Dictionary
 		var definition := {"id": config.id, "archetype_id": config.archetype, "sequence": entry.sequence}
 		entry.sequence.sequence_signature = SequenceSchema.calculated_signature_hash(definition)
 		var failures := SequenceSchema.validate_definition(definition, OperationRegistry, {})
@@ -44,6 +47,24 @@ func _init() -> void:
 	var file := FileAccess.open(PACKAGE_PATH, FileAccess.WRITE)
 	file.store_string(JSON.stringify(package, "  ", false) + "\n")
 	file.close()
+	var catalog := SequenceCatalog.load_catalog()
+	if not bool(catalog.get("ok", false)):
+		push_error("Generated catalog rejected: %s" % "; ".join(catalog.get("failures", [])))
+		quit(1)
+		return
+	var expected := ["corner_store_delivery_day"]
+	for config in CONFIGS: expected.append(str(config.id))
+	var package_rows: Array = catalog.get("packages", [])
+	var actual: Array = []
+	for package_row_value in package_rows:
+		var package_row := package_row_value as Dictionary
+		if str(package_row.get("package_id", "")) == "env06_7_shops_streets": actual = package_row.get("scenario_ids", [])
+	expected.sort()
+	actual.sort()
+	if actual != expected:
+		push_error("Generated Package A inventory mismatch: %s" % JSON.stringify(actual))
+		quit(1)
+		return
 	print("ENV06_7_PACKAGE_A_GENERATED count=%d" % retained.size())
 	quit(0)
 
@@ -64,7 +85,7 @@ func _entry(c: Dictionary) -> Dictionary:
 		"expiry":{"boundary":"night_end","after":1,"policy":"ignore"},
 		"cleanup":{"operations":[
 			_remove("scene_ops",sid+"_cleanup_a",c.object_a), _remove("scene_ops",sid+"_cleanup_b",c.object_b),
-			_remove("interaction_ops",sid+"_cleanup_task",sid+"_task"), _remove("interaction_ops",sid+"_cleanup_work",sid+"_work_station"), _remove("interaction_ops",sid+"_cleanup_exit",sid+"_exit"),
+			_remove("interaction_ops",sid+"_cleanup_task",c.object_a), _remove("interaction_ops",sid+"_cleanup_work",c.object_b), _remove("interaction_ops",sid+"_cleanup_exit",sid+"_exit"),
 			{"family":"actor_ops","op":"despawn","receipt_id":sid+"_cleanup_actor","owner_namespace":"scenario","stable_object_id":c.actor}
 		]},
 		"aftermath":{
@@ -83,7 +104,7 @@ func _entry(c: Dictionary) -> Dictionary:
 	return {"scenario_id":sid,"sequence":sequence,"authoring":{
 		"arrival_summary":c.arrival,"player_verbs":[c.verb_a,c.verb_b,c.fail,"ignore_sequence","refuse_sequence"],
 		"world_connections":[c.world,"travel_interruption","safe_exit"],
-		"references":{"actors":[c.actor],"objects":["scenario::%s" % c.object_a,"scenario::%s" % c.object_b]},
+		"references":{"objects":["scenario::%s" % c.object_a,"scenario::%s" % c.object_b]},
 		"capture_ids":[sid+"_arrival",sid+"_work",sid+"_success",sid+"_failure",sid+"_ignored",sid+"_refused",sid+"_interrupted",sid+"_partial_revisit",sid+"_terminal_revisit",sid+"_reduced_motion",sid+"_small_screen",sid+"_hit_overlay"],
 		"seed_evidence":{"proof_seed":sid+"_seed","expected_outcomes":["success","failure","ignored","refused","interrupted"],"save_boundaries":["arrival","work","resolution"],"cleanup_idempotent":true,"reentry_idempotent":true,"minimum_target_size":44},
 		"masked_visual_explanations":{}
@@ -93,7 +114,7 @@ func _phase_arrival(c: Dictionary) -> Dictionary:
 	var sid := str(c.id)
 	return {"id":"arrival","label":_label(c.object_a),"arrival_feedback":c.arrival,"exit_prompt":"A marked exit remains open while you inspect the scene.","entry_conditions":[{"type":"always"}],"objective_ids":["complete_%s" % c.object_a],"advance_after_actions":0,
 		"scene_ops":[_spawn(sid+"_arrival_a",c.object_a,_label(c.object_a),"primary_task","left","arrival"),_spawn(sid+"_arrival_b",c.object_b,_label(c.object_b),"evidence","right","unread")],
-		"interaction_ops":[_interaction(sid+"_arrival_task",sid+"_task",c.task,[ _action(c.verb_a,"Begin: "+_label(c.verb_a),"ui_accept","path","none"), _action("ignore_sequence","Ignore the scene","ui_down","path","ignored"), _action("refuse_sequence","Refuse the task","ui_cancel","path","refused")],false),_exit(c)],
+		"interaction_ops":[_interaction(sid+"_arrival_task",c.object_a,c.task,[ _action(c.verb_a,"Begin: "+_label(c.verb_a),"ui_accept","path","none"), _action("ignore_sequence","Ignore the scene","ui_down","path","ignored"), _action("refuse_sequence","Refuse the task","ui_cancel","path","refused")],false),_exit(c)],
 		"actor_ops":[{"family":"actor_ops","op":"spawn","receipt_id":sid+"_arrival_actor","owner_namespace":"scenario","stable_object_id":c.actor,"actor":{"label":_label(c.actor),"actor_id":c.actor,"zone_id":"background","behavior":"work","route_id":sid+"_arrival_route","pose":"observing"}}],
 		"transition_ops":[_transition(sid+"_arrival_stage","stage",str(c.arrival))],
 		"branches":[{"id":sid+"_begin","condition":{"type":"command","command_id":c.verb_a},"next_phase":"work"},{"id":sid+"_ignore","condition":{"type":"command","command_id":"ignore_sequence"},"next_phase":"resolution"},{"id":sid+"_refuse","condition":{"type":"command","command_id":"refuse_sequence"},"next_phase":"resolution"},{"id":sid+"_depart","condition":{"type":"fact","fact_type":"travel_departed"},"next_phase":"resolution"}]}
@@ -102,7 +123,7 @@ func _phase_work(c: Dictionary) -> Dictionary:
 	var sid := str(c.id)
 	return {"id":"work","label":str(c.task),"arrival_feedback":"The first physical step exposes the second station and changes the actor's route.","exit_prompt":"The marked exit remains clear during the second step.","entry_conditions":[],"objective_ids":["complete_%s" % c.object_a],"advance_after_actions":0,
 		"scene_ops":[{"family":"scene_ops","op":"move","receipt_id":sid+"_work_move","owner_namespace":"scenario","stable_object_id":c.object_a,"zone_id":"center"},{"family":"scene_ops","op":"set_appearance","receipt_id":sid+"_work_reveal","owner_namespace":"scenario","stable_object_id":c.object_b,"appearance":"active_station"}],
-		"interaction_ops":[_interaction(sid+"_work_task",sid+"_work_station",c.task,[_action(c.verb_b,_label(c.verb_b),"ui_accept","path","success"),_action(c.fail,_label(c.fail),"ui_right","path","failure")],false)],
+		"interaction_ops":[_interaction(sid+"_work_task",c.object_b,c.task,[_action(c.verb_b,_label(c.verb_b),"ui_accept","path","success"),_action(c.fail,_label(c.fail),"ui_right","path","failure")],false)],
 		"actor_ops":[{"family":"actor_ops","op":"set_position","receipt_id":sid+"_work_actor","owner_namespace":"scenario","stable_object_id":c.actor,"zone_id":"service_lane"}],
 		"transition_ops":[_transition(sid+"_work_change","scene_change","The scene physically shifts into its decisive second step.")],
 		"branches":[{"id":sid+"_success","condition":{"type":"command","command_id":c.verb_b},"next_phase":"resolution"},{"id":sid+"_failure","condition":{"type":"command","command_id":c.fail},"next_phase":"resolution"},{"id":sid+"_work_depart","condition":{"type":"fact","fact_type":"travel_departed"},"next_phase":"resolution"}]}
