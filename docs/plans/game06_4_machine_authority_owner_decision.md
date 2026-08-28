@@ -51,175 +51,184 @@ Whichever option the owner selects:
 Leaving the decision unresolved is not a closure path. `game06_4` remains
 blocked, and the applicable portions of `game06_8` and `audio06_1` cannot close.
 
-## Option A — one shared host-rooted machine authority
+## Two independent decision axes
 
-Authorize a single shared game-authority successor to own machine-credit and
-hand-pay state. Slot and Video Poker consume that authority through the accepted
-ritual command/result boundary; neither game owns a second ledger.
+The earlier packet coupled credit storage and hand-pay scope. They are separate
+authority decisions. Select one wagering option and one hand-pay option; do not
+infer either selection from the other.
 
-The shared authority owns:
+### Wagering axis W0 — existing direct-bankroll authority
 
-- the bankroll/cash-to-machine-credit transfer and its inverse;
-- the authoritative machine-credit balance and cabinet/session scope;
-- atomic conservation across source funds, pending transfer, credits, payout,
-  cash-out, and hand-pay settlement;
-- hand-pay qualification supplied by authoritative game results or owner-authored
-  policy, never by a consumer-local threshold;
-- acknowledgement authorization and receipts;
-- idempotency, duplicate-command handling, and exactly-once settlement; and
-- schema versioning, migration, save, restore, and reconciliation.
+Slot and Video Poker commit wagers and receive settlement through the existing
+authoritative bankroll command/result boundary. They expose no machine-credit
+balance, buy-in, or cash-out and add no credit-ledger schema. Projection stays
+fail-closed, and the surface labels the value bankroll/cash rather than credits.
 
-`game06_4` would be limited to adapters, commands, result consumption, and
-truthful presentation. The new shared authority must have its own explicitly
-assigned owner before the frozen remediation is rebased or extended.
+Required proof includes authoritative cost validation, exactly-once settlement,
+hostile/replayed request handling, bankroll conservation, and save/revisit. This
+option changes the current credit/buy-in/cash-out requirements but does not by
+itself decide whether Video Poker or Slot has a hand-pay flow.
 
-### Downstream implications
+### Wagering axis W1 — one shared host-rooted credit ledger
 
-- **game06_1:** extend or clarify the ritual contract and acceptance checklist
-  so the shared successor explicitly owns machine-credit cost authority,
-  transfer receipts, hand-pay qualification, acknowledgement, conservation,
-  and persistence. The shared successor requires review before Slot or Video
-  Poker integration is reviewed.
-- **game06_8:** retain the existing machine-credit, buy-in, cash-out, hand-pay,
-  conservation, hostile-call, and save/revisit requirements. Gate evidence must
-  exercise both the shared authority and each consumer without a second ledger.
-- **audio06_1:** retain credit-in, credit-out, hand-pay, tower-light, and machine
-  interaction profiles. Trigger sounds only from accepted shared facts or
-  transition operations. Machine-profile work that needs these events waits for
-  the accepted fact names.
+Authorize one shared game-authority successor to own bankroll-to-credit transfer,
+machine-credit balance, cash-out, conservation, stable receipts, idempotency,
+schema/migration/save/restore, and reconciliation. Slot and Video Poker consume
+it; neither owns a second ledger.
 
-### Owner values required to execute Option A
+Owner values required: source currency, conversion unit/rate/rounding/minimums,
+balance scope, exit treatment for remaining credits, and migration policy.
 
-- source currency and authority;
-- credit conversion unit, rate, rounding, minimums, and permitted increments;
-- balance scope (cabinet, game instance, session, or another owner-defined
-  scope);
-- cash-out and terminal/exit treatment of remaining credits;
-- hand-pay qualification source and policy configuration;
-- acknowledgement actor and authorization rule; and
-- save compatibility and migration policy for prior machine state.
+### Wagering axis W2 — game-local credit ledgers
 
-This option adds shared scope, schema, migration, and review work. Its accepted
-architecture contains one machine-credit ledger.
+Authorize Slot and Video Poker to own separate local ledgers alongside host
+bankroll authority, explicitly accepting double-authority risk. Each game owns
+its schema/migration, conversion, buy-in/cash-out, receipts, idempotency,
+save/restore, abandoned-credit policy, and reconciliation. The owner must define
+an atomic host/local transfer and recovery protocol; independent mutation of
+host funds and local credits is not sufficient.
 
-## Option B — direct-bankroll machines with no Video Poker hand-pay
+Owner values required are those for W1 plus whether schemas may diverge and
+explicit acceptance of duplicated implementation, migration, reconciliation,
+and split-brain risk.
 
-Explicitly reduce the 0.6 machine requirements. Slot and Video Poker wager and
-settle directly through the existing bankroll authority. They do not expose a
-machine-credit balance, buy-in, or cash-out. Video Poker has no hand-pay flow.
-Projection stays fail-closed, and the interface must call the value bankroll or
-cash rather than credits.
+### Hand-pay axis H0 — no Video Poker hand-pay
 
-This is a requirements amendment, not permission to simulate missing
-transactions. The owner must explicitly decide whether Slot's existing
-authoritative jackpot/attendant acknowledgement remains in scope.
+Video Poker has no hand-pay qualification or acknowledgement flow. This is an
+explicit scope amendment, independent of whether wagering uses direct bankroll
+or credits. The owner separately states whether Slot's existing authoritative
+jackpot/attendant acknowledgement remains in scope.
 
-### Downstream implications
+### Hand-pay axis H1 — shared host-rooted qualification and acknowledgement
 
-- **game06_1:** no machine-credit authority is added. The contract records that
-  these consumers use the existing bankroll command/result and payout facts.
-  Any checklist language implying a universal machine-credit ledger must be
-  scoped accordingly.
-- **game06_8:** amend the machine gate before implementation review. For Slot and
-  Video Poker, replace buy-in/cash-out/credit/Video-Poker-hand-pay expectations
-  with direct-bankroll commitment, settlement, exactly-once payout, hostile-call
-  rejection, and bankroll conservation. Do not accept cosmetic transaction
-  panels as substitutes.
-- **audio06_1:** remove Slot/Video Poker credit-in, credit-out, and Video Poker
-  hand-pay obligations. Author only events that exist: machine controls,
-  reels/cards, features, attract behavior, and any retained authoritative Slot
-  jackpot/attendant transition. Do not synthesize transaction sounds from UI
-  timers.
+Retain an authoritative Video Poker hand-pay flow without requiring a credit
+ledger. The accepted game result, or owner-authored policy applied to that exact
+result by a shared host authority, supplies qualification. The host owns lockup,
+acknowledgement authorization, stable receipts, replay/idempotency,
+exactly-once payout release, save/restore, and reconciliation. Video Poker may
+request and render the flow but may not invent a threshold or settle it locally.
 
-### Documentation amendments required to execute Option B
+H1 is compatible with W0. The specific **W0 + H1** combination therefore uses
+the existing authoritative direct-bankroll wager/settlement path, adds no credit
+ledger, and retains authoritative Video Poker hand-pay qualification and
+acknowledgement derived from the accepted result/policy. The hand-pay boundary
+must not duplicate the bankroll payout or create a second funds ledger.
 
-- `game06_4_machine_games_depth_prompt.md`: machine-depth contract and its
-  acceptance/tests;
-- `game06_8_games_depth_release_gate_prompt.md`: machine conservation and
-  hand-pay acceptance language;
-- `audio06_1_surface_sfx_pass_prompt.md`: machine-event scope; and
-- the `game06_1` contract/checklist only where its wording would otherwise imply
-  machine-credit or Video Poker hand-pay support for these consumers.
+H1 may also combine with W1 or W2. In those combinations the hand-pay authority
+must name which authoritative balance receives or releases settlement and prove
+that the credit and bankroll authorities cannot both pay the same result.
 
-This option changes the promised 0.6 machine experience and avoids adding a new
-ledger or migration. The scope reduction must be accepted before the frozen
-remediation can be reviewed against the amended contract.
+### Hand-pay axis H2 — game-local qualification and acknowledgement
 
-## Option C — game-local credit and hand-pay authorities
+Authorize each game to own its hand-pay policy, lockup, acknowledgement,
+receipts, idempotency, persistence, and payout-release boundary. Qualification
+must still derive from the accepted authoritative game result and owner-authored
+policy, never a renderer threshold. This option accepts duplicated authority and
+review scope independently of the selected wagering architecture.
 
-Authorize Slot and Video Poker to own local machine-credit ledgers and hand-pay
-authority. This explicitly accepts two game-local authorities alongside the
-existing bankroll authority and the resulting double-authority risk.
+H2 combined with W0 does not create a credit ledger, but it does create local
+hand-pay authority adjacent to host bankroll settlement. H2 combined with W1 or
+W2 must define atomicity between hand-pay release and the selected credit
+authority.
 
-Each game-local implementation must own and document:
+## Combination matrix
 
-- a versioned credit-ledger and transaction schema;
-- migration from every supported prior save shape;
-- source-fund transfer, credit conversion, rounding, buy-in, and cash-out;
-- atomic conservation and reconciliation across host funds and local credits;
-- authoritative payout and hand-pay qualification without consumer-invented
-  thresholds;
-- acknowledgement authorization and stable receipts;
-- idempotency, crash/retry behavior, and exactly-once settlement;
-- save/restore behavior at every commitment, payout, lockup, acknowledgement,
-  cash-out, exit, and revisit boundary; and
-- ownership of abandoned or stranded credits.
+No cell is recommended. Every cell requires an explicit owner selection and the
+listed contract changes before implementation or review.
 
-A local ledger may not be a presentation cache. The owner must authorize the
-cross-authority transfer protocol; direct independent mutation of host funds and
-local credits would otherwise permit split-brain loss or duplication.
-
-### Downstream implications
-
-- **game06_1:** amend the ritual contract and checklist to permit bounded
-  game-local funds authorities and to define their atomic handoff with host
-  bankroll authority. Both implementations and their cross-authority protocol
-  require review.
-- **game06_8:** retain the original machine gate and expand its matrix to prove
-  both schemas, all migrations, conservation, crash/save/retry boundaries,
-  hostile calls, exit/revisit behavior, and duplicate prevention independently.
-- **audio06_1:** retain the original machine-event scope, but bind Slot and Video
-  Poker profiles to their separately accepted local facts and operations. Audio
-  integration waits for both local schemas and event vocabularies.
-
-### Owner values required to execute Option C
-
-- the same currency, conversion, rounding, balance-scope, exit, hand-pay,
-  acknowledgement, and migration values listed for Option A;
-- the authorized host/local atomic transfer and recovery protocol;
-- whether Slot and Video Poker schemas must remain identical or may diverge;
-  and
-- explicit acceptance of duplicate implementation, migration, reconciliation,
-  and double-authority risk.
-
-This option expands implementation and review across two ledgers plus their host
-handoffs.
-
-## Comparison
-
-| Decision surface | Option A | Option B | Option C |
+| Combination | Funds state | Video Poker hand-pay state | Principal authority consequence |
 | --- | --- | --- | --- |
-| Machine authority owner | One shared host-rooted successor | Existing bankroll authority only | Slot-local and Video-Poker-local authorities plus host bankroll |
-| 0.6 requirement effect | Retains current machine depth | Reduces machine-credit and Video Poker hand-pay scope | Retains current machine depth |
-| New schema/migration | One shared machine schema | None for machine credits | Two local schemas plus cross-authority recovery |
-| Double-authority exposure | One machine ledger coordinated with host | No new ledger | Explicitly accepted across local ledgers and host |
-| game06_1 | Extend shared authority contract | Scope consumers to existing bankroll facts | Permit and govern local funds authorities |
-| game06_8 | Keep gate; prove shared authority and consumers | Amend gate before review | Keep and expand gate per local authority |
-| audio06_1 | Keep machine transaction events; bind shared facts | Remove nonexistent transaction events | Keep events; bind two local vocabularies |
-| game06_4 review path | Shared successor accepted, then integrate and review | Contract amendments accepted, then review aligned successor | Local authority successor implemented, then review |
+| W0 + H0 | Existing bankroll only | None | Credit/buy-in/cash-out and VP hand-pay scope are removed. |
+| W0 + H1 | Existing bankroll only | Shared host-rooted | No credit ledger; host result/policy qualifies and acknowledges hand-pay without duplicate payout. |
+| W0 + H2 | Existing bankroll only | Game-local | No credit ledger; owner accepts local hand-pay authority beside host settlement. |
+| W1 + H0 | One shared credit ledger | None | Shared conversion/migration exists; VP hand-pay scope is removed. |
+| W1 + H1 | One shared credit ledger | Shared host-rooted | Shared ledger and hand-pay may be one successor or separately bounded shared services. |
+| W1 + H2 | One shared credit ledger | Game-local | Local hand-pay must atomically release against the shared ledger. |
+| W2 + H0 | Two game-local credit ledgers | None | Local ledger duplication exists; VP hand-pay scope is removed. |
+| W2 + H1 | Two game-local credit ledgers | Shared host-rooted | Shared hand-pay must identify and reconcile the relevant local ledger. |
+| W2 + H2 | Two game-local credit ledgers | Game-local | Maximum duplicated schema, migration, reconciliation, and authority scope. |
+
+## Downstream consequences by axis
+
+### game06_1
+
+- W0 records Slot/Video Poker as consumers of existing bankroll cost and payout
+  facts; no credit schema is added.
+- W1 extends the shared contract with credit transfer, balance, conservation,
+  receipts, and persistence.
+- W2 permits bounded game-local funds authorities and defines their atomic host
+  handoff.
+- H0 adds no Video Poker hand-pay authority.
+- H1 adds shared qualification, lockup, acknowledgement, payout release,
+  idempotency, and persistence from authoritative results/policy.
+- H2 permits bounded game-local hand-pay authority and defines its atomic payout
+  handoff.
+
+Any selected extension needs its own authorized owner and acceptance review
+before `game06_4` integration review.
+
+### game06_8
+
+- W0 requires amending credit/buy-in/cash-out expectations to direct-bankroll
+  commitment, settlement, hostile-call rejection, and conservation.
+- W1 retains the current credit/conversion gate and proves one shared ledger
+  through both consumers.
+- W2 retains and expands the gate for two schemas, migrations, crash/retry,
+  reconciliation, and duplicate prevention.
+- H0 removes Video Poker hand-pay expectations while leaving the separately
+  selected Slot acknowledgement scope explicit.
+- H1 retains hand-pay lifecycle tests against the shared authority, including
+  accepted-result qualification and no duplicate payout.
+- H2 retains and expands hand-pay lifecycle tests per game-local authority.
+
+### audio06_1
+
+- W0 removes Slot/Video Poker credit-in and credit-out events; W1/W2 retain them
+  and bind sounds to accepted shared/local transition facts.
+- H0 removes Video Poker hand-pay audio; H1/H2 retain it and bind audio only to
+  the selected authoritative qualification/lockup/acknowledgement operations.
+- Slot's tower-light/jackpot audio follows the separately confirmed Slot scope.
+  No UI timer or projection may synthesize an authority event.
+
+## Required documentation and review path
+
+For W0, amend `game06_4_machine_games_depth_prompt.md` and
+`game06_8_games_depth_release_gate_prompt.md` so direct-bankroll behavior is the
+truthful contract. For W1/W2, retain credit requirements and authorize the
+selected schema owner. For H0, amend the Video Poker hand-pay requirements. For
+H1/H2, retain them and add the selected qualification/acknowledgement boundary.
+Amend `audio06_1_surface_sfx_pass_prompt.md` only to match the selected event
+set, and amend the `game06_1` contract/checklist for every new authority it must
+own or permit.
+
+After documentation/contract acceptance:
+
+- W0 + H0 may align the frozen remediation with the reduced contract before
+  independent review.
+- W0 + H1 requires a shared hand-pay successor, then integration and review; it
+  does not require a machine-credit ledger.
+- every W1 combination requires the shared credit successor before integration;
+- every W2 combination requires both local credit implementations and their
+  host transfer protocol before review; and
+- every H2 combination requires the authorized local hand-pay implementation
+  before review.
+
+The rejected and frozen heads remain evidence only throughout these paths.
 
 ## Owner response
 
-Select exactly one without editing the evidence heads:
+Select exactly one wagering option and one hand-pay option without editing the
+evidence heads:
 
-- [ ] **A** — authorize one shared host-rooted machine-credit and hand-pay
-  authority.
-- [ ] **B** — amend 0.6 to direct-bankroll Slot/Video Poker with no Video Poker
-  hand-pay.
-- [ ] **C** — authorize game-local credit and hand-pay authorities and accept the
-  documented double-authority risk.
+- Wagering: [ ] **W0** direct bankroll; [ ] **W1** shared credit ledger;
+  [ ] **W2** game-local credit ledgers.
+- Video Poker hand-pay: [ ] **H0** none; [ ] **H1** shared host-rooted;
+  [ ] **H2** game-local.
+- Slot existing jackpot/attendant acknowledgement: [ ] retain; [ ] remove;
+  [ ] owner clarification required.
 
-Also provide the values required by the selected option. For Option B, state
-whether Slot's existing authoritative jackpot/attendant acknowledgement remains
-in scope. Implementation assignment, contract amendment, or review submission
-begins only after this owner response is recorded.
+For W1/W2, provide currency, conversion, balance-scope, exit, and migration
+values. For H1/H2, provide the policy source/configuration, acknowledgement actor
+and authorization, payout-release target, exit/recovery behavior, and migration
+policy. Implementation assignment, contract amendment, or review submission
+begins only after both axes and the required values are recorded.
