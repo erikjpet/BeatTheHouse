@@ -1630,16 +1630,25 @@
           ]
         },
         "seed_evidence": {
+          "accepted_public_facts": "[\"service_result\"]",
           "cleanup_idempotent": true,
           "expected_outcomes": [
             "success",
             "failure",
             "ignored",
             "refused",
-            "interrupted"
+            "interrupted",
+            "public"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "corner_store_lotto_fever_seed",
+          "public_exactly_once_receipt": true,
+          "public_fact_producer": "service",
+          "public_fact_type": "service_result",
+          "public_material_aftermath": "economy_stock_public_service",
+          "public_payload_predicate": "{\"kind\":\"scenario_service\",\"service_id\":\"economy_stock\"}",
+          "public_projected_field": "public_service_ok",
+          "public_projected_payload_key": "ok",
           "reentry_idempotent": true,
           "save_boundaries": [
             "arrival",
@@ -1776,6 +1785,47 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_lotto_fever_service_interrupted",
                 "stable_object_id": "corner_store_lotto_fever_service_interrupted"
+              }
+            ]
+          },
+          "public": {
+            "label": "Economy Stock Public Service",
+            "revisit_feedback": "Economy Stock Public Service remains visible when the player returns.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "object": {
+                  "appearance": "economy_stock_public_service",
+                  "bounds": {
+                    "h": 56.0,
+                    "w": 72.0
+                  },
+                  "enabled": true,
+                  "label": "Economy Stock Public Service",
+                  "role": "aftermath",
+                  "state": "public_service",
+                  "visible": true,
+                  "zone_id": "foreground"
+                },
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "corner_store_lotto_fever_after_public",
+                "stable_object_id": "economy_stock_public_service"
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "object": {
+                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "enabled": false,
+                  "id": "corner_store_lotto_fever_service_public",
+                  "label": "Public access"
+                },
+                "op": "add",
+                "owner_namespace": "scenario",
+                "receipt_id": "corner_store_lotto_fever_service_public",
+                "stable_object_id": "corner_store_lotto_fever_service_public"
               }
             ]
           },
@@ -1943,6 +1993,30 @@
               "key": "path",
               "value": "interrupted"
             }
+          },
+          {
+            "fact_type": "service_result",
+            "handler": "set_local",
+            "inputs": {
+              "key": "public_service_ok",
+              "value_from_payload": "ok"
+            },
+            "payload_equals": {
+              "kind": "scenario_service",
+              "service_id": "economy_stock"
+            }
+          },
+          {
+            "fact_type": "service_result",
+            "handler": "set_local",
+            "inputs": {
+              "key": "path",
+              "value": "public"
+            },
+            "payload_equals": {
+              "kind": "scenario_service",
+              "service_id": "economy_stock"
+            }
           }
         ],
         "local_state_schema": {
@@ -1955,9 +2029,15 @@
               "failure",
               "ignored",
               "refused",
-              "interrupted"
+              "interrupted",
+              "public"
             ],
             "visibility": "private"
+          },
+          "public_service_ok": {
+            "default": false,
+            "type": "bool",
+            "visibility": "public"
           }
         },
         "mechanic_tags": [
@@ -2048,6 +2128,15 @@
                     "type": "fact"
                   },
                   "id": "corner_store_lotto_fever_depart",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "corner_store_lotto_fever_public_arrival",
                   "next_phase": "resolution"
                 }
               ],
@@ -2259,6 +2348,15 @@
                   },
                   "id": "corner_store_lotto_fever_work_depart",
                   "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "corner_store_lotto_fever_public_work",
+                  "next_phase": "resolution"
                 }
               ],
               "entry_conditions": [],
@@ -2403,6 +2501,15 @@
                   },
                   "id": "corner_store_lotto_fever_out_interrupted",
                   "outcome": "interrupted"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "corner_store_lotto_fever_out_public",
+                  "outcome": "public"
                 }
               ],
               "entry_conditions": [],
@@ -2433,7 +2540,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "274f5a18282b52f719f135ae1b27aa6ac9f3a13d390cde0842aa35b358d5a41b"
+        "sequence_signature": "b16f6edacbe725d77d1feda0c7ae5bafed119548a1252b8c9cde29b1e4f81a90"
       }
     },
     {
@@ -2470,16 +2577,25 @@
           ]
         },
         "seed_evidence": {
+          "accepted_public_facts": "[\"sweep_changed\"]",
           "cleanup_idempotent": true,
           "expected_outcomes": [
             "success",
             "failure",
             "ignored",
             "refused",
-            "interrupted"
+            "interrupted",
+            "public"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "corner_store_aftermath_seed",
+          "public_exactly_once_receipt": true,
+          "public_fact_producer": "sweep",
+          "public_fact_type": "sweep_changed",
+          "public_material_aftermath": "evidence_sweep_hold",
+          "public_payload_predicate": "{\"node_id\":\"corner_store\"}",
+          "public_projected_field": "security_pressure_active",
+          "public_projected_payload_key": "active",
           "reentry_idempotent": true,
           "save_boundaries": [
             "arrival",
@@ -2616,6 +2732,47 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_aftermath_service_interrupted",
                 "stable_object_id": "corner_store_aftermath_service_interrupted"
+              }
+            ]
+          },
+          "public": {
+            "label": "Evidence Sweep Hold",
+            "revisit_feedback": "Evidence Sweep Hold remains visible when the player returns.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "object": {
+                  "appearance": "evidence_sweep_hold",
+                  "bounds": {
+                    "h": 56.0,
+                    "w": 72.0
+                  },
+                  "enabled": true,
+                  "label": "Evidence Sweep Hold",
+                  "role": "aftermath",
+                  "state": "security_pressure",
+                  "visible": true,
+                  "zone_id": "foreground"
+                },
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "corner_store_aftermath_after_public",
+                "stable_object_id": "evidence_sweep_hold"
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "object": {
+                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "enabled": false,
+                  "id": "corner_store_aftermath_service_public",
+                  "label": "Public access"
+                },
+                "op": "add",
+                "owner_namespace": "scenario",
+                "receipt_id": "corner_store_aftermath_service_public",
+                "stable_object_id": "corner_store_aftermath_service_public"
               }
             ]
           },
@@ -2783,6 +2940,28 @@
               "key": "path",
               "value": "interrupted"
             }
+          },
+          {
+            "fact_type": "sweep_changed",
+            "handler": "set_local",
+            "inputs": {
+              "key": "security_pressure_active",
+              "value_from_payload": "active"
+            },
+            "payload_equals": {
+              "node_id": "corner_store"
+            }
+          },
+          {
+            "fact_type": "sweep_changed",
+            "handler": "set_local",
+            "inputs": {
+              "key": "path",
+              "value": "public"
+            },
+            "payload_equals": {
+              "node_id": "corner_store"
+            }
           }
         ],
         "local_state_schema": {
@@ -2795,9 +2974,15 @@
               "failure",
               "ignored",
               "refused",
-              "interrupted"
+              "interrupted",
+              "public"
             ],
             "visibility": "private"
+          },
+          "security_pressure_active": {
+            "default": false,
+            "type": "bool",
+            "visibility": "public"
           }
         },
         "mechanic_tags": [
@@ -2888,6 +3073,15 @@
                     "type": "fact"
                   },
                   "id": "corner_store_aftermath_depart",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "corner_store_aftermath_public_arrival",
                   "next_phase": "resolution"
                 }
               ],
@@ -3099,6 +3293,15 @@
                   },
                   "id": "corner_store_aftermath_work_depart",
                   "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "corner_store_aftermath_public_work",
+                  "next_phase": "resolution"
                 }
               ],
               "entry_conditions": [],
@@ -3243,6 +3446,15 @@
                   },
                   "id": "corner_store_aftermath_out_interrupted",
                   "outcome": "interrupted"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "corner_store_aftermath_out_public",
+                  "outcome": "public"
                 }
               ],
               "entry_conditions": [],
@@ -3273,7 +3485,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4ed36fed76ca05964061553e41702fd702c7fbc8a16a130ab3cef4e2807d2a08"
+        "sequence_signature": "4e7f0649f0c79d4140e6b9c8a5aba7f062b0361c339085476683fc8fead6e3a1"
       }
     },
     {
@@ -3310,16 +3522,25 @@
           ]
         },
         "seed_evidence": {
+          "accepted_public_facts": "[\"heat_changed\"]",
           "cleanup_idempotent": true,
           "expected_outcomes": [
             "success",
             "failure",
             "ignored",
             "refused",
-            "interrupted"
+            "interrupted",
+            "public"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "corner_store_dead_shift_seed",
+          "public_exactly_once_receipt": true,
+          "public_fact_producer": "heat",
+          "public_fact_type": "heat_changed",
+          "public_material_aftermath": "surveillance_rumor_route",
+          "public_payload_predicate": "{\"source\":\"corner_store_surveillance\"}",
+          "public_projected_field": "surveillance_heat",
+          "public_projected_payload_key": "current",
           "reentry_idempotent": true,
           "save_boundaries": [
             "arrival",
@@ -3456,6 +3677,47 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_dead_shift_service_interrupted",
                 "stable_object_id": "corner_store_dead_shift_service_interrupted"
+              }
+            ]
+          },
+          "public": {
+            "label": "Surveillance Rumor Route",
+            "revisit_feedback": "Surveillance Rumor Route remains visible when the player returns.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "object": {
+                  "appearance": "surveillance_rumor_route",
+                  "bounds": {
+                    "h": 56.0,
+                    "w": 72.0
+                  },
+                  "enabled": true,
+                  "label": "Surveillance Rumor Route",
+                  "role": "aftermath",
+                  "state": "rumor_pressure",
+                  "visible": true,
+                  "zone_id": "foreground"
+                },
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "corner_store_dead_shift_after_public",
+                "stable_object_id": "surveillance_rumor_route"
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "object": {
+                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "enabled": false,
+                  "id": "corner_store_dead_shift_service_public",
+                  "label": "Public access"
+                },
+                "op": "add",
+                "owner_namespace": "scenario",
+                "receipt_id": "corner_store_dead_shift_service_public",
+                "stable_object_id": "corner_store_dead_shift_service_public"
               }
             ]
           },
@@ -3623,6 +3885,28 @@
               "key": "path",
               "value": "interrupted"
             }
+          },
+          {
+            "fact_type": "heat_changed",
+            "handler": "set_local",
+            "inputs": {
+              "key": "surveillance_heat",
+              "value_from_payload": "current"
+            },
+            "payload_equals": {
+              "source": "corner_store_surveillance"
+            }
+          },
+          {
+            "fact_type": "heat_changed",
+            "handler": "set_local",
+            "inputs": {
+              "key": "path",
+              "value": "public"
+            },
+            "payload_equals": {
+              "source": "corner_store_surveillance"
+            }
           }
         ],
         "local_state_schema": {
@@ -3635,9 +3919,17 @@
               "failure",
               "ignored",
               "refused",
-              "interrupted"
+              "interrupted",
+              "public"
             ],
             "visibility": "private"
+          },
+          "surveillance_heat": {
+            "default": 0.0,
+            "max": 100.0,
+            "min": 0.0,
+            "type": "float",
+            "visibility": "public"
           }
         },
         "mechanic_tags": [
@@ -3728,6 +4020,15 @@
                     "type": "fact"
                   },
                   "id": "corner_store_dead_shift_depart",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "corner_store_dead_shift_public_arrival",
                   "next_phase": "resolution"
                 }
               ],
@@ -3939,6 +4240,15 @@
                   },
                   "id": "corner_store_dead_shift_work_depart",
                   "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "corner_store_dead_shift_public_work",
+                  "next_phase": "resolution"
                 }
               ],
               "entry_conditions": [],
@@ -4083,6 +4393,15 @@
                   },
                   "id": "corner_store_dead_shift_out_interrupted",
                   "outcome": "interrupted"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "corner_store_dead_shift_out_public",
+                  "outcome": "public"
                 }
               ],
               "entry_conditions": [],
@@ -4113,7 +4432,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "255673b098d3260136092a78ba90f77110ae03a52896cbead2995e98de36a00c"
+        "sequence_signature": "f75bb670cc3042626ecbcf1faa0b3ed075638c82ef6858bccf63ad8e22e2fbe2"
       }
     },
     {
@@ -4150,16 +4469,25 @@
           ]
         },
         "seed_evidence": {
+          "accepted_public_facts": "[\"service_result\"]",
           "cleanup_idempotent": true,
           "expected_outcomes": [
             "success",
             "failure",
             "ignored",
             "refused",
-            "interrupted"
+            "interrupted",
+            "public"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "corner_store_inventory_night_seed",
+          "public_exactly_once_receipt": true,
+          "public_fact_producer": "service",
+          "public_fact_type": "service_result",
+          "public_material_aftermath": "economy_inventory_public_service",
+          "public_payload_predicate": "{\"kind\":\"scenario_service\",\"service_id\":\"economy_inventory\"}",
+          "public_projected_field": "public_service_ok",
+          "public_projected_payload_key": "ok",
           "reentry_idempotent": true,
           "save_boundaries": [
             "arrival",
@@ -4296,6 +4624,47 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_inventory_night_service_interrupted",
                 "stable_object_id": "corner_store_inventory_night_service_interrupted"
+              }
+            ]
+          },
+          "public": {
+            "label": "Economy Inventory Public Service",
+            "revisit_feedback": "Economy Inventory Public Service remains visible when the player returns.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "object": {
+                  "appearance": "economy_inventory_public_service",
+                  "bounds": {
+                    "h": 56.0,
+                    "w": 72.0
+                  },
+                  "enabled": true,
+                  "label": "Economy Inventory Public Service",
+                  "role": "aftermath",
+                  "state": "public_service",
+                  "visible": true,
+                  "zone_id": "foreground"
+                },
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "corner_store_inventory_night_after_public",
+                "stable_object_id": "economy_inventory_public_service"
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "object": {
+                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "enabled": false,
+                  "id": "corner_store_inventory_night_service_public",
+                  "label": "Public access"
+                },
+                "op": "add",
+                "owner_namespace": "scenario",
+                "receipt_id": "corner_store_inventory_night_service_public",
+                "stable_object_id": "corner_store_inventory_night_service_public"
               }
             ]
           },
@@ -4463,6 +4832,30 @@
               "key": "path",
               "value": "interrupted"
             }
+          },
+          {
+            "fact_type": "service_result",
+            "handler": "set_local",
+            "inputs": {
+              "key": "public_service_ok",
+              "value_from_payload": "ok"
+            },
+            "payload_equals": {
+              "kind": "scenario_service",
+              "service_id": "economy_inventory"
+            }
+          },
+          {
+            "fact_type": "service_result",
+            "handler": "set_local",
+            "inputs": {
+              "key": "path",
+              "value": "public"
+            },
+            "payload_equals": {
+              "kind": "scenario_service",
+              "service_id": "economy_inventory"
+            }
           }
         ],
         "local_state_schema": {
@@ -4475,9 +4868,15 @@
               "failure",
               "ignored",
               "refused",
-              "interrupted"
+              "interrupted",
+              "public"
             ],
             "visibility": "private"
+          },
+          "public_service_ok": {
+            "default": false,
+            "type": "bool",
+            "visibility": "public"
           }
         },
         "mechanic_tags": [
@@ -4568,6 +4967,15 @@
                     "type": "fact"
                   },
                   "id": "corner_store_inventory_night_depart",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "corner_store_inventory_night_public_arrival",
                   "next_phase": "resolution"
                 }
               ],
@@ -4779,6 +5187,15 @@
                   },
                   "id": "corner_store_inventory_night_work_depart",
                   "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "corner_store_inventory_night_public_work",
+                  "next_phase": "resolution"
                 }
               ],
               "entry_conditions": [],
@@ -4923,6 +5340,15 @@
                   },
                   "id": "corner_store_inventory_night_out_interrupted",
                   "outcome": "interrupted"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "corner_store_inventory_night_out_public",
+                  "outcome": "public"
                 }
               ],
               "entry_conditions": [],
@@ -4953,7 +5379,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f60105c534318fca42196a66e62d9bcd6d553058bc2df475fc3b2d60bd1eb10a"
+        "sequence_signature": "cbb8a9586b53747e60f9563f63e9a1e00b077391be31483a32966c9343c53516"
       }
     },
     {
@@ -4990,16 +5416,25 @@
           ]
         },
         "seed_evidence": {
+          "accepted_public_facts": "[\"craps.roll_resolved\",\"craps.come_out\",\"craps.point_set\",\"craps.point_made\",\"craps.seven_out\",\"craps.table_cooled\",\"craps.streak_tier\",\"craps.large_swing\",\"craps.street_lookout_warning\",\"craps.dispersal\"]",
           "cleanup_idempotent": true,
           "expected_outcomes": [
             "success",
             "failure",
             "ignored",
             "refused",
-            "interrupted"
+            "interrupted",
+            "public"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "back_alley_street_craps_seed",
+          "public_exactly_once_receipt": true,
+          "public_fact_producer": "game",
+          "public_fact_type": "game_result",
+          "public_material_aftermath": "street_stake_recovered",
+          "public_payload_predicate": "{\"action_id\":\"street_craps_disperse\",\"game_id\":\"craps\"}",
+          "public_projected_field": "stake_recovery_delta",
+          "public_projected_payload_key": "bankroll_delta",
           "reentry_idempotent": true,
           "save_boundaries": [
             "arrival",
@@ -5136,6 +5571,47 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_street_craps_service_interrupted",
                 "stable_object_id": "back_alley_street_craps_service_interrupted"
+              }
+            ]
+          },
+          "public": {
+            "label": "Street Stake Recovered",
+            "revisit_feedback": "Street Stake Recovered remains visible when the player returns.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "object": {
+                  "appearance": "street_stake_recovered",
+                  "bounds": {
+                    "h": 56.0,
+                    "w": 72.0
+                  },
+                  "enabled": true,
+                  "label": "Street Stake Recovered",
+                  "role": "aftermath",
+                  "state": "stake_recovery",
+                  "visible": true,
+                  "zone_id": "foreground"
+                },
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "back_alley_street_craps_after_public",
+                "stable_object_id": "street_stake_recovered"
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "object": {
+                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "enabled": false,
+                  "id": "back_alley_street_craps_service_public",
+                  "label": "Public access"
+                },
+                "op": "add",
+                "owner_namespace": "scenario",
+                "receipt_id": "back_alley_street_craps_service_public",
+                "stable_object_id": "back_alley_street_craps_service_public"
               }
             ]
           },
@@ -5303,6 +5779,30 @@
               "key": "path",
               "value": "interrupted"
             }
+          },
+          {
+            "fact_type": "game_result",
+            "handler": "set_local",
+            "inputs": {
+              "key": "stake_recovery_delta",
+              "value_from_payload": "bankroll_delta"
+            },
+            "payload_equals": {
+              "action_id": "street_craps_disperse",
+              "game_id": "craps"
+            }
+          },
+          {
+            "fact_type": "game_result",
+            "handler": "set_local",
+            "inputs": {
+              "key": "path",
+              "value": "public"
+            },
+            "payload_equals": {
+              "action_id": "street_craps_disperse",
+              "game_id": "craps"
+            }
           }
         ],
         "local_state_schema": {
@@ -5315,9 +5815,17 @@
               "failure",
               "ignored",
               "refused",
-              "interrupted"
+              "interrupted",
+              "public"
             ],
             "visibility": "private"
+          },
+          "stake_recovery_delta": {
+            "default": 0.0,
+            "max": 1000000.0,
+            "min": 0.0,
+            "type": "float",
+            "visibility": "public"
           }
         },
         "mechanic_tags": [
@@ -5408,6 +5916,15 @@
                     "type": "fact"
                   },
                   "id": "back_alley_street_craps_depart",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "back_alley_street_craps_public_arrival",
                   "next_phase": "resolution"
                 }
               ],
@@ -5619,6 +6136,15 @@
                   },
                   "id": "back_alley_street_craps_work_depart",
                   "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "back_alley_street_craps_public_work",
+                  "next_phase": "resolution"
                 }
               ],
               "entry_conditions": [],
@@ -5763,6 +6289,15 @@
                   },
                   "id": "back_alley_street_craps_out_interrupted",
                   "outcome": "interrupted"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "back_alley_street_craps_out_public",
+                  "outcome": "public"
                 }
               ],
               "entry_conditions": [],
@@ -5793,7 +6328,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "6e993ce12338ccb23aa79ae03f7a6339188c2ab083868ee158f8670218fec633"
+        "sequence_signature": "bb89476a694703226545fd267f44eaae4b138f589c59e40f05ba1b97de176a4a"
       }
     },
     {
@@ -5830,16 +6365,25 @@
           ]
         },
         "seed_evidence": {
+          "accepted_public_facts": "[\"sweep_changed\"]",
           "cleanup_idempotent": true,
           "expected_outcomes": [
             "success",
             "failure",
             "ignored",
             "refused",
-            "interrupted"
+            "interrupted",
+            "public"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "back_alley_cruiser_parked_seed",
+          "public_exactly_once_receipt": true,
+          "public_fact_producer": "sweep",
+          "public_fact_type": "sweep_changed",
+          "public_material_aftermath": "cruiser_pressure_route",
+          "public_payload_predicate": "{\"node_id\":\"back_alley\"}",
+          "public_projected_field": "cruiser_sweep_active",
+          "public_projected_payload_key": "active",
           "reentry_idempotent": true,
           "save_boundaries": [
             "arrival",
@@ -5976,6 +6520,47 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_cruiser_parked_service_interrupted",
                 "stable_object_id": "back_alley_cruiser_parked_service_interrupted"
+              }
+            ]
+          },
+          "public": {
+            "label": "Cruiser Pressure Route",
+            "revisit_feedback": "Cruiser Pressure Route remains visible when the player returns.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "object": {
+                  "appearance": "cruiser_pressure_route",
+                  "bounds": {
+                    "h": 56.0,
+                    "w": 72.0
+                  },
+                  "enabled": true,
+                  "label": "Cruiser Pressure Route",
+                  "role": "aftermath",
+                  "state": "active_sweep",
+                  "visible": true,
+                  "zone_id": "foreground"
+                },
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "back_alley_cruiser_parked_after_public",
+                "stable_object_id": "cruiser_pressure_route"
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "object": {
+                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "enabled": false,
+                  "id": "back_alley_cruiser_parked_service_public",
+                  "label": "Public access"
+                },
+                "op": "add",
+                "owner_namespace": "scenario",
+                "receipt_id": "back_alley_cruiser_parked_service_public",
+                "stable_object_id": "back_alley_cruiser_parked_service_public"
               }
             ]
           },
@@ -6143,9 +6728,36 @@
               "key": "path",
               "value": "interrupted"
             }
+          },
+          {
+            "fact_type": "sweep_changed",
+            "handler": "set_local",
+            "inputs": {
+              "key": "cruiser_sweep_active",
+              "value_from_payload": "active"
+            },
+            "payload_equals": {
+              "node_id": "back_alley"
+            }
+          },
+          {
+            "fact_type": "sweep_changed",
+            "handler": "set_local",
+            "inputs": {
+              "key": "path",
+              "value": "public"
+            },
+            "payload_equals": {
+              "node_id": "back_alley"
+            }
           }
         ],
         "local_state_schema": {
+          "cruiser_sweep_active": {
+            "default": false,
+            "type": "bool",
+            "visibility": "public"
+          },
           "path": {
             "default": "none",
             "type": "enum",
@@ -6155,7 +6767,8 @@
               "failure",
               "ignored",
               "refused",
-              "interrupted"
+              "interrupted",
+              "public"
             ],
             "visibility": "private"
           }
@@ -6248,6 +6861,15 @@
                     "type": "fact"
                   },
                   "id": "back_alley_cruiser_parked_depart",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "back_alley_cruiser_parked_public_arrival",
                   "next_phase": "resolution"
                 }
               ],
@@ -6459,6 +7081,15 @@
                   },
                   "id": "back_alley_cruiser_parked_work_depart",
                   "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "back_alley_cruiser_parked_public_work",
+                  "next_phase": "resolution"
                 }
               ],
               "entry_conditions": [],
@@ -6603,6 +7234,15 @@
                   },
                   "id": "back_alley_cruiser_parked_out_interrupted",
                   "outcome": "interrupted"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "back_alley_cruiser_parked_out_public",
+                  "outcome": "public"
                 }
               ],
               "entry_conditions": [],
@@ -6633,7 +7273,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "364f7470341137e098c496a508a28b80b514129adfdfede07c192c79da9ca636"
+        "sequence_signature": "f0af1e103ea815b243a5b7b5629811d6018bfed8703c74e39ac0ce4d21994547"
       }
     },
     {
@@ -6670,16 +7310,25 @@
           ]
         },
         "seed_evidence": {
+          "accepted_public_facts": "[\"service_result\"]",
           "cleanup_idempotent": true,
           "expected_outcomes": [
             "success",
             "failure",
             "ignored",
             "refused",
-            "interrupted"
+            "interrupted",
+            "public"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "back_alley_fence_night_seed",
+          "public_exactly_once_receipt": true,
+          "public_fact_producer": "service",
+          "public_fact_type": "service_result",
+          "public_material_aftermath": "economy_fence_public_service",
+          "public_payload_predicate": "{\"kind\":\"scenario_service\",\"service_id\":\"economy_fence\"}",
+          "public_projected_field": "public_service_ok",
+          "public_projected_payload_key": "ok",
           "reentry_idempotent": true,
           "save_boundaries": [
             "arrival",
@@ -6816,6 +7465,47 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_fence_night_service_interrupted",
                 "stable_object_id": "back_alley_fence_night_service_interrupted"
+              }
+            ]
+          },
+          "public": {
+            "label": "Economy Fence Public Service",
+            "revisit_feedback": "Economy Fence Public Service remains visible when the player returns.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "object": {
+                  "appearance": "economy_fence_public_service",
+                  "bounds": {
+                    "h": 56.0,
+                    "w": 72.0
+                  },
+                  "enabled": true,
+                  "label": "Economy Fence Public Service",
+                  "role": "aftermath",
+                  "state": "public_service",
+                  "visible": true,
+                  "zone_id": "foreground"
+                },
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "back_alley_fence_night_after_public",
+                "stable_object_id": "economy_fence_public_service"
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "object": {
+                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "enabled": false,
+                  "id": "back_alley_fence_night_service_public",
+                  "label": "Public access"
+                },
+                "op": "add",
+                "owner_namespace": "scenario",
+                "receipt_id": "back_alley_fence_night_service_public",
+                "stable_object_id": "back_alley_fence_night_service_public"
               }
             ]
           },
@@ -6983,6 +7673,30 @@
               "key": "path",
               "value": "interrupted"
             }
+          },
+          {
+            "fact_type": "service_result",
+            "handler": "set_local",
+            "inputs": {
+              "key": "public_service_ok",
+              "value_from_payload": "ok"
+            },
+            "payload_equals": {
+              "kind": "scenario_service",
+              "service_id": "economy_fence"
+            }
+          },
+          {
+            "fact_type": "service_result",
+            "handler": "set_local",
+            "inputs": {
+              "key": "path",
+              "value": "public"
+            },
+            "payload_equals": {
+              "kind": "scenario_service",
+              "service_id": "economy_fence"
+            }
           }
         ],
         "local_state_schema": {
@@ -6995,9 +7709,15 @@
               "failure",
               "ignored",
               "refused",
-              "interrupted"
+              "interrupted",
+              "public"
             ],
             "visibility": "private"
+          },
+          "public_service_ok": {
+            "default": false,
+            "type": "bool",
+            "visibility": "public"
           }
         },
         "mechanic_tags": [
@@ -7088,6 +7808,15 @@
                     "type": "fact"
                   },
                   "id": "back_alley_fence_night_depart",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "back_alley_fence_night_public_arrival",
                   "next_phase": "resolution"
                 }
               ],
@@ -7299,6 +8028,15 @@
                   },
                   "id": "back_alley_fence_night_work_depart",
                   "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "back_alley_fence_night_public_work",
+                  "next_phase": "resolution"
                 }
               ],
               "entry_conditions": [],
@@ -7443,6 +8181,15 @@
                   },
                   "id": "back_alley_fence_night_out_interrupted",
                   "outcome": "interrupted"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "back_alley_fence_night_out_public",
+                  "outcome": "public"
                 }
               ],
               "entry_conditions": [],
@@ -7473,7 +8220,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "bcb0ea646ecb038923fb62110d2c084777b5ff341b2d2a97311f6c4cf1ed64ce"
+        "sequence_signature": "cf4fac9af57de086c7d38b997447f2c3e6015b60d169a02a795b905bf95960fc"
       }
     },
     {
@@ -7510,16 +8257,25 @@
           ]
         },
         "seed_evidence": {
+          "accepted_public_facts": "[\"town_transition\"]",
           "cleanup_idempotent": true,
           "expected_outcomes": [
             "success",
             "failure",
             "ignored",
             "refused",
-            "interrupted"
+            "interrupted",
+            "public"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "back_alley_nothing_moving_seed",
+          "public_exactly_once_receipt": true,
+          "public_fact_producer": "town",
+          "public_fact_type": "town_transition",
+          "public_material_aftermath": "weather_rumor_exit",
+          "public_payload_predicate": "{\"day_type\":\"weekday\"}",
+          "public_projected_field": "rumor_weather_route",
+          "public_projected_payload_key": "weather",
           "reentry_idempotent": true,
           "save_boundaries": [
             "arrival",
@@ -7656,6 +8412,47 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_nothing_moving_service_interrupted",
                 "stable_object_id": "back_alley_nothing_moving_service_interrupted"
+              }
+            ]
+          },
+          "public": {
+            "label": "Weather Rumor Exit",
+            "revisit_feedback": "Weather Rumor Exit remains visible when the player returns.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "object": {
+                  "appearance": "weather_rumor_exit",
+                  "bounds": {
+                    "h": 56.0,
+                    "w": 72.0
+                  },
+                  "enabled": true,
+                  "label": "Weather Rumor Exit",
+                  "role": "aftermath",
+                  "state": "rumor_route",
+                  "visible": true,
+                  "zone_id": "foreground"
+                },
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "back_alley_nothing_moving_after_public",
+                "stable_object_id": "weather_rumor_exit"
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "object": {
+                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "enabled": false,
+                  "id": "back_alley_nothing_moving_service_public",
+                  "label": "Public access"
+                },
+                "op": "add",
+                "owner_namespace": "scenario",
+                "receipt_id": "back_alley_nothing_moving_service_public",
+                "stable_object_id": "back_alley_nothing_moving_service_public"
               }
             ]
           },
@@ -7823,6 +8620,28 @@
               "key": "path",
               "value": "interrupted"
             }
+          },
+          {
+            "fact_type": "town_transition",
+            "handler": "set_local",
+            "inputs": {
+              "key": "rumor_weather_route",
+              "value_from_payload": "weather"
+            },
+            "payload_equals": {
+              "day_type": "weekday"
+            }
+          },
+          {
+            "fact_type": "town_transition",
+            "handler": "set_local",
+            "inputs": {
+              "key": "path",
+              "value": "public"
+            },
+            "payload_equals": {
+              "day_type": "weekday"
+            }
           }
         ],
         "local_state_schema": {
@@ -7835,9 +8654,15 @@
               "failure",
               "ignored",
               "refused",
-              "interrupted"
+              "interrupted",
+              "public"
             ],
             "visibility": "private"
+          },
+          "rumor_weather_route": {
+            "default": "",
+            "type": "string",
+            "visibility": "public"
           }
         },
         "mechanic_tags": [
@@ -7928,6 +8753,15 @@
                     "type": "fact"
                   },
                   "id": "back_alley_nothing_moving_depart",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "back_alley_nothing_moving_public_arrival",
                   "next_phase": "resolution"
                 }
               ],
@@ -8139,6 +8973,15 @@
                   },
                   "id": "back_alley_nothing_moving_work_depart",
                   "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "back_alley_nothing_moving_public_work",
+                  "next_phase": "resolution"
                 }
               ],
               "entry_conditions": [],
@@ -8283,6 +9126,15 @@
                   },
                   "id": "back_alley_nothing_moving_out_interrupted",
                   "outcome": "interrupted"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "back_alley_nothing_moving_out_public",
+                  "outcome": "public"
                 }
               ],
               "entry_conditions": [],
@@ -8313,7 +9165,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a172ec05088627ba2f2d8cc7980ffdc33005ddeb3c14c2e39d8ead7d50cda8da"
+        "sequence_signature": "2af909549c6fa0090cd14224d08fd57be12c8584f60717907942d5e5eb30b117"
       }
     },
     {
@@ -8350,16 +9202,25 @@
           ]
         },
         "seed_evidence": {
+          "accepted_public_facts": "[\"service_result\"]",
           "cleanup_idempotent": true,
           "expected_outcomes": [
             "success",
             "failure",
             "ignored",
             "refused",
-            "interrupted"
+            "interrupted",
+            "public"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "pawn_shop_estate_lot_day_seed",
+          "public_exactly_once_receipt": true,
+          "public_fact_producer": "service",
+          "public_fact_type": "service_result",
+          "public_material_aftermath": "economy_provenance_public_service",
+          "public_payload_predicate": "{\"kind\":\"scenario_service\",\"service_id\":\"economy_provenance\"}",
+          "public_projected_field": "public_service_ok",
+          "public_projected_payload_key": "ok",
           "reentry_idempotent": true,
           "save_boundaries": [
             "arrival",
@@ -8496,6 +9357,47 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_estate_lot_day_service_interrupted",
                 "stable_object_id": "pawn_shop_estate_lot_day_service_interrupted"
+              }
+            ]
+          },
+          "public": {
+            "label": "Economy Provenance Public Service",
+            "revisit_feedback": "Economy Provenance Public Service remains visible when the player returns.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "object": {
+                  "appearance": "economy_provenance_public_service",
+                  "bounds": {
+                    "h": 56.0,
+                    "w": 72.0
+                  },
+                  "enabled": true,
+                  "label": "Economy Provenance Public Service",
+                  "role": "aftermath",
+                  "state": "public_service",
+                  "visible": true,
+                  "zone_id": "foreground"
+                },
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "pawn_shop_estate_lot_day_after_public",
+                "stable_object_id": "economy_provenance_public_service"
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "object": {
+                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "enabled": false,
+                  "id": "pawn_shop_estate_lot_day_service_public",
+                  "label": "Public access"
+                },
+                "op": "add",
+                "owner_namespace": "scenario",
+                "receipt_id": "pawn_shop_estate_lot_day_service_public",
+                "stable_object_id": "pawn_shop_estate_lot_day_service_public"
               }
             ]
           },
@@ -8663,6 +9565,30 @@
               "key": "path",
               "value": "interrupted"
             }
+          },
+          {
+            "fact_type": "service_result",
+            "handler": "set_local",
+            "inputs": {
+              "key": "public_service_ok",
+              "value_from_payload": "ok"
+            },
+            "payload_equals": {
+              "kind": "scenario_service",
+              "service_id": "economy_provenance"
+            }
+          },
+          {
+            "fact_type": "service_result",
+            "handler": "set_local",
+            "inputs": {
+              "key": "path",
+              "value": "public"
+            },
+            "payload_equals": {
+              "kind": "scenario_service",
+              "service_id": "economy_provenance"
+            }
           }
         ],
         "local_state_schema": {
@@ -8675,9 +9601,15 @@
               "failure",
               "ignored",
               "refused",
-              "interrupted"
+              "interrupted",
+              "public"
             ],
             "visibility": "private"
+          },
+          "public_service_ok": {
+            "default": false,
+            "type": "bool",
+            "visibility": "public"
           }
         },
         "mechanic_tags": [
@@ -8768,6 +9700,15 @@
                     "type": "fact"
                   },
                   "id": "pawn_shop_estate_lot_day_depart",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "pawn_shop_estate_lot_day_public_arrival",
                   "next_phase": "resolution"
                 }
               ],
@@ -8979,6 +9920,15 @@
                   },
                   "id": "pawn_shop_estate_lot_day_work_depart",
                   "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "pawn_shop_estate_lot_day_public_work",
+                  "next_phase": "resolution"
                 }
               ],
               "entry_conditions": [],
@@ -9123,6 +10073,15 @@
                   },
                   "id": "pawn_shop_estate_lot_day_out_interrupted",
                   "outcome": "interrupted"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "pawn_shop_estate_lot_day_out_public",
+                  "outcome": "public"
                 }
               ],
               "entry_conditions": [],
@@ -9153,7 +10112,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c21523184b1a52a6e825dfb98a6a01ca8ccb1768df764a69dd2f590a6589e082"
+        "sequence_signature": "a96b85cda8f0e6c43c5842a16239adb40b553d972be3e851b57d1342eb6fd7a2"
       }
     },
     {
@@ -9190,16 +10149,25 @@
           ]
         },
         "seed_evidence": {
+          "accepted_public_facts": "[\"sweep_changed\"]",
           "cleanup_idempotent": true,
           "expected_outcomes": [
             "success",
             "failure",
             "ignored",
             "refused",
-            "interrupted"
+            "interrupted",
+            "public"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "pawn_shop_serial_check_day_seed",
+          "public_exactly_once_receipt": true,
+          "public_fact_producer": "sweep",
+          "public_fact_type": "sweep_changed",
+          "public_material_aftermath": "serial_sweep_hold",
+          "public_payload_predicate": "{\"node_id\":\"pawn_shop\"}",
+          "public_projected_field": "serial_sweep_active",
+          "public_projected_payload_key": "active",
           "reentry_idempotent": true,
           "save_boundaries": [
             "arrival",
@@ -9336,6 +10304,47 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_serial_check_day_service_interrupted",
                 "stable_object_id": "pawn_shop_serial_check_day_service_interrupted"
+              }
+            ]
+          },
+          "public": {
+            "label": "Serial Sweep Hold",
+            "revisit_feedback": "Serial Sweep Hold remains visible when the player returns.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "object": {
+                  "appearance": "serial_sweep_hold",
+                  "bounds": {
+                    "h": 56.0,
+                    "w": 72.0
+                  },
+                  "enabled": true,
+                  "label": "Serial Sweep Hold",
+                  "role": "aftermath",
+                  "state": "security_inventory",
+                  "visible": true,
+                  "zone_id": "foreground"
+                },
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "pawn_shop_serial_check_day_after_public",
+                "stable_object_id": "serial_sweep_hold"
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "object": {
+                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "enabled": false,
+                  "id": "pawn_shop_serial_check_day_service_public",
+                  "label": "Public access"
+                },
+                "op": "add",
+                "owner_namespace": "scenario",
+                "receipt_id": "pawn_shop_serial_check_day_service_public",
+                "stable_object_id": "pawn_shop_serial_check_day_service_public"
               }
             ]
           },
@@ -9503,6 +10512,28 @@
               "key": "path",
               "value": "interrupted"
             }
+          },
+          {
+            "fact_type": "sweep_changed",
+            "handler": "set_local",
+            "inputs": {
+              "key": "serial_sweep_active",
+              "value_from_payload": "active"
+            },
+            "payload_equals": {
+              "node_id": "pawn_shop"
+            }
+          },
+          {
+            "fact_type": "sweep_changed",
+            "handler": "set_local",
+            "inputs": {
+              "key": "path",
+              "value": "public"
+            },
+            "payload_equals": {
+              "node_id": "pawn_shop"
+            }
           }
         ],
         "local_state_schema": {
@@ -9515,9 +10546,15 @@
               "failure",
               "ignored",
               "refused",
-              "interrupted"
+              "interrupted",
+              "public"
             ],
             "visibility": "private"
+          },
+          "serial_sweep_active": {
+            "default": false,
+            "type": "bool",
+            "visibility": "public"
           }
         },
         "mechanic_tags": [
@@ -9608,6 +10645,15 @@
                     "type": "fact"
                   },
                   "id": "pawn_shop_serial_check_day_depart",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "pawn_shop_serial_check_day_public_arrival",
                   "next_phase": "resolution"
                 }
               ],
@@ -9819,6 +10865,15 @@
                   },
                   "id": "pawn_shop_serial_check_day_work_depart",
                   "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "pawn_shop_serial_check_day_public_work",
+                  "next_phase": "resolution"
                 }
               ],
               "entry_conditions": [],
@@ -9963,6 +11018,15 @@
                   },
                   "id": "pawn_shop_serial_check_day_out_interrupted",
                   "outcome": "interrupted"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "pawn_shop_serial_check_day_out_public",
+                  "outcome": "public"
                 }
               ],
               "entry_conditions": [],
@@ -9993,7 +11057,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "7326041b8e13e8d1333fc4cb569d0db9266634d247bf8b2a3624ae05b06bea3b"
+        "sequence_signature": "8e34b2cab165871ca5cd72bc34d9ef798f9afc62acc79b345350d2b9c4fd1c9b"
       }
     },
     {
@@ -10030,16 +11094,25 @@
           ]
         },
         "seed_evidence": {
+          "accepted_public_facts": "[\"service_result\"]",
           "cleanup_idempotent": true,
           "expected_outcomes": [
             "success",
             "failure",
             "ignored",
             "refused",
-            "interrupted"
+            "interrupted",
+            "public"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "pawn_shop_sals_mood_seed",
+          "public_exactly_once_receipt": true,
+          "public_fact_producer": "service",
+          "public_fact_type": "service_result",
+          "public_material_aftermath": "service_appraisal_public_service",
+          "public_payload_predicate": "{\"kind\":\"scenario_service\",\"service_id\":\"service_appraisal\"}",
+          "public_projected_field": "public_service_ok",
+          "public_projected_payload_key": "ok",
           "reentry_idempotent": true,
           "save_boundaries": [
             "arrival",
@@ -10176,6 +11249,47 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_sals_mood_service_interrupted",
                 "stable_object_id": "pawn_shop_sals_mood_service_interrupted"
+              }
+            ]
+          },
+          "public": {
+            "label": "Service Appraisal Public Service",
+            "revisit_feedback": "Service Appraisal Public Service remains visible when the player returns.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "object": {
+                  "appearance": "service_appraisal_public_service",
+                  "bounds": {
+                    "h": 56.0,
+                    "w": 72.0
+                  },
+                  "enabled": true,
+                  "label": "Service Appraisal Public Service",
+                  "role": "aftermath",
+                  "state": "public_service",
+                  "visible": true,
+                  "zone_id": "foreground"
+                },
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "pawn_shop_sals_mood_after_public",
+                "stable_object_id": "service_appraisal_public_service"
+              }
+            ],
+            "service_ops": [
+              {
+                "family": "service_ops",
+                "object": {
+                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "enabled": false,
+                  "id": "pawn_shop_sals_mood_service_public",
+                  "label": "Public access"
+                },
+                "op": "add",
+                "owner_namespace": "scenario",
+                "receipt_id": "pawn_shop_sals_mood_service_public",
+                "stable_object_id": "pawn_shop_sals_mood_service_public"
               }
             ]
           },
@@ -10343,6 +11457,30 @@
               "key": "path",
               "value": "interrupted"
             }
+          },
+          {
+            "fact_type": "service_result",
+            "handler": "set_local",
+            "inputs": {
+              "key": "public_service_ok",
+              "value_from_payload": "ok"
+            },
+            "payload_equals": {
+              "kind": "scenario_service",
+              "service_id": "service_appraisal"
+            }
+          },
+          {
+            "fact_type": "service_result",
+            "handler": "set_local",
+            "inputs": {
+              "key": "path",
+              "value": "public"
+            },
+            "payload_equals": {
+              "kind": "scenario_service",
+              "service_id": "service_appraisal"
+            }
           }
         ],
         "local_state_schema": {
@@ -10355,9 +11493,15 @@
               "failure",
               "ignored",
               "refused",
-              "interrupted"
+              "interrupted",
+              "public"
             ],
             "visibility": "private"
+          },
+          "public_service_ok": {
+            "default": false,
+            "type": "bool",
+            "visibility": "public"
           }
         },
         "mechanic_tags": [
@@ -10448,6 +11592,15 @@
                     "type": "fact"
                   },
                   "id": "pawn_shop_sals_mood_depart",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "pawn_shop_sals_mood_public_arrival",
                   "next_phase": "resolution"
                 }
               ],
@@ -10659,6 +11812,15 @@
                   },
                   "id": "pawn_shop_sals_mood_work_depart",
                   "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "pawn_shop_sals_mood_public_work",
+                  "next_phase": "resolution"
                 }
               ],
               "entry_conditions": [],
@@ -10803,6 +11965,15 @@
                   },
                   "id": "pawn_shop_sals_mood_out_interrupted",
                   "outcome": "interrupted"
+                },
+                {
+                  "condition": {
+                    "key": "path",
+                    "type": "local_equals",
+                    "value": "public"
+                  },
+                  "id": "pawn_shop_sals_mood_out_public",
+                  "outcome": "public"
                 }
               ],
               "entry_conditions": [],
@@ -10833,7 +12004,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "916e2c42d29ad591ef231b43b4535f5982c097660f744ff155ec663a96734a2f"
+        "sequence_signature": "270d754ae78ddb141f01c687771bcca6084667f564398020348730d237b5e5a9"
       }
     }
   ]

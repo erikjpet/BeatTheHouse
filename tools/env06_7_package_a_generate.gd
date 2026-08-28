@@ -71,9 +71,10 @@ func _init() -> void:
 func _entry(c: Dictionary) -> Dictionary:
 	var sid := str(c.id)
 	var task := str(c.task)
+	var world := _world_contract(c)
 	var sequence := {
 		"schema_version": 2,
-		"local_state_schema": {"path":{"type":"enum","default":"none","values":["none","success","failure","ignored","refused","interrupted"],"visibility":"private"}},
+		"local_state_schema": {"path":{"type":"enum","default":"none","values":["none","success","failure","ignored","refused","interrupted","public"],"visibility":"private"},str(world.field):world.local_schema},
 		"phase_graph": {"initial_phase":"arrival","phases":[
 			_phase_arrival(c), _phase_work(c), _phase_resolution(c)
 		]},
@@ -93,10 +94,13 @@ func _entry(c: Dictionary) -> Dictionary:
 			"failure":_aftermath(c,"failure",c.failure,"restricted"),
 			"ignored":_aftermath(c,"ignored",c.ignored,"occupied"),
 			"refused":_aftermath(c,"refused",str(c.ignored)+"_refused","closed"),
-			"interrupted":_aftermath(c,"interrupted",str(c.object_b)+"_abandoned","paused")
+			"interrupted":_aftermath(c,"interrupted",str(c.object_b)+"_abandoned","paused"),
+			"public":_aftermath(c,"public",str(world.aftermath),str(world.state))
 		},
 		"mechanic_tags":c.tags + [c.world], "sequence_signature":"", "owner_exceptions":[], "fact_subscriptions":[
-			{"fact_type":"travel_departed","handler":"set_local","inputs":{"key":"path","value":"interrupted"}}
+			{"fact_type":"travel_departed","handler":"set_local","inputs":{"key":"path","value":"interrupted"}},
+			_world_subscription(world, str(world.field), true),
+			_world_subscription(world, "path", false)
 		],
 		"completion_contract":{"arrival_readable":true,"semantic_changes":true,"scenario_interaction":true,"action_boundaries":true,"choice_or_failure":true,"material_outcomes":true,"revisit_coverage":true,"world_connection":true,"primary_verb":true,"feedback_and_exit":true},
 		"declared_targets":{"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":[]}
@@ -106,7 +110,7 @@ func _entry(c: Dictionary) -> Dictionary:
 		"world_connections":[c.world,"travel_interruption","safe_exit"],
 		"references":{"objects":["scenario::%s" % c.object_a,"scenario::%s" % c.object_b]},
 		"capture_ids":[sid+"_arrival",sid+"_work",sid+"_success",sid+"_failure",sid+"_ignored",sid+"_refused",sid+"_interrupted",sid+"_partial_revisit",sid+"_terminal_revisit",sid+"_reduced_motion",sid+"_small_screen",sid+"_hit_overlay"],
-		"seed_evidence":{"proof_seed":sid+"_seed","expected_outcomes":["success","failure","ignored","refused","interrupted"],"save_boundaries":["arrival","work","resolution"],"cleanup_idempotent":true,"reentry_idempotent":true,"minimum_target_size":44},
+		"seed_evidence":{"proof_seed":sid+"_seed","expected_outcomes":["success","failure","ignored","refused","interrupted","public"],"save_boundaries":["arrival","work","resolution"],"cleanup_idempotent":true,"reentry_idempotent":true,"minimum_target_size":44,"public_fact_type":world.fact_type,"public_fact_producer":world.producer,"public_payload_predicate":JSON.stringify(world.payload_equals),"public_projected_field":world.field,"public_projected_payload_key":world.selector,"public_material_aftermath":world.aftermath,"public_exactly_once_receipt":true,"accepted_public_facts":JSON.stringify(world.accepted_public_facts)},
 		"masked_visual_explanations":{}
 	}}
 
@@ -117,7 +121,7 @@ func _phase_arrival(c: Dictionary) -> Dictionary:
 		"interaction_ops":[_interaction(sid+"_arrival_task",c.object_a,c.task,[ _action(c.verb_a,"Begin: "+_label(c.verb_a),"ui_accept","path","none"), _action("ignore_sequence","Ignore the scene","ui_down","path","ignored"), _action("refuse_sequence","Refuse the task","ui_cancel","path","refused")],false),_exit(c)],
 		"actor_ops":[{"family":"actor_ops","op":"spawn","receipt_id":sid+"_arrival_actor","owner_namespace":"scenario","stable_object_id":c.actor,"actor":{"label":_label(c.actor),"actor_id":c.actor,"zone_id":"background","behavior":"work","route_id":sid+"_arrival_route","pose":"observing"}}],
 		"transition_ops":[_transition(sid+"_arrival_stage","stage",str(c.arrival))],
-		"branches":[{"id":sid+"_begin","condition":{"type":"command","command_id":c.verb_a},"next_phase":"work"},{"id":sid+"_ignore","condition":{"type":"command","command_id":"ignore_sequence"},"next_phase":"resolution"},{"id":sid+"_refuse","condition":{"type":"command","command_id":"refuse_sequence"},"next_phase":"resolution"},{"id":sid+"_depart","condition":{"type":"fact","fact_type":"travel_departed"},"next_phase":"resolution"}]}
+		"branches":[{"id":sid+"_begin","condition":{"type":"command","command_id":c.verb_a},"next_phase":"work"},{"id":sid+"_ignore","condition":{"type":"command","command_id":"ignore_sequence"},"next_phase":"resolution"},{"id":sid+"_refuse","condition":{"type":"command","command_id":"refuse_sequence"},"next_phase":"resolution"},{"id":sid+"_depart","condition":{"type":"fact","fact_type":"travel_departed"},"next_phase":"resolution"},{"id":sid+"_public_arrival","condition":{"type":"local_equals","key":"path","value":"public"},"next_phase":"resolution"}]}
 
 func _phase_work(c: Dictionary) -> Dictionary:
 	var sid := str(c.id)
@@ -126,12 +130,34 @@ func _phase_work(c: Dictionary) -> Dictionary:
 		"interaction_ops":[_interaction(sid+"_work_task",c.object_b,c.task,[_action(c.verb_b,_label(c.verb_b),"ui_accept","path","success"),_action(c.fail,_label(c.fail),"ui_right","path","failure")],false)],
 		"actor_ops":[{"family":"actor_ops","op":"set_position","receipt_id":sid+"_work_actor","owner_namespace":"scenario","stable_object_id":c.actor,"zone_id":"service_lane"}],
 		"transition_ops":[_transition(sid+"_work_change","scene_change","The scene physically shifts into its decisive second step.")],
-		"branches":[{"id":sid+"_success","condition":{"type":"command","command_id":c.verb_b},"next_phase":"resolution"},{"id":sid+"_failure","condition":{"type":"command","command_id":c.fail},"next_phase":"resolution"},{"id":sid+"_work_depart","condition":{"type":"fact","fact_type":"travel_departed"},"next_phase":"resolution"}]}
+		"branches":[{"id":sid+"_success","condition":{"type":"command","command_id":c.verb_b},"next_phase":"resolution"},{"id":sid+"_failure","condition":{"type":"command","command_id":c.fail},"next_phase":"resolution"},{"id":sid+"_work_depart","condition":{"type":"fact","fact_type":"travel_departed"},"next_phase":"resolution"},{"id":sid+"_public_work","condition":{"type":"local_equals","key":"path","value":"public"},"next_phase":"resolution"}]}
 
 func _phase_resolution(c: Dictionary) -> Dictionary:
 	var sid := str(c.id)
 	return {"id":"resolution","label":"Physical aftermath","arrival_feedback":"The room holds the chosen physical aftermath for revisit.","exit_prompt":"Leave through the marked clear route.","terminal":true,"entry_conditions":[],"objective_ids":[],"advance_after_actions":0,"scene_ops":[],"interaction_ops":[],"actor_ops":[],"transition_ops":[_transition(sid+"_resolution_feedback","feedback","The outcome is recorded once and its room changes persist.")],"branches":[
-		{"id":sid+"_out_success","condition":{"type":"local_equals","key":"path","value":"success"},"outcome":"success"},{"id":sid+"_out_failure","condition":{"type":"local_equals","key":"path","value":"failure"},"outcome":"failure"},{"id":sid+"_out_ignored","condition":{"type":"local_equals","key":"path","value":"ignored"},"outcome":"ignored"},{"id":sid+"_out_refused","condition":{"type":"local_equals","key":"path","value":"refused"},"outcome":"refused"},{"id":sid+"_out_interrupted","condition":{"type":"local_equals","key":"path","value":"interrupted"},"outcome":"interrupted"}]}
+		{"id":sid+"_out_success","condition":{"type":"local_equals","key":"path","value":"success"},"outcome":"success"},{"id":sid+"_out_failure","condition":{"type":"local_equals","key":"path","value":"failure"},"outcome":"failure"},{"id":sid+"_out_ignored","condition":{"type":"local_equals","key":"path","value":"ignored"},"outcome":"ignored"},{"id":sid+"_out_refused","condition":{"type":"local_equals","key":"path","value":"refused"},"outcome":"refused"},{"id":sid+"_out_interrupted","condition":{"type":"local_equals","key":"path","value":"interrupted"},"outcome":"interrupted"},{"id":sid+"_out_public","condition":{"type":"local_equals","key":"path","value":"public"},"outcome":"public"}]}
+
+func _world_contract(c: Dictionary) -> Dictionary:
+	var world_id := str(c.world)
+	var result := {"fact_type":"service_result","producer":"service","payload_equals":{"kind":"scenario_service","service_id":world_id},"selector":"ok","field":"public_service_ok","local_schema":{"type":"bool","default":false,"visibility":"public"},"aftermath":"%s_public_service" % world_id,"state":"public_service","accepted_public_facts":["service_result"]}
+	match world_id:
+		"security_evidence":
+			result = {"fact_type":"sweep_changed","producer":"sweep","payload_equals":{"node_id":"corner_store"},"selector":"active","field":"security_pressure_active","local_schema":{"type":"bool","default":false,"visibility":"public"},"aftermath":"evidence_sweep_hold","state":"security_pressure","accepted_public_facts":["sweep_changed"]}
+		"rumor_surveillance":
+			result = {"fact_type":"heat_changed","producer":"heat","payload_equals":{"source":"corner_store_surveillance"},"selector":"current","field":"surveillance_heat","local_schema":{"type":"float","default":0.0,"min":0.0,"max":100.0,"visibility":"public"},"aftermath":"surveillance_rumor_route","state":"rumor_pressure","accepted_public_facts":["heat_changed"]}
+		"game_craps_public":
+			result = {"fact_type":"game_result","producer":"game","payload_equals":{"game_id":"craps","action_id":"street_craps_disperse"},"selector":"bankroll_delta","field":"stake_recovery_delta","local_schema":{"type":"float","default":0.0,"min":0.0,"max":1000000.0,"visibility":"public"},"aftermath":"street_stake_recovered","state":"stake_recovery","accepted_public_facts":["craps.roll_resolved","craps.come_out","craps.point_set","craps.point_made","craps.seven_out","craps.table_cooled","craps.streak_tier","craps.large_swing","craps.street_lookout_warning","craps.dispersal"]}
+		"sweep_public_pressure":
+			result = {"fact_type":"sweep_changed","producer":"sweep","payload_equals":{"node_id":"back_alley"},"selector":"active","field":"cruiser_sweep_active","local_schema":{"type":"bool","default":false,"visibility":"public"},"aftermath":"cruiser_pressure_route","state":"active_sweep","accepted_public_facts":["sweep_changed"]}
+		"rumor_route":
+			result = {"fact_type":"town_transition","producer":"town","payload_equals":{"day_type":"weekday"},"selector":"weather","field":"rumor_weather_route","local_schema":{"type":"string","default":"","visibility":"public"},"aftermath":"weather_rumor_exit","state":"rumor_route","accepted_public_facts":["town_transition"]}
+		"security_inventory":
+			result = {"fact_type":"sweep_changed","producer":"sweep","payload_equals":{"node_id":"pawn_shop"},"selector":"active","field":"serial_sweep_active","local_schema":{"type":"bool","default":false,"visibility":"public"},"aftermath":"serial_sweep_hold","state":"security_inventory","accepted_public_facts":["sweep_changed"]}
+	return result
+
+func _world_subscription(world: Dictionary, local_key: String, project_payload: bool) -> Dictionary:
+	var inputs := {"key":local_key,"value_from_payload":str(world.selector)} if project_payload else {"key":local_key,"value":"public"}
+	return {"fact_type":str(world.fact_type),"payload_equals":(world.payload_equals as Dictionary).duplicate(true),"handler":"set_local","inputs":inputs}
 
 func _spawn(receipt: String, stable_id: String, label: String, role: String, zone: String, state: String) -> Dictionary:
 	return {"family":"scene_ops","op":"spawn","receipt_id":receipt,"owner_namespace":"scenario","stable_object_id":stable_id,"object":{"label":label,"role":role,"zone_id":zone,"bounds":{"w":72,"h":56},"visible":true,"enabled":true,"state":state,"appearance":stable_id}}
