@@ -5,7 +5,7 @@ const RunReportTimelineCanvasScript := preload("res://scripts/ui/run_report_time
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
-const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
+const LendersBlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const StaffBlackjackGameScript := preload("res://scripts/games/blackjack.gd")
 const StaffBaccaratGameScript := preload("res://scripts/games/baccarat.gd")
 const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
@@ -3244,16 +3244,16 @@ func _blackjack_authority_resolve_for_test(game: GameModule, action_id: String, 
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var table: Dictionary = (game_states.get("blackjack", {}) as Dictionary).duplicate(true) if typeof(game_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
 	var binding := "blackjack:%s:%s" % [str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
-	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(
-		table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {}),
+	var ledger := LendersBlackjackActionAuthorityScript.validate_persisted_ledger(
+		table.get(LendersBlackjackActionAuthorityScript.LEDGER_KEY, {}),
 		binding,
 		run_state.blackjack_authority_checkpoint_fingerprint()
 	)
 	if ledger.is_empty():
-		ledger = BlackjackActionAuthorityScript.default_ledger(binding, run_state.blackjack_authority_checkpoint_fingerprint())
+		ledger = LendersBlackjackActionAuthorityScript.default_ledger(binding, run_state.blackjack_authority_checkpoint_fingerprint())
 	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
 		return {"ok": false, "error_code": "pending_delivery", "message": "Test host already has a pending Blackjack action."}
-	table[BlackjackActionAuthorityScript.LEDGER_KEY] = BlackjackActionAuthorityScript.stage_session(ledger, session)
+	table[LendersBlackjackActionAuthorityScript.LEDGER_KEY] = LendersBlackjackActionAuthorityScript.stage_session(ledger, session)
 	game.call("_update_environment_table", environment, table)
 	run_state.current_environment = environment
 	var host: Control = FoundationMain.new()
