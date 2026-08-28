@@ -7,6 +7,24 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 var failures: Array[String] = []
 
 
+class RitualDrawProbe:
+	extends RefCounted
+	var labels: Array[String] = []
+	var hits: Array[Dictionary] = []
+
+	func draw_rect(_rect: Rect2, _color: Color, _filled: bool = true, _width: float = -1.0) -> void:
+		pass
+
+	func surface_label_centered(text: String, _rect: Rect2, _size: int, _color: Color) -> void:
+		labels.append(text)
+
+	func surface_label_centered_plain(text: String, _rect: Rect2, _size: int, _color: Color) -> void:
+		labels.append(text)
+
+	func surface_add_hold_hit(rect: Rect2, action: String, index: int = -1) -> void:
+		hits.append({"rect": rect, "action": action, "index": index, "keyboard_hold": true, "drag": true})
+
+
 func _init() -> void:
 	_check_roulette()
 	_check_baccarat()
@@ -62,6 +80,20 @@ func _check_roulette() -> void:
 	var remaining: Array = (removed.get("ui_state", {}) as Dictionary).get("roulette_bets", [])
 	if remaining.size() != 1 or str((remaining[0] as Dictionary).get("id", "")) != "outside:red":
 		failures.append("Roulette remove-one changed a different pending stack.")
+	var focused_state := {"roulette_bets": bets.duplicate(true), "selected_chip": 5, "roulette_undo_stack": [], "roulette_focused_stack_id": "outside:red"}
+	var focused_remove: Dictionary = game._remove_bet_chip_command(-1, focused_state, table)
+	var focused_remaining: Array = (focused_remove.get("ui_state", {}) as Dictionary).get("roulette_bets", [])
+	if focused_remaining.size() != 2 or int((focused_remaining[1] as Dictionary).get("stake", 0)) != 5 or str((focused_remaining[0] as Dictionary).get("id", "")) != "straight:17":
+		failures.append("Roulette controller remove did not bind to the exact focused named stack.")
+	var unfocused_state := {"roulette_bets": bets.duplicate(true), "selected_chip": 5, "roulette_undo_stack": []}
+	var unfocused_before := JSON.stringify(unfocused_state)
+	var unfocused_remove: Dictionary = game._remove_bet_chip_command(-1, unfocused_state, table)
+	if JSON.stringify((unfocused_remove.get("ui_state", {}) as Dictionary).get("roulette_bets", [])) != JSON.stringify(bets) or unfocused_before != JSON.stringify(unfocused_state):
+		failures.append("Roulette controller remove without a named focus mutated an implicit last stack.")
+	var roulette_probe := RitualDrawProbe.new()
+	game._draw_roulette_ritual_status(roulette_probe, {"ritual_phase": "no_more_bets", "ritual_energy": {"tier": "packed"}, "ritual_actors": [{"behavior": "waving_off_bets"}], "ritual_scene_objects": [{"id": "roulette.ball", "visual_state": "travel"}]})
+	if roulette_probe.labels.is_empty() or (roulette_probe.labels[0] as String).find("WAVING OFF BETS") < 0 or (roulette_probe.labels[0] as String).find("PACKED") < 0:
+		failures.append("Roulette renderer did not visibly consume actor/object/energy ritual state.")
 
 
 func _check_baccarat() -> void:
@@ -130,6 +162,23 @@ func _check_baccarat() -> void:
 	var reduced: Dictionary = game._squeeze_command({"surface_time_msec": 10000, "reduce_motion": true}, squeeze_table, run_state, false)
 	if float((reduced.get("ui_state", {}) as Dictionary).get("baccarat_squeeze_progress", 0.0)) != 1.0:
 		failures.append("Reduced-motion Baccarat squeeze does not reveal the identical fixed card immediately.")
+	var pointer_environment := {"game_states": {"baccarat": {"schema": "baccarat_table_state", "last_result": squeeze_result.duplicate(true)}}}
+	var pointer_before := JSON.stringify(pointer_environment)
+	var pointer_begin: Dictionary = game.surface_pointer_command("baccarat_squeeze", 0, "begin", Vector2(390, 200), {"surface_time_msec": 10000}, run_state, pointer_environment)
+	var pointer_move: Dictionary = game.surface_pointer_command("baccarat_squeeze", 0, "move", Vector2(490, 200), pointer_begin.get("ui_state", {}), run_state, pointer_environment)
+	var pointer_end: Dictionary = game.surface_pointer_command("baccarat_squeeze", 0, "end", Vector2(490, 200), pointer_move.get("ui_state", {}), run_state, pointer_environment)
+	if float((pointer_end.get("ui_state", {}) as Dictionary).get("baccarat_squeeze_progress", 0.0)) != 1.0 or JSON.stringify(pointer_environment) != pointer_before:
+		failures.append("Baccarat pointer squeeze did not complete a bounded reveal without changing the authored hand.")
+	var late_pointer: Dictionary = game.surface_pointer_command("baccarat_squeeze", 0, "begin", Vector2(390, 200), {"surface_time_msec": 14000}, run_state, pointer_environment)
+	if (late_pointer.get("ui_state", {}) as Dictionary).has("baccarat_squeeze_origin") or JSON.stringify(pointer_environment) != pointer_before:
+		failures.append("Baccarat accepted late squeeze input after the reveal window or changed authority.")
+	var baccarat_probe := RitualDrawProbe.new()
+	game._draw_baccarat_ritual_status(baccarat_probe, {"ritual_phase": "squeeze_reveal", "ritual_energy": {"tier": "busy"}, "ritual_actors": [{"behavior": "offering_squeeze"}], "ritual_scene_objects": [{"id": "baccarat.shoe", "visual_state": "in_use"}]})
+	if baccarat_probe.labels.is_empty() or (baccarat_probe.labels[0] as String).find("OFFERING SQUEEZE") < 0 or (baccarat_probe.labels[0] as String).find("BUSY") < 0:
+		failures.append("Baccarat renderer did not visibly consume actor/object/energy ritual state.")
+	game._draw_squeeze_badge(baccarat_probe, squeeze_result.get("animation_events", [])[0], {"baccarat_squeeze_progress": 0.5, "baccarat_squeeze_available": true})
+	if baccarat_probe.hits.is_empty() or not bool((baccarat_probe.hits[0] as Dictionary).get("keyboard_hold", false)) or not bool((baccarat_probe.hits[0] as Dictionary).get("drag", false)):
+		failures.append("Baccarat squeeze renderer did not register the shared pointer/keyboard/controller hold route.")
 	if FileAccess.get_file_as_string("res://scripts/games/baccarat.gd").find("Time.get_ticks_msec") >= 0:
 		failures.append("Baccarat module still depends on uptime instead of the deterministic simulation clock.")
 	var environment := {"id": "game06_3_baccarat_restore", "archetype_id": "grand_casino", "kind": "boss", "game_ids": ["baccarat"], "economic_profile": {"stake_floor": 5, "stake_ceiling": 1000}, "security_profile": {"strictness": "high"}}
