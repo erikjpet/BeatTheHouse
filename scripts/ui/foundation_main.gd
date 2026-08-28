@@ -5497,11 +5497,15 @@ func _restore_talk_dock_control_lifecycle_snapshot(control: Control, snapshot: D
 	control.offset_top = float(snapshot.get("offset_top", control.offset_top))
 	control.offset_right = float(snapshot.get("offset_right", control.offset_right))
 	control.offset_bottom = float(snapshot.get("offset_bottom", control.offset_bottom))
-	control.position = snapshot.get("position", control.position) as Vector2
-	# Container-owned controls with fixed anchors still require their synchronous
-	# derived size restored. Stretched controls are already defined exactly by
-	# anchors/offsets; assigning size there is redundant and emits a Godot warning.
-	if is_equal_approx(control.anchor_left, control.anchor_right) and is_equal_approx(control.anchor_top, control.anchor_bottom):
+	# Containers own their children's derived size; assigning it directly rewrites
+	# otherwise exact offsets. Stretched controls are likewise defined by their
+	# anchors/offsets, so restore derived geometry only for independently laid-out
+	# fixed controls.
+	var independent_fixed_control := is_equal_approx(control.anchor_left, control.anchor_right) \
+			and is_equal_approx(control.anchor_top, control.anchor_bottom) \
+			and not (control.get_parent() is Container)
+	if independent_fixed_control:
+		control.position = snapshot.get("position", control.position) as Vector2
 		control.size = snapshot.get("size", control.size) as Vector2
 	control.custom_minimum_size = snapshot.get("custom_minimum_size", control.custom_minimum_size) as Vector2
 	control.visible = bool(snapshot.get("visible", control.visible))
@@ -10383,6 +10387,7 @@ func current_action_category_snapshot() -> Dictionary:
 
 func current_screen_snapshot() -> Dictionary:
 	var map_detail_badges: Array = world_map_overlay_controller.detail_badges() if world_map_overlay_controller != null else []
+	var environment: Dictionary = run_state.current_environment if run_state != null else {}
 	return {
 		"screen": current_screen,
 		"selected_category": selected_action_category,
@@ -10413,8 +10418,8 @@ func current_screen_snapshot() -> Dictionary:
 		"world_map": _world_map_snapshot() if run_state != null else {},
 		"conclusion_animation": current_conclusion_animation_snapshot(),
 		"accessibility": current_accessibility_snapshot(),
-		"scenario_layout_audit": _copy_dict(run_state.current_environment.get("scenario_layout_audit", {})),
-		"scenario_layout_authority_digest": str(run_state.current_environment.get("scenario_layout_authority_digest", "")),
+		"scenario_layout_audit": _copy_dict(environment.get("scenario_layout_audit", {})),
+		"scenario_layout_authority_digest": str(environment.get("scenario_layout_authority_digest", "")),
 	}
 
 
