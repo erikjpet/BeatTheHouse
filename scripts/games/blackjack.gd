@@ -9,6 +9,7 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
+const RitualSchemaScript := preload("res://scripts/core/game_ritual_schema.gd")
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
@@ -74,6 +75,7 @@ const BJ_CONSOLE_H := 84.0
 const BJ_TABLE_BOTTOM := 334.0
 const DRAW_DEAL_EVENTS_CACHE_KEY := "_blackjack_draw_deal_events"
 const ROURKE_DUEL_VARIANT := "rourke_duel"
+const BLACKJACK_RITUAL_ID := "blackjack.standard_table"
 const BJ_RAIL_POINTS := [
 	Vector2(46, 142), Vector2(156, 92), Vector2(334, 76), Vector2(566, 76),
 	Vector2(744, 92), Vector2(854, 142), Vector2(822, BJ_TABLE_BOTTOM), Vector2(78, BJ_TABLE_BOTTOM),
@@ -573,7 +575,107 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			},
 		}),
 	})
+	spec["ritual_projection"] = _blackjack_ritual_projection(
+		run_state,
+		environment,
+		table,
+		session,
+		spec,
+		deal_animation_active,
+		payout_animation_active
+	)
 	return _rourke_duel_surface_state(spec, run_state, environment, session, table)
+
+
+func _blackjack_ritual_projection(run_state: RunState, environment: Dictionary, table: Dictionary, session: Dictionary, spec: Dictionary, deal_animation_active: bool, payout_animation_active: bool) -> Dictionary:
+	var dealt := _has_dealt_hand(session)
+	var round_complete := dealt and _all_hands_complete(session)
+	var phase_id := "betting"
+	if deal_animation_active:
+		phase_id = "deal"
+	elif round_complete or bool(spec.get("dealer_blackjack_pending", false)):
+		phase_id = "dealer_procedure"
+	elif dealt:
+		phase_id = "player_decisions"
+	elif payout_animation_active or not _local_copy_dict(table.get("last_result", {})).is_empty():
+		phase_id = "settlement"
+	var selected_stake := int(spec.get("selected_stake", 0))
+	var pending_items := {}
+	if phase_id in ["betting", "settlement"] and selected_stake > 0:
+		pending_items["wager.main"] = selected_stake
+		for side_id in _string_array(session.get("blackjack_side_bets", [])):
+			pending_items["wager.side.%s" % side_id] = int(_local_copy_dict(spec.get("side_bet_stakes", {})).get(side_id, 0))
+	var working_items := {}
+	if dealt:
+		for hand_index in range(_hand_array(session.get("player_hands", [])).size()):
+			var hand: Dictionary = _hand_array(session.get("player_hands", []))[hand_index]
+			working_items["hand.%d" % hand_index] = int(hand.get("stake", selected_stake))
+	var last_result := _local_copy_dict(table.get("last_result", {}))
+	var bankroll := maxi(0, run_state.wager_balance_for_game(get_id(), environment)) if run_state != null else 0
+	var heat := run_state.suspicion_level_for_environment_id(str(environment.get("id", ""))) if run_state != null else 0
+	var energy_tier := "hot" if heat >= 70 else "watched" if heat >= 40 else "engaged" if dealt else "quiet"
+	var dealer_behavior := "paying" if phase_id == "settlement" else "drawing" if phase_id == "dealer_procedure" else "dealing" if phase_id == "deal" else "watching" if heat >= 40 else "idle"
+	var actors: Array = [{
+		"id": "dealer.primary",
+		"role": "dealer",
+		"state": {"pose": dealer_behavior, "behavior": dealer_behavior, "anchor": "station.dealer", "attention": energy_tier, "visible": true},
+	}]
+	for patron_index in range(_dictionary_array(spec.get("patrons", [])).size()):
+		var patron: Dictionary = _dictionary_array(spec.get("patrons", []))[patron_index]
+		actors.append({
+			"id": "neighbour.%d" % patron_index,
+			"role": "neighbour",
+			"state": {"pose": str(patron.get("pose", "seated")), "behavior": "playing" if dealt else "idle", "anchor": "seat.%d" % patron_index, "visible": true},
+		})
+	if heat >= 40:
+		actors.append({"id": "pit.primary", "role": "pit", "state": {"pose": "near" if heat >= 70 else "watching", "behavior": "watching", "anchor": "pit.rail", "visible": true}})
+	for crew_index in range(_dictionary_array(spec.get("crew_play_status", [])).size()):
+		var crew: Dictionary = _dictionary_array(spec.get("crew_play_status", []))[crew_index]
+		actors.append({"id": "crew.%d" % crew_index, "role": str(crew.get("role", "crew")), "state": {"pose": "present", "behavior": str(crew.get("status", "ready")), "anchor": "crew.rail", "visible": true}})
+	var action_states := {
+		"blackjack_deal": _ritual_action_state(bool(spec.get("can_deal", false)), "Finish the current hand before dealing again."),
+		"blackjack_hit": _ritual_action_state(bool(spec.get("can_hit", false)), "Hit is only available on the active unfinished hand."),
+		"blackjack_stand": _ritual_action_state(bool(spec.get("can_stand", false)), "Stand is only available on the active unfinished hand."),
+		"blackjack_double": _ritual_action_state(bool(spec.get("can_double", false)), "Double requires an eligible two-card hand and enough funds."),
+		"blackjack_split": _ritual_action_state(bool(spec.get("can_split", false)), "Split requires a matching eligible pair, room for another hand, and enough funds."),
+		"blackjack_surrender": _ritual_action_state(bool(spec.get("can_surrender", false)), "Surrender follows this table's late-surrender rule."),
+	}
+	return {
+		"contract": RitualSchemaScript.CONTRACT,
+		"ritual_id": BLACKJACK_RITUAL_ID,
+		"phase_id": phase_id,
+		"pending_items": pending_items,
+		"working_items": working_items,
+		"item_resolutions": _dictionary_array(last_result.get("hand_results", [])),
+		"readable_totals": {
+			"available_funds": bankroll,
+			"pending_total": _ritual_amount_total(pending_items),
+			"at_risk_total": _ritual_amount_total(working_items),
+			"returned_stake": int(last_result.get("returned_stake", 0)),
+			"payout": maxi(0, int(last_result.get("bankroll_delta", 0))),
+			"net_change": int(last_result.get("bankroll_delta", 0)),
+		},
+		"actors": actors,
+		"scene_objects": [
+			{"id": "shoe.primary", "state": {"visual": "cut_card_near" if int(spec.get("shoe_remaining", 0)) <= int(spec.get("cut_card_remaining", 0)) else "ready", "functional": "dealing" if dealt else "ready", "visible": true, "enabled": true}},
+			{"id": "tray.discard", "state": {"visual": "occupied" if int(spec.get("shoe_remaining", 0)) < int(table.get("deck_count", 1)) * CardShoeScript.CARDS_PER_DECK else "empty", "functional": "passive", "visible": true, "enabled": false}},
+			{"id": "commitment.player", "state": {"visual": "at_risk" if dealt else "pending", "functional": "locked" if dealt else "editable", "visible": true, "enabled": not dealt}},
+		],
+		"energy_tier": energy_tier,
+		"action_states": action_states,
+		"accessibility_equivalents": {"hit": "blackjack_hit", "stand": "blackjack_stand", "cut": "blackjack_deal", "reduced_motion": true},
+	}
+
+
+func _ritual_action_state(enabled: bool, disabled_reason: String) -> Dictionary:
+	return {"enabled": enabled, "disabled_reason": "" if enabled else disabled_reason}
+
+
+func _ritual_amount_total(items: Dictionary) -> int:
+	var total := 0
+	for amount in items.values():
+		total += maxi(0, int(amount))
+	return total
 
 
 func _rourke_duel_surface_state(spec: Dictionary, run_state: RunState, environment: Dictionary, session: Dictionary, _table: Dictionary) -> Dictionary:
