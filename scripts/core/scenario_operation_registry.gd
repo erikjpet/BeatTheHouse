@@ -253,7 +253,13 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 	var authored_receipts: Dictionary = {}
 	var pending: Array = []
 	var fingerprints := _dict(original.get("operation_fingerprints", {}))
-	var known_targets := _dict(original.get(_collection_key(family), {}))
+	var collection_key := _collection_key(family)
+	var known_targets := _dict(original.get(collection_key, {}))
+	# Sealed host targets are live even before a scenario materializes its overlay.
+	# Per-operation declared-target checks below still gate mutation, while create
+	# operations continue to reject every identity already present in inventory.
+	for target_value in _string_array(_dict(original.get("target_inventory", {})).get(collection_key, [])):
+		known_targets[str(target_value)] = true
 	var existing_receipts := _string_array(original.get("operation_receipts", []))
 	for index in range(operations.size()):
 		if typeof(operations[index]) != TYPE_DICTIONARY:
