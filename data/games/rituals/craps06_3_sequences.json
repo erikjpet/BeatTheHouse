@@ -1,0 +1,69 @@
+[
+{
+  "contract": "game_ritual/1",
+  "package_id": "craps06_3_sequences",
+  "contract_head": "a2760d816c781e711ff0923c296f97b786662453",
+  "profiles": [
+    {
+      "id": "craps.ordinary_casino",
+      "initial_phase": "betting",
+      "phases": ["betting", "dice_offered", "aiming_throw", "bounce_read", "dealer_settlement"],
+      "required_actions": ["place", "correct", "remove_one", "undo", "clear", "repeat", "rebet", "confirm", "flick"],
+      "actors": ["stickperson", "base_dealer_left", "base_dealer_right", "boxperson", "pit_boss", "crowd_rail"],
+      "objects": ["table_layout", "dice_pair", "working_chips", "point_puck", "crowd_rail"],
+      "material_operations": ["actor.set_behavior", "object.set_state", "interaction.set_availability"],
+      "required_facts": ["craps.come_out", "craps.point_set", "craps.point_made", "craps.seven_out", "craps.streak_tier", "craps.large_swing", "craps.table_cooled"]
+    },
+    {
+      "id": "craps.hot_high_stakes",
+      "initial_phase": "betting",
+      "phases": ["betting", "attention_call", "dice_offered", "aiming_throw", "bounce_read", "dealer_settlement"],
+      "required_actions": ["place", "correct", "remove_one", "undo", "clear", "repeat", "rebet", "confirm", "flick"],
+      "actors": ["stickperson", "base_dealer_left", "base_dealer_right", "boxperson", "pit_boss", "expanded_crowd"],
+      "objects": ["table_layout", "dice_pair", "working_chips", "point_puck", "high_stakes_marker", "crowd_rail"],
+      "material_operations": ["actor.move", "actor.set_attention", "object.set_state", "interaction.set_availability"],
+      "required_facts": ["craps.point_made", "craps.streak_tier", "craps.large_swing"]
+    },
+    {
+      "id": "craps.security_audit",
+      "initial_phase": "betting",
+      "phases": ["betting", "audit_hold", "dice_offered", "aiming_throw", "bounce_read", "dealer_settlement"],
+      "required_actions": ["place", "remove_one", "confirm", "flick"],
+      "actors": ["stickperson", "base_dealer_left", "base_dealer_right", "pit_boss", "security_observer"],
+      "objects": ["table_layout", "dice_pair", "audit_marker", "service_gate", "security_rail"],
+      "material_operations": ["actor.move", "actor.set_attention", "object.set_state", "interaction.set_availability"],
+      "required_facts": ["craps.cheat_attempt", "craps.cheat_result", "craps.large_swing"]
+    },
+    {
+      "id": "craps.ordinary_street",
+      "initial_phase": "arrival",
+      "phases": ["arrival", "cash_commit", "dice_offered", "aiming_throw", "bounce_read", "cash_settlement"],
+      "required_actions": ["place", "correct", "remove_one", "undo", "clear", "repeat", "rebet", "confirm", "flick"],
+      "actors": ["caller", "lookout", "shooter", "street_participants"],
+      "objects": ["chalk_ring", "cash_ring", "dice_pair", "lookout_post"],
+      "material_operations": ["actor.set_behavior", "object.set_state", "interaction.set_availability"],
+      "required_facts": ["craps.come_out", "craps.point_set", "craps.point_made", "craps.seven_out", "craps.streak_tier"]
+    },
+    {
+      "id": "craps.interrupted_street",
+      "initial_phase": "arrival",
+      "phases": ["arrival", "cash_commit", "warning", "break_up", "escape_or_relocate", "terminal_session"],
+      "required_actions": ["place", "remove_one", "confirm", "escape", "relocate"],
+      "actors": ["caller", "lookout", "shooter", "street_participants", "approaching_pressure"],
+      "objects": ["chalk_ring", "cash_ring", "alternate_circle_request", "exit_interaction"],
+      "material_operations": ["actor.move", "actor.set_behavior", "object.set_state", "interaction.set_availability", "route.request_relocation"],
+      "required_facts": ["craps.street_lookout_warning", "craps.dispersal"]
+    }
+  ],
+  "persistence": {
+    "authoritative": ["point", "working_bets", "last_committed_bets", "last_resolved_bets", "ritual_sequence", "street_dispersed", "street_disperse_reason"],
+    "derived": ["ritual_actors", "ritual_scene_objects", "ritual_energy_tier"],
+    "transient": ["craps_throw_origin", "craps_throw_position", "surface_presentation_time_msec"],
+    "one_shot": ["craps_ritual_receipt", "fact.receipt_key"]
+  },
+  "rejection_policy": {
+    "side_effect_free": true,
+    "forbids": ["charge", "phase_advance", "fact", "authoritative_result", "receipt"]
+  }
+}
+]

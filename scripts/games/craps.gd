@@ -97,7 +97,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var pending := _pending_bets(ui_state.get("craps_pending_bets", {}))
 	var selected_chip := int(ui_state.get("selected_chip", _first_chip(table)))
 	var targets := _street_bet_targets(table, rules) if street else CrapsSurfaceViewModelScript.bet_targets(table, rules)
-	if dispersed:
+	if dispersed or warning:
 		for target_value in targets:
 			if typeof(target_value) == TYPE_DICTIONARY:
 				(target_value as Dictionary)["enabled"] = false
@@ -973,7 +973,7 @@ func _resolved_rebet_set(pending: Dictionary, settlement: Dictionary) -> Diction
 
 
 func _presentation_phase(last_roll: Dictionary, now_msec: int, duration: int, dispersed: bool, requested_phase: String = "") -> String:
-	if dispersed or warning:
+	if dispersed:
 		return "dispersed"
 	var started := int(last_roll.get("resolved_at_msec", 0))
 	if started > 0 and duration > 0 and now_msec >= started and now_msec < started + duration:
