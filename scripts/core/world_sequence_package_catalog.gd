@@ -19,9 +19,12 @@ static func entry(package_id: String) -> Dictionary:
 	if _cache.has(clean_id):
 		return _copy_dict(_cache.get(clean_id, {}))
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(str(PACKAGE_PATHS.get(clean_id, ""))))
-	if typeof(parsed) != TYPE_DICTIONARY:
+	if typeof(parsed) != TYPE_ARRAY or (parsed as Array).size() != 1 or typeof((parsed as Array)[0]) != TYPE_DICTIONARY:
 		return {}
-	var definitions: Array = (parsed as Dictionary).get("definitions", []) if typeof((parsed as Dictionary).get("definitions", [])) == TYPE_ARRAY else []
+	var package := (parsed as Array)[0] as Dictionary
+	if str(package.get("package_id", "")) != clean_id:
+		return {}
+	var definitions: Array = package.get("definitions", []) if typeof(package.get("definitions", [])) == TYPE_ARRAY else []
 	if definitions.size() != 1 or typeof(definitions[0]) != TYPE_DICTIONARY:
 		return {}
 	var result := _copy_dict(definitions[0])

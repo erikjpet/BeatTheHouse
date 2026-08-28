@@ -36,7 +36,8 @@ const DELIVERY_CHECKPOINT_FIELDS := [
 
 func _initialize() -> void:
 	var failures: Array = []
-	var package := _load_json_dictionary(PACKAGE_PATH, failures)
+	var packages := _load_json_array(PACKAGE_PATH, failures)
+	var package := _first_package(packages, failures)
 	var entry := _first_definition(package, failures)
 	_check_adapter_envelope(entry, failures)
 	_check_shared_definition(entry, failures)
@@ -777,12 +778,23 @@ func _production_run(library: ContentLibrary, seed: String) -> RunState:
 	return run_state
 
 
-func _load_json_dictionary(path: String, failures: Array) -> Dictionary:
+func _load_json_array(path: String, failures: Array) -> Array:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if typeof(parsed) != TYPE_DICTIONARY:
-		failures.append("JSON document did not parse as a dictionary: %s." % path)
+	if typeof(parsed) != TYPE_ARRAY:
+		failures.append("JSON document did not parse as an array: %s." % path)
+		return []
+	return (parsed as Array).duplicate(true)
+
+
+func _first_package(packages: Array, failures: Array) -> Dictionary:
+	if packages.size() != 1 or typeof(packages[0]) != TYPE_DICTIONARY:
+		failures.append("Crew favor proof catalog must contain exactly one package record.")
 		return {}
-	return (parsed as Dictionary).duplicate(true)
+	var package := _dict(packages[0])
+	if str(package.get("package_id", "")) != "world06_1_crew_favor_delivery":
+		failures.append("Crew favor proof catalog package id is not canonical.")
+		return {}
+	return package
 
 
 func _first_definition(package: Dictionary, failures: Array) -> Dictionary:
