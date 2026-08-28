@@ -533,7 +533,7 @@ static func _apply_operation(state: Dictionary, family: String, operation: Dicti
 	var key := identity_from(operation)
 	var op_id := str(operation.get("op", ""))
 	var payload := _dict(operation.get("object", operation.get("actor", operation.get("interaction", {}))))
-	if cleanup_restore and family == "interaction_ops" and not ["add", "remove"].has(op_id):
+	if cleanup_restore and family == "interaction_ops" and not ["add", "remove"].has(op_id) and collection.has(key):
 		collection.erase(key)
 		state[collection_key] = collection
 		return
@@ -645,10 +645,17 @@ static func _validate_operation_target(state: Dictionary, family: String, operat
 	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
 		if cleanup_restore:
 			if not collection.has(key):
-				errors.append("interaction cleanup overlay identity is not live: %s." % key)
+				var cleanup_target_key := identity(str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", "")))
+				if not collection.has(cleanup_target_key) and not _target_declared(state, collection_key, cleanup_target_key):
+					errors.append("interaction cleanup overlay target is not live: %s." % cleanup_target_key)
 			return errors
 		if collection.has(key):
-			errors.append("interaction overlay identity already exists: %s." % key)
+			var existing_overlay := _dict(collection.get(key, {}))
+			var existing_target := identity(str(existing_overlay.get("target_owner_namespace", "")), str(existing_overlay.get("target_stable_object_id", "")))
+			var requested_target := identity(str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", "")))
+			if existing_target != requested_target or str(existing_overlay.get("mode", "")) != op_id:
+				errors.append("interaction overlay identity already exists with different authority: %s." % key)
+			return errors
 		var target_key := identity(str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", "")))
 		if not collection.has(target_key) and not _target_declared(state, collection_key, target_key):
 			errors.append("interaction %s targets undeclared missing identity %s." % [key, target_key])

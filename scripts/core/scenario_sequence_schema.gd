@@ -942,7 +942,14 @@ static func _operation_has_material_target(family: String, operation: Dictionary
 	var source_key := "%s::%s" % [str(operation.get("owner_namespace", "")), str(operation.get("stable_object_id", ""))]
 	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
 		var target_key := "%s::%s" % [str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", ""))]
-		return not targets.has(source_key) and _material_target_live(targets, target_key)
+		if not _material_target_live(targets, target_key):
+			return false
+		if not targets.has(source_key):
+			return true
+		var existing_overlay := _dict(targets.get(source_key, {}))
+		return _material_target_live(targets, source_key) \
+			and str(existing_overlay.get("material_kind", "")) == "interaction_overlay" \
+			and str(existing_overlay.get("overlay_target_identity", "")) == target_key
 	if family == "scene_ops" and op_id == "spawn" or family in ["interaction_ops", "service_ops", "game_ops"] and op_id == "add" or family == "actor_ops" and op_id == "spawn":
 		return not targets.has(source_key)
 	return _material_target_live(targets, source_key)
@@ -956,6 +963,11 @@ static func _apply_material_target_projection(family: String, operation: Diction
 	var op_id := str(operation.get("op", ""))
 	if ["remove", "despawn"].has(op_id):
 		var removed := _dict(targets.get(source_key, {})).duplicate(true)
+		if family == "interaction_ops" and str(removed.get("material_kind", "")) == "interaction_overlay":
+			var overlay_target := str(removed.get("overlay_target_identity", ""))
+			var target_snapshot := _dict(removed.get("overlay_target_snapshot", {}))
+			if not overlay_target.is_empty() and not target_snapshot.is_empty():
+				targets[overlay_target] = target_snapshot.duplicate(true)
 		if str(removed.get("material_origin", "")) == "base":
 			removed["present"] = false
 			removed["material_dirty"] = true
@@ -970,6 +982,8 @@ static func _apply_material_target_projection(family: String, operation: Diction
 		var overlay := _material_created_state(family, operation, source_key)
 		overlay["material_kind"] = "interaction_overlay"
 		overlay["overlay_target_identity"] = target_key
+		var previous_overlay := _dict(targets.get(source_key, {}))
+		overlay["overlay_target_snapshot"] = _dict(previous_overlay.get("overlay_target_snapshot", current)).duplicate(true)
 		targets[source_key] = overlay
 		if op_id == "replace":
 			current["present"] = false
@@ -1017,7 +1031,16 @@ static func _cleanup_operation_has_obligation(family: String, operation: Diction
 	var op_id := str(operation.get("op", ""))
 	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
 		var target_key := "%s::%s" % [str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", ""))]
-		return _material_target_live(targets, source_key) and str(_dict(targets.get(source_key, {})).get("material_kind", "")) == "interaction_overlay" and baseline.has(target_key) and bool(_dict(targets.get(target_key, {})).get("material_dirty", false))
+		var existing_overlay := _dict(targets.get(source_key, {}))
+		var restores_overlay := _material_target_live(targets, source_key) \
+			and str(existing_overlay.get("material_kind", "")) == "interaction_overlay" \
+			and str(existing_overlay.get("overlay_target_identity", "")) == target_key \
+			and baseline.has(target_key) \
+			and bool(_dict(targets.get(target_key, {})).get("material_dirty", false))
+		var installs_terminal_overlay := not targets.has(source_key) \
+			and baseline.has(target_key) \
+			and _material_target_live(targets, target_key)
+		return restores_overlay or installs_terminal_overlay
 	var current := _dict(targets.get(source_key, {}))
 	if baseline.has(source_key): return bool(current.get("material_dirty", false))
 	return ["remove", "despawn"].has(op_id) and _material_target_live(targets, source_key) and str(current.get("material_origin", "")) == "sequence"
@@ -1032,8 +1055,20 @@ static func _apply_cleanup_material_projection(family: String, operation: Dictio
 	var op_id := str(operation.get("op", ""))
 	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
 		var target_key := "%s::%s" % [str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", ""))]
-		targets.erase(source_key)
-		if baseline.has(target_key): targets[target_key] = _dict(baseline.get(target_key, {})).duplicate(true)
+		if targets.has(source_key):
+			targets.erase(source_key)
+			if baseline.has(target_key): targets[target_key] = _dict(baseline.get(target_key, {})).duplicate(true)
+		else:
+			var current := _dict(targets.get(target_key, {})).duplicate(true)
+			var overlay := _material_created_state(family, operation, source_key)
+			overlay["material_kind"] = "interaction_overlay"
+			overlay["material_origin"] = "cleanup"
+			overlay["overlay_target_identity"] = target_key
+			overlay["overlay_target_snapshot"] = current.duplicate(true)
+			targets[source_key] = overlay
+			_apply_material_fields(current, op_id, operation)
+			current["material_dirty"] = true
+			targets[target_key] = current
 	elif baseline.has(source_key):
 		targets[source_key] = _dict(baseline.get(source_key, {})).duplicate(true)
 	elif ["remove", "despawn"].has(op_id):
@@ -1064,6 +1099,18 @@ static func _proven_cleanup_projection(authored: Dictionary, targets_value: Dict
 		var baseline_collection := _dict(base_targets.get(collection_key, {}))
 		for identity_value in baseline_collection.keys():
 			var identity := str(identity_value)
+			var retained_cleanup_overlay := false
+			if collection_key == "interactions":
+				for overlay_value in collection.values():
+					var overlay := _dict(overlay_value)
+					if bool(overlay.get("present", false)) \
+					and str(overlay.get("material_kind", "")) == "interaction_overlay" \
+					and str(overlay.get("material_origin", "")) == "cleanup" \
+					and str(overlay.get("overlay_target_identity", "")) == identity:
+						retained_cleanup_overlay = true
+						break
+			if retained_cleanup_overlay:
+				continue
 			if not collection.has(identity) or _canonical_variant(collection.get(identity)) != _canonical_variant(baseline_collection.get(identity)):
 				errors.append("sequence %s does not restore exact base %s target %s after cleanup." % [path_label, collection_key, identity])
 	return cleaned

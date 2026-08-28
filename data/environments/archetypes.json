@@ -179,36 +179,36 @@
     "semantic_anchors": {
       "delivery_clerk": {
         "position": [
-          560,
-          380
+          150,
+          100
         ],
         "zone_id": "foreground"
       },
       "delivery_clerk_work": {
         "position": [
-          570,
-          50
+          150,
+          350
         ],
         "zone_id": "center"
       },
       "delivery_manifest": {
         "position": [
-          700,
+          650,
           100
         ],
         "zone_id": "service_lane"
       },
       "delivery_verification_shelf": {
         "position": [
-          850,
-          110
+          650,
+          100
         ],
         "zone_id": "right"
       },
       "delivery_runner_route": {
         "position": [
-          700,
-          385
+          300,
+          100
         ],
         "zone_id": "foreground"
       },
@@ -221,8 +221,8 @@
       },
       "travel_1": {
         "position": [
-          780,
-          258
+          300,
+          100
         ],
         "zone_id": "exit_lane"
       }

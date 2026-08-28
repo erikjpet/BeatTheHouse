@@ -227,7 +227,6 @@
                     "actor_id": "ada_corner_merchant",
                     "anchor_id": "delivery_clerk",
                     "behavior": "work",
-                    "route_id": "delivery_clerk",
                     "pose": "checking_manifest"
                   }
                 },
@@ -242,7 +241,6 @@
                     "actor_id": "priya_travel_merchant",
                     "anchor_id": "travel_1",
                     "behavior": "work",
-                    "route_id": "delivery_runner_route",
                     "pose": "unloading_dolly"
                   }
                 }
@@ -413,7 +411,7 @@
                   "receipt_id": "sorting_route_runner_to_service_lane",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_runner",
-                  "zone_id": "service_lane"
+                  "anchor_id": "delivery_runner_route"
                 },
                 {
                   "family": "actor_ops",
@@ -583,7 +581,7 @@
                   "receipt_id": "verification_reposition_runner",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_runner",
-                  "zone_id": "service_lane"
+                  "anchor_id": "delivery_runner_route"
                 },
                 {
                   "family": "actor_ops",
@@ -658,7 +656,7 @@
                   "receipt_id": "awaiting_stock_reposition_cartons",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_cartons",
-                  "zone_id": "background"
+                  "anchor_id": "delivery_clerk"
                 },
                 {
                   "family": "scene_ops",
@@ -692,6 +690,18 @@
                   "receipt_id": "awaiting_stock_remove_verification",
                   "owner_namespace": "scenario",
                   "stable_object_id": "sorting_shelf"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "gate",
+                  "receipt_id": "awaiting_stock_keep_host_delivery_event_gated",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_event_host_gate",
+                  "mode": "gate",
+                  "target_owner_namespace": "event",
+                  "target_stable_object_id": "event:scenario_delivery_day_stock",
+                  "enabled": false,
+                  "disabled_reason": "The delivered scenario request owns this stock choice; the base card stays gated."
                 }
               ],
               "actor_ops": [
@@ -717,7 +727,7 @@
                   "receipt_id": "awaiting_stock_reposition_runner",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_runner",
-                  "zone_id": "service_lane"
+                  "anchor_id": "delivery_runner_route"
                 },
                 {
                   "family": "actor_ops",
@@ -809,7 +819,20 @@
               "objective_ids": [],
               "advance_after_actions": 0,
               "scene_ops": [],
-              "interaction_ops": [],
+              "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "gate",
+                  "receipt_id": "resolution_close_host_delivery_event",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "delivery_event_host_gate",
+                  "mode": "gate",
+                  "target_owner_namespace": "event",
+                  "target_stable_object_id": "event:scenario_delivery_day_stock",
+                  "enabled": false,
+                  "disabled_reason": "The delivery-stock choice is no longer independently available."
+                }
+              ],
               "actor_ops": [],
               "transition_ops": [
                 {
@@ -991,6 +1014,18 @@
             },
             {
               "family": "interaction_ops",
+              "op": "gate",
+              "receipt_id": "cleanup_install_terminal_delivery_event_gate",
+              "owner_namespace": "scenario",
+              "stable_object_id": "delivery_event_terminal_gate",
+              "mode": "gate",
+              "target_owner_namespace": "event",
+              "target_stable_object_id": "event:scenario_delivery_day_stock",
+              "enabled": false,
+              "disabled_reason": "This delivery can no longer open independent stock consequences."
+            },
+            {
+              "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_delivery_event_controls",
               "owner_namespace": "scenario",
@@ -1079,15 +1114,10 @@
             "interaction_ops": [
               {
                 "family": "interaction_ops",
-                "op": "gate",
-                "receipt_id": "aftermath_repaired_terminal_event_gate",
+                "op": "remove",
+                "receipt_id": "aftermath_repaired_remove_terminal_event_gate",
                 "owner_namespace": "scenario",
-                "stable_object_id": "delivery_event_terminal_gate",
-                "mode": "gate",
-                "target_owner_namespace": "event",
-                "target_stable_object_id": "event:scenario_delivery_day_stock",
-                "enabled": false,
-                "disabled_reason": "This delivery has already been resolved."
+                "stable_object_id": "delivery_event_terminal_gate"
               }
             ],
             "service_ops": [
@@ -1144,15 +1174,10 @@
             "interaction_ops": [
               {
                 "family": "interaction_ops",
-                "op": "gate",
-                "receipt_id": "aftermath_broken_terminal_event_gate",
+                "op": "remove",
+                "receipt_id": "aftermath_broken_remove_terminal_event_gate",
                 "owner_namespace": "scenario",
-                "stable_object_id": "delivery_event_terminal_gate",
-                "mode": "gate",
-                "target_owner_namespace": "event",
-                "target_stable_object_id": "event:scenario_delivery_day_stock",
-                "enabled": false,
-                "disabled_reason": "This delivery has already been resolved."
+                "stable_object_id": "delivery_event_terminal_gate"
               }
             ],
             "service_ops": [
@@ -1223,20 +1248,7 @@
                 }
               }
             ],
-            "interaction_ops": [
-              {
-                "family": "interaction_ops",
-                "op": "gate",
-                "receipt_id": "aftermath_refused_terminal_event_gate",
-                "owner_namespace": "scenario",
-                "stable_object_id": "delivery_event_terminal_gate",
-                "mode": "gate",
-                "target_owner_namespace": "event",
-                "target_stable_object_id": "event:scenario_delivery_day_stock",
-                "enabled": false,
-                "disabled_reason": "This delivery has already been resolved."
-              }
-            ],
+            "interaction_ops": [],
             "service_ops": [
               {
                 "family": "service_ops",
@@ -1289,20 +1301,7 @@
               }
             ],
             "actor_ops": [],
-            "interaction_ops": [
-              {
-                "family": "interaction_ops",
-                "op": "gate",
-                "receipt_id": "aftermath_interrupted_terminal_event_gate",
-                "owner_namespace": "scenario",
-                "stable_object_id": "delivery_event_terminal_gate",
-                "mode": "gate",
-                "target_owner_namespace": "event",
-                "target_stable_object_id": "event:scenario_delivery_day_stock",
-                "enabled": false,
-                "disabled_reason": "This delivery has already been resolved."
-              }
-            ],
+            "interaction_ops": [],
             "service_ops": [
               {
                 "family": "service_ops",
@@ -1339,7 +1338,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-  "sequence_signature": "741dd575dd34d10c8dc7b7f330843c770f003fefe77f684e9cf5545a1954d2e0",
+        "sequence_signature": "4d65a114025abafb43cd54b5d0d3c3dc8c5058d671a50b9b2dfcf8b1f1aa2a9b",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
