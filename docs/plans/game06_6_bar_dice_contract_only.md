@@ -1,6 +1,6 @@
 # game06_6 BAR-DICE contract-only staging
 
-Status: **UNREVIEWED / dependency-held**
+Status: **UNREVIEWED / clean-parked / dependency-held**
 
 Base: frozen `game06_1` vocabulary head `a2760d81`. Integration is held until
 the owner resolves `craps06_3` and an accepted `game06_1` successor exists.
@@ -92,3 +92,35 @@ must not copy `scripts/games/craps.gd` or its state flags.
 No accepted-ready handoff can come from this lineage alone. The row must be
 replayed onto the owner-resolved `craps06_3` and accepted `game06_1` successor
 heads without importing rejected runtime commits.
+
+## Park manifest
+
+- Canonical closed-shape ritual:
+  `data/games/bar_dice_game_ritual_v1.json`.
+- Pure row-local projection:
+  `scripts/core/bar_dice_ritual_projection.gd`.
+- Executable invariant proof:
+  `scripts/tests/foundation/game06_6_bar_dice_contract.gd`.
+- Bounded platform/evidence probe:
+  `tools/game06_6_bar_dice_platform_probe.gd` and its scene.
+- Fifteen inspected native captures, contact sheet, hashes and report:
+  `docs/plans/evidence/game06_6_bar_dice/`.
+
+The frozen vocabulary validator passes all 72 negative fixtures and five
+neutrality targets. The row-local proof passes seven phases and ten seed
+projections, including refused/partial cover conservation, interruption from
+every nonterminal phase, receipt replay/conflict handling, save/load, hidden
+state noninterference and canonical serialization parity.
+
+The inspected native evidence covers quiet/crowded bars, agreed/refused cover,
+shake/throw/reveal/call, win/bad beat, interruption, partial return, reduced
+motion, small screen and colorblind labels. Its canonical semantic SHA-256 is
+`4e24b5f7230e6169cec55ce0e812fe76639dfff64ce3f49165d7644fc115019c`;
+500 serializations measured 192.208 ms and the 30-frame idle maximum was
+7.41 ms. These are bounded contract-only observations, not the mandatory
+native/Web or full performance gates; those remain with the Integrator after
+dependency replay.
+
+This park is deliberately **not** accepted-ready. It owns no shipped Bar Dice
+or Craps implementation change and cannot bind the street seam until the owner
+resolves `craps06_3` and an accepted `game06_1` successor exists.
