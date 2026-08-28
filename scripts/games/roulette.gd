@@ -6,6 +6,7 @@ extends GameModule
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
+const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
@@ -28,6 +29,11 @@ const ROULETTE_NO_MORE_BETS_MSEC := 650
 const ROULETTE_BALL_SETTLE_MSEC := 1100
 const ROULETTE_CLEARING_MSEC := 650
 const ROULETTE_RITUAL_PHASES := ["betting", "no_more_bets", "spin", "ball_settle", "croupier_settlement"]
+const TABLE_GAME_HOST_TRANSIENT_UI_KEYS := [
+	"surface_time_msec", "drunk_scaled_surface_time_msec", "reduce_motion",
+	"selected_action_id", "selected_action_kind", "selected_index",
+	"focused_talk_speaker",
+]
 const WHEEL_CENTER := Vector2(150, 182)
 const WHEEL_RADIUS := 108.0
 const GRID_RECT := Rect2(332, 156, 360, 108)
@@ -240,7 +246,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var cheat_binding_action := "roulette_past_post" if past_post_available else "roulette_nudge"
 	var past_post_item_modifiers := skill_item_modifier_badges(run_state, PAST_POST_ITEM_EFFECT_KEYS)
 	var wheel_read_item_modifiers := skill_item_modifier_badges(run_state, WHEEL_READ_ITEM_EFFECT_KEYS)
-	return GameModule.surface_spec({
+	var authority_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var pending_delivery: Dictionary = authority_ledger.get("pending_delivery", {}) if typeof(authority_ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
+	var spec := GameModule.surface_spec({
 		"surface_renderer": "roulette",
 		"surface_life": "immersive_table",
 		"surface_cast": "dealer_table",
@@ -380,6 +388,23 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			},
 		}),
 	})
+	if not pending_delivery.is_empty():
+		spec["table_game_host_pending_delivery"] = pending_delivery.duplicate(true)
+		spec["table_game_host_retry_available"] = true
+		spec["table_game_host_cancel_available"] = true
+		spec["table_notice"] = "A sealed action is waiting. Retry it or cancel back to the prior table ceremony."
+		spec["can_spin"] = false
+		spec["can_clear"] = false
+		spec["can_undo"] = false
+		spec["can_rebet"] = false
+		spec["surface_action_bindings"] = {
+			"legal": {"action": "table_game_retry_pending", "index": 0},
+			"cheat": {"action": "table_game_cancel_pending", "index": 0},
+			"surface_stake_down": {"action": "table_game_cancel_pending", "index": 0},
+			"surface_stake_up": {"action": "table_game_retry_pending", "index": 0},
+			"surface_stake_max": {"action": "table_game_retry_pending", "index": 0},
+		}
+	return spec
 
 
 func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
@@ -611,6 +636,57 @@ func resolve(action_id: String, stake: int, run_state: RunState, environment: Di
 
 
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	return _table_game_compatibility_simulation(action_id, stake, run_state, environment, rng, ui_state)
+
+
+func _table_game_compatibility_simulation(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+	if run_state == null or rng == null:
+		return _empty_roulette_result(action_id, stake, environment, "Roulette simulation requires serialized run and RNG inputs.")
+	var proposal := _table_game_resolve_proposal(action_id, stake, run_state.to_save_snapshot(), rng.snapshot(), ui_state.duplicate(true))
+	var result: Dictionary = (proposal.get("result", {}) as Dictionary).duplicate(true)
+	result.erase("table_game_proposal_requires_apply")
+	result.erase("blackjack_host_apply_receipt")
+	result.erase("blackjack_host_content_fingerprint")
+	result["table_game_compatibility_simulation"] = true
+	result["table_game_authoritative"] = false
+	return result
+
+
+func _table_game_resolve_proposal(action_id: String, stake: int, run_snapshot: Dictionary, rng_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var proposal_input := {
+		"action_id": action_id,
+		"stake": stake,
+		"run_snapshot": run_snapshot,
+		"rng_snapshot": rng_snapshot,
+		"ui_state": ui_state,
+	}
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var proposal_rng := RngStream.new()
+	proposal_rng.restore(rng_snapshot.duplicate(true))
+	var result := _resolve_roulette_proposal_core(action_id, stake, candidate, candidate.current_environment, proposal_rng, ui_state.duplicate(true))
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
+		"result": result.duplicate(true),
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": proposal_rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
+	return proposal
+
+
+func _table_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var cost := wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+	return {
+		"cost": maxi(0, cost),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
+
+
+func _resolve_roulette_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	if action_id == "read_wheel_bias":
 		return _resolve_read_wheel(action_id, run_state, environment, rng, ui_state)
 	if action_id == PAST_POST_ACTION_ID:
@@ -737,7 +813,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["roulette_pit_boss_watched"] = bool(pit_boss_status.get("watched", false))
 	result["roulette_pit_boss_heat_bonus"] = pit_boss_bonus
 	result["roulette_table_pressure"] = table_pressure
-	GameModule.apply_result(run_state, result, rng)
+	result["table_game_proposal_requires_apply"] = true
 	return result
 
 
@@ -898,7 +974,7 @@ func _resolve_past_post(action_id: String, run_state: RunState, environment: Dic
 	result["skill_margin_msec"] = int(challenge.get("skill_margin_msec", 0))
 	result["base_suspicion_delta"] = base_suspicion_delta
 	GameModule.normalize_skill_cheat_contract(result, result)
-	GameModule.apply_result(run_state, result, rng)
+	result["table_game_proposal_requires_apply"] = true
 	return result
 
 
@@ -2501,7 +2577,7 @@ func _resolve_read_wheel(action_id: String, run_state: RunState, environment: Di
 	result["roulette_pit_boss_watched"] = bool(pit_boss_status.get("watched", false))
 	result["roulette_pit_boss_heat_bonus"] = pit_boss_bonus
 	result["roulette_table_pressure"] = table_pressure
-	GameModule.apply_result(run_state, result, rng)
+	result["table_game_proposal_requires_apply"] = true
 	return result
 
 
@@ -3018,6 +3094,11 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	var panel := Rect2(274, CONSOLE_Y + 8, 352, CONSOLE_H - 16)
 	_draw_neon_panel(surface, panel, C_CYAN, 0.10)
+	if bool(surface_state.get("table_game_host_retry_available", false)):
+		surface.surface_label("SEALED ACTION", panel.position + Vector2(10, 14), 10, C_YELLOW)
+		_draw_table_button(surface, Rect2(panel.position.x + 16, panel.position.y + 26, 144, 38), "RETRY", "table_game_retry_pending", 0, C_YELLOW, true, true)
+		_draw_table_button(surface, Rect2(panel.position.x + 176, panel.position.y + 26, 144, 38), "CANCEL", "table_game_cancel_pending", 0, C_SOFT, bool(surface_state.get("table_game_host_cancel_available", false)))
+		return
 	surface.surface_label("WHEEL ACTIONS", panel.position + Vector2(10, 14), 10, C_SOFT)
 	if bool(surface_state.get("table_barred", false)):
 		surface.surface_label("TABLE CLOSED", panel.position + Vector2(14, 42), 15, C_PINK)
@@ -3323,7 +3404,13 @@ func _normalize_physics_profile(value: Variant) -> Dictionary:
 
 
 func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_state: Dictionary, table: Dictionary) -> Dictionary:
-	var session := ui_state.duplicate(true)
+	var host_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var host_session_initialized := bool(host_ledger.get("initialized", false))
+	var session: Dictionary = (host_ledger.get("session", {}) as Dictionary).duplicate(true) if host_session_initialized and typeof(host_ledger.get("session", {})) == TYPE_DICTIONARY else ui_state.duplicate(true)
+	if host_session_initialized:
+		for key in TABLE_GAME_HOST_TRANSIENT_UI_KEYS:
+			if ui_state.has(key):
+				session[key] = ui_state[key]
 	var denoms := _chip_denominations(table)
 	var selected_chip := int(session.get("selected_chip", session.get("selected_stake", denoms[0])))
 	if not denoms.has(selected_chip):
