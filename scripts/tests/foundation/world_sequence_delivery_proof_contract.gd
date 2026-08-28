@@ -477,8 +477,8 @@ func _travel_away_and_revisit(run_state: RunState, library: ContentLibrary, targ
 	var away_id := ""
 	for edge_value in _array(run_state.world_map.get("edges", [])):
 		var edge := _dict(edge_value)
-		var from_id := str(edge.get("from", ""))
-		var to_id := str(edge.get("to", ""))
+		var from_id := str(edge.get("a", ""))
+		var to_id := str(edge.get("b", ""))
 		if from_id == target_node_id:
 			away_id = to_id
 			break
