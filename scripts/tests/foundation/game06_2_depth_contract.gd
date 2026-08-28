@@ -36,12 +36,25 @@ func _check_contract(game: GameModule) -> void:
 	var contract: Dictionary = game.call("blackjack_ritual_contract")
 	_check(str(contract.get("contract", "")) == "game_ritual/1", "Blackjack did not declare the accepted ritual contract version.")
 	_check(str(contract.get("ritual_id", "")) == "blackjack.standard_table", "Blackjack ritual id changed.")
-	_check(contract.get("phases", []) == ["wagering", "initial_deal", "player_turn", "dealer_procedure", "settlement"], "Blackjack phase vocabulary is incomplete or reordered.")
-	for action in ["place", "correct", "remove_one", "undo", "clear", "repeat", "rebet", "confirm"]:
-		_check((contract.get("commitment_actions", []) as Array).has(action), "Missing staged commitment action: %s." % action)
+	var expected_top_level := ["action_declarations", "actors", "contract", "declared_targets", "energy", "game_facts", "handler_registry", "initial_phase", "pointer_verbs", "ritual_id", "ritual_persistence", "ritual_phases", "scene_objects", "staged_commitment"]
+	var actual_top_level := contract.keys()
+	actual_top_level.sort()
+	expected_top_level.sort()
+	_check(actual_top_level == expected_top_level, "Blackjack ritual definition is not a closed game_ritual/1 record.")
+	var phase_ids: Array = []
+	for phase_value in contract.get("ritual_phases", []):
+		phase_ids.append(str((phase_value as Dictionary).get("id", "")) if typeof(phase_value) == TYPE_DICTIONARY else "")
+	_check(phase_ids == ["wagering", "initial_deal", "player_turn", "dealer_procedure", "settlement"], "Blackjack phase vocabulary is incomplete or reordered.")
+	var staged: Dictionary = contract.get("staged_commitment", {}) if typeof(contract.get("staged_commitment", {})) == TYPE_DICTIONARY else {}
+	var effects: Array = []
+	for action_value in staged.get("actions", []):
+		if typeof(action_value) == TYPE_DICTIONARY:
+			effects.append(str((action_value as Dictionary).get("effect", "")))
+	for effect in ["add_or_increment_one", "correct_one_pending_amount", "remove_one_pending_item", "reverse_last_pending_edit", "remove_all_pending_items", "copy_last_eligible_commitment", "copy_eligible_resolved_items", "authorize_pending_set"]:
+		_check(effects.has(effect), "Missing staged commitment effect: %s." % effect)
 	for total in ["available_funds", "pending_total", "at_risk_total", "returned_stake", "payout", "net_change"]:
-		_check((contract.get("readable_totals", []) as Array).has(total), "Missing readable total: %s." % total)
-	var gestures: Array = contract.get("gestures", []) if typeof(contract.get("gestures", [])) == TYPE_ARRAY else []
+		_check((staged.get("readable_totals", []) as Array).has(total), "Missing readable total: %s." % total)
+	var gestures: Array = contract.get("pointer_verbs", []) if typeof(contract.get("pointer_verbs", [])) == TYPE_ARRAY else []
 	_check(gestures.size() == 4, "Blackjack must declare place, cut, wave, and tap gesture packages.")
 	for gesture_value in gestures:
 		var gesture: Dictionary = gesture_value if typeof(gesture_value) == TYPE_DICTIONARY else {}
@@ -49,7 +62,7 @@ func _check_contract(game: GameModule) -> void:
 		var equivalents: Dictionary = gesture.get("equivalents", {}) if typeof(gesture.get("equivalents", {})) == TYPE_DICTIONARY else {}
 		for input_kind in ["keyboard", "controller", "reduced_motion"]:
 			_check(typeof(equivalents.get(input_kind, null)) == TYPE_DICTIONARY, "Gesture %s lost its %s equivalent." % [str(gesture.get("id", "unknown")), input_kind])
-	var persistence: Dictionary = contract.get("persistence", {}) if typeof(contract.get("persistence", {})) == TYPE_DICTIONARY else {}
+	var persistence: Dictionary = contract.get("ritual_persistence", {}) if typeof(contract.get("ritual_persistence", {})) == TYPE_DICTIONARY else {}
 	_check(persistence.get("save_boundaries", []) == ["wagering", "initial_deal", "player_turn", "dealer_procedure", "settlement"], "Not every Blackjack action phase is a declared save boundary.")
 
 
@@ -106,10 +119,22 @@ func _check_gesture_rejections_and_equivalence(game: GameModule) -> void:
 	var placed: Dictionary = game.surface_pointer_command("blackjack_wager_place_gesture", 1, "end", Vector2(452, 304), drag_begin.get("ui_state", {}), run, environment)
 	_check(int(placed.get("set_stake", 0)) > 5, "Chip drag did not reach the same staged-wager handler as the button path.")
 	_check(run.wager_balance_for_game("blackjack", environment) == bankroll_before, "Staging a dragged chip charged before confirmation.")
-	var cut_begin: Dictionary = game.surface_pointer_command("blackjack_cut_gesture", 0, "begin", Vector2(720, 120), placed.get("ui_state", {}), run, environment)
+	var corrected := game.surface_action_command("blackjack_correct_bet", 3, false, placed.get("ui_state", {}), run, environment)
+	_check(int(corrected.get("set_stake", 0)) == 25, "Correct-one did not replace the pending main wager with the named denomination.")
+	var removed := game.surface_action_command("blackjack_remove_chip", 1, false, corrected.get("ui_state", {}), run, environment)
+	_check(int(removed.get("set_stake", 0)) == 20, "Remove-one did not pull the named denomination from the pending main wager.")
+	var undone := game.surface_action_command("blackjack_undo_bet", 0, false, removed.get("ui_state", {}), run, environment)
+	_check(int(undone.get("set_stake", 0)) == 25, "Undo did not restore the immediately previous pending wager.")
+	var table: Dictionary = (environment.get("game_states", {}) as Dictionary).get("blackjack", {})
+	table["last_result"] = {"main_stake": 10, "side_bet_ids": [], "bankroll_delta": 0}
+	var repeated := game.surface_action_command("blackjack_repeat_bet", 0, false, undone.get("ui_state", {}), run, environment)
+	_check(int(repeated.get("set_stake", 0)) == 10, "Repeat did not stage the last eligible resolved wager.")
+	var cut_begin: Dictionary = game.surface_pointer_command("blackjack_cut_gesture", 0, "begin", Vector2(720, 120), repeated.get("ui_state", {}), run, environment)
 	var cut: Dictionary = game.surface_pointer_command("blackjack_cut_gesture", 0, "end", Vector2(720, 120), cut_begin.get("ui_state", {}), run, environment)
 	_check(str(cut.get("action_id", "")) == "blackjack_place_bet" and bool(cut.get("direct_resolve", false)), "Cut gesture did not reach the same confirm/deal authority as keyboard/controller action.")
 	_check(run.wager_balance_for_game("blackjack", environment) == bankroll_before, "Cut gesture mutated bankroll before the authoritative resolve boundary.")
+	var duplicate_end := game.surface_pointer_command("blackjack_cut_gesture", 0, "end", Vector2(720, 120), cut.get("ui_state", {}), run, environment)
+	_check(str(duplicate_end.get("action_id", "")).is_empty(), "Repeated cut end produced a second deal/commit command.")
 
 
 func _check_ten_seed_projection_isolation(game: GameModule) -> void:
