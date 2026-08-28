@@ -21,7 +21,15 @@ the same already-authored card. Invalid or incomplete gestures return without
 resolving, charging, advancing authority, or changing RNG. Road boards declare
 no predictive authority and are derived only from settled history.
 
-`scripts/tests/foundation/game06_3_depth_contract.gd` proves both games. The
-shipped Baccarat seed audit completed 400 hands with no game-specific failures;
-its nonzero wrapper result consisted solely of inherited missing-asset content
-validation errors on the frozen base.
+The live card is face-down at zero progress, reveals a bounded face strip as
+progress advances, and turns fully face-up only at completion. The same surface
+region is registered as a shared pointer drag and keyboard/controller hold.
+The renderer also visibly consumes phase, dealer behavior, shoe state, and table
+energy in a non-color-only status strip.
+
+`scripts/tests/foundation/game06_3_depth_contract.gd` proves both games,
+including pointer/hold/confirm/reduced-motion/late squeeze routes, every ritual
+save boundary, executable renderer consumption, and ten-seed neighbor authority
+isolation. The shipped Baccarat seed audit completed 400 hands with no
+game-specific rules/statistical failure; its 250 failures were inherited
+missing-asset content validation errors on the frozen base.
