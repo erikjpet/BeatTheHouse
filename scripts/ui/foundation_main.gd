@@ -159,6 +159,7 @@ const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_
 const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
+const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
@@ -1076,6 +1077,13 @@ func _on_game_surface_pointer_action(action: String, index: int, phase: String, 
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
 	var command := current_game.surface_pointer_command(action, index, phase, board_position, ui_state, run_state, run_state.current_environment)
+	if _current_game_uses_blackjack_action_authority() and command.has("blackjack_surface_intent"):
+		var authority: RefCounted = _blackjack_action_authority()
+		command = authority.submit_surface_intent(
+			str(command.get("blackjack_surface_intent", "")),
+			int(command.get("blackjack_surface_intent_index", index)),
+			false
+		)
 	command["_resolved_surface_ui_state"] = ui_state
 	_apply_game_surface_command(command, index, false, notify_coach, true)
 
@@ -1092,7 +1100,11 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
 	debug_outer_stage_started_usec = Time.get_ticks_usec() if debug_coin_pusher_outer else 0
-	var command := current_game.surface_action_command(action, index, confirm_requested, ui_state, run_state, run_state.current_environment)
+	var command: Dictionary
+	if _current_game_uses_blackjack_action_authority():
+		command = _blackjack_action_authority().submit_surface_intent(action, index, confirm_requested)
+	else:
+		command = current_game.surface_action_command(action, index, confirm_requested, ui_state, run_state, run_state.current_environment)
 	var debug_outer_command_usec := Time.get_ticks_usec() - debug_outer_stage_started_usec if debug_coin_pusher_outer else 0
 	command["_resolved_surface_ui_state"] = ui_state
 	debug_outer_stage_started_usec = Time.get_ticks_usec() if debug_coin_pusher_outer else 0
@@ -1104,6 +1116,20 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 		debug_host_timing["outer_apply_command"] = Time.get_ticks_usec() - debug_outer_stage_started_usec
 		debug_host_timing["outer_total"] = Time.get_ticks_usec() - debug_outer_started_usec
 	return handled
+
+
+func _blackjack_action_authority(rng_stream_tag: String = "") -> RefCounted:
+	return BlackjackActionAuthorityScript.new(
+		current_game,
+		run_state,
+		run_state.current_environment,
+		_current_selected_stake(),
+		rng_stream_tag
+	)
+
+
+func _current_game_uses_blackjack_action_authority() -> bool:
+	return current_game != null and current_game.has_method("_blackjack_begin_host_lease")
 
 
 # `input_route_guarded` is trusted call-stack context only. It is never read
@@ -8606,19 +8632,25 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state)
 	if confirmed_all_in_wager:
 		run_state.begin_deferred_bankroll_zero_resolution()
-	var wager_funding := run_state.fund_grand_casino_wager(current_game.get_id(), wager_cost, run_state.current_environment)
-	if not bool(wager_funding.get("ok", false)):
-		if confirmed_all_in_wager:
-			run_state.clear_deferred_bankroll_zero_resolution()
-		_show_message(str(wager_funding.get("message", "You do not have enough cash or chips for that wager.")))
-		_refresh()
-		return
 	var bankroll_before_result := run_state.bankroll
-	var rng := run_state.create_rng()
+	var rng: RngStream
+	var result: Dictionary
 	if debug_coin_pusher_host:
 		debug_host_timing["host_pre_module"] = Time.get_ticks_usec() - debug_host_stage_started_usec
 		debug_host_stage_started_usec = Time.get_ticks_usec()
-	var result := current_game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, action_surface_ui_state)
+	if _current_game_uses_blackjack_action_authority():
+		result = _blackjack_action_authority().submit_resolve_intent(action_id)
+	else:
+		var wager_funding := run_state.fund_grand_casino_wager(current_game.get_id(), wager_cost, run_state.current_environment)
+		if not bool(wager_funding.get("ok", false)):
+			if confirmed_all_in_wager:
+				run_state.clear_deferred_bankroll_zero_resolution()
+			_show_message(str(wager_funding.get("message", "You do not have enough cash or chips for that wager.")))
+			_refresh()
+			return
+		bankroll_before_result = run_state.bankroll
+		rng = run_state.create_rng()
+		result = current_game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, action_surface_ui_state)
 	if debug_coin_pusher_host:
 		debug_host_timing["host_module_resolve"] = Time.get_ticks_usec() - debug_host_stage_started_usec
 		debug_host_stage_started_usec = Time.get_ticks_usec()
@@ -8646,7 +8678,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if debug_coin_pusher_host:
 		debug_host_timing["host_result_preapply"] = Time.get_ticks_usec() - debug_host_stage_started_usec
 		debug_host_stage_started_usec = Time.get_ticks_usec()
-	if bool(result.get("ok", false)):
+	if bool(result.get("ok", false)) and not bool(result.get("blackjack_host_committed", false)):
 		if not runtime_tick_in_progress:
 			run_state.advance_environment_turns(1)
 		if bool(result.get("host_apply_result", false)) and not runtime_tick_in_progress:
@@ -8908,6 +8940,8 @@ func cancel_pending_wager_confirmation() -> void:
 func _wager_cost_for_action(action_id: String, stake: int) -> int:
 	if current_game == null or run_state == null:
 		return 0
+	if _current_game_uses_blackjack_action_authority():
+		return _blackjack_action_authority().preview_wager_cost(action_id)
 	return maxi(0, current_game.wager_cost_for_context(action_id, stake, run_state, run_state.current_environment, _current_game_surface_ui_state()))
 
 

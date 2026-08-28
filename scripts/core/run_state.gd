@@ -1965,6 +1965,36 @@ func wager_capacity_for_game(game_id: String, environment: Dictionary = {}) -> i
 	return bankroll + grand_casino_chips if grand_casino_game_uses_chips(game_id, environment) else bankroll
 
 
+func preview_grand_casino_wager_funding(game_id: String, wager_amount: int, environment: Dictionary = {}) -> Dictionary:
+	# Pure funding lease preview used by the Blackjack transaction authority.
+	# In particular, cash does not equal one chip when the venue exchange rate is
+	# greater than one, so wager_capacity_for_game() is not a sufficient check.
+	var amount := maxi(0, wager_amount)
+	if amount <= 0:
+		return {"ok": true, "wager": amount, "existing_chips_used": 0, "chips_bought": 0, "cash_used": 0}
+	if not grand_casino_game_uses_chips(game_id, environment):
+		return {
+			"ok": amount <= maxi(0, bankroll),
+			"wager": amount,
+			"existing_chips_used": 0,
+			"chips_bought": 0,
+			"cash_used": amount,
+			"message": "You do not have enough bankroll for that wager." if amount > maxi(0, bankroll) else "",
+		}
+	var existing_chips_used := mini(maxi(0, grand_casino_chips), amount)
+	var required_chips := maxi(0, amount - existing_chips_used)
+	var rate := grand_casino_chip_exchange_rate()
+	var cash_cost := required_chips * rate
+	return {
+		"ok": cash_cost <= maxi(0, bankroll),
+		"wager": amount,
+		"existing_chips_used": existing_chips_used,
+		"chips_bought": required_chips if cash_cost <= maxi(0, bankroll) else 0,
+		"cash_used": cash_cost if cash_cost <= maxi(0, bankroll) else 0,
+		"message": "That wager needs %d chips plus $%d cash, but you only have $%d cash available." % [existing_chips_used, cash_cost, bankroll] if cash_cost > maxi(0, bankroll) else "",
+	}
+
+
 func fund_grand_casino_wager(game_id: String, wager_amount: int, environment: Dictionary = {}) -> Dictionary:
 	var amount := maxi(0, wager_amount)
 	if amount <= 0 or not grand_casino_game_uses_chips(game_id, environment):
@@ -2362,6 +2392,35 @@ func route_grand_casino_game_currency(result: Dictionary, deltas: Dictionary) ->
 	result["currency"] = "chips"
 	result["deltas"] = routed
 	return routed
+
+
+func consume_blackjack_authority_result_receipt(result: Dictionary) -> bool:
+	if str(result.get("game_id", result.get("source_id", ""))) != "blackjack":
+		return true
+	var receipt: Dictionary = result.get("blackjack_host_apply_receipt", {}) if typeof(result.get("blackjack_host_apply_receipt", {})) == TYPE_DICTIONARY else {}
+	var request_key := str(receipt.get("request_key", ""))
+	var context_fingerprint := str(receipt.get("context_fingerprint", ""))
+	if request_key.is_empty() or context_fingerprint.is_empty():
+		return false
+	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	for state_key in game_states.keys():
+		var table_value: Variant = game_states[state_key]
+		if typeof(table_value) != TYPE_DICTIONARY:
+			continue
+		var table: Dictionary = table_value
+		var ledger_value: Variant = table.get("_blackjack_action_authority", {})
+		if typeof(ledger_value) != TYPE_DICTIONARY:
+			continue
+		var ledger: Dictionary = ledger_value
+		var pending: Dictionary = ledger.get("pending_apply_receipt", {}) if typeof(ledger.get("pending_apply_receipt", {})) == TYPE_DICTIONARY else {}
+		if str(pending.get("request_key", "")) != request_key or str(pending.get("context_fingerprint", "")) != context_fingerprint:
+			continue
+		ledger.erase("pending_apply_receipt")
+		table["_blackjack_action_authority"] = ledger
+		game_states[state_key] = table
+		current_environment["game_states"] = game_states
+		return true
+	return false
 
 
 func _grand_casino_result_wager_funding_amount(result: Dictionary, bankroll_delta: int) -> int:

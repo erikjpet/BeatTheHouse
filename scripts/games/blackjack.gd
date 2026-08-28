@@ -82,6 +82,13 @@ const BLACKJACK_WAGER_PLACE_GESTURE := "blackjack_wager_place_gesture"
 const BLACKJACK_CUT_GESTURE := "blackjack_cut_gesture"
 const BLACKJACK_WAVE_GESTURE := "blackjack_wave_gesture"
 const BLACKJACK_TAP_GESTURE := "blackjack_tap_gesture"
+const BLACKJACK_HOST_LEDGER_KEY := "_blackjack_action_authority"
+const BLACKJACK_HOST_TRANSIENT_UI_KEYS := [
+	"surface_time_msec", "drunk_scaled_surface_time_msec",
+	"selected_action_id", "selected_action_kind", "selected_index",
+	"blackjack_gesture_active", "blackjack_gesture_origin",
+	"blackjack_gesture_index", "blackjack_gesture_pointer",
+]
 const BLACKJACK_GESTURE_ACTIONS := [
 	BLACKJACK_WAGER_PLACE_GESTURE,
 	BLACKJACK_CUT_GESTURE,
@@ -113,6 +120,7 @@ var draw_deal_events_cache_id := ""
 var draw_deal_events_cache: Array = []
 var draw_dealer_character_style: Dictionary = {}
 var draw_patron_character_style: Dictionary = {}
+var _blackjack_active_host_lease: RefCounted
 
 
 func blackjack_ritual_contract() -> Dictionary:
@@ -1547,7 +1555,10 @@ func surface_pointer_command(surface_action: String, index: int, pointer_phase: 
 	_blackjack_clear_gesture_state(next_state)
 	if not valid:
 		return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "message": invalid_message}, true)
-	return _blackjack_surface_action_command(semantic_action, gesture_index, false, next_state, run_state, environment)
+	var semantic_command := _blackjack_surface_action_command(semantic_action, gesture_index, false, next_state, run_state, environment)
+	semantic_command["blackjack_surface_intent"] = semantic_action
+	semantic_command["blackjack_surface_intent_index"] = gesture_index
+	return semantic_command
 
 
 func _blackjack_clear_gesture_state(ui_state: Dictionary) -> void:
@@ -1835,17 +1846,40 @@ func _rourke_duel_surface_action_command(surface_action: String, index: int, con
 				command = _message_command(next_state, "You steal a look. Rourke watches your hands.")
 		_:
 			command = _blackjack_surface_action_command(surface_action, index, confirm_requested, next_state, run_state, environment)
-	var saved_state: Variant = command.get("ui_state", next_state)
-	if typeof(saved_state) == TYPE_DICTIONARY:
-		run_state.persist_grand_casino_duel_session(saved_state as Dictionary)
 	return command
 
 
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
-	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
+	return _empty_blackjack_result(action_id, stake, environment, "Blackjack actions require the table host authority.")
 
 
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	return _empty_blackjack_result(action_id, stake, environment, "Blackjack actions require the table host authority.")
+
+
+func _blackjack_begin_host_lease(lease: RefCounted) -> void:
+	_blackjack_active_host_lease = lease
+
+
+func _blackjack_end_host_lease(lease: RefCounted) -> void:
+	if _blackjack_active_host_lease != null and is_same(_blackjack_active_host_lease, lease):
+		_blackjack_active_host_lease = null
+
+
+func _blackjack_consume_host_lease(lease: RefCounted) -> bool:
+	if lease == null or _blackjack_active_host_lease == null or not is_same(_blackjack_active_host_lease, lease):
+		return false
+	if bool(lease.get("consumed")):
+		return false
+	lease.set("consumed", true)
+	return true
+
+
+func _resolve_with_blackjack_host_lease(lease: RefCounted, action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	if lease == null or _blackjack_active_host_lease == null or not is_same(_blackjack_active_host_lease, lease):
+		return _empty_blackjack_result(action_id, stake, environment, "Blackjack host lease is missing or stale.")
+	if not bool(lease.get("consumed")):
+		return _empty_blackjack_result(action_id, stake, environment, "Blackjack host lease was not consumed by the authority.")
 	if action_id.begins_with("crew_play:"):
 		return super.resolve_with_context(action_id, stake, run_state, environment, rng, ui_state)
 	if _is_rourke_duel(run_state, environment):
@@ -2015,7 +2049,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["blackjack_pit_boss_heat_bonus"] = int(cheat.get("pit_boss_heat_bonus", 0))
 	result["blackjack_running_count"] = int(table.get("running_count", 0))
 	result["blackjack_recorded_count"] = int(table.get("recorded_running_count", 0))
-	GameModule.apply_result(run_state, result, rng)
+	_apply_blackjack_authority_result(run_state, result, rng)
 	return result
 
 
@@ -2124,6 +2158,12 @@ func _resolve_rourke_duel_hand(action_id: String, run_state: RunState, environme
 
 
 func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
+	return 0
+
+
+func _blackjack_wager_cost_with_host_lease(lease: RefCounted, action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
+	if lease == null or _blackjack_active_host_lease == null or not is_same(_blackjack_active_host_lease, lease):
+		return 0
 	if action_id != "play_basic" and action_id != "blackjack_place_bet":
 		return 0
 	# Rourke's fixed ante belongs to the duel's internal player/Rourke stacks.
@@ -2204,7 +2244,7 @@ func _place_bet_result(run_state: RunState, environment: Dictionary, rng: RngStr
 	result["blackjack_wager_debited"] = int(session.get("wager_debited", 0))
 	if run_state != null and run_state.wager_balance_for_game(get_id(), environment) + bankroll_delta <= 0 and _has_dealt_hand(session):
 		result["defer_bankroll_zero_failure"] = true
-	GameModule.apply_result(run_state, result, rng)
+	_apply_blackjack_authority_result(run_state, result, rng)
 	return result
 
 
@@ -2338,7 +2378,7 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 	result["blackjack_pit_boss_watched"] = pit_boss_watched
 	result["blackjack_pit_boss_heat_bonus"] = pit_boss_heat_bonus
 	result["blackjack_coolers_cufflinks_broke"] = cufflinks_broke
-	GameModule.apply_result(run_state, result, rng)
+	_apply_blackjack_authority_result(run_state, result, rng)
 	return result
 
 
@@ -2470,8 +2510,18 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 	if tutorial_practice_protected:
 		result["preserve_surface_ui_state"] = true
 		result["blackjack_surface_ui_state"] = session.duplicate(true)
-	GameModule.apply_result(run_state, result, rng)
+	_apply_blackjack_authority_result(run_state, result, rng)
 	return result
+
+
+func _apply_blackjack_authority_result(run_state: RunState, result: Dictionary, rng: RngStream) -> void:
+	if _blackjack_active_host_lease == null or not bool(_blackjack_active_host_lease.get("consumed")):
+		return
+	result["blackjack_host_apply_receipt"] = {
+		"request_key": str(_blackjack_active_host_lease.get("request_key")),
+		"context_fingerprint": str(_blackjack_active_host_lease.get("context_fingerprint")),
+	}
+	GameModule.apply_result(run_state, result, rng)
 
 
 func _base_suspicion_for_applied_cap(desired_applied_heat: int, run_state: RunState) -> int:
@@ -4000,9 +4050,15 @@ func _normalize_table_state(table: Dictionary) -> Dictionary:
 
 
 func _normalized_session(run_state: RunState, environment: Dictionary, ui_state: Dictionary, table: Dictionary) -> Dictionary:
-	var session: Dictionary = run_state.grand_casino_duel_session() if _is_rourke_duel(run_state, environment) else {}
+	var host_ledger: Dictionary = table.get(BLACKJACK_HOST_LEDGER_KEY, {}) if typeof(table.get(BLACKJACK_HOST_LEDGER_KEY, {})) == TYPE_DICTIONARY else {}
+	var host_session_initialized := bool(host_ledger.get("initialized", false))
+	var session: Dictionary = run_state.grand_casino_duel_session() if _is_rourke_duel(run_state, environment) else (host_ledger.get("session", {}) as Dictionary).duplicate(true) if host_session_initialized and typeof(host_ledger.get("session", {})) == TYPE_DICTIONARY else {}
 	for key in ui_state.keys():
-		session[str(key)] = ui_state[key]
+		# Once the table host has initialized its durable session, caller UI is
+		# presentation-only. Cards, phase, wager debit, cheats and shoe data are
+		# always read from the saved host session.
+		if not host_session_initialized or _is_rourke_duel(run_state, environment) or BLACKJACK_HOST_TRANSIENT_UI_KEYS.has(str(key)):
+			session[str(key)] = ui_state[key]
 	if _is_rourke_duel(run_state, environment):
 		var duel := run_state.grand_casino_duel_status()
 		session["boss_duel_session"] = true
