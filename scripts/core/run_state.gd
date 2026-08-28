@@ -14,6 +14,14 @@ const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const ScenarioOperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
+const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
+const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
+const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
+const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
+const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
+const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
+const ScenarioHostTransactionScript := preload("res://scripts/core/scenario_host_transaction.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
@@ -325,6 +333,7 @@ var crew_grievance_sequence: int = 0
 var crew_job_sequence: int = 0
 var active_delivery_run: Dictionary = {}
 var crew_pattern_memory: Dictionary = {}
+var scenario_host_transaction_ledger: Dictionary = {}
 var crew_match_marks: Dictionary = {}
 var crew_contraband_stash: Array = []
 var crew_play_state: Dictionary = {}
@@ -351,6 +360,7 @@ var _item_definitions_loaded: bool = false
 var _item_effect_total_cache: Dictionary = {}
 var _owned_item_lookup_cache: Dictionary = {}
 var _owned_item_lookup_cache_valid := false
+var _scenario_sequence_definition_cache: Dictionary = {}
 
 
 # Resets the run from a seed and optional challenge.
@@ -381,6 +391,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	current_environment = {}
 	world_map = {}
 	scenario_recent_by_archetype = {}
+	_scenario_sequence_definition_cache = {}
 	grand_casino_room_states = {}
 	grand_casino_staffing = {}
 	rourke_current_room = ""
@@ -415,6 +426,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	crew_job_sequence = 0
 	active_delivery_run = {}
 	crew_pattern_memory = CrewPokerModelScript.default_observations()
+	scenario_host_transaction_ledger = {}
 	crew_match_marks = {}
 	crew_contraband_stash = []
 	crew_play_state = CrewPlayModelScript.default_state()
@@ -669,24 +681,34 @@ func clock_display_text(include_day: bool = true) -> String:
 	return time_text
 
 
-func advance_game_clock_minutes(amount: int) -> void:
+func advance_game_clock_minutes(amount: int) -> Dictionary:
 	if amount <= 0 or is_terminal():
-		return
+		return {"ok": true, "applied": false, "errors": []}
 	var previous_minutes := game_clock_minutes
 	var previous_day := game_day()
-	game_clock_minutes = maxi(0, game_clock_minutes + amount)
+	var next_minutes := maxi(0, game_clock_minutes + amount)
+	var next_day := maxi(1, int(floor(float(next_minutes) / 1440.0)) + 1)
+	if next_day > previous_day and _scenario_sequence_uses_expiry_boundary("night_end"):
+		var rollback_environment := current_environment.duplicate(true)
+		var expiry_result := scenario_sequence_apply_expiry_boundary("night_end", next_day - previous_day)
+		if not bool(expiry_result.get("ok", false)):
+			current_environment = rollback_environment
+			return {"ok": false, "applied": false, "errors": _copy_array(expiry_result.get("errors", []))}
+	game_clock_minutes = next_minutes
 	_process_grand_casino_atm_interest_boundaries(previous_minutes, game_clock_minutes)
-	var next_day := game_day()
 	if next_day > previous_day:
+		for ended_day in range(previous_day, next_day):
+			scenario_apply_expiry("night_end", ended_day)
 		_advance_grand_casino_staff_day_rollovers(previous_day, next_day)
 		_advance_home_day_rollovers(previous_day, next_day)
+	return {"ok": true, "applied": true, "errors": []}
 
 
-func advance_action_clock(amount: int = 1) -> void:
+func advance_action_clock(amount: int = 1) -> Dictionary:
 	var actions := maxi(0, amount)
 	if actions <= 0:
-		return
-	advance_game_clock_minutes(actions * ACTION_CLOCK_MINUTES)
+		return {"ok": true, "applied": false, "errors": []}
+	return advance_game_clock_minutes(actions * ACTION_CLOCK_MINUTES)
 
 
 # True only during the discovered solo race between a published handle and the
@@ -804,6 +826,10 @@ func sleep_at_home() -> Dictionary:
 		return {"ok": false, "message": "This run is already over."}
 	if not is_current_home_environment():
 		return {"ok": false, "message": "You need to be home to sleep."}
+	var rollback_run := to_dict()
+	var rollback_environment := current_environment.duplicate(true)
+	var rollback_world_map := world_map.duplicate(true)
+	var rollback_room_states := grand_casino_room_states.duplicate(true)
 	var rng := create_rng()
 	var hours := rng.randi_range(HOME_SLEEP_MIN_HOURS, HOME_SLEEP_MAX_HOURS)
 	save_rng(rng)
@@ -822,7 +848,13 @@ func sleep_at_home() -> Dictionary:
 	var drunk_recovery := mini(drunk_level, hours * HOME_SLEEP_DRUNK_RECOVERY_PER_HOUR)
 	if drunk_recovery > 0:
 		change_drunk(-drunk_recovery)
-	advance_game_clock_minutes(minutes)
+	var clock_result := advance_game_clock_minutes(minutes)
+	if not bool(clock_result.get("ok", false)):
+		from_dict(rollback_run)
+		current_environment = rollback_environment
+		world_map = rollback_world_map
+		grand_casino_room_states = rollback_room_states
+		return {"ok": false, "message": "Sleep could not cross the night boundary safely.", "errors": _copy_array(clock_result.get("errors", []))}
 	var heat_after := suspicion_level()
 	var drunk_after := drunk_level
 	var message := "You sleep for %d hours and wake with a clearer head." % hours
@@ -1444,10 +1476,74 @@ func _event_cadence_visit_key(environment_data: Dictionary) -> String:
 	return "%s#%d" % [environment_id, environment_travel_count()]
 
 
+# Read-only departure check used before callers publish facts, consume RNG, or
+# move a world-map cursor. The real boundary is committed by set_environment.
+func scenario_preflight_environment_change(source_id: String = "", target_id: String = "", travel_kind: String = "") -> Dictionary:
+	if current_environment.is_empty(): return {"ok": true, "inactive": true, "errors": []}
+	var candidate := current_environment.duplicate(true)
+	var definition := scenario_sequence_definition()
+	if not travel_kind.is_empty() and ScenarioSequenceSchemaScript.is_sequence(definition):
+		if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure."]}
+		var state := ScenarioEngineScript.ensure_sequence_state(candidate, definition)
+		if state.is_empty(): return {"ok": false, "errors": ["Dynamic room sequence departure could not initialize its causal state."]}
+		var serial := maxi(1, int(state.get("fact_serial_next", 1)))
+		var departure_fact := ScenarioSequenceRuntimeScript.fact(
+			"travel_departed",
+			"travel",
+			current_world_node_id(),
+			"travel:travel_departed:%d" % serial,
+			serial,
+			maxi(int(state.get("boundary_serial", 0)), _crew_action_index()),
+			{"source_id": source_id, "target_id": target_id, "travel_kind": travel_kind}
+		)
+		var enqueued := ScenarioEngineScript.enqueue_sequence_fact(candidate, definition, departure_fact)
+		if not bool(enqueued.get("ok", false)):
+			return {"ok": false, "errors": _copy_array(enqueued.get("errors", []))}
+		var flushed := ScenarioEngineScript.flush_sequence_facts(candidate, definition, _crew_action_index())
+		if not bool(flushed.get("ok", false)):
+			return {"ok": false, "errors": _copy_array(flushed.get("errors", []))}
+	var boundary := _scenario_environment_change_expiry_boundary()
+	if boundary.is_empty(): return {"ok": true, "inactive": true, "errors": []}
+	if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure."]}
+	var result := ScenarioEngineScript.sequence_apply_expiry_boundary(candidate, definition, boundary)
+	return {"ok": bool(result.get("ok", false)), "inactive": false, "errors": _copy_array(result.get("errors", []))}
+
+
+func _scenario_environment_change_expiry_boundary() -> String:
+	for boundary in ["leave", "visit_end"]:
+		if _scenario_sequence_uses_expiry_boundary(boundary): return boundary
+	return ""
+
+
 # Sets the current environment and records the previous one.
-func set_environment(environment_data: Dictionary) -> void:
+func set_environment(environment_data: Dictionary) -> Dictionary:
 	var previous_was_grand_casino := _is_grand_casino_environment(current_environment)
+	var destination_sequence_state := ScenarioSequenceRuntimeScript.normalize_state(environment_data.get("scenario_sequence_state", {}))
+	var destination_is_revisit := environment_data.has("departed_game_clock_minutes") or not destination_sequence_state.is_empty() and (
+		int(destination_sequence_state.get("boundary_serial", 0)) > 0
+		or str(destination_sequence_state.get("status", ScenarioSequenceRuntimeScript.STATUS_ACTIVE)) != ScenarioSequenceRuntimeScript.STATUS_ACTIVE
+		or not _copy_array(destination_sequence_state.get("command_receipts", [])).is_empty()
+		or not _copy_array(destination_sequence_state.get("fact_receipts", [])).is_empty()
+		or not _copy_array(destination_sequence_state.get("visit_receipts", [])).is_empty()
+	)
+	var departure_check := scenario_preflight_environment_change()
+	if not bool(departure_check.get("ok", false)):
+		return {"ok": false, "applied": false, "errors": _copy_array(departure_check.get("errors", []))}
+	var departure_boundary := _scenario_environment_change_expiry_boundary()
+	if not departure_boundary.is_empty():
+		var expiry_result := scenario_sequence_apply_expiry_boundary(departure_boundary)
+		if not bool(expiry_result.get("ok", false)):
+			return {"ok": false, "applied": false, "errors": _copy_array(expiry_result.get("errors", []))}
 	if not current_environment.is_empty():
+		scenario_apply_expiry("leave", _crew_action_index())
+		scenario_apply_expiry("visit_end", _crew_action_index())
+		# Lifecycle cleanup and its receipts are authoritative source-room state.
+		# Persist them before any caller can observe the destination as current.
+		if is_layered_environment():
+			store_current_environment_layer_state()
+		if _is_grand_casino_environment(current_environment):
+			store_grand_casino_room_environment(current_environment)
+		store_current_world_node_environment()
 		# Travel advances the clock before installing the destination, but stamps
 		# the actual departure first. Preserve that boundary so the report can
 		# animate the journey instead of collapsing it to a zero-length teleport.
@@ -1466,6 +1562,23 @@ func set_environment(environment_data: Dictionary) -> void:
 		environment_history.append(_environment_history_entry(current_environment))
 		_compact_environment_history()
 	current_environment = _normalize_environment(environment_data)
+	ScenarioEngineScript.migrate_environment_sequence(
+		current_environment,
+		{},
+		"%d:set_environment:%s" % [seed_value, str(current_environment.get("world_node_id", current_environment.get("archetype_id", "")))]
+	)
+	_ensure_scenario_host_public_context()
+	var destination_definition := scenario_sequence_definition()
+	if ScenarioSequenceSchemaScript.is_sequence(destination_definition):
+		# V2 initialization/reentry is intentionally deferred until the controller's
+		# final pre-overlay interaction record set and ContentLibrary are sealed.
+		current_environment.erase("scenario_semantic_ready")
+		current_environment.erase("scenario_semantic_inventory")
+		current_environment.erase("scenario_base_interactions")
+		current_environment.erase("scenario_base_actors")
+		current_environment.erase("scenario_base_producer_context")
+		current_environment.erase("scenario_semantic_action_digest")
+		current_environment["scenario_sequence_pending_visit_id"] = str(current_environment.get("environment_visit_id", ""))
 	CharacterChainModelScript.apply_to_environment(self, current_environment)
 	# The Punchline's posted board is a physical source. Arriving after the post
 	# reveals only the current published handle; it does not grant solo-route lore.
@@ -1491,6 +1604,8 @@ func set_environment(environment_data: Dictionary) -> void:
 	if previous_was_grand_casino and not _is_grand_casino_environment(current_environment):
 		_clear_grand_casino_clean_cashout_ready()
 	event_cadence_begin_visit(current_environment)
+	if destination_is_revisit:
+		scenario_reenter_current(_event_cadence_visit_key(current_environment))
 	music_arrangement_state = {
 		"visit_id": _event_cadence_visit_key(current_environment),
 		"track_id": "",
@@ -1512,6 +1627,7 @@ func set_environment(environment_data: Dictionary) -> void:
 	_initialize_grand_casino_living_floor()
 	_queue_grand_casino_entry_cue(previous_was_grand_casino)
 	_evaluate_immediate_terminal_state()
+	return {"ok": true, "applied": true, "errors": []}
 
 
 func set_world_map(map_data: Dictionary) -> void:
@@ -1640,6 +1756,1068 @@ func scenario_for_node(node_id: String) -> Dictionary:
 	return seeded_scenario_for_node(wanted)
 
 
+# Immutable authored definition for the current node. TownState owns seeded
+# identity/definition; the environment fallback exists for headless fixtures.
+func scenario_sequence_definition() -> Dictionary:
+	var node_id := current_world_node_id()
+	var scenario_id := str(_copy_dict(current_environment.get("scenario_state", {})).get("id", current_environment.get("scenario_id", ""))).strip_edges()
+	var embedded_definition := _copy_dict(current_environment.get("scenario_sequence_definition", {}))
+	if scenario_id.is_empty() and ScenarioSequenceSchemaScript.is_sequence(embedded_definition):
+		scenario_id = str(embedded_definition.get("id", embedded_definition.get("scenario_id", ""))).strip_edges()
+	if not scenario_id.is_empty() and _scenario_sequence_definition_cache.has(scenario_id):
+		return _copy_dict(_scenario_sequence_definition_cache.get(scenario_id, {}))
+	var definition := seeded_scenario_definition_for_node(node_id)
+	if definition.is_empty():
+		definition = embedded_definition
+	if scenario_sequence_is_suppressed(scenario_id, str(current_environment.get("archetype_id", node_id))):
+		definition = ScenarioEngineScript.suppress_sequence_definition(definition if not definition.is_empty() else {"id": scenario_id, "archetype_id": str(current_environment.get("archetype_id", node_id))})
+	var resolution_environment := current_environment
+	if str(_copy_dict(resolution_environment.get("scenario_state", {})).get("id", resolution_environment.get("scenario_id", ""))).strip_edges().is_empty() and not scenario_id.is_empty():
+		resolution_environment = current_environment.duplicate(true)
+		resolution_environment["scenario_id"] = scenario_id
+	var resolved := ScenarioEngineScript.sequence_definition_for_environment(resolution_environment, definition)
+	# Embedded/headless definitions cannot prove declared targets until the
+	# environment-owned semantic inventory has been produced. They remain a
+	# provisional, ingress-blocked candidate until finalization validates them
+	# against that exact inventory and stamps the runtime marker below.
+	if not ScenarioSequenceSchemaScript.is_sequence(resolved) and ScenarioSequenceSchemaScript.is_sequence(embedded_definition) and not bool(current_environment.get("scenario_semantic_ready", false)):
+		resolved = embedded_definition
+	if not scenario_id.is_empty() and bool(resolved.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)):
+		_scenario_sequence_definition_cache[scenario_id] = resolved.duplicate(true)
+	return resolved
+
+
+func scenario_definition_cache_snapshot() -> Dictionary:
+	return _scenario_sequence_definition_cache.duplicate(true)
+
+
+func restore_scenario_definition_cache(snapshot: Dictionary) -> void:
+	_scenario_sequence_definition_cache = snapshot.duplicate(true)
+
+
+func scenario_sequence_is_suppressed(scenario_id: String, archetype_id: String = "") -> bool:
+	var modifiers := _copy_dict(challenge_config.get("modifiers", {}))
+	if bool(modifiers.get("scenario_pins_apply_mutations", true)):
+		return false
+	var clean_archetype := archetype_id.strip_edges()
+	if clean_archetype.is_empty():
+		clean_archetype = str(current_environment.get("archetype_id", current_world_node_id())).strip_edges()
+	return not clean_archetype.is_empty() and str(_copy_dict(modifiers.get("scenario_pins", {})).get(clean_archetype, "")).strip_edges() == scenario_id.strip_edges()
+
+
+func scenario_prepare_semantic_finalization() -> Dictionary:
+	_ensure_scenario_host_public_context()
+	var definition := scenario_sequence_definition()
+	if not ScenarioSequenceSchemaScript.is_sequence(definition): return {"ok": true, "inactive": true, "errors": []}
+	return {"ok": true, "errors": []}
+
+
+func scenario_finalize_installed_environment(library: ContentLibrary) -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if not ScenarioSequenceSchemaScript.is_sequence(definition):
+		return {"ok": true, "inactive": true, "errors": []}
+	var preparation := scenario_prepare_semantic_finalization()
+	if not bool(preparation.get("ok", false)):
+		return preparation
+	var produced := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(current_environment, library)
+	if not bool(produced.get("ok", false)):
+		return _scenario_semantic_finalization_failure(_copy_array(produced.get("errors", [])), false)
+	return scenario_finalize_base_semantics(_copy_array(produced.get("records", [])), library)
+
+
+func scenario_finalize_base_semantics(interactable_records: Array, library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
+	_ensure_scenario_host_public_context()
+	var definition := scenario_sequence_definition()
+	if not ScenarioSequenceSchemaScript.is_sequence(definition): return {"ok": true, "inactive": true, "errors": []}
+	var refresh_attempt := bool(current_environment.get("scenario_semantic_ready", false))
+	if library == null: return _scenario_semantic_finalization_failure(["Scenario semantic finalization requires ContentLibrary."], refresh_attempt)
+	var producer_context := _scenario_base_producer_context()
+	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(interactable_records, current_environment, library, producer_context)
+	if not bool(stamped.get("ok", false)): return _scenario_semantic_finalization_failure(_copy_array(stamped.get("errors", [])), refresh_attempt)
+	var stamped_records := _copy_array(stamped.get("records", []))
+	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(stamped_records)
+	if not bool(produced.get("ok", false)): return _scenario_semantic_finalization_failure(_copy_array(produced.get("errors", [])), refresh_attempt)
+	var interactions := _scenario_declared_base_records(_copy_array(produced.get("interactions", [])), definition, ["interactions", "scene_objects"])
+	interactions = _scenario_terminal_semantic_interactions(interactions, definition)
+	stamped_records = _scenario_terminal_layout_base_records(stamped_records, interactions, definition)
+	var dynamic_actors := EnvironmentBaseSemanticRecordsScript.authorized_dynamic_actor_records(current_environment, library)
+	if not bool(dynamic_actors.get("ok", false)): return _scenario_semantic_finalization_failure(_copy_array(dynamic_actors.get("errors", [])), refresh_attempt)
+	var actors := _copy_array(produced.get("actors", []))
+	actors.append_array(_copy_array(dynamic_actors.get("records", [])))
+	actors = _scenario_declared_base_records(actors, definition, ["actors"])
+	var action_digest := ScenarioSequenceRuntimeScript.base_interaction_action_authority_digest(interactions)
+	var semantic_environment := current_environment.duplicate(true)
+	semantic_environment["scenario_base_producer_context"] = producer_context.duplicate(true)
+	if current_environment.has("scenario_sequence_base_game_ids"):
+		semantic_environment["game_ids"] = _copy_array(current_environment.get("scenario_sequence_base_game_ids", []))
+	if current_environment.has("scenario_sequence_base_service_ids"):
+		semantic_environment["service_ids"] = _copy_array(current_environment.get("scenario_sequence_base_service_ids", []))
+	if current_environment.has("scenario_sequence_base_travel_hooks"):
+		semantic_environment["travel_hooks"] = _copy_array(current_environment.get("scenario_sequence_base_travel_hooks", []))
+	if current_environment.has("scenario_sequence_base_layout_object_rects"):
+		var semantic_layout := _copy_dict(semantic_environment.get("layout", {}))
+		semantic_layout["object_rects"] = _copy_dict(current_environment.get("scenario_sequence_base_layout_object_rects", {}))
+		semantic_environment["layout"] = semantic_layout
+	var terminal_refresh := refresh_attempt and _scenario_terminal_semantic_refresh(definition)
+	var sealed := _copy_dict(current_environment.get("scenario_semantic_inventory", {})) if terminal_refresh else EnvironmentSemanticInventoryScript.for_instance(semantic_environment, library, interactions, actors)
+	var inventory_errors := EnvironmentSemanticInventoryScript.validate(sealed)
+	if not inventory_errors.is_empty(): return _scenario_semantic_finalization_failure(inventory_errors, refresh_attempt)
+	if not bool(definition.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)):
+		var definition_errors := ScenarioSequenceSchemaScript.validate_definition(definition, ScenarioOperationRegistryScript, EnvironmentSemanticInventoryScript.exact_collections(sealed))
+		if not definition_errors.is_empty(): return _scenario_semantic_finalization_failure(definition_errors, refresh_attempt)
+		definition[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
+	var definition_id := str(definition.get("id", definition.get("scenario_id", ""))).strip_edges()
+	var next_version := int(sealed.get("schema_version", 0))
+	var next_digest := str(sealed.get("digest", ""))
+	var has_expected_version := current_environment.has("scenario_semantic_inventory_version")
+	var has_expected_digest := current_environment.has("scenario_semantic_digest")
+	var proof_ready := bool(current_environment.get("scenario_semantic_ready", false))
+	if has_expected_version != has_expected_digest or proof_ready and not has_expected_version:
+		return _invalidate_scenario_semantic_proof("scenario semantic inventory proof reference is incomplete; explicit migration is required")
+	var expected_version_value: Variant = current_environment.get("scenario_semantic_inventory_version", 0)
+	var expected_digest_value: Variant = current_environment.get("scenario_semantic_digest", "")
+	var expected_version := int(expected_version_value) if typeof(expected_version_value) == TYPE_INT else 0
+	var expected_digest := str(expected_digest_value) if typeof(expected_digest_value) == TYPE_STRING else ""
+	if has_expected_version and (typeof(current_environment.get("scenario_semantic_inventory_version")) != TYPE_INT or typeof(current_environment.get("scenario_semantic_digest")) != TYPE_STRING or expected_version <= 0 or expected_digest != expected_digest.strip_edges() or expected_digest.is_empty()):
+		return _invalidate_scenario_semantic_proof("scenario semantic inventory proof reference is malformed; explicit migration is required")
+	if has_expected_version and (expected_version != next_version or expected_digest != next_digest):
+		return _invalidate_scenario_semantic_proof("scenario semantic inventory version or digest changed; explicit migration is required")
+	if proof_ready:
+		# Identity/origin digest stability deliberately permits current presentation
+		# availability and action descriptors to change. Refresh all authorization
+		# inputs and the projection on a detached copy without replaying reentry.
+		if _copy_dict(current_environment.get("scenario_sequence_state", {})).is_empty():
+			return _invalidate_scenario_semantic_proof("Scenario semantic refresh requires an initialized sequence state.")
+		var refresh_candidate := current_environment.duplicate(true)
+		if str(refresh_candidate.get("scenario_id", "")).strip_edges().is_empty(): refresh_candidate["scenario_id"] = definition_id
+		refresh_candidate["scenario_base_interactions"] = interactions
+		refresh_candidate["scenario_base_actors"] = actors
+		refresh_candidate["scenario_base_producer_context"] = producer_context.duplicate(true)
+		refresh_candidate["scenario_semantic_action_digest"] = action_digest
+		refresh_candidate["scenario_semantic_inventory"] = sealed
+		refresh_candidate["scenario_semantic_inventory_version"] = next_version
+		refresh_candidate["scenario_semantic_digest"] = next_digest
+		refresh_candidate["scenario_semantic_ready"] = true
+		refresh_candidate["scenario_event_choices"] = EnvironmentSemanticInventoryScript.event_choice_index(_copy_array(refresh_candidate.get("event_ids", [])), library)
+		refresh_candidate["scenario_layout_base_records"] = stamped_records.duplicate(true)
+		refresh_candidate["scenario_layout_context"] = layout_context.duplicate(true)
+		var refreshed_state := ScenarioEngineScript.ensure_sequence_state(refresh_candidate, definition)
+		if refreshed_state.is_empty() or str(refreshed_state.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_CLEANED and str(_copy_dict(current_environment.get("scenario_sequence_state", {})).get("status", "")) != ScenarioSequenceRuntimeScript.STATUS_CLEANED:
+			return _scenario_semantic_finalization_failure(_copy_array(refreshed_state.get("errors", ["Scenario semantic refresh failed closed."])), refresh_attempt)
+		var refresh_layout := _resolve_scenario_layout_candidate(refresh_candidate, stamped_records, definition, layout_context)
+		if not bool(refresh_layout.get("ok", false)):
+			return refresh_layout
+		for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_event_choices", "scenario_sequence_state", "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot"]:
+			current_environment[key] = refresh_candidate.get(key).duplicate(true) if typeof(refresh_candidate.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else refresh_candidate.get(key)
+		current_environment.erase("scenario_sequence_lifecycle_errors")
+		if not definition_id.is_empty(): _scenario_sequence_definition_cache[definition_id] = definition.duplicate(true)
+		return _finalized_scenario_layout_result(true, next_digest, refreshed_state, stamped_records, refresh_layout)
+	# Build the proof and perform initialization/reentry against a detached
+	# environment. Readiness, authorization and runtime state become visible
+	# together only after the entire transition succeeds.
+	var candidate := current_environment.duplicate(true)
+	if str(candidate.get("scenario_id", "")).strip_edges().is_empty(): candidate["scenario_id"] = definition_id
+	candidate["scenario_base_interactions"] = interactions
+	candidate["scenario_base_actors"] = actors
+	candidate["scenario_base_producer_context"] = producer_context.duplicate(true)
+	candidate["scenario_semantic_action_digest"] = action_digest
+	candidate["scenario_semantic_inventory"] = sealed
+	candidate["scenario_semantic_inventory_version"] = next_version
+	candidate["scenario_semantic_digest"] = next_digest
+	candidate["scenario_semantic_ready"] = true
+	candidate["scenario_event_choices"] = EnvironmentSemanticInventoryScript.event_choice_index(_copy_array(candidate.get("event_ids", [])), library)
+	candidate["scenario_layout_base_records"] = stamped_records.duplicate(true)
+	candidate["scenario_layout_context"] = layout_context.duplicate(true)
+	if _copy_dict(candidate.get("scenario_state", {})).is_empty():
+		candidate["scenario_state"] = ScenarioEngineScript.initial_state(definition)
+	var migration := ScenarioEngineScript.migrate_environment_sequence(candidate, definition, str(candidate.get("id", candidate.get("environment_visit_id", ""))))
+	if not bool(migration.get("ok", false)) or not bool(migration.get("active", false)):
+		return _scenario_semantic_finalization_failure(_copy_array(migration.get("errors", ["Scenario sequence migration did not activate after semantic finalization."])), refresh_attempt)
+	var visit_id := str(candidate.get("scenario_sequence_pending_visit_id", candidate.get("environment_visit_id", "")))
+	var reentry := ScenarioEngineScript.sequence_apply_reentry(candidate, definition, visit_id)
+	if not bool(reentry.get("ok", false)):
+		return {"ok": false, "errors": _copy_array(reentry.get("errors", []))}
+	var candidate_layout := {
+		"ok": true,
+		"projection": _copy_dict(reentry.get("projection", candidate.get("scenario_sequence_projection", {}))),
+		"layout_authority": _copy_dict(reentry.get("layout_authority", candidate.get("scenario_layout_authority", {}))),
+		"layout_authority_digest": str(reentry.get("layout_authority_digest", candidate.get("scenario_layout_authority_digest", ""))),
+		"layout_audit": _copy_dict(reentry.get("layout_audit", candidate.get("scenario_layout_audit", {}))),
+		"warnings": _copy_array(reentry.get("warnings", [])),
+		"errors": [],
+	}
+	for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_event_choices", "scenario_sequence_migration", "scenario_sequence_state", "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot"]:
+		current_environment[key] = candidate.get(key).duplicate(true) if typeof(candidate.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else candidate.get(key)
+	current_environment.erase("scenario_sequence_pending_visit_id")
+	current_environment.erase("scenario_sequence_lifecycle_errors")
+	if not definition_id.is_empty(): _scenario_sequence_definition_cache[definition_id] = definition.duplicate(true)
+	return _finalized_scenario_layout_result(false, next_digest, _copy_dict(reentry.get("state", {})), stamped_records, candidate_layout)
+
+
+func _resolve_scenario_layout_candidate(candidate: Dictionary, stamped_records: Array, definition: Dictionary, layout_context: Dictionary) -> Dictionary:
+	var projection := ScenarioEngineScript.sequence_projection(candidate, definition)
+	var layout_environment := candidate.duplicate(true)
+	if not layout_context.is_empty():
+		layout_environment["_scenario_layout_context"] = layout_context.duplicate(true)
+	var layout_result := ScenarioLayoutResolverScript.resolve(stamped_records, projection, layout_environment)
+	if not bool(layout_result.get("ok", false)):
+		return {
+			"ok": false,
+			"errors": _copy_array(layout_result.get("errors", ["Scenario production layout resolution failed closed."])),
+			"layout_audit": _copy_dict(layout_result.get("layout_audit", {})),
+		}
+	candidate["scenario_sequence_projection"] = _copy_dict(layout_result.get("projection", projection))
+	candidate["scenario_layout_authority"] = _copy_dict(layout_result.get("layout_authority", {}))
+	candidate["scenario_layout_audit"] = _copy_dict(layout_result.get("layout_audit", {}))
+	candidate["scenario_layout_authority_digest"] = str(layout_result.get("layout_authority_digest", ""))
+	var renderer_snapshot := ScenarioLayoutResolverScript.sealed_renderer_snapshot(layout_result)
+	if not bool(renderer_snapshot.get("ok", false)):
+		return {"ok": false, "errors": _copy_array(renderer_snapshot.get("errors", ["Scenario sealed renderer snapshot failed closed."])), "layout_audit": _copy_dict(layout_result.get("layout_audit", {}))}
+	candidate["scenario_render_snapshot"] = renderer_snapshot.duplicate(true)
+	return layout_result
+
+
+func _finalized_scenario_layout_result(replayed: bool, digest: String, state: Dictionary, records: Array, layout_result: Dictionary) -> Dictionary:
+	return {
+		"ok": true,
+		"replayed": replayed,
+		"digest": digest,
+		"state": state.duplicate(true),
+		"records": records.duplicate(true),
+		"projection": _copy_dict(layout_result.get("projection", {})),
+		"layout_authority": _copy_dict(layout_result.get("layout_authority", {})),
+		"layout_authority_digest": str(layout_result.get("layout_authority_digest", "")),
+		"layout_audit": _copy_dict(layout_result.get("layout_audit", {})),
+		"warnings": _copy_array(layout_result.get("warnings", [])),
+		"errors": [],
+	}
+
+
+func _scenario_declared_base_records(records: Array, definition: Dictionary, collection_keys: Array) -> Array:
+	var declared := _copy_dict(_copy_dict(ScenarioSequenceSchemaScript.sequence(definition)).get("declared_targets", {}))
+	var allowed: Dictionary = {}
+	for collection_value in collection_keys:
+		for identity_value in _copy_array(declared.get(str(collection_value), [])):
+			allowed[str(identity_value)] = true
+	var result: Array = []
+	for record_value in records:
+		if typeof(record_value) != TYPE_DICTIONARY: continue
+		var record := record_value as Dictionary
+		var owned_identity := ScenarioOperationRegistryScript.identity(str(record.get("owner_namespace", "")), str(record.get("stable_object_id", "")))
+		if allowed.has(owned_identity): result.append(record.duplicate(true))
+	return result
+
+
+# A resolved base event legitimately leaves the live UI after it drives a
+# terminal sequence branch. Retain its already sealed producer identity as a
+# disabled semantic record so aftermath reconstruction keeps the immutable
+# inventory proof without resurrecting the interaction in the live record set.
+func _scenario_terminal_semantic_interactions(live_records: Array, definition: Dictionary) -> Array:
+	var state := _copy_dict(current_environment.get("scenario_sequence_state", {}))
+	if not _scenario_terminal_semantic_refresh(definition):
+		return live_records
+	var sealed_inventory := _copy_dict(current_environment.get("scenario_semantic_inventory", {}))
+	var sealed_inventory_valid := EnvironmentSemanticInventoryScript.validate(sealed_inventory).is_empty() \
+		and str(sealed_inventory.get("environment_id", "")) == str(current_environment.get("id", "")) \
+		and str(sealed_inventory.get("layer_id", "")) == str(current_environment.get("current_layer_id", ""))
+	var result := live_records.duplicate(true)
+	var present: Dictionary = {}
+	for record_value in result:
+		var record := _copy_dict(record_value)
+		present[ScenarioOperationRegistryScript.identity(str(record.get("owner_namespace", "")), str(record.get("stable_object_id", "")))] = true
+	for record_value in _copy_array(current_environment.get("scenario_base_interactions", [])) if sealed_inventory_valid else []:
+		var record := _copy_dict(record_value)
+		var identity := ScenarioOperationRegistryScript.identity(str(record.get("owner_namespace", "")), str(record.get("stable_object_id", "")))
+		if identity.is_empty() or present.has(identity):
+			continue
+		record["enabled"] = false
+		record["interactive"] = false
+		record["available_actions"] = []
+		record["inline_actions"] = []
+		record["scenario_sequence_actions"] = []
+		result.append(record)
+		present[identity] = true
+	# Render-time proof data is intentionally absent after save/load. Rebuild a
+	# resolved base-event tombstone from its durable producer and exact final
+	# layout so terminal reentry recreates the same immutable identity seal
+	# without persisting hidden semantic inventory state.
+	var declared := _copy_dict(_copy_dict(ScenarioSequenceSchemaScript.sequence(definition)).get("declared_targets", {}))
+	var layout_rects := _copy_dict(current_environment.get("scenario_sequence_base_layout_object_rects", _copy_dict(current_environment.get("layout", {})).get("object_rects", {})))
+	var board := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
+	for identity_value in _copy_array(declared.get("interactions", [])):
+		var identity := str(identity_value)
+		if present.has(identity) or not identity.begins_with("event::event:"):
+			continue
+		var event_id := identity.trim_prefix("event::event:")
+		var presentation_id := "event:%s" % event_id
+		var normalized_rect := _copy_dict(layout_rects.get(presentation_id, {}))
+		if not _copy_array(current_environment.get("event_ids", [])).has(event_id) or normalized_rect.is_empty():
+			continue
+		result.append({
+			"owner_namespace": "event",
+			"stable_object_id": presentation_id,
+			"presentation_object_id": presentation_id,
+			"source_kind": "environment_instance_ui",
+			"source_field": "event_ids",
+			"source_record_id": event_id,
+			"label": event_id,
+			"state_label": "Resolved",
+			"prompt": "No action is currently available.",
+			"enabled": false,
+			"disabled_reason": "No action is currently available.",
+			"available_actions": [],
+			"input_actions": [],
+			"non_color_state": "closed",
+			"focus_order": result.size(),
+			"hit_bounds": {
+				"w": float(normalized_rect.get("w", 0.0)) * board.x,
+				"h": float(normalized_rect.get("h", 0.0)) * board.y,
+			},
+			"normalized_hit_rect": normalized_rect,
+			"min_target_size": ScenarioOperationRegistryScript.MIN_TARGET_SIZE,
+			"safe_exit": false,
+			"alternate_exit": false,
+			"source_id": event_id,
+		})
+		present[identity] = true
+	return result
+
+
+func _scenario_terminal_layout_base_records(live_records: Array, interactions: Array, definition: Dictionary) -> Array:
+	if not _scenario_terminal_semantic_refresh(definition):
+		return live_records
+	var result := live_records.duplicate(true)
+	var presentation_ids: Dictionary = {}
+	for record_value in result:
+		presentation_ids[str(_copy_dict(record_value).get("object_id", ""))] = true
+	for interaction_value in interactions:
+		var interaction := _copy_dict(interaction_value)
+		var presentation_id := str(interaction.get("presentation_object_id", ""))
+		if presentation_id.is_empty() or presentation_ids.has(presentation_id):
+			continue
+		result.append({
+			"object_id": presentation_id,
+			"object_type": "event",
+			"visual_type": "event",
+			"source_id": str(interaction.get("source_id", "")),
+			"owner_namespace": str(interaction.get("owner_namespace", "")),
+			"stable_object_id": str(interaction.get("stable_object_id", "")),
+			"source_kind": str(interaction.get("source_kind", "")),
+			"source_field": str(interaction.get("source_field", "")),
+			"source_record_id": str(interaction.get("source_record_id", "")),
+			"normalized_hit_rect": _copy_dict(interaction.get("normalized_hit_rect", {})),
+			"normalized_rect": _copy_dict(interaction.get("normalized_hit_rect", {})),
+			"pixel_hit_bounds": _copy_dict(interaction.get("hit_bounds", {})),
+			"label": str(interaction.get("label", presentation_id)),
+			"state_label": "Resolved",
+			"non_color_state": "closed",
+			"action_summary": "No action is currently available.",
+			"enabled": false,
+			"interactive": false,
+			"visible": false,
+			"available_actions": [],
+			"inline_actions": [],
+		})
+		presentation_ids[presentation_id] = true
+	return result
+
+
+func _scenario_terminal_semantic_refresh(definition: Dictionary) -> bool:
+	var state := _copy_dict(current_environment.get("scenario_sequence_state", {}))
+	if str(state.get("status", "")) in [ScenarioSequenceRuntimeScript.STATUS_AFTERMATH, ScenarioSequenceRuntimeScript.STATUS_CLEANED]:
+		return true
+	return bool(_copy_dict(ScenarioSequenceSchemaScript.phase(definition, str(state.get("phase_id", "")))).get("terminal", false))
+
+
+func _scenario_base_producer_context() -> Dictionary:
+	var venue_ids: Array = []
+	for venue_value in _copy_array(numbers_status().get("venue_status", [])):
+		if typeof(venue_value) != TYPE_DICTIONARY: continue
+		var venue_id := str((venue_value as Dictionary).get("id", ""))
+		if venue_id == venue_id.strip_edges() and not venue_id.is_empty() and not venue_ids.has(venue_id): venue_ids.append(venue_id)
+	venue_ids.sort()
+	var handoff := delivery_arrival_interaction()
+	return {
+		"numbers_venue_ids": venue_ids,
+		"numbers_silas_present": numbers_silas_is_here(),
+		"delivery_handoff_node_id": str(handoff.get("node_id", "")),
+	}
+
+
+func _invalidate_scenario_semantic_proof(message: String) -> Dictionary:
+	for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot"]:
+		current_environment.erase(key)
+	# Proof invalidation is not a causal gameplay boundary. Preserve the durable
+	# journal exactly and block live ingress; cleanup may only be written by the
+	# runtime through an authenticated command/fact/expiry receipt.
+	current_environment["scenario_sequence_lifecycle_errors"] = [message]
+	current_environment["scenario_sequence_projection"] = {}
+	return {"ok": false, "errors": [message]}
+
+
+func _scenario_semantic_finalization_failure(errors: Array, _invalidate_if_ready: bool) -> Dictionary:
+	var failure_errors := errors.duplicate(true)
+	if failure_errors.is_empty(): failure_errors = ["Scenario semantic finalization failed closed."]
+	# A rejected refresh never became authoritative. Preserve the previously
+	# sealed proof byte-for-byte; explicit proof mismatches use
+	# _invalidate_scenario_semantic_proof at their detection sites.
+	return {"ok": false, "errors": failure_errors}
+
+
+func scenario_reject_layout_projection(errors_value: Array, layout_audit: Dictionary = {}) -> Dictionary:
+	var errors: Array = []
+	for value in errors_value:
+		var message := str(value).strip_edges()
+		if not message.is_empty() and not errors.has(message): errors.append(message)
+	if errors.is_empty(): errors.append("Scenario production layout projection failed closed.")
+	_invalidate_scenario_semantic_proof(str(errors[0]))
+	current_environment["scenario_sequence_lifecycle_errors"] = errors.duplicate(true)
+	current_environment["scenario_layout_audit"] = layout_audit.duplicate(true)
+	current_environment["scenario_layout_authority_digest"] = ""
+	return {"ok": false, "errors": errors}
+
+
+func _scenario_semantic_ready() -> bool:
+	if not bool(current_environment.get("scenario_semantic_ready", false)): return false
+	var inventory := _copy_dict(current_environment.get("scenario_semantic_inventory", {}))
+	var layout_audit := _copy_dict(current_environment.get("scenario_layout_audit", {}))
+	var layout_digest := str(current_environment.get("scenario_layout_authority_digest", ""))
+	var layout_authority := _copy_dict(current_environment.get("scenario_layout_authority", {}))
+	var renderer_snapshot := _copy_dict(current_environment.get("scenario_render_snapshot", {}))
+	var projection_semantic := _copy_dict(_copy_dict(current_environment.get("scenario_sequence_projection", {})).get("semantic_state", {}))
+	var passive_layout := not bool(layout_audit.get("active", true))
+	if typeof(current_environment.get("scenario_semantic_inventory_version")) != TYPE_INT \
+		or typeof(current_environment.get("scenario_semantic_digest")) != TYPE_STRING \
+		or typeof(current_environment.get("scenario_semantic_action_digest")) != TYPE_STRING \
+		or not bool(layout_audit.get("valid", false)) \
+		or not ScenarioSequenceRuntimeScript._valid_sha256(layout_digest) \
+		or (layout_authority.is_empty() and not passive_layout) \
+		or (passive_layout and (not layout_authority.is_empty() or not bool(layout_audit.get("sealed_passive", false)) or not bool(renderer_snapshot.get("sealed_passive", false)) or str(renderer_snapshot.get("presentation_mode", "")) != "passive")) \
+		or (not passive_layout and bool(renderer_snapshot.get("sealed_passive", false))) \
+		or not bool(renderer_snapshot.get("ok", false)) \
+		or str(layout_audit.get("authority_digest", "")) != layout_digest \
+		or str(renderer_snapshot.get("layout_authority_digest", "")) != layout_digest \
+		or str(projection_semantic.get("layout_authority_digest", "")) != layout_digest:
+		return false
+	var action_digest := str(current_environment.get("scenario_semantic_action_digest", ""))
+	if not ScenarioSequenceRuntimeScript._valid_sha256(action_digest) or action_digest != ScenarioSequenceRuntimeScript.base_interaction_action_authority_digest(_copy_array(current_environment.get("scenario_base_interactions", []))): return false
+	var binding_environment := current_environment.duplicate(true)
+	binding_environment["scenario_base_producer_context"] = _scenario_base_producer_context()
+	return not inventory.is_empty() \
+		and EnvironmentSemanticInventoryScript.validate_instance_binding(inventory, binding_environment).is_empty() \
+		and int(inventory.get("schema_version", 0)) == int(current_environment.get("scenario_semantic_inventory_version", 0)) \
+		and str(inventory.get("digest", "")) == str(current_environment.get("scenario_semantic_digest", ""))
+
+
+func scenario_sequence_active() -> bool:
+	return _scenario_semantic_ready() and not ScenarioEngineScript.sequence_projection(current_environment, scenario_sequence_definition()).is_empty()
+
+
+func scenario_sequence_present() -> bool:
+	var definition := scenario_sequence_definition()
+	return ScenarioSequenceSchemaScript.is_sequence(definition) and (current_environment.has("scenario_sequence_state") or current_environment.has("scenario_sequence_pending_visit_id"))
+
+
+func _scenario_sequence_uses_expiry_boundary(boundary: String) -> bool:
+	if not scenario_sequence_present(): return false
+	return str(_copy_dict(_copy_dict(ScenarioSequenceSchemaScript.sequence(scenario_sequence_definition())).get("expiry", {})).get("boundary", "none")) == boundary
+
+
+func scenario_sequence_projection() -> Dictionary:
+	if not _scenario_semantic_ready(): return {}
+	return ScenarioEngineScript.sequence_projection(current_environment, scenario_sequence_definition())
+
+
+func scenario_sequence_record_visit(visit_id: String = "") -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if definition.is_empty(): return {"ok": false, "errors": ["No dynamic room sequence is active."]}
+	if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized."]}
+	var environment_before := current_environment.duplicate(true)
+	_ensure_scenario_host_public_context()
+	var stable_visit_id := visit_id.strip_edges()
+	if stable_visit_id.is_empty(): stable_visit_id = str(current_environment.get("environment_visit_id", ""))
+	var result := ScenarioEngineScript.sequence_record_visit(current_environment, definition, stable_visit_id)
+	if not bool(result.get("ok", false)):
+		current_environment = environment_before
+	return result
+
+
+func scenario_sequence_apply_reentry(visit_id: String = "") -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if definition.is_empty(): return {"ok": false, "errors": ["No dynamic room sequence is active."]}
+	if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized."]}
+	var environment_before := current_environment.duplicate(true)
+	_ensure_scenario_host_public_context()
+	var stable_visit_id := visit_id.strip_edges()
+	if stable_visit_id.is_empty(): stable_visit_id = str(current_environment.get("environment_visit_id", ""))
+	var result := ScenarioEngineScript.sequence_apply_reentry(current_environment, definition, stable_visit_id)
+	if not bool(result.get("ok", false)):
+		current_environment = environment_before
+	return result
+
+
+func scenario_sequence_apply_expiry_boundary(boundary: String, amount: int = 1) -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if definition.is_empty(): return {"ok": true, "inactive": true, "errors": []}
+	var authored_boundary := str(_copy_dict(_copy_dict(ScenarioSequenceSchemaScript.sequence(definition)).get("expiry", {})).get("boundary", "none"))
+	if authored_boundary == "none" or authored_boundary != boundary:
+		return {"ok": true, "inactive": true, "errors": []}
+	if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized."]}
+	return ScenarioEngineScript.sequence_apply_expiry_boundary(current_environment, definition, boundary, amount)
+
+
+# Public cross-consumer table-game transaction context. The returned state is an
+# ephemeral CAS snapshot bound to canonical RunState fields; only the ledger is
+# persisted.
+func prepare_game_command_context(table_id: String, producer_id: String, requested_keys: Array = []) -> Dictionary:
+	_ensure_scenario_host_public_context()
+	return ScenarioHostTransactionScript.prepared_game_context(_scenario_host_bound_state(), _scenario_host_public_context(), table_id, producer_id, requested_keys)
+
+
+func reduce_game_command_transaction(command: Dictionary) -> Dictionary:
+	_ensure_scenario_host_public_context()
+	return ScenarioHostTransactionScript.reduce_game_command(_scenario_host_bound_state(), command)
+
+
+func commit_game_command(transaction: Dictionary) -> Dictionary:
+	var result := ScenarioHostTransactionScript.commit_game_command(_scenario_host_bound_state(), transaction)
+	return _apply_scenario_host_result(result)
+
+
+func game_command_cas_snapshot() -> Dictionary:
+	var state := _scenario_host_bound_state()
+	return {"revision": int(state.get("revision", 0)), "state_digest": ScenarioHostTransactionScript.state_digest(state)}
+
+
+func flush_game_facts_at_safe_boundary(boundary: int) -> Dictionary:
+	var result := ScenarioHostTransactionScript.flush_game_facts(_scenario_host_bound_state(), boundary)
+	return _apply_scenario_host_result(result)
+
+
+func respond_to_prepared_game_request(request_id: String, response: String, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	return _apply_scenario_host_result(ScenarioHostTransactionScript.respond_to_prepared_request(_scenario_host_bound_state(), request_id, response, receipt_id, expected_revision, expected_digest))
+
+
+func complete_prepared_game_request_economy(request_id: String, account_ops: Array, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	return _apply_scenario_host_result(ScenarioHostTransactionScript.complete_prepared_request_economy(_scenario_host_bound_state(), request_id, account_ops, receipt_id, expected_revision, expected_digest))
+
+
+func acknowledge_prepared_game_unwound(request_id: String, replacement_table_state: Dictionary, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	return _apply_scenario_host_result(ScenarioHostTransactionScript.acknowledge_prepared_request_unwound(_scenario_host_bound_state(), request_id, replacement_table_state, receipt_id, expected_revision, expected_digest))
+
+
+func apply_prepared_game_request_runtime(request_id: String, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	return _apply_scenario_host_result(ScenarioHostTransactionScript.apply_prepared_request_runtime(_scenario_host_bound_state(), request_id, receipt_id, expected_revision, expected_digest))
+
+
+func pre_travel_game_gate(command: Dictionary, request: Dictionary) -> Dictionary:
+	return ScenarioHostTransactionScript.pre_travel_hook(command, request)
+
+
+func _scenario_host_bound_state() -> Dictionary:
+	_ensure_scenario_host_ledger()
+	return ScenarioHostTransactionScript.bind_canonical_snapshot(scenario_host_transaction_ledger, {
+		"accounts": {
+			"player_bankroll": {"fund_domain": "bankroll", "balance": bankroll},
+			"grand_casino_chips": {"fund_domain": "chips", "balance": grand_casino_chips},
+		},
+		"table_states": _copy_dict(current_environment.get("game_states", {})),
+		"trust": crew_trust_by_member.duplicate(true),
+		"tells": _scenario_host_tell_snapshot(),
+	})
+
+
+func _apply_scenario_host_result(result_value: Dictionary) -> Dictionary:
+	var result := result_value.duplicate(true)
+	if not bool(result.get("ok", false)):
+		return result
+	var state := _copy_dict(result.get("state", {}))
+	if state.is_empty():
+		return result
+	if not bool(result.get("replayed", false)):
+		var accounts := _copy_dict(state.get("accounts", {}))
+		bankroll = int(_copy_dict(accounts.get("player_bankroll", {})).get("balance", bankroll))
+		grand_casino_chips = maxi(0, int(_copy_dict(accounts.get("grand_casino_chips", {})).get("balance", grand_casino_chips)))
+		current_environment["game_states"] = _copy_dict(state.get("table_states", {}))
+		crew_trust_by_member = _copy_dict(state.get("trust", {}))
+		_apply_scenario_host_tell_snapshot(_copy_dict(state.get("tells", {})))
+	scenario_host_transaction_ledger = ScenarioHostTransactionScript.persisted_ledger(state)
+	return result
+
+
+func _ensure_scenario_host_ledger() -> void:
+	if not scenario_host_transaction_ledger.is_empty():
+		return
+	var scenario_state := text_to_seed("%s|%d|scenario" % [seed_text, rng_state])
+	var craps_throw_state := text_to_seed("%s|%d|craps_throw" % [seed_text, rng_state])
+	var craps_recovery_state := text_to_seed("%s|%d|craps_recovery" % [seed_text, rng_state])
+	var poker_cards_state := text_to_seed("%s|%d|poker_cards" % [seed_text, rng_state])
+	var rng_leases := {
+		"scenario_main": {"owner_id": "scenario", "stream_id": "scenario", "current_state": scenario_state, "receipts": []},
+		"craps_throw_main": {"owner_id": "craps_throw", "stream_id": "craps_throw", "current_state": craps_throw_state, "receipts": []},
+		"craps_recovery_main": {"owner_id": "craps_recovery", "stream_id": "craps_recovery", "current_state": craps_recovery_state, "receipts": []},
+		"poker_cards_main": {"owner_id": "poker_cards", "stream_id": "poker_cards", "current_state": poker_cards_state, "receipts": []},
+	}
+	for member_id in ["crew_rook", "crew_velvet", "crew_knuckles", "crew_switch", "crew_mags", "crew_bishop", "crew_lucky"]:
+		var owner_id := "poker_policy_%s" % member_id
+		rng_leases[owner_id] = {
+			"owner_id": owner_id,
+			"stream_id": owner_id,
+			"current_state": text_to_seed("%s|%d|%s" % [seed_text, rng_state, owner_id]),
+			"receipts": [],
+		}
+	var state := ScenarioHostTransactionScript.initial_state({}, {}, rng_leases)
+	scenario_host_transaction_ledger = ScenarioHostTransactionScript.persisted_ledger(state)
+
+
+func _ensure_scenario_host_public_context() -> void:
+	if current_environment.is_empty():
+		return
+	var node_id := _scenario_host_safe_id(str(current_environment.get("world_node_id", current_environment.get("archetype_id", "node"))))
+	if node_id.is_empty(): node_id = "node"
+	current_environment["world_node_id"] = node_id
+	var environment_visit_id := _scenario_host_safe_id(str(current_environment.get("environment_visit_id", "")))
+	if environment_visit_id.is_empty():
+		environment_visit_id = "visit_%s_%d" % [_scenario_host_safe_id(str(current_environment.get("id", node_id))), maxi(1, environment_travel_count() + 1)]
+	current_environment["environment_visit_id"] = environment_visit_id
+	var night_instance_id := _scenario_host_safe_id(str(current_environment.get("night_instance_id", "")))
+	if night_instance_id.is_empty(): night_instance_id = "night_%d" % maxi(1, act_index + 1)
+	current_environment["night_instance_id"] = night_instance_id
+	var context_instance_id := _scenario_host_safe_id(str(current_environment.get("context_instance_id", "")))
+	if context_instance_id.is_empty(): context_instance_id = "context_%s" % environment_visit_id
+	current_environment["context_instance_id"] = context_instance_id
+
+
+func _scenario_host_public_context() -> Dictionary:
+	return ScenarioHostTransactionScript.public_context(
+		str(current_environment.get("world_node_id", "")),
+		str(current_environment.get("environment_visit_id", "")),
+		str(current_environment.get("night_instance_id", "")),
+		str(current_environment.get("context_instance_id", ""))
+	)
+
+
+func _scenario_host_tell_snapshot() -> Dictionary:
+	var result: Dictionary = {}
+	for member_id_value in crew_pattern_memory.keys():
+		var member_id := str(member_id_value)
+		for pattern_id_value in _copy_dict(crew_pattern_memory.get(member_id_value, {})).keys():
+			var pattern_id := str(pattern_id_value)
+			result["%s:%s" % [member_id, pattern_id]] = int(_copy_dict(crew_pattern_memory.get(member_id_value, {})).get(pattern_id_value, 0))
+	return result
+
+
+func _apply_scenario_host_tell_snapshot(snapshot: Dictionary) -> void:
+	var next := crew_pattern_memory.duplicate(true)
+	for key_value in snapshot.keys():
+		var parts := str(key_value).split(":", false, 1)
+		if parts.size() != 2: continue
+		var member := _copy_dict(next.get(str(parts[0]), {}))
+		member[str(parts[1])] = maxi(0, int(snapshot.get(key_value, 0)))
+		next[str(parts[0])] = member
+	crew_pattern_memory = next
+
+
+func _scenario_host_safe_id(value: String) -> String:
+	var result := ""
+	var normalized := value.strip_edges().to_lower()
+	for index in range(normalized.length()):
+		var code := normalized.unicode_at(index)
+		result += normalized[index] if (code >= 97 and code <= 122) or (code >= 48 and code <= 57) or code in [95, 45] else "_"
+	return result
+
+
+func scenario_sequence_command(command_id: String, idempotency_key: String, payload: Dictionary = {}, owner_namespace: String = "scenario", stable_object_id: String = "sequence", host_interaction_availability: Dictionary = {}, action_origin_owner_namespace: String = "", action_origin_stable_object_id: String = "", action_origin_receipt_key: String = "", action_origin_boundary_id: String = "", action_origin_fingerprint: String = "") -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if definition.is_empty():
+		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
+	if not _scenario_semantic_ready():
+		return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized."]}
+	var sequence_state := _copy_dict(current_environment.get("scenario_sequence_state", {}))
+	var replay_record: Dictionary = {}
+	if _copy_array(sequence_state.get("command_receipts", [])).has(idempotency_key):
+		for record_value in _copy_array(sequence_state.get("command_receipt_records", [])):
+			var record := _copy_dict(record_value)
+			if str(record.get("receipt_key", "")) != idempotency_key:
+				continue
+			if not replay_record.is_empty():
+				return {"ok": false, "errors": ["scenario command replay receipt is duplicated or malformed"]}
+			replay_record = record
+		if replay_record.is_empty():
+			return {"ok": false, "errors": ["scenario command replay receipt is missing or malformed"]}
+	var expected_phase := str(scenario_sequence_projection().get("phase_id", ""))
+	if not replay_record.is_empty():
+		var stored_envelope := _copy_dict(replay_record.get("envelope", {}))
+		var stored_fingerprint := str(replay_record.get("fingerprint", ""))
+		if stored_envelope.is_empty() or stored_fingerprint.is_empty() or stored_fingerprint != str(_copy_dict(sequence_state.get("command_fingerprints", {})).get(idempotency_key, "")) or stored_fingerprint != ScenarioSequenceRuntimeScript.content_fingerprint(stored_envelope):
+			return {"ok": false, "errors": ["scenario command replay receipt is missing, malformed, or conflicts with its exact command"]}
+		expected_phase = str(stored_envelope.get("expected_phase", ""))
+	var authored_command := ScenarioSequenceRuntimeScript.command(
+		command_id,
+		current_world_node_id(),
+		expected_phase,
+		idempotency_key,
+		payload,
+		owner_namespace,
+		stable_object_id,
+		action_origin_owner_namespace,
+		action_origin_stable_object_id,
+		action_origin_receipt_key,
+		action_origin_boundary_id,
+		action_origin_fingerprint
+	)
+	if not replay_record.is_empty():
+		if ScenarioSequenceRuntimeScript.content_fingerprint(authored_command) != str(replay_record.get("fingerprint", "")):
+			return {"ok": false, "errors": ["scenario command idempotency_key was reused for a different command"]}
+		var stored_descriptor := _copy_dict(replay_record.get("causal_action_descriptor", {}))
+		var stored_descriptor_fingerprint := str(replay_record.get("causal_action_descriptor_fingerprint", ""))
+		if stored_descriptor.is_empty() or stored_descriptor_fingerprint != ScenarioSequenceRuntimeScript.content_fingerprint(stored_descriptor):
+			return {"ok": false, "errors": ["scenario command replay action origin, handler, inputs, or cost changed"]}
+	var candidate_environment := current_environment.duplicate(true)
+	# This map is an internal presentation-to-state boundary: FoundationMain
+	# derives it synchronously from the current composed interaction model. The
+	# default is empty/fail-closed, and extension handlers cannot rewrite it.
+	var result := ScenarioEngineScript.sequence_command(candidate_environment, definition, authored_command, {
+		"available_funds": bankroll,
+		"host_interaction_availability": host_interaction_availability.duplicate(true),
+	})
+	if not bool(result.get("ok", false)):
+		var quarantine_state := _scenario_node_binding_quarantine_state(candidate_environment, definition)
+		if not quarantine_state.is_empty():
+			# Persist only the independently reproduced quarantine journal. Command
+			# payload, presentation, funds, and every other host field remain the
+			# exact pre-ingress values.
+			current_environment["scenario_sequence_state"] = quarantine_state
+			result["state"] = quarantine_state.duplicate(true)
+		return result
+	var cost := 0 if bool(result.get("replayed", false)) else maxi(0, int(result.get("cost", 0)))
+	if cost > bankroll:
+		return {"ok": false, "errors": ["scenario command cost is not payable"], "state": _copy_dict(current_environment.get("scenario_sequence_state", {})), "cost": 0}
+	bankroll -= cost
+	current_environment = candidate_environment
+	result["cost"] = cost
+	result["bankroll_delta"] = -cost
+	result["bankroll_after"] = bankroll
+	result["result_receipt"] = {
+		"receipt_id": str(result.get("receipt_id", "")),
+		"command_id": command_id,
+		"scenario_id": str(definition.get("id", "")),
+		"node_id": current_world_node_id(),
+		"cost": cost,
+		"replayed": bool(result.get("replayed", false)),
+	}
+	return result
+
+
+func _scenario_node_binding_quarantine_state(candidate_environment: Dictionary, definition: Dictionary) -> Dictionary:
+	var stored := _copy_dict(current_environment.get("scenario_sequence_state", {}))
+	var stored_node := str(stored.get("node_id", "")).strip_edges()
+	var physical_node := current_world_node_id()
+	if stored.is_empty() or str(stored.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_CLEANED or stored_node.is_empty() or physical_node.is_empty() or stored_node == physical_node:
+		return {}
+	var expected_environment := current_environment.duplicate(true)
+	var expected := ScenarioEngineScript.ensure_sequence_state(expected_environment, definition)
+	var candidate := _copy_dict(candidate_environment.get("scenario_sequence_state", {}))
+	var binding_error := "scenario progressed sequence state is bound to another world node; explicit migration is required"
+	if str(expected.get("status", "")) != ScenarioSequenceRuntimeScript.STATUS_CLEANED \
+		or not _copy_array(expected.get("errors", [])).has(binding_error) \
+		or ScenarioSequenceRuntimeScript.content_fingerprint(candidate) != ScenarioSequenceRuntimeScript.content_fingerprint(expected):
+		return {}
+	return expected.duplicate(true)
+
+
+func scenario_reenter_current(visit_id: String = "") -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if definition.is_empty():
+		return {"ok": false, "inactive": true, "errors": []}
+	var stable_visit := visit_id.strip_edges()
+	if stable_visit.is_empty():
+		stable_visit = "%s:%d" % [current_world_node_id(), _crew_action_index()]
+	return ScenarioEngineScript.sequence_reentry(current_environment, definition, stable_visit)
+
+
+func scenario_apply_expiry(boundary: String, boundary_serial: int = -1) -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if definition.is_empty():
+		return {"ok": false, "inactive": true, "errors": []}
+	var serial := _crew_action_index() if boundary_serial < 0 else boundary_serial
+	return ScenarioEngineScript.sequence_expiry(current_environment, definition, boundary, serial)
+
+
+func scenario_drain_transitions(reduced_motion: bool = false) -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if definition.is_empty():
+		return {"ok": false, "inactive": true, "transitions": [], "errors": []}
+	return ScenarioEngineScript.drain_sequence_transitions(current_environment, definition, reduced_motion)
+
+
+func scenario_drain_event_requests() -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if definition.is_empty():
+		return {"ok": false, "inactive": true, "requests": [], "errors": []}
+	return ScenarioEngineScript.drain_sequence_event_requests(current_environment, definition)
+
+
+# Migrates every persisted environment graph without changing scenario identity
+# or touching snapshots that do not have a sequence overlay. SaveService restores
+# through from_dict(), so this is the single migration seam for old slots.
+func migrate_legacy_scenario_sequences() -> Dictionary:
+	var report := {
+		"schema_version": ScenarioSequenceRuntimeScript.STATE_SCHEMA_VERSION,
+		"snapshots_checked": 0,
+		"legacy_scenarios_checked": 0,
+		"active_sequences": 0,
+		"changed_snapshots": 0,
+		"no_sequence_unchanged": 0,
+		"scenario_ids": [],
+		"changed_paths": [],
+	}
+	var current_result := _migrate_scenario_environment_graph(current_environment, "current_environment", report, str(current_environment.get("archetype_id", "")))
+	if bool(current_result.get("changed", false)):
+		current_environment = _copy_dict(current_result.get("environment", current_environment))
+	var nodes := _copy_array(world_map.get("nodes", []))
+	var map_changed := false
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var node := _copy_dict(nodes[index])
+		var environment := _copy_dict(node.get("environment", {}))
+		if environment.is_empty():
+			continue
+		var node_id := str(node.get("id", index)).strip_edges()
+		var stored_result := _migrate_scenario_environment_graph(environment, "world_map.nodes.%s.environment" % node_id, report, str(node.get("archetype_id", "")))
+		if bool(stored_result.get("changed", false)):
+			node["environment"] = _copy_dict(stored_result.get("environment", environment))
+			nodes[index] = node
+			map_changed = true
+	if map_changed:
+		var next_map := world_map.duplicate(true)
+		next_map["nodes"] = nodes
+		world_map = next_map
+	var rooms := grand_casino_room_states.duplicate(true)
+	var rooms_changed := false
+	for room_id_value in rooms.keys():
+		var room_id := str(room_id_value)
+		var room := _copy_dict(rooms.get(room_id_value, {}))
+		var room_result := _migrate_scenario_environment_graph(room, "grand_casino_room_states.%s" % room_id, report, room_id)
+		if bool(room_result.get("changed", false)):
+			rooms[room_id_value] = _copy_dict(room_result.get("environment", room))
+			rooms_changed = true
+	if rooms_changed:
+		grand_casino_room_states = rooms
+	(report["scenario_ids"] as Array).sort()
+	(report["changed_paths"] as Array).sort()
+	return report
+
+
+func _migrate_scenario_environment_graph(environment: Dictionary, path: String, report: Dictionary, fallback_archetype_id: String = "") -> Dictionary:
+	if environment.is_empty():
+		return {"changed": false, "environment": environment}
+	var before := JSON.stringify(environment)
+	var candidate := environment.duplicate(true)
+	var graph_archetype_id := str(candidate.get("archetype_id", "")).strip_edges()
+	if graph_archetype_id.is_empty():
+		graph_archetype_id = str(_copy_dict(candidate.get("scenario_state", {})).get("archetype_id", "")).strip_edges()
+	if graph_archetype_id.is_empty():
+		graph_archetype_id = fallback_archetype_id.strip_edges()
+	_migrate_scenario_snapshot_in_place(candidate, path, report, graph_archetype_id)
+	var states := _copy_dict(candidate.get("layer_states", {}))
+	for layer_id_value in states.keys():
+		var layer_id := str(layer_id_value)
+		var layer := _copy_dict(states.get(layer_id_value, {}))
+		if layer.is_empty():
+			continue
+		_migrate_scenario_snapshot_in_place(layer, "%s.layer_states.%s" % [path, layer_id], report, graph_archetype_id)
+		states[layer_id_value] = layer
+	if not states.is_empty():
+		candidate["layer_states"] = states
+	var changed := before != JSON.stringify(candidate)
+	if changed:
+		report["changed_snapshots"] = int(report.get("changed_snapshots", 0)) + 1
+		var changed_paths := _copy_array(report.get("changed_paths", []))
+		if not changed_paths.has(path):
+			changed_paths.append(path)
+		report["changed_paths"] = changed_paths
+	return {"changed": changed, "environment": candidate if changed else environment}
+
+
+func _migrate_scenario_snapshot_in_place(environment: Dictionary, path: String, report: Dictionary, fallback_archetype_id: String = "") -> void:
+	report["snapshots_checked"] = int(report.get("snapshots_checked", 0)) + 1
+	var scenario_id := str(_copy_dict(environment.get("scenario_state", {})).get("id", environment.get("scenario_id", ""))).strip_edges()
+	if scenario_id.is_empty():
+		report["no_sequence_unchanged"] = int(report.get("no_sequence_unchanged", 0)) + 1
+		return
+	report["legacy_scenarios_checked"] = int(report.get("legacy_scenarios_checked", 0)) + 1
+	var scenario_ids := _copy_array(report.get("scenario_ids", []))
+	if not scenario_ids.has(scenario_id):
+		scenario_ids.append(scenario_id)
+	report["scenario_ids"] = scenario_ids
+	var preferred := _scenario_sequence_migration_definition(environment, fallback_archetype_id)
+	var result := ScenarioEngineScript.migrate_environment_sequence(environment, preferred, "%d:%s" % [seed_value, path])
+	if bool(result.get("active", false)):
+		report["active_sequences"] = int(report.get("active_sequences", 0)) + 1
+
+
+# Old saves predate the durable suppression marker, so every independently
+# persisted snapshot must re-derive it from the restored challenge before the
+# content catalog is allowed to resolve a newly installed sequence overlay.
+func _scenario_sequence_migration_definition(environment: Dictionary, fallback_archetype_id: String = "") -> Dictionary:
+	var scenario_state := ScenarioEngineScript.normalize_state(environment.get("scenario_state", {}))
+	var scenario_id := str(scenario_state.get("id", environment.get("scenario_id", ""))).strip_edges()
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	if archetype_id.is_empty():
+		archetype_id = str(scenario_state.get("archetype_id", "")).strip_edges()
+	if archetype_id.is_empty():
+		archetype_id = fallback_archetype_id.strip_edges()
+	if scenario_id.is_empty() or not scenario_sequence_is_suppressed(scenario_id, archetype_id):
+		return {}
+	scenario_state[ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY] = true
+	environment["scenario_state"] = ScenarioEngineScript.normalize_state(scenario_state)
+	var preferred := _copy_dict(environment.get("scenario_sequence_definition", {}))
+	if str(preferred.get("id", preferred.get("scenario_id", ""))).strip_edges() != scenario_id:
+		preferred = {}
+	if preferred.is_empty():
+		preferred = {"id": scenario_id, "archetype_id": archetype_id}
+	return ScenarioEngineScript.suppress_sequence_definition(preferred)
+
+
+func scenario_enqueue_fact(fact_type: String, producer: String, payload: Dictionary = {}, fact_id: String = "", node_id: String = "") -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if not ScenarioSequenceSchemaScript.is_sequence(definition):
+		return {"ok": false, "inactive": true, "errors": []}
+	if not _scenario_semantic_ready():
+		return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized."]}
+	var state_candidate := current_environment.duplicate(true)
+	var state := ScenarioEngineScript.ensure_sequence_state(state_candidate, definition)
+	var target_node := current_world_node_id() if node_id.strip_edges().is_empty() else node_id.strip_edges()
+	var serial := maxi(1, int(state.get("fact_serial_next", 1)))
+	var stable_fact_id := fact_id.strip_edges()
+	if stable_fact_id.is_empty():
+		stable_fact_id = "%s:%s:%d" % [producer, fact_type, serial]
+	var typed_fact := ScenarioSequenceRuntimeScript.fact(
+		fact_type,
+		producer,
+		target_node,
+		stable_fact_id,
+		serial,
+		maxi(int(state.get("boundary_serial", 0)), _crew_action_index()),
+		payload
+	)
+	return ScenarioEngineScript.enqueue_sequence_fact(current_environment, definition, typed_fact)
+
+
+func scenario_flush_facts(boundary_serial: int = -1) -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if definition.is_empty():
+		return {"ok": false, "inactive": true, "processed": [], "errors": []}
+	if not _scenario_semantic_ready():
+		return {"ok": false, "processed": [], "errors": ["Dynamic room sequence semantic records are not finalized."]}
+	var target := _crew_action_index() if boundary_serial < 0 else boundary_serial
+	return ScenarioEngineScript.flush_sequence_facts(current_environment, definition, target)
+
+
+func scenario_publish_game_result(result: Dictionary, deltas: Dictionary) -> void:
+	var game_id := str(result.get("game_id", "")).strip_edges()
+	if game_id.is_empty():
+		return
+	scenario_enqueue_fact("game_result", "game", {
+		"game_id": game_id,
+		"action_id": str(result.get("action_id", "")),
+		"won": bool(result.get("won", false)),
+		"ended": bool(deltas.get("ended", result.get("ended", false))),
+		"bankroll_delta": int(deltas.get("bankroll_delta", 0)),
+		"chips_delta": int(deltas.get("chips_delta", 0)),
+		"applied_heat_delta": int(deltas.get("suspicion_delta", 0)),
+	})
+
+
+func scenario_publish_event_result(result: Dictionary) -> void:
+	var resolved := bool(result.get("resolved", false))
+	var deltas := _copy_dict(result.get("deltas", {}))
+	for hook_value in _copy_array(deltas.get("event_hooks", [])):
+		if typeof(hook_value) == TYPE_DICTIONARY and str((hook_value as Dictionary).get("type", "")) == "resolve_event":
+			resolved = true
+			break
+	var event_id := str(result.get("event_id", result.get("source_id", "")))
+	var resolution_id := str(result.get("resolution_id", "")).strip_edges()
+	if resolution_id.is_empty():
+		resolution_id = _scenario_pending_resolution_for_event(event_id)
+	scenario_enqueue_fact("event_result", "event", {
+		"event_id": event_id,
+		"choice_id": str(result.get("choice_id", result.get("action_id", ""))),
+		"resolution_id": resolution_id,
+		"resolved": resolved,
+		"ok": bool(result.get("ok", false)),
+	})
+
+
+func _scenario_pending_resolution_for_event(event_id: String) -> String:
+	var state := ScenarioSequenceRuntimeScript.normalize_state(current_environment.get("scenario_sequence_state", {}))
+	var history := _copy_array(state.get("event_request_history", []))
+	var receipts := _string_array(_copy_array(state.get("event_choice_receipts", [])))
+	for index in range(history.size() - 1, -1, -1):
+		var request := _copy_dict(history[index])
+		if str(request.get("event_id", "")) != event_id:
+			continue
+		var resolution_id := str(request.get("resolution_id", "")).strip_edges()
+		if resolution_id.is_empty():
+			continue
+		var already_resolved := false
+		for receipt_value in receipts:
+			if str(receipt_value).begins_with("%s:" % resolution_id):
+				already_resolved = true
+				break
+		if not already_resolved:
+			return resolution_id
+	return ""
+
+
+func scenario_publish_service_result(kind: String, hook_id: String, result: Dictionary) -> void:
+	scenario_enqueue_fact("service_result", "service", {
+		"kind": kind,
+		"service_id": hook_id,
+		"ok": bool(result.get("ok", false)),
+		"action_id": str(result.get("action_id", "")),
+	})
+
+
+func scenario_publish_travel(fact_type: String, source_id: String, target_id: String, travel_kind: String = "world") -> Dictionary:
+	if not ["travel_departed", "travel_arrived"].has(fact_type):
+		return {"ok": false, "errors": ["Scenario travel fact type is unregistered."]}
+	var result := scenario_enqueue_fact(fact_type, "travel", {"source_id": source_id, "target_id": target_id, "travel_kind": travel_kind})
+	if bool(result.get("inactive", false)):
+		return {"ok": true, "inactive": true, "errors": []}
+	return result
+
+
+func _scenario_publish_crew_change(member_id: String, change: String, value: Variant) -> void:
+	scenario_enqueue_fact("crew_changed", "crew", {"member_id": member_id, "change": change, "value": value})
+
+
+func _scenario_publish_crew_job(job: Dictionary) -> void:
+	if job.is_empty():
+		return
+	scenario_enqueue_fact("crew_job_changed", "crew", {"job_id": str(job.get("id", "")), "definition_id": str(job.get("definition_id", "")), "member_id": str(job.get("member_id", "")), "status": str(job.get("status", "")), "outcome": str(job.get("outcome", ""))})
+
+
+func _scenario_publish_heat_change(previous_level: int, applied_delta: int, source: String) -> void:
+	if applied_delta == 0:
+		return
+	var next_level := suspicion_level()
+	scenario_enqueue_fact("heat_changed", "heat", {"previous": previous_level, "current": next_level, "applied_delta": applied_delta, "source": source})
+	var previous_band := _scenario_heat_band(previous_level)
+	var next_band := _scenario_heat_band(next_level)
+	if previous_band != next_band:
+		scenario_enqueue_fact("heat_band_changed", "heat", {"previous_band": previous_band, "current_band": next_band, "current": next_level, "source": source})
+
+
+static func _scenario_heat_band(value: int) -> String:
+	if value >= 75: return "critical"
+	if value >= 50: return "hot"
+	if value >= 25: return "caution"
+	return "quiet"
+
+
 func recent_scenario_ids(archetype_id: String) -> Array:
 	var value: Variant = scenario_recent_by_archetype.get(archetype_id, [])
 	return (value as Array).duplicate(false) if typeof(value) == TYPE_ARRAY else []
@@ -1734,6 +2912,7 @@ func store_current_environment_layer_state() -> void:
 	var states := _copy_dict(current_environment.get("layer_states", {}))
 	var body := current_environment.duplicate(true)
 	body.erase("layer_states")
+	_strip_scenario_semantic_ephemera(body)
 	states[current_id] = body
 	current_environment["layer_states"] = states
 
@@ -1768,6 +2947,13 @@ func install_environment_layer_state(layer_id: String, layer_state: Dictionary) 
 	if not scenario_state.is_empty():
 		ScenarioEngineScript.reconcile_environment(target, scenario_state)
 	current_environment = _normalize_environment(target)
+	ScenarioEngineScript.migrate_environment_sequence(
+		current_environment,
+		{},
+		"%d:layer:%s:%s" % [seed_value, str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))), target_id]
+	)
+	if ScenarioSequenceSchemaScript.is_sequence(scenario_sequence_definition()):
+		current_environment["scenario_sequence_pending_visit_id"] = str(current_environment.get("environment_visit_id", ""))
 	CharacterChainModelScript.apply_to_environment(self, current_environment)
 	return true
 
@@ -2556,6 +3742,7 @@ func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior",
 		_apply_tutorial_heat_intervention(location_id, cue_id)
 	if applied_amount != 0 and active_location:
 		heat_changed.emit(applied_amount, suspicion_level(), cue_id, context.duplicate(true))
+		_scenario_publish_heat_change(base_level, applied_amount, cue_id)
 	_evaluate_immediate_terminal_state(defer_bankroll_zero)
 	return applied_amount
 
@@ -6429,8 +7616,11 @@ func crew_rank(member_id: String) -> String:
 func crew_add_trust(member_id: String, amount: int, _reason: String = "") -> int:
 	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or amount == 0:
 		return crew_trust(member_id)
+	var previous := crew_trust(member_id)
 	crew_trust_by_member[member_id] = maxi(0, crew_trust(member_id) + amount)
 	_reconcile_crew_recruitment_perks()
+	if crew_trust(member_id) != previous:
+		_scenario_publish_crew_change(member_id, "trust", crew_trust(member_id))
 	return crew_trust(member_id)
 
 
@@ -7887,6 +9077,7 @@ func job_accept(job_id: String) -> Dictionary:
 	job["status"] = "accepted"
 	job["accepted_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
+	_scenario_publish_crew_job(job)
 	return job.duplicate(true)
 
 
@@ -7898,6 +9089,7 @@ func job_activate(job_id: String) -> Dictionary:
 	job["status"] = "active"
 	job["active_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
+	_scenario_publish_crew_job(job)
 	return job.duplicate(true)
 
 
@@ -7936,6 +9128,7 @@ func job_resolve(job_id: String, outcome: String) -> Dictionary:
 	job["outcome"] = outcome
 	job["resolved_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
+	_scenario_publish_crew_job(job)
 	return job.duplicate(true)
 
 
@@ -8759,6 +9952,10 @@ func delivery_abandon(reason: String = "abandoned") -> Dictionary:
 func delivery_resolve_travel_arrival(route: Dictionary = {}, route_risk: Dictionary = {}) -> Dictionary:
 	if not delivery_has_active_run():
 		return {}
+	var rollback_run := to_dict()
+	var rollback_environment := current_environment.duplicate(true)
+	var rollback_world_map := world_map.duplicate(true)
+	var rollback_room_states := grand_casino_room_states.duplicate(true)
 	var node_id := current_world_node_id()
 	var security_heat := _delivery_arrival_security_heat()
 	if security_heat > 0:
@@ -8769,7 +9966,13 @@ func delivery_resolve_travel_arrival(route: Dictionary = {}, route_risk: Diction
 		}, true)
 		active_delivery_run = DeliveryRunModelScript.add_heat(active_delivery_run, security_heat)
 	# Travel is one delivery action boundary. Ordinary travel never enters here.
-	advance_environment_turns(1)
+	var advance_result := advance_environment_turns(1)
+	if not bool(advance_result.get("ok", false)):
+		from_dict(rollback_run)
+		current_environment = rollback_environment
+		world_map = rollback_world_map
+		grand_casino_room_states = rollback_room_states
+		return {"ok": false, "resolved": false, "snapshot": delivery_snapshot(), "errors": _copy_array(advance_result.get("errors", []))}
 	if not delivery_has_active_run():
 		return {"ok": false, "resolved": true, "snapshot": delivery_snapshot()}
 	active_delivery_run = DeliveryRunModelScript.note_arrival(active_delivery_run, node_id)
@@ -9322,7 +10525,9 @@ func perform_sweep_wait_action() -> Dictionary:
 	if not bool(status.get("enabled", false)):
 		return {"ok": false, "message": "There is no sweep to wait out."}
 	var before := int(status.get("remaining_actions", 0))
-	advance_environment_turns(1)
+	var advance_result := advance_environment_turns(1)
+	if not bool(advance_result.get("ok", false)):
+		return {"ok": false, "message": "The sweep boundary could not advance safely.", "errors": _copy_array(advance_result.get("errors", []))}
 	var after := current_travel_lock_remaining()
 	return {
 		"ok": true,
@@ -10496,11 +11701,62 @@ func _remember_story_seen_flags(story_entry: Dictionary) -> void:
 		narrative_flags["%s%s:%s" % [STORY_SEEN_OBJECTIVE_FLAG_PREFIX, entry_type, objective_id]] = true
 
 
+# Read-only production turn preflight. It executes the authored expiry and
+# world-boundary fact against a detached environment so deterministic capacity
+# or handler rejection is reported before any clock, RNG, town, or room state
+# can move.
+func _scenario_preflight_environment_turn(amount: int) -> Dictionary:
+	if amount <= 0 or not scenario_sequence_present():
+		return {"ok": true, "inactive": true, "errors": []}
+	if not _scenario_semantic_ready():
+		return {"ok": false, "inactive": false, "errors": ["Dynamic room sequence semantic records are not finalized."]}
+	var definition := scenario_sequence_definition()
+	var candidate := current_environment.duplicate(true)
+	if _scenario_sequence_uses_expiry_boundary("town_action"):
+		var expiry_result := ScenarioEngineScript.sequence_apply_expiry_boundary(candidate, definition, "town_action", amount)
+		if not bool(expiry_result.get("ok", false)):
+			return {"ok": false, "inactive": false, "errors": _copy_array(expiry_result.get("errors", []))}
+	var state := ScenarioEngineScript.ensure_sequence_state(candidate, definition)
+	if state.is_empty():
+		return {"ok": false, "inactive": false, "errors": ["Dynamic room sequence turn preflight could not initialize its causal state."]}
+	var future_action_index := _crew_action_index() + amount
+	var serial := maxi(1, int(state.get("fact_serial_next", 1)))
+	var world_fact := ScenarioSequenceRuntimeScript.fact(
+		"world_boundary",
+		"scenario",
+		current_world_node_id(),
+		"scenario:world_boundary:%d" % serial,
+		serial,
+		maxi(int(state.get("boundary_serial", 0)), future_action_index),
+		{"amount": amount, "action_index": future_action_index}
+	)
+	var enqueued := ScenarioEngineScript.enqueue_sequence_fact(candidate, definition, world_fact)
+	if not bool(enqueued.get("ok", false)):
+		return {"ok": false, "inactive": false, "errors": _copy_array(enqueued.get("errors", []))}
+	var flushed := ScenarioEngineScript.flush_sequence_facts(candidate, definition, future_action_index)
+	return {"ok": bool(flushed.get("ok", false)), "inactive": false, "errors": _copy_array(flushed.get("errors", []))}
+
+
 # Advances the current environment clock.
-func advance_environment_turns(amount: int = 1) -> void:
+func advance_environment_turns(amount: int = 1) -> Dictionary:
 	if current_environment.is_empty() or is_terminal():
-		return
+		return {"ok": true, "applied": false, "errors": []}
 	var safe_amount := maxi(0, amount)
+	var action_boundary_before := _crew_action_index()
+	var uses_v2_expiry := safe_amount > 0 and _scenario_sequence_uses_expiry_boundary("town_action")
+	var turn_preflight := _scenario_preflight_environment_turn(safe_amount)
+	if not bool(turn_preflight.get("ok", false)):
+		return {"ok": false, "applied": false, "errors": _copy_array(turn_preflight.get("errors", []))}
+	var rollback_snapshot := to_dict()
+	var rollback_environment := current_environment.duplicate(true)
+	var rollback_world_map := world_map.duplicate(true)
+	var rollback_room_states := grand_casino_room_states.duplicate(true)
+	if uses_v2_expiry:
+		var expiry_result := scenario_sequence_apply_expiry_boundary("town_action", safe_amount)
+		if not bool(expiry_result.get("ok", false)):
+			return {"ok": false, "applied": false, "errors": _copy_array(expiry_result.get("errors", []))}
+	var town_before := JSON.stringify(town_state.public_snapshot()) if town_state != null else ""
+	var sweep_before := JSON.stringify(town_state.sweep_internal_status()) if town_state != null else ""
 	_advance_global_boundary_start(safe_amount)
 	var previous_turns := int(current_environment.get("turns", 0))
 	var next_turns := previous_turns + safe_amount
@@ -10520,6 +11776,53 @@ func advance_environment_turns(amount: int = 1) -> void:
 	_decrease_current_suspicion(next_decay_step - previous_decay_step)
 	_advance_heat_cooldown(safe_amount)
 	_advance_global_boundary_finish(safe_amount)
+	if town_state != null:
+		var town_after := town_state.public_snapshot()
+		if JSON.stringify(town_after) != town_before:
+			var happening_ids: Array = []
+			for happening_value in _copy_array(town_after.get("active_happenings", [])):
+				if typeof(happening_value) != TYPE_DICTIONARY:
+					continue
+				var happening_id := str((happening_value as Dictionary).get("id", "")).strip_edges()
+				if not happening_id.is_empty() and not happening_ids.has(happening_id):
+					happening_ids.append(happening_id)
+			happening_ids.sort()
+			var town_fact := scenario_enqueue_fact("town_transition", "town", {"action_index": _crew_action_index(), "weather": str(town_after.get("weather", "")), "day_type": str(town_after.get("day_type", "")), "happening_ids": happening_ids})
+			if not bool(town_fact.get("ok", false)) and not bool(town_fact.get("inactive", false)):
+				from_dict(rollback_snapshot)
+				current_environment = rollback_environment
+				world_map = rollback_world_map
+				grand_casino_room_states = rollback_room_states
+				return {"ok": false, "applied": false, "errors": _copy_array(town_fact.get("errors", []))}
+		var sweep_after := town_state.sweep_internal_status()
+		if JSON.stringify(sweep_after) != sweep_before:
+			var sweep_fact := scenario_enqueue_fact("sweep_changed", "sweep", {"action_index": _crew_action_index(), "node_id": str(sweep_after.get("current_node_id", "")), "segment_index": int(sweep_after.get("segment_index", -1)), "active": bool(sweep_after.get("active", false))})
+			if not bool(sweep_fact.get("ok", false)) and not bool(sweep_fact.get("inactive", false)):
+				from_dict(rollback_snapshot)
+				current_environment = rollback_environment
+				world_map = rollback_world_map
+				grand_casino_room_states = rollback_room_states
+				return {"ok": false, "applied": false, "errors": _copy_array(sweep_fact.get("errors", []))}
+	if safe_amount > 0:
+		var world_fact := scenario_enqueue_fact("world_boundary", "scenario", {"amount": safe_amount, "action_index": _crew_action_index()})
+		if not bool(world_fact.get("ok", false)) and not bool(world_fact.get("inactive", false)):
+			from_dict(rollback_snapshot)
+			current_environment = rollback_environment
+			world_map = rollback_world_map
+			grand_casino_room_states = rollback_room_states
+			return {"ok": false, "applied": false, "errors": _copy_array(world_fact.get("errors", []))}
+		if not bool(world_fact.get("inactive", false)):
+			var flushed := scenario_flush_facts(_crew_action_index())
+			if not bool(flushed.get("ok", false)):
+				from_dict(rollback_snapshot)
+				current_environment = rollback_environment
+				world_map = rollback_world_map
+				grand_casino_room_states = rollback_room_states
+				return {"ok": false, "applied": false, "errors": _copy_array(flushed.get("errors", []))}
+		if not uses_v2_expiry:
+			for offset in range(safe_amount):
+				scenario_apply_expiry("town_action", action_boundary_before + offset + 1)
+	return {"ok": true, "applied": safe_amount > 0, "errors": []}
 
 
 func _advance_global_boundary_start(safe_amount: int) -> void:
@@ -11724,6 +13027,7 @@ func _decrease_current_suspicion(amount: int) -> void:
 	suspicion["level"] = next_level
 	if next_level != previous_level:
 		_record_heat_history(false)
+		_scenario_publish_heat_change(previous_level, next_level - previous_level, "cooldown")
 	if location_id.is_empty():
 		return
 	var levels := _local_suspicion_levels()
@@ -11966,6 +13270,7 @@ func to_dict() -> Dictionary:
 		# Runtime serialization remains the established public projection for
 		# compatibility/goldens. Persistent saves use to_save_snapshot().
 		"crew_state": _crew_state_for_save(true, false),
+		"scenario_host_transaction_ledger": scenario_host_transaction_ledger.duplicate(true),
 		"active_delivery_run": active_delivery_run.duplicate(true),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": normalize_heat_history(heat_history),
@@ -12044,6 +13349,7 @@ func to_save_snapshot() -> Dictionary:
 		"story_log": story_log.duplicate(false),
 		"story_log_archive_count": story_log_archive_count,
 		"crew_state": _crew_state_for_save(false, true),
+		"scenario_host_transaction_ledger": scenario_host_transaction_ledger.duplicate(true),
 		"active_delivery_run": active_delivery_run.duplicate(false),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": heat_history.duplicate(false),
@@ -12065,6 +13371,7 @@ func to_save_snapshot() -> Dictionary:
 
 # Restores the run from saved data.
 func from_dict(data: Dictionary) -> void:
+	_scenario_sequence_definition_cache = {}
 	var saved_crew_state: Dictionary = data.get("crew_state", {}) if typeof(data.get("crew_state", {})) == TYPE_DICTIONARY else {}
 	var legacy_streets_migration := _copy_dict(data.get("active_streets_run", {}))
 	seed_text = str(data.get("seed_text", "FOUNDATION-SEED"))
@@ -12100,6 +13407,7 @@ func from_dict(data: Dictionary) -> void:
 	pending_drunk_absorption = _normalize_pending_drunk_absorption(_copy_array(data.get("pending_drunk_absorption", [])))
 	drunk_distortion_suppression_turns = maxi(0, int(data.get("drunk_distortion_suppression_turns", 0)))
 	current_environment = _normalize_environment(_copy_dict(data.get("current_environment", {})))
+	scenario_host_transaction_ledger = _copy_dict(data.get("scenario_host_transaction_ledger", {}))
 	# Import current-room machine ownership from pre-portable saves, then make
 	# the portable record authoritative for the restored surface.
 	capture_portable_ticket_piles_from_environment(current_environment, true)
@@ -12114,6 +13422,7 @@ func from_dict(data: Dictionary) -> void:
 	configure_town_world(world_map, false)
 	scenario_recent_by_archetype = _normalize_scenario_recent(_copy_dict(data.get("scenario_recent_by_archetype", {})))
 	grand_casino_room_states = _normalize_grand_casino_room_states(_copy_dict(data.get("grand_casino_room_states", {})))
+	migrate_legacy_scenario_sequences()
 	grand_casino_staffing = _normalize_grand_casino_staffing(_copy_dict(data.get("grand_casino_staffing", {})))
 	rourke_current_room = _normalize_grand_casino_room_id(str(data.get("rourke_current_room", "")))
 	rourke_current_spot = str(data.get("rourke_current_spot", "")).strip_edges()
@@ -12469,6 +13778,7 @@ static func _environment_for_persistent_storage(environment: Dictionary, deep_co
 		stored[key] = _persistent_copy_value(environment.get(key_value)) if deep_copy else environment.get(key_value)
 	var states_value: Variant = environment.get("game_states", {})
 	if typeof(states_value) != TYPE_DICTIONARY:
+		_strip_scenario_semantic_ephemera(stored)
 		return stored
 	var stored_states: Dictionary = {}
 	for game_key_value in (states_value as Dictionary).keys():
@@ -12487,7 +13797,34 @@ static func _environment_for_persistent_storage(environment: Dictionary, deep_co
 		else:
 			stored_states[game_key] = _persistent_copy_value(state_value) if deep_copy else state_value
 	stored["game_states"] = stored_states
+	_strip_scenario_semantic_ephemera(stored)
 	return stored
+
+
+static func _strip_scenario_semantic_ephemera(environment: Dictionary) -> void:
+	for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_event_choices", "scenario_sequence_projection", "scenario_sequence_lifecycle_errors", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot"]:
+		environment.erase(key)
+	var state := _copy_dict(environment.get("scenario_sequence_state", {}))
+	if not state.is_empty():
+		var semantic := _copy_dict(state.get("semantic_state", {}))
+		for key in ["target_inventory", "declared_targets", "base_interactions", "event_choices", "scene_objects", "interactions", "actors", "services", "games", "routes", "transition_queue", "tombstones"]:
+			semantic.erase(key)
+		state["semantic_state"] = semantic
+		state.erase("resolved_branches")
+		state.erase("resolved_outcomes")
+		environment["scenario_sequence_state"] = state
+	if environment.has("scenario_sequence_state"):
+		environment["scenario_sequence_pending_visit_id"] = str(environment.get("environment_visit_id", environment.get("scenario_sequence_pending_visit_id", "")))
+	else:
+		environment.erase("scenario_sequence_pending_visit_id")
+	var layer_states := _copy_dict(environment.get("layer_states", {}))
+	if not layer_states.is_empty():
+		for layer_id_value in layer_states.keys():
+			var layer_body := _copy_dict(layer_states.get(layer_id_value, {}))
+			layer_body.erase("layer_states")
+			_strip_scenario_semantic_ephemera(layer_body)
+			layer_states[layer_id_value] = layer_body
+		environment["layer_states"] = layer_states
 
 
 static func _world_map_for_save_snapshot(map_data: Dictionary) -> Dictionary:
@@ -12674,6 +14011,7 @@ static func environment_context_snapshot(environment: Dictionary) -> Dictionary:
 		if str(key_value) == "game_states":
 			continue
 		snapshot[key_value] = _persistent_copy_value(environment.get(key_value))
+	_strip_scenario_semantic_ephemera(snapshot)
 	return snapshot
 
 
@@ -13146,7 +14484,7 @@ func _grand_casino_room_states_for_save(deep_copy: bool = true) -> Dictionary:
 			continue
 		var room: Variant = grand_casino_room_states.get(room_id, {})
 		if typeof(room) == TYPE_DICTIONARY and not (room as Dictionary).is_empty():
-			result[room_id] = (room as Dictionary).duplicate(deep_copy)
+			result[room_id] = _environment_for_persistent_storage(room as Dictionary, deep_copy)
 	return result
 
 
@@ -13381,6 +14719,10 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	if data.is_empty():
 		return {}
 	var environment := data.duplicate(true)
+	if environment.has("scenario_semantic_inventory_version"):
+		var inventory_version_value: Variant = environment.get("scenario_semantic_inventory_version")
+		if typeof(inventory_version_value) == TYPE_FLOAT and is_finite(float(inventory_version_value)) and is_equal_approx(float(inventory_version_value), floor(float(inventory_version_value))):
+			environment["scenario_semantic_inventory_version"] = int(inventory_version_value)
 	environment["depth"] = int(environment.get("depth", 0))
 	environment["tier"] = int(environment.get("tier", 1))
 	environment["turns"] = int(environment.get("turns", 0))
@@ -13405,6 +14747,9 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	environment["travel_hooks"] = _copy_array(environment.get("travel_hooks", []))
 	environment["next_archetypes"] = _copy_array(environment.get("next_archetypes", []))
 	environment["object_fixtures"] = _copy_array(environment.get("object_fixtures", []))
+	if environment.has("semantic_anchors"): environment["semantic_anchors"] = _copy_dict(environment.get("semantic_anchors", {}))
+	if environment.has("semantic_zones"): environment["semantic_zones"] = _copy_dict(environment.get("semantic_zones", {}))
+	if environment.has("semantic_actors"): environment["semantic_actors"] = _copy_array(environment.get("semantic_actors", []))
 	environment["local_narrative_flags"] = _copy_dict(environment.get("local_narrative_flags", {}))
 	if environment.has("crew_presence"):
 		environment["crew_presence"] = _copy_array(environment.get("crew_presence", []))
@@ -13432,7 +14777,40 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 			environment[scenario_array_key] = _copy_array(environment.get(scenario_array_key, []))
 		for scenario_dict_key in ["scenario_game_modifiers", "scenario_presentation", "scenario_exclusive_opportunity", "scenario_hook_flags"]:
 			environment[scenario_dict_key] = _copy_dict(environment.get(scenario_dict_key, {}))
+	var has_persisted_sequence := environment.has("scenario_sequence_state")
+	var raw_sequence_state: Variant = environment.get("scenario_sequence_state", {})
+	var sequence_state := _copy_dict(raw_sequence_state)
+	if typeof(sequence_state.get("schema_version")) == TYPE_FLOAT and is_finite(float(sequence_state.get("schema_version"))) and is_equal_approx(float(sequence_state.get("schema_version")), floor(float(sequence_state.get("schema_version")))):
+		sequence_state["schema_version"] = int(sequence_state.get("schema_version"))
+	var sequence_state_errors := ScenarioOperationRegistryScript.validate_bounded_variant("persisted scenario sequence state", raw_sequence_state) if has_persisted_sequence else []
+	var sequence_identity_valid := typeof(raw_sequence_state) == TYPE_DICTIONARY and not sequence_state.is_empty() and typeof(sequence_state.get("schema_version")) == TYPE_INT and int(sequence_state.get("schema_version", 0)) == ScenarioSequenceRuntimeScript.STATE_SCHEMA_VERSION and typeof(sequence_state.get("scenario_id")) == TYPE_STRING and not str(sequence_state.get("scenario_id", "")).strip_edges().is_empty() and ScenarioSequenceRuntimeScript._persisted_collections_within_limits(sequence_state)
+	if has_persisted_sequence and (not sequence_state_errors.is_empty() or not sequence_identity_valid):
+		environment.erase("scenario_sequence_state")
+		environment.erase("scenario_sequence_projection")
+		environment.erase("scenario_render_snapshot")
+		environment.erase("scenario_sequence_pending_visit_id")
+		environment["scenario_sequence_migration_error"] = "Persisted dynamic room sequence state is malformed, unsupported, or overbound; explicit migration is required."
+	elif has_persisted_sequence:
+		environment["scenario_sequence_state"] = sequence_state.duplicate(true)
+		# Projection and render data are derived from authoritative sequence state.
+		# Never trust a stale or tampered saved copy across schema/content versions.
+		environment.erase("scenario_sequence_projection")
+		environment.erase("scenario_render_snapshot")
+		var baseline_sources := {
+			"scenario_sequence_base_game_ids": "game_ids",
+			"scenario_sequence_base_service_ids": "service_ids",
+			"scenario_sequence_base_travel_hooks": "travel_hooks",
+		}
+		for baseline_array_key in baseline_sources.keys():
+			var source_key := str(baseline_sources.get(baseline_array_key, ""))
+			environment[baseline_array_key] = _copy_array(environment.get(baseline_array_key, environment.get(source_key, [])))
+		environment["scenario_sequence_base_game_modifiers"] = _copy_dict(environment.get("scenario_sequence_base_game_modifiers", environment.get("scenario_game_modifiers", {})))
+	if environment.has("scenario_sequence_migration"):
+		environment["scenario_sequence_migration"] = _copy_dict(environment.get("scenario_sequence_migration", {}))
 	_normalize_environment_layers(environment)
+	# Semantic authorization is a render-time proof. Saved or layer-stored copies
+	# can retain only the expected schema/digest and must be rebuilt before ingress.
+	_strip_scenario_semantic_ephemera(environment)
 	return environment
 
 
@@ -13474,6 +14852,22 @@ static func _normalize_environment_layers(environment: Dictionary) -> void:
 	for state_id_value in states.keys():
 		var body := _copy_dict(states.get(state_id_value, {}))
 		body.erase("layer_states")
+		if body.has("scenario_sequence_state"):
+			var raw_layer_sequence_state: Variant = body.get("scenario_sequence_state", {})
+			var layer_sequence_state := _copy_dict(raw_layer_sequence_state)
+			if typeof(layer_sequence_state.get("schema_version")) == TYPE_FLOAT and is_finite(float(layer_sequence_state.get("schema_version"))) and is_equal_approx(float(layer_sequence_state.get("schema_version")), floor(float(layer_sequence_state.get("schema_version")))):
+				layer_sequence_state["schema_version"] = int(layer_sequence_state.get("schema_version"))
+			var layer_sequence_valid := typeof(raw_layer_sequence_state) == TYPE_DICTIONARY \
+				and not layer_sequence_state.is_empty() \
+				and ScenarioOperationRegistryScript.validate_bounded_variant("persisted layer scenario sequence state", raw_layer_sequence_state).is_empty() \
+				and typeof(layer_sequence_state.get("schema_version")) == TYPE_INT \
+				and int(layer_sequence_state.get("schema_version", 0)) == ScenarioSequenceRuntimeScript.STATE_SCHEMA_VERSION \
+				and typeof(layer_sequence_state.get("scenario_id")) == TYPE_STRING \
+				and not str(layer_sequence_state.get("scenario_id", "")).strip_edges().is_empty() \
+				and ScenarioSequenceRuntimeScript._persisted_collections_within_limits(layer_sequence_state)
+			if not layer_sequence_valid:
+				body.erase("scenario_sequence_state")
+				body["scenario_sequence_migration_error"] = "Persisted dynamic room sequence state is malformed, unsupported, or overbound; explicit migration is required."
 		states[str(state_id_value)] = body
 	environment["layer_states"] = states
 	environment["layer_ambient_lines"] = _string_array(_copy_array(environment.get("layer_ambient_lines", [])))
