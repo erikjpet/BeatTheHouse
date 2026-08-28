@@ -21,7 +21,9 @@ func _run() -> void:
 	_check_declared_projection_ids(game)
 	_check_phase_projection(game)
 	_check_itemized_accounting(game)
+	_check_charged_deal_envelope(game)
 	_check_gesture_rejections_and_equivalence(game)
+	_check_live_equivalent_bindings(game)
 	_check_energy_and_restore_projection(game)
 	_check_ten_seed_projection_isolation(game)
 	if failures.is_empty():
@@ -64,6 +66,9 @@ func _check_contract(game: GameModule) -> void:
 		var equivalents: Dictionary = gesture.get("equivalents", {}) if typeof(gesture.get("equivalents", {})) == TYPE_DICTIONARY else {}
 		for input_kind in ["keyboard", "controller", "reduced_motion"]:
 			_check(typeof(equivalents.get(input_kind, null)) == TYPE_DICTIONARY, "Gesture %s lost its %s equivalent." % [str(gesture.get("id", "unknown")), input_kind])
+			var equivalent: Dictionary = equivalents.get(input_kind, {})
+			_check(not str(equivalent.get("action_id", "")).is_empty(), "Gesture %s %s equivalent is not bound to a frozen action_id." % [str(gesture.get("id", "unknown")), input_kind])
+			_check(str(equivalent.get("target_selection", "")) in ["focus", "cycle", "direct"], "Gesture %s %s equivalent has no canonical target selection." % [str(gesture.get("id", "unknown")), input_kind])
 	var persistence: Dictionary = contract.get("ritual_persistence", {}) if typeof(contract.get("ritual_persistence", {})) == TYPE_DICTIONARY else {}
 	_check(persistence.get("save_boundaries", []) == ["wagering", "initial_deal", "player_turn", "dealer_procedure", "settlement"], "Not every Blackjack action phase is a declared save boundary.")
 
@@ -132,6 +137,31 @@ func _check_itemized_accounting(game: GameModule) -> void:
 		_check(pending.has(field), "A staged wager item omitted frozen field %s." % field)
 
 
+func _check_charged_deal_envelope(game: GameModule) -> void:
+	var fixture := _fixture(game, "GAME06-2-ENVELOPE", 4)
+	var session := {"session_id": "blackjack:game06-2-envelope:0", "cards_consumed": 0, "active_hand_index": 0}
+	var envelope: Dictionary = game.call("blackjack_ritual_deal_envelope", session, fixture.environment)
+	_check(game.call("blackjack_ritual_deal_envelope_authorized", envelope, "wagering"), "Canonical charged-deal envelope did not bind to the Blackjack handler allowlist.")
+	var contract: Dictionary = game.call("blackjack_ritual_contract")
+	var charged_declarations := 0
+	for declaration_value in contract.get("action_declarations", []):
+		if typeof(declaration_value) == TYPE_DICTIONARY and str((declaration_value as Dictionary).get("action_id", "")) == "blackjack_place_bet":
+			charged_declarations += 1
+	_check(charged_declarations == 1, "Charged/resolving Blackjack deal action is not declared exactly once.")
+	for mutation in ["action_id", "source_id", "target_id", "expected_phase"]:
+		var hostile := envelope.duplicate(true)
+		hostile[mutation] = "foreign.id"
+		_check(not game.call("blackjack_ritual_deal_envelope_authorized", hostile, "wagering"), "Hostile charged envelope bypassed %s validation." % mutation)
+	var cross_id := envelope.duplicate(true)
+	(cross_id.get("boundary", {}) as Dictionary)["session_id"] = "blackjack:other-session:0"
+	_check(not game.call("blackjack_ritual_deal_envelope_authorized", cross_id, "wagering"), "Cross-session boundary id was accepted.")
+	var malformed := envelope.duplicate(true)
+	malformed["caller_handler"] = "blackjack_authority"
+	_check(not game.call("blackjack_ritual_deal_envelope_authorized", malformed, "wagering"), "Unknown caller handler field bypassed the closed envelope.")
+	var wrong_phase := envelope.duplicate(true)
+	_check(not game.call("blackjack_ritual_deal_envelope_authorized", wrong_phase, "player_turn"), "Wagering deal envelope was accepted in player_turn.")
+
+
 func _check_gesture_rejections_and_equivalence(game: GameModule) -> void:
 	var fixture := _fixture(game, "GAME06-2-GESTURES", 0)
 	var run: RunState = fixture.run
@@ -159,9 +189,33 @@ func _check_gesture_rejections_and_equivalence(game: GameModule) -> void:
 	var cut_begin: Dictionary = game.surface_pointer_command("blackjack_cut_gesture", 0, "begin", Vector2(720, 120), repeated.get("ui_state", {}), run, environment)
 	var cut: Dictionary = game.surface_pointer_command("blackjack_cut_gesture", 0, "end", Vector2(720, 120), cut_begin.get("ui_state", {}), run, environment)
 	_check(str(cut.get("action_id", "")) == "blackjack_place_bet" and bool(cut.get("direct_resolve", false)), "Cut gesture did not reach the same confirm/deal authority as keyboard/controller action.")
+	_check(game.call("blackjack_ritual_deal_envelope_authorized", cut.get("ritual_command", {}), "wagering"), "Live cut/deal command bypassed the frozen ritual envelope.")
+	_check(str(cut.get("ritual_handler_id", "")) == "blackjack_authority", "Live cut/deal command did not bind its declared handler.")
 	_check(run.wager_balance_for_game("blackjack", environment) == bankroll_before, "Cut gesture mutated bankroll before the authoritative resolve boundary.")
 	var duplicate_end := game.surface_pointer_command("blackjack_cut_gesture", 0, "end", Vector2(720, 120), cut.get("ui_state", {}), run, environment)
 	_check(str(duplicate_end.get("action_id", "")).is_empty(), "Repeated cut end produced a second deal/commit command.")
+
+
+func _check_live_equivalent_bindings(game: GameModule) -> void:
+	var input_kinds := ["keyboard", "controller", "reduced_motion"]
+	for input_index in range(input_kinds.size()):
+		var input_kind: String = input_kinds[input_index]
+		var fixture := _fixture(game, "GAME06-2-EQUIVALENT-%s" % input_kind, 10 + input_index)
+		var run: RunState = fixture.run
+		var environment: Dictionary = fixture.environment
+		var bankroll_before := run.wager_balance_for_game("blackjack", environment)
+		var ui := {"selected_stake": 5, "surface_time_msec": 11000}
+		var placed: Dictionary = game.call("blackjack_ritual_equivalent_command", input_kind, "blackjack_wager_place_gesture", "cycle", "wager.player", 1, ui, run, environment)
+		_check(int(placed.get("set_stake", 0)) > 5, "%s chip equivalent did not reach the live staged-wager binding." % input_kind)
+		_check(str(placed.get("ritual_target_selection", "")) == "cycle" and str(placed.get("ritual_target_id", "")) == "wager.player", "%s chip equivalent lost target selection authority." % input_kind)
+		_check(run.wager_balance_for_game("blackjack", environment) == bankroll_before, "%s chip equivalent charged before confirm." % input_kind)
+		var dealt: Dictionary = game.call("blackjack_ritual_equivalent_command", input_kind, "blackjack_cut_gesture", "focus", "shoe.primary", 0, placed.get("ui_state", {}), run, environment)
+		_check(str(dealt.get("action_id", "")) == "blackjack_place_bet", "%s cut equivalent did not reach the charged deal boundary." % input_kind)
+		_check(game.call("blackjack_ritual_deal_envelope_authorized", dealt.get("ritual_command", {}), "wagering"), "%s cut equivalent emitted an unauthenticated deal." % input_kind)
+		_check(bool(dealt.get("ritual_reduced_motion", false)) == (input_kind == "reduced_motion"), "%s equivalent reported the wrong reduced-motion path." % input_kind)
+		var hostile_target: Dictionary = game.call("blackjack_ritual_equivalent_command", input_kind, "blackjack_cut_gesture", "focus", "wager.player", 0, ui, run, environment)
+		_check(str(hostile_target.get("action_id", "")).is_empty(), "%s cross-target equivalent reached an authoritative action." % input_kind)
+		_check(run.wager_balance_for_game("blackjack", environment) == bankroll_before, "%s hostile target changed bankroll." % input_kind)
 
 
 func _check_ten_seed_projection_isolation(game: GameModule) -> void:
