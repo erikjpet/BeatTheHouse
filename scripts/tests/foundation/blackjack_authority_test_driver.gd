@@ -72,6 +72,33 @@ static func resolve_surface_command(game: GameModule, command: Dictionary, _stak
 	return result
 
 
+static func authority_diagnostic(game: GameModule, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Dictionary = game_states.get(game.get_id(), {}) if typeof(game_states.get(game.get_id(), {})) == TYPE_DICTIONARY else {}
+	var binding := "%s:%s:%s" % [game.get_id(), str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {}), binding)
+	var checkpoint := run_state.blackjack_authority_checkpoint_fingerprint()
+	var session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
+	var pending: Dictionary = ledger.get("pending_delivery", {}) if typeof(ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
+	return {
+		"ledger_valid": not ledger.is_empty(),
+		"checkpoint_matches": not ledger.is_empty() and str(ledger.get("checkpoint_fingerprint", "")) == checkpoint,
+		"ledger_checkpoint": str(ledger.get("checkpoint_fingerprint", "")),
+		"run_checkpoint": checkpoint,
+		"pending_action": str(pending.get("action_id", "")),
+		"pending_stake": int(pending.get("stake", -1)),
+		"pending_request_key": str(pending.get("request_key", "")),
+		"session_dealt": not session.is_empty() and bool(game.call("_has_dealt_hand", session)),
+		"session_complete": not session.is_empty() and bool(game.call("_all_hands_complete", session)),
+		"session_stake": int(session.get("selected_stake", -1)),
+		"hands_played": int(table.get("hands_played", -1)),
+		"barred": bool(table.get("barred", false)),
+		"rng_seed": run_state.rng_seed,
+		"rng_state": run_state.rng_state,
+		"bankroll": run_state.bankroll,
+	}
+
+
 static func advance_terminal_presentation(game: GameModule, stake: int, run_state: RunState, environment: Dictionary) -> Dictionary:
 	if game == null or run_state == null:
 		return {"ok": false, "error_code": "invalid_fixture"}
