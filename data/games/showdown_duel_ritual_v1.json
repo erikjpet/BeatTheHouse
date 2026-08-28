@@ -1,0 +1,103 @@
+{
+  "contract": "game_ritual/1",
+  "ritual_id": "grand_casino.showdown_duel",
+  "initial_phase": "approach",
+  "ritual_phases": [
+    {"id":"approach","authority_phase":"walk","permitted_actions":["showdown.respond"],"entry_operations":["rourke.arrive","room.open_floor"],"transitions":[{"id":"approach_to_seating","condition":{"kind":"accepted_action","action_id":"showdown.respond"},"next_phase":"seating"}],"terminal":false},
+    {"id":"seating","authority_phase":"pat_down","permitted_actions":["showdown.ack_pat_down"],"entry_operations":["rourke.seat","table.ready","security.project"],"transitions":[{"id":"seating_to_response","condition":{"kind":"accepted_action","action_id":"showdown.ack_pat_down"},"next_phase":"response"},{"id":"seating_to_outcome","condition":{"kind":"authoritative_result_present","outcome":"taken_out_back"},"next_phase":"outcome_staging"}],"terminal":false},
+    {"id":"response","authority_phase":"interrogation","permitted_actions":["interrogation.respond"],"entry_operations":["evidence.present","rourke.question"],"transitions":[{"id":"response_repeat","condition":{"kind":"authoritative_result_present","result":"interrogation_beat_remaining"},"next_phase":"response"},{"id":"response_to_commitment","condition":{"kind":"authoritative_result_present","result":"duel_terms_sealed"},"next_phase":"commitment"}],"terminal":false},
+    {"id":"commitment","authority_phase":"duel","permitted_actions":["commit.place","commit.correct","commit.remove","commit.undo","commit.clear","commit.repeat","commit.rebet","commit.confirm","duel.call_edge","duel.cheat"],"entry_operations":["table.open_commitment","rourke.project_state"],"transitions":[{"id":"commitment_to_reveal","condition":{"kind":"authoritative_result_present","result":"blackjack_hand_settled"},"next_phase":"reveal"},{"id":"commitment_to_outcome","condition":{"kind":"authoritative_result_present","result":"duel_terminal"},"next_phase":"outcome_staging"}],"terminal":false},
+    {"id":"reveal","authority_phase":"duel","permitted_actions":["result.reveal"],"entry_operations":["cards.reveal","stacks.project","rourke.react"],"transitions":[{"id":"reveal_to_break","condition":{"kind":"accepted_action","action_id":"result.reveal"},"next_phase":"phase_break"},{"id":"reveal_to_outcome","condition":{"kind":"authoritative_result_present","result":"duel_terminal"},"next_phase":"outcome_staging"}],"terminal":false},
+    {"id":"phase_break","authority_phase":"duel","permitted_actions":["staging.ack_break"],"entry_operations":["table.collect","rourke.project_state"],"transitions":[{"id":"break_to_crowd","condition":{"kind":"accepted_action","action_id":"staging.ack_break"},"next_phase":"crowd_change"}],"terminal":false},
+    {"id":"crowd_change","authority_phase":"duel","permitted_actions":["staging.ack_crowd"],"entry_operations":["crowd.project","rail.project","security.project"],"transitions":[{"id":"crowd_to_commitment","condition":{"kind":"accepted_action","action_id":"staging.ack_crowd"},"next_phase":"commitment"},{"id":"crowd_to_outcome","condition":{"kind":"authoritative_result_present","result":"duel_terminal"},"next_phase":"outcome_staging"}],"terminal":false},
+    {"id":"outcome_staging","authority_phase":"terminal","permitted_actions":["ending.ack"],"entry_operations":["ending.project","rourke.project_terminal","room.project_terminal"],"transitions":[{"id":"outcome_to_exit","condition":{"kind":"accepted_action","action_id":"ending.ack"},"next_phase":"exit"}],"terminal":false},
+    {"id":"exit","authority_phase":"terminal","permitted_actions":[],"entry_operations":["exit.present"],"transitions":[],"terminal":true}
+  ],
+  "action_declarations": [
+    {"action_id":"showdown.respond","handler_id":"existing.showdown_response","parameters":{"choice_id":"qualified_id"}},
+    {"action_id":"showdown.ack_pat_down","handler_id":"presentation.ack","parameters":{}},
+    {"action_id":"interrogation.respond","handler_id":"existing.interrogation_response","parameters":{"choice_id":"qualified_id"}},
+    {"action_id":"commit.place","handler_id":"commitment.edit","parameters":{"item_id":"qualified_id","amount":"int"}},
+    {"action_id":"commit.correct","handler_id":"commitment.edit","parameters":{"item_id":"qualified_id","amount":"int"}},
+    {"action_id":"commit.remove","handler_id":"commitment.edit","parameters":{"item_id":"qualified_id"}},
+    {"action_id":"commit.undo","handler_id":"commitment.edit","parameters":{}},
+    {"action_id":"commit.clear","handler_id":"commitment.edit","parameters":{}},
+    {"action_id":"commit.repeat","handler_id":"commitment.edit","parameters":{}},
+    {"action_id":"commit.rebet","handler_id":"commitment.edit","parameters":{}},
+    {"action_id":"commit.confirm","handler_id":"existing.blackjack_commitment","parameters":{}},
+    {"action_id":"duel.call_edge","handler_id":"existing.duel_call_edge","parameters":{"edge_id":"qualified_id"}},
+    {"action_id":"duel.cheat","handler_id":"existing.blackjack_cheat","parameters":{"cheat_id":"qualified_id"}},
+    {"action_id":"result.reveal","handler_id":"presentation.ack","parameters":{}},
+    {"action_id":"staging.ack_break","handler_id":"presentation.ack","parameters":{}},
+    {"action_id":"staging.ack_crowd","handler_id":"presentation.ack","parameters":{}},
+    {"action_id":"ending.ack","handler_id":"presentation.ack","parameters":{}}
+  ],
+  "staged_commitment": {
+    "pending_collection":"pending_items",
+    "working_collection":"working_items",
+    "resolution_collection":"item_resolutions",
+    "funds_authority":"existing_blackjack_settlement",
+    "actions":["commit.place","commit.correct","commit.remove","commit.undo","commit.clear","commit.repeat","commit.rebet","commit.confirm"],
+    "readable_totals":["available_funds","pending_total","at_risk_total","returned_stake","payout","net_change","player_stack","rourke_stack","ante"]
+  },
+  "pointer_verbs": [
+    {"id":"place_duel_commitment","verb":"place","source_region":"player.reserve","target_regions":["showdown.commitment"],"bounds":{"space":"design","min_distance":0,"max_distance":420},"phases":["commitment"],"accepted_action":"commit.place","rejection":"return_to_source","rejection_effects":[],"equivalents":{"keyboard":{"action_id":"commit.place","target_selection":"focus"},"controller":{"action_id":"commit.place","target_selection":"focus"},"reduced_motion":{"action_id":"commit.place","target_selection":"focus","travel":false}}},
+    {"id":"answer_call","verb":"direct_semantic","source_region":"player.response","target_regions":["showdown.response"],"bounds":{"space":"design","min_distance":0,"max_distance":0},"phases":["approach"],"accepted_action":"showdown.respond","rejection":"stay_at_source","rejection_effects":[],"equivalents":{"keyboard":{"action_id":"showdown.respond","target_selection":"focus"},"controller":{"action_id":"showdown.respond","target_selection":"focus"},"reduced_motion":{"action_id":"showdown.respond","target_selection":"focus","travel":false}}},
+    {"id":"answer_rourke","verb":"direct_semantic","source_region":"player.response","target_regions":["showdown.response"],"bounds":{"space":"design","min_distance":0,"max_distance":0},"phases":["response"],"accepted_action":"interrogation.respond","rejection":"stay_at_source","rejection_effects":[],"equivalents":{"keyboard":{"action_id":"interrogation.respond","target_selection":"focus"},"controller":{"action_id":"interrogation.respond","target_selection":"focus"},"reduced_motion":{"action_id":"interrogation.respond","target_selection":"focus","travel":false}}},
+    {"id":"reveal_duel_result","verb":"reveal","source_region":"showdown.cards","target_regions":["showdown.cards"],"bounds":{"space":"design","min_distance":0,"max_distance":180},"phases":["reveal"],"accepted_action":"result.reveal","rejection":"stay_at_source","rejection_effects":[],"equivalents":{"keyboard":{"action_id":"result.reveal","target_selection":"focus"},"controller":{"action_id":"result.reveal","target_selection":"focus"},"reduced_motion":{"action_id":"result.reveal","target_selection":"focus","travel":false}}}
+  ],
+  "actors": [
+    {"id":"actor.rourke","role":"opponent","anchor":"room.rourke","poses":["arrival","seated","leaning","standing","departing"],"behavior_states":["arrival","confidence","pressure","tilt","respect","contempt","suspicion","realizing_loss"],"public_source":"duel_authority"},
+    {"id":"actor.player","role":"player_representation","anchor":"room.player","poses":["arrival","seated","standing","departing"],"behavior_states":["ready","committed","waiting","resolved"],"public_source":"ritual_projection"},
+    {"id":"actor.witnesses","role":"onlookers","anchor":"room.rail","poses":["watching","withdrawing","returning"],"behavior_states":["full","thinning","empty","celebrating","hostile"],"public_source":"duel_authority"},
+    {"id":"actor.security","role":"security","anchor":"room.security","poses":["rest","watch","close"],"behavior_states":["low","present","high"],"public_source":"duel_authority"},
+    {"id":"actor.crew_public","role":"crew_presence","anchor":"room.crew","poses":["rail","shadow","exit"],"behavior_states":["present","supporting","departing"],"public_source":"accepted_crew_public_projection"}
+  ],
+  "scene_objects": [
+    {"id":"showdown.table","bounds":[250,210,780,370],"z_order":20,"states":["closed","commitment","dealing","revealing","settled"],"interactive":false},
+    {"id":"showdown.cards","bounds":[470,300,340,170],"z_order":30,"states":["hidden","dealt","revealed","collected"],"interactive":true,"hit_region":[450,270,380,220]},
+    {"id":"showdown.commitment","bounds":[290,470,300,150],"z_order":35,"states":["open","locked","settled"],"interactive":true,"hit_region":[270,450,340,190]},
+    {"id":"showdown.evidence","bounds":[880,170,270,240],"z_order":24,"states":["hidden","present","answered"],"interactive":true,"hit_region":[860,150,310,280]},
+    {"id":"showdown.stakes","bounds":[610,470,310,150],"z_order":35,"states":["open","at_risk","won","lost"],"interactive":false},
+    {"id":"showdown.rail","bounds":[160,120,960,500],"z_order":10,"states":["open","tight","empty","celebration","hostile"],"interactive":false},
+    {"id":"showdown.exit","bounds":[1120,280,120,180],"z_order":40,"states":["blocked","victory","failure","crew"],"interactive":true,"hit_region":[1096,256,168,228]}
+  ],
+  "energy": {
+    "source":"authoritative_margin_and_hand_index",
+    "tiers":[
+      {"id":"controlled","condition":"abs_margin_lt_12","operations":["rourke.pressure","rail.open"]},
+      {"id":"player_pressing","condition":"margin_gte_12","operations":["rourke.realizing_loss","crowd.thinning","security.present"]},
+      {"id":"house_pressing","condition":"margin_lte_minus_12","operations":["rourke.confidence","rail.tight","security.high"]}
+    ]
+  },
+  "game_facts": [
+    {"fact_type":"round.started","visibility":"public","authority":"existing_blackjack"},
+    {"fact_type":"commitment.accepted","visibility":"public","authority":"existing_blackjack"},
+    {"fact_type":"resolution.completed","visibility":"public","authority":"existing_blackjack"},
+    {"fact_type":"cheat.attempted","visibility":"public","authority":"existing_blackjack"},
+    {"fact_type":"cheat.resolved","visibility":"public","authority":"existing_blackjack"},
+    {"fact_type":"attention.changed","visibility":"public","authority":"existing_run_state"},
+    {"fact_type":"session.ended","visibility":"public","authority":"existing_duel_model"}
+  ],
+  "ritual_persistence": {
+    "authoritative_serialized":["phase_id","phase_entry_receipts","transition_receipts","one_shot_receipts","authoritative_duel_ref","authoritative_result_ref","selected_ending","outcome_receipt"],
+    "derived_projection":["rourke_actor","room_state","player_stakes","public_crew_actors","available_controls","energy_tier"],
+    "transient_presentation":["animation_progress","hover","focus_pulse","audio_playhead","shake_offset"],
+    "one_shot_receipted":["approach_dialogue","seating_cue","phase_break_cue","crowd_change_cue","ending_dialogue","ending_audio"],
+    "save_boundaries":["approach","seating","response","commitment","reveal","phase_break","crowd_change","outcome_staging","exit"],
+    "restore_policy":"restore_authority_then_project_phase_and_drain_unreceipted_effects"
+  },
+  "outcome_authority": {
+    "margin_thresholds":{"walk_out_clean_min":12,"shown_the_door_min":-60},
+    "early_terminal":{"player_stack_zero":"taken_out_back","rourke_stack_zero":"walk_out_clean"},
+    "outcomes":["walk_out_clean","shown_the_door","taken_out_back"],
+    "routes":["high_roller_cashout","pit_boss_showdown","crew_heist"],
+    "failure_reason":"casino_taken_out_back",
+    "adapter":"existing_grand_casino_duel_and_blackjack_settlement"
+  },
+  "privacy": {
+    "allowed_crew_fields":["member_id","presentation_id","pose","public_state"],
+    "forbidden_fields":["turn_member_id","turn_eligible_members","turn_roll","turn_threshold","hidden_contradiction","private_state","x"],
+    "projection_rule":"unknown_and_private_fields_are_ignored"
+  }
+}
