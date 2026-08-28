@@ -283,12 +283,20 @@ grievance ledger, job, route, draw, sweep, play, or heist state.
 
 ### 5.3 Exactly-once handshake
 
-The shared runtime emits a stable owner-scoped outcome receipt. The adapter
-checks its persisted acknowledgement, submits the public payload once, records
-the owning model's acknowledgement atomically at the boundary, and then marks
-the runtime receipt consumed. Replaying any step returns the recorded public
-result without applying the consequence again. Save/reload between every pair
-of steps MUST be tested.
+The adapter first derives a pure, non-persisting receipt preview from the exact
+live registration, trusted definition fingerprint, and terminal cause. The
+owning model then commits its consequences, `world_applied`, and a closed public
+checkpoint in one synchronous rollback boundary. Only after that commit may the
+adapter materialize the exact previewed receipt. Acknowledgement and cleanup are
+separate retryable steps and neither can execute owner consequences.
+
+`DeliveryRunModel` is the sole issuer of the persisted checkpoint. It binds the
+delivery/job and public instance, owner token, neutral receipt id/fingerprint
+and cause, resolution and delivery receipt fingerprints, and the canonical
+public result/fingerprint. A mounted applied delivery without that exact
+checkpoint fails closed; the established unmounted delivery path remains a
+separate legacy boundary. Save/reload between preview, model commit, receipt
+materialization, acknowledgement, and cleanup MUST be tested.
 
 EventModule retained choices continue through their existing result path. A
 system can convert one interaction without converting its siblings.
@@ -428,12 +436,14 @@ Starting or mounting applies none of those effects. The existing `refuse` path
 preserves +9 heat and the refusal flag and does not mount an instance.
 
 The sequence outcome receipt key is the composite instance key plus terminal
-outcome and exact runtime receipt fingerprint. The adapter persists the owning
-model acknowledgement before marking the runtime outcome consumed. Replay,
-save/load between either write, duplicate EventModule submission, or revisit
-returns the recorded public result and cannot reapply money, heat, trust, job,
-delivery, or flags. Cleanup removes only crew-owned temporary semantics;
-aftermath is a separately authored persistent claim.
+outcome and exact runtime receipt fingerprint. Its pure preview persists no
+pending work. The delivery model commits the closed checkpoint and unchanged
+owner consequences first; the adapter then independently materializes,
+acknowledges, and cleans the exact receipt. Replay, save/load between any two
+steps, duplicate EventModule submission, or revisit returns the checkpointed
+public result and cannot reapply money, heat, trust, job, delivery, or flags.
+Cleanup removes only crew-owned temporary semantics; aftermath is a separately
+authored persistent claim.
 
 ## 10. Concrete env06_6 binding appendix
 
