@@ -2652,6 +2652,12 @@ static func _check_serialized_fact_ingress(failures: Array) -> void:
 
 static func _check_handler_reducer_contracts(failures: Array) -> void:
 	var definition := _runtime_definition()
+	var event_bridge_definition := definition.duplicate(true)
+	event_bridge_definition["sequence"]["fact_subscriptions"].append({
+		"fact_type": "event_result",
+		"payload_equals": {"event_id": "fixture_event", "choice_id": "leave", "resolution_id": "leave", "resolved": true, "ok": true},
+	})
+	event_bridge_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(event_bridge_definition)
 	var fixtures := {
 		"set_local": {"key": "pressure", "value": 2},
 		"increment_local": {"key": "pressure", "amount": 1},
@@ -2664,7 +2670,7 @@ static func _check_handler_reducer_contracts(failures: Array) -> void:
 	var contracts := OperationRegistryScript.registered_handlers()
 	for handler_id_value in fixtures.keys():
 		var handler_id := str(handler_id_value)
-		var handler_definition := _safe_early_cleanup_definition() if handler_id == "request_cleanup" else definition
+		var handler_definition := _safe_early_cleanup_definition() if handler_id == "request_cleanup" else event_bridge_definition if handler_id == "event_bridge" else definition
 		var before := SequenceRuntimeScript.initial_state(handler_definition, "bar_node", "handler_seed", _fixture_host_semantics(handler_definition))
 		var response := SequenceRuntimeScript._run_handler(before, handler_definition, handler_id, _dict(fixtures.get(handler_id, {})), {"kind": "command", "receipt_id": "golden:%s" % handler_id})
 		if not bool(response.get("ok", false)):
@@ -2705,13 +2711,14 @@ static func _check_handler_reducer_contracts(failures: Array) -> void:
 	var cleanup_second := SequenceRuntimeScript._run_handler(_dict(cleanup_first.get("state", {})), cleanup_definition, "request_cleanup", {"reason": "handler"}, {"kind": "command", "receipt_id": "cleanup:second"})
 	if not bool(cleanup_first.get("ok", false)) or not bool(cleanup_second.get("ok", false)) or not bool(cleanup_second.get("replayed", false)) or JSON.stringify(cleanup_second.get("state", {})) != JSON.stringify(cleanup_first.get("state", {})):
 		failures.append("Cleanup handler replay did not preserve the exact replayed result shape/state.")
-	var forged_correlations := cleanup_before.duplicate(true)
+	var bridge_before := SequenceRuntimeScript.initial_state(event_bridge_definition, "bar_node", "bridge_seed", _fixture_host_semantics(event_bridge_definition))
+	var forged_correlations := bridge_before.duplicate(true)
 	forged_correlations["event_correlations"] = [{"correlation_key": "forged", "event_id": "fixture_event", "resolution_id": "leave", "trigger_kind": "command", "trigger_id": "bridge:1"}]
-	var normalized_forgery := SequenceRuntimeScript.normalize_state(forged_correlations, definition)
+	var normalized_forgery := SequenceRuntimeScript.normalize_state(forged_correlations, event_bridge_definition)
 	if not _array(normalized_forgery.get("event_correlations", [])).is_empty():
 		failures.append("Forged persisted event correlation survived closed normalization.")
-	var bridged := SequenceRuntimeScript._run_handler(normalized_forgery, definition, "event_bridge", {"event_id": "fixture_event", "resolution_id": "leave"}, {"kind": "command", "receipt_id": "bridge:1"})
-	var normalized_bridge := SequenceRuntimeScript.normalize_state(_dict(bridged.get("state", {})), definition)
+	var bridged := SequenceRuntimeScript._run_handler(normalized_forgery, event_bridge_definition, "event_bridge", {"event_id": "fixture_event", "resolution_id": "leave"}, {"kind": "command", "receipt_id": "bridge:1"})
+	var normalized_bridge := SequenceRuntimeScript.normalize_state(_dict(bridged.get("state", {})), event_bridge_definition)
 	if not bool(bridged.get("ok", false)) or _array(normalized_bridge.get("event_correlations", [])).size() != 1:
 		failures.append("Valid event correlation did not survive exact closed normalization.")
 
@@ -3544,7 +3551,7 @@ static func _check_atomic_runtime_failures(failures: Array) -> void:
 	var receipt_initial := SequenceRuntimeScript.initial_state(receipt_entry, "bar_node", "receipt_entry_seed", _fixture_host_semantics(receipt_entry))
 	var receipt_prepared := SequenceRuntimeScript.apply_command(receipt_initial, receipt_entry, _runtime_command(receipt_initial, receipt_entry, "prepare", "bar_node", "arrival", "receipt:prepare", {}, "scenario", "command_console"), {"available_funds": 2})
 	var receipt_prepared_state := _dict(receipt_prepared.get("state", {}))
-	var receipt_finished := SequenceRuntimeScript.apply_command(receipt_prepared_state, receipt_entry, _runtime_command(receipt_prepared_state, receipt_entry, "finish", "bar_node", "arrival", "receipt:finish", {}, "scenario", "command_console"), {"available_funds": 4})
+	var receipt_finished := SequenceRuntimeScript.apply_command(receipt_prepared_state, receipt_entry, _runtime_command(receipt_prepared_state, receipt_entry, "finish", "bar_node", "complication", "receipt:finish", {}, "scenario", "command_console"), {"available_funds": 4})
 	if not bool(receipt_finished.get("ok", false)) or str(_dict(receipt_finished.get("state", {})).get("phase_id", "")) != "aftermath":
 		failures.append("Typed operation receipt condition did not match its exact family/boundary/authored id record.")
 	var bad_cleanup := definition.duplicate(true)
