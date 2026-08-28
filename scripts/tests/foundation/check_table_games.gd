@@ -2395,32 +2395,31 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 	# Dealer focus intentionally samples wall-clock time for gaze/status animation,
 	# so exact text, colors, and coordinates may differ between consecutive draws.
 	# The invariant contract is command structure and interaction order.
-	var first_hit_order: Array = []
-	var repeat_hit_order: Array = []
-	for hit_value in harness.hit_regions:
-		var hit: Dictionary = hit_value
-		first_hit_order.append([str(hit.get("action", "")), int(hit.get("index", -1))])
-	for hit_value in repeat_harness.hit_regions:
-		var hit: Dictionary = hit_value
-		repeat_hit_order.append([str(hit.get("action", "")), int(hit.get("index", -1))])
-	var first_draw_shape: Array = []
-	var repeat_draw_shape: Array = []
-	for draw_value in harness.draw_rect_records:
-		var draw: Dictionary = draw_value
-		first_draw_shape.append([bool(draw.get("filled", true)), float(draw.get("width", -1.0))])
-	for draw_value in repeat_harness.draw_rect_records:
-		var draw: Dictionary = draw_value
-		repeat_draw_shape.append([bool(draw.get("filled", true)), float(draw.get("width", -1.0))])
-	var first_label_slots: Array = []
-	var repeat_label_slots: Array = []
-	for label_value in harness.label_records:
-		first_label_slots.append(int((label_value as Dictionary).get("font_size", 0)))
-	for label_value in repeat_harness.label_records:
-		repeat_label_slots.append(int((label_value as Dictionary).get("font_size", 0)))
-	if JSON.stringify(repeat_hit_order) != JSON.stringify(first_hit_order) \
-			or JSON.stringify(repeat_draw_shape) != JSON.stringify(first_draw_shape) \
-			or JSON.stringify(repeat_label_slots) != JSON.stringify(first_label_slots):
+	if JSON.stringify(_baccarat_draw_structure(repeat_harness)) != JSON.stringify(_baccarat_draw_structure(harness)):
 		failures.append("Baccarat repeated draw changed interaction order or structural draw/label command slots.")
+	var boundary_surface := surface.duplicate(true)
+	var boundary_patrons := _baccarat_dictionary_array(boundary_surface.get("patrons", []))
+	if not boundary_patrons.is_empty():
+		var boundary_patron := (boundary_patrons[0] as Dictionary).duplicate(true)
+		boundary_patron["animation_offset"] = 0
+		boundary_patron["watching_player"] = true
+		boundary_patron["active_snitch_risk"] = 1
+		boundary_patron["snitch_threshold"] = 60
+		boundary_patron["tell_active"] = false
+		boundary_surface["patrons"] = [boundary_patron]
+		for phase_pair in [[0.57, 0.59], [0.81, 0.83]]:
+			var before_boundary := SurfaceHarness.new()
+			before_boundary.setup(boundary_surface)
+			before_boundary.record_draw_rects = true
+			before_boundary.flicker_value = float(phase_pair[0]) * 2.2
+			game.draw_surface(before_boundary, boundary_surface, {"contract_harness": true})
+			var after_boundary := SurfaceHarness.new()
+			after_boundary.setup(boundary_surface)
+			after_boundary.record_draw_rects = true
+			after_boundary.flicker_value = float(phase_pair[1]) * 2.2
+			game.draw_surface(after_boundary, boundary_surface, {"contract_harness": true})
+			if JSON.stringify(_baccarat_draw_structure(after_boundary)) != JSON.stringify(_baccarat_draw_structure(before_boundary)):
+				failures.append("Baccarat patron phase boundary %.2f changed structural draw/label command slots." % float(phase_pair[1]))
 	var found_bead_plate_label := false
 	for label_value in harness.labels:
 		if str(label_value).find("BEAD PLATE") >= 0:
@@ -7442,5 +7441,20 @@ func _bar_dice_state_for(game: GameModule, run_state: RunState, environment: Dic
 	state["stake_ladder"] = [2, 5, 10, 20, 40]
 	state["selected_stake_index"] = 2
 	return state
+
+
+func _baccarat_draw_structure(harness: SurfaceHarness) -> Dictionary:
+	var hit_order: Array = []
+	for hit_value in harness.hit_regions:
+		var hit: Dictionary = hit_value
+		hit_order.append([str(hit.get("action", "")), int(hit.get("index", -1))])
+	var draw_shape: Array = []
+	for draw_value in harness.draw_rect_records:
+		var draw: Dictionary = draw_value
+		draw_shape.append([bool(draw.get("filled", true)), float(draw.get("width", -1.0))])
+	var label_slots: Array = []
+	for label_value in harness.label_records:
+		label_slots.append(int((label_value as Dictionary).get("font_size", 0)))
+	return {"hit_order": hit_order, "draw_shape": draw_shape, "label_slots": label_slots}
 
 
