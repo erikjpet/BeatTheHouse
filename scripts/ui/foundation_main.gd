@@ -5230,12 +5230,13 @@ func _restore_coach_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	if coach_overlay.ok_button != null:
 		coach_overlay.ok_button.text = str(snapshot.get("ok_text", ""))
 		coach_overlay.ok_button.disabled = bool(snapshot.get("ok_disabled", false))
-	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay, _copy_dict(snapshot.get("root_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.panel, _copy_dict(snapshot.get("panel_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.eyebrow_label, _copy_dict(snapshot.get("eyebrow_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.copy_label, _copy_dict(snapshot.get("copy_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.ok_button, _copy_dict(snapshot.get("ok_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.focus_layer, _copy_dict(snapshot.get("focus_control", {})))
+	var container_layout_restorations: Array = []
+	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay, _copy_dict(snapshot.get("root_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.panel, _copy_dict(snapshot.get("panel_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.eyebrow_label, _copy_dict(snapshot.get("eyebrow_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.copy_label, _copy_dict(snapshot.get("copy_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.ok_button, _copy_dict(snapshot.get("ok_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.focus_layer, _copy_dict(snapshot.get("focus_control", {})), container_layout_restorations)
 	var restored_focus: Variant = snapshot.get("focus_ref", null)
 	if restored_focus is Control and is_instance_valid(restored_focus) and (restored_focus as Control).is_inside_tree() and not (restored_focus as Control).is_queued_for_deletion():
 		(restored_focus as Control).grab_focus()
@@ -5394,20 +5395,21 @@ func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
 			talk_dock.choice_list.remove_child(child)
 			child.queue_free()
 		talk_dock._render_choices()
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock, _copy_dict(snapshot.get("dock_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.panel, _copy_dict(snapshot.get("panel_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.portrait_panel, _copy_dict(snapshot.get("portrait_panel_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.portrait_model, _copy_dict(snapshot.get("portrait_model_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.collapsed_button, _copy_dict(snapshot.get("collapsed_button_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.collapse_button, _copy_dict(snapshot.get("collapse_button_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.header_row, _copy_dict(snapshot.get("header_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.speaker_label, _copy_dict(snapshot.get("speaker_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.summary_label, _copy_dict(snapshot.get("summary_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.body_label, _copy_dict(snapshot.get("body_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.choice_list, _copy_dict(snapshot.get("choice_list_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.urgency_bar, _copy_dict(snapshot.get("urgency_bar_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.badge_label, _copy_dict(snapshot.get("badge_control", {})))
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.urgency_label, _copy_dict(snapshot.get("urgency_control", {})))
+	var container_layout_restorations: Array = []
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock, _copy_dict(snapshot.get("dock_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.panel, _copy_dict(snapshot.get("panel_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.portrait_panel, _copy_dict(snapshot.get("portrait_panel_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.portrait_model, _copy_dict(snapshot.get("portrait_model_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.collapsed_button, _copy_dict(snapshot.get("collapsed_button_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.collapse_button, _copy_dict(snapshot.get("collapse_button_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.header_row, _copy_dict(snapshot.get("header_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.speaker_label, _copy_dict(snapshot.get("speaker_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.summary_label, _copy_dict(snapshot.get("summary_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.body_label, _copy_dict(snapshot.get("body_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.choice_list, _copy_dict(snapshot.get("choice_list_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.urgency_bar, _copy_dict(snapshot.get("urgency_bar_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.badge_label, _copy_dict(snapshot.get("badge_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.urgency_label, _copy_dict(snapshot.get("urgency_control", {})), container_layout_restorations)
 	if talk_dock.collapsed_button != null:
 		talk_dock.collapsed_button.text = str(snapshot.get("collapsed_text", ""))
 	if talk_dock.collapse_button != null:
@@ -5423,7 +5425,7 @@ func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		talk_dock.body_label.max_lines_visible = int(snapshot.get("body_max_lines", 0))
 	if talk_dock.choice_list != null:
 		talk_dock.choice_list.columns = int(snapshot.get("choice_columns", 1))
-		_restore_talk_dock_choice_lifecycle_snapshot(_copy_array(snapshot.get("choice_controls", [])))
+		_restore_talk_dock_choice_lifecycle_snapshot(_copy_array(snapshot.get("choice_controls", [])), container_layout_restorations)
 	if talk_dock.urgency_bar != null:
 		talk_dock.urgency_bar.value = float(snapshot.get("urgency_value", 0.0))
 	if talk_dock.badge_label != null:
@@ -5440,6 +5442,7 @@ func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		talk_dock.portrait_model.animation_active = bool(snapshot.get("portrait_animation_active", false))
 		talk_dock.portrait_model.reduce_motion = bool(snapshot.get("portrait_reduce_motion", false))
 		talk_dock.portrait_model.set_process(bool(snapshot.get("portrait_processing", false)))
+	_apply_talk_dock_container_layout_restorations(container_layout_restorations)
 	talk_dock.set_process(bool(snapshot.get("processing", false)))
 	var restored_focus: Variant = snapshot.get("focus_ref", null)
 	if restored_focus is Control and is_instance_valid(restored_focus) and (restored_focus as Control).is_inside_tree() and not (restored_focus as Control).is_queued_for_deletion():
@@ -5486,7 +5489,7 @@ func _talk_dock_control_lifecycle_snapshot(control: Control) -> Dictionary:
 	}
 
 
-func _restore_talk_dock_control_lifecycle_snapshot(control: Control, snapshot: Dictionary) -> void:
+func _restore_talk_dock_control_lifecycle_snapshot(control: Control, snapshot: Dictionary, container_layout_restorations: Array) -> void:
 	if control == null or snapshot.is_empty():
 		return
 	control.anchor_left = float(snapshot.get("anchor_left", control.anchor_left))
@@ -5497,16 +5500,6 @@ func _restore_talk_dock_control_lifecycle_snapshot(control: Control, snapshot: D
 	control.offset_top = float(snapshot.get("offset_top", control.offset_top))
 	control.offset_right = float(snapshot.get("offset_right", control.offset_right))
 	control.offset_bottom = float(snapshot.get("offset_bottom", control.offset_bottom))
-	# Containers own their children's derived size; assigning it directly rewrites
-	# otherwise exact offsets. Stretched controls are likewise defined by their
-	# anchors/offsets, so restore derived geometry only for independently laid-out
-	# fixed controls.
-	var independent_fixed_control := is_equal_approx(control.anchor_left, control.anchor_right) \
-			and is_equal_approx(control.anchor_top, control.anchor_bottom) \
-			and not (control.get_parent() is Container)
-	if independent_fixed_control:
-		control.position = snapshot.get("position", control.position) as Vector2
-		control.size = snapshot.get("size", control.size) as Vector2
 	control.custom_minimum_size = snapshot.get("custom_minimum_size", control.custom_minimum_size) as Vector2
 	control.visible = bool(snapshot.get("visible", control.visible))
 	control.modulate = snapshot.get("modulate", control.modulate) as Color
@@ -5518,6 +5511,102 @@ func _restore_talk_dock_control_lifecycle_snapshot(control: Control, snapshot: D
 	control.focus_mode = int(snapshot.get("focus_mode", control.focus_mode))
 	control.tooltip_text = str(snapshot.get("tooltip_text", control.tooltip_text))
 	control.z_index = int(snapshot.get("z_index", control.z_index))
+	var restored_rect := Rect2(
+		snapshot.get("position", control.position) as Vector2,
+		snapshot.get("size", control.size) as Vector2
+	)
+	var parent := control.get_parent()
+	# Containers own their children's derived rect. Record each owner now and let
+	# it lay out every child together only after all content has been restored.
+	if parent is Container:
+		var already_recorded := false
+		for restoration_value in container_layout_restorations:
+			if not restoration_value is Container:
+				continue
+			var restored_container := restoration_value as Container
+			if restored_container == parent:
+				already_recorded = true
+				break
+		if not already_recorded:
+			container_layout_restorations.append(parent)
+		if not control.visible:
+			var hidden_control_already_recorded := false
+			for restoration_value in container_layout_restorations:
+				if not restoration_value is Dictionary:
+					continue
+				var candidate_control: Variant = (restoration_value as Dictionary).get("control", null)
+				if candidate_control is Control and candidate_control == control:
+					hidden_control_already_recorded = true
+					break
+			if not hidden_control_already_recorded:
+				container_layout_restorations.append({
+					"parent": parent,
+					"control": control,
+					"rect": restored_rect,
+					"anchor_left": control.anchor_left,
+					"anchor_top": control.anchor_top,
+					"anchor_right": control.anchor_right,
+					"anchor_bottom": control.anchor_bottom,
+					"offset_left": control.offset_left,
+					"offset_top": control.offset_top,
+					"offset_right": control.offset_right,
+					"offset_bottom": control.offset_bottom,
+				})
+	elif is_equal_approx(control.anchor_left, control.anchor_right) \
+			and is_equal_approx(control.anchor_top, control.anchor_bottom):
+		control.position = restored_rect.position
+		control.size = restored_rect.size
+
+
+func _apply_talk_dock_container_layout_restorations(container_layout_restorations: Array) -> void:
+	# A Container does not sort hidden children, so seed each hidden cached rect
+	# through its owner and then restore the authoritative layout parameters that
+	# fit_child_in_rect rewrites. The visible sibling sort below skips these nodes.
+	for restoration_value in container_layout_restorations:
+		if not restoration_value is Dictionary:
+			continue
+		var restoration: Dictionary = restoration_value
+		var parent: Variant = restoration.get("parent", null)
+		var control: Variant = restoration.get("control", null)
+		if not parent is Container or not control is Control:
+			continue
+		if not is_instance_valid(parent) or not is_instance_valid(control) or (control as Control).get_parent() != parent:
+			continue
+		(parent as Container).fit_child_in_rect(control as Control, restoration.get("rect", Rect2()) as Rect2)
+		(control as Control).anchor_left = float(restoration.get("anchor_left", (control as Control).anchor_left))
+		(control as Control).anchor_top = float(restoration.get("anchor_top", (control as Control).anchor_top))
+		(control as Control).anchor_right = float(restoration.get("anchor_right", (control as Control).anchor_right))
+		(control as Control).anchor_bottom = float(restoration.get("anchor_bottom", (control as Control).anchor_bottom))
+		(control as Control).offset_left = float(restoration.get("offset_left", (control as Control).offset_left))
+		(control as Control).offset_top = float(restoration.get("offset_top", (control as Control).offset_top))
+		(control as Control).offset_right = float(restoration.get("offset_right", (control as Control).offset_right))
+		(control as Control).offset_bottom = float(restoration.get("offset_bottom", (control as Control).offset_bottom))
+	# Parent containers must establish nested container rects before those nested
+	# owners lay out their own children. Preserve discovery order at equal depth.
+	var ordered_containers: Array = []
+	for container_value in container_layout_restorations:
+		if not container_value is Container or not is_instance_valid(container_value):
+			continue
+		var insert_index := ordered_containers.size()
+		var container_depth := _talk_dock_node_depth(container_value as Node)
+		for candidate_index in range(ordered_containers.size()):
+			if container_depth < _talk_dock_node_depth(ordered_containers[candidate_index] as Node):
+				insert_index = candidate_index
+				break
+		ordered_containers.insert(insert_index, container_value)
+	for container_value in ordered_containers:
+		var container := container_value as Container
+		container.queue_sort()
+		container.notification(Container.NOTIFICATION_SORT_CHILDREN)
+
+
+func _talk_dock_node_depth(node: Node) -> int:
+	var depth := 0
+	var ancestor := node.get_parent()
+	while ancestor != null:
+		depth += 1
+		ancestor = ancestor.get_parent()
+	return depth
 
 
 func _talk_dock_choice_lifecycle_snapshot() -> Array:
@@ -5543,7 +5632,7 @@ func _talk_dock_choice_lifecycle_snapshot() -> Array:
 	return result
 
 
-func _restore_talk_dock_choice_lifecycle_snapshot(snapshot: Array) -> void:
+func _restore_talk_dock_choice_lifecycle_snapshot(snapshot: Array, container_layout_restorations: Array) -> void:
 	if talk_dock == null or talk_dock.choice_list == null:
 		return
 	for response_index in range(mini(snapshot.size(), talk_dock.choice_list.get_child_count())):
@@ -5551,14 +5640,14 @@ func _restore_talk_dock_choice_lifecycle_snapshot(snapshot: Array) -> void:
 		var response_value := talk_dock.choice_list.get_child(response_index)
 		if not response_value is Control:
 			continue
-		_restore_talk_dock_control_lifecycle_snapshot(response_value as Control, _copy_dict(response_state.get("control", {})))
+		_restore_talk_dock_control_lifecycle_snapshot(response_value as Control, _copy_dict(response_state.get("control", {})), container_layout_restorations)
 		var child_states := _copy_array(response_state.get("children", []))
 		for child_index in range(mini(child_states.size(), response_value.get_child_count())):
 			var child_state := _copy_dict(child_states[child_index])
 			var child_value := response_value.get_child(child_index)
 			if not child_value is Control:
 				continue
-			_restore_talk_dock_control_lifecycle_snapshot(child_value as Control, _copy_dict(child_state.get("control", {})))
+			_restore_talk_dock_control_lifecycle_snapshot(child_value as Control, _copy_dict(child_state.get("control", {})), container_layout_restorations)
 			if child_value is Button:
 				(child_value as Button).text = str(child_state.get("button_text", ""))
 				(child_value as Button).disabled = bool(child_state.get("button_disabled", false))
