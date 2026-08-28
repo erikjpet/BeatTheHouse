@@ -144,6 +144,82 @@ static func availability(run_state: RunState, environment: Dictionary, game_id: 
 	}
 
 
+# Player-safe description of the table-presence sequence a host adapter may
+# mount. This model has no sealed adapter receipt or live actor/scene inventory,
+# so the projection is deliberately non-authoritative and never mutates state.
+static func table_presence_proposal(run_state: RunState, environment: Dictionary, game_id: String, play_id: String) -> Dictionary:
+	var base := {
+		"authoritative": false,
+		"proposal_only": true,
+		"can_mutate": false,
+		"authority_gap": "adapter_host_root_unavailable",
+		"play_id": play_id,
+		"game_id": game_id,
+		"environment_key": environment_key(environment),
+	}
+	if run_state == null or environment.is_empty() or JSON.stringify(environment) != JSON.stringify(run_state.current_environment) \
+			or str(environment.get("active_game_id", "")) != game_id:
+		return base.merged({"eligible": false, "reason": "untrusted_table_context"}, true)
+	var status := availability(run_state, environment, game_id, play_id)
+	if not bool(status.get("available", false)):
+		return base.merged({"eligible": false, "reason": str(status.get("reason", "unavailable"))}, true)
+	var play := definition(play_id)
+	var members := _string_array(status.get("member_ids", []))
+	var action_index := run_state.crew_action_index()
+	var state := normalize_state(run_state.crew_play_state)
+	var used := maxi(0, int((state.get("uses", {}) as Dictionary).get(play_id, 0)))
+	var uses_per_run := maxi(0, int(play.get("uses_per_run", 0)))
+	var window_boundaries := maxi(0, int(play.get("window_boundaries", 0)))
+	var cooldown_boundaries := maxi(0, int(play.get("cooldown_boundaries", 0)))
+	var actor_ops: Array = []
+	for member_id in members:
+		actor_ops.append({"phase_id": "arrive", "verb": "behavior", "actor_id": member_id, "state": "arriving"})
+		actor_ops.append({"phase_id": "work", "verb": "behavior", "actor_id": member_id, "state": "working"})
+		actor_ops.append({"phase_id": "detected", "verb": "behavior", "actor_id": member_id, "state": "detected"})
+		actor_ops.append({"phase_id": "clean", "verb": "behavior", "actor_id": member_id, "state": "working"})
+		actor_ops.append({"phase_id": "leave", "verb": "behavior", "actor_id": member_id, "state": "leaving"})
+	var funding: Dictionary = {}
+	if play_id == "chip_dump":
+		var effect := _dict(play.get("effect", {}))
+		funding = {
+			"model": "A_player_funded",
+			"direction": str(effect.get("direction", "")),
+			"cash_debit": maxi(0, int(effect.get("transfer_amount", 0))) + maxi(0, int(effect.get("transfer_fee", 0))),
+			"chip_credit": maxi(0, int(effect.get("transfer_amount", 0))),
+			"fee_sink": maxi(0, int(effect.get("transfer_fee", 0))),
+		}
+	return base.merged({
+		"eligible": true,
+		"reason": "proposal_ready_host_authorization_required",
+		"member_ids": members,
+		"lifecycle_phases": ["arrive", "work", "detected_or_clean", "leave"],
+		"actor_ops": actor_ops,
+		"transition_ops": [
+			{"from": "arrive", "to": "work", "cause": "host_arrival_complete"},
+			{"from": "work", "to": "detected", "cause": "host_authenticated_detected"},
+			{"from": "work", "to": "clean", "cause": "host_authenticated_clean"},
+			{"from": "detected", "to": "leave", "cause": "host_aftermath_complete"},
+			{"from": "clean", "to": "leave", "cause": "host_window_complete"},
+		],
+		"window_state": {
+			"boundaries": window_boundaries,
+			"active": is_active(state, play_id, action_index, environment),
+			"would_expire_at_action": action_index + window_boundaries + 1 if window_boundaries > 0 else action_index,
+		},
+		"cooldown_state": {"boundaries": cooldown_boundaries, "would_end_at_action": action_index + cooldown_boundaries + 1},
+		"use_state": {"used": used, "cap": uses_per_run, "remaining": maxi(0, uses_per_run - used)},
+		"detection": {
+			"chance_percent": clampi(int(play.get("detection_chance_percent", 0)), 0, 100),
+			"heat": maxi(0, int(play.get("detection_heat", 0))),
+			"outcome_authority": "host_authenticated_only",
+			"branches": ["detected", "clean"],
+		},
+		"funding": funding,
+		"effect": _dict(play.get("effect", {})),
+		"voice_lines": _dict(play.get("voice_lines", {})),
+	}, true)
+
+
 static func activate(run_state: RunState, environment: Dictionary, game_id: String, play_id: String) -> Dictionary:
 	var status := availability(run_state, environment, game_id, play_id)
 	if not bool(status.get("available", false)):
@@ -488,6 +564,10 @@ static func _string_array(value: Variant) -> Array:
 		if not text.is_empty():
 			result.append(text)
 	return result
+
+
+static func _dict(value: Variant) -> Dictionary:
+	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
 
 
 static func _array(value: Variant) -> Array:
