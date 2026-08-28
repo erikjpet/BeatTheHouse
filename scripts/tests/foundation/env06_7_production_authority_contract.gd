@@ -24,8 +24,8 @@ func _initialize() -> void:
 	quit(1)
 
 
-static func _check_scenario_local_actor_authority(library: ContentLibrary, failures: Array) -> void:
-	var definition := library.scenario(LOCAL_ACTOR_SCENARIO_ID)
+static func _check_scenario_local_actor_authority(library: Variant, failures: Array) -> void:
+	var definition: Dictionary = library.scenario(LOCAL_ACTOR_SCENARIO_ID)
 	if definition.is_empty():
 		failures.append("Production scenario %s is missing." % LOCAL_ACTOR_SCENARIO_ID)
 		return
@@ -38,7 +38,7 @@ static func _check_scenario_local_actor_authority(library: ContentLibrary, failu
 	if _contains(positive_errors, "references unknown actor"):
 		failures.append("Structurally valid scenario-owned local actor was rejected: %s" % _matching(positive_errors, "references unknown actor"))
 
-	var malformed := definition.duplicate(true)
+	var malformed: Dictionary = definition.duplicate(true)
 	if not _mutate_first_actor_spawn(malformed, "malformed"):
 		failures.append("Production scenario %s has no actor spawn fixture." % LOCAL_ACTOR_SCENARIO_ID)
 	else:
@@ -46,16 +46,16 @@ static func _check_scenario_local_actor_authority(library: ContentLibrary, failu
 		if not _contains(malformed_errors, "actor requires label and actor_id") or not _contains(malformed_errors, "references unknown actor"):
 			failures.append("Malformed scenario-local actor did not fail both structure and actor authority checks.")
 
-	var external := definition.duplicate(true)
+	var external: Dictionary = definition.duplicate(true)
 	if _mutate_first_actor_spawn(external, "external"):
 		var external_errors := ScenarioEngineScript.validate_sequence_definition(external, references)
 		if not _contains(external_errors, "references unknown actor hostile_external_actor"):
 			failures.append("External unknown actor was not rejected by actor authority.")
 
 
-static func _check_unproven_zone_rejection(library: ContentLibrary, failures: Array) -> void:
-	var definition := library.scenario(PROVEN_TARGET_SCENARIO_ID)
-	var catalog := library.scenario_target_catalog(definition)
+static func _check_unproven_zone_rejection(library: Variant, failures: Array) -> void:
+	var definition: Dictionary = library.scenario(PROVEN_TARGET_SCENARIO_ID)
+	var catalog: Dictionary = library.scenario_target_catalog(definition)
 	var catalog_errors := _array(catalog.get("errors", []))
 	if definition.is_empty() or catalog.is_empty() or not catalog_errors.is_empty():
 		failures.append("Production target authority fixture is unavailable: %s" % JSON.stringify(catalog_errors))
@@ -63,7 +63,7 @@ static func _check_unproven_zone_rejection(library: ContentLibrary, failures: Ar
 	var inventory := _dict(catalog.get("guaranteed", {}))
 	inventory["event_choices"] = _dict(catalog.get("event_choices", {}))
 	for zone_id in ["work_2", "hostile_arbitrary_zone"]:
-		var hostile := definition.duplicate(true)
+		var hostile: Dictionary = definition.duplicate(true)
 		var zones := _array(hostile["sequence"]["declared_targets"].get("zones", []))
 		zones.append("base::zone:%s" % zone_id)
 		hostile["sequence"]["declared_targets"]["zones"] = zones
