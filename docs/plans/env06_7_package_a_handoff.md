@@ -35,6 +35,12 @@ inventory, validates all eleven newly authored schema-v2 definitions, verifies
 at least two semantic changes and two command boundaries per id, and rejects
 duplicate exact or normalized signatures.
 
+Latest cheap evidence: `PASS ids=12 exact_signatures=12
+normalized_signatures=12`; generation plus the independent exact check completed
+in 5.6 seconds. `git diff --check` passed. Expensive project gates and visual
+captures remain Integrator-owned; no shared gate, golden, budget, or owner
+artifact was changed by this package.
+
 ## Assembly handoff
 
 The assembly owner should consume this package file without giving Package A
