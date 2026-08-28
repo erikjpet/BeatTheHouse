@@ -33,7 +33,7 @@ func _initialize() -> void:
 		var definition := {"id": config.id, "archetype_id": config.archetype, "sequence": entry.sequence}
 		entry["sequence"]["sequence_signature"] = Schema.calculated_signature_hash(definition)
 		definition["sequence"] = entry["sequence"]
-		var errors := Schema.validate_definition(definition)
+		var errors := Schema.validate_definition(definition, null, _target_inventory())
 		if not errors.is_empty(): failures.append({"id":config.id,"errors":errors})
 		var signature := str(entry["sequence"]["sequence_signature"])
 		if signatures.has(signature): failures.append({"duplicate_signature":[signatures[signature],config.id]})
@@ -45,8 +45,8 @@ func _initialize() -> void:
 		printerr(JSON.stringify(failures, "  "))
 		quit(1)
 		return
-	_write_json(OUTPUT, {"schema_version":1,"package_id":"env06_7_underground_lounge","handler_pack":"underground_lounge","renderer_id":"underground_lounge","scenarios":entries})
-	_write_json(DOSSIERS, {"schema_version":1,"package_id":"env06_7_underground_lounge","base_head":"855a296126e8b4747b78fbe89cb5a2d02daf61f5","scenario_count":entries.size(),"dossiers":dossiers,"uniqueness_rows":report.rows,"pairwise_similarity":report.pairs,"assembly_evidence_needed":report.failures,"pair_count":report.comparison_count})
+	_write_json(OUTPUT, {"schema_version":1,"package_id":"env06_7_punchline_clubs","handler_pack":"punchline_clubs","renderer_id":"punchline_clubs","scenarios":entries})
+	_write_json(DOSSIERS, {"schema_version":1,"package_id":"env06_7_punchline_clubs","base_head":"855a296126e8b4747b78fbe89cb5a2d02daf61f5","scenario_count":entries.size(),"dossiers":dossiers,"uniqueness_rows":report.rows,"pairwise_similarity":report.pairs,"assembly_evidence_needed":report.failures,"pair_count":report.comparison_count})
 	print("ENV06_7_PACKAGE_D_AUTHOR_OK scenarios=%d pairs=%d" % [entries.size(), report.comparison_count])
 	quit(0)
 
@@ -106,6 +106,8 @@ func _entry(c: Dictionary) -> Dictionary:
 	for terminal in [["success",c.outcomes[0]],["failure",c.outcomes[1]],["refused",c.outcomes[2]],["interrupted",c.outcomes[3]]]:
 		phases.append(_phase("terminal_%s" % terminal[0],str(terminal[0]).capitalize(),"The active task gives way to a branch-specific room arrangement.","The marked exit remains readable through cleanup.",[],[],[],[],[_transition(prefix,"terminal_%s" % terminal[0],"feedback","The %s aftermath fixes a distinct %s room state for revisit." % [str(terminal[1]).replace("_"," "),prefix.replace("_"," ")])],[{"id":"%s_terminal_%s" % [prefix,terminal[0]],"condition":{"type":"always"},"outcome":terminal[1]}],true))
 	var aftermath := _aftermath(c)
+	var declared_zones: Array = ["base::zone:left", "base::zone:center", "base::zone:right", "base::zone:background", "base::zone:exit_lane", "base::zone:service_lane"]
+	for zone_index in range(c.verbs.size()): declared_zones.append("base::zone:work_%d" % zone_index)
 	var sequence := {
 		"schema_version":2,
 		"local_state_schema":{"pressure_seen":{"type":"bool","default":false,"visibility":"public"}},
@@ -115,7 +117,7 @@ func _entry(c: Dictionary) -> Dictionary:
 		"expiry":{"boundary":"night_end","after":1,"policy":"cleanup"},
 		"cleanup":{"operations":cleanup},
 		"aftermath":aftermath,
-		"declared_targets":{"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":[]},
+		"declared_targets":{"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":declared_zones},
 		"mechanic_tags":c.tags,
 		"sequence_signature":"pending",
 		"owner_exceptions":[],
@@ -227,8 +229,14 @@ func _aftermath(c:Dictionary)->Dictionary:
 func _definitions(entries:Array)->Array:
 	var result: Array = []
 	for entry in entries:
-		result.append({"id":entry.scenario_id,"sequence":entry.sequence,"sequence_package_id":"env06_7_underground_lounge","sequence_handler_pack":"underground_lounge","sequence_renderer_id":"underground_lounge","sequence_authoring":entry.authoring})
+		result.append({"id":entry.scenario_id,"sequence":entry.sequence,"sequence_package_id":"env06_7_punchline_clubs","sequence_handler_pack":"punchline_clubs","sequence_renderer_id":"punchline_clubs","sequence_authoring":entry.authoring})
 	return result
+
+
+func _target_inventory() -> Dictionary:
+	var zones := ["base::zone:left", "base::zone:center", "base::zone:right", "base::zone:background", "base::zone:exit_lane", "base::zone:service_lane"]
+	for index in range(6): zones.append("base::zone:work_%d" % index)
+	return {"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":zones,"event_choices":{}}
 
 
 func _dossier(c:Dictionary,entry:Dictionary)->Dictionary:

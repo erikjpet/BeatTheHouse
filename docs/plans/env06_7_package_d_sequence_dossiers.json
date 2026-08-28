@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "package_id": "env06_7_underground_lounge",
+  "package_id": "env06_7_punchline_clubs",
   "base_head": "855a296126e8b4747b78fbe89cb5a2d02daf61f5",
   "scenario_count": 12,
   "dossiers": [
@@ -48,7 +48,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "b9f0650661b1f81b49228efd6bce7d8a4947bc33aba235210ce5bf2982893766",
+      "sequence_signature": "fe06b5a6fa7ea1318ee8e2b9bcceefa4202818e57e7a09155c688ad241c5d636",
       "capture_ids": [
         "punchline_open_mic_night_arrival",
         "punchline_open_mic_night_partial",
@@ -108,7 +108,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "98a93c47bab49d300beb9698e7c80d7bfecc48b9ee9682846da53c374d7a82b9",
+      "sequence_signature": "493d65adc86ec59cf52610302d30d890296749a2747778e80dcb4fece4f76f29",
       "capture_ids": [
         "punchline_headliner_night_arrival",
         "punchline_headliner_night_partial",
@@ -166,7 +166,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "816ae9b527cdf75e3c17fa2f45b721f18d3527432102d9abe4a8d45184373daf",
+      "sequence_signature": "5f69365614627cf55f803b233dba81cd8a358cbd3459fa11c4bc23a707b346e5",
       "capture_ids": [
         "punchline_bringer_show_arrival",
         "punchline_bringer_show_partial",
@@ -224,7 +224,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "b3d3aada605418a809a1bb5ebdd2ce974a44868300ffe71cf6941aa1e912e023",
+      "sequence_signature": "7d28ad6f75f07636e531add72aee101f2779ceeff457f5c8449ab5e5a5fed8e1",
       "capture_ids": [
         "punchline_high_stakes_night_arrival",
         "punchline_high_stakes_night_partial",
@@ -284,7 +284,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "996ce3785adf571bb3e69a5fe9486ce266223ec9bd9b90dab054b3cf7bccdd24",
+      "sequence_signature": "4a40e4f2670e6ea928a677b5e86d44a8751f2352e1b302d2439755640edb106d",
       "capture_ids": [
         "punchline_greased_week_arrival",
         "punchline_greased_week_partial",
@@ -342,7 +342,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "4ba19343ef88a652e3b2b885a482575a642dcc36f949ee8ca302f90223b57ad2",
+      "sequence_signature": "91fac9af9a4088f15d174c6745bfbeaffd467ef7e329051578084f32cc07893d",
       "capture_ids": [
         "punchline_debt_court_arrival",
         "punchline_debt_court_partial",
@@ -402,7 +402,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "5de78c5beab363f3519ad1690c4dcee7b9412eb5d692cd7b255b277823dc9c5e",
+      "sequence_signature": "dae5aa32f79f20ec073007c0a9226399cc56a287a1c58511be794af27b1159b5",
       "capture_ids": [
         "punchline_new_muscle_arrival",
         "punchline_new_muscle_partial",
@@ -462,7 +462,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "a9f049c820b5aecd84bd5416a59df7fef4e2994c951d3f2c7fd47ce1c967dad0",
+      "sequence_signature": "3bbd7940525d454da4d91b4a893507792f1c1303c31df03cb9721b3b07f6f9a5",
       "capture_ids": [
         "punchline_raid_jitters_arrival",
         "punchline_raid_jitters_partial",
@@ -522,7 +522,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "fef12510d7e174acba3b9417ba1f8a0ed9478dfaf927e18d4de687ec17fe3b93",
+      "sequence_signature": "a204c5d6bad3a88c6ec9524468d5d6f1fe0848223ca11920fd286b087bcae462",
       "capture_ids": [
         "kitty_cat_lounge_amateur_night_arrival",
         "kitty_cat_lounge_amateur_night_partial",
@@ -582,7 +582,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "e5d6d7e5e48f1fc797b8ff7620b54343d27a9dd37f802011fcab51222abccbb3",
+      "sequence_signature": "49b7ec6242a473cfab8c449814066196080b7223799be8a5b2b1bf46a8d30145",
       "capture_ids": [
         "kitty_cat_lounge_buyout_arrival",
         "kitty_cat_lounge_buyout_partial",
@@ -640,7 +640,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "b6aaf2f4eece1c0cb43c4cfffb96d7baceec619872a0c717d69774a760183cf5",
+      "sequence_signature": "3726d89cf78ace1d72f94695cc99a7d08469f6b072f1418a89c8a7b2350874dc",
       "capture_ids": [
         "kitty_cat_lounge_slow_night_arrival",
         "kitty_cat_lounge_slow_night_partial",
@@ -702,7 +702,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "5fec4d9a0a14488147cc6fc306e727f58aac23bd0b39811c95cd9916bf382a51",
+      "sequence_signature": "2bb43e315e582a583d1733324ce1a3d1fb3ec47ab95c59640ea214ecf3530b1c",
       "capture_ids": [
         "kitty_cat_lounge_bachelorette_storm_arrival",
         "kitty_cat_lounge_bachelorette_storm_partial",
@@ -1943,7 +1943,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 0
+          "zones": 11
         },
         "reentry": {
           "expired": "expired",
@@ -1956,8 +1956,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "fef12510d7e174acba3b9417ba1f8a0ed9478dfaf927e18d4de687ec17fe3b93",
-      "calculated_signature": "fef12510d7e174acba3b9417ba1f8a0ed9478dfaf927e18d4de687ec17fe3b93",
+      "authored_signature": "a204c5d6bad3a88c6ec9524468d5d6f1fe0848223ca11920fd286b087bcae462",
+      "calculated_signature": "a204c5d6bad3a88c6ec9524468d5d6f1fe0848223ca11920fd286b087bcae462",
       "nearest_id": "punchline_raid_jitters",
       "nearest_similarity": 0.693150684931507
     },
@@ -3352,7 +3352,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 0
+          "zones": 12
         },
         "reentry": {
           "expired": "expired",
@@ -3365,10 +3365,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "5fec4d9a0a14488147cc6fc306e727f58aac23bd0b39811c95cd9916bf382a51",
-      "calculated_signature": "5fec4d9a0a14488147cc6fc306e727f58aac23bd0b39811c95cd9916bf382a51",
+      "authored_signature": "2bb43e315e582a583d1733324ce1a3d1fb3ec47ab95c59640ea214ecf3530b1c",
+      "calculated_signature": "2bb43e315e582a583d1733324ce1a3d1fb3ec47ab95c59640ea214ecf3530b1c",
       "nearest_id": "punchline_new_muscle",
-      "nearest_similarity": 0.436343852013058
+      "nearest_similarity": 0.434782608695652
     },
     {
       "id": "kitty_cat_lounge_buyout",
@@ -4595,7 +4595,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 0
+          "zones": 11
         },
         "reentry": {
           "expired": "expired",
@@ -4608,8 +4608,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "e5d6d7e5e48f1fc797b8ff7620b54343d27a9dd37f802011fcab51222abccbb3",
-      "calculated_signature": "e5d6d7e5e48f1fc797b8ff7620b54343d27a9dd37f802011fcab51222abccbb3",
+      "authored_signature": "49b7ec6242a473cfab8c449814066196080b7223799be8a5b2b1bf46a8d30145",
+      "calculated_signature": "49b7ec6242a473cfab8c449814066196080b7223799be8a5b2b1bf46a8d30145",
       "nearest_id": "punchline_headliner_night",
       "nearest_similarity": 0.726256983240223
     },
@@ -5676,7 +5676,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 0
+          "zones": 10
         },
         "reentry": {
           "expired": "expired",
@@ -5689,8 +5689,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "b6aaf2f4eece1c0cb43c4cfffb96d7baceec619872a0c717d69774a760183cf5",
-      "calculated_signature": "b6aaf2f4eece1c0cb43c4cfffb96d7baceec619872a0c717d69774a760183cf5",
+      "authored_signature": "3726d89cf78ace1d72f94695cc99a7d08469f6b072f1418a89c8a7b2350874dc",
+      "calculated_signature": "3726d89cf78ace1d72f94695cc99a7d08469f6b072f1418a89c8a7b2350874dc",
       "nearest_id": "punchline_bringer_show",
       "nearest_similarity": 0.68125
     },
@@ -6757,7 +6757,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 0
+          "zones": 10
         },
         "reentry": {
           "expired": "expired",
@@ -6770,8 +6770,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "816ae9b527cdf75e3c17fa2f45b721f18d3527432102d9abe4a8d45184373daf",
-      "calculated_signature": "816ae9b527cdf75e3c17fa2f45b721f18d3527432102d9abe4a8d45184373daf",
+      "authored_signature": "5f69365614627cf55f803b233dba81cd8a358cbd3459fa11c4bc23a707b346e5",
+      "calculated_signature": "5f69365614627cf55f803b233dba81cd8a358cbd3459fa11c4bc23a707b346e5",
       "nearest_id": "punchline_open_mic_night",
       "nearest_similarity": 0.683881064162754
     },
@@ -7838,7 +7838,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 0
+          "zones": 10
         },
         "reentry": {
           "expired": "expired",
@@ -7851,8 +7851,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "4ba19343ef88a652e3b2b885a482575a642dcc36f949ee8ca302f90223b57ad2",
-      "calculated_signature": "4ba19343ef88a652e3b2b885a482575a642dcc36f949ee8ca302f90223b57ad2",
+      "authored_signature": "91fac9af9a4088f15d174c6745bfbeaffd467ef7e329051578084f32cc07893d",
+      "calculated_signature": "91fac9af9a4088f15d174c6745bfbeaffd467ef7e329051578084f32cc07893d",
       "nearest_id": "punchline_bringer_show",
       "nearest_similarity": 0.68125
     },
@@ -9081,7 +9081,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 0
+          "zones": 11
         },
         "reentry": {
           "expired": "expired",
@@ -9094,8 +9094,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "996ce3785adf571bb3e69a5fe9486ce266223ec9bd9b90dab054b3cf7bccdd24",
-      "calculated_signature": "996ce3785adf571bb3e69a5fe9486ce266223ec9bd9b90dab054b3cf7bccdd24",
+      "authored_signature": "4a40e4f2670e6ea928a677b5e86d44a8751f2352e1b302d2439755640edb106d",
+      "calculated_signature": "4a40e4f2670e6ea928a677b5e86d44a8751f2352e1b302d2439755640edb106d",
       "nearest_id": "punchline_new_muscle",
       "nearest_similarity": 0.70954356846473
     },
@@ -10324,7 +10324,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 0
+          "zones": 11
         },
         "reentry": {
           "expired": "expired",
@@ -10337,8 +10337,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "98a93c47bab49d300beb9698e7c80d7bfecc48b9ee9682846da53c374d7a82b9",
-      "calculated_signature": "98a93c47bab49d300beb9698e7c80d7bfecc48b9ee9682846da53c374d7a82b9",
+      "authored_signature": "493d65adc86ec59cf52610302d30d890296749a2747778e80dcb4fece4f76f29",
+      "calculated_signature": "493d65adc86ec59cf52610302d30d890296749a2747778e80dcb4fece4f76f29",
       "nearest_id": "kitty_cat_lounge_buyout",
       "nearest_similarity": 0.726256983240223
     },
@@ -11405,7 +11405,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 0
+          "zones": 10
         },
         "reentry": {
           "expired": "expired",
@@ -11418,8 +11418,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "b3d3aada605418a809a1bb5ebdd2ce974a44868300ffe71cf6941aa1e912e023",
-      "calculated_signature": "b3d3aada605418a809a1bb5ebdd2ce974a44868300ffe71cf6941aa1e912e023",
+      "authored_signature": "7d28ad6f75f07636e531add72aee101f2779ceeff457f5c8449ab5e5a5fed8e1",
+      "calculated_signature": "7d28ad6f75f07636e531add72aee101f2779ceeff457f5c8449ab5e5a5fed8e1",
       "nearest_id": "punchline_open_mic_night",
       "nearest_similarity": 0.710651828298887
     },
@@ -12648,7 +12648,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 0
+          "zones": 11
         },
         "reentry": {
           "expired": "expired",
@@ -12661,8 +12661,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "5de78c5beab363f3519ad1690c4dcee7b9412eb5d692cd7b255b277823dc9c5e",
-      "calculated_signature": "5de78c5beab363f3519ad1690c4dcee7b9412eb5d692cd7b255b277823dc9c5e",
+      "authored_signature": "dae5aa32f79f20ec073007c0a9226399cc56a287a1c58511be794af27b1159b5",
+      "calculated_signature": "dae5aa32f79f20ec073007c0a9226399cc56a287a1c58511be794af27b1159b5",
       "nearest_id": "punchline_raid_jitters",
       "nearest_similarity": 0.719054242002782
     },
@@ -13729,7 +13729,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 0
+          "zones": 10
         },
         "reentry": {
           "expired": "expired",
@@ -13742,8 +13742,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "b9f0650661b1f81b49228efd6bce7d8a4947bc33aba235210ce5bf2982893766",
-      "calculated_signature": "b9f0650661b1f81b49228efd6bce7d8a4947bc33aba235210ce5bf2982893766",
+      "authored_signature": "fe06b5a6fa7ea1318ee8e2b9bcceefa4202818e57e7a09155c688ad241c5d636",
+      "calculated_signature": "fe06b5a6fa7ea1318ee8e2b9bcceefa4202818e57e7a09155c688ad241c5d636",
       "nearest_id": "punchline_high_stakes_night",
       "nearest_similarity": 0.710651828298887
     },
@@ -14972,7 +14972,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 0
+          "zones": 11
         },
         "reentry": {
           "expired": "expired",
@@ -14985,8 +14985,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "a9f049c820b5aecd84bd5416a59df7fef4e2994c951d3f2c7fd47ce1c967dad0",
-      "calculated_signature": "a9f049c820b5aecd84bd5416a59df7fef4e2994c951d3f2c7fd47ce1c967dad0",
+      "authored_signature": "3bbd7940525d454da4d91b4a893507792f1c1303c31df03cb9721b3b07f6f9a5",
+      "calculated_signature": "3bbd7940525d454da4d91b4a893507792f1c1303c31df03cb9721b3b07f6f9a5",
       "nearest_id": "punchline_new_muscle",
       "nearest_similarity": 0.719054242002782
     }
@@ -14995,7 +14995,7 @@
     {
       "left_id": "kitty_cat_lounge_amateur_night",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.416309012875536,
+      "similarity": 0.414790996784566,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15019,7 +15019,7 @@
     {
       "left_id": "kitty_cat_lounge_amateur_night",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.321142857142857,
+      "similarity": 0.319634703196347,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15031,7 +15031,7 @@
     {
       "left_id": "kitty_cat_lounge_buyout",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.396825396825397,
+      "similarity": 0.395348837209302,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15043,7 +15043,7 @@
     {
       "left_id": "kitty_cat_lounge_buyout",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.341067285382831,
+      "similarity": 0.339513325608343,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15055,7 +15055,7 @@
     {
       "left_id": "kitty_cat_lounge_slow_night",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.331901181525242,
+      "similarity": 0.330472103004292,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15067,7 +15067,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.336416184971098,
+      "similarity": 0.334872979214781,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15079,7 +15079,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.346362649294245,
+      "similarity": 0.344902386117137,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15091,7 +15091,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.356807511737089,
+      "similarity": 0.355216881594373,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15127,7 +15127,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "punchline_greased_week",
-      "similarity": 0.377830750893921,
+      "similarity": 0.376190476190476,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15151,7 +15151,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "punchline_new_muscle",
-      "similarity": 0.356807511737089,
+      "similarity": 0.355216881594373,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15163,7 +15163,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.356807511737089,
+      "similarity": 0.355216881594373,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15175,7 +15175,7 @@
     {
       "left_id": "punchline_debt_court",
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.356807511737089,
+      "similarity": 0.355216881594373,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15187,7 +15187,7 @@
     {
       "left_id": "punchline_debt_court",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.32762312633833,
+      "similarity": 0.32620320855615,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15199,7 +15199,7 @@
     {
       "left_id": "punchline_debt_court",
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.377830750893921,
+      "similarity": 0.376190476190476,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15223,7 +15223,7 @@
     {
       "left_id": "punchline_debt_court",
       "right_id": "punchline_new_muscle",
-      "similarity": 0.336416184971098,
+      "similarity": 0.334872979214781,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15235,7 +15235,7 @@
     {
       "left_id": "punchline_debt_court",
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.336416184971098,
+      "similarity": 0.334872979214781,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15259,7 +15259,7 @@
     {
       "left_id": "punchline_greased_week",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.416309012875536,
+      "similarity": 0.414790996784566,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15283,7 +15283,7 @@
     {
       "left_id": "punchline_greased_week",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.361601884570082,
+      "similarity": 0.36,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15295,7 +15295,7 @@
     {
       "left_id": "punchline_greased_week",
       "right_id": "punchline_debt_court",
-      "similarity": 0.356807511737089,
+      "similarity": 0.355216881594373,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15343,7 +15343,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.396825396825397,
+      "similarity": 0.395348837209302,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15367,7 +15367,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.341067285382831,
+      "similarity": 0.339513325608343,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15379,7 +15379,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "punchline_bringer_show",
-      "similarity": 0.356807511737089,
+      "similarity": 0.355216881594373,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15391,7 +15391,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "punchline_debt_court",
-      "similarity": 0.377830750893921,
+      "similarity": 0.376190476190476,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15415,7 +15415,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.336416184971098,
+      "similarity": 0.334872979214781,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15451,7 +15451,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.356807511737089,
+      "similarity": 0.355216881594373,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15463,7 +15463,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.365638766519824,
+      "similarity": 0.364136413641364,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15475,7 +15475,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.336416184971098,
+      "similarity": 0.334872979214781,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15511,7 +15511,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "punchline_greased_week",
-      "similarity": 0.356807511737089,
+      "similarity": 0.355216881594373,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15523,7 +15523,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "punchline_new_muscle",
-      "similarity": 0.377830750893921,
+      "similarity": 0.376190476190476,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15535,7 +15535,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.377830750893921,
+      "similarity": 0.376190476190476,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15559,7 +15559,7 @@
     {
       "left_id": "punchline_new_muscle",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.436343852013058,
+      "similarity": 0.434782608695652,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15583,7 +15583,7 @@
     {
       "left_id": "punchline_new_muscle",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.341067285382831,
+      "similarity": 0.339513325608343,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15607,7 +15607,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.368047337278107,
+      "similarity": 0.366430260047281,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15619,7 +15619,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.365638766519824,
+      "similarity": 0.364136413641364,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15631,7 +15631,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.336416184971098,
+      "similarity": 0.334872979214781,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15679,7 +15679,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "punchline_greased_week",
-      "similarity": 0.356807511737089,
+      "similarity": 0.355216881594373,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15691,7 +15691,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "punchline_headliner_night",
-      "similarity": 0.336416184971098,
+      "similarity": 0.334872979214781,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15715,7 +15715,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "punchline_new_muscle",
-      "similarity": 0.377830750893921,
+      "similarity": 0.376190476190476,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15727,7 +15727,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.377830750893921,
+      "similarity": 0.376190476190476,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15751,7 +15751,7 @@
     {
       "left_id": "punchline_raid_jitters",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.436343852013058,
+      "similarity": 0.434782608695652,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15775,7 +15775,7 @@
     {
       "left_id": "punchline_raid_jitters",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.341067285382831,
+      "similarity": 0.339513325608343,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15786,6 +15786,18 @@
     }
   ],
   "assembly_evidence_needed": [
+    "scenario punchline_open_mic_night is invalid: [\"scenario punchline_open_mic_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario punchline_open_mic_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario punchline_open_mic_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario punchline_open_mic_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario punchline_open_mic_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario punchline_open_mic_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario punchline_open_mic_night sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario punchline_open_mic_night sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario punchline_open_mic_night sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario punchline_open_mic_night sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\"]",
+    "scenario punchline_headliner_night is invalid: [\"scenario punchline_headliner_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario punchline_headliner_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario punchline_headliner_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario punchline_headliner_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario punchline_headliner_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario punchline_headliner_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario punchline_headliner_night sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario punchline_headliner_night sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario punchline_headliner_night sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario punchline_headliner_night sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario punchline_headliner_night sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\"]",
+    "scenario punchline_bringer_show is invalid: [\"scenario punchline_bringer_show sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario punchline_bringer_show sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario punchline_bringer_show sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario punchline_bringer_show sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario punchline_bringer_show sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario punchline_bringer_show sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario punchline_bringer_show sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario punchline_bringer_show sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario punchline_bringer_show sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario punchline_bringer_show sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\"]",
+    "scenario punchline_high_stakes_night is invalid: [\"scenario punchline_high_stakes_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario punchline_high_stakes_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario punchline_high_stakes_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario punchline_high_stakes_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario punchline_high_stakes_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario punchline_high_stakes_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario punchline_high_stakes_night sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario punchline_high_stakes_night sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario punchline_high_stakes_night sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario punchline_high_stakes_night sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\"]",
+    "scenario punchline_greased_week is invalid: [\"scenario punchline_greased_week sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario punchline_greased_week sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario punchline_greased_week sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario punchline_greased_week sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario punchline_greased_week sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario punchline_greased_week sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario punchline_greased_week sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario punchline_greased_week sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario punchline_greased_week sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario punchline_greased_week sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario punchline_greased_week sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\"]",
+    "scenario punchline_debt_court is invalid: [\"scenario punchline_debt_court sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario punchline_debt_court sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario punchline_debt_court sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario punchline_debt_court sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario punchline_debt_court sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario punchline_debt_court sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario punchline_debt_court sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario punchline_debt_court sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario punchline_debt_court sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario punchline_debt_court sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\"]",
+    "scenario punchline_new_muscle is invalid: [\"scenario punchline_new_muscle sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario punchline_new_muscle sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario punchline_new_muscle sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario punchline_new_muscle sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario punchline_new_muscle sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario punchline_new_muscle sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario punchline_new_muscle sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario punchline_new_muscle sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario punchline_new_muscle sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario punchline_new_muscle sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario punchline_new_muscle sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\"]",
+    "scenario punchline_raid_jitters is invalid: [\"scenario punchline_raid_jitters sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario punchline_raid_jitters sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario punchline_raid_jitters sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario punchline_raid_jitters sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario punchline_raid_jitters sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario punchline_raid_jitters sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario punchline_raid_jitters sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario punchline_raid_jitters sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario punchline_raid_jitters sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario punchline_raid_jitters sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario punchline_raid_jitters sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\"]",
+    "scenario kitty_cat_lounge_amateur_night is invalid: [\"scenario kitty_cat_lounge_amateur_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario kitty_cat_lounge_amateur_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario kitty_cat_lounge_amateur_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario kitty_cat_lounge_amateur_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario kitty_cat_lounge_amateur_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_amateur_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_amateur_night sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_amateur_night sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_amateur_night sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_amateur_night sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_amateur_night sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\"]",
+    "scenario kitty_cat_lounge_buyout is invalid: [\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\"]",
+    "scenario kitty_cat_lounge_slow_night is invalid: [\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\"]",
+    "scenario kitty_cat_lounge_bachelorette_storm is invalid: [\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
     "scenario punchline_open_mic_night vs punchline_bringer_show: 0.684 (warning). Missing receipt-bound masked visual evidence.",
     "scenario punchline_open_mic_night vs punchline_high_stakes_night: 0.711 (warning). Missing receipt-bound masked visual evidence.",
     "scenario punchline_open_mic_night vs punchline_debt_court: 0.650 (warning). Missing receipt-bound masked visual evidence.",

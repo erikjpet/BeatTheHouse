@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "package_id": "env06_7_underground_lounge",
-  "handler_pack": "underground_lounge",
-  "renderer_id": "underground_lounge",
+  "package_id": "env06_7_punchline_clubs",
+  "handler_pack": "punchline_clubs",
+  "renderer_id": "punchline_clubs",
   "scenarios": [
     {
       "authoring": {
@@ -305,7 +305,18 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:center",
+            "base::zone:right",
+            "base::zone:background",
+            "base::zone:exit_lane",
+            "base::zone:service_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -1259,7 +1270,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b9f0650661b1f81b49228efd6bce7d8a4947bc33aba235210ce5bf2982893766"
+        "sequence_signature": "fe06b5a6fa7ea1318ee8e2b9bcceefa4202818e57e7a09155c688ad241c5d636"
       }
     },
     {
@@ -1578,7 +1589,19 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:center",
+            "base::zone:right",
+            "base::zone:background",
+            "base::zone:exit_lane",
+            "base::zone:service_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -2699,7 +2722,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "98a93c47bab49d300beb9698e7c80d7bfecc48b9ee9682846da53c374d7a82b9"
+        "sequence_signature": "493d65adc86ec59cf52610302d30d890296749a2747778e80dcb4fece4f76f29"
       }
     },
     {
@@ -3003,7 +3026,18 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:center",
+            "base::zone:right",
+            "base::zone:background",
+            "base::zone:exit_lane",
+            "base::zone:service_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -3957,7 +3991,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "816ae9b527cdf75e3c17fa2f45b721f18d3527432102d9abe4a8d45184373daf"
+        "sequence_signature": "5f69365614627cf55f803b233dba81cd8a358cbd3459fa11c4bc23a707b346e5"
       }
     },
     {
@@ -4261,7 +4295,18 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:center",
+            "base::zone:right",
+            "base::zone:background",
+            "base::zone:exit_lane",
+            "base::zone:service_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -5215,7 +5260,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b3d3aada605418a809a1bb5ebdd2ce974a44868300ffe71cf6941aa1e912e023"
+        "sequence_signature": "7d28ad6f75f07636e531add72aee101f2779ceeff457f5c8449ab5e5a5fed8e1"
       }
     },
     {
@@ -5534,7 +5579,19 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:center",
+            "base::zone:right",
+            "base::zone:background",
+            "base::zone:exit_lane",
+            "base::zone:service_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -6655,7 +6712,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "996ce3785adf571bb3e69a5fe9486ce266223ec9bd9b90dab054b3cf7bccdd24"
+        "sequence_signature": "4a40e4f2670e6ea928a677b5e86d44a8751f2352e1b302d2439755640edb106d"
       }
     },
     {
@@ -6959,7 +7016,18 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:center",
+            "base::zone:right",
+            "base::zone:background",
+            "base::zone:exit_lane",
+            "base::zone:service_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -7913,7 +7981,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4ba19343ef88a652e3b2b885a482575a642dcc36f949ee8ca302f90223b57ad2"
+        "sequence_signature": "91fac9af9a4088f15d174c6745bfbeaffd467ef7e329051578084f32cc07893d"
       }
     },
     {
@@ -8232,7 +8300,19 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:center",
+            "base::zone:right",
+            "base::zone:background",
+            "base::zone:exit_lane",
+            "base::zone:service_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -9353,7 +9433,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5de78c5beab363f3519ad1690c4dcee7b9412eb5d692cd7b255b277823dc9c5e"
+        "sequence_signature": "dae5aa32f79f20ec073007c0a9226399cc56a287a1c58511be794af27b1159b5"
       }
     },
     {
@@ -9672,7 +9752,19 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:center",
+            "base::zone:right",
+            "base::zone:background",
+            "base::zone:exit_lane",
+            "base::zone:service_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -10793,7 +10885,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a9f049c820b5aecd84bd5416a59df7fef4e2994c951d3f2c7fd47ce1c967dad0"
+        "sequence_signature": "3bbd7940525d454da4d91b4a893507792f1c1303c31df03cb9721b3b07f6f9a5"
       }
     },
     {
@@ -11112,7 +11204,19 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:center",
+            "base::zone:right",
+            "base::zone:background",
+            "base::zone:exit_lane",
+            "base::zone:service_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -12233,7 +12337,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "fef12510d7e174acba3b9417ba1f8a0ed9478dfaf927e18d4de687ec17fe3b93"
+        "sequence_signature": "a204c5d6bad3a88c6ec9524468d5d6f1fe0848223ca11920fd286b087bcae462"
       }
     },
     {
@@ -12552,7 +12656,19 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:center",
+            "base::zone:right",
+            "base::zone:background",
+            "base::zone:exit_lane",
+            "base::zone:service_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -13673,7 +13789,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e5d6d7e5e48f1fc797b8ff7620b54343d27a9dd37f802011fcab51222abccbb3"
+        "sequence_signature": "49b7ec6242a473cfab8c449814066196080b7223799be8a5b2b1bf46a8d30145"
       }
     },
     {
@@ -13977,7 +14093,18 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:center",
+            "base::zone:right",
+            "base::zone:background",
+            "base::zone:exit_lane",
+            "base::zone:service_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -14931,7 +15058,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b6aaf2f4eece1c0cb43c4cfffb96d7baceec619872a0c717d69774a760183cf5"
+        "sequence_signature": "3726d89cf78ace1d72f94695cc99a7d08469f6b072f1418a89c8a7b2350874dc"
       }
     },
     {
@@ -15265,7 +15392,20 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:center",
+            "base::zone:right",
+            "base::zone:background",
+            "base::zone:exit_lane",
+            "base::zone:service_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4",
+            "base::zone:work_5"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -16557,7 +16697,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5fec4d9a0a14488147cc6fc306e727f58aac23bd0b39811c95cd9916bf382a51"
+        "sequence_signature": "2bb43e315e582a583d1733324ce1a3d1fb3ec47ab95c59640ea214ecf3530b1c"
       }
     }
   ]
