@@ -67,4 +67,3 @@ Expected sentinels:
 
 - `ENV06_7_PACKAGE_D_AUTHOR_OK scenarios=12 pairs=66`
 - `ENV06_7_PACKAGE_D_CONTRACT_OK scenarios=12 signatures=12`
-
