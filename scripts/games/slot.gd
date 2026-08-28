@@ -24,6 +24,8 @@ const LUCKY_REEL_GREASE_ITEM_ID := "lucky_reel_grease"
 const COLD_QUARTERS_ITEM_ID := "cold_quarters"
 const SPLIT_REEL_NOTE_ITEM_ID := "split_reel_note"
 const CUMQUAT_SANDWICH_ITEM_ID := "cumquat_sandwich"
+const SLOT_RITUAL_CONTRACT := "game_ritual/1"
+const SLOT_RITUAL_ID := "slot.machine_session"
 
 var generator
 var resolver
@@ -31,6 +33,91 @@ var presentation
 var renderer
 var catalog
 var definition_cache
+
+
+func slot_machine_ritual_contract() -> Dictionary:
+	# Slot-owned declaration only: resolver authority and RNG remain in the
+	# shipped machine state/resolver. No shared executable ritual is imported.
+	var action_ids := ["slot_bet", "spin", "nudge", "slot_auto_toggle", "launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt"]
+	var declarations: Array = []
+	for action_id in action_ids:
+		declarations.append({"action_id": action_id, "handler_id": "slot_machine_authority", "parameters": {}})
+	return {
+		"contract": SLOT_RITUAL_CONTRACT,
+		"ritual_id": SLOT_RITUAL_ID,
+		"initial_phase": "credits",
+		"ritual_phases": [
+			_slot_ritual_phase("credits", ["slot_bet", "spin", "slot_auto_toggle"], "commitment"),
+			_slot_ritual_phase("commitment", ["spin"], "activation"),
+			_slot_ritual_phase("activation", [], "outcome_staging"),
+			{"id": "outcome_staging", "entry_conditions": [], "permitted_actions": ["nudge"], "entry_operations": [], "transitions": [
+				{"id": "outcome_to_feature", "condition": {"kind": "public_state_equals", "key": "feature_active", "value": true}, "next_phase": "feature", "operations": []},
+				{"id": "outcome_to_payout", "condition": {"kind": "public_state_equals", "key": "feature_active", "value": false}, "next_phase": "payout_or_handpay", "operations": []},
+			], "terminal": false},
+			_slot_ritual_phase("feature", ["launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt"], "payout_or_handpay"),
+			_slot_ritual_phase("payout_or_handpay", [], "credits"),
+		],
+		"action_declarations": declarations,
+		"staged_commitment": {
+			"pending_collection": "pending_items", "working_collection": "working_items", "resolution_collection": "item_resolutions", "funds_authority": "slot_game_rules",
+			"actions": [{"id": "slot_bet", "effect": "correct_one_pending_amount"}, {"id": "spin", "effect": "authorize_pending_set"}],
+			"readable_totals": ["available_funds", "pending_total", "at_risk_total", "returned_stake", "payout", "net_change"],
+		},
+		"pointer_verbs": [
+			_slot_ritual_pointer("slot_button_press", "hold", "spin", "button_deck"),
+			_slot_ritual_pointer("slot_handle_pull", "drag", "spin", "handle_lane"),
+		],
+		"actors": [
+			{"id": "attendant_primary", "role": "attendant", "anchor": "attendant_station", "poses": ["absent", "approaching", "servicing"], "behavior_states": ["idle", "handpay", "security"], "initial_pose": "absent", "initial_behavior": "idle", "fact_reactions": []},
+			{"id": "neighbour_seats", "role": "neighbours", "anchor": "seat_rail", "poses": ["seated", "turning"], "behavior_states": ["idle", "playing", "reacting"], "initial_pose": "seated", "initial_behavior": "idle", "fact_reactions": []},
+		],
+		"scene_objects": [
+			_slot_ritual_object("cabinet_body", "cabinet", ["attract", "idle", "play", "feature", "lockup"], ["passive"]),
+			_slot_ritual_object("cabinet_reels", "reel_window", ["idle", "spinning", "stopped", "feature"], ["read_only"]),
+			_slot_ritual_object("cabinet_button_deck", "button_deck", ["ready", "pressed", "locked"], ["enabled", "locked"]),
+			_slot_ritual_object("cabinet_credit_meter", "credit_meter", ["ready", "committed", "paying"], ["read_only"]),
+			_slot_ritual_object("cabinet_tower_light", "tower_light", ["off", "service", "feature", "handpay", "security"], ["passive"]),
+			_slot_ritual_object("cabinet_money_path", "money_path", ["idle", "accepting", "paying"], ["enabled", "locked"]),
+		],
+		"energy": {"initial_tier": "quiet", "tiers": [
+			{"id": "quiet", "actor_operations": [{"target": "neighbour_seats", "behavior": "idle"}], "object_operations": [{"target": "cabinet_body", "state": "idle"}], "interaction_operations": [], "audio_cues": []},
+			{"id": "engaged", "actor_operations": [{"target": "neighbour_seats", "behavior": "playing"}], "object_operations": [{"target": "cabinet_button_deck", "state": "pressed"}], "interaction_operations": [], "audio_cues": []},
+			{"id": "feature", "actor_operations": [{"target": "neighbour_seats", "behavior": "reacting"}], "object_operations": [{"target": "cabinet_tower_light", "state": "feature"}], "interaction_operations": [], "audio_cues": []},
+			{"id": "lockup", "actor_operations": [{"target": "attendant_primary", "behavior": "handpay"}], "object_operations": [{"target": "cabinet_tower_light", "state": "handpay"}], "interaction_operations": [{"target": "button_deck", "state": "locked"}], "audio_cues": []},
+		]},
+		"game_facts": [
+			{"fact_type": "machine.commitment_accepted", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"credits": "int"}},
+			{"fact_type": "machine.result_completed", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"coin_out": "int", "result_class": "string"}},
+			{"fact_type": "machine.handpay_required", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"credits": "int"}},
+		],
+		"ritual_persistence": {
+			"authoritative_serialized": ["machine_state", "selected_bet", "credits", "active_bonus", "result_receipts"],
+			"derived_projection": ["actors", "scene_objects", "energy", "hit_regions"],
+			"transient_presentation": ["pointer_path", "reel_interpolation", "pulse", "hover"],
+			"one_shot_receipted": ["coin_out_audio", "feature_entry", "room_reaction", "handpay_call"],
+			"save_boundaries": ["credits", "commitment", "activation", "outcome_staging", "feature", "payout_or_handpay"],
+			"restore_policy": "restore_legal_phase_without_replay",
+		},
+		"handler_registry": [{
+			"handler_id": "slot_machine_authority", "version": 1, "accepted_actions": action_ids, "accepted_operations": [], "inputs": {"phase_id": "string"}, "outputs": {"public_projection": "qualified_id"},
+			"authority": "sealed_host_slot_game_rules", "persisted_state": ["machine_state", "result_receipts"], "transient_state": ["pointer_path", "reel_interpolation"],
+			"rng": {"owner": "slot_game_rules", "stream": "existing_action_stream", "consumption": "accepted_authoritative_action_only"},
+			"emitted_facts": ["machine.commitment_accepted", "machine.result_completed", "machine.handpay_required"], "rejection": "side_effect_free",
+		}],
+		"declared_targets": {"anchors": ["cabinet", "attendant_station", "seat_rail", "reel_window", "credit_meter", "tower_light", "money_path"], "regions": ["button_deck", "handle_lane"], "sealed_host_targets": []},
+	}
+
+
+func _slot_ritual_phase(phase_id: String, permitted_actions: Array, next_phase: String) -> Dictionary:
+	return {"id": phase_id, "entry_conditions": [], "permitted_actions": permitted_actions, "entry_operations": [], "transitions": [{"id": "%s_to_%s" % [phase_id, next_phase], "condition": {"kind": "public_state_equals", "key": "phase_complete", "value": true}, "next_phase": next_phase, "operations": []}], "terminal": false}
+
+
+func _slot_ritual_pointer(pointer_id: String, verb: String, action_id: String, region: String) -> Dictionary:
+	return {"id": pointer_id, "verb": verb, "source_region": region, "target_regions": [region], "bounds": {"space": "design", "min_distance": 0, "max_distance": 220}, "phases": ["credits", "commitment"], "accepted_action": action_id, "rejection": "restore_focus", "rejection_effects": [], "equivalents": {"keyboard": {"action_id": action_id, "target_selection": "focus"}, "controller": {"action_id": action_id, "target_selection": "focus"}, "reduced_motion": {"action_id": action_id, "target_selection": "focus", "staging": "short"}}}
+
+
+func _slot_ritual_object(object_id: String, anchor: String, appearances: Array, functions: Array) -> Dictionary:
+	return {"id": object_id, "anchor": anchor, "bounds": {"space": "design", "x": 80, "y": 50, "w": 740, "h": 330}, "z_layer": 10, "visual_states": appearances, "functional_states": functions, "initial_visual_state": str(appearances[0]), "initial_functional_state": str(functions[0]), "hit_regions": [], "text_safety_regions": []}
 
 
 func setup(p_definition: Dictionary, p_library: ContentLibrary = null) -> void:

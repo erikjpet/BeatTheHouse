@@ -76,6 +76,8 @@ const HOLDOUT_ITEM_EFFECT_KEYS := [
 ]
 const STRATEGY_SAMPLE_CAP := 1024
 const STRATEGY_CACHE_LIMIT := 128
+const VIDEO_POKER_RITUAL_CONTRACT := "game_ritual/1"
+const VIDEO_POKER_RITUAL_ID := "video_poker.machine_session"
 
 const COIN_DENOMINATION_SETS := [
 	[
@@ -300,6 +302,96 @@ const SUIT_WORD := {0: "Spades", 1: "Hearts", 2: "Clubs", 3: "Diamonds"}
 var machine_renderer := VideoPokerRendererScript.new()
 var _strategy_hold_cache: Dictionary = {}
 var _strategy_hold_cache_order: Array[String] = []
+
+
+func video_poker_ritual_contract() -> Dictionary:
+	# Consumer declaration only. Cards, evaluation, paytable, credits, detection,
+	# and RNG stay exclusively in this game's existing authority.
+	var action_ids := ["video_poker_bet_down", "video_poker_bet_one", "video_poker_bet_max", "video_poker_denom", "video_poker_deal", "video_poker_hold", "video_poker_draw", "video_poker_mark", "video_poker_palm", "video_poker_double", "video_poker_double_pick", "video_poker_collect"]
+	var declarations: Array = []
+	for action_id in action_ids:
+		var parameters := {"index": "int"} if action_id in ["video_poker_hold", "video_poker_palm", "video_poker_double_pick"] else {}
+		declarations.append({"action_id": action_id, "handler_id": "video_poker_authority", "parameters": parameters})
+	return {
+		"contract": VIDEO_POKER_RITUAL_CONTRACT,
+		"ritual_id": VIDEO_POKER_RITUAL_ID,
+		"initial_phase": "credits",
+		"ritual_phases": [
+			_video_poker_ritual_phase("credits", ["video_poker_bet_down", "video_poker_bet_one", "video_poker_bet_max", "video_poker_denom", "video_poker_deal"], "commitment"),
+			_video_poker_ritual_phase("commitment", ["video_poker_deal"], "initial_deal"),
+			_video_poker_ritual_phase("initial_deal", [], "hold_selection"),
+			_video_poker_ritual_phase("hold_selection", ["video_poker_hold", "video_poker_mark", "video_poker_palm", "video_poker_draw"], "draw"),
+			_video_poker_ritual_phase("draw", ["video_poker_draw"], "result_read"),
+			{"id": "result_read", "entry_conditions": [], "permitted_actions": ["video_poker_double", "video_poker_collect"], "entry_operations": [], "transitions": [
+				{"id": "result_to_double", "condition": {"kind": "public_state_equals", "key": "double_up_offered", "value": true}, "next_phase": "double_up", "operations": []},
+				{"id": "result_to_payout", "condition": {"kind": "public_state_equals", "key": "double_up_offered", "value": false}, "next_phase": "payout_or_handpay", "operations": []},
+			], "terminal": false},
+			_video_poker_ritual_phase("double_up", ["video_poker_double_pick"], "payout_or_handpay"),
+			_video_poker_ritual_phase("payout_or_handpay", ["video_poker_collect"], "credits"),
+		],
+		"action_declarations": declarations,
+		"staged_commitment": {
+			"pending_collection": "pending_items", "working_collection": "working_items", "resolution_collection": "item_resolutions", "funds_authority": "video_poker_game_rules",
+			"actions": [{"id": "video_poker_bet_one", "effect": "add_or_increment_one"}, {"id": "video_poker_bet_down", "effect": "remove_one_pending_item"}, {"id": "video_poker_bet_max", "effect": "correct_one_pending_amount"}, {"id": "video_poker_deal", "effect": "authorize_pending_set"}],
+			"readable_totals": ["available_funds", "pending_total", "at_risk_total", "returned_stake", "payout", "net_change"],
+		},
+		"pointer_verbs": [
+			_video_poker_pointer("video_poker_deal_press", "hold", "video_poker_deal", "button_deck"),
+			_video_poker_pointer("video_poker_card_hold", "place", "video_poker_hold", "card_regions"),
+			_video_poker_pointer("video_poker_draw_press", "hold", "video_poker_draw", "button_deck"),
+		],
+		"actors": [
+			{"id": "attendant_primary", "role": "attendant", "anchor": "attendant_station", "poses": ["absent", "approaching", "servicing"], "behavior_states": ["idle", "handpay", "security"], "initial_pose": "absent", "initial_behavior": "idle", "fact_reactions": []},
+			{"id": "neighbour_seats", "role": "neighbours", "anchor": "seat_rail", "poses": ["seated", "turning"], "behavior_states": ["idle", "playing", "reacting"], "initial_pose": "seated", "initial_behavior": "idle", "fact_reactions": []},
+		],
+		"scene_objects": [
+			_video_poker_ritual_object("cabinet_body", "cabinet", ["attract", "idle", "play", "lockup"], ["passive"]),
+			_video_poker_ritual_object("cabinet_playfield", "playfield", ["deal", "holds", "draw", "result"], ["read_only"]),
+			_video_poker_ritual_object("cabinet_paytable", "paytable", ["idle", "highlighted"], ["read_only"]),
+			_video_poker_ritual_object("cabinet_credit_meter", "credit_meter", ["ready", "committed", "paying"], ["read_only"]),
+			_video_poker_ritual_object("cabinet_tower_light", "tower_light", ["off", "handpay", "security"], ["passive"]),
+			_video_poker_ritual_object("cabinet_money_path", "money_path", ["idle", "accepting", "paying"], ["enabled", "locked"]),
+			_video_poker_ritual_object("card_0_to_4", "card_regions", ["dealt", "held", "replaced", "final"], ["selectable", "locked"]),
+		],
+		"energy": {"initial_tier": "quiet", "tiers": [
+			{"id": "quiet", "actor_operations": [{"target": "neighbour_seats", "behavior": "idle"}], "object_operations": [{"target": "cabinet_body", "state": "idle"}], "interaction_operations": [], "audio_cues": []},
+			{"id": "engaged", "actor_operations": [{"target": "neighbour_seats", "behavior": "playing"}], "object_operations": [{"target": "cabinet_playfield", "state": "holds"}], "interaction_operations": [], "audio_cues": []},
+			{"id": "big_win", "actor_operations": [{"target": "neighbour_seats", "behavior": "reacting"}], "object_operations": [{"target": "cabinet_tower_light", "state": "handpay"}], "interaction_operations": [], "audio_cues": []},
+			{"id": "lockup", "actor_operations": [{"target": "attendant_primary", "behavior": "handpay"}], "object_operations": [{"target": "cabinet_tower_light", "state": "handpay"}], "interaction_operations": [{"target": "button_deck", "state": "locked"}], "audio_cues": []},
+		]},
+		"game_facts": [
+			{"fact_type": "video_poker.initial_deal_completed", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"card_count": "int"}},
+			{"fact_type": "video_poker.holds_changed", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"held_indices": "int_array"}},
+			{"fact_type": "video_poker.result_completed", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"pay_label": "string", "credits": "int", "drawn_indices": "int_array"}},
+		],
+		"ritual_persistence": {
+			"authoritative_serialized": ["machine_state", "wager", "holds", "result", "result_receipts"],
+			"derived_projection": ["actors", "scene_objects", "energy", "hit_regions", "paytable_highlight"],
+			"transient_presentation": ["pointer_path", "card_flip", "draw_cascade", "hover"],
+			"one_shot_receipted": ["deal_audio", "draw_audio", "win_audio", "room_reaction", "handpay_call"],
+			"save_boundaries": ["credits", "commitment", "initial_deal", "hold_selection", "draw", "result_read", "double_up", "payout_or_handpay"],
+			"restore_policy": "restore_legal_phase_without_replay",
+		},
+		"handler_registry": [{
+			"handler_id": "video_poker_authority", "version": 1, "accepted_actions": action_ids, "accepted_operations": [], "inputs": {"phase_id": "string"}, "outputs": {"public_projection": "qualified_id"},
+			"authority": "sealed_host_video_poker_game_rules", "persisted_state": ["machine_state", "result_receipts"], "transient_state": ["pointer_path", "card_flip", "draw_cascade"],
+			"rng": {"owner": "video_poker_game_rules", "stream": "existing_action_stream", "consumption": "accepted_authoritative_action_only"},
+			"emitted_facts": ["video_poker.initial_deal_completed", "video_poker.holds_changed", "video_poker.result_completed"], "rejection": "side_effect_free",
+		}],
+		"declared_targets": {"anchors": ["cabinet", "attendant_station", "seat_rail", "playfield", "paytable", "credit_meter", "tower_light", "money_path"], "regions": ["button_deck", "card_regions"], "sealed_host_targets": []},
+	}
+
+
+func _video_poker_ritual_phase(phase_id: String, permitted_actions: Array, next_phase: String) -> Dictionary:
+	return {"id": phase_id, "entry_conditions": [], "permitted_actions": permitted_actions, "entry_operations": [], "transitions": [{"id": "%s_to_%s" % [phase_id, next_phase], "condition": {"kind": "public_state_equals", "key": "phase_complete", "value": true}, "next_phase": next_phase, "operations": []}], "terminal": false}
+
+
+func _video_poker_pointer(pointer_id: String, verb: String, action_id: String, region: String) -> Dictionary:
+	return {"id": pointer_id, "verb": verb, "source_region": region, "target_regions": [region], "bounds": {"space": "design", "min_distance": 0, "max_distance": 220}, "phases": ["credits", "hold_selection", "draw"], "accepted_action": action_id, "rejection": "restore_focus", "rejection_effects": [], "equivalents": {"keyboard": {"action_id": action_id, "target_selection": "focus"}, "controller": {"action_id": action_id, "target_selection": "focus"}, "reduced_motion": {"action_id": action_id, "target_selection": "focus", "staging": "short"}}}
+
+
+func _video_poker_ritual_object(object_id: String, anchor: String, appearances: Array, functions: Array) -> Dictionary:
+	return {"id": object_id, "anchor": anchor, "bounds": {"space": "design", "x": 80, "y": 50, "w": 740, "h": 330}, "z_layer": 10, "visual_states": appearances, "functional_states": functions, "initial_visual_state": str(appearances[0]), "initial_functional_state": str(functions[0]), "hit_regions": [], "text_safety_regions": []}
 
 
 # Creates the entry message for the cabinet.
