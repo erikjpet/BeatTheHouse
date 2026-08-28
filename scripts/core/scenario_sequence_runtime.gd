@@ -928,10 +928,11 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 			errors.append("scenario command cannot spoof another owner namespace")
 		else:
 			var addressed_identity := OperationRegistryScript.identity(owner_namespace, stable_object_id)
-			var availability := _dict(context.get("host_interaction_availability", {}))
-			descriptor["interaction_enabled"] = availability.has(addressed_identity) \
-				and typeof(availability.get(addressed_identity)) == TYPE_BOOL \
-				and bool(availability.get(addressed_identity, false))
+			# Presentation availability is a one-way proposal. It may suppress a
+			# sealed host interaction, but caller true can never create or broaden
+			# authority beyond the base records captured in this sequence state.
+			descriptor["interaction_enabled"] = _sealed_host_interaction_enabled(state, owner_namespace, stable_object_id) \
+				and _availability_proposal_allows(context, addressed_identity)
 	if not bool(descriptor.get("identity_present", false)):
 		errors.append("scenario command targets a missing interaction identity")
 	else:
@@ -1734,17 +1735,42 @@ static func _command_descriptor(state: Dictionary, definition: Dictionary, owner
 		var action := _dict(action_value)
 		if str(action.get("id", "")) == command_id:
 			if not _authored_action_origin_matches(state, definition, owner_namespace, stable_object_id, action):
-				return {"identity_present": true, "interaction_enabled": _interaction_enabled_for_command(interaction, context), "action_present": false, "action": {}}
-			return {"identity_present": true, "interaction_enabled": _interaction_enabled_for_command(interaction, context), "action_present": true, "action": action, "action_origin_owner_namespace": str(action.get("action_origin_owner_namespace", owner_namespace)), "action_origin_stable_object_id": str(action.get("action_origin_stable_object_id", stable_object_id)), "action_origin_receipt_key": str(action.get("action_origin_receipt_key", "")), "action_origin_boundary_id": str(action.get("action_origin_boundary_id", "")), "action_origin_fingerprint": str(action.get("action_origin_fingerprint", ""))}
-	return {"identity_present": true, "interaction_enabled": _interaction_enabled_for_command(interaction, context), "action_present": false, "action": {}}
+				return {"identity_present": true, "interaction_enabled": _interaction_enabled_for_command(state, interaction, context), "action_present": false, "action": {}}
+			return {"identity_present": true, "interaction_enabled": _interaction_enabled_for_command(state, interaction, context), "action_present": true, "action": action, "action_origin_owner_namespace": str(action.get("action_origin_owner_namespace", owner_namespace)), "action_origin_stable_object_id": str(action.get("action_origin_stable_object_id", stable_object_id)), "action_origin_receipt_key": str(action.get("action_origin_receipt_key", "")), "action_origin_boundary_id": str(action.get("action_origin_boundary_id", "")), "action_origin_fingerprint": str(action.get("action_origin_fingerprint", ""))}
+	return {"identity_present": true, "interaction_enabled": _interaction_enabled_for_command(state, interaction, context), "action_present": false, "action": {}}
 
 
-static func _interaction_enabled_for_command(interaction: Dictionary, context: Dictionary) -> bool:
+static func _interaction_enabled_for_command(state: Dictionary, interaction: Dictionary, context: Dictionary) -> bool:
 	if str(interaction.get("mode", "add")) == "augment":
-		var target_identity := OperationRegistryScript.identity(str(interaction.get("target_owner_namespace", "")), str(interaction.get("target_stable_object_id", "")))
-		var availability := _dict(context.get("host_interaction_availability", {}))
-		return availability.has(target_identity) and typeof(availability.get(target_identity)) == TYPE_BOOL and bool(availability.get(target_identity, false))
+		var target_owner := str(interaction.get("target_owner_namespace", ""))
+		var target_stable_id := str(interaction.get("target_stable_object_id", ""))
+		var target_identity := OperationRegistryScript.identity(target_owner, target_stable_id)
+		return _sealed_host_interaction_enabled(state, target_owner, target_stable_id) \
+			and _availability_proposal_allows(context, target_identity)
 	return bool(interaction.get("enabled", false))
+
+
+static func _sealed_host_interaction_enabled(state: Dictionary, owner_namespace: String, stable_object_id: String) -> bool:
+	var expected_identity := OperationRegistryScript.identity(owner_namespace, stable_object_id)
+	if OperationRegistryScript.parse_owned_identity(expected_identity).is_empty():
+		return false
+	var matches: Array = []
+	var semantic := _dict(state.get("semantic_state", {}))
+	for record_value in _array(semantic.get("base_interactions", [])):
+		var record := _dict(record_value)
+		if OperationRegistryScript.identity_from(record) == expected_identity:
+			matches.append(record)
+	if matches.size() != 1:
+		return false
+	var authority := _dict(matches[0])
+	return bool(authority.get("enabled", false)) and bool(authority.get("interactive", true))
+
+
+static func _availability_proposal_allows(context: Dictionary, identity: String) -> bool:
+	var proposals := _dict(context.get("host_interaction_availability", {}))
+	if not proposals.has(identity):
+		return true
+	return typeof(proposals.get(identity)) == TYPE_BOOL and bool(proposals.get(identity, false))
 
 
 static func _queue_feedback_transition(state: Dictionary, message: String, trigger: Dictionary) -> Dictionary:

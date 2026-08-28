@@ -33,6 +33,16 @@ const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
 const CharacterChainModelScript := preload("res://scripts/core/character_chain_model.gd")
 
+const ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1 := "ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1"
+const SCENARIO_DERIVED_NONCAUSAL_ENVIRONMENT_FIELDS := [
+	"scenario_sequence_projection",
+	"scenario_sequence_lifecycle_errors",
+	"scenario_layout_context",
+	"scenario_layout_audit",
+	"scenario_render_snapshot",
+	"scenario_restore_pending_trusted_rebuild",
+]
+
 const DEFAULT_BANKROLL := 100
 const LOCAL_RISK_DECAY_BY_DISTANCE := {
 	"same": 0,
@@ -1812,27 +1822,29 @@ func scenario_prepare_semantic_finalization() -> Dictionary:
 	return {"ok": true, "errors": []}
 
 
-func scenario_finalize_installed_environment(library: ContentLibrary) -> Dictionary:
+func scenario_finalize_installed_environment(library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
 	var definition := scenario_sequence_definition()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition):
 		return {"ok": true, "inactive": true, "errors": []}
-	var preparation := scenario_prepare_semantic_finalization()
-	if not bool(preparation.get("ok", false)):
-		return preparation
-	var produced := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(current_environment, library)
-	if not bool(produced.get("ok", false)):
-		return _scenario_semantic_finalization_failure(_copy_array(produced.get("errors", [])), false)
-	return scenario_finalize_base_semantics(_copy_array(produced.get("records", [])), library)
+	return scenario_finalize_base_semantics([], library, layout_context)
 
 
-func scenario_finalize_base_semantics(interactable_records: Array, library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
+func scenario_finalize_base_semantics(_interactable_records: Array, library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
 	_ensure_scenario_host_public_context()
 	var definition := scenario_sequence_definition()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition): return {"ok": true, "inactive": true, "errors": []}
 	var refresh_attempt := bool(current_environment.get("scenario_semantic_ready", false))
 	if library == null: return _scenario_semantic_finalization_failure(["Scenario semantic finalization requires ContentLibrary."], refresh_attempt)
+	# `interactable_records` is retained as a compatibility proposal input only.
+	# It can restrict presentation after projection, but it never authors the
+	# sealed base interaction inventory. Authority is reproduced independently
+	# from the installed environment and trusted ContentLibrary catalog.
+	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(current_environment, library)
+	if not bool(authoritative.get("ok", false)):
+		return _scenario_semantic_finalization_failure(_copy_array(authoritative.get("errors", [])), refresh_attempt)
+	var trusted_records := _copy_array(authoritative.get("records", []))
 	var producer_context := _scenario_base_producer_context()
-	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(interactable_records, current_environment, library, producer_context)
+	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(trusted_records, current_environment, library, producer_context)
 	if not bool(stamped.get("ok", false)): return _scenario_semantic_finalization_failure(_copy_array(stamped.get("errors", [])), refresh_attempt)
 	var stamped_records := _copy_array(stamped.get("records", []))
 	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(stamped_records)
@@ -1898,6 +1910,7 @@ func scenario_finalize_base_semantics(interactable_records: Array, library: Cont
 		refresh_candidate["scenario_semantic_inventory_version"] = next_version
 		refresh_candidate["scenario_semantic_digest"] = next_digest
 		refresh_candidate["scenario_semantic_ready"] = true
+		refresh_candidate["scenario_restore_contract"] = ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1
 		refresh_candidate["scenario_event_choices"] = EnvironmentSemanticInventoryScript.event_choice_index(_copy_array(refresh_candidate.get("event_ids", [])), library)
 		refresh_candidate["scenario_layout_base_records"] = stamped_records.duplicate(true)
 		refresh_candidate["scenario_layout_context"] = layout_context.duplicate(true)
@@ -1907,9 +1920,10 @@ func scenario_finalize_base_semantics(interactable_records: Array, library: Cont
 		var refresh_layout := _resolve_scenario_layout_candidate(refresh_candidate, stamped_records, definition, layout_context)
 		if not bool(refresh_layout.get("ok", false)):
 			return refresh_layout
-		for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_event_choices", "scenario_sequence_state", "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
+		for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_restore_contract", "scenario_event_choices", "scenario_sequence_state", "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
 			current_environment[key] = refresh_candidate.get(key).duplicate(true) if typeof(refresh_candidate.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else refresh_candidate.get(key)
 		current_environment.erase("scenario_sequence_lifecycle_errors")
+		current_environment.erase("scenario_restore_pending_trusted_rebuild")
 		if not definition_id.is_empty(): _scenario_sequence_definition_cache[definition_id] = definition.duplicate(true)
 		return _finalized_scenario_layout_result(true, next_digest, refreshed_state, stamped_records, refresh_layout)
 	# Build the proof and perform initialization/reentry against a detached
@@ -1925,6 +1939,7 @@ func scenario_finalize_base_semantics(interactable_records: Array, library: Cont
 	candidate["scenario_semantic_inventory_version"] = next_version
 	candidate["scenario_semantic_digest"] = next_digest
 	candidate["scenario_semantic_ready"] = true
+	candidate["scenario_restore_contract"] = ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1
 	candidate["scenario_event_choices"] = EnvironmentSemanticInventoryScript.event_choice_index(_copy_array(candidate.get("event_ids", [])), library)
 	candidate["scenario_layout_base_records"] = stamped_records.duplicate(true)
 	candidate["scenario_layout_context"] = layout_context.duplicate(true)
@@ -1946,10 +1961,11 @@ func scenario_finalize_base_semantics(interactable_records: Array, library: Cont
 		"warnings": _copy_array(reentry.get("warnings", [])),
 		"errors": [],
 	}
-	for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_event_choices", "scenario_sequence_migration", "scenario_sequence_state", "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
+	for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_restore_contract", "scenario_event_choices", "scenario_sequence_migration", "scenario_sequence_state", "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
 		current_environment[key] = candidate.get(key).duplicate(true) if typeof(candidate.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else candidate.get(key)
 	current_environment.erase("scenario_sequence_pending_visit_id")
 	current_environment.erase("scenario_sequence_lifecycle_errors")
+	current_environment.erase("scenario_restore_pending_trusted_rebuild")
 	if not definition_id.is_empty(): _scenario_sequence_definition_cache[definition_id] = definition.duplicate(true)
 	return _finalized_scenario_layout_result(false, next_digest, _copy_dict(reentry.get("state", {})), stamped_records, candidate_layout)
 
@@ -2179,6 +2195,8 @@ func scenario_reject_layout_projection(errors_value: Array, layout_audit: Dictio
 
 
 func _scenario_semantic_ready() -> bool:
+	if bool(current_environment.get("scenario_restore_pending_trusted_rebuild", false)): return false
+	if str(current_environment.get("scenario_restore_contract", "")) != ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1: return false
 	if not bool(current_environment.get("scenario_semantic_ready", false)): return false
 	var inventory := _copy_dict(current_environment.get("scenario_semantic_inventory", {}))
 	var layout_audit := _copy_dict(current_environment.get("scenario_layout_audit", {}))
@@ -13422,6 +13440,7 @@ func from_dict(data: Dictionary) -> void:
 	pending_drunk_absorption = _normalize_pending_drunk_absorption(_copy_array(data.get("pending_drunk_absorption", [])))
 	drunk_distortion_suppression_turns = maxi(0, int(data.get("drunk_distortion_suppression_turns", 0)))
 	current_environment = _normalize_environment(_copy_dict(data.get("current_environment", {})))
+	_mark_scenario_restore_pending_trusted_rebuild(current_environment)
 	scenario_host_transaction_ledger = _copy_dict(data.get("scenario_host_transaction_ledger", {}))
 	# Import current-room machine ownership from pre-portable saves, then make
 	# the portable record authoritative for the restored surface.
@@ -13817,21 +13836,20 @@ static func _environment_for_persistent_storage(environment: Dictionary, deep_co
 
 
 static func _strip_scenario_semantic_ephemera(environment: Dictionary) -> void:
-	for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_event_choices", "scenario_sequence_projection", "scenario_sequence_lifecycle_errors", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot"]:
+	# ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1 persists every causal and
+	# authority-bearing field exactly. Only named presentation projections and
+	# caches are rebuilt from those trusted bytes after restore.
+	for key in SCENARIO_DERIVED_NONCAUSAL_ENVIRONMENT_FIELDS:
 		environment.erase(key)
 	var state := _copy_dict(environment.get("scenario_sequence_state", {}))
 	if not state.is_empty():
-		var semantic := _copy_dict(state.get("semantic_state", {}))
-		for key in ["target_inventory", "declared_targets", "base_interactions", "event_choices", "scene_objects", "interactions", "actors", "services", "games", "routes", "transition_queue", "tombstones"]:
-			semantic.erase(key)
-		state["semantic_state"] = semantic
-		state.erase("resolved_branches")
-		state.erase("resolved_outcomes")
 		environment["scenario_sequence_state"] = state
+		environment["scenario_restore_contract"] = ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1
 	if environment.has("scenario_sequence_state"):
 		environment["scenario_sequence_pending_visit_id"] = str(environment.get("environment_visit_id", environment.get("scenario_sequence_pending_visit_id", "")))
 	else:
 		environment.erase("scenario_sequence_pending_visit_id")
+		environment.erase("scenario_restore_contract")
 	var layer_states := _copy_dict(environment.get("layer_states", {}))
 	if not layer_states.is_empty():
 		for layer_id_value in layer_states.keys():
@@ -13840,6 +13858,32 @@ static func _strip_scenario_semantic_ephemera(environment: Dictionary) -> void:
 			_strip_scenario_semantic_ephemera(layer_body)
 			layer_states[layer_id_value] = layer_body
 		environment["layer_states"] = layer_states
+
+
+static func _mark_scenario_restore_pending_trusted_rebuild(environment: Dictionary) -> void:
+	if not _copy_dict(environment.get("scenario_sequence_state", {})).is_empty():
+		environment["scenario_restore_pending_trusted_rebuild"] = true
+	var layer_states := _copy_dict(environment.get("layer_states", {}))
+	for layer_id_value in layer_states.keys():
+		var layer_body := _copy_dict(layer_states.get(layer_id_value, {}))
+		_mark_scenario_restore_pending_trusted_rebuild(layer_body)
+		layer_states[layer_id_value] = layer_body
+	if not layer_states.is_empty():
+		environment["layer_states"] = layer_states
+
+
+static func scenario_restore_equivalence_snapshot(environment: Dictionary) -> Dictionary:
+	var snapshot := environment.duplicate(true)
+	_strip_scenario_semantic_ephemera(snapshot)
+	return {
+		"contract": ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1,
+		"causal_environment": snapshot,
+		"derived_noncausal_fields": SCENARIO_DERIVED_NONCAUSAL_ENVIRONMENT_FIELDS.duplicate(),
+	}
+
+
+static func scenario_restore_equivalent(before: Dictionary, after: Dictionary) -> bool:
+	return JSON.stringify(scenario_restore_equivalence_snapshot(before)) == JSON.stringify(scenario_restore_equivalence_snapshot(after))
 
 
 static func _world_map_for_save_snapshot(map_data: Dictionary) -> Dictionary:
