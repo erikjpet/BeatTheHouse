@@ -22,8 +22,6 @@ var leak_successes: int = 0
 var pending_leaks: Array = []
 var active_leak: Dictionary = {}
 var collection_state: Dictionary = {}
-var action_receipts: Dictionary = {}
-var action_sequence: int = 0
 var draw_occasions: Dictionary = {}
 var bookmaker_aftermath: Dictionary = {}
 var config: Dictionary = {}
@@ -55,8 +53,6 @@ func reset(p_seed_value: int, source_config: Dictionary = {}) -> void:
 	pending_leaks = []
 	active_leak = {}
 	collection_state = {}
-	action_receipts = {}
-	action_sequence = 0
 	draw_occasions = {}
 	bookmaker_aftermath = {}
 	config = source_config.duplicate(true) if not source_config.is_empty() else tuning().duplicate(true)
@@ -77,8 +73,6 @@ func snapshot() -> Dictionary:
 		"pending_leaks": pending_leaks.duplicate(true),
 		"active_leak": active_leak.duplicate(true),
 		"collection_state": collection_state.duplicate(true),
-		"action_receipts": action_receipts.duplicate(true),
-		"action_sequence": action_sequence,
 		"draw_occasions": draw_occasions.duplicate(true),
 		"bookmaker_aftermath": bookmaker_aftermath.duplicate(true),
 	}
@@ -102,13 +96,13 @@ func restore(source: Dictionary, p_seed_value: int, source_config: Dictionary = 
 	pending_leaks = _dictionary_array(source.get("pending_leaks", []))
 	active_leak = _dictionary(source.get("active_leak", {})).duplicate(true)
 	collection_state = _dictionary(source.get("collection_state", {})).duplicate(true)
-	action_receipts = _dictionary(source.get("action_receipts", {})).duplicate(true)
-	action_sequence = maxi(0, int(source.get("action_sequence", action_receipts.size())))
-	draw_occasions = _dictionary(source.get("draw_occasions", {})).duplicate(true)
-	bookmaker_aftermath = _dictionary(source.get("bookmaker_aftermath", {})).duplicate(true)
-	if not _receipt_chain_valid(action_receipts, action_sequence):
+	# No trusted host command/transaction journal exists on this base. Reject all
+	# model-minted or imported receipt chains, including coherently rehashed ones.
+	if not _dictionary(source.get("action_receipts", {})).is_empty() or int(source.get("action_sequence", 0)) != 0:
 		reset(p_seed_value, source_config)
 		return false
+	draw_occasions = _dictionary(source.get("draw_occasions", {})).duplicate(true)
+	bookmaker_aftermath = _dictionary(source.get("bookmaker_aftermath", {})).duplicate(true)
 	return true
 
 
@@ -252,23 +246,41 @@ func public_aftermath(venue_id: String = "") -> Variant:
 	return result
 
 
-# Model-owned physical action seam. Receipt replay returns the original result;
-# a reused key with different content is rejected without mutation.
+# This base has no genuinely host-rooted command or transaction record that the
+# model can verify. Depth actions are therefore explicit proposals only. They
+# never mutate Numbers authority and never mint a second receipt authority.
 func apply_action(receipt_key: String, action: String, context: Dictionary) -> Dictionary:
-	var clean_key := receipt_key.strip_edges()
 	var clean_action := action.strip_edges().to_lower()
-	var envelope := {"action": clean_action, "context": _canonical_value(context)}
-	var envelope_fingerprint := _fingerprint(envelope)
-	var existing := _dictionary(action_receipts.get(clean_key, {}))
-	if not existing.is_empty():
-		return {"ok": true, "replayed": true, "receipt_key": clean_key} if str(existing.get("envelope_fingerprint", "")) == envelope_fingerprint else {"ok": false, "reason": "receipt_conflict"}
-	if clean_key.is_empty():
-		return {"ok": false, "reason": "receipt_required"}
-	var result := _apply_depth_action(clean_action, context)
-	if not bool(result.get("ok", false)):
-		return result
-	_record_depth_receipt(clean_key, clean_action, envelope_fingerprint, result)
-	return result.duplicate(true)
+	if clean_action in ["draw_present", "draw_absent"] and action_index >= post_action(maxi(0, int(context.get("day", day_at(action_index))))):
+		return {"ok": false, "proposed": false, "reason": "attendance_closed"}
+	return {
+		"ok": false,
+		"proposed": true,
+		"reason": "host_authority_unavailable",
+		"proposal": {"proposal_id": receipt_key.strip_edges(), "action": clean_action, "context": context.duplicate(true), "authoritative": false, "requires": ["host_presence", "host_proximity", "host_command_or_transaction"]},
+	}
+
+
+func begin_action_proposal(sequence_kind: String, context: Dictionary = {}) -> Dictionary:
+	var verbs: Array = []
+	match sequence_kind.strip_edges().to_lower():
+		"place_slip": verbs = ["approach_bookmaker", "choose_number", "choose_money", "write_slip", "hand_slip"]
+		"collect_payday": verbs = ["approach_bookmaker", "present_winning_slip", "witness_verification", "receive_payday"]
+		"solo_past_post": verbs = ["learn_posted_handle", "travel_to_open_book", "choose_number", "choose_money", "write_slip", "hand_slip", "leave_unseen"]
+		_: return {}
+	return {"schema_version": DEPTH_SCHEMA_VERSION, "kind": sequence_kind.strip_edges().to_lower(), "step_index": 0, "verbs": verbs, "context": context.duplicate(true), "status": "proposed", "authoritative": false, "requires": ["host_presence", "host_proximity", "host_command_or_transaction"]}
+
+
+func advance_action_proposal(proposal_value: Variant, verb: String, evidence_claim: Dictionary = {}) -> Dictionary:
+	if typeof(proposal_value) != TYPE_DICTIONARY: return {}
+	var proposal: Dictionary = (proposal_value as Dictionary).duplicate(true)
+	var verbs: Array = proposal.get("verbs", []) if typeof(proposal.get("verbs", [])) == TYPE_ARRAY else []
+	var index := int(proposal.get("step_index", 0))
+	if str(proposal.get("status", "")) != "proposed" or index < 0 or index >= verbs.size() or str(verbs[index]) != verb.strip_edges(): return proposal
+	proposal["step_index"] = index + 1
+	proposal["last_evidence_claim"] = evidence_claim.duplicate(true)
+	proposal["status"] = "ready_for_host_commit" if index + 1 == verbs.size() else "proposed"
+	return proposal
 
 
 func buy_slip(venue_id: String, digits_value: Variant, stake: int, play_type: String, known_number: String = "") -> Dictionary:
@@ -575,110 +587,9 @@ func collection_next_node(visited_stop_ids: Array) -> String:
 
 
 func _apply_depth_action(action: String, context: Dictionary) -> Dictionary:
-	if action in ["bookmaker_busy", "bookmaker_remember"]:
-		var venue_id := str(context.get("venue_id", "")).strip_edges()
-		if venue_definition(venue_id).is_empty(): return {"ok": false, "reason": "unknown_bookmaker"}
-		var memory := _dictionary(bookmaker_aftermath.get(venue_id, {})).duplicate(true)
-		if action == "bookmaker_busy":
-			memory["busy"] = true
-		else:
-			var memory_id := str(context.get("memory_id", "")).strip_edges()
-			if memory_id.is_empty(): return {"ok": false, "reason": "memory_required"}
-			memory[memory_id] = true if memory_id != "visit_count" else int(memory.get(memory_id, 0)) + 1
-		bookmaker_aftermath[venue_id] = memory
-		return {"ok": true, "bookmaker": bookmaker_state(venue_id)}
-	if action in ["fix_bribe_begin", "fix_bribe_resolve", "fix_camouflage_place", "fix_camouflage_commit"]:
-		if action == "fix_bribe_begin": return fix_begin_bribe()
-		if action == "fix_bribe_resolve": return fix_record_bribe(bool(context.get("success", false)), {"clean": bool(context.get("clean", false)), "fast": bool(context.get("fast", false))})
-		if action == "fix_camouflage_place":
-			if str(fix_state.get("status", "")) != "camouflage": return {"ok": false, "reason": "camouflage_not_ready"}
-			var venue_id := str(context.get("venue_id", "")).strip_edges()
-			var stake := int(context.get("stake", 0))
-			if venue_definition(venue_id).is_empty() or stake <= 0: return {"ok": false, "reason": "invalid_camouflage_slip"}
-			var staged := _dictionary(fix_state.get("staged_allocations", {})).duplicate(true)
-			staged[venue_id] = stake
-			fix_state["staged_allocations"] = staged
-			return {"ok": true, "venue_id": venue_id, "stake": stake}
-		var allocations := _dictionary(fix_state.get("staged_allocations", {})).duplicate(true)
-		var committed := fix_allocate(allocations)
-		if bool(committed.get("ok", false)): fix_state.erase("staged_allocations")
-		return committed
-	if action in ["draw_present", "draw_absent"]:
-		var day := maxi(0, int(context.get("day", day_at(action_index))))
-		if action_index < post_action(day):
-			return {"ok": false, "reason": "draw_not_posted"}
-		var venue_id := str(context.get("venue_id", "")).strip_edges()
-		if action == "draw_present" and venue_definition(venue_id).is_empty():
-			return {"ok": false, "reason": "bookmaker_place_required"}
-		var occasion := {
-			"schema_version": DEPTH_SCHEMA_VERSION,
-			"day": day,
-			"status": "witnessed" if action == "draw_present" else "missed",
-			"presence": "present" if action == "draw_present" else "absent",
-			"attendance": "present" if action == "draw_present" else "absent",
-			"venue_id": venue_id if action == "draw_present" else "",
-			"post_action": post_action(day),
-			"registered_action": action_index,
-			"resolved_action": post_action(day),
-		}
-		draw_occasions[str(day)] = occasion
-		return {"ok": true, "occasion": draw_occasion_status(day)}
-	if action in ["slip_show", "slip_hide", "slip_hand", "slip_move", "slip_lose", "slip_collect"]:
-		var slip_id := str(context.get("slip_id", "")).strip_edges()
-		var index := _slip_index(slip_id)
-		if index < 0:
-			return {"ok": false, "reason": "unknown_slip"}
-		var slip := _dictionary(slips[index])
-		var physical := _physical_slip_state(slip)
-		var requested_node := str(context.get("node_id", "")).strip_edges()
-		if requested_node.is_empty() or requested_node != str(physical.get("node_id", "")):
-			return {"ok": false, "reason": "slip_not_here"}
-		if action == "slip_show":
-			physical["visibility"] = "visible"
-			physical["state"] = "shown"
-		elif action == "slip_hide":
-			physical["visibility"] = "hidden"
-			physical["state"] = "hidden"
-		elif action == "slip_hand" or action == "slip_move":
-			var node_id := requested_node
-			var place_id := str(context.get("place_id", physical.get("place_id", ""))).strip_edges()
-			var holder_id := str(context.get("holder_id", "")).strip_edges()
-			if node_id.is_empty() or holder_id.is_empty():
-				return {"ok": false, "reason": "physical_destination_required"}
-			physical["node_id"] = node_id
-			physical["place_id"] = place_id
-			physical["holder_id"] = holder_id
-			physical["possession"] = "held"
-			physical["state"] = "handed"
-		elif action == "slip_lose":
-			if str(slip.get("status", "")) != "open":
-				return {"ok": false, "reason": "slip_not_open"}
-			slip["status"] = "lost"
-			physical["holder_id"] = ""
-			physical["possession"] = "lost"
-			physical["state"] = "lost"
-			physical["visibility"] = "hidden"
-			physical["place_id"] = str(context.get("place_id", physical.get("place_id", ""))).strip_edges()
-		elif action == "slip_collect":
-			if str(slip.get("status", "")) != "settled" or not bool(slip.get("won", false)) or int(slip.get("payout", 0)) <= 0:
-				return {"ok": false, "reason": "winning_settlement_required"}
-			var venue_id := str(slip.get("venue_id", ""))
-			if str(context.get("venue_id", venue_id)) != venue_id:
-				return {"ok": false, "reason": "wrong_bookmaker"}
-			slip["status"] = "collected"
-			slip["collected_action"] = action_index
-			physical["holder_id"] = "numbers_bookmaker_%s" % venue_id
-			physical["node_id"] = venue_id
-			physical["place_id"] = "%s::numbers_book" % venue_id
-			physical["possession"] = "redeemed"
-			physical["state"] = "collected"
-			_record_collection_aftermath(slip)
-		physical["last_action"] = action
-		physical["last_action_index"] = action_index
-		slip["physical_state"] = physical
-		slips[index] = slip
-		return {"ok": true, "slip": slip_public_state(slip_id)}
-	return {"ok": false, "reason": "unsupported_action"}
+	# Retained as a private compatibility symbol for callers compiled against the
+	# rejected candidate. It is permanently fail-closed and cannot mutate state.
+	return {"ok": false, "proposed": true, "reason": "host_authority_unavailable", "action": action, "context": context.duplicate(true)}
 
 
 func _resolve_draw_occasion(day: int, boundary: int) -> void:
@@ -688,53 +599,6 @@ func _resolve_draw_occasion(day: int, boundary: int) -> void:
 	occasion["status"] = "witnessed" if str(occasion.get("presence", "absent")) == "present" else "missed"
 	occasion["resolved_action"] = boundary
 	draw_occasions[str(day)] = occasion
-
-
-func _record_depth_receipt(receipt_key: String, action: String, envelope_fingerprint: String, _result: Dictionary) -> void:
-	action_sequence += 1
-	var previous := "0".repeat(64)
-	for receipt_value in action_receipts.values():
-		var receipt := _dictionary(receipt_value)
-		if int(receipt.get("sequence", 0)) == action_sequence - 1:
-			previous = str(receipt.get("receipt_fingerprint", ""))
-			break
-	var receipt := {
-		"schema_version": DEPTH_SCHEMA_VERSION,
-		"receipt_key": receipt_key,
-		"action": action,
-		"sequence": action_sequence,
-		"envelope_fingerprint": envelope_fingerprint,
-		"previous_receipt_fingerprint": previous,
-	}
-	receipt["receipt_fingerprint"] = _fingerprint(receipt)
-	action_receipts[receipt_key] = receipt
-
-
-func _receipt_chain_valid(receipts: Dictionary, sequence_total: int) -> bool:
-	if sequence_total != receipts.size():
-		return false
-	var by_sequence: Dictionary = {}
-	var exact_keys := ["action", "envelope_fingerprint", "previous_receipt_fingerprint", "receipt_fingerprint", "receipt_key", "schema_version", "sequence"]
-	for key_value in receipts.keys():
-		var receipt := _dictionary(receipts.get(key_value, {}))
-		var keys: Array = receipt.keys()
-		keys.sort()
-		if keys != exact_keys or str(key_value) != str(receipt.get("receipt_key", "")) or int(receipt.get("schema_version", 0)) != DEPTH_SCHEMA_VERSION:
-			return false
-		for digest_key in ["envelope_fingerprint", "previous_receipt_fingerprint", "receipt_fingerprint"]:
-			if not _is_sha256(str(receipt.get(digest_key, ""))): return false
-		var body := receipt.duplicate(true)
-		var stored := str(body.get("receipt_fingerprint", ""))
-		body.erase("receipt_fingerprint")
-		if stored != _fingerprint(body): return false
-		var sequence := int(receipt.get("sequence", 0))
-		if sequence <= 0 or by_sequence.has(sequence): return false
-		by_sequence[sequence] = receipt
-	for sequence in range(1, sequence_total + 1):
-		if not by_sequence.has(sequence): return false
-		var expected := "0".repeat(64) if sequence == 1 else str(_dictionary(by_sequence.get(sequence - 1, {})).get("receipt_fingerprint", ""))
-		if str(_dictionary(by_sequence.get(sequence, {})).get("previous_receipt_fingerprint", "")) != expected: return false
-	return true
 
 
 func venue_definition(venue_id: String) -> Dictionary:
@@ -1003,32 +867,6 @@ static func _public_bookmaker_aftermath(memory: Dictionary) -> Dictionary:
 	for key in ["busy", "refused", "visit_count", "friendly", "wary", "suspicious", "past_post_memory", "collection_count", "last_public_event", "last_day"]:
 		if memory.has(key): result[key] = memory.get(key)
 	return result
-
-
-static func _fingerprint(value: Variant) -> String:
-	return JSON.stringify(_canonical_value(value)).sha256_text()
-
-
-static func _canonical_value(value: Variant) -> Variant:
-	if typeof(value) == TYPE_DICTIONARY:
-		var result: Dictionary = {}
-		var keys: Array = (value as Dictionary).keys()
-		keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
-		for key_value in keys: result[str(key_value)] = _canonical_value((value as Dictionary).get(key_value))
-		return result
-	if typeof(value) == TYPE_ARRAY:
-		var result: Array = []
-		for entry in value as Array: result.append(_canonical_value(entry))
-		return result
-	return value
-
-
-static func _is_sha256(value: String) -> bool:
-	if value.length() != 64 or value != value.to_lower(): return false
-	for index in range(value.length()):
-		var code := value.unicode_at(index)
-		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102): return false
-	return true
 
 
 func _normalize_knowledge(value: Variant) -> Dictionary:
