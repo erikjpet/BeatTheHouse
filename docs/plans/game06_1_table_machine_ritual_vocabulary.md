@@ -172,8 +172,16 @@ lowercase 64-hex SHA-256 of the canonical closed envelope excluding only its
 `content_fingerprint` field. Canonicalization is UTF-8 JSON with keys sorted by
 ordinal code point, no insignificant whitespace, authored array order
 preserved, JSON-escaped strings, lowercase `true`/`false`/`null`, and invariant
-base-10 numbers. Types are not coerced: `1`, `1.0`, `"1"`, and `true` are
-distinct. NaN, infinity, resources, objects, and executable values reject.
+base-10 numbers. Numeric scalars use typed canonical JSON so a parser cannot
+erase authored type: logical integers encode as
+`{"$number":"int","value":"1"}` and logical floats encode as
+`{"$number":"float","value":"1.0"}`. Integer width normalizes to the
+contract's single signed `int` type. Finite floats normalize to invariant
+binary64 round-trip text; an integral-looking float receives a mandatory `.0`.
+Authored `-0.0` normalizes to `0.0`. Since authored keys follow id grammar,
+`$number` cannot collide with an authored dictionary. Integer `1`, float `1.0`,
+string `"1"`, and boolean `true` therefore have distinct canonical bytes and
+hashes. NaN, infinity, resources, objects, and executable values reject.
 
 `request_key` is request/cache identity, not an envelope receipt and not a
 content fingerprint. It uses the receipt-key grammar and indexes one command
@@ -188,6 +196,12 @@ Repeating a request key with the identical command receipt and canonical command
 fingerprint returns the response named by the cache record. Reusing a request
 key with different command content, or reusing any receipt key for a different
 envelope kind/content, returns `receipt_content_conflict` without mutation.
+`status=resolved` requires a successful `RitualResult` with the identical
+request key and binds that result's own receipt key/fingerprint. `status=rejected`
+requires a `RitualRejection` with the identical request key and binds that
+rejection's own receipt key/fingerprint. A cache status/response-kind mismatch,
+request-key mismatch, command reference mismatch, response key/fingerprint
+mismatch, or command/response receipt alias rejects.
 Rejected ingress does not advance
 the boundary ordinal and creates no accepted operation/fact/transition receipt.
 Atomic failure preserves authoritative pre-state except a separately declared
@@ -345,9 +359,25 @@ presentation or gameplay shortcuts.
 Every record below rejects unknown fields. “Optional” means the field may be
 absent; when present it is still typed and bounded. An empty collection is
 explicit, not omitted. User-defined schema maps are the only keyed extension
-points: their keys follow local-id grammar and their values are registered type
-ids (`bool`, `int`, `float`, `string`, `qualified_id`, `string_array`, or
-`int_array`).
+points. A schema has at most 32 fields and its keys follow local-id grammar.
+Each value is a closed bounded type record:
+
+- `bool`: `{type}`;
+- `int`/`float`: `{type, min, max}` with finite bounds and `min <= max`;
+- `string`: `{type, min_length, max_length}` measured in UTF-8 bytes;
+- `qualified_id`: `{type, max_length}`;
+- `string_array`: `{type, min_items, max_items, item_max_length}`;
+- `int_array`: `{type, min_items, max_items, item_min, item_max}`.
+
+Hard ceilings are consumer-visible and cannot be raised by a definition: string
+values 512 UTF-8 bytes, qualified ids 192 ASCII characters, arrays 64 items,
+string-array items 128 UTF-8 bytes, and signed integers within
+`[-2147483648, 2147483647]`. Definitions may choose smaller bounds. Every
+runtime scalar/array is checked before fingerprinted authority is accepted.
+Runtime receipt arrays (`state_receipts`, `operation_receipts`,
+`fact_receipts`) are capped at 64 exact receipt keys, each at most 192
+characters. Oversize values return `invalid_parameters` with an `over limit`
+diagnostic and no mutation.
 
 | Record | Required fields | Optional fields |
 | --- | --- | --- |
