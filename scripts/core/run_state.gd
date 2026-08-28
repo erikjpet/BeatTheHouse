@@ -15027,20 +15027,29 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 		environment.erase("scenario_sequence_pending_visit_id")
 		environment["scenario_sequence_migration_error"] = "Persisted dynamic room sequence state is malformed, unsupported, or overbound; explicit migration is required."
 	elif has_persisted_sequence:
-		environment["scenario_sequence_state"] = sequence_state.duplicate(true)
-		# Projection and render data are derived from authoritative sequence state.
-		# Never trust a stale or tampered saved copy across schema/content versions.
-		environment.erase("scenario_sequence_projection")
-		environment.erase("scenario_render_snapshot")
-		var baseline_sources := {
-			"scenario_sequence_base_game_ids": "game_ids",
-			"scenario_sequence_base_service_ids": "service_ids",
-			"scenario_sequence_base_travel_hooks": "travel_hooks",
-		}
-		for baseline_array_key in baseline_sources.keys():
-			var source_key := str(baseline_sources.get(baseline_array_key, ""))
-			environment[baseline_array_key] = _copy_array(environment.get(baseline_array_key, environment.get(source_key, [])))
-		environment["scenario_sequence_base_game_modifiers"] = _copy_dict(environment.get("scenario_sequence_base_game_modifiers", environment.get("scenario_game_modifiers", {})))
+		var sequence_definition := _copy_dict(environment.get("scenario_sequence_definition", {}))
+		var normalized_sequence_state := ScenarioSequenceRuntimeScript.normalize_state(sequence_state, sequence_definition)
+		if normalized_sequence_state.is_empty():
+			environment.erase("scenario_sequence_state")
+			environment.erase("scenario_sequence_projection")
+			environment.erase("scenario_render_snapshot")
+			environment.erase("scenario_sequence_pending_visit_id")
+			environment["scenario_sequence_migration_error"] = "Persisted dynamic room sequence state is malformed, unsupported, or overbound; explicit migration is required."
+		else:
+			environment["scenario_sequence_state"] = normalized_sequence_state
+			# Projection and render data are derived from authoritative sequence state.
+			# Never trust a stale or tampered saved copy across schema/content versions.
+			environment.erase("scenario_sequence_projection")
+			environment.erase("scenario_render_snapshot")
+			var baseline_sources := {
+				"scenario_sequence_base_game_ids": "game_ids",
+				"scenario_sequence_base_service_ids": "service_ids",
+				"scenario_sequence_base_travel_hooks": "travel_hooks",
+			}
+			for baseline_array_key in baseline_sources.keys():
+				var source_key := str(baseline_sources.get(baseline_array_key, ""))
+				environment[baseline_array_key] = _copy_array(environment.get(baseline_array_key, environment.get(source_key, [])))
+			environment["scenario_sequence_base_game_modifiers"] = _copy_dict(environment.get("scenario_sequence_base_game_modifiers", environment.get("scenario_game_modifiers", {})))
 	if environment.has("scenario_sequence_migration"):
 		environment["scenario_sequence_migration"] = _copy_dict(environment.get("scenario_sequence_migration", {}))
 	_normalize_environment_layers(environment)

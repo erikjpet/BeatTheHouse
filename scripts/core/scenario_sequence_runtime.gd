@@ -411,10 +411,7 @@ static func enqueue_fact(state_value: Dictionary, definition: Dictionary, fact_v
 	var bounded_errors := OperationRegistryScript.validate_bounded_variant("scenario fact", fact_value)
 	if not bounded_errors.is_empty():
 		return {"ok": false, "duplicate": false, "state": state, "errors": bounded_errors}
-	var errors := validate_fact(state, fact_value)
-	if not errors.is_empty():
-		return {"ok": false, "duplicate": false, "state": state, "errors": errors}
-	var fact_id := str(fact_value.get("fact_id", ""))
+	var fact_id := str(fact_value.get("fact_id", "")) if typeof(fact_value.get("fact_id")) == TYPE_STRING else ""
 	var fact_fingerprint := _fingerprint(fact_value)
 	if _string_array(state.get("fact_receipts", [])).has(fact_id):
 		if str(_dict(state.get("fact_fingerprints", {})).get(fact_id, "")) != fact_fingerprint:
@@ -425,6 +422,9 @@ static func enqueue_fact(state_value: Dictionary, definition: Dictionary, fact_v
 		if _fingerprint(_without_ingress(queued_fact)) != fact_fingerprint:
 			return {"ok": false, "duplicate": false, "state": state, "errors": ["scenario queued fact_id was reused for a different fact"]}
 		return {"ok": true, "duplicate": true, "state": state, "errors": []}
+	var errors := validate_fact(state, fact_value)
+	if not errors.is_empty():
+		return {"ok": false, "duplicate": false, "state": state, "errors": errors}
 	if _next_cause_ordinal(state) + _fact_array(state.get("fact_queue", [])).size() >= MAX_RECEIPTS:
 		return {"ok": false, "duplicate": false, "state": state, "errors": ["scenario fact lifetime receipt limit reached"]}
 	var queue := _fact_array(state.get("fact_queue", []))
