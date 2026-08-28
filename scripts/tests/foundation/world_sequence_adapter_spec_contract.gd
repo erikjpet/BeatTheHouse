@@ -121,7 +121,8 @@ func _check_inventory(failures: Array) -> void:
 		if not actual_ids.has(event_id):
 			failures.append("Inventoried EventModule surface disappeared: %s" % event_id)
 	var source := FileAccess.get_file_as_string(EVENT_MODULE_PATH)
-	var diagnostics := AdapterScript.validate_frozen_event_module_inventory(parsed as Array, source)
+	var frozen_inventory := _frozen_inventory()
+	var diagnostics := AdapterScript.validate_frozen_event_module_inventory(parsed as Array, source, frozen_inventory)
 	if not diagnostics.is_empty():
 		failures.append("Frozen EventModule inventory guard rejected production: %s" % JSON.stringify(diagnostics))
 	for kind in REQUIRED_DYNAMIC_KINDS:
@@ -135,21 +136,30 @@ func _check_inventory(failures: Array) -> void:
 			failures.append("EventModule direct surface is not routed: %s" % direct_id)
 	var hostile_catalog := (parsed as Array).duplicate(true)
 	hostile_catalog.append({"id": "crew_unclassified_probe", "payload": {"kind": "crew_unclassified_probe"}})
-	var unclassified := AdapterScript.validate_frozen_event_module_inventory(hostile_catalog, source)
+	var unclassified := AdapterScript.validate_frozen_event_module_inventory(hostile_catalog, source, frozen_inventory)
 	if not _diagnostics_include(unclassified, "event_catalog", "crew_unclassified_probe", "Unclassified EventModule crew/world surface."):
 		failures.append("Frozen inventory guard did not reject a new data-backed Crew surface.")
 	var hostile_source := source + '\nif str(payload.get("kind", "")) == "crew_shadow_surface": pass\n'
-	var source_unclassified := AdapterScript.validate_frozen_event_module_inventory(parsed as Array, hostile_source)
+	var source_unclassified := AdapterScript.validate_frozen_event_module_inventory(parsed as Array, hostile_source, frozen_inventory)
 	if not _diagnostics_include(source_unclassified, "dynamic_kind", "crew_shadow_surface", "Unclassified EventModule crew/world surface."):
 		failures.append("Frozen inventory guard did not reject a new source-routed Crew surface.")
 	var missing_catalog := (parsed as Array).duplicate(true)
 	for index in range(missing_catalog.size() - 1, -1, -1):
 		if str(_dict(missing_catalog[index]).get("id", "")) == "crew_favor_delivery": missing_catalog.remove_at(index)
-	var missing := AdapterScript.validate_frozen_event_module_inventory(missing_catalog, source)
+	var missing := AdapterScript.validate_frozen_event_module_inventory(missing_catalog, source, frozen_inventory)
 	if not _diagnostics_include(missing, "event_catalog", "crew_favor_delivery", "Frozen EventModule crew/world surface is no longer routed."):
 		failures.append("Frozen inventory guard did not reject a removed inventoried Crew surface.")
-	if JSON.stringify(unclassified) != JSON.stringify(AdapterScript.validate_frozen_event_module_inventory(hostile_catalog, source)):
+	if JSON.stringify(unclassified) != JSON.stringify(AdapterScript.validate_frozen_event_module_inventory(hostile_catalog, source, frozen_inventory)):
 		failures.append("Frozen inventory diagnostics are not deterministic.")
+
+
+func _frozen_inventory() -> Dictionary:
+	return {
+		"event_catalog": REQUIRED_EVENT_IDS,
+		"dynamic_kind": REQUIRED_DYNAMIC_KINDS,
+		"direct_surface": ["crew_planning_table", "heist_live_table", "crew_favor_delivery"],
+		"event_hook": REQUIRED_HOOKS,
+	}
 
 
 func _check_frozen_bindings(failures: Array) -> void:

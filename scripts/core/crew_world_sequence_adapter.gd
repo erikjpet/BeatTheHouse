@@ -20,29 +20,6 @@ const LIFECYCLE_ACTIVE := "active"
 const LIFECYCLE_CLEANUP_PENDING := "cleanup_pending"
 const LIFECYCLE_CLEANED := "cleaned"
 const PROJECTION_COLLECTIONS := ["scene_objects", "interactions", "actors", "services", "games", "routes"]
-const FROZEN_EVENT_SURFACES := [
-	"crew_collection_press", "crew_contact_bishop", "crew_contact_knuckles", "crew_contact_lucky",
-	"crew_contact_mags", "crew_contact_rook", "crew_contact_switch", "crew_contact_velvet",
-	"crew_favor_delivery", "crew_job_board", "crew_mags_bench", "crew_planning_table",
-	"crew_practice_rig", "crew_rook_ride", "crew_stake_horse_loss", "heist_live_table",
-	"numbers_desk", "numbers_knuckles_collection", "numbers_lucky_swept_collection",
-	"police_sweep_adjacent_sighting", "police_sweep_confiscation", "police_sweep_pass_over",
-	"police_sweep_punchline_l2_near_miss", "police_sweep_shakedown", "police_sweep_travel_lock",
-	"recruitment_bishop", "recruitment_knuckles", "recruitment_lucky", "recruitment_mags",
-	"recruitment_rook_leads", "recruitment_rook_signpost", "recruitment_switch", "recruitment_velvet",
-]
-const FROZEN_DYNAMIC_KINDS := [
-	"crew_collection_press", "crew_contact", "crew_job_board", "crew_mags_bench",
-	"crew_practice_rig", "crew_rook_leads", "crew_rook_ride", "crew_rook_signpost",
-	"crew_stake_horse_loss",
-]
-const FROZEN_DIRECT_SURFACES := ["crew_favor_delivery", "crew_planning_table", "heist_live_table"]
-const FROZEN_HOOKS := [
-	"crew_collection_choice", "crew_heist", "crew_job_accept", "crew_knuckles_retrieve",
-	"crew_knuckles_stash", "crew_lucky_collection", "crew_meet", "crew_practice_rig",
-	"crew_recruit", "crew_rook_lead_closed", "crew_rook_ride", "crew_stake_loss_choice",
-	"crew_switch_reveal",
-]
 const HIDDEN_IDENTIFIER_TERMS := [
 	"betrayal", "clue", "grievance", "mole", "rat", "snitch", "theturn", "traitor", "turncoat",
 ]
@@ -52,7 +29,7 @@ const HASH_IDENTIFIER_LENGTHS := [32, 40, 64]
 # Machine-checks the frozen EventModule seam against both the production event
 # catalog and the exact routing syntax used by EventModule. Additions are errors,
 # not silently accepted inventory growth.
-static func validate_frozen_event_module_inventory(event_catalog: Array, event_module_source: String) -> Array:
+static func validate_frozen_event_module_inventory(event_catalog: Array, event_module_source: String, frozen_inventory: Dictionary) -> Array:
 	var actual_events: Array = []
 	for event_value in event_catalog:
 		var event := _dict(event_value)
@@ -67,10 +44,10 @@ static func validate_frozen_event_module_inventory(event_catalog: Array, event_m
 		var hook_id := trimmed.trim_prefix('"').trim_suffix('":')
 		if not actual_hooks.has(hook_id): actual_hooks.append(hook_id)
 	var diagnostics: Array = []
-	_append_inventory_difference(diagnostics, "event_catalog", actual_events, FROZEN_EVENT_SURFACES)
-	_append_inventory_difference(diagnostics, "dynamic_kind", actual_kinds, FROZEN_DYNAMIC_KINDS)
-	_append_inventory_difference(diagnostics, "direct_surface", actual_direct, FROZEN_DIRECT_SURFACES)
-	_append_inventory_difference(diagnostics, "event_hook", actual_hooks, FROZEN_HOOKS)
+	_append_inventory_difference(diagnostics, "event_catalog", actual_events, _array(frozen_inventory.get("event_catalog", [])))
+	_append_inventory_difference(diagnostics, "dynamic_kind", actual_kinds, _array(frozen_inventory.get("dynamic_kind", [])))
+	_append_inventory_difference(diagnostics, "direct_surface", actual_direct, _array(frozen_inventory.get("direct_surface", [])))
+	_append_inventory_difference(diagnostics, "event_hook", actual_hooks, _array(frozen_inventory.get("event_hook", [])))
 	return _sorted_diagnostics(diagnostics)
 
 
