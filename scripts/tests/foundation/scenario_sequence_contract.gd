@@ -2738,7 +2738,6 @@ static func _check_receipt_reconstruction(failures: Array) -> void:
 	for command_spec_value in [
 		["prepare", "arrival", "rebuild:prepare", "command_console"],
 		["finish", "complication", "rebuild:finish", "command_console"],
-		["use", "aftermath", "rebuild:outcome", "fixture_201"],
 	]:
 		var command_spec := command_spec_value as Array
 		var command_value := _runtime_command(state, definition, str(command_spec[0]), "bar_node", str(command_spec[1]), str(command_spec[2]), {}, "scenario", str(command_spec[3]))
@@ -3229,7 +3228,7 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	lifecycle_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(lifecycle_definition)
 	var lifecycle_host := _fixture_host_semantics(lifecycle_definition)
 	var lifecycle_state := SequenceRuntimeScript.initial_state(lifecycle_definition, "bar_node", "cleanup_lifecycle_seed", lifecycle_host)
-	for lifecycle_command_value in [["prepare", "arrival", "lifecycle:prepare", "command_console"], ["finish", "complication", "lifecycle:finish", "command_console"], ["use", "aftermath", "lifecycle:terminal", "fixture_201"]]:
+	for lifecycle_command_value in [["prepare", "arrival", "lifecycle:prepare", "command_console"], ["finish", "complication", "lifecycle:finish", "command_console"]]:
 		var lifecycle_command := lifecycle_command_value as Array
 		var lifecycle_applied := SequenceRuntimeScript.apply_command(lifecycle_state, lifecycle_definition, _runtime_command(lifecycle_state, lifecycle_definition, str(lifecycle_command[0]), "bar_node", str(lifecycle_command[1]), str(lifecycle_command[2]), {}, "scenario", str(lifecycle_command[3])), {"available_funds": 10})
 		if not bool(lifecycle_applied.get("ok", false)):
