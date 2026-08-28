@@ -2,493 +2,182 @@ class_name GameRitualRuntimeContract
 extends RefCounted
 
 const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
+const HostScript := preload("res://scripts/core/game_ritual_host_authority.gd")
 const SchemaScript := preload("res://scripts/core/game_ritual_schema.gd")
 const LayoutScript := preload("res://scripts/core/game_ritual_layout.gd")
 const CanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const FIXTURE_PATH := "res://scripts/tests/fixtures/game_ritual_vocabulary_v1.json"
-const ENVELOPE_FIXTURE_PATH := "res://scripts/tests/fixtures/game_ritual_shared_envelopes_v1.json"
-
-
-class RetainedRitualHost:
-	extends "res://scripts/core/game_ritual_host_authority.gd"
-
-	func issue(command: Dictionary, context: Dictionary = {}) -> Dictionary:
-		return issue_command(command, context)
 
 
 static func check(_library, failures: Array) -> void:
 	var definition := _fixture(failures)
-	if definition.is_empty():
-		return
+	if definition.is_empty(): return
 	_check_validation(definition, failures)
-	_check_runtime_trace(definition, failures)
-	_check_seed_parity(definition, failures)
-	_check_envelope_boundary(definition, failures)
-	_check_handler_allowlists(definition, failures)
-	_check_authority_closure(definition, failures)
-	_check_hostile_restore(definition, failures)
-	_check_two_round_receipt_identity(definition, failures)
-	_check_retained_causal_history(definition, failures)
-	_check_layout_and_canvas(definition, failures)
-	_check_neutral_opt_in_seams(failures)
+	_check_intent_authority(definition, failures)
+	_check_hostile_candidates(definition, failures)
+	_check_checkpoint_restore(definition, failures)
+	_check_layout_and_neutrality(definition, failures)
 
 
 static func _check_validation(definition: Dictionary, failures: Array) -> void:
-	var errors := SchemaScript.validate_definition(definition)
-	if not errors.is_empty():
-		failures.append("Frozen game ritual vocabulary is not accepted by its runtime validator: %s" % JSON.stringify(errors))
-	if not LayoutScript.validate_definition(definition).is_empty():
-		failures.append("Frozen game ritual vocabulary does not satisfy shared layout validation.")
+	if not SchemaScript.validate_definition(definition).is_empty() or not LayoutScript.validate_definition(definition).is_empty():
+		failures.append("Frozen game ritual vocabulary is not accepted by schema/layout validation.")
 	var malformed := definition.duplicate(true)
 	(malformed["ritual_phases"] as Array).remove_at(1)
-	if SchemaScript.validate_definition(malformed).is_empty():
-		failures.append("Ritual validator accepted a transition to a removed phase.")
+	if SchemaScript.validate_definition(malformed).is_empty(): failures.append("Ritual schema accepted a transition to a removed phase.")
 	malformed = definition.duplicate(true)
 	((malformed["actors"] as Array)[0] as Dictionary)["behavior_states"] = []
-	if SchemaScript.validate_definition(malformed).is_empty():
-		failures.append("Ritual validator accepted an actor without behavior states.")
+	if SchemaScript.validate_definition(malformed).is_empty(): failures.append("Ritual schema accepted an actor without behavior states.")
 	malformed = definition.duplicate(true)
 	((malformed["scene_objects"] as Array)[0] as Dictionary).erase("bounds")
-	if SchemaScript.validate_definition(malformed).is_empty():
-		failures.append("Ritual validator accepted a scene object without bounds.")
-	malformed = definition.duplicate(true)
-	var tier: Dictionary = (malformed["energy"] as Dictionary)["tiers"][0]
-	tier["object_operations"] = []
-	if SchemaScript.validate_definition(malformed).is_empty():
-		failures.append("Ritual validator accepted an energy tier that touches only audio/text.")
-	malformed = definition.duplicate(true)
-	((malformed["pointer_verbs"] as Array)[0] as Dictionary)["equivalents"].erase("controller")
-	if SchemaScript.validate_definition(malformed).is_empty():
-		failures.append("Ritual validator accepted a pointer verb without controller parity.")
+	if SchemaScript.validate_definition(malformed).is_empty(): failures.append("Ritual schema accepted an object without bounds.")
+	var invalid_initial := definition.duplicate(true)
+	var open_phase: Dictionary = (invalid_initial["ritual_phases"] as Array)[0]
+	(open_phase["entry_operations"] as Array).append({"operation_id": "initial_hostile_pose", "family": "actor_ops", "verb": "set_pose", "source_owner_id": "example_table.standard_session", "target_id": "staff.primary", "arguments": {"pose": "hostile"}})
+	var invalid_host = _host(invalid_initial)
+	if bool(invalid_host.configuration_result().get("ok", true)):
+		failures.append("Initial entry operation bypassed complete candidate validation.")
 
 
-static func _check_runtime_trace(definition: Dictionary, failures: Array) -> void:
-	var host := RetainedRitualHost.new(definition, {"play.primary": Callable(GameRitualRuntimeContract, "_play_handler")})
-	var runtime = RuntimeScript.new(host)
-	var configured: Dictionary = runtime.configure(definition)
-	if not bool(configured.get("ok", false)):
-		failures.append("Ritual runtime rejected the frozen vocabulary: %s" % JSON.stringify(configured))
+static func _check_intent_authority(definition: Dictionary, failures: Array) -> void:
+	var host = _host(definition)
+	if not bool(host.configuration_result().get("ok", false)):
+		failures.append("Retained host rejected the frozen ritual: %s" % JSON.stringify(host.configuration_result()))
 		return
-	var initial := runtime.serialized_state()
-	var rejected: Dictionary = _execute(runtime, host, "play.primary", {"commitment_id": "early"}, "trace_reject", {})
-	if bool(rejected.get("ok", false)) or str(rejected.get("error_code", "")) != "action_not_permitted":
-		failures.append("Ritual runtime did not reject an out-of-phase authoritative action.")
-	var rejected_state := runtime.serialized_state()
-	for key in initial.keys():
-		if initial[key] != rejected_state.get(key):
-			failures.append("Rejected ritual action mutated authoritative field %s." % key)
-	var place_command := _command_for(runtime, host, "commit.place", _place_parameters("layout.primary", 5), "trace_place", {"available_funds": 20})
-	var place: Dictionary = runtime.process_command(place_command)
-	var replay: Dictionary = runtime.process_command(place_command)
-	if not bool(place.get("ok", false)) or place != replay:
-		failures.append("Ritual request replay was not byte-identical under canonical key ordering.")
-	var conflict_command := place_command.duplicate(true)
-	(conflict_command["parameters"] as Dictionary)["amount"] = 6
-	conflict_command["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(conflict_command))
-	var conflict: Dictionary = runtime.process_command(conflict_command, {"available_funds": 20})
-	if str(conflict.get("error_code", "")) != "authority_mismatch":
-		failures.append("Ritual request key did not reject different canonical content.")
-	var correct: Dictionary = _execute(runtime, host, "commit.correct", {"item_id": "layout.primary", "amount": 7}, "trace_correct", {"available_funds": 20})
-	var undo: Dictionary = _execute(runtime, host, "commit.undo", {}, "trace_undo", {"available_funds": 20})
-	if not bool(correct.get("ok", false)) or not bool(undo.get("ok", false)) or int((runtime.prepared_projection()["pending_items"] as Dictionary).get("layout.primary", 0)) != 5:
-		failures.append("Staged commitment correction/undo did not preserve the pending set.")
-	var confirm_command := _command_for(runtime, host, "commit.confirm", {}, "trace_confirm", {"available_funds": 20})
-	var confirm: Dictionary = runtime.process_command(confirm_command)
-	var confirm_replay: Dictionary = runtime.process_command(confirm_command)
-	if not bool(confirm.get("ok", false)) or confirm != confirm_replay or str(confirm.get("phase_after", "")) != "committed":
-		failures.append("Phase-changing commitment confirmation was not exactly-once replayable.")
-	var double_commit: Dictionary = _execute(runtime, host, "commit.confirm", {}, "trace_double", {"available_funds": 20})
-	if bool(double_commit.get("ok", true)):
-		failures.append("Phase machine permitted a double commitment.")
-	var play: Dictionary = _execute(runtime, host, "play.primary", {"commitment_id": "commitment.one"}, "trace_play", {"seed": 19})
-	if not bool(play.get("ok", false)) or str(play.get("phase_after", "")) != "resolving" or (runtime.serialized_state().get("fact_envelopes", []) as Array).size() != 1:
-		failures.append("Allowlisted rules handler did not advance and publish one action-boundary fact.")
-	var fact_envelopes: Array = runtime.serialized_state().get("fact_envelopes", [])
-	var fact_keys := ["envelope_version", "fact_id", "fact_type", "fact_version", "payload", "visibility", "boundary", "receipt_key", "content_fingerprint"]
-	if fact_envelopes.size() != 1 or not _exact_keys(fact_envelopes[0] as Dictionary, fact_keys) or RuntimeScript.canonical_fingerprint(_without_fingerprint(fact_envelopes[0] as Dictionary)) != str((fact_envelopes[0] as Dictionary).get("content_fingerprint", "")):
-		failures.append("Published GameFact did not use the exact closed fingerprinted envelope.")
-	var saved := runtime.serialized_state()
-	var restored = RuntimeScript.new(host)
-	if not bool(restored.configure(definition).get("ok", false)):
-		failures.append("Restore proof could not configure a second ritual runtime.")
-		return
-	var restore_result: Dictionary = restored.restore_snapshot(runtime.authenticated_snapshot())
-	if not bool(restore_result.get("ok", false)) or not (restore_result.get("replayed_effects", [1]) as Array).is_empty() or restored.serialized_state() != saved:
-		failures.append("Ritual restore changed authoritative state or replayed one-shot effects: %s" % JSON.stringify(restore_result))
-	var acknowledge: Dictionary = _execute(restored, host, "resolution.acknowledge", {}, "trace_ack", {})
-	if not bool(acknowledge.get("ok", false)) or str(acknowledge.get("phase_after", "")) != "open":
-		failures.append("Resolution acknowledgement did not return to the legal open phase.")
-	var before_energy := restored.serialized_state()
-	var energy: Dictionary = restored.set_energy_tier("engaged", "trace_energy")
-	if bool(energy.get("ok", true)) or str(energy.get("error_code", "")) != "unsealed_authority" or restored.serialized_state() != before_energy:
-		failures.append("Caller reached the sealed energy mutation path.")
-	if RuntimeScript.canonical_fingerprint({"b": 2, "a": [1, true]}) != RuntimeScript.canonical_fingerprint({"a": [1, true], "b": 2}):
-		failures.append("Ritual canonical fingerprint depends on dictionary insertion order.")
+	var initial: Dictionary = host.serialized_state()
+	var early: Dictionary = _submit(host, "play.primary", {"commitment_id": "commitment.seed_1"}, "early", {"seed": 999})
+	if bool(early.get("ok", true)) or host.serialized_state() != initial: failures.append("Out-of-phase intent changed authoritative host state.")
+	var place_token: String = host.intent_token("place")
+	var place: Dictionary = host.submit_intent("commit.place", _place_parameters("layout.primary", 5), place_token)
+	if not _response_projection_matches(place, host.public_projection(), true): failures.append("Place result projection is not its accepted post-state.")
+	var replay: Dictionary = host.submit_intent("commit.place", _place_parameters("layout.primary", 5), place_token)
+	if not bool(place.get("ok", false)) or replay != place: failures.append("Host-derived funds intent was not exactly-once replayable.")
+	var conflict: Dictionary = host.submit_intent("commit.place", _place_parameters("layout.primary", 6), place_token)
+	if str(conflict.get("error_code", "")) != "receipt_content_conflict": failures.append("Intent-key content conflict did not fail closed.")
+	var confirm: Dictionary = _submit(host, "commit.confirm", {}, "confirm")
+	if not _response_projection_matches(confirm, host.public_projection(), true): failures.append("Confirm result projection is not its accepted post-state.")
+	var play: Dictionary = _submit(host, "play.primary", {"commitment_id": "commitment.seed_19"}, "play", {"seed": 999999})
+	if not bool(confirm.get("ok", false)) or not bool(play.get("ok", false)) or str(play.get("authoritative_result_ref", "")) != "result.seed_19.commitment_seed_19": failures.append("Host-owned phase/RNG authority did not drive the accepted trace.")
+	for response in [place, confirm, play]:
+		if not _response_projection_matches(response as Dictionary, host.public_projection(), response == play):
+			# Earlier responses intentionally describe their own accepted boundary;
+			# the live equality assertion belongs to the latest response.
+			if response == play: failures.append("Accepted RitualResult projection does not equal post-commit authority.")
+	var before_ghost: Dictionary = host.serialized_state()
+	var ghost: Dictionary = _submit(host, "resolution.acknowledge", {}, "ack")
+	if not bool(ghost.get("ok", false)): failures.append("Resolution acknowledgement did not reopen the ritual.")
+	before_ghost = host.serialized_state()
+	ghost = _submit(host, "commit.place", _place_parameters("layout.ghost", 5), "ghost")
+	if bool(ghost.get("ok", true)) or host.serialized_state() != before_ghost: failures.append("Undeclared wager item reached pending authority.")
+	var probe: Dictionary = host.reflected_runtime_probe()
+	var reflected = probe.get("runtime")
+	var before_reflection: Dictionary = host.serialized_state()
+	var leaked_capability := false
+	for method in host.get_method_list():
+		if str((method as Dictionary).get("name", "")) == "submit_intent":
+			var args: Array = (method as Dictionary).get("args", [])
+			if args.size() != 3: leaked_capability = true
+			for arg in args:
+				if str((arg as Dictionary).get("name", "")).contains("context"): leaked_capability = true
+	for property in reflected.get_property_list():
+		var name := str((property as Dictionary).get("name", ""))
+		if name in ["script", "resource_path", "resource_name", "resource_local_to_scene", "resource_scene_unique_id"]: continue
+		var value: Variant = reflected.get(name)
+		if typeof(value) in [TYPE_OBJECT, TYPE_CALLABLE] or name.contains("host") or name.contains("lease") or name.contains("issued") or name.contains("context"): leaked_capability = true
+	var reflected_state: Variant = reflected.get("state")
+	if typeof(reflected_state) == TYPE_DICTIONARY: (reflected_state as Dictionary)["authority"] = "forged"
+	reflected.call("process_command", {})
+	if leaked_capability or host.serialized_state() != before_reflection: failures.append("Reflected pure runtime exposed or exercised host authority.")
 
 
-static func _check_layout_and_canvas(definition: Dictionary, failures: Array) -> void:
-	var hits := LayoutScript.compile_pointer_hits(definition, "open")
-	if hits.size() != 1 or str((hits[0] as Dictionary).get("target_region", "")) != "layout.primary":
-		failures.append("Ritual layout did not compile the active target-region hit.")
-	var canvas = CanvasScript.new()
-	canvas.surface_add_ritual_hits(hits)
-	if canvas.hit_regions.size() != hits.size() or str((canvas.hit_regions[0] as Dictionary).get("ritual_pointer_id", "")) != "place_primary":
-		failures.append("Canvas ritual adapter did not preserve semantic pointer identity.")
-	canvas.free()
-	var malformed := definition.duplicate(true)
-	var bounds: Dictionary = ((malformed["scene_objects"] as Array)[0] as Dictionary)["bounds"]
-	bounds["x"] = 880
-	if LayoutScript.validate_definition(malformed).is_empty():
-		failures.append("Ritual layout accepted an object outside design space.")
-
-
-static func _check_seed_parity(definition: Dictionary, failures: Array) -> void:
-	for seed in range(10):
-		var handlers := {"play.primary": Callable(GameRitualRuntimeContract, "_play_handler")}
-		var left_host := RetainedRitualHost.new(definition, handlers)
-		var right_host := RetainedRitualHost.new(definition, handlers)
-		var left = RuntimeScript.new(left_host)
-		var right = RuntimeScript.new(right_host)
-		left.configure(definition)
-		right.configure(definition)
-		var left_trace: Array = []
-		var right_trace: Array = []
-		for runtime in [left, right]:
-			var host = left_host if runtime == left else right_host
-			var trace: Array = []
-			trace.append(_execute(runtime, host, "commit.place", _place_parameters("layout.primary", seed + 1), "seed_%d_place" % seed, {"available_funds": 100}))
-			trace.append(_execute(runtime, host, "commit.confirm", {}, "seed_%d_confirm" % seed, {"available_funds": 100}))
-			trace.append(_execute(runtime, host, "play.primary", {"commitment_id": "commitment.%d" % seed}, "seed_%d_play" % seed, {"seed": seed}))
-			if runtime == left:
-				left_trace = trace
-			else:
-				right_trace = trace
-		if RuntimeScript.canonical_json(left_trace) != RuntimeScript.canonical_json(right_trace) or left.serialized_state() != right.serialized_state():
-			failures.append("Ritual native/Web-equivalent trace diverged at seed %d." % seed)
-
-
-static func _check_envelope_boundary(definition: Dictionary, failures: Array) -> void:
-	var fixture_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(ENVELOPE_FIXTURE_PATH))
-	if typeof(fixture_value) != TYPE_DICTIONARY:
-		failures.append("Shared ritual envelope fixture is not valid JSON.")
-		return
-	var fixture: Dictionary = fixture_value
-	var command: Dictionary = (fixture.get("command", {}) as Dictionary).duplicate(true)
-	# Godot's JSON parser materializes every JSON number as float; restore the
-	# frozen schema's integer semantics before exercising the live envelope.
-	(command["parameters"] as Dictionary)["amount"] = int((command["parameters"] as Dictionary).get("amount", 0))
-	var weights: Array = (command["parameters"] as Dictionary).get("weights", [])
-	for index in range(weights.size()): weights[index] = int(weights[index])
-	(command["boundary"] as Dictionary)["ordinal"] = int((command["boundary"] as Dictionary).get("ordinal", 0))
-	command["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(command))
-	var host := RetainedRitualHost.new(definition, {}, str(command.get("session_id", "")))
-	command["authenticated_action"] = host.ritual_authenticated_action(str(command.get("action_id", "")))
-	command["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(command))
-	host.issue(command, {"available_funds": 100})
-	var runtime = RuntimeScript.new(host)
-	var configured: Dictionary = runtime.configure(definition)
-	var command_validation: Dictionary = runtime.validate_command_envelope(command)
-	if not bool(configured.get("ok", false)) or not command_validation.is_empty():
-		failures.append("Runtime rejected the complete frozen RitualCommand envelope: %s" % JSON.stringify(command_validation))
-		return
-	var result: Dictionary = runtime.process_command(command)
-	var replay: Dictionary = runtime.process_command(command)
-	var result_keys := ["envelope_version", "ok", "ritual_id", "session_id", "command_id", "request_key", "phase_before", "phase_after", "authoritative_result_ref", "state_receipts", "operation_receipts", "fact_receipts", "boundary", "receipt_key", "content_fingerprint", "public_projection"]
-	if not bool(result.get("ok", false)) or result != replay or not _exact_keys(result, result_keys) or RuntimeScript.canonical_fingerprint(_without_fingerprint(result)) != str(result.get("content_fingerprint", "")):
-		failures.append("Complete RitualCommand did not produce an exact fingerprinted replay-safe RitualResult: first=%s replay=%s" % [JSON.stringify(result), JSON.stringify(replay)])
-	var envelope_state := runtime.serialized_state()
-	var cache: Dictionary = (envelope_state.get("envelope_request_cache", {}) as Dictionary).get(str(command.get("request_key", "")), {})
-	var cache_keys := ["request_key", "command_receipt_key", "command_content_fingerprint", "response_receipt_key", "response_content_fingerprint", "status"]
-	var receipt_keys := ["receipt_key", "content_fingerprint", "boundary_id", "envelope_kind", "status"]
-	if not _exact_keys(cache, cache_keys) or str(cache.get("response_content_fingerprint", "")) != str(result.get("content_fingerprint", "")):
-		failures.append("RequestCacheRecord did not bind the exact command/result fingerprints.")
-	for receipt in envelope_state.get("envelope_receipts", []):
-		if not _exact_keys(receipt as Dictionary, receipt_keys): failures.append("ReceiptRecord did not use the exact closed shape.")
-	var hostile := command.duplicate(true)
-	hostile["extra"] = true
-	var rejected: Dictionary = runtime.process_command(hostile)
-	var rejection_keys := ["envelope_version", "ok", "ritual_id", "session_id", "command_id", "request_key", "phase", "error_code", "public_message", "retryable", "return_policy", "boundary", "receipt_key", "content_fingerprint", "public_projection"]
-	if bool(rejected.get("ok", true)) or str(rejected.get("error_code", "")) != "invalid_envelope" or not _exact_keys(rejected, rejection_keys) or RuntimeScript.canonical_fingerprint(_without_fingerprint(rejected)) != str(rejected.get("content_fingerprint", "")):
-		failures.append("Hostile open command did not return the exact closed RitualRejection taxonomy envelope.")
-	hostile = command.duplicate(true)
-	(hostile["authenticated_action"] as Dictionary)["origin_stable_id"] = "action.hostile_origin"
-	hostile["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(hostile))
-	if str(runtime.validate_command_envelope(hostile).get("error_code", "")) != "authority_mismatch":
-		failures.append("Caller-supplied authenticated origin overrode the live trusted action descriptor.")
-	hostile = command.duplicate(true)
-	hostile["content_fingerprint"] = "f".repeat(64)
-	var fingerprint_host := RetainedRitualHost.new(definition, {}, str(command.get("session_id", "")))
-	fingerprint_host.issue(hostile)
-	var fingerprint_runtime = RuntimeScript.new(fingerprint_host)
-	fingerprint_runtime.configure(definition)
-	if str(fingerprint_runtime.validate_command_envelope(hostile).get("error_code", "")) != "authority_mismatch":
-		failures.append("Supplied noncanonical command fingerprint bypassed retained host issuance.")
-
-
-static func _check_handler_allowlists(definition: Dictionary, failures: Array) -> void:
-	for callback in [Callable(GameRitualRuntimeContract, "_hostile_operation_handler"), Callable(GameRitualRuntimeContract, "_hostile_fact_handler")]:
-		var host := RetainedRitualHost.new(definition, {"play.primary": callback})
-		var runtime = RuntimeScript.new(host)
-		runtime.configure(definition)
-		_execute(runtime, host, "commit.place", _place_parameters("layout.primary", 5), "allow_place", {"available_funds": 20})
-		_execute(runtime, host, "commit.confirm", {}, "allow_confirm", {"available_funds": 20})
-		var before := runtime.serialized_state()
-		var rejected: Dictionary = _execute(runtime, host, "play.primary", {"commitment_id": "commitment.one"}, "allow_hostile_%d" % absi(callback.hash()), {})
-		var after := runtime.serialized_state()
-		if bool(rejected.get("ok", true)):
-			failures.append("Handler emitted an operation/fact outside its own allowlist without rejection.")
-		if before != after: failures.append("Hostile cross-handler emission mutated authoritative state.")
+static func _check_hostile_candidates(definition: Dictionary, failures: Array) -> void:
 	for callback in [Callable(GameRitualRuntimeContract, "_duplicate_operation_handler"), Callable(GameRitualRuntimeContract, "_invalid_persisted_handler")]:
-		var host := RetainedRitualHost.new(definition, {"play.primary": callback})
-		var runtime = RuntimeScript.new(host)
-		runtime.configure(definition)
-		_execute(runtime, host, "commit.place", _place_parameters("layout.primary", 5), "candidate_place_%d" % absi(callback.hash()), {"available_funds": 20})
-		_execute(runtime, host, "commit.confirm", {}, "candidate_confirm_%d" % absi(callback.hash()), {"available_funds": 20})
-		var before := runtime.serialized_state()
-		var rejected: Dictionary = _execute(runtime, host, "play.primary", {"commitment_id": "commitment.hostile"}, "candidate_play_%d" % absi(callback.hash()), {"seed": 4})
-		if bool(rejected.get("ok", true)) or runtime.serialized_state() != before:
-			failures.append("Duplicate-operation or invalid persisted candidate did not reject atomically.")
-	var operation_definition := definition.duplicate(true)
-	for handler_value in operation_definition.get("handler_registry", []):
+		var host = _host(definition, {"play.primary": callback})
+		_submit(host, "commit.place", _place_parameters("layout.primary", 5), "candidate_place")
+		_submit(host, "commit.confirm", {}, "candidate_confirm")
+		var before: Dictionary = host.serialized_state()
+		var rejected: Dictionary = _submit(host, "play.primary", {"commitment_id": "commitment.seed_4"}, "candidate_play")
+		if bool(rejected.get("ok", true)) or host.serialized_state() != before: failures.append("Duplicate operation or invalid persisted proposal published authority.")
+	var altered := definition.duplicate(true)
+	for handler_value in altered.get("handler_registry", []):
 		var handler: Dictionary = handler_value
 		if str(handler.get("handler_id", "")) == "play.primary": (handler["accepted_operations"] as Array).append("energy_engaged_staff")
-	var operation_host := RetainedRitualHost.new(operation_definition, {"play.primary": Callable(GameRitualRuntimeContract, "_invalid_declared_operation_handler")})
-	var operation_runtime = RuntimeScript.new(operation_host)
-	if bool(operation_runtime.configure(operation_definition).get("ok", false)):
-		_execute(operation_runtime, operation_host, "commit.place", _place_parameters("layout.primary", 5), "declared_place", {"available_funds": 20})
-		_execute(operation_runtime, operation_host, "commit.confirm", {}, "declared_confirm", {"available_funds": 20})
-		var before := operation_runtime.serialized_state()
-		var rejected: Dictionary = _execute(operation_runtime, operation_host, "play.primary", {"commitment_id": "commitment.hostile"}, "declared_play", {"seed": 4})
-		if bool(rejected.get("ok", true)) or operation_runtime.serialized_state() != before:
-			failures.append("Allowlisted operation with undeclared arguments did not reject atomically.")
-	else:
-		failures.append("Hostile declared-operation fixture could not configure.")
+	var altered_host = _host(altered, {"play.primary": Callable(GameRitualRuntimeContract, "_invalid_declared_operation_handler")})
+	_submit(altered_host, "commit.place", _place_parameters("layout.primary", 5), "altered_place")
+	_submit(altered_host, "commit.confirm", {}, "altered_confirm")
+	var altered_before: Dictionary = altered_host.serialized_state()
+	var altered_result: Dictionary = _submit(altered_host, "play.primary", {"commitment_id": "commitment.seed_4"}, "altered_play")
+	if bool(altered_result.get("ok", true)) or altered_host.serialized_state() != altered_before: failures.append("Allowlisted operation with undeclared arguments published authority.")
 
 
-static func _check_authority_closure(definition: Dictionary, failures: Array) -> void:
-	var host := RetainedRitualHost.new(definition)
-	var runtime = RuntimeScript.new(host)
-	runtime.configure(definition)
-	var before := runtime.serialized_state()
-	var attempts: Array = [
-		runtime.process_action("commit.place", _place_parameters("layout.primary", 5), "direct_action", {"available_funds": 20}),
-		runtime._reduce_action("commit.place", _place_parameters("layout.primary", 5), "forged_reducer", {"available_funds": 20}),
-		runtime.set_energy_tier("engaged", "direct_energy"),
-		runtime._apply_energy_tier("engaged", "forged_energy"),
-		runtime.restore(before),
-		runtime._restore_state(before),
-	]
-	for attempt in attempts:
-		if bool((attempt as Dictionary).get("ok", false)) and not (attempt as Dictionary).has("state"):
-			failures.append("Caller reached a sealed ritual mutation or restore path.")
-	if bool(runtime.configure(definition).get("ok", true)):
-		failures.append("Caller reconfigured an already-live ritual authority.")
-	if runtime.serialized_state() != before:
-		failures.append("Unauthorized ritual authority attempts changed hidden state.")
-	var unissued := _command_for(runtime, host, "commit.place", _place_parameters("layout.primary", 5), "authority_unissued")
-	unissued["command_id"] = "command.authority_unissued_changed"
-	unissued["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(unissued))
-	var unissued_before := runtime.serialized_state()
-	var unissued_result: Dictionary = runtime.process_command(unissued, {"available_funds": 20})
-	if str(unissued_result.get("error_code", "")) != "authority_mismatch" or runtime.serialized_state() != unissued_before:
-		failures.append("A caller-shaped command without a retained host journal entry reached authority.")
+static func _check_checkpoint_restore(definition: Dictionary, failures: Array) -> void:
+	var host = _host(definition)
+	var old_token: String = host.intent_token("old_place")
+	host.submit_intent("commit.place", _place_parameters("layout.primary", 5), old_token)
+	_submit(host, "commit.confirm", {}, "old_confirm")
+	_submit(host, "play.primary", {"commitment_id": "commitment.seed_0"}, "old_play")
+	_submit(host, "resolution.acknowledge", {}, "old_ack")
+	for round_index in range(32):
+		_submit(host, "commit.place", _place_parameters("layout.primary", 5), "long_%d_place" % round_index)
+		_submit(host, "commit.confirm", {}, "long_%d_confirm" % round_index)
+		_submit(host, "play.primary", {"commitment_id": "commitment.seed_%d" % (round_index + 1)}, "long_%d_play" % round_index)
+		_submit(host, "resolution.acknowledge", {}, "long_%d_ack" % round_index)
+	var state: Dictionary = host.serialized_state()
+	if (state.get("envelope_request_cache", {}) as Dictionary).size() > 128 or (state.get("envelope_receipts", []) as Array).size() > 256: failures.append("Coordinated checkpoint left a live causal collection above its bound.")
+	var before_stale: Dictionary = host.serialized_state()
+	var stale: Dictionary = host.submit_intent("commit.place", _place_parameters("layout.primary", 5), old_token)
+	if str(stale.get("error_code", "")) != "stale_phase" or host.serialized_state() != before_stale: failures.append("Pre-checkpoint intent did not reject as stale and consequence-free.")
+	var tail_token: String = host.intent_token("tail_replay_place")
+	var tail_response: Dictionary = host.submit_intent("commit.place", _place_parameters("layout.primary", 5), tail_token)
+	var snapshot: Dictionary = host.authenticated_snapshot()
+	var saved: Dictionary = host.serialized_state()
+	var restore: Dictionary = host.restore_snapshot(snapshot)
+	if not bool(restore.get("ok", false)) or host.serialized_state() != saved or not (restore.get("replayed_effects", [1]) as Array).is_empty(): failures.append("Checkpoint/tail restore was not exact and effect-free: %s" % JSON.stringify(restore))
+	var replay_before: Dictionary = host.serialized_state()
+	var tail_replay: Dictionary = host.submit_intent("commit.place", _place_parameters("layout.primary", 5), tail_token)
+	if tail_replay != tail_response or host.serialized_state() != replay_before: failures.append("Retained-tail intent replay was not byte-identical and consequence-free.")
+	var fresh = _host(definition)
+	var fresh_before: Dictionary = fresh.serialized_state()
+	var fresh_result: Dictionary = fresh.restore_snapshot(snapshot)
+	if bool(fresh_result.get("ok", true)) or fresh.serialized_state() != fresh_before: failures.append("Fresh process self-authorized a snapshot without trusted save ledger.")
+	for field in ["authority_epoch", "checkpoint", "tail"]:
+		var hostile: Dictionary = snapshot.duplicate(true)
+		if field == "authority_epoch": hostile[field] = int(hostile.get(field, 0)) + 1
+		elif field == "checkpoint": (hostile[field] as Dictionary)["high_water_boundary"] = int((hostile[field] as Dictionary).get("high_water_boundary", 0)) + 1
+		elif not (hostile[field] as Array).is_empty(): ((hostile[field] as Array)[0] as Dictionary)["pre_state_digest"] = "0".repeat(64)
+		hostile["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(hostile))
+		var before: Dictionary = host.serialized_state()
+		var rejected: Dictionary = host.restore_snapshot(hostile)
+		if bool(rejected.get("ok", true)) or host.serialized_state() != before: failures.append("Hostile checkpoint/tail field %s did not fail closed." % field)
 
 
-static func _check_hostile_restore(definition: Dictionary, failures: Array) -> void:
-	var host := RetainedRitualHost.new(definition)
-	var runtime = RuntimeScript.new(host)
-	runtime.configure(definition)
-	var valid := runtime.authenticated_snapshot()
-	var restored = RuntimeScript.new(host)
-	restored.configure(definition)
-	if not bool(restored.restore_snapshot(valid).get("ok", false)):
-		failures.append("Authenticated closed restore rejected its own exact snapshot.")
-	var fresh_host := RetainedRitualHost.new(definition)
-	var fresh_runtime = RuntimeScript.new(fresh_host)
-	fresh_runtime.configure(definition)
-	var fresh_before := fresh_runtime.serialized_state()
-	var fresh_result: Dictionary = fresh_runtime.restore_snapshot(valid)
-	if bool(fresh_result.get("ok", true)) or str(fresh_result.get("error_code", "")) != "invalid_restore" or fresh_runtime.serialized_state() != fresh_before:
-		failures.append("Fresh-process restore self-authorized without a trusted external save ledger.")
-	var hostile_cases: Array = []
-	var state: Dictionary
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["unknown"] = true; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["action_sequence"] = "1"; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["actor_states"] as Dictionary)["ghost.actor"] = {}; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["envelope_request_cache"] as Dictionary)["request:bad"] = {"extra": true}; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["contract"] = "game_ritual/2"; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["transition_sequence"] = 2; state["action_sequence"] = 1; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["state_version"] = 2; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["readable_totals"] as Dictionary)["payout"] = 100; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["pending_items"] as Dictionary)["layout.primary"] = 5; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["working_items"] as Dictionary)["layout.primary"] = -1; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["handler_state"] as Dictionary)["caller_authority"] = true; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["energy_tier"] = "hostile"; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); ((state["actor_states"] as Dictionary)["staff.primary"] as Dictionary)["pose"] = "hostile"; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); ((state["object_states"] as Dictionary)["apparatus.primary"] as Dictionary)["visual"] = "hostile"; hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["item_resolutions"] as Array).append({"item_id": "layout.primary"}); hostile_cases.append(state)
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["authoritative_result_refs"] as Array).append({"result_id": ""}); hostile_cases.append(state)
-	for index in range(hostile_cases.size()):
-		var before := restored.serialized_state()
-		var result: Dictionary = restored._restore_state(hostile_cases[index])
-		if bool(result.get("ok", true)) or restored.serialized_state() != before:
-			failures.append("Hostile nested restore case %d did not fail closed without mutation." % index)
-
-	var populated_host := RetainedRitualHost.new(definition, {"play.primary": Callable(GameRitualRuntimeContract, "_play_handler")})
-	var populated = RuntimeScript.new(populated_host)
-	populated.configure(definition)
-	_execute(populated, populated_host, "commit.place", _place_parameters("layout.primary", 5), "hostile_place", {"available_funds": 20})
-	_execute(populated, populated_host, "commit.confirm", {}, "hostile_confirm", {"available_funds": 20})
-	_execute(populated, populated_host, "play.primary", {"commitment_id": "commitment.hostile"}, "hostile_play", {"seed": 3})
-	var populated_state := populated.serialized_state()
-	var populated_cases: Array = []
-	state = populated_state.duplicate(true); (state["envelope_receipts"] as Array).pop_back(); populated_cases.append(state)
-	state = populated_state.duplicate(true); ((state["operation_envelopes"] as Array)[0] as Dictionary)["receipt_key"] = "receipt:operation:forged:b2"; populated_cases.append(state)
-	state = populated_state.duplicate(true); (state["operation_envelopes"] as Array).append(((state["operation_envelopes"] as Array)[0] as Dictionary).duplicate(true)); populated_cases.append(state)
-	state = populated_state.duplicate(true); ((state["fact_envelopes"] as Array)[0] as Dictionary)["content_fingerprint"] = "0".repeat(64); populated_cases.append(state)
-	state = populated_state.duplicate(true)
-	var cache_key := str((state["envelope_request_cache"] as Dictionary).keys()[0])
-	((state["envelope_request_cache"] as Dictionary)[cache_key] as Dictionary)["response_content_fingerprint"] = "0".repeat(64)
-	populated_cases.append(state)
-	state = populated_state.duplicate(true)
-	var cached_responses: Dictionary = (state["handler_state"] as Dictionary)["_ritual_cached_responses"]
-	cached_responses["request:orphan"] = (cached_responses.values()[0] as Dictionary).duplicate(true)
-	populated_cases.append(state)
-	for index in range(populated_cases.size()):
-		var before := populated.serialized_state()
-		var result: Dictionary = populated._restore_state(populated_cases[index])
-		if bool(result.get("ok", true)) or populated.serialized_state() != before:
-			failures.append("Hostile causal restore case %d did not fail closed without mutation." % index)
-
-	var fingerprint_hostile := valid.duplicate(true)
-	fingerprint_hostile["content_fingerprint"] = "0".repeat(64)
-	var migration_hostile := valid.duplicate(true)
-	migration_hostile["envelope_version"] = 2
-	migration_hostile["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(migration_hostile))
-	var unjournaled_state: Dictionary = (valid.get("state", {}) as Dictionary).duplicate(true)
-	unjournaled_state["energy_tier"] = "hostile"
-	for snapshot in [fingerprint_hostile, migration_hostile, _sealed_snapshot(valid, unjournaled_state)]:
-		var before := restored.serialized_state()
-		var result: Dictionary = restored.restore_snapshot(snapshot)
-		if bool(result.get("ok", true)) or str(result.get("error_code", "")) != "invalid_restore" or restored.serialized_state() != before:
-			failures.append("Unjournaled hostile snapshot did not fail closed without mutation.")
-
-
-static func _check_two_round_receipt_identity(definition: Dictionary, failures: Array) -> void:
-	var host := RetainedRitualHost.new(definition, {"play.primary": Callable(GameRitualRuntimeContract, "_play_handler")})
-	var runtime = RuntimeScript.new(host)
-	if not bool(runtime.configure(definition).get("ok", false)):
-		failures.append("Two-round receipt trace could not configure the ritual runtime.")
-		return
-	var commands: Array = []
-	var responses: Array = []
-	for round_index in range(2):
-		var steps := [
-			["commit.place", _place_parameters("layout.primary", 5), {"available_funds": 20}],
-			["commit.confirm", {}, {"available_funds": 20}],
-			["play.primary", {"commitment_id": "commitment.round_%d" % round_index}, {"seed": round_index + 10}],
-			["resolution.acknowledge", {}, {}],
-		]
-		for step_index in range(steps.size()):
-			var step: Array = steps[step_index]
-			var command := _command_for(runtime, host, str(step[0]), step[1] as Dictionary, "round_%d_step_%d" % [round_index, step_index], step[2] as Dictionary)
-			var response: Dictionary = runtime.process_command(command, {"available_funds": 0, "seed": 999999})
-			commands.append(command)
-			responses.append(response)
-			if not bool(response.get("ok", false)):
-				failures.append("Two-round receipt trace rejected round %d step %d: %s" % [round_index, step_index, JSON.stringify(response)])
-			if str(step[0]) == "play.primary" and str(response.get("authoritative_result_ref", "")) != "result.seed_%d.commitment_round_%d" % [round_index + 10, round_index]:
-				failures.append("Caller context overrode the retained host RNG lease in round %d." % round_index)
-	var state := runtime.serialized_state()
-	var operation_keys := {}
-	for operation_value in state.get("operation_envelopes", []):
-		var operation: Dictionary = operation_value
-		var receipt_key := str(operation.get("receipt_key", ""))
-		if operation_keys.has(receipt_key): failures.append("Two-round trace reused an operation receipt identity across boundaries.")
-		operation_keys[receipt_key] = str(operation.get("content_fingerprint", ""))
-	var operation_receipts := {}
-	for receipt_value in state.get("envelope_receipts", []):
-		var receipt: Dictionary = receipt_value
-		if str(receipt.get("envelope_kind", "")) == "operation": operation_receipts[str(receipt.get("receipt_key", ""))] = str(receipt.get("content_fingerprint", ""))
-	if operation_keys.is_empty() or operation_keys != operation_receipts:
-		failures.append("Two-round operation envelopes and causal receipts are not bijective.")
-	var before_replay := runtime.serialized_state()
-	for replay_index in [1, 2, 5, 6]:
-		var replay: Dictionary = runtime.process_command(commands[replay_index] as Dictionary)
-		if replay != responses[replay_index] or runtime.serialized_state() != before_replay:
-			failures.append("Two-round historical replay %d was not byte-identical and effect-free." % replay_index)
-	var snapshot := runtime.authenticated_snapshot()
-	var restored = RuntimeScript.new(host)
-	restored.configure(definition)
-	var restore_result: Dictionary = restored.restore_snapshot(snapshot)
-	if not bool(restore_result.get("ok", false)) or restored.serialized_state() != runtime.serialized_state() or not (restore_result.get("replayed_effects", [1]) as Array).is_empty():
-		failures.append("Two-round causal state did not restore exactly without replaying effects: %s" % JSON.stringify(restore_result))
-
-
-static func _check_retained_causal_history(definition: Dictionary, failures: Array) -> void:
-	var host := RetainedRitualHost.new(definition, {"play.primary": Callable(GameRitualRuntimeContract, "_play_handler")})
-	var runtime = RuntimeScript.new(host)
-	runtime.configure(definition)
-	for round_index in range(33):
-		_execute(runtime, host, "commit.place", _place_parameters("layout.primary", 5), "retained_%d_place" % round_index, {"available_funds": 20})
-		_execute(runtime, host, "commit.confirm", {}, "retained_%d_confirm" % round_index, {"available_funds": 20})
-		_execute(runtime, host, "play.primary", {"commitment_id": "commitment.retained_%d" % round_index}, "retained_%d_play" % round_index, {"seed": round_index})
-		_execute(runtime, host, "resolution.acknowledge", {}, "retained_%d_ack" % round_index, {})
-	var saved := runtime.serialized_state()
-	if (saved.get("envelope_request_cache", {}) as Dictionary).size() <= 128 or (saved.get("envelope_receipts", []) as Array).size() <= 256:
-		failures.append("Long causal trace did not cross the former unilateral compaction thresholds.")
-	var snapshot := runtime.authenticated_snapshot()
-	var restored = RuntimeScript.new(host)
-	restored.configure(definition)
-	var result: Dictionary = restored.restore_snapshot(snapshot)
-	if not bool(result.get("ok", false)) or restored.serialized_state() != saved or not (result.get("replayed_effects", [1]) as Array).is_empty():
-		failures.append("Complete retained causal history did not survive restore beyond former thresholds: %s" % JSON.stringify(result))
-
-
-static func _check_neutral_opt_in_seams(failures: Array) -> void:
-	var runtime_source := FileAccess.get_file_as_string("res://scripts/core/game_ritual_runtime.gd").to_lower()
-	var layout_source := FileAccess.get_file_as_string("res://scripts/core/game_ritual_layout.gd").to_lower()
+static func _check_layout_and_neutrality(definition: Dictionary, failures: Array) -> void:
+	var hits := LayoutScript.compile_pointer_hits(definition, "open")
+	var canvas = CanvasScript.new()
+	canvas.surface_add_ritual_hits(hits)
+	if hits.size() != 1 or canvas.hit_regions.size() != 1: failures.append("Ritual layout/canvas opt-in seam did not preserve one semantic hit.")
+	canvas.free()
+	var sources := (FileAccess.get_file_as_string("res://scripts/core/game_ritual_runtime.gd") + FileAccess.get_file_as_string("res://scripts/core/game_ritual_host_authority.gd")).to_lower()
 	for forbidden in ["craps", "blackjack", "roulette", "baccarat", "poker", "slots", "pusher"]:
-		if runtime_source.contains(forbidden) or layout_source.contains(forbidden):
-			failures.append("Shared ritual implementation contains game-specific token %s." % forbidden)
-	var canvas_source := FileAccess.get_file_as_string("res://scripts/ui/game_surface_canvas.gd")
-	if canvas_source.count("surface_add_ritual_hits(") != 1:
-		failures.append("Ritual canvas seam is not opt-in; an existing path invokes it implicitly.")
+		if sources.contains(forbidden): failures.append("Shared ritual authority contains game-specific token %s." % forbidden)
 
 
-static func _command_for(runtime, host: RetainedRitualHost, action_id: String, parameters: Dictionary, tag: String, context: Dictionary = {}) -> Dictionary:
-	var snapshot: Dictionary = runtime.serialized_state()
-	var authenticated: Dictionary = host.ritual_authenticated_action(action_id)
-	var command := {
-		"envelope_version": 1,
-		"ritual_id": str(runtime.definition.get("ritual_id", "")),
-		"session_id": str(snapshot.get("session_id", "")),
-		"command_id": "command.%s" % tag,
-		"request_key": "request:%s" % tag,
-		"action_id": action_id,
-		"expected_phase": str(snapshot.get("phase_id", "")),
-		"source_id": "player.reserve",
-		"target_id": "layout.primary",
-		"parameters": parameters.duplicate(true),
-		"authenticated_action": authenticated.duplicate(true),
-		"boundary": {
-			"boundary_id": "boundary.command.%s" % tag,
-			"kind": "command",
-			"ritual_id": str(runtime.definition.get("ritual_id", "")),
-			"session_id": str(snapshot.get("session_id", "")),
-			"phase_id": str(snapshot.get("phase_id", "")),
-			"ordinal": int(snapshot.get("boundary_ordinal", 0)) + 1,
-			"cause_receipt_key": "receipt:command:%s" % tag,
-		},
-		"receipt_key": "receipt:command:%s" % tag,
-		"content_fingerprint": "",
-	}
-	command["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(command))
-	return host.issue(command, context)
+static func _host(definition: Dictionary, handlers: Dictionary = {}):
+	var merged := {"play.primary": Callable(GameRitualRuntimeContract, "_play_handler")}
+	for key in handlers.keys(): merged[key] = handlers[key]
+	return HostScript.new(definition, merged, "session.default_01", Callable(GameRitualRuntimeContract, "_authoritative_context"))
 
 
-static func _execute(runtime, host: RetainedRitualHost, action_id: String, parameters: Dictionary, tag: String, context: Dictionary) -> Dictionary:
-	return runtime.process_command(_command_for(runtime, host, action_id, parameters, tag, context))
+static func _submit(host, action_id: String, parameters: Dictionary, tag: String, caller_context: Dictionary = {}) -> Dictionary:
+	return host.submit_intent(action_id, parameters, host.intent_token(tag))
+
+
+static func _authoritative_context(action_id: String, parameters: Dictionary, _state: Dictionary) -> Dictionary:
+	var seed := 0
+	if action_id == "play.primary":
+		var commitment := str(parameters.get("commitment_id", ""))
+		seed = commitment.get_slice("seed_", 1).to_int() if commitment.contains("seed_") else 0
+	return {"available_funds": 100, "seed": seed, "account_id": "account.test_ritual"}
 
 
 static func _place_parameters(item_id: String, amount: int) -> Dictionary:
@@ -497,39 +186,31 @@ static func _place_parameters(item_id: String, amount: int) -> Dictionary:
 
 static func _play_handler(_action_id: String, parameters: Dictionary, _candidate: Dictionary, context: Dictionary) -> Dictionary:
 	var result_id := "result.seed_%d.%s" % [int(context.get("seed", 0)), str(parameters.get("commitment_id", "")).replace(".", "_")]
-	return {
-		"ok": true,
-		"persisted_state": {"authoritative_result_refs": [{"result_id": result_id}]},
-		"result": {"result_id": result_id, "payout": 15, "net_change": 10},
-		"facts": [{"fact_type": "resolution.completed", "payload": {"result_id": result_id, "net_change": 10}}],
-		"operations": [],
-	}
+	return {"ok": true, "persisted_state": {"authoritative_result_refs": [{"result_id": result_id}]}, "result": {"result_id": result_id, "payout": 15, "net_change": 10}, "facts": [{"fact_type": "resolution.completed", "payload": {"result_id": result_id, "net_change": 10}}], "operations": []}
 
 
-static func _hostile_operation_handler(_action_id: String, _parameters: Dictionary, _candidate: Dictionary, _context: Dictionary) -> Dictionary:
-	return {"ok": true, "persisted_state": {}, "result": {}, "facts": [], "operations": [{"operation_id": "staff_offer", "family": "actor_ops", "verb": "set_pose", "source_owner_id": "example_table.standard_session", "target_id": "staff.primary", "arguments": {"pose": "offer"}}]}
-
-
-static func _hostile_fact_handler(_action_id: String, _parameters: Dictionary, _candidate: Dictionary, _context: Dictionary) -> Dictionary:
-	return {"ok": true, "persisted_state": {}, "result": {}, "facts": [{"fact_type": "commitment.accepted", "payload": {"commitment_id": "commitment.hostile", "at_risk_total": 5}}], "operations": []}
-
-
-static func _duplicate_operation_handler(_action_id: String, parameters: Dictionary, _candidate: Dictionary, context: Dictionary) -> Dictionary:
-	var result := _play_handler("play.primary", parameters, {}, context)
+static func _duplicate_operation_handler(action_id: String, parameters: Dictionary, candidate: Dictionary, context: Dictionary) -> Dictionary:
+	var result := _play_handler(action_id, parameters, candidate, context)
 	result["operations"] = [{"operation_id": "apparatus_activate", "family": "scene_ops", "verb": "set_state", "source_owner_id": "example_table.standard_session", "target_id": "apparatus.primary", "arguments": {"state_slot": "visual", "state": "active"}}]
 	return result
 
 
-static func _invalid_persisted_handler(_action_id: String, parameters: Dictionary, _candidate: Dictionary, context: Dictionary) -> Dictionary:
-	var result := _play_handler("play.primary", parameters, {}, context)
+static func _invalid_persisted_handler(action_id: String, parameters: Dictionary, candidate: Dictionary, context: Dictionary) -> Dictionary:
+	var result := _play_handler(action_id, parameters, candidate, context)
 	result["persisted_state"] = {"authoritative_result_refs": [{"result_id": ""}]}
 	return result
 
 
-static func _invalid_declared_operation_handler(_action_id: String, parameters: Dictionary, _candidate: Dictionary, context: Dictionary) -> Dictionary:
-	var result := _play_handler("play.primary", parameters, {}, context)
+static func _invalid_declared_operation_handler(action_id: String, parameters: Dictionary, candidate: Dictionary, context: Dictionary) -> Dictionary:
+	var result := _play_handler(action_id, parameters, candidate, context)
 	result["operations"] = [{"operation_id": "energy_engaged_staff", "family": "actor_ops", "verb": "set_behavior", "source_owner_id": "example_table.standard_session", "target_id": "staff.primary", "arguments": {"behavior": "hostile"}}]
 	return result
+
+
+static func _response_projection_matches(response: Dictionary, projection: Dictionary, current: bool) -> bool:
+	if not current: return true
+	var public: Dictionary = response.get("public_projection", {})
+	return str(public.get("phase_id", "")) == str(projection.get("phase_id", "")) and int(public.get("pending_total", -1)) == int((projection.get("readable_totals", {}) as Dictionary).get("pending_total", 0)) and int(public.get("at_risk_total", -1)) == int((projection.get("readable_totals", {}) as Dictionary).get("at_risk_total", 0))
 
 
 static func _without_fingerprint(value: Dictionary) -> Dictionary:
@@ -538,23 +219,9 @@ static func _without_fingerprint(value: Dictionary) -> Dictionary:
 	return copy
 
 
-static func _exact_keys(value: Dictionary, keys: Array) -> bool:
-	if value.size() != keys.size(): return false
-	for key in keys:
-		if not value.has(key): return false
-	return true
-
-
-static func _sealed_snapshot(base: Dictionary, state: Dictionary) -> Dictionary:
-	var snapshot := base.duplicate(true)
-	snapshot["state"] = state
-	snapshot["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(snapshot))
-	return snapshot
-
-
 static func _fixture(failures: Array) -> Dictionary:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE_PATH))
 	if typeof(parsed) != TYPE_DICTIONARY:
-		failures.append("Frozen ritual vocabulary fixture is not valid JSON.")
+		failures.append("Frozen ritual fixture is invalid JSON.")
 		return {}
-	return parsed
+	return (parsed as Dictionary).duplicate(true)

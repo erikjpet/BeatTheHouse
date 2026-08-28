@@ -21,45 +21,47 @@ var _phases: Dictionary = {}
 var _handlers: Dictionary = {}
 var _operations: Dictionary = {}
 var _session_id := "session.default_01"
-var _host_authority: Object
 
 
-func _init(host_authority: Object = null) -> void:
-	_host_authority = host_authority
-
-
-func configure(ritual_definition: Dictionary) -> Dictionary:
+func configure(ritual_definition: Dictionary, session_id: String = "session.default_01") -> Dictionary:
 	if not definition.is_empty():
 		return {"ok": false, "errors": ["ritual runtime is already configured"]}
 	var errors := SchemaScript.validate_definition(ritual_definition)
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors}
-	for method in ["ritual_session_id", "ritual_authenticated_action", "ritual_authorizes_command", "ritual_execution_lease", "ritual_consume_command", "ritual_handle_action", "ritual_record_snapshot", "ritual_authorizes_snapshot"]:
-		if _host_authority == null or not _host_authority.has_method(method):
-			return {"ok": false, "errors": ["retained ritual host authority is incomplete"]}
 	definition = ritual_definition.duplicate(true)
-	_session_id = str(_host_authority.call("ritual_session_id"))
+	_session_id = session_id
 	if not _qualified_id(_session_id):
 		definition.clear()
 		return {"ok": false, "errors": ["retained ritual host session identity is invalid"]}
 	_index_definition()
 	state = _fresh_state()
 	_apply_phase_entry(str(state.get("phase_id", "")))
+	var initial_errors := _validate_complete_state(state)
+	if not initial_errors.is_empty():
+		definition.clear()
+		state.clear()
+		return {"ok": false, "errors": initial_errors}
 	return {"ok": true, "state": state.duplicate(true), "projection": prepared_projection()}
 
 
 # Strict frozen-contract entry point. Caller origin data never establishes
 # authority: the complete authenticated descriptor must equal the live trusted
 # descriptor supplied by the host for this action.
-func process_command(command: Dictionary, _caller_context: Dictionary = {}) -> Dictionary:
+func process_command(command: Dictionary) -> Dictionary:
+	return _envelope_rejection(command, "unsealed_authority", "Only the retained ritual host may commit an intent.", false, "none")
+
+
+# Pure proposal entry used only by the owning host. This object contains a copy
+# of state and no host/capability reference; reflecting or calling it cannot
+# issue authority or commit the host's durable state.
+func propose_command(command: Dictionary, trusted_action: Dictionary, authoritative_context: Dictionary = {}, handler_result: Dictionary = {}) -> Dictionary:
 	var request_key := str(command.get("request_key", ""))
 	var envelope_cache: Dictionary = state.get("envelope_request_cache", {})
 	if envelope_cache.has(request_key):
 		var cached: Dictionary = envelope_cache[request_key]
 		if not _closed_shape(command, COMMAND_KEYS) or not _fingerprint(str(command.get("content_fingerprint", ""))) or canonical_fingerprint(_without_fingerprint(command)) != str(command.get("content_fingerprint", "")):
 			return _envelope_rejection(command, "invalid_envelope", "Replay command envelope is invalid.", false, "none")
-		if not bool(_host_authority.call("ritual_authorizes_command", command.duplicate(true), true)):
-			return _envelope_rejection(command, "authority_mismatch", "Replay action origin is not live and authenticated.", false, "none")
 		if str(cached.get("command_content_fingerprint", "")) != str(command.get("content_fingerprint", "")):
 			return _envelope_rejection(command, "receipt_content_conflict", "Request key is already bound to different command content.", false, "none")
 		var cached_responses: Dictionary = (state.get("handler_state", {}) as Dictionary).get("_ritual_cached_responses", {})
@@ -67,18 +69,12 @@ func process_command(command: Dictionary, _caller_context: Dictionary = {}) -> D
 		if cached_response.is_empty() or str(cached_response.get("content_fingerprint", "")) != str(cached.get("response_content_fingerprint", "")):
 			return _envelope_rejection(command, "internal_fail_closed", "Cached response receipt is unavailable or mismatched.", false, "none")
 		return cached_response.duplicate(true)
-	var validation := _validate_command_envelope(command)
+	var validation := _validate_command_envelope(command, trusted_action)
 	if not validation.is_empty():
 		return _envelope_rejection(command, str(validation.get("error_code", "invalid_envelope")), str(validation.get("message", "Invalid ritual command.")), false, "none")
-	var lease_value: Variant = _host_authority.call("ritual_execution_lease", command.duplicate(true))
-	var lease: Dictionary = lease_value if typeof(lease_value) == TYPE_DICTIONARY else {}
-	var leased_context: Dictionary = (lease.get("context", {}) as Dictionary).duplicate(true) if typeof(lease.get("context")) == TYPE_DICTIONARY else {}
-	var lease_body := {"command_content_fingerprint": str(command.get("content_fingerprint", "")), "context": leased_context.duplicate(true)}
-	if not _closed_shape(lease, ["command_content_fingerprint", "context", "content_fingerprint"]) or str(lease.get("command_content_fingerprint", "")) != str(command.get("content_fingerprint", "")) or typeof(lease.get("context")) != TYPE_DICTIONARY or not _fingerprint(str(lease.get("content_fingerprint", ""))) or canonical_fingerprint(lease_body) != str(lease.get("content_fingerprint", "")):
-		return _envelope_rejection(command, "authority_mismatch", "RitualCommand has no exact retained host execution lease.", false, "none")
-	# The compatibility argument is deliberately inert. Money, RNG, and every
-	# other authoritative input come only from the lease bound to this command.
-	var execution_context := leased_context
+	var execution_context := authoritative_context.duplicate(true)
+	execution_context["_ritual_handler_result"] = handler_result.duplicate(true)
+	execution_context["_ritual_command_target"] = str(command.get("target_id", ""))
 	execution_context["_ritual_command_boundary"] = (command.get("boundary", {}) as Dictionary).duplicate(true)
 	execution_context["_ritual_command_receipt"] = str(command.get("receipt_key", ""))
 	var before := state.duplicate(true)
@@ -119,14 +115,27 @@ func process_command(command: Dictionary, _caller_context: Dictionary = {}) -> D
 	var candidate_validation := _restore_state(candidate)
 	if not bool(candidate_validation.get("ok", false)):
 		return _envelope_rejection(command, "internal_fail_closed", "Authoritative ritual proposal failed closed validation.", false, "none")
-	if not bool(_host_authority.call("ritual_consume_command", command.duplicate(true))):
-		return _envelope_rejection(command, "authority_mismatch", "RitualCommand host nonce was not pending at commit.", false, "none")
 	state = candidate
 	return response
 
 
+func adopt_validated_state(source_state: Dictionary) -> Dictionary:
+	var result := _restore_state(source_state)
+	if bool(result.get("ok", false)):
+		state = (result.get("state", {}) as Dictionary).duplicate(true)
+	return result
+
+
 func validate_command_envelope(command: Dictionary) -> Dictionary:
-	return _validate_command_envelope(command)
+	return _validation_error("unsealed_authority", "Only the retained ritual host can bind a trusted action descriptor.")
+
+
+func preflight_command(command: Dictionary, trusted_action: Dictionary) -> Dictionary:
+	return _validate_command_envelope(command, trusted_action)
+
+
+func rejection_for_command(command: Dictionary, validation: Dictionary) -> Dictionary:
+	return _envelope_rejection(command, str(validation.get("error_code", "invalid_envelope")), str(validation.get("message", "Invalid ritual command.")), false, "none")
 
 
 func process_action(action_id: String, parameters: Dictionary, request_key: String, context: Dictionary = {}) -> Dictionary:
@@ -241,32 +250,24 @@ func _restore_state(serialized_state: Dictionary) -> Dictionary:
 	return {"ok": true, "state": candidate, "projection": _prepared_projection(candidate), "replayed_effects": []}
 
 
+func _validate_complete_state(candidate: Dictionary) -> Array[String]:
+	var result := _restore_state(candidate)
+	var errors: Array[String] = []
+	if not bool(result.get("ok", false)):
+		for error in result.get("errors", []): errors.append(str(error))
+	return errors
+
+
 func serialized_state() -> Dictionary:
 	return state.duplicate(true)
 
 
 func authenticated_snapshot() -> Dictionary:
-	var snapshot := {"envelope_version": 1, "ritual_id": str(definition.get("ritual_id", "")), "session_id": _session_id, "state": state.duplicate(true), "content_fingerprint": ""}
-	snapshot["content_fingerprint"] = canonical_fingerprint(_without_fingerprint(snapshot))
-	if not bool(_host_authority.call("ritual_record_snapshot", str(snapshot.get("content_fingerprint", "")))):
-		return {}
-	return snapshot
+	return {}
 
 
 func restore_snapshot(snapshot: Dictionary) -> Dictionary:
-	var keys := ["envelope_version", "ritual_id", "session_id", "state", "content_fingerprint"]
-	if not _closed_shape(snapshot, keys): return {"ok": false, "error_code": "invalid_restore", "errors": ["restore snapshot has invalid closed shape"]}
-	if int(snapshot.get("envelope_version", 0)) != 1: return {"ok": false, "error_code": "invalid_restore", "errors": ["restore snapshot version requires an explicit unavailable migration"]}
-	if str(snapshot.get("ritual_id", "")) != str(definition.get("ritual_id", "")) or str(snapshot.get("session_id", "")) != _session_id: return {"ok": false, "error_code": "invalid_restore", "errors": ["restore snapshot identity mismatch"]}
-	if typeof(snapshot.get("state")) != TYPE_DICTIONARY or not _fingerprint(str(snapshot.get("content_fingerprint", ""))) or canonical_fingerprint(_without_fingerprint(snapshot)) != str(snapshot.get("content_fingerprint", "")) or not bool(_host_authority.call("ritual_authorizes_snapshot", str(snapshot.get("content_fingerprint", "")))):
-		return {"ok": false, "error_code": "invalid_restore", "errors": ["restore snapshot fingerprint mismatch"]}
-	var before := state.duplicate(true)
-	var result := _restore_state(snapshot.get("state", {}) as Dictionary)
-	if not bool(result.get("ok", false)):
-		result["error_code"] = "invalid_restore"
-		return result
-	state = (result.get("state", before) as Dictionary).duplicate(true)
-	return result
+	return {"ok": false, "error_code": "invalid_restore", "errors": ["Snapshot authority belongs to the retained ritual host"]}
 
 
 func prepared_projection() -> Dictionary:
@@ -388,7 +389,7 @@ func _invoke_handler(handler_id: String, action_id: String, parameters: Dictiona
 		return _builtin_commitment(action_id, parameters, candidate, context)
 	if handler_id == "resolution.ack":
 		return {"ok": true, "result": {}, "operations": [], "facts": []}
-	var response: Variant = _host_authority.call("ritual_handle_action", handler_id, action_id, parameters.duplicate(true), candidate.duplicate(true), context.duplicate(true))
+	var response: Variant = context.get("_ritual_handler_result", {})
 	return (response as Dictionary).duplicate(true) if typeof(response) == TYPE_DICTIONARY else {"ok": false, "error_code": "handler_contract_violation", "message": "Handler did not return a record."}
 
 
@@ -409,6 +410,8 @@ func _builtin_commitment(action_id: String, parameters: Dictionary, candidate: D
 	var pending: Dictionary = candidate.get("pending_items", {}).duplicate(true)
 	var history: Array = candidate.get("pending_history", []).duplicate(true)
 	var item_id := str(parameters.get("item_id", ""))
+	if parameters.has("item_id") and (item_id != str(context.get("_ritual_command_target", "")) or not _declared_item_target(item_id)):
+		return {"ok": false, "error_code": "unavailable_target", "message": "Commitment item is not the exact sealed command target."}
 	var amount := maxi(0, int(parameters.get("amount", 0)))
 	var available := maxi(0, int(context.get("available_funds", (candidate.get("readable_totals", {}) as Dictionary).get("available_funds", 0))))
 	match action_id:
@@ -658,7 +661,7 @@ func _fingerprint(value: String) -> bool:
 	return true
 
 
-func _validate_command_envelope(command: Dictionary) -> Dictionary:
+func _validate_command_envelope(command: Dictionary, trusted_action: Dictionary) -> Dictionary:
 	if not _closed_shape(command, COMMAND_KEYS): return _validation_error("invalid_envelope", "RitualCommand has unknown or missing fields.")
 	if int(command.get("envelope_version", 0)) != ENVELOPE_VERSION: return _validation_error("unsupported_version", "RitualCommand envelope_version must be 1.")
 	for key in ["ritual_id", "session_id", "command_id", "action_id", "source_id", "target_id"]:
@@ -684,11 +687,8 @@ func _validate_command_envelope(command: Dictionary) -> Dictionary:
 	for key in ["operation_receipt_key", "boundary_id"]:
 		if not _request_key(str(authenticated.get(key, ""))): return _validation_error("invalid_id", "Authenticated action %s is invalid." % key)
 	if not _fingerprint(str(authenticated.get("content_fingerprint", ""))): return _validation_error("invalid_envelope", "Authenticated action fingerprint is invalid.")
-	var trusted_value: Variant = _host_authority.call("ritual_authenticated_action", action_id)
-	var trusted: Dictionary = trusted_value if typeof(trusted_value) == TYPE_DICTIONARY else {}
-	if trusted.is_empty(): return _validation_error("unsealed_authority", "No live authenticated action is bound.")
-	if canonical_json(authenticated) != canonical_json(trusted): return _validation_error("authority_mismatch", "Caller action origin does not match the live authenticated action.")
-	if not bool(_host_authority.call("ritual_authorizes_command", command.duplicate(true), false)): return _validation_error("authority_mismatch", "RitualCommand was not issued by the retained game host.")
+	if trusted_action.is_empty(): return _validation_error("unsealed_authority", "No live authenticated action is bound.")
+	if canonical_json(authenticated) != canonical_json(trusted_action): return _validation_error("authority_mismatch", "Command action origin does not match the host-derived action.")
 	var boundary: Dictionary = command.get("boundary", {}) if typeof(command.get("boundary")) == TYPE_DICTIONARY else {}
 	var boundary_error := _validate_boundary(boundary, command)
 	if not boundary_error.is_empty(): return boundary_error
@@ -716,7 +716,7 @@ func _result_envelope(command: Dictionary, legacy: Dictionary) -> Dictionary:
 		"envelope_version": ENVELOPE_VERSION, "ok": true, "ritual_id": str(command.get("ritual_id", "")), "session_id": str(command.get("session_id", "")), "command_id": str(command.get("command_id", "")), "request_key": str(command.get("request_key", "")),
 		"phase_before": phase_before, "phase_after": str(legacy.get("phase_id", phase_before)), "authoritative_result_ref": result_ref,
 		"state_receipts": [str((legacy.get("result_receipt", {}) as Dictionary).get("receipt_key", ""))], "operation_receipts": [], "fact_receipts": [],
-		"boundary": (command.get("boundary", {}) as Dictionary).duplicate(true), "receipt_key": "receipt:result:%s" % str(command.get("command_id", "")).replace(".", "_"), "content_fingerprint": "", "public_projection": _public_projection(),
+		"boundary": (command.get("boundary", {}) as Dictionary).duplicate(true), "receipt_key": "receipt:result:%s" % str(command.get("command_id", "")).replace(".", "_"), "content_fingerprint": "", "public_projection": _public_projection_from_prepared(legacy.get("projection", {}) as Dictionary),
 	}
 	for fact in legacy.get("facts", []): envelope["fact_receipts"].append(str((fact as Dictionary).get("receipt_key", "")))
 	for receipt_key in legacy.get("operation_receipt_keys", []): envelope["operation_receipts"].append(str(receipt_key))
@@ -762,7 +762,10 @@ func _fallback_boundary(command: Dictionary) -> Dictionary:
 
 
 func _public_projection() -> Dictionary:
-	var projection := prepared_projection()
+	return _public_projection_from_prepared(prepared_projection())
+
+
+func _public_projection_from_prepared(projection: Dictionary) -> Dictionary:
 	return {"phase_id": str(projection.get("phase_id", "")), "pending_total": int((projection.get("readable_totals", {}) as Dictionary).get("pending_total", 0)), "at_risk_total": int((projection.get("readable_totals", {}) as Dictionary).get("at_risk_total", 0))}
 
 
@@ -899,8 +902,12 @@ func _valid_operation_result_envelope(operation: Dictionary) -> bool:
 func _valid_item_map(items: Dictionary) -> bool:
 	if items.size() > 128: return false
 	for item_id in items.keys():
-		if not _qualified_id(str(item_id)) or typeof(items[item_id]) != TYPE_INT or int(items[item_id]) < 0 or int(items[item_id]) > 2147483647: return false
+		if not _declared_item_target(str(item_id)) or typeof(items[item_id]) != TYPE_INT or int(items[item_id]) < 0 or int(items[item_id]) > 2147483647: return false
 	return true
+
+
+func _declared_item_target(item_id: String) -> bool:
+	return ((definition.get("declared_targets", {}) as Dictionary).get("regions", []) as Array).has(item_id)
 
 
 func _valid_item_resolution(resolution: Dictionary, source_state: Dictionary) -> bool:
