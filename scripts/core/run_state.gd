@@ -1865,23 +1865,26 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	var definition := scenario_sequence_definition()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition):
 		return {"ok": true, "inactive": true, "errors": []}
-	return scenario_finalize_base_semantics([], library, layout_context)
+	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(current_environment, library)
+	if not bool(authoritative.get("ok", false)):
+		return _scenario_semantic_finalization_failure(_copy_array(authoritative.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
+	return _scenario_finalize_trusted_base_semantics(_copy_array(authoritative.get("records", [])), library, layout_context)
 
 
-func scenario_finalize_base_semantics(_interactable_records: Array, library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
+func scenario_finalize_base_semantics(interactable_records: Array, library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
+	# Explicit host/test seam. Production generation and refresh call
+	# scenario_finalize_installed_environment(), whose records come only from the
+	# installed environment plus trusted ContentLibrary. Presentation callers do
+	# not route through this seam.
+	return _scenario_finalize_trusted_base_semantics(interactable_records, library, layout_context)
+
+
+func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
 	_ensure_scenario_host_public_context()
 	var definition := scenario_sequence_definition()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition): return {"ok": true, "inactive": true, "errors": []}
 	var refresh_attempt := bool(current_environment.get("scenario_semantic_ready", false))
 	if library == null: return _scenario_semantic_finalization_failure(["Scenario semantic finalization requires ContentLibrary."], refresh_attempt)
-	# `interactable_records` is retained as a compatibility proposal input only.
-	# It can restrict presentation after projection, but it never authors the
-	# sealed base interaction inventory. Authority is reproduced independently
-	# from the installed environment and trusted ContentLibrary catalog.
-	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(current_environment, library)
-	if not bool(authoritative.get("ok", false)):
-		return _scenario_semantic_finalization_failure(_copy_array(authoritative.get("errors", [])), refresh_attempt)
-	var trusted_records := _copy_array(authoritative.get("records", []))
 	var producer_context := _scenario_base_producer_context()
 	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(trusted_records, current_environment, library, producer_context)
 	if not bool(stamped.get("ok", false)): return _scenario_semantic_finalization_failure(_copy_array(stamped.get("errors", [])), refresh_attempt)
@@ -14028,9 +14031,26 @@ static func _mark_scenario_restore_pending_trusted_rebuild(environment: Dictiona
 static func scenario_restore_equivalence_snapshot(environment: Dictionary) -> Dictionary:
 	var snapshot := environment.duplicate(true)
 	_strip_scenario_semantic_ephemera(snapshot)
+	var causal_environment: Dictionary = {}
+	for key in [
+		"id", "archetype_id", "world_node_id", "environment_visit_id", "current_layer_id",
+		"scenario_id", "scenario_sequence_definition", "scenario_sequence_migration",
+		"scenario_sequence_state", "scenario_sequence_pending_visit_id",
+		"scenario_restore_contract", "scenario_semantic_ready", "scenario_semantic_inventory",
+		"scenario_semantic_inventory_version", "scenario_semantic_digest",
+		"scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context",
+		"scenario_semantic_action_digest", "scenario_event_choices",
+		"scenario_layout_base_records", "scenario_layout_authority", "scenario_layout_authority_digest",
+		"scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids",
+		"scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers",
+		"scenario_sequence_base_layout_object_rects",
+	]:
+		if snapshot.has(key):
+			var value: Variant = snapshot.get(key)
+			causal_environment[key] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
 	return {
 		"contract": ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1,
-		"causal_environment": snapshot,
+		"causal_environment": causal_environment,
 		"derived_noncausal_fields": SCENARIO_DERIVED_NONCAUSAL_ENVIRONMENT_FIELDS.duplicate(),
 	}
 

@@ -1591,8 +1591,16 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 				failures.append("A hostile fake-CLEANED candidate bypassed exact node-binding quarantine reproduction.")
 	var saved := RunStateScript._environment_for_persistent_storage(run_state.current_environment)
 	var saved_semantic := _dict(_dict(saved.get("scenario_sequence_state", {})).get("semantic_state", {}))
-	if saved.has("scenario_semantic_ready") or saved.has("scenario_semantic_inventory") or saved.has("scenario_base_interactions") or saved.has("scenario_event_choices") or saved_semantic.has("target_inventory") or saved_semantic.has("declared_targets") or saved_semantic.has("base_interactions") or saved_semantic.has("event_choices") or saved_semantic.has("scene_objects") or saved_semantic.has("interactions") or saved_semantic.has("actors") or saved_semantic.has("transition_queue") or _dict(saved.get("scenario_sequence_state", {})).has("resolved_branches") or _dict(saved.get("scenario_sequence_state", {})).has("resolved_outcomes"):
-		failures.append("Save serialization retained ephemeral semantic authorization proof.")
+	if str(saved.get("scenario_restore_contract", "")) != RunStateScript.ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1 \
+		or not bool(saved.get("scenario_semantic_ready", false)) \
+		or _dict(saved.get("scenario_semantic_inventory", {})).is_empty() \
+		or _array(saved.get("scenario_base_interactions", [])).is_empty() \
+		or _dict(saved.get("scenario_event_choices", {})).is_empty() \
+		or _array(saved_semantic.get("base_interactions", [])).is_empty() \
+		or saved.has("scenario_sequence_projection") \
+		or saved.has("scenario_render_snapshot") \
+		or not RunStateScript.scenario_restore_equivalent(run_state.current_environment, saved):
+		failures.append("Save serialization did not preserve the named exact causal/authority restore contract while stripping only derived projection caches.")
 	var forged_live := RunStateScript.new()
 	forged_live.current_environment = run_state.current_environment.duplicate(true)
 	var forged_inventory: Dictionary = _dict(forged_live.current_environment.get("scenario_semantic_inventory", {}))
@@ -2470,6 +2478,13 @@ static func _check_augment_availability(failures: Array) -> void:
 	var enabled := SequenceRuntimeScript.apply_command(state, definition, command, {"available_funds": 0, "host_interaction_availability": enabled_availability})
 	if not bool(enabled.get("ok", false)):
 		failures.append("Scenario augment command could not execute against an available authoritative host target.")
+	var unsealed_state := state.duplicate(true)
+	var unsealed_semantic := _dict(unsealed_state.get("semantic_state", {}))
+	unsealed_semantic["base_interactions"] = []
+	unsealed_state["semantic_state"] = unsealed_semantic
+	var forged_enabled := SequenceRuntimeScript.apply_command(unsealed_state, definition, command, {"available_funds": 0, "host_interaction_availability": enabled_availability})
+	if bool(forged_enabled.get("ok", true)):
+		failures.append("Caller proposal true granted an augment after sealed host authority was removed.")
 
 
 static func _prepared_fixture_state(definition: Dictionary, seed_token: String, failures: Array) -> Dictionary:
