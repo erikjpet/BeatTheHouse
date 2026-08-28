@@ -211,47 +211,5 @@
       "grand_casino_invite": true
     },
     "condition_text": "You need an invitation from the high-roller circuit."
-  },
-  {
-    "id": "grand_casino_high_limit",
-    "label": "Grand Casino High-Limit Room",
-    "destination_archetype": "grand_casino_high_limit",
-    "description": "The velvet rope opens onto the public high-limit room.",
-    "decision": {
-      "offer": "Sharper tables and the house's highest public limits.",
-      "tradeoff": "the main floor's wider exits"
-    },
-    "cost": 0,
-    "risk": "boss",
-    "distance": "same",
-    "risk_decay": 0
-  },
-  {
-    "id": "grand_casino_back_room",
-    "label": "Grand Casino Back Room",
-    "destination_archetype": "grand_casino_back_room",
-    "description": "A watched interior door leads to Rourke's private table.",
-    "decision": {
-      "offer": "The house's private confrontation room.",
-      "tradeoff": "the safety of the public floor"
-    },
-    "cost": 0,
-    "risk": "boss",
-    "distance": "same",
-    "risk_decay": 0
-  },
-  {
-    "id": "grand_casino_cage",
-    "label": "Grand Casino Cage",
-    "destination_archetype": "grand_casino_cage",
-    "description": "The internal cage corridor handles chips, review, and cashout.",
-    "decision": {
-      "offer": "Cashout, review, and the house ledger.",
-      "tradeoff": "remaining on the casino floor"
-    },
-    "cost": 0,
-    "risk": "boss",
-    "distance": "same",
-    "risk_decay": 0
   }
 ]

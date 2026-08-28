@@ -6,12 +6,11 @@ const HANDLER_ROOT := "res://scripts/core/scenario_handlers"
 const RENDERER_ROOT := "res://scripts/ui/scenario_renderers"
 const PACKAGE_EXTENSIONS := {
 	"env06_7_shops_streets": "shops_streets",
-	"env06_7_roadside_shelter": "roadside_shelter",
 	"env06_7_bars_road": "bars_road",
 	"env06_7_punchline_clubs": "punchline_clubs",
 	"env06_7_queen_public": "queen_public",
 }
-const ALLOWED_EXTENSION_IDS := [BASE_EXTENSION_ID, "shops_streets", "roadside_shelter", "bars_road", "punchline_clubs", "queen_public"]
+const ALLOWED_EXTENSION_IDS := [BASE_EXTENSION_ID, "shops_streets", "bars_road", "punchline_clubs", "queen_public"]
 
 
 static func validate_package_extensions(package_id: String, handler_pack: String, renderer_id: String) -> Array:

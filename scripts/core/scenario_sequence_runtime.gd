@@ -200,13 +200,13 @@ static func normalize_state(value: Variant, definition: Dictionary = {}, trusted
 		"semantic_state": OperationRegistryScript.normalize_semantic_state(semantic_source),
 		"fact_queue": [],
 		"fact_receipts": _bounded_strings(source.get("fact_receipts", []), MAX_RECEIPTS),
-		"fact_receipt_records": _normalized_fact_receipt_records(source.get("fact_receipt_records", [])),
-		"fact_flush_batch_records": _normalized_integer_record_fields(source.get("fact_flush_batch_records", []), ["batch_ordinal", "requested_boundary_serial", "effective_boundary_serial", "first_cause_ordinal"]),
+		"fact_receipt_records": _bounded_records(source.get("fact_receipt_records", []), MAX_RECEIPTS),
+		"fact_flush_batch_records": _bounded_records(source.get("fact_flush_batch_records", []), MAX_RECEIPTS),
 		"command_receipts": _bounded_strings(source.get("command_receipts", []), MAX_RECEIPTS),
-		"command_receipt_records": _normalized_command_receipt_records(source.get("command_receipt_records", [])),
-		"command_results": {},
+		"command_receipt_records": _bounded_records(source.get("command_receipt_records", []), MAX_RECEIPTS),
+		"command_results": _normalized_command_results(source.get("command_results", {}), source.get("command_receipts", []), source.get("command_receipt_records", []), source.get("command_fingerprints", {})),
 		"command_fingerprints": _normalized_receipt_fingerprints(source.get("command_fingerprints", {}), source.get("command_receipts", [])),
-		"branch_resolution_records": _normalized_integer_record_fields(source.get("branch_resolution_records", []), ["boundary_ordinal"]),
+		"branch_resolution_records": _bounded_records(source.get("branch_resolution_records", []), MAX_RECEIPTS),
 		"transition_receipts": _bounded_strings(source.get("transition_receipts", []), MAX_RECEIPTS),
 		"transition_delivery_receipts": _bounded_strings(source.get("transition_delivery_receipts", []), MAX_RECEIPTS),
 		"active_stages": _bounded_records(source.get("active_stages", []), MAX_RECEIPTS),
@@ -233,7 +233,6 @@ static func normalize_state(value: Variant, definition: Dictionary = {}, trusted
 		"runtime_errors": _bounded_strings(source.get("runtime_errors", []), 32),
 		"performance_counters": _normalize_counters(source.get("performance_counters", {})),
 	}
-	state["command_results"] = _normalized_command_results(source.get("command_results", {}), state.get("command_receipts", []), state.get("command_receipt_records", []), state.get("command_fingerprints", {}))
 	if not definition.is_empty():
 		state["command_receipt_records"] = _migrate_command_receipt_records(state, definition)
 	if not [STATUS_ACTIVE, STATUS_AFTERMATH, STATUS_CLEANED].has(str(state.get("status", ""))):
@@ -847,7 +846,7 @@ static func public_projection(state_value: Dictionary, definition: Dictionary = 
 		interaction["available_actions"] = available_actions
 		public_interactions[identity_value] = interaction
 	public_semantics["interactions"] = public_interactions
-	var projection := {
+	return {
 		"scenario_id": str(state.get("scenario_id", "")),
 		"node_id": str(state.get("node_id", "")),
 		"phase_id": str(state.get("phase_id", "")),
@@ -862,7 +861,6 @@ static func public_projection(state_value: Dictionary, definition: Dictionary = 
 		"active_stages": _public_active_stage_dtos(state.get("active_stages", [])),
 		"pending_event_request_count": _array(state.get("event_request_queue", [])).size(),
 	}
-	return _json_projection_variant(projection)
 
 
 # Presentation may suppress only an action whose unmet requirement is itself
@@ -1659,11 +1657,7 @@ static func _normalized_command_results(value: Variant, receipts_value: Variant,
 		var envelope := _dict(record.get("envelope", {}))
 		if record.is_empty() or str(fingerprints.get(receipt_id, "")) != str(record.get("fingerprint", "")):
 			continue
-		var cached := _dict(source.get(receipt_id, {})).duplicate(true)
-		for integer_field in ["boundary_serial", "cost"]:
-			var raw: Variant = cached.get(integer_field)
-			if typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
-				cached[integer_field] = int(raw)
+		var cached := _dict(source.get(receipt_id, {}))
 		if _valid_cached_command_result(cached, receipt_id, envelope):
 			result[receipt_id] = cached.duplicate(true)
 	return result
@@ -2207,39 +2201,6 @@ static func _normalized_integer_record_fields(value: Variant, fields: Array) -> 
 	return result
 
 
-static func _normalized_command_receipt_records(value: Variant) -> Array:
-	var result := _normalized_integer_record_fields(value, ["cause_ordinal"])
-	for record_value in result:
-		var record := record_value as Dictionary
-		var envelope := _dict(record.get("envelope", {})).duplicate(true)
-		var schema_version_value: Variant = envelope.get("schema_version")
-		if typeof(schema_version_value) == TYPE_FLOAT and is_finite(float(schema_version_value)) and is_equal_approx(float(schema_version_value), floor(float(schema_version_value))):
-			envelope["schema_version"] = int(schema_version_value)
-		record["envelope"] = envelope
-	return result
-
-
-static func _normalized_fact_receipt_records(value: Variant) -> Array:
-	var result := _normalized_integer_record_fields(value, ["cause_ordinal", "flush_batch_ordinal", "flush_boundary_serial"])
-	for record_value in result:
-		var record := record_value as Dictionary
-		var envelope := _dict(record.get("envelope", {})).duplicate(true)
-		for integer_field in ["schema_version", "producer_serial", "boundary_serial"]:
-			var raw: Variant = envelope.get(integer_field)
-			if typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
-				envelope[integer_field] = int(raw)
-		var payload := _dict(envelope.get("payload", {})).duplicate(true)
-		var payload_types := _dict(FACT_PAYLOAD_TYPES.get(str(envelope.get("fact_type", "")), {}))
-		for field_value in payload_types.keys():
-			var field := str(field_value)
-			var raw: Variant = payload.get(field)
-			if str(payload_types.get(field, "")) == "int" and typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
-				payload[field] = int(raw)
-		envelope["payload"] = payload
-		record["envelope"] = envelope
-	return result
-
-
 static func _resolved_branch_ids(records: Array) -> Array:
 	var result: Array = []
 	for record_value in records:
@@ -2317,37 +2278,6 @@ static func _append_unique(values: Array, value: String) -> void:
 
 static func _canonical_variant(value: Variant) -> Variant:
 	return _canonical_variant_inner(value, 0, [])
-
-
-# Public projections are wire DTOs. Godot's JSON parser materializes every JSON
-# number as a float, so normalize public integer values at the producer boundary
-# to keep native and Web projections byte-equivalent without weakening the
-# typed canonical fingerprints used for commands, receipts, and saved state.
-static func _json_projection_variant(value: Variant) -> Variant:
-	return _json_projection_variant_inner(value, 0, [])
-
-
-static func _json_projection_variant_inner(value: Variant, depth: int, ancestors: Array) -> Variant:
-	if depth > OperationRegistryScript.MAX_VARIANT_DEPTH:
-		return "<depth-limit>"
-	if typeof(value) == TYPE_INT:
-		return float(value)
-	if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY]:
-		for ancestor in ancestors:
-			if is_same(ancestor, value):
-				return "<cycle>"
-		ancestors = ancestors.duplicate(false)
-		ancestors.append(value)
-	if typeof(value) == TYPE_DICTIONARY:
-		var result: Dictionary = {}
-		for key_value in (value as Dictionary).keys():
-			result[str(key_value)] = _json_projection_variant_inner((value as Dictionary).get(key_value), depth + 1, ancestors)
-		return result
-	if typeof(value) == TYPE_ARRAY:
-		var result: Array = []
-		for item in value as Array: result.append(_json_projection_variant_inner(item, depth + 1, ancestors))
-		return result
-	return value
 
 
 static func _canonical_variant_inner(value: Variant, depth: int, ancestors: Array) -> Variant:
