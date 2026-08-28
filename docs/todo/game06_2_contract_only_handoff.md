@@ -1,6 +1,6 @@
 # game06_2 contract-only successor handoff
 
-Status: UNREVIEWED candidate
+Status: UNREVIEWED-BLOCKED candidate
 Branch: `codex/game06_2-contract-only`
 Frozen base: `a2760d816c781e711ff0923c296f97b786662453`
 Supersedes: blocked `codex/game06_2-impl` head `2def171d` (preserved unchanged; do not land)
@@ -54,6 +54,7 @@ or `review_artifacts` file is staged.
 | `tools/validate_project.ps1 -Quiet` | PASS, `51.5 s`. |
 | `tools/blackjack_table_visual_capture.gd` (native GUI) | PASS; idle, initial deal, and live player hand inspected at 1280x720. Generated tracked captures were restored and are not part of the diff. |
 | Web export | PASS after locked Web native-plugin build. Exported plugin SHA-256: `58E4CA6C6D8B73DAA42143A70579A75342D6160640AEDC2C8A3E93F211E3277F`. |
+| Final exact-head Windows rerun | BLOCKED before row execution: the fresh locked Windows native-plugin build crashes Godot while loading. Gate Service artifact/decision required. |
 
 ## Disclosed gate blockers / remaining reviewer decisions
 
@@ -74,6 +75,15 @@ or `review_artifacts` file is staged.
    executable energy/reduced-motion contract assertions are sufficient for this
    contract-only successor or whether it requires additional retained captures
    for hot, settlement, reduced-motion, and small-screen states before acceptance.
+5. The fresh locked Windows native-plugin build completed, but Godot crashes
+   while loading its generated DLL before the exact-head row test can execute.
+   That DLL's SHA-256 is
+   `3E2092B478B1C94476F2D32544D9BD84182FD614B1AF83B333BE2C9F162AF6A4`.
+   The Gate Service's read-only artifact at main has SHA-256
+   `BDCB843DF652475530CFB9756348641582238126F83853D413AD11C350B050C7`.
+   The artifacts differ. No main/Gate artifact was copied or modified; the Gate
+   Service must supply or authorize a known-good artifact and own the bounded
+   final rerun.
 
 ## Review focus
 
