@@ -39,6 +39,10 @@ func _init() -> void:
 
 func _check_roulette() -> void:
 	var game = RouletteGameScript.new()
+	_setup_game_definition(game, "roulette")
+	if game.get_id() != "roulette":
+		failures.append("Executable proof could not load the shipped roulette definition.")
+		return
 	var phase_cases := [
 		{"elapsed_msec": -1, "motion_active": false, "expected": "betting"},
 		{"elapsed_msec": 0, "motion_active": true, "expected": "no_more_bets"},
@@ -94,15 +98,28 @@ func _check_roulette() -> void:
 	game._draw_roulette_ritual_status(roulette_probe, {"ritual_phase": "no_more_bets", "ritual_energy": {"tier": "packed"}, "ritual_actors": [{"behavior": "waving_off_bets"}], "ritual_scene_objects": [{"id": "roulette.ball", "visual_state": "travel"}]})
 	if roulette_probe.labels.is_empty() or (roulette_probe.labels[0] as String).find("WAVING OFF BETS") < 0 or (roulette_probe.labels[0] as String).find("PACKED") < 0:
 		failures.append("Roulette renderer did not visibly consume actor/object/energy ritual state.")
+	var phase_run = RunStateScript.new()
+	phase_run.start_new("GAME06-3-ROULETTE-PHASE-RESTORE")
+	var phase_environment := {"id": "game06_3_roulette_restore", "archetype_id": "grand_casino", "kind": "boss", "game_ids": ["roulette"], "economic_profile": {"stake_floor": 5, "stake_ceiling": 1000}, "security_profile": {"strictness": "high"}}
+	var phase_table: Dictionary = game.generate_environment_state(phase_run, phase_environment, phase_run.create_rng("game06_3_roulette_table"))
+	phase_table["last_result"] = {"spin_id": "restore_spin", "payout_animation_id": "restore_pay", "resolved_at_msec": 10000, "winning_number": "17", "winning_color": "black", "bets": bets.duplicate(true), "bet_results": settled.duplicate(true), "trajectory": []}
+	phase_environment["game_states"] = {"roulette": phase_table}
+	phase_run.current_environment = phase_environment
+	var restored_phase_run = RunStateScript.new()
+	restored_phase_run.from_dict(phase_run.to_dict())
+	for phase_case_value in [{"time": 9999, "phase": "betting"}, {"time": 10000, "phase": "no_more_bets"}, {"time": 10700, "phase": "spin"}, {"time": 15000, "phase": "ball_settle"}, {"time": 15700, "phase": "croupier_settlement"}]:
+		var restore_case: Dictionary = phase_case_value
+		var phase_ui := {"surface_time_msec": int(restore_case.get("time", 0))}
+		var live_surface: Dictionary = game.surface_state(phase_run, phase_run.current_environment, phase_ui)
+		var restored_surface: Dictionary = game.surface_state(restored_phase_run, restored_phase_run.current_environment, phase_ui)
+		if JSON.stringify(live_surface) != JSON.stringify(restored_surface) or str(live_surface.get("ritual_phase", "")) != str(restore_case.get("phase", "")):
+			failures.append("Roulette save/revisit diverged at %s boundary." % str(restore_case.get("phase", "")))
+	_check_roulette_neighbor_isolation(game)
 
 
 func _check_baccarat() -> void:
 	var game = BaccaratGameScript.new()
-	var games_value: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/games/games.json"))
-	for definition_value in games_value if typeof(games_value) == TYPE_ARRAY else []:
-		if typeof(definition_value) == TYPE_DICTIONARY and str((definition_value as Dictionary).get("id", "")) == "baccarat":
-			game.setup(definition_value as Dictionary)
-			break
+	_setup_game_definition(game, "baccarat")
 	if game.get_id() != "baccarat":
 		failures.append("Executable proof could not load the shipped baccarat definition.")
 		return
@@ -198,3 +215,71 @@ func _check_baccarat() -> void:
 	var restored_surface: Dictionary = game.surface_state(restored_state, restored_state.current_environment, active_ui)
 	if JSON.stringify(first_surface) != JSON.stringify(restored_surface) or str(first_surface.get("phase", "")) != "dealing" or str(first_surface.get("ritual_phase", "")) != "squeeze_reveal":
 		failures.append("Baccarat save/revisit did not restore the deterministic squeeze boundary exactly.")
+	for baccarat_case_value in [{"time": 8199, "phase": "betting"}, {"time": 8200, "phase": "shoe"}, {"time": 8700, "phase": "deal"}, {"time": 10100, "phase": "squeeze_reveal"}, {"time": 10700, "phase": "third_card_rule"}, {"time": 11900, "phase": "settlement"}]:
+		var boundary_case: Dictionary = baccarat_case_value
+		var boundary_ui := {"surface_time_msec": int(boundary_case.get("time", 0))}
+		var boundary_live: Dictionary = game.surface_state(run_state, run_state.current_environment, boundary_ui)
+		var boundary_restored: Dictionary = game.surface_state(restored_state, restored_state.current_environment, boundary_ui)
+		if JSON.stringify(boundary_live) != JSON.stringify(boundary_restored) or str(boundary_live.get("ritual_phase", "")) != str(boundary_case.get("phase", "")):
+			failures.append("Baccarat save/revisit diverged at %s boundary." % str(boundary_case.get("phase", "")))
+	_check_baccarat_neighbor_isolation(game)
+
+
+func _check_roulette_neighbor_isolation(game) -> void:
+	for seed_index in range(10):
+		var run_a = RunStateScript.new()
+		run_a.start_new("GAME06-3-ROULETTE-NEIGHBOR-%d" % seed_index)
+		run_a.bankroll = 1000
+		run_a.grand_casino_chips = 1000
+		var environment := {"id": "roulette_neighbor_%d" % seed_index, "archetype_id": "grand_casino", "kind": "boss", "game_ids": ["roulette"], "economic_profile": {"stake_floor": 5, "stake_ceiling": 1000}, "security_profile": {"strictness": "high"}}
+		var table: Dictionary = game.generate_environment_state(run_a, environment, run_a.create_rng("table"))
+		environment["game_states"] = {"roulette": table}
+		run_a.current_environment = environment
+		var run_b = RunStateScript.new()
+		run_b.from_dict(run_a.to_dict())
+		var isolated_table: Dictionary = ((run_b.current_environment.get("game_states", {}) as Dictionary).get("roulette", {}) as Dictionary)
+		isolated_table["patrons"] = []
+		var isolated_states: Dictionary = run_b.current_environment.get("game_states", {})
+		isolated_states["roulette"] = isolated_table
+		run_b.current_environment["game_states"] = isolated_states
+		var target: Dictionary = {}
+		for target_value in game._roulette_bet_targets_cached(table):
+			if str((target_value as Dictionary).get("id", "")) == "straight:17":
+				target = (target_value as Dictionary).duplicate(true)
+				break
+		target["stake"] = 5
+		var result_a: Dictionary = game.resolve_with_context("spin_roulette", 5, run_a, run_a.current_environment, run_a.create_rng("spin"), {"roulette_bets": [target]})
+		var result_b: Dictionary = game.resolve_with_context("spin_roulette", 5, run_b, run_b.current_environment, run_b.create_rng("spin"), {"roulette_bets": [target]})
+		if str(result_a.get("winning_number", "")) != str(result_b.get("winning_number", "")) or int(result_a.get("bankroll_delta", 0)) != int(result_b.get("bankroll_delta", 0)):
+			failures.append("Roulette neighbors changed player authority at seed %d." % seed_index)
+
+
+func _check_baccarat_neighbor_isolation(game) -> void:
+	for seed_index in range(10):
+		var run_a = RunStateScript.new()
+		run_a.start_new("GAME06-3-BACCARAT-NEIGHBOR-%d" % seed_index)
+		run_a.bankroll = 1000
+		run_a.grand_casino_chips = 1000
+		var environment := {"id": "baccarat_neighbor_%d" % seed_index, "archetype_id": "grand_casino", "kind": "boss", "game_ids": ["baccarat"], "economic_profile": {"stake_floor": 5, "stake_ceiling": 1000}, "security_profile": {"strictness": "high"}}
+		var table: Dictionary = game.generate_environment_state(run_a, environment, run_a.create_rng("table"))
+		environment["game_states"] = {"baccarat": table}
+		run_a.current_environment = environment
+		var run_b = RunStateScript.new()
+		run_b.from_dict(run_a.to_dict())
+		var isolated_table: Dictionary = ((run_b.current_environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary)
+		isolated_table["patrons"] = []
+		var isolated_states: Dictionary = run_b.current_environment.get("game_states", {})
+		isolated_states["baccarat"] = isolated_table
+		run_b.current_environment["game_states"] = isolated_states
+		var result_a: Dictionary = game.resolve_with_context("deal_baccarat", 20, run_a, run_a.current_environment, run_a.create_rng("deal"), {"baccarat_bets": {"player": 20}})
+		var result_b: Dictionary = game.resolve_with_context("deal_baccarat", 20, run_b, run_b.current_environment, run_b.create_rng("deal"), {"baccarat_bets": {"player": 20}})
+		if JSON.stringify(result_a.get("hand", {})) != JSON.stringify(result_b.get("hand", {})) or int(result_a.get("bankroll_delta", 0)) != int(result_b.get("bankroll_delta", 0)):
+			failures.append("Baccarat neighbors changed player authority at seed %d." % seed_index)
+
+
+func _setup_game_definition(game, game_id: String) -> void:
+	var games_value: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/games/games.json"))
+	for definition_value in games_value if typeof(games_value) == TYPE_ARRAY else []:
+		if typeof(definition_value) == TYPE_DICTIONARY and str((definition_value as Dictionary).get("id", "")) == game_id:
+			game.setup(definition_value as Dictionary)
+			return
