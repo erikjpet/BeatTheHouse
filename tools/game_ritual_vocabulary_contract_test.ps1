@@ -72,12 +72,16 @@ function ConvertTo-CanonicalJson {
     if ($Value -is [string]) { return ($Value | ConvertTo-Json -Compress) }
     if ($Value -is [bool]) { return $(if ($Value) { "true" } else { "false" }) }
     if ($Value -is [byte] -or $Value -is [sbyte] -or $Value -is [int16] -or $Value -is [uint16] -or $Value -is [int32] -or $Value -is [uint32] -or $Value -is [int64] -or $Value -is [uint64]) {
-        return $Value.ToString([System.Globalization.CultureInfo]::InvariantCulture)
+        $integerText = $Value.ToString([System.Globalization.CultureInfo]::InvariantCulture)
+        return '{"$number":"int","value":' + (ConvertTo-CanonicalJson $integerText) + '}'
     }
     if ($Value -is [single] -or $Value -is [double] -or $Value -is [decimal]) {
         $number = [double]$Value
         if ([double]::IsNaN($number) -or [double]::IsInfinity($number)) { throw "noncanonical number" }
-        return $number.ToString("R", [System.Globalization.CultureInfo]::InvariantCulture)
+        $floatText = $number.ToString("R", [System.Globalization.CultureInfo]::InvariantCulture).Replace("E", "e")
+        if ($number -eq 0.0) { $floatText = "0.0" }
+        elseif ($floatText.IndexOf(".") -lt 0 -and $floatText.IndexOf("e") -lt 0) { $floatText += ".0" }
+        return '{"$number":"float","value":' + (ConvertTo-CanonicalJson $floatText) + '}'
     }
     if ($Value -is [System.Array]) {
         $items = @($Value | ForEach-Object { ConvertTo-CanonicalJson $_ })
@@ -114,17 +118,134 @@ function Test-CanonicalFingerprint {
     if ([string]$Envelope.content_fingerprint -cne $actual) { Add-Error $Errors "$Label canonical fingerprint mismatch" }
 }
 
-function Test-DeclaredValueType {
-    param($Value, [string]$Type)
-    switch ($Type) {
-        "bool" { return $Value -is [bool] }
-        "int" { return $Value -is [int64] -or $Value -is [int32] }
-        "float" { return $Value -is [double] -or $Value -is [single] -or $Value -is [decimal] }
-        "string" { return $Value -is [string] }
-        "qualified_id" { return $Value -is [string] -and (Test-QualifiedId ([string]$Value)) }
-        "string_array" { return $Value -is [System.Array] -and @($Value | Where-Object { $_ -isnot [string] }).Count -eq 0 }
-        "int_array" { return $Value -is [System.Array] -and @($Value | Where-Object { $_ -isnot [int64] -and $_ -isnot [int32] }).Count -eq 0 }
-        default { return $false }
+function Get-Utf8Length {
+    param([string]$Value)
+    return [System.Text.Encoding]::UTF8.GetByteCount($Value)
+}
+
+function Test-IntegerScalar {
+    param($Value)
+    return $Value -is [int32] -or $Value -is [int64]
+}
+
+function Set-CanonicalFingerprint {
+    param($Envelope)
+    $Envelope.content_fingerprint = Get-CanonicalFingerprint $Envelope
+}
+
+function Test-ReceiptTripleMatch {
+    param($Condition, $Receipt)
+    if ($null -eq $Condition -or $null -eq $Receipt) { return $false }
+    foreach ($field in @("kind", "receipt_kind", "receipt_key", "content_fingerprint")) {
+        if ($field -notin (Property-Names $Condition)) { return $false }
+    }
+    foreach ($field in @("receipt_key", "content_fingerprint", "envelope_kind", "status")) {
+        if ($field -notin (Property-Names $Receipt)) { return $false }
+    }
+    return [string]$Condition.kind -ceq "receipt_present" -and
+        [string]$Receipt.status -ceq "accepted" -and
+        [string]$Condition.receipt_kind -ceq [string]$Receipt.envelope_kind -and
+        [string]$Condition.receipt_key -ceq [string]$Receipt.receipt_key -and
+        [string]$Condition.content_fingerprint -ceq [string]$Receipt.content_fingerprint
+}
+
+function Test-SchemaMap {
+    param([System.Collections.Generic.List[string]]$Errors, [string]$Label, $Schema)
+    $schemaProperties = @($Schema.PSObject.Properties)
+    if ($schemaProperties.Count -gt 32) { Add-Error $Errors "$Label schema field count over limit" }
+    foreach ($schemaProperty in $schemaProperties) {
+        $schemaFieldName = [string]$schemaProperty.Name
+        if ([string]$schemaFieldName -cnotmatch '^[a-z][a-z0-9_]{0,63}$') { Add-Error $Errors "$Label schema key must be a local id: $schemaFieldName"; continue }
+        $spec = $schemaProperty.Value
+        $type = [string]$spec.type
+        switch ($type) {
+            "bool" { Add-ClosedShapeErrors $Errors "$Label schema bool" $spec @("type") }
+            "int" {
+                Add-ClosedShapeErrors $Errors "$Label schema int" $spec @("type", "min", "max")
+                if (($spec.min -isnot [int32] -and $spec.min -isnot [int64]) -or ($spec.max -isnot [int32] -and $spec.max -isnot [int64])) { Add-Error $Errors "$Label int bounds have wrong type" }
+                elseif ([int64]$spec.min -gt [int64]$spec.max -or [int64]$spec.min -lt -2147483648 -or [int64]$spec.max -gt 2147483647) { Add-Error $Errors "$Label int bounds over limit" }
+            }
+            "float" {
+                Add-ClosedShapeErrors $Errors "$Label schema float" $spec @("type", "min", "max")
+                if (($spec.min -isnot [double] -and $spec.min -isnot [single] -and $spec.min -isnot [decimal]) -or ($spec.max -isnot [double] -and $spec.max -isnot [single] -and $spec.max -isnot [decimal])) { Add-Error $Errors "$Label float bounds have wrong type" }
+                else {
+                    $minimum = [double]$spec.min; $maximum = [double]$spec.max
+                    if ([double]::IsNaN($minimum) -or [double]::IsInfinity($minimum) -or [double]::IsNaN($maximum) -or [double]::IsInfinity($maximum) -or $minimum -gt $maximum) { Add-Error $Errors "$Label float bounds are invalid" }
+                }
+            }
+            "string" {
+                Add-ClosedShapeErrors $Errors "$Label schema string" $spec @("type", "min_length", "max_length")
+                if (-not (Test-IntegerScalar $spec.min_length) -or -not (Test-IntegerScalar $spec.max_length)) { Add-Error $Errors "$Label string bounds have wrong type" }
+                elseif ([int]$spec.min_length -lt 0 -or [int]$spec.max_length -lt [int]$spec.min_length -or [int]$spec.max_length -gt 512) { Add-Error $Errors "$Label string bounds over limit" }
+            }
+            "qualified_id" {
+                Add-ClosedShapeErrors $Errors "$Label schema qualified_id" $spec @("type", "max_length")
+                if (-not (Test-IntegerScalar $spec.max_length)) { Add-Error $Errors "$Label qualified id bounds have wrong type" }
+                elseif ([int]$spec.max_length -lt 3 -or [int]$spec.max_length -gt 192) { Add-Error $Errors "$Label qualified id bounds over limit" }
+            }
+            "string_array" {
+                Add-ClosedShapeErrors $Errors "$Label schema string_array" $spec @("type", "min_items", "max_items", "item_max_length")
+                if (-not (Test-IntegerScalar $spec.min_items) -or -not (Test-IntegerScalar $spec.max_items) -or -not (Test-IntegerScalar $spec.item_max_length)) { Add-Error $Errors "$Label string array bounds have wrong type" }
+                elseif ([int]$spec.min_items -lt 0 -or [int]$spec.max_items -lt [int]$spec.min_items -or [int]$spec.max_items -gt 64 -or [int]$spec.item_max_length -lt 0 -or [int]$spec.item_max_length -gt 128) { Add-Error $Errors "$Label string array bounds over limit" }
+            }
+            "int_array" {
+                Add-ClosedShapeErrors $Errors "$Label schema int_array" $spec @("type", "min_items", "max_items", "item_min", "item_max")
+                if (-not (Test-IntegerScalar $spec.min_items) -or -not (Test-IntegerScalar $spec.max_items) -or -not (Test-IntegerScalar $spec.item_min) -or -not (Test-IntegerScalar $spec.item_max)) { Add-Error $Errors "$Label int array bounds have wrong type" }
+                elseif ([int]$spec.min_items -lt 0 -or [int]$spec.max_items -lt [int]$spec.min_items -or [int]$spec.max_items -gt 64 -or [int64]$spec.item_min -gt [int64]$spec.item_max -or [int64]$spec.item_min -lt -2147483648 -or [int64]$spec.item_max -gt 2147483647) { Add-Error $Errors "$Label int array bounds over limit" }
+            }
+            default { Add-Error $Errors "$Label schema type is not registered: $type" }
+        }
+    }
+}
+
+function Get-DeclaredValueError {
+    param($Value, $Schema)
+    $type = [string]$Schema.type
+    switch ($type) {
+        "bool" { if ($Value -isnot [bool]) { return "wrong declared type" } }
+        "int" {
+            if ($Value -isnot [int64] -and $Value -isnot [int32]) { return "wrong declared type" }
+            if ([int64]$Value -lt [int64]$Schema.min -or [int64]$Value -gt [int64]$Schema.max) { return "over limit" }
+        }
+        "float" {
+            if ($Value -isnot [double] -and $Value -isnot [single] -and $Value -isnot [decimal]) { return "wrong declared type" }
+            $number = [double]$Value
+            if ([double]::IsNaN($number) -or [double]::IsInfinity($number) -or $number -lt [double]$Schema.min -or $number -gt [double]$Schema.max) { return "over limit" }
+        }
+        "string" {
+            if ($Value -isnot [string]) { return "wrong declared type" }
+            $length = Get-Utf8Length ([string]$Value)
+            if ($length -lt [int]$Schema.min_length -or $length -gt [int]$Schema.max_length) { return "over limit" }
+        }
+        "qualified_id" {
+            if ($Value -isnot [string]) { return "wrong declared type" }
+            if (([string]$Value).Length -gt [int]$Schema.max_length) { return "over limit" }
+            if (-not (Test-QualifiedId ([string]$Value))) { return "wrong declared type" }
+        }
+        "string_array" {
+            if ($Value -isnot [System.Array] -or @($Value | Where-Object { $_ -isnot [string] }).Count -gt 0) { return "wrong declared type" }
+            if (@($Value).Count -lt [int]$Schema.min_items -or @($Value).Count -gt [int]$Schema.max_items) { return "over limit" }
+            if (@($Value | Where-Object { (Get-Utf8Length ([string]$_)) -gt [int]$Schema.item_max_length }).Count -gt 0) { return "over limit" }
+        }
+        "int_array" {
+            if ($Value -isnot [System.Array] -or @($Value | Where-Object { $_ -isnot [int64] -and $_ -isnot [int32] }).Count -gt 0) { return "wrong declared type" }
+            if (@($Value).Count -lt [int]$Schema.min_items -or @($Value).Count -gt [int]$Schema.max_items) { return "over limit" }
+            if (@($Value | Where-Object { [int64]$_ -lt [int64]$Schema.item_min -or [int64]$_ -gt [int64]$Schema.item_max }).Count -gt 0) { return "over limit" }
+        }
+        default { return "wrong declared type" }
+    }
+    return ""
+}
+
+function Add-DeclaredMapErrors {
+    param([System.Collections.Generic.List[string]]$Errors, [string]$Label, $Value, $Schema)
+    $required = @(Property-Names $Schema)
+    Add-ClosedShapeErrors $Errors $Label $Value $required
+    $actual = @(Property-Names $Value)
+    foreach ($fieldName in $required) {
+        if ($fieldName -notin $actual) { continue }
+        $valueError = Get-DeclaredValueError $Value.$fieldName $Schema.$fieldName
+        if ($valueError) { Add-Error $Errors "$Label field $fieldName $valueError" }
     }
 }
 
@@ -135,7 +256,7 @@ function Test-RitualDefinition {
     $allowedTop = @(
         "contract", "ritual_id", "initial_phase", "ritual_phases", "action_declarations",
         "staged_commitment", "pointer_verbs", "actors", "scene_objects",
-        "energy", "game_facts", "ritual_persistence", "handler_registry",
+        "energy", "game_facts", "public_projection_schema", "ritual_persistence", "handler_registry",
         "declared_targets"
     )
     foreach ($key in (Property-Names $Definition)) {
@@ -238,12 +359,7 @@ function Test-RitualDefinition {
         elseif ($actionById.ContainsKey($actionId)) { Add-Error $errors "duplicate action declaration: $actionId" }
         else { $actionById[$actionId] = $declaration }
         if (-not (Test-QualifiedId ([string]$declaration.handler_id))) { Add-Error $errors "action declaration handler id must be qualified" }
-        foreach ($parameterName in (Property-Names $declaration.parameters)) {
-            if (-not (Test-LocalId $parameterName)) { Add-Error $errors "action parameter name must be a local id" }
-            if ([string]$declaration.parameters.$parameterName -notin @("bool", "int", "float", "string", "qualified_id", "string_array", "int_array")) {
-                Add-Error $errors "action parameter type is not registered"
-            }
-        }
+        Test-SchemaMap $errors "action parameters" $declaration.parameters
     }
 
     Add-ClosedShapeErrors $errors "staged commitment" $Definition.staged_commitment @("pending_collection", "working_collection", "resolution_collection", "funds_authority", "actions", "readable_totals")
@@ -366,18 +482,21 @@ function Test-RitualDefinition {
         if ($materialCount -eq 0) { Add-Error $errors "energy tier must change actor, object, or interactable: $($tier.id)" }
     }
 
+    $factTypes = [System.Collections.Generic.HashSet[string]]::new()
     foreach ($fact in @($Definition.game_facts)) {
         Add-ClosedShapeErrors $errors "fact declaration" $fact @("fact_type", "fact_version", "boundary", "visibility", "payload")
         if (-not (Test-QualifiedId ([string]$fact.fact_type))) { Add-Error $errors "fact type must be a qualified id" }
+        elseif (-not $factTypes.Add([string]$fact.fact_type)) { Add-Error $errors "duplicate fact type: $($fact.fact_type)" }
         if ([int]$fact.fact_version -lt 1) { Add-Error $errors "fact version must be positive" }
         if ([string]$fact.boundary -ne "action") { Add-Error $errors "fact must publish at an action boundary" }
         if ([string]$fact.visibility -ne "public") { Add-Error $errors "fixture fact must have public visibility" }
         if (@(Property-Names $fact.payload).Count -eq 0) { Add-Error $errors "fact payload must be typed" }
-        foreach ($payloadKey in (Property-Names $fact.payload)) {
-            if (-not (Test-LocalId $payloadKey)) { Add-Error $errors "fact payload key must be a local id" }
-            if ([string]$fact.payload.$payloadKey -notin @("bool", "int", "float", "string", "qualified_id", "string_array", "int_array")) { Add-Error $errors "fact payload type is not registered" }
-        }
+        Test-SchemaMap $errors "fact payload" $fact.payload
     }
+
+    Add-ClosedShapeErrors $errors "public projection schema" $Definition.public_projection_schema @("authority", "fields")
+    if ([string]$Definition.public_projection_schema.authority -cne "public") { Add-Error $errors "public projection schema authority must be public" }
+    Test-SchemaMap $errors "public projection" $Definition.public_projection_schema.fields
 
     $handlerById = @{}
     $actionHandlerBindings = @{}
@@ -392,11 +511,9 @@ function Test-RitualDefinition {
         foreach ($key in @("inputs", "outputs", "authority", "persisted_state", "transient_state", "rng", "rejection")) {
             if ($key -notin (Property-Names $handler)) { Add-Error $errors "handler is missing contract field: $key" }
         }
-        foreach ($schemaName in @("inputs", "outputs")) {
-            foreach ($schemaKey in (Property-Names $handler.$schemaName)) {
-                if (-not (Test-LocalId $schemaKey)) { Add-Error $errors "handler $schemaName key must be a local id" }
-                if ([string]$handler.$schemaName.$schemaKey -notin @("bool", "int", "float", "string", "qualified_id", "string_array", "int_array")) { Add-Error $errors "handler $schemaName type is not registered" }
-            }
+        foreach ($schemaName in @("inputs", "outputs")) { Test-SchemaMap $errors "handler $schemaName" $handler.$schemaName }
+        foreach ($emittedFactType in @($handler.emitted_facts)) {
+            if (-not $factTypes.Contains([string]$emittedFactType)) { Add-Error $errors "handler emits undeclared fact: $emittedFactType" }
         }
         foreach ($actionId in @($handler.accepted_actions)) {
             $actionId = [string]$actionId
@@ -551,24 +668,41 @@ function Test-EnvelopeFixture {
         $schema = $actionDeclaration[0].parameters
         Add-ClosedShapeErrors $errors "command parameters" $Fixture.command.parameters @(Property-Names $schema)
         foreach ($parameterName in (Property-Names $schema)) {
-            if (-not (Test-DeclaredValueType $Fixture.command.parameters.$parameterName ([string]$schema.$parameterName))) {
-                Add-Error $errors "command parameter has wrong declared type: $parameterName"
-            }
+            $valueError = Get-DeclaredValueError $Fixture.command.parameters.$parameterName $schema.$parameterName
+            if ($valueError) { Add-Error $errors "command parameter $parameterName $valueError" }
         }
     }
 
     Add-ClosedShapeErrors $errors "result" $Fixture.result @("envelope_version", "ok", "ritual_id", "session_id", "command_id", "request_key", "phase_before", "phase_after", "authoritative_result_ref", "state_receipts", "operation_receipts", "fact_receipts", "boundary", "receipt_key", "content_fingerprint", "public_projection")
     if (-not [bool]$Fixture.result.ok) { Add-Error $errors "result must be accepted" }
+    if ([string]$Definition.public_projection_schema.authority -cne "public") { Add-Error $errors "result public projection authority must be public" }
+    Add-DeclaredMapErrors $errors "result public projection" $Fixture.result.public_projection $Definition.public_projection_schema.fields
+    foreach ($receiptArrayName in @("state_receipts", "operation_receipts", "fact_receipts")) {
+        $receiptArray = @($Fixture.result.$receiptArrayName)
+        if ($receiptArray.Count -gt 64) { Add-Error $errors "result $receiptArrayName over limit" }
+        foreach ($receiptKey in $receiptArray) {
+            if ($receiptKey -isnot [string] -or [string]$receiptKey -cnotmatch '^[a-z0-9][a-z0-9_.:-]{0,191}$') { Add-Error $errors "result $receiptArrayName has invalid receipt key" }
+        }
+    }
 
     Add-ClosedShapeErrors $errors "rejection" $Fixture.rejection @("envelope_version", "ok", "ritual_id", "session_id", "command_id", "request_key", "phase", "error_code", "public_message", "retryable", "return_policy", "boundary", "receipt_key", "content_fingerprint", "public_projection")
     if ([bool]$Fixture.rejection.ok) { Add-Error $errors "rejection must have ok=false" }
+    if ([string]$Definition.public_projection_schema.authority -cne "public") { Add-Error $errors "rejection public projection authority must be public" }
+    Add-DeclaredMapErrors $errors "rejection public projection" $Fixture.rejection.public_projection $Definition.public_projection_schema.fields
     $errorCodes = @("invalid_envelope", "unsupported_version", "invalid_id", "unknown_reference", "stale_phase", "action_not_permitted", "disabled_action", "blocked_action", "unavailable_source", "unavailable_target", "unsealed_authority", "authority_mismatch", "ambiguous_target", "invalid_parameters", "incomplete_gesture", "out_of_bounds", "inaccessible_target", "precondition_failed", "insufficient_funds", "receipt_content_conflict", "handler_rejected", "invalid_restore", "ambiguous_transition", "internal_fail_closed")
     if ([string]$Fixture.rejection.error_code -notin $errorCodes) { Add-Error $errors "unknown rejection code" }
     if ([string]$Fixture.rejection.return_policy -notin @("none", "return_to_source", "restore_focus")) { Add-Error $errors "unknown rejection return policy" }
 
     Add-ClosedShapeErrors $errors "fact" $Fixture.fact @("envelope_version", "fact_id", "fact_type", "fact_version", "payload", "visibility", "boundary", "receipt_key", "content_fingerprint")
-    if ([string]$Fixture.fact.visibility -ne "public") { Add-Error $errors "fact visibility must be public" }
-    if ([int]$Fixture.fact.fact_version -lt 1) { Add-Error $errors "fact version must be positive" }
+    $factDeclarations = @($Definition.game_facts | Where-Object { [string]$_.fact_type -ceq [string]$Fixture.fact.fact_type })
+    if ($factDeclarations.Count -ne 1) { Add-Error $errors "runtime fact type must resolve to exactly one declaration" }
+    else {
+        $factDeclaration = $factDeclarations[0]
+        if (-not (Test-IntegerScalar $Fixture.fact.fact_version) -or [int]$Fixture.fact.fact_version -ne [int]$factDeclaration.fact_version) { Add-Error $errors "runtime fact version does not match declaration" }
+        if ([string]$Fixture.fact.visibility -cne [string]$factDeclaration.visibility) { Add-Error $errors "runtime fact visibility does not match declaration" }
+        if ([string]$factDeclaration.boundary -cne "action" -or [string]$Fixture.fact.boundary.kind -cne "command") { Add-Error $errors "runtime fact publication boundary does not match declaration" }
+        Add-DeclaredMapErrors $errors "runtime fact payload" $Fixture.fact.payload $factDeclaration.payload
+    }
 
     $operationFields = @("envelope_version", "operation_id", "family", "verb", "source_owner_id", "target_id", "arguments")
     Add-ClosedShapeErrors $errors "operation envelope" $Fixture.operation $operationFields
@@ -583,14 +717,28 @@ function Test-EnvelopeFixture {
     foreach ($requestKey in @($Fixture.command.request_key, $Fixture.result.request_key, $Fixture.rejection.request_key, $Fixture.request_cache.request_key)) {
         if ([string]$requestKey -cnotmatch '^[a-z0-9][a-z0-9_.:-]{0,191}$') { Add-Error $errors "invalid request key" }
     }
-    if ([string]$Fixture.command.request_key -cne [string]$Fixture.result.request_key) { Add-Error $errors "result request identity does not match command" }
-    if ([string]$Fixture.command.receipt_key -ceq [string]$Fixture.result.receipt_key) { Add-Error $errors "command and result must own distinct receipt keys" }
+    if ([string]$Fixture.command.receipt_key -ceq [string]$Fixture.result.receipt_key -or [string]$Fixture.command.receipt_key -ceq [string]$Fixture.rejection.receipt_key) { Add-Error $errors "command and response must own distinct receipt keys" }
     if ([string]$Fixture.request_cache.request_key -cne [string]$Fixture.command.request_key -or
         [string]$Fixture.request_cache.command_receipt_key -cne [string]$Fixture.command.receipt_key -or
-        [string]$Fixture.request_cache.command_content_fingerprint -cne [string]$Fixture.command.content_fingerprint -or
-        [string]$Fixture.request_cache.response_receipt_key -cne [string]$Fixture.result.receipt_key -or
-        [string]$Fixture.request_cache.response_content_fingerprint -cne [string]$Fixture.result.content_fingerprint) {
-        Add-Error $errors "request cache does not bind exact command and response envelopes"
+        [string]$Fixture.request_cache.command_content_fingerprint -cne [string]$Fixture.command.content_fingerprint) {
+        Add-Error $errors "request cache does not bind exact command envelope"
+    }
+    switch ([string]$Fixture.request_cache.status) {
+        "resolved" {
+            if (-not [bool]$Fixture.result.ok -or [string]$Fixture.result.request_key -cne [string]$Fixture.command.request_key -or
+                [string]$Fixture.request_cache.response_receipt_key -cne [string]$Fixture.result.receipt_key -or
+                [string]$Fixture.request_cache.response_content_fingerprint -cne [string]$Fixture.result.content_fingerprint) {
+                Add-Error $errors "resolved request cache does not bind exact result envelope"
+            }
+        }
+        "rejected" {
+            if ([bool]$Fixture.rejection.ok -or [string]$Fixture.rejection.request_key -cne [string]$Fixture.command.request_key -or
+                [string]$Fixture.request_cache.response_receipt_key -cne [string]$Fixture.rejection.receipt_key -or
+                [string]$Fixture.request_cache.response_content_fingerprint -cne [string]$Fixture.rejection.content_fingerprint) {
+                Add-Error $errors "rejected request cache does not bind exact rejection envelope"
+            }
+        }
+        "pending" { Add-Error $errors "request cache fixture must be terminal" }
     }
     if ([string]$Fixture.receipt.receipt_key -cne [string]$Fixture.operation_result.receipt_key -or
         [string]$Fixture.receipt.content_fingerprint -cne [string]$Fixture.operation_result.content_fingerprint -or
@@ -622,6 +770,12 @@ function Assert-EnvelopeRejected {
     if (($errors -join "`n").IndexOf($Expected, [System.StringComparison]::OrdinalIgnoreCase) -lt 0) {
         throw "$Name expected '$Expected'; got: $($errors -join '; ')"
     }
+}
+
+function Assert-EnvelopeNoErrors {
+    param([string]$Name, $Fixture, $Definition)
+    $errors = @(Test-EnvelopeFixture $Fixture $Definition)
+    if ($errors.Count -ne 0) { throw "$Name expected no envelope errors; got: $($errors -join '; ')" }
 }
 
 if (-not (Test-Path -LiteralPath $fixturePath)) { throw "Missing fixture: $fixturePath" }
@@ -724,7 +878,7 @@ Assert-Rejected "undeclared permitted action" $bad "permitted action lacks decla
 
 $bad = Copy-Definition $definition
 $bad.action_declarations[0].parameters.amount = "variant"
-Assert-Rejected "open action parameter type" $bad "action parameter type is not registered"; $negativeCount++
+Assert-Rejected "open action parameter type" $bad "schema type is not registered"; $negativeCount++
 
 $bad = Copy-Definition $definition
 $bad.handler_registry[0].accepted_actions = @($bad.handler_registry[0].accepted_actions | Where-Object { $_ -ne "commit.place" })
@@ -805,7 +959,7 @@ Assert-EnvelopeRejected "copied command fingerprint on result" $badEnvelope $def
 
 $badEnvelope = Copy-Definition $envelopes
 $badEnvelope.request_cache.response_receipt_key = "receipt:result:wrong"
-Assert-EnvelopeRejected "request cache wrong response" $badEnvelope $definition "request cache does not bind"; $negativeCount++
+Assert-EnvelopeRejected "request cache wrong response" $badEnvelope $definition "resolved request cache does not bind"; $negativeCount++
 
 $badEnvelope = Copy-Definition $envelopes
 $badEnvelope.rejection.error_code = "game_specific_error"
@@ -813,7 +967,8 @@ Assert-EnvelopeRejected "open error taxonomy" $badEnvelope $definition "unknown 
 
 $badEnvelope = Copy-Definition $envelopes
 $badEnvelope.fact.visibility = "private"
-Assert-EnvelopeRejected "private outward fact" $badEnvelope $definition "fact visibility must be public"; $negativeCount++
+Set-CanonicalFingerprint $badEnvelope.fact
+Assert-EnvelopeRejected "private outward fact" $badEnvelope $definition "visibility does not match declaration"; $negativeCount++
 
 $badEnvelope = Copy-Definition $envelopes
 $badEnvelope.command.authenticated_action.PSObject.Properties.Remove("content_fingerprint")
@@ -837,14 +992,265 @@ foreach ($case in $envelopeUnknownCases) {
     $negativeCount++
 }
 
+# Runtime facts bind to exactly one declaration and its exact bounded payload.
+foreach ($factBound in @(
+    @{ name = "fact payload minima"; commitment_id = "a"; at_risk_total = 0 },
+    @{ name = "fact payload maxima"; commitment_id = ("c" * 128); at_risk_total = 2147483647 }
+)) {
+    $factEnvelope = Copy-Definition $envelopes
+    $factEnvelope.fact.payload.commitment_id = $factBound.commitment_id
+    $factEnvelope.fact.payload.at_risk_total = $factBound.at_risk_total
+    Set-CanonicalFingerprint $factEnvelope.fact
+    Assert-EnvelopeNoErrors $factBound.name $factEnvelope $definition
+}
+
+$factCases = @(
+    @{ name = "fact unknown ten thousand byte field"; expected = "runtime fact payload unknown field"; mutate = { param($x) $x.fact.payload | Add-Member -NotePropertyName hidden_blob -NotePropertyValue ("x" * 10000) } },
+    @{ name = "fact missing required field"; expected = "runtime fact payload missing field: commitment_id"; mutate = { param($x) $x.fact.payload.PSObject.Properties.Remove("commitment_id") } },
+    @{ name = "fact wrong declared integer type"; expected = "at_risk_total wrong declared type"; mutate = { param($x) $x.fact.payload.at_risk_total = "5" } },
+    @{ name = "fact declared integer overflow"; expected = "at_risk_total over limit"; mutate = { param($x) $x.fact.payload.at_risk_total = [int64]2147483648 } },
+    @{ name = "fact oversized declared string"; expected = "commitment_id over limit"; mutate = { param($x) $x.fact.payload.commitment_id = "c" * 129 } },
+    @{ name = "fact unknown type"; expected = "exactly one declaration"; mutate = { param($x) $x.fact.fact_type = "unknown.fact" } },
+    @{ name = "fact wrong version"; expected = "version does not match declaration"; mutate = { param($x) $x.fact.fact_version = 2 } }
+)
+foreach ($case in $factCases) {
+    $badEnvelope = Copy-Definition $envelopes
+    & $case.mutate $badEnvelope
+    Set-CanonicalFingerprint $badEnvelope.fact
+    Assert-EnvelopeRejected $case.name $badEnvelope $definition $case.expected; $negativeCount++
+}
+
+# Result projections use the explicit public bounded allowlist.
+foreach ($projectionBound in @(
+    @{ name = "result projection lower bounds"; phase_id = "a"; pending_total = 0; at_risk_total = 0 },
+    @{ name = "result projection upper bounds"; phase_id = ("p" * 64); pending_total = 2147483647; at_risk_total = 2147483647 }
+)) {
+    $projectionEnvelope = Copy-Definition $envelopes
+    $projectionEnvelope.result.public_projection.phase_id = $projectionBound.phase_id
+    $projectionEnvelope.result.public_projection.pending_total = $projectionBound.pending_total
+    $projectionEnvelope.result.public_projection.at_risk_total = $projectionBound.at_risk_total
+    Set-CanonicalFingerprint $projectionEnvelope.result
+    $projectionEnvelope.request_cache.response_content_fingerprint = $projectionEnvelope.result.content_fingerprint
+    Assert-EnvelopeNoErrors $projectionBound.name $projectionEnvelope $definition
+}
+
+$resultProjectionCases = @(
+    @{ name = "result projection unknown ten thousand byte field"; expected = "result public projection unknown field"; mutate = { param($x) $x.result.public_projection | Add-Member -NotePropertyName hidden_blob -NotePropertyValue ("x" * 10000) } },
+    @{ name = "result projection missing field"; expected = "result public projection missing field: phase_id"; mutate = { param($x) $x.result.public_projection.PSObject.Properties.Remove("phase_id") } },
+    @{ name = "result projection wrong type"; expected = "pending_total wrong declared type"; mutate = { param($x) $x.result.public_projection.pending_total = "5" } },
+    @{ name = "result projection above maximum"; expected = "pending_total over limit"; mutate = { param($x) $x.result.public_projection.pending_total = [int64]2147483648 } },
+    @{ name = "result projection below minimum"; expected = "pending_total over limit"; mutate = { param($x) $x.result.public_projection.pending_total = -1 } }
+)
+foreach ($case in $resultProjectionCases) {
+    $badEnvelope = Copy-Definition $envelopes
+    & $case.mutate $badEnvelope
+    Set-CanonicalFingerprint $badEnvelope.result
+    $badEnvelope.request_cache.response_content_fingerprint = $badEnvelope.result.content_fingerprint
+    Assert-EnvelopeRejected $case.name $badEnvelope $definition $case.expected; $negativeCount++
+}
+
+$bad = Copy-Definition $definition
+$bad.game_facts += @(Copy-Definition $bad.game_facts[0])
+Assert-Rejected "duplicate fact declaration" $bad "duplicate fact type"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.game_facts[0].fact_type = "Noncanonical"
+Assert-Rejected "noncanonical fact declaration" $bad "fact type must be a qualified id"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.handler_registry[0].emitted_facts = @("unknown.fact")
+Assert-Rejected "handler emits unknown fact declaration" $bad "handler emits undeclared fact"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.PSObject.Properties.Remove("public_projection_schema")
+Assert-Rejected "missing public projection schema" $bad "missing top-level field: public_projection_schema"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.public_projection_schema | Add-Member -NotePropertyName extra -NotePropertyValue $true
+Assert-Rejected "open public projection schema record" $bad "public projection schema unknown field"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.public_projection_schema.fields.phase_id | Add-Member -NotePropertyName private -NotePropertyValue $true
+Assert-Rejected "open public projection type record" $bad "schema string unknown field"; $negativeCount++
+
+$bad = Copy-Definition $definition
+for ($index = 0; $index -lt 30; $index++) {
+    $bad.public_projection_schema.fields | Add-Member -NotePropertyName ("field_{0}" -f $index) -NotePropertyValue ([pscustomobject]@{ type = "bool" })
+}
+Assert-Rejected "public projection schema over 32 fields" $bad "schema field count over limit"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.public_projection_schema.fields.phase_id.max_length = 513
+Assert-Rejected "public projection invalid bounds" $bad "string bounds over limit"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.public_projection_schema.authority = "private"
+Assert-Rejected "private public projection authority" $bad "authority must be public"; $negativeCount++
+
+# Declared schemas are closed and bounded, and runtime values enforce every bound.
+$schemaMaximum = Copy-Definition $definition
+for ($index = 0; $index -lt 26; $index++) {
+    $schemaMaximum.action_declarations[0].parameters | Add-Member -NotePropertyName ("field_{0}" -f $index) -NotePropertyValue ([pscustomobject]@{ type = "bool" })
+}
+Assert-NoErrors "schema field maximum" $schemaMaximum
+$schemaMaximum.action_declarations[0].parameters | Add-Member -NotePropertyName "field_26" -NotePropertyValue ([pscustomobject]@{ type = "bool" })
+Assert-Rejected "schema field maximum plus one" $schemaMaximum "schema field count over limit"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.action_declarations[0].parameters.note.max_length = 513
+Assert-Rejected "string schema maximum plus one" $bad "string bounds over limit"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.action_declarations[0].parameters.labels.max_items = 65
+Assert-Rejected "array schema maximum plus one" $bad "string array bounds over limit"; $negativeCount++
+
+$maxEnvelope = Copy-Definition $envelopes
+$maxEnvelope.command.parameters.amount = 1000000
+$maxEnvelope.command.parameters.confidence = [double]1.0
+$maxEnvelope.command.parameters.item_id = ("a" * 64) + "." + ("b" * 64) + "." + ("c" * 62)
+$maxEnvelope.command.parameters.note = "n" * 128
+$maxEnvelope.command.parameters.labels = @((1..64) | ForEach-Object { "l" * 64 })
+$maxEnvelope.command.parameters.weights = @((1..64) | ForEach-Object { 1000000 })
+Set-CanonicalFingerprint $maxEnvelope.command
+$maxEnvelope.request_cache.command_content_fingerprint = $maxEnvelope.command.content_fingerprint
+Assert-EnvelopeNoErrors "declared value maxima" $maxEnvelope $definition
+
+$runtimeLimitCases = @(
+    @{ name = "integer maximum plus one"; mutate = { param($x) $x.command.parameters.amount = 1000001 } },
+    @{ name = "float maximum plus one"; mutate = { param($x) $x.command.parameters.confidence = [double]1.1 } },
+    @{ name = "qualified id maximum plus one"; mutate = { param($x) $x.command.parameters.item_id = ("a" * 64) + "." + ("b" * 64) + "." + ("c" * 61) + ".d" } },
+    @{ name = "string maximum plus one"; mutate = { param($x) $x.command.parameters.note = "n" * 129 } },
+    @{ name = "string UTF-8 byte maximum plus one"; mutate = { param($x) $x.command.parameters.note = "é" * 65 } },
+    @{ name = "string array maximum plus one"; mutate = { param($x) $x.command.parameters.labels = @((1..65) | ForEach-Object { "x" }) } },
+    @{ name = "string array item maximum plus one"; mutate = { param($x) $x.command.parameters.labels = @("x" * 65) } },
+    @{ name = "int array maximum plus one"; mutate = { param($x) $x.command.parameters.weights = @((1..65) | ForEach-Object { 1 }) } },
+    @{ name = "int array item maximum plus one"; mutate = { param($x) $x.command.parameters.weights = @(1000001) } },
+    @{ name = "mandatory ten thousand element rejection"; mutate = { param($x) $x.command.parameters.labels = @((1..10000) | ForEach-Object { "x" }) } }
+)
+foreach ($case in $runtimeLimitCases) {
+    $badEnvelope = Copy-Definition $envelopes
+    & $case.mutate $badEnvelope
+    Set-CanonicalFingerprint $badEnvelope.command
+    $badEnvelope.request_cache.command_content_fingerprint = $badEnvelope.command.content_fingerprint
+    Assert-EnvelopeRejected $case.name $badEnvelope $definition "over limit"; $negativeCount++
+}
+
+$receiptMaxEnvelope = Copy-Definition $envelopes
+foreach ($receiptArrayName in @("state_receipts", "operation_receipts", "fact_receipts")) {
+    $receiptMaxEnvelope.result.$receiptArrayName = @((1..64) | ForEach-Object { "receipt:${receiptArrayName}:$_" })
+}
+Set-CanonicalFingerprint $receiptMaxEnvelope.result
+$receiptMaxEnvelope.request_cache.response_content_fingerprint = $receiptMaxEnvelope.result.content_fingerprint
+Assert-EnvelopeNoErrors "runtime receipt array maxima" $receiptMaxEnvelope $definition
+foreach ($receiptArrayName in @("state_receipts", "operation_receipts", "fact_receipts")) {
+    $badEnvelope = Copy-Definition $envelopes
+    $badEnvelope.result.$receiptArrayName = @((1..65) | ForEach-Object { "receipt:${receiptArrayName}:$_" })
+    Set-CanonicalFingerprint $badEnvelope.result
+    $badEnvelope.request_cache.response_content_fingerprint = $badEnvelope.result.content_fingerprint
+    Assert-EnvelopeRejected "$receiptArrayName maximum plus one" $badEnvelope $definition "over limit"; $negativeCount++
+}
+
+# A receipt condition matches exactly the authored (kind, key, fingerprint) triple.
+$conditionA = [pscustomobject]@{ kind = "receipt_present"; receipt_kind = "result"; receipt_key = "receipt:result:a"; content_fingerprint = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
+$receiptA = [pscustomobject]@{ receipt_key = "receipt:result:a"; content_fingerprint = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"; envelope_kind = "result"; status = "accepted" }
+$receiptB = [pscustomobject]@{ receipt_key = "receipt:result:b"; content_fingerprint = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"; envelope_kind = "result"; status = "accepted" }
+if (@(@($receiptA, $receiptB) | Where-Object { Test-ReceiptTripleMatch $conditionA $_ }).Count -ne 1) { throw "receipt triple condition did not match exactly one receipt" }
+foreach ($case in @(
+    @{ name = "wrong receipt kind"; mutate = { param($x) $x.envelope_kind = "operation" } },
+    @{ name = "wrong receipt key"; mutate = { param($x) $x.receipt_key = "receipt:result:b" } },
+    @{ name = "wrong receipt fingerprint"; mutate = { param($x) $x.content_fingerprint = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" } },
+    @{ name = "non-accepted receipt"; mutate = { param($x) $x.status = "rejected" } }
+)) {
+    $badReceipt = Copy-Definition $receiptA; & $case.mutate $badReceipt
+    if (Test-ReceiptTripleMatch $conditionA $badReceipt) { throw "$($case.name) matched receipt condition" }
+    $negativeCount++
+}
+$partialReceipt = Copy-Definition $receiptA; $partialReceipt.PSObject.Properties.Remove("content_fingerprint")
+if (Test-ReceiptTripleMatch $conditionA $partialReceipt) { throw "partial receipt matched receipt condition" }; $negativeCount++
+$partialCondition = Copy-Definition $conditionA; $partialCondition.PSObject.Properties.Remove("receipt_key")
+if (Test-ReceiptTripleMatch $partialCondition $receiptA) { throw "partial condition matched receipt" }; $negativeCount++
+if (Test-ReceiptTripleMatch $conditionA $null) { throw "missing receipt matched receipt condition" }; $negativeCount++
+
+# RequestCache terminal records bind their own exact response envelope.
+$rejectedCache = Copy-Definition $envelopes
+$rejectedCache.rejection.command_id = $rejectedCache.command.command_id
+$rejectedCache.rejection.request_key = $rejectedCache.command.request_key
+Set-CanonicalFingerprint $rejectedCache.rejection
+$rejectedCache.request_cache.status = "rejected"
+$rejectedCache.request_cache.response_receipt_key = $rejectedCache.rejection.receipt_key
+$rejectedCache.request_cache.response_content_fingerprint = $rejectedCache.rejection.content_fingerprint
+Assert-EnvelopeNoErrors "rejected request cache branch" $rejectedCache $definition
+
+foreach ($projectionBound in @(
+    @{ name = "rejection projection lower bounds"; phase_id = "a"; pending_total = 0; at_risk_total = 0 },
+    @{ name = "rejection projection upper bounds"; phase_id = ("p" * 64); pending_total = 2147483647; at_risk_total = 2147483647 }
+)) {
+    $projectionEnvelope = Copy-Definition $rejectedCache
+    $projectionEnvelope.rejection.public_projection.phase_id = $projectionBound.phase_id
+    $projectionEnvelope.rejection.public_projection.pending_total = $projectionBound.pending_total
+    $projectionEnvelope.rejection.public_projection.at_risk_total = $projectionBound.at_risk_total
+    Set-CanonicalFingerprint $projectionEnvelope.rejection
+    $projectionEnvelope.request_cache.response_content_fingerprint = $projectionEnvelope.rejection.content_fingerprint
+    Assert-EnvelopeNoErrors $projectionBound.name $projectionEnvelope $definition
+}
+
+$rejectionProjectionCases = @(
+    @{ name = "rejection projection unknown ten thousand byte field"; expected = "rejection public projection unknown field"; mutate = { param($x) $x.rejection.public_projection | Add-Member -NotePropertyName hidden_blob -NotePropertyValue ("x" * 10000) } },
+    @{ name = "rejection projection missing field"; expected = "rejection public projection missing field: phase_id"; mutate = { param($x) $x.rejection.public_projection.PSObject.Properties.Remove("phase_id") } },
+    @{ name = "rejection projection wrong type"; expected = "pending_total wrong declared type"; mutate = { param($x) $x.rejection.public_projection.pending_total = "5" } },
+    @{ name = "rejection projection above maximum"; expected = "pending_total over limit"; mutate = { param($x) $x.rejection.public_projection.pending_total = [int64]2147483648 } },
+    @{ name = "rejection projection below minimum"; expected = "pending_total over limit"; mutate = { param($x) $x.rejection.public_projection.pending_total = -1 } }
+)
+foreach ($case in $rejectionProjectionCases) {
+    $badEnvelope = Copy-Definition $rejectedCache
+    & $case.mutate $badEnvelope
+    Set-CanonicalFingerprint $badEnvelope.rejection
+    $badEnvelope.request_cache.response_content_fingerprint = $badEnvelope.rejection.content_fingerprint
+    Assert-EnvelopeRejected $case.name $badEnvelope $definition $case.expected; $negativeCount++
+}
+
+$privateProjectionDefinition = Copy-Definition $definition
+$privateProjectionDefinition.public_projection_schema.authority = "private"
+Assert-EnvelopeRejected "result private projection authority" $envelopes $privateProjectionDefinition "result public projection authority must be public"; $negativeCount++
+Assert-EnvelopeRejected "rejection private projection authority" $rejectedCache $privateProjectionDefinition "rejection public projection authority must be public"; $negativeCount++
+
+$cacheCases = @(
+    @{ name = "cache wrong request key"; expected = "exact command"; mutate = { param($x) $x.request_cache.request_key = "request:command:other" } },
+    @{ name = "rejected cache wrong request"; expected = "rejected request cache"; mutate = { param($x) $x.rejection.request_key = "request:command:other"; Set-CanonicalFingerprint $x.rejection; $x.request_cache.response_content_fingerprint = $x.rejection.content_fingerprint } },
+    @{ name = "cache wrong command receipt"; expected = "exact command"; mutate = { param($x) $x.request_cache.command_receipt_key = "receipt:command:other" } },
+    @{ name = "cache wrong command fingerprint"; expected = "exact command"; mutate = { param($x) $x.request_cache.command_content_fingerprint = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } },
+    @{ name = "rejected cache wrong response key"; expected = "rejected request cache"; mutate = { param($x) $x.request_cache.response_receipt_key = "receipt:rejection:other" } },
+    @{ name = "rejected cache wrong response fingerprint"; expected = "rejected request cache"; mutate = { param($x) $x.request_cache.response_content_fingerprint = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } },
+    @{ name = "status response kind mismatch"; expected = "rejected request cache"; mutate = { param($x) $x.request_cache.response_receipt_key = $x.result.receipt_key; $x.request_cache.response_content_fingerprint = $x.result.content_fingerprint } },
+    @{ name = "response aliases command"; expected = "rejected request cache"; mutate = { param($x) $x.request_cache.response_receipt_key = $x.command.receipt_key; $x.request_cache.response_content_fingerprint = $x.command.content_fingerprint } }
+)
+foreach ($case in $cacheCases) {
+    $badEnvelope = Copy-Definition $rejectedCache; & $case.mutate $badEnvelope
+    Assert-EnvelopeRejected $case.name $badEnvelope $definition $case.expected; $negativeCount++
+}
+
 $canonicalCommand = ConvertTo-CanonicalJson $envelopes.command
 $reorderedCommand = [pscustomobject][ordered]@{}
 foreach ($name in @((Property-Names $envelopes.command) | Sort-Object -CaseSensitive -Descending)) {
     $reorderedCommand | Add-Member -NotePropertyName $name -NotePropertyValue $envelopes.command.$name
 }
 if ((ConvertTo-CanonicalJson $reorderedCommand) -cne $canonicalCommand) { throw "Canonical semantics depend on dictionary insertion order" }
-if ((ConvertTo-CanonicalJson 1) -ceq (ConvertTo-CanonicalJson "1")) { throw "Canonical semantics coerce integer and string" }
+$canonicalInteger = ConvertTo-CanonicalJson ([int64]1)
+$canonicalFloat = ConvertTo-CanonicalJson ([double]1.0)
+if ($canonicalInteger -cne '{"$number":"int","value":"1"}') { throw "Canonical integer representation is not exact" }
+if ($canonicalFloat -cne '{"$number":"float","value":"1.0"}') { throw "Canonical float representation is not exact" }
+if ($canonicalInteger -ceq $canonicalFloat) { throw "Canonical semantics coerce integer and float" }
+if ($canonicalInteger -ceq (ConvertTo-CanonicalJson "1") -or $canonicalInteger -ceq (ConvertTo-CanonicalJson $true)) { throw "Canonical semantics coerce integer, string, or boolean" }
+if ((ConvertTo-CanonicalJson "true") -ceq (ConvertTo-CanonicalJson $true)) { throw "Canonical semantics coerce string and boolean" }
 if ((ConvertTo-CanonicalJson @("a", "b")) -ceq (ConvertTo-CanonicalJson @("b", "a"))) { throw "Canonical semantics do not preserve authored array order" }
+
+$integerSubstitution = Copy-Definition $envelopes
+$floatFingerprint = [string]$integerSubstitution.command.content_fingerprint
+$integerSubstitution.command.parameters.confidence = [int64]1
+Set-CanonicalFingerprint $integerSubstitution.command
+$integerSubstitution.request_cache.command_content_fingerprint = $integerSubstitution.command.content_fingerprint
+if ([string]$integerSubstitution.command.content_fingerprint -ceq $floatFingerprint) { throw "Authored float and integer substitution share an envelope fingerprint" }
+Assert-EnvelopeRejected "authored float replaced by integer" $integerSubstitution $definition "wrong declared type"; $negativeCount++
 
 $contractText = Get-Content -LiteralPath $contractPath -Raw
 $checklistText = Get-Content -LiteralPath $checklistPath -Raw
