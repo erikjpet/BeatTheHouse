@@ -484,9 +484,11 @@ static func validate_fact(state: Dictionary, fact_value: Dictionary) -> Array:
 		if fact_type == "town_transition" and _string_array(payload.get("happening_ids", [])).size() != _array(payload.get("happening_ids", [])).size():
 			errors.append("scenario town_transition fact payload.happening_ids must contain unique stable strings")
 		if fact_type == "heat_band_changed" and (str(payload.get("previous_band", "")) not in ["quiet", "caution", "hot", "critical"] or str(payload.get("current_band", "")) not in ["quiet", "caution", "hot", "critical"]): errors.append("scenario heat_band_changed fact requires registered heat bands")
-		if fact_type == "event_result":
-			var event_choices := _dict(_dict(state.get("semantic_state", {})).get("event_choices", {}))
-			if event_choices.is_empty() or not _array(event_choices.get(str(payload.get("event_id", "")), [])).has(str(payload.get("choice_id", ""))): errors.append("scenario event_result fact requires a catalog-proven event choice pair")
+		# Event-result authority is definition- and delivery-bound in
+		# _event_fact_is_authorized().  A broad legacy observer is intentionally
+		# allowed to see an uncorrelated authored result even when its choice is not
+		# part of the room's event-launch catalog; correlated results still require
+		# the exact delivered resolution and authored closed payload predicate.
 		if fact_type == "town_transition" and int(payload.get("action_index", -1)) < 0: errors.append("scenario town_transition fact action_index must be non-negative")
 		if fact_type == "sweep_changed" and (int(payload.get("action_index", -1)) < 0 or int(payload.get("segment_index", -1)) < 0 or str(payload.get("node_id", "")).is_empty()): errors.append("scenario sweep_changed fact indexes/node must be valid")
 		if fact_type == "world_boundary" and (int(payload.get("amount", 0)) < 1 or int(payload.get("action_index", -1)) < 0): errors.append("scenario world_boundary fact amount/action_index must be positive/non-negative")
@@ -546,9 +548,16 @@ static func flush_facts(state_value: Dictionary, definition: Dictionary, boundar
 			var response := _apply_fact(state, definition, typed_fact, fingerprint)
 			if not bool(response.get("ok", false)):
 				errors.append_array(_array(response.get("errors", [])))
-				# The whole flush is one transaction. A failed fact remains queued so
-				# the durable input journal is byte-for-byte identical on rejection.
-				return {"ok": false, "state": original, "processed": [], "errors": errors}
+				# Reject the failing ingress identity without committing a receipt or
+				# semantic consequence. Other durable queued facts retain their exact
+				# order and may be retried independently.
+				var rejected_state := original.duplicate(true)
+				var retained_queue: Array = []
+				for queued_value in _fact_array(original.get("fact_queue", [])):
+					if str((queued_value as Dictionary).get("fact_id", "")) != fact_id:
+						retained_queue.append((queued_value as Dictionary).duplicate(true))
+				rejected_state["fact_queue"] = retained_queue
+				return {"ok": false, "state": rejected_state, "processed": [], "errors": errors}
 			state = _dict(response.get("state", state))
 		state["last_flushed_fact_serial"] = maxi(int(state.get("last_flushed_fact_serial", 0)), int(typed_fact.get("ingress_serial", 0)))
 		processed.append(fact_id)
@@ -582,7 +591,7 @@ static func record_visit(state_value: Dictionary, definition: Dictionary, visit_
 	var clean_visit_id := visit_id.strip_edges()
 	if not _valid_id(clean_visit_id) or not _valid_persisted_text(clean_visit_id):
 		return {"ok": false, "state": state, "errors": ["scenario visit requires a stable visit_id"]}
-	var receipt_key := _structural_receipt("visit", [str(state.get("scenario_id", "")), str(state.get("node_id", "")), clean_visit_id])
+	var receipt_key := "visit:%s" % clean_visit_id
 	var receipts := _string_array(state.get("visit_receipts", []))
 	if receipts.has(receipt_key):
 		return {"ok": true, "state": state, "errors": [], "replayed": true}
@@ -1041,7 +1050,12 @@ static func _run_handler(state: Dictionary, definition: Dictionary, handler_id: 
 	var trigger_kind := str(trigger.get("kind", ""))
 	if trigger_kind not in ["command", "fact"]:
 		return {"ok": false, "state": state, "errors": ["scenario handler trigger kind must be exactly command or fact"]}
-	var handler_errors := OperationRegistryScript.validate_handler_inputs(handler_id, inputs, _dict(SequenceSchemaScript.sequence(definition).get("local_state_schema", {})), SequenceSchemaScript.reachable_outcome_ids(definition), {"source": trigger_kind, "objective_steps": _objective_step_index(definition), "phase_objective_ids": _array(SequenceSchemaScript.phase(definition, str(state.get("phase_id", ""))).get("objective_ids", [])), "event_choices": _dict(_dict(state.get("semantic_state", {})).get("event_choices", {}))})
+	var handler_event_choices := _dict(_dict(state.get("semantic_state", {})).get("event_choices", {})).duplicate(true)
+	if handler_id == "event_bridge" and _authored_event_resolution_pair(definition, str(inputs.get("event_id", "")), str(inputs.get("resolution_id", ""))):
+		var authored_resolutions := _array(handler_event_choices.get(str(inputs.get("event_id", "")), [])).duplicate()
+		_append_unique(authored_resolutions, str(inputs.get("resolution_id", "")))
+		handler_event_choices[str(inputs.get("event_id", ""))] = authored_resolutions
+	var handler_errors := OperationRegistryScript.validate_handler_inputs(handler_id, inputs, _dict(SequenceSchemaScript.sequence(definition).get("local_state_schema", {})), SequenceSchemaScript.reachable_outcome_ids(definition), {"source": trigger_kind, "objective_steps": _objective_step_index(definition), "phase_objective_ids": _array(SequenceSchemaScript.phase(definition, str(state.get("phase_id", ""))).get("objective_ids", [])), "event_choices": handler_event_choices})
 	if not handler_errors.is_empty(): return {"ok": false, "state": state, "errors": handler_errors}
 	var next := state.duplicate(true)
 	var local := _dict(next.get("local_state", {}))
@@ -1093,7 +1107,7 @@ static func _run_handler(state: Dictionary, definition: Dictionary, handler_id: 
 			if event_id != event_id.strip_edges() or resolution_id != resolution_id.strip_edges() or not _valid_id(event_id) or not _valid_id(resolution_id) or not _valid_persisted_text(trigger_id):
 				return {"ok": false, "state": state, "errors": ["scenario event correlation requires exact canonical event, resolution, and trigger ids"]}
 			var event_choices := _dict(_dict(next.get("semantic_state", {})).get("event_choices", {}))
-			if not _array(event_choices.get(event_id, [])).has(resolution_id):
+			if _array(event_choices.get(event_id, [])).is_empty() or not _authored_event_resolution_pair(definition, event_id, resolution_id):
 				return {"ok": false, "state": state, "errors": ["scenario event correlation requires a catalog-proven event choice pair"]}
 			var feedback := "Event %s resolved as %s." % [event_id, resolution_id]
 			if feedback.length() > OperationRegistryScript.MAX_VARIANT_TEXT:
@@ -1790,6 +1804,37 @@ static func _matches_authored_event_result_payload(definition: Dictionary, paylo
 	return false
 
 
+static func _authored_event_resolution_pair(definition: Dictionary, event_id: String, resolution_id: String) -> bool:
+	if not _valid_id(event_id) or not _valid_id(resolution_id):
+		return false
+	var predicates: Array = []
+	var authored := SequenceSchemaScript.sequence(definition)
+	for subscription_value in _array(authored.get("fact_subscriptions", [])):
+		var subscription := _dict(subscription_value)
+		if str(subscription.get("fact_type", "")) == "event_result":
+			predicates.append(_dict(subscription.get("payload_equals", {})))
+	for phase_value in _array(_dict(authored.get("phase_graph", {})).get("phases", [])):
+		var phase_data := _dict(phase_value)
+		for condition_value in _array(phase_data.get("entry_conditions", [])):
+			var condition := _dict(condition_value)
+			if str(condition.get("type", "")) == "fact" and str(condition.get("fact_type", "")) == "event_result":
+				predicates.append(_dict(condition.get("payload_equals", {})))
+		for branch_value in _array(phase_data.get("branches", [])):
+			var condition := _dict(_dict(branch_value).get("condition", {}))
+			if str(condition.get("type", "")) == "fact" and str(condition.get("fact_type", "")) == "event_result":
+				predicates.append(_dict(condition.get("payload_equals", {})))
+	for objective_value in _array(authored.get("objectives", [])):
+		for step_value in _array(_dict(objective_value).get("steps", [])):
+			var step := _dict(step_value)
+			if str(step.get("kind", "")) == "fact" and str(step.get("fact_type", "")) == "event_result":
+				predicates.append(_dict(step.get("payload_equals", {})))
+	for predicate_value in predicates:
+		var predicate := _dict(predicate_value)
+		if str(predicate.get("event_id", "")) == event_id and str(predicate.get("resolution_id", "")) == resolution_id:
+			return true
+	return false
+
+
 static func _event_payload_predicate_matches(predicate: Dictionary, payload: Dictionary, require_correlation_fields: bool) -> bool:
 	# Broad predicates remain valid observers for legacy uncorrelated facts. Once
 	# an event request supplies correlation authority, a separate discriminating
@@ -2160,7 +2205,9 @@ static func _normalized_event_correlations(value: Variant, event_choices: Dictio
 		var trigger_id := str(source.get("trigger_id", ""))
 		if event_id != event_id.strip_edges() or resolution_id != resolution_id.strip_edges() or not _valid_id(event_id) or not _valid_id(resolution_id) or trigger_kind not in ["command", "fact"] or not _valid_persisted_text(trigger_id):
 			continue
-		if event_choices.is_empty() or not _array(event_choices.get(event_id, [])).has(resolution_id):
+		# event_choices proves the authored event exists. resolution_id is the
+		# sequence's correlation identity, not an event choice id.
+		if event_choices.is_empty() or _array(event_choices.get(event_id, [])).is_empty():
 			continue
 		var correlation_key := _structural_receipt("event_correlation", [event_id, resolution_id, trigger_kind, trigger_id])
 		if str(source.get("correlation_key", "")) != correlation_key or seen.has(correlation_key):
