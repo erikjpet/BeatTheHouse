@@ -681,6 +681,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var total_wager_cost := _wager_cost_from_session(selected_stake, session, table, run_state)
 	var shoe_remaining_value := _shoe_remaining(table)
 	var shoe_label_value := str(table.get("shoe_label", CardShoeScript.shoe_label(int(table.get("deck_count", 6)))))
+	var authority_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var pending_delivery: Dictionary = authority_ledger.get("pending_delivery", {}) if typeof(authority_ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
 	var spec := GameModule.surface_spec({
 		"surface_renderer": "blackjack",
 		"surface_time_msec": now_msec,
@@ -878,6 +880,24 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			},
 		}),
 	})
+	if not pending_delivery.is_empty():
+		spec["blackjack_host_pending_delivery"] = pending_delivery.duplicate(true)
+		spec["blackjack_host_retry_available"] = true
+		spec["blackjack_host_cancel_available"] = true
+		spec["table_notice"] = "A sealed action is waiting. Retry it or cancel back to the prior table state."
+		spec["can_deal"] = false
+		spec["can_hit"] = false
+		spec["can_stand"] = false
+		spec["can_double"] = false
+		spec["can_split"] = false
+		spec["can_surrender"] = false
+		spec["surface_action_bindings"] = {
+			"legal": {"action": "blackjack_retry_pending", "index": 0},
+			"cheat": {"action": "blackjack_cancel_pending", "index": 0},
+			"surface_stake_down": {"action": "blackjack_cancel_pending", "index": 0},
+			"surface_stake_up": {"action": "blackjack_retry_pending", "index": 0},
+			"surface_stake_max": {"action": "blackjack_retry_pending", "index": 0},
+		}
 	if not _is_rourke_duel(run_state, environment):
 		spec["ritual_contract"] = BLACKJACK_RITUAL_CONTRACT
 		spec["ritual_id"] = BLACKJACK_RITUAL_ID
@@ -1850,11 +1870,33 @@ func _rourke_duel_surface_action_command(surface_action: String, index: int, con
 
 
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
-	return _empty_blackjack_result(action_id, stake, environment, "Blackjack actions require the table host authority.")
+	return _blackjack_compatibility_simulation(action_id, stake, run_state, environment, rng, {})
 
 
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
-	return _empty_blackjack_result(action_id, stake, environment, "Blackjack actions require the table host authority.")
+	return _blackjack_compatibility_simulation(action_id, stake, run_state, environment, rng, ui_state)
+
+
+func _blackjack_compatibility_simulation(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+	# Legacy probes may simulate Blackjack locally, but this API carries no live
+	# authority. It snapshots the caller inputs, resolves only detached copies,
+	# and returns a receipt-free result that GameModule.apply_result rejects.
+	if run_state == null or rng == null:
+		return _empty_blackjack_result(action_id, stake, environment, "Blackjack simulation requires serialized run and RNG inputs.")
+	var proposal := _blackjack_resolve_proposal(
+		action_id,
+		stake,
+		run_state.to_save_snapshot(),
+		rng.snapshot(),
+		ui_state.duplicate(true)
+	)
+	var result: Dictionary = (proposal.get("result", {}) as Dictionary).duplicate(true)
+	result.erase("blackjack_proposal_requires_apply")
+	result.erase("blackjack_host_apply_receipt")
+	result.erase("blackjack_host_content_fingerprint")
+	result["blackjack_compatibility_simulation"] = true
+	result["blackjack_authoritative"] = false
+	return result
 
 
 func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Dictionary, rng_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
@@ -3044,6 +3086,11 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	var panel := Rect2(586, BJ_CONSOLE_Y + 8.0, 292, BJ_CONSOLE_H - 16.0)
 	_draw_neon_panel(surface, panel, C_CYAN, 0.10)
+	if bool(surface_state.get("blackjack_host_retry_available", false)):
+		surface.surface_label("SEALED ACTION", panel.position + Vector2(10, 15), 10, C_YELLOW)
+		_draw_table_button(surface, Rect2(panel.position.x + 14, panel.position.y + 28, 132, 38), "RETRY", "blackjack_retry_pending", 0, C_YELLOW, true, surface.surface_native_action_selected("blackjack_retry_pending"))
+		_draw_table_button(surface, Rect2(panel.position.x + 154, panel.position.y + 28, 112, 38), "CANCEL", "blackjack_cancel_pending", 0, C_SOFT, bool(surface_state.get("blackjack_host_cancel_available", false)))
+		return
 	if bool(surface_state.get("boss_duel_active", false)):
 		_draw_rourke_duel_actions(surface, surface_state, panel)
 		return
