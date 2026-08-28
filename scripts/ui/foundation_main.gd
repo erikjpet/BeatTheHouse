@@ -1147,18 +1147,21 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 
 
 func _current_game_uses_blackjack_action_authority() -> bool:
-	var canonical: Variant = game_module_cache.get("blackjack", null)
-	return current_game != null \
+	if current_game == null:
+		return false
+	var game_id := current_game.get_id()
+	var canonical: Variant = game_module_cache.get(game_id, null)
+	return not game_id.is_empty() \
 		and canonical is GameModule \
 		and current_game == canonical \
-		and current_game.get_id() == "blackjack" \
 		and current_game.has_method("_blackjack_resolve_proposal") \
 		and current_game.has_method("_blackjack_wager_cost_proposal")
 
 
 func _blackjack_host_table_binding(environment: Dictionary = {}) -> String:
 	var source := environment if not environment.is_empty() else (run_state.current_environment if run_state != null else {})
-	return "blackjack:%s:%s" % [str(source.get("id", "unknown")), str(source.get("archetype_id", "unknown"))]
+	var game_id := current_game.get_id() if current_game != null else "unknown"
+	return "%s:%s:%s" % [game_id, str(source.get("id", "unknown")), str(source.get("archetype_id", "unknown"))]
 
 
 func _blackjack_host_ledger(candidate: RunState, create: bool = true, reconcile_checkpoint: bool = true) -> Dictionary:
@@ -1187,11 +1190,12 @@ func _blackjack_host_trusted_context(candidate: RunState, stake: int) -> Diction
 	var snapshot := candidate.to_save_snapshot()
 	var snapshot_environment: Dictionary = (snapshot.get("current_environment", {}) as Dictionary).duplicate(true)
 	var game_states: Dictionary = (snapshot_environment.get("game_states", {}) as Dictionary).duplicate(true)
-	if typeof(game_states.get("blackjack", null)) == TYPE_DICTIONARY:
-		var table: Dictionary = (game_states.get("blackjack", {}) as Dictionary).duplicate(true)
+	var game_id := current_game.get_id()
+	if typeof(game_states.get(game_id, null)) == TYPE_DICTIONARY:
+		var table: Dictionary = (game_states.get(game_id, {}) as Dictionary).duplicate(true)
 		table.erase(BlackjackActionAuthorityScript.LEDGER_KEY)
 		table.erase("_blackjack_pending_apply_receipt")
-		game_states["blackjack"] = table
+		game_states[game_id] = table
 		snapshot_environment["game_states"] = game_states
 		snapshot["current_environment"] = snapshot_environment
 	return {
@@ -1575,7 +1579,7 @@ func _blackjack_host_resolve_intent(action_id: String, stake: int, delivery_clai
 		result["blackjack_host_request_key"] = request_key
 		result["blackjack_host_committed"] = false
 		return result
-	if str(result.get("game_id", result.get("source_id", ""))) != "blackjack" \
+	if str(result.get("game_id", result.get("source_id", ""))) != current_game.get_id() \
 			or str(result.get("action_id", "")) != action_id \
 			or str(result.get("environment_id", "")) != str(candidate.current_environment.get("id", "")):
 		return _blackjack_host_rejection("invalid_proposal", "Blackjack result identity did not match the sealed delivery.", request_key)
