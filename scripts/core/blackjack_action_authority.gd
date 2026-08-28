@@ -87,6 +87,57 @@ func submit_surface_intent(surface_action: String, index: int, confirm_requested
 	return command
 
 
+func needs_auto_tick(surface_time_msec: int) -> bool:
+	if not _ready():
+		return false
+	var candidate := _detached_run_state()
+	if candidate == null:
+		return false
+	var candidate_environment := candidate.current_environment
+	var ledger := _ledger(candidate, candidate_environment, true)
+	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
+	session["surface_time_msec"] = surface_time_msec
+	return bool(_game.surface_needs_auto_tick(session, candidate, candidate_environment))
+
+
+func submit_auto_intent(surface_time_msec: int) -> Dictionary:
+	if not _ready():
+		return _rejection("invalid_intent", "Blackjack auto action intent is unavailable.")
+	var candidate := _detached_run_state()
+	if candidate == null:
+		return _rejection("internal_fail_closed", "Blackjack authority could not create a detached candidate.")
+	var candidate_environment := candidate.current_environment
+	var table: Dictionary = _game.call("_table_state", candidate, candidate_environment)
+	var ledger := _ledger_from_table(table, true)
+	var request_key := _next_request_key(ledger)
+	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
+	session["surface_time_msec"] = surface_time_msec
+	var command: Dictionary = _game.surface_auto_action_command(session, candidate, candidate_environment, {})
+	# The timer can legitimately initialize on an unhandled tick. Publish that
+	# candidate-owned table mutation, but only an accepted command advances the
+	# durable Blackjack action boundary.
+	if bool(command.get("handled", false)):
+		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
+		ledger["session"] = next_session.duplicate(true)
+		ledger["boundary_ordinal"] = int(ledger.get("boundary_ordinal", 0)) + 1
+		ledger["next_request_ordinal"] = int(ledger.get("next_request_ordinal", 1)) + 1
+		if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)):
+			ledger["pending_request_key"] = request_key
+			ledger["pending_action_id"] = str(command.get("action_id", ""))
+		else:
+			ledger.erase("pending_request_key")
+			ledger.erase("pending_action_id")
+		table = _game.call("_table_state", candidate, candidate_environment)
+		table[LEDGER_KEY] = ledger
+		_game.call("_update_environment_table", candidate_environment, table)
+	if not _publish(candidate):
+		return _rejection("internal_fail_closed", "Blackjack authority could not publish the auto action.", request_key)
+	if bool(command.get("handled", false)):
+		command["blackjack_host_request_key"] = request_key
+		command["blackjack_host_boundary_ordinal"] = int(ledger.get("boundary_ordinal", 0))
+	return command
+
+
 func submit_resolve_intent(action_id: String) -> Dictionary:
 	if not _ready() or action_id.is_empty():
 		return _rejection("invalid_intent", "Blackjack action intent is unavailable.")
@@ -138,7 +189,11 @@ func submit_resolve_intent(action_id: String) -> Dictionary:
 	if bool(result.get("host_apply_result", false)):
 		result["blackjack_host_apply_receipt"] = {"request_key": request_key, "context_fingerprint": context_fingerprint}
 		GameModule.apply_result(candidate, result, rng)
-	candidate.advance_environment_turns(1)
+	# Up-front all-in placement and caught-Peek reprieves intentionally defer the
+	# zero-bankroll terminal check while a hand remains live. Advancing here would
+	# clear that contract before the follow-up settlement can run.
+	if not bool(result.get("defer_bankroll_zero_failure", false)):
+		candidate.advance_environment_turns(1)
 	var committed_session: Dictionary = {}
 	if typeof(result.get("ui_state", null)) == TYPE_DICTIONARY:
 		committed_session = (result.get("ui_state", {}) as Dictionary).duplicate(true)
@@ -199,15 +254,36 @@ func _detached_run_state() -> RunState:
 
 
 func _publish(candidate: RunState) -> bool:
-	var snapshot := candidate.to_save_snapshot()
-	_run_state.from_dict(snapshot)
+	# Validate the exact serialization boundary before touching live state.
+	# RunState normalization is part of publication, so compare two normalized
+	# round trips rather than a raw in-memory candidate with its normalized form.
+	var normalized_candidate := RunState.new()
+	normalized_candidate.from_dict(candidate.to_save_snapshot())
+	var normalized_snapshot := normalized_candidate.to_save_snapshot()
+	var verifier := RunState.new()
+	verifier.from_dict(normalized_snapshot)
+	if RuntimeScript.canonical_fingerprint(verifier.to_save_snapshot()) != RuntimeScript.canonical_fingerprint(normalized_snapshot):
+		return false
+	var original_snapshot := _run_state.to_save_snapshot()
+	var original_environment := _environment.duplicate(true)
+	_run_state.from_dict(normalized_snapshot)
 	# Keep the environment Dictionary identity held by FoundationMain/callers.
 	var published_environment := _run_state.current_environment.duplicate(true)
 	_environment.clear()
 	for key in published_environment:
 		_environment[key] = published_environment[key]
 	_run_state.current_environment = _environment
-	return RuntimeScript.canonical_fingerprint(_run_state.to_save_snapshot()) == RuntimeScript.canonical_fingerprint(candidate.to_save_snapshot())
+	var live_snapshot := _run_state.to_save_snapshot()
+	if RuntimeScript.canonical_fingerprint(live_snapshot) == RuntimeScript.canonical_fingerprint(normalized_snapshot):
+		return true
+	# A publication mismatch must remain failure-atomic even though it should be
+	# unreachable after the shadow verification above.
+	_run_state.from_dict(original_snapshot)
+	_environment.clear()
+	for key in original_environment:
+		_environment[key] = original_environment[key]
+	_run_state.current_environment = _environment
+	return false
 
 
 func _ledger(run_state: RunState, environment: Dictionary, create: bool) -> Dictionary:

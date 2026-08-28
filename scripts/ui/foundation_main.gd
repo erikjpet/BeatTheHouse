@@ -1288,12 +1288,20 @@ func _advance_game_surface_automation() -> void:
 	if _simulation_progression_paused():
 		return
 	var tick_state := _current_game_surface_auto_tick_state()
-	if not current_game.surface_needs_auto_tick(tick_state, run_state, run_state.current_environment):
-		return
 	var ui_state := tick_state if current_game.surface_auto_action_uses_lightweight_ui_state() else _current_game_surface_ui_state()
-	if not current_game.surface_needs_auto_tick(ui_state, run_state, run_state.current_environment):
-		return
-	var command := current_game.surface_auto_action_command(ui_state, run_state, run_state.current_environment, {})
+	var command: Dictionary
+	if _current_game_uses_blackjack_action_authority():
+		var surface_time_msec := int(ui_state.get("surface_time_msec", _environment_simulation_time_msec()))
+		var authority: RefCounted = _blackjack_action_authority()
+		if not authority.needs_auto_tick(surface_time_msec):
+			return
+		command = authority.submit_auto_intent(surface_time_msec)
+	else:
+		if not current_game.surface_needs_auto_tick(tick_state, run_state, run_state.current_environment):
+			return
+		if not current_game.surface_needs_auto_tick(ui_state, run_state, run_state.current_environment):
+			return
+		command = current_game.surface_auto_action_command(ui_state, run_state, run_state.current_environment, {})
 	if command.is_empty() or not bool(command.get("handled", false)):
 		return
 	# Reuse the action-boundary snapshot already built above. Rebuilding it in

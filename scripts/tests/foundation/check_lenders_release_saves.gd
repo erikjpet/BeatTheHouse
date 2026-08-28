@@ -4664,6 +4664,11 @@ func _check_grand_casino_invite_table_win_spawn(library: ContentLibrary, invite_
 		failures.append("Grand Casino table-win invite triggered at exactly $300 or from a non-table game.")
 
 	var qualifying_result := {"ok": true, "game_id": "blackjack", "source_id": "blackjack", "action_id": "play_basic", "deltas": {"bankroll_delta": 301}}
+	var blackjack_receipt := {"request_key": "test:blackjack:qualifying_table_win", "context_fingerprint": "trusted_consumer_fixture"}
+	var source_game_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	source_game_states["blackjack_consumer_fixture"] = {"_blackjack_action_authority": {"pending_apply_receipt": blackjack_receipt.duplicate(true)}}
+	run_state.current_environment["game_states"] = source_game_states
+	qualifying_result["blackjack_host_apply_receipt"] = blackjack_receipt
 	GameModule.apply_result(run_state, qualifying_result)
 	if not bool(run_state.narrative_flags.get(RunState.GRAND_CASINO_INVITATION_TABLE_WIN_FLAG, false)):
 		failures.append("A net blackjack win over $300 did not trigger the Grand Casino invitation.")
