@@ -139,29 +139,31 @@ static func ending_line(plan_id: String, outcome: String) -> String:
 static func plan_surface(plan_id: String) -> Dictionary:
 	if not PLAN_IDS.has(plan_id) or plan(plan_id).is_empty(): return {}
 	if plan_id == PLAN_COUNT:
+		var decision_rounds := _copy_dict(_copy_dict(plan(PLAN_COUNT).get("play", {})).get("decision_rounds", {}))
 		return {
 			"plan_id": PLAN_COUNT, "label": "The Count", "phases": [
-				_phase("setup", "crew_planning_table", ["identity", "schedule", "swap_cart"]),
-				_phase("play", "grand_casino_count_floor", ["hold_boring_blackjack_session"]),
-				_phase("getaway", "grand_casino_service_perimeter", ["move_count_cart"]),
+				_phase("plan", "planning_table", ["review_plan"]),
+				_phase("setup", "grand_casino_floor", ["identity", "schedule", "swap_cart"]),
+				_phase("play", "count_table", ["hold_boring_blackjack_session"]),
+				_phase("getaway", "street_exit", ["move_count_cart"]),
 				_phase("aftermath", "exit", ["leave_the_count"]),
 			],
 			"decisions": [
-				_decision("go", "play", 0, "count_floor", ["call_early", "hold"]),
-				_decision("distraction", "play", 1, "count_floor", ["cause_incident", "stay_quiet"]),
-				_decision("exit", "play", 2, "count_cart", ["dock", "corridor"]),
+				_decision("go", "play", int(decision_rounds.get("go", -1)), "count_table", ["call_early", "hold"]),
+				_decision("distraction", "play", int(decision_rounds.get("distraction", -1)), "count_table", ["cause_incident", "stay_quiet"]),
+				_decision("exit", "play", int(decision_rounds.get("exit", -1)), "count_cart", ["dock", "corridor"]),
 			],
 			"exits": [
-				{"id": "dock", "place": "loading_dock", "dependency": "route_open", "shared_chase_required": true, "tone": "fast_loud"},
-				{"id": "corridor", "place": "back_corridor", "dependency": "no_heat_spike_during_window", "guard_marker_effect": "guard_walks", "shared_chase_required": true, "tone": "slow_quiet"},
+				dependency_proposal(PLAN_COUNT, "dock"), dependency_proposal(PLAN_COUNT, "corridor"),
 			],
 		}
 	return {
 		"plan_id": PLAN_WHALE, "label": "The Whale Game", "phases": [
-			_phase("setup", "crew_planning_table", ["vouch", "rig", "name", "drunk"]),
-			_phase("play", "grand_casino_high_limit", ["complete_mixed_invitational"]),
-			_phase("interview", "grand_casino_cage", ["cash_out", "answer_cage_interview"]),
-			_phase("getaway", "grand_casino_front_door", ["leave_with_receipt"]),
+			_phase("plan", "planning_table", ["review_plan"]),
+			_phase("setup", "private_invitational", ["vouch", "rig", "name", "drunk"]),
+			_phase("play", "private_invitational", ["complete_mixed_invitational"]),
+			_phase("interview", "casino_cage", ["cash_out", "answer_cage_interview"]),
+			_phase("getaway", "front_door", ["leave_with_receipt"]),
 			_phase("aftermath", "exit", ["leave_the_whale_game"]),
 		],
 		"decisions": [
@@ -169,10 +171,24 @@ static func plan_surface(plan_id: String) -> Dictionary:
 			_decision("cut_short", "interview", -1, "grand_casino_cage", ["cut_short"]),
 		],
 		"exits": [
-			{"id": "clean_walk", "place": "grand_casino_front_door", "dependency": "cage_receipt_verified_and_clean_score", "pursuit_pressure": 0, "later_boundaries_keep_zero": true},
-			{"id": "hot_exit", "place": "grand_casino_front_door", "dependency": "interview_cut_short_or_name_cracked", "shared_chase_required": true, "shared_chase_verbs": ["travel", "alternate_exit", "resolve_pursuit"]},
+			dependency_proposal(PLAN_WHALE, "clean_walk"), dependency_proposal(PLAN_WHALE, "hot_chase"),
 		],
 	}
+
+
+static func dependency_proposal(plan_id: String, dependency_id: String) -> Dictionary:
+	var proposals := {
+		"the_count:dock": {"id": "dock", "place": "loading_dock", "requires": ["host_route_open", "host_shared_chase"], "public_verbs": ["arrive", "load", "board", "leave"]},
+		"the_count:corridor": {"id": "corridor", "place": "service_corridor", "requires": ["host_window_heat_record", "host_guard_marker_record", "host_shared_chase"], "public_verbs": ["arrive", "guide", "carry", "leave"]},
+		"the_whale_game:cage": {"id": "cage", "place": "casino_cage", "requires": ["host_chip_flow", "host_cage_receipt"], "public_verbs": ["arrive", "cash_out", "present_receipt"]},
+		"the_whale_game:interview": {"id": "interview", "place": "interview_room", "requires": ["host_cage_receipt", "host_interview_result"], "public_verbs": ["arrive", "listen", "answer", "leave"]},
+		"the_whale_game:clean_walk": {"id": "clean_walk", "place": "front_door", "requires": ["host_cage_receipt", "host_clean_score", "host_zero_pursuit"], "public_verbs": ["arrive", "present_receipt", "walk", "leave"]},
+		"the_whale_game:hot_chase": {"id": "hot_chase", "place": "street_exit", "requires": ["host_interview_result", "host_shared_chase"], "public_verbs": ["arrive", "run", "board", "escape"]},
+	}
+	var proposal := _copy_dict(proposals.get("%s:%s" % [plan_id, dependency_id], {}))
+	if proposal.is_empty(): return {}
+	proposal.merge({"authoritative": false, "can_mutate": false, "authority_gap": SURFACE_AUTHORITY_GAP})
+	return proposal
 
 
 static func objective_evidence_requirements(plan_id: String, objective_id: String) -> Dictionary:
@@ -187,7 +203,10 @@ static func objective_evidence_requirements(plan_id: String, objective_id: Strin
 		"the_whale_game:drunk": {"source_kind": "automatic_plan_beat"},
 		"the_whale_game:invitational": {"source_kind": "settled_game_sequence", "game_sequence": ["craps", "blackjack", "craps", "baccarat", "blackjack"], "requires_game_specific_settlement": true, "lifelines_source": "finite_coordinated_play_state"},
 	}
-	return _copy_dict(requirements.get("%s:%s" % [plan_id, objective_id], {}))
+	var proposal := _copy_dict(requirements.get("%s:%s" % [plan_id, objective_id], {}))
+	if proposal.is_empty(): return {}
+	proposal.merge({"authoritative": false, "can_mutate": false, "authority_gap": SURFACE_AUTHORITY_GAP})
+	return proposal
 
 
 static func phase_public_state(state_value: Variant) -> Dictionary:
@@ -236,11 +255,14 @@ static func outcome_ladder_public() -> Array:
 
 
 static func aftermath_public(plan_id: String, outcome: String, cause: String) -> Dictionary:
-	if not PLAN_IDS.has(plan_id) or outcome not in ["somebody_got_pinched", "closed"] or cause not in ["mechanical", "plan_broke"]: return {}
-	var beat := "cart_route_failed" if plan_id == PLAN_COUNT and cause == "mechanical" else "corridor_did_not_hold" if plan_id == PLAN_COUNT else "table_loss" if cause == "mechanical" else "rig_pointed_back"
+	if not PLAN_IDS.has(plan_id) or outcome not in ["somebody_got_pinched", "closed"] or cause not in ["mechanical", "confrontation"]: return {}
+	var beat := "identity_shortfall" if plan_id == PLAN_COUNT and cause == "mechanical" else "corridor_closes" if plan_id == PLAN_COUNT else "table_breaks" if cause == "mechanical" else "rig_is_read"
+	var semantics := _copy_dict(plan(plan_id).get("semantics", {}))
+	var descriptor := _copy_dict(_copy_dict(semantics.get("failure_beats", {})).get(beat, {}))
+	if descriptor.is_empty(): return {}
 	return {
-		"plan_id": plan_id, "outcome": outcome, "cause_public": cause, "aftermath_beat": beat, "place": "service_exit" if plan_id == PLAN_COUNT else "grand_casino_high_limit",
-		"ending_line": ending_line(plan_id, outcome), "authoritative": false, "can_mutate": false, "authority_gap": SURFACE_AUTHORITY_GAP,
+		"plan_id": plan_id, "outcome": outcome, "cause_public": cause, "aftermath_beat": beat, "descriptor": descriptor,
+		"authoritative": false, "can_mutate": false, "authority_gap": SURFACE_AUTHORITY_GAP,
 	}
 
 
