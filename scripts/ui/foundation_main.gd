@@ -1317,15 +1317,9 @@ func _blackjack_host_surface_intent(surface_action: String, index: int, confirm_
 
 
 func _blackjack_host_needs_auto_tick(surface_time_msec: int) -> bool:
-	var candidate := _blackjack_host_detached()
-	if candidate == null:
+	if run_state == null or current_game == null or not current_game.has_method("_blackjack_host_needs_auto_tick"):
 		return false
-	var ledger := _blackjack_host_ledger(candidate, true)
-	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
-		return false
-	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
-	session["surface_time_msec"] = surface_time_msec
-	return current_game.surface_needs_auto_tick(session, candidate, candidate.current_environment)
+	return bool(current_game.call("_blackjack_host_needs_auto_tick", surface_time_msec, run_state, run_state.current_environment))
 
 
 func _blackjack_host_auto_intent(surface_time_msec: int) -> Dictionary:

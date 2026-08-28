@@ -19,7 +19,9 @@ static func resolve(game: GameModule, action_id: String, stake: int, run_state: 
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run_state)
 	host.set("selected_stake", stake)
-	return host.call("_blackjack_host_resolve_intent", action_id, stake)
+	var result: Dictionary = host.call("_blackjack_host_resolve_intent", action_id, stake)
+	host.free()
+	return result
 
 
 static func _seed_session(game: GameModule, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> void:

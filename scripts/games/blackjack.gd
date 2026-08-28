@@ -1353,22 +1353,44 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 	var table: Dictionary = _peek_table_state(environment)
 	if table.is_empty():
 		return false
-	var raw_challenge: Variant = ui_state.get("count_challenge", {})
-	if typeof(raw_challenge) == TYPE_DICTIONARY and not (raw_challenge as Dictionary).is_empty() and not bool(ui_state.get("count_answered", false)):
+	return _blackjack_auto_tick_predicate(ui_state, run_state, environment, table, _surface_time_for_count(ui_state))
+
+
+func _blackjack_host_needs_auto_tick(surface_time_msec: int, run_state: RunState, environment: Dictionary) -> bool:
+	# Foundation calls this every frame. Read the canonical table, ledger, and
+	# session in place; the subsequent auto-intent boundary owns every mutation.
+	var table: Dictionary = _peek_table_state(environment)
+	if table.is_empty():
+		return false
+	var ledger_value: Variant = table.get(BLACKJACK_HOST_LEDGER_KEY, null)
+	if typeof(ledger_value) != TYPE_DICTIONARY:
+		return false
+	var ledger: Dictionary = ledger_value as Dictionary
+	var pending_value: Variant = ledger.get("pending_delivery", null)
+	if typeof(pending_value) == TYPE_DICTIONARY and not (pending_value as Dictionary).is_empty():
+		return false
+	var session_value: Variant = ledger.get("session", null)
+	if typeof(session_value) != TYPE_DICTIONARY:
+		return false
+	return _blackjack_auto_tick_predicate(session_value as Dictionary, run_state, environment, table, surface_time_msec)
+
+
+func _blackjack_auto_tick_predicate(session: Dictionary, run_state: RunState, environment: Dictionary, table: Dictionary, now_msec: int) -> bool:
+	var raw_challenge: Variant = session.get("count_challenge", {})
+	if typeof(raw_challenge) == TYPE_DICTIONARY and not (raw_challenge as Dictionary).is_empty() and not bool(session.get("count_answered", false)):
 		var challenge: Dictionary = raw_challenge as Dictionary
-		if _count_has_new_misses(challenge, _surface_time_for_count(ui_state)):
+		if _count_has_new_misses(challenge, now_msec):
 			return true
-	var dealt := _has_dealt_hand(ui_state)
-	var dealer_cards_value: Variant = ui_state.get("dealer_cards", [])
+	var dealt := _has_dealt_hand(session)
+	var dealer_cards_value: Variant = session.get("dealer_cards", [])
 	var dealer_cards: Array = dealer_cards_value as Array if typeof(dealer_cards_value) == TYPE_ARRAY else []
-	if dealt and (_all_hands_complete(ui_state) or _dealer_has_blackjack(dealer_cards)):
+	if dealt and (_all_hands_complete(session) or _dealer_has_blackjack(dealer_cards)):
 		if _tutorial_grand_casino_manual_settlement(run_state, environment):
 			return false
-		if bool(ui_state.get("presentation_timing_enforced", false)):
-			var now_msec := _surface_time_for_count(ui_state)
-			if _deal_presentation_active(ui_state):
+		if bool(session.get("presentation_timing_enforced", false)):
+			if _deal_presentation_active(session, now_msec):
 				return false
-			if _count_settlement_bubbles_pending(ui_state, now_msec):
+			if _count_settlement_bubbles_pending(session, now_msec):
 				return false
 		return true
 	if dealt or bool(table.get("barred", false)):
@@ -1378,14 +1400,13 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 	# deal the next hand out from under a first-time player.
 	if run_state != null and run_state.is_tutorial_run():
 		return false
-	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
 	if _blackjack_table_motion_active(table, now_msec):
 		return false
 	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand")
 	if bool(timer.get("active", false)):
 		return bool(timer.get("due", false))
-	var last_result: Dictionary = _local_copy_dict(table.get("last_result", {}))
-	return not last_result.is_empty()
+	var last_result_value: Variant = table.get("last_result", null)
+	return typeof(last_result_value) == TYPE_DICTIONARY and not (last_result_value as Dictionary).is_empty()
 
 
 func surface_auto_tick_state_keys() -> Array:
@@ -2006,7 +2027,10 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 	var used_cards: Array = _cards_used_for_counting(hands, dealer_cards, patron_hands)
 	var patron_action_events: Array = _patron_action_event_array(session.get("patron_action_events", []))
 	var actual_count_delta: int = _count_cards_delta(used_cards)
-	var count_record_delta: int = int(session.get("count_delta", 0)) if bool(session.get("count_answered", false)) else 0
+	# The durable shoe count is derived from the cards the canonical table dealt.
+	# Caller challenge payload may describe presentation/click progress, but it can
+	# never author the persisted count (or inject an arbitrary declared delta).
+	var count_record_delta: int = actual_count_delta if bool(session.get("count_answered", false)) else 0
 	var message := _blackjack_result_message(hand_results, side_results, main_delta, side_delta, cheat, item_adjustment, security_message)
 	if cufflinks_broke:
 		message = "%s Cooler's Cufflinks absorb the peek heat and break." % message
@@ -2157,7 +2181,8 @@ func _resolve_rourke_duel_hand(action_id: String, run_state: RunState, environme
 	var hand_index_for_rng := maxi(0, int(duel.get("hand_index", 0)))
 	var settlement_rng := run_state.create_rng("grand_casino_duel").fork("attempt:%d:hand:%d:settlement" % [maxi(1, int(duel.get("attempt", 1))), hand_index_for_rng])
 	var used_cards := _cards_used_for_counting(hands, dealer_cards, [])
-	_update_table_after_hand(table, session, dealer_cards, _count_cards_delta(used_cards), int(session.get("count_delta", 0)), settlement_rng, presentation_msec)
+	var actual_count_delta := _count_cards_delta(used_cards)
+	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, actual_count_delta if bool(session.get("count_answered", false)) else 0, settlement_rng, presentation_msec)
 	table["last_result"] = _blackjack_last_result_payload(message, hand_results, [], transfer, 0, transfer - caught_penalty, 0, dealer_cards, hands, [], [], {"caught": caught}, presentation_msec)
 	_update_environment_table(environment, table)
 	var applied := run_state.apply_grand_casino_duel_hand({
@@ -4508,7 +4533,7 @@ func _deal_animation_duration_msec(events: Array) -> int:
 	return duration
 
 
-func _deal_presentation_active(session: Dictionary) -> bool:
+func _deal_presentation_active(session: Dictionary, now_msec: int = -1) -> bool:
 	var animation_id := str(session.get("deal_animation_id", ""))
 	if animation_id.is_empty():
 		return false
@@ -4518,7 +4543,7 @@ func _deal_presentation_active(session: Dictionary) -> bool:
 	var started_msec := int(session.get("deal_started_msec", 0))
 	if started_msec <= 0:
 		return false
-	var now_msec := _blackjack_presentation_time_msec(session)
+	now_msec = _blackjack_presentation_time_msec(session, now_msec)
 	var duration_msec := _deal_animation_duration_msec(events)
 	return now_msec >= started_msec and now_msec < started_msec + duration_msec
 

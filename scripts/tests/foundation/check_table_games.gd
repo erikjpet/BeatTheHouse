@@ -4442,25 +4442,33 @@ func _blackjack_authority_resolve(game: GameModule, action_id: String, stake: in
 	# The production host owns the canonical run RNG. The legacy parameter stays
 	# for call compatibility but may not rebase the durable ledger to a named fork.
 	var host := _blackjack_test_host(game, run_state, stake)
-	return host.call("_blackjack_host_resolve_intent", action_id, stake)
+	var result: Dictionary = host.call("_blackjack_host_resolve_intent", action_id, stake)
+	host.free()
+	return result
 
 
 func _blackjack_authority_surface(game: GameModule, surface_action: String, stake: int, run_state: RunState, environment: Dictionary, index: int = 0, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:
 	run_state.current_environment = environment
 	var host := _blackjack_test_host(game, run_state, stake)
-	return host.call("_blackjack_host_surface_intent", surface_action, index, confirm_requested, surface_time_msec)
+	var command: Dictionary = host.call("_blackjack_host_surface_intent", surface_action, index, confirm_requested, surface_time_msec)
+	host.free()
+	return command
 
 
 func _blackjack_authority_auto_command(game: GameModule, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary, surface_time_msec: int) -> Dictionary:
 	_blackjack_seed_authority_session(game, run_state, environment, ui_state)
 	var host := _blackjack_test_host(game, run_state, stake)
-	return host.call("_blackjack_host_auto_intent", surface_time_msec)
+	var command: Dictionary = host.call("_blackjack_host_auto_intent", surface_time_msec)
+	host.free()
+	return command
 
 
 func _blackjack_authority_preview(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> int:
 	_blackjack_seed_authority_session(game, run_state, environment, ui_state)
 	var host := _blackjack_test_host(game, run_state, stake)
-	return int(host.call("_blackjack_host_preview_wager_cost", action_id, stake))
+	var cost := int(host.call("_blackjack_host_preview_wager_cost", action_id, stake))
+	host.free()
+	return cost
 
 
 func _blackjack_test_host(game: GameModule, run_state: RunState, stake: int) -> Control:
