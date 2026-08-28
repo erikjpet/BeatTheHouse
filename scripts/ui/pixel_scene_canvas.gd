@@ -72,7 +72,7 @@ const OBJECT_INFO_ACTION_GAP := 5.0
 const OBJECT_INFO_INLINE_ACTION_HEIGHT := 19.0
 const OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT := 11.0
 const OBJECT_INFO_INLINE_ACTION_GAP := 5.0
-const OBJECT_INFO_INLINE_ACTION_MAX := 4
+const OBJECT_INFO_INLINE_ACTION_MAX := 8
 const OBJECT_INFO_BOTTOM_PADDING := 8.0
 const OBJECT_INFO_ANIMATION_SPEED := 14.0
 const OBJECT_INFO_RECT_SNAP_EPSILON := 0.25
@@ -132,6 +132,8 @@ var scene_objects_by_id_cache: Dictionary = {}
 var draw_text_width_cache: Dictionary = {}
 var fit_draw_text_cache: Dictionary = {}
 var object_animation_phase_cache: Dictionary = {}
+var actor_route_started_at_cache: Dictionary = {}
+var actor_route_time := 0.0
 var drunk_distortion_overlay: DrunkDistortionOverlay
 var drunk_effect_mode: String = "distortion"
 var last_mouse_press_msec: int = -100000
@@ -155,10 +157,12 @@ var scenario_presentation: Dictionary = {}
 var scenario_palette_overlay := Color.TRANSPARENT
 var scenario_crowd_count := 0
 var scenario_signage := ""
+var selected_info_action_index := 0
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	focus_mode = Control.FOCUS_ALL
 	clip_contents = true
 	_ensure_drunk_distortion_overlay()
 
@@ -204,6 +208,7 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(foundation_snapshot.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	foundation_scene_objects = _objects_from_foundation_snapshot(foundation_snapshot)
+	_sync_actor_route_starts()
 	overlay_repositioned_object_ids.clear()
 	_clear_draw_text_caches()
 	_rebuild_scene_object_cache()
@@ -244,6 +249,23 @@ func set_reserved_overlay_rect(global_rect: Rect2) -> bool:
 	return true
 
 
+# Exact board-space reserve consumed by scenario layout validation. This is a
+# read-only presentation snapshot and never authorizes sequence behavior.
+func scenario_layout_context() -> Dictionary:
+	var local_rect := _reserved_overlay_local_rect()
+	var board_rect := Rect2()
+	if local_rect.has_area():
+		var start := _local_to_board_position(local_rect.position)
+		var finish := _local_to_board_position(local_rect.end)
+		board_rect = Rect2(start, finish - start).intersection(Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)))
+	return {
+		"reserved_overlay_board_rect": _rect_to_snapshot(board_rect),
+		"small_screen_mode": small_screen_mode,
+		"reduce_motion": reduce_motion,
+		"production_canvas": true,
+	}
+
+
 func debug_soak_snapshot() -> Dictionary:
 	return {
 		"environment_id": environment_id,
@@ -255,6 +277,8 @@ func debug_soak_snapshot() -> Dictionary:
 		"draw_text_width_cache_size": draw_text_width_cache.size(),
 		"fit_draw_text_cache_size": fit_draw_text_cache.size(),
 		"object_animation_phase_cache_size": object_animation_phase_cache.size(),
+		"actor_route_started_at_cache_size": actor_route_started_at_cache.size(),
+		"actor_route_time": actor_route_time,
 		"background_texture_loaded": background_texture != null,
 		"scene_idle_animation_redraw_count": scene_idle_animation_redraw_count,
 		"reserved_overlay_global_rect": reserved_overlay_global_rect,
@@ -306,6 +330,7 @@ func set_selected_object(object_id: String, snap_to_target: bool = true) -> void
 		_set_hovered_object("")
 	if selected_object_id != object_id:
 		selected_object_id = object_id
+		selected_info_action_index = 0
 		_invalidate_camera_target()
 	_update_camera_target_if_needed()
 	# Reduced-motion and explicit room resets snap. A tutorial conversation only
@@ -390,6 +415,9 @@ func current_view_snapshot() -> Dictionary:
 		"overlay_repositioned_object_ids": overlay_repositioned_object_ids.duplicate(),
 		"objects": _copy_array(_active_scene_objects()),
 		"object_layout": _scene_object_layout_snapshot(_active_scene_objects()),
+		"scenario_layout_audit": _copy_dictionary(foundation_snapshot.get("scenario_layout_audit", {})) if uses_foundation_snapshot else {},
+		"scenario_layout_authority_digest": str(foundation_snapshot.get("scenario_layout_authority_digest", "")) if uses_foundation_snapshot else "",
+		"scenario_layout_evidence": _scenario_layout_evidence(_active_scene_objects()),
 		"selected_info": _selected_object_info_snapshot(),
 		"drunk_effect_mode": drunk_effect_mode,
 		"drunk_distortion_visible": drunk_distortion_overlay != null and drunk_distortion_overlay.visible,
@@ -418,6 +446,27 @@ func local_position_for_selected_info_action_button() -> Vector2:
 
 
 func _gui_input(event: InputEvent) -> void:
+	# Authored action bindings own their declared input. Navigation is the
+	# fallback only when the selected interaction does not consume the event.
+	if _activate_selected_info_action_for_authored_input(event):
+		accept_event()
+		return
+	if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
+		var direction := -1 if event.is_action_pressed("ui_left") else 1
+		if _cycle_interactive_object(direction):
+			accept_event()
+			return
+	if event.is_action_pressed("ui_up") or event.is_action_pressed("ui_down"):
+		var entries := _selected_info_action_entries_from_info(_selected_object_info())
+		if not entries.is_empty():
+			var direction := -1 if event.is_action_pressed("ui_up") else 1
+			selected_info_action_index = posmod(selected_info_action_index + direction, entries.size())
+			accept_event()
+			queue_redraw()
+			return
+	if event.is_action_pressed("ui_accept") and _activate_selected_info_action_by_index():
+		accept_event()
+		return
 	if event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion
 		var badge_tooltip := _selected_info_badge_tooltip_at_local_position(motion.position)
@@ -528,6 +577,7 @@ func _process(delta: float) -> void:
 	# Environment animation is presentation, not simulation. It remains alive
 	# while Pal freezes tutorial clocks and game progression.
 	flicker += scaled_delta
+	actor_route_time += scaled_delta
 	_update_camera_target_if_needed()
 	var speed := FOCUS_LERP_SPEED if camera_focus_active else ROOM_LERP_SPEED
 	var weight := _camera_lerp_weight(scaled_delta, speed)
@@ -1887,6 +1937,10 @@ func _draw_scene_objects() -> void:
 				_draw_event_prop(rect, object_data, selected or hovered)
 			"character":
 				_draw_character_actor(rect, object_data)
+			"scenario_actor":
+				_draw_scenario_actor(rect, object_data, selected or hovered)
+			"scenario_object":
+				_draw_scenario_prop(rect, object_data, selected or hovered)
 			"drink":
 				_draw_drink_prop(rect, selected or hovered)
 			_:
@@ -1901,10 +1955,47 @@ func _draw_scene_objects() -> void:
 				_draw_selected_item_frame(rect, object_type)
 		elif hovered:
 			_draw_hover_scene_mark(rect)
-		elif not disabled and not low_detail:
+		elif should_draw_hotspot_hint(object_data, low_detail):
 			_draw_hotspot_hint(rect, object_type)
 		_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered)
 	_draw_selected_object_info()
+
+
+func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> void:
+	var role := str(object_data.get("role", "prop"))
+	var appearance := str(object_data.get("appearance", ""))
+	var accent := C_ORANGE if role == "obstacle" else C_PURPLE_2 if role == "exit" else C_CYAN_2
+	var fill := C_SHADOW.lightened(0.10) if appearance.is_empty() else accent.darkened(0.66)
+	draw_rect(rect, fill)
+	draw_rect(rect, accent.lightened(0.16) if active else accent, false, 3.0)
+	var mark := "!" if role == "obstacle" else ">" if role == "exit" else "#"
+	_neon_text(mark, rect.get_center() + Vector2(-4.0, 5.0), 14, C_WHITE)
+	if not str(object_data.get("state", "")).is_empty():
+		draw_line(rect.position + Vector2(8.0, rect.size.y - 9.0), rect.end - Vector2(8.0, 9.0), accent, 3.0)
+
+
+func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) -> void:
+	var behavior := str(object_data.get("behavior", "idle"))
+	var pose := str(object_data.get("pose", "idle"))
+	var accent := C_ORANGE if behavior in ["guard", "fight", "flee"] else C_TEAL
+	var center := rect.get_center()
+	var route_points := _copy_array(object_data.get("route_points", []))
+	if route_points.size() >= 2:
+		var start := _vector2_from_dict(route_points[0], Vector2.ZERO) * Vector2(BOARD_SIZE)
+		var finish := _vector2_from_dict(route_points[1], Vector2.ZERO) * Vector2(BOARD_SIZE)
+		draw_dashed_line(start, finish, accent, 2.0, 7.0, true)
+		draw_circle(finish, 4.0, accent)
+	var head_radius := clampf(rect.size.x * 0.15, 6.0, 12.0)
+	draw_circle(Vector2(center.x, rect.position.y + head_radius + 4.0), head_radius, C_SOFT.darkened(0.15))
+	var body_top := rect.position.y + head_radius * 2.0 + 6.0
+	var body := Rect2(Vector2(center.x - rect.size.x * 0.20, body_top), Vector2(rect.size.x * 0.40, maxf(16.0, rect.end.y - body_top - 8.0)))
+	draw_rect(body, accent.darkened(0.42))
+	draw_rect(body, accent.lightened(0.15) if active else accent, false, 2.0)
+	var arm_y := body.position.y + body.size.y * 0.38
+	var arm_spread := rect.size.x * (0.38 if pose in ["fight", "warning"] else 0.28)
+	draw_line(Vector2(center.x - arm_spread, arm_y), Vector2(center.x + arm_spread, arm_y), accent, 3.0)
+	if behavior in ["guard", "watch", "patrol"]:
+		_neon_text("EYE", Vector2(center.x - 10.0, rect.end.y - 4.0), 8, C_WHITE)
 
 
 func _draw_selected_object_info() -> void:
@@ -2108,9 +2199,23 @@ func _has_scene_outcome_feedback() -> bool:
 
 
 func _active_scene_objects() -> Array:
-	if uses_foundation_snapshot:
-		return foundation_scene_objects
-	return scene_objects
+	var active := foundation_scene_objects if uses_foundation_snapshot else scene_objects
+	var has_layout_authority := false
+	for value in active:
+		if typeof(value) == TYPE_DICTIONARY and bool((value as Dictionary).get("scenario_layout_resolved", false)):
+			has_layout_authority = true
+			break
+	if not has_layout_authority:
+		return active
+	var ordered := active.duplicate()
+	ordered.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left: Dictionary = left_value if typeof(left_value) == TYPE_DICTIONARY else {}
+		var right: Dictionary = right_value if typeof(right_value) == TYPE_DICTIONARY else {}
+		var left_key := _scene_object_z_key(left)
+		var right_key := _scene_object_z_key(right)
+		return left_key < right_key if left_key != right_key else str(left.get("id", "")) < str(right.get("id", ""))
+	)
+	return ordered
 
 
 func _rebuild_scene_object_cache() -> void:
@@ -2128,32 +2233,33 @@ func _rebuild_scene_object_cache() -> void:
 
 func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 	var interactable_objects: Array = snapshot.get("interactable_objects", [])
-	if not interactable_objects.is_empty():
-		return _objects_from_interactable_records(interactable_objects)
 	var objects: Array = []
-	var games := _string_array(snapshot.get("game_ids", []))
-	for index in range(games.size()):
-		objects.append({
+	if not interactable_objects.is_empty():
+		objects = _objects_from_interactable_records(interactable_objects)
+	else:
+		var games := _string_array(snapshot.get("game_ids", []))
+		for index in range(games.size()):
+			objects.append({
 			"id": "game:%s" % games[index],
 			"type": "game",
 			"position": Vector2(0.28 + float(index % 3) * 0.18, 0.56 + float(index / 3) * 0.13),
 			"size": Vector2(118, 72),
-		})
-	var events := _string_array(snapshot.get("event_ids", []))
-	for index in range(events.size()):
-		objects.append({
+			})
+		var events := _string_array(snapshot.get("event_ids", []))
+		for index in range(events.size()):
+			objects.append({
 			"id": "event:%s" % events[index],
 			"type": "event",
 			"position": Vector2(0.68 + float(index % 2) * 0.12, 0.42 + float(index / 2) * 0.14),
 			"size": Vector2(100, 64),
-		})
-	var offers: Array = snapshot.get("item_offers", [])
-	for index in range(offers.size()):
-		if typeof(offers[index]) != TYPE_DICTIONARY:
-			continue
-		var offer: Dictionary = offers[index]
-		var item_id := str(offer.get("id", "item_%d" % index))
-		objects.append({
+			})
+		var offers: Array = snapshot.get("item_offers", [])
+		for index in range(offers.size()):
+			if typeof(offers[index]) != TYPE_DICTIONARY:
+				continue
+			var offer: Dictionary = offers[index]
+			var item_id := str(offer.get("id", "item_%d" % index))
+			objects.append({
 			"id": "item:%s" % item_id,
 			"type": "item",
 			"label": str(offer.get("display_name", item_id)),
@@ -2162,19 +2268,48 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 			"icon_key": str(offer.get("icon_key", item_id)),
 			"position": Vector2(0.30 + float(index % 4) * 0.12, 0.76),
 			"size": Vector2(90, 54),
-		})
-	var travel_targets := _string_array(snapshot.get("next_archetypes", []))
-	if travel_targets.is_empty():
-		travel_targets = _string_array(snapshot.get("travel_hooks", []))
-	if not travel_targets.is_empty():
-		objects.append({
+			})
+		var travel_targets := _string_array(snapshot.get("next_archetypes", []))
+		if travel_targets.is_empty():
+			travel_targets = _string_array(snapshot.get("travel_hooks", []))
+		if not travel_targets.is_empty():
+			objects.append({
 			"id": "travel:leave",
 			"type": "travel",
 			"label": "Leave",
 			"prop": "door",
 			"position": Vector2(0.78, 0.64),
 			"size": Vector2(118, 64),
-		})
+			})
+	var ids: Dictionary = {}
+	for object_value in objects:
+		ids[str(_copy_dictionary(object_value).get("id", ""))] = true
+	var render_snapshot := _copy_dictionary(snapshot.get("scenario_render_snapshot", {}))
+	if not bool(render_snapshot.get("ok", false)):
+		objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
+		return objects
+	for stage_index in range(_copy_array(render_snapshot.get("active_stages", [])).size()):
+		var stage := _copy_dictionary(_copy_array(render_snapshot.get("active_stages", []))[stage_index])
+		var stage_id := str(stage.get("stage_id", "stage_%d" % stage_index))
+		var stage_object_id := "scenario:stage:%s" % stage_id
+		if ids.has(stage_object_id): continue
+		objects.append_array(_objects_from_interactable_records([{
+			"object_id": stage_object_id, "object_type": "scenario", "visual_type": "scenario_object",
+			"source_id": stage_id, "label": str(stage.get("message", "Room state")),
+			"short_description": str(stage.get("message", "")), "presence": "scenario_stage",
+			"interactive": false, "decorative": true, "enabled": true,
+			"normalized_rect": {"x": 0.34, "y": 0.06 + float(stage_index) * 0.09, "w": 0.32, "h": 0.08},
+			"non_color_state": "stage", "z_order": 10000 + stage_index,
+		}]))
+		ids[stage_object_id] = true
+	for visual_value in _copy_array(render_snapshot.get("visual_objects", [])):
+		var visual := _copy_dictionary(visual_value)
+		var object_id := str(visual.get("object_id", ""))
+		if object_id.is_empty() or ids.has(object_id) or not bool(visual.get("visible", true)):
+			continue
+		objects.append_array(_objects_from_interactable_records([visual]))
+		ids[object_id] = true
+	objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
 	return objects
 
 
@@ -2184,6 +2319,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 		if typeof(records[index]) != TYPE_DICTIONARY:
 			continue
 		var record: Dictionary = records[index]
+		if not bool(record.get("visible", true)):
+			continue
 		var object_id := str(record.get("object_id", ""))
 		if object_id.is_empty():
 			continue
@@ -2191,7 +2328,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 		var object_type := str(record.get("visual_type", interaction_type))
 		var normalized_rect := _normalized_rect_from_record(record)
 		var focus_point := normalized_rect.position + normalized_rect.size * 0.5
-		var minimum_visual_size := _minimum_object_visual_size(object_type)
+		var layout_resolved := bool(record.get("scenario_layout_resolved", false))
+		var minimum_visual_size := Vector2.ZERO if layout_resolved else _minimum_object_visual_size(object_type)
 		var scene_object := {
 			"id": object_id,
 			"type": object_type,
@@ -2223,6 +2361,25 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"runtime_state": (record.get("runtime_state", {}) as Dictionary).duplicate(true) if typeof(record.get("runtime_state", {})) == TYPE_DICTIONARY else {},
 			"visual_state": (record.get("visual_state", {}) as Dictionary).duplicate(true) if typeof(record.get("visual_state", {})) == TYPE_DICTIONARY else {},
 			"character_actor": (record.get("character_actor", {}) as Dictionary).duplicate(true) if typeof(record.get("character_actor", {})) == TYPE_DICTIONARY else {},
+			"owner_namespace": str(record.get("owner_namespace", "")),
+			"stable_object_id": str(record.get("stable_object_id", "")),
+			"semantic_role": str(record.get("semantic_role", "")),
+			"semantic_state": str(record.get("semantic_state", "")),
+			"semantic_appearance": str(record.get("semantic_appearance", "")),
+			"anchor_id": str(record.get("anchor_id", "")),
+			"zone_id": str(record.get("zone_id", "")),
+			"actor_id": str(record.get("actor_id", "")),
+			"actor_pose": str(record.get("actor_pose", "")),
+			"actor_behavior": str(record.get("actor_behavior", "")),
+			"actor_route_id": str(record.get("actor_route_id", "")),
+			"actor_route_points": _copy_array(record.get("actor_route_points", [])),
+			"actor_route_stage": _copy_dictionary(record.get("actor_route_stage", {})),
+			"small_screen_rect": _copy_dictionary(record.get("small_screen_rect", {})),
+			"scenario_z_order": int(record.get("scenario_z_order", index)),
+			"scenario_layout_resolved": bool(record.get("scenario_layout_resolved", false)),
+			"scenario_layout_authority_identity": str(record.get("scenario_layout_authority_identity", "")),
+			"scenario_layout_authority_digest": str(record.get("scenario_layout_authority_digest", "")),
+			"source_order": index,
 			"state_badge": str(record.get("state_badge", "")),
 			"visual_key": str(record.get("visual_key", "")),
 			"prop": str(record.get("prop", "")),
@@ -2232,9 +2389,42 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"available_actions": _copy_array(record.get("available_actions", [])),
 			"inline_actions": _copy_array(record.get("inline_actions", [])),
 			"confirm_action_id": str(record.get("confirm_action_id", "")),
+			"scenario_owner_namespace": str(record.get("scenario_owner_namespace", "")),
+			"scenario_stable_object_id": str(record.get("scenario_stable_object_id", "")),
+			"scenario_command_id": str(record.get("scenario_command_id", "")),
+			"role": str(record.get("role", "")),
+			"state": str(record.get("state", "")),
+			"appearance": str(record.get("appearance", "")),
+			"pose": str(record.get("pose", "")),
+			"behavior": str(record.get("behavior", "")),
+			"route_id": str(record.get("route_id", "")),
+			"route_points": _copy_array(record.get("route_points", [])),
+			"non_color_state": str(record.get("non_color_state", "")),
+			"z_order": int(record.get("z_order", 0)),
+			"z_order_explicit": bool(record.get("z_order_explicit", record.has("z_order"))),
+			"focus_order": maxi(0, int(record.get("focus_order", 0))),
 		}
 		objects.append(_apply_draw_hints(scene_object, object_type, index))
 	return objects
+
+
+static func _sort_composed_scene_objects(a: Dictionary, b: Dictionary) -> bool:
+	var az := _composed_z_order(a)
+	var bz := _composed_z_order(b)
+	return str(a.get("id", "")) < str(b.get("id", "")) if az == bz else az < bz
+
+
+static func _composed_z_order(value: Dictionary) -> int:
+	if bool(value.get("z_order_explicit", false)):
+		return int(value.get("z_order", 0))
+	var position_value: Variant = value.get("position", Vector2.ZERO)
+	if typeof(position_value) != TYPE_VECTOR2:
+		return 0
+	return int(round(float((position_value as Vector2).y) * BOARD_SIZE.y))
+
+
+static func should_draw_hotspot_hint(object_data: Dictionary, low_detail: bool) -> bool:
+	return bool(object_data.get("interactive", true)) and not bool(object_data.get("disabled", false)) and not low_detail
 
 
 func _reserved_overlay_local_rect() -> Rect2:
@@ -2282,6 +2472,12 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 			"type": str(object_data.get("type", "")),
 			"rect": _rect_to_snapshot(object_rect),
 			"footprint": _rect_to_snapshot(footprint),
+			"interaction_rect": _rect_to_snapshot(_interaction_rect_for_object(object_data)),
+			"label_rect": _rect_to_snapshot(_label_rect_for_object(object_rect, str(object_data.get("label", "")))),
+			"z_order": int(object_data.get("scenario_z_order", object_data.get("source_order", index))),
+			"layout_authority_identity": str(object_data.get("scenario_layout_authority_identity", "")),
+			"actor_route_stage": _copy_dictionary(object_data.get("actor_route_stage", {})),
+			"actor_route_position": _actor_route_position(object_data),
 		}
 		entries.append(entry)
 	for a in range(entries.size()):
@@ -2303,6 +2499,8 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 		"overlaps": overlaps,
 		"gap": OBJECT_LAYOUT_GAP,
 		"margin": OBJECT_LAYOUT_MARGIN,
+		"small_screen_mode": small_screen_mode,
+		"deterministic_z_order": true,
 	}
 
 
@@ -2358,7 +2556,13 @@ func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int)
 
 
 func _normalized_rect_from_record(record: Dictionary) -> Rect2:
+	var layout_resolved := bool(record.get("scenario_layout_resolved", false))
 	var rect := _rect_from_dict(record.get("normalized_rect", record.get("focus_rect", {})))
+	if layout_resolved:
+		# Finalized scenario records are already board-bounded and digested by the
+		# layout resolver. Legacy visual minima and position clamps must not alter
+		# the exact rectangle after validation.
+		return rect
 	var object_type := str(record.get("visual_type", record.get("object_type", "info")))
 	var minimum_visual_size := _minimum_object_visual_size(object_type)
 	var minimum_normalized_size := Vector2(
@@ -2866,7 +3070,9 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 				"emit_object_id": str(action_data.get("emit_object_id", action_data.get("id", ""))),
 				"button_rect": button_rect,
 				"detail_rect": detail_rect,
-				"selected": bool(action_data.get("selected", false)),
+				"selected": entries.size() == selected_info_action_index,
+				"input_action": str(action_data.get("input_action", "")),
+				"enabled": bool(action_data.get("enabled", true)),
 			})
 			y += button_height + detail_height + OBJECT_INFO_INLINE_ACTION_GAP
 		return entries
@@ -2992,6 +3198,77 @@ func _activate_selected_info_action_at_local_position(local_position: Vector2) -
 	object_focused.emit(object_id)
 	var emit_object_id := str(action_entry.get("emit_object_id", "")).strip_edges()
 	object_activated.emit(emit_object_id if not emit_object_id.is_empty() else object_id)
+	return true
+
+
+func _activate_selected_info_action_by_index() -> bool:
+	var entries := _selected_info_action_entries_from_info(_selected_object_info())
+	if entries.is_empty():
+		return false
+	selected_info_action_index = clampi(selected_info_action_index, 0, entries.size() - 1)
+	return _activate_selected_info_action_entry(entries[selected_info_action_index])
+
+
+func _activate_selected_info_action_for_authored_input(event: InputEvent) -> bool:
+	var entries := _selected_info_action_entries_from_info(_selected_object_info())
+	for index in range(entries.size()):
+		var entry := _copy_dictionary(entries[index])
+		var input_action := str(entry.get("input_action", "")).strip_edges()
+		if input_action.is_empty() or not InputMap.has_action(input_action):
+			continue
+		if event.is_action_pressed(input_action):
+			selected_info_action_index = index
+			return _activate_selected_info_action_entry(entry)
+	return false
+
+
+func _activate_selected_info_action_entry(action_entry: Dictionary) -> bool:
+	if action_entry.is_empty() or not bool(action_entry.get("enabled", true)):
+		return false
+	var info := _selected_object_info()
+	var object_id := str(info.get("object_id", selected_object_id))
+	if object_id.is_empty():
+		return false
+	set_selected_object(object_id)
+	object_focused.emit(object_id)
+	var emit_object_id := str(action_entry.get("emit_object_id", "")).strip_edges()
+	object_activated.emit(emit_object_id if not emit_object_id.is_empty() else object_id)
+	return true
+
+
+func keyboard_reachable_object_ids() -> Array:
+	var ids: Array = []
+	var candidates: Array = []
+	for object_value in _active_scene_objects():
+		var object_data := _copy_dictionary(object_value)
+		if not bool(object_data.get("interactive", true)) or not bool(object_data.get("visible", true)):
+			continue
+		var object_id := str(object_data.get("id", "")).strip_edges()
+		if not object_id.is_empty(): candidates.append(object_data)
+	candidates.sort_custom(Callable(PixelSceneCanvas, "_sort_keyboard_objects"))
+	for candidate_value in candidates:
+		ids.append(str(_copy_dictionary(candidate_value).get("id", "")))
+	return ids
+
+
+static func _sort_keyboard_objects(a: Dictionary, b: Dictionary) -> bool:
+	var af := maxi(0, int(a.get("focus_order", 0)))
+	var bf := maxi(0, int(b.get("focus_order", 0)))
+	return str(a.get("id", "")) < str(b.get("id", "")) if af == bf else af < bf
+
+
+func _cycle_interactive_object(direction: int) -> bool:
+	var ids := keyboard_reachable_object_ids()
+	if ids.is_empty():
+		return false
+	var current_index := ids.find(selected_object_id)
+	if current_index < 0:
+		current_index = 0 if direction >= 0 else ids.size() - 1
+	else:
+		current_index = posmod(current_index + (-1 if direction < 0 else 1), ids.size())
+	var object_id := str(ids[current_index])
+	set_selected_object(object_id)
+	object_focused.emit(object_id)
 	return true
 
 
@@ -3570,12 +3847,28 @@ func _update_drunk_distortion_protected_rects() -> void:
 
 
 func _board_rect_for_object(object_data: Dictionary) -> Rect2:
+	var route_position := _actor_route_position(object_data)
+	if route_position.x >= 0.0 and route_position.y >= 0.0:
+		var route_rect := _board_rect_for_object_at_position(object_data, route_position)
+		if small_screen_mode:
+			if bool(object_data.get("scenario_layout_resolved", false)):
+				var sealed_small := _rect_from_dict(object_data.get("small_screen_rect", {}))
+				var sealed_size := sealed_small.size * Vector2(BOARD_SIZE)
+				return Rect2(route_rect.get_center() - sealed_size * 0.5, sealed_size)
+			var route_size := Vector2(maxf(route_rect.size.x, SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.x), maxf(route_rect.size.y, SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.y))
+			return _clamp_board_rect(Rect2(route_rect.get_center() - route_size * 0.5, route_size))
+		return route_rect
+	if small_screen_mode:
+		var small_rect := _rect_from_dict(object_data.get("small_screen_rect", {}))
+		if small_rect.has_area():
+			var board_size := Vector2(BOARD_SIZE)
+			return Rect2(small_rect.position * board_size, small_rect.size * board_size)
 	return _board_rect_for_object_at_position(object_data, object_data.get("position", Vector2(0.5, 0.5)))
 
 
 func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
 	var rect := _board_rect_for_object(object_data)
-	if not small_screen_mode:
+	if not small_screen_mode or bool(object_data.get("scenario_layout_resolved", false)):
 		return rect
 	var minimum_size := SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE
 	var next_size := Vector2(maxf(rect.size.x, minimum_size.x), maxf(rect.size.y, minimum_size.y))
@@ -3586,6 +3879,92 @@ func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
 	next_position.x = clampf(next_position.x, 0.0, maxf(0.0, board_size.x - next_size.x))
 	next_position.y = clampf(next_position.y, 0.0, maxf(0.0, board_size.y - next_size.y))
 	return Rect2(next_position, next_size)
+
+
+func _actor_route_position(object_data: Dictionary) -> Vector2:
+	var stage := _copy_dictionary(object_data.get("actor_route_stage", {}))
+	var points := _copy_array(object_data.get("actor_route_points", []))
+	if stage.is_empty() or points.size() != 2:
+		return Vector2(-1.0, -1.0)
+	var start := _vector2_from_dict(points[0], Vector2(-1.0, -1.0))
+	var endpoint := _vector2_from_dict(points[1], Vector2(-1.0, -1.0))
+	if small_screen_mode and bool(object_data.get("scenario_layout_resolved", false)):
+		start = _vector2_from_dict(stage.get("small_screen_start", points[0]), start)
+		endpoint = _vector2_from_dict(stage.get("small_screen_endpoint", points[1]), endpoint)
+	if start.x < 0.0 or endpoint.x < 0.0:
+		return Vector2(-1.0, -1.0)
+	if reduce_motion:
+		if small_screen_mode and bool(object_data.get("scenario_layout_resolved", false)):
+			return endpoint
+		return _vector2_from_dict(stage.get("reduced_motion_endpoint", points[1]), endpoint)
+	var route_key := _actor_route_cache_key(object_data)
+	var started_at := float(actor_route_started_at_cache.get(route_key, actor_route_time))
+	var duration := maxf(0.001, float(stage.get("duration_sec", 1.0)))
+	var progress := clampf((actor_route_time - started_at) / duration, 0.0, 1.0)
+	if str(stage.get("mode", "to_endpoint")) == "ping_pong":
+		progress = 1.0 - absf(fposmod((actor_route_time - started_at) / duration, 2.0) - 1.0)
+	return start.lerp(endpoint, progress)
+
+
+func _actor_route_cache_key(object_data: Dictionary) -> String:
+	var route_identity := str(object_data.get("id", ""))
+	if bool(object_data.get("scenario_layout_resolved", false)):
+		route_identity = str(object_data.get("scenario_layout_authority_identity", ""))
+	return "%s:%s" % [route_identity, JSON.stringify(object_data.get("actor_route_stage", {})).sha256_text()]
+
+
+func _sync_actor_route_starts() -> void:
+	var active: Dictionary = {}
+	for value in foundation_scene_objects:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var object_data := value as Dictionary
+		if _copy_dictionary(object_data.get("actor_route_stage", {})).is_empty():
+			continue
+		var key := _actor_route_cache_key(object_data)
+		active[key] = true
+		if not actor_route_started_at_cache.has(key):
+			actor_route_started_at_cache[key] = actor_route_time
+	for key_value in actor_route_started_at_cache.keys():
+		if not active.has(str(key_value)):
+			actor_route_started_at_cache.erase(key_value)
+
+
+func _scene_object_z_key(object_data: Dictionary) -> int:
+	if bool(object_data.get("scenario_layout_resolved", false)):
+		return 10000 + int(object_data.get("scenario_z_order", 0))
+	return int(object_data.get("source_order", 0))
+
+
+func _scenario_layout_evidence(objects: Array) -> Dictionary:
+	var entries: Array = []
+	var digests: Dictionary = {}
+	for value in objects:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var object_data := value as Dictionary
+		var identity := str(object_data.get("scenario_layout_authority_identity", ""))
+		if identity.is_empty():
+			continue
+		var digest := str(object_data.get("scenario_layout_authority_digest", ""))
+		if not digest.is_empty():
+			digests[digest] = true
+		entries.append({
+			"identity": identity,
+			"draw_rect": _rect_to_snapshot(_board_rect_for_object(object_data)),
+			"hit_rect": _rect_to_snapshot(_interaction_rect_for_object(object_data)),
+			"z_order": int(object_data.get("scenario_z_order", 0)),
+			"route_stage": _copy_dictionary(object_data.get("actor_route_stage", {})),
+			"route_position": _actor_route_position(object_data),
+		})
+	return {
+		"authority_count": entries.size(),
+		"authority_digest_count": digests.size(),
+		"objects": entries,
+		"small_screen_mode": small_screen_mode,
+		"reduce_motion": reduce_motion,
+		"reserved_overlay_board_rect": scenario_layout_context().get("reserved_overlay_board_rect", {}),
+	}
 
 
 func _board_rect_for_object_at_position(object_data: Dictionary, pos_norm: Vector2) -> Rect2:

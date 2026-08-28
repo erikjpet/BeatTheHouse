@@ -919,6 +919,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 		result["deltas"] = deltas
 		result["ended"] = true
 		result["state"] = RESULT_ENDED
+	run_state.scenario_publish_game_result(result, deltas)
 	if rng != null:
 		run_state.save_rng(rng)
 	run_state.clear_deferred_bankroll_zero_resolution()
