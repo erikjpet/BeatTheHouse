@@ -1990,6 +1990,12 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	var migration := ScenarioEngineScript.migrate_environment_sequence(candidate, definition, str(candidate.get("id", candidate.get("environment_visit_id", ""))))
 	if not bool(migration.get("ok", false)) or not bool(migration.get("active", false)):
 		return _scenario_semantic_finalization_failure(_copy_array(migration.get("errors", ["Scenario sequence migration did not activate after semantic finalization."])), refresh_attempt)
+	var initialized_state := _copy_dict(candidate.get("scenario_sequence_state", {}))
+	if str(initialized_state.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_CLEANED:
+		var initialization_errors := _copy_array(initialized_state.get("errors", []))
+		if initialization_errors.is_empty():
+			initialization_errors = ["Scenario sequence could not initialize its sealed semantic state."]
+		return _scenario_semantic_finalization_failure(initialization_errors, refresh_attempt)
 	var visit_id := str(candidate.get("scenario_sequence_pending_visit_id", candidate.get("environment_visit_id", "")))
 	var reentry := ScenarioEngineScript.sequence_apply_reentry(candidate, definition, visit_id)
 	if not bool(reentry.get("ok", false)):
@@ -2213,13 +2219,14 @@ func _invalidate_scenario_semantic_proof(message: String) -> Dictionary:
 	return {"ok": false, "errors": [message]}
 
 
-func _scenario_semantic_finalization_failure(errors: Array, _invalidate_if_ready: bool) -> Dictionary:
+func _scenario_semantic_finalization_failure(errors: Array, invalidate_if_ready: bool) -> Dictionary:
 	var failure_errors := errors.duplicate(true)
 	if failure_errors.is_empty(): failure_errors = ["Scenario semantic finalization failed closed."]
-	# Finalization is evaluated against detached candidates. A rejected refresh
-	# never supersedes the already sealed environment proof, so preserve it
-	# byte-for-byte. Explicit live-proof mismatches invalidate through
-	# _invalidate_scenario_semantic_proof() at their detection sites.
+	# A malformed trusted refresh means the live proof can no longer establish a
+	# unique authority record. Invalidate only ephemeral proof state while the
+	# durable causal journal remains byte-for-byte unchanged.
+	if invalidate_if_ready:
+		_invalidate_scenario_semantic_proof(str(failure_errors[0]))
 	return {"ok": false, "errors": failure_errors}
 
 
