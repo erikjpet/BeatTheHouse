@@ -5,10 +5,11 @@ extends RefCounted
 # persisted data deduplicates identical environments and omits slot definition
 # arrays that are reconstructed from stable machine IDs by SlotGame.
 
-const CODEC_VERSION := 1
+const CODEC_VERSION := 2
 const ENVIRONMENT_REF_KEY := "__bth_environment_ref"
 const REGISTRY_KEY := "environment_registry"
 const CODEC_KEY := "run_save_codec_version"
+const EXACT_INT_KEY := "__bth_exact_int64"
 const SLOT_DEFINITION_KEYS := ["reel_strips", "bonus_reel_strips"]
 const SLOT_DUPLICATE_PRESENTATION_KEYS := ["slot_reel_timeline", "slot_reel_stop_times"]
 
@@ -42,7 +43,9 @@ static func _encode_value(value: Variant, registry: Dictionary, fingerprints: Di
 			return _encode_environment_reference(source, registry, fingerprints)
 		var encoded_dict: Dictionary = {}
 		for key_value in source.keys():
-			encoded_dict[key_value] = _encode_value(source.get(key_value), registry, fingerprints, inside_environment)
+			var key := str(key_value)
+			var child: Variant = source.get(key_value)
+			encoded_dict[key_value] = _encode_exact_integers(child) if key.begins_with("scenario_") else _encode_value(child, registry, fingerprints, inside_environment)
 		return encoded_dict
 	if typeof(value) == TYPE_ARRAY:
 		var source_array: Array = value
@@ -103,6 +106,8 @@ static func _compact_slot_game_states(environment: Dictionary) -> void:
 static func _decode_value(value: Variant, registry: Dictionary) -> Variant:
 	if typeof(value) == TYPE_DICTIONARY:
 		var source: Dictionary = value
+		if source.size() == 1 and typeof(source.get(EXACT_INT_KEY)) == TYPE_STRING:
+			return int(str(source.get(EXACT_INT_KEY, "0")))
 		if source.size() == 1 and source.has(ENVIRONMENT_REF_KEY):
 			var ref := str(source.get(ENVIRONMENT_REF_KEY, ""))
 			var stored: Variant = registry.get(ref, {})
@@ -115,6 +120,25 @@ static func _decode_value(value: Variant, registry: Dictionary) -> Variant:
 		var result: Array = []
 		for entry_value in value as Array:
 			result.append(_decode_value(entry_value, registry))
+		return result
+	return value
+
+
+# JSON has one numeric type and otherwise changes every persisted integer into a
+# float. Dynamic scenario authority hashes exact typed envelopes, so preserve
+# integer identity recursively for every scenario-owned save field.
+static func _encode_exact_integers(value: Variant) -> Variant:
+	if typeof(value) == TYPE_INT:
+		return {EXACT_INT_KEY: str(value)}
+	if typeof(value) == TYPE_DICTIONARY:
+		var result: Dictionary = {}
+		for key_value in (value as Dictionary).keys():
+			result[key_value] = _encode_exact_integers((value as Dictionary).get(key_value))
+		return result
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for entry_value in value as Array:
+			result.append(_encode_exact_integers(entry_value))
 		return result
 	return value
 
