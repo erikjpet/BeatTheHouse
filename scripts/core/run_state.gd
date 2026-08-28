@@ -12256,13 +12256,14 @@ func from_dict(data: Dictionary) -> void:
 	run_failure_reason = str(data.get("run_failure_reason", FAILURE_NONE))
 	run_failure_message = str(data.get("run_failure_message", ""))
 	run_spending_score = maxi(0, int(data.get("run_spending_score", 0)))
-	_refresh_economy()
+	var blackjack_unsettled_wager := _blackjack_authority_has_unsettled_wager()
+	_refresh_economy(blackjack_unsettled_wager)
 	_activate_current_local_suspicion(true)
 	_initialize_grand_casino_objective_runtime()
 	_initialize_grand_casino_staffing()
 	_initialize_grand_casino_living_floor()
 	if saved_run_status != RUN_STATUS_ENDED and saved_run_status != RUN_STATUS_FAILED:
-		_evaluate_immediate_terminal_state()
+		_evaluate_immediate_terminal_state(blackjack_unsettled_wager)
 	if saved_run_status == RUN_STATUS_ENDED:
 		run_status = saved_run_status
 	elif saved_run_status == RUN_STATUS_FAILED:
@@ -13873,3 +13874,14 @@ func _refresh_economy(defer_bankroll_zero: bool = false) -> void:
 	if run_status == RUN_STATUS_ACTIVE:
 		run_failure_reason = FAILURE_NONE
 		run_failure_message = ""
+
+
+func _blackjack_authority_has_unsettled_wager() -> bool:
+	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Dictionary = game_states.get("blackjack", {}) if typeof(game_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
+	var ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
+	var hands: Array = session.get("player_hands", session.get("blackjack_hands", [])) if typeof(session.get("player_hands", session.get("blackjack_hands", []))) == TYPE_ARRAY else []
+	return bool(session.get("bankroll_wager_debited", false)) \
+		and int(session.get("wager_debited", 0)) > 0 \
+		and not hands.is_empty()

@@ -3549,7 +3549,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		dirty_count_state["count_answered"] = true
 		dirty_count_state["count_correct"] = false
 		var dirty_count_result := _blackjack_authority_resolve(game, "count_cards", 1, run_state, environment, run_state.create_rng("blackjack_dirty_count_contract"), dirty_count_state)
-		if int(dirty_count_result.get("suspicion_delta", 0)) < 14:
+		if int(dirty_count_result.get("blackjack_host_action_suspicion_delta", dirty_count_result.get("suspicion_delta", 0))) < 14:
 			failures.append("Blackjack inaccurate live count did not produce significant heat.")
 	var miss_state: Dictionary = count_state.duplicate(true)
 	var miss_challenge: Dictionary = miss_state.get("count_challenge", {})
@@ -4446,10 +4446,10 @@ func _blackjack_authority_resolve(game: GameModule, action_id: String, stake: in
 	return authority.call("submit_resolve_intent", action_id)
 
 
-func _blackjack_authority_surface(game: GameModule, surface_action: String, stake: int, run_state: RunState, environment: Dictionary, index: int = 0, confirm_requested: bool = false) -> Dictionary:
+func _blackjack_authority_surface(game: GameModule, surface_action: String, stake: int, run_state: RunState, environment: Dictionary, index: int = 0, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:
 	run_state.current_environment = environment
 	var authority: RefCounted = BlackjackActionAuthorityScript.new(game, run_state, environment, stake)
-	return authority.call("submit_surface_intent", surface_action, index, confirm_requested)
+	return authority.call("submit_surface_intent", surface_action, index, confirm_requested, surface_time_msec)
 
 
 func _blackjack_authority_auto_command(game: GameModule, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary, surface_time_msec: int) -> Dictionary:
@@ -4469,7 +4469,9 @@ func _blackjack_authority_click_all_count_icons(game: GameModule, stake: int, ru
 	var challenge: Dictionary = current.get("count_challenge", {}) if typeof(current.get("count_challenge", {})) == TYPE_DICTIONARY else {}
 	var icons: Array = challenge.get("icons", []) if typeof(challenge.get("icons", [])) == TYPE_ARRAY else []
 	for icon_index in range(icons.size()):
-		var command := _blackjack_authority_surface(game, "blackjack_count_icon", stake, run_state, environment, icon_index)
+		var icon: Dictionary = icons[icon_index] if typeof(icons[icon_index]) == TYPE_DICTIONARY else {}
+		var action_msec := int(icon.get("spawn_msec", 0)) + 10
+		var command := _blackjack_authority_surface(game, "blackjack_count_icon", stake, run_state, environment, icon_index, false, action_msec)
 		if typeof(command.get("ui_state", null)) == TYPE_DICTIONARY:
 			current = (command.get("ui_state", {}) as Dictionary).duplicate(true)
 	return current

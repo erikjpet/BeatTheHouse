@@ -1082,7 +1082,8 @@ func _on_game_surface_pointer_action(action: String, index: int, phase: String, 
 		command = authority.submit_surface_intent(
 			str(command.get("blackjack_surface_intent", "")),
 			int(command.get("blackjack_surface_intent_index", index)),
-			false
+			false,
+			_environment_simulation_time_msec()
 		)
 	command["_resolved_surface_ui_state"] = ui_state
 	_apply_game_surface_command(command, index, false, notify_coach, true)
@@ -1102,7 +1103,7 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 	debug_outer_stage_started_usec = Time.get_ticks_usec() if debug_coin_pusher_outer else 0
 	var command: Dictionary
 	if _current_game_uses_blackjack_action_authority():
-		command = _blackjack_action_authority().submit_surface_intent(action, index, confirm_requested)
+		command = _blackjack_action_authority().submit_surface_intent(action, index, confirm_requested, _environment_simulation_time_msec())
 	else:
 		command = current_game.surface_action_command(action, index, confirm_requested, ui_state, run_state, run_state.current_environment)
 	var debug_outer_command_usec := Time.get_ticks_usec() - debug_outer_stage_started_usec if debug_coin_pusher_outer else 0

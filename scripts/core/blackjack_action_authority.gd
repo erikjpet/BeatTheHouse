@@ -50,7 +50,7 @@ func preview_wager_cost(action_id: String) -> int:
 	return maxi(0, cost)
 
 
-func submit_surface_intent(surface_action: String, index: int, confirm_requested: bool = false) -> Dictionary:
+func submit_surface_intent(surface_action: String, index: int, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:
 	if not _ready() or surface_action.is_empty():
 		return _rejection("invalid_intent", "Blackjack action intent is unavailable.")
 	var candidate := _detached_run_state()
@@ -61,6 +61,8 @@ func submit_surface_intent(surface_action: String, index: int, confirm_requested
 	var ledger := _ledger_from_table(table, true)
 	var request_key := _next_request_key(ledger)
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
+	if surface_time_msec >= 0:
+		session["surface_time_msec"] = surface_time_msec
 	if not _game.call("_has_dealt_hand", session) and _trusted_stake > 0:
 		session["selected_stake"] = _trusted_stake
 	var command: Dictionary = _game.surface_action_command(surface_action, index, confirm_requested, session, candidate, candidate_environment)
@@ -158,6 +160,8 @@ func submit_resolve_intent(action_id: String) -> Dictionary:
 	if candidate == null:
 		return _rejection("internal_fail_closed", "Blackjack authority could not create a detached candidate.", request_key)
 	var candidate_environment := candidate.current_environment
+	var environment_id := str(candidate_environment.get("id", ""))
+	var suspicion_before_transaction := candidate.suspicion_level_for_environment_id(environment_id)
 	var table: Dictionary = _game.call("_table_state", candidate, candidate_environment)
 	var ledger := _ledger_from_table(table, true)
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
@@ -174,6 +178,12 @@ func submit_resolve_intent(action_id: String) -> Dictionary:
 	if not bool(_game.call("_blackjack_consume_host_lease", lease)):
 		_game.call("_blackjack_end_host_lease", lease)
 		return _rejection("stale_lease", "Blackjack authority lease is missing or already consumed.", request_key)
+	var funding_depletes_liquid_balance := (
+		candidate.bankroll - int(funding_preview.get("cash_used", 0)) <= 0
+		and candidate.grand_casino_chips - int(funding_preview.get("existing_chips_used", 0)) <= 0
+	)
+	if action_id == "blackjack_place_bet" and funding_depletes_liquid_balance:
+		candidate.begin_deferred_bankroll_zero_resolution()
 	ledger["pending_apply_receipt"] = {"request_key": request_key, "context_fingerprint": context_fingerprint}
 	table[LEDGER_KEY] = ledger
 	_game.call("_update_environment_table", candidate_environment, table)
@@ -194,6 +204,17 @@ func submit_resolve_intent(action_id: String) -> Dictionary:
 	# clear that contract before the follow-up settlement can run.
 	if not bool(result.get("defer_bankroll_zero_failure", false)):
 		candidate.advance_environment_turns(1)
+	var suspicion_after_transaction := candidate.suspicion_level_for_environment_id(environment_id)
+	var transaction_suspicion_delta := suspicion_after_transaction - suspicion_before_transaction
+	var action_suspicion_delta := int((result.get("deltas", {}) as Dictionary).get("suspicion_delta", result.get("suspicion_delta", 0))) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else int(result.get("suspicion_delta", 0))
+	if transaction_suspicion_delta != action_suspicion_delta:
+		result["blackjack_host_action_suspicion_delta"] = action_suspicion_delta
+		result["blackjack_host_environment_turn_suspicion_delta"] = transaction_suspicion_delta - action_suspicion_delta
+		result["suspicion_delta"] = transaction_suspicion_delta
+		var transaction_deltas: Dictionary = result.get("deltas", {}).duplicate(true) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else GameModule.empty_result_deltas()
+		transaction_deltas["suspicion_delta"] = transaction_suspicion_delta
+		result["deltas"] = transaction_deltas
+		GameModule.normalize_skill_cheat_contract(result)
 	var committed_session: Dictionary = {}
 	if typeof(result.get("ui_state", null)) == TYPE_DICTIONARY:
 		committed_session = (result.get("ui_state", {}) as Dictionary).duplicate(true)
