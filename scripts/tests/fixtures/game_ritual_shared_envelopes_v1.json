@@ -24,7 +24,11 @@
     "target_id": "layout.primary",
     "parameters": {
       "item_id": "pending.item_01",
-      "amount": 5
+      "amount": 5,
+      "confidence": 1.0,
+      "note": "ready",
+      "labels": ["primary"],
+      "weights": [1, 2]
     },
     "authenticated_action": {
       "action_id": "commit.place",
@@ -44,7 +48,7 @@
       "cause_receipt_key": "receipt:command:0001"
     },
     "receipt_key": "receipt:command:0001",
-    "content_fingerprint": "2a346e46bfbfa4940413822768d63e2df4b5b530af8f2d2288d408f93415d1fa"
+    "content_fingerprint": "bd43018639cd4de6b0dc1b09bf587a614cabfcdb3f2e11d0cbaff282ad27f26e"
   },
   "result": {
     "envelope_version": 1,
@@ -71,7 +75,7 @@
       "cause_receipt_key": "receipt:command:0001"
     },
     "receipt_key": "receipt:result:0001",
-    "content_fingerprint": "ee92737aad7ff8cafc90c4be2782a41c2fd87cc019d19253b230fc14a91fa731",
+    "content_fingerprint": "57cbc5fd61963fbe3437787646fa3b5becf2c64b74f4b97fe10b892850b3c6f4",
     "public_projection": {
       "phase_id": "open",
       "pending_total": 5,
@@ -100,7 +104,7 @@
       "cause_receipt_key": "receipt:command:0002"
     },
     "receipt_key": "receipt:rejection:0002",
-    "content_fingerprint": "08db5f57f2e4bf95df8ea3eb723fb3c5c8fb25103008e4355267d19671c038ea",
+    "content_fingerprint": "3fb13bf5bd723cb0642a04e49db6ebfdc1a88b48d7598e428739ce7581ebddbb",
     "public_projection": {
       "phase_id": "open",
       "pending_total": 5,
@@ -127,7 +131,7 @@
       "cause_receipt_key": "receipt:command:0003"
     },
     "receipt_key": "receipt:fact:commitment_0001",
-    "content_fingerprint": "4332d793b590869ba25d67620f1fe06e4e1236a0e1e6bbce8a570c443b749087"
+    "content_fingerprint": "d32f28c5055a73e63945d929e5c455eb0fd5a30d2f933a2fa55ab7bd78522dc2"
   },
   "operation": {
     "envelope_version": 1,
@@ -156,12 +160,12 @@
       "cause_receipt_key": "receipt:command:0003"
     },
     "receipt_key": "receipt:operation:staff_offer",
-    "content_fingerprint": "5506b50deef29e0b711a2382ae9f85e9db399354f0fe61cb34e2f6aa80de0f2e",
+    "content_fingerprint": "3494f2d624d7a71f29ebf29189d5c6e7218973974d18cedb164ec5716b09016f",
     "applied": true
   },
   "receipt": {
     "receipt_key": "receipt:operation:staff_offer",
-    "content_fingerprint": "5506b50deef29e0b711a2382ae9f85e9db399354f0fe61cb34e2f6aa80de0f2e",
+    "content_fingerprint": "3494f2d624d7a71f29ebf29189d5c6e7218973974d18cedb164ec5716b09016f",
     "boundary_id": "boundary.phase_entry.b0002",
     "envelope_kind": "operation",
     "status": "accepted"
@@ -169,9 +173,9 @@
   "request_cache": {
     "request_key": "request:command:0001",
     "command_receipt_key": "receipt:command:0001",
-    "command_content_fingerprint": "2a346e46bfbfa4940413822768d63e2df4b5b530af8f2d2288d408f93415d1fa",
+    "command_content_fingerprint": "bd43018639cd4de6b0dc1b09bf587a614cabfcdb3f2e11d0cbaff282ad27f26e",
     "response_receipt_key": "receipt:result:0001",
-    "response_content_fingerprint": "ee92737aad7ff8cafc90c4be2782a41c2fd87cc019d19253b230fc14a91fa731",
+    "response_content_fingerprint": "57cbc5fd61963fbe3437787646fa3b5becf2c64b74f4b97fe10b892850b3c6f4",
     "status": "resolved"
   }
 }

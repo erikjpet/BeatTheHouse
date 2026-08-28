@@ -129,15 +129,15 @@
     }
   ],
   "action_declarations": [
-    {"action_id": "commit.place", "handler_id": "commitment.edit", "parameters": {"item_id": "qualified_id", "amount": "int"}},
-    {"action_id": "commit.correct", "handler_id": "commitment.edit", "parameters": {"item_id": "qualified_id", "amount": "int"}},
-    {"action_id": "commit.remove", "handler_id": "commitment.edit", "parameters": {"item_id": "qualified_id"}},
+    {"action_id": "commit.place", "handler_id": "commitment.edit", "parameters": {"item_id": {"type": "qualified_id", "max_length": 192}, "amount": {"type": "int", "min": 0, "max": 1000000}, "confidence": {"type": "float", "min": 0.0, "max": 1.0}, "note": {"type": "string", "min_length": 0, "max_length": 128}, "labels": {"type": "string_array", "min_items": 0, "max_items": 64, "item_max_length": 64}, "weights": {"type": "int_array", "min_items": 0, "max_items": 64, "item_min": -1000000, "item_max": 1000000}}},
+    {"action_id": "commit.correct", "handler_id": "commitment.edit", "parameters": {"item_id": {"type": "qualified_id", "max_length": 192}, "amount": {"type": "int", "min": 0, "max": 1000000}}},
+    {"action_id": "commit.remove", "handler_id": "commitment.edit", "parameters": {"item_id": {"type": "qualified_id", "max_length": 192}}},
     {"action_id": "commit.undo", "handler_id": "commitment.edit", "parameters": {}},
     {"action_id": "commit.clear", "handler_id": "commitment.edit", "parameters": {}},
     {"action_id": "commit.repeat", "handler_id": "commitment.edit", "parameters": {}},
     {"action_id": "commit.rebet", "handler_id": "commitment.edit", "parameters": {}},
     {"action_id": "commit.confirm", "handler_id": "commitment.edit", "parameters": {}},
-    {"action_id": "play.primary", "handler_id": "play.primary", "parameters": {"commitment_id": "string"}},
+    {"action_id": "play.primary", "handler_id": "play.primary", "parameters": {"commitment_id": {"type": "string", "min_length": 1, "max_length": 128}}},
     {"action_id": "resolution.acknowledge", "handler_id": "resolution.ack", "parameters": {}}
   ],
   "staged_commitment": {
@@ -352,7 +352,7 @@
       "boundary": "action",
       "visibility": "public",
       "payload": {
-        "session_id": "string"
+        "session_id": {"type": "string", "min_length": 1, "max_length": 128}
       }
     },
     {
@@ -361,8 +361,8 @@
       "boundary": "action",
       "visibility": "public",
       "payload": {
-        "commitment_id": "string",
-        "at_risk_total": "int"
+        "commitment_id": {"type": "string", "min_length": 1, "max_length": 128},
+        "at_risk_total": {"type": "int", "min": 0, "max": 2147483647}
       }
     },
     {
@@ -371,8 +371,8 @@
       "boundary": "action",
       "visibility": "public",
       "payload": {
-        "result_id": "string",
-        "net_change": "int"
+        "result_id": {"type": "string", "min_length": 1, "max_length": 128},
+        "net_change": {"type": "int", "min": -2147483648, "max": 2147483647}
       }
     },
     {
@@ -381,10 +381,18 @@
       "boundary": "action",
       "visibility": "public",
       "payload": {
-        "session_id": "string"
+        "session_id": {"type": "string", "min_length": 1, "max_length": 128}
       }
     }
   ],
+  "public_projection_schema": {
+    "authority": "public",
+    "fields": {
+      "phase_id": {"type": "string", "min_length": 1, "max_length": 64},
+      "pending_total": {"type": "int", "min": 0, "max": 2147483647},
+      "at_risk_total": {"type": "int", "min": 0, "max": 2147483647}
+    }
+  },
   "ritual_persistence": {
     "authoritative_serialized": [
       "contract",
@@ -426,8 +434,8 @@
       "version": 1,
       "accepted_actions": ["commit.place", "commit.correct", "commit.remove", "commit.undo", "commit.clear", "commit.repeat", "commit.rebet", "commit.confirm"],
       "accepted_operations": ["staff_offer"],
-      "inputs": {"item_id": "qualified_id", "amount": "int"},
-      "outputs": {"pending_total": "int"},
+      "inputs": {"item_id": {"type": "qualified_id", "max_length": 192}, "amount": {"type": "int", "min": 0, "max": 1000000}},
+      "outputs": {"pending_total": {"type": "int", "min": 0, "max": 2147483647}},
       "authority": "game_rules",
       "persisted_state": ["pending_items"],
       "transient_state": [],
@@ -441,10 +449,10 @@
       "accepted_actions": ["play.primary"],
       "accepted_operations": ["apparatus_activate", "staff_react"],
       "inputs": {
-        "commitment_id": "string"
+        "commitment_id": {"type": "string", "min_length": 1, "max_length": 128}
       },
       "outputs": {
-        "result_id": "string"
+        "result_id": {"type": "string", "min_length": 1, "max_length": 128}
       },
       "authority": "game_rules",
       "persisted_state": [
@@ -480,7 +488,7 @@
       "version": 1,
       "accepted_actions": [],
       "accepted_operations": ["energy_quiet_apparatus", "energy_engaged_staff"],
-      "inputs": {"tier_id": "string"},
+      "inputs": {"tier_id": {"type": "string", "min_length": 1, "max_length": 128}},
       "outputs": {},
       "authority": "ritual_projection",
       "persisted_state": ["energy_tier"],
