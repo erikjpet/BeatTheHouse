@@ -120,12 +120,14 @@ func _check_runtime_trace(scenario_id: String, definition: Dictionary, host: Dic
 		var branch := (terminal_phase.get("branches", []) as Array)[terminal_index] as Dictionary
 		var command_id := str((branch.get("condition", {}) as Dictionary).get("command_id", ""))
 		var branch_state := state.duplicate(true)
+		if not _round_trip(branch_state, definition, host): failures.append("%s terminal branch %s changed before save/load." % [scenario_id, command_id])
 		var command := _runtime_command(branch_state, definition, command_id, "%s:terminal:%d" % [scenario_id, terminal_index])
 		var applied := Runtime.apply_command(branch_state, definition, command, {"available_funds": 0})
 		if not bool(applied.get("ok", false)) or str((applied.get("state", {}) as Dictionary).get("status", "")) != Runtime.STATUS_AFTERMATH:
 			failures.append("%s terminal command %s failed: %s" % [scenario_id, command_id, JSON.stringify(applied.get("errors", []))])
 			continue
 		var final_state: Dictionary = applied.get("state", {})
+		if not _round_trip(final_state, definition, host): failures.append("%s terminal branch %s changed after save/load." % [scenario_id, command_id])
 		var replay := Runtime.apply_command(final_state, definition, command, {"available_funds": 0})
 		if not bool(replay.get("ok", false)) or not bool(replay.get("replayed", false)) or JSON.stringify(replay.get("state", {})) != JSON.stringify(final_state):
 			failures.append("%s terminal receipt %s did not replay exactly once." % [scenario_id, command_id])
@@ -134,6 +136,7 @@ func _check_runtime_trace(scenario_id: String, definition: Dictionary, host: Dic
 		if bool(Runtime.apply_command(final_state, definition, conflict, {"available_funds": 0}).get("ok", true)):
 			failures.append("%s accepted conflicting reuse of terminal receipt %s." % [scenario_id, command_id])
 	var interrupt_branch := (terminal_phase.get("branches", []) as Array)[4] as Dictionary
+	if not _round_trip(state, definition, host): failures.append("%s interruption branch changed before save/load." % scenario_id)
 	var fact_type := str((interrupt_branch.get("condition", {}) as Dictionary).get("fact_type", ""))
 	var fact_boundary := int(state.get("boundary_serial", 0)) + 1
 	var fact := Runtime.fact(fact_type, _fact_producer(fact_type), str(state.get("node_id", "")), "%s_interrupt_fact" % scenario_id, 1, fact_boundary, _fact_payload(fact_type, state))
@@ -156,6 +159,86 @@ func _check_runtime_trace(scenario_id: String, definition: Dictionary, host: Dic
 		flushed = Runtime.flush_facts(second_queued.get("state", {}), definition, second_boundary) if bool(second_queued.get("ok", false)) else second_queued
 	if not bool(flushed.get("ok", false)) or str((flushed.get("state", {}) as Dictionary).get("status", "")) != Runtime.STATUS_AFTERMATH:
 		failures.append("%s interruption fact %s did not resolve its physical aftermath: %s" % [scenario_id, fact_type, JSON.stringify(flushed.get("errors", []))])
+	elif not _round_trip(flushed.get("state", {}), definition, host):
+		failures.append("%s interruption branch changed after save/load." % scenario_id)
+	_check_lifecycle_rollback_observers(scenario_id, definition, host, state, failures)
+
+
+func _check_lifecycle_rollback_observers(scenario_id: String, definition: Dictionary, host: Dictionary, decision_state: Dictionary, failures: Array) -> void:
+	var initial := Runtime.initial_state(definition, "%s_lifecycle_node" % scenario_id, "%s_lifecycle_seed" % scenario_id, host)
+	if str(initial.get("status", "")) != Runtime.STATUS_ACTIVE: return
+	var initial_phase := Schema.phase(definition, str(initial.get("phase_id", "")))
+	var first_branch: Dictionary = (initial_phase.get("branches", []) as Array)[0]
+	var first_command_id := str((first_branch.get("condition", {}) as Dictionary).get("command_id", ""))
+	var partial_result := Runtime.apply_command(initial, definition, _runtime_command(initial, definition, first_command_id, "%s:partial" % scenario_id), {"available_funds": 0})
+	var partial: Dictionary = partial_result.get("state", {})
+	var partial_reentry := Runtime.apply_reentry(partial, definition, "%s_partial_visit" % scenario_id, host)
+	if not bool(partial_result.get("ok", false)) or not bool(partial_reentry.get("ok", false)) or str((partial_reentry.get("state", {}) as Dictionary).get("status", "")) != Runtime.STATUS_ACTIVE:
+		failures.append("%s partial reentry failed." % scenario_id)
+	elif not _round_trip(partial_reentry.get("state", {}), definition, host): failures.append("%s partial reentry save/load drifted." % scenario_id)
+	var terminal_phase := Schema.phase(definition, "decision")
+	var terminal_branch: Dictionary = (terminal_phase.get("branches", []) as Array)[0]
+	var terminal_command_id := str((terminal_branch.get("condition", {}) as Dictionary).get("command_id", ""))
+	var terminal_result := Runtime.apply_command(decision_state, definition, _runtime_command(decision_state, definition, terminal_command_id, "%s:terminal_reentry" % scenario_id), {"available_funds": 0})
+	var terminal: Dictionary = terminal_result.get("state", {})
+	var terminal_reentry := Runtime.apply_reentry(terminal, definition, "%s_terminal_visit" % scenario_id, host)
+	if not bool(terminal_result.get("ok", false)) or not bool(terminal_reentry.get("ok", false)) or str((terminal_reentry.get("state", {}) as Dictionary).get("status", "")) != Runtime.STATUS_AFTERMATH:
+		failures.append("%s terminal reentry failed." % scenario_id)
+	elif not _round_trip(terminal_reentry.get("state", {}), definition, host): failures.append("%s terminal reentry save/load drifted." % scenario_id)
+	var expiry: Dictionary = (definition.get("sequence", {}) as Dictionary).get("expiry", {})
+	var expiry_state := initial
+	var expiry_result: Dictionary = {}
+	for serial in range(1, maxi(1, int(expiry.get("after", 1))) + 1):
+		expiry_result = Runtime.apply_expiry(expiry_state, definition, str(expiry.get("boundary", "")), serial)
+		if not bool(expiry_result.get("ok", false)): break
+		expiry_state = expiry_result.get("state", {})
+	if not bool(expiry_result.get("ok", false)) or not bool(expiry_result.get("expired", false)):
+		failures.append("%s expiry policy did not execute." % scenario_id)
+	else:
+		var expired_reentry := Runtime.apply_reentry(expiry_state, definition, "%s_expired_visit" % scenario_id, host)
+		if not bool(expired_reentry.get("ok", false)) or not _round_trip(expired_reentry.get("state", {}), definition, host): failures.append("%s expiry cleanup/reentry save-load failed." % scenario_id)
+		var tampered_cleanup := definition.duplicate(true)
+		var cleanup_ops: Array = (((tampered_cleanup.get("sequence", {}) as Dictionary).get("cleanup", {}) as Dictionary).get("operations", []) as Array)
+		if not cleanup_ops.is_empty():
+			(cleanup_ops[0] as Dictionary)["receipt_id"] = "%s_forged_cleanup" % scenario_id
+			var before_cleanup := JSON.stringify(expiry_state)
+			var cleanup_injection := Runtime._apply_cleanup(expiry_state, tampered_cleanup, "forged")
+			if bool(cleanup_injection.get("ok", false)) or JSON.stringify(cleanup_injection.get("state", {})) != before_cleanup: failures.append("%s cleanup/finalization injection did not roll back exactly." % scenario_id)
+	var hostile_command := _runtime_command(initial, definition, first_command_id, "%s:hostile_operation" % scenario_id)
+	hostile_command["expected_phase"] = "forged_phase"
+	var before_initial := JSON.stringify(initial)
+	var hostile_result := Runtime.apply_command(initial, definition, hostile_command, {"available_funds": 0})
+	if bool(hostile_result.get("ok", false)) or JSON.stringify(hostile_result.get("state", {})) != before_initial: failures.append("%s operation injection did not roll back exactly." % scenario_id)
+	var fact_type := str((((terminal_phase.get("branches", []) as Array)[4] as Dictionary).get("condition", {}) as Dictionary).get("fact_type", ""))
+	var producer := _fact_producer(fact_type)
+	var wrong_producer := "game" if producer != "game" else "scenario"
+	var hostile_fact := Runtime.fact(fact_type, wrong_producer, str(initial.get("node_id", "")), "%s:hostile_fact" % scenario_id, 1, 1, _fact_payload(fact_type, initial))
+	var hostile_fact_result := Runtime.enqueue_fact(initial, definition, hostile_fact)
+	if bool(hostile_fact_result.get("ok", false)) or JSON.stringify(hostile_fact_result.get("state", {})) != before_initial: failures.append("%s fact injection did not roll back exactly." % scenario_id)
+	var projection := Runtime.public_projection(initial, definition)
+	for forbidden in ["seed_token", "command_fingerprints", "fact_fingerprints", "command_results", "cleanup_fingerprints"]:
+		if projection.has(forbidden): failures.append("%s public observer leaked %s." % [scenario_id, forbidden])
+	var hidden_a := initial.duplicate(true)
+	var hidden_b := initial.duplicate(true)
+	hidden_a["seed_token"] = "hidden_a"
+	hidden_b["seed_token"] = "hidden_b"
+	hidden_a["command_fingerprints"] = {"private": "a"}
+	hidden_b["command_fingerprints"] = {"private": "b"}
+	if Runtime.content_fingerprint(Runtime.public_projection(hidden_a, definition)) != Runtime.content_fingerprint(Runtime.public_projection(hidden_b, definition)): failures.append("%s paired hidden-state observers diverged." % scenario_id)
+	var native_round_trip: Variant = JSON.parse_string(JSON.stringify(projection))
+	if Runtime.content_fingerprint(projection) != Runtime.content_fingerprint(native_round_trip): failures.append("%s native/Web canonical projection parity drifted." % scenario_id)
+	var normal := Runtime.drain_transitions(initial, definition, false)
+	var reduced := Runtime.drain_transitions(initial, definition, true)
+	if not bool(normal.get("ok", false)) or not bool(reduced.get("ok", false)) or (normal.get("transitions", []) as Array).size() != (reduced.get("transitions", []) as Array).size(): failures.append("%s transition liveness/reduced-motion parity failed." % scenario_id)
+	var counters: Dictionary = (partial.get("performance_counters", {}) as Dictionary)
+	if int(counters.get("commands_applied", 0)) < 1 or int(counters.get("transitions_prepared", 0)) < 1: failures.append("%s runtime liveness counters did not advance." % scenario_id)
+
+
+func _round_trip(state_value: Variant, definition: Dictionary, host: Dictionary) -> bool:
+	if typeof(state_value) != TYPE_DICTIONARY: return false
+	var state := state_value as Dictionary
+	var restored := Runtime.normalize_state(JSON.parse_string(JSON.stringify(state)), definition, host)
+	return Runtime.content_fingerprint(restored) == Runtime.content_fingerprint(state) and Runtime.content_fingerprint(Runtime.public_projection(restored, definition)) == Runtime.content_fingerprint(Runtime.public_projection(state, definition))
 
 
 func _runtime_command(state: Dictionary, definition: Dictionary, command_id: String, receipt_id: String) -> Dictionary:
