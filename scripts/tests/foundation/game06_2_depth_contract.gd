@@ -7,6 +7,7 @@ const RitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd"
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
 var failures: Array = []
+var authority_hosts: Array = []
 
 
 class FailingAdvanceHost:
@@ -84,6 +85,7 @@ func _run() -> void:
 	_check_failure_atomic_rng_retry(game)
 	_check_failed_turn_retry(game)
 	_check_mixed_rate_funding_rejection(game)
+	_cleanup_authority_hosts()
 	if failures.is_empty():
 		print("game06_2_depth_contract: PASS")
 		quit(0)
@@ -643,6 +645,7 @@ func _seed_authority_session(game: GameModule, run: RunState, environment: Dicti
 
 func _authority_host(game: GameModule, run: RunState, stake: int) -> Control:
 	var host: Control = FoundationMainScript.new()
+	authority_hosts.append(host)
 	host.set("current_game", game)
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run)
@@ -652,6 +655,7 @@ func _authority_host(game: GameModule, run: RunState, stake: int) -> Control:
 
 func _failing_authority_host(game: GameModule, run: RunState, stake: int) -> Control:
 	var host: Control = FailingAdvanceHost.new()
+	authority_hosts.append(host)
 	host.set("current_game", game)
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run)
@@ -661,11 +665,19 @@ func _failing_authority_host(game: GameModule, run: RunState, stake: int) -> Con
 
 func _replay_audit_host(game: GameModule, run: RunState, stake: int) -> Control:
 	var host: Control = ReplayAuditHost.new()
+	authority_hosts.append(host)
 	host.set("current_game", game)
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run)
 	host.set("selected_stake", stake)
 	return host
+
+
+func _cleanup_authority_hosts() -> void:
+	for host_value in authority_hosts:
+		if host_value is Control and is_instance_valid(host_value):
+			(host_value as Control).free()
+	authority_hosts.clear()
 
 
 func _actor_visible(projection: Dictionary, actor_id: String) -> bool:
