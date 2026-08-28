@@ -12,7 +12,8 @@ param(
     [switch]$AllowConcurrentGodot,
     [switch]$PostLand,
     [string]$ExpectedMain = "",
-    [string]$NativePluginPath = ""
+    [string]$NativePluginPath = "",
+    [string]$ExpectedNativePluginSha256 = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -21,12 +22,17 @@ $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
 $suiteKey = $Suite.ToLowerInvariant()
 $foundationSuiteKey = $FoundationSuite.Trim().ToLowerInvariant()
+$postLandInvocationErrors = New-Object System.Collections.Generic.List[string]
 if ($PostLand) {
     if ($suiteKey -ne "smoke") {
-        throw "Post-land verification is the complete Smoke path; Suite must be Smoke."
+        $postLandInvocationErrors.Add("Post-land verification is the complete Smoke path; Suite must be Smoke.")
+        $Suite = "Smoke"
+        $suiteKey = "smoke"
     }
     if (-not [string]::IsNullOrWhiteSpace($foundationSuiteKey)) {
-        throw "Post-land verification cannot narrow Smoke with FoundationSuite."
+        $postLandInvocationErrors.Add("Post-land verification cannot narrow Smoke with FoundationSuite.")
+        $FoundationSuite = ""
+        $foundationSuiteKey = ""
     }
     $RequireGodot = $true
     $KeepGoing = $true
@@ -357,6 +363,9 @@ function Get-GitIdentityValue {
 function Add-PostLandIdentityStage {
     param([ValidateSet("start", "end")][string]$Phase)
     $errors = New-Object System.Collections.Generic.List[string]
+    foreach ($invocationError in $postLandInvocationErrors) {
+        $errors.Add([string]$invocationError)
+    }
     $identity = [ordered]@{
         phase = $Phase
         expected_main = ""
@@ -368,6 +377,8 @@ function Add-PostLandIdentityStage {
         native_descriptor_sha256 = ""
         native_plugin_path = ""
         native_plugin_sha256 = ""
+        expected_native_plugin_sha256 = $ExpectedNativePluginSha256.Trim().ToUpperInvariant()
+        native_source_tree = ""
         godot_path = if ($script:Godot) { [string]$script:Godot } else { "" }
         godot_sha256 = if ($script:Godot -and (Test-Path -LiteralPath $script:Godot)) { (Get-FileHash -LiteralPath $script:Godot -Algorithm SHA256).Hash } else { "" }
     }
@@ -375,6 +386,7 @@ function Add-PostLandIdentityStage {
         $identity.main_commit = (Get-GitIdentityValue @("rev-parse", "refs/heads/main")).ToLowerInvariant()
         $identity.head_commit = (Get-GitIdentityValue @("rev-parse", "HEAD")).ToLowerInvariant()
         $identity.tree = (Get-GitIdentityValue @("rev-parse", "HEAD^{tree}")).ToLowerInvariant()
+        $identity.native_source_tree = (Get-GitIdentityValue @("rev-parse", "HEAD:native/coin_pusher")).ToLowerInvariant()
         $requestedMain = $ExpectedMain.Trim().ToLowerInvariant()
         $identity.expected_main = if ([string]::IsNullOrWhiteSpace($requestedMain)) { $identity.main_commit } else { $requestedMain }
         if ($identity.expected_main -notmatch '^[0-9a-f]{40}$') {
@@ -419,8 +431,17 @@ function Add-PostLandIdentityStage {
         else {
             $identity.native_plugin_sha256 = (Get-FileHash -LiteralPath $pluginPath -Algorithm SHA256).Hash
         }
+        if ($identity.expected_native_plugin_sha256 -notmatch '^[0-9A-F]{64}$') {
+            $errors.Add("ExpectedNativePluginSha256 must be the full approved Gate Service build hash.")
+        }
+        elseif ($identity.native_plugin_sha256 -cne $identity.expected_native_plugin_sha256) {
+            $errors.Add("Native plugin does not match the approved Gate Service build hash: expected=$($identity.expected_native_plugin_sha256) actual=$($identity.native_plugin_sha256).")
+        }
+        if ([string]::IsNullOrWhiteSpace($identity.godot_path) -or -not (Test-Path -LiteralPath $identity.godot_path -PathType Leaf) -or [string]::IsNullOrWhiteSpace($identity.godot_sha256)) {
+            $errors.Add("Godot executable identity is missing before the post-land gate starts.")
+        }
         if ($Phase -eq "end" -and $null -ne $script:PostLandIdentity) {
-            foreach ($key in @("expected_main", "main_commit", "head_commit", "tree", "native_descriptor_sha256", "native_plugin_sha256")) {
+            foreach ($key in @("expected_main", "main_commit", "head_commit", "tree", "native_source_tree", "native_descriptor_sha256", "native_plugin_sha256", "expected_native_plugin_sha256", "godot_path", "godot_sha256")) {
                 if ([string]$identity[$key] -cne [string]$script:PostLandIdentity[$key]) {
                     $errors.Add("Post-land identity changed during the gate at ${key}: start=$($script:PostLandIdentity[$key]) end=$($identity[$key]).")
                 }
@@ -1062,10 +1083,6 @@ function Invoke-ExhaustiveParse {
 }
 
 $powerShellExe = (Get-Command powershell -ErrorAction Stop).Source
-if ($PostLand -and -not (Add-PostLandIdentityStage -Phase "start")) {
-    Write-TestSummary
-    exit 1
-}
 if (-not (Enter-CheckGodotWorkspaceMutex)) {
     $message = "Another check_godot process already owns the workspace test lock."
     $script:StageResults.Add((New-FoundationConcurrencyGuardStage -Message $message))
@@ -1074,9 +1091,13 @@ if (-not (Enter-CheckGodotWorkspaceMutex)) {
     Write-TestSummary
     exit 125
 }
+$script:Godot = Find-Godot
+if ($PostLand -and -not (Add-PostLandIdentityStage -Phase "start")) {
+    Write-TestSummary
+    exit 1
+}
 Invoke-ProcessStage -Name "validate_project" -FilePath $powerShellExe -Arguments @("-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "validate_project.ps1"), "-Quiet") -StageTimeoutSec 120 | Out-Null
 
-$script:Godot = Find-Godot
 if (-not $script:Godot) {
     if ($RequireGodot) {
         throw "Godot was not found. Run tools/install_godot.ps1 or set GODOT_BIN."
@@ -1086,11 +1107,6 @@ if (-not $script:Godot) {
     exit 0
 }
 
-if ($PostLand) {
-    $script:PostLandIdentity.godot_path = [System.IO.Path]::GetFullPath($script:Godot)
-    $script:PostLandIdentity.godot_sha256 = (Get-FileHash -LiteralPath $script:Godot -Algorithm SHA256).Hash
-}
-
 Assert-NoConcurrentProjectGodot
 
 if (-not $NoImport) {
@@ -1098,6 +1114,9 @@ if (-not $NoImport) {
 }
 
 Invoke-GDScriptLoadCheck
+if ($PostLand) {
+    Invoke-GodotScript -Name "native_coin_pusher_smoke" -ScriptPath "res://tools/native_coin_pusher_smoke.gd" -StageTimeoutSec 120
+}
 
 if ($ExhaustiveParse -or $suiteKey -eq "full") {
     Invoke-ExhaustiveParse
