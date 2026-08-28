@@ -11,7 +11,7 @@ const PlayingCardRendererScript := preload("res://scripts/games/playing_card_ren
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 
 const STATE_SCHEMA := "crew_draw_table"
-const STATE_VERSION := 1
+const STATE_VERSION := 2
 const PLAYER_ID := "player"
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -28,6 +28,8 @@ const MEMBER_NAMES := {
 	"crew_rook": "Rook", "crew_velvet": "Velvet", "crew_knuckles": "Knuckles",
 	"crew_switch": "Switch", "crew_mags": "Mags", "crew_bishop": "Bishop", "crew_lucky": "Lucky",
 }
+const NIGHT_IDS := ["friendly_teaching", "hustle_test", "debt_court", "after_job", "raid_jitters"]
+const OBSERVATION_DURATION_ACTIONS := 3
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -35,8 +37,10 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var state := _table_state(environment)
 	if not _buy_in_open(run_state, state):
 		result["message"] = "The table is friendly, not open. An associate at the table has to vouch for your chair."
+	elif bool(state.get("session_settled", false)):
+		result["message"] = "The last night is settled. A fresh visit can open a newly seeded table."
 	else:
-		result["message"] = "The back-room table plays five-card draw: ante, bet, one draw, bet, showdown. Cash stays friendly."
+		result["message"] = "The back-room table plays five-card draw: ante, ordered bets, one draw, ordered bets, showdown. Cash stays friendly."
 	return result
 
 
@@ -58,6 +62,11 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 		"hand_number": 0,
 		"session_swing": 0,
 		"session_settled": false,
+		"session_index": 0,
+		"night_id": _night_id(environment),
+		"action_ordinal": 0,
+		"observation_queue": [],
+		"verified_observation_receipts": [],
 		"pot": 0,
 		"shoe": [],
 		"player_cards": [],
@@ -76,7 +85,7 @@ func legal_actions(run_state: RunState, environment: Dictionary) -> Array:
 	match phase:
 		"idle":
 			if bool(state.get("session_settled", false)):
-				return []
+				return [_poker_action("new_session", "Open New Night", "Begin a fresh seeded session after the settlement boundary.")]
 			return [_poker_action("deal", "Ante & Deal", "Ante the friendly stake and deal five cards."), _poker_action("cash_out", "Leave Table", "Settle the session and stand up.")]
 		"before", "after":
 			return [
@@ -100,6 +109,8 @@ func wager_cost_for_context(action_id: String, _stake: int, _run_state: RunState
 		"deal":
 			var ante := int(tuning.get("ante", 2))
 			return ante if _loss_room(state, ante) == ante else 0
+		"new_session":
+			return 0
 		"call":
 			var call_cost := int(state.get("to_call", 0))
 			return call_cost if _loss_room(state, call_cost) == call_cost else 0
@@ -128,6 +139,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		seat.erase("policy")
 		seats.append(seat)
 	var beat := _poker_dict(state.get("beat", {}))
+	var visible_observations := _visible_observations(state)
+	if not visible_observations.is_empty():
+		beat = visible_observations[0]
 	var presentation := {}
 	if not beat.is_empty():
 		var presentation_member := str(beat.get("m", ""))
@@ -138,6 +152,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			for presentation_key in ["channel", "timing_msec", "portrait_variant", "line", "quirk"]:
 				presentation[presentation_key] = authored.get(presentation_key)
 			presentation["member_id"] = presentation_member
+			presentation["observation_id"] = str(beat.get("id", ""))
+			presentation["start_ordinal"] = int(beat.get("start_ordinal", 0))
+			presentation["duration_actions"] = int(beat.get("duration_actions", OBSERVATION_DURATION_ACTIONS))
 	if str(presentation.get("channel", "")) == "portrait":
 		for seat_index in range(seats.size()):
 			var presentation_seat: Dictionary = seats[seat_index]
@@ -171,6 +188,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"swing_cap": int(CrewPokerModelScript.config().get("session_swing_cap", 60)),
 		"buy_in_open": _buy_in_open(run_state, state),
 		"observation": presentation,
+		"observation_queue": _public_observation_queue(state),
+		"action_ordinal": int(state.get("action_ordinal", 0)),
+		"night_id": str(state.get("night_id", "friendly_teaching")),
 		"banter": _banter_for_state(state),
 		"last_result": last,
 		"result_message": str(last.get("message", "")),
@@ -227,6 +247,9 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	var bankroll_delta := 0
 	var message := ""
 	match action_id:
+		"new_session":
+			_start_new_session(state, environment)
+			message = "A fresh night begins. The button moves and the table cuts a new deck."
 		"deal":
 			var dealt := _deal_hand(run_state, state, rng)
 			if not bool(dealt.get("ok", true)):
@@ -256,6 +279,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 			message = _settle_session(state, run_state)
 		_:
 			return _result(action_id, environment, 0, "That move is not open at this table.", false)
+	state["action_ordinal"] = int(state.get("action_ordinal", 0)) + 1
 	_update_environment_state(environment, state)
 	var result := _result(action_id, environment, bankroll_delta, message, true)
 	result["ui_state"] = {} if action_id != "draw" else {"poker_held": []}
@@ -455,6 +479,22 @@ func _maybe_surface(state: Dictionary, seat: Dictionary, action: String, rng: Rn
 		return
 	var neutral := {"m": member_id, "i": authored_index}
 	state["beat"] = neutral
+	var queue := _dict_array(state.get("observation_queue", []))
+	var source_ordinal := int(state.get("action_ordinal", 0))
+	var observation_id := "%s:%d:%s:%d" % [member_id, source_ordinal, action, queue.size()]
+	queue.append({
+		"id": observation_id,
+		"m": member_id,
+		"i": authored_index,
+		"source_action": action,
+		"source_receipt": "poker-action:%d:%s:%s" % [source_ordinal, member_id, action],
+		"start_ordinal": source_ordinal,
+		"duration_actions": OBSERVATION_DURATION_ACTIONS,
+		"channel": str(authored.get("channel", "posture")),
+		"consumed": false,
+		"verified": false,
+	})
+	state["observation_queue"] = queue
 	var shown: Array = state.get("x", [])
 	if not shown.has(neutral):
 		shown.append(neutral)
@@ -485,13 +525,22 @@ func _showdown(state: Dictionary, run_state: RunState) -> Dictionary:
 	var raw_payout := int(shares.get(PLAYER_ID, 0))
 	var payout := mini(raw_payout, _win_room(state, raw_payout))
 	state["session_swing"] = int(state.get("session_swing", 0)) + payout
-	for shown_value in _dict_array(state.get("x", [])):
-		var shown: Dictionary = shown_value
+	var verified_receipts := _string_array(state.get("verified_observation_receipts", []))
+	var queue := _dict_array(state.get("observation_queue", []))
+	for queue_index in range(queue.size()):
+		var shown: Dictionary = queue[queue_index]
 		var shown_member := str(shown.get("m", ""))
 		var shown_patterns := CrewPokerModelScript.patterns(shown_member)
 		var shown_index := int(shown.get("i", -1))
-		if shown_index >= 0 and shown_index < shown_patterns.size() and (winners.has(shown_member) or _seat_active(seats, shown_member)):
+		var verification_receipt := "tell-verify:%s" % str(shown.get("id", ""))
+		if shown_index >= 0 and shown_index < shown_patterns.size() and _seat_revealed(seats, shown_member) and not verified_receipts.has(verification_receipt):
 			run_state.crew_record_pattern(shown_member, str((shown_patterns[shown_index] as Dictionary).get("state_key", "")))
+			verified_receipts.append(verification_receipt)
+			shown["verified"] = true
+			shown["verification_receipt"] = verification_receipt
+		queue[queue_index] = shown
+	state["observation_queue"] = queue
+	state["verified_observation_receipts"] = verified_receipts
 	var player_score := CrewPokerModelScript.evaluate_hand(state.get("player_cards", []))
 	var message := "%s. %s" % [str(player_score.get("label", "Hand")), "You take $%d." % payout if raw_payout > 0 else "%s takes it." % _winner_names(winners)]
 	_finish_hand(state, run_state, {"winners": winners, "payout": payout, "message": message})
@@ -531,6 +580,26 @@ func _settle_session(state: Dictionary, run_state: RunState) -> String:
 	return "The table settles at %s. Nobody makes it bigger than it is." % _signed_cash(int(state.get("session_swing", 0)))
 
 
+func _start_new_session(state: Dictionary, environment: Dictionary) -> void:
+	# The settlement boundary is the cooldown. Reentry is explicit and advances a
+	# durable session identity; it never reuses a live deck or settlement receipt.
+	state["session_index"] = int(state.get("session_index", 0)) + 1
+	state["hand_number"] = 0
+	state["session_swing"] = 0
+	state["session_settled"] = false
+	state["phase"] = "idle"
+	state["pot"] = 0
+	state["shoe"] = []
+	state["player_cards"] = []
+	state["seats"] = []
+	state["x"] = []
+	state["beat"] = {}
+	state["observation_queue"] = []
+	state["verified_observation_receipts"] = []
+	state["night_id"] = _night_id(environment)
+	state["last_result"] = {}
+
+
 func _buy_in_open(run_state: RunState, state: Dictionary) -> bool:
 	if run_state == null:
 		return false
@@ -554,8 +623,20 @@ func _table_state(environment: Dictionary) -> Dictionary:
 	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var value: Variant = states.get(get_id(), {})
 	if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("schema", "")) == STATE_SCHEMA:
-		return (value as Dictionary).duplicate(true)
-	return {"schema": STATE_SCHEMA, "version": STATE_VERSION, "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "pot": 0, "shoe": [], "player_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}}
+		var migrated := (value as Dictionary).duplicate(true)
+		migrated["version"] = STATE_VERSION
+		if not migrated.has("session_index"):
+			migrated["session_index"] = 0
+		if not migrated.has("night_id"):
+			migrated["night_id"] = _night_id(environment)
+		if not migrated.has("action_ordinal"):
+			migrated["action_ordinal"] = 0
+		if not migrated.has("observation_queue"):
+			migrated["observation_queue"] = []
+		if not migrated.has("verified_observation_receipts"):
+			migrated["verified_observation_receipts"] = []
+		return migrated
+	return {"schema": STATE_SCHEMA, "version": STATE_VERSION, "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "session_index": 0, "night_id": _night_id(environment), "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [], "pot": 0, "shoe": [], "player_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}}
 
 
 func _update_environment_state(environment: Dictionary, state: Dictionary) -> void:
@@ -585,6 +666,46 @@ func _seat_active(seats: Array, member_id: String) -> bool:
 		if typeof(seat_value) == TYPE_DICTIONARY and str((seat_value as Dictionary).get("member_id", "")) == member_id:
 			return bool((seat_value as Dictionary).get("active", false))
 	return false
+
+
+func _seat_revealed(seats: Array, member_id: String) -> bool:
+	for seat_value in seats:
+		if typeof(seat_value) == TYPE_DICTIONARY and str((seat_value as Dictionary).get("member_id", "")) == member_id:
+			return bool((seat_value as Dictionary).get("revealed", false))
+	return false
+
+
+func _night_id(environment: Dictionary) -> String:
+	var requested := str(environment.get("crew_poker_night_id", "friendly_teaching"))
+	return requested if NIGHT_IDS.has(requested) else "friendly_teaching"
+
+
+func _visible_observations(state: Dictionary) -> Array:
+	var result: Array = []
+	var ordinal := int(state.get("action_ordinal", 0))
+	for value in _dict_array(state.get("observation_queue", [])):
+		var start := int(value.get("start_ordinal", 0))
+		var duration := maxi(1, int(value.get("duration_actions", OBSERVATION_DURATION_ACTIONS)))
+		if ordinal >= start and ordinal < start + duration:
+			result.append(value)
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return int(a.get("start_ordinal", 0)) < int(b.get("start_ordinal", 0)) or (int(a.get("start_ordinal", 0)) == int(b.get("start_ordinal", 0)) and str(a.get("id", "")) < str(b.get("id", "")))
+	)
+	return result
+
+
+func _public_observation_queue(state: Dictionary) -> Array:
+	var result: Array = []
+	for value in _visible_observations(state):
+		result.append({
+			"observation_id": str(value.get("id", "")),
+			"member_id": str(value.get("m", "")),
+			"source_action": str(value.get("source_action", "")),
+			"start_ordinal": int(value.get("start_ordinal", 0)),
+			"duration_actions": int(value.get("duration_actions", OBSERVATION_DURATION_ACTIONS)),
+			"channel": str(value.get("channel", "posture")),
+		})
+	return result
 
 
 func _winner_names(winners: Array) -> String:
@@ -654,11 +775,9 @@ func _draw_observation(surface, state: Dictionary) -> void:
 		"portrait":
 			text = str(observation.get("quirk", ""))
 		"timing":
-			var elapsed_msec := int(surface.surface_render_elapsed_msec()) if surface != null and surface.has_method("surface_render_elapsed_msec") else int(observation.get("timing_msec", 0))
-			if elapsed_msec >= int(observation.get("timing_msec", 0)):
-				text = str(observation.get("line", ""))
-			else:
-				text = "The room holds one quiet beat."
+			# Timing is authored against the source action ordinal. Reduced motion
+			# changes travel, never whether the readable cue is present.
+			text = str(observation.get("line", "The room holds one quiet beat."))
 		_:
 			text = str(observation.get("quirk", observation.get("line", "")))
 	if text.is_empty():
