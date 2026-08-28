@@ -84,6 +84,7 @@ static func check(_library, failures: Array) -> void:
 	_check_handler_allowlists(definition, failures)
 	_check_authority_closure(definition, failures)
 	_check_hostile_restore(definition, failures)
+	_check_two_round_receipt_identity(definition, failures)
 	_check_layout_and_canvas(definition, failures)
 	_check_neutral_opt_in_seams(failures)
 
@@ -169,7 +170,7 @@ static func _check_runtime_trace(definition: Dictionary, failures: Array) -> voi
 		return
 	var restore_result: Dictionary = restored.restore_snapshot(runtime.authenticated_snapshot())
 	if not bool(restore_result.get("ok", false)) or not (restore_result.get("replayed_effects", [1]) as Array).is_empty() or restored.serialized_state() != saved:
-		failures.append("Ritual restore changed authoritative state or replayed one-shot effects.")
+		failures.append("Ritual restore changed authoritative state or replayed one-shot effects: %s" % JSON.stringify(restore_result))
 	var acknowledge: Dictionary = _execute(restored, host, "resolution.acknowledge", {}, "trace_ack", {})
 	if not bool(acknowledge.get("ok", false)) or str(acknowledge.get("phase_after", "")) != "open":
 		failures.append("Resolution acknowledgement did not return to the legal open phase.")
@@ -315,6 +316,13 @@ static func _check_authority_closure(definition: Dictionary, failures: Array) ->
 		failures.append("Caller reconfigured an already-live ritual authority.")
 	if runtime.serialized_state() != before:
 		failures.append("Unauthorized ritual authority attempts changed hidden state.")
+	var unissued := _command_for(runtime, host, "commit.place", _place_parameters("layout.primary", 5), "authority_unissued")
+	unissued["command_id"] = "command.authority_unissued_changed"
+	unissued["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(unissued))
+	var unissued_before := runtime.serialized_state()
+	var unissued_result: Dictionary = runtime.process_command(unissued, {"available_funds": 20})
+	if str(unissued_result.get("error_code", "")) != "authority_mismatch" or runtime.serialized_state() != unissued_before:
+		failures.append("A caller-shaped command without a retained host journal entry reached authority.")
 
 
 static func _check_hostile_restore(definition: Dictionary, failures: Array) -> void:
@@ -328,20 +336,115 @@ static func _check_hostile_restore(definition: Dictionary, failures: Array) -> v
 		failures.append("Authenticated closed restore rejected its own exact snapshot.")
 	var hostile_cases: Array = []
 	var state: Dictionary
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["unknown"] = true; hostile_cases.append(_sealed_snapshot(valid, state))
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["action_sequence"] = "1"; hostile_cases.append(_sealed_snapshot(valid, state))
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["actor_states"] as Dictionary)["ghost.actor"] = {}; hostile_cases.append(_sealed_snapshot(valid, state))
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["envelope_request_cache"] as Dictionary)["request:bad"] = {"extra": true}; hostile_cases.append(_sealed_snapshot(valid, state))
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["contract"] = "game_ritual/2"; hostile_cases.append(_sealed_snapshot(valid, state))
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["transition_sequence"] = 2; state["action_sequence"] = 1; hostile_cases.append(_sealed_snapshot(valid, state))
-	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["state_version"] = 2; hostile_cases.append(_sealed_snapshot(valid, state))
-	var fingerprint_hostile := valid.duplicate(true); fingerprint_hostile["content_fingerprint"] = "0".repeat(64); hostile_cases.append(fingerprint_hostile)
-	var migration_hostile := valid.duplicate(true); migration_hostile["envelope_version"] = 2; migration_hostile["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(migration_hostile)); hostile_cases.append(migration_hostile)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["unknown"] = true; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["action_sequence"] = "1"; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["actor_states"] as Dictionary)["ghost.actor"] = {}; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["envelope_request_cache"] as Dictionary)["request:bad"] = {"extra": true}; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["contract"] = "game_ritual/2"; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["transition_sequence"] = 2; state["action_sequence"] = 1; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["state_version"] = 2; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["readable_totals"] as Dictionary)["payout"] = 100; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["pending_items"] as Dictionary)["layout.primary"] = 5; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["working_items"] as Dictionary)["layout.primary"] = -1; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["handler_state"] as Dictionary)["caller_authority"] = true; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["energy_tier"] = "hostile"; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); ((state["actor_states"] as Dictionary)["staff.primary"] as Dictionary)["pose"] = "hostile"; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); ((state["object_states"] as Dictionary)["apparatus.primary"] as Dictionary)["visual"] = "hostile"; hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["item_resolutions"] as Array).append({"item_id": "layout.primary"}); hostile_cases.append(state)
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["authoritative_result_refs"] as Array).append({"result_id": ""}); hostile_cases.append(state)
 	for index in range(hostile_cases.size()):
 		var before := restored.serialized_state()
-		var result: Dictionary = restored.restore_snapshot(hostile_cases[index])
+		var result: Dictionary = restored._restore_state(hostile_cases[index])
+		if bool(result.get("ok", true)) or restored.serialized_state() != before:
+			failures.append("Hostile nested restore case %d did not fail closed without mutation." % index)
+
+	var populated_host := RetainedRitualHost.new(definition, {"play.primary": Callable(GameRitualRuntimeContract, "_play_handler")})
+	var populated = RuntimeScript.new(populated_host)
+	populated.configure(definition)
+	_execute(populated, populated_host, "commit.place", _place_parameters("layout.primary", 5), "hostile_place", {"available_funds": 20})
+	_execute(populated, populated_host, "commit.confirm", {}, "hostile_confirm", {"available_funds": 20})
+	_execute(populated, populated_host, "play.primary", {"commitment_id": "commitment.hostile"}, "hostile_play", {"seed": 3})
+	var populated_state := populated.serialized_state()
+	var populated_cases: Array = []
+	state = populated_state.duplicate(true); (state["envelope_receipts"] as Array).pop_back(); populated_cases.append(state)
+	state = populated_state.duplicate(true); ((state["operation_envelopes"] as Array)[0] as Dictionary)["receipt_key"] = "receipt:operation:forged:b2"; populated_cases.append(state)
+	state = populated_state.duplicate(true); (state["operation_envelopes"] as Array).append(((state["operation_envelopes"] as Array)[0] as Dictionary).duplicate(true)); populated_cases.append(state)
+	state = populated_state.duplicate(true); ((state["fact_envelopes"] as Array)[0] as Dictionary)["content_fingerprint"] = "0".repeat(64); populated_cases.append(state)
+	state = populated_state.duplicate(true)
+	var cache_key := str((state["envelope_request_cache"] as Dictionary).keys()[0])
+	((state["envelope_request_cache"] as Dictionary)[cache_key] as Dictionary)["response_content_fingerprint"] = "0".repeat(64)
+	populated_cases.append(state)
+	state = populated_state.duplicate(true)
+	var cached_responses: Dictionary = (state["handler_state"] as Dictionary)["_ritual_cached_responses"]
+	cached_responses["request:orphan"] = (cached_responses.values()[0] as Dictionary).duplicate(true)
+	populated_cases.append(state)
+	for index in range(populated_cases.size()):
+		var before := populated.serialized_state()
+		var result: Dictionary = populated._restore_state(populated_cases[index])
+		if bool(result.get("ok", true)) or populated.serialized_state() != before:
+			failures.append("Hostile causal restore case %d did not fail closed without mutation." % index)
+
+	var fingerprint_hostile := valid.duplicate(true)
+	fingerprint_hostile["content_fingerprint"] = "0".repeat(64)
+	var migration_hostile := valid.duplicate(true)
+	migration_hostile["envelope_version"] = 2
+	migration_hostile["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(migration_hostile))
+	var unjournaled_state: Dictionary = (valid.get("state", {}) as Dictionary).duplicate(true)
+	unjournaled_state["energy_tier"] = "hostile"
+	for snapshot in [fingerprint_hostile, migration_hostile, _sealed_snapshot(valid, unjournaled_state)]:
+		var before := restored.serialized_state()
+		var result: Dictionary = restored.restore_snapshot(snapshot)
 		if bool(result.get("ok", true)) or str(result.get("error_code", "")) != "invalid_restore" or restored.serialized_state() != before:
-			failures.append("Hostile restore/migration case %d did not fail closed without mutation." % index)
+			failures.append("Unjournaled hostile snapshot did not fail closed without mutation.")
+
+
+static func _check_two_round_receipt_identity(definition: Dictionary, failures: Array) -> void:
+	var host := RetainedRitualHost.new(definition, {"play.primary": Callable(GameRitualRuntimeContract, "_play_handler")})
+	var runtime = RuntimeScript.new(host)
+	if not bool(runtime.configure(definition).get("ok", false)):
+		failures.append("Two-round receipt trace could not configure the ritual runtime.")
+		return
+	var commands: Array = []
+	var responses: Array = []
+	for round_index in range(2):
+		var steps := [
+			["commit.place", _place_parameters("layout.primary", 5), {"available_funds": 20}],
+			["commit.confirm", {}, {"available_funds": 20}],
+			["play.primary", {"commitment_id": "commitment.round_%d" % round_index}, {"seed": round_index + 10}],
+			["resolution.acknowledge", {}, {}],
+		]
+		for step_index in range(steps.size()):
+			var step: Array = steps[step_index]
+			var command := _command_for(runtime, host, str(step[0]), step[1] as Dictionary, "round_%d_step_%d" % [round_index, step_index])
+			var response: Dictionary = runtime.process_command(command, step[2] as Dictionary)
+			commands.append(command)
+			responses.append(response)
+			if not bool(response.get("ok", false)):
+				failures.append("Two-round receipt trace rejected round %d step %d: %s" % [round_index, step_index, JSON.stringify(response)])
+	var state := runtime.serialized_state()
+	var operation_keys := {}
+	for operation_value in state.get("operation_envelopes", []):
+		var operation: Dictionary = operation_value
+		var receipt_key := str(operation.get("receipt_key", ""))
+		if operation_keys.has(receipt_key): failures.append("Two-round trace reused an operation receipt identity across boundaries.")
+		operation_keys[receipt_key] = str(operation.get("content_fingerprint", ""))
+	var operation_receipts := {}
+	for receipt_value in state.get("envelope_receipts", []):
+		var receipt: Dictionary = receipt_value
+		if str(receipt.get("envelope_kind", "")) == "operation": operation_receipts[str(receipt.get("receipt_key", ""))] = str(receipt.get("content_fingerprint", ""))
+	if operation_keys.is_empty() or operation_keys != operation_receipts:
+		failures.append("Two-round operation envelopes and causal receipts are not bijective.")
+	var before_replay := runtime.serialized_state()
+	for replay_index in [1, 2, 5, 6]:
+		var replay: Dictionary = runtime.process_command(commands[replay_index] as Dictionary)
+		if replay != responses[replay_index] or runtime.serialized_state() != before_replay:
+			failures.append("Two-round historical replay %d was not byte-identical and effect-free." % replay_index)
+	var snapshot := runtime.authenticated_snapshot()
+	var restored = RuntimeScript.new(host)
+	restored.configure(definition)
+	var restore_result: Dictionary = restored.restore_snapshot(snapshot)
+	if not bool(restore_result.get("ok", false)) or restored.serialized_state() != runtime.serialized_state() or not (restore_result.get("replayed_effects", [1]) as Array).is_empty():
+		failures.append("Two-round causal state did not restore exactly without replaying effects: %s" % JSON.stringify(restore_result))
 
 
 static func _check_neutral_opt_in_seams(failures: Array) -> void:
@@ -395,11 +498,11 @@ static func _place_parameters(item_id: String, amount: int) -> Dictionary:
 
 
 static func _play_handler(_action_id: String, parameters: Dictionary, _candidate: Dictionary, context: Dictionary) -> Dictionary:
-	var result_id := "result.%d.%s" % [int(context.get("seed", 0)), str(parameters.get("commitment_id", ""))]
+	var result_id := "result.seed_%d.%s" % [int(context.get("seed", 0)), str(parameters.get("commitment_id", "")).replace(".", "_")]
 	return {
 		"ok": true,
 		"persisted_state": {"authoritative_result_refs": [{"result_id": result_id}]},
-		"result": {"result_id": result_id, "net_change": 10},
+		"result": {"result_id": result_id, "payout": 15, "net_change": 10},
 		"facts": [{"fact_type": "resolution.completed", "payload": {"result_id": result_id, "net_change": 10}}],
 		"operations": [],
 	}
