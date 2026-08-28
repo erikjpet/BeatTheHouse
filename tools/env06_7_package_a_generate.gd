@@ -37,7 +37,7 @@ func _init() -> void:
 		var entry := JSON.parse_string(JSON.stringify(_entry(config))) as Dictionary
 		var definition := {"id": config.id, "archetype_id": config.archetype, "sequence": entry.sequence}
 		entry.sequence.sequence_signature = SequenceSchema.calculated_signature_hash(definition)
-		var failures := SequenceSchema.validate_definition(definition, OperationRegistry, {})
+		var failures := SequenceSchema.validate_definition(definition, OperationRegistry, _target_inventory())
 		if not failures.is_empty():
 			push_error("%s: %s" % [config.id, "; ".join(failures)])
 			quit(1)
@@ -103,13 +103,13 @@ func _entry(c: Dictionary) -> Dictionary:
 			_world_subscription(world, "path", false)
 		],
 		"completion_contract":{"arrival_readable":true,"semantic_changes":true,"scenario_interaction":true,"action_boundaries":true,"choice_or_failure":true,"material_outcomes":true,"revisit_coverage":true,"world_connection":true,"primary_verb":true,"feedback_and_exit":true},
-		"declared_targets":{"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":[]}
+		"declared_targets":{"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":["base::zone:left","base::zone:right","base::zone:center","base::zone:background","base::zone:service_lane","base::zone:foreground","base::zone:exit_lane"]}
 	}
 	return {"scenario_id":sid,"sequence":sequence,"authoring":{
 		"arrival_summary":c.arrival,"player_verbs":[c.verb_a,c.verb_b,c.fail,"ignore_sequence","refuse_sequence"],
 		"world_connections":[c.world,"travel_interruption","safe_exit"],
 		"references":{"objects":["scenario::%s" % c.object_a,"scenario::%s" % c.object_b]},
-		"capture_ids":[sid+"_arrival",sid+"_work",sid+"_success",sid+"_failure",sid+"_ignored",sid+"_refused",sid+"_interrupted",sid+"_partial_revisit",sid+"_terminal_revisit",sid+"_reduced_motion",sid+"_small_screen",sid+"_hit_overlay"],
+		"capture_ids":[sid+"_arrival",sid+"_work",sid+"_success",sid+"_failure",sid+"_ignored",sid+"_refused",sid+"_interrupted",sid+"_partial_revisit",sid+"_terminal_revisit",sid+"_reduced_motion",sid+"_small_screen",sid+"_hit_overlay",sid+"_obstruction"],
 		"seed_evidence":{"proof_seed":sid+"_seed","expected_outcomes":["success","failure","ignored","refused","interrupted","public"],"save_boundaries":["arrival","work","resolution"],"cleanup_idempotent":true,"reentry_idempotent":true,"minimum_target_size":44,"public_fact_type":world.fact_type,"public_fact_producer":world.producer,"public_payload_predicate":JSON.stringify(world.payload_equals),"public_projected_field":world.field,"public_projected_payload_key":world.selector,"public_material_aftermath":world.aftermath,"public_exactly_once_receipt":true,"accepted_public_facts":JSON.stringify(world.accepted_public_facts)},
 		"masked_visual_explanations":{}
 	}}
@@ -158,6 +158,9 @@ func _world_contract(c: Dictionary) -> Dictionary:
 func _world_subscription(world: Dictionary, local_key: String, project_payload: bool) -> Dictionary:
 	var inputs := {"key":local_key,"value_from_payload":str(world.selector)} if project_payload else {"key":local_key,"value":"public"}
 	return {"fact_type":str(world.fact_type),"payload_equals":(world.payload_equals as Dictionary).duplicate(true),"handler":"set_local","inputs":inputs}
+
+func _target_inventory() -> Dictionary:
+	return {"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":["base::zone:left","base::zone:right","base::zone:center","base::zone:background","base::zone:service_lane","base::zone:foreground","base::zone:exit_lane"],"event_choices":{}}
 
 func _spawn(receipt: String, stable_id: String, label: String, role: String, zone: String, state: String) -> Dictionary:
 	return {"family":"scene_ops","op":"spawn","receipt_id":receipt,"owner_namespace":"scenario","stable_object_id":stable_id,"object":{"label":label,"role":role,"zone_id":zone,"bounds":{"w":72,"h":56},"visible":true,"enabled":true,"state":state,"appearance":stable_id}}

@@ -1611,7 +1611,8 @@
           "corner_store_lotto_fever_terminal_revisit",
           "corner_store_lotto_fever_reduced_motion",
           "corner_store_lotto_fever_small_screen",
-          "corner_store_lotto_fever_hit_overlay"
+          "corner_store_lotto_fever_hit_overlay",
+          "corner_store_lotto_fever_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -1978,7 +1979,15 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -2540,7 +2549,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b16f6edacbe725d77d1feda0c7ae5bafed119548a1252b8c9cde29b1e4f81a90"
+        "sequence_signature": "9e734922dda3c4028dd51f55dd164ec54d64c0bc0dc2ed4603a40f80d7de082c"
       }
     },
     {
@@ -2558,7 +2567,8 @@
           "corner_store_aftermath_terminal_revisit",
           "corner_store_aftermath_reduced_motion",
           "corner_store_aftermath_small_screen",
-          "corner_store_aftermath_hit_overlay"
+          "corner_store_aftermath_hit_overlay",
+          "corner_store_aftermath_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -2925,7 +2935,15 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -3485,7 +3503,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4e7f0649f0c79d4140e6b9c8a5aba7f062b0361c339085476683fc8fead6e3a1"
+        "sequence_signature": "ba7e78255692319f4a06c48f2502d0d174e78580e410317178eb830b128af2b4"
       }
     },
     {
@@ -3503,7 +3521,8 @@
           "corner_store_dead_shift_terminal_revisit",
           "corner_store_dead_shift_reduced_motion",
           "corner_store_dead_shift_small_screen",
-          "corner_store_dead_shift_hit_overlay"
+          "corner_store_dead_shift_hit_overlay",
+          "corner_store_dead_shift_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -3870,7 +3889,15 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -4432,7 +4459,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f75bb670cc3042626ecbcf1faa0b3ed075638c82ef6858bccf63ad8e22e2fbe2"
+        "sequence_signature": "22d113422bd94606c3feabc67747da17251138b1f20c26691c335a09b69cd386"
       }
     },
     {
@@ -4450,7 +4477,8 @@
           "corner_store_inventory_night_terminal_revisit",
           "corner_store_inventory_night_reduced_motion",
           "corner_store_inventory_night_small_screen",
-          "corner_store_inventory_night_hit_overlay"
+          "corner_store_inventory_night_hit_overlay",
+          "corner_store_inventory_night_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -4817,7 +4845,15 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -5379,7 +5415,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "cbb8a9586b53747e60f9563f63e9a1e00b077391be31483a32966c9343c53516"
+        "sequence_signature": "b657e32db8f7d1611ed5aa23e73f4448fcdf0fa29eb92af82b0bd3fdbd1d4424"
       }
     },
     {
@@ -5397,7 +5433,8 @@
           "back_alley_street_craps_terminal_revisit",
           "back_alley_street_craps_reduced_motion",
           "back_alley_street_craps_small_screen",
-          "back_alley_street_craps_hit_overlay"
+          "back_alley_street_craps_hit_overlay",
+          "back_alley_street_craps_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -5764,7 +5801,15 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -6328,7 +6373,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "bb89476a694703226545fd267f44eaae4b138f589c59e40f05ba1b97de176a4a"
+        "sequence_signature": "65e6aa8cb1f87e96cf913714396e175db830236680d34692e138bb7bc45814b7"
       }
     },
     {
@@ -6346,7 +6391,8 @@
           "back_alley_cruiser_parked_terminal_revisit",
           "back_alley_cruiser_parked_reduced_motion",
           "back_alley_cruiser_parked_small_screen",
-          "back_alley_cruiser_parked_hit_overlay"
+          "back_alley_cruiser_parked_hit_overlay",
+          "back_alley_cruiser_parked_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -6713,7 +6759,15 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -7273,7 +7327,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f0af1e103ea815b243a5b7b5629811d6018bfed8703c74e39ac0ce4d21994547"
+        "sequence_signature": "3617e2b46d031057efe731827374832e5a1f763d69995d0480d9fdd4f4dacbd3"
       }
     },
     {
@@ -7291,7 +7345,8 @@
           "back_alley_fence_night_terminal_revisit",
           "back_alley_fence_night_reduced_motion",
           "back_alley_fence_night_small_screen",
-          "back_alley_fence_night_hit_overlay"
+          "back_alley_fence_night_hit_overlay",
+          "back_alley_fence_night_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -7658,7 +7713,15 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -8220,7 +8283,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "cf4fac9af57de086c7d38b997447f2c3e6015b60d169a02a795b905bf95960fc"
+        "sequence_signature": "1fc20f35abce05fd2eb0de2351f826754521221e614fbcd6d299cf125bcfafcb"
       }
     },
     {
@@ -8238,7 +8301,8 @@
           "back_alley_nothing_moving_terminal_revisit",
           "back_alley_nothing_moving_reduced_motion",
           "back_alley_nothing_moving_small_screen",
-          "back_alley_nothing_moving_hit_overlay"
+          "back_alley_nothing_moving_hit_overlay",
+          "back_alley_nothing_moving_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -8605,7 +8669,15 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -9165,7 +9237,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "2af909549c6fa0090cd14224d08fd57be12c8584f60717907942d5e5eb30b117"
+        "sequence_signature": "751dd2e08a9f6321f92384ed786482ad2e8365cbe8129d3e6b4c1f07f3befd62"
       }
     },
     {
@@ -9183,7 +9255,8 @@
           "pawn_shop_estate_lot_day_terminal_revisit",
           "pawn_shop_estate_lot_day_reduced_motion",
           "pawn_shop_estate_lot_day_small_screen",
-          "pawn_shop_estate_lot_day_hit_overlay"
+          "pawn_shop_estate_lot_day_hit_overlay",
+          "pawn_shop_estate_lot_day_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -9550,7 +9623,15 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -10112,7 +10193,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a96b85cda8f0e6c43c5842a16239adb40b553d972be3e851b57d1342eb6fd7a2"
+        "sequence_signature": "0d2086b8c6ad2f135e40cf99261bf3c1fdbb80c070064136949afa8e84e78291"
       }
     },
     {
@@ -10130,7 +10211,8 @@
           "pawn_shop_serial_check_day_terminal_revisit",
           "pawn_shop_serial_check_day_reduced_motion",
           "pawn_shop_serial_check_day_small_screen",
-          "pawn_shop_serial_check_day_hit_overlay"
+          "pawn_shop_serial_check_day_hit_overlay",
+          "pawn_shop_serial_check_day_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -10497,7 +10579,15 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -11057,7 +11147,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "8e34b2cab165871ca5cd72bc34d9ef798f9afc62acc79b345350d2b9c4fd1c9b"
+        "sequence_signature": "940948affd208e314c8b7b1bd438d570bd2a2d1340af3bf0125e91b7aedb5612"
       }
     },
     {
@@ -11075,7 +11165,8 @@
           "pawn_shop_sals_mood_terminal_revisit",
           "pawn_shop_sals_mood_reduced_motion",
           "pawn_shop_sals_mood_small_screen",
-          "pawn_shop_sals_mood_hit_overlay"
+          "pawn_shop_sals_mood_hit_overlay",
+          "pawn_shop_sals_mood_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -11442,7 +11533,15 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -12004,7 +12103,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "270d754ae78ddb141f01c687771bcca6084667f564398020348730d237b5e5a9"
+        "sequence_signature": "195af7742f492dfa4b5469fc55aa0927bf88cc5dcf0701138be6363bfb644815"
       }
     }
   ]
