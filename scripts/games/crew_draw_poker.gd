@@ -1077,7 +1077,7 @@ func _showdown(state: Dictionary, run_state: RunState) -> Dictionary:
 	state["verified_observation_receipts"] = verified_receipts
 	if not queue.is_empty() and not bool(state.get("player_folded_hidden", false)):
 		authority_gaps.append("host_tell_observation_authority_unavailable")
-	var player_score := CrewPokerModelScript.evaluate_hand(state.get("player_cards", []))
+	var player_score := CrewPokerModelScript.evaluate_hand(state.get("player_cards", [])) if bool(state.get("player_active", true)) else {}
 	var hand_label := str(player_score.get("label", "Hand")) if bool(state.get("player_active", true)) else "Your folded cards stay hidden"
 	var message := "%s. %s" % [hand_label, "You take $%d." % payout if raw_payout > 0 else "%s takes it." % _winner_names(winners)]
 	_finish_hand(state, run_state, {"winners": winners, "payout": payout, "message": message})
