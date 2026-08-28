@@ -244,7 +244,8 @@ func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: 
 		failures.append("Composed target-room handoff is not routed by its exact owner-scoped sequence token: %s." % JSON.stringify(handoff))
 	if run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_node_id) != token:
 		failures.append("Mounted Crew favor sequence did not become the sole delivery_handoff presentation owner.")
-	var before_command := run_state.to_dict()
+	var bankroll_at_command := run_state.bankroll
+	var heat_at_command := run_state.suspicion_level()
 	var actions := _array(handoff.get("available_actions", []))
 	var handoff_action := _dict(actions[0]) if not actions.is_empty() else {}
 	var command := run_state.world_sequence_command(
@@ -264,7 +265,7 @@ func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: 
 	if not bool(command.get("ok", false)):
 		failures.append("Authenticated Crew favor handoff command failed: %s." % JSON.stringify(command))
 		return
-	if run_state.bankroll != int(before_command.get("bankroll", -1)) or run_state.suspicion_level() != int(before_command.get("suspicion", -1)):
+	if run_state.bankroll != bankroll_at_command or run_state.suspicion_level() != heat_at_command:
 		failures.append("Adapter command applied Crew economy consequences before the owning delivery model consumed the neutral outcome.")
 	var pending := run_state.world_sequence_pending_outcomes(token)
 	if pending.size() != 1 or str(_dict(pending[0]).get("channel_id", "")) != "delivery_handoff" \
