@@ -2046,7 +2046,10 @@ func _refresh_world_sequence_registration(token: String, preserve_pending: bool 
 	var snapshot := CrewWorldSequenceAdapterScript.snapshot(current_environment, token, _world_sequence_definition(token))
 	if snapshot.is_empty(): return
 	var registration := _copy_dict(world_sequence_registrations.get(token, {}))
-	registration["lifecycle"] = str(snapshot.get("lifecycle", registration.get("lifecycle", "mounted")))
+	var adapter_lifecycle := str(snapshot.get("lifecycle", ""))
+	# The adapter's live `active` state corresponds to the registration's public
+	# `mounted` state; terminal lifecycle names are shared verbatim.
+	registration["lifecycle"] = "mounted" if adapter_lifecycle == "active" else adapter_lifecycle if not adapter_lifecycle.is_empty() else str(registration.get("lifecycle", "mounted"))
 	registration["outcome_acknowledgements"] = _copy_dict(snapshot.get("outcome_acknowledgements", {}))
 	var live_pending := CrewWorldSequenceAdapterScript.pending_outcomes(current_environment, token)
 	if not live_pending.is_empty() or not preserve_pending:
