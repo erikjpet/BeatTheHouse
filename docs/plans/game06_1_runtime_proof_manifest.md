@@ -47,6 +47,33 @@ handlers. Existing game modules never invoke the new opt-in methods implicitly.
 
 The same check is registered in the existing table-game surface contract path.
 
+## First-review remediation
+
+The first product review rejected the simplified action-call boundary. The
+runtime now accepts the complete frozen `RitualCommand` and validates, before
+mutation, its closed shape, exact version and ids, declared parameters and live
+source/target references, expected phase, next durable boundary ordinal, command
+receipt, caller-supplied canonical fingerprint, and the complete authenticated
+action against the live trusted origin descriptor.
+
+Accepted commands produce closed independently fingerprinted `RitualResult`,
+`GameFact`, `OperationResult`, `ReceiptRecord`, and `RequestCacheRecord` records.
+Rejected commands produce only the frozen closed `RitualRejection` taxonomy.
+Replay uses the exact command fingerprint and verifies the cached response
+fingerprint before returning it.
+
+Each host handler is checked against its own accepted-operation and emitted-fact
+allowlists before any candidate state commits. Hostile cross-handler operation
+and fact emissions reject without authoritative mutation.
+
+Persistence now uses a closed authenticated snapshot. Restore validates outer
+identity/fingerprint and inner closed state version, types, legal phase,
+sequences, actor/object references, receipts, facts, operation results, request
+cache, and cached response bindings. Hostile unknown-field, wrong-type,
+reference, fingerprint, cache-shape, schema, sequence, state-version, and
+migration-version cases all return `invalid_restore` while preserving the
+pre-restore state.
+
 ## Recorded gates
 
 | Gate | Result | Duration/evidence |
@@ -57,6 +84,10 @@ The same check is registered in the existing table-game surface contract path.
 | GDScript load check | PASS | 26.2 s |
 | all game module contracts | PASS | 10.98 s including load, 0 failures |
 | game surface contracts | PASS | 18.3 s including load; check body 7.58 s, 0 failures |
+| first-review focused hostile closure | PASS | complete envelope, allowlist, and restore negatives |
+| first-review project validation | PASS | 51.1 s |
+| first-review GDScript load check | PASS | 25.2 s; 250 scripts |
+| first-review game surface contracts | PASS | 18.0 s including load; check body 7.53 s, 0 failures |
 
 The monolithic `foundation_games` wrapper was not used as the final evidence: on
 this checkout it exceeded a 304-second outer process ceiling without producing a
