@@ -2906,7 +2906,7 @@ func _draw_roulette_ritual_status(surface, state: Dictionary) -> void:
 	var accent := C_PINK if phase == "no_more_bets" else C_YELLOW
 	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.76))
 	surface.draw_rect(rect, accent, false, 2)
-	surface.surface_label_centered_plain("%s | %s | BALL %s | %s" % [phase.replace("_", " ").to_upper(), croupier_behavior.replace("_", " ").to_upper(), ball_state.to_upper(), str(energy.get("tier", "quiet")).to_upper()], rect.grow(-3), 7, C_WHITE)
+	surface.surface_label_centered("%s | %s | BALL %s | %s" % [phase.replace("_", " ").to_upper(), croupier_behavior.replace("_", " ").to_upper(), ball_state.to_upper(), str(energy.get("tier", "quiet")).to_upper()], rect.grow(-3), 7, C_WHITE)
 
 
 func _draw_result_bet_chips(surface, entries_value: Variant, include_losers: bool, winners_paid: bool) -> void:
