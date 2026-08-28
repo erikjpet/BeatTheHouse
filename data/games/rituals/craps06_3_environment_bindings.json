@@ -8,6 +8,7 @@
       {
         "profile_id": "craps.ordinary_casino",
         "surface_kind": "casino",
+        "authoritative_fund_domain": "chips",
         "response_fact": "craps.point_set",
         "required_inventory": {"anchors": ["base::anchor:craps_table_north"]},
         "operations": [
@@ -17,6 +18,7 @@
       {
         "profile_id": "craps.hot_high_stakes",
         "surface_kind": "casino",
+        "authoritative_fund_domain": "chips",
         "response_fact": "craps.streak_tier",
         "required_inventory": {"anchors": ["base::anchor:craps_rail"]},
         "operations": [
@@ -26,6 +28,7 @@
       {
         "profile_id": "craps.security_audit",
         "surface_kind": "casino",
+        "authoritative_fund_domain": "chips",
         "response_fact": "craps.cheat_attempt",
         "required_inventory": {"anchors": ["base::anchor:craps_security_rail"]},
         "operations": [
@@ -35,6 +38,7 @@
       {
         "profile_id": "craps.ordinary_street",
         "surface_kind": "street",
+        "authoritative_fund_domain": "bankroll",
         "response_fact": "craps.point_set",
         "required_inventory": {"anchors": ["base::anchor:street_lookout_post"]},
         "operations": [
@@ -44,6 +48,7 @@
       {
         "profile_id": "craps.interrupted_street",
         "surface_kind": "street",
+        "authoritative_fund_domain": "bankroll",
         "response_fact": "craps.street_lookout_warning",
         "required_inventory": {"anchors": ["base::anchor:street_pressure_approach"], "routes": ["base::world:street_exit"]},
         "operations": [
