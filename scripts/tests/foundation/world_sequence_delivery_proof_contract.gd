@@ -351,6 +351,7 @@ func _check_delivery_failure_injection_matrix(failures: Array) -> void:
 
 	_check_owner_lifecycle_retry(library, "expired", false, failures)
 	_check_owner_lifecycle_retry(library, "abandoned", true, failures)
+	_check_after_cleanup_replay(library, failures)
 
 
 func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures: Array, issue_command: bool = true) -> Dictionary:
@@ -465,6 +466,34 @@ func _check_owner_lifecycle_retry(library: ContentLibrary, outcome: String, inje
 	var replay := _dict(run_state.call("_retry_delivery_world_sequence_lifecycle"))
 	if not bool(replay.get("inactive", false)) or JSON.stringify(run_state.to_dict()) != exact:
 		failures.append("P1 %s lifecycle retry replay was not byte-identical and inactive." % outcome)
+
+
+func _check_after_cleanup_replay(library: ContentLibrary, failures: Array) -> void:
+	var fixture := _prepared_delivery_outcome(library, "WORLD-SEQUENCE-P1-AFTER-CLEANUP", failures)
+	if fixture.is_empty(): return
+	var run_state: RunState = fixture.get("run_state")
+	var token := str(fixture.get("token", ""))
+	var receipt_id := str(fixture.get("receipt_id", ""))
+	var target_node_id := str(fixture.get("target_node_id", ""))
+	var bankroll_before := int(fixture.get("bankroll_before", 0))
+	var heat_before := int(fixture.get("heat_before", 0))
+	var command_count := _world_sequence_command_receipt_count(run_state, token)
+	var owner_result := run_state.delivery_complete_handoff(target_node_id)
+	var public_result := _persist_owner_result_checkpoint(run_state, token, receipt_id, owner_result)
+	var acknowledged := run_state.world_sequence_ack_outcome(token, receipt_id, public_result)
+	var cleaned := run_state.world_sequence_sync_owner(token, false, "owner_ended")
+	if not bool(owner_result.get("ok", false)) or not bool(acknowledged.get("ok", false)) or not bool(cleaned.get("ok", false)):
+		failures.append("P1 after-cleanup injection could not establish its completed transaction checkpoint.")
+		return
+	var exact := JSON.stringify(run_state.to_dict())
+	var app := FoundationMainScript.new()
+	app.set("run_state", run_state)
+	var replay := _dict(app.call("_resume_pending_world_sequence_outcomes"))
+	app.free()
+	if not bool(replay.get("ok", false)) or not bool(replay.get("inactive", false)) or JSON.stringify(run_state.to_dict()) != exact \
+			or run_state.bankroll != bankroll_before + 22 or run_state.suspicion_level() != heat_before + 4 \
+			or _world_sequence_command_receipt_count(run_state, token) != command_count:
+		failures.append("P1 after-cleanup refresh replay was not exact, inactive and consequence-idempotent: %s." % JSON.stringify(replay))
 
 
 func _round_trip_run(run_state: RunState) -> RunState:
