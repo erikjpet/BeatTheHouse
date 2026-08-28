@@ -1,6 +1,6 @@
 # game06_4 machine-games consumer contract
 
-Status: implementation-blocking draft
+Status: UNREVIEWED contract-only consumer candidate
 
 Frozen vocabulary base: `a2760d81` (`game_ritual/1`)
 
@@ -218,6 +218,14 @@ already-receipted payout, award, dialogue, audio, and room-reaction effects.
 7. Visual captures cover all prompt states, accessibility modes, cabinet
    variants, denominations, and both hand-pay/lockup paths.
 
-Implementation cannot start from a rejected shared runtime. It may start only
-after an accepted runtime head satisfies the frozen command, receipt, handler,
-and restore boundaries.
+The executable declarations at `slot_machine_ritual_contract()` and
+`video_poker_ritual_contract()` are built directly on accepted vocabulary head
+`a2760d81`. They import no shared executable ritual runtime and preserve the
+existing resolver, RNG, paytable, detection, and rendering authorities. The
+focused `game06_4_machine_ritual_contract.gd` fixture binds closed top-level and
+phase shapes, action registration, side-effect-free pointer rejection, input
+equivalence, material energy tiers, sealed-host handler authority, persistence,
+and byte-equal otherwise-identical observers without authentic capability.
+
+Native, Web, full RTP, performance, accessibility, save/restore, and visual
+evidence remain Integrator-owned gates. This WIP is not an acceptance verdict.
