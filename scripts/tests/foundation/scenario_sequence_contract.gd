@@ -252,6 +252,7 @@ static func check(library: ContentLibrary, failures: Array, scene_tree: SceneTre
 	_check_lifecycle_caller_failure_contract(library, failures, scene_tree)
 	_check_negative_fixtures(failures)
 	_check_lifecycle_commands(failures)
+	_check_created_owner_command_authority(failures)
 	_check_augment_availability(failures)
 	_check_boundary_provenance(failures)
 	_check_mutually_exclusive_branch_cleanup(failures)
@@ -2503,6 +2504,58 @@ static func _check_augment_availability(failures: Array) -> void:
 	var forged_enabled := SequenceRuntimeScript.apply_command(unsealed_state, definition, command, {"available_funds": 0, "host_interaction_availability": enabled_availability})
 	if bool(forged_enabled.get("ok", true)):
 		failures.append("Caller proposal true granted an augment after sealed host authority was removed.")
+
+
+static func _check_created_owner_command_authority(failures: Array) -> void:
+	var definition := _runtime_definition()
+	var sequence := _dict(definition.get("sequence", {}))
+	var graph := _dict(sequence.get("phase_graph", {}))
+	var phases := _array(graph.get("phases", []))
+	var arrival := _dict(phases[0])
+	var interaction_operations := _array(arrival.get("interaction_ops", []))
+	for index in range(interaction_operations.size()):
+		var operation := _dict(interaction_operations[index])
+		if str(operation.get("stable_object_id", "")) != "command_console":
+			continue
+		operation["owner_namespace"] = "crew"
+		operation["stable_object_id"] = "package_handoff"
+		var interaction := _dict(operation.get("interaction", {}))
+		interaction["owner_namespace"] = "crew"
+		interaction["stable_object_id"] = "package_handoff"
+		operation["interaction"] = interaction
+		interaction_operations[index] = operation
+	arrival["interaction_ops"] = interaction_operations
+	phases[0] = arrival
+	graph["phases"] = phases
+	sequence["phase_graph"] = graph
+	var cleanup := _dict(sequence.get("cleanup", {}))
+	var cleanup_operations := _array(cleanup.get("operations", []))
+	for cleanup_index in range(cleanup_operations.size()):
+		var cleanup_operation := _dict(cleanup_operations[cleanup_index])
+		if str(cleanup_operation.get("stable_object_id", "")) != "command_console":
+			continue
+		cleanup_operation["owner_namespace"] = "crew"
+		cleanup_operation["stable_object_id"] = "package_handoff"
+		cleanup_operations[cleanup_index] = cleanup_operation
+	cleanup["operations"] = cleanup_operations
+	sequence["cleanup"] = cleanup
+	definition["sequence"] = sequence
+	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
+
+	var trusted_host := _fixture_host_semantics(definition)
+	trusted_host["creation_owner_namespaces"] = ["crew", "scenario"]
+	var state := SequenceRuntimeScript.initial_state(definition, "bar_node", "created_owner_seed", trusted_host)
+	var command := _runtime_command(state, definition, "prepare", "bar_node", "arrival", "created_owner:crew:1", {}, "crew", "package_handoff")
+	var accepted := SequenceRuntimeScript.apply_command(state, definition, command, {"available_funds": 2})
+	if not bool(accepted.get("ok", false)):
+		failures.append("Trusted Crew-created package_handoff interaction could not execute its authenticated command: %s" % JSON.stringify(accepted.get("errors", [])))
+
+	var untrusted_host := _fixture_host_semantics(definition)
+	var untrusted_state := SequenceRuntimeScript.initial_state(definition, "bar_node", "caller_minted_owner_seed", untrusted_host)
+	var forged_command := SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "created_owner:forged:1", {}, "crew", "package_handoff")
+	var forged := SequenceRuntimeScript.apply_command(untrusted_state, definition, forged_command, {"available_funds": 2, "creation_owner_namespaces": ["crew"]})
+	if bool(forged.get("ok", true)):
+		failures.append("Caller-minted creation_owner_namespaces granted created-interaction command authority without trusted host registration.")
 
 
 static func _prepared_fixture_state(definition: Dictionary, seed_token: String, failures: Array) -> Dictionary:

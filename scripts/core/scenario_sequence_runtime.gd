@@ -945,9 +945,9 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 			"action_origin_boundary_id": str(_dict(causal_descriptor.get("action", {})).get("action_origin_boundary_id", "")),
 			"action_origin_fingerprint": str(_dict(causal_descriptor.get("action", {})).get("action_origin_fingerprint", "")),
 		}
-	if owner_namespace != "scenario":
+	var creation_owners := _array(_dict(state.get("semantic_state", {})).get("creation_owner_namespaces", ["scenario"]))
+	if not creation_owners.has(owner_namespace):
 		var external_action := _dict(descriptor.get("action", {}))
-		var creation_owners := _array(_dict(state.get("semantic_state", {})).get("creation_owner_namespaces", ["scenario"]))
 		var sealed_creation_owner_origin := bool(descriptor.get("action_present", false)) \
 			and creation_owners.has(str(external_action.get("action_origin_owner_namespace", ""))) \
 			and _authored_action_origin_matches(state, definition, owner_namespace, stable_object_id, external_action)
