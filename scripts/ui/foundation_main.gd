@@ -1257,9 +1257,36 @@ func _blackjack_host_surface_intent(surface_action: String, index: int, confirm_
 		return _blackjack_host_rejection("invalid_intent", "Blackjack action intent is unavailable.")
 	var candidate := _blackjack_host_detached()
 	var ledger := _blackjack_host_ledger(candidate, true)
-	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
-		return _blackjack_host_rejection("pending_delivery", "Settle the pending Blackjack action before changing the table.", str((ledger.get("pending_delivery", {}) as Dictionary).get("request_key", "")))
+	var pending: Dictionary = ledger.get("pending_delivery", {})
+	if not pending.is_empty():
+		if surface_action in ["blackjack_retry_pending", "blackjack_deal"]:
+			return GameModule.surface_command({
+				"handled": true,
+				"action_id": str(pending.get("action_id", "")),
+				"action_kind": "legal",
+				"direct_resolve": true,
+				"skip_stake_validation": true,
+				"set_stake": int(pending.get("stake", 0)),
+				"ui_state": (ledger.get("session", {}) as Dictionary).duplicate(true),
+				"_blackjack_host_delivery": pending.duplicate(true),
+				"message": "Retrying the sealed Blackjack action.",
+			})
+		if surface_action == "blackjack_cancel_pending":
+			var cancelled := BlackjackActionAuthorityScript.cancel_delivery(ledger, pending)
+			if not bool(cancelled.get("ok", false)):
+				return _blackjack_host_rejection(str(cancelled.get("error_code", "receipt_content_conflict")), "Blackjack cancellation did not match the pending action.", str(pending.get("request_key", "")))
+			var cancelled_ledger: Dictionary = cancelled.get("ledger", ledger)
+			_blackjack_host_store_ledger(candidate, cancelled_ledger)
+			if not _blackjack_host_publish(candidate):
+				return _blackjack_host_rejection("internal_fail_closed", "Blackjack cancellation could not restore the pre-delivery session.", str(pending.get("request_key", "")))
+			return GameModule.surface_command({
+				"handled": true,
+				"ui_state": (cancelled_ledger.get("session", {}) as Dictionary).duplicate(true),
+				"message": "Pending Blackjack action cancelled; the pre-delivery table state is restored.",
+			})
+		return _blackjack_host_rejection("pending_delivery", "Retry or cancel the pending Blackjack action before changing the table.", str(pending.get("request_key", "")))
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
+	var recovery_session := session.duplicate(true)
 	if surface_time_msec >= 0:
 		session["surface_time_msec"] = surface_time_msec
 	if not current_game.call("_has_dealt_hand", session) and _current_selected_stake() > 0:
@@ -1271,7 +1298,7 @@ func _blackjack_host_surface_intent(surface_action: String, index: int, confirm_
 		if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)):
 			var action_id := str(command.get("action_id", ""))
 			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
-			var issued := BlackjackActionAuthorityScript.issue_delivery(ledger, action_id, _blackjack_host_trusted_context(candidate, delivery_stake))
+			var issued := BlackjackActionAuthorityScript.issue_delivery(ledger, action_id, _blackjack_host_trusted_context(candidate, delivery_stake), delivery_stake, recovery_session)
 			if not bool(issued.get("ok", false)):
 				return _blackjack_host_rejection(str(issued.get("error_code", "receipt_content_conflict")), "Blackjack delivery conflicts with the pending action.")
 			ledger = issued.get("ledger", ledger)
@@ -1305,6 +1332,7 @@ func _blackjack_host_auto_intent(surface_time_msec: int) -> Dictionary:
 	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
 		return {}
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
+	var recovery_session := session.duplicate(true)
 	session["surface_time_msec"] = surface_time_msec
 	var command := current_game.surface_auto_action_command(session, candidate, candidate.current_environment, {})
 	if bool(command.get("handled", false)):
@@ -1312,7 +1340,7 @@ func _blackjack_host_auto_intent(surface_time_msec: int) -> Dictionary:
 		ledger = BlackjackActionAuthorityScript.stage_session(ledger, next_session)
 		if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)):
 			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
-			var issued := BlackjackActionAuthorityScript.issue_delivery(ledger, str(command.get("action_id", "")), _blackjack_host_trusted_context(candidate, delivery_stake))
+			var issued := BlackjackActionAuthorityScript.issue_delivery(ledger, str(command.get("action_id", "")), _blackjack_host_trusted_context(candidate, delivery_stake), delivery_stake, recovery_session)
 			if not bool(issued.get("ok", false)):
 				return _blackjack_host_rejection(str(issued.get("error_code", "receipt_content_conflict")), "Blackjack auto delivery conflicts with the pending action.")
 			ledger = issued.get("ledger", ledger)
@@ -1367,7 +1395,9 @@ func _blackjack_host_prepare_delivery(action_id: String, stake: int, delivery_cl
 	var ledger := _blackjack_host_ledger(candidate, true)
 	var cache: Dictionary = ledger.get("request_cache", {}) if typeof(ledger.get("request_cache", {})) == TYPE_DICTIONARY else {}
 	if not requested_key.is_empty() and cache.has(requested_key):
-		var cached_response := BlackjackActionAuthorityScript.cached_response(ledger, requested_key, delivery_claim)
+		if str(delivery_claim.get("action_id", "")) != action_id or int(delivery_claim.get("stake", -1)) != stake:
+			return _blackjack_host_rejection("receipt_content_conflict", "Blackjack request receipt is bound to a different action or stake.", requested_key)
+		var cached_response := BlackjackActionAuthorityScript.cached_replay_response(ledger, requested_key, delivery_claim)
 		if cached_response.is_empty() or (not bool(cached_response.get("ok", false)) and cached_response.has("error_code")):
 			return _blackjack_host_rejection("receipt_content_conflict", "Blackjack request receipt is bound to different content.", requested_key)
 		return {"ok": true, "cached_response": cached_response}
@@ -1376,13 +1406,13 @@ func _blackjack_host_prepare_delivery(action_id: String, stake: int, delivery_cl
 	if not pending.is_empty():
 		if not delivery_claim.is_empty() and GameRitualRuntimeScript.canonical_json(delivery_claim) != GameRitualRuntimeScript.canonical_json(pending):
 			return _blackjack_host_rejection("stale_boundary", "Blackjack delivery belongs to a different action boundary.", requested_key)
-		var matched := BlackjackActionAuthorityScript.delivery_matches(ledger, str(pending.get("request_key", "")), action_id, context)
+		var matched := BlackjackActionAuthorityScript.delivery_matches(ledger, str(pending.get("request_key", "")), action_id, context, stake)
 		if not bool(matched.get("ok", false)):
 			return _blackjack_host_rejection(str(matched.get("error_code", "receipt_content_conflict")), "Blackjack delivery content changed before settlement.", str(pending.get("request_key", "")))
 		return {"ok": true, "delivery": pending.duplicate(true)}
 	if not requested_key.is_empty():
 		return _blackjack_host_rejection("stale_boundary", "Blackjack delivery is no longer pending.", requested_key)
-	var issued := BlackjackActionAuthorityScript.issue_delivery(ledger, action_id, context)
+	var issued := BlackjackActionAuthorityScript.issue_delivery(ledger, action_id, context, stake, ledger.get("session", {}))
 	if not bool(issued.get("ok", false)):
 		return _blackjack_host_rejection(str(issued.get("error_code", "receipt_content_conflict")), "Blackjack delivery could not be issued.")
 	ledger = issued.get("ledger", ledger)
@@ -1391,6 +1421,41 @@ func _blackjack_host_prepare_delivery(action_id: String, stake: int, delivery_cl
 	if not _blackjack_host_publish(candidate):
 		return _blackjack_host_rejection("internal_fail_closed", "Blackjack delivery could not be persisted.")
 	return {"ok": true, "delivery": (issued.get("delivery", {}) as Dictionary).duplicate(true)}
+
+
+func _blackjack_host_is_canonical_replay(result: Dictionary) -> bool:
+	if run_state == null or not _current_game_uses_blackjack_action_authority():
+		return false
+	var ledger := _blackjack_host_ledger(run_state, false)
+	return not ledger.is_empty() and BlackjackActionAuthorityScript.valid_cached_replay(ledger, result)
+
+
+func _blackjack_host_cached_replay(delivery_claim: Dictionary) -> Dictionary:
+	var request_key := str(delivery_claim.get("request_key", ""))
+	if request_key.is_empty() or run_state == null or not _current_game_uses_blackjack_action_authority():
+		return {}
+	var ledger := _blackjack_host_ledger(run_state, false)
+	var cache: Dictionary = ledger.get("request_cache", {}) if typeof(ledger.get("request_cache", {})) == TYPE_DICTIONARY else {}
+	if ledger.is_empty() or not cache.has(request_key):
+		return {}
+	var replay := BlackjackActionAuthorityScript.cached_replay_response(ledger, request_key, delivery_claim)
+	if replay.is_empty() or (not bool(replay.get("ok", false)) and replay.has("error_code")):
+		return _blackjack_host_rejection("receipt_content_conflict", "Blackjack request receipt is bound to different content.", request_key)
+	return replay
+
+
+func _blackjack_host_present_cached_replay(result: Dictionary) -> bool:
+	if not _blackjack_host_is_canonical_replay(result):
+		return false
+	# Cache hits may refresh presentation, but they are not a second action
+	# boundary and must never repeat tutorials, audio, absorption, autosave,
+	# interrupts, outcome scheduling, or any other one-shot consumer.
+	last_game_result = FoundationActionViewModelScript.stored_game_result_snapshot(result)
+	if game_surface_canvas != null and current_screen == SCREEN_GAME:
+		game_surface_canvas.render_game_snapshot(_game_view_snapshot(true))
+	else:
+		_refresh()
+	return true
 
 
 func _blackjack_host_proposal_valid(proposal: Dictionary, proposal_input: Dictionary) -> bool:
@@ -1434,6 +1499,10 @@ func _blackjack_host_proposal_fingerprints(proposal: Dictionary) -> Dictionary:
 		"run_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(proposal.get("run_snapshot", {})),
 		"rng_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(proposal.get("rng_snapshot", {})),
 	}
+
+
+func _blackjack_host_advance_environment_turn(candidate: RunState) -> Dictionary:
+	return candidate.advance_environment_turns(1)
 
 
 func _blackjack_host_resolve_intent(action_id: String, stake: int, delivery_claim: Dictionary = {}) -> Dictionary:
@@ -1557,7 +1626,7 @@ func _blackjack_host_resolve_intent(action_id: String, stake: int, delivery_clai
 	proposed_ledger["checkpoint_fingerprint"] = proposed_candidate.blackjack_authority_checkpoint_fingerprint()
 	_blackjack_host_store_ledger(proposed_candidate, proposed_ledger)
 	if not bool(result.get("defer_bankroll_zero_failure", false)):
-		var turn_result := proposed_candidate.advance_environment_turns(1)
+		var turn_result := _blackjack_host_advance_environment_turn(proposed_candidate)
 		if not bool(turn_result.get("ok", false)):
 			return _blackjack_host_rejection(str(turn_result.get("error_code", "environment_turn_failed")), "Blackjack transaction could not cross the environment boundary.", request_key)
 	var suspicion_after := proposed_candidate.suspicion_level_for_environment_id(environment_id)
@@ -10043,6 +10112,18 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		return
 	if not wager_confirmed and not input_route_guarded and _guard_player_input_route():
 		return
+	if _current_game_uses_blackjack_action_authority() and not blackjack_delivery.is_empty():
+		if str(blackjack_delivery.get("action_id", "")) != action_id:
+			_show_message("Blackjack replay failed closed because its action did not match the sealed delivery.")
+			_refresh()
+			return
+		var early_replay := _blackjack_host_cached_replay(blackjack_delivery)
+		if not early_replay.is_empty():
+			if early_replay.has("blackjack_host_replay") and _blackjack_host_present_cached_replay(early_replay):
+				return
+			_show_message(str(early_replay.get("message", "Blackjack replay failed closed.")))
+			_refresh()
+			return
 	var debug_coin_pusher_host := bool(resolved_surface_ui_state.get("coin_pusher_debug_profile_stages", false))
 	var debug_host_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
 	var debug_host_stage_started_usec := debug_host_started_usec
@@ -10110,6 +10191,11 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if debug_coin_pusher_host:
 		debug_host_timing["host_module_resolve"] = Time.get_ticks_usec() - debug_host_stage_started_usec
 		debug_host_stage_started_usec = Time.get_ticks_usec()
+	if result.has("blackjack_host_replay"):
+		if not _blackjack_host_present_cached_replay(result):
+			result = _blackjack_host_rejection("invalid_cache", "Blackjack replay did not match the canonical committed response.", str(result.get("blackjack_host_request_key", "")))
+		else:
+			return
 	if bool(result.get("ok", false)):
 		var scratch_completion: Dictionary = _record_scratch_ticket_discovery(str(result.get("scratch_discovered_type_id", "")))
 		if not scratch_completion.is_empty():
