@@ -114,6 +114,7 @@ func _check_runtime_matrix(definition: Dictionary, entry: Dictionary, failures: 
 			_check_terminal_route(definition, phase_id, kind, failures)
 		if phase_id != "arrival": _check_pressure_route(definition, phase_id, failures)
 	_check_identity_routes(definition, entry, failures)
+	_check_fact_cleanup_injection(definition, failures)
 	_check_reentry_expiry(definition, failures)
 	_check_hostile_privacy_presentation(definition, entry, failures)
 
@@ -145,16 +146,49 @@ func _check_identity_routes(definition: Dictionary, entry: Dictionary, failures:
 		failures.append("%s lacks its exact three-way identity decision evidence." % sid)
 		return
 	var terminal_count := 0
+	var spatial_targets: Dictionary = {}
+	var spatial_zones: Dictionary = {}
+	var focus_orders: Dictionary = {}
+	var traversal_inputs: Dictionary = {}
 	for index in range(decision_verbs.size()):
 		var state := _state_at_phase(definition, phase_id, "%s_identity_%d" % [sid,index], failures)
 		var command_id := str(decision_verbs[index])
-		var target := _branch_target(definition, phase_id, command_id)
+		var target := _command_target(state, command_id)
+		if target.is_empty() or spatial_targets.has(target): failures.append("%s identity choices do not own distinct interactable targets." % sid)
+		spatial_targets[target] = true
+		var interaction := _interaction_for_target(state, target)
+		var scene_object := _dict(_dict(_dict(state.get("semantic_state", {})).get("scene_objects", {})).get("scenario::%s" % target, {}))
+		var zone := str(scene_object.get("zone_id", ""))
+		if zone.is_empty() or spatial_zones.has(zone): failures.append("%s identity choices do not occupy distinct spatial routes." % sid)
+		spatial_zones[zone] = true
+		var focus := int(interaction.get("focus_order", -1))
+		if focus < 0 or focus_orders.has(focus): failures.append("%s identity choices do not expose distinct traversal order." % sid)
+		focus_orders[focus] = true
+		for action_value in _array(interaction.get("available_actions", [])):
+			var action := _dict(action_value)
+			if str(action.get("id", "")) == command_id: traversal_inputs[str(action.get("input_action", ""))] = true
+		var branch_target := _branch_target(definition, phase_id, command_id)
 		var result := _apply(state, definition, command_id, "%s:identity:%d" % [sid,index])
 		var next := _dict(result.get("state", {}))
-		if target.begins_with("terminal_"): terminal_count += 1
-		if not bool(result.get("ok", false)) or (target.begins_with("terminal_") and str(next.get("status", "")) != "aftermath") or (not target.begins_with("terminal_") and str(next.get("phase_id", "")) != target): failures.append("%s identity command %s missed target %s." % [sid,command_id,target])
+		if branch_target.begins_with("terminal_"): terminal_count += 1
+		if not bool(result.get("ok", false)) or (branch_target.begins_with("terminal_") and str(next.get("status", "")) != "aftermath") or (not branch_target.begins_with("terminal_") and str(next.get("phase_id", "")) != branch_target): failures.append("%s identity command %s missed target %s." % [sid,command_id,branch_target])
 		if not _round_trip(next, definition): failures.append("%s identity command %s save/load drifted." % [sid,command_id])
 	if terminal_count < 2: failures.append("%s identity graph lacks materially exclusive terminal choices." % sid)
+	for input_action in ["ui_left", "ui_up", "ui_right"]:
+		if not traversal_inputs.has(input_action): failures.append("%s identity route lacks keyboard/controller traversal action %s." % [sid,input_action])
+
+func _command_target(state: Dictionary, command_id: String) -> String:
+	for interaction_value in _dict(_dict(state.get("semantic_state", {})).get("interactions", {})).values():
+		var interaction := _dict(interaction_value)
+		for action_value in _array(interaction.get("available_actions", [])):
+			if str(_dict(action_value).get("id", "")) == command_id: return str(interaction.get("stable_object_id", ""))
+	return ""
+
+func _interaction_for_target(state: Dictionary, target: String) -> Dictionary:
+	for interaction_value in _dict(_dict(state.get("semantic_state", {})).get("interactions", {})).values():
+		var interaction := _dict(interaction_value)
+		if str(interaction.get("stable_object_id", "")) == target: return interaction
+	return {}
 
 func _check_reentry_expiry(definition: Dictionary, failures: Array) -> void:
 	var sid := str(definition.get("id", ""))
@@ -168,6 +202,28 @@ func _check_reentry_expiry(definition: Dictionary, failures: Array) -> void:
 	var expired := _dict(expiry.get("state", {}))
 	var expired_reentry := Runtime.apply_reentry(expired, definition, "%s_expired_visit" % sid, _host_semantics())
 	if not bool(expiry.get("ok", false)) or not bool(expiry.get("expired", false)) or str(expired.get("status", "")) != "cleaned" or not bool(expired_reentry.get("ok", false)): failures.append("%s expiry/cleanup/reentry failed." % sid)
+	var repeated := Runtime.apply_expiry(expired, definition, "night_end", 2)
+	if not bool(repeated.get("ok", false)) or JSON.stringify(_dict(repeated.get("state", {}))) != JSON.stringify(expired): failures.append("%s repeated cleanup injection was not idempotent." % sid)
+
+func _check_fact_cleanup_injection(definition: Dictionary, failures: Array) -> void:
+	var sid := str(definition.get("id", ""))
+	var fact_type := _scenario_fact_type(definition)
+	var state := _initial(definition, "%s_fact_injection" % sid)
+	var before := JSON.stringify(state)
+	var expected_producer := _producer(fact_type)
+	var wrong_producer := "game" if expected_producer == "scenario" else "scenario"
+	var wrong := Runtime.fact(fact_type,wrong_producer,"package_e_runtime_node","%s:wrong_producer" % sid,1,1,_valid_payload(fact_type))
+	var rejected := Runtime.enqueue_fact(state, definition, wrong)
+	if bool(rejected.get("ok", false)) or JSON.stringify(_dict(rejected.get("state", {}))) != before: failures.append("%s wrong-producer fact injection partially committed." % sid)
+	var fact := Runtime.fact(fact_type,_producer(fact_type),"package_e_runtime_node","%s:fact_receipt" % sid,1,1,_valid_payload(fact_type))
+	var accepted := Runtime.enqueue_fact(state, definition, fact)
+	var accepted_state := _dict(accepted.get("state", {}))
+	var replay := Runtime.enqueue_fact(accepted_state, definition, fact)
+	var conflicting_payload := _valid_payload(fact_type)
+	conflicting_payload["injected_conflict"] = true
+	var conflict_fact := Runtime.fact(fact_type,_producer(fact_type),"package_e_runtime_node","%s:fact_receipt" % sid,1,1,conflicting_payload)
+	var conflict := Runtime.enqueue_fact(accepted_state, definition, conflict_fact)
+	if not bool(accepted.get("ok", false)) or not bool(replay.get("duplicate", false)) or bool(conflict.get("ok", false)) or JSON.stringify(_dict(conflict.get("state", {}))) != JSON.stringify(accepted_state): failures.append("%s fact replay/conflict injection matrix failed." % sid)
 
 func _check_hostile_privacy_presentation(definition: Dictionary, entry: Dictionary, failures: Array) -> void:
 	var sid := str(definition.get("id", ""))
@@ -190,6 +246,13 @@ func _check_hostile_privacy_presentation(definition: Dictionary, entry: Dictiona
 		if projection.has(forbidden): failures.append("%s leaked private %s." % [sid,forbidden])
 	var canonical := JSON.stringify(projection)
 	if canonical != JSON.stringify(Runtime.public_projection(JSON.parse_string(JSON.stringify(state)), definition)): failures.append("%s native/Web deterministic platform parity drifted." % sid)
+	var hidden_a := state.duplicate(true)
+	var hidden_b := state.duplicate(true)
+	hidden_a["seed_token"] = "%s_hidden_a" % sid
+	hidden_b["seed_token"] = "%s_hidden_b" % sid
+	hidden_a["command_fingerprints"] = {"private":"a"}
+	hidden_b["command_fingerprints"] = {"private":"b"}
+	if JSON.stringify(Runtime.public_projection(hidden_a, definition)) != JSON.stringify(Runtime.public_projection(hidden_b, definition)): failures.append("%s paired hidden-state observers diverged." % sid)
 	var interactions := _dict(_dict(projection.get("semantic_state", {})).get("interactions", {}))
 	if interactions.size() < 2: failures.append("%s production layout lacks independent task/safe-exit targets." % sid)
 	for interaction_value in interactions.values():
@@ -270,7 +333,13 @@ func _branch_target(definition: Dictionary, phase_id: String, command_id: String
 func _round_trip(state: Dictionary, definition: Dictionary) -> bool:
 	if state.is_empty(): return false
 	var restored := Runtime.normalize_state(JSON.parse_string(JSON.stringify(state)), definition, _host_semantics())
-	return str(restored.get("phase_id","")) == str(state.get("phase_id","")) and str(restored.get("status","")) == str(state.get("status","")) and _array(restored.get("command_receipts",[])) == _array(state.get("command_receipts",[])) and _array(restored.get("fact_receipts",[])) == _array(state.get("fact_receipts",[])) and _array(_dict(restored.get("semantic_state",{})).get("operation_receipts",[])) == _array(_dict(state.get("semantic_state",{})).get("operation_receipts",[]))
+	return str(restored.get("phase_id","")) == str(state.get("phase_id","")) \
+		and str(restored.get("status","")) == str(state.get("status","")) \
+		and JSON.stringify(_dict(restored.get("semantic_state",{}))) == JSON.stringify(_dict(state.get("semantic_state",{}))) \
+		and JSON.stringify(_dict(restored.get("local_state",{}))) == JSON.stringify(_dict(state.get("local_state",{}))) \
+		and _array(restored.get("command_receipts",[])) == _array(state.get("command_receipts",[])) \
+		and _array(restored.get("fact_receipts",[])) == _array(state.get("fact_receipts",[])) \
+		and JSON.stringify(Runtime.public_projection(restored, definition)) == JSON.stringify(Runtime.public_projection(state, definition))
 
 func _producer(fact_type: String) -> String:
 	for producer_value in Runtime.FACT_TYPES_BY_PRODUCER.keys():

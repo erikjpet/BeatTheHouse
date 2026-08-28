@@ -207,42 +207,42 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_wedding_charter_cleanup_remove_delta_queen_wedding_charter_gate_2",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_interaction_ops_remove_delta_queen_wedding_charter_gate_2",
               "stable_object_id": "delta_queen_wedding_charter_gate_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_wedding_charter_cleanup_remove_delta_queen_wedding_charter_gate_1",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_interaction_ops_remove_delta_queen_wedding_charter_gate_1",
               "stable_object_id": "delta_queen_wedding_charter_gate_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_wedding_charter_cleanup_remove_delta_queen_wedding_charter_gate_0",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_interaction_ops_remove_delta_queen_wedding_charter_gate_0",
               "stable_object_id": "delta_queen_wedding_charter_gate_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_wedding_charter_cleanup_remove_delta_queen_wedding_charter_ceremony_rope",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_scene_ops_remove_delta_queen_wedding_charter_ceremony_rope",
               "stable_object_id": "delta_queen_wedding_charter_ceremony_rope"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_wedding_charter_cleanup_remove_delta_queen_wedding_charter_ring_case",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_scene_ops_remove_delta_queen_wedding_charter_ring_case",
               "stable_object_id": "delta_queen_wedding_charter_ring_case"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_wedding_charter_cleanup_remove_delta_queen_wedding_charter_best_man_table",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_scene_ops_remove_delta_queen_wedding_charter_best_man_table",
               "stable_object_id": "delta_queen_wedding_charter_best_man_table"
             },
             {
@@ -263,35 +263,77 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_wedding_charter_cleanup_remove_delta_queen_wedding_charter_safe_exit",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_interaction_ops_remove_delta_queen_wedding_charter_safe_exit",
               "stable_object_id": "delta_queen_wedding_charter_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_wedding_charter_cleanup_remove_delta_queen_wedding_charter_task_0",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_interaction_ops_remove_delta_queen_wedding_charter_task_0",
               "stable_object_id": "delta_queen_wedding_charter_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_wedding_charter_cleanup_remove_delta_queen_wedding_charter_task_1",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_interaction_ops_remove_delta_queen_wedding_charter_work_1_choice_0",
+              "stable_object_id": "delta_queen_wedding_charter_work_1_choice_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_scene_ops_remove_delta_queen_wedding_charter_work_1_choice_0",
+              "stable_object_id": "delta_queen_wedding_charter_work_1_choice_0"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_interaction_ops_remove_delta_queen_wedding_charter_work_1_choice_1",
+              "stable_object_id": "delta_queen_wedding_charter_work_1_choice_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_scene_ops_remove_delta_queen_wedding_charter_work_1_choice_1",
+              "stable_object_id": "delta_queen_wedding_charter_work_1_choice_1"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_interaction_ops_remove_delta_queen_wedding_charter_work_1_choice_2",
+              "stable_object_id": "delta_queen_wedding_charter_work_1_choice_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_scene_ops_remove_delta_queen_wedding_charter_work_1_choice_2",
+              "stable_object_id": "delta_queen_wedding_charter_work_1_choice_2"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_interaction_ops_remove_delta_queen_wedding_charter_task_1",
               "stable_object_id": "delta_queen_wedding_charter_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_wedding_charter_cleanup_remove_delta_queen_wedding_charter_task_2",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_interaction_ops_remove_delta_queen_wedding_charter_task_2",
               "stable_object_id": "delta_queen_wedding_charter_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_wedding_charter_cleanup_remove_delta_queen_wedding_charter_task_3",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_interaction_ops_remove_delta_queen_wedding_charter_task_3",
               "stable_object_id": "delta_queen_wedding_charter_task_3"
             }
           ]
@@ -562,7 +604,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_wedding_charter_task_0",
-                    "prompt": "Delta Queen Wedding Charter: Begin the first physical task or choose this identity's named route.",
+                    "prompt": "Delta Queen Wedding Charter: Begin the first physical task; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_wedding_charter_task_0",
                     "state_label": "Arrival station"
@@ -800,24 +842,6 @@
                         "input_action": "ui_cancel",
                         "label": "Refuse and leave",
                         "non_color_state": "ready"
-                      },
-                      {
-                        "id": "return_rings_to_best_man",
-                        "input_action": "ui_left",
-                        "label": "Return Rings To Best Man",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "exploit_loose_wedding_tables",
-                        "input_action": "ui_up",
-                        "label": "Exploit Loose Wedding Tables",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "delay_wedding_charter",
-                        "input_action": "ui_right",
-                        "label": "Delay Wedding Charter",
-                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -830,16 +854,14 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
-                      "ui_cancel",
-                      "ui_left",
-                      "ui_up"
+                      "ui_cancel"
                     ],
                     "label": "Recover Ring Case",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_wedding_charter_task_1",
-                    "prompt": "Delta Queen Wedding Charter: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Wedding Charter: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_wedding_charter_task_1",
                     "state_label": "Work 1 station"
@@ -848,6 +870,117 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_work_1_add_delta_queen_wedding_charter_task_1",
                   "stable_object_id": "delta_queen_wedding_charter_task_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "return_rings_to_best_man",
+                        "input_action": "ui_left",
+                        "label": "Return Rings To Best Man",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 10.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_left"
+                    ],
+                    "label": "Return Rings To Best Man",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_0_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_wedding_charter_work_1_choice_0",
+                    "prompt": "Delta Queen Wedding Charter: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_wedding_charter_work_1_choice_0",
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_1_add_delta_queen_wedding_charter_work_1_choice_0",
+                  "stable_object_id": "delta_queen_wedding_charter_work_1_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "exploit_loose_wedding_tables",
+                        "input_action": "ui_up",
+                        "label": "Exploit Loose Wedding Tables",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 11.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_up"
+                    ],
+                    "label": "Exploit Loose Wedding Tables",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_1_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_wedding_charter_work_1_choice_1",
+                    "prompt": "Delta Queen Wedding Charter: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_wedding_charter_work_1_choice_1",
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_1_add_delta_queen_wedding_charter_work_1_choice_1",
+                  "stable_object_id": "delta_queen_wedding_charter_work_1_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "delay_wedding_charter",
+                        "input_action": "ui_right",
+                        "label": "Delay Wedding Charter",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 12.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_right"
+                    ],
+                    "label": "Delay Wedding Charter",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_2_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_wedding_charter_work_1_choice_2",
+                    "prompt": "Delta Queen Wedding Charter: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_wedding_charter_work_1_choice_2",
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_1_add_delta_queen_wedding_charter_work_1_choice_2",
+                  "stable_object_id": "delta_queen_wedding_charter_work_1_choice_2"
                 }
               ],
               "label": "Work beat 1",
@@ -862,6 +995,66 @@
                   "receipt_id": "delta_queen_wedding_charter_rope_move_move",
                   "stable_object_id": "delta_queen_wedding_charter_ceremony_rope",
                   "zone_id": "work_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_0_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Return Rings To Best Man",
+                    "role": "decision_route",
+                    "state": "route_0_ready",
+                    "visible": true,
+                    "zone_id": "left"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_1_spawn_delta_queen_wedding_charter_work_1_choice_0",
+                  "stable_object_id": "delta_queen_wedding_charter_work_1_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_1_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Exploit Loose Wedding Tables",
+                    "role": "decision_route",
+                    "state": "route_1_ready",
+                    "visible": true,
+                    "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_1_spawn_delta_queen_wedding_charter_work_1_choice_1",
+                  "stable_object_id": "delta_queen_wedding_charter_work_1_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_2_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Delay Wedding Charter",
+                    "role": "decision_route",
+                    "state": "route_2_ready",
+                    "visible": true,
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_1_spawn_delta_queen_wedding_charter_work_1_choice_2",
+                  "stable_object_id": "delta_queen_wedding_charter_work_1_choice_2"
                 }
               ],
               "transition_ops": [
@@ -1008,7 +1201,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_wedding_charter_task_2",
-                    "prompt": "Delta Queen Wedding Charter: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Wedding Charter: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_wedding_charter_task_2",
                     "state_label": "Work 2 station"
@@ -1180,7 +1373,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_wedding_charter_task_3",
-                    "prompt": "Delta Queen Wedding Charter: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Wedding Charter: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_wedding_charter_task_3",
                     "state_label": "Work 3 station"
@@ -1358,7 +1551,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9220c1f7d82f58e7fcab017ff878039b0a412116194f554b2f5a4b46b281ffc5"
+        "sequence_signature": "3248c3e6ee69e8dbf5f3d695ebd76f3c02b318e9fe2a2da4b61d8c8b09a8c4cd"
       }
     },
     {
@@ -1564,42 +1757,42 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_whale_aboard_cleanup_remove_delta_queen_whale_aboard_gate_2",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_interaction_ops_remove_delta_queen_whale_aboard_gate_2",
               "stable_object_id": "delta_queen_whale_aboard_gate_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_whale_aboard_cleanup_remove_delta_queen_whale_aboard_gate_1",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_interaction_ops_remove_delta_queen_whale_aboard_gate_1",
               "stable_object_id": "delta_queen_whale_aboard_gate_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_whale_aboard_cleanup_remove_delta_queen_whale_aboard_gate_0",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_interaction_ops_remove_delta_queen_whale_aboard_gate_0",
               "stable_object_id": "delta_queen_whale_aboard_gate_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_whale_aboard_cleanup_remove_delta_queen_whale_aboard_premium_table",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_scene_ops_remove_delta_queen_whale_aboard_premium_table",
               "stable_object_id": "delta_queen_whale_aboard_premium_table"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_whale_aboard_cleanup_remove_delta_queen_whale_aboard_stake_placards",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_scene_ops_remove_delta_queen_whale_aboard_stake_placards",
               "stable_object_id": "delta_queen_whale_aboard_stake_placards"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_whale_aboard_cleanup_remove_delta_queen_whale_aboard_service_lane",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_scene_ops_remove_delta_queen_whale_aboard_service_lane",
               "stable_object_id": "delta_queen_whale_aboard_service_lane"
             },
             {
@@ -1620,35 +1813,77 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_whale_aboard_cleanup_remove_delta_queen_whale_aboard_safe_exit",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_interaction_ops_remove_delta_queen_whale_aboard_safe_exit",
               "stable_object_id": "delta_queen_whale_aboard_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_whale_aboard_cleanup_remove_delta_queen_whale_aboard_task_0",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_interaction_ops_remove_delta_queen_whale_aboard_task_0",
               "stable_object_id": "delta_queen_whale_aboard_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_whale_aboard_cleanup_remove_delta_queen_whale_aboard_task_1",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_interaction_ops_remove_delta_queen_whale_aboard_task_1",
               "stable_object_id": "delta_queen_whale_aboard_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_whale_aboard_cleanup_remove_delta_queen_whale_aboard_task_2",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_interaction_ops_remove_delta_queen_whale_aboard_work_2_choice_0",
+              "stable_object_id": "delta_queen_whale_aboard_work_2_choice_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_scene_ops_remove_delta_queen_whale_aboard_work_2_choice_0",
+              "stable_object_id": "delta_queen_whale_aboard_work_2_choice_0"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_interaction_ops_remove_delta_queen_whale_aboard_work_2_choice_1",
+              "stable_object_id": "delta_queen_whale_aboard_work_2_choice_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_scene_ops_remove_delta_queen_whale_aboard_work_2_choice_1",
+              "stable_object_id": "delta_queen_whale_aboard_work_2_choice_1"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_interaction_ops_remove_delta_queen_whale_aboard_work_2_choice_2",
+              "stable_object_id": "delta_queen_whale_aboard_work_2_choice_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_scene_ops_remove_delta_queen_whale_aboard_work_2_choice_2",
+              "stable_object_id": "delta_queen_whale_aboard_work_2_choice_2"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_interaction_ops_remove_delta_queen_whale_aboard_task_2",
               "stable_object_id": "delta_queen_whale_aboard_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_whale_aboard_cleanup_remove_delta_queen_whale_aboard_task_3",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_interaction_ops_remove_delta_queen_whale_aboard_task_3",
               "stable_object_id": "delta_queen_whale_aboard_task_3"
             }
           ]
@@ -1919,7 +2154,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_whale_aboard_task_0",
-                    "prompt": "Delta Queen Whale Aboard: Begin the first physical task or choose this identity's named route.",
+                    "prompt": "Delta Queen Whale Aboard: Begin the first physical task; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_whale_aboard_task_0",
                     "state_label": "Arrival station"
@@ -2143,7 +2378,7 @@
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_whale_aboard_task_1",
-                    "prompt": "Delta Queen Whale Aboard: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Whale Aboard: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_whale_aboard_task_1",
                     "state_label": "Work 1 station"
@@ -2326,24 +2561,6 @@
                         "input_action": "ui_cancel",
                         "label": "Refuse and leave",
                         "non_color_state": "ready"
-                      },
-                      {
-                        "id": "earn_whale_service_access",
-                        "input_action": "ui_left",
-                        "label": "Earn Whale Service Access",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "shadow_whale_entourage",
-                        "input_action": "ui_up",
-                        "label": "Shadow Whale Entourage",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "trigger_whale_security_lock",
-                        "input_action": "ui_right",
-                        "label": "Trigger Whale Security Lock",
-                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -2356,16 +2573,14 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
-                      "ui_cancel",
-                      "ui_left",
-                      "ui_up"
+                      "ui_cancel"
                     ],
                     "label": "Read Stake Shift",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_whale_aboard_task_2",
-                    "prompt": "Delta Queen Whale Aboard: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Whale Aboard: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_whale_aboard_task_2",
                     "state_label": "Work 2 station"
@@ -2374,6 +2589,117 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_work_2_add_delta_queen_whale_aboard_task_2",
                   "stable_object_id": "delta_queen_whale_aboard_task_2"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "earn_whale_service_access",
+                        "input_action": "ui_left",
+                        "label": "Earn Whale Service Access",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 10.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_left"
+                    ],
+                    "label": "Earn Whale Service Access",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_0_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_whale_aboard_work_2_choice_0",
+                    "prompt": "Delta Queen Whale Aboard: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_whale_aboard_work_2_choice_0",
+                    "state_label": "Work 2 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_2_add_delta_queen_whale_aboard_work_2_choice_0",
+                  "stable_object_id": "delta_queen_whale_aboard_work_2_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "shadow_whale_entourage",
+                        "input_action": "ui_up",
+                        "label": "Shadow Whale Entourage",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 11.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_up"
+                    ],
+                    "label": "Shadow Whale Entourage",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_1_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_whale_aboard_work_2_choice_1",
+                    "prompt": "Delta Queen Whale Aboard: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_whale_aboard_work_2_choice_1",
+                    "state_label": "Work 2 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_2_add_delta_queen_whale_aboard_work_2_choice_1",
+                  "stable_object_id": "delta_queen_whale_aboard_work_2_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "trigger_whale_security_lock",
+                        "input_action": "ui_right",
+                        "label": "Trigger Whale Security Lock",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 12.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_right"
+                    ],
+                    "label": "Trigger Whale Security Lock",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_2_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_whale_aboard_work_2_choice_2",
+                    "prompt": "Delta Queen Whale Aboard: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_whale_aboard_work_2_choice_2",
+                    "state_label": "Work 2 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_2_add_delta_queen_whale_aboard_work_2_choice_2",
+                  "stable_object_id": "delta_queen_whale_aboard_work_2_choice_2"
                 }
               ],
               "label": "Work beat 2",
@@ -2388,6 +2714,66 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_table_state_appearance",
                   "stable_object_id": "delta_queen_whale_aboard_stake_placards"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_0_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Earn Whale Service Access",
+                    "role": "decision_route",
+                    "state": "route_0_ready",
+                    "visible": true,
+                    "zone_id": "left"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_2_spawn_delta_queen_whale_aboard_work_2_choice_0",
+                  "stable_object_id": "delta_queen_whale_aboard_work_2_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_1_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Shadow Whale Entourage",
+                    "role": "decision_route",
+                    "state": "route_1_ready",
+                    "visible": true,
+                    "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_2_spawn_delta_queen_whale_aboard_work_2_choice_1",
+                  "stable_object_id": "delta_queen_whale_aboard_work_2_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_2_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Trigger Whale Security Lock",
+                    "role": "decision_route",
+                    "state": "route_2_ready",
+                    "visible": true,
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_2_spawn_delta_queen_whale_aboard_work_2_choice_2",
+                  "stable_object_id": "delta_queen_whale_aboard_work_2_choice_2"
                 }
               ],
               "transition_ops": [
@@ -2537,7 +2923,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_whale_aboard_task_3",
-                    "prompt": "Delta Queen Whale Aboard: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Whale Aboard: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_whale_aboard_task_3",
                     "state_label": "Work 3 station"
@@ -2715,7 +3101,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "7953c413e4b4deaffa64ce03b519e77b163561c15d8d87b1a1ba2aa8dab56e09"
+        "sequence_signature": "4d0351999c26004d67b10f6422945423f4eb964d0fd955f6e0cbe3505b2f5edd"
       }
     },
     {
@@ -2921,42 +3307,42 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_fog_delay_cleanup_remove_delta_queen_fog_delay_gate_2",
+              "receipt_id": "delta_queen_fog_delay_cleanup_interaction_ops_remove_delta_queen_fog_delay_gate_2",
               "stable_object_id": "delta_queen_fog_delay_gate_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_fog_delay_cleanup_remove_delta_queen_fog_delay_gate_1",
+              "receipt_id": "delta_queen_fog_delay_cleanup_interaction_ops_remove_delta_queen_fog_delay_gate_1",
               "stable_object_id": "delta_queen_fog_delay_gate_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_fog_delay_cleanup_remove_delta_queen_fog_delay_gate_0",
+              "receipt_id": "delta_queen_fog_delay_cleanup_interaction_ops_remove_delta_queen_fog_delay_gate_0",
               "stable_object_id": "delta_queen_fog_delay_gate_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_fog_delay_cleanup_remove_delta_queen_fog_delay_fog_signal",
+              "receipt_id": "delta_queen_fog_delay_cleanup_scene_ops_remove_delta_queen_fog_delay_fog_signal",
               "stable_object_id": "delta_queen_fog_delay_fog_signal"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_fog_delay_cleanup_remove_delta_queen_fog_delay_gangway_shutter",
+              "receipt_id": "delta_queen_fog_delay_cleanup_scene_ops_remove_delta_queen_fog_delay_gangway_shutter",
               "stable_object_id": "delta_queen_fog_delay_gangway_shutter"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_fog_delay_cleanup_remove_delta_queen_fog_delay_drift_board",
+              "receipt_id": "delta_queen_fog_delay_cleanup_scene_ops_remove_delta_queen_fog_delay_drift_board",
               "stable_object_id": "delta_queen_fog_delay_drift_board"
             },
             {
@@ -2977,35 +3363,77 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_fog_delay_cleanup_remove_delta_queen_fog_delay_safe_exit",
+              "receipt_id": "delta_queen_fog_delay_cleanup_interaction_ops_remove_delta_queen_fog_delay_safe_exit",
               "stable_object_id": "delta_queen_fog_delay_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_fog_delay_cleanup_remove_delta_queen_fog_delay_task_0",
+              "receipt_id": "delta_queen_fog_delay_cleanup_interaction_ops_remove_delta_queen_fog_delay_task_0",
               "stable_object_id": "delta_queen_fog_delay_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_fog_delay_cleanup_remove_delta_queen_fog_delay_task_1",
+              "receipt_id": "delta_queen_fog_delay_cleanup_interaction_ops_remove_delta_queen_fog_delay_work_1_choice_0",
+              "stable_object_id": "delta_queen_fog_delay_work_1_choice_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_fog_delay_cleanup_scene_ops_remove_delta_queen_fog_delay_work_1_choice_0",
+              "stable_object_id": "delta_queen_fog_delay_work_1_choice_0"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_fog_delay_cleanup_interaction_ops_remove_delta_queen_fog_delay_work_1_choice_1",
+              "stable_object_id": "delta_queen_fog_delay_work_1_choice_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_fog_delay_cleanup_scene_ops_remove_delta_queen_fog_delay_work_1_choice_1",
+              "stable_object_id": "delta_queen_fog_delay_work_1_choice_1"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_fog_delay_cleanup_interaction_ops_remove_delta_queen_fog_delay_work_1_choice_2",
+              "stable_object_id": "delta_queen_fog_delay_work_1_choice_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_fog_delay_cleanup_scene_ops_remove_delta_queen_fog_delay_work_1_choice_2",
+              "stable_object_id": "delta_queen_fog_delay_work_1_choice_2"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_fog_delay_cleanup_interaction_ops_remove_delta_queen_fog_delay_task_1",
               "stable_object_id": "delta_queen_fog_delay_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_fog_delay_cleanup_remove_delta_queen_fog_delay_task_2",
+              "receipt_id": "delta_queen_fog_delay_cleanup_interaction_ops_remove_delta_queen_fog_delay_task_2",
               "stable_object_id": "delta_queen_fog_delay_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_fog_delay_cleanup_remove_delta_queen_fog_delay_task_3",
+              "receipt_id": "delta_queen_fog_delay_cleanup_interaction_ops_remove_delta_queen_fog_delay_task_3",
               "stable_object_id": "delta_queen_fog_delay_task_3"
             }
           ]
@@ -3276,7 +3704,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_fog_delay_task_0",
-                    "prompt": "Delta Queen Fog Delay: Begin the first physical task or choose this identity's named route.",
+                    "prompt": "Delta Queen Fog Delay: Begin the first physical task; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_fog_delay_task_0",
                     "state_label": "Arrival station"
@@ -3514,24 +3942,6 @@
                         "input_action": "ui_cancel",
                         "label": "Refuse and leave",
                         "non_color_state": "ready"
-                      },
-                      {
-                        "id": "assist_fog_reroute",
-                        "input_action": "ui_left",
-                        "label": "Assist Fog Reroute",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "wait_out_fog_safely",
-                        "input_action": "ui_up",
-                        "label": "Wait Out Fog Safely",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "exploit_trapped_fog_crowd",
-                        "input_action": "ui_right",
-                        "label": "Exploit Trapped Fog Crowd",
-                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -3544,16 +3954,14 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
-                      "ui_cancel",
-                      "ui_left",
-                      "ui_up"
+                      "ui_cancel"
                     ],
                     "label": "Organize Waiting Crowd",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_fog_delay_task_1",
-                    "prompt": "Delta Queen Fog Delay: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Fog Delay: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_fog_delay_task_1",
                     "state_label": "Work 1 station"
@@ -3562,6 +3970,117 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_work_1_add_delta_queen_fog_delay_task_1",
                   "stable_object_id": "delta_queen_fog_delay_task_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "assist_fog_reroute",
+                        "input_action": "ui_left",
+                        "label": "Assist Fog Reroute",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 10.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_left"
+                    ],
+                    "label": "Assist Fog Reroute",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_0_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_fog_delay_work_1_choice_0",
+                    "prompt": "Delta Queen Fog Delay: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_fog_delay_work_1_choice_0",
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_1_add_delta_queen_fog_delay_work_1_choice_0",
+                  "stable_object_id": "delta_queen_fog_delay_work_1_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "wait_out_fog_safely",
+                        "input_action": "ui_up",
+                        "label": "Wait Out Fog Safely",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 11.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_up"
+                    ],
+                    "label": "Wait Out Fog Safely",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_1_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_fog_delay_work_1_choice_1",
+                    "prompt": "Delta Queen Fog Delay: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_fog_delay_work_1_choice_1",
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_1_add_delta_queen_fog_delay_work_1_choice_1",
+                  "stable_object_id": "delta_queen_fog_delay_work_1_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "exploit_trapped_fog_crowd",
+                        "input_action": "ui_right",
+                        "label": "Exploit Trapped Fog Crowd",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 12.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_right"
+                    ],
+                    "label": "Exploit Trapped Fog Crowd",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_2_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_fog_delay_work_1_choice_2",
+                    "prompt": "Delta Queen Fog Delay: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_fog_delay_work_1_choice_2",
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_1_add_delta_queen_fog_delay_work_1_choice_2",
+                  "stable_object_id": "delta_queen_fog_delay_work_1_choice_2"
                 }
               ],
               "label": "Work beat 1",
@@ -3576,6 +4095,66 @@
                   "receipt_id": "delta_queen_fog_delay_signal_appearance_move",
                   "stable_object_id": "delta_queen_fog_delay_fog_signal",
                   "zone_id": "work_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_0_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Assist Fog Reroute",
+                    "role": "decision_route",
+                    "state": "route_0_ready",
+                    "visible": true,
+                    "zone_id": "left"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_1_spawn_delta_queen_fog_delay_work_1_choice_0",
+                  "stable_object_id": "delta_queen_fog_delay_work_1_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_1_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Wait Out Fog Safely",
+                    "role": "decision_route",
+                    "state": "route_1_ready",
+                    "visible": true,
+                    "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_1_spawn_delta_queen_fog_delay_work_1_choice_1",
+                  "stable_object_id": "delta_queen_fog_delay_work_1_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_2_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Exploit Trapped Fog Crowd",
+                    "role": "decision_route",
+                    "state": "route_2_ready",
+                    "visible": true,
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_1_spawn_delta_queen_fog_delay_work_1_choice_2",
+                  "stable_object_id": "delta_queen_fog_delay_work_1_choice_2"
                 }
               ],
               "transition_ops": [
@@ -3722,7 +4301,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_fog_delay_task_2",
-                    "prompt": "Delta Queen Fog Delay: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Fog Delay: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_fog_delay_task_2",
                     "state_label": "Work 2 station"
@@ -3894,7 +4473,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_fog_delay_task_3",
-                    "prompt": "Delta Queen Fog Delay: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Fog Delay: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_fog_delay_task_3",
                     "state_label": "Work 3 station"
@@ -4072,7 +4651,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "7a5b2ffa63246bc1e7db0a09ca3c5e3e4ea37a32f157870dd8dee79f45c0a6c5"
+        "sequence_signature": "6ddff62833ab21ba47b25485845389ccee5293ffe5462087185f64368b649416"
       }
     },
     {
@@ -4279,56 +4858,56 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_gate_3",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_gate_3",
               "stable_object_id": "delta_queen_engine_trouble_gate_3"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_gate_2",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_gate_2",
               "stable_object_id": "delta_queen_engine_trouble_gate_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_gate_1",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_gate_1",
               "stable_object_id": "delta_queen_engine_trouble_gate_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_gate_0",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_gate_0",
               "stable_object_id": "delta_queen_engine_trouble_gate_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_engine_bulkhead",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_scene_ops_remove_delta_queen_engine_trouble_engine_bulkhead",
               "stable_object_id": "delta_queen_engine_trouble_engine_bulkhead"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_pressure_gauge",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_scene_ops_remove_delta_queen_engine_trouble_pressure_gauge",
               "stable_object_id": "delta_queen_engine_trouble_pressure_gauge"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_evacuation_benches",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_scene_ops_remove_delta_queen_engine_trouble_evacuation_benches",
               "stable_object_id": "delta_queen_engine_trouble_evacuation_benches"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_locked_gangway",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_scene_ops_remove_delta_queen_engine_trouble_locked_gangway",
               "stable_object_id": "delta_queen_engine_trouble_locked_gangway"
             },
             {
@@ -4349,42 +4928,84 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_safe_exit",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_safe_exit",
               "stable_object_id": "delta_queen_engine_trouble_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_task_0",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_task_0",
               "stable_object_id": "delta_queen_engine_trouble_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_task_1",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_task_1",
               "stable_object_id": "delta_queen_engine_trouble_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_task_2",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_task_2",
               "stable_object_id": "delta_queen_engine_trouble_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_task_3",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_work_3_choice_0",
+              "stable_object_id": "delta_queen_engine_trouble_work_3_choice_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_scene_ops_remove_delta_queen_engine_trouble_work_3_choice_0",
+              "stable_object_id": "delta_queen_engine_trouble_work_3_choice_0"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_work_3_choice_1",
+              "stable_object_id": "delta_queen_engine_trouble_work_3_choice_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_scene_ops_remove_delta_queen_engine_trouble_work_3_choice_1",
+              "stable_object_id": "delta_queen_engine_trouble_work_3_choice_1"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_work_3_choice_2",
+              "stable_object_id": "delta_queen_engine_trouble_work_3_choice_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_scene_ops_remove_delta_queen_engine_trouble_work_3_choice_2",
+              "stable_object_id": "delta_queen_engine_trouble_work_3_choice_2"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_task_3",
               "stable_object_id": "delta_queen_engine_trouble_task_3"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_engine_trouble_cleanup_remove_delta_queen_engine_trouble_task_4",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_task_4",
               "stable_object_id": "delta_queen_engine_trouble_task_4"
             }
           ]
@@ -4661,7 +5282,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_engine_trouble_task_0",
-                    "prompt": "Delta Queen Engine Trouble: Begin the first physical task or choose this identity's named route.",
+                    "prompt": "Delta Queen Engine Trouble: Begin the first physical task; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_engine_trouble_task_0",
                     "state_label": "Arrival station"
@@ -4905,7 +5526,7 @@
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_engine_trouble_task_1",
-                    "prompt": "Delta Queen Engine Trouble: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Engine Trouble: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_engine_trouble_task_1",
                     "state_label": "Work 1 station"
@@ -5074,7 +5695,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_engine_trouble_task_2",
-                    "prompt": "Delta Queen Engine Trouble: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Engine Trouble: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_engine_trouble_task_2",
                     "state_label": "Work 2 station"
@@ -5260,24 +5881,6 @@
                         "input_action": "ui_cancel",
                         "label": "Refuse and leave",
                         "non_color_state": "ready"
-                      },
-                      {
-                        "id": "repair_engine_for_departure",
-                        "input_action": "ui_left",
-                        "label": "Repair Engine For Departure",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "ration_limited_engine_power",
-                        "input_action": "ui_up",
-                        "label": "Ration Limited Engine Power",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "stage_engine_evacuation",
-                        "input_action": "ui_right",
-                        "label": "Stage Engine Evacuation",
-                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -5290,16 +5893,14 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
-                      "ui_cancel",
-                      "ui_left",
-                      "ui_up"
+                      "ui_cancel"
                     ],
                     "label": "Choose Engine Response",
                     "min_target_size": 44.0,
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_engine_trouble_task_3",
-                    "prompt": "Delta Queen Engine Trouble: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Engine Trouble: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_engine_trouble_task_3",
                     "state_label": "Work 3 station"
@@ -5308,6 +5909,117 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_work_3_add_delta_queen_engine_trouble_task_3",
                   "stable_object_id": "delta_queen_engine_trouble_task_3"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "repair_engine_for_departure",
+                        "input_action": "ui_left",
+                        "label": "Repair Engine For Departure",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 10.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_left"
+                    ],
+                    "label": "Repair Engine For Departure",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_0_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_engine_trouble_work_3_choice_0",
+                    "prompt": "Delta Queen Engine Trouble: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_engine_trouble_work_3_choice_0",
+                    "state_label": "Work 3 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_3_add_delta_queen_engine_trouble_work_3_choice_0",
+                  "stable_object_id": "delta_queen_engine_trouble_work_3_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "ration_limited_engine_power",
+                        "input_action": "ui_up",
+                        "label": "Ration Limited Engine Power",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 11.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_up"
+                    ],
+                    "label": "Ration Limited Engine Power",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_1_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_engine_trouble_work_3_choice_1",
+                    "prompt": "Delta Queen Engine Trouble: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_engine_trouble_work_3_choice_1",
+                    "state_label": "Work 3 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_3_add_delta_queen_engine_trouble_work_3_choice_1",
+                  "stable_object_id": "delta_queen_engine_trouble_work_3_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "stage_engine_evacuation",
+                        "input_action": "ui_right",
+                        "label": "Stage Engine Evacuation",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 12.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_right"
+                    ],
+                    "label": "Stage Engine Evacuation",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_2_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_engine_trouble_work_3_choice_2",
+                    "prompt": "Delta Queen Engine Trouble: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_engine_trouble_work_3_choice_2",
+                    "state_label": "Work 3 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_3_add_delta_queen_engine_trouble_work_3_choice_2",
+                  "stable_object_id": "delta_queen_engine_trouble_work_3_choice_2"
                 }
               ],
               "label": "Work beat 3",
@@ -5322,6 +6034,66 @@
                   "receipt_id": "delta_queen_engine_trouble_bench_move_state",
                   "stable_object_id": "delta_queen_engine_trouble_evacuation_benches",
                   "state": "bench_move_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_0_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Repair Engine For Departure",
+                    "role": "decision_route",
+                    "state": "route_0_ready",
+                    "visible": true,
+                    "zone_id": "left"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_3_spawn_delta_queen_engine_trouble_work_3_choice_0",
+                  "stable_object_id": "delta_queen_engine_trouble_work_3_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_1_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Ration Limited Engine Power",
+                    "role": "decision_route",
+                    "state": "route_1_ready",
+                    "visible": true,
+                    "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_3_spawn_delta_queen_engine_trouble_work_3_choice_1",
+                  "stable_object_id": "delta_queen_engine_trouble_work_3_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_2_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Stage Engine Evacuation",
+                    "role": "decision_route",
+                    "state": "route_2_ready",
+                    "visible": true,
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_3_spawn_delta_queen_engine_trouble_work_3_choice_2",
+                  "stable_object_id": "delta_queen_engine_trouble_work_3_choice_2"
                 }
               ],
               "transition_ops": [
@@ -5469,7 +6241,7 @@
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_engine_trouble_task_4",
-                    "prompt": "Delta Queen Engine Trouble: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Engine Trouble: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_engine_trouble_task_4",
                     "state_label": "Work 4 station"
@@ -5645,7 +6417,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9f8bcf707fe9160d0633c3e6a16f4e681946c4d448cd5729506629bd9f272217"
+        "sequence_signature": "57d459106d51207329764636691139c0134cf30f97c322a11e60c8d6e3a7243a"
       }
     },
     {
@@ -5852,49 +6624,49 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_captains_invitational_cleanup_remove_delta_queen_captains_invitational_gate_3",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_gate_3",
               "stable_object_id": "delta_queen_captains_invitational_gate_3"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_captains_invitational_cleanup_remove_delta_queen_captains_invitational_gate_2",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_gate_2",
               "stable_object_id": "delta_queen_captains_invitational_gate_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_captains_invitational_cleanup_remove_delta_queen_captains_invitational_gate_1",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_gate_1",
               "stable_object_id": "delta_queen_captains_invitational_gate_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_captains_invitational_cleanup_remove_delta_queen_captains_invitational_gate_0",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_gate_0",
               "stable_object_id": "delta_queen_captains_invitational_gate_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_captains_invitational_cleanup_remove_delta_queen_captains_invitational_entry_cards",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_scene_ops_remove_delta_queen_captains_invitational_entry_cards",
               "stable_object_id": "delta_queen_captains_invitational_entry_cards"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_captains_invitational_cleanup_remove_delta_queen_captains_invitational_bracket_tables",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_scene_ops_remove_delta_queen_captains_invitational_bracket_tables",
               "stable_object_id": "delta_queen_captains_invitational_bracket_tables"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_captains_invitational_cleanup_remove_delta_queen_captains_invitational_scorer_rail",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_scene_ops_remove_delta_queen_captains_invitational_scorer_rail",
               "stable_object_id": "delta_queen_captains_invitational_scorer_rail"
             },
             {
@@ -5915,42 +6687,84 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_captains_invitational_cleanup_remove_delta_queen_captains_invitational_safe_exit",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_safe_exit",
               "stable_object_id": "delta_queen_captains_invitational_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_captains_invitational_cleanup_remove_delta_queen_captains_invitational_task_0",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_task_0",
               "stable_object_id": "delta_queen_captains_invitational_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_captains_invitational_cleanup_remove_delta_queen_captains_invitational_task_1",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_task_1",
               "stable_object_id": "delta_queen_captains_invitational_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_captains_invitational_cleanup_remove_delta_queen_captains_invitational_task_2",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_task_2",
               "stable_object_id": "delta_queen_captains_invitational_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_captains_invitational_cleanup_remove_delta_queen_captains_invitational_task_3",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_work_3_choice_0",
+              "stable_object_id": "delta_queen_captains_invitational_work_3_choice_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_scene_ops_remove_delta_queen_captains_invitational_work_3_choice_0",
+              "stable_object_id": "delta_queen_captains_invitational_work_3_choice_0"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_work_3_choice_1",
+              "stable_object_id": "delta_queen_captains_invitational_work_3_choice_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_scene_ops_remove_delta_queen_captains_invitational_work_3_choice_1",
+              "stable_object_id": "delta_queen_captains_invitational_work_3_choice_1"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_work_3_choice_2",
+              "stable_object_id": "delta_queen_captains_invitational_work_3_choice_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_scene_ops_remove_delta_queen_captains_invitational_work_3_choice_2",
+              "stable_object_id": "delta_queen_captains_invitational_work_3_choice_2"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_task_3",
               "stable_object_id": "delta_queen_captains_invitational_task_3"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "delta_queen_captains_invitational_cleanup_remove_delta_queen_captains_invitational_task_4",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_task_4",
               "stable_object_id": "delta_queen_captains_invitational_task_4"
             }
           ]
@@ -6227,7 +7041,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_captains_invitational_task_0",
-                    "prompt": "Delta Queen Captains Invitational: Begin the first physical task or choose this identity's named route.",
+                    "prompt": "Delta Queen Captains Invitational: Begin the first physical task; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_captains_invitational_task_0",
                     "state_label": "Arrival station"
@@ -6451,7 +7265,7 @@
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_captains_invitational_task_1",
-                    "prompt": "Delta Queen Captains Invitational: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Captains Invitational: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_captains_invitational_task_1",
                     "state_label": "Work 1 station"
@@ -6620,7 +7434,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_captains_invitational_task_2",
-                    "prompt": "Delta Queen Captains Invitational: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Captains Invitational: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_captains_invitational_task_2",
                     "state_label": "Work 2 station"
@@ -6806,24 +7620,6 @@
                         "input_action": "ui_cancel",
                         "label": "Refuse and leave",
                         "non_color_state": "ready"
-                      },
-                      {
-                        "id": "qualify_for_captains_final",
-                        "input_action": "ui_left",
-                        "label": "Qualify For Captains Final",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "observe_captains_final",
-                        "input_action": "ui_up",
-                        "label": "Observe Captains Final",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "dispute_captains_bracket",
-                        "input_action": "ui_right",
-                        "label": "Dispute Captains Bracket",
-                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -6836,16 +7632,14 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
-                      "ui_cancel",
-                      "ui_left",
-                      "ui_up"
+                      "ui_cancel"
                     ],
                     "label": "Choose Invitational Role",
                     "min_target_size": 44.0,
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_captains_invitational_task_3",
-                    "prompt": "Delta Queen Captains Invitational: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Captains Invitational: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_captains_invitational_task_3",
                     "state_label": "Work 3 station"
@@ -6854,6 +7648,117 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_work_3_add_delta_queen_captains_invitational_task_3",
                   "stable_object_id": "delta_queen_captains_invitational_task_3"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "qualify_for_captains_final",
+                        "input_action": "ui_left",
+                        "label": "Qualify For Captains Final",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 10.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_left"
+                    ],
+                    "label": "Qualify For Captains Final",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_0_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_captains_invitational_work_3_choice_0",
+                    "prompt": "Delta Queen Captains Invitational: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_captains_invitational_work_3_choice_0",
+                    "state_label": "Work 3 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_3_add_delta_queen_captains_invitational_work_3_choice_0",
+                  "stable_object_id": "delta_queen_captains_invitational_work_3_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "observe_captains_final",
+                        "input_action": "ui_up",
+                        "label": "Observe Captains Final",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 11.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_up"
+                    ],
+                    "label": "Observe Captains Final",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_1_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_captains_invitational_work_3_choice_1",
+                    "prompt": "Delta Queen Captains Invitational: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_captains_invitational_work_3_choice_1",
+                    "state_label": "Work 3 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_3_add_delta_queen_captains_invitational_work_3_choice_1",
+                  "stable_object_id": "delta_queen_captains_invitational_work_3_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "dispute_captains_bracket",
+                        "input_action": "ui_right",
+                        "label": "Dispute Captains Bracket",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 12.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_right"
+                    ],
+                    "label": "Dispute Captains Bracket",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_2_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::delta_queen_captains_invitational_work_3_choice_2",
+                    "prompt": "Delta Queen Captains Invitational: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "delta_queen_captains_invitational_work_3_choice_2",
+                    "state_label": "Work 3 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_3_add_delta_queen_captains_invitational_work_3_choice_2",
+                  "stable_object_id": "delta_queen_captains_invitational_work_3_choice_2"
                 }
               ],
               "label": "Work beat 3",
@@ -6868,6 +7773,66 @@
                   "receipt_id": "delta_queen_captains_invitational_spectator_behavior_state",
                   "stable_object_id": "delta_queen_captains_invitational_scorer_rail",
                   "state": "spectator_behavior_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_0_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Qualify For Captains Final",
+                    "role": "decision_route",
+                    "state": "route_0_ready",
+                    "visible": true,
+                    "zone_id": "left"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_3_spawn_delta_queen_captains_invitational_work_3_choice_0",
+                  "stable_object_id": "delta_queen_captains_invitational_work_3_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_1_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Observe Captains Final",
+                    "role": "decision_route",
+                    "state": "route_1_ready",
+                    "visible": true,
+                    "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_3_spawn_delta_queen_captains_invitational_work_3_choice_1",
+                  "stable_object_id": "delta_queen_captains_invitational_work_3_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_2_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Dispute Captains Bracket",
+                    "role": "decision_route",
+                    "state": "route_2_ready",
+                    "visible": true,
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_3_spawn_delta_queen_captains_invitational_work_3_choice_2",
+                  "stable_object_id": "delta_queen_captains_invitational_work_3_choice_2"
                 }
               ],
               "transition_ops": [
@@ -7015,7 +7980,7 @@
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::delta_queen_captains_invitational_task_4",
-                    "prompt": "Delta Queen Captains Invitational: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Delta Queen Captains Invitational: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "delta_queen_captains_invitational_task_4",
                     "state_label": "Work 4 station"
@@ -7191,7 +8156,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f6531541c4534889245ec8ddaf1977cd7f35948aab983d3faeeca91001e5b319"
+        "sequence_signature": "9b231ff741045b4d4cbbebfd2e45ea76fbe78b4dab1f517a0067df78bd7b392a"
       }
     },
     {
@@ -7397,42 +8362,42 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_gala_night_cleanup_remove_grand_casino_gala_night_gate_2",
+              "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_gate_2",
               "stable_object_id": "grand_casino_gala_night_gate_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_gala_night_cleanup_remove_grand_casino_gala_night_gate_1",
+              "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_gate_1",
               "stable_object_id": "grand_casino_gala_night_gate_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_gala_night_cleanup_remove_grand_casino_gala_night_gate_0",
+              "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_gate_0",
               "stable_object_id": "grand_casino_gala_night_gate_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_gala_night_cleanup_remove_grand_casino_gala_night_coat_check",
+              "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_coat_check",
               "stable_object_id": "grand_casino_gala_night_coat_check"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_gala_night_cleanup_remove_grand_casino_gala_night_charity_badges",
+              "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_charity_badges",
               "stable_object_id": "grand_casino_gala_night_charity_badges"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_gala_night_cleanup_remove_grand_casino_gala_night_stage_lift",
+              "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_stage_lift",
               "stable_object_id": "grand_casino_gala_night_stage_lift"
             },
             {
@@ -7453,35 +8418,77 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_gala_night_cleanup_remove_grand_casino_gala_night_safe_exit",
+              "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_safe_exit",
               "stable_object_id": "grand_casino_gala_night_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_gala_night_cleanup_remove_grand_casino_gala_night_task_0",
+              "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_task_0",
               "stable_object_id": "grand_casino_gala_night_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_gala_night_cleanup_remove_grand_casino_gala_night_task_1",
+              "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_task_1",
               "stable_object_id": "grand_casino_gala_night_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_gala_night_cleanup_remove_grand_casino_gala_night_task_2",
+              "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_work_2_choice_0",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_work_2_choice_0",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_0"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_work_2_choice_1",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_work_2_choice_1",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_1"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_work_2_choice_2",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_work_2_choice_2",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_2"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_task_2",
               "stable_object_id": "grand_casino_gala_night_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_gala_night_cleanup_remove_grand_casino_gala_night_task_3",
+              "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_task_3",
               "stable_object_id": "grand_casino_gala_night_task_3"
             }
           ]
@@ -7752,7 +8759,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::grand_casino_gala_night_task_0",
-                    "prompt": "Grand Casino Gala Night: Begin the first physical task or choose this identity's named route.",
+                    "prompt": "Grand Casino Gala Night: Begin the first physical task; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "grand_casino_gala_night_task_0",
                     "state_label": "Arrival station"
@@ -7976,7 +8983,7 @@
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::grand_casino_gala_night_task_1",
-                    "prompt": "Grand Casino Gala Night: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Grand Casino Gala Night: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "grand_casino_gala_night_task_1",
                     "state_label": "Work 1 station"
@@ -8159,24 +9166,6 @@
                         "input_action": "ui_cancel",
                         "label": "Refuse and leave",
                         "non_color_state": "ready"
-                      },
-                      {
-                        "id": "assume_gala_cover_identity",
-                        "input_action": "ui_left",
-                        "label": "Assume Gala Cover Identity",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "reopen_public_gala_floor",
-                        "input_action": "ui_up",
-                        "label": "Reopen Public Gala Floor",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "fail_gala_credentials",
-                        "input_action": "ui_right",
-                        "label": "Fail Gala Credentials",
-                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -8189,16 +9178,14 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
-                      "ui_cancel",
-                      "ui_left",
-                      "ui_up"
+                      "ui_cancel"
                     ],
                     "label": "Reset Stage Lift",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::grand_casino_gala_night_task_2",
-                    "prompt": "Grand Casino Gala Night: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Grand Casino Gala Night: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "grand_casino_gala_night_task_2",
                     "state_label": "Work 2 station"
@@ -8207,6 +9194,117 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_work_2_add_grand_casino_gala_night_task_2",
                   "stable_object_id": "grand_casino_gala_night_task_2"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "assume_gala_cover_identity",
+                        "input_action": "ui_left",
+                        "label": "Assume Gala Cover Identity",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 10.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_left"
+                    ],
+                    "label": "Assume Gala Cover Identity",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_0_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::grand_casino_gala_night_work_2_choice_0",
+                    "prompt": "Grand Casino Gala Night: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "grand_casino_gala_night_work_2_choice_0",
+                    "state_label": "Work 2 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_2_add_grand_casino_gala_night_work_2_choice_0",
+                  "stable_object_id": "grand_casino_gala_night_work_2_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "reopen_public_gala_floor",
+                        "input_action": "ui_up",
+                        "label": "Reopen Public Gala Floor",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 11.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_up"
+                    ],
+                    "label": "Reopen Public Gala Floor",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_1_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::grand_casino_gala_night_work_2_choice_1",
+                    "prompt": "Grand Casino Gala Night: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "grand_casino_gala_night_work_2_choice_1",
+                    "state_label": "Work 2 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_2_add_grand_casino_gala_night_work_2_choice_1",
+                  "stable_object_id": "grand_casino_gala_night_work_2_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "fail_gala_credentials",
+                        "input_action": "ui_right",
+                        "label": "Fail Gala Credentials",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 12.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_right"
+                    ],
+                    "label": "Fail Gala Credentials",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_2_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::grand_casino_gala_night_work_2_choice_2",
+                    "prompt": "Grand Casino Gala Night: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "grand_casino_gala_night_work_2_choice_2",
+                    "state_label": "Work 2 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_2_add_grand_casino_gala_night_work_2_choice_2",
+                  "stable_object_id": "grand_casino_gala_night_work_2_choice_2"
                 }
               ],
               "label": "Work beat 2",
@@ -8221,6 +9319,66 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_badge_state_appearance",
                   "stable_object_id": "grand_casino_gala_night_charity_badges"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_0_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Assume Gala Cover Identity",
+                    "role": "decision_route",
+                    "state": "route_0_ready",
+                    "visible": true,
+                    "zone_id": "left"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_2_spawn_grand_casino_gala_night_work_2_choice_0",
+                  "stable_object_id": "grand_casino_gala_night_work_2_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_1_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Reopen Public Gala Floor",
+                    "role": "decision_route",
+                    "state": "route_1_ready",
+                    "visible": true,
+                    "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_2_spawn_grand_casino_gala_night_work_2_choice_1",
+                  "stable_object_id": "grand_casino_gala_night_work_2_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_2_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Fail Gala Credentials",
+                    "role": "decision_route",
+                    "state": "route_2_ready",
+                    "visible": true,
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_2_spawn_grand_casino_gala_night_work_2_choice_2",
+                  "stable_object_id": "grand_casino_gala_night_work_2_choice_2"
                 }
               ],
               "transition_ops": [
@@ -8370,7 +9528,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::grand_casino_gala_night_task_3",
-                    "prompt": "Grand Casino Gala Night: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Grand Casino Gala Night: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "grand_casino_gala_night_task_3",
                     "state_label": "Work 3 station"
@@ -8548,7 +9706,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9258af52c68f12bf778bc75fc3571e16475a8b4490bf91f1bc6b067a80d60b90"
+        "sequence_signature": "54ef6e98265ed54106c4b5c4e16512cb65f0310285dac036943a45abdeb849cd"
       }
     },
     {
@@ -8754,42 +9912,42 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_convention_crowd_cleanup_remove_grand_casino_convention_crowd_gate_2",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_interaction_ops_remove_grand_casino_convention_crowd_gate_2",
               "stable_object_id": "grand_casino_convention_crowd_gate_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_convention_crowd_cleanup_remove_grand_casino_convention_crowd_gate_1",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_interaction_ops_remove_grand_casino_convention_crowd_gate_1",
               "stable_object_id": "grand_casino_convention_crowd_gate_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_convention_crowd_cleanup_remove_grand_casino_convention_crowd_gate_0",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_interaction_ops_remove_grand_casino_convention_crowd_gate_0",
               "stable_object_id": "grand_casino_convention_crowd_gate_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_convention_crowd_cleanup_remove_grand_casino_convention_crowd_booking_board",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_scene_ops_remove_grand_casino_convention_crowd_booking_board",
               "stable_object_id": "grand_casino_convention_crowd_booking_board"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_convention_crowd_cleanup_remove_grand_casino_convention_crowd_machine_banks",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_scene_ops_remove_grand_casino_convention_crowd_machine_banks",
               "stable_object_id": "grand_casino_convention_crowd_machine_banks"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_convention_crowd_cleanup_remove_grand_casino_convention_crowd_table_block",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_scene_ops_remove_grand_casino_convention_crowd_table_block",
               "stable_object_id": "grand_casino_convention_crowd_table_block"
             },
             {
@@ -8810,35 +9968,77 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_convention_crowd_cleanup_remove_grand_casino_convention_crowd_safe_exit",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_interaction_ops_remove_grand_casino_convention_crowd_safe_exit",
               "stable_object_id": "grand_casino_convention_crowd_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_convention_crowd_cleanup_remove_grand_casino_convention_crowd_task_0",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_interaction_ops_remove_grand_casino_convention_crowd_task_0",
               "stable_object_id": "grand_casino_convention_crowd_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_convention_crowd_cleanup_remove_grand_casino_convention_crowd_task_1",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_interaction_ops_remove_grand_casino_convention_crowd_task_1",
               "stable_object_id": "grand_casino_convention_crowd_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_convention_crowd_cleanup_remove_grand_casino_convention_crowd_task_2",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_interaction_ops_remove_grand_casino_convention_crowd_work_2_choice_0",
+              "stable_object_id": "grand_casino_convention_crowd_work_2_choice_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_scene_ops_remove_grand_casino_convention_crowd_work_2_choice_0",
+              "stable_object_id": "grand_casino_convention_crowd_work_2_choice_0"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_interaction_ops_remove_grand_casino_convention_crowd_work_2_choice_1",
+              "stable_object_id": "grand_casino_convention_crowd_work_2_choice_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_scene_ops_remove_grand_casino_convention_crowd_work_2_choice_1",
+              "stable_object_id": "grand_casino_convention_crowd_work_2_choice_1"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_interaction_ops_remove_grand_casino_convention_crowd_work_2_choice_2",
+              "stable_object_id": "grand_casino_convention_crowd_work_2_choice_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_scene_ops_remove_grand_casino_convention_crowd_work_2_choice_2",
+              "stable_object_id": "grand_casino_convention_crowd_work_2_choice_2"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_interaction_ops_remove_grand_casino_convention_crowd_task_2",
               "stable_object_id": "grand_casino_convention_crowd_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_convention_crowd_cleanup_remove_grand_casino_convention_crowd_task_3",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_interaction_ops_remove_grand_casino_convention_crowd_task_3",
               "stable_object_id": "grand_casino_convention_crowd_task_3"
             }
           ]
@@ -9109,7 +10309,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::grand_casino_convention_crowd_task_0",
-                    "prompt": "Grand Casino Convention Crowd: Begin the first physical task or choose this identity's named route.",
+                    "prompt": "Grand Casino Convention Crowd: Begin the first physical task; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "grand_casino_convention_crowd_task_0",
                     "state_label": "Arrival station"
@@ -9333,7 +10533,7 @@
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::grand_casino_convention_crowd_task_1",
-                    "prompt": "Grand Casino Convention Crowd: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Grand Casino Convention Crowd: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "grand_casino_convention_crowd_task_1",
                     "state_label": "Work 1 station"
@@ -9516,24 +10716,6 @@
                         "input_action": "ui_cancel",
                         "label": "Refuse and leave",
                         "non_color_state": "ready"
-                      },
-                      {
-                        "id": "blend_with_badge_crowd",
-                        "input_action": "ui_left",
-                        "label": "Blend With Badge Crowd",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "split_convention_schedule",
-                        "input_action": "ui_up",
-                        "label": "Split Convention Schedule",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "trigger_convention_standoff",
-                        "input_action": "ui_right",
-                        "label": "Trigger Convention Standoff",
-                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -9546,16 +10728,14 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
-                      "ui_cancel",
-                      "ui_left",
-                      "ui_up"
+                      "ui_cancel"
                     ],
                     "label": "Move Machine Markers",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::grand_casino_convention_crowd_task_2",
-                    "prompt": "Grand Casino Convention Crowd: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Grand Casino Convention Crowd: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "grand_casino_convention_crowd_task_2",
                     "state_label": "Work 2 station"
@@ -9564,6 +10744,117 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_work_2_add_grand_casino_convention_crowd_task_2",
                   "stable_object_id": "grand_casino_convention_crowd_task_2"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "blend_with_badge_crowd",
+                        "input_action": "ui_left",
+                        "label": "Blend With Badge Crowd",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 10.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_left"
+                    ],
+                    "label": "Blend With Badge Crowd",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_0_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::grand_casino_convention_crowd_work_2_choice_0",
+                    "prompt": "Grand Casino Convention Crowd: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "grand_casino_convention_crowd_work_2_choice_0",
+                    "state_label": "Work 2 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_2_add_grand_casino_convention_crowd_work_2_choice_0",
+                  "stable_object_id": "grand_casino_convention_crowd_work_2_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "split_convention_schedule",
+                        "input_action": "ui_up",
+                        "label": "Split Convention Schedule",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 11.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_up"
+                    ],
+                    "label": "Split Convention Schedule",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_1_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::grand_casino_convention_crowd_work_2_choice_1",
+                    "prompt": "Grand Casino Convention Crowd: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "grand_casino_convention_crowd_work_2_choice_1",
+                    "state_label": "Work 2 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_2_add_grand_casino_convention_crowd_work_2_choice_1",
+                  "stable_object_id": "grand_casino_convention_crowd_work_2_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "trigger_convention_standoff",
+                        "input_action": "ui_right",
+                        "label": "Trigger Convention Standoff",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 12.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_right"
+                    ],
+                    "label": "Trigger Convention Standoff",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_2_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::grand_casino_convention_crowd_work_2_choice_2",
+                    "prompt": "Grand Casino Convention Crowd: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "grand_casino_convention_crowd_work_2_choice_2",
+                    "state_label": "Work 2 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_2_add_grand_casino_convention_crowd_work_2_choice_2",
+                  "stable_object_id": "grand_casino_convention_crowd_work_2_choice_2"
                 }
               ],
               "label": "Work beat 2",
@@ -9578,6 +10869,66 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_badge_move_appearance",
                   "stable_object_id": "grand_casino_convention_crowd_machine_banks"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_0_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Blend With Badge Crowd",
+                    "role": "decision_route",
+                    "state": "route_0_ready",
+                    "visible": true,
+                    "zone_id": "left"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_2_spawn_grand_casino_convention_crowd_work_2_choice_0",
+                  "stable_object_id": "grand_casino_convention_crowd_work_2_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_1_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Split Convention Schedule",
+                    "role": "decision_route",
+                    "state": "route_1_ready",
+                    "visible": true,
+                    "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_2_spawn_grand_casino_convention_crowd_work_2_choice_1",
+                  "stable_object_id": "grand_casino_convention_crowd_work_2_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_2_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Trigger Convention Standoff",
+                    "role": "decision_route",
+                    "state": "route_2_ready",
+                    "visible": true,
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_2_spawn_grand_casino_convention_crowd_work_2_choice_2",
+                  "stable_object_id": "grand_casino_convention_crowd_work_2_choice_2"
                 }
               ],
               "transition_ops": [
@@ -9727,7 +11078,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::grand_casino_convention_crowd_task_3",
-                    "prompt": "Grand Casino Convention Crowd: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Grand Casino Convention Crowd: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "grand_casino_convention_crowd_task_3",
                     "state_label": "Work 3 station"
@@ -9905,7 +11256,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "079ec5bc2c80d72f0284bdbbfe3c21b9514d79833113b20d21ec0ee1ea59bc49"
+        "sequence_signature": "d034ae2268b16fb58d0a64c84f52e687b79f78b5a3efca3252024a92ae0acc2c"
       }
     },
     {
@@ -10111,49 +11462,49 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_audit_night_cleanup_remove_grand_casino_audit_night_gate_2",
+              "receipt_id": "grand_casino_audit_night_cleanup_interaction_ops_remove_grand_casino_audit_night_gate_2",
               "stable_object_id": "grand_casino_audit_night_gate_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_audit_night_cleanup_remove_grand_casino_audit_night_gate_1",
+              "receipt_id": "grand_casino_audit_night_cleanup_interaction_ops_remove_grand_casino_audit_night_gate_1",
               "stable_object_id": "grand_casino_audit_night_gate_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_audit_night_cleanup_remove_grand_casino_audit_night_gate_0",
+              "receipt_id": "grand_casino_audit_night_cleanup_interaction_ops_remove_grand_casino_audit_night_gate_0",
               "stable_object_id": "grand_casino_audit_night_gate_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_audit_night_cleanup_remove_grand_casino_audit_night_cage_seal",
+              "receipt_id": "grand_casino_audit_night_cleanup_scene_ops_remove_grand_casino_audit_night_cage_seal",
               "stable_object_id": "grand_casino_audit_night_cage_seal"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_audit_night_cleanup_remove_grand_casino_audit_night_pit_ledger",
+              "receipt_id": "grand_casino_audit_night_cleanup_scene_ops_remove_grand_casino_audit_night_pit_ledger",
               "stable_object_id": "grand_casino_audit_night_pit_ledger"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_audit_night_cleanup_remove_grand_casino_audit_night_audit_barrier",
+              "receipt_id": "grand_casino_audit_night_cleanup_scene_ops_remove_grand_casino_audit_night_audit_barrier",
               "stable_object_id": "grand_casino_audit_night_audit_barrier"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_audit_night_cleanup_remove_grand_casino_audit_night_open_exit_marker",
+              "receipt_id": "grand_casino_audit_night_cleanup_scene_ops_remove_grand_casino_audit_night_open_exit_marker",
               "stable_object_id": "grand_casino_audit_night_open_exit_marker"
             },
             {
@@ -10174,35 +11525,77 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_audit_night_cleanup_remove_grand_casino_audit_night_safe_exit",
+              "receipt_id": "grand_casino_audit_night_cleanup_interaction_ops_remove_grand_casino_audit_night_safe_exit",
               "stable_object_id": "grand_casino_audit_night_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_audit_night_cleanup_remove_grand_casino_audit_night_task_0",
+              "receipt_id": "grand_casino_audit_night_cleanup_interaction_ops_remove_grand_casino_audit_night_task_0",
               "stable_object_id": "grand_casino_audit_night_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_audit_night_cleanup_remove_grand_casino_audit_night_task_1",
+              "receipt_id": "grand_casino_audit_night_cleanup_interaction_ops_remove_grand_casino_audit_night_work_1_choice_0",
+              "stable_object_id": "grand_casino_audit_night_work_1_choice_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_audit_night_cleanup_scene_ops_remove_grand_casino_audit_night_work_1_choice_0",
+              "stable_object_id": "grand_casino_audit_night_work_1_choice_0"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_audit_night_cleanup_interaction_ops_remove_grand_casino_audit_night_work_1_choice_1",
+              "stable_object_id": "grand_casino_audit_night_work_1_choice_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_audit_night_cleanup_scene_ops_remove_grand_casino_audit_night_work_1_choice_1",
+              "stable_object_id": "grand_casino_audit_night_work_1_choice_1"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_audit_night_cleanup_interaction_ops_remove_grand_casino_audit_night_work_1_choice_2",
+              "stable_object_id": "grand_casino_audit_night_work_1_choice_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_audit_night_cleanup_scene_ops_remove_grand_casino_audit_night_work_1_choice_2",
+              "stable_object_id": "grand_casino_audit_night_work_1_choice_2"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_audit_night_cleanup_interaction_ops_remove_grand_casino_audit_night_task_1",
               "stable_object_id": "grand_casino_audit_night_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_audit_night_cleanup_remove_grand_casino_audit_night_task_2",
+              "receipt_id": "grand_casino_audit_night_cleanup_interaction_ops_remove_grand_casino_audit_night_task_2",
               "stable_object_id": "grand_casino_audit_night_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "grand_casino_audit_night_cleanup_remove_grand_casino_audit_night_task_3",
+              "receipt_id": "grand_casino_audit_night_cleanup_interaction_ops_remove_grand_casino_audit_night_task_3",
               "stable_object_id": "grand_casino_audit_night_task_3"
             }
           ]
@@ -10473,7 +11866,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::grand_casino_audit_night_task_0",
-                    "prompt": "Grand Casino Audit Night: Begin the first physical task or choose this identity's named route.",
+                    "prompt": "Grand Casino Audit Night: Begin the first physical task; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "grand_casino_audit_night_task_0",
                     "state_label": "Arrival station"
@@ -10731,24 +12124,6 @@
                         "input_action": "ui_cancel",
                         "label": "Refuse and leave",
                         "non_color_state": "ready"
-                      },
-                      {
-                        "id": "comply_with_audit_route",
-                        "input_action": "ui_left",
-                        "label": "Comply With Audit Route",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "redirect_public_audit",
-                        "input_action": "ui_up",
-                        "label": "Redirect Public Audit",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "close_audited_games",
-                        "input_action": "ui_right",
-                        "label": "Close Audited Games",
-                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -10761,16 +12136,14 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
-                      "ui_cancel",
-                      "ui_left",
-                      "ui_up"
+                      "ui_cancel"
                     ],
                     "label": "Present Pit Ledger",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::grand_casino_audit_night_task_1",
-                    "prompt": "Grand Casino Audit Night: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Grand Casino Audit Night: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "grand_casino_audit_night_task_1",
                     "state_label": "Work 1 station"
@@ -10779,6 +12152,117 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_work_1_add_grand_casino_audit_night_task_1",
                   "stable_object_id": "grand_casino_audit_night_task_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "comply_with_audit_route",
+                        "input_action": "ui_left",
+                        "label": "Comply With Audit Route",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 10.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_left"
+                    ],
+                    "label": "Comply With Audit Route",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_0_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::grand_casino_audit_night_work_1_choice_0",
+                    "prompt": "Grand Casino Audit Night: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "grand_casino_audit_night_work_1_choice_0",
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_1_add_grand_casino_audit_night_work_1_choice_0",
+                  "stable_object_id": "grand_casino_audit_night_work_1_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "redirect_public_audit",
+                        "input_action": "ui_up",
+                        "label": "Redirect Public Audit",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 11.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_up"
+                    ],
+                    "label": "Redirect Public Audit",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_1_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::grand_casino_audit_night_work_1_choice_1",
+                    "prompt": "Grand Casino Audit Night: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "grand_casino_audit_night_work_1_choice_1",
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_1_add_grand_casino_audit_night_work_1_choice_1",
+                  "stable_object_id": "grand_casino_audit_night_work_1_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "close_audited_games",
+                        "input_action": "ui_right",
+                        "label": "Close Audited Games",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 12.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_right"
+                    ],
+                    "label": "Close Audited Games",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_2_ready",
+                    "owner_namespace": "scenario",
+                    "presentation_object_id": "scenario::grand_casino_audit_night_work_1_choice_2",
+                    "prompt": "Grand Casino Audit Night: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "stable_object_id": "grand_casino_audit_night_work_1_choice_2",
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_1_add_grand_casino_audit_night_work_1_choice_2",
+                  "stable_object_id": "grand_casino_audit_night_work_1_choice_2"
                 }
               ],
               "label": "Work beat 1",
@@ -10793,6 +12277,66 @@
                   "receipt_id": "grand_casino_audit_night_seal_state_move",
                   "stable_object_id": "grand_casino_audit_night_cage_seal",
                   "zone_id": "work_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_0_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Comply With Audit Route",
+                    "role": "decision_route",
+                    "state": "route_0_ready",
+                    "visible": true,
+                    "zone_id": "left"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_1_spawn_grand_casino_audit_night_work_1_choice_0",
+                  "stable_object_id": "grand_casino_audit_night_work_1_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_1_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Redirect Public Audit",
+                    "role": "decision_route",
+                    "state": "route_1_ready",
+                    "visible": true,
+                    "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_1_spawn_grand_casino_audit_night_work_1_choice_1",
+                  "stable_object_id": "grand_casino_audit_night_work_1_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "route_2_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Close Audited Games",
+                    "role": "decision_route",
+                    "state": "route_2_ready",
+                    "visible": true,
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_1_spawn_grand_casino_audit_night_work_1_choice_2",
+                  "stable_object_id": "grand_casino_audit_night_work_1_choice_2"
                 }
               ],
               "transition_ops": [
@@ -10939,7 +12483,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::grand_casino_audit_night_task_2",
-                    "prompt": "Grand Casino Audit Night: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Grand Casino Audit Night: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "grand_casino_audit_night_task_2",
                     "state_label": "Work 2 station"
@@ -11111,7 +12655,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::grand_casino_audit_night_task_3",
-                    "prompt": "Grand Casino Audit Night: Complete this operation or choose its identity-specific route.",
+                    "prompt": "Grand Casino Audit Night: Complete this operation; named routes use their own marked stations.",
                     "safe_exit": false,
                     "stable_object_id": "grand_casino_audit_night_task_3",
                     "state_label": "Work 3 station"
@@ -11289,7 +12833,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c2765236c48da74654fd38af073f966b35fc4e21f3751fd1a2ab028e6f863b45"
+        "sequence_signature": "641b392b80fcb123203d43ba95c4fa133a7f163b1fd6e6e61d98f896d365bccd"
       }
     }
   ]

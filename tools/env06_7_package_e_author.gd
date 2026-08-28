@@ -80,8 +80,12 @@ func _entry(c: Dictionary) -> Dictionary:
 	var first_task_id := "%s_task_0" % prefix
 	var arrival_interactions := [
 		_interaction_add(prefix, "arrival", exit_id, "%s clean exit" % prefix.replace("_"," ").capitalize(), "Leave or refuse the %s task without crossing its active work zone." % prefix.replace("_"," "), [_action("ignore_%s" % prefix, "Ignore the sequence", "ui_down"), _action("refuse_%s" % prefix, "Refuse the task", "ui_cancel")], true),
-		_interaction_add(prefix, "arrival", first_task_id, str(c.verbs[0]).replace("_", " ").capitalize(), "Begin the first physical task or choose this identity's named route.", [_step_action(str(c.verbs[0]), prefix, str(c.verbs[0])), _action("fail_%s" % prefix, "Let the pressure win", "ui_right")] + _decision_actions(decision, "arrival"), false),
+		_interaction_add(prefix, "arrival", first_task_id, str(c.verbs[0]).replace("_", " ").capitalize(), "Begin the first physical task; named routes use their own marked stations.", [_step_action(str(c.verbs[0]), prefix, str(c.verbs[0])), _action("fail_%s" % prefix, "Let the pressure win", "ui_right")], false),
 	]
+	var arrival_choices := _decision_semantics(prefix, "arrival", decision)
+	scene_ops.append_array(arrival_choices.scene)
+	arrival_interactions.append_array(arrival_choices.interactions)
+	cleanup.append_array(arrival_choices.cleanup)
 	cleanup.append(_remove("interaction_ops", prefix, exit_id))
 	cleanup.append(_remove("interaction_ops", prefix, first_task_id))
 	objective_steps.append({"id":str(c.verbs[0]),"label":str(c.verbs[0]).replace("_"," ").capitalize(),"kind":"command","command_id":str(c.verbs[0])})
@@ -99,7 +103,11 @@ func _entry(c: Dictionary) -> Dictionary:
 		var gate_id := "%s_gate_%d" % [prefix, index - 1]
 		var operations := _beat_operations(c, index - 1)
 		var phase_id := "work_%d" % index
-		var interactions := [_gate(prefix,phase_id,gate_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this operation or choose its identity-specific route.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave","ui_cancel")] + _decision_actions(decision, phase_id),false)]
+		var interactions := [_gate(prefix,phase_id,gate_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this operation; named routes use their own marked stations.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave","ui_cancel")],false)]
+		var phase_choices := _decision_semantics(prefix, phase_id, decision)
+		operations.scene.append_array(phase_choices.scene)
+		interactions.append_array(phase_choices.interactions)
+		cleanup.append_array(phase_choices.cleanup)
 		# Remove gate overlays before their underlying task interactions so cleanup
 		# cannot restore an already-removed target and leak it across revisit.
 		cleanup.push_front(_remove("interaction_ops",prefix,gate_id))
@@ -144,13 +152,22 @@ func _phase(id:String,label:String,feedback:String,exit_prompt:String,objectives
 	if terminal: result["terminal"] = true
 	return result
 
-func _decision_actions(decision: Dictionary, phase_id: String) -> Array:
-	if str(decision.get("at", "")) != phase_id: return []
-	var result: Array = []
+func _decision_semantics(prefix: String, phase_id: String, decision: Dictionary) -> Dictionary:
+	var result := {"scene":[], "interactions":[], "cleanup":[]}
+	if str(decision.get("at", "")) != phase_id: return result
 	var inputs := ["ui_left","ui_up","ui_right"]
+	var zones := ["left","center","right"]
 	for index in range(_array(decision.get("options", [])).size()):
 		var option := _array(decision.get("options", []))[index] as Array
-		result.append(_action(str(option[0]),str(option[0]).replace("_"," ").capitalize(),inputs[index]))
+		var command_id := str(option[0])
+		var target_id := "%s_%s_choice_%d" % [prefix,phase_id,index]
+		result.scene.append(_scene_spawn(prefix,phase_id,target_id,command_id.replace("_"," ").capitalize(),"decision_route",zones[index],"route_%d_ready" % index,68,56))
+		var interaction := _interaction_add(prefix,phase_id,target_id,command_id.replace("_"," ").capitalize(),"Use this marked spatial route; the other two stations remain independently focusable.",[_action(command_id,command_id.replace("_"," ").capitalize(),inputs[index])],false)
+		interaction.interaction.focus_order = 10 + index
+		interaction.interaction.non_color_state = "route_%d_ready" % index
+		result.interactions.append(interaction)
+		result.cleanup.append(_remove("interaction_ops",prefix,target_id))
+		result.cleanup.append(_remove("scene_ops",prefix,target_id))
 	return result
 
 func _decision_branches(decision: Dictionary, phase_id: String, prefix: String) -> Array:
@@ -203,7 +220,7 @@ func _gate(prefix:String,boundary:String,id:String,target:String)->Dictionary:
 
 
 func _remove(family:String,prefix:String,id:String)->Dictionary:
-	return {"family":family,"op":"remove","receipt_id":"%s_cleanup_remove_%s" % [prefix,id],"owner_namespace":"scenario","stable_object_id":id}
+	return {"family":family,"op":"remove","receipt_id":"%s_cleanup_%s_remove_%s" % [prefix,family,id],"owner_namespace":"scenario","stable_object_id":id}
 
 
 func _despawn(prefix:String,id:String)->Dictionary:
@@ -285,7 +302,3 @@ func _write_json(path:String,value:Variant)->void:
 	var file := FileAccess.open(path,FileAccess.WRITE)
 	file.store_string(JSON.stringify(value,"  ",false)+"\n")
 	file.close()
-
-
-
-
