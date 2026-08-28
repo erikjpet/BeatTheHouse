@@ -6,10 +6,10 @@ document neither claims that row nor authorizes edits outside the other lane's
 exclusive crew/world ownership.  
 Authority: `docs/todo/world06_1_crew_sequence_adapter_prompt.md`, the Family 2
 launcher, the program prompt, and the landed hidden-state contracts.  
-Contract dependency: the normative behavior handoff at env branch commit
-`749390ce`. It is not env06_6 product acceptance. Concrete spellings and APIs
-left unspecified there must not be inferred from unaccepted product head
-`06459402` (whose retained content report has 78 failures).
+Contract dependency: normative behavior handoff `749390ce`, with all 24 concrete
+bindings resolved against the owner-authorized frozen, green env06_6 head
+`855a296126e8b4747b78fbe89cb5a2d02daf61f5`. The older `06459402` 78-failure
+report remains historical evidence and is not the implementation base.
 
 ## Independent acceptance rule
 
@@ -21,13 +21,16 @@ rejection regardless of other results.
 
 ## 1. Inputs and exact-head discipline
 
-- [ ] The implementation is based on the accepted, landed `env06_6` head.
+- [ ] The implementation is based on frozen env06_6 head `855a2961` or an
+  independently reviewed compatible successor; landing on main is not a start
+  precondition.
 - [ ] The reviewer records the implementation head, `env06_6` merge/head, native
   plugin hash, commands, durations, and evidence paths.
-- [ ] The adapter consumes the independently accepted vocabulary specification,
-  not names reverse-engineered from `env06_6` product code.
-- [ ] Every concrete binding left unspecified by the behavior vocabulary is
-  declared by the reviewed adapter implementation before code review.
+- [ ] The adapter consumes the normative vocabulary at `749390ce` and exact
+  `ENV-BIND-01..24` appendix, not provisional names or a crew-only vocabulary.
+- [ ] Every concrete binding matches the frozen env implementation and the
+  executable binding test; any successor drift updates/reviews the contract
+  before product code adopts it.
 - [ ] No crew/world model contract, tuning value, economy value, outcome ladder,
   clue rate, grievance weight, or hidden resolution rule changed.
 
@@ -65,6 +68,10 @@ rejection regardless of other results.
 
 ## 4. Composition and precedence
 
+- [ ] Runtime storage is a generic persisted owner-scoped instance map keyed by
+  `source_domain::owner_id::definition_id::public_instance_token`; source domain
+  is `crew|world`, semantic owner namespace stays separate, and every instance
+  has independent env runtime state with no proof/event/model/node special-case.
 - [ ] A crew sequence and environment scenario can coexist at one node without
   replacing each other's snapshot state, interactions, services, actors, or
   aftermath.
@@ -145,9 +152,11 @@ rejection regardless of other results.
 
 ## 8. Real proof conversion
 
-- [ ] Exactly one smallest genuine production crew interaction is converted;
+- [ ] Exactly `crew_favor_delivery/run_package` is converted;
   the proof is not a fixture, one-line acknowledgement, reward-only action, or
   room staging around the old choice list.
+- [ ] `crew_favor_delivery/refuse` remains on its honest EventModule dialogue
+  path, mounts no instance, and preserves its exact shipped refusal effect.
 - [ ] The proof demonstrates a real semantic scene/actor/object change, public
   player verb or objective, meaningful outcome feedback through the owning
   model's existing API, and visible branch aftermath.
@@ -158,6 +167,9 @@ rejection regardless of other results.
   model. A required special-case is an adapter design rejection.
 - [ ] The worked example in the contract matches production data and the tested
   conversion exactly.
+- [ ] The trusted `delivery_handoff` channel preserves success
+  (+22 bankroll, +4 heat, completion flags and existing trust behavior) and
+  failure (+9 heat and failure flags) exactly once; mount/start applies none.
 
 ## 9. Required negative tests
 

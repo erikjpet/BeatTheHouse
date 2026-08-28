@@ -1,6 +1,6 @@
 # world06_1 Crew and World Sequence Adapter Contract
 
-Contract version: pre-implementation draft 2, bound to env vocabulary handoff  
+Contract version: 1, concrete bindings resolved against frozen env06_6 head
 Audience: `world06_1` implementer and `world06_2` through `world06_6` consumers  
 Ownership: knowledge artifact only. The other program lane retains exclusive
 ownership of `world06_1`, the `EventModule` crew seam, and every crew/world
@@ -14,18 +14,18 @@ Executable companion:
 
 This contract fixes adapter invariants before the reference implementation
 lands. It is derived from the binding `world06_1` prompt, the Family 2 launcher,
-the `env06_6` prompt, and the landed hidden-state/no-op contracts. It deliberately
-does not infer runtime field names from an in-progress `env06_6` implementation.
+the `env06_6` prompt, and the landed hidden-state/no-op contracts. The owner
+authorized implementation against frozen, green env06_6 head
+`855a296126e8b4747b78fbe89cb5a2d02daf61f5`; section 10 binds the adapter to
+that exact API and schema surface.
 
 The normative behavior vocabulary arrived in
 `D:\bth-env6\docs\todo\env06_6_runtime_vocabulary_and_delivery_handoff.md` at
-commit `749390ce`. It is an implementation-independent contract handoff, not
-env06_6 acceptance or landing authorization. Its referenced product head is
-`06459402`; the retained content report has 78 failures. This contract consumes
-the handoff's normative behavior only. Section 10 records concrete
-spelling/API/schema values that remain unresolved because the handoff defines
-behavior rather than filenames or a preferred implementation. Consumers must
-not infer those values from the unaccepted product branch.
+commit `749390ce`. It remains the normative behavior authority. The referenced
+older product head `06459402` and its retained 78-failure content report are
+historical evidence, not the implementation base. The owner-authorized frozen
+head `855a2961` resolves the concrete spellings and APIs in section 10 without
+changing the handoff's behavior.
 
 Contract words have their usual force: MUST/MUST NOT are acceptance conditions;
 SHOULD requires written justification to depart; MAY is optional.
@@ -177,6 +177,38 @@ and stable identity, operation receipt, boundary, and content fingerprint. The
 runtime authenticates these against the live resolved interaction; caller
 values are comparison material only. `alternate_exit` is an explicit authored
 property, separate from `safe_exit`, reachability, label, or action text.
+
+### 3.4 Generic owner-scoped multi-sequence composition
+
+The frozen env runtime stores one `sequence_state` on one environment and its
+runtime identity contains only `scenario_id` and `node_id`. Reusing that slot
+for crew/world work would replace the active environment scenario. Therefore
+the adapter MUST own a generic persisted `world_sequence_instances` map. It is
+keyed by the canonical owner token
+`source_domain::owner_id::definition_id::public_instance_token`. Source domains
+are exactly `crew` and `world`; semantic operation ownership remains the separate
+shared `owner_namespace` vocabulary. The closed persisted value contains schema
+version 1, owner token, public source, public instance token, node/mount selector,
+definition fingerprint, registration marker, lifecycle, independent env runtime
+state, ownership claims, and outcome receipts/acknowledgements. The definition
+stays in its trusted catalog and must match the fingerprint on rehydration.
+Every token component is canonical and the map key MUST equal the normalized
+fields.
+
+Every mounted instance calls the shared `ScenarioSequenceSchema`,
+`ScenarioSequenceRuntime`, and `ScenarioOperationRegistry` separately. Facts are
+fanned out in sorted composite-key order, but each instance owns its own queues,
+receipts, phase, objectives, semantics, reentry, expiry, cleanup, and outcome
+handshake. Presentation is a deterministic composition of base semantics, the
+environment scenario, and all owner-scoped instances; it is never produced by
+copying one instance over another. Conflicts are validated across the union of
+claims before any mount or mutation. Removing one instance cannot alter another
+instance's state or shared base semantics.
+
+This container and its APIs are generic: no branch may inspect an event id,
+crew member id, node id, or owning model to select storage, validation, dispatch,
+or composition behavior. The proof conversion uses the same path that every
+Family 2 consumer will use.
 
 ## 4. Lifecycle
 
@@ -354,11 +386,9 @@ The shared validator MUST reject, with source location and stable error id:
 ## 9. Proof conversion contract
 
 The implementation converts exactly one smallest genuine production
-interaction. The recommended candidate is one real `crew_job_board` package-run
-job because it demonstrates an object transaction, mounted route objective,
-owning-model feedback, save/revisit, and cleanup. This recommendation is not an
-authorization to change job or delivery contracts; the other lane may select a
-smaller genuine candidate after its seam audit.
+interaction: `crew_favor_delivery`. The `refuse` choice remains genuine dialogue
+on its existing EventModule result path. `run_package` mounts the generic
+adapter sequence and may not call a proof-specific adapter branch.
 
 The proof MUST include:
 
@@ -373,50 +403,75 @@ The proof MUST include:
    behavior;
 8. keyboard, controller, reduced-motion, small-screen, and obstruction proof.
 
-A proof-specific adapter branch is a design rejection. The worked example can
-be made binding only after the `ENV-BIND-*` appendix is resolved.
+A proof-specific adapter branch is a design rejection.
+
+### 9.1 Exact `crew_favor_delivery` worked interface
+
+The trusted registration uses `source.domain=crew`, `source.owner_id=crew`,
+`definition_id=crew_favor_delivery`, and a canonical attempt-scoped
+`public_instance_token`. Its exact owner token is therefore
+`crew::crew::crew_favor_delivery::<public_instance_token>`. The runtime
+definition uses `id=crew_favor_delivery` and a nested
+schema-v2 `sequence`. It mounts at the real delivery target node only after the
+existing public delivery/job state authorizes the target. The semantic proof
+must add a crew-owned package handoff interaction and at least one visible scene
+or actor record, expose an authenticated `make_handoff` objective action, and
+declare exact cleanup and branch aftermath.
+
+The only trusted outcome channel for the conversion is
+`delivery_handoff`. Authored data names that channel, never a
+method. Trusted code maps it to the already-existing delivery/job completion
+boundary. A success acknowledgement preserves the shipped +22 bankroll and +4 heat,
+crew-favor completion flags, and existing job trust behavior exactly; a
+delivery failure preserves the shipped +9 heat and failure flags exactly.
+Starting or mounting applies none of those effects. The existing `refuse` path
+preserves +9 heat and the refusal flag and does not mount an instance.
+
+The sequence outcome receipt key is the composite instance key plus terminal
+outcome and exact runtime receipt fingerprint. The adapter persists the owning
+model acknowledgement before marking the runtime outcome consumed. Replay,
+save/load between either write, duplicate EventModule submission, or revisit
+returns the recorded public result and cannot reapply money, heat, trust, job,
+delivery, or flags. Cleanup removes only crew-owned temporary semantics;
+aftermath is a separately authored persistent claim.
 
 ## 10. Concrete env06_6 binding appendix
 
-The handoff binds the behavior summarized by these rows. Since it deliberately
-does not prescribe filenames or a preferred implementation, concrete spellings
-and entry points remain unresolved and MUST NOT be guessed from product code.
+These values are resolved against frozen env06_6 head `855a2961`. A later
+env06_6 review correction requires an explicit compatibility update to this
+appendix; adapters do not silently guess or negotiate alternate spellings.
 
-| Binding id | Required concrete value | Status |
+| Binding id | Concrete value | Status |
 | --- | --- | --- |
-| `ENV-BIND-01` | Contract/version field spelling, accepted value, and negotiation API (versioned behavior is bound) | CONCRETE BINDING UNRESOLVED |
-| `ENV-BIND-02` | Root sequence definition envelope, required/optional keys, defaults, and unknown-key policy | UNRESOLVED |
-| `ENV-BIND-03` | Stable sequence instance id and owner/source namespace format | UNRESOLVED |
-| `ENV-BIND-04` | Node, semantic object, anchor/zone, actor, interaction, service, and route selector formats | UNRESOLVED |
-| `ENV-BIND-05` | `local_state_schema` type vocabulary, default encoding, mutation commands, and validation rules | UNRESOLVED |
-| `ENV-BIND-06` | `phase_graph` node/edge/condition/branch/terminal schema and compatibility `advance_after_actions` representation | UNRESOLVED |
-| `ENV-BIND-07` | Registered `scene_ops` ids and the common operation envelope/result | UNRESOLVED |
-| `ENV-BIND-08` | Registered `interaction_ops` ids, prompt/action-set schema, service retargeting, and hit-region ownership | UNRESOLVED |
-| `ENV-BIND-09` | Registered `actor_ops` ids, actor source/position/route/pose/behavior schema | UNRESOLVED |
-| `ENV-BIND-10` | Objective schema, public progress facts, completion/failure/refusal/ignore/cancel encodings | UNRESOLVED |
-| `ENV-BIND-11` | Transition op schema, deterministic beat timing, cue ids, and one-shot receipt behavior | UNRESOLVED |
-| `ENV-BIND-12` | Reentry policy enum/shape and partial/terminal projection rules | UNRESOLVED |
-| `ENV-BIND-13` | Expiry clocks/facts, policy enum, boundary evaluation order, and resume/fail/cancel semantics | UNRESOLVED |
-| `ENV-BIND-14` | Cleanup declaration, owner-scoped removal schema, cleanup receipt and retry semantics | UNRESOLVED |
-| `ENV-BIND-15` | Aftermath declaration and persistent scene/actor/service/game property ownership | UNRESOLVED |
-| `ENV-BIND-16` | Mechanic tags, authored `sequence_signature`, normalized signature algorithm/output, and uniqueness thresholds | UNRESOLVED |
-| `ENV-BIND-17` | Typed fact envelope, publisher registry, delivery/safe-boundary order, deduplication, and persistence | UNRESOLVED |
-| `ENV-BIND-18` | Authoritative command/result boundary API, error ids, cost preview, idempotency key, and replay response | UNRESOLVED |
-| `ENV-BIND-19` | Handler registry declaration, input/output/persistence/RNG contracts, and allowlists | UNRESOLVED |
-| `ENV-BIND-20` | Snapshot placement and exact shapes for phase/local/objective/scene/actor/interaction/branch/transition/cleanup receipts | UNRESOLVED |
-| `ENV-BIND-21` | Ownership/conflict key, shared-versus-exclusive property declarations, overlay rules, and validation error ids | UNRESOLVED |
-| `ENV-BIND-22` | Validator entry point/report schema and source-location representation for crew-sourced definitions | UNRESOLVED |
-| `ENV-BIND-23` | Legacy/no-sequence compatibility guarantees exposed to an adapter and the no-op registration marker | UNRESOLVED |
-| `ENV-BIND-24` | Native/Web parity serialization/canonicalization requirements and prepared render/layout snapshot contract | UNRESOLVED |
+| `ENV-BIND-01` | Version is integer `sequence.schema_version=2`; `ScenarioSequenceSchema.validate_definition(...)` accepts exact equality only. Runtime state is schema 4; command and fact envelopes are schema 1. There is no negotiation or fallback. | RESOLVED |
+| `ENV-BIND-02` | Shared-validator input is `{id, sequence}`. `sequence` permits exactly `schema_version`, `local_state_schema`, `phase_graph`, `objectives`, `reentry_policy`, `expiry`, `cleanup`, `aftermath`, `mechanic_tags`, `sequence_signature`, `owner_exceptions`, `fact_subscriptions`, `completion_contract`, `declared_targets`; unknown sequence keys reject. Adapter metadata remains outside `sequence`. | RESOLVED |
+| `ENV-BIND-03` | Env state identity is exact `scenario_id=definition.id` plus `node_id`. Adapter `owner_token` is `source.domain::source.owner_id::source.definition_id::public_instance_token`, with source domain exactly `crew|world`; its persisted map key must equal those canonical fields. Operation identity remains the separate exact `owner_namespace::stable_object_id`. | RESOLVED |
+| `ENV-BIND-04` | `node_id` is exact persisted text. `stable_object_id` is canonical lowercase/digit/underscore/hyphen with optional colon-separated semantic components and no `::`. Position uses declared `anchor_id` or `zone_id`; route uses exact owned identity proven by the sealed room inventory. Declared collections are `scene_objects`, `interactions`, `actors`, `services`, `games`, `routes`, `anchors`, `zones`. | RESOLVED |
+| `ENV-BIND-05` | Local types are `bool,int,float,string,enum,string_array,int_array`. Every field requires typed `default`, optional `visibility=private|public`, enum `values`, or paired numeric `min/max`. Mutations use registered `set_local` or integer-only `increment_local`; invalid type/domain/bounds reject. | RESOLVED |
+| `ENV-BIND-06` | `phase_graph={initial_phase,phases}`. Phase keys are `id,label,arrival_feedback,exit_prompt,terminal,entry_conditions,objective_ids,advance_after_actions,scene_ops,interaction_ops,actor_ops,transition_ops,branches`. Branches have `id,condition` and exactly one `next_phase` or terminal `outcome`, with optional `objective_outcomes`. Conditions are `always,command,fact,local_equals,local_min,objective,outcome,receipt`. | RESOLVED |
+| `ENV-BIND-07` | Scene ids are `spawn,remove,move,replace,reveal,hide,enable,disable,set_state,set_appearance`. Every operation has `family,op,receipt_id,owner_namespace,stable_object_id` plus the verb's closed payload. `apply_operations` is transactional and returns `ok,state,applied,errors` with fingerprint-bound replay. | RESOLVED |
+| `ENV-BIND-08` | Interaction ids are `add,remove,replace,gate,retarget,augment`. Add/replace declares bounded label/state/prompt, enabled state, actions/inputs, non-color state, focus order, hit bounds/minimum 44px, `safe_exit`, and explicit `alternate_exit`. Overlays name exact target owner/id; an augment contributes authenticated actions but no second host identity. | RESOLVED |
+| `ENV-BIND-09` | Actor ids are `spawn,despawn,set_position,set_route,set_pose,set_behavior`. Spawn carries closed `actor`; position requires anchor/zone, route requires sealed exact owned route, pose is canonical, behavior bounded. Resolved route points and platform motion are derived. | RESOLVED |
+| `ENV-BIND-10` | Objective rows are `id,label,progress_label,steps,outcomes`; steps are `id,label,kind,command_id,fact_type,payload_equals`. Outcomes are `success,failure,ignore,cancel`. Public projection exposes progress; `complete_objective_step` and `resolve_objective` mutate it; terminal branches bind outcomes atomically. | RESOLVED |
+| `ENV-BIND-11` | Transition ids are `stage,sound,music,scene_change,feedback`; all require `channel`. Stage requires message/id/duration 0..8/reduced-motion fallback; sound/music require `cue_id`; scene change requires message/change id. Production and delivery receipts are separate; `drain_transitions` emits each once and publishes bounded `active_stages`. | RESOLVED |
+| `ENV-BIND-12` | `reentry_policy` is a closed dictionary with `partial`, `terminal`, `expired`, each one of `resume,restart,aftermath,expired`. `apply_reentry(state,definition,visit_id,host_semantics)` uses a structural visit receipt and rebuilds projection without replay. | RESOLVED |
+| `ENV-BIND-13` | `expiry={boundary,after,policy}`. Boundaries are `none,leave,visit_end,night_end,town_action`; policies are `resume,fail,ignore,cancel,cleanup`. `apply_expiry_boundary` records ordered boundary/amount causes and applies objective/cleanup behavior atomically after the threshold. | RESOLVED |
+| `ENV-BIND-14` | `cleanup={operations:[...]}`; each op includes `family` and the registered common envelope. Validation proves a live mutation/tombstone/overlay obligation and exact base restoration. Structural cleanup receipts and content fingerprints make exact retry idempotent and changed finalized content reject. | RESOLVED |
+| `ENV-BIND-15` | `aftermath` is keyed by reachable outcome. Each row permits `label,revisit_feedback,scene_ops,interaction_ops,actor_ops,service_ops,game_ops,route_ops`. It applies after cleanup and persists material owner-scoped semantics/receipts; it cannot retain temporary claims. | RESOLVED |
+| `ENV-BIND-16` | `mechanic_tags` are unique canonical ids. `sequence_signature` equals SHA-256 `calculated_signature_hash(definition)` of canonical `normalized_signature`. Equal hashes fail; similarity >=.820 fails, .720-.819 blocks, .600-.719 requires receipt-bound masked visual evidence, below .600 passes. | RESOLVED |
+| `ENV-BIND-17` | Facts use schema-1 envelope `fact_type,producer,node_id,fact_id,producer_serial,boundary_serial,payload`. Producer/type/payload registries are in `ScenarioSequenceRuntime`; `enqueue_fact` fingerprints/deduplicates and `flush_facts` persists deterministically ordered exact batch/receipt records. | RESOLVED |
+| `ENV-BIND-18` | Commands use schema 1 with exact `command_id,node_id,expected_phase,idempotency_key,owner_namespace,stable_object_id`, five `action_origin_*` authority fields, and `payload`. `apply_command` validates the live action and cost before mutation. Result keys are `ok,replayed,receipt_id,command_id,phase_id,status,boundary_serial,outcomes,changed,cost,state`; changed key content rejects and exact replay returns cached result. | RESOLVED |
+| `ENV-BIND-19` | Registered handlers are `set_local,increment_local,complete_objective_step,resolve_objective,record_outcome,publish_feedback,request_cleanup,event_bridge`. `registered_handlers()` publishes closed inputs, source, persistent outputs, write algebra, atomicity, idempotence and `rng=none`; `validate_handler_inputs` is authoritative. Outcome channels are a separate trusted adapter registry. | RESOLVED |
+| `ENV-BIND-20` | Container and registration schemas are 1. Each entry stores `owner_token,source,public_instance_token,node_id,mount_selector,definition_fingerprint,registration_marker,lifecycle,state,ownership_claims,outcome_channels,outcome_receipts,outcome_acknowledgements`; `state` is the complete normalized env runtime. Public adapter snapshot omits private state and adds env `public_projection` only when the trusted definition fingerprint rebinds. | RESOLVED |
+| `ENV-BIND-21` | Owned identity is `owner_namespace::stable_object_id`; priority is `base10,traveler20,service30,game40,event50,crew55,scenario60,sweep70`. Priority arbitrates registered overlays only. Duplicate same-owner identity, ambiguous target, cycles, and exclusive target/property conflict reject; adapter preflights across all active instances. | RESOLVED |
+| `ENV-BIND-22` | Validator entry is `ScenarioSequenceSchema.validate_definition(definition,ScenarioOperationRegistry,target_inventory)->Array[String]`; empty means valid. Crew reports wrap each unchanged message as `{source_kind,source_id,definition_id,instance_id,error}`, sort by composite instance/source ids, and never expose filesystem paths. | RESOLVED |
+| `ENV-BIND-23` | `is_sequence` is false when nested `sequence` is absent; env migration/ensure leaves legacy snapshots unchanged. Adapter no-op is absence of `world_sequence_instances` and its registration marker, causing no scan/normalization. A marker is owner-scoped and removed only after durable cleanup. | RESOLVED |
+| `ENV-BIND-24` | Canonical dictionaries sort string keys recursively; arrays preserve authored/receipt order; fingerprints are lowercase SHA-256. Persistence excludes Vector/Rect/render data. Prepared DTO collections are `visual_objects,interaction_overlays,services,games,routes,active_stages`; preparation failure empties all six. Native/Web serialize identical authority and semantically identical prepared DTOs. | RESOLVED |
 
-## 11. Consumer authoring boundary before bindings resolve
+## 11. Consumer authoring boundary after binding
 
-Family 2 authors MAY prepare inventories, semantic targets, actor/object intent,
-public verbs/objectives, phase diagrams, outcome-channel intent, cleanup tables,
-unchanged-value tables, capture plans, and negative tests against sections 1
-through 9. They MUST label any serialized example `NON-BINDING INTENT` and MUST
-NOT commit production JSON/GDScript using provisional env vocabulary. Once the
-handoff resolves section 10, this document and its executable companion receive
-an independent contract review; Family 2 implementation may then begin against
-the accepted knowledge without waiting for the `world06_1` reference
-implementation to land.
+Family 2 authors may author against sections 1 through 10 and the generic
+owner-scoped instance API. They MUST NOT bypass the shared validator/runtime,
+invent a second vocabulary, or special-case the proof conversion. Any change to
+the frozen env binding first updates this appendix and its executable companion,
+then receives independent contract review before consumer code adopts it.
