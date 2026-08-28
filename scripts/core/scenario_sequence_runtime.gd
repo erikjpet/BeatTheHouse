@@ -548,16 +548,10 @@ static func flush_facts(state_value: Dictionary, definition: Dictionary, boundar
 			var response := _apply_fact(state, definition, typed_fact, fingerprint)
 			if not bool(response.get("ok", false)):
 				errors.append_array(_array(response.get("errors", [])))
-				# Reject the failing ingress identity without committing a receipt or
-				# semantic consequence. Other durable queued facts retain their exact
-				# order and may be retried independently.
-				var rejected_state := original.duplicate(true)
-				var retained_queue: Array = []
-				for queued_value in _fact_array(original.get("fact_queue", [])):
-					if str((queued_value as Dictionary).get("fact_id", "")) != fact_id:
-						retained_queue.append((queued_value as Dictionary).duplicate(true))
-				rejected_state["fact_queue"] = retained_queue
-				return {"ok": false, "state": rejected_state, "processed": [], "errors": errors}
+				# A failed batch is fully retryable: keep the durable ingress envelope,
+				# its order, and every pre-batch receipt byte-exact. Quarantine or discard
+				# requires a separate explicit authority boundary.
+				return {"ok": false, "state": original, "processed": [], "errors": errors}
 			state = _dict(response.get("state", state))
 		state["last_flushed_fact_serial"] = maxi(int(state.get("last_flushed_fact_serial", 0)), int(typed_fact.get("ingress_serial", 0)))
 		processed.append(fact_id)
