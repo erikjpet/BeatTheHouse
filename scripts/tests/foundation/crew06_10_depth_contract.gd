@@ -1,7 +1,11 @@
 extends SceneTree
 
 const GameScript := preload("res://scripts/games/crew_draw_poker.gd")
+const PokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
+const HostTransactionScript := preload("res://scripts/core/scenario_host_transaction.gd")
 const NIGHT_PATH := "res://data/games/rituals/crew06_10_poker_nights.json"
+const MEMBER_IDS := ["crew_rook", "crew_velvet", "crew_knuckles", "crew_switch", "crew_mags", "crew_bishop", "crew_lucky"]
+const NIGHT_IDS := ["friendly_teaching", "hustle_test", "debt_court", "after_job", "raid_jitters"]
 
 var failures: Array[String] = []
 
@@ -13,6 +17,11 @@ func _init() -> void:
 	if not bool(load_report.get("ok", false)) and library.game("crew_draw_poker").is_empty():
 		failures.append("Content library could not load Crew Draw Poker.")
 	else:
+		_check_executable_nights(library)
+		_check_profile_mechanics(library)
+		_check_raise_and_fold_continuation(library)
+		_check_interrupt_authority(library)
+		_check_observation_restore_authority(library)
 		_check_ordered_traces(library)
 	if failures.is_empty():
 		print("CREW06_10_DEPTH_CONTRACT PASS seeds=10 profiles=5 engine=ordered_v1")
@@ -31,7 +40,7 @@ func _check_night_package() -> void:
 	var package: Dictionary = (parsed as Array)[0]
 	if str(package.get("contract", "")) != "game_ritual/1" or str(package.get("contract_head", "")) != "a2760d816c781e711ff0923c296f97b786662453":
 		failures.append("Poker nights do not consume the owner-frozen ritual contract.")
-	var expected := ["friendly_teaching", "hustle_test", "debt_court", "after_job", "raid_jitters"]
+	var expected := NIGHT_IDS
 	var actual: Array[String] = []
 	for profile_value in package.get("profiles", []):
 		var profile: Dictionary = profile_value
