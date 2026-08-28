@@ -1,6 +1,6 @@
 # craps06_3 shared assembly manifest
 
-Implementation branch: `codex/craps06_3-impl`  
+Implementation branch: `codex/craps06_3-impl`
 Frozen ritual contract: `a2760d816c781e711ff0923c296f97b786662453`
 
 The row deliberately makes no shared-catalog, shared-index, master-probe, or
