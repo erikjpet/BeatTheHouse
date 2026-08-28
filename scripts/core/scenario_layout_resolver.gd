@@ -624,8 +624,12 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 			"label_rect": _label_rect(rect, str(interaction.get("label", ""))),
 			"small_label_rect": _label_rect(small_rect, str(interaction.get("label", ""))),
 		})
-		var reachable := _path_reachable(WALK_LANE.get_center(), rect.get_center(), obstacles, identity) and _path_reachable(WALK_LANE.get_center(), small_rect.get_center(), obstacles, identity, "small_rect")
+		var normal_reachable := _path_reachable(WALK_LANE.get_center(), rect.get_center(), obstacles, identity)
+		var small_reachable := _path_reachable(WALK_LANE.get_center(), small_rect.get_center(), obstacles, identity, "small_rect")
+		var reachable := normal_reachable and small_reachable
 		if not reachable:
+			if normal_reachable and not small_reachable:
+				errors.append("Expanded small-screen scenario obstruction leaves no reachable route from the player access lane into the room.")
 			errors.append("Scenario interaction %s is not reachable from the player access lane." % identity)
 			continue
 		reachable_ids.append(identity)
@@ -828,8 +832,11 @@ static func _seal_projection_coverage(authority: Dictionary, semantic_state: Dic
 				errors.append("Semantic interaction %s has a non-boolean presentation presence contract." % identity)
 			else:
 				presence_values[bool(interaction.get("present", true))] = true
-		if presence_values.has(true) and presence_values.has(false):
-			errors.append("Semantic identity %s has conflicting live and tombstoned presentation presence." % identity)
+		# Collection membership is sealed independently. A tombstone in either
+		# presentation collection intentionally suppresses the shared base canvas
+		# record even when the other collection still records its exact membership.
+		# The three membership booleans below preserve that distinction for the
+		# hostile pre-canvas comparison.
 		var required := not presence_values.has(false)
 		if record.is_empty():
 			if required:
@@ -1049,6 +1056,12 @@ static func _point_clear(point: Vector2, obstacles: Array, ignored_identity: Str
 
 
 static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array) -> Dictionary:
+	# A normal-layout collision may be deterministically displaced. Expanded-only
+	# contact must retain authored placement so the later small-screen hit, label,
+	# lane, and reachability validators can reject the exact authored conflict
+	# instead of silently manufacturing different room geometry.
+	if not _substantially_overlaps(identity, authored, occupied):
+		return {"rect": _clamp_inside_board(authored), "adjusted": false, "colliding": false}
 	for offset_value in COLLISION_OFFSETS:
 		var offset := offset_value as Vector2
 		var candidate := _clamp_inside_board(Rect2(authored.position + offset, authored.size))
