@@ -10511,7 +10511,12 @@ func _apply_delivery_resolution() -> void:
 		var public_instance_token := job_id if not job_id.is_empty() else run_id
 		var owner_token := world_sequence_owner_for_public_instance("delivery_handoff", public_instance_token)
 		if not owner_token.is_empty():
-			world_sequence_sync_owner(owner_token, false, lifecycle_reason)
+			var sync_result := world_sequence_sync_owner(owner_token, false, lifecycle_reason)
+			if bool(sync_result.get("ok", false)):
+				for outcome_value in world_sequence_pending_outcomes(owner_token):
+					var outcome := _copy_dict(outcome_value)
+					if str(outcome.get("channel_id", "")) == "delivery_handoff" and str(outcome.get("outcome", "")) == lifecycle_reason:
+						world_sequence_ack_outcome(owner_token, str(outcome.get("receipt_id", "")), {"ok": true, "resolved": true, "outcome": lifecycle_reason})
 
 
 func _migrate_legacy_streets_run(legacy_state: Dictionary) -> void:

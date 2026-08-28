@@ -941,10 +941,11 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 		}
 	if owner_namespace != "scenario":
 		var external_action := _dict(descriptor.get("action", {}))
-		var sealed_scenario_origin := bool(descriptor.get("action_present", false)) \
-			and str(external_action.get("action_origin_owner_namespace", "")) == "scenario" \
+		var creation_owners := _array(_dict(state.get("semantic_state", {})).get("creation_owner_namespaces", ["scenario"]))
+		var sealed_creation_owner_origin := bool(descriptor.get("action_present", false)) \
+			and creation_owners.has(str(external_action.get("action_origin_owner_namespace", ""))) \
 			and _authored_action_origin_matches(state, definition, owner_namespace, stable_object_id, external_action)
-		if not sealed_scenario_origin:
+		if not sealed_creation_owner_origin:
 			errors.append("scenario command cannot spoof another owner namespace")
 		else:
 			var addressed_identity := OperationRegistryScript.identity(owner_namespace, stable_object_id)

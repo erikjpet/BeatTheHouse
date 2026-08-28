@@ -136,7 +136,10 @@ static func projection(environment: Dictionary, token: String, definition: Dicti
 
 static func execute(environment: Dictionary, token: String, definition: Dictionary, command: Dictionary, public_context: Dictionary = {}) -> Dictionary:
 	return _apply_runtime_result(environment, token, definition, func(state: Dictionary) -> Dictionary:
-		return SequenceRuntimeScript.apply_command(state, definition, command, _public_command_context(public_context))
+		var sealed_command := _sealed_command(state, command)
+		if sealed_command.is_empty():
+			return {"ok": false, "state": state, "errors": ["world sequence command is not bound to a sealed interaction action"]}
+		return SequenceRuntimeScript.apply_command(state, definition, sealed_command, _public_command_context(public_context))
 	)
 
 
@@ -263,6 +266,9 @@ static func composed_projection(environment: Dictionary, definitions: Dictionary
 					var actions: Array = []
 					for action_value in _array(record.get("available_actions", [])):
 						var action := _dict(action_value)
+						for field in ["owner_namespace", "stable_object_id", "operation_receipt_key", "operation_boundary_id", "operation_fingerprint"]:
+							var action_field := "action_origin_%s" % field.trim_prefix("operation_")
+							if record.has(field): action[action_field] = record.get(field)
 						if creation_owners.has(str(action.get("action_origin_owner_namespace", ""))):
 							action["world_sequence_owner_token"] = token
 						actions.append(action)
@@ -471,6 +477,26 @@ static func _public_command_context(value: Dictionary) -> Dictionary:
 	for key in ["available_funds", "host_interaction_availability"]:
 		if value.has(key):
 			result[key] = _copy_variant(value.get(key))
+	return result
+
+
+static func _sealed_command(state: Dictionary, command: Dictionary) -> Dictionary:
+	var identity := OperationRegistryScript.identity(str(command.get("owner_namespace", "")), str(command.get("stable_object_id", "")))
+	var interaction := _dict(_dict(_dict(state.get("semantic_state", {})).get("interactions", {})).get(identity, {}))
+	if interaction.is_empty(): return {}
+	var sealed_action: Dictionary = {}
+	for action_value in _array(interaction.get("available_actions", [])):
+		var action := _dict(action_value)
+		if str(action.get("id", "")) == str(command.get("command_id", "")):
+			sealed_action = action
+			break
+	if sealed_action.is_empty(): return {}
+	var result := command.duplicate(true)
+	result["action_origin_owner_namespace"] = str(interaction.get("owner_namespace", ""))
+	result["action_origin_stable_object_id"] = str(interaction.get("stable_object_id", ""))
+	result["action_origin_receipt_key"] = str(interaction.get("operation_receipt_key", ""))
+	result["action_origin_boundary_id"] = str(interaction.get("operation_boundary_id", ""))
+	result["action_origin_fingerprint"] = str(interaction.get("operation_fingerprint", ""))
 	return result
 
 
