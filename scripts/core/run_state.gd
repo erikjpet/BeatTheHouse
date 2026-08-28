@@ -1780,6 +1780,9 @@ func world_sequence_schedule_mount(source: Dictionary, public_instance_token: St
 		"ownership_claims": ownership_claims.duplicate(true),
 		"seed_token": seed_token,
 		"lifecycle": "eligible",
+		"pending_outcomes": [],
+		"owner_outcome_results": {},
+		"outcome_acknowledgements": {},
 	}
 	_world_sequence_definition_cache[token] = definition.duplicate(true)
 	return {"ok": true, "replayed": false, "owner_token": token, "lifecycle": "eligible", "errors": []}
@@ -1818,6 +1821,7 @@ func world_sequence_activate_current_mounts() -> Dictionary:
 		registration["lifecycle"] = "mounted"
 		registration["registration_marker"] = str(result.get("registration_marker", ""))
 		world_sequence_registrations[token] = registration
+		_refresh_world_sequence_registration(token)
 		_world_sequence_definition_cache[token] = definition.duplicate(true)
 		mounted.append(token)
 	return {"ok": errors.is_empty(), "mounted": mounted, "errors": errors}
@@ -1876,7 +1880,9 @@ func world_sequence_composed_projection() -> Dictionary:
 
 
 func world_sequence_execute(token: String, command: Dictionary, public_context: Dictionary = {}) -> Dictionary:
-	return CrewWorldSequenceAdapterScript.execute(current_environment, token, _world_sequence_definition(token), command, public_context)
+	var result := CrewWorldSequenceAdapterScript.execute(current_environment, token, _world_sequence_definition(token), command, public_context)
+	if bool(result.get("ok", false)): _refresh_world_sequence_registration(token)
+	return result
 
 
 func world_sequence_command(token: String, command_id: String, idempotency_key: String, payload: Dictionary = {}, owner_namespace: String = "crew", stable_object_id: String = "sequence", host_interaction_availability: Dictionary = {}, action_origin_owner_namespace: String = "", action_origin_stable_object_id: String = "", action_origin_receipt_key: String = "", action_origin_boundary_id: String = "", action_origin_fingerprint: String = "") -> Dictionary:
@@ -1898,6 +1904,7 @@ func world_sequence_command(token: String, command_id: String, idempotency_key: 
 	if cost > bankroll: return {"ok": false, "errors": ["world sequence command cost is not payable"], "cost": 0}
 	bankroll -= cost
 	current_environment = candidate
+	_refresh_world_sequence_registration(token)
 	result["cost"] = cost
 	result["bankroll_delta"] = -cost
 	result["bankroll_after"] = bankroll
@@ -1905,27 +1912,37 @@ func world_sequence_command(token: String, command_id: String, idempotency_key: 
 
 
 func world_sequence_enqueue_fact(token: String, fact: Dictionary) -> Dictionary:
-	return CrewWorldSequenceAdapterScript.enqueue_fact(current_environment, token, _world_sequence_definition(token), fact)
+	var result := CrewWorldSequenceAdapterScript.enqueue_fact(current_environment, token, _world_sequence_definition(token), fact)
+	if bool(result.get("ok", false)): _refresh_world_sequence_registration(token)
+	return result
 
 
 func world_sequence_flush_facts(token: String, boundary_serial: int) -> Dictionary:
-	return CrewWorldSequenceAdapterScript.flush_facts(current_environment, token, _world_sequence_definition(token), boundary_serial)
+	var result := CrewWorldSequenceAdapterScript.flush_facts(current_environment, token, _world_sequence_definition(token), boundary_serial)
+	if bool(result.get("ok", false)): _refresh_world_sequence_registration(token)
+	return result
 
 
 func world_sequence_record_visit(token: String, visit_id: String = "") -> Dictionary:
 	var exact_visit := visit_id.strip_edges()
 	if exact_visit.is_empty(): exact_visit = str(current_environment.get("environment_visit_id", ""))
-	return CrewWorldSequenceAdapterScript.record_visit(current_environment, token, _world_sequence_definition(token), exact_visit)
+	var result := CrewWorldSequenceAdapterScript.record_visit(current_environment, token, _world_sequence_definition(token), exact_visit)
+	if bool(result.get("ok", false)): _refresh_world_sequence_registration(token)
+	return result
 
 
 func world_sequence_apply_reentry(token: String, visit_id: String = "") -> Dictionary:
 	var exact_visit := visit_id.strip_edges()
 	if exact_visit.is_empty(): exact_visit = str(current_environment.get("environment_visit_id", ""))
-	return CrewWorldSequenceAdapterScript.apply_reentry(current_environment, token, _world_sequence_definition(token), exact_visit)
+	var result := CrewWorldSequenceAdapterScript.apply_reentry(current_environment, token, _world_sequence_definition(token), exact_visit)
+	if bool(result.get("ok", false)): _refresh_world_sequence_registration(token)
+	return result
 
 
 func world_sequence_apply_expiry(token: String, boundary: String, amount: int = 1) -> Dictionary:
-	return CrewWorldSequenceAdapterScript.apply_expiry_boundary(current_environment, token, _world_sequence_definition(token), boundary, amount)
+	var result := CrewWorldSequenceAdapterScript.apply_expiry_boundary(current_environment, token, _world_sequence_definition(token), boundary, amount)
+	if bool(result.get("ok", false)): _refresh_world_sequence_registration(token)
+	return result
 
 
 func world_sequence_sync_owner(token: String, owner_active: bool, reason: String = "owner_ended") -> Dictionary:
@@ -1938,8 +1955,12 @@ func world_sequence_sync_owner(token: String, owner_active: bool, reason: String
 		return {"ok": true, "cancelled_pending": true, "errors": []}
 	var result := CrewWorldSequenceAdapterScript.sync_owner(current_environment, token, _world_sequence_definition(token), owner_active, reason)
 	if bool(result.get("ok", false)) and not owner_active:
-		registration["lifecycle"] = str(CrewWorldSequenceAdapterScript.snapshot(current_environment, token).get("lifecycle", "cleaned"))
-		world_sequence_registrations[token] = registration
+		_refresh_world_sequence_registration(token)
+		registration = _copy_dict(world_sequence_registrations.get(token, registration))
+		if str(registration.get("lifecycle", "")) == "cleaned":
+			registration["pending_outcomes"] = []
+			registration["owner_outcome_results"] = {}
+			world_sequence_registrations[token] = registration
 	return result
 
 
@@ -1948,16 +1969,89 @@ func world_sequence_unmount(token: String, reason: String = "abandoned") -> Dict
 
 
 func world_sequence_pending_outcomes(token: String) -> Array:
-	return CrewWorldSequenceAdapterScript.pending_outcomes(current_environment, token)
+	_refresh_world_sequence_registration(token)
+	return _copy_array(_copy_dict(world_sequence_registrations.get(token, {})).get("pending_outcomes", []))
+
+
+func world_sequence_pending_owner_tokens() -> Array:
+	var result: Array = []
+	var tokens := world_sequence_registrations.keys()
+	tokens.sort()
+	for token_value in tokens:
+		var token := str(token_value)
+		var registration := _copy_dict(world_sequence_registrations.get(token, {}))
+		if not _copy_array(registration.get("pending_outcomes", [])).is_empty() or not _copy_dict(registration.get("owner_outcome_results", {})).is_empty():
+			result.append(token)
+	return result
 
 
 func world_sequence_ack_outcome(token: String, receipt_id: String, public_result: Dictionary) -> Dictionary:
 	var result := CrewWorldSequenceAdapterScript.acknowledge_outcome(current_environment, token, receipt_id, public_result)
 	if bool(result.get("ok", false)) and world_sequence_registrations.has(token):
-		var registration := _copy_dict(world_sequence_registrations.get(token, {}))
-		registration["lifecycle"] = "cleaned"
-		world_sequence_registrations[token] = registration
+		# The durable work item remains pending until cleanup succeeds, even though
+		# the room-local adapter now reports the receipt as acknowledged.
+		_refresh_world_sequence_registration(token)
 	return result
+
+
+# Completes one neutral delivery outcome as a persisted three-stage transaction:
+# owner consequence, acknowledgement, then cleanup. Once the consequence has
+# produced its public result, retries reuse that result and never reissue either
+# the sequence command or the delivery mutation.
+func world_sequence_consume_delivery_outcome(token: String, receipt_id: String, node_id: String = "") -> Dictionary:
+	var registration := _copy_dict(world_sequence_registrations.get(token, {}))
+	if registration.is_empty(): return {"ok": false, "errors": ["world sequence outcome registration is missing"]}
+	var receipt: Dictionary = {}
+	for receipt_value in _copy_array(registration.get("pending_outcomes", [])):
+		var candidate := _copy_dict(receipt_value)
+		if str(candidate.get("receipt_id", "")) == receipt_id:
+			receipt = candidate
+			break
+	if receipt.is_empty(): return {"ok": false, "errors": ["world sequence pending outcome receipt is missing"]}
+	if str(receipt.get("channel_id", "")) != "delivery_handoff":
+		return {"ok": false, "errors": ["world sequence outcome is not routed to delivery_handoff"]}
+	var owner_results := _copy_dict(registration.get("owner_outcome_results", {}))
+	var public_result := _copy_dict(owner_results.get(receipt_id, {}))
+	if public_result.is_empty():
+		var outcome := str(receipt.get("outcome", ""))
+		var owner_result: Dictionary = {}
+		if outcome == "delivered":
+			owner_result = delivery_complete_handoff(node_id)
+		elif outcome in ["expired", "abandoned"] and bool(active_delivery_run.get("world_applied", false)):
+			owner_result = {"ok": true, "resolved": true, "outcome": outcome, "message": ""}
+		else:
+			return {"ok": false, "errors": ["delivery owner is not ready to consume world sequence outcome %s" % outcome]}
+		if not bool(owner_result.get("ok", false)):
+			return {"ok": false, "errors": [str(owner_result.get("message", "The owning delivery model rejected this outcome."))]}
+		public_result = {
+			"ok": true,
+			"resolved": bool(owner_result.get("resolved", false)),
+			"message": str(owner_result.get("message", "")),
+		}
+		if owner_result.has("outcome"): public_result["outcome"] = str(owner_result.get("outcome", ""))
+		owner_results[receipt_id] = public_result.duplicate(true)
+		registration["owner_outcome_results"] = owner_results
+		world_sequence_registrations[token] = registration
+	var acknowledgement := world_sequence_ack_outcome(token, receipt_id, public_result)
+	if not bool(acknowledgement.get("ok", false)):
+		return {"ok": false, "errors": _copy_array(acknowledgement.get("errors", ["World sequence outcome acknowledgement failed."]))}
+	var cleanup := world_sequence_sync_owner(token, false, "owner_ended")
+	if not bool(cleanup.get("ok", false)):
+		return {"ok": false, "errors": _copy_array(cleanup.get("errors", ["World sequence cleanup failed."]))}
+	return {"ok": true, "message": str(public_result.get("message", "")), "public_result": public_result, "errors": []}
+
+
+func _refresh_world_sequence_registration(token: String, preserve_pending: bool = true) -> void:
+	if not world_sequence_registrations.has(token): return
+	var snapshot := CrewWorldSequenceAdapterScript.snapshot(current_environment, token, _world_sequence_definition(token))
+	if snapshot.is_empty(): return
+	var registration := _copy_dict(world_sequence_registrations.get(token, {}))
+	registration["lifecycle"] = str(snapshot.get("lifecycle", registration.get("lifecycle", "mounted")))
+	registration["outcome_acknowledgements"] = _copy_dict(snapshot.get("outcome_acknowledgements", {}))
+	var live_pending := CrewWorldSequenceAdapterScript.pending_outcomes(current_environment, token)
+	if not live_pending.is_empty() or not preserve_pending:
+		registration["pending_outcomes"] = live_pending.duplicate(true)
+	world_sequence_registrations[token] = registration
 
 
 func _world_sequence_definition(token: String) -> Dictionary:
@@ -1982,6 +2076,9 @@ static func _normalize_world_sequence_registrations(value: Variant) -> Dictionar
 		if str(registration.get("definition_fingerprint", "")) != ScenarioSequenceRuntimeScript.content_fingerprint(definition): continue
 		if str(registration.get("lifecycle", "")) not in ["eligible", "mounted", "cleanup_pending", "cleaned"]: continue
 		if str(registration.get("node_id", "")).strip_edges().is_empty(): continue
+		registration["pending_outcomes"] = _copy_array(registration.get("pending_outcomes", []))
+		registration["owner_outcome_results"] = _copy_dict(registration.get("owner_outcome_results", {}))
+		registration["outcome_acknowledgements"] = _copy_dict(registration.get("outcome_acknowledgements", {}))
 		result[token] = registration
 	return result
 
@@ -10454,7 +10551,10 @@ func _delivery_arrival_security_heat() -> int:
 
 
 func _apply_delivery_resolution() -> void:
-	if active_delivery_run.is_empty() or str(active_delivery_run.get("status", "")) != "resolved" or bool(active_delivery_run.get("world_applied", false)):
+	if active_delivery_run.is_empty() or str(active_delivery_run.get("status", "")) != "resolved":
+		return
+	if bool(active_delivery_run.get("world_applied", false)):
+		_retry_delivery_world_sequence_lifecycle()
 		return
 	var resolution := _copy_dict(active_delivery_run.get("resolution", {}))
 	var succeeded := str(resolution.get("outcome", "")) == "success"
@@ -10511,12 +10611,37 @@ func _apply_delivery_resolution() -> void:
 		var public_instance_token := job_id if not job_id.is_empty() else run_id
 		var owner_token := world_sequence_owner_for_public_instance("delivery_handoff", public_instance_token)
 		if not owner_token.is_empty():
-			var sync_result := world_sequence_sync_owner(owner_token, false, lifecycle_reason)
-			if bool(sync_result.get("ok", false)):
-				for outcome_value in world_sequence_pending_outcomes(owner_token):
-					var outcome := _copy_dict(outcome_value)
-					if str(outcome.get("channel_id", "")) == "delivery_handoff" and str(outcome.get("outcome", "")) == lifecycle_reason:
-						world_sequence_ack_outcome(owner_token, str(outcome.get("receipt_id", "")), {"ok": true, "resolved": true, "outcome": lifecycle_reason})
+			active_delivery_run["world_sequence_lifecycle_retry"] = {"owner_token": owner_token, "outcome": lifecycle_reason}
+			_retry_delivery_world_sequence_lifecycle()
+
+
+func _retry_delivery_world_sequence_lifecycle() -> Dictionary:
+	var retry := _copy_dict(active_delivery_run.get("world_sequence_lifecycle_retry", {}))
+	if retry.is_empty(): return {"ok": true, "inactive": true, "errors": []}
+	var owner_token := str(retry.get("owner_token", ""))
+	var outcome_id := str(retry.get("outcome", ""))
+	if owner_token.is_empty() or outcome_id not in ["expired", "abandoned"]:
+		return {"ok": false, "errors": ["delivery world-sequence lifecycle retry authority is invalid"]}
+	var matching_receipt: Dictionary = {}
+	for outcome_value in world_sequence_pending_outcomes(owner_token):
+		var outcome := _copy_dict(outcome_value)
+		if str(outcome.get("channel_id", "")) == "delivery_handoff" and str(outcome.get("outcome", "")) == outcome_id:
+			matching_receipt = outcome
+			break
+	if matching_receipt.is_empty():
+		var sync_result := world_sequence_sync_owner(owner_token, false, outcome_id)
+		if not bool(sync_result.get("ok", false)): return sync_result
+		for outcome_value in world_sequence_pending_outcomes(owner_token):
+			var outcome := _copy_dict(outcome_value)
+			if str(outcome.get("channel_id", "")) == "delivery_handoff" and str(outcome.get("outcome", "")) == outcome_id:
+				matching_receipt = outcome
+				break
+	if matching_receipt.is_empty():
+		return {"ok": false, "errors": ["delivery world-sequence lifecycle outcome receipt was not emitted"]}
+	var consumed := world_sequence_consume_delivery_outcome(owner_token, str(matching_receipt.get("receipt_id", "")), current_world_node_id())
+	if bool(consumed.get("ok", false)):
+		active_delivery_run.erase("world_sequence_lifecycle_retry")
+	return consumed
 
 
 func _migrate_legacy_streets_run(legacy_state: Dictionary) -> void:

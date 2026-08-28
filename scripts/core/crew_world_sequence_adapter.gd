@@ -299,7 +299,10 @@ static func acknowledge_outcome(environment: Dictionary, token: String, receipt_
 		return {"ok": true, "replayed": true, "receipt_id": receipt_id, "public_result": _dict(existing.get("public_result", {})), "errors": []}
 	acknowledgements[receipt_id] = {"result_fingerprint": fingerprint, "public_result": public_result.duplicate(true)}
 	entry["outcome_acknowledgements"] = acknowledgements
-	entry["lifecycle"] = LIFECYCLE_CLEANED
+	# Acknowledgement completes delivery to the owning model, not runtime
+	# cleanup. Keep cleanup authority explicit and retryable until sync_owner()
+	# successfully applies the shared runtime cleanup operation.
+	entry["lifecycle"] = LIFECYCLE_CLEANUP_PENDING
 	container[token] = entry
 	environment[CONTAINER_KEY] = container
 	return {"ok": true, "replayed": false, "receipt_id": receipt_id, "public_result": public_result.duplicate(true), "errors": []}

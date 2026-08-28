@@ -7936,6 +7936,12 @@ func _refresh() -> void:
 		_set_current_screen(SCREEN_START)
 		_render_start_screen()
 		return
+	var resumed_world_outcomes := _resume_pending_world_sequence_outcomes()
+	if not bool(resumed_world_outcomes.get("ok", false)):
+		var resume_errors := _copy_array(resumed_world_outcomes.get("errors", []))
+		_show_message(str(resume_errors[0]) if not resume_errors.is_empty() else "A pending Crew outcome is waiting to retry.")
+	elif not bool(resumed_world_outcomes.get("inactive", false)):
+		_autosave_foundation_run("Crew outcome resumed.")
 	_evaluate_run_terminal_state()
 	var scenario_transition_message := _consume_scenario_transitions()
 	if not scenario_transition_message.is_empty():
@@ -11020,24 +11026,22 @@ func _consume_world_sequence_outcomes(owner_token: String) -> Dictionary:
 		var outcome := _copy_dict(outcome_value)
 		var channel_id := str(outcome.get("channel_id", ""))
 		var receipt_id := str(outcome.get("receipt_id", ""))
-		var rollback := run_state.to_dict()
-		var owner_result: Dictionary = {}
 		match channel_id:
-			"delivery_handoff": owner_result = run_state.delivery_complete_handoff(run_state.current_world_node_id())
+			"delivery_handoff": pass
 			_: return {"ok": false, "errors": ["World sequence outcome channel is not registered in the UI: %s" % channel_id]}
-		if not bool(owner_result.get("ok", false)):
-			return {"ok": false, "errors": [str(owner_result.get("message", "The owning model rejected this outcome."))]}
-		var public_result := {"ok": true, "resolved": bool(owner_result.get("resolved", false)), "message": str(owner_result.get("message", ""))}
-		var acknowledgement := run_state.world_sequence_ack_outcome(owner_token, receipt_id, public_result)
-		if not bool(acknowledgement.get("ok", false)):
-			run_state.from_dict(rollback)
-			return {"ok": false, "errors": _copy_array(acknowledgement.get("errors", ["World sequence outcome acknowledgement failed."]))}
-		var cleanup := run_state.world_sequence_sync_owner(owner_token, false, "owner_ended")
-		if not bool(cleanup.get("ok", false)):
-			run_state.from_dict(rollback)
-			return {"ok": false, "errors": _copy_array(cleanup.get("errors", ["World sequence cleanup failed."]))}
-		return {"ok": true, "message": str(owner_result.get("message", "")), "errors": []}
+		var consumed := run_state.world_sequence_consume_delivery_outcome(owner_token, receipt_id, run_state.current_world_node_id())
+		if not bool(consumed.get("ok", false)): return consumed
+		return {"ok": true, "message": str(consumed.get("message", "")), "errors": []}
 	return {"ok": true, "inactive": true, "errors": []}
+
+
+func _resume_pending_world_sequence_outcomes() -> Dictionary:
+	var resumed := false
+	for token_value in run_state.world_sequence_pending_owner_tokens():
+		var result := _consume_world_sequence_outcomes(str(token_value))
+		if not bool(result.get("ok", false)): return result
+		if not bool(result.get("inactive", false)): resumed = true
+	return {"ok": true, "inactive": not resumed, "errors": []}
 
 
 func _scenario_host_interaction_availability() -> Dictionary:
