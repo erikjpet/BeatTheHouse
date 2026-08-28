@@ -2,6 +2,7 @@ extends SceneTree
 
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
+const EventModuleScript := preload("res://scripts/core/event_module.gd")
 
 const PACKAGE_PATH := "res://data/crew/world06_1_crew_favor_delivery_sequence.json"
 const EVENTS_PATH := "res://data/events/events.json"
@@ -43,13 +44,17 @@ func _check_adapter_envelope(entry: Dictionary, failures: Array) -> void:
 	if mount != {"zone_id": "center"}:
 		failures.append("Crew favor template must leave node selection to the public delivery result and declare only its canonical mount zone.")
 	var outcomes := _dict(entry.get("outcome_channels", {}))
-	if outcomes != {"delivered": "delivery_handoff"}:
-		failures.append("Crew favor reachable outcome is not mapped only to the neutral delivery_handoff channel.")
+	if outcomes != {"delivered": "delivery_handoff", "expired": "delivery_handoff", "abandoned": "delivery_handoff"}:
+		failures.append("Crew favor reachable outcomes are not mapped only to the neutral delivery_handoff channel.")
 	if not _array(entry.get("private_capabilities", [])).is_empty():
 		failures.append("Crew favor proof does not require a private capability.")
 	var expected_claims := {
-		"crew::package_handoff/scene_object": true,
-		"crew::package_handoff/interaction": true,
+		"crew::package_handoff/scene_ops": true,
+		"crew::package_handoff/interaction_ops": true,
+		"crew::package_handoff_receipt/scene_ops": true,
+		"crew::package_handoff_status/interaction_ops": true,
+		"crew::package_handoff_expired/scene_ops": true,
+		"crew::package_handoff_abandoned/scene_ops": true,
 	}
 	var actual_claims: Dictionary = {}
 	for claim_value in _array(entry.get("ownership_claims", [])):
@@ -81,8 +86,8 @@ func _check_shared_definition(entry: Dictionary, failures: Array) -> void:
 		failures.append("Shared sequence validator rejected production proof: %s" % str(error_value))
 	var graph := _dict(sequence.get("phase_graph", {}))
 	var phases := _array(graph.get("phases", []))
-	if str(graph.get("initial_phase", "")) != "handoff" or phases.size() != 1:
-		failures.append("Crew favor proof must have one real handoff phase, not a staged wrapper around the old choice list.")
+	if str(graph.get("initial_phase", "")) != "handoff" or phases.size() != 4:
+		failures.append("Crew favor proof must have one playable handoff phase plus exact delivered/expired/abandoned terminal phases.")
 		return
 	var phase := _dict(phases[0])
 	var scene_ops := _array(phase.get("scene_ops", []))
@@ -102,17 +107,23 @@ func _check_shared_definition(entry: Dictionary, failures: Array) -> void:
 	if objectives.size() != 1 or str(_dict(objectives[0]).get("id", "")) != "deliver_package":
 		failures.append("Crew favor proof lacks the real public delivery objective.")
 	var branches := _array(phase.get("branches", []))
-	if branches.size() != 1 or str(_dict(branches[0]).get("outcome", "")) != "delivered":
-		failures.append("Crew favor proof handoff does not terminate through its registered neutral outcome.")
+	if branches.size() != 3 or str(_dict(branches[0]).get("next_phase", "")) != "delivered_result" \
+			or str(_dict(branches[1]).get("next_phase", "")) != "expired_result" \
+			or str(_dict(branches[2]).get("next_phase", "")) != "abandoned_result":
+		failures.append("Crew favor proof does not bind command delivery and trusted owner expiry/abandon lifecycle to separate terminals.")
 	var expiry := _dict(sequence.get("expiry", {}))
 	if str(expiry.get("boundary", "")) != "none" or int(expiry.get("after", -1)) != 0 or str(expiry.get("policy", "")) != "cancel":
 		failures.append("Adapter data must not duplicate the delivery model's deadline or expiry authority.")
 	var cleanup_ops := _array(_dict(sequence.get("cleanup", {})).get("operations", []))
 	if cleanup_ops.size() != 2:
 		failures.append("Crew favor proof cleanup does not remove exactly its temporary object and interaction.")
-	var aftermath := _dict(_dict(sequence.get("aftermath", {})).get("delivered", {}))
-	if _array(aftermath.get("scene_ops", [])).size() != 1 or str(aftermath.get("revisit_feedback", "")).is_empty():
-		failures.append("Crew favor proof lacks visible, persistent delivered aftermath.")
+	var aftermaths := _dict(sequence.get("aftermath", {}))
+	if aftermaths.keys().size() != 3:
+		failures.append("Crew favor proof lacks exact delivered/expired/abandoned aftermath.")
+	for outcome_id in ["delivered", "expired", "abandoned"]:
+		var aftermath := _dict(aftermaths.get(outcome_id, {}))
+		if _array(aftermath.get("scene_ops", [])).size() != 1 or str(aftermath.get("revisit_feedback", "")).is_empty():
+			failures.append("Crew favor proof lacks visible, persistent %s aftermath." % outcome_id)
 
 
 func _check_production_event_contract(failures: Array) -> void:
@@ -147,6 +158,8 @@ func _check_production_event_contract(failures: Array) -> void:
 
 
 func _check_generic_integration_surface(failures: Array) -> void:
+	if EventModuleScript == null:
+		failures.append("EventModule proof integration did not load.")
 	var event_source := FileAccess.get_file_as_string(EVENT_MODULE_PATH)
 	if not event_source.contains("world_sequence_schedule_mount"):
 		failures.append("EventModule does not schedule the accepted offer through the generic future-node mount seam.")

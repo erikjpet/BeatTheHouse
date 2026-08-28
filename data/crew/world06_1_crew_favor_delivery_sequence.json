@@ -14,17 +14,39 @@
       "ownership_claims": [
         {
           "target": "crew::package_handoff",
-          "property": "scene_object",
+          "property": "scene_ops",
           "mode": "exclusive"
         },
         {
           "target": "crew::package_handoff",
-          "property": "interaction",
+          "property": "interaction_ops",
+          "mode": "exclusive"
+        },
+        {
+          "target": "crew::package_handoff_receipt",
+          "property": "scene_ops",
+          "mode": "exclusive"
+        },
+        {
+          "target": "crew::package_handoff_status",
+          "property": "interaction_ops",
+          "mode": "exclusive"
+        },
+        {
+          "target": "crew::package_handoff_expired",
+          "property": "scene_ops",
+          "mode": "exclusive"
+        },
+        {
+          "target": "crew::package_handoff_abandoned",
+          "property": "scene_ops",
           "mode": "exclusive"
         }
       ],
       "outcome_channels": {
-        "delivered": "delivery_handoff"
+        "delivered": "delivery_handoff",
+        "expired": "delivery_handoff",
+        "abandoned": "delivery_handoff"
       },
       "private_capabilities": [],
       "definition": {
@@ -38,7 +60,6 @@
             {
               "id": "handoff",
               "label": "Package handoff",
-              "terminal": true,
               "arrival_feedback": "A quiet hand waits at the marked place for the Crew package.",
               "exit_prompt": "The room's ordinary exit remains open while the package waits.",
               "entry_conditions": [
@@ -120,8 +141,75 @@
                     "type": "command",
                     "command_id": "make_handoff"
                   },
-                  "outcome": "delivered"
+                  "next_phase": "delivered_result"
+                },
+                {
+                  "id": "package_expired",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "owner_expired"
+                  },
+                  "next_phase": "expired_result"
+                },
+                {
+                  "id": "package_abandoned",
+                  "condition": {
+                    "type": "command",
+                    "command_id": "owner_abandoned"
+                  },
+                  "next_phase": "abandoned_result"
                 }
+              ]
+            },
+            {
+              "id": "delivered_result",
+              "label": "Package delivered",
+              "terminal": true,
+              "arrival_feedback": "The package changes hands exactly once.",
+              "exit_prompt": "The room's ordinary exit remains open.",
+              "entry_conditions": [],
+              "objective_ids": [],
+              "advance_after_actions": 0,
+              "scene_ops": [],
+              "interaction_ops": [],
+              "actor_ops": [],
+              "transition_ops": [],
+              "branches": [
+                {"id": "delivered_outcome", "condition": {"type": "always"}, "outcome": "delivered"}
+              ]
+            },
+            {
+              "id": "expired_result",
+              "label": "Package expired",
+              "terminal": true,
+              "arrival_feedback": "The Crew's clock runs out before the package changes hands.",
+              "exit_prompt": "The room's ordinary exit remains open.",
+              "entry_conditions": [],
+              "objective_ids": [],
+              "advance_after_actions": 0,
+              "scene_ops": [],
+              "interaction_ops": [],
+              "actor_ops": [],
+              "transition_ops": [],
+              "branches": [
+                {"id": "expired_outcome", "condition": {"type": "always"}, "outcome": "expired"}
+              ]
+            },
+            {
+              "id": "abandoned_result",
+              "label": "Package abandoned",
+              "terminal": true,
+              "arrival_feedback": "The marked handoff closes without the package.",
+              "exit_prompt": "The room's ordinary exit remains open.",
+              "entry_conditions": [],
+              "objective_ids": [],
+              "advance_after_actions": 0,
+              "scene_ops": [],
+              "interaction_ops": [],
+              "actor_ops": [],
+              "transition_ops": [],
+              "branches": [
+                {"id": "abandoned_outcome", "condition": {"type": "always"}, "outcome": "abandoned"}
               ]
             }
           ]
@@ -192,6 +280,78 @@
                   "appearance": "empty_mark"
                 }
               }
+            ],
+            "interaction_ops": [
+              {
+                "family": "interaction_ops",
+                "op": "add",
+                "receipt_id": "aftermath_package_delivered_status",
+                "owner_namespace": "crew",
+                "stable_object_id": "package_handoff_status",
+                "interaction": {
+                  "owner_namespace": "crew",
+                  "stable_object_id": "package_handoff_status",
+                  "label": "Handoff complete",
+                  "state_label": "Delivered",
+                  "prompt": "The package already changed hands.",
+                  "enabled": false,
+                  "disabled_reason": "Already delivered.",
+                  "available_actions": [],
+                  "input_actions": [],
+                  "non_color_state": "delivered",
+                  "focus_order": 20,
+                  "hit_bounds": {"w": 44, "h": 44},
+                  "min_target_size": 44,
+                  "safe_exit": false,
+                  "alternate_exit": false
+                }
+              }
+            ]
+          },
+          "expired": {
+            "label": "Package expired",
+            "revisit_feedback": "The handoff mark is cold. The Crew's clock already ran out.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "op": "spawn",
+                "receipt_id": "aftermath_package_expired",
+                "owner_namespace": "crew",
+                "stable_object_id": "package_handoff_expired",
+                "object": {
+                  "label": "Expired handoff mark",
+                  "role": "aftermath",
+                  "zone_id": "center",
+                  "bounds": {"w": 44, "h": 44},
+                  "visible": true,
+                  "enabled": false,
+                  "state": "expired",
+                  "appearance": "cold_mark"
+                }
+              }
+            ]
+          },
+          "abandoned": {
+            "label": "Package abandoned",
+            "revisit_feedback": "The marked place is empty. The abandoned route already closed.",
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "op": "spawn",
+                "receipt_id": "aftermath_package_abandoned",
+                "owner_namespace": "crew",
+                "stable_object_id": "package_handoff_abandoned",
+                "object": {
+                  "label": "Abandoned handoff mark",
+                  "role": "aftermath",
+                  "zone_id": "center",
+                  "bounds": {"w": 44, "h": 44},
+                  "visible": true,
+                  "enabled": false,
+                  "state": "abandoned",
+                  "appearance": "empty_mark"
+                }
+              }
             ]
           }
         },
@@ -211,8 +371,21 @@
           "owner_feedback",
           "environment_composition"
         ],
-        "sequence_signature": "65cabc60e30a5b58aa26625ab6fe10281e3f2d02deb956b6a9a232a50e19a99f",
-        "owner_exceptions": [],
+        "sequence_signature": "ea253c262bbf657dc76dfe0d731aeaf03130872298799f09c303f3e15c0d5d53",
+        "owner_exceptions": [
+          {
+            "row": "world_connection",
+            "reason": "The owner-scoped overlay composes with the sealed host room's ordinary exit instead of duplicating travel authority.",
+            "owner": "program06_0",
+            "approved_on": "2026-08-27"
+          },
+          {
+            "row": "feedback_and_exit",
+            "reason": "The sequence authors feedback while the sealed host room remains the sole exit authority.",
+            "owner": "program06_0",
+            "approved_on": "2026-08-27"
+          }
+        ],
         "fact_subscriptions": [],
           "completion_contract": {
           "arrival_readable": true,
