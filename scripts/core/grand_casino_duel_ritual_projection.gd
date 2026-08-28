@@ -57,13 +57,13 @@ static func apply_transition(state_value: Dictionary, next_phase: String, receip
 	var phase_before := str(state.get("phase_id", ""))
 	var result_ref := str(authority.get("authoritative_result_ref", ""))
 	var ending := _ending_from_authority(authority)
-	var content := {"phase_before":phase_before,"phase_after":next_phase,"authoritative_result_ref":result_ref,"selected_ending":ending}
-	var fingerprint := _fingerprint(content)
 	var receipts: Dictionary = state.get("transition_receipts", {})
 	if receipts.has(clean_receipt):
 		var prior := _dict(receipts.get(clean_receipt, {}))
-		if str(prior.get("content_fingerprint", "")) == fingerprint: return {"ok": true, "state": state, "replayed": true}
+		if str(prior.get("phase_after", "")) == next_phase and str(prior.get("authoritative_result_ref", "")) == result_ref and str(prior.get("selected_ending", "")) == ending: return {"ok": true, "state": state, "replayed": true}
 		return {"ok": false, "state": state, "error_code": "receipt_content_conflict"}
+	var content := {"phase_before":phase_before,"phase_after":next_phase,"authoritative_result_ref":result_ref,"selected_ending":ending}
+	var fingerprint := _fingerprint(content)
 	if not _allowed_transition(phase_before, next_phase, authority): return {"ok": false, "state": state, "error_code": "phase_transition_rejected"}
 	if next_phase == "outcome_staging" and ending.is_empty(): return {"ok": false, "state": state, "error_code": "authoritative_result_missing"}
 	var next := state.duplicate(true)
@@ -73,7 +73,7 @@ static func apply_transition(state_value: Dictionary, next_phase: String, receip
 		next["selected_ending"] = ending
 		next["outcome_receipt"] = clean_receipt
 	receipts = _dict(next.get("transition_receipts", {}))
-	receipts[clean_receipt] = {"phase_before":phase_before,"phase_after":next_phase,"content_fingerprint":fingerprint,"authoritative_result_ref":result_ref}
+	receipts[clean_receipt] = {"phase_before":phase_before,"phase_after":next_phase,"content_fingerprint":fingerprint,"authoritative_result_ref":result_ref,"selected_ending":ending}
 	next["transition_receipts"] = receipts
 	var entries: Array = next.get("phase_entry_receipts", [])
 	entries.append("receipt:phase_entry:%s:%d" % [next_phase, entries.size() + 1])
@@ -226,8 +226,10 @@ static func _public_crew(value: Array) -> Array:
 
 static func _public_authority_ref(value: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
-	for key in ["duel_id", "attempt", "route_id", "result_serial", "duel_content_fingerprint"]:
-		if value.has(key): result[key] = value.get(key)
+	for key in ["duel_id", "route_id", "duel_content_fingerprint"]:
+		if value.has(key): result[key] = str(value.get(key, ""))
+	for key in ["attempt", "result_serial"]:
+		if value.has(key): result[key] = int(value.get(key, 0))
 	return result
 
 
