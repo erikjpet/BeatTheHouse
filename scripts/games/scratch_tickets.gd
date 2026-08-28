@@ -142,10 +142,16 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var sweep_duration := 0 if reduce_motion else SWEEP_DURATION_MSEC
 	_configure_active_ticket_layout(active_ticket, compact_mode)
 	var result_ready := bool(active_ticket.get("result_ready", false))
+	var counter_ritual := _scratch_counter_ritual(machine, active_ticket, run_state, environment)
 	return GameModule.surface_spec({
 		"surface_renderer": "scratch_tickets",
 		"surface_life": "scratch_vending_machine",
-		"surface_cast": "machine",
+		"surface_cast": "clerk_and_machine",
+		"counter_ritual": counter_ritual,
+		"counter_phase": str(counter_ritual.get("phase", "selection")),
+		"counter_actors": counter_ritual.get("actors", []),
+		"counter_objects": counter_ritual.get("objects", []),
+		"counter_attention": counter_ritual.get("attention", {}),
 		"surface_controls_native": true,
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
@@ -688,6 +694,16 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 	machine["last_dispense_id"] = "scratch-dispense:%s" % str(first_ticket.get("id", first_purchase_number))
 	machine["last_dispense_slot"] = stock_index
 	machine["dispense_started_msec"] = GameModule.deterministic_time_msec(run_state, ui_state)
+	machine["last_counter_transaction"] = {
+		"kind": "purchase",
+		"phase": "handover",
+		"ticket_count": quantity,
+		"tendered": total_price,
+		"price": total_price,
+		"change": 0,
+		"ticket_id": str(first_ticket.get("id", "")),
+		"completed": true,
+	}
 	_write_machine_state(environment, machine, run_state, false)
 	var message := "%s%s paid for now. Scratch one at a time." % [str(first_ticket.get("display_name", "A scratch ticket")), " x%d" % quantity if quantity > 1 else ""]
 	if not _dictionary_array(first_ticket.get("xray_peeks", [])).is_empty():
@@ -858,6 +874,14 @@ func _resolve_redemption(run_state: RunState, environment: Dictionary, rng: RngS
 	var heat := big_wins * 4
 	machine["winner_pile"] = []
 	machine["redeemed_count"] = int(machine.get("redeemed_count", 0)) + winners.size()
+	machine["last_counter_transaction"] = {
+		"kind": "redemption",
+		"phase": "payout",
+		"ticket_count": winners.size(),
+		"payout": payout,
+		"scrutiny": "extended" if big_wins > 0 else "standard",
+		"completed": true,
+	}
 	_write_machine_state(environment, machine, run_state)
 	var message := "The clerk scans %d ticket%s and counts out $%d." % [winners.size(), "" if winners.size() == 1 else "s", payout]
 	if heat > 0:
@@ -891,6 +915,60 @@ func _redeemer_label(environment: Dictionary) -> String:
 	if scene_type == "bar" or str(environment.get("archetype_id", "")) == "bar":
 		return "Bartender"
 	return "Lottery Clerk"
+
+
+func _scratch_counter_ritual(machine: Dictionary, active_ticket: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var winners := _dictionary_array(machine.get("winner_pile", []))
+	var losers := _dictionary_array(machine.get("loser_pile", []))
+	var suspicion := run_state.suspicion_level() if run_state != null else 0
+	var transaction := _copy_dict(machine.get("last_counter_transaction", {}))
+	var phase := "selection"
+	if not winners.is_empty():
+		phase = "redemption_ready"
+	elif not active_ticket.is_empty():
+		phase = "file" if bool(active_ticket.get("result_ready", false)) else "play"
+	elif str(transaction.get("phase", "")) == "handover":
+		phase = "handover"
+	var clerk_state := "idle"
+	if suspicion >= 70:
+		clerk_state = "refusing"
+	elif suspicion >= 45:
+		clerk_state = "suspicious"
+	elif suspicion >= 20:
+		clerk_state = "watching"
+	elif phase == "redemption_ready":
+		clerk_state = "paying_out"
+	elif phase in ["handover", "selection"] and not transaction.is_empty():
+		clerk_state = "serving"
+	elif _stock_total(machine) <= 0:
+		clerk_state = "bored"
+	var stock_rows := _dictionary_array(machine.get("stock", []))
+	var rack_rows: Array = []
+	for row_value in stock_rows:
+		var row: Dictionary = row_value
+		rack_rows.append({
+			"type_id": str(row.get("type_id", "")),
+			"remaining": maxi(0, int(row.get("remaining", 0))),
+			"capacity": maxi(0, int(row.get("capacity", 0))),
+			"material_energy": "lit" if int(row.get("remaining", 0)) > 0 else "spent",
+		})
+	return {
+		"version": 1,
+		"phase": phase,
+		"actors": [{
+			"id": "scratch_clerk",
+			"label": _redeemer_label(environment),
+			"state": clerk_state,
+			"material_energy": "alert" if clerk_state in ["watching", "suspicious", "refusing"] else "working" if clerk_state in ["serving", "paying_out"] else "ambient",
+		}],
+		"objects": [
+			{"id": "ticket_rack", "state": "stocked" if _stock_total(machine) > 0 else "empty", "stock": rack_rows, "material_energy": "interactive" if _stock_total(machine) > 0 else "spent"},
+			{"id": "counter", "state": phase, "material_energy": "active" if phase in ["handover", "redemption_ready"] else "ambient"},
+			{"id": "losing_ticket_pile", "count": losers.size() + maxi(0, int(machine.get("loser_archive_count", 0))), "visible": true, "material_energy": "spent"},
+		],
+		"transaction": transaction,
+		"attention": {"tier": clerk_state, "suspicion": suspicion, "reveals_hidden_outcomes": false},
+	}
 
 
 func _is_practice_environment(environment: Dictionary) -> bool:
