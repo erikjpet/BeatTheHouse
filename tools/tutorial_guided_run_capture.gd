@@ -9,6 +9,7 @@ const MainScene := preload("res://scenes/main.tscn")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 
 var app: Control
 var out_dir := "res://.tmp/tutorial_rework/captures"
@@ -391,8 +392,7 @@ func _stage_blackjack_count_miss_surface() -> void:
 		icons[icon_index] = icon
 	challenge["icons"] = icons
 	ui_state["count_challenge"] = challenge
-	var result := game.resolve_with_context("count_cards", 0, run_state, run_state.current_environment, run_state.create_rng("capture_count_miss"), ui_state)
-	GameModuleScript.apply_result(run_state, result, run_state.create_rng("capture_count_miss_apply"))
+	var result := BlackjackAuthorityTestDriverScript.resolve(game, "count_cards", 0, run_state, run_state.current_environment, run_state.create_rng("capture_count_miss"), ui_state)
 	var final_state: Dictionary = result.get("blackjack_surface_ui_state", ui_state) if typeof(result.get("blackjack_surface_ui_state", ui_state)) == TYPE_DICTIONARY else ui_state
 	app.set("game_surface_ui_state", final_state)
 	app.set("last_game_result", result)

@@ -4435,14 +4435,13 @@ func _check_blackjack_surface_time_resolve_determinism(game: GameModule, table_s
 		failures.append("Blackjack supplied surface_time_msec resolve left divergent RunState economy/heat.")
 
 
-func _blackjack_authority_resolve(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+func _blackjack_authority_resolve(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, _rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	# Test fixtures are the trusted host in this suite. Seed their authored
 	# mid-hand state into the same durable table ledger production restores, then
 	# submit only the action through the production authority.
 	_blackjack_seed_authority_session(game, run_state, environment, ui_state)
-	var rng_snapshot := rng.snapshot() if rng != null else run_state.create_rng().snapshot()
-	run_state.rng_seed = int(rng_snapshot.get("seed", run_state.rng_seed))
-	run_state.rng_state = int(rng_snapshot.get("state", run_state.rng_state))
+	# The production host owns the canonical run RNG. The legacy parameter stays
+	# for call compatibility but may not rebase the durable ledger to a named fork.
 	var host := _blackjack_test_host(game, run_state, stake)
 	return host.call("_blackjack_host_resolve_intent", action_id, stake)
 
