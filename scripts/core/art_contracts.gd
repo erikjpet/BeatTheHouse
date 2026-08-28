@@ -6,6 +6,5 @@ extends RefCounted
 # competing surface dimensions.
 
 const ENVIRONMENT_BOARD_SIZE := Vector2i(900, 430)
-const ENVIRONMENT_OBJECT_HIT_SIZE := Vector2i(104, 76)
 const GAME_BOARD_SIZE := Vector2i(900, 430)
 const ICON_SIZE := Vector2i(32, 32)

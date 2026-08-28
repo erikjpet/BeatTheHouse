@@ -4338,8 +4338,7 @@ func _check_canonical_pack_paths(failures: Array) -> void:
 	for pack_name in required_paths.keys():
 		var path := str(required_paths[pack_name])
 		_check_foundation_pack_path(path, failures)
-		var exists := DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(path)) if path.get_extension().is_empty() else FileAccess.file_exists(path)
-		if not exists:
+		if not FileAccess.file_exists(path):
 			failures.append("Missing required foundation pack %s at %s." % [pack_name, path])
 
 	var future_paths := ContentLibraryScript.future_pack_paths()

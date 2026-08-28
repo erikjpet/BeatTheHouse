@@ -19,7 +19,6 @@ const CollectionDropServiceScript := preload("res://scripts/core/collection_drop
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
-const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const EnvironmentHoursScript := preload("res://scripts/core/environment_hours.gd")
@@ -30,9 +29,6 @@ const PoliceSweepContractScript := preload("res://scripts/tests/foundation/polic
 const NumbersContractScript := preload("res://scripts/tests/foundation/numbers_contract.gd")
 const Tier2ScenarioContractScript := preload("res://scripts/tests/foundation/tier2_scenario_contract.gd")
 const ScenarioBacklogContractScript := preload("res://scripts/tests/foundation/scenario_backlog_contract.gd")
-const ScenarioSequenceContractScript := preload("res://scripts/tests/foundation/scenario_sequence_contract.gd")
-const ScenarioSemanticPresentationContractScript := preload("res://scripts/tests/foundation/scenario_semantic_presentation_contract.gd")
-const EnvironmentSemanticInventoryContractScript := preload("res://scripts/tests/foundation/environment_semantic_inventory_contract.gd")
 const InteractableEventClassGuardScript := preload("res://scripts/tests/foundation/interactable_event_class_guard.gd")
 const GameActivationClassGuardScript := preload("res://scripts/tests/foundation/game_activation_class_guard.gd")
 const Onboarding06ContractScript := preload("res://scripts/tests/foundation/onboarding_06_contract.gd")
@@ -298,7 +294,7 @@ class SurfaceHarness:
 		surface_add_hit(rect, action, index, false)
 
 	func surface_add_exact_hover_hit(rect: Rect2, action: String, index: int = -1) -> void:
-		surface_add_exact_hit(rect, action, index)
+		surface_add_hit(rect, action, index, false)
 		if not hit_regions.is_empty():
 			(hit_regions[-1] as Dictionary)["activate_on_hover"] = true
 
@@ -398,19 +394,7 @@ class HostileInputAllInFixtureGame:
 
 
 # Runs fixture checks and exits with a process code.
-class FoundationRunnerReadySentinel:
-	extends Node
-	var ready_seen := false
-
-	func _ready() -> void:
-		ready_seen = true
-
-
 func _init() -> void:
-	call_deferred("_foundation_init_after_tree_ready")
-
-
-func _foundation_init_after_tree_ready() -> void:
 	var options := _foundation_options()
 	if bool(options.get("list", false)):
 		_foundation_print_suite_list()
@@ -418,11 +402,6 @@ func _foundation_init_after_tree_ready() -> void:
 		return
 	_foundation_active_suite = str(options.get("suite", "contracts"))
 	var failures: Array = []
-	var ready_sentinel := FoundationRunnerReadySentinel.new()
-	root.add_child(ready_sentinel)
-	if not ready_sentinel.ready_seen:
-		failures.append("Foundation runner deferred start did not attach nodes through _ready.")
-	ready_sentinel.free()
 	var report := _foundation_report(_foundation_active_suite)
 	var requested_check_ids: Array = options.get("check_ids", [])
 	for check_id_value in requested_check_ids:
@@ -793,9 +772,6 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	PunchlineLayerContractScript.check(library, failures)
 	Tier2ScenarioContractScript.check(library, failures)
 	ScenarioBacklogContractScript.check(library, failures)
-	ScenarioSequenceContractScript.check(library, failures, self)
-	ScenarioSemanticPresentationContractScript.check(library, failures)
-	EnvironmentSemanticInventoryContractScript.check(library, failures)
 
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CONTENT-CHECK")
@@ -974,10 +950,6 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	phase_run.set_environment(phased)
 	if str(phase_run.current_environment.get("scenario_id", "")) != "bar_fight_night" or str(_copy_dict(phase_run.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "UNDERCARD STARTS SOON.":
 		failures.append("Selected scenario was not applied at environment generation time.")
-	var legacy_before_dynamic_probe := JSON.stringify(phase_run.current_environment)
-	var legacy_dynamic_probe := phase_run.scenario_enqueue_fact("world_boundary", "scenario", {"amount": 1, "action_index": 1}, "legacy:inactive")
-	if not bool(legacy_dynamic_probe.get("inactive", false)) or bool(legacy_dynamic_probe.get("ok", true)) or not _copy_array(legacy_dynamic_probe.get("errors", [])).is_empty() or JSON.stringify(phase_run.current_environment) != legacy_before_dynamic_probe:
-		failures.append("A nonempty legacy scenario definition did not bypass dynamic fact ingress byte-identically.")
 	phase_run.advance_environment_turns(1)
 	if int(phase_run.current_environment.get("scenario_phase_index", -1)) != 0 or int(phase_run.current_environment.get("scenario_phase_action_counter", -1)) != 1:
 		failures.append("Scenario phase advanced before its authored action boundary.")
@@ -1239,43 +1211,8 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	tutorial_run.start_new("TIER1-TUTORIAL-PIN", tutorial_config)
 	var tutorial_generator := RunGeneratorScript.new(library)
 	var tutorial_pin: Dictionary = tutorial_generator.call("_select_scenario", tutorial_run, "corner_store", tutorial_run.create_rng("tutorial_pin"))
-	if str(tutorial_pin.get("id", "")) != "corner_store_delivery_day" or not _copy_dict(tutorial_pin.get("mutations", {})).is_empty() or not _copy_array(tutorial_pin.get("phases", [])).is_empty() or not bool(tutorial_pin.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)) or tutorial_pin.has("sequence"):
+	if str(tutorial_pin.get("id", "")) != "corner_store_delivery_day" or not _copy_dict(tutorial_pin.get("mutations", {})).is_empty() or not _copy_array(tutorial_pin.get("phases", [])).is_empty():
 		failures.append("Tutorial neutral pin did not preserve identity while suppressing every scenario mutation and phase.")
-	var ordinary_selector_config := RunStateScript.standard_challenge("TIER1-ORDINARY-SELECTOR")
-	var ordinary_selector_modifiers := _copy_dict(ordinary_selector_config.get("modifiers", {}))
-	ordinary_selector_modifiers["scenario_pins"] = {"corner_store": "corner_store_delivery_day"}
-	ordinary_selector_modifiers["scenario_pins_apply_mutations"] = true
-	ordinary_selector_config["modifiers"] = ordinary_selector_modifiers
-	var authored_delivery := library.scenario("corner_store_delivery_day")
-	for pin_seed_index in range(20):
-		var neutral_seed_run := RunStateScript.new()
-		neutral_seed_run.start_new("TIER1-TUTORIAL-PIN-%02d" % pin_seed_index, tutorial_config)
-		var neutral_seed_generator := RunGeneratorScript.new(library)
-		var neutral_seed_pin: Dictionary = neutral_seed_generator.call("_select_scenario", neutral_seed_run, "corner_store", neutral_seed_run.create_rng("tutorial_pin_sweep"))
-		if str(neutral_seed_pin.get("id", "")) != "corner_store_delivery_day" or not bool(neutral_seed_pin.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)) or neutral_seed_pin.has("sequence"):
-			failures.append("Tutorial neutral scenario sequence suppression changed across the 20-seed selector sweep (%d)." % pin_seed_index)
-		var ordinary_seed_run := RunStateScript.new()
-		ordinary_seed_run.start_new("TIER1-ORDINARY-PIN-%02d" % pin_seed_index, ordinary_selector_config)
-		var ordinary_seed_generator := RunGeneratorScript.new(library)
-		var ordinary_seed_pin: Dictionary = ordinary_seed_generator.call("_select_scenario", ordinary_seed_run, "corner_store", ordinary_seed_run.create_rng("ordinary_pin_sweep"))
-		if str(ordinary_seed_pin.get("id", "")) != "corner_store_delivery_day" or bool(ordinary_seed_pin.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)) or ordinary_seed_pin.has("sequence") != authored_delivery.has("sequence"):
-			failures.append("Ordinary scenario pin lost its full selector payload across the 20-seed sweep (%d)." % pin_seed_index)
-	var legacy_neutral_definition := authored_delivery.duplicate(true)
-	legacy_neutral_definition["mutations"] = {}
-	legacy_neutral_definition["phases"] = []
-	legacy_neutral_definition.erase(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY)
-	legacy_neutral_definition.erase("sequence")
-	legacy_neutral_definition.erase("sequence_package_id")
-	legacy_neutral_definition.erase("sequence_handler_pack")
-	legacy_neutral_definition.erase("sequence_renderer_id")
-	legacy_neutral_definition.erase("sequence_authoring")
-	var legacy_neutral_run := RunStateScript.new()
-	legacy_neutral_run.start_new("TIER1-TUTORIAL-LEGACY-SEED", tutorial_config)
-	var legacy_seeded := legacy_neutral_run.seed_scenario_for_node("corner_store", legacy_neutral_definition)
-	var legacy_neutral_generator := RunGeneratorScript.new(library)
-	var upgraded_neutral: Dictionary = legacy_neutral_generator.call("_select_scenario", legacy_neutral_run, "corner_store", legacy_neutral_run.create_rng("legacy_neutral"))
-	if not legacy_seeded or not bool(upgraded_neutral.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)) or upgraded_neutral.has("sequence") or not _copy_dict(upgraded_neutral.get("mutations", {})).is_empty() or not _copy_array(upgraded_neutral.get("phases", [])).is_empty():
-		failures.append("A legacy mutation-suppressed tutorial seed was not upgraded before sequence resolution.")
 	var controlled_run := RunStateScript.new()
 	controlled_run.start_new("TIER1-TUTORIAL-CONTROLLED", tutorial_config)
 	var neutral_environment := EnvironmentInstance.from_archetype(library.environment_archetype("corner_store"), 1, controlled_run.create_rng("controlled_corner"), library, tutorial_config, {}).to_dict()
@@ -1287,11 +1224,6 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 			failures.append("Tutorial neutral scenario pin changed controlled environment field %s." % sensitive_key)
 	if not _copy_dict(pinned_environment.get("scenario_presentation", {})).is_empty() or not _copy_dict(neutral_environment.get("scenario_presentation", {})).is_empty():
 		failures.append("Tutorial neutral scenario pin leaked presentation values into the controlled room.")
-	for forbidden_sequence_key in ["scenario_sequence_state", "scenario_sequence_projection", "scenario_render_snapshot", "scenario_sequence_migration", "scenario_sequence_definition"]:
-		if pinned_environment.has(forbidden_sequence_key):
-			failures.append("Tutorial neutral scenario pin leaked dynamic sequence artifact %s." % forbidden_sequence_key)
-	if ScenarioEngineScript.sequence_definition_for_environment(pinned_environment, authored_delivery).has("sequence"):
-		failures.append("Tutorial neutral scenario identity reacquired its dynamic sequence overlay by catalog id.")
 	var presentation_canvas := PixelSceneCanvasScript.new()
 	presentation_canvas.render_environment_snapshot(neutral_environment)
 	var neutral_view := presentation_canvas.current_view_snapshot()
@@ -1331,8 +1263,6 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	var ordinary_seeded_bytes := JSON.stringify(ordinary_seeded)
 	ordinary_generator.next_environment(ordinary_run, "corner_store", true)
 	if _copy_dict(ordinary_seeded.get("mutations", {})).is_empty() \
-		or bool(ordinary_seeded.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)) \
-		or ordinary_seeded.has("sequence") != authored_delivery.has("sequence") \
 		or JSON.stringify(ordinary_run.seeded_scenario_definition_for_node("corner_store")) != ordinary_seeded_bytes \
 		or str(_copy_dict(ordinary_run.current_environment.get("scenario_exclusive_opportunity", {})).get("event_id", "")) != "scenario_delivery_day_stock" \
 		or not bool(_copy_dict(ordinary_run.current_environment.get("scenario_hook_flags", {})).get("delivery_day", false)):

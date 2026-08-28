@@ -273,7 +273,6 @@ var layout_boundary_key := ""
 var layout_side_change_count := 0
 var layout_position_change_count := 0
 var entry_open_input_frame := -1
-var attention_tweens: Array[Tween] = []
 
 var panel: PanelContainer
 var stack: VBoxContainer
@@ -467,33 +466,6 @@ func current_snapshot() -> Dictionary:
 		"layout_position_change_count": layout_position_change_count,
 		"screen_rect": get_global_rect(),
 	}
-
-
-# Foundation lifecycle transactions need to preserve an attention animation that
-# was already running while canceling only animations started by a failed dock
-# refresh. Keep explicit ownership here so rollback never scans or kills unrelated
-# SceneTree tweens.
-func attention_tween_lifecycle_snapshot() -> Array:
-	_prune_attention_tweens()
-	return attention_tweens.duplicate()
-
-
-func restore_attention_tween_lifecycle_snapshot(snapshot: Array) -> void:
-	_prune_attention_tweens()
-	for tween in attention_tweens:
-		if tween != null and tween.is_valid() and not snapshot.has(tween):
-			tween.kill()
-	attention_tweens.clear()
-	for tween_value in snapshot:
-		if tween_value is Tween and (tween_value as Tween).is_valid():
-			attention_tweens.append(tween_value as Tween)
-
-
-func _prune_attention_tweens() -> void:
-	for index in range(attention_tweens.size() - 1, -1, -1):
-		var tween := attention_tweens[index]
-		if tween == null or not tween.is_valid():
-			attention_tweens.remove_at(index)
 
 
 func occupied_global_rect() -> Rect2:
@@ -1229,7 +1201,6 @@ func _play_attention_animation() -> void:
 		return
 	panel.modulate = Color(1.0, 1.0, 1.0, 0.88)
 	var tween := create_tween()
-	attention_tweens.append(tween)
 	tween.set_trans(Tween.TRANS_CUBIC)
 	tween.set_ease(Tween.EASE_OUT)
 	tween.tween_property(panel, "modulate", Color.WHITE, 0.12)

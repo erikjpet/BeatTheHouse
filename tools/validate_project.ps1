@@ -18,11 +18,6 @@ function Get-ProjectRelativePath {
     return [System.Uri]::UnescapeDataString($rootUri.MakeRelativeUri($pathUri).ToString()) -replace "\\", "/"
 }
 
-function Test-JsonObjectRoot {
-    param([AllowNull()][object]$Value)
-    return $null -ne $Value -and $Value.GetType() -eq [System.Management.Automation.PSCustomObject]
-}
-
 $requiredFiles = @(
     "README.md",
     "project.godot",
@@ -37,10 +32,6 @@ $requiredFiles = @(
     "scripts/core/profile_inventory.gd",
     "scripts/core/attribute_badges.gd",
     "scripts/core/content_library.gd",
-    "scripts/core/scenario_sequence_catalog.gd",
-    "scripts/core/scenario_sequence_schema.gd",
-    "scripts/core/scenario_sequence_runtime.gd",
-    "scripts/core/scenario_operation_registry.gd",
     "scripts/core/character_roster.gd",
     "scripts/core/crew_state_model.gd",
     "scripts/core/crew_recruitment_model.gd",
@@ -60,7 +51,6 @@ $requiredFiles = @(
     "scripts/tests/foundation/crew_turn_contract.gd",
     "scripts/tests/foundation/character_chains_contract.gd",
     "scripts/tests/foundation/content_depth_contract.gd",
-    "scripts/tests/foundation/scenario_sequence_contract.gd",
     "scripts/tests/foundation/crew_ignored_golden_probe.gd",
     "scripts/tests/fixtures/crew06_5_ignored_run_baseline.json",
     "scripts/tests/foundation/check_scratch_tickets.gd",
@@ -71,18 +61,9 @@ $requiredFiles = @(
     "tools/gdscript_load_check.gd",
     "tools/foundation_visual_qa.ps1",
     "tools/foundation_visual_qa.gd",
-    "tools/scenario_sequence_audit.ps1",
-    "tools/scenario_sequence_audit.gd",
-    "tools/scenario_sequence_probe_support.gd",
-    "tools/scenario_sequence_probe_main.gd",
-    "tools/scenario_sequence_probe_main.tscn",
-    "tools/scenario_sequence_visual_capture.ps1",
-    "tools/scenario_sequence_web_capture.mjs",
-    "tools/scenario_sequence_parity_performance.ps1",
     "data/art/art_manifest.json",
     "data/art/attribute_glyphs.json",
     "data/environments/archetypes.json",
-    "data/environments/scenario_sequences/env06_7_shops_streets.json",
     "data/items/items.json",
     "data/events/events.json",
     "data/characters/characters.json",
@@ -121,204 +102,10 @@ $requiredFiles = @(
 
 $failures = New-Object System.Collections.Generic.List[string]
 
-$objectRootContractFixtures = @(
-    @{ Label = "object"; Value = ('{"fixture":true}' | ConvertFrom-Json); Expected = $true },
-    @{ Label = "array"; Value = ('[1,2]' | ConvertFrom-Json); Expected = $false },
-    @{ Label = "null"; Value = ('null' | ConvertFrom-Json); Expected = $false },
-    @{ Label = "string"; Value = ('"fixture"' | ConvertFrom-Json); Expected = $false },
-    @{ Label = "number"; Value = ('7' | ConvertFrom-Json); Expected = $false },
-    @{ Label = "boolean"; Value = ('true' | ConvertFrom-Json); Expected = $false }
-)
-foreach ($fixture in $objectRootContractFixtures) {
-    if ((Test-JsonObjectRoot $fixture.Value) -ne $fixture.Expected) {
-        $failures.Add("JSON object-root classifier contract failed for $($fixture.Label).")
-    }
-}
-
 foreach ($relative in $requiredFiles) {
     $path = Join-Path $root $relative
     if (-not (Test-Path -LiteralPath $path)) {
         $failures.Add("Missing required file: $relative")
-    }
-}
-
-$scenarioAuditSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_audit.gd") -Raw
-if ($scenarioAuditSource -match 'definitions\.size\(\)\s*==\s*1') {
-    $failures.Add("Scenario sequence audit must not require a singleton catalog for hostile fixtures.")
-}
-foreach ($requiredAuditSeam in @(
-    'HOSTILE_FIXTURE_SCENARIO_ID := "corner_store_delivery_day"',
-    'static func hostile_fixture_report_for_definitions',
-    'static func report_has_exact_shape'
-)) {
-    if (-not $scenarioAuditSource.Contains($requiredAuditSeam)) {
-        $failures.Add("Scenario sequence audit is missing rollout seam: $requiredAuditSeam")
-    }
-}
-$scenarioContractSource = Get-Content -LiteralPath (Join-Path $root "scripts/tests/foundation/scenario_sequence_contract.gd") -Raw
-foreach ($requiredGrowthProbe in @(
-    'for rollout_count_value in [13, 55]',
-	'hostile_fixture_report_for_definitions(reversed_definitions)',
-	'package_for_scenario(DELIVERY_SCENARIO_ID, expanded_catalog)',
-	'"label": "unsupported_choice"',
-	'base_collision_result',
-	'broad_only_event_bridge'
-)) {
-    if (-not $scenarioContractSource.Contains($requiredGrowthProbe)) {
-        $failures.Add("Scenario sequence contract is missing growth/authority probe: $requiredGrowthProbe")
-    }
-}
-$runtimeDefinitionMatch = [regex]::Match(
-    $scenarioContractSource,
-    '(?ms)^static func _runtime_definition\(\) -> Dictionary:\r?\n(?<body>.*?)(?=^static func )'
-)
-if (-not $runtimeDefinitionMatch.Success) {
-    $failures.Add("Scenario sequence contract is missing _runtime_definition for focused static validation.")
-} else {
-    $runtimeDefinitionBody = $runtimeDefinitionMatch.Groups['body'].Value
-    foreach ($declaration in @('cleanup', 'cleanup_operations')) {
-        $declarationCount = [regex]::Matches($runtimeDefinitionBody, "(?m)^`tvar $declaration(?:\s|:)").Count
-        if ($declarationCount -ne 1) {
-            $failures.Add("Scenario sequence _runtime_definition must declare $declaration exactly once (found $declarationCount).")
-        }
-    }
-}
-$scenarioEvidenceFiles = @(
-    "tools/scenario_sequence_probe_support.gd",
-    "tools/scenario_sequence_probe_main.gd",
-    "tools/scenario_sequence_probe_main.tscn",
-    "tools/scenario_sequence_visual_capture.ps1",
-    "tools/scenario_sequence_web_capture.mjs",
-    "tools/scenario_sequence_parity_performance.ps1"
-)
-foreach ($relative in $scenarioEvidenceFiles) {
-    if (-not (Test-Path -LiteralPath (Join-Path $root $relative) -PathType Leaf)) {
-        $failures.Add("Executable scenario evidence file is missing: $relative")
-    }
-}
-foreach ($relative in @("tools/scenario_sequence_visual_capture.ps1", "tools/scenario_sequence_parity_performance.ps1")) {
-    $parseTokens = $null
-    $parseErrors = $null
-    [void][System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root $relative), [ref]$parseTokens, [ref]$parseErrors)
-    foreach ($parseError in @($parseErrors)) {
-        $failures.Add("Executable scenario evidence PowerShell syntax error in $relative`: $($parseError.Message)")
-    }
-}
-$scenarioProbeSupportSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_probe_support.gd") -Raw
-$scenarioProbeMainSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_probe_main.gd") -Raw
-$scenarioProbeSceneSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_probe_main.tscn") -Raw
-$scenarioVisualWrapperSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_visual_capture.ps1") -Raw
-$scenarioWebCaptureSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_web_capture.mjs") -Raw
-$scenarioParityWrapperSource = Get-Content -LiteralPath (Join-Path $root "tools/scenario_sequence_parity_performance.ps1") -Raw
-foreach ($requiredEvidenceSeam in @(
-    'PACKAGE_PATH := "res://data/environments/scenario_sequences/env06_7_shops_streets.json"',
-    'SCENARIO_ID := "corner_store_delivery_day"',
-    'PROOF_SEED := "corner_store_delivery_day_env06_6"',
-    'static func canonical_semantic_sha256',
-    'static func validate_probe_report',
-    'static func validate_capture_manifest',
-    'static func obstruction_target_contract',
-    'EXPECTED_OBSTRUCTION_TARGET_IDS',
-    'EXPECTED_TRACE_ROWS',
-    '_validate_runtime_trace',
-    'REQUIRED_PERFORMANCE_ROWS'
-)) {
-    if (-not $scenarioProbeSupportSource.Contains($requiredEvidenceSeam)) {
-        $failures.Add("Scenario evidence support is missing fail-closed authority: $requiredEvidenceSeam")
-    }
-}
-foreach ($requiredObstructionAuthority in @(
-    '"scenario::delivery_event_gate"',
-    '"scenario::delivery_exit"',
-    '["inspect_manifest"]',
-    '["ignore_delivery", "refuse_sort"]',
-    '"semantic_role", record.get("role", "")',
-    'action_origin_receipt_key',
-    'action_origin_fingerprint'
-)) {
-    if (-not $scenarioProbeSupportSource.Contains($requiredObstructionAuthority)) {
-        $failures.Add("Scenario obstruction support lost exact production target/action authority: $requiredObstructionAuthority")
-    }
-}
-$expectedTraceRows = @(
-    'arrival_delivery_blocked|arrival|active|', 'base_event_pre_request_gated|arrival|active|',
-    'obstruction_overlay_zero_overlap|arrival|active|', 'hit_target_overlay_44_minimum|arrival|active|',
-    'sorting_aisle_rerouted|sorting|active|', 'verification_station_ready|verification|active|',
-    'awaiting_stock_choice|awaiting_stock|active|', 'base_event_request_delivered|awaiting_stock|active|',
-    'partial_revisit_awaiting_stock|awaiting_stock|active|', 'resolution_repaired|resolution|aftermath|repaired',
-    'terminal_revisit_repaired|resolution|aftermath|repaired', 'resolution_broken|resolution|aftermath|broken',
-    'terminal_revisit_broken|resolution|aftermath|broken', 'resolution_refused|resolution|aftermath|refused',
-    'terminal_revisit_refused|resolution|aftermath|refused', 'base_event_terminal_gated|resolution|aftermath|refused',
-    'resolution_interrupted|resolution|aftermath|interrupted', 'terminal_revisit_interrupted|resolution|aftermath|interrupted',
-    'expired_revisit_night_end|arrival|cleaned|', 'reduced_motion_arrival|arrival|active|',
-    'small_screen_104x76|arrival|active|'
-)
-$traceBlock = [regex]::Match($scenarioProbeSupportSource, '(?s)const EXPECTED_TRACE_ROWS := \[(.*?)\]\s*const PERFORMANCE_BUDGETS')
-$actualTraceRows = @()
-if ($traceBlock.Success) {
-    foreach ($traceMatch in [regex]::Matches($traceBlock.Groups[1].Value, '\{"label": "([^"]+)", "phase_id": "([^"]+)", "status": "([^"]+)", "outcomes": \[([^\]]*)\]\}')) {
-        $outcome = $traceMatch.Groups[4].Value.Replace('"', '').Trim()
-        $actualTraceRows += "$($traceMatch.Groups[1].Value)|$($traceMatch.Groups[2].Value)|$($traceMatch.Groups[3].Value)|$outcome"
-    }
-}
-if ($actualTraceRows.Count -ne 21 -or (Compare-Object -ReferenceObject $expectedTraceRows -DifferenceObject $actualTraceRows -SyncWindow 0)) {
-    $failures.Add("Scenario evidence support lost the exact 21-row runtime label/phase/status/outcome contract.")
-}
-foreach ($requiredMainSeam in @(
-    'extends Node',
-    'res://scenes/main.tscn',
-    'start_foundation_run", ProbeSupport.PROOF_SEED, {}, false',
-    'current_environment_view_snapshot',
-    'activate_interactable_object',
-    'global_rect_for_object',
-    'object_id_at_local_position',
-    'scenario_reenter_current',
-    'scenario_apply_expiry',
-    'RenderingServer.frame_post_draw',
-    'current_environment_result_feedback_snapshot',
-    'environment_reserved_global_rect',
-    '_obstruction_target_evidence',
-    'obstruction_center_hit_count',
-    'intersection(reserved).get_area() > 0.0',
-    'load_foundation_run',
-    'ENV06_6_SEQUENCE_PROBE='
-)) {
-    if (-not $scenarioProbeMainSource.Contains($requiredMainSeam)) {
-        $failures.Add("Scenario evidence main scene is missing production seam: $requiredMainSeam")
-    }
-}
-if ($scenarioProbeMainSource.Contains('scenario_flush_facts') -or $scenarioProbeMainSource.Contains('_interactable_object_view_list') -or $scenarioProbeMainSource.Contains('var scenario_added := false') -or $scenarioProbeMainSource.Contains('scenario_hit_rects.size() != 1') -or $scenarioProbeMainSource.Contains('intersection(reserved).get_area() > 0.5')) {
-    $failures.Add("Scenario evidence main scene must not manually flush facts, use the private interactable list, or collapse the two production obstruction targets.")
-}
-if (-not $scenarioProbeSceneSource.Contains('type="Node"') -or -not $scenarioProbeSceneSource.Contains('scenario_sequence_probe_main.gd')) {
-    $failures.Add("Scenario evidence entry scene must attach the Node-backed probe script.")
-}
-if ($scenarioVisualWrapperSource.Contains('"--headless"') -or -not $scenarioVisualWrapperSource.Contains('scenario_sequence_probe_main.tscn') -or -not $scenarioVisualWrapperSource.Contains('Get-FileHash') -or -not $scenarioVisualWrapperSource.Contains('BTH_DISTRIBUTION_DATA_ROOT') -or -not $scenarioVisualWrapperSource.Contains('expectedRuntimeTraceIds') -or -not $scenarioVisualWrapperSource.Contains('expectedRuntimeStateById')) {
-    $failures.Add("Scenario visual wrapper must be direct, windowed, isolated, and byte-hash fail-closed.")
-}
-foreach ($requiredWebSeam in @('launchPersistentContext', 'Emulation.setCPUThrottlingRate', 'pageerror', 'requestfailed', 'ENV06_6_SEQUENCE_PROBE=')) {
-    if (-not $scenarioWebCaptureSource.Contains($requiredWebSeam)) {
-        $failures.Add("Scenario Web capture is missing fail-closed browser seam: $requiredWebSeam")
-    }
-}
-foreach ($requiredParitySeam in @(
-    'native_process_1', 'native_process_2', 'web_process_1', 'web_process_2', 'native_web_semantic_exact',
-    'transientAddon', 'BTH_DISTRIBUTION_DATA_ROOT', 'run_transient_scons.py',
-    'expectedRuntimeTraceLabels', 'expectedRuntimeStateByLabel', 'semantic.checkpoints',
-    'Copy-Item -LiteralPath $canonicalAddon', 'Required Windows host library is unavailable',
-    'Get-ChildItem -LiteralPath (Join-Path $transientAddon "bin") -Filter "*.wasm"'
-)) {
-    if (-not $scenarioParityWrapperSource.Contains($requiredParitySeam)) {
-        $failures.Add("Scenario parity/performance wrapper is missing acceptance seam: $requiredParitySeam")
-    }
-}
-if ($scenarioParityWrapperSource.Contains('tools\build_native_solver.ps1') -or $scenarioParityWrapperSource.Contains('Join-Path $root "addons"')) {
-    $failures.Add("Scenario parity/performance Web build must keep compiler outputs inside its ignored OutDir.")
-}
-$scenarioPresentationSource = Get-Content -LiteralPath (Join-Path $root "scripts/tests/foundation/scenario_presentation_contract.gd") -Raw
-foreach ($requiredOverlayProbe in @('collision_overlay', 'z_equal_augment', 'sweep_unique')) {
-    if (-not $scenarioPresentationSource.Contains($requiredOverlayProbe)) {
-        $failures.Add("Scenario presentation contract is missing collision probe: $requiredOverlayProbe")
     }
 }
 
@@ -382,9 +169,6 @@ $objectJsonFiles = @(
     "data/environments/scenarios.json",
     "data/story/character_chains.json"
 )
-$objectJsonDirectories = @(
-    "data/environments/scenario_sequences/"
-)
 
 $jsonFiles = Get-ChildItem -LiteralPath (Join-Path $root "data") -Filter "*.json" -File -Recurse -ErrorAction SilentlyContinue
 
@@ -396,15 +180,8 @@ foreach ($jsonFile in $jsonFiles) {
             $failures.Add("JSON file parsed to null: $($jsonFile.FullName)")
         }
         $relativeJson = Get-ProjectRelativePath $jsonFile.FullName
-        $requiresObject = $objectJsonFiles -contains $relativeJson
-        foreach ($directory in $objectJsonDirectories) {
-            if ($relativeJson.StartsWith($directory, [System.StringComparison]::OrdinalIgnoreCase)) {
-                $requiresObject = $true
-                break
-            }
-        }
-        if ($requiresObject) {
-            if (-not (Test-JsonObjectRoot $parsed)) {
+        if ($objectJsonFiles -contains $relativeJson) {
+            if ($parsed -is [System.Array]) {
                 $failures.Add("JSON file must contain an object: $($jsonFile.FullName)")
             }
         }
