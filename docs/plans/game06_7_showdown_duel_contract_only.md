@@ -1,6 +1,6 @@
 # game06_7 SHOWDOWN-DUEL contract-only staging
 
-Status: **UNREVIEWED / dependency-held**
+Status: **UNREVIEWED / clean-parked / dependency-held**
 
 Base: frozen `game06_1` vocabulary head `a2760d81`. Integration is held until
 accepted `game06_1` and `game06_2` successor heads exist. This branch consumes
@@ -88,3 +88,29 @@ output keys.
 No integration or accepted-ready handoff is possible from this lineage alone.
 The final candidate must be replayed onto accepted `game06_1` and `game06_2`
 successors without importing any rejected runtime commit.
+
+## Park manifest
+
+- Canonical closed-shape artifact:
+  `data/games/showdown_duel_game_ritual_v1.json` (`game_ritual/1`).
+- Row-local design declaration:
+  `data/games/showdown_duel_ritual_v1.json`
+  (`showdown_duel_projection/1`). It carries the immutable outcome authority
+  and privacy clauses without extending the canonical vocabulary shape.
+- Pure staging projection:
+  `scripts/core/grand_casino_duel_ritual_projection.gd`.
+- Executable row proof:
+  `scripts/tests/foundation/game06_7_showdown_duel_contract.gd`.
+- Surface evidence and manifest:
+  `docs/plans/evidence/game06_7_showdown_duel/`.
+
+Frozen vocabulary conformance passes with all 72 negative fixtures and five
+neutrality targets. The row-local proof passes all nine staging phases and ten
+deterministic seeds. Native and Web semantic reports have identical canonical
+SHA-256 `0fbde506dcf5395a82d0801e5fd52a509b1296ae35339a9cf3d90345b57c385a`.
+Native measured 500 serializations in 215.31 ms with 5.92 ms maximum idle;
+throttled Chrome measured 1327.935 ms with 39.72 ms maximum idle.
+
+This park is deliberately **not** an accepted-ready head. The Integrator must
+receive a newly replayed immutable product head after both accepted dependency
+successors exist; this branch remains preserved as contract-only staging.
