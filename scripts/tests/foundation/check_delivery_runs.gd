@@ -366,7 +366,7 @@ func _check_delivery_save_and_migration(failures: Array) -> void:
 	source.delivery_complete_handoff(first_target)
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(source.to_dict())
-	if JSON.stringify(restored.delivery_snapshot()) != JSON.stringify(source.delivery_snapshot()) or int(restored.delivery_snapshot().get("schema_version", 0)) != 1:
+	if JSON.stringify(restored.delivery_snapshot()) != JSON.stringify(source.delivery_snapshot()) or int(restored.delivery_snapshot().get("schema_version", 0)) != DeliveryRunModelTestScript.SCHEMA_VERSION:
 		failures.append("Schema-versioned delivery state did not round-trip mid-job.")
 
 	var legacy := source.to_dict()
