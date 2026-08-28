@@ -106,7 +106,7 @@ func _check_profile_mechanics(library: ContentLibrary) -> void:
 		if baseline.has("") or pressure.has(""):
 			failures.append("Member %s did not execute all seeded policy decisions." % member_id)
 		if JSON.stringify(baseline) == JSON.stringify(pressure):
-			failures.append("Member %s never consumed authenticated public session memory across seeded decisions." % member_id)
+			failures.append("Member %s dependency-held adaptive candidate never responded to the pure public-memory projection." % member_id)
 	# Seven profiles cannot collapse to an inventory count or one mechanical trace.
 	var combined: Dictionary = {}
 	for member_id in MEMBER_IDS:
@@ -227,15 +227,15 @@ func _check_memory_window_rollover(library: ContentLibrary) -> void:
 			break
 		var ids := _legal_ids(game, run)
 		if ids.is_empty():
-			failures.append("Adaptive public-memory table froze after bounded action-history eviction at step %d." % step)
+			failures.append("Base-policy table froze after bounded action-history eviction at step %d." % step)
 			return
 		var action_id := "deal" if ids.has("deal") else "observe" if ids.has("observe") else "draw" if ids.has("draw") else "call" if ids.has("call") else "fold"
 		var result := _act(game, run, action_id, "memory_window_%d" % step, {"poker_held": [0, 2]} if action_id == "draw" else {})
 		if not bool(result.get("ok", false)):
-			failures.append("Adaptive public-memory table rejected its own post-eviction record at step %d." % step)
+			failures.append("Base-policy table rejected its own post-eviction record at step %d." % step)
 			return
 	if not saw_full_window or int(_table(run).get("hand_number", 0)) < 4:
-		failures.append("Adaptive memory matrix did not execute beyond the 40-record bounded history window.")
+		failures.append("Public-memory fallback matrix did not execute beyond the 40-record bounded history window.")
 
 
 func _check_same_domain_memory_forgery(library: ContentLibrary) -> void:
@@ -270,7 +270,7 @@ func _check_same_domain_memory_forgery(library: ContentLibrary) -> void:
 	var result := game.resolve_with_context("observe", 0, run, run.current_environment, rng, {})
 	var baseline_rng := baseline_run.create_rng("crew06_10_action:forged_memory_observe")
 	var baseline_result := baseline_game.resolve_with_context("observe", 0, baseline_run, baseline_run.current_environment, baseline_rng, {})
-	if not bool(result.get("ok", false)) or not bool(baseline_result.get("ok", false)) or str(result.get("dependency_reason", "")) != "host_poker_memory_authority_unavailable" or str(baseline_result.get("dependency_reason", "")) != "host_poker_memory_authority_unavailable" or JSON.stringify(_table(run)) != JSON.stringify(_table(baseline_run)):
+	if not bool(result.get("ok", false)) or not bool(baseline_result.get("ok", false)) or not _has_authority_gap(result, "host_poker_memory_authority_unavailable") or not _has_authority_gap(baseline_result, "host_poker_memory_authority_unavailable") or JSON.stringify(_table(run)) != JSON.stringify(_table(baseline_run)):
 		failures.append("Caller-minted same-domain game-command receipt authorized adaptive public memory.")
 
 
@@ -281,7 +281,7 @@ func _check_missing_memory_root(library: ContentLibrary) -> void:
 	_act(game, run, "deal", "missing_memory_deal")
 	var rng := run.create_rng("crew06_10_action:missing_memory_observe")
 	var result := game.resolve_with_context("observe", 0, run, run.current_environment, rng, {})
-	if not bool(result.get("ok", false)) or str(result.get("dependency_reason", "")) != "host_poker_memory_authority_unavailable":
+	if not bool(result.get("ok", false)) or not _has_authority_gap(result, "host_poker_memory_authority_unavailable"):
 		failures.append("Blank public-memory receipt did not remain playable on base policy with the exact authority-unavailable reason.")
 
 
@@ -309,7 +309,7 @@ func _check_interrupt_authority(library: ContentLibrary) -> void:
 			var after := JSON.stringify(left_run.to_dict())
 			if before != after or after != JSON.stringify(right_run.to_dict()):
 				failures.append("Caller-authored %s interruption claim changed state or distinguished paired observers (%s)." % [disposition, hostile_reason])
-			if bool(result.get("authoritative", true)) or bool(result.get("host_apply_result", false)) or int(result.get("bankroll_delta", 0)) != 0:
+			if bool(result.get("authoritative", true)) or bool(result.get("host_apply_result", false)) or int(result.get("bankroll_delta", 0)) != 0 or not _has_authority_gap(result, "host_room_interrupt_authority_unavailable"):
 				failures.append("Raw %s interruption claim escaped the non-authoritative proposal boundary." % disposition)
 			var proposal: Dictionary = result.get("proposal", {}) if typeof(result.get("proposal", {})) == TYPE_DICTIONARY else {}
 			if str(proposal.get("disposition", "")) != disposition or str(proposal.get("kind", "")) != "interruption":
@@ -355,7 +355,7 @@ func _check_observation_restore_authority(library: ContentLibrary) -> void:
 		failures.append("Private observation helper unexpectedly minted its own host authority.")
 	var memory_before := run.crew_pattern_memory.duplicate(true)
 	var blank_result: Dictionary = game.call("_showdown", state, run)
-	if JSON.stringify(run.crew_pattern_memory) != JSON.stringify(memory_before) or not (state.get("verified_observation_receipts", []) as Array).is_empty() or str(blank_result.get("dependency_reason", "")) != "host_tell_observation_authority_unavailable":
+	if JSON.stringify(run.crew_pattern_memory) != JSON.stringify(memory_before) or not (state.get("verified_observation_receipts", []) as Array).is_empty() or not _has_authority_gap(blank_result, "host_tell_observation_authority_unavailable"):
 		failures.append("Blank tell receipt did not remain unlearned with the exact authority-unavailable reason.")
 
 	var hostile_states: Array = []
@@ -592,6 +592,15 @@ func _tell_receipt_result(state: Dictionary, observation: Dictionary, state_key:
 			"payload": {"observation_id": str(observation.get("id", "")), "member_id": member_id, "pattern_index": int(observation.get("i", -1)), "state_key": state_key, "source_action": str(observation.get("source_action", "")), "source_ordinal": int(observation.get("start_ordinal", -1)), "session_index": int(state.get("session_index", 0))},
 		}],
 	}
+
+
+func _has_authority_gap(result: Dictionary, reason: String) -> bool:
+	if str(result.get("dependency_reason", "")) == reason or str(result.get("authority_gap", "")) == reason:
+		return true
+	for key in ["crew_poker_authority_gaps", "authority_gaps"]:
+		if typeof(result.get(key)) == TYPE_ARRAY and (result.get(key) as Array).has(reason):
+			return true
+	return false
 
 
 func _table(run: RunState) -> Dictionary:
