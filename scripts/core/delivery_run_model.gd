@@ -1,7 +1,8 @@
 class_name DeliveryRunModel
 extends RefCounted
 
-const SCHEMA_VERSION := 2
+const SCHEMA_VERSION := 3
+const LEGACY_SCHEMA_VERSION := 2
 const CLOSED_CHECKPOINT_SCHEMA_VERSION := 1
 const CLOSED_CHECKPOINT_FIELDS := [
 	"schema_version", "delivery_instance_id", "job_id", "owner_token", "public_instance_token",
@@ -13,6 +14,21 @@ const MODE_MULTI_STOP := "multi_stop"
 const MODE_HOLD := "hold"
 const MODE_GETAWAY := "getaway"
 const MODES := [MODE_PACKAGE, MODE_MULTI_STOP, MODE_HOLD, MODE_GETAWAY]
+const DEPTH_STATE_SCHEMA_VERSION := 1
+const MAX_DEPTH_COMMAND_RECEIPTS := 64
+const CARGO_PICKUP_PENDING := "pickup_pending"
+const CARGO_CARRIED := "carried"
+const CARGO_STASHED := "stashed"
+const CARGO_DELIVERED := "delivered"
+const CARGO_DITCHED := "ditched"
+const CARGO_CONFISCATED := "confiscated"
+const CARGO_FOUND := "found"
+const CARGO_NONE := "none"
+const CARGO_STATES := [
+	CARGO_PICKUP_PENDING, CARGO_CARRIED, CARGO_STASHED, CARGO_DELIVERED,
+	CARGO_DITCHED, CARGO_CONFISCATED, CARGO_FOUND, CARGO_NONE,
+]
+const STREET_VERBS := ["pickup", "move", "wait", "duck", "stash", "retrieve", "ditch", "signal", "break_hold", "handoff"]
 
 
 static func begin(spec: Dictionary, started_action: int) -> Dictionary:
@@ -41,6 +57,7 @@ static func begin(spec: Dictionary, started_action: int) -> Dictionary:
 		"cargo_id": str(spec.get("cargo_id", "crew_package")).strip_edges(),
 		"cargo_label": str(spec.get("cargo_label", "Crew package")).strip_edges(),
 		"cargo_heat_per_travel": maxi(0, int(spec.get("cargo_heat_per_travel", 2))),
+		"depth_state": _initial_depth_state(mode, spec),
 		"consumer_payload": _copy_dict(spec.get("consumer_payload", {})),
 		"fast_threshold_actions": maxi(0, int(spec.get("fast_threshold_actions", deadline - 2))),
 		"boundaries_elapsed": 0,
@@ -68,6 +85,11 @@ static func normalize_state(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY or (value as Dictionary).is_empty():
 		return {}
 	var source: Dictionary = value
+	var source_schema := int(source.get("schema_version", 0))
+	if source_schema not in [LEGACY_SCHEMA_VERSION, SCHEMA_VERSION]:
+		return {}
+	if source_schema == LEGACY_SCHEMA_VERSION and source.has("depth_state"):
+		return {}
 	var mode := str(source.get("mode", MODE_PACKAGE)).strip_edges().to_lower()
 	if not MODES.has(mode):
 		return {}
@@ -81,6 +103,9 @@ static func normalize_state(value: Variant) -> Dictionary:
 	var resolution := _copy_dict(source.get("resolution", {}))
 	if status == "resolved" and resolution.is_empty():
 		resolution = _resolution("failed", "invalid_state", source, false)
+	var depth_state := _normalize_depth_state(source.get("depth_state", {})) if source_schema == SCHEMA_VERSION else _legacy_depth_state(source, mode)
+	if depth_state.is_empty():
+		return {}
 	var result := {
 		"schema_version": SCHEMA_VERSION,
 		"status": status,
@@ -96,6 +121,7 @@ static func normalize_state(value: Variant) -> Dictionary:
 		"cargo_id": str(source.get("cargo_id", "crew_package")).strip_edges(),
 		"cargo_label": str(source.get("cargo_label", "Crew package")).strip_edges(),
 		"cargo_heat_per_travel": maxi(0, int(source.get("cargo_heat_per_travel", 2))),
+		"depth_state": depth_state,
 		"consumer_payload": _copy_dict(source.get("consumer_payload", {})),
 		"fast_threshold_actions": maxi(0, int(source.get("fast_threshold_actions", deadline_total - 2))),
 		"boundaries_elapsed": maxi(0, int(source.get("boundaries_elapsed", 0))),
@@ -231,7 +257,8 @@ static func snapshot(state_value: Variant) -> Dictionary:
 		"delivered_count": delivered,
 		"cargo_id": str(state.get("cargo_id", "")),
 		"cargo_label": str(state.get("cargo_label", "Crew package")),
-		"carrying_contraband": str(state.get("status", "")) == "active" and not bool(state.get("confiscated", false)),
+		"physical": physical_projection(state),
+		"carrying_contraband": str(_copy_dict(_copy_dict(state.get("depth_state", {})).get("cargo", {})).get("status", "")) == CARGO_CARRIED,
 		"handoff_pending_node_id": str(state.get("handoff_pending_node_id", "")),
 		"hold_required_actions": int(state.get("hold_required_actions", 0)),
 		"hold_progress": int(state.get("hold_progress", 0)),
@@ -241,6 +268,33 @@ static func snapshot(state_value: Variant) -> Dictionary:
 		"assists_used": _copy_array(state.get("assists_used", [])),
 		"resolution": _copy_dict(state.get("resolution", {})),
 		"receipt": _copy_dict(state.get("receipt", {})),
+	}
+
+
+static func physical_projection(state_value: Variant) -> Dictionary:
+	var state := normalize_state(state_value)
+	if state.is_empty():
+		return {}
+	var depth := _copy_dict(state.get("depth_state", {}))
+	var cargo := _copy_dict(depth.get("cargo", {}))
+	var position := _copy_dict(depth.get("position", {}))
+	return {
+		"schema_version": DEPTH_STATE_SCHEMA_VERSION,
+		"instance_id": str(state.get("job_id", "")) if not str(state.get("job_id", "")).is_empty() else str(state.get("run_id", "")),
+		"mode": str(state.get("mode", "")),
+		"cargo_id": str(state.get("cargo_id", "")),
+		"cargo_label": str(state.get("cargo_label", "")),
+		"cargo_state": str(cargo.get("status", CARGO_NONE)),
+		"cargo_node_id": str(cargo.get("node_id", "")),
+		"cargo_place_kind": str(cargo.get("place_kind", "")),
+		"cargo_place_id": str(cargo.get("place_id", "")),
+		"position_node_id": str(position.get("node_id", "")),
+		"previous_node_id": str(position.get("previous_node_id", "")),
+		"last_verb": str(position.get("last_verb", "")),
+		"available_verbs": _available_physical_verbs(state),
+		"hold_signals": _copy_array(depth.get("hold_signals", [])),
+		"hold_aftermath": _copy_dict(depth.get("hold_aftermath", {})),
+		"pursuit_aftermath": _copy_dict(depth.get("pursuit_aftermath", {})),
 	}
 
 
@@ -393,6 +447,182 @@ static func _all_targets_delivered(state: Dictionary) -> bool:
 		if typeof(target_value) != TYPE_DICTIONARY or str((target_value as Dictionary).get("status", "pending")) != "delivered":
 			return false
 	return true
+
+
+static func _initial_depth_state(mode: String, spec: Dictionary) -> Dictionary:
+	var origin_node_id := str(spec.get("start_node_id", spec.get("current_node_id", ""))).strip_edges()
+	var cargo_status := CARGO_NONE if mode in [MODE_HOLD, MODE_GETAWAY] else CARGO_PICKUP_PENDING
+	var cargo_place_kind := "none" if cargo_status == CARGO_NONE else "pickup_contact"
+	var cargo_place_id := "" if cargo_status == CARGO_NONE else str(spec.get("pickup_object_id", "delivery_pickup")).strip_edges()
+	return {
+		"schema_version": DEPTH_STATE_SCHEMA_VERSION,
+		"origin": "current",
+		"cargo": _physical_cargo(cargo_status, origin_node_id, cargo_place_kind, cargo_place_id),
+		"position": _physical_position(origin_node_id, "", "start"),
+		"command_receipts": [],
+		"command_sequence": 0,
+		"hold_signals": [],
+		"hold_aftermath": {},
+		"pursuit_aftermath": {},
+	}
+
+
+static func _legacy_depth_state(source: Dictionary, mode: String) -> Dictionary:
+	var node_id := str(source.get("handoff_pending_node_id", "")).strip_edges()
+	var cargo_status := CARGO_NONE if mode in [MODE_HOLD, MODE_GETAWAY] else CARGO_CARRIED
+	if bool(source.get("confiscated", false)):
+		cargo_status = CARGO_CONFISCATED
+	elif str(source.get("status", "active")) == "resolved":
+		var resolution := _copy_dict(source.get("resolution", {}))
+		if str(resolution.get("outcome", "")) == "success":
+			cargo_status = CARGO_DELIVERED
+		elif str(resolution.get("reason", "")) == "swept":
+			cargo_status = CARGO_CONFISCATED
+		elif str(resolution.get("reason", "")) in ["ditched", "cargo_found"]:
+			cargo_status = CARGO_DITCHED if str(resolution.get("reason", "")) == "ditched" else CARGO_FOUND
+	var place_kind := "none" if cargo_status == CARGO_NONE else "legacy_v2"
+	return {
+		"schema_version": DEPTH_STATE_SCHEMA_VERSION,
+		"origin": "legacy_v2",
+		"cargo": _physical_cargo(cargo_status, node_id, place_kind, ""),
+		"position": _physical_position(node_id, "", "legacy_restore"),
+		"command_receipts": [],
+		"command_sequence": 0,
+		"hold_signals": [],
+		"hold_aftermath": {},
+		"pursuit_aftermath": {},
+	}
+
+
+static func _normalize_depth_state(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = value
+	var keys := source.keys()
+	keys.sort()
+	var exact := ["cargo", "command_receipts", "command_sequence", "hold_aftermath", "hold_signals", "origin", "position", "pursuit_aftermath", "schema_version"]
+	exact.sort()
+	if keys != exact or typeof(source.get("schema_version")) != TYPE_INT or int(source.get("schema_version", 0)) != DEPTH_STATE_SCHEMA_VERSION:
+		return {}
+	if str(source.get("origin", "")) not in ["current", "legacy_v2"]:
+		return {}
+	var cargo := _normalize_physical_cargo(source.get("cargo", {}))
+	var position := _normalize_physical_position(source.get("position", {}))
+	var receipts := _normalize_depth_receipts(source.get("command_receipts", []))
+	if cargo.is_empty() or position.is_empty() or receipts.size() != _copy_array(source.get("command_receipts", [])).size() \
+			or receipts.size() > MAX_DEPTH_COMMAND_RECEIPTS or int(source.get("command_sequence", -1)) != receipts.size():
+		return {}
+	if typeof(source.get("hold_signals")) != TYPE_ARRAY or (source.get("hold_signals", []) as Array).size() > MAX_DEPTH_COMMAND_RECEIPTS \
+			or typeof(source.get("hold_aftermath")) != TYPE_DICTIONARY or typeof(source.get("pursuit_aftermath")) != TYPE_DICTIONARY:
+		return {}
+	return {
+		"schema_version": DEPTH_STATE_SCHEMA_VERSION,
+		"origin": str(source.get("origin", "")),
+		"cargo": cargo,
+		"position": position,
+		"command_receipts": receipts,
+		"command_sequence": receipts.size(),
+		"hold_signals": _copy_array(source.get("hold_signals", [])),
+		"hold_aftermath": _copy_dict(source.get("hold_aftermath", {})),
+		"pursuit_aftermath": _copy_dict(source.get("pursuit_aftermath", {})),
+	}
+
+
+static func _physical_cargo(status: String, node_id: String, place_kind: String, place_id: String) -> Dictionary:
+	return {
+		"schema_version": DEPTH_STATE_SCHEMA_VERSION,
+		"status": status,
+		"node_id": node_id.strip_edges(),
+		"place_kind": place_kind.strip_edges(),
+		"place_id": place_id.strip_edges(),
+	}
+
+
+static func _normalize_physical_cargo(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var cargo: Dictionary = value
+	var keys := cargo.keys()
+	keys.sort()
+	if keys != ["node_id", "place_id", "place_kind", "schema_version", "status"] \
+			or typeof(cargo.get("schema_version")) != TYPE_INT or int(cargo.get("schema_version", 0)) != DEPTH_STATE_SCHEMA_VERSION:
+		return {}
+	var status := str(cargo.get("status", ""))
+	var node_id := str(cargo.get("node_id", ""))
+	var place_kind := str(cargo.get("place_kind", ""))
+	var place_id := str(cargo.get("place_id", ""))
+	if status not in CARGO_STATES or node_id != node_id.strip_edges() or place_kind != place_kind.strip_edges() or place_id != place_id.strip_edges():
+		return {}
+	if status == CARGO_STASHED and (node_id.is_empty() or place_kind != "stash" or place_id.is_empty()):
+		return {}
+	if status == CARGO_PICKUP_PENDING and (node_id.is_empty() or place_kind != "pickup_contact" or place_id.is_empty()):
+		return {}
+	return _physical_cargo(status, node_id, place_kind, place_id)
+
+
+static func _physical_position(node_id: String, previous_node_id: String, last_verb: String) -> Dictionary:
+	return {
+		"schema_version": DEPTH_STATE_SCHEMA_VERSION,
+		"node_id": node_id.strip_edges(),
+		"previous_node_id": previous_node_id.strip_edges(),
+		"last_verb": last_verb.strip_edges(),
+	}
+
+
+static func _normalize_physical_position(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var position: Dictionary = value
+	var keys := position.keys()
+	keys.sort()
+	if keys != ["last_verb", "node_id", "previous_node_id", "schema_version"] \
+			or typeof(position.get("schema_version")) != TYPE_INT or int(position.get("schema_version", 0)) != DEPTH_STATE_SCHEMA_VERSION:
+		return {}
+	for key in ["node_id", "previous_node_id", "last_verb"]:
+		if typeof(position.get(key)) != TYPE_STRING or str(position.get(key, "")) != str(position.get(key, "")).strip_edges():
+			return {}
+	return _physical_position(str(position.get("node_id", "")), str(position.get("previous_node_id", "")), str(position.get("last_verb", "")))
+
+
+static func _normalize_depth_receipts(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	var result: Array = []
+	for index in range((value as Array).size()):
+		var receipt_value: Variant = (value as Array)[index]
+		if typeof(receipt_value) != TYPE_DICTIONARY:
+			return []
+		var receipt: Dictionary = receipt_value
+		var keys := receipt.keys()
+		keys.sort()
+		if keys != ["command_id", "command_record_fingerprint", "receipt_key", "sequence"] \
+				or typeof(receipt.get("sequence")) != TYPE_INT or int(receipt.get("sequence", 0)) != index + 1:
+			return []
+		for key in ["command_id", "command_record_fingerprint", "receipt_key"]:
+			if typeof(receipt.get(key)) != TYPE_STRING or str(receipt.get(key, "")).is_empty() or str(receipt.get(key, "")) != str(receipt.get(key, "")).strip_edges():
+				return []
+		result.append(receipt.duplicate(true))
+	return result
+
+
+static func _available_physical_verbs(state: Dictionary) -> Array:
+	if str(state.get("status", "")) != "active":
+		return []
+	var mode := str(state.get("mode", ""))
+	var cargo_status := str(_copy_dict(_copy_dict(state.get("depth_state", {})).get("cargo", {})).get("status", CARGO_NONE))
+	if cargo_status == CARGO_PICKUP_PENDING:
+		return ["pickup"]
+	if mode == MODE_HOLD:
+		return ["wait", "signal", "break_hold"]
+	if mode == MODE_GETAWAY:
+		return ["move", "wait", "duck"]
+	var result := ["move", "wait", "duck"]
+	if cargo_status == CARGO_CARRIED:
+		result.append_array(["stash", "ditch"])
+		if not str(state.get("handoff_pending_node_id", "")).is_empty(): result.append("handoff")
+	elif cargo_status == CARGO_STASHED:
+		result.append_array(["retrieve", "ditch"])
+	return result
 
 
 static func _normalize_targets(value: Variant) -> Array:

@@ -10437,6 +10437,8 @@ func _delivery_begin(spec: Dictionary) -> Dictionary:
 		return {"ok": false, "message": str(resolved_targets.get("message", "That route cannot be offered tonight."))}
 	var normalized := spec.duplicate(true)
 	normalized["targets"] = _copy_array(resolved_targets.get("targets", []))
+	normalized["start_node_id"] = current_world_node_id()
+	normalized["current_node_id"] = current_world_node_id()
 	var state := DeliveryRunModelScript.begin(normalized, _crew_action_index())
 	if state.is_empty():
 		return {"ok": false, "message": "That route cannot be carried on this town map."}
