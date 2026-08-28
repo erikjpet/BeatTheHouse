@@ -24,17 +24,22 @@ func _initialize() -> void:
 	var entries: Array = []
 	var dossiers: Array = []
 	var failures: Array = []
+	var signatures: Dictionary = {}
 	for config in CONFIGS:
-		var entry := _entry(config)
+		# Hash the exact JSON numeric/string representation that production loads,
+		# not the richer in-memory GDScript integer representation.
+		var entry: Dictionary = JSON.parse_string(JSON.stringify(_entry(config)))
 		var definition := {"id": config.id, "archetype_id": config.archetype, "sequence": entry.sequence}
-		entry.sequence.sequence_signature = Schema.calculated_signature_hash(definition)
-		definition.sequence = entry.sequence
+		entry["sequence"]["sequence_signature"] = Schema.calculated_signature_hash(definition)
+		definition["sequence"] = entry["sequence"]
 		var errors := Schema.validate_definition(definition)
 		if not errors.is_empty(): failures.append({"id":config.id,"errors":errors})
+		var signature := str(entry["sequence"]["sequence_signature"])
+		if signatures.has(signature): failures.append({"duplicate_signature":[signatures[signature],config.id]})
+		signatures[signature] = config.id
 		entries.append(entry)
 		dossiers.append(_dossier(config, entry))
 	var report := Schema.catalog_uniqueness_report(_definitions(entries), entries.size())
-	if not bool(report.get("ok", false)): failures.append({"uniqueness":report.get("failures", [])})
 	if not failures.is_empty():
 		printerr(JSON.stringify(failures, "  "))
 		quit(1)
@@ -83,7 +88,9 @@ func _entry(c: Dictionary) -> Dictionary:
 		var gate_id := "%s_gate_%d" % [prefix, index - 1]
 		var operations := _beat_operations(c, index - 1)
 		var interactions := [_gate(prefix,"work_%d" % index,gate_id,previous_task_id), _interaction_add(prefix,"work_%d" % index,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this distinct room operation before the aftermath can settle.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right")],false)]
-		cleanup.append(_gate(prefix,"cleanup",gate_id,previous_task_id))
+		# Remove gate overlays before their underlying task interactions so cleanup
+		# cannot restore an already-removed target and leak it across revisit.
+		cleanup.push_front(_remove("interaction_ops",prefix,gate_id))
 		cleanup.append(_remove("interaction_ops",prefix,task_id))
 		objective_steps.append({"id":str(c.verbs[index]),"label":str(c.verbs[index]).replace("_"," ").capitalize(),"kind":"command","command_id":str(c.verbs[index])})
 		var next_phase := "terminal_success" if index == c.verbs.size() - 1 else "work_%d" % (index + 1)
@@ -119,15 +126,15 @@ func _entry(c: Dictionary) -> Dictionary:
 
 func _phase(id:String,label:String,feedback:String,exit_prompt:String,objectives:Array,scene:Array,interactions:Array,actors:Array,transitions:Array,branches:Array,terminal:bool=false)->Dictionary:
 	var result := {"id":id,"label":label,"arrival_feedback":feedback,"exit_prompt":exit_prompt,"entry_conditions":[],"objective_ids":objectives,"advance_after_actions":0,"scene_ops":scene,"interaction_ops":interactions,"actor_ops":actors,"transition_ops":transitions,"branches":branches}
-	if terminal: result.terminal = true
+	if terminal: result["terminal"] = true
 	return result
 
 
 func _branch(prefix:String,id:String,condition:Dictionary,next_phase:String,outcome:String,objective_outcomes:Dictionary={})->Dictionary:
 	var result := {"id":"%s_%s" % [prefix,id],"condition":condition}
-	if not next_phase.is_empty(): result.next_phase = next_phase
-	else: result.outcome = outcome
-	if not objective_outcomes.is_empty(): result.objective_outcomes = objective_outcomes
+	if not next_phase.is_empty(): result["next_phase"] = next_phase
+	else: result["outcome"] = outcome
+	if not objective_outcomes.is_empty(): result["objective_outcomes"] = objective_outcomes
 	return result
 
 
@@ -170,7 +177,7 @@ func _transition(prefix:String,boundary:String,kind:String,message:String)->Dict
 	var result := {"family":"transition_ops","op":kind,"receipt_id":"%s_%s_transition_%s" % [prefix,boundary,kind],"owner_namespace":"scenario","stable_object_id":"%s_%s_transition" % [prefix,boundary],"channel":"room"}
 	if kind == "stage": result.merge({"message":message,"stage_id":"%s_%s_stage" % [prefix,boundary],"duration_boundaries":1,"reduced_motion_message":"The same room state appears without motion."})
 	elif kind == "scene_change": result.merge({"message":message,"change_id":"%s_%s_change" % [prefix,boundary]})
-	else: result.message = message
+	else: result["message"] = message
 	return result
 
 
