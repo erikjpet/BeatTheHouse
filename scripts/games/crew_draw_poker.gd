@@ -677,7 +677,26 @@ func _actor_name(actor: String) -> String:
 
 func _ordered_public_facts(state: Dictionary, action_id: String) -> Array:
 	var boundary := "crew-poker:%d:%d" % [int(state.get("session_index", 0)), int(state.get("action_ordinal", 0))]
-	return [{"fact_type": "crew_poker.action_boundary", "fact_version": 1, "visibility": "public", "boundary": boundary, "receipt_key": "%s:%s" % [boundary, action_id], "payload": {"night_id": str(state.get("night_id", "friendly_teaching")), "phase": str(state.get("phase", "idle")), "turn_owner": str(state.get("turn_owner", "")), "pot": int(state.get("pot", 0))}}]
+	var fact := {"fact_id": "%s:%s" % [boundary, action_id], "fact_type": "crew_poker.action_boundary", "fact_version": 1, "visibility": "public", "boundary": boundary, "cause": "action_resolution", "receipt_key": "%s:%s" % [boundary, action_id], "payload": {"night_id": str(state.get("night_id", "friendly_teaching")), "phase": str(state.get("phase", "idle")), "turn_owner": str(state.get("turn_owner", "")), "pot": int(state.get("pot", 0))}}
+	fact["content_fingerprint"] = _canonical_ritual_json(fact).sha256_text()
+	return [fact]
+
+
+func _canonical_ritual_json(value: Variant) -> String:
+	if typeof(value) == TYPE_DICTIONARY:
+		var source: Dictionary = value
+		var keys := _string_array(source.keys())
+		keys.sort()
+		var members: Array[String] = []
+		for key in keys:
+			members.append("%s:%s" % [JSON.stringify(key), _canonical_ritual_json(source.get(key))])
+		return "{%s}" % ",".join(members)
+	if typeof(value) == TYPE_ARRAY:
+		var items: Array[String] = []
+		for item in value:
+			items.append(_canonical_ritual_json(item))
+		return "[%s]" % ",".join(items)
+	return JSON.stringify(value)
 
 
 func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) -> bool:
@@ -711,6 +730,41 @@ func surface_motion_signature(surface, state: Dictionary) -> Dictionary:
 
 func environment_object_state(_run_state: RunState, _environment: Dictionary) -> Dictionary:
 	return {"prop": "card_table", "label": "Back-Room Poker", "status": "A friendly five-card draw is running."}
+
+
+func interrupt_for_room_scenario(_run_state: RunState, environment: Dictionary, disposition: String, reason: String) -> Dictionary:
+	var state := _table_state(environment)
+	var live := ["before", "draw", "after"].has(str(state.get("phase", "idle")))
+	if disposition == "pause" and live:
+		state["interrupted_phase"] = str(state.get("phase", ""))
+		state["phase"] = "paused"
+		state["interrupt_reason"] = reason
+		state["interrupt_receipt"] = "crew-poker-interrupt:%d:%d:pause" % [int(state.get("session_index", 0)), int(state.get("action_ordinal", 0))]
+		_update_environment_state(environment, state)
+		return {"ok": true, "disposition": "paused", "bankroll_delta": 0, "receipt_key": str(state.get("interrupt_receipt", ""))}
+	if disposition == "resume" and str(state.get("phase", "")) == "paused":
+		state["phase"] = str(state.get("interrupted_phase", "before"))
+		state.erase("interrupted_phase")
+		state["interrupt_receipt"] = "crew-poker-interrupt:%d:%d:resume" % [int(state.get("session_index", 0)), int(state.get("action_ordinal", 0))]
+		_update_environment_state(environment, state)
+		return {"ok": true, "disposition": "resumed", "bankroll_delta": 0, "receipt_key": str(state.get("interrupt_receipt", ""))}
+	if disposition == "abort" and (live or str(state.get("phase", "")) == "paused"):
+		var refund := maxi(0, int(state.get("player_contribution", 0)))
+		state["session_swing"] = int(state.get("session_swing", 0)) + refund
+		state["phase"] = "idle"
+		state["pot"] = 0
+		state["player_contribution"] = 0
+		state["player_cards"] = []
+		state["seats"] = []
+		state["turn_owner"] = ""
+		state["turn_order"] = []
+		state["observation_queue"] = []
+		state["night_aftermath"] = "interrupted_stakes_returned"
+		state["interrupt_reason"] = reason
+		state["interrupt_receipt"] = "crew-poker-interrupt:%d:%d:abort" % [int(state.get("session_index", 0)), int(state.get("action_ordinal", 0))]
+		_update_environment_state(environment, state)
+		return {"ok": true, "disposition": "aborted", "bankroll_delta": refund, "receipt_key": str(state.get("interrupt_receipt", ""))}
+	return {"ok": false, "disposition": "rejected", "bankroll_delta": 0, "message": "That interruption boundary is not legal now."}
 
 
 static func scripted_session(seed: int, member_id: String, force_showdown: bool = true) -> Dictionary:
@@ -1281,8 +1335,14 @@ func _draw_observation(surface, state: Dictionary) -> void:
 			text = str(observation.get("quirk", ""))
 		"timing":
 			# Timing is authored against the source action ordinal. Reduced motion
-			# changes travel, never whether the readable cue is present.
-			text = str(observation.get("line", "The room holds one quiet beat."))
+			# changes travel, never whether an ordered cue is present. Legacy v1
+			# observations retain their shipped elapsed presentation contract until
+			# assembly opts the table into ordered_v1.
+			if str(observation.get("observation_id", "")).is_empty():
+				var elapsed_msec := int(surface.surface_render_elapsed_msec()) if surface != null and surface.has_method("surface_render_elapsed_msec") else int(observation.get("timing_msec", 0))
+				text = str(observation.get("line", "")) if elapsed_msec >= int(observation.get("timing_msec", 0)) else "The room holds one quiet beat."
+			else:
+				text = str(observation.get("line", "The room holds one quiet beat."))
 		_:
 			text = str(observation.get("quirk", observation.get("line", "")))
 	if text.is_empty():

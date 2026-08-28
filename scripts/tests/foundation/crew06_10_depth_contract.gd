@@ -110,13 +110,22 @@ func _ordered_trace(library: ContentLibrary, seed: int) -> Dictionary:
 		if receipt.is_empty() or receipts.has(receipt):
 			return {"ok": false, "error": "missing or duplicate turn receipt"}
 		receipts.append(receipt)
+		var facts: Array = result.get("crew_poker_public_facts", []) if typeof(result.get("crew_poker_public_facts", [])) == TYPE_ARRAY else []
+		if facts.size() != 1 or str((facts[0] as Dictionary).get("content_fingerprint", "")).length() != 64:
+			return {"ok": false, "error": "public action fact lacks one canonical fingerprint"}
 		var after := _table(run)
 		trace.append({"action": action_id, "phase": str(after.get("phase", "")), "owner": str(after.get("turn_owner", "")), "pot": int(after.get("pot", 0)), "history": (after.get("action_history", []) as Array).size()})
 		if step == 4:
+			var pause: Dictionary = game.interrupt_for_room_scenario(run, run.current_environment, "pause", "fixture_knock")
+			if not bool(pause.get("ok", false)) or int(_table(run).get("pot", -1)) != int(after.get("pot", -2)):
+				return {"ok": false, "error": "pause changed the conserved pot"}
 			var restored_mid := RunState.new()
 			restored_mid.from_dict(run.to_dict())
-			if JSON.stringify(_table(restored_mid)) != JSON.stringify(after):
+			if JSON.stringify(_table(restored_mid)) != JSON.stringify(_table(run)):
 				return {"ok": false, "error": "mid-hand save/load changed ordered state"}
+			var resume: Dictionary = game.interrupt_for_room_scenario(run, run.current_environment, "resume", "fixture_knock")
+			if not bool(resume.get("ok", false)) or str(_table(run).get("phase", "")) == "paused":
+				return {"ok": false, "error": "paused hand did not resume exactly"}
 	return {"ok": false, "error": "ordered trace did not terminate"}
 
 
