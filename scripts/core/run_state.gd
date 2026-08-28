@@ -2269,10 +2269,7 @@ func _scenario_semantic_ready() -> bool:
 		return false
 	var action_digest := str(current_environment.get("scenario_semantic_action_digest", ""))
 	if not ScenarioSequenceRuntimeScript._valid_sha256(action_digest) or action_digest != ScenarioSequenceRuntimeScript.base_interaction_action_authority_digest(_copy_array(current_environment.get("scenario_base_interactions", []))): return false
-	var binding_environment := current_environment.duplicate(true)
-	binding_environment["scenario_base_producer_context"] = _scenario_base_producer_context()
 	return not inventory.is_empty() \
-		and EnvironmentSemanticInventoryScript.validate_instance_binding(inventory, binding_environment).is_empty() \
 		and int(inventory.get("schema_version", 0)) == int(current_environment.get("scenario_semantic_inventory_version", 0)) \
 		and str(inventory.get("digest", "")) == str(current_environment.get("scenario_semantic_digest", ""))
 

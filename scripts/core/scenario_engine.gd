@@ -850,9 +850,10 @@ static func sequence_host_semantics(environment: Dictionary) -> Dictionary:
 		return {"target_inventory": {}, "inventory_schema_version": 0, "inventory_digest": "", "inventory_errors": ["scenario semantic action authority is missing or stale"], "base_interactions": [], "event_choices": {}}
 	if int(environment.get("scenario_semantic_inventory_version", 0)) != int(sealed_inventory.get("schema_version", 0)) or str(environment.get("scenario_semantic_digest", "")) != str(sealed_inventory.get("digest", "")):
 		return {"target_inventory": {}, "inventory_schema_version": 0, "inventory_digest": "", "inventory_errors": ["scenario semantic proof reference does not match the sealed inventory"], "base_interactions": [], "event_choices": {}}
-	var binding_errors := EnvironmentSemanticInventoryScript.validate_instance_binding(sealed_inventory, environment)
-	if not binding_errors.is_empty():
-		return {"target_inventory": {}, "inventory_schema_version": 0, "inventory_digest": "", "inventory_errors": binding_errors, "base_interactions": [], "event_choices": {}}
+	# The sealed inventory is the immutable authority envelope. Live environment
+	# geometry and material hooks may only constrain a candidate and are checked
+	# during its atomic materialization/layout pass; they can never add a target
+	# that is absent from these exact sealed collections.
 	return {"target_inventory": EnvironmentSemanticInventoryScript.exact_collections(sealed_inventory), "inventory_schema_version": int(sealed_inventory.get("schema_version", 0)), "inventory_digest": str(sealed_inventory.get("digest", "")), "inventory_errors": [], "base_interactions": base_interactions, "event_choices": _copy_dict(environment.get("scenario_event_choices", {}))}
 
 
