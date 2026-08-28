@@ -8,6 +8,7 @@ const BaccaratScript := preload("res://scripts/games/baccarat.gd")
 const CrewPlayModelScript := preload("res://scripts/core/crew_play_model.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 
 
 static func check(library: ContentLibrary, failures: Array) -> void:
@@ -48,15 +49,14 @@ static func _check_spotter_window_and_blackjack_seam(library: ContentLibrary, fa
 	_make_made(run, ["crew_switch"])
 	var blackjack := _module(BlackjackScript, library, "blackjack")
 	var before_cash := run.bankroll
-	var result := blackjack.resolve_with_context("crew_play:spotter", 5, run, run.current_environment, run.create_rng(), {})
+	var result := BlackjackAuthorityTestDriverScript.resolve(blackjack, "crew_play:spotter", 5, run, run.current_environment, run.create_rng(), {})
 	if not bool(result.get("ok", false)) or not run.crew_play_active("spotter") or run.bankroll != before_cash - 8:
 		failures.append("Spotter did not activate explicitly with its visible $8 cut.")
 	if run.crew_play_adjust_suspicion(20, "blackjack") != 13 \
 		or run.crew_play_effect_int("spotter", "blackjack_count_tolerance", 0) != 1:
 		failures.append("Spotter did not expose the blackjack suspicion/count-assist seam.")
-	# The host advances the activation boundary after resolve; four subsequent
-	# boundaries remain, then the effect closes exactly.
-	run.advance_environment_turns(1)
+	# The production Blackjack host advances the activation boundary atomically;
+	# four subsequent boundaries remain, then the effect closes exactly.
 	if int(_status(run, "spotter").get("remaining_boundaries", -1)) != 4:
 		failures.append("Spotter did not publish four remaining action boundaries after activation.")
 	run.advance_environment_turns(3)
@@ -75,10 +75,10 @@ static func _check_big_player_pair(library: ContentLibrary, failures: Array) -> 
 	var blackjack := _module(BlackjackScript, library, "blackjack")
 	if _action_ids(blackjack.legal_actions(run, run.current_environment)).has("crew_play:big_player"):
 		failures.append("Big Player surfaced without Spotter active.")
-	blackjack.resolve_with_context("crew_play:spotter", 5, run, run.current_environment, run.create_rng(), {})
+	BlackjackAuthorityTestDriverScript.resolve(blackjack, "crew_play:spotter", 5, run, run.current_environment, run.create_rng(), {})
 	if not _action_ids(blackjack.legal_actions(run, run.current_environment)).has("crew_play:big_player"):
 		failures.append("Spotter did not unlock a second present Made member's Big Player call-in.")
-	var result := blackjack.resolve_with_context("crew_play:big_player", 5, run, run.current_environment, run.create_rng(), {})
+	var result := BlackjackAuthorityTestDriverScript.resolve(blackjack, "crew_play:big_player", 5, run, run.current_environment, run.create_rng(), {})
 	var table := _table(run.current_environment, "blackjack")
 	if not bool(result.get("ok", false)) or not bool(table.get("crew_pre_warmed", false)) \
 		or int(table.get("running_count", 0)) < 3 or int(table.get("recorded_running_count", 0)) != int(table.get("running_count", 0)):
@@ -90,7 +90,7 @@ static func _check_distraction_and_grievance(library: ContentLibrary, failures: 
 	_make_made(run, ["crew_velvet"])
 	run.add_suspicion("fixture", 70, "fixture", true)
 	var blackjack := _module(BlackjackScript, library, "blackjack")
-	var result := blackjack.resolve_with_context("crew_play:distraction", 5, run, run.current_environment, run.create_rng(), {})
+	var result := BlackjackAuthorityTestDriverScript.resolve(blackjack, "crew_play:distraction", 5, run, run.current_environment, run.create_rng(), {})
 	if not bool(result.get("ok", false)) or run.suspicion_level() != 52:
 		failures.append("Distraction did not apply its immediate local 18-point heat dump.")
 	if _action_ids(blackjack.legal_actions(run, run.current_environment)).has("crew_play:distraction"):
@@ -127,7 +127,7 @@ static func _check_table_flood_and_concurrency(library: ContentLibrary, failures
 	var run := _run("CREW-PLAYS-FLOOD", ["crew_rook", "crew_mags", "crew_switch"])
 	_make_made(run, ["crew_rook", "crew_mags", "crew_switch"])
 	var blackjack := _module(BlackjackScript, library, "blackjack")
-	var result := blackjack.resolve_with_context("crew_play:table_flood", 5, run, run.current_environment, run.create_rng(), {})
+	var result := BlackjackAuthorityTestDriverScript.resolve(blackjack, "crew_play:table_flood", 5, run, run.current_environment, run.create_rng(), {})
 	if not bool(result.get("ok", false)) or run.crew_play_adjust_detection_chance(50) != 30 \
 		or _string_array(result.get("crew_play_member_ids", [])).size() != 2:
 		failures.append("Table Flood did not require two present Made members or apply its 60% cheat-detection multiplier.")
@@ -146,8 +146,7 @@ static func _check_detection_determinism(library: ContentLibrary, failures: Arra
 		var run := _watched_run(seed)
 		_make_made(run, ["crew_switch"])
 		var blackjack := _module(BlackjackScript, library, "blackjack")
-		blackjack.resolve_with_context("crew_play:spotter", 5, run, run.current_environment, run.create_rng(), {})
-		run.advance_environment_turns(1)
+		BlackjackAuthorityTestDriverScript.resolve(blackjack, "crew_play:spotter", 5, run, run.current_environment, run.create_rng(), {})
 		if not run.crew_play_active("spotter"):
 			burned_seed = seed
 			break
@@ -159,8 +158,7 @@ static func _check_detection_determinism(library: ContentLibrary, failures: Arra
 		var replay := _watched_run(burned_seed)
 		_make_made(replay, ["crew_switch"])
 		var blackjack := _module(BlackjackScript, library, "blackjack")
-		blackjack.resolve_with_context("crew_play:spotter", 5, replay, replay.current_environment, replay.create_rng(), {})
-		replay.advance_environment_turns(1)
+		BlackjackAuthorityTestDriverScript.resolve(blackjack, "crew_play:spotter", 5, replay, replay.current_environment, replay.create_rng(), {})
 		hashes.append(JSON.stringify(replay.to_dict()).sha256_text())
 	if hashes[0] != hashes[1]:
 		failures.append("Spotter watched-pit detection replay diverged for the same seed.")
@@ -170,8 +168,7 @@ static func _check_save_load_mid_window(library: ContentLibrary, failures: Array
 	var run := _run("CREW-PLAYS-SAVE", ["crew_rook", "crew_mags"])
 	_make_made(run, ["crew_rook", "crew_mags"])
 	var blackjack := _module(BlackjackScript, library, "blackjack")
-	blackjack.resolve_with_context("crew_play:table_flood", 5, run, run.current_environment, run.create_rng(), {})
-	run.advance_environment_turns(1)
+	BlackjackAuthorityTestDriverScript.resolve(blackjack, "crew_play:table_flood", 5, run, run.current_environment, run.create_rng(), {})
 	var expected := run.crew_play_active_status("blackjack")
 	var restored := RunStateScript.new()
 	restored.from_dict(run.to_dict())
@@ -186,8 +183,7 @@ static func _check_heat_pressure(library: ContentLibrary, failures: Array) -> vo
 	var run := _run("CREW-PLAYS-HEAT-PRESSURE", ["crew_switch"])
 	_make_made(run, ["crew_switch"])
 	var blackjack := _module(BlackjackScript, library, "blackjack")
-	blackjack.resolve_with_context("crew_play:spotter", 5, run, run.current_environment, run.create_rng(), {})
-	run.advance_environment_turns(1)
+	BlackjackAuthorityTestDriverScript.resolve(blackjack, "crew_play:spotter", 5, run, run.current_environment, run.create_rng(), {})
 	for index in range(12):
 		var pressure := run.crew_play_adjust_suspicion(12, "blackjack")
 		run.add_suspicion("aggressive_fixture_%d" % index, pressure, "behavior", true, {"action_kind": "cheat"}, true)
