@@ -181,6 +181,7 @@ static func normalize_state(value: Variant, definition: Dictionary = {}, trusted
 	var semantic_source := _dict(source.get("semantic_state", {})).duplicate(true)
 	if not trusted_host_semantics.is_empty():
 		semantic_source["event_choices"] = _dict(trusted_host_semantics.get("event_choices", {}))
+		semantic_source["creation_owner_namespaces"] = _string_array(trusted_host_semantics.get("creation_owner_namespaces", ["scenario"]))
 	var state := {
 		"schema_version": STATE_SCHEMA_VERSION,
 		"scenario_id": str(source.get("scenario_id", "")).strip_edges(),

@@ -229,6 +229,7 @@ static func acknowledge_outcome(environment: Dictionary, token: String, receipt_
 		return {"ok": true, "replayed": true, "receipt_id": receipt_id, "public_result": _dict(existing.get("public_result", {})), "errors": []}
 	acknowledgements[receipt_id] = {"result_fingerprint": fingerprint, "public_result": public_result.duplicate(true)}
 	entry["outcome_acknowledgements"] = acknowledgements
+	entry["lifecycle"] = LIFECYCLE_CLEANED
 	container[token] = entry
 	environment[CONTAINER_KEY] = container
 	return {"ok": true, "replayed": false, "receipt_id": receipt_id, "public_result": public_result.duplicate(true), "errors": []}
@@ -319,6 +320,8 @@ static func _apply_runtime_result(environment: Dictionary, token: String, defini
 	entry["state"] = next
 	if not lifecycle_override.is_empty():
 		entry["lifecycle"] = lifecycle_override
+	elif str(next.get("status", "")) == SequenceRuntimeScript.STATUS_AFTERMATH:
+		entry["lifecycle"] = LIFECYCLE_CLEANUP_PENDING
 	elif str(next.get("status", "")) == SequenceRuntimeScript.STATUS_CLEANED:
 		entry["lifecycle"] = LIFECYCLE_CLEANED
 	_capture_terminal_outcomes(entry, definition)

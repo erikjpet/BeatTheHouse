@@ -1880,7 +1880,7 @@ func world_sequence_sync_owner(token: String, owner_active: bool, reason: String
 		return {"ok": true, "cancelled_pending": true, "errors": []}
 	var result := CrewWorldSequenceAdapterScript.sync_owner(current_environment, token, _world_sequence_definition(token), owner_active, reason)
 	if bool(result.get("ok", false)) and not owner_active:
-		registration["lifecycle"] = "cleaned"
+		registration["lifecycle"] = str(CrewWorldSequenceAdapterScript.snapshot(current_environment, token).get("lifecycle", "cleaned"))
 		world_sequence_registrations[token] = registration
 	return result
 
@@ -1894,7 +1894,12 @@ func world_sequence_pending_outcomes(token: String) -> Array:
 
 
 func world_sequence_ack_outcome(token: String, receipt_id: String, public_result: Dictionary) -> Dictionary:
-	return CrewWorldSequenceAdapterScript.acknowledge_outcome(current_environment, token, receipt_id, public_result)
+	var result := CrewWorldSequenceAdapterScript.acknowledge_outcome(current_environment, token, receipt_id, public_result)
+	if bool(result.get("ok", false)) and world_sequence_registrations.has(token):
+		var registration := _copy_dict(world_sequence_registrations.get(token, {}))
+		registration["lifecycle"] = "cleaned"
+		world_sequence_registrations[token] = registration
+	return result
 
 
 func _world_sequence_definition(token: String) -> Dictionary:
@@ -1938,6 +1943,63 @@ func scenario_prepare_semantic_finalization() -> Dictionary:
 	var definition := scenario_sequence_definition()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition): return {"ok": true, "inactive": true, "errors": []}
 	return {"ok": true, "errors": []}
+
+
+func world_sequence_prepare_semantic_finalization() -> Dictionary:
+	if world_sequence_registrations.is_empty(): return {"ok": true, "inactive": true, "errors": []}
+	var node_id := current_world_node_id()
+	for registration_value in world_sequence_registrations.values():
+		var registration := _copy_dict(registration_value)
+		if str(registration.get("node_id", "")) == node_id and str(registration.get("lifecycle", "")) in ["eligible", "mounted"]:
+			_ensure_scenario_host_public_context()
+			return {"ok": true, "active": true, "errors": []}
+	return {"ok": true, "inactive": true, "errors": []}
+
+
+# Produces the same sealed host inventory for a crew/world-only room. This is
+# used only at the normal interaction-list boundary when a persisted matching
+# registration exists; an ignored run remains a constant-time empty check.
+func world_sequence_finalize_base_semantics(interactable_records: Array, library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
+	var preparation := world_sequence_prepare_semantic_finalization()
+	if bool(preparation.get("inactive", false)): return preparation
+	if library == null: return {"ok": false, "errors": ["World sequence semantic finalization requires ContentLibrary."]}
+	var producer_context := _scenario_base_producer_context()
+	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(interactable_records, current_environment, library, producer_context)
+	if not bool(stamped.get("ok", false)): return {"ok": false, "errors": _copy_array(stamped.get("errors", []))}
+	var stamped_records := _copy_array(stamped.get("records", []))
+	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(stamped_records)
+	if not bool(produced.get("ok", false)): return {"ok": false, "errors": _copy_array(produced.get("errors", []))}
+	var interactions := _copy_array(produced.get("interactions", []))
+	var dynamic_actors := EnvironmentBaseSemanticRecordsScript.authorized_dynamic_actor_records(current_environment, library)
+	if not bool(dynamic_actors.get("ok", false)): return {"ok": false, "errors": _copy_array(dynamic_actors.get("errors", []))}
+	var actors := _copy_array(produced.get("actors", []))
+	actors.append_array(_copy_array(dynamic_actors.get("records", [])))
+	var semantic_environment := current_environment.duplicate(true)
+	semantic_environment["scenario_base_producer_context"] = producer_context.duplicate(true)
+	var sealed := EnvironmentSemanticInventoryScript.for_instance(semantic_environment, library, interactions, actors)
+	var inventory_errors := EnvironmentSemanticInventoryScript.validate(sealed)
+	if not inventory_errors.is_empty(): return {"ok": false, "errors": inventory_errors}
+	var candidate := current_environment.duplicate(true)
+	candidate["scenario_base_interactions"] = interactions
+	candidate["scenario_base_actors"] = actors
+	candidate["scenario_base_producer_context"] = producer_context.duplicate(true)
+	candidate["scenario_semantic_action_digest"] = ScenarioSequenceRuntimeScript.base_interaction_action_authority_digest(interactions)
+	candidate["scenario_semantic_inventory"] = sealed
+	candidate["scenario_semantic_inventory_version"] = int(sealed.get("schema_version", 0))
+	candidate["scenario_semantic_digest"] = str(sealed.get("digest", ""))
+	candidate["scenario_semantic_ready"] = true
+	candidate["scenario_event_choices"] = EnvironmentSemanticInventoryScript.event_choice_index(_copy_array(candidate.get("event_ids", [])), library)
+	candidate["scenario_layout_base_records"] = stamped_records.duplicate(true)
+	candidate["scenario_layout_context"] = layout_context.duplicate(true)
+	current_environment = candidate
+	var activation := world_sequence_activate_current_mounts()
+	if not bool(activation.get("ok", false)): return {"ok": false, "errors": _copy_array(activation.get("errors", []))}
+	var composed := _resolve_world_sequence_composed_layout(stamped_records, layout_context)
+	if not bool(composed.get("ok", false)): return composed
+	composed["world_sequences"] = activation
+	composed["records"] = stamped_records
+	composed["state"] = {}
+	return composed
 
 
 func scenario_finalize_installed_environment(library: ContentLibrary) -> Dictionary:
@@ -2105,6 +2167,33 @@ func _resolve_scenario_layout_candidate(candidate: Dictionary, stamped_records: 
 	return layout_result
 
 
+func _resolve_world_sequence_composed_layout(stamped_records: Array, layout_context: Dictionary) -> Dictionary:
+	var projection := world_sequence_composed_projection()
+	if not bool(projection.get("ok", true)):
+		return {"ok": false, "errors": _copy_array(projection.get("errors", ["World sequence projection composition failed closed."]))}
+	var layout_environment := current_environment.duplicate(true)
+	if not layout_context.is_empty(): layout_environment["_scenario_layout_context"] = layout_context.duplicate(true)
+	var layout_result := ScenarioLayoutResolverScript.resolve(stamped_records, projection, layout_environment)
+	if not bool(layout_result.get("ok", false)): return {"ok": false, "errors": _copy_array(layout_result.get("errors", ["World sequence layout resolution failed closed."])), "layout_audit": _copy_dict(layout_result.get("layout_audit", {}))}
+	var renderer_snapshot := ScenarioLayoutResolverScript.sealed_renderer_snapshot(layout_result)
+	if not bool(renderer_snapshot.get("ok", false)): return {"ok": false, "errors": _copy_array(renderer_snapshot.get("errors", ["World sequence renderer resolution failed closed."]))}
+	current_environment["scenario_sequence_projection"] = _copy_dict(layout_result.get("projection", projection))
+	current_environment["scenario_layout_authority"] = _copy_dict(layout_result.get("layout_authority", {}))
+	current_environment["scenario_layout_audit"] = _copy_dict(layout_result.get("layout_audit", {}))
+	current_environment["scenario_layout_authority_digest"] = str(layout_result.get("layout_authority_digest", ""))
+	current_environment["scenario_render_snapshot"] = renderer_snapshot.duplicate(true)
+	return {
+		"ok": true,
+		"projection": _copy_dict(layout_result.get("projection", projection)),
+		"layout_authority": _copy_dict(layout_result.get("layout_authority", {})),
+		"layout_authority_digest": str(layout_result.get("layout_authority_digest", "")),
+		"layout_audit": _copy_dict(layout_result.get("layout_audit", {})),
+		"renderer_snapshot": renderer_snapshot,
+		"warnings": _copy_array(layout_result.get("warnings", [])),
+		"errors": [],
+	}
+
+
 func _finalized_scenario_layout_result(replayed: bool, digest: String, state: Dictionary, records: Array, layout_result: Dictionary) -> Dictionary:
 	var result := {
 		"ok": true,
@@ -2124,6 +2213,14 @@ func _finalized_scenario_layout_result(replayed: bool, digest: String, state: Di
 	if not bool(world_activation.get("ok", false)):
 		result["ok"] = false
 		result["errors"] = _copy_array(world_activation.get("errors", []))
+	elif not _copy_array(world_activation.get("mounted", [])).is_empty():
+		var composed := _resolve_world_sequence_composed_layout(records, _copy_dict(current_environment.get("scenario_layout_context", {})))
+		if not bool(composed.get("ok", false)):
+			result["ok"] = false
+			result["errors"] = _copy_array(composed.get("errors", []))
+		else:
+			for key in ["projection", "layout_authority", "layout_authority_digest", "layout_audit", "renderer_snapshot", "warnings"]:
+				result[key] = composed.get(key).duplicate(true) if typeof(composed.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else composed.get(key)
 	return result
 
 
