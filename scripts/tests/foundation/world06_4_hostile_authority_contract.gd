@@ -6,12 +6,12 @@ const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment
 
 func _initialize() -> void:
 	var failures: Array = []
-	if not CrewStateModelScript.can_instantiate():
+	if not (CrewStateModelScript as Script).can_instantiate():
 		failures.append("CrewStateModel did not compile; hostile authority checks could not execute.")
 	else:
 		_check_job_envelope_authority(failures)
 		_check_job_lifecycle_authority(failures)
-	if not CrewRecruitmentModelScript.can_instantiate():
+	if not (CrewRecruitmentModelScript as Script).can_instantiate():
 		failures.append("CrewRecruitmentModel did not compile; hostile authority checks could not execute.")
 	else:
 		_check_recruitment_authority(failures)
