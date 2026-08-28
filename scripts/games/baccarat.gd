@@ -3130,9 +3130,12 @@ func _draw_card_areas(surface, state: Dictionary) -> void:
 	var visible_cards := _visible_animation_cards(surface, state) if deal_active else []
 	if deal_active and not visible_cards.is_empty():
 		var squeeze_event := _active_squeeze_event(surface, state)
+		var authored_squeeze := _authored_squeeze_event(state)
+		var deal_elapsed_msec := int(round(float(surface.surface_elapsed(BACCARAT_DEAL_CHANNEL)) * 1000.0))
+		var squeeze_pending := not authored_squeeze.is_empty() and deal_elapsed_msec <= int(authored_squeeze.get("delay_msec", 0)) + int(authored_squeeze.get("duration_msec", 0))
 		for event in visible_cards:
 			var card_event: Dictionary = event
-			var is_squeeze_card := not squeeze_event.is_empty() and str(card_event.get("zone", "")) == str(squeeze_event.get("target_zone", "")) and int(card_event.get("zone_card_slot", -1)) == int(squeeze_event.get("card_slot", -2))
+			var is_squeeze_card := squeeze_pending and str(card_event.get("zone", "")) == str(authored_squeeze.get("target_zone", "")) and int(card_event.get("zone_card_slot", -1)) == int(authored_squeeze.get("card_slot", -2))
 			if is_squeeze_card:
 				_draw_squeezed_card(surface, card_event.get("card", {}), card_event.get("position", Vector2.ZERO), float(state.get("baccarat_squeeze_progress", 0.0)))
 			else:
@@ -3167,6 +3170,14 @@ func _active_squeeze_event(surface, state: Dictionary) -> Dictionary:
 		var delay := float(int(event.get("delay_msec", 0))) / 1000.0
 		var duration := maxf(0.001, float(int(event.get("duration_msec", 520))) / 1000.0)
 		if progress_elapsed >= delay and progress_elapsed <= delay + duration + 0.8:
+			return event
+	return {}
+
+
+func _authored_squeeze_event(state: Dictionary) -> Dictionary:
+	for event_value in _draw_array_view(state.get("deal_animation_events", [])):
+		var event: Dictionary = event_value
+		if str(event.get("type", "")) == "squeeze":
 			return event
 	return {}
 
