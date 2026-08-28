@@ -45,11 +45,12 @@ func _initialize() -> void:
 		if _array(_dict(entry.get("authoring", {})).get("player_verbs", [])).size() < 4: failures.append("%s lacks scenario-specific verbs." % scenario_id)
 		var receipts: Dictionary = {}
 		_collect_receipts(definition.sequence, receipts, failures, scenario_id)
-		_check_runtime_replay(definition, entry, failures)
-		_check_identity_branch_matrix(definition, entry, failures)
-		_check_lifecycle_matrix(definition, entry, failures)
-		_check_ingress_and_observer_contract(definition, entry, failures)
-		_check_package_presentation_contract(definition, entry, failures)
+		if _requested_scenario().is_empty() or _requested_scenario() == scenario_id:
+			_check_runtime_replay(definition, entry, failures)
+			_check_identity_branch_matrix(definition, entry, failures)
+			_check_lifecycle_matrix(definition, entry, failures)
+			_check_ingress_and_observer_contract(definition, entry, failures)
+			_check_package_presentation_contract(definition, entry, failures)
 	actual_ids.sort()
 	var expected := EXPECTED_IDS.duplicate()
 	expected.sort()
@@ -139,6 +140,17 @@ func _check_lifecycle_matrix(definition: Dictionary, entry: Dictionary, failures
 				result = _apply_named_command(state, definition, ("fail_" if branch_kind == "failure" else "refuse_") + scenario_id, "%s:%s:%s" % [scenario_id, phase_id, branch_kind])
 			if not bool(result.get("ok", false)) or str(_dict(result.get("state", {})).get("status", "")) != "aftermath":
 				failures.append("%s %s branch at %s did not reach aftermath atomically: %s" % [scenario_id, branch_kind, phase_id, JSON.stringify(result.get("errors", []))])
+		if phase_id != "arrival":
+			var pressure := _scenario_fact_branch(definition, phase_id)
+			var pressure_state := _state_at_phase(definition, phase_id, "%s_%s_pressure" % [scenario_id, phase_id], failures)
+			if pressure.is_empty() or pressure_state.is_empty():
+				failures.append("%s lacks executable scenario-specific pressure fact at %s." % [scenario_id, phase_id])
+			else:
+				var pressure_type := str(pressure.get("fact_type", ""))
+				var pressure_payload := _valid_fact_payload(pressure_type)
+				pressure_payload.merge(_dict(pressure.get("payload_equals", {})), true)
+				var pressure_result := _apply_fact_branch(pressure_state, definition, pressure_type, pressure_payload, "%s:%s:pressure" % [scenario_id, phase_id])
+				if not bool(pressure_result.get("ok", false)) or str(_dict(pressure_result.get("state", {})).get("status", "")) != "aftermath": failures.append("%s pressure fact branch at %s did not execute: status=%s errors=%s" % [scenario_id, phase_id, str(_dict(pressure_result.get("state", {})).get("status", "")), JSON.stringify(pressure_result.get("errors", []))])
 	var partial := _state_at_phase(definition, "work_1", "%s_partial_reentry" % scenario_id, failures)
 	var partial_saved := Runtime.normalize_state(JSON.parse_string(JSON.stringify(partial)), definition, _host_semantics())
 	var partial_reentry := Runtime.apply_reentry(partial_saved, definition, "%s_partial_visit" % scenario_id, _host_semantics())
@@ -172,6 +184,9 @@ func _check_ingress_and_observer_contract(definition: Dictionary, entry: Diction
 	malformed["action_origin_fingerprint"] = "0".repeat(64)
 	var malformed_result := Runtime.apply_command(state, definition, malformed)
 	if bool(malformed_result.get("ok", false)) or JSON.stringify(_dict(malformed_result.get("state", {}))) != JSON.stringify(state): failures.append("%s malformed operation injection partially committed." % scenario_id)
+	var malformed_fact := Runtime.fact("travel_departed", "travel", "wrong_node", "%s:bad_fact" % scenario_id, 1, 1, {"source_id":scenario_id,"target_id":"world_map","travel_kind":"ordinary"})
+	var malformed_fact_result := Runtime.enqueue_fact(state, definition, malformed_fact)
+	if bool(malformed_fact_result.get("ok", false)) or JSON.stringify(_dict(malformed_fact_result.get("state", {}))) != JSON.stringify(state): failures.append("%s malformed fact injection partially committed." % scenario_id)
 	var projection := Runtime.public_projection(state, definition)
 	for forbidden in ["command_fingerprints", "fact_fingerprints", "seed_token", "cleanup_fingerprints", "command_results"]:
 		if projection.has(forbidden): failures.append("%s public observer leaked hidden %s." % [scenario_id, forbidden])
@@ -242,11 +257,41 @@ func _apply_named_command(state: Dictionary, definition: Dictionary, command_id:
 
 
 func _apply_fact_branch(state: Dictionary, definition: Dictionary, fact_type: String, payload: Dictionary, fact_id: String) -> Dictionary:
-	var producer := "travel" if fact_type.begins_with("travel_") else "scenario"
+	var producer := _producer_for_fact(fact_type)
 	var fact := Runtime.fact(fact_type, producer, "package_d_runtime_node", fact_id, 1, 1, payload)
 	var enqueued := Runtime.enqueue_fact(state, definition, fact)
 	if not bool(enqueued.get("ok", false)): return enqueued
 	return Runtime.flush_facts(_dict(enqueued.get("state", {})), definition, 1)
+
+
+func _producer_for_fact(fact_type: String) -> String:
+	for producer_value in Runtime.FACT_TYPES_BY_PRODUCER.keys():
+		if _array(Runtime.FACT_TYPES_BY_PRODUCER.get(producer_value, [])).has(fact_type): return str(producer_value)
+	return "scenario"
+
+
+func _valid_fact_payload(fact_type: String) -> Dictionary:
+	match fact_type:
+		"game_result": return {"game_id":"package_d_game","action_id":"resolved","won":false,"ended":true,"bankroll_delta":0,"chips_delta":0,"applied_heat_delta":0}
+		"service_result": return {"kind":"package_d_service","service_id":"package_d_service","ok":false,"action_id":"resolved"}
+		"travel_arrived", "travel_departed": return {"source_id":"package_d_source","target_id":"package_d_target","travel_kind":"ordinary"}
+		"crew_changed": return {"member_id":"package_d_member","change":"assignment","value":"changed"}
+		"heat_changed": return {"previous":0,"current":1,"applied_delta":1,"source":"package_d"}
+		"heat_band_changed": return {"previous_band":"quiet","current_band":"caution","current":1,"source":"package_d"}
+		"town_transition": return {"action_index":1,"weather":"clear","day_type":"weekday","happening_ids":[]}
+		"sweep_changed": return {"action_index":1,"node_id":"package_d_runtime_node","segment_index":0,"active":true}
+		"world_boundary": return {"amount":1,"action_index":1}
+	return {}
+
+
+func _scenario_fact_branch(definition: Dictionary, phase_id: String) -> Dictionary:
+	for phase_value in _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", [])):
+		var phase := _dict(phase_value)
+		if str(phase.get("id", "")) != phase_id: continue
+		for branch_value in _array(phase.get("branches", [])):
+			var condition := _dict(_dict(branch_value).get("condition", {}))
+			if str(condition.get("type", "")) == "fact" and str(condition.get("fact_type", "")) != "travel_departed": return condition
+	return {}
 
 
 func _semantic_collections_empty(state: Dictionary) -> bool:
@@ -281,6 +326,12 @@ func _finish(failures: Array) -> void:
 	else:
 		for failure in failures: printerr("ENV06_7_PACKAGE_D_CONTRACT_FAIL %s" % failure)
 		quit(1)
+
+
+func _requested_scenario() -> String:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--scenario="): return argument.trim_prefix("--scenario=")
+	return ""
 
 
 func _array(value: Variant) -> Array:
