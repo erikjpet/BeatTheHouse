@@ -19,6 +19,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_played_in_opening_state(library, game_definition, failures)
 	_check_pusher_v3_plinko_bounce_and_variance(machine_definition, failures)
 	_check_pusher_v3_alive_cabinet(library, machine_definition, failures)
+	_check_pusher_v3_realtime_redraw_ownership(failures)
 	_check_pusher_v3_presentation_view(machine_definition, failures)
 	_check_pusher_v3_rejected_mechanics_deleted(failures)
 	_check_pusher_v3_landing_skill(machine_definition, failures)
@@ -45,6 +46,43 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_items_alarm_and_rumor(library, failures)
 	_check_pusher_v3_generated_rider_production(library, failures)
 	_check_pusher_v3_solver_performance(machine_definition, failures)
+
+
+func _check_pusher_v3_realtime_redraw_ownership(failures: Array) -> void:
+	var canvas: Control = PusherGameSurfaceCanvasScript.new()
+	canvas.call("render_game_snapshot", {
+		"game_id": "coin_pusher",
+		"surface_renderer": "coin_pusher",
+		"surface_animates_idle": true,
+		"surface_defer_patch_redraw": true,
+		"coin_pusher_body_count": 1,
+	})
+	if (canvas.call("realtime_surface_state") as Dictionary).has("surface_defer_patch_redraw"):
+		failures.append("Coin Pusher entry render leaked redraw-policy metadata into public canvas state.")
+	canvas.call("reset_performance_counters")
+	canvas.call("apply_surface_state_patch", {
+		"surface_defer_patch_redraw": true,
+		"coin_pusher_body_count": 2,
+	})
+	var deferred_state: Dictionary = canvas.call("realtime_surface_state")
+	var deferred_counters: Dictionary = canvas.call("performance_counters")
+	if int(deferred_state.get("coin_pusher_body_count", 0)) != 2:
+		failures.append("Coin Pusher deferred realtime patch did not update the authoritative canvas state.")
+	if deferred_state.has("surface_defer_patch_redraw"):
+		failures.append("Coin Pusher redraw-policy metadata leaked into render state.")
+	if int(deferred_counters.get("patch_redraw_requests", -1)) != 0:
+		failures.append("Coin Pusher deferred realtime patch bypassed the maintained redraw scheduler.")
+	canvas.call("apply_surface_state_patch", {"coin_pusher_carriage_x": 55000})
+	var action_counters: Dictionary = canvas.call("performance_counters")
+	if int(action_counters.get("patch_redraw_requests", 0)) != 1:
+		failures.append("Coin Pusher action-visible dirty patch did not request an immediate redraw.")
+	canvas.call("apply_surface_state_patch", {"reduce_motion": true})
+	canvas.call("reset_performance_counters")
+	var reduced_counters: Dictionary = canvas.call("performance_counters")
+	if int(reduced_counters.get("surface_animation_redraw_count", -1)) != 0 \
+			or int(reduced_counters.get("reduced_motion_measurement_redraw_requests", 0)) != 1:
+		failures.append("Coin Pusher reduced-motion measurement did not request exactly one real dirty draw while keeping the animation scheduler frozen.")
+	canvas.free()
 
 
 func _check_pusher_v3_10_idle_queue_cups_and_stack(library: ContentLibrary, game_definition: Dictionary, machine: Dictionary, failures: Array) -> void:
@@ -351,6 +389,9 @@ func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary
 	for required_cue in ["coin_pusher_coin_stack", "coin_pusher_slide", "coin_pusher_coin_metal", "coin_pusher_tray", "coin_pusher_gutter"]:
 		if not audio_cues.has(required_cue):
 			failures.append("Coin Pusher V3 physics-audio event map omitted %s: %s." % [required_cue, JSON.stringify(audio_schedule)])
+	var entry_anchor: Dictionary = game.surface_realtime_entry_anchor_patch(run_state, environment, {"surface_time_msec": 0}, initial)
+	if entry_anchor.has("surface_defer_patch_redraw"):
+		failures.append("Coin Pusher production entry-anchor patch leaked transient redraw-policy metadata into snapshot assembly.")
 	var first_patch: Dictionary = game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": 1}, initial)
 	var second_patch: Dictionary = game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": 35}, first_patch)
 	var previous: Array = second_patch.get("coin_pusher_previous_bodies", []) if typeof(second_patch.get("coin_pusher_previous_bodies", [])) == TYPE_ARRAY else []

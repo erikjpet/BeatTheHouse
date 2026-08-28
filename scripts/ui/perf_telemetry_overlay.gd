@@ -413,6 +413,8 @@ func _run_coin_pusher_plan() -> void:
 		dump_report()
 		await _quit_after_report_flush()
 		return
+	await _wait_frames(4)
+	_enable_coin_pusher_stage_diagnostic()
 	var fixture := _coin_pusher_fixture_identity(run_state, game)
 	mark_event("coin_pusher_fixture_identity", fixture)
 	await _wait_frames(4)
@@ -492,6 +494,7 @@ func _reinstall_coin_pusher_fixture(run_state: RunState, game: GameModule) -> Di
 	var fixture := _coin_pusher_fixture_identity(run_state, game)
 	var boundary_state := _coin_pusher_surface_state(canvas)
 	await _wait_frames(4)
+	_enable_coin_pusher_stage_diagnostic()
 	var observed_state := _coin_pusher_surface_state(canvas)
 	var conservation := _coin_pusher_conservation_snapshot(run_state, game)
 	return {
@@ -506,6 +509,14 @@ func _reinstall_coin_pusher_fixture(run_state: RunState, game: GameModule) -> Di
 			"conservation": conservation,
 		},
 	}
+
+
+func _enable_coin_pusher_stage_diagnostic() -> void:
+	if not _option_bool(runtime_options, "bth_perf_coin_pusher_stage_diagnostic", false):
+		return
+	var canvas := _coin_pusher_canvas()
+	if canvas != null and canvas.has_method("apply_surface_state_patch"):
+		canvas.call("apply_surface_state_patch", {"coin_pusher_perf_stage_capture": true})
 
 
 func _coin_pusher_machine_definition(game: GameModule) -> Dictionary:

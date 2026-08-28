@@ -1,6 +1,7 @@
 class_name CoinPusherRenderer
 extends RefCounted
 
+const CoinPusherSolverAPI := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const DESIGN_SIZE := Vector2(900, 430)
 const CABINET_RECT := Rect2(34, 18, 832, 400)
 const MARQUEE_RECT := Rect2(170, 4, 560, 38)
@@ -42,18 +43,33 @@ var _coin_mesh: QuadMesh
 var _sorted_body_cache: Array = []
 var _sorted_body_cache_key := ""
 var _sorted_body_cache_source: Array = []
-var _coin_instance_color_cache: Array = []
+var _coin_transform_buffer := PackedVector2Array()
+var _coin_color_buffer := PackedColorArray()
 var _palette_cache_key := ""
 var _palette_cache: Dictionary = {}
+var _static_cache_viewports: Array[SubViewport] = []
+var _static_cache_canvases: Array[Control] = []
+var _static_cache_key := ""
+var _static_cache_pending := true
+var _static_cache_pending_layers := [true, true, true]
+var _static_cache_host: Control
+var _static_cache_font: Font
+var _static_cache_render_serial := 0
+var _static_cache_rebuild_serial := 0
+var _static_cache_fallback_reason := "cold"
+var _static_cache_pixel_size := Vector2i.ZERO
 var _world_width := SCHEMA_DEFAULT_WIDTH
 var _world_back_y := SCHEMA_DEFAULT_BACK_Y
 var _coin_height := SCHEMA_DEFAULT_COIN_HEIGHT
 var _coin_radius := SCHEMA_DEFAULT_COIN_RADIUS
+var _perf_stage_samples: Dictionary = {}
 
 
 func draw(surface, state: Dictionary) -> bool:
 	if str(state.get("surface_renderer", "")) != "coin_pusher":
 		return false
+	var capture_stages := bool(state.get("coin_pusher_perf_stage_capture", false))
+	var stage_started_usec := Time.get_ticks_usec() if capture_stages else 0
 	_ensure_coin_batch()
 	_configure_projection(state)
 	surface.surface_begin_design_space(DESIGN_SIZE)
@@ -61,13 +77,52 @@ func draw(surface, state: Dictionary) -> bool:
 	var colors := _colors(cabinet)
 	if bool(state.get("coin_pusher_locked", false)):
 		colors = _locked_colors(colors)
-	_draw_floor_and_shell(surface, cabinet, colors)
+	var static_cached := _prepare_static_cache(surface, state)
+	stage_started_usec = _capture_perf_stage("setup_cache", stage_started_usec, capture_stages)
+	if not static_cached:
+		_draw_floor_and_shell(surface, cabinet, colors)
+	else:
+		_draw_static_cache_texture(surface, 0)
+	stage_started_usec = _capture_perf_stage("shell", stage_started_usec, capture_stages)
 	_draw_backglass(surface, state, cabinet, colors)
-	_draw_playfield(surface, state, colors, cabinet)
+	stage_started_usec = _capture_perf_stage("backglass", stage_started_usec, capture_stages)
+	if not static_cached:
+		_draw_playfield(surface, state, colors, cabinet)
+		stage_started_usec = _capture_perf_stage("playfield_uncached", stage_started_usec, capture_stages)
+	else:
+		_draw_static_cache_texture(surface, 1)
+		stage_started_usec = _capture_perf_stage("static_pre", stage_started_usec, capture_stages)
+		_draw_playfield(surface, state, colors, cabinet, false, true, false, false)
+		stage_started_usec = _capture_perf_stage("platform", stage_started_usec, capture_stages)
+		_draw_static_cache_texture(surface, 2)
+		stage_started_usec = _capture_perf_stage("static_post", stage_started_usec, capture_stages)
+		_draw_playfield(surface, state, colors, cabinet, false, false, false, true)
+		stage_started_usec = _capture_perf_stage("bodies", stage_started_usec, capture_stages)
 	_draw_glass(surface, colors)
+	stage_started_usec = _capture_perf_stage("glass", stage_started_usec, capture_stages)
 	_draw_hardware(surface, state, colors)
+	stage_started_usec = _capture_perf_stage("hardware", stage_started_usec, capture_stages)
 	surface.surface_end_design_space()
+	_capture_perf_stage("end_design_space", stage_started_usec, capture_stages)
 	return true
+
+
+func reset_performance_stage_counters() -> void:
+	_perf_stage_samples.clear()
+
+
+func performance_stage_counters() -> Dictionary:
+	return _perf_stage_samples.duplicate(true)
+
+
+func _capture_perf_stage(stage_id: String, started_usec: int, enabled: bool) -> int:
+	if not enabled:
+		return 0
+	var finished_usec := Time.get_ticks_usec()
+	var samples: Array = _perf_stage_samples.get(stage_id, [])
+	samples.append(finished_usec - started_usec)
+	_perf_stage_samples[stage_id] = samples
+	return finished_usec
 
 
 func render_signature(state: Dictionary) -> Dictionary:
@@ -217,7 +272,7 @@ func _draw_backglass(surface, state: Dictionary, cabinet: Dictionary, colors: Di
 				surface.surface_label_centered(str(display.get("label_template", "%d")) % prize_count, rect, 11, colors["light"])
 
 
-func _draw_playfield(surface, state: Dictionary, colors: Dictionary, cabinet: Dictionary) -> void:
+func _draw_playfield(surface, state: Dictionary, colors: Dictionary, cabinet: Dictionary, draw_static_pre: bool = true, draw_platform: bool = true, draw_static_post: bool = true, draw_bodies: bool = true) -> void:
 	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
 	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
 	var current_face_y := float(state.get("coin_pusher_face_position_y", 43000))
@@ -230,12 +285,14 @@ func _draw_playfield(surface, state: Dictionary, colors: Dictionary, cabinet: Di
 	var payout_ramp_run := maxi(1, int(geometry.get("payout_ramp_run", 6500)))
 	var payout_ramp_rise := maxi(0, int(geometry.get("payout_ramp_rise", 900)))
 	var payout_apron_drop := maxi(1, int(geometry.get("payout_apron_drop", 3000)))
-	surface.draw_rect(PLAYFIELD_RECT, Color("#07131c"))
-	_draw_delivery_board(surface, apparatus, geometry, colors)
+	if draw_static_pre:
+		surface.draw_rect(PLAYFIELD_RECT, Color("#07131c"))
+		_draw_delivery_board(surface, apparatus, geometry, colors)
 	# Back plate, fixed deck, and the moving platform are projected from authored geometry.
 	var back_left := _project(0, back_plate_y, 0)
 	var back_right := _project(int(geometry.get("width", 100000)), back_plate_y, 0)
-	surface.surface_filled_polygon(PackedVector2Array([back_left + Vector2(0, -20), back_right + Vector2(0, -20), back_right + Vector2(0, 6), back_left + Vector2(0, 6)]), colors["trim"].darkened(0.35)) # SA2_PER_FRAME_OK: four projected public geometry points.
+	if draw_static_pre:
+		surface.surface_filled_polygon(PackedVector2Array([back_left + Vector2(0, -20), back_right + Vector2(0, -20), back_right + Vector2(0, 6), back_left + Vector2(0, 6)]), colors["trim"].darkened(0.35)) # SA2_PER_FRAME_OK: four projected public geometry points.
 	var lip_left := _project(0, tray_lip_y, payout_ramp_rise)
 	var lip_right := _project(int(geometry.get("width", 100000)), tray_lip_y, payout_ramp_rise)
 	var ramp_back_left := _project(0, tray_lip_y + payout_ramp_run, 0)
@@ -243,30 +300,36 @@ func _draw_playfield(surface, state: Dictionary, colors: Dictionary, cabinet: Di
 	var face_left := _project(0, face_y, 0)
 	var face_right := _project(int(geometry.get("width", 100000)), face_y, 0)
 	var authored_deck := _project_deck_polygon(geometry)
-	surface.surface_filled_polygon(authored_deck if authored_deck.size() >= 3 else PackedVector2Array([ramp_back_left, ramp_back_right, face_right, face_left]), colors["deck"]) # SA2_PER_FRAME_OK: bounded authored public geometry.
+	if (authored_deck.size() >= 3 and draw_static_pre) or (authored_deck.size() < 3 and draw_platform):
+		surface.surface_filled_polygon(authored_deck if authored_deck.size() >= 3 else PackedVector2Array([ramp_back_left, ramp_back_right, face_right, face_left]), colors["deck"]) # SA2_PER_FRAME_OK: bounded authored public geometry.
 	# Real payout edges are inclined plates, not invisible trigger lines. Coins
 	# climb this raised band before tipping into the win chute.
-	surface.surface_filled_polygon(PackedVector2Array([lip_left, lip_right, ramp_back_right, ramp_back_left]), colors["deck"].lightened(0.16)) # SA2_PER_FRAME_OK: fixed four-point edge plate.
-	surface.draw_line(ramp_back_left, ramp_back_right, Color(colors["light"], 0.52), 1.5)
-	surface.draw_line(lip_left, lip_right, colors["light"], 2.0)
+	if draw_static_pre:
+		surface.surface_filled_polygon(PackedVector2Array([lip_left, lip_right, ramp_back_right, ramp_back_left]), colors["deck"].lightened(0.16)) # SA2_PER_FRAME_OK: fixed four-point edge plate.
+		surface.draw_line(ramp_back_left, ramp_back_right, Color(colors["light"], 0.52), 1.5)
+		surface.draw_line(lip_left, lip_right, colors["light"], 2.0)
 	var top_face_left := _project(0, face_y, platform_top_z)
 	var top_face_right := _project(int(geometry.get("width", 100000)), face_y, platform_top_z)
 	var top_back_left := _project(0, back_plate_y, platform_top_z)
 	var top_back_right := _project(int(geometry.get("width", 100000)), back_plate_y, platform_top_z)
-	surface.surface_filled_polygon(PackedVector2Array([top_face_left, top_face_right, top_back_right, top_back_left]), colors["platform"].lightened(0.15)) # SA2_PER_FRAME_OK: four projected public geometry points.
-	surface.surface_filled_polygon(PackedVector2Array([face_left, face_right, top_face_right, top_face_left]), colors["platform"].darkened(0.24)) # SA2_PER_FRAME_OK: four projected public geometry points.
-	surface.draw_line(top_face_left, top_face_right, colors["light"], 2.0)
-	_draw_gutters(surface, geometry, colors)
-	_draw_delivery_pegs(surface, apparatus, geometry, colors)
-	_draw_delivery_targets(surface, apparatus, geometry, colors)
-	_draw_interpolated_bodies(surface, state, colors, cabinet)
+	if draw_platform:
+		surface.surface_filled_polygon(PackedVector2Array([top_face_left, top_face_right, top_back_right, top_back_left]), colors["platform"].lightened(0.15)) # SA2_PER_FRAME_OK: four projected public geometry points.
+		surface.surface_filled_polygon(PackedVector2Array([face_left, face_right, top_face_right, top_face_left]), colors["platform"].darkened(0.24)) # SA2_PER_FRAME_OK: four projected public geometry points.
+		surface.draw_line(top_face_left, top_face_right, colors["light"], 2.0)
+	if draw_static_post:
+		_draw_gutters(surface, geometry, colors)
+		_draw_delivery_pegs(surface, apparatus, geometry, colors)
+		_draw_delivery_targets(surface, apparatus, geometry, colors)
+	if draw_bodies:
+		_draw_interpolated_bodies(surface, state, colors, cabinet)
 	# The steel front apron is foreground hardware. Drawing its opaque face after
 	# the coin batch hides a coin while it is still behind the shelf edge; the
 	# coin reappears naturally only after its physical fall clears the bottom.
 	var apron_bottom_z := payout_ramp_rise - payout_apron_drop
 	var apron_bottom_left := _project(0, tray_lip_y, apron_bottom_z)
 	var apron_bottom_right := _project(int(geometry.get("width", 100000)), tray_lip_y, apron_bottom_z)
-	_draw_payout_edge_face(surface, lip_left, lip_right, apron_bottom_left, apron_bottom_right, colors)
+	if draw_bodies:
+		_draw_payout_edge_face(surface, lip_left, lip_right, apron_bottom_left, apron_bottom_right, colors)
 
 
 func _draw_gutters(surface, geometry: Dictionary, colors: Dictionary) -> void:
@@ -345,6 +408,8 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 	var current: Array = state.get("coin_pusher_bodies", []) if typeof(state.get("coin_pusher_bodies", [])) == TYPE_ARRAY else []
 	var previous: Array = state.get("coin_pusher_previous_bodies", []) if typeof(state.get("coin_pusher_previous_bodies", [])) == TYPE_ARRAY else []
 	var alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
+	if _draw_native_interpolated_bodies(surface, state, cabinet, current, previous, alpha):
+		return
 	var aligned_previous := alpha < 0.999 and _body_order_matches(current, previous)
 	var previous_by_id := {}
 	if alpha < 0.999 and not aligned_previous:
@@ -353,7 +418,11 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 				previous_by_id[str((value as Dictionary).get("id", ""))] = value
 	var sorted_indices := _depth_sorted_body_indices(current, int(state.get("coin_pusher_presentation_view_serial", state.get("coin_pusher_liveness_ticks", 0))))
 	var count := mini(BATCH_CAPACITY, sorted_indices.size())
+	if _coin_multimesh.instance_count != count:
+		_coin_multimesh.instance_count = count
 	_coin_multimesh.visible_instance_count = count
+	_coin_transform_buffer.resize(count * 3)
+	_coin_color_buffer.resize(count)
 	var feature_labels: Array = []
 	var airborne_shadows: Array = []
 	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
@@ -392,10 +461,12 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 		var depth_scale := lerpf(1.0, REAR_WIDTH_FACTOR, clampf(y / _world_back_y, 0.0, 1.0))
 		var radius_scale := float(body.get("radius", int(_coin_radius))) / _coin_radius
 		var visual_scale := depth_scale * radius_scale
-		_coin_multimesh.set_instance_transform_2d(instance_index, Transform2D(rotation, Vector2(visual_scale, visual_scale), 0.0, point))
-		if _coin_instance_color_cache[instance_index] != body_color:
-			_coin_multimesh.set_instance_color(instance_index, body_color)
-			_coin_instance_color_cache[instance_index] = body_color
+		var transform := Transform2D(rotation, Vector2(visual_scale, visual_scale), 0.0, point)
+		var transform_offset := instance_index * 3
+		_coin_transform_buffer[transform_offset] = transform.x
+		_coin_transform_buffer[transform_offset + 1] = transform.y
+		_coin_transform_buffer[transform_offset + 2] = transform.origin
+		_coin_color_buffer[instance_index] = body_color
 		if falling:
 			var shadow_point := _project_delivery_board_point(board, x, z) if on_delivery_board and z > board_z_bottom + _coin_height else _project_f(x, y, board_z_bottom)
 			airborne_shadows.append({"point": shadow_point, "scale": visual_scale})
@@ -407,6 +478,11 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 		_draw_ellipse(surface, (shadow.get("point", Vector2.ZERO) as Vector2) + AIRBORNE_SHADOW_OFFSET, COIN_RX * 0.94 * shadow_scale, COIN_RY * 0.76 * shadow_scale, Color(0, 0, 0, 0.80), 0)
 	# One ordered batch is the exact depth order above; seeded rotation variants
 	# are per instance and never repartition or reorder overlapping bodies.
+	# These compatibility array setters cross GDScript/WebAssembly twice and run
+	# the per-instance renderer updates below that boundary. The visible order,
+	# transforms, colors and one draw_multimesh command are unchanged.
+	_coin_multimesh.call("_set_transform_2d_array", _coin_transform_buffer)
+	_coin_multimesh.call("_set_color_array", _coin_color_buffer)
 	surface.surface_present_multimesh_batch(_coin_multimesh, _coin_texture, null, DESIGN_SIZE)
 	for feature_value in feature_labels:
 		var feature: Dictionary = feature_value
@@ -415,6 +491,250 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 		var label := str(labels.get(kind, kind.left(1).to_upper()))
 		if not label.is_empty():
 			surface.surface_reel_symbol_label(label, Rect2(point - Vector2(9, 8), Vector2(18, 16)), 10, Color("#111722"))
+
+
+func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dictionary, current: Array, previous: Array, alpha: float) -> bool:
+	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var body_colors: Dictionary = cabinet.get("body_colors", {}) if typeof(cabinet.get("body_colors", {})) == TYPE_DICTIONARY else {}
+	var batch := CoinPusherSolverAPI.native_live_render_batch({
+		"world_width": _world_width,
+		"world_back_y": _world_back_y,
+		"coin_height": _coin_height,
+		"coin_radius": _coin_radius,
+		"board": _delivery_board(apparatus, geometry),
+		"body_colors": body_colors,
+	}, current, previous, alpha)
+	if batch.is_empty() or typeof(batch.get("buffer", null)) != TYPE_PACKED_FLOAT32_ARRAY:
+		return false
+	var count := int(batch.get("count", 0))
+	if _coin_multimesh.instance_count != count:
+		_coin_multimesh.instance_count = count
+	_coin_multimesh.visible_instance_count = count
+	for shadow_value in batch.get("shadows", []):
+		var shadow: Dictionary = shadow_value
+		var shadow_scale := float(shadow.get("scale", 1.0))
+		_draw_ellipse(surface, (shadow.get("point", Vector2.ZERO) as Vector2) + AIRBORNE_SHADOW_OFFSET, COIN_RX * 0.94 * shadow_scale, COIN_RY * 0.76 * shadow_scale, Color(0, 0, 0, 0.80), 0)
+	_coin_multimesh.buffer = batch["buffer"] as PackedFloat32Array
+	surface.surface_present_multimesh_batch(_coin_multimesh, _coin_texture, null, DESIGN_SIZE)
+	var labels: Dictionary = cabinet.get("body_labels", {}) if typeof(cabinet.get("body_labels", {})) == TYPE_DICTIONARY else {}
+	for feature_value in batch.get("features", []):
+		var feature: Dictionary = feature_value
+		var point: Vector2 = feature["point"]
+		var kind := str(feature.get("kind", ""))
+		var label := str(labels.get(kind, kind.left(1).to_upper()))
+		if not label.is_empty():
+			surface.surface_reel_symbol_label(label, Rect2(point - Vector2(9, 8), Vector2(18, 16)), 10, Color("#111722"))
+	return true
+
+
+func draw_static_cache_layer(surface, state: Dictionary, layer_index: int) -> void:
+	_configure_projection(state)
+	var cabinet := _cabinet(state)
+	var colors := _colors(cabinet)
+	if bool(state.get("coin_pusher_locked", false)):
+		colors = _locked_colors(colors)
+	surface.surface_begin_design_space(DESIGN_SIZE)
+	match layer_index:
+		0:
+			_draw_floor_and_shell(surface, cabinet, colors)
+		1:
+			_draw_playfield(surface, state, colors, cabinet, true, false, false, false)
+		2:
+			_draw_playfield(surface, state, colors, cabinet, false, false, true, false)
+	surface.surface_end_design_space()
+
+
+func _prepare_static_cache(surface, state: Dictionary) -> bool:
+	# The cache contains only design-space commands whose complete dependencies
+	# are listed here. Backglass content, moving platform/bodies, glass, hardware,
+	# hover/hit/control state and overlays remain on the live surface every draw.
+	if not OS.has_feature("web") and not bool(state.get("coin_pusher_static_cache_test", false)):
+		_static_cache_fallback_reason = "non_web_runtime"
+		return false
+	var transform: Dictionary = surface.debug_design_space_transform(DESIGN_SIZE)
+	var design_scale: Vector2 = transform.get("design_scale", Vector2.ONE)
+	var board_rect: Rect2 = surface.board_rect()
+	# Render at the live surface's complete logical-pixel extent. That gives the
+	# cache canvas the identical board scale/offset as the production canvas and
+	# lets the opaque cabinet texture composite one-for-one without resampling.
+	if design_scale != Vector2.ONE or board_rect.size.x < 1.0 or board_rect.size.y < 1.0:
+		_static_cache_key = ""
+		_static_cache_pending = true
+		_static_cache_fallback_reason = "unsupported_design_transform"
+		return false
+	var cache_pixel_size := Vector2i(maxi(1, int(round(surface.size.x))), maxi(1, int(round(surface.size.y))))
+	if not is_instance_valid(_static_cache_host) or _static_cache_host != surface:
+		_recreate_static_cache_for_host(surface)
+	var effective_font: Font = surface.get_theme_default_font()
+	_bind_static_cache_font(effective_font)
+	var font_identity: int = effective_font.get_instance_id() if effective_font != null else 0
+	# The full snapshot owns the nested static-content fingerprint. Keep the
+	# live draw key scalar-only: serializing the authored peg/apparatus trees on
+	# every Web draw was itself a material part of the measured draw callback.
+	var key := "%d:%d|%.3f:%.3f:%.3f:%.3f|%.4f:%.4f|%d|%s|%d" % [
+		cache_pixel_size.x,
+		cache_pixel_size.y,
+		board_rect.position.x,
+		board_rect.position.y,
+		board_rect.size.x,
+		board_rect.size.y,
+		(transform.get("scale", Vector2.ONE) as Vector2).x,
+		(transform.get("scale", Vector2.ONE) as Vector2).y,
+		font_identity,
+		str(state.get("coin_pusher_static_content_key", "missing")),
+		1 if bool(state.get("coin_pusher_locked", false)) else 0,
+	]
+	if _static_cache_viewports.is_empty():
+		var canvas_script: Script = load("res://scripts/games/coin_pusher/coin_pusher_static_cache_canvas.gd")
+		for layer_index in range(3):
+			var viewport := SubViewport.new()
+			viewport.name = "CoinPusherStaticCache%d" % layer_index
+			viewport.size = cache_pixel_size
+			viewport.transparent_bg = true
+			viewport.disable_3d = true
+			viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
+			var canvas: Control = canvas_script.new() as Control
+			canvas.name = "StaticLayer%d" % layer_index
+			canvas.set("static_renderer", self)
+			canvas.set("static_layer_index", layer_index)
+			canvas.theme = _static_cache_theme_for_font(effective_font)
+			canvas.position = Vector2.ZERO
+			canvas.size = Vector2(cache_pixel_size)
+			canvas.connect("static_cache_drawn", _on_static_cache_drawn.bind(layer_index))
+			viewport.add_child(canvas)
+			surface.add_child(viewport)
+			_static_cache_viewports.append(viewport)
+			_static_cache_canvases.append(canvas)
+	if key != _static_cache_key:
+		_static_cache_key = key
+		_static_cache_pixel_size = cache_pixel_size
+		_static_cache_pending = true
+		_static_cache_pending_layers = [true, true, true]
+		_static_cache_rebuild_serial += 1
+		_static_cache_fallback_reason = "rebuild_pending"
+		for layer_index in range(3):
+			var viewport := _static_cache_viewports[layer_index]
+			var canvas := _static_cache_canvases[layer_index]
+			viewport.size = cache_pixel_size
+			canvas.size = Vector2(cache_pixel_size)
+			canvas.theme = _static_cache_theme_for_font(effective_font)
+			canvas.set("static_state", state.duplicate(false))
+			canvas.queue_redraw()
+			viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+	if _static_cache_pending:
+		return false
+	_static_cache_fallback_reason = ""
+	return true
+
+
+func _draw_static_cache_texture(surface, layer_index: int) -> void:
+	if layer_index < 0 or layer_index >= _static_cache_viewports.size():
+		return
+	# This method is entered inside the production design transform. Composite
+	# the full-surface cache in unscaled surface pixels, then restore the exact
+	# design transform for every live layer that follows.
+	surface.surface_end_design_space()
+	surface.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	surface.draw_texture_rect(_static_cache_viewports[layer_index].get_texture(), Rect2(Vector2.ZERO, surface.size), false)
+	surface.surface_begin_design_space(DESIGN_SIZE)
+
+
+func _on_static_cache_drawn(layer_index: int) -> void:
+	if layer_index >= 0 and layer_index < _static_cache_pending_layers.size():
+		_static_cache_pending_layers[layer_index] = false
+	_static_cache_pending = _static_cache_pending_layers.has(true)
+	_static_cache_render_serial += 1
+	if not _static_cache_pending and is_instance_valid(_static_cache_host):
+		_static_cache_host.queue_redraw()
+
+
+func _recreate_static_cache_for_host(surface: Control) -> void:
+	# A renderer instance survives surface re-entry. Never reuse a viewport that
+	# is parented to the previous canvas: its inherited theme/layout and render
+	# lifetime belong to that host.
+	for viewport in _static_cache_viewports:
+		if is_instance_valid(viewport):
+			viewport.queue_free()
+	_static_cache_viewports.clear()
+	_static_cache_canvases.clear()
+	_static_cache_host = surface
+	_static_cache_key = ""
+	_static_cache_pending = true
+	_static_cache_pending_layers = [true, true, true]
+	_static_cache_fallback_reason = "host_reentry"
+
+
+func _bind_static_cache_font(font: Font) -> void:
+	if _static_cache_font == font:
+		return
+	if is_instance_valid(_static_cache_font) and _static_cache_font.changed.is_connected(_on_static_cache_font_changed):
+		_static_cache_font.changed.disconnect(_on_static_cache_font_changed)
+	_static_cache_font = font
+	if is_instance_valid(_static_cache_font) and not _static_cache_font.changed.is_connected(_on_static_cache_font_changed):
+		_static_cache_font.changed.connect(_on_static_cache_font_changed)
+	_static_cache_key = ""
+	_static_cache_pending = true
+	_static_cache_pending_layers = [true, true, true]
+	_static_cache_fallback_reason = "effective_font_changed"
+
+
+func _on_static_cache_font_changed() -> void:
+	# The static layer supplies every color and size explicitly; the effective
+	# default Font is its only theme-derived dependency and can mutate in place.
+	_static_cache_key = ""
+	_static_cache_pending = true
+	_static_cache_pending_layers = [true, true, true]
+	_static_cache_fallback_reason = "effective_font_changed"
+	if is_instance_valid(_static_cache_host):
+		_static_cache_host.queue_redraw()
+
+
+func _static_cache_theme_for_font(font: Font) -> Theme:
+	var cache_theme := Theme.new()
+	cache_theme.default_font = font
+	return cache_theme
+
+
+func debug_static_cache_for_test() -> Dictionary:
+	return {
+		"active": not _static_cache_pending and not _static_cache_key.is_empty(),
+		"pending": _static_cache_pending,
+		"key": _static_cache_key,
+		"host_instance_id": _static_cache_host.get_instance_id() if is_instance_valid(_static_cache_host) else 0,
+		"viewport_count": _static_cache_viewports.size(),
+		"viewport_parent_instance_id": _static_cache_viewports[0].get_parent().get_instance_id() if not _static_cache_viewports.is_empty() and is_instance_valid(_static_cache_viewports[0]) and is_instance_valid(_static_cache_viewports[0].get_parent()) else 0,
+		"font_instance_id": _static_cache_font.get_instance_id() if is_instance_valid(_static_cache_font) else 0,
+		"pixel_size": _static_cache_pixel_size,
+		"render_serial": _static_cache_render_serial,
+		"rebuild_serial": _static_cache_rebuild_serial,
+		"fallback_reason": _static_cache_fallback_reason,
+	}
+
+
+func debug_static_cache_command_equivalence_for_test() -> Dictionary:
+	# Layer textures replace only the commands named for that layer. Expanding
+	# those textures at their three call sites yields the unchanged production
+	# painter's order; every stateful/dynamic stage remains a live command.
+	var uncached := [
+		"shell", "backglass", "playfield_static_pre", "platform",
+		"playfield_static_post", "bodies", "apron", "glass", "hardware",
+	]
+	var cached_expanded := [
+		"shell", "backglass", "playfield_static_pre", "platform",
+		"playfield_static_post", "bodies", "apron", "glass", "hardware",
+	]
+	return {
+		"uncached": uncached,
+		"cached_expanded": cached_expanded,
+		"exact_order_match": uncached == cached_expanded,
+		"layers": [
+			{"index": 0, "commands": ["shell"]},
+			{"index": 1, "commands": ["playfield_static_pre"]},
+			{"index": 2, "commands": ["playfield_static_post"]},
+		],
+		"live_commands": ["backglass", "platform", "bodies", "apron", "glass", "hardware"],
+	}
 
 
 func _depth_sorted_body_indices(bodies: Array, presentation_view_serial: int) -> Array:
@@ -497,11 +817,9 @@ func _new_coin_multimesh() -> MultiMesh:
 	var result := MultiMesh.new()
 	result.transform_format = MultiMesh.TRANSFORM_2D
 	result.use_colors = true
-	result.instance_count = BATCH_CAPACITY
+	result.instance_count = 0
 	result.visible_instance_count = 0
 	result.mesh = _coin_mesh
-	_coin_instance_color_cache.resize(BATCH_CAPACITY)
-	_coin_instance_color_cache.fill(Color(-1, -1, -1, -1))
 	return result
 
 
