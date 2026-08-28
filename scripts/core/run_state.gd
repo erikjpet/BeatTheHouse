@@ -1567,9 +1567,9 @@ func set_environment(environment_data: Dictionary) -> Dictionary:
 		{},
 		"%d:set_environment:%s" % [seed_value, str(current_environment.get("world_node_id", current_environment.get("archetype_id", "")))]
 	)
-	_ensure_scenario_host_public_context()
 	var destination_definition := scenario_sequence_definition()
 	if ScenarioSequenceSchemaScript.is_sequence(destination_definition):
+		_ensure_scenario_host_public_context()
 		# V2 initialization/reentry is intentionally deferred until the controller's
 		# final pre-overlay interaction record set and ContentLibrary are sealed.
 		current_environment.erase("scenario_semantic_ready")
@@ -2155,12 +2155,11 @@ func _invalidate_scenario_semantic_proof(message: String) -> Dictionary:
 	return {"ok": false, "errors": [message]}
 
 
-func _scenario_semantic_finalization_failure(errors: Array, _invalidate_if_ready: bool) -> Dictionary:
+func _scenario_semantic_finalization_failure(errors: Array, invalidate_if_ready: bool) -> Dictionary:
 	var failure_errors := errors.duplicate(true)
 	if failure_errors.is_empty(): failure_errors = ["Scenario semantic finalization failed closed."]
-	# A rejected refresh never became authoritative. Preserve the previously
-	# sealed proof byte-for-byte; explicit proof mismatches use
-	# _invalidate_scenario_semantic_proof at their detection sites.
+	if invalidate_if_ready:
+		_invalidate_scenario_semantic_proof(str(failure_errors[0]))
 	return {"ok": false, "errors": failure_errors}
 
 
@@ -13213,7 +13212,7 @@ func _failure_message_for_reason(reason: String) -> String:
 
 # Converts the run to saveable data.
 func to_dict() -> Dictionary:
-	return {
+	var result := {
 		"seed_text": seed_text,
 		"seed_value": seed_value,
 		"rng_seed": rng_seed,
@@ -13288,6 +13287,9 @@ func to_dict() -> Dictionary:
 		"run_failure_message": run_failure_message,
 		"run_spending_score": run_spending_score,
 	}
+	if scenario_host_transaction_ledger.is_empty():
+		result.erase("scenario_host_transaction_ledger")
+	return result
 
 
 # Captures a worker-safe save generation without first deep-copying duplicated
@@ -13296,7 +13298,7 @@ func to_dict() -> Dictionary:
 # codec is non-mutating and performs the final compact deep projection on the
 # worker.
 func to_save_snapshot() -> Dictionary:
-	return {
+	var result := {
 		"seed_text": seed_text,
 		"seed_value": seed_value,
 		"rng_seed": rng_seed,
@@ -13367,6 +13369,9 @@ func to_save_snapshot() -> Dictionary:
 		"run_failure_message": run_failure_message,
 		"run_spending_score": run_spending_score,
 	}
+	if scenario_host_transaction_ledger.is_empty():
+		result.erase("scenario_host_transaction_ledger")
+	return result
 
 
 # Restores the run from saved data.

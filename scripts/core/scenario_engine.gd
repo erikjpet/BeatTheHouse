@@ -41,20 +41,22 @@ const ALLOWED_SECURITY_KEYS := ["strictness_band", "cheat_risk_window", "machine
 static func initial_state(definition: Dictionary) -> Dictionary:
 	if definition.is_empty():
 		return {}
-	return {
+	var result := {
 		"schema_version": STATE_SCHEMA_VERSION,
 		"id": str(definition.get("id", "")).strip_edges(),
 		"archetype_id": str(definition.get("archetype_id", "")).strip_edges(),
 		"layer_id": str(definition.get("layer_id", "")).strip_edges(),
 		"display_name": str(definition.get("display_name", "")).strip_edges(),
 		"placeholder": bool(definition.get("placeholder", false)),
-		"sequence_suppressed": bool(definition.get(SEQUENCE_SUPPRESSION_KEY, false)),
 		"phase_index": 0,
 		"phase_action_counter": 0,
 		"mutations": _copy_dict(definition.get("mutations", {})),
 		"phases": _copy_array(definition.get("phases", [])),
 		"town_weight_tags": _string_array(definition.get("town_weight_tags", [])),
 	}
+	if bool(definition.get(SEQUENCE_SUPPRESSION_KEY, false)):
+		result[SEQUENCE_SUPPRESSION_KEY] = true
+	return result
 
 
 static func normalize_state(value: Variant) -> Dictionary:
@@ -70,20 +72,22 @@ static func normalize_state(value: Variant) -> Dictionary:
 		phase_index = mini(phase_index, phases.size() - 1)
 	else:
 		phase_index = 0
-	return {
+	var result := {
 		"schema_version": STATE_SCHEMA_VERSION,
 		"id": scenario_id,
 		"archetype_id": str(source.get("archetype_id", "")).strip_edges(),
 		"layer_id": str(source.get("layer_id", "")).strip_edges(),
 		"display_name": str(source.get("display_name", scenario_id)).strip_edges(),
 		"placeholder": bool(source.get("placeholder", false)),
-		"sequence_suppressed": bool(source.get(SEQUENCE_SUPPRESSION_KEY, false)),
 		"phase_index": phase_index,
 		"phase_action_counter": maxi(0, int(source.get("phase_action_counter", 0))),
 		"mutations": _copy_dict(source.get("mutations", {})),
 		"phases": phases,
 		"town_weight_tags": _string_array(source.get("town_weight_tags", [])),
 	}
+	if bool(source.get(SEQUENCE_SUPPRESSION_KEY, false)):
+		result[SEQUENCE_SUPPRESSION_KEY] = true
+	return result
 
 
 static func apply_to_archetype(archetype: Dictionary, state_value: Variant) -> Dictionary:
@@ -1006,12 +1010,6 @@ static func _refresh_sequence_snapshots(environment: Dictionary, definition: Dic
 static func _commit_sequence_candidate(environment: Dictionary, candidate_value: Dictionary, definition: Dictionary, result_value: Dictionary) -> Dictionary:
 	var result := result_value.duplicate(true)
 	if not bool(result.get("ok", false)):
-		var rejected_state := _copy_dict(result.get("state", {}))
-		if str(rejected_state.get("status", "")) == SequenceRuntimeScript.STATUS_CLEANED and str(_copy_dict(environment.get("scenario_sequence_state", {})).get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED:
-			var rejected_candidate := candidate_value.duplicate(true)
-			rejected_candidate["scenario_sequence_state"] = rejected_state
-			environment.clear()
-			environment.merge(rejected_candidate, true)
 		return result
 	var candidate := candidate_value.duplicate(true)
 	var next := _copy_dict(result.get("state", {}))
@@ -1176,6 +1174,7 @@ static func validate_sequence_definition(definition: Dictionary, references: Dic
 			"layout": _copy_dict(archetype.get("layout", {})),
 			"semantic_zones": _copy_dict(archetype.get("semantic_zones", {})),
 			"semantic_anchors": _copy_dict(archetype.get("semantic_anchors", {})),
+			"scenario_semantic_inventory": _copy_dict(references.get("scenario_semantic_inventory", {})),
 			"travel_hooks": _copy_array(archetype.get("travel_hooks", [])),
 			"next_archetypes": _copy_array(archetype.get("next_archetypes", [])),
 		}

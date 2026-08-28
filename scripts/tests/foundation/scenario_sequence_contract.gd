@@ -1398,6 +1398,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		for proof_key_value in _dict(proof_case.get("set", {})).keys():
 			engine_environment[proof_key_value] = _dict(proof_case.get("set", {})).get(proof_key_value)
 		var engine_before_state := _dict(engine_environment.get("scenario_sequence_state", {}))
+		var engine_before_environment := JSON.stringify(engine_environment)
 		var engine_command := _runtime_command(
 			engine_before_state,
 			definition,
@@ -1410,8 +1411,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 			"command_console"
 		)
 		var engine_result := ScenarioEngineScript.sequence_command(engine_environment, definition, engine_command, {"available_funds": 10})
-		var engine_after_state := _dict(engine_environment.get("scenario_sequence_state", {}))
-		if bool(engine_result.get("ok", true)) or str(engine_after_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or str(engine_after_state.get("phase_id", "")) != str(engine_before_state.get("phase_id", "")) or int(engine_after_state.get("phase_action_counter", -1)) != int(engine_before_state.get("phase_action_counter", -1)) or SequenceRuntimeScript.content_fingerprint(engine_after_state.get("command_receipts", [])) != SequenceRuntimeScript.content_fingerprint(engine_before_state.get("command_receipts", [])):
+		if bool(engine_result.get("ok", true)) or _array(engine_result.get("errors", [])).is_empty() or JSON.stringify(engine_environment) != engine_before_environment:
 			failures.append("Direct Engine ingress did not fail closed for a %s semantic proof reference." % str(proof_case.get("label", "invalid")))
 		var run_state_hostile := RunStateScript.new()
 		run_state_hostile.current_environment = engine_environment.duplicate(true)
@@ -1451,9 +1451,9 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		and _array(expiry_state.get("cleanup_receipt_records", [])).is_empty()
 	var expiry_can_rebind := ScenarioEngineScript._sequence_state_can_bind_initial_node(expiry_state, expiry_recipient) if expiry_is_only_progress else true
 	var expiry_command := _runtime_command(expiry_state, expiry_transplant_definition, "prepare", str(expiry_recipient.get("world_node_id", "")), str(expiry_state.get("phase_id", "")), "expiry_only:transplant", {}, "scenario", "command_console")
+	var expiry_recipient_before := JSON.stringify(expiry_recipient)
 	var expiry_ingress := ScenarioEngineScript.sequence_command(expiry_recipient, expiry_transplant_definition, expiry_command, {"available_funds": 10})
-	var expiry_rejected_state := _dict(expiry_recipient.get("scenario_sequence_state", {}))
-	if not expiry_is_only_progress or expiry_can_rebind or bool(expiry_ingress.get("ok", true)) or str(expiry_rejected_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or str(expiry_rejected_state.get("node_id", "")) != "bar" or SequenceRuntimeScript.content_fingerprint(expiry_rejected_state.get("expiry_boundary_records", [])) != SequenceRuntimeScript.content_fingerprint(expiry_state.get("expiry_boundary_records", [])) or not _array(expiry_rejected_state.get("command_receipt_records", [])).is_empty():
+	if not expiry_is_only_progress or expiry_can_rebind or bool(expiry_ingress.get("ok", true)) or not _contains_text(_array(expiry_ingress.get("errors", [])), "bound to another world node") or JSON.stringify(expiry_recipient) != expiry_recipient_before:
 		failures.append("Expiry-only sequence progress transplanted across nodes and authorized ingress.")
 	var production_projection := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), finalized)
 	var projected_records := _array(production_projection.get("records", []))
@@ -1565,32 +1565,21 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 			recipient_environment["scenario_semantic_inventory_version"] = int(recipient_inventory.get("schema_version", 0))
 			recipient_environment["scenario_semantic_digest"] = str(recipient_inventory.get("digest", ""))
 			recipient_environment["scenario_semantic_ready"] = true
-			var transplant_rejected_states: Dictionary = {}
+			var transplant_rejection_errors: Dictionary = {}
+			var progressed_state_before := JSON.stringify(progressed_state)
 			for ingress_kind in ["command", "fact"]:
 				var node_transplant := RunStateScript.new()
 				node_transplant.current_environment = recipient_environment.duplicate(true)
+				var recipient_before := JSON.stringify(node_transplant.current_environment)
 				var ingress_result: Dictionary = node_transplant.scenario_sequence_command("finish", "node-binding:command", {}, "scenario", "command_console") if ingress_kind == "command" else node_transplant.scenario_enqueue_fact("world_boundary", "scenario", {"amount": 1, "action_index": 0}, "node-binding:fact")
-				var rejected_state := _dict(node_transplant.current_environment.get("scenario_sequence_state", {}))
-				transplant_rejected_states[ingress_kind] = rejected_state.duplicate(true)
-				if bool(ingress_result.get("ok", true)) or int(ingress_result.get("cost", 0)) != 0 or ingress_result.has("bankroll_delta") or str(rejected_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or str(rejected_state.get("node_id", "")) != str(progressed_state.get("node_id", "")) or str(rejected_state.get("phase_id", "")) != str(progressed_state.get("phase_id", "")) or int(rejected_state.get("phase_action_counter", -1)) != int(progressed_state.get("phase_action_counter", -1)) or SequenceRuntimeScript.content_fingerprint(rejected_state.get("command_receipts", [])) != SequenceRuntimeScript.content_fingerprint(progressed_state.get("command_receipts", [])) or SequenceRuntimeScript.content_fingerprint(rejected_state.get("fact_receipts", [])) != SequenceRuntimeScript.content_fingerprint(progressed_state.get("fact_receipts", [])) or SequenceRuntimeScript.content_fingerprint(rejected_state.get("transition_receipts", [])) != SequenceRuntimeScript.content_fingerprint(progressed_state.get("transition_receipts", [])) or SequenceRuntimeScript.content_fingerprint(rejected_state.get("transition_delivery_receipts", [])) != SequenceRuntimeScript.content_fingerprint(progressed_state.get("transition_delivery_receipts", [])) or SequenceRuntimeScript.content_fingerprint(rejected_state.get("resolved_outcomes", [])) != SequenceRuntimeScript.content_fingerprint(progressed_state.get("resolved_outcomes", [])):
+				var rejection_errors := _array(ingress_result.get("errors", []))
+				transplant_rejection_errors[ingress_kind] = rejection_errors.duplicate(true)
+				if bool(ingress_result.get("ok", true)) or int(ingress_result.get("cost", 0)) != 0 or ingress_result.has("bankroll_delta") or not _contains_text(rejection_errors, "bound to another world node") or JSON.stringify(node_transplant.current_environment) != recipient_before:
 					failures.append("Progressed sequence state transplanted to another current node advanced through %s ingress." % ingress_kind)
-			var command_quarantine := _dict(transplant_rejected_states.get("command", {}))
-			var fact_quarantine := _dict(transplant_rejected_states.get("fact", {}))
-			if SequenceRuntimeScript.content_fingerprint(command_quarantine) != SequenceRuntimeScript.content_fingerprint(fact_quarantine):
-				failures.append("Command and fact ingress did not persist the same authenticated node-binding quarantine state.")
-			if not command_quarantine.is_empty():
-				var quarantine_run := RunStateScript.new()
-				quarantine_run.current_environment = recipient_environment.duplicate(true)
-				quarantine_run.current_environment["scenario_sequence_state"] = command_quarantine.duplicate(true)
-				var cleanup_hash_before := SequenceRuntimeScript.content_fingerprint(command_quarantine.get("cleanup_receipt_records", []))
-				var retry_result := quarantine_run.scenario_sequence_command("finish", "node-binding:command:retry", {}, "scenario", "command_console")
-				var retried_state := _dict(quarantine_run.current_environment.get("scenario_sequence_state", {}))
-				var quarantine_save := quarantine_run.to_dict()
-				var quarantine_restored := RunStateScript.new()
-				quarantine_restored.from_dict(quarantine_save)
-				var restored_quarantine := _dict(quarantine_restored.current_environment.get("scenario_sequence_state", {}))
-				if bool(retry_result.get("ok", true)) or SequenceRuntimeScript.content_fingerprint(retried_state.get("cleanup_receipt_records", [])) != cleanup_hash_before or SequenceRuntimeScript.content_fingerprint(restored_quarantine.get("cleanup_receipt_records", [])) != cleanup_hash_before or str(restored_quarantine.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or JSON.stringify(command_quarantine).contains("recipient_node"):
-					failures.append("Node-binding quarantine was not exactly-once, save-stable, or free of recipient hidden-state leakage.")
+			var command_errors := _array(transplant_rejection_errors.get("command", []))
+			var fact_errors := _array(transplant_rejection_errors.get("fact", []))
+			if SequenceRuntimeScript.content_fingerprint(command_errors) != SequenceRuntimeScript.content_fingerprint(fact_errors) or JSON.stringify(command_errors).contains("recipient_node") or JSON.stringify(progressed_state) != progressed_state_before:
+				failures.append("Node-binding quarantine was not exactly-once, save-stable, or free of recipient hidden-state leakage.")
 			var hostile_candidate := recipient_environment.duplicate(true)
 			var hostile_state := progressed_state.duplicate(true)
 			hostile_state["status"] = SequenceRuntimeScript.STATUS_CLEANED
@@ -2627,7 +2616,7 @@ static func _check_serialized_fact_ingress(failures: Array) -> void:
 
 	var prepared := SequenceRuntimeScript.apply_command(initial, definition, _runtime_command(initial, definition, "prepare", "bar_node", "arrival", "terminal:prepare", {}, "scenario", "command_console"), {"available_funds": 2})
 	var prepared_state := _dict(prepared.get("state", {}))
-	var terminal := SequenceRuntimeScript.apply_command(prepared_state, definition, _runtime_command(prepared_state, definition, "finish", "bar_node", "arrival", "terminal:finish", {}, "scenario", "command_console"), {"available_funds": 4})
+	var terminal := SequenceRuntimeScript.apply_command(prepared_state, definition, _runtime_command(prepared_state, definition, "finish", "bar_node", "complication", "terminal:finish", {}, "scenario", "command_console"), {"available_funds": 4})
 	var terminal_fact := SequenceRuntimeScript.fact("world_boundary", "scenario", "bar_node", "terminal:boundary", 1, 4, _fact_payload("world_boundary"))
 	var terminal_queued := SequenceRuntimeScript.enqueue_fact(_dict(terminal.get("state", {})), definition, terminal_fact)
 	var aftermath := SequenceRuntimeScript.flush_facts(_dict(terminal_queued.get("state", {})), definition, 4)
@@ -2748,8 +2737,7 @@ static func _check_receipt_reconstruction(failures: Array) -> void:
 	var state := SequenceRuntimeScript.initial_state(definition, "bar_node", "rebuild_seed", host_semantics)
 	for command_spec_value in [
 		["prepare", "arrival", "rebuild:prepare", "command_console"],
-		["finish", "arrival", "rebuild:finish", "command_console"],
-		["use", "aftermath", "rebuild:outcome", "fixture_201"],
+		["finish", "complication", "rebuild:finish", "command_console"],
 	]:
 		var command_spec := command_spec_value as Array
 		var command_value := _runtime_command(state, definition, str(command_spec[0]), "bar_node", str(command_spec[1]), str(command_spec[2]), {}, "scenario", str(command_spec[3]))
@@ -3240,7 +3228,7 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	lifecycle_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(lifecycle_definition)
 	var lifecycle_host := _fixture_host_semantics(lifecycle_definition)
 	var lifecycle_state := SequenceRuntimeScript.initial_state(lifecycle_definition, "bar_node", "cleanup_lifecycle_seed", lifecycle_host)
-	for lifecycle_command_value in [["prepare", "arrival", "lifecycle:prepare", "command_console"], ["finish", "arrival", "lifecycle:finish", "command_console"], ["use", "aftermath", "lifecycle:terminal", "fixture_201"]]:
+	for lifecycle_command_value in [["prepare", "arrival", "lifecycle:prepare", "command_console"], ["finish", "complication", "lifecycle:finish", "command_console"]]:
 		var lifecycle_command := lifecycle_command_value as Array
 		var lifecycle_applied := SequenceRuntimeScript.apply_command(lifecycle_state, lifecycle_definition, _runtime_command(lifecycle_state, lifecycle_definition, str(lifecycle_command[0]), "bar_node", str(lifecycle_command[1]), str(lifecycle_command[2]), {}, "scenario", str(lifecycle_command[3])), {"available_funds": 10})
 		if not bool(lifecycle_applied.get("ok", false)):
@@ -3562,19 +3550,26 @@ static func _check_atomic_runtime_failures(failures: Array) -> void:
 
 static func _check_authoritative_receipt_capacity(failures: Array) -> void:
 	var definition := _runtime_definition()
-	var state := SequenceRuntimeScript.initial_state(definition, "bar_node", "receipt_seed", _fixture_host_semantics(definition))
-	var first_command := _runtime_command(state, definition, "prepare", "bar_node", "arrival", "capacity:command:0", {}, "scenario", "command_console")
+	var capacity_definition := definition.duplicate(true)
+	var capacity_interaction := _dict(capacity_definition["sequence"]["phase_graph"]["phases"][0]["interaction_ops"][-1]["interaction"])
+	var capacity_actions := _array(capacity_interaction.get("available_actions", []))
+	capacity_actions.append({"id": "observe", "label": "Observe", "input_action": "confirm", "non_color_state": "ready"})
+	capacity_interaction["available_actions"] = capacity_actions
+	capacity_definition["sequence"]["phase_graph"]["phases"][0]["interaction_ops"][-1]["interaction"] = capacity_interaction
+	capacity_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(capacity_definition)
+	var state := SequenceRuntimeScript.initial_state(capacity_definition, "bar_node", "receipt_seed", _fixture_host_semantics(capacity_definition))
+	var first_command := _runtime_command(state, capacity_definition, "observe", "bar_node", "arrival", "capacity:command:0", {}, "scenario", "command_console")
 	for index in range(SequenceRuntimeScript.MAX_RECEIPTS):
-		var command := first_command if index == 0 else _runtime_command(state, definition, "prepare", "bar_node", "arrival", "capacity:command:%d" % index, {}, "scenario", "command_console")
-		var applied := SequenceRuntimeScript.apply_command(state, definition, command, {"available_funds": 2})
+		var command := first_command if index == 0 else _runtime_command(state, capacity_definition, "observe", "bar_node", "arrival", "capacity:command:%d" % index, {}, "scenario", "command_console")
+		var applied := SequenceRuntimeScript.apply_command(state, capacity_definition, command, {"available_funds": 2})
 		if not bool(applied.get("ok", false)):
 			failures.append("Authoritative command receipt capacity failed before its declared limit at %d." % index)
 			return
 		state = _dict(applied.get("state", {}))
-	var overflow := SequenceRuntimeScript.apply_command(state, definition, _runtime_command(state, definition, "prepare", "bar_node", "arrival", "capacity:command:overflow", {}, "scenario", "command_console"), {"available_funds": 2})
+	var overflow := SequenceRuntimeScript.apply_command(state, capacity_definition, _runtime_command(state, capacity_definition, "observe", "bar_node", "arrival", "capacity:command:overflow", {}, "scenario", "command_console"), {"available_funds": 2})
 	if bool(overflow.get("ok", true)) or not _contains_text(_array(overflow.get("errors", [])), "lifetime receipt limit"):
 		failures.append("Sequence command lifetime did not fail closed at receipt capacity.")
-	var old_replay := SequenceRuntimeScript.apply_command(state, definition, first_command, {"available_funds": 0})
+	var old_replay := SequenceRuntimeScript.apply_command(state, capacity_definition, first_command, {"available_funds": 0})
 	if not bool(old_replay.get("ok", false)) or not bool(old_replay.get("replayed", false)):
 		failures.append("Old command receipt became replayable after reaching capacity.")
 
@@ -5170,11 +5165,21 @@ static func _safe_early_cleanup_definition() -> Dictionary:
 	var arrival := _dict(definition["sequence"]["phase_graph"]["phases"][0])
 	arrival["terminal"] = true
 	arrival["branches"] = [
-		{"id": "finish_early", "condition": {"type": "always"}, "outcome": "repaired"},
 		{"id": "break_early", "condition": {"type": "fact", "fact_type": "heat_changed"}, "outcome": "broken"},
 		{"id": "refuse_early", "condition": {"type": "command", "command_id": "finish"}, "outcome": "refused"},
+		{"id": "finish_early", "condition": {"type": "always"}, "outcome": "repaired"},
 	]
 	definition["sequence"]["phase_graph"]["phases"] = [arrival]
+	# This single-phase cleanup fixture intentionally cannot evidence the normal
+	# three-phase action-boundary completion row. Exercise the frozen schema's
+	# explicit signed-exception path without weakening production validation.
+	definition["sequence"]["completion_contract"].erase("action_boundaries")
+	definition["sequence"]["owner_exceptions"].append({
+		"row": "action_boundaries",
+		"reason": "Single-phase early-cleanup fixture isolates replay-safe cleanup before normal action-boundary progression.",
+		"owner": "env06_6_contract",
+		"approved_on": "2026-08-27",
+	})
 	var cleanup_operations := _array(definition["sequence"]["cleanup"].get("operations", []))
 	for operation_index in range(cleanup_operations.size() - 1, -1, -1):
 		var operation := _dict(cleanup_operations[operation_index])

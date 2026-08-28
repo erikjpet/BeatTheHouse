@@ -1193,10 +1193,27 @@ static func _resolve_route_center(environment: Dictionary, semantic_state: Dicti
 
 static func _resolve_route_center_result(environment: Dictionary, semantic_state: Dictionary, route_id: String) -> Dictionary:
 	var parsed := OperationRegistryScript.parse_owned_identity(route_id)
+	var raw_alias := route_id.strip_edges()
+	var sealed_inventory := _dict(environment.get("scenario_semantic_inventory", {}))
+	# Static content validation carries a validated catalog seal; live runtime
+	# resolution carries an instance-bound seal. Both are authoritative for their
+	# boundary, but only the latter may use exact_collections().
+	var inventory := EnvironmentSemanticInventoryScript.guaranteed_collections(sealed_inventory) if str(sealed_inventory.get("kind", "")) == "catalog" else EnvironmentSemanticInventoryScript.exact_collections(sealed_inventory)
+	# Actor spawn payloads may name a room-local endpoint alias rather than a
+	# world route identity. The alias never resolves directly from live geometry:
+	# it must match one guaranteed/exact anchor in the sealed inventory first.
+	if parsed.is_empty():
+		var raw_anchor_matches := _inventory_alias_matches(_array(inventory.get("anchors", [])), raw_alias)
+		if raw_alias.is_empty() or raw_alias != raw_alias.to_lower() or raw_alias.contains("::") or raw_anchor_matches.is_empty():
+			return {"ok": false, "center": Vector2(-1.0, -1.0), "error": "unknown sealed route/anchor alias %s" % raw_alias}
+		if raw_anchor_matches.size() != 1:
+			return {"ok": false, "center": Vector2(-1.0, -1.0), "error": "ambiguous sealed route/anchor alias %s" % raw_alias}
+		var raw_center := _resolve_center(environment, raw_alias, raw_alias)
+		if not _finite_point(raw_center) or raw_center.x < 0.0:
+			return {"ok": false, "center": Vector2(-1.0, -1.0), "error": "unknown sealed route/anchor alias %s" % raw_alias}
+		return {"ok": true, "center": raw_center, "error": ""}
 	var stable_id := str(parsed.get("stable_object_id", ""))
 	var alias := stable_id.get_slice(":", stable_id.get_slice_count(":") - 1)
-	var sealed_inventory := _dict(environment.get("scenario_semantic_inventory", {}))
-	var inventory := EnvironmentSemanticInventoryScript.exact_collections(sealed_inventory)
 	var route_matches := _inventory_alias_matches(_array(inventory.get("routes", [])), alias)
 	var anchor_matches := _inventory_alias_matches(_array(inventory.get("anchors", [])), alias)
 	if parsed.is_empty() or alias.is_empty() or route_matches.is_empty() or anchor_matches.is_empty():
