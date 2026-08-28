@@ -414,9 +414,10 @@ static func _valid_cache_entry(value: Variant, request_key: String, table_bindin
 
 static func _binding_matches_response(table_binding: String, response: Dictionary) -> bool:
 	var environment_id := str(response.get("environment_id", ""))
-	if environment_id.is_empty():
+	var game_id := str(response.get("game_id", response.get("source_id", "")))
+	if environment_id.is_empty() or game_id.is_empty():
 		return false
-	return table_binding.begins_with("blackjack:%s:" % environment_id)
+	return table_binding.begins_with("%s:%s:" % [game_id, environment_id])
 
 
 static func _valid_journal_entry(entry: Dictionary, previous: String) -> bool:
