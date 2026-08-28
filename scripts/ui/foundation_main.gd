@@ -5012,6 +5012,16 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 	snapshot["coach"] = _coach_lifecycle_snapshot()
 	snapshot["talk_dock"] = _talk_dock_lifecycle_snapshot()
 	snapshot["talk_dock_canvases"] = _talk_dock_canvas_lifecycle_snapshot()
+	snapshot["run_state_mutable_models"] = {
+		"numbers": {
+			"state": run_state.numbers_state.snapshot(),
+			"config": run_state.numbers_state.config.duplicate(true),
+		} if run_state != null and run_state.numbers_state != null else {},
+		"town": {
+			"state": run_state.town_state.snapshot(),
+			"conditions": _copy_dict(run_state.town_state.get("_conditions")),
+		} if run_state != null and run_state.town_state != null else {},
+	}
 	snapshot["event_popup_presentation"] = {
 		"title": event_choice_popup_title_label.text if event_choice_popup_title_label != null else "",
 		"summary": event_choice_popup_summary_label.text if event_choice_popup_summary_label != null else "",
@@ -5070,6 +5080,13 @@ func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
 			run_state.home_state = _copy_dict(snapshot.get("home_state", {}))
 		else:
 			_restore_run_state_lifecycle_storage(storage_snapshot)
+		var mutable_models := _copy_dict(snapshot.get("run_state_mutable_models", {}))
+		var numbers_model := _copy_dict(mutable_models.get("numbers", {}))
+		if run_state.numbers_state != null and not numbers_model.is_empty():
+			run_state.numbers_state.restore(_copy_dict(numbers_model.get("state", {})), run_state.seed_value, _copy_dict(numbers_model.get("config", {})))
+		var town_model := _copy_dict(mutable_models.get("town", {}))
+		if run_state.town_state != null and not town_model.is_empty():
+			run_state.town_state.restore(_copy_dict(town_model.get("state", {})), run_state.seed_value, _copy_dict(town_model.get("conditions", {})))
 	var fields := _copy_dict(snapshot.get("fields", {}))
 	for field_name_value in fields.keys():
 		var field_name := str(field_name_value)
@@ -5220,7 +5237,7 @@ func _restore_coach_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.ok_button, _copy_dict(snapshot.get("ok_control", {})))
 	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.focus_layer, _copy_dict(snapshot.get("focus_control", {})))
 	var restored_focus: Variant = snapshot.get("focus_ref", null)
-	if restored_focus is Control and is_instance_valid(restored_focus) and not (restored_focus as Control).is_queued_for_deletion():
+	if restored_focus is Control and is_instance_valid(restored_focus) and (restored_focus as Control).is_inside_tree() and not (restored_focus as Control).is_queued_for_deletion():
 		(restored_focus as Control).grab_focus()
 	elif bool(snapshot.get("focus_was_ok", false)) and coach_overlay.ok_button != null:
 		coach_overlay.ok_button.grab_focus()
@@ -5425,7 +5442,7 @@ func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		talk_dock.portrait_model.set_process(bool(snapshot.get("portrait_processing", false)))
 	talk_dock.set_process(bool(snapshot.get("processing", false)))
 	var restored_focus: Variant = snapshot.get("focus_ref", null)
-	if restored_focus is Control and is_instance_valid(restored_focus) and not (restored_focus as Control).is_queued_for_deletion():
+	if restored_focus is Control and is_instance_valid(restored_focus) and (restored_focus as Control).is_inside_tree() and not (restored_focus as Control).is_queued_for_deletion():
 		(restored_focus as Control).grab_focus()
 	else:
 		var choice_focus_path := _copy_array(snapshot.get("choice_focus_path", []))
@@ -11092,8 +11109,18 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 		# Compatibility alias for old tutorial/save anchors. It routes to the new
 		# room and never constructs the retired modal.
 		if run_state != null and str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID:
-			if select_travel_option(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
-				var travel_ok := confirm_selected_travel(true)
+			var cage_choice := _travel_choice(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)
+			if not cage_choice.is_empty() and select_travel_option(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+				# Preserve the exact sealed choice selected on the main floor. The
+				# selection refresh may rebuild the generic travel view, but this local
+				# door must not re-query a different screen-scoped route contract.
+				var cage_travel := _travel_to(
+					str(cage_choice.get("id", RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)),
+					str(cage_choice.get("label", RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)),
+					cage_choice,
+					true
+				)
+				var travel_ok := bool(cage_travel.get("ok", false))
 				if not travel_ok:
 					_restore_foundation_lifecycle_snapshot(caller_rollback)
 				return travel_ok
