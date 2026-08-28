@@ -10721,7 +10721,7 @@ func _delivery_arrival_security_heat() -> int:
 	return heat
 
 
-func _apply_delivery_resolution(expected_receipt: Dictionary = {}) -> Dictionary:
+func _apply_delivery_resolution(expected_receipt: Dictionary = {}, materialize_adapter: bool = true) -> Dictionary:
 	if active_delivery_run.is_empty() or str(active_delivery_run.get("status", "")) != "resolved":
 		return {"ok": true, "inactive": true, "errors": []}
 	if bool(active_delivery_run.get("world_applied", false)):
@@ -10824,14 +10824,14 @@ func _apply_delivery_resolution(expected_receipt: Dictionary = {}) -> Dictionary
 			grand_casino_room_states = rollback_room_states
 			return checkpointed
 		active_delivery_run = _copy_dict(checkpointed.get("state", {}))
-		var confirmed := CrewWorldSequenceAdapterScript.confirm_outcome(current_environment, owner_token, _world_sequence_definition(owner_token), receipt, owner_cause)
-		if not bool(confirmed.get("ok", false)):
-			from_dict(rollback_run)
-			current_environment = rollback_environment
-			world_map = rollback_world_map
-			grand_casino_room_states = rollback_room_states
-			return confirmed
-		_refresh_world_sequence_registration(owner_token, false)
+		if materialize_adapter:
+			var confirmed := CrewWorldSequenceAdapterScript.confirm_outcome(current_environment, owner_token, _world_sequence_definition(owner_token), receipt, owner_cause)
+			if not bool(confirmed.get("ok", false)):
+				# The owner checkpoint is already the durable authority. Adapter
+				# materialization is a separate retryable step and may never roll back or
+				# reissue the committed economy/model consequence.
+				return confirmed
+			_refresh_world_sequence_registration(owner_token, false)
 	else:
 		# Separate legacy/unmounted delivery path: it retains its established
 		# exactly-once world bit and never manufactures an adapter checkpoint.
@@ -14063,6 +14063,14 @@ func world_sequence_preview_delivery_outcome(token: String, outcome: String = "d
 
 
 func world_sequence_commit_delivery_outcome(token: String, node_id: String = "") -> Dictionary:
+	var checkpointed := world_sequence_checkpoint_delivery_outcome(token, node_id)
+	if not bool(checkpointed.get("ok", false)): return checkpointed
+	var materialized := world_sequence_materialize_delivery_checkpoint(token)
+	if not bool(materialized.get("ok", false)): return materialized
+	return checkpointed
+
+
+func world_sequence_checkpoint_delivery_outcome(token: String, node_id: String = "") -> Dictionary:
 	var preview := world_sequence_preview_delivery_outcome(token, "delivered")
 	if not bool(preview.get("ok", false)): return preview
 	var target_id := node_id.strip_edges()
@@ -14072,7 +14080,7 @@ func world_sequence_commit_delivery_outcome(token: String, node_id: String = "")
 	active_delivery_run = DeliveryRunModelScript.complete_handoff(active_delivery_run, target_id)
 	if JSON.stringify(delivery_snapshot()) == before or str(active_delivery_run.get("status", "")) != "resolved":
 		return {"ok": false, "errors": ["delivery owner rejected the terminal handoff"]}
-	var applied := _apply_delivery_resolution(_copy_dict(preview.get("receipt", {})))
+	var applied := _apply_delivery_resolution(_copy_dict(preview.get("receipt", {})), false)
 	if not bool(applied.get("ok", false)): return applied
 	return {"ok": true, "resolved": true, "message": str(_copy_dict(applied.get("public_result", {})).get("message", "")), "public_result": _copy_dict(applied.get("public_result", {})), "errors": []}
 

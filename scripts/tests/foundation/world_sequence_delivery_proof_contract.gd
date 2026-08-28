@@ -357,10 +357,17 @@ func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: 
 	if not bool(preview.get("ok", false)) or preview_receipt.is_empty() or not run_state.world_sequence_pending_outcomes(token).is_empty():
 		failures.append("Crew favor handoff did not expose one non-persisting trusted receipt preview.")
 		return
-	var owner_result := run_state.world_sequence_commit_delivery_outcome(token, target_node_id)
+	var owner_result := run_state.world_sequence_checkpoint_delivery_outcome(token, target_node_id)
 	if not bool(owner_result.get("ok", false)) or run_state.bankroll != bankroll_before + 22 \
 			or run_state.suspicion_level() != heat_before + 4 or not bool(run_state.narrative_flags.get("crew_favor_completed", false)):
 		failures.append("Existing delivery authority did not atomically apply the unchanged Crew favor result and checkpoint: %s." % JSON.stringify(owner_result))
+		return
+	if not run_state.world_sequence_pending_outcomes(token).is_empty():
+		failures.append("Owner checkpoint persisted adapter pending work before independent confirmation.")
+		return
+	var materialized := run_state.world_sequence_materialize_delivery_checkpoint(token)
+	if not bool(materialized.get("ok", false)):
+		failures.append("Crew favor checkpoint could not materialize its independently retryable receipt.")
 		return
 	var pending := run_state.world_sequence_pending_outcomes(token)
 	if pending.size() != 1 or _dict(pending[0]) != preview_receipt:
@@ -396,10 +403,17 @@ func _check_delivery_failure_injection_matrix(failures: Array) -> void:
 				var rejected := run_state.world_sequence_consume_delivery_outcome(token, receipt_id, "wrong_node")
 				if bool(rejected.get("ok", false)) or JSON.stringify(run_state.to_dict()) != before:
 					failures.append("P1 before-owner injection did not reject byte-identically.")
-			"after_owner_apply", "before_ack", "after_ack", "save_load", "refresh", "travel_revisit":
-				var owner_result := run_state.world_sequence_commit_delivery_outcome(token, target_node_id)
+			"after_owner_apply", "save_load", "refresh":
+				var owner_result := run_state.world_sequence_checkpoint_delivery_outcome(token, target_node_id)
 				if not bool(owner_result.get("ok", false)):
 					failures.append("P1 %s injection could not establish the atomic owner checkpoint." % stage)
+					continue
+				if stage in ["save_load", "refresh"]:
+					run_state = _round_trip_run(run_state)
+			"before_ack", "after_ack", "travel_revisit":
+				var owner_result := run_state.world_sequence_commit_delivery_outcome(token, target_node_id)
+				if not bool(owner_result.get("ok", false)):
+					failures.append("P1 %s injection could not establish the atomic owner checkpoint and receipt." % stage)
 					continue
 				if stage in ["after_ack", "travel_revisit"]:
 					var checkpoint := DeliveryRunModelScript.closed_checkpoint(run_state.active_delivery_run)
@@ -407,9 +421,7 @@ func _check_delivery_failure_injection_matrix(failures: Array) -> void:
 					if not bool(acknowledged.get("ok", false)):
 						failures.append("P1 %s injection could not establish the acknowledged cleanup checkpoint." % stage)
 						continue
-				if stage == "save_load" or stage == "refresh":
-					run_state = _round_trip_run(run_state)
-				elif stage == "travel_revisit":
+				if stage == "travel_revisit":
 					if not _travel_away_and_revisit(run_state, library, target_node_id):
 						failures.append("P1 travel/revisit injection could not cross the real room boundary and revisit its owner state.")
 						continue
@@ -422,6 +434,11 @@ func _check_delivery_failure_injection_matrix(failures: Array) -> void:
 			resumed = _dict(app.call("_resume_pending_world_sequence_outcomes"))
 			app.free()
 		else:
+			if stage in ["after_owner_apply", "save_load"]:
+				var materialized := run_state.world_sequence_materialize_delivery_checkpoint(token)
+				if not bool(materialized.get("ok", false)):
+					failures.append("P1 %s injection could not independently materialize the checkpoint receipt." % stage)
+					continue
 			resumed = run_state.world_sequence_consume_delivery_outcome(token, receipt_id, target_node_id)
 		_assert_delivered_resume(stage, run_state, token, receipt_id, resumed, bankroll_before, heat_before, command_receipts_before, failures)
 
