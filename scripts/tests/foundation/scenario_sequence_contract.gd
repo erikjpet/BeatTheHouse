@@ -5170,11 +5170,21 @@ static func _safe_early_cleanup_definition() -> Dictionary:
 	var arrival := _dict(definition["sequence"]["phase_graph"]["phases"][0])
 	arrival["terminal"] = true
 	arrival["branches"] = [
-		{"id": "finish_early", "condition": {"type": "always"}, "outcome": "repaired"},
 		{"id": "break_early", "condition": {"type": "fact", "fact_type": "heat_changed"}, "outcome": "broken"},
 		{"id": "refuse_early", "condition": {"type": "command", "command_id": "finish"}, "outcome": "refused"},
+		{"id": "finish_early", "condition": {"type": "always"}, "outcome": "repaired"},
 	]
 	definition["sequence"]["phase_graph"]["phases"] = [arrival]
+	# This single-phase cleanup fixture intentionally cannot evidence the normal
+	# three-phase action-boundary completion row. Exercise the frozen schema's
+	# explicit signed-exception path without weakening production validation.
+	definition["sequence"]["completion_contract"].erase("action_boundaries")
+	definition["sequence"]["owner_exceptions"].append({
+		"row": "action_boundaries",
+		"reason": "Single-phase early-cleanup fixture isolates replay-safe cleanup before normal action-boundary progression.",
+		"owner": "env06_6_contract",
+		"approved_on": "2026-08-27",
+	})
 	var cleanup_operations := _array(definition["sequence"]["cleanup"].get("operations", []))
 	for operation_index in range(cleanup_operations.size() - 1, -1, -1):
 		var operation := _dict(cleanup_operations[operation_index])
