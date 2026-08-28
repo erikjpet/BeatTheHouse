@@ -91,7 +91,7 @@ func _entry(c: Dictionary) -> Dictionary:
 		var gate_id := "%s_gate_%d" % [prefix, index - 1]
 		var operations := _beat_operations(c, index - 1)
 		var phase_id := "work_%d" % index
-		var interactions := [_gate(prefix,phase_id,gate_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this distinct room operation or take its identity-specific branch.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right")] + _decision_actions(c, phase_id, prefix),false)]
+		var interactions := [_gate(prefix,phase_id,gate_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this distinct room operation or take its identity-specific branch.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave cleanly","ui_cancel")] + _decision_actions(c, phase_id, prefix),false)]
 		# Remove gate overlays before their underlying task interactions so cleanup
 		# cannot restore an already-removed target and leak it across revisit.
 		cleanup.push_front(_remove("interaction_ops",prefix,gate_id))
@@ -128,7 +128,11 @@ func _entry(c: Dictionary) -> Dictionary:
 		"fact_subscriptions":[_fact_subscription(c),"travel_departed"],
 		"completion_contract":{"arrival_readable":true,"semantic_changes":true,"scenario_interaction":true,"action_boundaries":true,"choice_or_failure":true,"material_outcomes":true,"revisit_coverage":true,"world_connection":true,"primary_verb":true,"feedback_and_exit":true},
 	}
-	return {"scenario_id":c.id,"sequence":sequence,"authoring":{"arrival_summary":c.arrival,"player_verbs":c.verbs + ["refuse_%s" % prefix,"ignore_%s" % prefix],"world_connections":[str(c.fact),"travel_departed"],"references":{"objects":["base::travel:leave"]},"capture_ids":["%s_arrival" % prefix,"%s_partial" % prefix,"%s_success" % prefix,"%s_failure" % prefix,"%s_refused" % prefix,"%s_interrupted" % prefix,"%s_reduced_motion" % prefix,"%s_small_screen" % prefix,"%s_hit_overlay" % prefix],"seed_evidence":{"proof_seed":"%s_seed" % prefix,"save_boundaries":["arrival","partial","success","failure","refused","interrupted"],"minimum_target_size":44,"expected_outcomes":c.outcomes},"masked_visual_explanations":{}}}
+	var decision := _dict(c.get("decision", {}))
+	var decision_verbs: Array = []
+	for option_value in _array(decision.get("options", [])):
+		decision_verbs.append(str((option_value as Array)[0]))
+	return {"scenario_id":c.id,"sequence":sequence,"authoring":{"arrival_summary":c.arrival,"player_verbs":c.verbs + decision_verbs + ["refuse_%s" % prefix,"ignore_%s" % prefix],"identity_decision":{"phase_id":str(decision.get("at", "")),"options":_array(decision.get("options", []))},"world_connections":[str(c.fact),"travel_departed"],"references":{"objects":["base::travel:leave"]},"capture_ids":["%s_arrival" % prefix,"%s_partial" % prefix,"%s_success" % prefix,"%s_failure" % prefix,"%s_refused" % prefix,"%s_interrupted" % prefix,"%s_reduced_motion" % prefix,"%s_small_screen" % prefix,"%s_hit_overlay" % prefix,"%s_obstruction" % prefix],"seed_evidence":{"proof_seed":"%s_seed" % prefix,"save_boundaries":["arrival","partial","success","failure","refused","interrupted"],"minimum_target_size":44,"expected_outcomes":c.outcomes},"masked_visual_explanations":{}}}
 
 
 func _phase(id:String,label:String,feedback:String,exit_prompt:String,objectives:Array,scene:Array,interactions:Array,actors:Array,transitions:Array,branches:Array,terminal:bool=false)->Dictionary:

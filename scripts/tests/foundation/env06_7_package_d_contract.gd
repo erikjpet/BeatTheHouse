@@ -46,6 +46,10 @@ func _initialize() -> void:
 		var receipts: Dictionary = {}
 		_collect_receipts(definition.sequence, receipts, failures, scenario_id)
 		_check_runtime_replay(definition, entry, failures)
+		_check_identity_branch_matrix(definition, entry, failures)
+		_check_lifecycle_matrix(definition, entry, failures)
+		_check_ingress_and_observer_contract(definition, entry, failures)
+		_check_package_presentation_contract(definition, entry, failures)
 	actual_ids.sort()
 	var expected := EXPECTED_IDS.duplicate()
 	expected.sort()
@@ -67,8 +71,7 @@ func _check_runtime_replay(definition: Dictionary, entry: Dictionary, failures: 
 	var arrival_semantics := _dict(state.get("semantic_state", {}))
 	if _dict(arrival_semantics.get("scene_objects", {})).size() < 3 or _dict(arrival_semantics.get("actors", {})).size() < 2:
 		failures.append("%s arrival did not materialize its physical object/actor tableau." % scenario_id)
-	var verbs := _array(_dict(entry.get("authoring", {})).get("player_verbs", []))
-	verbs = verbs.slice(0, verbs.size() - 2)
+	var verbs := _success_verbs(definition)
 	for index in range(verbs.size()):
 		var command_id := str(verbs[index])
 		var target_id := "%s_task_%d" % [scenario_id, index]
@@ -101,9 +104,156 @@ func _check_runtime_replay(definition: Dictionary, entry: Dictionary, failures: 
 		failures.append("%s refusal path did not remain a clean terminal exit: %s" % [scenario_id, JSON.stringify(refused_result.get("errors", []))])
 
 
+func _check_identity_branch_matrix(definition: Dictionary, entry: Dictionary, failures: Array) -> void:
+	var scenario_id := str(definition.get("id", ""))
+	var decision := _dict(_dict(entry.get("authoring", {})).get("identity_decision", {}))
+	var decision_phase := str(decision.get("phase_id", ""))
+	var options := _array(decision.get("options", []))
+	if decision_phase.is_empty() or options.size() != 3:
+		failures.append("%s lacks its exact three-way identity decision contract." % scenario_id)
+		return
+	for option_index in range(options.size()):
+		var option := _array(options[option_index])
+		var state := _state_at_phase(definition, decision_phase, "%s_identity_%d" % [scenario_id, option_index], failures)
+		if state.is_empty(): return
+		var command_id := str(option[0])
+		var target := str(option[1])
+		var result := _apply_named_command(state, definition, command_id, "%s:identity:%d" % [scenario_id, option_index])
+		var next := _dict(result.get("state", {}))
+		if not bool(result.get("ok", false)) or (target.begins_with("terminal_") and str(next.get("status", "")) != "aftermath") or (not target.begins_with("terminal_") and str(next.get("phase_id", "")) != target):
+			failures.append("%s identity decision %s did not execute its authored target %s: %s" % [scenario_id, command_id, target, JSON.stringify(result.get("errors", []))])
+
+
+func _check_lifecycle_matrix(definition: Dictionary, entry: Dictionary, failures: Array) -> void:
+	var scenario_id := str(definition.get("id", ""))
+	var phases := ["arrival"]
+	for index in range(_success_verbs(definition).size() - 1): phases.append("work_%d" % (index + 1))
+	for phase_id in phases:
+		for branch_kind in ["failure", "refused", "interrupted"]:
+			var state := _state_at_phase(definition, phase_id, "%s_%s_%s" % [scenario_id, phase_id, branch_kind], failures)
+			if state.is_empty(): return
+			var result: Dictionary
+			if branch_kind == "interrupted":
+				result = _apply_fact_branch(state, definition, "travel_departed", {"source_id":scenario_id,"target_id":"world_map","travel_kind":"ordinary"}, "%s:%s:interrupt" % [scenario_id, phase_id])
+			else:
+				result = _apply_named_command(state, definition, ("fail_" if branch_kind == "failure" else "refuse_") + scenario_id, "%s:%s:%s" % [scenario_id, phase_id, branch_kind])
+			if not bool(result.get("ok", false)) or str(_dict(result.get("state", {})).get("status", "")) != "aftermath":
+				failures.append("%s %s branch at %s did not reach aftermath atomically: %s" % [scenario_id, branch_kind, phase_id, JSON.stringify(result.get("errors", []))])
+	var partial := _state_at_phase(definition, "work_1", "%s_partial_reentry" % scenario_id, failures)
+	var partial_saved := Runtime.normalize_state(JSON.parse_string(JSON.stringify(partial)), definition, _host_semantics())
+	var partial_reentry := Runtime.apply_reentry(partial_saved, definition, "%s_partial_visit" % scenario_id, _host_semantics())
+	if not bool(partial_reentry.get("ok", false)) or str(_dict(partial_reentry.get("state", {})).get("phase_id", "")) != "work_1": failures.append("%s partial save/reentry did not resume exact phase." % scenario_id)
+	var terminal := _apply_named_command(Runtime.initial_state(definition, "package_d_runtime_node", "%s_terminal" % scenario_id, _host_semantics()), definition, "fail_%s" % scenario_id, "%s:terminal" % scenario_id)
+	var terminal_reentry := Runtime.apply_reentry(_dict(terminal.get("state", {})), definition, "%s_terminal_visit" % scenario_id, _host_semantics())
+	if not bool(terminal_reentry.get("ok", false)) or str(_dict(terminal_reentry.get("state", {})).get("status", "")) != "aftermath": failures.append("%s terminal reentry did not preserve aftermath." % scenario_id)
+	var expiry_state := Runtime.initial_state(definition, "package_d_runtime_node", "%s_expiry" % scenario_id, _host_semantics())
+	var expired := Runtime.apply_expiry(expiry_state, definition, "night_end", 1)
+	var expired_state := _dict(expired.get("state", {}))
+	var expired_reentry := Runtime.apply_reentry(expired_state, definition, "%s_expired_visit" % scenario_id, _host_semantics())
+	if not bool(expired.get("ok", false)) or not bool(expired.get("expired", false)) or not _semantic_collections_empty(expired_state) or not bool(expired_reentry.get("ok", false)) or str(_dict(expired_reentry.get("state", {})).get("status", "")) != "cleaned": failures.append("%s expiry/cleanup/reentry contract failed." % scenario_id)
+
+
+func _check_ingress_and_observer_contract(definition: Dictionary, entry: Dictionary, failures: Array) -> void:
+	var scenario_id := str(definition.get("id", ""))
+	var state := Runtime.initial_state(definition, "package_d_runtime_node", "%s_ingress" % scenario_id, _host_semantics())
+	var valid := _runtime_command(state, definition, str(_success_verbs(definition)[0]), "package_d_runtime_node", "%s:receipt" % scenario_id, "%s_task_0" % scenario_id)
+	var accepted := Runtime.apply_command(state, definition, valid)
+	if not bool(accepted.get("ok", false)):
+		failures.append("%s could not establish receipt mismatch fixture." % scenario_id)
+		return
+	var accepted_state := _dict(accepted.get("state", {}))
+	var accepted_snapshot := JSON.stringify(accepted_state)
+	var mismatch := valid.duplicate(true)
+	mismatch["idempotency_key"] = "%s:receipt" % scenario_id
+	mismatch["command_id"] = "fail_%s" % scenario_id
+	var rejected := Runtime.apply_command(accepted_state, definition, mismatch)
+	if bool(rejected.get("ok", false)) or JSON.stringify(_dict(rejected.get("state", {}))) != accepted_snapshot: failures.append("%s receipt mismatch was not rejected without mutation." % scenario_id)
+	var malformed := valid.duplicate(true)
+	malformed["action_origin_fingerprint"] = "0".repeat(64)
+	var malformed_result := Runtime.apply_command(state, definition, malformed)
+	if bool(malformed_result.get("ok", false)) or JSON.stringify(_dict(malformed_result.get("state", {}))) != JSON.stringify(state): failures.append("%s malformed operation injection partially committed." % scenario_id)
+	var projection := Runtime.public_projection(state, definition)
+	for forbidden in ["command_fingerprints", "fact_fingerprints", "seed_token", "cleanup_fingerprints", "command_results"]:
+		if projection.has(forbidden): failures.append("%s public observer leaked hidden %s." % [scenario_id, forbidden])
+	var native_projection := JSON.stringify(projection)
+	var web_projection := JSON.stringify(Runtime.public_projection(JSON.parse_string(JSON.stringify(state)), definition))
+	if native_projection != web_projection: failures.append("%s native/Web serialized public parity drifted." % scenario_id)
+
+
+func _check_package_presentation_contract(definition: Dictionary, entry: Dictionary, failures: Array) -> void:
+	var scenario_id := str(definition.get("id", ""))
+	var state := Runtime.initial_state(definition, "package_d_runtime_node", "%s_present" % scenario_id, _host_semantics())
+	var semantic := _dict(state.get("semantic_state", {}))
+	var interactions := _dict(semantic.get("interactions", {}))
+	if interactions.size() < 2: failures.append("%s presentation lacks task plus safe-exit targets." % scenario_id)
+	var rect_keys: Dictionary = {}
+	for interaction_value in interactions.values():
+		var interaction := _dict(interaction_value)
+		var hit := _dict(interaction.get("hit_bounds", {}))
+		if int(hit.get("w", 0)) < 44 or int(hit.get("h", 0)) < 44 or str(interaction.get("label", "")).is_empty() or str(interaction.get("prompt", "")).is_empty() or str(interaction.get("non_color_state", "")).is_empty(): failures.append("%s presentation target failed label/prompt/non-color/44px accessibility." % scenario_id)
+		rect_keys["%s:%s" % [hit.get("w", 0), hit.get("h", 0)]] = true
+	var captures := _array(_dict(entry.get("authoring", {})).get("capture_ids", []))
+	for suffix in ["arrival","partial","success","failure","refused","interrupted","reduced_motion","small_screen","hit_overlay","obstruction"]:
+		if not captures.has("%s_%s" % [scenario_id, suffix]): failures.append("%s lacks package-scoped %s evidence binding." % [scenario_id, suffix])
+	var normal := Runtime.drain_transitions(state, definition, false)
+	var reduced := Runtime.drain_transitions(state, definition, true)
+	if not bool(normal.get("ok", false)) or not bool(reduced.get("ok", false)) or _array(normal.get("transitions", [])).size() != _array(reduced.get("transitions", [])).size(): failures.append("%s reduced-motion presentation parity failed." % scenario_id)
+
+
 func _runtime_command(state: Dictionary, definition: Dictionary, command_id: String, node_id: String, receipt_id: String, stable_object_id: String) -> Dictionary:
 	var descriptor := Runtime._command_descriptor(state, definition, "scenario", stable_object_id, command_id)
 	return Runtime.command(command_id, node_id, str(state.get("phase_id", "")), receipt_id, {}, "scenario", stable_object_id, str(descriptor.get("action_origin_owner_namespace", "scenario")), str(descriptor.get("action_origin_stable_object_id", stable_object_id)), str(descriptor.get("action_origin_receipt_key", "")), str(descriptor.get("action_origin_boundary_id", "")), str(descriptor.get("action_origin_fingerprint", "")))
+
+
+func _success_verbs(definition: Dictionary) -> Array:
+	var result: Array = []
+	for objective_value in _array(_dict(definition.get("sequence", {})).get("objectives", [])):
+		for step_value in _array(_dict(objective_value).get("steps", [])):
+			result.append(str(_dict(step_value).get("command_id", "")))
+	return result
+
+
+func _state_at_phase(definition: Dictionary, target_phase: String, seed: String, failures: Array) -> Dictionary:
+	var scenario_id := str(definition.get("id", ""))
+	var state := Runtime.initial_state(definition, "package_d_runtime_node", seed, _host_semantics())
+	var verbs := _success_verbs(definition)
+	var guard := 0
+	while str(state.get("phase_id", "")) != target_phase and str(state.get("status", "")) == "active" and guard < verbs.size():
+		var phase_id := str(state.get("phase_id", ""))
+		var index := 0 if phase_id == "arrival" else int(phase_id.trim_prefix("work_"))
+		var result := _apply_named_command(state, definition, str(verbs[index]), "%s:advance:%d" % [seed, guard])
+		if not bool(result.get("ok", false)):
+			failures.append("%s could not prepare phase %s: %s" % [scenario_id, target_phase, JSON.stringify(result.get("errors", []))])
+			return {}
+		state = _dict(result.get("state", {}))
+		guard += 1
+	if str(state.get("phase_id", "")) != target_phase:
+		failures.append("%s did not reach prepared phase %s." % [scenario_id, target_phase])
+		return {}
+	return state
+
+
+func _apply_named_command(state: Dictionary, definition: Dictionary, command_id: String, receipt_id: String) -> Dictionary:
+	var scenario_id := str(definition.get("id", ""))
+	var phase_id := str(state.get("phase_id", ""))
+	var index := 0 if phase_id == "arrival" else int(phase_id.trim_prefix("work_"))
+	var stable_object_id := "%s_safe_exit" % scenario_id if command_id.begins_with("refuse_") and phase_id == "arrival" else "%s_task_%d" % [scenario_id, index]
+	return Runtime.apply_command(state, definition, _runtime_command(state, definition, command_id, "package_d_runtime_node", receipt_id, stable_object_id))
+
+
+func _apply_fact_branch(state: Dictionary, definition: Dictionary, fact_type: String, payload: Dictionary, fact_id: String) -> Dictionary:
+	var producer := "travel" if fact_type.begins_with("travel_") else "scenario"
+	var fact := Runtime.fact(fact_type, producer, "package_d_runtime_node", fact_id, 1, 1, payload)
+	var enqueued := Runtime.enqueue_fact(state, definition, fact)
+	if not bool(enqueued.get("ok", false)): return enqueued
+	return Runtime.flush_facts(_dict(enqueued.get("state", {})), definition, 1)
+
+
+func _semantic_collections_empty(state: Dictionary) -> bool:
+	var semantic := _dict(state.get("semantic_state", {}))
+	for key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors"]:
+		if not _dict(semantic.get(key, {})).is_empty(): return false
+	return true
 
 
 func _host_semantics() -> Dictionary:

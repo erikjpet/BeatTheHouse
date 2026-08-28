@@ -48,7 +48,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "89937eca7ad332811524ed3d837514096d914f7c8b2426e0e87919a633918ca2",
+      "sequence_signature": "b81ed64aa6fa85ae83b0befed4a377d926b34dc7b95f1b5580b26e1ba323ece0",
       "capture_ids": [
         "punchline_open_mic_night_arrival",
         "punchline_open_mic_night_partial",
@@ -58,7 +58,8 @@
         "punchline_open_mic_night_interrupted",
         "punchline_open_mic_night_reduced_motion",
         "punchline_open_mic_night_small_screen",
-        "punchline_open_mic_night_hit_overlay"
+        "punchline_open_mic_night_hit_overlay",
+        "punchline_open_mic_night_obstruction"
       ],
       "exact_receipt_prefix": "punchline_open_mic_night"
     },
@@ -108,7 +109,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "7ce36ee297133339f16e9dfdb11107af2e7708161ac6cc2f762971319f3b2739",
+      "sequence_signature": "1f7577916a11ccc80591f43045b2678f5e5fe86b115ca06dd3f4815888b7b485",
       "capture_ids": [
         "punchline_headliner_night_arrival",
         "punchline_headliner_night_partial",
@@ -118,7 +119,8 @@
         "punchline_headliner_night_interrupted",
         "punchline_headliner_night_reduced_motion",
         "punchline_headliner_night_small_screen",
-        "punchline_headliner_night_hit_overlay"
+        "punchline_headliner_night_hit_overlay",
+        "punchline_headliner_night_obstruction"
       ],
       "exact_receipt_prefix": "punchline_headliner_night"
     },
@@ -166,7 +168,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "b9494e5f5b1dde1bce8d6540dd661c29d2d9f8ea6f038adcd18a55c4c2b64ff1",
+      "sequence_signature": "5c4c43d8c274f489064b7a48e514b71034d1197efbbc7b7ded5d047430033842",
       "capture_ids": [
         "punchline_bringer_show_arrival",
         "punchline_bringer_show_partial",
@@ -176,7 +178,8 @@
         "punchline_bringer_show_interrupted",
         "punchline_bringer_show_reduced_motion",
         "punchline_bringer_show_small_screen",
-        "punchline_bringer_show_hit_overlay"
+        "punchline_bringer_show_hit_overlay",
+        "punchline_bringer_show_obstruction"
       ],
       "exact_receipt_prefix": "punchline_bringer_show"
     },
@@ -224,7 +227,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "4f5ddbc65620aefb38bddb6df7941135c40412f65e498c559bc108587bbe861b",
+      "sequence_signature": "cc7c31329595794270208271a28482a66fe6c9e92211052471f3d89290a69f2e",
       "capture_ids": [
         "punchline_high_stakes_night_arrival",
         "punchline_high_stakes_night_partial",
@@ -234,7 +237,8 @@
         "punchline_high_stakes_night_interrupted",
         "punchline_high_stakes_night_reduced_motion",
         "punchline_high_stakes_night_small_screen",
-        "punchline_high_stakes_night_hit_overlay"
+        "punchline_high_stakes_night_hit_overlay",
+        "punchline_high_stakes_night_obstruction"
       ],
       "exact_receipt_prefix": "punchline_high_stakes_night"
     },
@@ -284,7 +288,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "c1e960874682eb2af92c64193875b522217e645c619902567df03da4f6fb48fd",
+      "sequence_signature": "b29d16acf24e2174cd6e7dd1db73c4cf108bc51fdc2233147854074212100ea7",
       "capture_ids": [
         "punchline_greased_week_arrival",
         "punchline_greased_week_partial",
@@ -294,7 +298,8 @@
         "punchline_greased_week_interrupted",
         "punchline_greased_week_reduced_motion",
         "punchline_greased_week_small_screen",
-        "punchline_greased_week_hit_overlay"
+        "punchline_greased_week_hit_overlay",
+        "punchline_greased_week_obstruction"
       ],
       "exact_receipt_prefix": "punchline_greased_week"
     },
@@ -342,7 +347,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "39f007c42b9525872920689de7352e0f17f8bf61cb1165b833e9729c126098c1",
+      "sequence_signature": "628d1bb7e9d8837aad6bd4aa9fbfcb3793792356eca46aed7117ffae46e2dae9",
       "capture_ids": [
         "punchline_debt_court_arrival",
         "punchline_debt_court_partial",
@@ -352,7 +357,8 @@
         "punchline_debt_court_interrupted",
         "punchline_debt_court_reduced_motion",
         "punchline_debt_court_small_screen",
-        "punchline_debt_court_hit_overlay"
+        "punchline_debt_court_hit_overlay",
+        "punchline_debt_court_obstruction"
       ],
       "exact_receipt_prefix": "punchline_debt_court"
     },
@@ -402,7 +408,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "c68b32a81a969740779d47413f742786c9eb1461be26b8e10d198ae373a300a2",
+      "sequence_signature": "ceab70468c740e9fd202c104f3b4bb98013a1627032440d7c18c22069bda2f6d",
       "capture_ids": [
         "punchline_new_muscle_arrival",
         "punchline_new_muscle_partial",
@@ -412,7 +418,8 @@
         "punchline_new_muscle_interrupted",
         "punchline_new_muscle_reduced_motion",
         "punchline_new_muscle_small_screen",
-        "punchline_new_muscle_hit_overlay"
+        "punchline_new_muscle_hit_overlay",
+        "punchline_new_muscle_obstruction"
       ],
       "exact_receipt_prefix": "punchline_new_muscle"
     },
@@ -462,7 +469,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "49337578317cf5785c53b600cc609b51c44d966d714f1bd26f4aefb0321f4d21",
+      "sequence_signature": "d18858b3a4909f8619476124200bef25485e51bae89d45323f9ddf9ceba83f6c",
       "capture_ids": [
         "punchline_raid_jitters_arrival",
         "punchline_raid_jitters_partial",
@@ -472,7 +479,8 @@
         "punchline_raid_jitters_interrupted",
         "punchline_raid_jitters_reduced_motion",
         "punchline_raid_jitters_small_screen",
-        "punchline_raid_jitters_hit_overlay"
+        "punchline_raid_jitters_hit_overlay",
+        "punchline_raid_jitters_obstruction"
       ],
       "exact_receipt_prefix": "punchline_raid_jitters"
     },
@@ -522,7 +530,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "e563f7a19203485bdd5f49b52a32f3d4f92b83da2b92f0406a5b61b5433eb7ab",
+      "sequence_signature": "964386a3c570ce6f635a41b9f0ce4856492b78fb899fb08954a21b2cb81e7546",
       "capture_ids": [
         "kitty_cat_lounge_amateur_night_arrival",
         "kitty_cat_lounge_amateur_night_partial",
@@ -532,7 +540,8 @@
         "kitty_cat_lounge_amateur_night_interrupted",
         "kitty_cat_lounge_amateur_night_reduced_motion",
         "kitty_cat_lounge_amateur_night_small_screen",
-        "kitty_cat_lounge_amateur_night_hit_overlay"
+        "kitty_cat_lounge_amateur_night_hit_overlay",
+        "kitty_cat_lounge_amateur_night_obstruction"
       ],
       "exact_receipt_prefix": "kitty_cat_lounge_amateur_night"
     },
@@ -582,7 +591,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "bc6424afab41eba83e4b4580a42f68ea917428182b007895ea3eb6b2d01becf2",
+      "sequence_signature": "ea3c1bfea01ea3a6cd35791457a143ec123e9e8f61e391ac4a3bbe9ed4e330a0",
       "capture_ids": [
         "kitty_cat_lounge_buyout_arrival",
         "kitty_cat_lounge_buyout_partial",
@@ -592,7 +601,8 @@
         "kitty_cat_lounge_buyout_interrupted",
         "kitty_cat_lounge_buyout_reduced_motion",
         "kitty_cat_lounge_buyout_small_screen",
-        "kitty_cat_lounge_buyout_hit_overlay"
+        "kitty_cat_lounge_buyout_hit_overlay",
+        "kitty_cat_lounge_buyout_obstruction"
       ],
       "exact_receipt_prefix": "kitty_cat_lounge_buyout"
     },
@@ -640,7 +650,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "d5743542fde4c35ceb98995424f588d10257b5f418340982598a29d25b92d82c",
+      "sequence_signature": "eade54e5f0f9db053a001d282e1db728471f2a00cf7206c362fe601460c3e6d8",
       "capture_ids": [
         "kitty_cat_lounge_slow_night_arrival",
         "kitty_cat_lounge_slow_night_partial",
@@ -650,7 +660,8 @@
         "kitty_cat_lounge_slow_night_interrupted",
         "kitty_cat_lounge_slow_night_reduced_motion",
         "kitty_cat_lounge_slow_night_small_screen",
-        "kitty_cat_lounge_slow_night_hit_overlay"
+        "kitty_cat_lounge_slow_night_hit_overlay",
+        "kitty_cat_lounge_slow_night_obstruction"
       ],
       "exact_receipt_prefix": "kitty_cat_lounge_slow_night"
     },
@@ -702,7 +713,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "4ad65a6683bbea6dc0bd6be7176126668d9ae3847c94039dc73eab36dd127b3a",
+      "sequence_signature": "a24f237b9641c27647e9d8cc4f6fddf219f6331686ae1868a0aee6ec1b7e882a",
       "capture_ids": [
         "kitty_cat_lounge_bachelorette_storm_arrival",
         "kitty_cat_lounge_bachelorette_storm_partial",
@@ -712,7 +723,8 @@
         "kitty_cat_lounge_bachelorette_storm_interrupted",
         "kitty_cat_lounge_bachelorette_storm_reduced_motion",
         "kitty_cat_lounge_bachelorette_storm_small_screen",
-        "kitty_cat_lounge_bachelorette_storm_hit_overlay"
+        "kitty_cat_lounge_bachelorette_storm_hit_overlay",
+        "kitty_cat_lounge_bachelorette_storm_obstruction"
       ],
       "exact_receipt_prefix": "kitty_cat_lounge_bachelorette_storm"
     }
@@ -780,6 +792,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_kitty_cat_lounge_amateur_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "judge_amateur_bracket",
                         "input_action": "ui_left",
                         "label": "Judge Amateur Bracket",
@@ -808,6 +826,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -964,6 +983,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_amateur_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -975,7 +1000,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Rotate Final Lineup",
                     "min_target_size": 44.0,
@@ -1103,6 +1129,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_amateur_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -1114,7 +1146,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Deliver Judges Card",
                     "min_target_size": 44.0,
@@ -1234,6 +1267,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_amateur_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -1245,7 +1284,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Carry Costume To Dressing",
                     "min_target_size": 44.0,
@@ -2003,10 +2043,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "e563f7a19203485bdd5f49b52a32f3d4f92b83da2b92f0406a5b61b5433eb7ab",
-      "calculated_signature": "e563f7a19203485bdd5f49b52a32f3d4f92b83da2b92f0406a5b61b5433eb7ab",
+      "authored_signature": "964386a3c570ce6f635a41b9f0ce4856492b78fb899fb08954a21b2cb81e7546",
+      "calculated_signature": "964386a3c570ce6f635a41b9f0ce4856492b78fb899fb08954a21b2cb81e7546",
       "nearest_id": "punchline_new_muscle",
-      "nearest_similarity": 0.637292464878672
+      "nearest_similarity": 0.63816604708798
     },
     {
       "id": "kitty_cat_lounge_bachelorette_storm",
@@ -2068,6 +2108,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_kitty_cat_lounge_bachelorette_storm",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "rescue_missing_guest",
                         "input_action": "ui_left",
                         "label": "Rescue Missing Guest",
@@ -2096,6 +2142,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -2255,6 +2302,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_bachelorette_storm",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -2266,7 +2319,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Trace Missing Guest Marker",
                     "min_target_size": 44.0,
@@ -2394,6 +2448,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_bachelorette_storm",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -2405,7 +2465,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Restore Bar Route",
                     "min_target_size": 44.0,
@@ -2535,6 +2596,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_bachelorette_storm",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -2546,7 +2613,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Seat Orderly Finale",
                     "min_target_size": 44.0,
@@ -2666,6 +2734,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_bachelorette_storm",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -2677,7 +2751,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Roll Prop Trunk Off Lane",
                     "min_target_size": 44.0,
@@ -3459,10 +3534,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "4ad65a6683bbea6dc0bd6be7176126668d9ae3847c94039dc73eab36dd127b3a",
-      "calculated_signature": "4ad65a6683bbea6dc0bd6be7176126668d9ae3847c94039dc73eab36dd127b3a",
+      "authored_signature": "a24f237b9641c27647e9d8cc4f6fddf219f6331686ae1868a0aee6ec1b7e882a",
+      "calculated_signature": "a24f237b9641c27647e9d8cc4f6fddf219f6331686ae1868a0aee6ec1b7e882a",
       "nearest_id": "punchline_raid_jitters",
-      "nearest_similarity": 0.433368310598111
+      "nearest_similarity": 0.431034482758621
     },
     {
       "id": "kitty_cat_lounge_buyout",
@@ -3515,6 +3590,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_kitty_cat_lounge_buyout",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "split_buyout_floor",
                         "input_action": "ui_left",
                         "label": "Split Buyout Floor",
@@ -3543,6 +3624,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -3710,6 +3792,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_buyout",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -3721,7 +3809,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Carry Request Cart",
                     "min_target_size": 44.0,
@@ -3849,6 +3938,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_buyout",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -3860,7 +3955,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Reset Entry Desk",
                     "min_target_size": 44.0,
@@ -3988,6 +4084,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_buyout",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -3999,7 +4101,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Mark Public Half Floor",
                     "min_target_size": 44.0,
@@ -4749,10 +4852,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "bc6424afab41eba83e4b4580a42f68ea917428182b007895ea3eb6b2d01becf2",
-      "calculated_signature": "bc6424afab41eba83e4b4580a42f68ea917428182b007895ea3eb6b2d01becf2",
+      "authored_signature": "ea3c1bfea01ea3a6cd35791457a143ec123e9e8f61e391ac4a3bbe9ed4e330a0",
+      "calculated_signature": "ea3c1bfea01ea3a6cd35791457a143ec123e9e8f61e391ac4a3bbe9ed4e330a0",
       "nearest_id": "punchline_headliner_night",
-      "nearest_similarity": 0.720805369127517
+      "nearest_similarity": 0.719115734720416
     },
     {
       "id": "kitty_cat_lounge_slow_night",
@@ -4814,6 +4917,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_slow_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -4825,7 +4934,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Power Selected Station",
                     "min_target_size": 44.0,
@@ -4954,6 +5064,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_slow_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -4965,7 +5081,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Move Remaining Staff",
                     "min_target_size": 44.0,
@@ -5085,6 +5202,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_slow_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -5096,7 +5219,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Coil Closed Section Rope",
                     "min_target_size": 44.0,
@@ -5877,10 +6001,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "d5743542fde4c35ceb98995424f588d10257b5f418340982598a29d25b92d82c",
-      "calculated_signature": "d5743542fde4c35ceb98995424f588d10257b5f418340982598a29d25b92d82c",
+      "authored_signature": "eade54e5f0f9db053a001d282e1db728471f2a00cf7206c362fe601460c3e6d8",
+      "calculated_signature": "eade54e5f0f9db053a001d282e1db728471f2a00cf7206c362fe601460c3e6d8",
       "nearest_id": "punchline_open_mic_night",
-      "nearest_similarity": 0.642752562225476
+      "nearest_similarity": 0.643366619115549
     },
     {
       "id": "punchline_bringer_show",
@@ -5933,6 +6057,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_punchline_bringer_show",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "seat_bringer_supporters",
                         "input_action": "ui_left",
                         "label": "Seat Bringer Supporters",
@@ -5961,6 +6091,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -6128,6 +6259,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_bringer_show",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -6139,7 +6276,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Count Minimum Seats",
                     "min_target_size": 44.0,
@@ -6268,6 +6406,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_bringer_show",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -6279,7 +6423,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Close Hostile Pitch",
                     "min_target_size": 44.0,
@@ -7005,10 +7150,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "b9494e5f5b1dde1bce8d6540dd661c29d2d9f8ea6f038adcd18a55c4c2b64ff1",
-      "calculated_signature": "b9494e5f5b1dde1bce8d6540dd661c29d2d9f8ea6f038adcd18a55c4c2b64ff1",
+      "authored_signature": "5c4c43d8c274f489064b7a48e514b71034d1197efbbc7b7ded5d047430033842",
+      "calculated_signature": "5c4c43d8c274f489064b7a48e514b71034d1197efbbc7b7ded5d047430033842",
       "nearest_id": "punchline_greased_week",
-      "nearest_similarity": 0.482120838471023
+      "nearest_similarity": 0.483213429256595
     },
     {
       "id": "punchline_debt_court",
@@ -7072,6 +7217,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_punchline_debt_court",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "uphold_debt_ruling",
                         "input_action": "ui_left",
                         "label": "Uphold Debt Ruling",
@@ -7100,6 +7251,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -7257,6 +7409,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_debt_court",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -7268,7 +7426,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Clear Chairs For Work",
                     "min_target_size": 44.0,
@@ -7388,6 +7547,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_debt_court",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -7399,7 +7564,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Place Public Evidence",
                     "min_target_size": 44.0,
@@ -8133,10 +8299,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "39f007c42b9525872920689de7352e0f17f8bf61cb1165b833e9729c126098c1",
-      "calculated_signature": "39f007c42b9525872920689de7352e0f17f8bf61cb1165b833e9729c126098c1",
+      "authored_signature": "628d1bb7e9d8837aad6bd4aa9fbfcb3793792356eca46aed7117ffae46e2dae9",
+      "calculated_signature": "628d1bb7e9d8837aad6bd4aa9fbfcb3793792356eca46aed7117ffae46e2dae9",
       "nearest_id": "punchline_high_stakes_night",
-      "nearest_similarity": 0.657311669128508
+      "nearest_similarity": 0.657553956834532
     },
     {
       "id": "punchline_greased_week",
@@ -8189,6 +8355,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_punchline_greased_week",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "expose_payoff_chain",
                         "input_action": "ui_left",
                         "label": "Expose Payoff Chain",
@@ -8217,6 +8389,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -8384,6 +8557,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_greased_week",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -8395,7 +8574,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Shadow Inspector To L 3",
                     "min_target_size": 44.0,
@@ -8523,6 +8703,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_greased_week",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -8534,7 +8720,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Post Route Record",
                     "min_target_size": 44.0,
@@ -8662,6 +8849,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_greased_week",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -8673,7 +8866,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Unseal Declared Service",
                     "min_target_size": 44.0,
@@ -9423,10 +9617,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "c1e960874682eb2af92c64193875b522217e645c619902567df03da4f6fb48fd",
-      "calculated_signature": "c1e960874682eb2af92c64193875b522217e645c619902567df03da4f6fb48fd",
+      "authored_signature": "b29d16acf24e2174cd6e7dd1db73c4cf108bc51fdc2233147854074212100ea7",
+      "calculated_signature": "b29d16acf24e2174cd6e7dd1db73c4cf108bc51fdc2233147854074212100ea7",
       "nearest_id": "punchline_headliner_night",
-      "nearest_similarity": 0.680209698558322
+      "nearest_similarity": 0.679796696315121
     },
     {
       "id": "punchline_headliner_night",
@@ -9479,6 +9673,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_punchline_headliner_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "honor_headliner_route",
                         "input_action": "ui_left",
                         "label": "Honor Headliner Route",
@@ -9507,6 +9707,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -9674,6 +9875,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_headliner_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -9685,7 +9892,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Signal L 3 Door",
                     "min_target_size": 44.0,
@@ -9813,6 +10021,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_headliner_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -9824,7 +10038,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Reset Service Rope",
                     "min_target_size": 44.0,
@@ -9952,6 +10167,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_headliner_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -9963,7 +10184,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Escort Headliner Route",
                     "min_target_size": 44.0,
@@ -10713,10 +10935,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "7ce36ee297133339f16e9dfdb11107af2e7708161ac6cc2f762971319f3b2739",
-      "calculated_signature": "7ce36ee297133339f16e9dfdb11107af2e7708161ac6cc2f762971319f3b2739",
+      "authored_signature": "1f7577916a11ccc80591f43045b2678f5e5fe86b115ca06dd3f4815888b7b485",
+      "calculated_signature": "1f7577916a11ccc80591f43045b2678f5e5fe86b115ca06dd3f4815888b7b485",
       "nearest_id": "kitty_cat_lounge_buyout",
-      "nearest_similarity": 0.720805369127517
+      "nearest_similarity": 0.719115734720416
     },
     {
       "id": "punchline_high_stakes_night",
@@ -10780,6 +11002,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_punchline_high_stakes_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "serve_protected_table",
                         "input_action": "ui_left",
                         "label": "Serve Protected Table",
@@ -10808,6 +11036,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -10965,6 +11194,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_high_stakes_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -10976,7 +11211,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Restore Public Game Lane",
                     "min_target_size": 44.0,
@@ -11096,6 +11332,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_high_stakes_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -11107,7 +11349,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Mark Guard Sightline",
                     "min_target_size": 44.0,
@@ -11841,10 +12084,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "4f5ddbc65620aefb38bddb6df7941135c40412f65e498c559bc108587bbe861b",
-      "calculated_signature": "4f5ddbc65620aefb38bddb6df7941135c40412f65e498c559bc108587bbe861b",
+      "authored_signature": "cc7c31329595794270208271a28482a66fe6c9e92211052471f3d89290a69f2e",
+      "calculated_signature": "cc7c31329595794270208271a28482a66fe6c9e92211052471f3d89290a69f2e",
       "nearest_id": "punchline_debt_court",
-      "nearest_similarity": 0.657311669128508
+      "nearest_similarity": 0.657553956834532
     },
     {
       "id": "punchline_new_muscle",
@@ -11906,6 +12149,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_new_muscle",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -11917,7 +12166,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Mark L 3 Bypass Lane",
                     "min_target_size": 44.0,
@@ -12045,6 +12295,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_new_muscle",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -12056,7 +12312,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Open Clean Route",
                     "min_target_size": 44.0,
@@ -12184,6 +12441,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_new_muscle",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -12195,7 +12458,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Reassign Checkpoint Posts",
                     "min_target_size": 44.0,
@@ -12315,6 +12579,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_new_muscle",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -12326,7 +12596,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Test L 2 Guard Gap",
                     "min_target_size": 44.0,
@@ -13131,10 +13402,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "c68b32a81a969740779d47413f742786c9eb1461be26b8e10d198ae373a300a2",
-      "calculated_signature": "c68b32a81a969740779d47413f742786c9eb1461be26b8e10d198ae373a300a2",
+      "authored_signature": "ceab70468c740e9fd202c104f3b4bb98013a1627032440d7c18c22069bda2f6d",
+      "calculated_signature": "ceab70468c740e9fd202c104f3b4bb98013a1627032440d7c18c22069bda2f6d",
       "nearest_id": "kitty_cat_lounge_amateur_night",
-      "nearest_similarity": 0.637292464878672
+      "nearest_similarity": 0.63816604708798
     },
     {
       "id": "punchline_open_mic_night",
@@ -13196,6 +13467,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_open_mic_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -13207,7 +13484,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Reseat Late Audience",
                     "min_target_size": 44.0,
@@ -13336,6 +13614,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_open_mic_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -13347,7 +13631,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Release Final Act",
                     "min_target_size": 44.0,
@@ -13467,6 +13752,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_open_mic_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -13478,7 +13769,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Carry Stage Steps",
                     "min_target_size": 44.0,
@@ -14259,10 +14551,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "89937eca7ad332811524ed3d837514096d914f7c8b2426e0e87919a633918ca2",
-      "calculated_signature": "89937eca7ad332811524ed3d837514096d914f7c8b2426e0e87919a633918ca2",
+      "authored_signature": "b81ed64aa6fa85ae83b0befed4a377d926b34dc7b95f1b5580b26e1ba323ece0",
+      "calculated_signature": "b81ed64aa6fa85ae83b0befed4a377d926b34dc7b95f1b5580b26e1ba323ece0",
       "nearest_id": "punchline_high_stakes_night",
-      "nearest_similarity": 0.645161290322581
+      "nearest_similarity": 0.645714285714286
     },
     {
       "id": "punchline_raid_jitters",
@@ -14324,6 +14616,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_punchline_raid_jitters",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "hide_raid_evidence",
                         "input_action": "ui_left",
                         "label": "Hide Raid Evidence",
@@ -14352,6 +14650,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -14511,6 +14810,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_raid_jitters",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -14522,7 +14827,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Seal L 3 Room Screen",
                     "min_target_size": 44.0,
@@ -14650,6 +14956,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_raid_jitters",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -14661,7 +14973,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Reopen Safe Floor",
                     "min_target_size": 44.0,
@@ -14780,6 +15093,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_raid_jitters",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -14791,7 +15110,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Clear L 2 Service Lane",
                     "min_target_size": 44.0,
@@ -15549,17 +15869,17 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "49337578317cf5785c53b600cc609b51c44d966d714f1bd26f4aefb0321f4d21",
-      "calculated_signature": "49337578317cf5785c53b600cc609b51c44d966d714f1bd26f4aefb0321f4d21",
+      "authored_signature": "d18858b3a4909f8619476124200bef25485e51bae89d45323f9ddf9ceba83f6c",
+      "calculated_signature": "d18858b3a4909f8619476124200bef25485e51bae89d45323f9ddf9ceba83f6c",
       "nearest_id": "kitty_cat_lounge_amateur_night",
-      "nearest_similarity": 0.635204081632653
+      "nearest_similarity": 0.636138613861386
     }
   ],
   "pairwise_similarity": [
     {
       "left_id": "kitty_cat_lounge_amateur_night",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.381193124368049,
+      "similarity": 0.380626223091977,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15571,7 +15891,7 @@
     {
       "left_id": "kitty_cat_lounge_amateur_night",
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.506462984723854,
+      "similarity": 0.497168742921857,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15583,7 +15903,7 @@
     {
       "left_id": "kitty_cat_lounge_amateur_night",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.305103148751357,
+      "similarity": 0.304852320675105,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15595,7 +15915,7 @@
     {
       "left_id": "kitty_cat_lounge_buyout",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.351137487636004,
+      "similarity": 0.351532567049808,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15607,7 +15927,7 @@
     {
       "left_id": "kitty_cat_lounge_buyout",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.300865800865801,
+      "similarity": 0.29664570230608,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15619,7 +15939,7 @@
     {
       "left_id": "kitty_cat_lounge_slow_night",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.298989898989899,
+      "similarity": 0.298726738491675,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15631,7 +15951,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.320879120879121,
+      "similarity": 0.32017075773746,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15643,7 +15963,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.332642487046632,
+      "similarity": 0.329989969909729,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15655,7 +15975,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.449939686369119,
+      "similarity": 0.451877934272301,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15667,7 +15987,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.445876288659794,
+      "similarity": 0.43640897755611,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15679,7 +15999,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "punchline_debt_court",
-      "similarity": 0.470511140235911,
+      "similarity": 0.460076045627376,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15691,7 +16011,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "punchline_greased_week",
-      "similarity": 0.482120838471023,
+      "similarity": 0.483213429256595,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15703,7 +16023,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.464751958224543,
+      "similarity": 0.454545454545455,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15715,7 +16035,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "punchline_new_muscle",
-      "similarity": 0.323788546255507,
+      "similarity": 0.322994652406417,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15727,7 +16047,7 @@
     {
       "left_id": "punchline_bringer_show",
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.346024636058231,
+      "similarity": 0.344565217391304,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15739,7 +16059,7 @@
     {
       "left_id": "punchline_debt_court",
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.35972850678733,
+      "similarity": 0.357848518111965,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15751,7 +16071,7 @@
     {
       "left_id": "punchline_debt_court",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.310907237512742,
+      "similarity": 0.30898321816387,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15763,7 +16083,7 @@
     {
       "left_id": "punchline_debt_court",
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.340022296544036,
+      "similarity": 0.332974137931034,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15775,7 +16095,7 @@
     {
       "left_id": "punchline_debt_court",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.591489361702128,
+      "similarity": 0.593360995850622,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15787,7 +16107,7 @@
     {
       "left_id": "punchline_debt_court",
       "right_id": "punchline_new_muscle",
-      "similarity": 0.310796074154853,
+      "similarity": 0.310381355932203,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15799,7 +16119,7 @@
     {
       "left_id": "punchline_debt_court",
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.319429198682766,
+      "similarity": 0.318763326226013,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15811,7 +16131,7 @@
     {
       "left_id": "punchline_greased_week",
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.468499427262314,
+      "similarity": 0.460773480662983,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15823,7 +16143,7 @@
     {
       "left_id": "punchline_greased_week",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.366,
+      "similarity": 0.365924491771539,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15835,7 +16155,7 @@
     {
       "left_id": "punchline_greased_week",
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.664935064935065,
+      "similarity": 0.664987405541562,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -15847,7 +16167,7 @@
     {
       "left_id": "punchline_greased_week",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.312227074235808,
+      "similarity": 0.307610993657505,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15859,7 +16179,7 @@
     {
       "left_id": "punchline_greased_week",
       "right_id": "punchline_debt_court",
-      "similarity": 0.316538882803943,
+      "similarity": 0.310381355932203,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15871,7 +16191,7 @@
     {
       "left_id": "punchline_greased_week",
       "right_id": "punchline_new_muscle",
-      "similarity": 0.482080924855491,
+      "similarity": 0.473801560758083,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15883,7 +16203,7 @@
     {
       "left_id": "punchline_greased_week",
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.51357733175915,
+      "similarity": 0.503981797497156,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15895,7 +16215,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.506462984723854,
+      "similarity": 0.497168742921857,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15907,7 +16227,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.351137487636004,
+      "similarity": 0.351532567049808,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15919,10 +16239,10 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.720805369127517,
+      "similarity": 0.719115734720416,
       "equal_normalized_hash": false,
-      "status": "blocking_review",
-      "blocking": true,
+      "status": "warning",
+      "blocking": false,
       "masked_visual_evidence": {
 
       },
@@ -15931,7 +16251,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.300865800865801,
+      "similarity": 0.29664570230608,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15943,7 +16263,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "punchline_bringer_show",
-      "similarity": 0.449939686369119,
+      "similarity": 0.451877934272301,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15955,7 +16275,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "punchline_debt_court",
-      "similarity": 0.340022296544036,
+      "similarity": 0.332974137931034,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15967,7 +16287,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "punchline_greased_week",
-      "similarity": 0.680209698558322,
+      "similarity": 0.679796696315121,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -15979,7 +16299,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.303687635574837,
+      "similarity": 0.29800629590766,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15991,7 +16311,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "punchline_new_muscle",
-      "similarity": 0.47187141216992,
+      "similarity": 0.464008859357697,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16003,7 +16323,7 @@
     {
       "left_id": "punchline_headliner_night",
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.497663551401869,
+      "similarity": 0.488738738738739,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16015,7 +16335,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.361268403171008,
+      "similarity": 0.359340659340659,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16027,7 +16347,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.345188284518828,
+      "similarity": 0.342105263157895,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16039,7 +16359,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.303687635574837,
+      "similarity": 0.29800629590766,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16051,7 +16371,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.589235127478754,
+      "similarity": 0.591160220994475,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16063,7 +16383,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "punchline_debt_court",
-      "similarity": 0.657311669128508,
+      "similarity": 0.657553956834532,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -16075,7 +16395,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "punchline_greased_week",
-      "similarity": 0.317982456140351,
+      "similarity": 0.311770943796394,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16087,7 +16407,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "punchline_new_muscle",
-      "similarity": 0.349046015712682,
+      "similarity": 0.347494553376906,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16099,7 +16419,7 @@
     {
       "left_id": "punchline_high_stakes_night",
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.35972850678733,
+      "similarity": 0.357848518111965,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16111,7 +16431,7 @@
     {
       "left_id": "punchline_new_muscle",
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.637292464878672,
+      "similarity": 0.63816604708798,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -16123,7 +16443,7 @@
     {
       "left_id": "punchline_new_muscle",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.382591093117409,
+      "similarity": 0.381978452497551,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16135,7 +16455,7 @@
     {
       "left_id": "punchline_new_muscle",
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.461801596351197,
+      "similarity": 0.454345434543454,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16147,7 +16467,7 @@
     {
       "left_id": "punchline_new_muscle",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.329646017699115,
+      "similarity": 0.328678839957035,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16159,7 +16479,7 @@
     {
       "left_id": "punchline_new_muscle",
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.614609571788413,
+      "similarity": 0.616136919315403,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -16171,7 +16491,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.349046015712682,
+      "similarity": 0.347494553376906,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16183,7 +16503,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.329886246122027,
+      "similarity": 0.328657314629259,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16195,7 +16515,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.296655879180151,
+      "similarity": 0.292580982236155,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16207,7 +16527,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.642752562225476,
+      "similarity": 0.643366619115549,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -16219,7 +16539,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "punchline_bringer_show",
-      "similarity": 0.447741935483871,
+      "similarity": 0.438202247191011,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16231,7 +16551,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "punchline_debt_court",
-      "similarity": 0.591489361702128,
+      "similarity": 0.593360995850622,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16243,7 +16563,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "punchline_greased_week",
-      "similarity": 0.307943416757345,
+      "similarity": 0.303477344573235,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16255,7 +16575,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "punchline_headliner_night",
-      "similarity": 0.296655879180151,
+      "similarity": 0.292580982236155,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16267,7 +16587,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.645161290322581,
+      "similarity": 0.645714285714286,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -16279,7 +16599,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "punchline_new_muscle",
-      "similarity": 0.364358683314415,
+      "similarity": 0.362334801762115,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16291,7 +16611,7 @@
     {
       "left_id": "punchline_open_mic_night",
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.340022296544036,
+      "similarity": 0.338744588744589,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16303,7 +16623,7 @@
     {
       "left_id": "punchline_raid_jitters",
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.635204081632653,
+      "similarity": 0.636138613861386,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -16315,7 +16635,7 @@
     {
       "left_id": "punchline_raid_jitters",
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.433368310598111,
+      "similarity": 0.431034482758621,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16327,7 +16647,7 @@
     {
       "left_id": "punchline_raid_jitters",
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.51357733175915,
+      "similarity": 0.503981797497156,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16339,7 +16659,7 @@
     {
       "left_id": "punchline_raid_jitters",
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.306521739130435,
+      "similarity": 0.30623020063358,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16362,15 +16682,15 @@
     "scenario kitty_cat_lounge_buyout is invalid: [\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_buyout sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\"]",
     "scenario kitty_cat_lounge_slow_night is invalid: [\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_slow_night sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\"]",
     "scenario kitty_cat_lounge_bachelorette_storm is invalid: [\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario kitty_cat_lounge_bachelorette_storm sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario punchline_open_mic_night vs punchline_high_stakes_night: 0.645 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_open_mic_night vs punchline_high_stakes_night: 0.646 (warning). Missing receipt-bound masked visual evidence.",
     "scenario punchline_open_mic_night vs kitty_cat_lounge_slow_night: 0.643 (warning). Missing receipt-bound masked visual evidence.",
     "scenario punchline_headliner_night vs punchline_greased_week: 0.680 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_headliner_night vs kitty_cat_lounge_buyout: 0.721 (blocking_review).",
-    "scenario punchline_high_stakes_night vs punchline_debt_court: 0.657 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_headliner_night vs kitty_cat_lounge_buyout: 0.719 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_high_stakes_night vs punchline_debt_court: 0.658 (warning). Missing receipt-bound masked visual evidence.",
     "scenario punchline_greased_week vs kitty_cat_lounge_buyout: 0.665 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_new_muscle vs punchline_raid_jitters: 0.615 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_new_muscle vs kitty_cat_lounge_amateur_night: 0.637 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_raid_jitters vs kitty_cat_lounge_amateur_night: 0.635 (warning). Missing receipt-bound masked visual evidence."
+    "scenario punchline_new_muscle vs punchline_raid_jitters: 0.616 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_new_muscle vs kitty_cat_lounge_amateur_night: 0.638 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_raid_jitters vs kitty_cat_lounge_amateur_night: 0.636 (warning). Missing receipt-bound masked visual evidence."
   ],
   "pair_count": 66
 }

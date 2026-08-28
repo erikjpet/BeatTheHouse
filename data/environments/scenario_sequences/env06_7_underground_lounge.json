@@ -16,8 +16,26 @@
           "punchline_open_mic_night_interrupted",
           "punchline_open_mic_night_reduced_motion",
           "punchline_open_mic_night_small_screen",
-          "punchline_open_mic_night_hit_overlay"
+          "punchline_open_mic_night_hit_overlay",
+          "punchline_open_mic_night_obstruction"
         ],
+        "identity_decision": {
+          "options": [
+            [
+              "manage_open_mic_bill",
+              "work_1"
+            ],
+            [
+              "support_waiting_comic",
+              "work_1"
+            ],
+            [
+              "sabotage_open_mic",
+              "terminal_failure"
+            ]
+          ],
+          "phase_id": "arrival"
+        },
         "masked_visual_explanations": {
 
         },
@@ -26,6 +44,9 @@
           "carry_stage_steps",
           "reseat_late_audience",
           "release_final_act",
+          "manage_open_mic_bill",
+          "support_waiting_comic",
+          "sabotage_open_mic",
           "refuse_punchline_open_mic_night",
           "ignore_punchline_open_mic_night"
         ],
@@ -800,6 +821,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_open_mic_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -811,7 +838,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Carry Stage Steps",
                     "min_target_size": 44.0,
@@ -962,6 +990,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_open_mic_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -973,7 +1007,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Reseat Late Audience",
                     "min_target_size": 44.0,
@@ -1127,6 +1162,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_open_mic_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -1138,7 +1179,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Release Final Act",
                     "min_target_size": 44.0,
@@ -1323,7 +1365,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "89937eca7ad332811524ed3d837514096d914f7c8b2426e0e87919a633918ca2"
+        "sequence_signature": "b81ed64aa6fa85ae83b0befed4a377d926b34dc7b95f1b5580b26e1ba323ece0"
       }
     },
     {
@@ -1338,8 +1380,26 @@
           "punchline_headliner_night_interrupted",
           "punchline_headliner_night_reduced_motion",
           "punchline_headliner_night_small_screen",
-          "punchline_headliner_night_hit_overlay"
+          "punchline_headliner_night_hit_overlay",
+          "punchline_headliner_night_obstruction"
         ],
+        "identity_decision": {
+          "options": [
+            [
+              "honor_headliner_route",
+              "work_2"
+            ],
+            [
+              "escort_headliner_direct",
+              "work_2"
+            ],
+            [
+              "divert_headliner_runner",
+              "terminal_failure"
+            ]
+          ],
+          "phase_id": "work_1"
+        },
         "masked_visual_explanations": {
 
         },
@@ -1349,6 +1409,9 @@
           "signal_l3_door",
           "escort_headliner_route",
           "reset_service_rope",
+          "honor_headliner_route",
+          "escort_headliner_direct",
+          "divert_headliner_runner",
           "refuse_punchline_headliner_night",
           "ignore_punchline_headliner_night"
         ],
@@ -2126,6 +2189,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_punchline_headliner_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "honor_headliner_route",
                         "input_action": "ui_left",
                         "label": "Honor Headliner Route",
@@ -2154,6 +2223,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -2306,6 +2376,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_headliner_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -2317,7 +2393,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Signal L 3 Door",
                     "min_target_size": 44.0,
@@ -2471,6 +2548,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_headliner_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -2482,7 +2565,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Escort Headliner Route",
                     "min_target_size": 44.0,
@@ -2634,6 +2718,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_headliner_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -2645,7 +2735,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Reset Service Rope",
                     "min_target_size": 44.0,
@@ -2828,7 +2919,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "7ce36ee297133339f16e9dfdb11107af2e7708161ac6cc2f762971319f3b2739"
+        "sequence_signature": "1f7577916a11ccc80591f43045b2678f5e5fe86b115ca06dd3f4815888b7b485"
       }
     },
     {
@@ -2843,8 +2934,26 @@
           "punchline_bringer_show_interrupted",
           "punchline_bringer_show_reduced_motion",
           "punchline_bringer_show_small_screen",
-          "punchline_bringer_show_hit_overlay"
+          "punchline_bringer_show_hit_overlay",
+          "punchline_bringer_show_obstruction"
         ],
+        "identity_decision": {
+          "options": [
+            [
+              "seat_bringer_supporters",
+              "work_2"
+            ],
+            [
+              "defend_bringer_minimum",
+              "terminal_success"
+            ],
+            [
+              "accept_hostile_pitch",
+              "terminal_failure"
+            ]
+          ],
+          "phase_id": "work_1"
+        },
         "masked_visual_explanations": {
 
         },
@@ -2853,6 +2962,9 @@
           "usher_supporters_to_block",
           "count_minimum_seats",
           "close_hostile_pitch",
+          "seat_bringer_supporters",
+          "defend_bringer_minimum",
+          "accept_hostile_pitch",
           "refuse_punchline_bringer_show",
           "ignore_punchline_bringer_show"
         ],
@@ -3609,6 +3721,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_punchline_bringer_show",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "seat_bringer_supporters",
                         "input_action": "ui_left",
                         "label": "Seat Bringer Supporters",
@@ -3637,6 +3755,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -3789,6 +3908,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_bringer_show",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -3800,7 +3925,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Count Minimum Seats",
                     "min_target_size": 44.0,
@@ -3954,6 +4080,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_bringer_show",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -3965,7 +4097,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Close Hostile Pitch",
                     "min_target_size": 44.0,
@@ -4150,7 +4283,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b9494e5f5b1dde1bce8d6540dd661c29d2d9f8ea6f038adcd18a55c4c2b64ff1"
+        "sequence_signature": "5c4c43d8c274f489064b7a48e514b71034d1197efbbc7b7ded5d047430033842"
       }
     },
     {
@@ -4165,8 +4298,26 @@
           "punchline_high_stakes_night_interrupted",
           "punchline_high_stakes_night_reduced_motion",
           "punchline_high_stakes_night_small_screen",
-          "punchline_high_stakes_night_hit_overlay"
+          "punchline_high_stakes_night_hit_overlay",
+          "punchline_high_stakes_night_obstruction"
         ],
+        "identity_decision": {
+          "options": [
+            [
+              "serve_protected_table",
+              "work_3"
+            ],
+            [
+              "open_public_observer_rail",
+              "terminal_success"
+            ],
+            [
+              "seal_public_game_lane",
+              "terminal_failure"
+            ]
+          ],
+          "phase_id": "work_2"
+        },
         "masked_visual_explanations": {
 
         },
@@ -4175,6 +4326,9 @@
           "mark_guard_sightline",
           "open_observer_rail",
           "restore_public_game_lane",
+          "serve_protected_table",
+          "open_public_observer_rail",
+          "seal_public_game_lane",
           "refuse_punchline_high_stakes_night",
           "ignore_punchline_high_stakes_night"
         ],
@@ -4906,6 +5060,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_high_stakes_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -4917,7 +5077,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Mark Guard Sightline",
                     "min_target_size": 44.0,
@@ -5107,6 +5268,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_punchline_high_stakes_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "serve_protected_table",
                         "input_action": "ui_left",
                         "label": "Serve Protected Table",
@@ -5135,6 +5302,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -5294,6 +5462,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_high_stakes_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -5305,7 +5479,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Restore Public Game Lane",
                     "min_target_size": 44.0,
@@ -5490,7 +5665,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4f5ddbc65620aefb38bddb6df7941135c40412f65e498c559bc108587bbe861b"
+        "sequence_signature": "cc7c31329595794270208271a28482a66fe6c9e92211052471f3d89290a69f2e"
       }
     },
     {
@@ -5505,8 +5680,26 @@
           "punchline_greased_week_interrupted",
           "punchline_greased_week_reduced_motion",
           "punchline_greased_week_small_screen",
-          "punchline_greased_week_hit_overlay"
+          "punchline_greased_week_hit_overlay",
+          "punchline_greased_week_obstruction"
         ],
+        "identity_decision": {
+          "options": [
+            [
+              "expose_payoff_chain",
+              "terminal_success"
+            ],
+            [
+              "maintain_payoff_route",
+              "terminal_failure"
+            ],
+            [
+              "redirect_inspector_route",
+              "work_2"
+            ]
+          ],
+          "phase_id": "work_1"
+        },
         "masked_visual_explanations": {
 
         },
@@ -5516,6 +5709,9 @@
           "shadow_inspector_to_l3",
           "unseal_declared_service",
           "post_route_record",
+          "expose_payoff_chain",
+          "maintain_payoff_route",
+          "redirect_inspector_route",
           "refuse_punchline_greased_week",
           "ignore_punchline_greased_week"
         ],
@@ -6293,6 +6489,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_punchline_greased_week",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "expose_payoff_chain",
                         "input_action": "ui_left",
                         "label": "Expose Payoff Chain",
@@ -6321,6 +6523,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -6473,6 +6676,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_greased_week",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -6484,7 +6693,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Shadow Inspector To L 3",
                     "min_target_size": 44.0,
@@ -6638,6 +6848,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_greased_week",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -6649,7 +6865,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Unseal Declared Service",
                     "min_target_size": 44.0,
@@ -6801,6 +7018,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_greased_week",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -6812,7 +7035,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Post Route Record",
                     "min_target_size": 44.0,
@@ -6995,7 +7219,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c1e960874682eb2af92c64193875b522217e645c619902567df03da4f6fb48fd"
+        "sequence_signature": "b29d16acf24e2174cd6e7dd1db73c4cf108bc51fdc2233147854074212100ea7"
       }
     },
     {
@@ -7010,8 +7234,26 @@
           "punchline_debt_court_interrupted",
           "punchline_debt_court_reduced_motion",
           "punchline_debt_court_small_screen",
-          "punchline_debt_court_hit_overlay"
+          "punchline_debt_court_hit_overlay",
+          "punchline_debt_court_obstruction"
         ],
+        "identity_decision": {
+          "options": [
+            [
+              "uphold_debt_ruling",
+              "terminal_success"
+            ],
+            [
+              "contest_debt_ruling",
+              "terminal_failure"
+            ],
+            [
+              "adjourn_debt_court",
+              "terminal_refused"
+            ]
+          ],
+          "phase_id": "work_2"
+        },
         "masked_visual_explanations": {
 
         },
@@ -7020,6 +7262,9 @@
           "place_public_evidence",
           "call_room_witness",
           "clear_chairs_for_work",
+          "uphold_debt_ruling",
+          "contest_debt_ruling",
+          "adjourn_debt_court",
           "refuse_punchline_debt_court",
           "ignore_punchline_debt_court"
         ],
@@ -7751,6 +7996,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_debt_court",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -7762,7 +8013,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Place Public Evidence",
                     "min_target_size": 44.0,
@@ -7952,6 +8204,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_punchline_debt_court",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "uphold_debt_ruling",
                         "input_action": "ui_left",
                         "label": "Uphold Debt Ruling",
@@ -7980,6 +8238,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -8139,6 +8398,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_debt_court",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -8150,7 +8415,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Clear Chairs For Work",
                     "min_target_size": 44.0,
@@ -8335,7 +8601,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "39f007c42b9525872920689de7352e0f17f8bf61cb1165b833e9729c126098c1"
+        "sequence_signature": "628d1bb7e9d8837aad6bd4aa9fbfcb3793792356eca46aed7117ffae46e2dae9"
       }
     },
     {
@@ -8350,8 +8616,26 @@
           "punchline_new_muscle_interrupted",
           "punchline_new_muscle_reduced_motion",
           "punchline_new_muscle_small_screen",
-          "punchline_new_muscle_hit_overlay"
+          "punchline_new_muscle_hit_overlay",
+          "punchline_new_muscle_obstruction"
         ],
+        "identity_decision": {
+          "options": [
+            [
+              "train_new_guard_posts",
+              "work_1"
+            ],
+            [
+              "test_guard_loyalty",
+              "work_1"
+            ],
+            [
+              "entrench_checkpoint_posts",
+              "terminal_failure"
+            ]
+          ],
+          "phase_id": "arrival"
+        },
         "masked_visual_explanations": {
 
         },
@@ -8361,6 +8645,9 @@
           "mark_l3_bypass_lane",
           "reassign_checkpoint_posts",
           "open_clean_route",
+          "train_new_guard_posts",
+          "test_guard_loyalty",
+          "entrench_checkpoint_posts",
           "refuse_punchline_new_muscle",
           "ignore_punchline_new_muscle"
         ],
@@ -9156,6 +9443,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_new_muscle",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -9167,7 +9460,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Test L 2 Guard Gap",
                     "min_target_size": 44.0,
@@ -9318,6 +9612,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_new_muscle",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -9329,7 +9629,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Mark L 3 Bypass Lane",
                     "min_target_size": 44.0,
@@ -9483,6 +9784,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_new_muscle",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -9494,7 +9801,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Reassign Checkpoint Posts",
                     "min_target_size": 44.0,
@@ -9646,6 +9954,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_new_muscle",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -9657,7 +9971,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Open Clean Route",
                     "min_target_size": 44.0,
@@ -9840,7 +10155,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c68b32a81a969740779d47413f742786c9eb1461be26b8e10d198ae373a300a2"
+        "sequence_signature": "ceab70468c740e9fd202c104f3b4bb98013a1627032440d7c18c22069bda2f6d"
       }
     },
     {
@@ -9855,8 +10170,26 @@
           "punchline_raid_jitters_interrupted",
           "punchline_raid_jitters_reduced_motion",
           "punchline_raid_jitters_small_screen",
-          "punchline_raid_jitters_hit_overlay"
+          "punchline_raid_jitters_hit_overlay",
+          "punchline_raid_jitters_obstruction"
         ],
+        "identity_decision": {
+          "options": [
+            [
+              "hide_raid_evidence",
+              "work_4"
+            ],
+            [
+              "abort_raid_night",
+              "terminal_failure"
+            ],
+            [
+              "reopen_after_false_alarm",
+              "terminal_success"
+            ]
+          ],
+          "phase_id": "work_3"
+        },
         "masked_visual_explanations": {
 
         },
@@ -9866,6 +10199,9 @@
           "seal_l3_room_screen",
           "answer_outer_knock",
           "reopen_safe_floor",
+          "hide_raid_evidence",
+          "abort_raid_night",
+          "reopen_after_false_alarm",
           "refuse_punchline_raid_jitters",
           "ignore_punchline_raid_jitters"
         ],
@@ -10608,6 +10944,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_raid_jitters",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -10619,7 +10961,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Clear L 2 Service Lane",
                     "min_target_size": 44.0,
@@ -10770,6 +11113,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_raid_jitters",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -10781,7 +11130,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Seal L 3 Room Screen",
                     "min_target_size": 44.0,
@@ -10970,6 +11320,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_punchline_raid_jitters",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "hide_raid_evidence",
                         "input_action": "ui_left",
                         "label": "Hide Raid Evidence",
@@ -10998,6 +11354,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -11151,6 +11508,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_raid_jitters",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -11162,7 +11525,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Reopen Safe Floor",
                     "min_target_size": 44.0,
@@ -11345,7 +11709,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "49337578317cf5785c53b600cc609b51c44d966d714f1bd26f4aefb0321f4d21"
+        "sequence_signature": "d18858b3a4909f8619476124200bef25485e51bae89d45323f9ddf9ceba83f6c"
       }
     },
     {
@@ -11360,8 +11724,26 @@
           "kitty_cat_lounge_amateur_night_interrupted",
           "kitty_cat_lounge_amateur_night_reduced_motion",
           "kitty_cat_lounge_amateur_night_small_screen",
-          "kitty_cat_lounge_amateur_night_hit_overlay"
+          "kitty_cat_lounge_amateur_night_hit_overlay",
+          "kitty_cat_lounge_amateur_night_obstruction"
         ],
+        "identity_decision": {
+          "options": [
+            [
+              "judge_amateur_bracket",
+              "work_3"
+            ],
+            [
+              "reseed_amateur_lineup",
+              "work_3"
+            ],
+            [
+              "stall_amateur_bracket",
+              "terminal_failure"
+            ]
+          ],
+          "phase_id": "work_2"
+        },
         "masked_visual_explanations": {
 
         },
@@ -11371,6 +11753,9 @@
           "set_stage_mark",
           "deliver_judges_card",
           "rotate_final_lineup",
+          "judge_amateur_bracket",
+          "reseed_amateur_lineup",
+          "stall_amateur_bracket",
           "refuse_kitty_cat_lounge_amateur_night",
           "ignore_kitty_cat_lounge_amateur_night"
         ],
@@ -12113,6 +12498,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_amateur_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -12124,7 +12515,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Carry Costume To Dressing",
                     "min_target_size": 44.0,
@@ -12310,6 +12702,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_kitty_cat_lounge_amateur_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "judge_amateur_bracket",
                         "input_action": "ui_left",
                         "label": "Judge Amateur Bracket",
@@ -12338,6 +12736,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -12493,6 +12892,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_amateur_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -12504,7 +12909,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Deliver Judges Card",
                     "min_target_size": 44.0,
@@ -12656,6 +13062,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_amateur_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -12667,7 +13079,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Rotate Final Lineup",
                     "min_target_size": 44.0,
@@ -12850,7 +13263,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e563f7a19203485bdd5f49b52a32f3d4f92b83da2b92f0406a5b61b5433eb7ab"
+        "sequence_signature": "964386a3c570ce6f635a41b9f0ce4856492b78fb899fb08954a21b2cb81e7546"
       }
     },
     {
@@ -12865,8 +13278,26 @@
           "kitty_cat_lounge_buyout_interrupted",
           "kitty_cat_lounge_buyout_reduced_motion",
           "kitty_cat_lounge_buyout_small_screen",
-          "kitty_cat_lounge_buyout_hit_overlay"
+          "kitty_cat_lounge_buyout_hit_overlay",
+          "kitty_cat_lounge_buyout_obstruction"
         ],
+        "identity_decision": {
+          "options": [
+            [
+              "split_buyout_floor",
+              "work_2"
+            ],
+            [
+              "claim_full_buyout",
+              "terminal_failure"
+            ],
+            [
+              "preserve_public_half",
+              "work_2"
+            ]
+          ],
+          "phase_id": "work_1"
+        },
         "masked_visual_explanations": {
 
         },
@@ -12876,6 +13307,9 @@
           "carry_request_cart",
           "mark_public_half_floor",
           "reset_entry_desk",
+          "split_buyout_floor",
+          "claim_full_buyout",
+          "preserve_public_half",
           "refuse_kitty_cat_lounge_buyout",
           "ignore_kitty_cat_lounge_buyout"
         ],
@@ -13653,6 +14087,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_kitty_cat_lounge_buyout",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "split_buyout_floor",
                         "input_action": "ui_left",
                         "label": "Split Buyout Floor",
@@ -13681,6 +14121,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -13833,6 +14274,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_buyout",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -13844,7 +14291,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Carry Request Cart",
                     "min_target_size": 44.0,
@@ -13998,6 +14446,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_buyout",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -14009,7 +14463,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Mark Public Half Floor",
                     "min_target_size": 44.0,
@@ -14161,6 +14616,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_buyout",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -14172,7 +14633,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Reset Entry Desk",
                     "min_target_size": 44.0,
@@ -14355,7 +14817,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "bc6424afab41eba83e4b4580a42f68ea917428182b007895ea3eb6b2d01becf2"
+        "sequence_signature": "ea3c1bfea01ea3a6cd35791457a143ec123e9e8f61e391ac4a3bbe9ed4e330a0"
       }
     },
     {
@@ -14370,8 +14832,26 @@
           "kitty_cat_lounge_slow_night_interrupted",
           "kitty_cat_lounge_slow_night_reduced_motion",
           "kitty_cat_lounge_slow_night_small_screen",
-          "kitty_cat_lounge_slow_night_hit_overlay"
+          "kitty_cat_lounge_slow_night_hit_overlay",
+          "kitty_cat_lounge_slow_night_obstruction"
         ],
+        "identity_decision": {
+          "options": [
+            [
+              "reactivate_mini_stage",
+              "work_1"
+            ],
+            [
+              "maintain_conversation_booth",
+              "work_1"
+            ],
+            [
+              "close_wrong_lounge_zone",
+              "terminal_failure"
+            ]
+          ],
+          "phase_id": "arrival"
+        },
         "masked_visual_explanations": {
 
         },
@@ -14380,6 +14860,9 @@
           "coil_closed_section_rope",
           "power_selected_station",
           "move_remaining_staff",
+          "reactivate_mini_stage",
+          "maintain_conversation_booth",
+          "close_wrong_lounge_zone",
           "refuse_kitty_cat_lounge_slow_night",
           "ignore_kitty_cat_lounge_slow_night"
         ],
@@ -15154,6 +15637,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_slow_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -15165,7 +15654,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Coil Closed Section Rope",
                     "min_target_size": 44.0,
@@ -15316,6 +15806,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_slow_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -15327,7 +15823,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Power Selected Station",
                     "min_target_size": 44.0,
@@ -15481,6 +15978,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_slow_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -15492,7 +15995,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Move Remaining Staff",
                     "min_target_size": 44.0,
@@ -15677,7 +16181,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d5743542fde4c35ceb98995424f588d10257b5f418340982598a29d25b92d82c"
+        "sequence_signature": "eade54e5f0f9db053a001d282e1db728471f2a00cf7206c362fe601460c3e6d8"
       }
     },
     {
@@ -15692,8 +16196,26 @@
           "kitty_cat_lounge_bachelorette_storm_interrupted",
           "kitty_cat_lounge_bachelorette_storm_reduced_motion",
           "kitty_cat_lounge_bachelorette_storm_small_screen",
-          "kitty_cat_lounge_bachelorette_storm_hit_overlay"
+          "kitty_cat_lounge_bachelorette_storm_hit_overlay",
+          "kitty_cat_lounge_bachelorette_storm_obstruction"
         ],
+        "identity_decision": {
+          "options": [
+            [
+              "rescue_missing_guest",
+              "work_4"
+            ],
+            [
+              "commandeer_lounge_stage",
+              "terminal_failure"
+            ],
+            [
+              "evacuate_party_groups",
+              "terminal_interrupted"
+            ]
+          ],
+          "phase_id": "work_3"
+        },
         "masked_visual_explanations": {
 
         },
@@ -15704,6 +16226,9 @@
           "return_stage_prop",
           "restore_bar_route",
           "seat_orderly_finale",
+          "rescue_missing_guest",
+          "commandeer_lounge_stage",
+          "evacuate_party_groups",
           "refuse_kitty_cat_lounge_bachelorette_storm",
           "ignore_kitty_cat_lounge_bachelorette_storm"
         ],
@@ -16467,6 +16992,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_bachelorette_storm",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -16478,7 +17009,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Roll Prop Trunk Off Lane",
                     "min_target_size": 44.0,
@@ -16629,6 +17161,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_bachelorette_storm",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -16640,7 +17178,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Trace Missing Guest Marker",
                     "min_target_size": 44.0,
@@ -16829,6 +17368,12 @@
                         "non_color_state": "ready"
                       },
                       {
+                        "id": "refuse_kitty_cat_lounge_bachelorette_storm",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "id": "rescue_missing_guest",
                         "input_action": "ui_left",
                         "label": "Rescue Missing Guest",
@@ -16857,6 +17402,7 @@
                     "input_actions": [
                       "ui_accept",
                       "ui_right",
+                      "ui_cancel",
                       "ui_left",
                       "ui_up"
                     ],
@@ -17010,6 +17556,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_bachelorette_storm",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -17021,7 +17573,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Restore Bar Route",
                     "min_target_size": 44.0,
@@ -17171,6 +17724,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_bachelorette_storm",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -17182,7 +17741,8 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Seat Orderly Finale",
                     "min_target_size": 44.0,
@@ -17369,7 +17929,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4ad65a6683bbea6dc0bd6be7176126668d9ae3847c94039dc73eab36dd127b3a"
+        "sequence_signature": "a24f237b9641c27647e9d8cc4f6fddf219f6331686ae1868a0aee6ec1b7e882a"
       }
     }
   ]
