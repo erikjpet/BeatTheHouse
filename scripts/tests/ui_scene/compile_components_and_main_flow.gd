@@ -2457,11 +2457,12 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# The ordinary-travel scalar baseline was first captured at 9cff9b23. The
 	# full generated-state hashes were reproduced at 908b14bb with the verified
 	# native build after authored coin-pusher persistence changes; meta injection
-	# remains disabled and each hash covers the full serialized value.
+	# remains disabled and each hash covers the full serialized value. env06_6
+	# canonically adds visit, night, and context instance identity to host state.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "45af0f598ae637b57cbb4b32124cfa7367fcb4528b7ca7dd26f13219b038ff12",
+		"current_environment_sha256": "1aed96619a9791ea4f6f2c597919e34f9692f6826d00fd2d76bf450e9c4af2ce",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
@@ -2472,7 +2473,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0801d8c617e0ab15f304eae949a7c70fae01fc4031f24580d34f74e2dedd72ce",
-		"world_map_sha256": "7ca2d05cb3378c802eb8df85894974b24f5d7f4953b8f34b62f3d7ebc450fbd4",
+		"world_map_sha256": "f25df26f7d1d9a2334ec2038817bd196301e53cc892f38d5372ba0c006ef1608",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
