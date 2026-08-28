@@ -252,25 +252,30 @@ function buildScenario(spec, scenarioIndex) {
     const actorOperation = actorOp(beat[6], `${spec.id}_beat_${i + 1}_${beat[6]}`, actorId, beat[8]);
     const interactionOps = [{family: "interaction_ops", op: "remove", receipt_id: `${spec.id}_remove_station_${i}`, owner_namespace: "scenario", stable_object_id: previousStation}];
     if (nextBeat) interactionOps.push(interactionOp(`${spec.id}_add_station_${i + 1}`, nextStation, nextBeat[1], [action(nextBeat[0], nextBeat[1], i + 1, "complete_objective_step", {objective_id: objectiveId, step_id: nextBeat[0]})]));
-    else interactionOps.push(interactionOp(`${spec.id}_add_decision`, `${spec.id}_decision_station`, "Resolve the physical aftermath", [
-      action(`${spec.id}_resolve_a`, spec.outcomes[0][1], 0, "resolve_objective", {objective_id: objectiveId, outcome: "success"}),
-      action(`${spec.id}_resolve_b`, spec.outcomes[1][1], 1, "resolve_objective", {objective_id: objectiveId, outcome: "success"}),
-      action(`${spec.id}_fail`, spec.outcomes[2][1], 2, "resolve_objective", {objective_id: objectiveId, outcome: "failure"}),
-      action(`${spec.id}_refuse`, spec.outcomes[3][1], 4, "resolve_objective", {objective_id: objectiveId, outcome: "cancel"})
+    else interactionOps.push(interactionOp(`${spec.id}_add_advance_station`, `${spec.id}_advance_station`, "Open the aftermath station", [
+      action(`${spec.id}_open_decision`, "Open the aftermath station", 3)
     ]));
     phases.push({
       id: `beat_${i + 1}`, label: beat[1], arrival_feedback: beat[2], exit_prompt: spec.exit,
       entry_conditions: [], objective_ids: [objectiveId], advance_after_actions: 0,
       scene_ops: [sceneOperation], interaction_ops: interactionOps, actor_ops: [actorOperation],
       transition_ops: [{family: "transition_ops", op: i % 2 ? "feedback" : "scene_change", receipt_id: `${spec.id}_beat_${i + 1}_feedback`, owner_namespace: "scenario", stable_object_id: `${spec.id}_beat_${i + 1}_transition`, channel: "scenario", message: beat[2], ...(i % 2 ? {} : {change_id: `${spec.id}_change_${i + 1}`})}],
-      branches: [{id: `${spec.id}_advance_${i + 1}`, condition: {type: "command", command_id: nextBeat ? nextBeat[0] : `${spec.id}_resolve_a`}, next_phase: next}]
+      branches: [{id: `${spec.id}_advance_${i + 1}`, condition: {type: "command", command_id: nextBeat ? nextBeat[0] : `${spec.id}_open_decision`}, next_phase: next}]
     });
   }
   phases.push({
     id: "decision", label: "Branch aftermath", arrival_feedback: `The ${spec.pressure.replaceAll("_", " ")} now demands a physical resolution.`, exit_prompt: spec.exit, terminal: true,
     entry_conditions: [], objective_ids: [objectiveId], advance_after_actions: 0,
     scene_ops: [sceneOp("set_state", `${spec.id}_decision_ready`, `${spec.id}_${spec.props[(scenarioIndex + 1) % spec.props.length][0]}`, "decision_ready")],
-    interaction_ops: [], actor_ops: [],
+    interaction_ops: [
+      {family: "interaction_ops", op: "remove", receipt_id: `${spec.id}_remove_advance_station`, owner_namespace: "scenario", stable_object_id: `${spec.id}_advance_station`},
+      interactionOp(`${spec.id}_add_decision`, `${spec.id}_decision_station`, "Resolve the physical aftermath", [
+        action(`${spec.id}_resolve_a`, spec.outcomes[0][1], 0, "resolve_objective", {objective_id: objectiveId, outcome: "success"}),
+        action(`${spec.id}_resolve_b`, spec.outcomes[1][1], 1, "resolve_objective", {objective_id: objectiveId, outcome: "success"}),
+        action(`${spec.id}_fail`, spec.outcomes[2][1], 2, "resolve_objective", {objective_id: objectiveId, outcome: "failure"}),
+        action(`${spec.id}_refuse`, spec.outcomes[3][1], 4, "resolve_objective", {objective_id: objectiveId, outcome: "cancel"})
+      ])
+    ], actor_ops: [],
     transition_ops: [{family: "transition_ops", op: "feedback", receipt_id: `${spec.id}_decision_feedback`, owner_namespace: "scenario", stable_object_id: `${spec.id}_decision_transition`, channel: "scenario", message: "The changed room remains visible while the final branch is recorded."}],
     branches: [
       {id: `${spec.id}_outcome_a`, condition: {type: "command", command_id: `${spec.id}_resolve_a`}, outcome: spec.outcomes[0][0], objective_outcomes: {[objectiveId]: "success"}},
@@ -285,17 +290,26 @@ function buildScenario(spec, scenarioIndex) {
   for (const row of spec.props) cleanup.push(sceneOp("remove", `cleanup_${spec.id}_${row[0]}`, `${spec.id}_${row[0]}`));
   for (const row of spec.actors) cleanup.push({family: "actor_ops", op: "despawn", receipt_id: `cleanup_${spec.id}_${row[0]}`, owner_namespace: "scenario", stable_object_id: `${spec.id}_${row[0]}`});
   cleanup.push({family: "interaction_ops", op: "remove", receipt_id: `cleanup_${spec.id}_exit`, owner_namespace: "scenario", stable_object_id: exitId});
-  for (let i = 0; i <= spec.beats.length; i++) cleanup.push({family: "interaction_ops", op: "remove", receipt_id: `cleanup_${spec.id}_station_${i}`, owner_namespace: "scenario", stable_object_id: i === spec.beats.length ? `${spec.id}_decision_station` : `${spec.id}_station_${i}`});
+  cleanup.push({family: "interaction_ops", op: "remove", receipt_id: `cleanup_${spec.id}_decision_station`, owner_namespace: "scenario", stable_object_id: `${spec.id}_decision_station`});
 
   const aftermath = {};
   spec.outcomes.forEach((outcome, i) => {
     const [, label, feedback, op, target, value] = outcome;
-    const family = spec.actors.some(a => a[0] === target) ? "actor_ops" : "scene_ops";
-    const targetId = `${spec.id}_${target}`;
-    const effect = family === "actor_ops" ? actorOp(op, `aftermath_${spec.id}_${i}_${op}`, targetId, value) : sceneOp(op, `aftermath_${spec.id}_${i}_${op}`, targetId, value);
-    aftermath[outcome[0]] = {label, revisit_feedback: feedback, [family]: [effect]};
-    if (i === 0 && spec.props.length > 4) aftermath[outcome[0]].scene_ops = [...(aftermath[outcome[0]].scene_ops ?? []), sceneOp("set_appearance", `aftermath_${spec.id}_${i}_secondary`, `${spec.id}_${spec.props[4][0]}`, "resolved_secondary")];
-    if (i === 2 && spec.actors.length > 1) aftermath[outcome[0]].actor_ops = [...(aftermath[outcome[0]].actor_ops ?? []), actorOp("set_behavior", `aftermath_${spec.id}_${i}_actor`, `${spec.id}_${spec.actors[1][0]}`, scenarioIndex % 2 ? "depart" : "guard")];
+    const sceneId = `${spec.id}_aftermath_${outcome[0]}`;
+    const sceneSpawn = {family: "scene_ops", op: "spawn", receipt_id: `aftermath_${spec.id}_${i}_scene`, owner_namespace: "scenario", stable_object_id: sceneId,
+      object: {label: `${label} physical marker`, role: ["aftermath", "route", "service", "evidence", "shelter"][i], zone_id: ["center", "right", "left", "background", "foreground"][i],
+        bounds: {w: 48 + i * 8 + (scenarioIndex % 3) * 4, h: 44 + ((i + scenarioIndex) % 3) * 8}, visible: true, enabled: i !== 2,
+        state: value, appearance: `${op}_${target}_${value}`}};
+    aftermath[outcome[0]] = {label, revisit_feedback: feedback, scene_ops: [sceneSpawn]};
+    if (i === 0 || i === 2 || (i === 4 && scenarioIndex % 2 === 0)) {
+      const actorId = `${spec.id}_aftermath_actor_${outcome[0]}`;
+      aftermath[outcome[0]].actor_ops = [{family: "actor_ops", op: "spawn", receipt_id: `aftermath_${spec.id}_${i}_actor`, owner_namespace: "scenario", stable_object_id: actorId,
+        actor: {label: `${label} witness`, actor_id: `${spec.archetype}_${outcome[0]}_witness`, zone_id: ["right", "left", "background"][i % 3], behavior: i === 2 ? "guard" : "idle", pose: `aftermath_${i}`}}];
+    }
+    if (i === 1 && scenarioIndex % 3 === 0) {
+      aftermath[outcome[0]].scene_ops.push({family: "scene_ops", op: "spawn", receipt_id: `aftermath_${spec.id}_${i}_secondary`, owner_namespace: "scenario", stable_object_id: `${sceneId}_secondary`,
+        object: {label: `${label} secondary route marker`, role: "route", zone_id: "service_lane", bounds: {w: 72, h: 48}, visible: true, enabled: true, state: "secondary", appearance: "split_route"}});
+    }
   });
 
   const objectiveSteps = spec.beats.map(beat => ({id: beat[0], label: beat[1], kind: "command", command_id: beat[0]}));
