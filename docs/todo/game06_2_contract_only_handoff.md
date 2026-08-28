@@ -1,9 +1,44 @@
 # game06_2 contract-only successor handoff
 
-Status: UNREVIEWED-BLOCKED candidate
-Branch: `codex/game06_2-contract-only`
+Status: UNREVIEWED first-rejection remediation candidate
+Branch: `codex/game06_2-remediation`
 Frozen base: `a2760d816c781e711ff0923c296f97b786662453`
 Supersedes: blocked `codex/game06_2-impl` head `2def171d` (preserved unchanged; do not land)
+
+## First-rejection remediation
+
+This named successor begins at the Integrator-frozen contract-only head
+`e699d0bcfb566a022f4c4115920690874d0991ab`. It changes only the rejected
+Blackjack consumer, its row-local proof, and this handoff:
+
+- the one charged/resolving deal action, `blackjack_place_bet`, is now declared
+  exactly once, permitted only at wagering, accepted by the closed
+  `blackjack_authority` handler, and carried by the live direct-resolve command
+  inside a closed, fingerprinted `game_ritual/1` command envelope;
+- actor, object, anchor, and region declarations use the same stable dotted IDs
+  emitted by live projection;
+- pending/working items emit target, denomination/amount, source, edit ordinal,
+  eligibility, and disabled reason; resolutions emit item and authoritative
+  result IDs, stake disposition, returned stake, payout, net change, and public
+  explanation;
+- pointer, keyboard, controller, and reduced-motion routes reach the same live
+  Blackjack action handlers with explicit `focus`/`cycle` target selection;
+- hostile proof rejects bypass action IDs, cross-source/cross-target IDs,
+  cross-session boundaries, unknown envelope fields, wrong phases, and invalid
+  equivalent targets without a charge.
+
+No shared runtime, rules math, RTP, timing, economy, environment, crew, world,
+music, board, or main file changed in this remediation.
+
+### Exact remediation proof manifest
+
+| Proof | Exact result |
+| --- | --- |
+| `scripts/tests/foundation/game06_2_depth_contract.gd` | PASS after isolated editor import warm-up; includes envelope/handler, declared/live ID, complete authority record, live equivalent binding, target-selection, malformed/cross-ID/wrong-phase, no-charge, energy, restore, accounting, and ten-seed projection assertions. |
+| `tools/blackjack_seed_audit.ps1 -SeedCount 10 -Output user://game06_2_remediation_seed.json -RequireGodot` | PASS: 10 generated tables and clean resolves; 1,410 compact UI/action samples; 1,010 resolves at avg/p95/max `1.454/1.976/4.121 ms`; surface state avg/p95/max `2.2724/2.5960/4.1690 ms`; 49 count icons and zero empty count hands; 1,000-hand main drift `-214 / 5475 = -0.0391`. |
+| `tools/blackjack_terminal_presentation_probe.gd` | PASS: deal duration `1600 ms`, terminal bubble spawn `12541`. |
+| `tools/blackjack_heat_backoff_probe.gd` | PASS. |
+| `git diff --check` | PASS. |
 
 ## Scope and ancestry
 

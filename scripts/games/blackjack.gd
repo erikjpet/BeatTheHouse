@@ -76,6 +76,8 @@ const DRAW_DEAL_EVENTS_CACHE_KEY := "_blackjack_draw_deal_events"
 const ROURKE_DUEL_VARIANT := "rourke_duel"
 const BLACKJACK_RITUAL_ID := "blackjack.standard_table"
 const BLACKJACK_RITUAL_CONTRACT := "game_ritual/1"
+const BLACKJACK_RITUAL_HANDLER_ID := "blackjack_authority"
+const BLACKJACK_CHARGED_DEAL_ACTION := "blackjack_place_bet"
 const BLACKJACK_WAGER_PLACE_GESTURE := "blackjack_wager_place_gesture"
 const BLACKJACK_CUT_GESTURE := "blackjack_cut_gesture"
 const BLACKJACK_WAVE_GESTURE := "blackjack_wave_gesture"
@@ -119,19 +121,19 @@ func blackjack_ritual_contract() -> Dictionary:
 	var action_ids := [
 		"blackjack_chip", "blackjack_correct_bet", "blackjack_remove_chip", "blackjack_undo_bet",
 		"blackjack_clear_bet", "blackjack_max_bet", "blackjack_repeat_bet",
-		"blackjack_rebet", "blackjack_side_bet", "blackjack_deal",
+		"blackjack_rebet", "blackjack_side_bet", "blackjack_deal", BLACKJACK_CHARGED_DEAL_ACTION,
 		"blackjack_hit", "blackjack_stand", "blackjack_double",
 		"blackjack_split", "blackjack_surrender", "play_basic",
 	]
 	var action_declarations: Array = []
 	for action_id in action_ids:
-		action_declarations.append({"action_id": action_id, "handler_id": "blackjack_authority", "parameters": {}})
+		action_declarations.append({"action_id": action_id, "handler_id": BLACKJACK_RITUAL_HANDLER_ID, "parameters": {}})
 	return {
 		"contract": BLACKJACK_RITUAL_CONTRACT,
 		"ritual_id": BLACKJACK_RITUAL_ID,
 		"initial_phase": "wagering",
 		"ritual_phases": [
-			_blackjack_ritual_phase("wagering", ["blackjack_chip", "blackjack_correct_bet", "blackjack_remove_chip", "blackjack_undo_bet", "blackjack_clear_bet", "blackjack_max_bet", "blackjack_repeat_bet", "blackjack_rebet", "blackjack_side_bet", "blackjack_deal"], [{"id": "confirm_to_deal", "condition": {"kind": "accepted_action", "action_id": "blackjack_deal"}, "next_phase": "initial_deal", "operations": []}]),
+			_blackjack_ritual_phase("wagering", ["blackjack_chip", "blackjack_correct_bet", "blackjack_remove_chip", "blackjack_undo_bet", "blackjack_clear_bet", "blackjack_max_bet", "blackjack_repeat_bet", "blackjack_rebet", "blackjack_side_bet", "blackjack_deal", BLACKJACK_CHARGED_DEAL_ACTION], [{"id": "confirm_to_deal", "condition": {"kind": "accepted_action", "action_id": BLACKJACK_CHARGED_DEAL_ACTION}, "next_phase": "initial_deal", "operations": []}]),
 			_blackjack_ritual_phase("initial_deal", [], [{"id": "deal_to_player", "condition": {"kind": "public_state_equals", "key": "deal_staged", "value": true}, "next_phase": "player_turn", "operations": []}]),
 			_blackjack_ritual_phase("player_turn", ["blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"], [{"id": "player_to_dealer", "condition": {"kind": "public_state_equals", "key": "hand_complete", "value": true}, "next_phase": "dealer_procedure", "operations": []}]),
 			_blackjack_ritual_phase("dealer_procedure", ["play_basic"], [{"id": "dealer_to_settlement", "condition": {"kind": "authoritative_result_present"}, "next_phase": "settlement", "operations": []}]),
@@ -151,7 +153,7 @@ func blackjack_ritual_contract() -> Dictionary:
 				{"id": "blackjack_clear_bet", "effect": "remove_all_pending_items"},
 				{"id": "blackjack_repeat_bet", "effect": "copy_last_eligible_commitment"},
 				{"id": "blackjack_rebet", "effect": "copy_eligible_resolved_items"},
-				{"id": "blackjack_deal", "effect": "authorize_pending_set"},
+				{"id": BLACKJACK_CHARGED_DEAL_ACTION, "effect": "authorize_pending_set"},
 			],
 			"readable_totals": ["available_funds", "pending_total", "at_risk_total", "returned_stake", "payout", "net_change"],
 		},
@@ -199,7 +201,7 @@ func blackjack_ritual_contract() -> Dictionary:
 			"restore_policy": "restore_legal_phase_without_replay",
 		},
 		"handler_registry": [{
-			"handler_id": "blackjack_authority",
+			"handler_id": BLACKJACK_RITUAL_HANDLER_ID,
 			"version": 1,
 			"accepted_actions": action_ids,
 			"accepted_operations": [],
@@ -225,6 +227,7 @@ func _blackjack_ritual_phase(phase_id: String, permitted_actions: Array, transit
 
 
 func _blackjack_gesture_contract(verb: String, gesture_id: String, action_id: String, phase_id: String, return_policy: String) -> Dictionary:
+	var equivalent_target_selection := "cycle" if gesture_id == BLACKJACK_WAGER_PLACE_GESTURE else "focus"
 	return {
 		"id": gesture_id,
 		"verb": verb,
@@ -236,9 +239,9 @@ func _blackjack_gesture_contract(verb: String, gesture_id: String, action_id: St
 		"rejection": return_policy,
 		"rejection_effects": [],
 		"equivalents": {
-			"keyboard": {"action": action_id, "target_selection": "focus"},
-			"controller": {"action": action_id, "target_selection": "focus"},
-			"reduced_motion": {"action": action_id, "target_selection": "focus", "staging": "short"},
+			"keyboard": {"action_id": action_id, "target_selection": equivalent_target_selection},
+			"controller": {"action_id": action_id, "target_selection": equivalent_target_selection},
+			"reduced_motion": {"action_id": action_id, "target_selection": equivalent_target_selection, "staging": "instant"},
 		},
 	}
 
@@ -249,6 +252,139 @@ func _blackjack_actor_contract(actor_id: String, role: String, anchor: String, p
 
 func _blackjack_object_contract(object_id: String, anchor: String, bounds: Dictionary, visual_states: Array, functional_states: Array) -> Dictionary:
 	return {"id": object_id, "anchor": anchor, "bounds": bounds, "z_layer": "gameplay", "visual_states": visual_states, "functional_states": functional_states, "initial_visual_state": str(visual_states[0]), "initial_functional_state": str(functional_states[0]), "hit_regions": [], "text_safety_regions": []}
+
+
+func blackjack_ritual_deal_envelope(session: Dictionary, environment: Dictionary) -> Dictionary:
+	var session_id := _blackjack_ritual_safe_id(str(session.get("session_id", "%s:%s:0" % [get_id(), str(environment.get("id", "table"))])))
+	var ordinal := maxi(0, int(session.get("cards_consumed", 0)) + int(session.get("active_hand_index", 0)))
+	var boundary_id := "blackjack:wagering:%d" % ordinal
+	var command_id := "%s:deal:%d" % [session_id, ordinal]
+	var request_key := "%s:request" % command_id
+	var receipt_key := "%s:command" % command_id
+	var operation_receipt_key := "%s:binding" % command_id
+	var authenticated_action := {
+		"origin_owner_id": BLACKJACK_RITUAL_ID,
+		"stable_action_id": BLACKJACK_CHARGED_DEAL_ACTION,
+		"operation_receipt_key": operation_receipt_key,
+		"boundary_id": boundary_id,
+		"fingerprint": ("%s|%s|%s|%s" % [BLACKJACK_RITUAL_ID, BLACKJACK_CHARGED_DEAL_ACTION, operation_receipt_key, boundary_id]).sha256_text(),
+	}
+	var boundary := {
+		"boundary_id": boundary_id,
+		"kind": "command",
+		"ritual_id": BLACKJACK_RITUAL_ID,
+		"session_id": session_id,
+		"phase_id": "wagering",
+		"ordinal": ordinal,
+		"cause_receipt_key": receipt_key,
+	}
+	var envelope := {
+		"envelope_version": 1,
+		"ritual_id": BLACKJACK_RITUAL_ID,
+		"session_id": session_id,
+		"command_id": command_id,
+		"request_key": request_key,
+		"action_id": BLACKJACK_CHARGED_DEAL_ACTION,
+		"expected_phase": "wagering",
+		"source_id": "shoe.primary",
+		"target_id": "wager.player",
+		"parameters": {},
+		"authenticated_action": authenticated_action,
+		"boundary": boundary,
+		"receipt_key": receipt_key,
+		"content_fingerprint": "",
+	}
+	envelope["content_fingerprint"] = _blackjack_ritual_envelope_fingerprint(envelope)
+	return envelope
+
+
+func blackjack_ritual_deal_envelope_authorized(envelope: Dictionary, current_phase: String = "wagering") -> bool:
+	var expected_keys := ["action_id", "authenticated_action", "boundary", "command_id", "content_fingerprint", "envelope_version", "expected_phase", "parameters", "receipt_key", "request_key", "ritual_id", "session_id", "source_id", "target_id"]
+	var actual_keys := envelope.keys()
+	actual_keys.sort()
+	expected_keys.sort()
+	if actual_keys != expected_keys or int(envelope.get("envelope_version", 0)) != 1:
+		return false
+	if str(envelope.get("ritual_id", "")) != BLACKJACK_RITUAL_ID or str(envelope.get("action_id", "")) != BLACKJACK_CHARGED_DEAL_ACTION:
+		return false
+	if str(envelope.get("expected_phase", "")) != current_phase or current_phase != "wagering":
+		return false
+	if str(envelope.get("source_id", "")) != "shoe.primary" or str(envelope.get("target_id", "")) != "wager.player":
+		return false
+	if typeof(envelope.get("parameters", null)) != TYPE_DICTIONARY or not (envelope.get("parameters", {}) as Dictionary).is_empty():
+		return false
+	for id_field in ["session_id", "command_id", "request_key", "receipt_key"]:
+		if not _blackjack_ritual_id_is_safe(str(envelope.get(id_field, ""))):
+			return false
+	if str(envelope.get("content_fingerprint", "")) != _blackjack_ritual_envelope_fingerprint(envelope):
+		return false
+	var authenticated_action: Dictionary = envelope.get("authenticated_action", {}) if typeof(envelope.get("authenticated_action", {})) == TYPE_DICTIONARY else {}
+	var expected_authenticated_keys := ["boundary_id", "fingerprint", "operation_receipt_key", "origin_owner_id", "stable_action_id"]
+	var authenticated_keys := authenticated_action.keys()
+	authenticated_keys.sort()
+	expected_authenticated_keys.sort()
+	if authenticated_keys != expected_authenticated_keys:
+		return false
+	if str(authenticated_action.get("origin_owner_id", "")) != BLACKJACK_RITUAL_ID or str(authenticated_action.get("stable_action_id", "")) != BLACKJACK_CHARGED_DEAL_ACTION:
+		return false
+	if not _blackjack_ritual_id_is_safe(str(authenticated_action.get("operation_receipt_key", ""))) or not _blackjack_ritual_sha256_is_valid(str(authenticated_action.get("fingerprint", ""))):
+		return false
+	var boundary: Dictionary = envelope.get("boundary", {}) if typeof(envelope.get("boundary", {})) == TYPE_DICTIONARY else {}
+	var expected_boundary_keys := ["boundary_id", "cause_receipt_key", "kind", "ordinal", "phase_id", "ritual_id", "session_id"]
+	var boundary_keys := boundary.keys()
+	boundary_keys.sort()
+	expected_boundary_keys.sort()
+	if boundary_keys != expected_boundary_keys:
+		return false
+	if str(boundary.get("kind", "")) != "command" or str(boundary.get("phase_id", "")) != current_phase or int(boundary.get("ordinal", -1)) < 0:
+		return false
+	if str(boundary.get("ritual_id", "")) != BLACKJACK_RITUAL_ID or str(boundary.get("session_id", "")) != str(envelope.get("session_id", "")):
+		return false
+	if str(boundary.get("cause_receipt_key", "")) != str(envelope.get("receipt_key", "")) or str(boundary.get("boundary_id", "")) != str(authenticated_action.get("boundary_id", "")):
+		return false
+	var contract := blackjack_ritual_contract()
+	var declared_handler := ""
+	for declaration_value in contract.get("action_declarations", []):
+		if typeof(declaration_value) == TYPE_DICTIONARY and str((declaration_value as Dictionary).get("action_id", "")) == BLACKJACK_CHARGED_DEAL_ACTION:
+			declared_handler = str((declaration_value as Dictionary).get("handler_id", ""))
+			break
+	if declared_handler != BLACKJACK_RITUAL_HANDLER_ID:
+		return false
+	for handler_value in contract.get("handler_registry", []):
+		if typeof(handler_value) == TYPE_DICTIONARY:
+			var handler: Dictionary = handler_value
+			if str(handler.get("handler_id", "")) == declared_handler:
+				return (handler.get("accepted_actions", []) as Array).has(BLACKJACK_CHARGED_DEAL_ACTION)
+	return false
+
+
+func _blackjack_ritual_envelope_fingerprint(envelope: Dictionary) -> String:
+	var fingerprint_source := envelope.duplicate(true)
+	fingerprint_source.erase("content_fingerprint")
+	return JSON.stringify(fingerprint_source, "", true).sha256_text()
+
+
+func _blackjack_ritual_safe_id(value: String) -> String:
+	var normalized := ""
+	for character in value.to_lower():
+		if character in "abcdefghijklmnopqrstuvwxyz0123456789_.:-":
+			normalized += character
+		else:
+			normalized += "-"
+	return normalized.left(192) if not normalized.is_empty() else "blackjack"
+
+
+func _blackjack_ritual_id_is_safe(value: String) -> bool:
+	return not value.is_empty() and value.length() <= 192 and value == _blackjack_ritual_safe_id(value)
+
+
+func _blackjack_ritual_sha256_is_valid(value: String) -> bool:
+	if value.length() != 64 or value != value.to_lower():
+		return false
+	for character in value:
+		if not character in "0123456789abcdef":
+			return false
+	return true
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -686,11 +822,17 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"shoe_composition": _local_copy_dict(table.get("shoe_composition", CardShoeScript.remaining_composition(table.get("shoe", [])))),
 		"native_selected_surface_actions": _selected_surface_actions(ui_state, session),
 		"surface_action_bindings": {
-			"legal": {"action": "blackjack_deal", "index": 0},
+			"legal": {"action": "blackjack_deal", "index": 0, "ritual_gesture_id": BLACKJACK_CUT_GESTURE, "target_selection": "focus", "target_id": "shoe.primary"},
 			"cheat": {"action": "blackjack_count_toggle", "index": 0},
 			"surface_stake_down": {"action": "blackjack_clear_bet", "index": 0},
-			"surface_stake_up": {"action": "blackjack_chip", "index": 0},
+			"surface_stake_up": {"action": "blackjack_chip", "index": 0, "ritual_gesture_id": BLACKJACK_WAGER_PLACE_GESTURE, "target_selection": "cycle", "target_id": "wager.player"},
 			"surface_stake_max": {"action": "blackjack_max_bet", "index": 0},
+		},
+		"ritual_equivalent_bindings": {
+			BLACKJACK_WAGER_PLACE_GESTURE: {"action": "blackjack_chip", "target_id": "wager.player", "target_selection": ["focus", "cycle"], "keyboard_binding": "surface_stake_up", "controller_binding": "surface_stake_up", "reduced_motion_staging": "instant"},
+			BLACKJACK_CUT_GESTURE: {"action": "blackjack_deal", "target_id": "shoe.primary", "target_selection": ["focus"], "keyboard_binding": "legal", "controller_binding": "legal", "reduced_motion_staging": "instant"},
+			BLACKJACK_TAP_GESTURE: {"action": "blackjack_hit", "target_id": "player_hand.region", "target_selection": ["focus", "cycle"], "keyboard_binding": "focused_surface_region", "controller_binding": "focused_surface_region", "reduced_motion_staging": "instant"},
+			BLACKJACK_WAVE_GESTURE: {"action": "blackjack_stand", "target_id": "player_hand.region", "target_selection": ["focus", "cycle"], "keyboard_binding": "focused_surface_region", "controller_binding": "focused_surface_region", "reduced_motion_staging": "instant"},
 		},
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "blackjack_table",
@@ -917,6 +1059,9 @@ func _blackjack_item_resolutions(last_result: Dictionary) -> Array:
 
 
 func _blackjack_authoritative_result_id(last_result: Dictionary, item_id: String) -> String:
+	var stored_result_id := _blackjack_ritual_safe_id(str(last_result.get("payout_animation_id", last_result.get("result_id", ""))))
+	if not stored_result_id.is_empty() and stored_result_id != "blackjack":
+		return "%s:%s" % [stored_result_id, item_id]
 	var result_ordinal := maxi(0, int(last_result.get("resolved_at_msec", last_result.get("timestamp_msec", 0))))
 	return "blackjack.result.%d:%s" % [result_ordinal, item_id]
 
@@ -1331,6 +1476,29 @@ func surface_pointer_uses_lightweight_ui_state(surface_action: String) -> bool:
 	return false
 
 
+func blackjack_ritual_equivalent_command(input_kind: String, gesture_id: String, target_selection: String, target_id: String, target_index: int, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if not input_kind in ["keyboard", "controller", "reduced_motion"]:
+		return _message_command(ui_state.duplicate(true), "Unsupported ritual input; nothing changed.")
+	var state := surface_state(run_state, environment, ui_state)
+	var bindings: Dictionary = state.get("ritual_equivalent_bindings", {}) if typeof(state.get("ritual_equivalent_bindings", {})) == TYPE_DICTIONARY else {}
+	var binding: Dictionary = bindings.get(gesture_id, {}) if typeof(bindings.get(gesture_id, {})) == TYPE_DICTIONARY else {}
+	if binding.is_empty() or not (binding.get("target_selection", []) as Array).has(target_selection):
+		return _message_command(ui_state.duplicate(true), "That ritual target selection is unavailable; nothing changed.")
+	if str(binding.get("target_id", "")) != target_id:
+		return _message_command(ui_state.duplicate(true), "That ritual target belongs to another object; nothing changed.")
+	if target_index < 0:
+		return _message_command(ui_state.duplicate(true), "No ritual target is selected; nothing changed.")
+	var action_id := str(binding.get("action", ""))
+	if action_id.is_empty():
+		return _message_command(ui_state.duplicate(true), "That ritual input has no authoritative action; nothing changed.")
+	var command := _blackjack_surface_action_command(action_id, target_index, false, ui_state, run_state, environment)
+	command["ritual_input_kind"] = input_kind
+	command["ritual_target_selection"] = target_selection
+	command["ritual_target_id"] = target_id
+	command["ritual_reduced_motion"] = input_kind == "reduced_motion"
+	return command
+
+
 func surface_pointer_command(surface_action: String, index: int, pointer_phase: String, board_position: Vector2, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	if not surface_action in BLACKJACK_GESTURE_ACTIONS or _is_rourke_duel(run_state, environment):
 		return {"handled": false}
@@ -1484,6 +1652,9 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 						return _settle_completed_round_command(next_state, index, "You wave off the hand. Dealer reveals and settles.", table, run_state)
 					return _action_command("play_basic", "legal", false, next_state, index, "Basic play selected. Click again to stand and settle, or use the live hand buttons.", true)
 				return _settle_completed_round_command(next_state, index, _terminal_round_message(next_state), table, run_state)
+			var ritual_envelope := blackjack_ritual_deal_envelope(next_state, environment)
+			if not blackjack_ritual_deal_envelope_authorized(ritual_envelope, "wagering"):
+				return _message_command(next_state, "The dealer cannot authenticate that wager boundary; no wager was charged.")
 			var dealt_state := next_state.duplicate(true)
 			_start_initial_hand(dealt_state, table, selected_stake, run_state)
 			var projected_cost: int = _wager_cost_from_session(selected_stake, dealt_state, table, run_state)
@@ -1493,16 +1664,20 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 				return GameModule.surface_command({
 					"handled": true,
 					"ui_state": _compact_session_for_ui(next_state),
-					"action_id": "blackjack_place_bet",
+					"action_id": BLACKJACK_CHARGED_DEAL_ACTION,
 					"action_kind": "legal",
+					"ritual_command": ritual_envelope,
+					"ritual_handler_id": BLACKJACK_RITUAL_HANDLER_ID,
 					"direct_resolve": true,
 					"preserve_surface_ui_state": true,
 					"selected_index": index,
 					"message": "Confirm the all-in blackjack wager.",
 				})
 			var command := _opening_deal_command(dealt_state, index, _opening_deal_notice(dealt_state, table))
-			command["action_id"] = "blackjack_place_bet"
+			command["action_id"] = BLACKJACK_CHARGED_DEAL_ACTION
 			command["action_kind"] = "legal"
+			command["ritual_command"] = ritual_envelope
+			command["ritual_handler_id"] = BLACKJACK_RITUAL_HANDLER_ID
 			command["direct_resolve"] = true
 			command["preserve_surface_ui_state"] = true
 			return GameModule.surface_command(command)
