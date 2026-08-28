@@ -391,7 +391,7 @@ func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures:
 	)
 	var pending := run_state.world_sequence_pending_outcomes(token)
 	if not bool(command.get("ok", false)) or pending.size() != 1:
-		failures.append("P1 injection fixture did not produce exactly one authenticated neutral outcome.")
+		failures.append("P1 injection fixture did not produce exactly one authenticated neutral outcome: command=%s pending=%s." % [JSON.stringify(command), JSON.stringify(pending)])
 		return {}
 	return {
 		"run_state": run_state,
