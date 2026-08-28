@@ -5498,7 +5498,11 @@ func _restore_talk_dock_control_lifecycle_snapshot(control: Control, snapshot: D
 	control.offset_right = float(snapshot.get("offset_right", control.offset_right))
 	control.offset_bottom = float(snapshot.get("offset_bottom", control.offset_bottom))
 	control.position = snapshot.get("position", control.position) as Vector2
-	control.size = snapshot.get("size", control.size) as Vector2
+	# Container-owned controls with fixed anchors still require their synchronous
+	# derived size restored. Stretched controls are already defined exactly by
+	# anchors/offsets; assigning size there is redundant and emits a Godot warning.
+	if is_equal_approx(control.anchor_left, control.anchor_right) and is_equal_approx(control.anchor_top, control.anchor_bottom):
+		control.size = snapshot.get("size", control.size) as Vector2
 	control.custom_minimum_size = snapshot.get("custom_minimum_size", control.custom_minimum_size) as Vector2
 	control.visible = bool(snapshot.get("visible", control.visible))
 	control.modulate = snapshot.get("modulate", control.modulate) as Color
