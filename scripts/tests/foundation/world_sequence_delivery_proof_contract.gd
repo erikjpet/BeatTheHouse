@@ -527,7 +527,10 @@ func _check_delivery_checkpoint_hostile_matrix(library: ContentLibrary, failures
 	if str(authentic_checkpoint.get("public_instance_token", "")) == str(foreign_checkpoint.get("public_instance_token", "")):
 		failures.append("P1 transplant fixture did not create a distinct public delivery instance.")
 		return
-	var cases: Array = [{"id": "transplant_same_definition_outcome_different_instance", "checkpoint": foreign_checkpoint.duplicate(true)}]
+	var cases: Array = [
+		{"id": "mounted_v1_applied_without_checkpoint", "checkpoint": {}},
+		{"id": "transplant_same_definition_outcome_different_instance", "checkpoint": foreign_checkpoint.duplicate(true)},
+	]
 	_append_checkpoint_field_mutations(cases, authentic_checkpoint)
 	for case_value in cases:
 		var case := _dict(case_value)
@@ -611,6 +614,7 @@ func _assert_hostile_checkpoint_case(library: ContentLibrary, fixture: Dictionar
 	var saved := source_run.to_dict()
 	var delivery := _dict(saved.get("active_delivery_run", {}))
 	delivery["closed_checkpoint"] = hostile_checkpoint.duplicate(true)
+	if case_id == "mounted_v1_applied_without_checkpoint": delivery["schema_version"] = 1
 	saved["active_delivery_run"] = delivery
 	hostile.from_dict(saved)
 	var token := str(fixture.get("token", ""))
