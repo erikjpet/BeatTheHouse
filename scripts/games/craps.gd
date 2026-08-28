@@ -5,10 +5,6 @@ const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
 const CrapsSurfaceViewModelScript := preload("res://scripts/games/craps/craps_surface_view_model.gd")
 
 const ROLL_CHANNEL := "craps_roll"
-const THROW_ACTION := "craps_throw"
-const THROW_REGION := Rect2(260, 112, 330, 142)
-const THROW_MIN_DISTANCE := 34.0
-const THROW_MAX_DISTANCE := 360.0
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -64,9 +60,6 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 		"last_result": {},
 		"hot_shooter_streak": 0,
 		"table_energy": int(rules.get("table_energy_min", 0)),
-		"last_committed_bets": {},
-		"last_resolved_bets": {},
-		"ritual_sequence": 0,
 		"normalized_version": int(config.get("state_version", 1)),
 	}
 	if street:
@@ -91,13 +84,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var table := _table_state_preview(run_state, environment)
 	var street := _is_street_table(table, environment)
 	var dispersed := street and bool(table.get("street_dispersed", false))
-	var warning_reason := _street_disperse_reason(run_state, environment, 0) if street and not dispersed else ""
-	var warning := not warning_reason.is_empty()
 	var rules := _dict(table.get("rules", {}))
 	var pending := _pending_bets(ui_state.get("craps_pending_bets", {}))
 	var selected_chip := int(ui_state.get("selected_chip", _first_chip(table)))
 	var targets := _street_bet_targets(table, rules) if street else CrapsSurfaceViewModelScript.bet_targets(table, rules)
-	if dispersed or warning:
+	if dispersed:
 		for target_value in targets:
 			if typeof(target_value) == TYPE_DICTIONARY:
 				(target_value as Dictionary)["enabled"] = false
@@ -107,15 +98,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var duration := int(_config().get("roll_animation_duration_msec", 0))
 	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var roll_active := roll_started > 0 and now_msec >= roll_started and now_msec < roll_started + duration
-	var presentation_phase := _presentation_phase(last_roll, now_msec, duration, dispersed, "warning" if warning else str(ui_state.get("craps_ritual_phase", "")))
 	var setting_challenge := _dict(ui_state.get("craps_setting_challenge", {}))
 	var switching_challenge := _dict(ui_state.get("craps_switching_challenge", {}))
 	var setting_active := not setting_challenge.is_empty() and str(setting_challenge.get("skill_grade", "")).is_empty()
 	var switching_active := not switching_challenge.is_empty() and str(switching_challenge.get("skill_grade", "")).is_empty()
-	var last_result := _dict(table.get("last_result", {}))
-	var accounting := _last_roll_accounting(last_result)
-	var available_cash := int(run_state.bankroll) if run_state != null else 0
-	var available_chips := int(run_state.grand_casino_chips) if run_state != null else 0
 	var spec := GameModule.surface_spec({
 		"surface_renderer": "craps",
 		"surface_life": "street_circle" if street else "immersive_table",
@@ -148,11 +134,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			{"label": "New wagers", "value": "%d cash" % total_wager if street else "%d chips" % total_wager},
 			{"label": "Circle", "value": "SCATTERED" if dispersed else "LIVE"} if street else {"label": "Energy", "value": str(table.get("table_energy", 0))},
 		],
-		# Keep the shipped surface phase stable for existing legal-boundary and
-		# animation consumers; ritual_phase carries the finer authored sequence.
 		"phase": "dispersed" if dispersed else "rolling" if roll_active else "betting",
-		"ritual_phase": presentation_phase,
-		"ritual_sequence": int(table.get("ritual_sequence", 0)),
 		"table_name": str(table.get("table_name", "Craps")),
 		"dealer_name": str(table.get("dealer_name", "Stickperson")),
 		"point": int(table.get("point", 0)),
@@ -166,36 +148,22 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"chip_denominations": _chip_denominations(table),
 		"total_wager_cost": total_wager,
 		"craps_total_wager": total_wager,
-		"available_cash": available_cash,
-		"available_chips": available_chips,
-		"available_funds": available_cash if street else available_chips,
-		"at_risk_working_stake": _working_wager_total(table.get("working_bets", {})),
-		"last_returned_stake": int(accounting.get("returned_stake", 0)),
-		"last_payout": int(accounting.get("payout", 0)),
-		"last_net": int(last_result.get("bankroll_delta", 0)),
 		"table_minimum": int(table.get("table_minimum", 0)),
 		"table_maximum": int(table.get("table_maximum", 0)),
-		"can_roll": (warning or _can_roll(table, pending)) and not roll_active and not dispersed,
-		"can_clear": not pending.is_empty() and not roll_active and not dispersed and not warning,
-		"can_undo": not _dictionary_array(ui_state.get("craps_pending_history", [])).is_empty() and not roll_active and not dispersed and not warning,
-		"can_remove": not pending.is_empty() and not roll_active and not dispersed and not warning,
-		"can_repeat": not _dict(table.get("last_committed_bets", {})).is_empty() and pending.is_empty() and not roll_active and not dispersed and not warning,
-		"can_rebet": not _dict(table.get("last_resolved_bets", {})).is_empty() and pending.is_empty() and not roll_active and not dispersed and not warning,
+		"can_roll": _can_roll(table, pending) and not roll_active and not dispersed,
+		"can_clear": not pending.is_empty() and not roll_active and not dispersed,
 		"last_roll": last_roll.duplicate(true),
-		"last_result": last_result.duplicate(true),
+		"last_result": _dict(table.get("last_result", {})).duplicate(true),
 		"roll_history": CrapsSurfaceViewModelScript.roll_history_rows(table.get("roll_history", []), int(_config().get("visible_history_limit", 0))),
 		"hot_shooter_streak": int(table.get("hot_shooter_streak", 0)),
 		"table_energy": int(table.get("table_energy", 0)),
-		"ritual_actors": _ritual_actors(table, street, warning),
-		"ritual_scene_objects": _ritual_scene_objects(table, street, presentation_phase),
-		"ritual_energy_tier": _energy_tier(table),
 		"craps_setting_available": _setting_available(run_state, environment) and not dispersed,
 		"craps_switching_available": _switching_available(run_state) and not street and not dispersed,
 		"craps_setting_challenge": setting_challenge.duplicate(true),
 		"craps_switching_challenge": switching_challenge.duplicate(true),
 		"craps_setting_item_modifiers": skill_item_modifier_badges(run_state, _string_array(_dict(_config().get("setting", {})).get("item_effect_keys", []))),
 		"craps_switching_item_modifiers": skill_item_modifier_badges(run_state, _string_array(_dict(_config().get("switching", {})).get("item_effect_keys", []))),
-		"result_message": str(last_result.get("message", "")),
+		"result_message": str(_dict(table.get("last_result", {})).get("message", "")),
 		"table_notice": _table_notice(table, pending, street),
 	})
 	if street:
@@ -204,22 +172,19 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		spec["currency"] = str(_street_config().get("currency", "cash"))
 		spec["street_dispersed"] = dispersed
 		spec["street_disperse_reason"] = str(table.get("street_disperse_reason", ""))
-		spec["street_warning"] = warning
-		spec["street_warning_reason"] = warning_reason
 	return spec
 
 
 func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(state.get("craps_variant", "")) == "street_craps":
 		return _draw_street_surface(surface, state)
-	var board := Vector2(900, 474)
+	var board := Vector2(900, 430)
 	surface.surface_begin_design_space(board)
 	surface.draw_rect(Rect2(Vector2.ZERO, board), Color("#071713"))
 	surface.draw_rect(Rect2(54, 52, 704, 332), Color("#0b513c"))
 	surface.draw_rect(Rect2(54, 52, 704, 332), Color("#e3c675"), false, 2)
 	surface.surface_title(str(state.get("table_name", "CRAPS")).to_upper(), Vector2(68, 38), Color("#f5e6a8"))
 	_draw_idle_rail_motion(surface)
-	_draw_casino_ritual_cast(surface, state)
 	_draw_targets(surface, state)
 	_draw_point_puck(surface, state)
 	_draw_dice(surface, state)
@@ -245,20 +210,6 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 	if street and bool(table.get("street_dispersed", false)):
 		return _message_command(session, "The chalk ring is empty for the rest of tonight.")
 	var pending := _pending_bets(session.get("craps_pending_bets", {}))
-	var last_roll := _dict(table.get("last_roll", {}))
-	var now_msec := GameModule.deterministic_time_msec(run_state, session)
-	var roll_duration := int(_config().get("roll_animation_duration_msec", 0))
-	var roll_active := int(last_roll.get("resolved_at_msec", 0)) > 0 and now_msec >= int(last_roll.get("resolved_at_msec", 0)) and now_msec < int(last_roll.get("resolved_at_msec", 0)) + roll_duration
-	if roll_active and surface_action in ["craps_bet", "craps_chip", "craps_clear", "craps_remove", "craps_undo", "craps_repeat", "craps_rebet", "craps_roll", "craps_throw", "craps_setting", "craps_switch"]:
-		return _message_command(session, "The dice are in motion; the stickperson returns that input without charge.")
-	var warning_reason := _street_disperse_reason(run_state, environment, 0) if street else ""
-	if not warning_reason.is_empty():
-		if surface_action == "craps_roll":
-			session["craps_ritual_phase"] = "warning"
-			return GameModule.surface_command({"ui_state": session, "preserve_surface_ui_state": true, "message": "The lookout calls the warning. Break up now; every unresolved stake returns at face value.", "surface_audio_cue": "dice_shake"})
-		if surface_action == "craps_throw":
-			return _throw_resolve_command(session, pending)
-		return _message_command(session, "No new cash crosses the ring after the lookout's warning.")
 	match surface_action:
 		"craps_bet":
 			var targets := _street_bet_targets(table, _dict(table.get("rules", {}))) if street else CrapsSurfaceViewModelScript.bet_targets(table, _dict(table.get("rules", {})))
@@ -274,70 +225,24 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				return _message_command(session, str(validation.get("message", "The wager is not available.")))
 			if CrapsRulesScript.pending_wager_total(pending) + chip > _wager_capacity(run_state, environment):
 				return _message_command(session, "Those chips exceed the funds available for this table.")
-			_push_pending_history(session, pending)
 			pending[bet_id] = int(pending.get(bet_id, 0)) + chip
 			session["craps_pending_bets"] = pending
-			session["craps_last_pending_id"] = bet_id
 			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "blackjack_chip"})
 		"craps_chip":
 			var chips := _chip_denominations(table)
 			if chips.is_empty():
 				return _message_command(session, "No chip rack is posted.")
-			if index >= 0 and index < chips.size():
-				session["selected_chip"] = int(chips[index])
-			else:
-				var current := int(session.get("selected_chip", chips[0]))
-				var chip_index := chips.find(current)
-				session["selected_chip"] = int(chips[(chip_index + 1) % chips.size()])
+			var current := int(session.get("selected_chip", chips[0]))
+			var chip_index := chips.find(current)
+			session["selected_chip"] = int(chips[(chip_index + 1) % chips.size()])
 			return GameModule.surface_command({"ui_state": session, "set_stake": int(session["selected_chip"]), "surface_audio_cue": "blackjack_chip"})
 		"craps_clear":
-			_push_pending_history(session, pending)
 			session["craps_pending_bets"] = {}
 			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "roulette_chip_sweep"})
-		"craps_remove":
-			if pending.is_empty():
-				return _message_command(session, "There is no pending wager to correct.")
-			var remove_id := _pending_id_for_correction(pending, str(session.get("craps_last_pending_id", "")))
-			var remove_amount := mini(int(pending.get(remove_id, 0)), int(session.get("selected_chip", _first_chip(table))))
-			_push_pending_history(session, pending)
-			pending[remove_id] = int(pending.get(remove_id, 0)) - remove_amount
-			if int(pending.get(remove_id, 0)) <= 0:
-				pending.erase(remove_id)
-			session["craps_pending_bets"] = pending
-			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "roulette_chip_sweep", "message": "%d returned from %s." % [remove_amount, remove_id.replace("_", " ").capitalize()]})
-		"craps_undo":
-			var history := _dictionary_array(session.get("craps_pending_history", []))
-			if history.is_empty():
-				return _message_command(session, "There is no pending change to undo.")
-			session["craps_pending_bets"] = history.pop_back()
-			session["craps_pending_history"] = history
-			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "roulette_chip_sweep", "message": "The last pending change is undone."})
-		"craps_repeat", "craps_rebet":
-			var source_key := "last_committed_bets" if surface_action == "craps_repeat" else "last_resolved_bets"
-			var repeated := _pending_bets(table.get(source_key, {}))
-			if repeated.is_empty():
-				return _message_command(session, "There is no eligible wager set to restore.")
-			var repeated_validation := _validate_pending_bets(table, repeated, street)
-			if not bool(repeated_validation.get("ok", false)):
-				return _message_command(session, str(repeated_validation.get("message", "That wager set is not legal in this phase.")))
-			if CrapsRulesScript.pending_wager_total(repeated) > _wager_capacity(run_state, environment):
-				return _message_command(session, "That wager set exceeds the funds available now.")
-			_push_pending_history(session, pending)
-			session["craps_pending_bets"] = repeated
-			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "blackjack_chip", "message": "The eligible wager set is staged again."})
 		"craps_roll":
 			if not _can_roll(table, pending):
 				return _message_command(session, "Place a wager before the dice are offered.")
-			# The established legal action remains the keyboard/controller and
-			# reduced-motion equivalent. It resolves through the normal boundary;
-			# pointer throws use the same action id and settlement path.
-			session["craps_ritual_phase"] = "aiming_throw"
-			return _throw_resolve_command(session, pending)
-		"craps_throw":
-			if not _can_roll(table, pending):
-				return _message_command(session, "The dice return without a wager being charged.")
-			session["craps_ritual_phase"] = "aiming_throw"
-			return _throw_resolve_command(session, pending)
+			return GameModule.surface_command({"ui_state": session, "action_id": "roll_craps", "action_kind": "legal", "resolve": true, "set_stake": CrapsRulesScript.pending_wager_total(pending)})
 		"craps_setting":
 			return _timing_command("setting", session, run_state, table, environment)
 		"craps_switch":
@@ -345,72 +250,6 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				return _message_command(session, "Nobody in this circle lets a second pair near the brick.")
 			return _timing_command("switching", session, run_state, table, environment)
 	return {"handled": false}
-
-
-func surface_pointer_uses_lightweight_ui_state(surface_action: String) -> bool:
-	return surface_action == THROW_ACTION
-
-
-func surface_pointer_command(surface_action: String, _index: int, phase: String, board_position: Vector2, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	if surface_action != THROW_ACTION:
-		return {"handled": false}
-	var session := ui_state.duplicate(true)
-	var table := _table_state_preview(run_state, environment)
-	var pending := _pending_bets(session.get("craps_pending_bets", {}))
-	if not _can_roll(table, pending):
-		return _message_command(session, "The dice return without a wager being charged.")
-	if phase == "begin":
-		if not THROW_REGION.has_point(board_position):
-			return _message_command(session, "Begin the throw inside the marked dice lane.")
-		session["craps_throw_origin"] = board_position
-		session["craps_throw_position"] = board_position
-		session["craps_ritual_phase"] = "dice_offered"
-		return GameModule.surface_command({"ui_state": session, "preserve_surface_ui_state": true, "surface_audio_cue": "dice_shake"}, true)
-	if phase == "cancel":
-		return _reject_throw(session, "The stickperson gathers the incomplete throw. No wager is charged.")
-	if phase == "move":
-		if not session.has("craps_throw_origin"):
-			return _reject_throw(session, "The dice remain in the stickperson's hand.")
-		session["craps_throw_position"] = board_position
-		session["craps_ritual_phase"] = "aiming_throw"
-		return GameModule.surface_command({"ui_state": session, "preserve_surface_ui_state": true}, true)
-	if phase != "end" or not session.has("craps_throw_origin"):
-		return _reject_throw(session, "The dice remain in the stickperson's hand.")
-	var origin: Vector2 = session.get("craps_throw_origin", board_position)
-	var distance := origin.distance_to(board_position)
-	if distance < THROW_MIN_DISTANCE or distance > THROW_MAX_DISTANCE or board_position.y >= origin.y - 8.0:
-		return _reject_throw(session, "That release does not reach the far wall. The dice come back; no wager is charged.")
-	session.erase("craps_throw_origin")
-	session.erase("craps_throw_position")
-	session["craps_throw_vector"] = board_position - origin
-	session["craps_ritual_phase"] = "aiming_throw"
-	return _throw_resolve_command(session, pending, true)
-
-
-func _throw_resolve_command(session: Dictionary, pending: Dictionary, direct: bool = false) -> Dictionary:
-	var command := {
-		"ui_state": session,
-		"action_id": "roll_craps",
-		"action_kind": "legal",
-		"set_stake": CrapsRulesScript.pending_wager_total(pending),
-		"preserve_surface_ui_state": true,
-		"surface_audio_cue": "dice_roll",
-	}
-	command["direct_resolve" if direct else "resolve"] = true
-	return GameModule.surface_command(command, direct)
-
-
-func _reject_throw(session: Dictionary, message: String) -> Dictionary:
-	session.erase("craps_throw_origin")
-	session.erase("craps_throw_position")
-	session.erase("craps_throw_vector")
-	session["craps_ritual_phase"] = "dice_offered"
-	return GameModule.surface_command({
-		"ui_state": session,
-		"preserve_surface_ui_state": true,
-		"message": message,
-		"surface_audio_cue": "dice_shake",
-	}, true)
 
 
 func wager_cost_for_context(_action_id: String, stake: int, _run_state: RunState, _environment: Dictionary, ui_state: Dictionary = {}) -> int:
@@ -452,9 +291,6 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		return _empty_result(action_id, total_wager, environment, str(cheat.get("message", "That move is not ready.")))
 	var roll := CrapsRulesScript.roll_dice(rng, _dict(table.get("rules", {})), int(cheat.get("bias_permille", 0)))
 	var settlement := CrapsRulesScript.settle_roll(table, pending, roll, _dict(table.get("rules", {})))
-	table["last_committed_bets"] = pending.duplicate(true)
-	table["last_resolved_bets"] = _resolved_rebet_set(pending, settlement)
-	table["ritual_sequence"] = int(table.get("ritual_sequence", 0)) + 1
 	var room_energy := _project_table_energy(environment, table)
 	var settlement_delta := int(settlement.get("bankroll_delta", 0))
 	var luck_payout_bonus := 0
@@ -495,7 +331,6 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"point_after": int(settlement.get("point_after", 0)),
 		"animation_id": "craps:%d:%d-%d" % [int(table.get("roll_count", 0)), int(dice[0]), int(dice[1])],
 		"resolved_at_msec": now_msec,
-		"throw_trajectory": _throw_trajectory(ui_state.get("craps_throw_vector", Vector2(0, -140))),
 	}
 	table["last_roll"] = last_roll
 	var history := _dictionary_array(table.get("roll_history", []))
@@ -597,8 +432,6 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["craps_table_energy"] = int(table.get("table_energy", 0))
 	result["craps_room_energy"] = room_energy.duplicate(true)
 	result["craps_hot_shooter_streak"] = int(table.get("hot_shooter_streak", 0))
-	result["craps_public_facts"] = _public_craps_facts(table, settlement, bankroll_delta, action_id, post_disperse_reason)
-	result["craps_ritual_receipt"] = "craps.ritual.%d" % int(table.get("ritual_sequence", 0))
 	if street:
 		result["craps_variant"] = "street_craps"
 		result["currency"] = "cash"
@@ -903,9 +736,6 @@ func _normalize_table_state(value: Variant, environment: Dictionary) -> Dictiona
 	table["roll_history"] = _dictionary_array(table.get("roll_history", []))
 	table["last_roll"] = _dict(table.get("last_roll", {})).duplicate(true)
 	table["last_result"] = _dict(table.get("last_result", {})).duplicate(true)
-	table["last_committed_bets"] = _pending_bets(table.get("last_committed_bets", {}))
-	table["last_resolved_bets"] = _pending_bets(table.get("last_resolved_bets", {}))
-	table["ritual_sequence"] = maxi(0, int(table.get("ritual_sequence", 0)))
 	table["rules"] = _dict(table.get("rules", _dict(_config().get("rules", {})))).duplicate(true)
 	table["chip_denominations"] = _int_array(table.get("chip_denominations", _config().get("chip_denominations", [])))
 	table["table_minimum"] = maxi(1, int(table.get("table_minimum", GameModule.stake_floor_for_game(environment, get_id(), 1))))
@@ -952,206 +782,6 @@ func _pending_bets(value: Variant) -> Dictionary:
 		if stake > 0:
 			result[str(key_value)] = stake
 	return result
-
-
-func _push_pending_history(session: Dictionary, pending: Dictionary) -> void:
-	var history := _dictionary_array(session.get("craps_pending_history", []))
-	history.append(pending.duplicate(true))
-	while history.size() > 16:
-		history.pop_front()
-	session["craps_pending_history"] = history
-
-
-func _pending_id_for_correction(pending: Dictionary, preferred: String) -> String:
-	if pending.has(preferred):
-		return preferred
-	var ids := _string_array(pending.keys())
-	ids.sort()
-	return ids.back() if not ids.is_empty() else ""
-
-
-func _resolved_rebet_set(pending: Dictionary, settlement: Dictionary) -> Dictionary:
-	var resolved_labels := {}
-	for result_value in _dictionary_array(settlement.get("bet_results", [])):
-		var result: Dictionary = result_value
-		if str(result.get("outcome", "")) in ["win", "loss", "push", "refund"]:
-			resolved_labels[str(result.get("label", "")).to_lower()] = true
-	var rebet := {}
-	for bet_id_value in pending.keys():
-		var bet_id := str(bet_id_value)
-		var label := bet_id.replace("_", " ")
-		if resolved_labels.has(label) or bet_id in ["field", "come", "dont_come"]:
-			rebet[bet_id] = int(pending.get(bet_id, 0))
-	return rebet
-
-
-func _presentation_phase(last_roll: Dictionary, now_msec: int, duration: int, dispersed: bool, requested_phase: String = "") -> String:
-	if dispersed:
-		return "dispersed"
-	var started := int(last_roll.get("resolved_at_msec", 0))
-	if started > 0 and duration > 0 and now_msec >= started and now_msec < started + duration:
-		var elapsed := now_msec - started
-		if elapsed < duration * 55 / 100:
-			return "bounce_read"
-		return "dealer_settlement"
-	if requested_phase in ["dice_offered", "aiming_throw", "warning"]:
-		return requested_phase
-	return "betting"
-
-
-func _throw_trajectory(vector_value: Variant) -> Dictionary:
-	var throw_vector := Vector2(0, -140)
-	if typeof(vector_value) == TYPE_VECTOR2:
-		throw_vector = vector_value
-	elif typeof(vector_value) == TYPE_DICTIONARY:
-		var vector_dict := _dict(vector_value)
-		throw_vector = Vector2(float(vector_dict.get("x", 0.0)), float(vector_dict.get("y", -140.0)))
-	var lateral := clampf(throw_vector.x * 0.22, -68.0, 68.0)
-	var start := Vector2(426, 278)
-	var wall := Vector2(426 + lateral, THROW_REGION.position.y + 8.0)
-	var rebound := Vector2(426 + lateral * 0.55, 176)
-	var rest := Vector2(650 + lateral * 0.18, 152)
-	return {
-		"source": "gesture_projection",
-		"authoritative_outcome_source": false,
-		"contacts": ["far_wall", "die_pair"],
-		"die_a": [_trajectory_point(start, "offer"), _trajectory_point(start.lerp(wall, 0.55), "travel"), _trajectory_point(wall, "wall_contact"), _trajectory_point(rebound + Vector2(-18, 4), "bounce"), _trajectory_point(rest + Vector2(-26, 4), "rest")],
-		"die_b": [_trajectory_point(start + Vector2(18, 8), "offer"), _trajectory_point(start.lerp(wall, 0.52) + Vector2(18, 10), "travel"), _trajectory_point(wall + Vector2(12, 5), "die_contact"), _trajectory_point(rebound + Vector2(28, 16), "separate"), _trajectory_point(rest + Vector2(28, 18), "rest")],
-	}
-
-
-func _trajectory_point(position: Vector2, beat: String) -> Dictionary:
-	return {"x": snappedf(position.x, 0.01), "y": snappedf(position.y, 0.01), "beat": beat}
-
-
-func _trajectory_position(trajectory: Dictionary, die_id: String, progress: float, fallback: Vector2) -> Vector2:
-	var points := _dictionary_array(trajectory.get(die_id, []))
-	if points.is_empty():
-		return fallback
-	if points.size() == 1 or progress >= 1.0:
-		var final_point: Dictionary = points.back()
-		return Vector2(float(final_point.get("x", fallback.x)), float(final_point.get("y", fallback.y)))
-	var scaled := clampf(progress, 0.0, 1.0) * float(points.size() - 1)
-	var index := mini(int(floor(scaled)), points.size() - 2)
-	var local_progress := scaled - float(index)
-	var from: Dictionary = points[index]
-	var to: Dictionary = points[index + 1]
-	return Vector2(float(from.get("x", fallback.x)), float(from.get("y", fallback.y))).lerp(
-		Vector2(float(to.get("x", fallback.x)), float(to.get("y", fallback.y))),
-		local_progress
-	)
-
-
-func _last_roll_accounting(last_result: Dictionary) -> Dictionary:
-	var returned_stake := 0
-	var payout := 0
-	for row_value in _dictionary_array(last_result.get("bet_results", [])):
-		var row: Dictionary = row_value
-		var stake := maxi(0, int(row.get("stake", 0)))
-		var profit := int(row.get("profit", 0))
-		var outcome := str(row.get("outcome", ""))
-		if outcome in ["win", "push", "refund"]:
-			returned_stake += stake
-		if outcome == "win":
-			payout += stake + maxi(0, profit)
-		elif outcome in ["push", "refund"]:
-			payout += stake
-	return {"returned_stake": returned_stake, "payout": payout}
-
-
-func _energy_tier(table: Dictionary) -> String:
-	var rules := _dict(table.get("rules", {}))
-	var energy := int(table.get("table_energy", 0))
-	var maximum := maxi(1, int(rules.get("table_energy_max", 100)))
-	if energy * 4 >= maximum * 3:
-		return "hot"
-	if energy * 2 >= maximum:
-		return "rising"
-	return "calm"
-
-
-func _ritual_actors(table: Dictionary, street: bool, warning: bool = false) -> Array:
-	var point := int(table.get("point", 0))
-	var last_result := _dict(table.get("last_result", {}))
-	var call_state := "idle" if last_result.is_empty() else "seven_out" if str(last_result.get("message", "")).begins_with("Seven out") else "point_on" if point != 0 else "come_out"
-	if street:
-		return [
-			{"id": "caller", "role": "stickperson", "anchor": "circle_north", "behavior": call_state, "pose": "calling", "bounds": Rect2(350, 24, 76, 64), "attention": "dice"},
-			{"id": "lookout", "role": "lookout", "anchor": "alley_mouth", "behavior": "warning" if warning else "watching", "pose": "signal" if warning else "lean", "bounds": Rect2(744, 54, 74, 108), "attention": "exit"},
-			{"id": "shooter", "role": "player_shooter", "anchor": "circle_south", "behavior": "ready", "pose": "offering", "bounds": Rect2(350, 346, 76, 72), "attention": "dice"},
-		]
-	return [
-		{"id": "stickperson", "role": "stickperson", "anchor": "table_north", "behavior": call_state, "pose": "calling", "bounds": Rect2(300, 18, 72, 64), "attention": "dice"},
-		{"id": "base_dealer_left", "role": "base_dealer", "anchor": "table_west", "behavior": "paying" if not last_result.is_empty() else "ready", "pose": "reach", "bounds": Rect2(42, 170, 54, 112), "attention": "layout"},
-		{"id": "base_dealer_right", "role": "base_dealer", "anchor": "table_east", "behavior": "collecting" if not last_result.is_empty() else "ready", "pose": "reach", "bounds": Rect2(716, 170, 54, 112), "attention": "layout"},
-		{"id": "boxperson", "role": "boxperson", "anchor": "table_northwest", "behavior": "watching", "pose": "seated", "bounds": Rect2(236, 18, 54, 58), "attention": "layout"},
-		{"id": "pit_boss", "role": "pit_boss", "anchor": "rail", "behavior": "attentive" if _energy_tier(table) != "calm" else "idle", "pose": "rail" if _energy_tier(table) != "calm" else "floor", "bounds": Rect2(724, 12, 62, 76), "attention": "shooter" if _energy_tier(table) != "calm" else "room"},
-	]
-
-
-func _ritual_scene_objects(table: Dictionary, street: bool, phase: String) -> Array:
-	return [
-		{"id": "chalk_ring" if street else "point_puck", "state": "dispersed" if street and bool(table.get("street_dispersed", false)) else "on" if int(table.get("point", 0)) != 0 else "off", "bounds": Rect2(170, 42, 436, 336) if street else Rect2(678, 46, 52, 52), "functional_state": "closed" if street and bool(table.get("street_dispersed", false)) else "readable", "z_order": 4},
-		{"id": "dice_pair", "state": phase, "bounds": THROW_REGION, "functional_state": "interactive" if phase in ["dice_offered", "aiming_throw"] else "presentation", "z_order": 8},
-		{"id": "crowd_rail", "state": _energy_tier(table), "bounds": Rect2(88, 8, 590, 44), "functional_state": "open" if _energy_tier(table) == "calm" else "occupied", "z_order": 2},
-	]
-
-
-func _public_craps_facts(table: Dictionary, settlement: Dictionary, bankroll_delta: int, action_id: String, disperse_reason: String) -> Array:
-	var sequence := int(table.get("ritual_sequence", 0))
-	var boundary := "craps.roll.%d" % sequence
-	var facts: Array = [_craps_fact("roll_resolved", sequence, boundary, {"point_before": int(settlement.get("point_before", 0)), "point_after": int(settlement.get("point_after", 0)), "energy_tier": _energy_tier(table)})]
-	if int(settlement.get("point_before", 0)) == 0:
-		facts.append(_craps_fact("come_out", sequence, boundary, {"total": int(_dict(table.get("last_roll", {})).get("total", 0)), "point_after": int(settlement.get("point_after", 0))}))
-	if int(settlement.get("point_before", 0)) == 0 and int(settlement.get("point_after", 0)) != 0:
-		facts.append(_craps_fact("point_set", sequence, boundary, {"point": int(settlement.get("point_after", 0))}))
-	if bool(settlement.get("point_made", false)):
-		facts.append(_craps_fact("point_made", sequence, boundary, {"streak_tier": int(table.get("hot_shooter_streak", 0)), "energy_tier": _energy_tier(table)}))
-	if bool(settlement.get("seven_out", false)):
-		facts.append(_craps_fact("seven_out", sequence, boundary, {"energy_tier": _energy_tier(table)}))
-		facts.append(_craps_fact("table_cooled", sequence, boundary, {"reason": "seven_out", "energy_tier": _energy_tier(table)}))
-	facts.append(_craps_fact("streak_tier", sequence, boundary, {"streak": int(table.get("hot_shooter_streak", 0)), "energy_tier": _energy_tier(table)}))
-	if absi(bankroll_delta) >= maxi(1, int(table.get("table_maximum", 1))):
-		facts.append(_craps_fact("large_swing", sequence, boundary, {"direction": "win" if bankroll_delta > 0 else "loss", "tier": 1}))
-	if action_id != "roll_craps":
-		facts.append(_craps_fact("cheat_attempt", sequence, boundary, {"method": action_id}))
-		facts.append(_craps_fact("cheat_result", sequence, boundary, {"revealed": true}))
-	if not disperse_reason.is_empty():
-		facts.append(_craps_fact("street_lookout_warning", sequence, boundary, {"reason": disperse_reason}))
-		facts.append(_craps_fact("dispersal", sequence, boundary, {"reason": disperse_reason}))
-	return facts
-
-
-func _craps_fact(local_type: String, sequence: int, boundary: String, payload: Dictionary) -> Dictionary:
-	var record := {
-		"fact_id": "craps.%s.%d" % [local_type, sequence],
-		"fact_type": "craps.%s" % local_type,
-		"fact_version": 1,
-		"visibility": "public",
-		"boundary": boundary,
-		"cause": "action_resolution",
-		"payload": payload.duplicate(true),
-		"receipt_key": "craps.fact.%d.%s" % [sequence, local_type],
-	}
-	record["content_fingerprint"] = _canonical_json(record).sha256_text()
-	return record
-
-
-func _canonical_json(value: Variant) -> String:
-	if typeof(value) == TYPE_DICTIONARY:
-		var source := _dict(value)
-		var keys := _string_array(source.keys())
-		keys.sort()
-		var members: Array[String] = []
-		for key in keys:
-			members.append("%s:%s" % [JSON.stringify(key), _canonical_json(source.get(key))])
-		return "{%s}" % ",".join(members)
-	if typeof(value) == TYPE_ARRAY:
-		var items: Array[String] = []
-		for item in value:
-			items.append(_canonical_json(item))
-		return "[%s]" % ",".join(items)
-	return JSON.stringify(value)
 
 
 func _chip_denominations(table: Dictionary) -> Array:
@@ -1320,7 +950,7 @@ func _message_command(ui_state: Dictionary, message: String) -> Dictionary:
 
 func _surface_action_blocks() -> Array:
 	return [{
-		"actions": ["craps_bet", "craps_chip", "craps_clear", "craps_remove", "craps_undo", "craps_repeat", "craps_rebet", "craps_roll", "craps_throw", "craps_setting", "craps_switch"],
+		"actions": ["craps_bet", "craps_chip", "craps_clear", "craps_roll", "craps_setting", "craps_switch"],
 		"while_animation": ROLL_CHANNEL,
 		"reason": "The dice are in motion; no more bets, please.",
 	}]
@@ -1336,10 +966,10 @@ func _selected_surface_actions(setting: Dictionary, switching: Dictionary) -> Ar
 
 
 func _draw_street_surface(surface, state: Dictionary) -> bool:
-	var board := Vector2(900, 474)
+	var board := Vector2(900, 430)
 	surface.surface_begin_design_space(board)
 	surface.draw_rect(Rect2(Vector2.ZERO, board), Color("#121416"))
-	for y in range(42, 432, 42):
+	for y in range(42, 390, 42):
 		surface.draw_line(Vector2(24, y), Vector2(876, y), Color(0.24, 0.20, 0.19, 0.44), 2.0)
 		var offset := 22.0 if int(y / 42) % 2 == 0 else 62.0
 		for x in range(int(offset), 880, 84):
@@ -1376,21 +1006,13 @@ func _draw_street_point(surface, state: Dictionary) -> void:
 
 
 func _draw_street_dice(surface, state: Dictionary) -> void:
-	if bool(state.get("can_roll", false)):
-		surface.draw_rect(THROW_REGION, Color(0.85, 0.77, 0.62, 0.08))
-		surface.draw_rect(THROW_REGION, Color("#b59b72"), false, 1.0)
-		surface.surface_add_exact_hit(THROW_REGION, THROW_ACTION)
 	var dice := _int_array(_dict(state.get("last_roll", {})).get("dice", []))
 	if dice.size() != 2:
 		return
 	var progress: float = float(surface.surface_animation_progress(ROLL_CHANNEL)) if surface.surface_animation_active(ROLL_CHANNEL) else 1.0
-	if bool(state.get("reduce_motion", false)):
-		progress = 1.0
-	var trajectory := _dict(_dict(state.get("last_roll", {})).get("throw_trajectory", {}))
+	var wobble := sin(progress * TAU * 3.0) * (1.0 - progress) * 10.0
 	for index in range(2):
-		var fallback := Vector2(372 + index * 56, 146)
-		var center := _trajectory_position(trajectory, "die_a" if index == 0 else "die_b", progress, fallback)
-		var rect := Rect2(center - Vector2(22, 22), Vector2(44, 44))
+		var rect := Rect2(350 + index * 56 + wobble * (1.0 if index == 0 else -1.0), 124 + absf(wobble) * 0.5, 44, 44)
 		surface.draw_rect(rect, Color("#d7c9ad"))
 		surface.draw_rect(rect, Color("#4a4034"), false, 2.0)
 		surface.surface_label_centered(str(dice[index]), rect, 20, Color("#171717"))
@@ -1418,15 +1040,11 @@ func _draw_street_side_panel(surface, state: Dictionary) -> void:
 
 
 func _draw_street_controls(surface, state: Dictionary) -> void:
-	_draw_denomination_controls(surface, state, 42.0, 386.0, true)
 	var actions := [
-		{"id": "craps_remove", "label": "REMOVE", "rect": Rect2(42, 428, 82, 32), "enabled": bool(state.get("can_remove", false))},
-		{"id": "craps_undo", "label": "UNDO", "rect": Rect2(130, 428, 72, 32), "enabled": bool(state.get("can_undo", false))},
-		{"id": "craps_clear", "label": "CLEAR", "rect": Rect2(208, 428, 72, 32), "enabled": bool(state.get("can_clear", false))},
-		{"id": "craps_repeat", "label": "REPEAT", "rect": Rect2(286, 428, 82, 32), "enabled": bool(state.get("can_repeat", false))},
-		{"id": "craps_rebet", "label": "RE-BET", "rect": Rect2(374, 428, 82, 32), "enabled": bool(state.get("can_rebet", false))},
-		{"id": "craps_roll", "label": "WARNING" if bool(state.get("street_warning", false)) else "OFFER", "rect": Rect2(462, 424, 94, 38), "enabled": bool(state.get("can_roll", false))},
-		{"id": "craps_throw", "label": "BREAK UP" if bool(state.get("street_warning", false)) else "THROW", "rect": Rect2(562, 424, 104, 38), "enabled": bool(state.get("can_roll", false))},
+		{"id": "craps_chip", "label": "CASH %d" % int(state.get("selected_chip", 0)), "rect": Rect2(64, 384, 118, 32), "enabled": not bool(state.get("street_dispersed", false))},
+		{"id": "craps_clear", "label": "CLEAR", "rect": Rect2(192, 384, 96, 32), "enabled": bool(state.get("can_clear", false))},
+		{"id": "craps_setting", "label": "SET DICE", "rect": Rect2(298, 384, 116, 32), "enabled": bool(state.get("craps_setting_available", false))},
+		{"id": "craps_roll", "label": "THROW", "rect": Rect2(470, 380, 138, 38), "enabled": bool(state.get("can_roll", false))},
 	]
 	for action_value in actions:
 		var action: Dictionary = action_value
@@ -1475,25 +1093,6 @@ func _draw_idle_rail_motion(surface) -> void:
 	surface.draw_circle(marker, 3.0, Color(0.98, 0.89, 0.58, glow))
 
 
-func _draw_casino_ritual_cast(surface, state: Dictionary) -> void:
-	var tier := str(state.get("ritual_energy_tier", "calm"))
-	var crowd_count := 3 if tier == "calm" else 5 if tier == "rising" else 7
-	for index in range(crowd_count):
-		var x := 106.0 + float(index) * 82.0
-		var attention_y := 22.0 if tier == "hot" else 26.0
-		surface.draw_circle(Vector2(x, attention_y), 7.0, Color("#b79a72"))
-		surface.draw_line(Vector2(x, attention_y + 7.0), Vector2(x, 46.0), Color("#554638"), 5.0)
-	# Staff positions are deliberately stable semantic anchors; energy changes
-	# crowd occupation and pit attention, while outcomes remain rules-owned.
-	surface.draw_circle(Vector2(336, 54), 8.0, Color("#e0c49a"))
-	surface.draw_line(Vector2(336, 62), Vector2(336, 80), Color("#4b2330"), 6.0)
-	surface.draw_circle(Vector2(68, 226), 8.0, Color("#d5b98f"))
-	surface.draw_circle(Vector2(744, 226), 8.0, Color("#d5b98f"))
-	if tier != "calm":
-		surface.draw_circle(Vector2(752, 48), 9.0, Color("#31253b"))
-		surface.draw_line(Vector2(752, 57), Vector2(726, 78), Color("#8a6da0"), 2.0)
-
-
 func _draw_point_puck(surface, state: Dictionary) -> void:
 	var point := int(state.get("point", 0))
 	var center := Vector2(704, 72)
@@ -1503,22 +1102,14 @@ func _draw_point_puck(surface, state: Dictionary) -> void:
 
 
 func _draw_dice(surface, state: Dictionary) -> void:
-	if bool(state.get("can_roll", false)):
-		surface.draw_rect(THROW_REGION, Color(0.96, 0.90, 0.69, 0.06))
-		surface.draw_rect(THROW_REGION, Color("#d6af4b"), false, 1.0)
-		surface.surface_add_exact_hit(THROW_REGION, THROW_ACTION)
 	var roll := _dict(state.get("last_roll", {}))
 	var dice := _int_array(roll.get("dice", []))
 	if dice.size() != 2:
 		return
 	var progress: float = float(surface.surface_animation_progress(ROLL_CHANNEL)) if surface.surface_animation_active(ROLL_CHANNEL) else 1.0
-	if bool(state.get("reduce_motion", false)):
-		progress = 1.0
-	var trajectory := _dict(roll.get("throw_trajectory", {}))
+	var wobble: float = sin(progress * TAU * 3.0) * (1.0 - progress) * 12.0
 	for index in range(2):
-		var fallback := Vector2(659 + index * 54, 161)
-		var center := _trajectory_position(trajectory, "die_a" if index == 0 else "die_b", progress, fallback)
-		var rect := Rect2(center - Vector2(21, 21), Vector2(42, 42))
+		var rect := Rect2(638 + index * 54 + wobble * (1.0 if index == 0 else -1.0), 140 + absf(wobble) * 0.5, 42, 42)
 		surface.draw_rect(rect, Color("#eee7d2"))
 		surface.draw_rect(rect, Color("#9a7735"), false, 2)
 		surface.surface_label_centered(str(dice[index]), rect, 20, Color("#171b19"))
@@ -1549,17 +1140,12 @@ func _draw_working_bets(surface, state: Dictionary) -> void:
 
 
 func _draw_controls(surface, state: Dictionary) -> void:
-	_draw_denomination_controls(surface, state, 64.0, 392.0, false)
 	var actions := [
-		{"id": "craps_clear", "label": "CLEAR", "rect": Rect2(300, 392, 68, 28), "enabled": bool(state.get("can_clear", false))},
-		{"id": "craps_remove", "label": "REMOVE", "rect": Rect2(374, 392, 76, 28), "enabled": bool(state.get("can_remove", false))},
-		{"id": "craps_undo", "label": "UNDO", "rect": Rect2(456, 392, 64, 28), "enabled": bool(state.get("can_undo", false))},
-		{"id": "craps_repeat", "label": "REPEAT", "rect": Rect2(526, 392, 72, 28), "enabled": bool(state.get("can_repeat", false))},
-		{"id": "craps_rebet", "label": "RE-BET", "rect": Rect2(604, 392, 72, 28), "enabled": bool(state.get("can_rebet", false))},
-		{"id": "craps_setting", "label": "SET DICE", "rect": Rect2(300, 430, 110, 30), "enabled": bool(state.get("craps_setting_available", false))},
-		{"id": "craps_switch", "label": "SWITCH", "rect": Rect2(416, 430, 100, 30), "enabled": bool(state.get("craps_switching_available", false))},
-		{"id": "craps_roll", "label": "OFFER", "rect": Rect2(522, 428, 82, 34), "enabled": bool(state.get("can_roll", false))},
-		{"id": "craps_throw", "label": "THROW", "rect": Rect2(610, 428, 92, 34), "enabled": bool(state.get("can_roll", false))},
+		{"id": "craps_chip", "label": "CHIP %d" % int(state.get("selected_chip", 0)), "rect": Rect2(64, 392, 112, 28), "enabled": true},
+		{"id": "craps_clear", "label": "CLEAR", "rect": Rect2(184, 392, 94, 28), "enabled": bool(state.get("can_clear", false))},
+		{"id": "craps_setting", "label": "SET DICE", "rect": Rect2(286, 392, 110, 28), "enabled": bool(state.get("craps_setting_available", false))},
+		{"id": "craps_switch", "label": "SWITCH", "rect": Rect2(404, 392, 100, 28), "enabled": bool(state.get("craps_switching_available", false))},
+		{"id": "craps_roll", "label": "ROLL", "rect": Rect2(620, 388, 138, 34), "enabled": bool(state.get("can_roll", false))},
 	]
 	for action_value in actions:
 		var action: Dictionary = action_value
@@ -1570,19 +1156,6 @@ func _draw_controls(surface, state: Dictionary) -> void:
 		surface.surface_label_centered(str(action.get("label", "")), rect, 10, Color("#fff5d2") if enabled else Color("#80978f"))
 		if enabled:
 			surface.surface_add_exact_hit(rect, str(action.get("id", "")))
-
-
-func _draw_denomination_controls(surface, state: Dictionary, start_x: float, y: float, street: bool) -> void:
-	var denominations := _int_array(state.get("chip_denominations", []))
-	var selected := int(state.get("selected_chip", 0))
-	for index in range(mini(denominations.size(), 4)):
-		var amount := int(denominations[index])
-		var rect := Rect2(start_x + float(index) * 58.0, y, 52, 28)
-		var active := amount == selected
-		surface.draw_rect(rect, Color("#9c7138") if active else Color("#3b493f"))
-		surface.draw_rect(rect, Color("#fff0d0") if active else Color("#7c9388"), false, 1.0)
-		surface.surface_label_centered(("$" if street else "") + str(amount), rect, 10, Color("#fff5d2"))
-		surface.surface_add_exact_hit(rect, "craps_chip", index)
 
 
 func _empty_result(action_id: String, stake: int, environment: Dictionary, text: String) -> Dictionary:
