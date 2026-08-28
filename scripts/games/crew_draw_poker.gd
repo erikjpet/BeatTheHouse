@@ -84,6 +84,7 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 		"player_stack": int(tuning.get("session_swing_cap", 60)),
 		"action_history": [],
 		"session_memory": {},
+		"public_memory_receipt_id": "",
 		"player_folded_hidden": false,
 		"pot": 0,
 		"shoe": [],
@@ -470,9 +471,10 @@ func _ordered_npc_turn(state: Dictionary, rng: RngStream, run_state: RunState) -
 		_advance_ordered_turn(state, rng, run_state)
 		return {"ok": true, "delta": 0, "message": "%s draws %d." % [_actor_name(actor), int((state.get("seats", []) as Array)[seat_index].get("draw_count", 0))]}
 	var due := maxi(0, int(state.get("current_bet", 0)) - int(seat.get("round_contribution", 0)))
-	var public_memory := derive_public_session_memory(state.get("action_history", []), int(state.get("session_swing", 0)))
-	if not _session_memory_matches(state.get("session_memory", {}), public_memory):
+	var authenticated := _authenticated_public_session_memory(state, run_state)
+	if not bool(authenticated.get("ok", false)):
 		return {"ok": false, "delta": 0, "message": "The public table memory does not match its action record."}
+	var public_memory: Dictionary = authenticated.get("memory", {})
 	var action := _adaptive_npc_action(actor, _card_array(seat.get("cards", [])), phase, due > 0, public_memory, rng)
 	if action == "raise" and int(state.get("raise_count", 0)) >= _night_raise_cap(state):
 		action = "call"
@@ -642,13 +644,12 @@ func _record_ordered_action(state: Dictionary, actor: String, action: String, am
 	while history.size() > 40:
 		history.pop_front()
 	state["action_history"] = history
-	var memory: Dictionary = state.get("session_memory", {}) if typeof(state.get("session_memory", {})) == TYPE_DICTIONARY else {}
-	var actor_memory: Dictionary = memory.get(actor, {}) if typeof(memory.get(actor, {})) == TYPE_DICTIONARY else {}
-	actor_memory["raises"] = int(actor_memory.get("raises", 0)) + (1 if action == "raise" else 0)
-	actor_memory["folds"] = int(actor_memory.get("folds", 0)) + (1 if action == "fold" else 0)
-	actor_memory["last_action"] = action
-	memory[actor] = actor_memory
+	var memory := derive_public_session_memory(history, int(state.get("session_swing", 0)))
+	memory.erase("table")
 	state["session_memory"] = memory
+	# A host command must authenticate the new public memory before it can drive
+	# another NPC policy decision.
+	state["public_memory_receipt_id"] = ""
 
 
 static func derive_public_session_memory(action_history_value: Variant, session_swing: int) -> Dictionary:
@@ -677,12 +678,27 @@ static func derive_public_session_memory(action_history_value: Variant, session_
 	return result
 
 
-func _session_memory_matches(stored_value: Variant, derived: Dictionary) -> bool:
-	if typeof(stored_value) != TYPE_DICTIONARY:
-		return false
-	var expected := derived.duplicate(true)
-	expected.erase("table")
-	return _canonical_ritual_json(stored_value) == _canonical_ritual_json(expected)
+func _authenticated_public_session_memory(state: Dictionary, run_state: RunState) -> Dictionary:
+	if run_state == null:
+		return {"ok": false}
+	var receipt_id := str(state.get("public_memory_receipt_id", ""))
+	var ledger: Dictionary = run_state.scenario_host_transaction_ledger
+	if receipt_id.is_empty() or not (ledger.get("authoritative_receipts", {}) as Dictionary).has(receipt_id):
+		return {"ok": false}
+	var receipt_result: Dictionary = (ledger.get("receipt_results", {}) as Dictionary).get(receipt_id, {})
+	if str(receipt_result.get("kind", "")) != "game_command" or str(receipt_result.get("table_id", "")) != get_id():
+		return {"ok": false}
+	for fact_value in _dict_array(receipt_result.get("facts", [])):
+		var fact: Dictionary = fact_value
+		if str(fact.get("fact_type", "")) != "crew_poker.public_memory" or str(fact.get("producer_id", "")) != "poker" or str(fact.get("game_id", "")) != get_id() or str(fact.get("table_id", "")) != get_id():
+			continue
+		var payload: Dictionary = fact.get("payload", {}) if typeof(fact.get("payload", {})) == TYPE_DICTIONARY else {}
+		var expected := derive_public_session_memory(state.get("action_history", []), int(state.get("session_swing", 0)))
+		var expected_stored := expected.duplicate(true)
+		expected_stored.erase("table")
+		if int(payload.get("session_index", -1)) == int(state.get("session_index", 0)) and int(payload.get("action_ordinal", -1)) == int(state.get("action_ordinal", 0)) and payload.get("action_history", []) == state.get("action_history", []) and int(payload.get("session_swing", 0)) == int(state.get("session_swing", 0)) and payload.get("memory", {}) == expected and state.get("session_memory", {}) == expected_stored:
+			return {"ok": true, "memory": expected}
+	return {"ok": false}
 
 
 func _adaptive_npc_action(member_id: String, cards: Array, phase: String, facing_raise: bool, public_memory: Dictionary, rng: RngStream) -> String:
@@ -1006,6 +1022,7 @@ func _maybe_surface(state: Dictionary, seat: Dictionary, action: String, rng: Rn
 		"i": authored_index,
 		"source_action": action,
 		"source_record": source_record,
+		"source_host_receipt_id": "",
 		"start_ordinal": source_ordinal,
 		"duration_actions": OBSERVATION_DURATION_ACTIONS,
 		"channel": str(authored.get("channel", "posture")),
@@ -1053,8 +1070,10 @@ func _showdown(state: Dictionary, run_state: RunState) -> Dictionary:
 		var shown_patterns := CrewPokerModelScript.patterns(shown_member)
 		var shown_index := int(shown.get("i", -1))
 		var verification_receipt := "tell-verify:%s" % str(shown.get("id", ""))
-		if not bool(state.get("player_folded_hidden", false)) and _observation_provenance_valid(state, seats, shown, shown_patterns) and not verified_receipts.has(verification_receipt):
-			run_state.crew_record_pattern(shown_member, str((shown_patterns[shown_index] as Dictionary).get("state_key", "")))
+		if not bool(state.get("player_folded_hidden", false)) and _observation_provenance_valid(state, seats, shown, shown_patterns, run_state) and not verified_receipts.has(verification_receipt):
+			# The host transaction already applied the exactly-once tell delta. This
+			# model only acknowledges its sealed observation receipt; it never applies
+			# a second authority from restored queue data.
 			verified_receipts.append(verification_receipt)
 			shown["verified"] = true
 			shown["verification_receipt"] = verification_receipt
@@ -1077,8 +1096,8 @@ func _source_action_record(state: Dictionary, member_id: String, action: String,
 	return {}
 
 
-func _observation_provenance_valid(state: Dictionary, seats: Array, observation: Dictionary, authored_patterns: Array) -> bool:
-	var allowed := ["id", "m", "i", "source_action", "source_record", "start_ordinal", "duration_actions", "channel", "consumed", "verified", "verification_receipt"]
+func _observation_provenance_valid(state: Dictionary, seats: Array, observation: Dictionary, authored_patterns: Array, run_state: RunState) -> bool:
+	var allowed := ["id", "m", "i", "source_action", "source_record", "source_host_receipt_id", "start_ordinal", "duration_actions", "channel", "consumed", "verified", "verification_receipt"]
 	for key_value in observation.keys():
 		if not allowed.has(str(key_value)):
 			return false
@@ -1102,7 +1121,39 @@ func _observation_provenance_valid(state: Dictionary, seats: Array, observation:
 	if seat_index < 0:
 		return false
 	var seat: Dictionary = seats[seat_index]
-	return CrewPokerModelScript.condition_matches(str(authored.get("condition", "")), _card_array(seat.get("cards", [])), action, int(seat.get("draw_count", -1)))
+	if not CrewPokerModelScript.condition_matches(str(authored.get("condition", "")), _card_array(seat.get("cards", [])), action, int(seat.get("draw_count", -1))):
+		return false
+	return _host_observation_applied(run_state, state, observation, str(authored.get("state_key", "")))
+
+
+func _host_observation_applied(run_state: RunState, state: Dictionary, observation: Dictionary, state_key: String) -> bool:
+	if run_state == null:
+		return false
+	var receipt_id := str(observation.get("source_host_receipt_id", ""))
+	var ledger: Dictionary = run_state.scenario_host_transaction_ledger
+	var receipts: Dictionary = ledger.get("authoritative_receipts", {}) if typeof(ledger.get("authoritative_receipts", {})) == TYPE_DICTIONARY else {}
+	var results: Dictionary = ledger.get("receipt_results", {}) if typeof(ledger.get("receipt_results", {})) == TYPE_DICTIONARY else {}
+	if receipt_id.is_empty() or not receipts.has(receipt_id) or typeof(results.get(receipt_id)) != TYPE_DICTIONARY:
+		return false
+	var result: Dictionary = results.get(receipt_id, {})
+	if str(result.get("kind", "")) != "game_command" or str(result.get("table_id", "")) != get_id():
+		return false
+	var member_id := str(observation.get("m", ""))
+	var pattern_id := "%s:%s" % [member_id, state_key]
+	var tell_applied := false
+	for operation in _dict_array(result.get("tell_ops", [])):
+		if str(operation.get("pattern_id", "")) == pattern_id and int(operation.get("delta", 0)) == 1 and int(operation.get("after", 0)) == int(operation.get("before", 0)) + 1:
+			tell_applied = true
+			break
+	if not tell_applied:
+		return false
+	for fact in _dict_array(result.get("facts", [])):
+		if str(fact.get("fact_type", "")) != "crew_poker.tell_observation" or str(fact.get("producer_id", "")) != "poker" or str(fact.get("game_id", "")) != get_id() or str(fact.get("table_id", "")) != get_id():
+			continue
+		var payload: Dictionary = fact.get("payload", {}) if typeof(fact.get("payload", {})) == TYPE_DICTIONARY else {}
+		if payload == {"observation_id": str(observation.get("id", "")), "member_id": member_id, "pattern_index": int(observation.get("i", -1)), "state_key": state_key, "source_action": str(observation.get("source_action", "")), "source_ordinal": int(observation.get("start_ordinal", -1)), "session_index": int(state.get("session_index", 0))}:
+			return true
+	return false
 
 
 func _finish_fold(state: Dictionary, run_state: RunState) -> String:
@@ -1172,6 +1223,8 @@ func _start_new_session(state: Dictionary, environment: Dictionary) -> void:
 	state["player_stack"] = int(CrewPokerModelScript.config().get("session_swing_cap", 60))
 	state["action_history"] = []
 	state["session_memory"] = {}
+	state["public_memory_receipt_id"] = ""
+	state["player_folded_hidden"] = false
 	state["night_task_receipt"] = ""
 	state["night_aftermath"] = ""
 
@@ -1201,6 +1254,8 @@ func _table_state(environment: Dictionary) -> Dictionary:
 	if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("schema", "")) == STATE_SCHEMA:
 		var migrated := (value as Dictionary).duplicate(true)
 		migrated["version"] = STATE_VERSION
+		migrated["producer_id"] = "poker"
+		migrated["game_id"] = get_id()
 		if not migrated.has("session_index"):
 			migrated["session_index"] = 0
 		if not migrated.has("night_id"):
@@ -1228,8 +1283,12 @@ func _table_state(environment: Dictionary) -> Dictionary:
 			migrated["player_active"] = true
 		if not migrated.has("player_stack"):
 			migrated["player_stack"] = int(CrewPokerModelScript.config().get("session_swing_cap", 60))
+		if not migrated.has("public_memory_receipt_id"):
+			migrated["public_memory_receipt_id"] = ""
+		if not migrated.has("player_folded_hidden"):
+			migrated["player_folded_hidden"] = false
 		return migrated
-	return {"schema": STATE_SCHEMA, "version": STATE_VERSION, "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "session_index": 0, "night_id": _night_id(environment), "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [], "pot": 0, "shoe": [], "player_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}}
+	return {"schema": STATE_SCHEMA, "version": STATE_VERSION, "producer_id": "poker", "game_id": get_id(), "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "session_index": 0, "night_id": _night_id(environment), "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [], "pot": 0, "shoe": [], "player_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}, "action_history": [], "session_memory": {}, "public_memory_receipt_id": "", "player_folded_hidden": false}
 
 
 func _update_environment_state(environment: Dictionary, state: Dictionary) -> void:
