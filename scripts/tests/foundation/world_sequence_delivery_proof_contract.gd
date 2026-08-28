@@ -7,6 +7,7 @@ const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
+const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
 const PACKAGE_PATH := "res://data/crew/world06_1_crew_favor_delivery_sequence.json"
@@ -22,6 +23,11 @@ const EXPECTED_SOURCE := {
 const FORBIDDEN_PACKAGE_TERMS := [
 	"consumer_payload", "payment_shortfall", "traitor", "betrayal",
 	"the_turn", "grievance", "clue", "crew_heist_state",
+]
+const DELIVERY_CHECKPOINT_FIELDS := [
+	"schema_version", "delivery_instance_id", "job_id", "owner_token", "public_instance_token",
+	"outcome_receipt_id", "outcome_receipt_fingerprint", "outcome_cause_fingerprint",
+	"resolution_fingerprint", "delivery_receipt_fingerprint", "public_result", "public_result_fingerprint",
 ]
 
 
@@ -352,12 +358,14 @@ func _check_delivery_failure_injection_matrix(failures: Array) -> void:
 	_check_owner_lifecycle_retry(library, "expired", false, failures)
 	_check_owner_lifecycle_retry(library, "abandoned", true, failures)
 	_check_after_cleanup_replay(library, failures)
+	_check_delivery_checkpoint_hostile_matrix(library, failures)
 
 
-func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures: Array, issue_command: bool = true) -> Dictionary:
+func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures: Array, issue_command: bool = true, job_sequence_offset: int = 0) -> Dictionary:
 	# Reuse the accepted production proof seed so every injected checkpoint is
 	# exercised against the same catalog-proven target semantic inventory.
 	var run_state := _production_run(library, "WORLD-SEQUENCE-PROOF-SCHEDULE")
+	run_state.crew_job_sequence = maxi(0, job_sequence_offset)
 	run_state.narrative_flags["crew_favor_pending"] = true
 	var module := EventModuleScript.new()
 	module.setup(library.event("crew_favor_delivery"), library)
@@ -409,17 +417,156 @@ func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures:
 
 
 func _persist_owner_result_checkpoint(run_state: RunState, token: String, receipt_id: String, owner_result: Dictionary) -> Dictionary:
-	var public_result := {
-		"ok": true,
-		"resolved": bool(owner_result.get("resolved", false)),
-		"message": str(owner_result.get("message", "")),
+	var checkpointed := run_state.world_sequence_checkpoint_delivery_outcome(token, receipt_id, owner_result)
+	if not bool(checkpointed.get("ok", false)):
+		return {}
+	return _dict(checkpointed.get("public_result", {}))
+
+
+func _check_delivery_checkpoint_hostile_matrix(library: ContentLibrary, failures: Array) -> void:
+	var authentic := _prepared_checkpoint_fixture(library, "AUTHENTIC", failures, 0)
+	var foreign := _prepared_checkpoint_fixture(library, "FOREIGN", failures, 70)
+	if authentic.is_empty() or foreign.is_empty():
+		return
+	var authentic_run: RunState = authentic.get("run_state")
+	var authentic_checkpoint := DeliveryRunModelScript.closed_checkpoint(authentic_run.active_delivery_run)
+	var foreign_checkpoint := DeliveryRunModelScript.closed_checkpoint((foreign.get("run_state") as RunState).active_delivery_run)
+	if authentic_checkpoint.is_empty() or foreign_checkpoint.is_empty():
+		failures.append("P1 product checkpoint path did not expose an authentic closed checkpoint.")
+		return
+	if str(authentic_checkpoint.get("public_instance_token", "")) == str(foreign_checkpoint.get("public_instance_token", "")):
+		failures.append("P1 transplant fixture did not create a distinct public delivery instance.")
+		return
+	var cases: Array = [{"id": "transplant_same_definition_outcome_different_instance", "checkpoint": foreign_checkpoint.duplicate(true)}]
+	_append_checkpoint_field_mutations(cases, authentic_checkpoint)
+	for case_value in cases:
+		var case := _dict(case_value)
+		_assert_hostile_checkpoint_case(library, authentic, str(case.get("id", "hostile")), _dict(case.get("checkpoint", {})), failures)
+	_check_authentic_checkpoint_round_trip(library, failures)
+
+
+func _prepared_checkpoint_fixture(library: ContentLibrary, label: String, failures: Array, job_sequence_offset: int) -> Dictionary:
+	var fixture := _prepared_delivery_outcome(library, "WORLD-SEQUENCE-P1-CHECKPOINT-%s" % label, failures, true, job_sequence_offset)
+	if fixture.is_empty():
+		return {}
+	var run_state: RunState = fixture.get("run_state")
+	var token := str(fixture.get("token", ""))
+	var receipt_id := str(fixture.get("receipt_id", ""))
+	var target_node_id := str(fixture.get("target_node_id", ""))
+	var owner_result := run_state.delivery_complete_handoff(target_node_id)
+	if not bool(owner_result.get("ok", false)):
+		failures.append("P1 %s checkpoint fixture could not apply the owner consequence." % label)
+		return {}
+	var checkpointed := run_state.world_sequence_checkpoint_delivery_outcome(token, receipt_id, owner_result)
+	if not bool(checkpointed.get("ok", false)):
+		failures.append("P1 %s fixture did not persist through the product checkpoint path: %s." % [label, JSON.stringify(checkpointed)])
+		return {}
+	fixture["owner_result"] = owner_result.duplicate(true)
+	fixture["public_result"] = _dict(checkpointed.get("public_result", {}))
+	return fixture
+
+
+func _append_checkpoint_field_mutations(cases: Array, authentic: Dictionary) -> void:
+	var direct_mutations := {
+		"wrong_neutral_receipt_fingerprint": ["outcome_receipt_fingerprint", "forged-receipt-fingerprint"],
+		"wrong_neutral_receipt_cause": ["outcome_cause_fingerprint", "forged-cause-fingerprint"],
+		"wrong_owner": ["owner_token", "crew::crew::crew_favor_delivery::wrong-owner"],
+		"wrong_public_instance": ["public_instance_token", "crew_favor_delivery:9999"],
+		"wrong_delivery_receipt": ["delivery_receipt_fingerprint", "forged-delivery-receipt"],
 	}
-	var registration := _dict(run_state.world_sequence_registrations.get(token, {}))
-	var results := _dict(registration.get("owner_outcome_results", {}))
-	results[receipt_id] = public_result.duplicate(true)
-	registration["owner_outcome_results"] = results
-	run_state.world_sequence_registrations[token] = registration
-	return public_result
+	for case_id_value in direct_mutations.keys():
+		var mutation := _array(direct_mutations.get(case_id_value, []))
+		var candidate := authentic.duplicate(true)
+		candidate[str(mutation[0])] = mutation[1]
+		cases.append({"id": str(case_id_value), "checkpoint": candidate})
+	var wrong_resolution := authentic.duplicate(true)
+	wrong_resolution["resolution_fingerprint"] = SequenceRuntimeScript.content_fingerprint({"outcome": "failed", "reason": "deadline", "clean": false})
+	cases.append({"id": "wrong_resolution_recomputed_self_fingerprint", "checkpoint": wrong_resolution})
+	for field_value in DELIVERY_CHECKPOINT_FIELDS:
+		var field := str(field_value)
+		var missing := authentic.duplicate(true)
+		missing.erase(field)
+		cases.append({"id": "missing_%s" % field, "checkpoint": missing})
+		var wrong_type := authentic.duplicate(true)
+		wrong_type[field] = _wrong_checkpoint_field_type(field, authentic.get(field))
+		cases.append({"id": "wrong_type_%s" % field, "checkpoint": wrong_type})
+	var extra := authentic.duplicate(true)
+	extra["consumer_payload"] = {"success": {"cash": 99999}}
+	cases.append({"id": "extra_field", "checkpoint": extra})
+	for mutation_value in [
+		["noncanonical_owner_whitespace", "owner_token", "%s " % str(authentic.get("owner_token", ""))],
+		["noncanonical_public_instance_whitespace", "public_instance_token", " %s" % str(authentic.get("public_instance_token", ""))],
+		["noncanonical_receipt_id_case", "outcome_receipt_id", str(authentic.get("outcome_receipt_id", "")).to_upper()],
+		["noncanonical_public_result", "public_result", {"message": str(_dict(authentic.get("public_result", {})).get("message", "")), "resolved": true, "ok": true}],
+	]:
+		var mutation := _array(mutation_value)
+		var candidate := authentic.duplicate(true)
+		candidate[str(mutation[1])] = mutation[2]
+		cases.append({"id": str(mutation[0]), "checkpoint": candidate})
+
+
+func _wrong_checkpoint_field_type(field: String, authentic_value: Variant) -> Variant:
+	if field == "schema_version":
+		return "1"
+	if field == "public_result":
+		return [authentic_value]
+	if typeof(authentic_value) == TYPE_STRING:
+		return {"value": authentic_value}
+	return "wrong-type"
+
+
+func _assert_hostile_checkpoint_case(library: ContentLibrary, fixture: Dictionary, case_id: String, hostile_checkpoint: Dictionary, failures: Array) -> void:
+	var source_run: RunState = fixture.get("run_state")
+	var hostile := RunStateScript.new()
+	var saved := source_run.to_dict()
+	var delivery := _dict(saved.get("active_delivery_run", {}))
+	delivery["closed_checkpoint"] = hostile_checkpoint.duplicate(true)
+	saved["active_delivery_run"] = delivery
+	hostile.from_dict(saved)
+	var token := str(fixture.get("token", ""))
+	var receipt_id := str(fixture.get("receipt_id", ""))
+	var target_node_id := str(fixture.get("target_node_id", ""))
+	var bankroll_committed := int(fixture.get("bankroll_before", 0)) + 22
+	var heat_committed := int(fixture.get("heat_before", 0)) + 4
+	var pending_before := JSON.stringify(hostile.world_sequence_pending_outcomes(token))
+	var command_count := _world_sequence_command_receipt_count(hostile, token)
+	var rejected := hostile.world_sequence_consume_delivery_outcome(token, receipt_id, target_node_id)
+	var registration := _dict(hostile.world_sequence_registrations.get(token, {}))
+	if bool(rejected.get("ok", false)):
+		failures.append("P1 hostile checkpoint %s was accepted." % case_id)
+		return
+	if hostile.bankroll != bankroll_committed or hostile.suspicion_level() != heat_committed:
+		failures.append("P1 hostile checkpoint %s suppressed or double-applied the committed owner consequence." % case_id)
+	if JSON.stringify(hostile.world_sequence_pending_outcomes(token)) != pending_before or str(registration.get("lifecycle", "")) == "cleaned" \
+			or not _dict(registration.get("outcome_acknowledgements", {})).is_empty() \
+			or _world_sequence_command_receipt_count(hostile, token) != command_count:
+		failures.append("P1 hostile checkpoint %s acknowledged, cleaned, reran the command, or lost its pending receipt." % case_id)
+	# Replace only the hostile persisted delivery snapshot with the authentic one;
+	# the pending registration remains the exact object that just failed closed.
+	hostile.active_delivery_run = source_run.active_delivery_run.duplicate(true)
+	var authentic_retry := hostile.world_sequence_consume_delivery_outcome(token, receipt_id, target_node_id)
+	if not bool(authentic_retry.get("ok", false)) or hostile.bankroll != bankroll_committed or hostile.suspicion_level() != heat_committed \
+			or not hostile.world_sequence_pending_outcomes(token).is_empty():
+		failures.append("P1 hostile checkpoint %s did not permit the authentic retry to finish exactly once: %s." % [case_id, JSON.stringify(authentic_retry)])
+		return
+	var exact := JSON.stringify(hostile.to_dict())
+	var replay := hostile.world_sequence_consume_delivery_outcome(token, receipt_id, target_node_id)
+	if bool(replay.get("ok", false)) or JSON.stringify(hostile.to_dict()) != exact:
+		failures.append("P1 hostile checkpoint %s authentic replay was not an exact no-op." % case_id)
+
+
+func _check_authentic_checkpoint_round_trip(library: ContentLibrary, failures: Array) -> void:
+	var fixture := _prepared_checkpoint_fixture(library, "ROUND-TRIP", failures, 120)
+	if fixture.is_empty():
+		return
+	var run_state: RunState = _round_trip_run(fixture.get("run_state"))
+	var token := str(fixture.get("token", ""))
+	var receipt_id := str(fixture.get("receipt_id", ""))
+	var target_node_id := str(fixture.get("target_node_id", ""))
+	var resumed := run_state.world_sequence_consume_delivery_outcome(token, receipt_id, target_node_id)
+	if not bool(resumed.get("ok", false)) or run_state.bankroll != int(fixture.get("bankroll_before", 0)) + 22 \
+			or run_state.suspicion_level() != int(fixture.get("heat_before", 0)) + 4 or not run_state.world_sequence_pending_outcomes(token).is_empty():
+		failures.append("P1 authentic product checkpoint did not survive save/load and resume exactly once: %s." % JSON.stringify(resumed))
 
 
 func _assert_delivered_resume(stage: String, run_state: RunState, token: String, receipt_id: String, resumed: Dictionary, bankroll_before: int, heat_before: int, command_receipts_before: int, failures: Array) -> void:
