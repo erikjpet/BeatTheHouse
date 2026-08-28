@@ -1839,12 +1839,69 @@ func world_sequence_projection(token: String) -> Dictionary:
 	return CrewWorldSequenceAdapterScript.projection(current_environment, token, _world_sequence_definition(token))
 
 
+func world_sequence_mounted_owner_for_channel(channel_id: String, node_id: String = "") -> String:
+	if world_sequence_registrations.is_empty(): return ""
+	var exact_node := node_id.strip_edges()
+	if exact_node.is_empty(): exact_node = current_world_node_id()
+	var tokens := world_sequence_registrations.keys()
+	tokens.sort()
+	for token_value in tokens:
+		var token := str(token_value)
+		var registration := _copy_dict(world_sequence_registrations.get(token, {}))
+		if str(registration.get("node_id", "")) != exact_node or str(registration.get("lifecycle", "")) not in ["mounted", "cleanup_pending"]: continue
+		if not _copy_dict(registration.get("outcome_channels", {})).values().has(channel_id): continue
+		if _copy_dict(_copy_dict(current_environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {})).get(token, {})).is_empty(): continue
+		return token
+	return ""
+
+
+func world_sequence_owner_for_public_instance(channel_id: String, public_instance_token: String) -> String:
+	if world_sequence_registrations.is_empty(): return ""
+	var exact_instance := public_instance_token.strip_edges()
+	if exact_instance.is_empty(): return ""
+	var tokens := world_sequence_registrations.keys()
+	tokens.sort()
+	for token_value in tokens:
+		var token := str(token_value)
+		var registration := _copy_dict(world_sequence_registrations.get(token, {}))
+		if str(registration.get("public_instance_token", "")) != exact_instance: continue
+		if str(registration.get("lifecycle", "")) not in ["eligible", "mounted", "cleanup_pending"]: continue
+		if not _copy_dict(registration.get("outcome_channels", {})).values().has(channel_id): continue
+		return token
+	return ""
+
+
 func world_sequence_composed_projection() -> Dictionary:
 	return CrewWorldSequenceAdapterScript.composed_projection(current_environment, _world_sequence_definition_cache, scenario_sequence_projection())
 
 
 func world_sequence_execute(token: String, command: Dictionary, public_context: Dictionary = {}) -> Dictionary:
 	return CrewWorldSequenceAdapterScript.execute(current_environment, token, _world_sequence_definition(token), command, public_context)
+
+
+func world_sequence_command(token: String, command_id: String, idempotency_key: String, payload: Dictionary = {}, owner_namespace: String = "crew", stable_object_id: String = "sequence", host_interaction_availability: Dictionary = {}, action_origin_owner_namespace: String = "", action_origin_stable_object_id: String = "", action_origin_receipt_key: String = "", action_origin_boundary_id: String = "", action_origin_fingerprint: String = "") -> Dictionary:
+	var definition := _world_sequence_definition(token)
+	var projection := world_sequence_projection(token)
+	if definition.is_empty() or projection.is_empty(): return {"ok": false, "errors": ["World sequence is not mounted and finalized."]}
+	var state := _copy_dict(_copy_dict(_copy_dict(current_environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {})).get(token, {})).get("state", {}))
+	var expected_phase := str(projection.get("phase_id", ""))
+	for record_value in _copy_array(state.get("command_receipt_records", [])):
+		var record := _copy_dict(record_value)
+		if str(record.get("receipt_key", "")) == idempotency_key:
+			expected_phase = str(_copy_dict(record.get("envelope", {})).get("expected_phase", expected_phase))
+			break
+	var command := ScenarioSequenceRuntimeScript.command(command_id, current_world_node_id(), expected_phase, idempotency_key, payload, owner_namespace, stable_object_id, action_origin_owner_namespace, action_origin_stable_object_id, action_origin_receipt_key, action_origin_boundary_id, action_origin_fingerprint)
+	var candidate := current_environment.duplicate(true)
+	var result := CrewWorldSequenceAdapterScript.execute(candidate, token, definition, command, {"available_funds": bankroll, "host_interaction_availability": host_interaction_availability})
+	if not bool(result.get("ok", false)): return result
+	var cost := 0 if bool(result.get("replayed", false)) else maxi(0, int(result.get("cost", 0)))
+	if cost > bankroll: return {"ok": false, "errors": ["world sequence command cost is not payable"], "cost": 0}
+	bankroll -= cost
+	current_environment = candidate
+	result["cost"] = cost
+	result["bankroll_delta"] = -cost
+	result["bankroll_after"] = bankroll
+	return result
 
 
 func world_sequence_enqueue_fact(token: String, fact: Dictionary) -> Dictionary:
@@ -1874,6 +1931,7 @@ func world_sequence_apply_expiry(token: String, boundary: String, amount: int = 
 func world_sequence_sync_owner(token: String, owner_active: bool, reason: String = "owner_ended") -> Dictionary:
 	var registration := _copy_dict(world_sequence_registrations.get(token, {}))
 	if registration.is_empty(): return {"ok": true, "inactive": true, "errors": []}
+	if not owner_active and str(registration.get("lifecycle", "")) == "cleaned": return {"ok": true, "replayed": true, "errors": []}
 	if not owner_active and str(registration.get("lifecycle", "")) == "eligible":
 		registration["lifecycle"] = "cleaned"
 		world_sequence_registrations[token] = registration
@@ -1922,7 +1980,7 @@ static func _normalize_world_sequence_registrations(value: Variant) -> Dictionar
 		if CrewWorldSequenceAdapterScript.owner_token(source, public_instance_token) != token: continue
 		if not ScenarioSequenceSchemaScript.is_sequence(definition): continue
 		if str(registration.get("definition_fingerprint", "")) != ScenarioSequenceRuntimeScript.content_fingerprint(definition): continue
-		if str(registration.get("lifecycle", "")) not in ["eligible", "mounted", "cleaned"]: continue
+		if str(registration.get("lifecycle", "")) not in ["eligible", "mounted", "cleanup_pending", "cleaned"]: continue
 		if str(registration.get("node_id", "")).strip_edges().is_empty(): continue
 		result[token] = registration
 	return result
@@ -10448,6 +10506,12 @@ func _apply_delivery_resolution() -> void:
 		elif run_id.begins_with("numbers_fix_bribe:"):
 			numbers_state.fix_record_bribe(succeeded, resolution)
 	active_delivery_run["world_applied"] = true
+	var lifecycle_reason := "expired" if reason == "deadline" else ("abandoned" if reason == "abandoned" else "")
+	if not lifecycle_reason.is_empty():
+		var public_instance_token := job_id if not job_id.is_empty() else run_id
+		var owner_token := world_sequence_owner_for_public_instance("delivery_handoff", public_instance_token)
+		if not owner_token.is_empty():
+			world_sequence_sync_owner(owner_token, false, lifecycle_reason)
 
 
 func _migrate_legacy_streets_run(legacy_state: Dictionary) -> void:
@@ -13438,7 +13502,7 @@ func _failure_message_for_reason(reason: String) -> String:
 
 # Converts the run to saveable data.
 func to_dict() -> Dictionary:
-	return {
+	var result := {
 		"seed_text": seed_text,
 		"seed_value": seed_value,
 		"rng_seed": rng_seed,
@@ -13464,7 +13528,6 @@ func to_dict() -> Dictionary:
 		"current_environment": _environment_for_persistent_storage(current_environment),
 		"world_map": _compact_world_map_ticket_storage(WorldMap.normalize(world_map)),
 		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
-		"world_sequence_registrations": world_sequence_registrations.duplicate(true),
 		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(true),
 		"grand_casino_room_states": _grand_casino_room_states_for_save(),
 		"grand_casino_staffing": grand_casino_staffing.duplicate(true),
@@ -13514,6 +13577,8 @@ func to_dict() -> Dictionary:
 		"run_failure_message": run_failure_message,
 		"run_spending_score": run_spending_score,
 	}
+	if not world_sequence_registrations.is_empty(): result["world_sequence_registrations"] = world_sequence_registrations.duplicate(true)
+	return result
 
 
 # Captures a worker-safe save generation without first deep-copying duplicated
@@ -13522,7 +13587,7 @@ func to_dict() -> Dictionary:
 # codec is non-mutating and performs the final compact deep projection on the
 # worker.
 func to_save_snapshot() -> Dictionary:
-	return {
+	var result := {
 		"seed_text": seed_text,
 		"seed_value": seed_value,
 		"rng_seed": rng_seed,
@@ -13546,7 +13611,6 @@ func to_save_snapshot() -> Dictionary:
 		"current_environment": _environment_for_persistent_storage(current_environment, false),
 		"world_map": _world_map_for_save_snapshot(world_map),
 		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
-		"world_sequence_registrations": world_sequence_registrations.duplicate(false),
 		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(false),
 		"grand_casino_room_states": _grand_casino_room_states_for_save(false),
 		"grand_casino_staffing": grand_casino_staffing.duplicate(false),
@@ -13594,6 +13658,8 @@ func to_save_snapshot() -> Dictionary:
 		"run_failure_message": run_failure_message,
 		"run_spending_score": run_spending_score,
 	}
+	if not world_sequence_registrations.is_empty(): result["world_sequence_registrations"] = world_sequence_registrations.duplicate(false)
+	return result
 
 
 # Restores the run from saved data.

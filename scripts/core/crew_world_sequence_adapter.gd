@@ -245,9 +245,11 @@ static func composed_projection(environment: Dictionary, definitions: Dictionary
 	tokens.sort()
 	for token_value in tokens:
 		var token := str(token_value)
+		var entry := _dict(_container(environment).get(token, {}))
 		var definition := _dict(definitions.get(token, {}))
 		if not SequenceSchemaScript.is_sequence(definition):
 			continue
+		var creation_owners := _array(_dict(_dict(entry.get("state", {})).get("semantic_state", {})).get("creation_owner_namespaces", []))
 		var owner_projection := projection(environment, token, definition)
 		var owner_semantic := _dict(owner_projection.get("semantic_state", {}))
 		for collection in PROJECTION_COLLECTIONS:
@@ -255,6 +257,16 @@ static func composed_projection(environment: Dictionary, definitions: Dictionary
 			for identity_value in _dict(owner_semantic.get(collection, {})).keys():
 				var identity := str(identity_value)
 				var record := _dict(_dict(owner_semantic.get(collection, {})).get(identity_value, {}))
+				if creation_owners.has(str(record.get("owner_namespace", ""))):
+					record["world_sequence_owner_token"] = token
+				if collection == "interactions":
+					var actions: Array = []
+					for action_value in _array(record.get("available_actions", [])):
+						var action := _dict(action_value)
+						if creation_owners.has(str(action.get("action_origin_owner_namespace", ""))):
+							action["world_sequence_owner_token"] = token
+						actions.append(action)
+					record["available_actions"] = actions
 				if target.has(identity) and JSON.stringify(target.get(identity)) != JSON.stringify(record):
 					errors.append("world sequence composed projection conflicts at %s/%s" % [collection, identity])
 				else:
@@ -456,7 +468,7 @@ static func _mount_selector_errors(environment: Dictionary, selector: Dictionary
 
 static func _public_command_context(value: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
-	for key in ["bankroll", "host_interaction_availability"]:
+	for key in ["available_funds", "host_interaction_availability"]:
 		if value.has(key):
 			result[key] = _copy_variant(value.get(key))
 	return result

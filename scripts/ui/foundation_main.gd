@@ -10940,6 +10940,9 @@ func _activate_scenario_sequence_action(object_data: Dictionary, action: Diction
 	var action_id := str(action.get("id", ""))
 	if action_id.is_empty():
 		return false
+	var world_owner_token := str(action.get("world_sequence_owner_token", object_data.get("world_sequence_owner_token", "")))
+	if not world_owner_token.is_empty():
+		return _activate_world_sequence_action(world_owner_token, object_data, action)
 	var sequence_state := _copy_dict(run_state.current_environment.get("scenario_sequence_state", {}))
 	var receipt_ordinal := _copy_array(sequence_state.get("command_receipts", [])).size()
 	var visit_id := str(run_state.current_environment.get("environment_visit_id", "visit"))
@@ -10972,6 +10975,69 @@ func _activate_scenario_sequence_action(object_data: Dictionary, action: Diction
 	_autosave_foundation_run("Scenario progress saved.")
 	_refresh()
 	return true
+
+
+func _activate_world_sequence_action(owner_token: String, object_data: Dictionary, action: Dictionary) -> bool:
+	var action_id := str(action.get("id", "")).strip_edges()
+	var projection := run_state.world_sequence_projection(owner_token)
+	if action_id.is_empty() or projection.is_empty(): return false
+	var idempotency_key := "ui:%d:%s:%s:%s" % [maxi(0, int(projection.get("boundary_serial", 0))), owner_token, str(object_data.get("stable_object_id", "")), action_id]
+	var result := run_state.world_sequence_command(
+		owner_token,
+		action_id,
+		idempotency_key,
+		{},
+		str(object_data.get("owner_namespace", "")),
+		str(object_data.get("stable_object_id", "")),
+		_scenario_host_interaction_availability(),
+		str(action.get("action_origin_owner_namespace", object_data.get("owner_namespace", ""))),
+		str(action.get("action_origin_stable_object_id", object_data.get("stable_object_id", ""))),
+		str(action.get("action_origin_receipt_key", "")),
+		str(action.get("action_origin_boundary_id", "")),
+		str(action.get("action_origin_fingerprint", ""))
+	)
+	if not bool(result.get("ok", false)):
+		var errors := _copy_array(result.get("errors", []))
+		_show_message(str(errors[0]) if not errors.is_empty() else "That Crew action is no longer available.")
+		_refresh()
+		return false
+	var outcome_result := _consume_world_sequence_outcomes(owner_token)
+	if not bool(outcome_result.get("ok", false)):
+		var outcome_errors := _copy_array(outcome_result.get("errors", []))
+		_show_message(str(outcome_errors[0]) if not outcome_errors.is_empty() else "That outcome could not be applied safely.")
+		_refresh()
+		return false
+	var message := str(outcome_result.get("message", _copy_dict(result.get("state", {})).get("last_feedback", "Room state updated.")))
+	clear_interaction_focus()
+	_show_message(message)
+	_autosave_foundation_run("Crew sequence saved.")
+	_refresh()
+	return true
+
+
+func _consume_world_sequence_outcomes(owner_token: String) -> Dictionary:
+	for outcome_value in run_state.world_sequence_pending_outcomes(owner_token):
+		var outcome := _copy_dict(outcome_value)
+		var channel_id := str(outcome.get("channel_id", ""))
+		var receipt_id := str(outcome.get("receipt_id", ""))
+		var rollback := run_state.to_dict()
+		var owner_result: Dictionary = {}
+		match channel_id:
+			"delivery_handoff": owner_result = run_state.delivery_complete_handoff(run_state.current_world_node_id())
+			_: return {"ok": false, "errors": ["World sequence outcome channel is not registered in the UI: %s" % channel_id]}
+		if not bool(owner_result.get("ok", false)):
+			return {"ok": false, "errors": [str(owner_result.get("message", "The owning model rejected this outcome."))]}
+		var public_result := {"ok": true, "resolved": bool(owner_result.get("resolved", false)), "message": str(owner_result.get("message", ""))}
+		var acknowledgement := run_state.world_sequence_ack_outcome(owner_token, receipt_id, public_result)
+		if not bool(acknowledgement.get("ok", false)):
+			run_state.from_dict(rollback)
+			return {"ok": false, "errors": _copy_array(acknowledgement.get("errors", ["World sequence outcome acknowledgement failed."]))}
+		var cleanup := run_state.world_sequence_sync_owner(owner_token, false, "owner_ended")
+		if not bool(cleanup.get("ok", false)):
+			run_state.from_dict(rollback)
+			return {"ok": false, "errors": _copy_array(cleanup.get("errors", ["World sequence cleanup failed."]))}
+		return {"ok": true, "message": str(owner_result.get("message", "")), "errors": []}
+	return {"ok": true, "inactive": true, "errors": []}
 
 
 func _scenario_host_interaction_availability() -> Dictionary:
@@ -11020,6 +11086,17 @@ func _consume_scenario_event_requests() -> void:
 			_activate_event_object(event_id)
 func _complete_delivery_handoff(node_id: String) -> bool:
 	if run_state == null:
+		return false
+	var owner_token := run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", node_id)
+	if not owner_token.is_empty():
+		for object_value in _interactable_object_view_list():
+			var object_data := _copy_dict(object_value)
+			if str(object_data.get("world_sequence_owner_token", "")) != owner_token: continue
+			var actions := _copy_array(object_data.get("scenario_sequence_actions", []))
+			if actions.is_empty() or typeof(actions[0]) != TYPE_DICTIONARY: continue
+			return _activate_world_sequence_action(owner_token, object_data, actions[0] as Dictionary)
+		_show_message("The mounted handoff action is not currently available.")
+		_refresh()
 		return false
 	var result := run_state.delivery_complete_handoff(node_id)
 	if not bool(result.get("ok", false)):

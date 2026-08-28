@@ -417,7 +417,8 @@ static func _compose_projected_records(base_records: Array, resolved_projection:
 
 static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary, authority: Dictionary, authority_digest: String) -> Dictionary:
 	var result := base.duplicate(true)
-	var scenario_owned := str(semantic.get("owner_namespace", "")) == "scenario"
+	var world_owner_token := str(semantic.get("world_sequence_owner_token", ""))
+	var scenario_owned := str(semantic.get("owner_namespace", "")) == "scenario" or not world_owner_token.is_empty()
 	var owned_identity := "%s::%s" % [str(semantic.get("owner_namespace", "")), str(semantic.get("stable_object_id", ""))]
 	var presentation_id := owned_identity if scenario_owned else str(semantic.get("presentation_object_id", result.get("object_id", "")))
 	result["object_id"] = presentation_id
@@ -426,6 +427,7 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary,
 	result["source_id"] = str(semantic.get("source_id", result.get("source_id", semantic.get("stable_object_id", ""))))
 	result["owner_namespace"] = str(semantic.get("owner_namespace", ""))
 	result["stable_object_id"] = str(semantic.get("stable_object_id", ""))
+	if not world_owner_token.is_empty(): result["world_sequence_owner_token"] = world_owner_token
 	result["label"] = str(semantic.get("label", result.get("label", presentation_id)))
 	result["short_description"] = str(semantic.get("prompt", result.get("short_description", "")))
 	result["action_summary"] = str(semantic.get("prompt", result.get("action_summary", "Choose an action.")))
@@ -445,7 +447,7 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary,
 	var sequence_actions: Array = []
 	for action_value in actions:
 		var action := _dict(action_value)
-		if scenario_owned or not str(action.get("action_origin_receipt_key", "")).is_empty(): sequence_actions.append(action)
+		if scenario_owned or not str(action.get("action_origin_receipt_key", "")).is_empty() or not str(action.get("world_sequence_owner_token", "")).is_empty(): sequence_actions.append(action)
 	result["scenario_sequence_actions"] = sequence_actions
 	return result
 
@@ -467,6 +469,8 @@ static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary
 	result["source_id"] = str(result.get("source_id", stable_id))
 	result["owner_namespace"] = owner
 	result["stable_object_id"] = stable_id
+	var world_owner_token := str(semantic.get("world_sequence_owner_token", ""))
+	if not world_owner_token.is_empty(): result["world_sequence_owner_token"] = world_owner_token
 	result["label"] = str(semantic.get("label", result.get("label", stable_id)))
 	result["short_description"] = str(semantic.get("role", result.get("short_description", "Room fixture")))
 	result["state_label"] = str(semantic.get("state", semantic.get("appearance", result.get("state_label", "Present"))))
@@ -798,6 +802,10 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 	if handoff.is_empty():
 		return []
 	var node_id := str(handoff.get("node_id", "")).strip_edges()
+	# A mounted owner projection is the sole player-facing handoff at this node.
+	# The old delivery record remains unchanged for legacy/unconverted runs.
+	if not host.run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", node_id).is_empty():
+		return []
 	var object_id := "delivery:handoff:%s" % node_id
 	var occupied_rects: Array[Rect2] = []
 	var layout: Dictionary = host._current_environment_layout()
