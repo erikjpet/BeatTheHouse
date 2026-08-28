@@ -371,8 +371,8 @@ func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures:
 	RunGeneratorScript.new(library).next_environment(run_state, target_node_id, true)
 	var arrival := run_state.delivery_resolve_travel_arrival({}, {})
 	var finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
-	if not bool(arrival.get("ok", false)) or not bool(finalized.get("ok", false)):
-		failures.append("P1 injection fixture could not mount at the delivery target.")
+	if run_state.current_world_node_id() != target_node_id or not bool(arrival.get("ok", false)) or not bool(finalized.get("ok", false)):
+		failures.append("P1 injection fixture could not mount at the delivery target: current=%s target=%s arrival=%s finalized=%s." % [run_state.current_world_node_id(), target_node_id, JSON.stringify(arrival), JSON.stringify(finalized)])
 		return {}
 	var interactions := _dict(_dict(_dict(finalized.get("projection", {})).get("semantic_state", {})).get("interactions", {}))
 	var handoff := _dict(interactions.get("crew::package_handoff", {}))
