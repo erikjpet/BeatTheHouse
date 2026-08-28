@@ -354,7 +354,9 @@ func _check_delivery_failure_injection_matrix(failures: Array) -> void:
 
 
 func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures: Array) -> Dictionary:
-	var run_state := _production_run(library, seed)
+	# Reuse the accepted production proof seed so every injected checkpoint is
+	# exercised against the same catalog-proven target semantic inventory.
+	var run_state := _production_run(library, "WORLD-SEQUENCE-PROOF-SCHEDULE")
 	run_state.narrative_flags["crew_favor_pending"] = true
 	var module := EventModuleScript.new()
 	module.setup(library.event("crew_favor_delivery"), library)
