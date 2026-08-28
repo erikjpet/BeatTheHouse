@@ -1,50 +1,68 @@
-# env06_7 Package A — Implementation Handoff
+# env06_7 Package A — Immutable Remediation Handoff
 
-Base: `855a2961`. Package definition:
-`data/environments/scenario_sequences/env06_7_shops_streets.json`.
+Status: remediation-ready for independent Integrator review. This document
+does not record a verdict.
 
-Each row is a runtime sequence, not a legacy choice substitution. All generated
-rows have arrival, physical work, and terminal aftermath phases; two command
-boundaries; ignore, refuse, interruption, success, and failure paths; partial
-resume plus terminal/expired revisit policies; exactly-once authored receipts;
-semantic touch targets bound to the physical task objects; reduced-motion,
-small-screen, revisit, and hit-overlay capture ids; and a unique calculated
-mechanic signature. Delivery Day is the frozen env06_6 reference implementation.
+- Dependency base: `855a296126e8b4747b78fbe89cb5a2d02daf61f5`
+- Exact remediation product head: `db8abbd120efe18530fdee013c16e77fd8ba6e98`
+- Branch: `codex/env06_7-pkg-a`
+- Payload: three-way apply of `855a2961..db8abbd1`; never replace a tree.
+- Dependency hold: rebase only after an accepted env06_6 successor is named.
 
-| Scenario | Physical progression | Material terminal identities | World seam |
-| --- | --- | --- | --- |
-| `corner_store_delivery_day` | inspect manifest → shift cartons → stock verification | repaired shelves / broken cooler / refused return / abandoned manifest | event, service, travel, sweep |
-| `corner_store_lotto_fever` | mark queue place → verify disputed number | celebration layout / angry queue / sold-out counter | economy stock |
-| `corner_store_aftermath` | trace boarded-glass evidence → recover or flag object | quiet recovery / police hold / watched aisle | security evidence |
-| `corner_store_dead_shift` | isolate breaker → restore circuit or preserve darkness | lit service / private darkness / flicker lockout | rumor and surveillance |
-| `corner_store_inventory_night` | compare shelf tags → recount or quarantine | reopened sections / quarantined section / closed aisles | economy inventory |
-| `back_alley_street_craps` | read chalk ring → shoot → answer lookout | continuing / relocated / dispersed ring | public craps fact |
-| `back_alley_cruiser_parked` | map sightline → move cover or divert patrol | departed cruiser / diverted patrol / watched route | public sweep pressure |
-| `back_alley_fence_night` | inspect marks → authenticate or broker lot | verified stall / brokered exit / buyer-controlled lot | fence economy |
-| `back_alley_nothing_moving` | compare three traces → follow or erase trail | follow exit / erased rumor exit / empty alley | rumor and route |
-| `pawn_shop_estate_lot_day` | stage estate cart → match provenance or return lot | displayed / returned / quarantined lot | provenance economy |
-| `pawn_shop_serial_check_day` | copy serial → trace record or withdraw object | disclosed hold / withdrawn stock / waiting hold | security inventory |
-| `pawn_shop_sals_mood` | finish shop task → read Sal's route or close shutters | reopened counter / closed shutters / private appraisal | appraisal service |
+## Exact payload
 
-Cheap exact check:
+1. `data/environments/scenario_sequences/env06_7_shops_streets.json`
+2. `docs/plans/env06_7_package_a_handoff.md`
+3. `docs/plans/env06_7_package_a_ownership.md`
+4. `docs/plans/env06_7_package_a_remediation_proof.md`
+5. `tools/env06_7_package_a_check.gd`
+6. `tools/env06_7_package_a_generate.gd`
 
-`Godot --headless --path <worktree> --script res://tools/env06_7_package_a_check.gd`
+No shared catalog/index/loader, combined dossier, cross-seam fixture, renderer,
+pixel canvas, scenario runtime/schema, crew/world model, board, main, `.tmp/`,
+`.tools/`, or `review_artifacts/` path is in the payload.
 
-The check loads the production overlay catalog, requires the exact 12-id
-inventory, validates all eleven newly authored schema-v2 definitions, verifies
-at least two semantic changes and two command boundaries per id, and rejects
-duplicate exact or normalized signatures.
+## First-rejection closure
 
-Latest cheap evidence: `PASS ids=12 exact_signatures=12
-normalized_signatures=12`; generation plus the independent exact check completed
-in 5.6 seconds. `git diff --check` passed. Expensive project gates and visual
-captures remain Integrator-owned; no shared gate, golden, budget, or owner
-artifact was changed by this package.
+Every newly authored identity now consumes an exact registered public fact,
+projects a typed public field, and routes to a materially distinct physical and
+service aftermath. These world connections are executable state transitions,
+not authoring labels.
 
-## Assembly handoff
+Street Craps binds the accepted public craps vocabulary through the
+`game_result` bridge and proves positive stake recovery is projected once under
+duplicate delivery. Cruiser Parked consumes active Back Alley sweep pressure.
+The remaining identities bind exact economy/stock, security/evidence,
+rumor/surveillance, inventory, fence, provenance, route, and appraisal service
+facts. Delivery Day remains the byte-preserved accepted env06_6 reference.
 
-The assembly owner should consume this package file without giving Package A
-ownership of the shared catalog/index, renderer, cross-seam fixtures, or master
-reports. Street Craps consumes only the accepted game's public facts; Cruiser
-Parked consumes only public sweep pressure. Any combined composition fixture
-remains assembly-owned under `ffc6bbd`.
+The rejected static checker has been replaced by executable exact-head proof.
+The complete route, receipt, reentry, cleanup, hostile, privacy, platform, and
+presentation matrix is recorded in
+`docs/plans/env06_7_package_a_remediation_proof.md`.
+
+## Exact-head evidence
+
+Executed from a clean worktree at product head `db8abbd1`:
+
+- generation/schema/catalog: `ENV06_7_PACKAGE_A_GENERATED count=12`
+- executable lifecycle/public-fact/presentation matrix:
+  `ENV06_7_PACKAGE_A_EXECUTABLE PASS ids=12 routes=66 public_facts=11`
+- combined focused wall time: 20.3 seconds
+- repository validation: `validate_project PASS 58670ms`
+- `git diff --check 855a2961..db8abbd1`: PASS
+
+The validation wrapper reported that its separately discovered engine-level
+checks were skipped; both focused Godot scripts were executed directly with the
+canonical Godot 4.6 console executable and passed.
+
+## Integration holds owned elsewhere
+
+The env06_7 assembly owner remains sole writer for the shared handler/renderer,
+55-id catalog, combined dossiers, cross-seam fixtures, pixel canvas, and fixed
+A → B → C catalog lineage. Package A remains dependency-held on the accepted
+env06_6 successor. The Integrator owns review, gating, and landing.
+
+Known local reds: none. This is Package A's first-rejection remediation; any
+second rejection must be escalated to the owner and there is never a third
+review round.
