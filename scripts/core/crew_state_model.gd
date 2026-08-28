@@ -259,76 +259,74 @@ static func new_job_execution(definition_id: String, instance_id: String, offere
 		"definition_id": definition_id,
 		"member_id": str(definition.get("member_id", "")),
 		"kind": str(definition.get("kind", "")),
-		"phase": "offered",
+		"phase": "offered_proposal",
 		"offered_action": maxi(0, offered_action),
 		"expires_at_action": maxi(0, offered_action) + int(definition.get("expiry_in_actions", 1)),
 		"payload": (definition.get("payload", {}) as Dictionary).duplicate(true),
-		"staged": {},
-		"outcome": "",
-		"public_aftermath": {},
-		"action_receipts": {},
-		"action_sequence": 0,
+		"verbs": job_proposal_verbs(str(definition.get("kind", ""))),
+		"step_index": 0,
+		"evidence_claims": [],
+		"outcome_proposal": "",
+		"authoritative": false,
 	}
 
 
 static func normalize_job_execution(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY: return {}
 	var state: Dictionary = (value as Dictionary).duplicate(true)
-	if int(state.get("schema_version", 0)) != JOB_EXECUTION_SCHEMA_VERSION or job_definition(str(state.get("definition_id", ""))).is_empty(): return {}
-	if str(state.get("phase", "")) not in ["offered", "accepted", "active", "stake_handed", "stake_witnessed", "collection_arrived", "resolved"]: return {}
-	if not _job_receipts_valid(state.get("action_receipts", {}), int(state.get("action_sequence", 0))): return {}
+	var exact := ["authoritative", "definition_id", "evidence_claims", "expires_at_action", "instance_id", "kind", "member_id", "offered_action", "outcome_proposal", "payload", "phase", "schema_version", "step_index", "verbs"]
+	var keys := state.keys(); keys.sort()
+	if keys != exact or int(state.get("schema_version", 0)) != JOB_EXECUTION_SCHEMA_VERSION or bool(state.get("authoritative", true)): return {}
+	var definition := job_definition(str(state.get("definition_id", "")))
+	if definition.is_empty() or str(state.get("member_id", "")) != str(definition.get("member_id", "")) or str(state.get("kind", "")) != str(definition.get("kind", "")) or state.get("payload", {}) != definition.get("payload", {}): return {}
+	if state.get("verbs", []) != job_proposal_verbs(str(state.get("kind", ""))) or typeof(state.get("evidence_claims", [])) != TYPE_ARRAY: return {}
+	if str(state.get("phase", "")) not in ["offered_proposal", "accepted_proposal", "active_proposal", "played_evidence_proposal", "terminal_proposal"]: return {}
+	if int(state.get("expires_at_action", -1)) != int(state.get("offered_action", 0)) + int(definition.get("expiry_in_actions", 0)): return {}
+	if state.has("action_receipts") or state.has("action_sequence") or state.has("receipt_fingerprint"): return {}
 	return state
 
 
 static func apply_job_action(state_value: Variant, receipt_key: String, action: String, context: Dictionary = {}) -> Dictionary:
 	var state := normalize_job_execution(state_value)
 	if state.is_empty(): return {}
-	var clean_key := receipt_key.strip_edges()
+	var proposal_id := receipt_key.strip_edges()
 	var clean_action := action.strip_edges().to_lower()
-	var envelope_fingerprint := _job_fingerprint({"action": clean_action, "context": _canonical_job_value(context)})
-	var existing := (state.get("action_receipts", {}) as Dictionary).get(clean_key, {}) as Dictionary
-	if not existing.is_empty(): return state if str(existing.get("envelope_fingerprint", "")) == envelope_fingerprint else (state_value as Dictionary).duplicate(true)
-	if clean_key.is_empty() or str(state.get("phase", "")) == "resolved": return (state_value as Dictionary).duplicate(true)
+	if proposal_id.is_empty() or str(state.get("phase", "")) == "terminal_proposal": return state
 	var before := state.duplicate(true)
-	var definition := job_definition(str(state.get("definition_id", "")))
-	var kind := str(state.get("kind", ""))
 	match clean_action:
 		"accept":
-			if str(state.get("phase", "")) != "offered": return before
-			state["phase"] = "accepted"
+			if not _exact_job_keys(context, ["owner_member_id", "owner_present"]) or str(state.get("phase", "")) != "offered_proposal" or not bool(context.get("owner_present", false)) or str(context.get("owner_member_id", "")) != str(state.get("member_id", "")): return before
+			state["phase"] = "accepted_proposal"
 		"start":
-			if str(state.get("phase", "")) not in ["accepted", "offered"]: return before
-			state["phase"] = "active"
-		"stake_hand":
-			if kind != "stake_horse" or str(state.get("phase", "")) not in ["accepted", "active"]: return before
-			state["phase"] = "stake_handed"
-			state["staged"] = {"crew_stake": int((state.get("payload", {}) as Dictionary).get("crew_stake", 0)), "venue_id": str((state.get("payload", {}) as Dictionary).get("venue_id", "")), "game_id": str((state.get("payload", {}) as Dictionary).get("game_id", ""))}
-		"stake_witness":
-			if kind != "stake_horse" or str(state.get("phase", "")) != "stake_handed": return before
-			state["phase"] = "stake_witnessed"
-			state["staged"] = {"bankroll_delta": int(context.get("bankroll_delta", 0))}
-		"collection_arrive":
-			if kind != "collection" or str(state.get("phase", "")) not in ["accepted", "active"]: return before
-			state["phase"] = "collection_arrived"
-			state["staged"] = {"target_node_id": str(context.get("target_node_id", "")), "target_present": bool(context.get("target_present", false))}
-		"collection_friendly", "collection_press":
-			if kind != "collection" or str(state.get("phase", "")) != "collection_arrived" or not bool((state.get("staged", {}) as Dictionary).get("target_present", false)): return before
-			var payload := state.get("payload", {}) as Dictionary
-			var choice := clean_action.trim_prefix("collection_")
-			state["staged"] = {"choice": choice, "cash": int(payload.get("%s_cash" % choice, 0)), "heat": int(payload.get("%s_heat" % choice, 0))}
-			_resolve_job_execution(state, "success", definition, clean_action)
-		"complete": _resolve_job_execution(state, "success", definition, clean_action)
-		"fail", "abandon", "expire": _resolve_job_execution(state, "abandoned" if clean_action == "abandon" else "failed", definition, clean_action)
+			if not context.is_empty() or str(state.get("phase", "")) != "accepted_proposal": return before
+			state["phase"] = "active_proposal"
+		"play_step":
+			if not _exact_job_keys(context, ["evidence_claim", "verb"]) or str(state.get("phase", "")) not in ["active_proposal", "played_evidence_proposal"]: return before
+			var verbs: Array = state.get("verbs", [])
+			var step := int(state.get("step_index", 0))
+			if step < 0 or step >= verbs.size() or str(context.get("verb", "")) != str(verbs[step]) or typeof(context.get("evidence_claim")) != TYPE_DICTIONARY: return before
+			var claims: Array = (state.get("evidence_claims", []) as Array).duplicate(true)
+			claims.append({"proposal_id": proposal_id, "verb": str(verbs[step]), "claim": (context.get("evidence_claim") as Dictionary).duplicate(true), "trusted": false})
+			state["evidence_claims"] = claims
+			state["step_index"] = step + 1
+			state["phase"] = "played_evidence_proposal"
+		"complete", "fail", "abandon":
+			if not context.is_empty() or int(state.get("step_index", 0)) != (state.get("verbs", []) as Array).size() or str(state.get("phase", "")) != "played_evidence_proposal": return before
+			state["phase"] = "terminal_proposal"
+			state["outcome_proposal"] = "success" if clean_action == "complete" else ("abandoned" if clean_action == "abandon" else "failed")
+		"expire":
+			if not _exact_job_keys(context, ["action_index"]) or int(context.get("action_index", -1)) < int(state.get("expires_at_action", 0)): return before
+			state["phase"] = "terminal_proposal"
+			state["outcome_proposal"] = "abandoned"
 		_:
 			return before
-	_record_job_receipt(state, clean_key, clean_action, envelope_fingerprint)
 	return state
 
 
 static func job_execution_public_state(value: Variant) -> Dictionary:
 	var state := normalize_job_execution(value)
 	if state.is_empty(): return {}
-	return {"instance_id": str(state.get("instance_id", "")), "definition_id": str(state.get("definition_id", "")), "member_id": str(state.get("member_id", "")), "kind": str(state.get("kind", "")), "phase": str(state.get("phase", "")), "expires_at_action": int(state.get("expires_at_action", 0)), "outcome": str(state.get("outcome", "")), "staged": (state.get("staged", {}) as Dictionary).duplicate(true), "aftermath": (state.get("public_aftermath", {}) as Dictionary).duplicate(true)}
+	return {"instance_id": str(state.get("instance_id", "")), "definition_id": str(state.get("definition_id", "")), "member_id": str(state.get("member_id", "")), "kind": str(state.get("kind", "")), "phase": str(state.get("phase", "")), "expires_at_action": int(state.get("expires_at_action", 0)), "outcome_proposal": str(state.get("outcome_proposal", "")), "step_index": int(state.get("step_index", 0)), "step_count": (state.get("verbs", []) as Array).size(), "authoritative": false, "requires": ["host_job_record", "host_game_or_world_evidence"]}
 
 
 static func _service(id: String, object_id: String, state: String, operator_id: String, occupied: bool) -> Dictionary:
