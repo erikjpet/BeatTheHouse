@@ -4050,9 +4050,17 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 		failures.append("ContentLibrary did not apply the committed delivery-day package exactly.")
 		return
 	var target_catalog := library.scenario_target_catalog(definition)
+	var sealed_catalog_inventory := _dict(target_catalog.get("inventory", {}))
 	var definition_errors := _array(target_catalog.get("errors", []))
+	if str(sealed_catalog_inventory.get("kind", "")) != "catalog" or str(sealed_catalog_inventory.get("digest", "")).length() != 64:
+		definition_errors.append("delivery-day target catalog did not retain its sealed catalog provenance")
 	if definition_errors.is_empty():
-		definition_errors = SequenceSchemaScript.validate_definition(definition, OperationRegistryScript, _dict(target_catalog.get("inventory", {})))
+		# Mirror ContentLibrary's production schema boundary: the full sealed
+		# catalog remains available for provenance/runtime consumers, while schema
+		# validation receives its proven collections plus exact event choices.
+		var schema_inventory := _dict(target_catalog.get("guaranteed", {})).duplicate(true)
+		schema_inventory["event_choices"] = _dict(target_catalog.get("event_choices", {}))
+		definition_errors = SequenceSchemaScript.validate_definition(definition, OperationRegistryScript, schema_inventory)
 	if not definition_errors.is_empty():
 		failures.append("Committed delivery-day definition failed schema/registry validation: %s" % JSON.stringify(definition_errors))
 		return
