@@ -3416,6 +3416,7 @@ func _validate_scenario_definitions() -> void:
 					"item_ids": item_ids,
 					"actor_ids": character_ids,
 					"archetype": environment_archetype(archetype_key),
+					"scenario_semantic_inventory": _as_dict(sequence_target_catalog.get("inventory", {})),
 				}, _as_dict(target_inventories.get(scenario_id, {}))))
 	var overlay_ids := _as_dict(scenario_sequence_catalog.get("overlays", {})).keys()
 	for overlay_id_value in overlay_ids:
