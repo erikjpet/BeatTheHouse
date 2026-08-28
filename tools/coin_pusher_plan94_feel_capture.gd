@@ -129,13 +129,13 @@ func _elevated_coin_count(state: Dictionary, definition: Dictionary) -> int:
 func _capture_upper_row(variation_id: String, definition: Dictionary) -> Dictionary:
 	var period := maxi(1, int((definition.get("stroke", {}) as Dictionary).get("period_ticks", 240)))
 	var opening_snapshot := _production_opening_snapshot()
-	var branch_seed := "plan94:%s:upper:production" % variation_id
-	var state := _restore_production_opening(branch_seed, definition)
+	LiveSession.advance(active_machine, production_clock_msec)
+	var production_entry_machine := active_machine.duplicate(true)
+	var state := _restore_production_entry(production_entry_machine)
 	if state.is_empty() or opening_snapshot.is_empty():
 		return {"id": "upper_row_join", "passed": false, "files": [], "reason": "production_opening_restore_failed"}
 	var before_views := Solver.body_views(state)
 	var before_record := _record(state)
-	var opening_ids := _body_id_set(before_views)
 	var branch_session_identity := _upper_row_session_identity()
 	var idle_before := _upper_row_control_digest(state)
 	var bankroll_before_idle := active_run_state.bankroll
@@ -150,14 +150,13 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 	var idle_record := _record(state)
 	var idle_unchanged := idle_before == idle_after \
 		and idle_events.is_empty() \
-		and not bool(active_machine.get("motor_started", false)) \
 		and int(state.get("motor_rate_fp", -1)) == 0 \
 		and active_run_state.bankroll == bankroll_before_idle \
 		and active_run_state.story_log_entry_count() == story_before_idle
 	var idle_file := "%s_upper_row_idle_control.png" % variation_id
 	var idle_saved := await _save_record_strip(idle_file, variation_id, definition, [before_record, idle_record], false)
 
-	state = _restore_production_opening(branch_seed, definition)
+	state = _restore_production_entry(production_entry_machine)
 	if state.is_empty():
 		return {"id": "upper_row_join", "passed": false, "files": [idle_file], "reason": "production_drop_restore_failed", "idle_control_passed": idle_unchanged and idle_exact_ticks and idle_saved}
 	var restored_views := Solver.body_views(state)
@@ -165,6 +164,8 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 	var baseline_reproduced := restored_views == before_views \
 		and restored_session_identity == branch_session_identity \
 		and _sha256(_production_opening_snapshot()) == _sha256(opening_snapshot)
+	var control_trace := _run_upper_row_control_trace(variation_id, state)
+	var preexisting_ids := _body_id_set(Solver.body_views(state))
 	var stimulus_before := _record(state)
 	var queue_before := (active_machine.get("drop_queue", []) as Array).size()
 	var accepted_before := int(state.get("accepted_inserts", 0))
@@ -214,7 +215,7 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 				landing_phase_fp = int(state.get("phase_fp", -1))
 				landing_face_y = int(state.get("face_y", -1))
 				landing_record = _record(state, [], result.get("events", []))
-				landing_neighbor_views = _upper_row_local_neighbors(Solver.body_views(state), body_id, opening_ids)
+				landing_neighbor_views = _upper_row_local_neighbors(Solver.body_views(state), body_id, preexisting_ids)
 		if not first_support_event.is_empty() or terminal_before_support:
 			break
 	var landing_y := _body_y_for_ids(Solver.body_views(state), _body_ids(landing_neighbor_views))
@@ -256,7 +257,7 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 	if not landing_record.is_empty():
 		join_saved = await _save_record_strip(join_file, variation_id, definition, [stimulus_before, landing_record, _record(state)], false)
 	var passed := idle_unchanged and idle_exact_ticks and idle_saved \
-		and baseline_reproduced and drop_committed and emitted \
+		and baseline_reproduced and bool(control_trace.get("passed", false)) and drop_committed and emitted \
 		and int(state.get("accepted_inserts", 0)) == accepted_before + 1 \
 		and exact_live_ticks and joined_platform_row and phase_matched \
 		and not advanced_ids.is_empty() \
@@ -274,6 +275,7 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 		"baseline_reproduced": baseline_reproduced,
 		"baseline_session_identity": branch_session_identity,
 		"restored_session_identity": restored_session_identity,
+		"fixed_control_trace": control_trace,
 		"selected_nozzle_id": selected_nozzle_id,
 		"paid_drop_cost": paid_drop_cost,
 		"drop_committed": drop_committed,
@@ -303,6 +305,85 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 		"production_input_trace_count": ((active_machine.get("live_session", {}) as Dictionary).get("input_trace", []) as Array).size(),
 		"production_liveness_ticks": int((active_machine.get("live_session", {}) as Dictionary).get("liveness_ticks", 0)),
 		"join_file_saved": join_saved,
+	}
+
+
+func _run_upper_row_control_trace(variation_id: String, state: Dictionary) -> Dictionary:
+	const PRIMING_DROP_COUNT := 12
+	var control := {"action": "", "handled": true, "selected_nozzle_id": str(active_machine.get("selected_nozzle_id", ""))}
+	if variation_id == "jackpot_ridge":
+		var command := game.surface_action_command("coin_pusher_hole_1", 0, false, {}, active_run_state, active_environment)
+		control = {
+			"action": "coin_pusher_hole_1",
+			"handled": bool(command.get("handled", false)),
+			"environment_changed": bool(command.get("environment_changed", false)),
+			"selected_nozzle_id": str(active_machine.get("selected_nozzle_id", "")),
+		}
+	else:
+		control["carriage_x"] = int(state.get("carriage_x", -1))
+		control["reason"] = "unchanged_production_entry_rail"
+	var control_passed := bool(control.get("handled", false)) \
+		and ((variation_id == "jackpot_ridge" and str(control.get("selected_nozzle_id", "")) == "ridge_center") \
+			or (variation_id != "jackpot_ridge" and not str(control.get("selected_nozzle_id", "")).is_empty()))
+	var priming_records: Array = []
+	var trace_passed := control_passed
+	for prime_index in range(PRIMING_DROP_COUNT):
+		var queue_before := (active_machine.get("drop_queue", []) as Array).size()
+		var bankroll_before := active_run_state.bankroll
+		var story_before := active_run_state.story_log_entry_count()
+		var command := game.surface_action_command("coin_pusher_drop", 0, false, {}, active_run_state, active_environment)
+		var cost := int(command.get("set_stake", 0))
+		var result := game.resolve_with_context(str(command.get("action_id", "")), cost, active_run_state, active_environment, _rng("plan94:%s:upper:prime:%d" % [variation_id, prime_index]), {})
+		GameModule.apply_result(active_run_state, result)
+		var body_id := "body_%05d" % int(state.get("next_body_id", 1))
+		var committed := bool(command.get("handled", false)) \
+			and bool(command.get("direct_resolve", false)) \
+			and cost > 0 \
+			and queue_before == 0 \
+			and (active_machine.get("drop_queue", []) as Array).size() == 1 \
+			and active_run_state.bankroll == bankroll_before - cost \
+			and active_run_state.story_log_entry_count() == story_before + 1
+		var emitted := false
+		var exact_ticks := true
+		var first_support := {}
+		var terminal_before_support := false
+		for _tick in range(1200):
+			var step := _advance_production_exact_tick()
+			exact_ticks = exact_ticks and bool(step.get("exact_one_tick", false))
+			emitted = emitted or not _body(state, body_id).is_empty()
+			for event_value in step.get("events", []):
+				if typeof(event_value) != TYPE_DICTIONARY or str((event_value as Dictionary).get("body_id", "")) != body_id:
+					continue
+				var event: Dictionary = event_value
+				if str(event.get("kind", "")) in ["tray", "gutter", "plinko_cup"] and first_support.is_empty():
+					terminal_before_support = true
+				if bool(event.get("first_support", false)):
+					first_support = event.duplicate(true)
+			if not first_support.is_empty() or terminal_before_support:
+				break
+		var platform_rooted := not terminal_before_support \
+			and str(first_support.get("support_root", "")) == "platform" \
+			and str(_body_from_views(Solver.body_views(state), body_id).get("support_root", "")) == "platform"
+		trace_passed = trace_passed and committed and emitted and exact_ticks and platform_rooted
+		priming_records.append({
+			"ordinal": prime_index + 1,
+			"body_id": body_id,
+			"committed": committed,
+			"emitted": emitted,
+			"exact_live_ticks": exact_ticks,
+			"terminal_before_support": terminal_before_support,
+			"first_support_event": first_support,
+			"platform_rooted_view": str(_body_from_views(Solver.body_views(state), body_id).get("support_root", "")) == "platform",
+		})
+	return {
+		"schema": "coin_pusher_upper_row_fixed_trace_v1",
+		"trace_id": "production_entry_fixed_nozzle_12_taps_then_tracked_drop",
+		"seed_search_count": 0,
+		"control_search_count": 0,
+		"control": control,
+		"priming_drop_count": PRIMING_DROP_COUNT,
+		"priming_drops": priming_records,
+		"passed": trace_passed,
 	}
 
 
@@ -717,22 +798,16 @@ func _production_opening_snapshot() -> Dictionary:
 	return snapshot.duplicate(true)
 
 
-func _restore_production_opening(seed: String, definition: Dictionary) -> Dictionary:
-	var game_states: Dictionary = active_environment.get("game_states", {}) if typeof(active_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var durable: Dictionary = game_states.get("coin_pusher", {}) if typeof(game_states.get("coin_pusher", {})) == TYPE_DICTIONARY else {}
-	var snapshot: Dictionary = durable.get("settled_state", {}) if typeof(durable.get("settled_state", {})) == TYPE_DICTIONARY else {}
-	if str(snapshot.get("schema", "")) != LiveSession.SNAPSHOT_SCHEMA:
+func _restore_production_entry(production_entry_machine: Dictionary) -> Dictionary:
+	if production_entry_machine.is_empty() \
+		or typeof(production_entry_machine.get("simulation", {})) != TYPE_DICTIONARY \
+		or typeof(production_entry_machine.get("live_session", {})) != TYPE_DICTIONARY:
 		return {}
-	var machine := durable.duplicate(true)
-	machine["simulation"] = LiveSession.restore_snapshot(snapshot, definition)
-	machine.erase("live_session")
 	# Preserve the dictionary already installed in the production module's live
-	# map; replacing its contents keeps every action/surface lookup authoritative.
+	# map and replay the exact production entry RNG/session byte-for-byte.
 	active_machine.clear()
-	active_machine.merge(machine, true)
-	LiveSession.begin(active_machine, definition, seed.hash() & 0x7fffffff)
+	active_machine.merge(production_entry_machine.duplicate(true), true)
 	production_clock_msec = 0
-	LiveSession.advance(active_machine, production_clock_msec)
 	return active_machine.get("simulation", {}) if typeof(active_machine.get("simulation", {})) == TYPE_DICTIONARY else {}
 
 
@@ -759,6 +834,8 @@ func _upper_row_control_digest(state: Dictionary) -> Dictionary:
 		"face_y": int(state.get("face_y", -1)),
 		"previous_face_y": int(state.get("previous_face_y", -1)),
 		"stroke_cycle_serial": int(state.get("stroke_cycle_serial", -1)),
+		"motor_started": bool(active_machine.get("motor_started", false)),
+		"motor_rate_fp": int(state.get("motor_rate_fp", -1)),
 		"accepted_inserts": int(state.get("accepted_inserts", 0)),
 		"collected_count": int(state.get("collected_count", 0)),
 		"collected_value": int(state.get("collected_value", 0)),
