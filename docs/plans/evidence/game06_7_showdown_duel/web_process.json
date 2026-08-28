@@ -1,0 +1,775 @@
+{
+  "evidence": {},
+  "failures": [],
+  "idle_frames": 30,
+  "max_idle_frame_ms": 39.72,
+  "ok": true,
+  "platform": "Web",
+  "schema": "game06_7_showdown_duel_platform_v1",
+  "semantic": [
+    {
+      "available_controls": [
+        "showdown.respond"
+      ],
+      "capture_id": "phase_approach",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "approach",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "arrival"
+      },
+      "selected_ending": "",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "showdown.ack_pat_down"
+      ],
+      "capture_id": "phase_seating",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "seating",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "seated"
+      },
+      "selected_ending": "",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "interrogation.respond"
+      ],
+      "capture_id": "phase_response",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "response",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "seated"
+      },
+      "selected_ending": "",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "commit.place",
+        "commit.correct",
+        "commit.remove",
+        "commit.undo",
+        "commit.clear",
+        "commit.repeat",
+        "commit.rebet",
+        "commit.confirm",
+        "duel.call_edge",
+        "duel.cheat"
+      ],
+      "capture_id": "phase_commitment",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "commitment",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "seated"
+      },
+      "selected_ending": "",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "result.reveal"
+      ],
+      "capture_id": "phase_reveal",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "reveal",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "leaning"
+      },
+      "selected_ending": "",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "staging.ack_break"
+      ],
+      "capture_id": "phase_break",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "phase_break",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "leaning"
+      },
+      "selected_ending": "",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "staging.ack_crowd"
+      ],
+      "capture_id": "phase_crowd_change",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "crowd_change",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "seated"
+      },
+      "selected_ending": "",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "ending.ack"
+      ],
+      "capture_id": "phase_outcome_staging",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "outcome_staging",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "standing"
+      },
+      "selected_ending": "",
+      "small_screen": false
+    },
+    {
+      "available_controls": [],
+      "capture_id": "phase_exit",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "exit",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "standing"
+      },
+      "selected_ending": "",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "ending.ack"
+      ],
+      "capture_id": "outcome_walk_out_clean",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "player_pressing",
+      "phase_id": "outcome_staging",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": 60,
+        "outcome": "walk_out_clean",
+        "player_stack": 130,
+        "rourke_stack": 70
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "celebrating",
+        "exit_state": "victory",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "settling",
+        "table_state": "settled"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "respect",
+        "id": "actor.rourke",
+        "pose": "departing"
+      },
+      "selected_ending": "walk_out_clean",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "ending.ack"
+      ],
+      "capture_id": "outcome_shown_the_door",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "outcome_staging",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 5,
+        "margin": -10,
+        "outcome": "shown_the_door",
+        "player_stack": 90,
+        "rourke_stack": 100
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "hostile",
+        "exit_state": "victory",
+        "rail_state": "tight",
+        "security_state": "high",
+        "staff_state": "settling",
+        "table_state": "settled"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "contempt",
+        "id": "actor.rourke",
+        "pose": "standing"
+      },
+      "selected_ending": "shown_the_door",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "ending.ack"
+      ],
+      "capture_id": "outcome_taken_out_back",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "house_pressing",
+      "phase_id": "outcome_staging",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 5,
+        "margin": -80,
+        "outcome": "taken_out_back",
+        "player_stack": 20,
+        "rourke_stack": 100
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "hostile",
+        "exit_state": "failure",
+        "rail_state": "tight",
+        "security_state": "high",
+        "staff_state": "settling",
+        "table_state": "settled"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "standing"
+      },
+      "selected_ending": "taken_out_back",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "ending.ack"
+      ],
+      "capture_id": "ending_high_roller",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "outcome_staging",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "celebrating",
+        "exit_state": "victory",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "standing"
+      },
+      "selected_ending": "high_roller_final",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "ending.ack"
+      ],
+      "capture_id": "ending_crew_heist",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "outcome_staging",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [
+        {
+          "member_id": "crew_ace",
+          "pose": "rail",
+          "presentation_id": "crew_ace_rail",
+          "public_state": "supporting"
+        }
+      ],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "celebrating",
+        "exit_state": "crew",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "standing"
+      },
+      "selected_ending": "crew_heist_final",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "showdown.respond"
+      ],
+      "capture_id": "maximum_crowd",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "approach",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 1,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "arrival"
+      },
+      "selected_ending": "",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "result.reveal"
+      ],
+      "capture_id": "cheat_edge_call",
+      "colorblind": false,
+      "current_edge": {
+        "active": true,
+        "called": true,
+        "correct_call": true,
+        "id": "deck_stack",
+        "label": "Call the Stack",
+        "stripped": true
+      },
+      "energy_tier": "controlled",
+      "phase_id": "reveal",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "leaning"
+      },
+      "selected_ending": "",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "commit.place",
+        "commit.correct",
+        "commit.remove",
+        "commit.undo",
+        "commit.clear",
+        "commit.repeat",
+        "commit.rebet",
+        "commit.confirm",
+        "duel.call_edge",
+        "duel.cheat"
+      ],
+      "capture_id": "reduced_motion",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "commitment",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": true,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "seated"
+      },
+      "selected_ending": "",
+      "small_screen": false
+    },
+    {
+      "available_controls": [
+        "commit.place",
+        "commit.correct",
+        "commit.remove",
+        "commit.undo",
+        "commit.clear",
+        "commit.repeat",
+        "commit.rebet",
+        "commit.confirm",
+        "duel.call_edge",
+        "duel.cheat"
+      ],
+      "capture_id": "small_screen",
+      "colorblind": false,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "commitment",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "seated"
+      },
+      "selected_ending": "",
+      "small_screen": true
+    },
+    {
+      "available_controls": [
+        "commit.place",
+        "commit.correct",
+        "commit.remove",
+        "commit.undo",
+        "commit.clear",
+        "commit.repeat",
+        "commit.rebet",
+        "commit.confirm",
+        "duel.call_edge",
+        "duel.cheat"
+      ],
+      "capture_id": "colorblind_labels",
+      "colorblind": true,
+      "current_edge": {},
+      "energy_tier": "controlled",
+      "phase_id": "commitment",
+      "player_stakes": {
+        "ante": 20,
+        "hand_limit": 5,
+        "hand_number": 2,
+        "margin": -5,
+        "outcome": "",
+        "player_stack": 100,
+        "rourke_stack": 105
+      },
+      "public_crew_actors": [],
+      "reduced_motion": false,
+      "room_state": {
+        "crowd_state": "full",
+        "exit_state": "blocked",
+        "rail_state": "open",
+        "security_state": "low",
+        "staff_state": "watching",
+        "table_state": "active"
+      },
+      "rourke_actor": {
+        "bark": "Rourke reads the felt, not a timer.",
+        "behavior_state": "confidence",
+        "id": "actor.rourke",
+        "pose": "seated"
+      },
+      "selected_ending": "",
+      "small_screen": false
+    }
+  ],
+  "semantic_sha256": "0fbde506dcf5395a82d0801e5fd52a509b1296ae35339a9cf3d90345b57c385a",
+  "serialization_iterations": 500,
+  "serialization_ms": 1327.935,
+  "browser_capture": {
+    "browser": "chrome",
+    "browser_version": "151.0.7922.174",
+    "cpu_throttle_rate": 4,
+    "console_errors": [],
+    "page_errors": [],
+    "request_failures": [],
+    "fresh_profile": "C:\\bth-game06_7-contract-only\\.tmp\\game06_7_web_profile",
+    "url": "http://127.0.0.1:18147/index.html"
+  }
+}

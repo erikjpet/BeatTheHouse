@@ -1,0 +1,1097 @@
+{
+  "schema": "game06_7_showdown_duel_platform_v1",
+  "ok": true,
+  "platform": "native",
+  "semantic": [
+    {
+      "capture_id": "phase_approach",
+      "phase_id": "approach",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "arrival",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "showdown.respond"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "phase_seating",
+      "phase_id": "seating",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "seated",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "showdown.ack_pat_down"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "phase_response",
+      "phase_id": "response",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "seated",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "interrogation.respond"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "phase_commitment",
+      "phase_id": "commitment",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "seated",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "commit.place",
+        "commit.correct",
+        "commit.remove",
+        "commit.undo",
+        "commit.clear",
+        "commit.repeat",
+        "commit.rebet",
+        "commit.confirm",
+        "duel.call_edge",
+        "duel.cheat"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "phase_reveal",
+      "phase_id": "reveal",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "leaning",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "result.reveal"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "phase_break",
+      "phase_id": "phase_break",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "leaning",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "staging.ack_break"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "phase_crowd_change",
+      "phase_id": "crowd_change",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "seated",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "staging.ack_crowd"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "phase_outcome_staging",
+      "phase_id": "outcome_staging",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "standing",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "ending.ack"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "phase_exit",
+      "phase_id": "exit",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "standing",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "outcome_walk_out_clean",
+      "phase_id": "outcome_staging",
+      "selected_ending": "walk_out_clean",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "respect",
+        "pose": "departing",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "celebrating",
+        "rail_state": "open",
+        "staff_state": "settling",
+        "security_state": "low",
+        "table_state": "settled",
+        "exit_state": "victory"
+      },
+      "player_stakes": {
+        "player_stack": 130,
+        "rourke_stack": 70,
+        "margin": 60,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": "walk_out_clean"
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "ending.ack"
+      ],
+      "energy_tier": "player_pressing",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "outcome_shown_the_door",
+      "phase_id": "outcome_staging",
+      "selected_ending": "shown_the_door",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "contempt",
+        "pose": "standing",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "hostile",
+        "rail_state": "tight",
+        "staff_state": "settling",
+        "security_state": "high",
+        "table_state": "settled",
+        "exit_state": "victory"
+      },
+      "player_stakes": {
+        "player_stack": 90,
+        "rourke_stack": 100,
+        "margin": -10,
+        "ante": 20,
+        "hand_number": 5,
+        "hand_limit": 5,
+        "outcome": "shown_the_door"
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "ending.ack"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "outcome_taken_out_back",
+      "phase_id": "outcome_staging",
+      "selected_ending": "taken_out_back",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "standing",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "hostile",
+        "rail_state": "tight",
+        "staff_state": "settling",
+        "security_state": "high",
+        "table_state": "settled",
+        "exit_state": "failure"
+      },
+      "player_stakes": {
+        "player_stack": 20,
+        "rourke_stack": 100,
+        "margin": -80,
+        "ante": 20,
+        "hand_number": 5,
+        "hand_limit": 5,
+        "outcome": "taken_out_back"
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "ending.ack"
+      ],
+      "energy_tier": "house_pressing",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "ending_high_roller",
+      "phase_id": "outcome_staging",
+      "selected_ending": "high_roller_final",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "standing",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "celebrating",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "victory"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "ending.ack"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "ending_crew_heist",
+      "phase_id": "outcome_staging",
+      "selected_ending": "crew_heist_final",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "standing",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "celebrating",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "crew"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [
+        {
+          "member_id": "crew_ace",
+          "presentation_id": "crew_ace_rail",
+          "pose": "rail",
+          "public_state": "supporting"
+        }
+      ],
+      "available_controls": [
+        "ending.ack"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "maximum_crowd",
+      "phase_id": "approach",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "arrival",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 1,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "showdown.respond"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "cheat_edge_call",
+      "phase_id": "reveal",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "leaning",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+        "id": "deck_stack",
+        "label": "Call the Stack",
+        "active": true,
+        "called": true,
+        "stripped": true,
+        "correct_call": true
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "result.reveal"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "reduced_motion",
+      "phase_id": "commitment",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "seated",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "commit.place",
+        "commit.correct",
+        "commit.remove",
+        "commit.undo",
+        "commit.clear",
+        "commit.repeat",
+        "commit.rebet",
+        "commit.confirm",
+        "duel.call_edge",
+        "duel.cheat"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": true,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "small_screen",
+      "phase_id": "commitment",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "seated",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "commit.place",
+        "commit.correct",
+        "commit.remove",
+        "commit.undo",
+        "commit.clear",
+        "commit.repeat",
+        "commit.rebet",
+        "commit.confirm",
+        "duel.call_edge",
+        "duel.cheat"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": true,
+      "colorblind": false
+    },
+    {
+      "capture_id": "colorblind_labels",
+      "phase_id": "commitment",
+      "selected_ending": "",
+      "rourke_actor": {
+        "id": "actor.rourke",
+        "behavior_state": "confidence",
+        "pose": "seated",
+        "bark": "Rourke reads the felt, not a timer."
+      },
+      "room_state": {
+        "crowd_state": "full",
+        "rail_state": "open",
+        "staff_state": "watching",
+        "security_state": "low",
+        "table_state": "active",
+        "exit_state": "blocked"
+      },
+      "player_stakes": {
+        "player_stack": 100,
+        "rourke_stack": 105,
+        "margin": -5,
+        "ante": 20,
+        "hand_number": 2,
+        "hand_limit": 5,
+        "outcome": ""
+      },
+      "current_edge": {
+
+      },
+      "public_crew_actors": [],
+      "available_controls": [
+        "commit.place",
+        "commit.correct",
+        "commit.remove",
+        "commit.undo",
+        "commit.clear",
+        "commit.repeat",
+        "commit.rebet",
+        "commit.confirm",
+        "duel.call_edge",
+        "duel.cheat"
+      ],
+      "energy_tier": "controlled",
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": true
+    }
+  ],
+  "semantic_sha256": "0fbde506dcf5395a82d0801e5fd52a509b1296ae35339a9cf3d90345b57c385a",
+  "serialization_iterations": 500,
+  "serialization_ms": 215.31,
+  "idle_frames": 30,
+  "max_idle_frame_ms": 5.92,
+  "evidence": {
+    "schema": "game06_7_showdown_duel_raster_v1",
+    "capture_count": 19,
+    "captures": [
+      {
+        "capture_id": "phase_approach",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/phase_approach.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "aaa61c4f02f46eadb5ff94980228642f21a1b068608cb8999c8b51e26bc491ba",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "phase_seating",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/phase_seating.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "df124079e09d199b31959baac08715d247c5321a7ba6f453e10762b261b73351",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "phase_response",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/phase_response.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "5093e7392a6aef163b3719b334ebac929856233fc6bc64999df75c625c030d2f",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "phase_commitment",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/phase_commitment.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "91e8cd99f586e8c2225fe235d2ac4b19f9a1faa933f55d08ef9d051d80e9e2ba",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "phase_reveal",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/phase_reveal.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "879ba8e6db00f69400bc2b415cd8672919aaa3836d5a972569729559afc73e52",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "phase_break",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/phase_break.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "ae9a8cbb90be0fb84b40c87ea842d6f830fcb8612339e463d5821a9fa87a2c5d",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "phase_crowd_change",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/phase_crowd_change.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "6d3c9c16f1133538b449049f2408cb9790d255c1f30e916c892457711a4d562c",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "phase_outcome_staging",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/phase_outcome_staging.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "be72b1bcfc593b1573866f3efd303cba84a6370f824bc0979294ba0690d447aa",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "phase_exit",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/phase_exit.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "a26d18696f494c982b6d366f6923060e9b86b952286d05c2d50470b535c7462d",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "outcome_walk_out_clean",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/outcome_walk_out_clean.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "2a006339303b346183c2aae224d03427496056dad70e284130881d82cb81ffd5",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "outcome_shown_the_door",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/outcome_shown_the_door.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "cdff3b586ea8189ae9f14abe33c6d0bbe97c6670a0f67c957994af1f6e8f288f",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "outcome_taken_out_back",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/outcome_taken_out_back.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "2f8a716acf8b8d90f45288dc8a5d946e2ab088b55f6d4595382a0a5793c967c4",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "ending_high_roller",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/ending_high_roller.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "19f2be33335d2772e78051c5675d3a88afbfe25d88de3372bd976049b9c4b4b3",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "ending_crew_heist",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/ending_crew_heist.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "a841dfdd32a8b297a4456f8b554096c7e5f0733a9a89398ed2598989e32b706f",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "maximum_crowd",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/maximum_crowd.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "9b7a1ee2c0ad149294fb684841ea86ac8ec81db60a33983dd3f312216f546584",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "cheat_edge_call",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/cheat_edge_call.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "879ba8e6db00f69400bc2b415cd8672919aaa3836d5a972569729559afc73e52",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "reduced_motion",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/reduced_motion.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "8ac9c780fc44d3ea191679cd2126dea031cfd7d605a7e87f9c767350aab96d3e",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "small_screen",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/small_screen.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "e980c1a9d90647359921ccfd36f4c45078ced3f02f27ae9006320fdd939ed6dc",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "colorblind_labels",
+        "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/colorblind_labels.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "e86d9f722e7dbed26efaef716c9afcfe273414bf1ac12547dddef590cb536d48",
+        "minimum_control_size": [
+          132,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "stake_label_visible": true,
+        "non_color_labels": true
+      }
+    ],
+    "contact_sheet": {
+      "path": "C:/bth-game06_7-contract-only/docs/plans/evidence/game06_7_showdown_duel/game06_7_showdown_duel_contact_sheet.png",
+      "width": 960,
+      "height": 1260,
+      "sha256": "e3c313df0dbda7bb055d03a5511acea8f40d050944927032404f6c5a169b7c81"
+    }
+  },
+  "failures": []
+}
