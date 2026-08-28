@@ -213,6 +213,14 @@ func _check_production_schedule(failures: Array) -> void:
 	for forbidden in FORBIDDEN_PACKAGE_TERMS:
 		if registration_text.contains(forbidden):
 			failures.append("Scheduled Crew favor registration leaks owner-private term: %s." % forbidden)
+	var schedule_before := JSON.stringify(run_state.to_dict())
+	var scheduled_instance := str(registration.get("public_instance_token", ""))
+	var wrong_instance := run_state.world_sequence_schedule_mount("world06_1_crew_favor_delivery", "%s_wrong" % scheduled_instance, target_node_id)
+	var wrong_node := run_state.world_sequence_schedule_mount("world06_1_crew_favor_delivery", scheduled_instance, "%s_wrong" % target_node_id)
+	var unknown_package := run_state.world_sequence_schedule_mount("unknown_package", scheduled_instance, target_node_id)
+	if bool(wrong_instance.get("ok", false)) or bool(wrong_node.get("ok", false)) or bool(unknown_package.get("ok", false)) \
+			or JSON.stringify(run_state.to_dict()) != schedule_before:
+		failures.append("Caller-supplied instance, target, or package fields altered the trusted live schedule registration.")
 	var restored := RunStateScript.new()
 	restored.from_dict(run_state.to_dict())
 	if JSON.stringify(restored.world_sequence_registrations) != JSON.stringify(run_state.world_sequence_registrations) \
