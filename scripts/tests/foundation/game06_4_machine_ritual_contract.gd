@@ -13,6 +13,7 @@ func _init() -> void:
 func _run() -> void:
 	_check_machine_contract(SlotScript.new().slot_machine_ritual_contract(), "slot.machine_session", ["credits", "commitment", "activation", "outcome_staging", "feature", "payout_or_handpay"])
 	_check_machine_contract(VideoPokerScript.new().video_poker_ritual_contract(), "video_poker.machine_session", ["credits", "commitment", "initial_deal", "hold_selection", "draw", "result_read", "double_up", "payout_or_handpay"])
+	_check_live_projections_and_tactile_rejection()
 	_check_observer_equivalence()
 	if failures.is_empty():
 		print("game06_4_machine_ritual_contract: PASS")
@@ -73,6 +74,22 @@ func _check_observer_equivalence() -> void:
 	var poker_b := JSON.stringify(VideoPokerScript.new().video_poker_ritual_contract())
 	_check(slot_a == slot_b, "Slot observer projections differ without authentic host capability.")
 	_check(poker_a == poker_b, "Video Poker observer projections differ without authentic host capability.")
+
+
+func _check_live_projections_and_tactile_rejection() -> void:
+	var slot = SlotScript.new()
+	var slot_projection: Dictionary = slot.call("_slot_live_ritual_projection", {"last_classification": "win", "active_bonus": {}}, {"bankroll": 95, "selected_bet_total_credits": 5, "slot_payout": 20, "slot_celebration_tier": "win"}, null)
+	_check(str(slot_projection.get("phase_id", "")) == "payout_or_handpay", "Slot result did not stage before returning to credits.")
+	_check(int(slot_projection.get("credits", -1)) == 95 and str(slot_projection.get("denomination_label", "")) == "5 CREDIT", "Slot cabinet did not consume live credit/denomination state.")
+	_check(str((slot_projection.get("neighbours", {}) as Dictionary).get("authority", "")) == "none", "Slot neighbour projection gained outcome authority.")
+	var begin: Dictionary = slot.surface_pointer_command("slot_handle_pull_gesture", 0, "begin", Vector2(900, 360), {}, null, {})
+	var rejected: Dictionary = slot.surface_pointer_command("slot_handle_pull_gesture", 0, "end", Vector2(900, 370), begin.get("ui_state", {}), null, {})
+	_check(str(rejected.get("action_id", "")).is_empty(), "Incomplete Slot handle pull emitted a spin command.")
+	var poker = VideoPokerScript.new()
+	var poker_projection: Dictionary = poker.call("_video_poker_live_ritual_projection", "hold", {"credits": 80, "coin_label": "25c", "bet_credits": 5, "holds": [1, 3], "drawn_indices": []}, {}, {}, true, {})
+	_check(str(poker_projection.get("phase_id", "")) == "hold_selection", "Video Poker live hand did not project hold selection.")
+	_check((poker_projection.get("held_indices", []) as Array) == [1, 3], "Video Poker cabinet projection lost exact held-card indices.")
+	_check(str((poker_projection.get("neighbours", {}) as Dictionary).get("authority", "")) == "none", "Video Poker neighbour projection gained outcome authority.")
 
 
 func _exact_keys(record: Dictionary, expected: Array) -> bool:

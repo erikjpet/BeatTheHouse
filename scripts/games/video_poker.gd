@@ -671,7 +671,42 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			},
 		}),
 	})
+	spec["ritual_contract"] = VIDEO_POKER_RITUAL_CONTRACT
+	spec["ritual_id"] = VIDEO_POKER_RITUAL_ID
+	spec["ritual_projection"] = _video_poker_live_ritual_projection(phase, spec, flip, pit_boss, hand_active, last_result)
 	return spec
+
+
+func _video_poker_live_ritual_projection(phase: String, spec: Dictionary, flip: Dictionary, pit_boss: Dictionary, hand_active: bool, last_result: Dictionary) -> Dictionary:
+	var ritual_phase := "credits"
+	if phase == "hold":
+		ritual_phase = "initial_deal" if not str(flip.get("id", "")).is_empty() else "hold_selection"
+	elif phase == "settled":
+		ritual_phase = "result_read"
+	elif phase == "double_up":
+		ritual_phase = "double_up"
+	elif phase == "double_result":
+		ritual_phase = "payout_or_handpay"
+	var watched := bool(pit_boss.get("active", false)) and bool(pit_boss.get("watched", false))
+	var win_credits := int(spec.get("win_credits", 0))
+	var handpay := win_credits >= 1000
+	var energy_tier := "lockup" if handpay or watched else "big_win" if win_credits >= maxi(20, int(spec.get("bet_credits", 0)) * 10) else "engaged" if hand_active else "quiet"
+	return {
+		"phase_id": ritual_phase,
+		"cabinet_state": "lockup" if handpay else "play" if hand_active else "idle",
+		"energy_tier": energy_tier,
+		"credits": int(spec.get("credits", 0)),
+		"denomination_label": str(spec.get("coin_label", "1c")),
+		"tower_state": "handpay" if handpay else "security" if watched else "service" if energy_tier == "big_win" else "off",
+		"validator_state": "locked" if hand_active or handpay else "ready",
+		"button_state": "locked" if handpay else "draw" if phase == "hold" else "deal",
+		"result_stage": "card_replacements" if phase == "hold" and not str(flip.get("id", "")).is_empty() else "paytable_read" if phase == "settled" else "idle",
+		"held_indices": spec.get("holds", []),
+		"drawn_indices": spec.get("drawn_indices", []),
+		"paytable_line": str(last_result.get("pay_label", "")),
+		"attendant": {"visible": handpay or watched, "behavior": "handpay" if handpay else "security"},
+		"neighbours": {"visible": true, "reaction": "heads_turn" if energy_tier in ["big_win", "lockup"] else "playing", "authority": "none"},
+	}
 
 
 # The bet is the module-owned ladder wager (2/5/10/15/20 credits), not a host stake.
