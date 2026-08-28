@@ -182,6 +182,7 @@ const specs = [
 ];
 
 const inputs = ["ui_accept", "ui_right", "ui_down", "ui_left", "ui_cancel", "ui_up"];
+const commonZones = ["background", "center", "exit_lane", "foreground", "left", "right", "service_lane"];
 
 function sceneOp(op, receipt, id, value = "") {
   const row = {family: "scene_ops", op, receipt_id: receipt, owner_namespace: "scenario", stable_object_id: id};
@@ -328,7 +329,7 @@ function buildScenario(spec, scenarioIndex) {
       mechanic_tags: [spec.archetype, spec.pressure, spec.connection, `beats_${spec.beats.length}`, `props_${spec.props.length}`, `actors_${spec.actors.length}`],
       sequence_signature: "UNSIGNED",
       owner_exceptions: [],
-      declared_targets: {scene_objects: [], interactions: [], actors: [], services: [], games: [], routes: [], anchors: [], zones: []},
+      declared_targets: {scene_objects: [], interactions: [], actors: [], services: [], games: [], routes: [], anchors: [], zones: commonZones.map(zone => `base::zone:${zone}`)},
       fact_subscriptions: [{fact_type: spec.fact, handler: "set_local", inputs: {key: "world_boundary_seen", value: true}}],
       completion_contract: {arrival_readable: true, semantic_changes: true, scenario_interaction: true, action_boundaries: true, choice_or_failure: true, material_outcomes: true, revisit_coverage: true, world_connection: true, primary_verb: true, feedback_and_exit: true}
     },

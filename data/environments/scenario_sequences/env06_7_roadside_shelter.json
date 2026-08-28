@@ -1043,7 +1043,7 @@
           "props_4",
           "actors_2"
         ],
-        "sequence_signature": "faa248c072826024efedb66833d2ffb2fd8b504fbbbc6e7cd9b94b10ec4d04a9",
+        "sequence_signature": "2f8469a3704ca1eda29a1922fea4edfa20c6d2a768d2d66a8c6a762b22eb3245",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1053,7 +1053,15 @@
           "games": [],
           "routes": [],
           "anchors": [],
-          "zones": []
+          "zones": [
+            "base::zone:background",
+            "base::zone:center",
+            "base::zone:exit_lane",
+            "base::zone:foreground",
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:service_lane"
+          ]
         },
         "fact_subscriptions": [
           {
@@ -2075,7 +2083,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "8ed285222c833bdef4b277d03e39bee63b8f189bdf239dd43d101cc720fcbb82",
+        "sequence_signature": "07e9d6e6e53c2c1608fcbd214d01e97263e05cb5b2c9e81f62c3057233ec4758",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -2085,7 +2093,15 @@
           "games": [],
           "routes": [],
           "anchors": [],
-          "zones": []
+          "zones": [
+            "base::zone:background",
+            "base::zone:center",
+            "base::zone:exit_lane",
+            "base::zone:foreground",
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:service_lane"
+          ]
         },
         "fact_subscriptions": [
           {
@@ -3289,7 +3305,7 @@
           "props_4",
           "actors_1"
         ],
-        "sequence_signature": "5512082516c53c5f3fab2bb852d1ee000d2f39ba1e5d047d3c10f4f2eaea8449",
+        "sequence_signature": "9aec23b74659f33983f3c14ec74357e0dac6c20d77e76366e5d59f1fcb91cfff",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -3299,7 +3315,15 @@
           "games": [],
           "routes": [],
           "anchors": [],
-          "zones": []
+          "zones": [
+            "base::zone:background",
+            "base::zone:center",
+            "base::zone:exit_lane",
+            "base::zone:foreground",
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:service_lane"
+          ]
         },
         "fact_subscriptions": [
           {
@@ -4471,7 +4495,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "4ce701c0af1266892bbbd5742494ba0a60abd67c3f0a3ad7735bdecad18acca8",
+        "sequence_signature": "5d6446acb566eb13f3c7420e6be6d398cfef26ba0aaaad4279d281f489326964",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -4481,7 +4505,15 @@
           "games": [],
           "routes": [],
           "anchors": [],
-          "zones": []
+          "zones": [
+            "base::zone:background",
+            "base::zone:center",
+            "base::zone:exit_lane",
+            "base::zone:foreground",
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:service_lane"
+          ]
         },
         "fact_subscriptions": [
           {
@@ -5650,7 +5682,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "e80b64c8db1992bb4ae93e89620a0e243598ce6cdbf776ee55da4bcd9d8b9101",
+        "sequence_signature": "f4cf9202680b3946636d7bf3a5795e5033e54df9a8c1272d8fad977d4417ecb0",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -5660,7 +5692,15 @@
           "games": [],
           "routes": [],
           "anchors": [],
-          "zones": []
+          "zones": [
+            "base::zone:background",
+            "base::zone:center",
+            "base::zone:exit_lane",
+            "base::zone:foreground",
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:service_lane"
+          ]
         },
         "fact_subscriptions": [
           {
@@ -6786,7 +6826,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "a7bdf0f221f7dd044c7c6c9096f68ec18122ef5589c6c7415016f380dc553be3",
+        "sequence_signature": "546deb4866cb9df88c518880461dfea729f1e853ebfd4a9174aa2b6946cc0f2c",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -6796,7 +6836,15 @@
           "games": [],
           "routes": [],
           "anchors": [],
-          "zones": []
+          "zones": [
+            "base::zone:background",
+            "base::zone:center",
+            "base::zone:exit_lane",
+            "base::zone:foreground",
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:service_lane"
+          ]
         },
         "fact_subscriptions": [
           {
@@ -8049,7 +8097,7 @@
           "props_5",
           "actors_1"
         ],
-        "sequence_signature": "094df2f4259965bd99656a48085652e93142a213370970565b5efacfd9f0f226",
+        "sequence_signature": "50c208231996778ae5a5b7ce220f738c75fe4f1e0dcd6fb14a5c26b80e4f1a19",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -8059,7 +8107,15 @@
           "games": [],
           "routes": [],
           "anchors": [],
-          "zones": []
+          "zones": [
+            "base::zone:background",
+            "base::zone:center",
+            "base::zone:exit_lane",
+            "base::zone:foreground",
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:service_lane"
+          ]
         },
         "fact_subscriptions": [
           {
@@ -9185,7 +9241,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "789368c543dd632d14dfead3178486480d3e9359c865e6ed19b3e1d95492c042",
+        "sequence_signature": "4d89bb335c50ab47f249bf6a4fe8f8eee9e5725f254e456b8ef36ee090bb58c4",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -9195,7 +9251,15 @@
           "games": [],
           "routes": [],
           "anchors": [],
-          "zones": []
+          "zones": [
+            "base::zone:background",
+            "base::zone:center",
+            "base::zone:exit_lane",
+            "base::zone:foreground",
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:service_lane"
+          ]
         },
         "fact_subscriptions": [
           {
@@ -10470,7 +10534,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "981b97cb881072556e9ab3f548b86bb5aecb120abdd14d224ddcdc4761584f64",
+        "sequence_signature": "2d0c73d3e69418e1695aa315cd17f895ee6c02e6fe075308ecf29577b24a9225",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -10480,7 +10544,15 @@
           "games": [],
           "routes": [],
           "anchors": [],
-          "zones": []
+          "zones": [
+            "base::zone:background",
+            "base::zone:center",
+            "base::zone:exit_lane",
+            "base::zone:foreground",
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:service_lane"
+          ]
         },
         "fact_subscriptions": [
           {
@@ -11634,7 +11706,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "21950e2f0bbb98b9d013f0e2f581a62db491631b10806c30c55a4d20daf6bea6",
+        "sequence_signature": "fa49fb9bf2d69726d8f0a63eca767db635745410fb31384c30fbe730d0888d3d",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -11644,7 +11716,15 @@
           "games": [],
           "routes": [],
           "anchors": [],
-          "zones": []
+          "zones": [
+            "base::zone:background",
+            "base::zone:center",
+            "base::zone:exit_lane",
+            "base::zone:foreground",
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:service_lane"
+          ]
         },
         "fact_subscriptions": [
           {
@@ -12919,7 +12999,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "b1f1a810bbc8aab486f6800bf67870528dc885b8d2a8501acd53e74b457c0068",
+        "sequence_signature": "39b9a31ade20ea87e9ee6a705e8cf12063902241aef3152f5587248ceda16a8a",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -12929,7 +13009,15 @@
           "games": [],
           "routes": [],
           "anchors": [],
-          "zones": []
+          "zones": [
+            "base::zone:background",
+            "base::zone:center",
+            "base::zone:exit_lane",
+            "base::zone:foreground",
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:service_lane"
+          ]
         },
         "fact_subscriptions": [
           {
@@ -14347,7 +14435,7 @@
           "props_6",
           "actors_4"
         ],
-        "sequence_signature": "fc7af9ab431ad6c032a1c6e89b2e938965e11ea4f6ce3268006f43cd7c0136a0",
+        "sequence_signature": "c621d29d83ce854cf843319ca6c3a948cabbee2a57baea4c19ae5fd9c6b1af2c",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -14357,7 +14445,15 @@
           "games": [],
           "routes": [],
           "anchors": [],
-          "zones": []
+          "zones": [
+            "base::zone:background",
+            "base::zone:center",
+            "base::zone:exit_lane",
+            "base::zone:foreground",
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:service_lane"
+          ]
         },
         "fact_subscriptions": [
           {
