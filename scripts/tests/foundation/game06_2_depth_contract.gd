@@ -4,6 +4,7 @@ const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const RitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
+const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
 var failures: Array = []
 
@@ -29,6 +30,7 @@ func _run() -> void:
 	_check_energy_and_restore_projection(game)
 	_check_ten_seed_projection_isolation(game)
 	_check_host_authority_and_replay(game)
+	_check_hostile_delivery_and_restore(game)
 	_check_failure_atomic_rng_retry(game)
 	_check_mixed_rate_funding_rejection(game)
 	if failures.is_empty():
@@ -317,13 +319,15 @@ func _check_host_authority_and_replay(game: GameModule) -> void:
 	_check(normalized.get("player_hands", []) == session.get("player_hands", []), "Caller UI replaced host-owned Blackjack cards.")
 	_check(not bool((normalized.get("cheats_used", {}) as Dictionary).get("peek_hole_card", false)), "Caller UI forged a Blackjack cheat fact.")
 
-	var authority: RefCounted = BlackjackActionAuthorityScript.new(game, run, environment, 5, "game06_2_authority")
-	var result: Dictionary = authority.call("submit_resolve_intent", "play_basic")
+	var pure_authority: RefCounted = BlackjackActionAuthorityScript.new()
+	_check(not pure_authority.has_method("submit_resolve_intent") and not pure_authority.has_method("submit_surface_intent"), "Caller-created Blackjack adapter retained live mutation methods.")
+	var host := _authority_host(game, run, 5)
+	var result: Dictionary = host.call("_blackjack_host_resolve_intent", "play_basic", 5)
 	_check(bool(result.get("ok", false)) and bool(result.get("blackjack_host_committed", false)), "Host Blackjack authority did not accept a prepared legal settlement.")
 	var request_key := str(result.get("blackjack_host_request_key", ""))
 	_check(not request_key.is_empty(), "Accepted Blackjack transaction has no host request key.")
 	var committed_snapshot := RitualRuntimeScript.canonical_json(run.to_save_snapshot())
-	var replay: Dictionary = authority.call("replay_request", request_key)
+	var replay: Dictionary = host.call("_blackjack_host_replay_request", request_key)
 	_check(RitualRuntimeScript.canonical_json(replay) == RitualRuntimeScript.canonical_json(result), "Same-process Blackjack replay was not byte-identical.")
 	_check(RitualRuntimeScript.canonical_json(run.to_save_snapshot()) == committed_snapshot, "Blackjack replay mutated committed state or RNG.")
 	GameModule.apply_result(run, result, run.create_rng("game06_2_duplicate_apply"))
@@ -332,9 +336,9 @@ func _check_host_authority_and_replay(game: GameModule) -> void:
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(run.to_save_snapshot())
 	var restored_environment: Dictionary = restored.current_environment
-	var restored_authority: RefCounted = BlackjackActionAuthorityScript.new(game, restored, restored_environment, 5, "game06_2_authority")
+	var restored_host := _authority_host(game, restored, 5)
 	var restored_before := RitualRuntimeScript.canonical_json(restored.to_save_snapshot())
-	var restored_replay: Dictionary = restored_authority.call("replay_request", request_key)
+	var restored_replay: Dictionary = restored_host.call("_blackjack_host_replay_request", request_key)
 	_check(RitualRuntimeScript.canonical_json(restored_replay) == RitualRuntimeScript.canonical_json(result), "Save/restore Blackjack replay was not byte-identical.")
 	_check(RitualRuntimeScript.canonical_json(restored.to_save_snapshot()) == restored_before, "Save/restore replay mutated the restored transaction ledger.")
 	var restored_table: Dictionary = game.call("_table_state_preview", restored, restored_environment)
@@ -348,23 +352,91 @@ func _check_failure_atomic_rng_retry(game: GameModule) -> void:
 	var retry_run: RunState = retry_fixture.run
 	var retry_environment: Dictionary = retry_fixture.environment
 	var before := RitualRuntimeScript.canonical_json(retry_run.to_save_snapshot())
-	var rejecting_authority: RefCounted = BlackjackActionAuthorityScript.new(
-		game,
-		retry_run,
-		retry_environment,
-		5,
-		"game06_2_rollback",
-		Callable(self, "_reject_blackjack_candidate")
-	)
-	var rejected: Dictionary = rejecting_authority.call("submit_resolve_intent", "play_basic")
-	_check(not bool(rejected.get("ok", true)) and str(rejected.get("error_code", "")) == "candidate_rejected", "Post-RNG candidate rejection did not fail closed.")
+	var retry_host := _authority_host(game, retry_run, 5)
+	var candidate := RunStateScript.new()
+	candidate.from_dict(retry_run.to_save_snapshot())
+	var candidate_rng := candidate.create_rng()
+	var proposal_input := {
+		"action_id": "play_basic",
+		"stake": 5,
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": candidate_rng.snapshot(),
+		"ui_state": retry_fixture.session,
+	}
+	var rejected: Dictionary = game.call("_blackjack_resolve_proposal", "play_basic", 5, proposal_input.run_snapshot, proposal_input.rng_snapshot, proposal_input.ui_state)
+	rejected["result"] = (rejected.get("result", {}) as Dictionary).duplicate(true)
+	(rejected["result"] as Dictionary)["bankroll_delta"] = 999999
+	_check(not bool(retry_host.call("_blackjack_host_proposal_valid", rejected, proposal_input)), "Post-RNG tampered proposal did not fail closed validation.")
 	_check(RitualRuntimeScript.canonical_json(retry_run.to_save_snapshot()) == before, "Post-RNG candidate rejection burned funding, RNG, receipt, or request sequence.")
-	var retry_authority: RefCounted = BlackjackActionAuthorityScript.new(game, retry_run, retry_environment, 5, "game06_2_rollback")
-	var retry_result: Dictionary = retry_authority.call("submit_resolve_intent", "play_basic")
-	var control_authority: RefCounted = BlackjackActionAuthorityScript.new(game, control_fixture.run, control_fixture.environment, 5, "game06_2_rollback")
-	var control_result: Dictionary = control_authority.call("submit_resolve_intent", "play_basic")
+	var retry_result: Dictionary = retry_host.call("_blackjack_host_resolve_intent", "play_basic", 5)
+	var control_host := _authority_host(game, control_fixture.run, 5)
+	var control_result: Dictionary = control_host.call("_blackjack_host_resolve_intent", "play_basic", 5)
 	_check(RitualRuntimeScript.canonical_json(retry_result) == RitualRuntimeScript.canonical_json(control_result), "Legitimate retry after post-RNG rejection diverged from clean control.")
 	_check(RitualRuntimeScript.canonical_json(retry_run.to_save_snapshot()) == RitualRuntimeScript.canonical_json(control_fixture.run.to_save_snapshot()), "Post-RNG retry committed different state/RNG than clean control.")
+
+
+func _check_hostile_delivery_and_restore(game: GameModule) -> void:
+	var gesture_fixture := _fixture(game, "GAME06-2-NONRESOLVING", 34)
+	var gesture_run: RunState = gesture_fixture.run
+	var gesture_host := _authority_host(game, gesture_run, 5)
+	var staged: Dictionary = gesture_host.call("_blackjack_host_surface_intent", "blackjack_chip", 0, false, 21000)
+	_check(bool(staged.get("handled", false)), "Trusted host rejected a legal nonresolving Blackjack chip gesture.")
+	var staged_table: Dictionary = game.call("_table_state_preview", gesture_run, gesture_run.current_environment)
+	var staged_ledger: Dictionary = staged_table.get("_blackjack_action_authority", {})
+	_check(int(staged_ledger.get("boundary_ordinal", -1)) == 0 and int(staged_ledger.get("next_request_ordinal", -1)) == 1, "Nonresolving Blackjack gesture advanced delivery identity.")
+	_check((staged_ledger.get("pending_delivery", {}) as Dictionary).is_empty(), "Nonresolving Blackjack gesture issued a pending delivery.")
+
+	var receipt_fixture := _prepared_authority_fixture(game, "GAME06-2-RECEIPT-FORGE", 35, 5)
+	var receipt_run: RunState = receipt_fixture.run
+	var receipt_host := _authority_host(game, receipt_run, 5)
+	var prepared: Dictionary = receipt_host.call("_blackjack_host_prepare_delivery", "play_basic", 5)
+	var delivery: Dictionary = prepared.get("delivery", {})
+	_check(bool(prepared.get("ok", false)) and not delivery.is_empty(), "Host could not persist a delivery for hostile receipt coverage.")
+	var benign := GameModule.build_action_result({
+		"ok": true,
+		"source_id": "blackjack",
+		"game_id": "blackjack",
+		"action_id": "play_basic",
+		"action_kind": "legal",
+		"stake": 5,
+		"bankroll_delta": 0,
+		"deltas": {"bankroll_delta": 0},
+		"environment_id": str(receipt_run.current_environment.get("id", "")),
+	})
+	var binding := "blackjack:%s:%s" % [str(receipt_run.current_environment.get("id", "unknown")), str(receipt_run.current_environment.get("archetype_id", "unknown"))]
+	var copied_receipt := BlackjackActionAuthorityScript.receipt_for(delivery, binding, benign)
+	var receipt_table: Dictionary = game.call("_table_state", receipt_run, receipt_run.current_environment)
+	receipt_table["_blackjack_pending_apply_receipt"] = copied_receipt.duplicate(true)
+	game.call("_update_environment_table", receipt_run.current_environment, receipt_table)
+	var forged := benign.duplicate(true)
+	forged["bankroll_delta"] = 301
+	(forged.get("deltas", {}) as Dictionary)["bankroll_delta"] = 301
+	forged["blackjack_host_apply_receipt"] = copied_receipt.duplicate(true)
+	var bankroll_before_forge := receipt_run.bankroll
+	GameModule.apply_result(receipt_run, forged, receipt_run.create_rng())
+	_check(receipt_run.bankroll == bankroll_before_forge, "Copied receipt authorized a fabricated +301 Blackjack result.")
+	var conflict: Dictionary = receipt_host.call("_blackjack_host_resolve_intent", "peek_hole_card", 5, str(delivery.get("request_key", "")))
+	_check(not bool(conflict.get("ok", true)) and str(conflict.get("error_code", "")) == "receipt_content_conflict", "Pending Blackjack delivery accepted conflicting content.")
+	var stale: Dictionary = receipt_host.call("_blackjack_host_resolve_intent", "play_basic", 5, "blackjack:stale:999")
+	_check(not bool(stale.get("ok", true)) and str(stale.get("error_code", "")) == "stale_boundary", "Stale Blackjack delivery key reached settlement.")
+
+	var tampered_snapshot := receipt_run.to_save_snapshot()
+	var tampered_environment: Dictionary = tampered_snapshot.get("current_environment", {})
+	var tampered_states: Dictionary = tampered_environment.get("game_states", {})
+	var tampered_table: Dictionary = tampered_states.get("blackjack", {})
+	var tampered_ledger: Dictionary = tampered_table.get("_blackjack_action_authority", {})
+	tampered_ledger["version"] = 1
+	tampered_table["_blackjack_action_authority"] = tampered_ledger
+	tampered_table["_blackjack_pending_apply_receipt"] = copied_receipt.duplicate(true)
+	tampered_states["blackjack"] = tampered_table
+	tampered_environment["game_states"] = tampered_states
+	tampered_snapshot["current_environment"] = tampered_environment
+	var tampered_restore := RunStateScript.new()
+	tampered_restore.from_dict(tampered_snapshot)
+	var restored_states: Dictionary = tampered_restore.current_environment.get("game_states", {})
+	var restored_table: Dictionary = restored_states.get("blackjack", {})
+	_check(not restored_table.has("_blackjack_action_authority"), "Restore trusted an arbitrary v1 Blackjack ledger.")
+	_check(not restored_table.has("_blackjack_pending_apply_receipt"), "Restore trusted an unauthenticated pending apply receipt.")
 
 
 func _check_mixed_rate_funding_rejection(game: GameModule) -> void:
@@ -379,10 +451,17 @@ func _check_mixed_rate_funding_rejection(game: GameModule) -> void:
 	var preview := run.preview_grand_casino_wager_funding("blackjack", 3, environment)
 	_check(not bool(preview.get("ok", true)) and int(preview.get("cash_used", -1)) == 0, "Mixed-rate Blackjack funding preview accepted two chips plus insufficient cash.")
 	var before := RitualRuntimeScript.canonical_json(run.to_save_snapshot())
-	var authority: RefCounted = BlackjackActionAuthorityScript.new(game, run, environment, 3, "game06_2_mixed_rate")
-	var rejected: Dictionary = authority.call("submit_resolve_intent", "play_basic")
+	var bankroll_before := run.bankroll
+	var chips_before := run.grand_casino_chips
+	var rng_before := run.rng_state
+	var host := _authority_host(game, run, 3)
+	var rejected: Dictionary = host.call("_blackjack_host_resolve_intent", "play_basic", 3)
 	_check(not bool(rejected.get("ok", true)) and str(rejected.get("error_code", "")) == "insufficient_funds", "Blackjack authority accepted an underfunded mixed-rate wager.")
-	_check(RitualRuntimeScript.canonical_json(run.to_save_snapshot()) == before, "Mixed-rate funding rejection changed chips, cash, RNG, or authority sequence.")
+	_check(run.bankroll == bankroll_before and run.grand_casino_chips == chips_before and run.rng_state == rng_before, "Mixed-rate funding rejection changed chips, cash, or RNG.")
+	var rejected_table: Dictionary = game.call("_table_state_preview", run, run.current_environment)
+	var rejected_ledger: Dictionary = rejected_table.get("_blackjack_action_authority", {})
+	_check(not (rejected_ledger.get("pending_delivery", {}) as Dictionary).is_empty(), "Mixed-rate rejection did not preserve its stable delivery for exact redelivery.")
+	_check(RitualRuntimeScript.canonical_json(run.to_save_snapshot()) != before, "Mixed-rate rejection failed to persist its issued delivery before resolution.")
 
 
 func _prepared_authority_fixture(game: GameModule, seed_text: String, seed_index: int, stake: int) -> Dictionary:
@@ -398,21 +477,19 @@ func _prepared_authority_fixture(game: GameModule, seed_text: String, seed_index
 
 func _seed_authority_session(game: GameModule, run: RunState, environment: Dictionary, session: Dictionary) -> void:
 	var table: Dictionary = game.call("_table_state", run, environment)
-	table["_blackjack_action_authority"] = {
-		"version": 1,
-		"initialized": true,
-		"next_request_ordinal": 1,
-		"boundary_ordinal": 0,
-		"session": session.duplicate(true),
-		"request_cache": {},
-		"request_order": [],
-	}
+	var binding := "blackjack:%s:%s" % [str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	var ledger := BlackjackActionAuthorityScript.default_ledger(binding)
+	table["_blackjack_action_authority"] = BlackjackActionAuthorityScript.stage_session(ledger, session)
 	game.call("_update_environment_table", environment, table)
 	run.current_environment = environment
 
 
-func _reject_blackjack_candidate(_candidate: RunState, _result: Dictionary) -> bool:
-	return false
+func _authority_host(game: GameModule, run: RunState, stake: int) -> Control:
+	var host: Control = FoundationMainScript.new()
+	host.set("current_game", game)
+	host.set("run_state", run)
+	host.set("selected_stake", stake)
+	return host
 
 
 func _actor_visible(projection: Dictionary, actor_id: String) -> bool:

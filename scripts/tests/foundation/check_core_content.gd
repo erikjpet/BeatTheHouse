@@ -5237,7 +5237,7 @@ func _check_single_table_environment_entry_contract(library: ContentLibrary, app
 	var wager_balance := run_state.wager_balance_for_game(game_id, run_state.current_environment)
 	var stake := clampi(int(snapshot.get("stake_min", actions.get("stake_floor", 1))), 1, maxi(1, wager_balance))
 	var result: Dictionary
-	if game.has_method("_blackjack_begin_host_lease"):
+	if game.has_method("_blackjack_resolve_proposal"):
 		app.call("_resolve_game_action", action_id, false, false, false, {}, true, stake)
 		result = (app.get("last_game_result") as Dictionary).duplicate(true)
 	else:

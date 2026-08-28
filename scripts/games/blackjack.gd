@@ -9,6 +9,7 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
+const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
@@ -120,7 +121,7 @@ var draw_deal_events_cache_id := ""
 var draw_deal_events_cache: Array = []
 var draw_dealer_character_style: Dictionary = {}
 var draw_patron_character_style: Dictionary = {}
-var _blackjack_active_host_lease: RefCounted
+var _blackjack_proposal_active := false
 
 
 func blackjack_ritual_contract() -> Dictionary:
@@ -1857,29 +1858,36 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	return _empty_blackjack_result(action_id, stake, environment, "Blackjack actions require the table host authority.")
 
 
-func _blackjack_begin_host_lease(lease: RefCounted) -> void:
-	_blackjack_active_host_lease = lease
+func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Dictionary, rng_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	# This is a pure proposal boundary: serialized values enter, serialized values
+	# leave, and no live Foundation object can be retained or mutated by the game.
+	var proposal_input := {
+		"action_id": action_id,
+		"stake": stake,
+		"run_snapshot": run_snapshot,
+		"rng_snapshot": rng_snapshot,
+		"ui_state": ui_state,
+	}
+	var input_fingerprint := RuntimeScript.canonical_fingerprint(proposal_input)
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var rng := RngStream.new()
+	rng.restore(rng_snapshot.duplicate(true))
+	_blackjack_proposal_active = true
+	var result := _resolve_blackjack_proposal_core(action_id, stake, candidate, candidate.current_environment, rng, ui_state.duplicate(true))
+	_blackjack_proposal_active = false
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": input_fingerprint,
+		"result": result.duplicate(true),
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
+	return proposal
 
 
-func _blackjack_end_host_lease(lease: RefCounted) -> void:
-	if _blackjack_active_host_lease != null and is_same(_blackjack_active_host_lease, lease):
-		_blackjack_active_host_lease = null
-
-
-func _blackjack_consume_host_lease(lease: RefCounted) -> bool:
-	if lease == null or _blackjack_active_host_lease == null or not is_same(_blackjack_active_host_lease, lease):
-		return false
-	if bool(lease.get("consumed")):
-		return false
-	lease.set("consumed", true)
-	return true
-
-
-func _resolve_with_blackjack_host_lease(lease: RefCounted, action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
-	if lease == null or _blackjack_active_host_lease == null or not is_same(_blackjack_active_host_lease, lease):
-		return _empty_blackjack_result(action_id, stake, environment, "Blackjack host lease is missing or stale.")
-	if not bool(lease.get("consumed")):
-		return _empty_blackjack_result(action_id, stake, environment, "Blackjack host lease was not consumed by the authority.")
+func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	if action_id.begins_with("crew_play:"):
 		return super.resolve_with_context(action_id, stake, run_state, environment, rng, ui_state)
 	if _is_rourke_duel(run_state, environment):
@@ -2161,24 +2169,28 @@ func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, 
 	return 0
 
 
-func _blackjack_wager_cost_with_host_lease(lease: RefCounted, action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
-	if lease == null or _blackjack_active_host_lease == null or not is_same(_blackjack_active_host_lease, lease):
-		return 0
+func _blackjack_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var environment := candidate.current_environment
 	if action_id != "play_basic" and action_id != "blackjack_place_bet":
-		return 0
+		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
 	# Rourke's fixed ante belongs to the duel's internal player/Rourke stacks.
 	# Charging the normal cash/chip wager again at hand settlement can reject a
 	# completed hand and leave the player trapped behind the SETTLE control.
-	if _is_rourke_duel(run_state, environment):
-		return 0
-	var table: Dictionary = _table_state_preview(run_state, environment)
+	if _is_rourke_duel(candidate, environment):
+		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+	var table: Dictionary = _table_state_preview(candidate, environment)
 	if bool(table.get("barred", false)):
-		return 0
-	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
+		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+	var session: Dictionary = _normalized_session(candidate, environment, ui_state, table)
 	if bool(session.get("blackjack_sit_out", false)):
-		return 0
-	var total_wager := _wager_cost_from_session(_session_stake(stake, session), session, table, run_state)
-	return maxi(0, total_wager - _session_debited_wager(session))
+		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+	var total_wager := _wager_cost_from_session(_session_stake(stake, session), session, table, candidate)
+	return {
+		"cost": maxi(0, total_wager - _session_debited_wager(session)),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
 
 
 func _resolve_place_bet(stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
@@ -2515,13 +2527,11 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 
 
 func _apply_blackjack_authority_result(run_state: RunState, result: Dictionary, rng: RngStream) -> void:
-	if _blackjack_active_host_lease == null or not bool(_blackjack_active_host_lease.get("consumed")):
+	if not _blackjack_proposal_active:
 		return
-	result["blackjack_host_apply_receipt"] = {
-		"request_key": str(_blackjack_active_host_lease.get("request_key")),
-		"context_fingerprint": str(_blackjack_active_host_lease.get("context_fingerprint")),
-	}
-	GameModule.apply_result(run_state, result, rng)
+	# FoundationMain applies the result to its detached candidate only after it
+	# has validated the complete proposal and staged an exact one-use receipt.
+	result["blackjack_proposal_requires_apply"] = true
 
 
 func _base_suspicion_for_applied_cap(desired_applied_heat: int, run_state: RunState) -> int:

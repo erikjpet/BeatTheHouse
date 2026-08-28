@@ -3,6 +3,7 @@ extends "res://scripts/tests/foundation/check_slots_surfaces.gd"
 const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
 const GameRitualRuntimeContractScript := preload("res://scripts/tests/foundation/game_ritual_runtime_contract.gd")
 const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
+const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
 
 func _check_craps_surface_contract(game: GameModule, failures: Array, library: ContentLibrary = null) -> void:
@@ -4442,26 +4443,34 @@ func _blackjack_authority_resolve(game: GameModule, action_id: String, stake: in
 	var rng_snapshot := rng.snapshot() if rng != null else run_state.create_rng().snapshot()
 	run_state.rng_seed = int(rng_snapshot.get("seed", run_state.rng_seed))
 	run_state.rng_state = int(rng_snapshot.get("state", run_state.rng_state))
-	var authority: RefCounted = BlackjackActionAuthorityScript.new(game, run_state, environment, stake)
-	return authority.call("submit_resolve_intent", action_id)
+	var host := _blackjack_test_host(game, run_state, stake)
+	return host.call("_blackjack_host_resolve_intent", action_id, stake)
 
 
 func _blackjack_authority_surface(game: GameModule, surface_action: String, stake: int, run_state: RunState, environment: Dictionary, index: int = 0, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:
 	run_state.current_environment = environment
-	var authority: RefCounted = BlackjackActionAuthorityScript.new(game, run_state, environment, stake)
-	return authority.call("submit_surface_intent", surface_action, index, confirm_requested, surface_time_msec)
+	var host := _blackjack_test_host(game, run_state, stake)
+	return host.call("_blackjack_host_surface_intent", surface_action, index, confirm_requested, surface_time_msec)
 
 
 func _blackjack_authority_auto_command(game: GameModule, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary, surface_time_msec: int) -> Dictionary:
 	_blackjack_seed_authority_session(game, run_state, environment, ui_state)
-	var authority: RefCounted = BlackjackActionAuthorityScript.new(game, run_state, environment, stake)
-	return authority.call("submit_auto_intent", surface_time_msec)
+	var host := _blackjack_test_host(game, run_state, stake)
+	return host.call("_blackjack_host_auto_intent", surface_time_msec)
 
 
 func _blackjack_authority_preview(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> int:
 	_blackjack_seed_authority_session(game, run_state, environment, ui_state)
-	var authority: RefCounted = BlackjackActionAuthorityScript.new(game, run_state, environment, stake)
-	return int(authority.call("preview_wager_cost", action_id))
+	var host := _blackjack_test_host(game, run_state, stake)
+	return int(host.call("_blackjack_host_preview_wager_cost", action_id, stake))
+
+
+func _blackjack_test_host(game: GameModule, run_state: RunState, stake: int) -> Control:
+	var host: Control = FoundationMainScript.new()
+	host.set("current_game", game)
+	host.set("run_state", run_state)
+	host.set("selected_stake", stake)
+	return host
 
 
 func _blackjack_authority_click_all_count_icons(game: GameModule, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> Dictionary:
@@ -4481,15 +4490,11 @@ func _blackjack_seed_authority_session(game: GameModule, run_state: RunState, en
 	run_state.current_environment = environment
 	var table: Dictionary = game.call("_table_state", run_state, environment)
 	var previous_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
-	table["_blackjack_action_authority"] = {
-		"version": 1,
-		"initialized": true,
-		"next_request_ordinal": maxi(1, int(previous_ledger.get("next_request_ordinal", 1))),
-		"boundary_ordinal": maxi(0, int(previous_ledger.get("boundary_ordinal", 0))),
-		"session": ui_state.duplicate(true),
-		"request_cache": previous_ledger.get("request_cache", {}).duplicate(true) if typeof(previous_ledger.get("request_cache", {})) == TYPE_DICTIONARY else {},
-		"request_order": previous_ledger.get("request_order", []).duplicate(true) if typeof(previous_ledger.get("request_order", [])) == TYPE_ARRAY else [],
-	}
+	var binding := "blackjack:%s:%s" % [str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(previous_ledger, binding)
+	if ledger.is_empty():
+		ledger = BlackjackActionAuthorityScript.default_ledger(binding)
+	table["_blackjack_action_authority"] = BlackjackActionAuthorityScript.stage_session(ledger, ui_state)
 	game.call("_update_environment_table", environment, table)
 
 
