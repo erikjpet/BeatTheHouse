@@ -14,17 +14,25 @@ static var _config_cache: Dictionary = {}
 
 
 static func config() -> Dictionary:
+	return _config_ref().duplicate(true)
+
+
+static func _config_ref() -> Dictionary:
 	if _config_cache.is_empty():
 		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(CONFIG_PATH)) if FileAccess.file_exists(CONFIG_PATH) else []
 		if typeof(parsed) == TYPE_ARRAY and (parsed as Array).size() == 1 and typeof((parsed as Array)[0]) == TYPE_DICTIONARY:
 			_config_cache = ((parsed as Array)[0] as Dictionary).duplicate(true)
-	return _config_cache.duplicate(true)
+	return _config_cache
 
 
 static func definition(play_id: String) -> Dictionary:
-	for value in _array(config().get("plays", [])):
+	return _definition_ref(play_id).duplicate(true)
+
+
+static func _definition_ref(play_id: String) -> Dictionary:
+	for value in _array(_config_ref().get("plays", [])):
 		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("id", "")) == play_id:
-			return (value as Dictionary).duplicate(true)
+			return value as Dictionary
 	return {}
 
 
@@ -74,7 +82,7 @@ static func available_actions(run_state: RunState, environment: Dictionary, game
 	if run_state == null or environment.is_empty() or game_id.is_empty():
 		return []
 	var result: Array = []
-	for value in _array(config().get("plays", [])):
+	for value in _array(_config_ref().get("plays", [])):
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var play: Dictionary = value
@@ -96,7 +104,7 @@ static func available_actions(run_state: RunState, environment: Dictionary, game
 
 
 static func availability(run_state: RunState, environment: Dictionary, game_id: String, play_id: String) -> Dictionary:
-	var play := definition(play_id)
+	var play := _definition_ref(play_id)
 	if run_state == null or play.is_empty() or not _string_array(play.get("game_ids", [])).has(game_id):
 		return {"available": false, "reason": "wrong_context"}
 	var state := normalize_state(run_state.crew_play_state)
@@ -163,7 +171,7 @@ static func table_presence_proposal(run_state: RunState, environment: Dictionary
 	var status := availability(run_state, environment, game_id, play_id)
 	if not bool(status.get("available", false)):
 		return base.merged({"eligible": false, "reason": str(status.get("reason", "unavailable"))}, true)
-	var play := definition(play_id)
+	var play := _definition_ref(play_id)
 	var members := _string_array(status.get("member_ids", []))
 	var action_index := run_state.crew_action_index()
 	var state := normalize_state(run_state.crew_play_state)
@@ -224,7 +232,7 @@ static func activate(run_state: RunState, environment: Dictionary, game_id: Stri
 	var status := availability(run_state, environment, game_id, play_id)
 	if not bool(status.get("available", false)):
 		return _result(false, play_id, environment, "That crew play is not available now.")
-	var play := definition(play_id)
+	var play := _definition_ref(play_id)
 	var state := normalize_state(run_state.crew_play_state)
 	var members := _string_array(status.get("member_ids", []))
 	var current_action := run_state.crew_action_index()
@@ -331,15 +339,15 @@ static func advance_boundary(run_state: RunState, environment: Dictionary) -> Ar
 		var active: Dictionary = active_value
 		var play_id := str(active.get("play_id", ""))
 		if action_index >= int(active.get("expires_at_action", 0)):
-			events.append({"type": "crew_play_ended", "play_id": play_id, "message": "%s's window closes." % str(definition(play_id).get("display_name", play_id.capitalize()))})
+			events.append({"type": "crew_play_ended", "play_id": play_id, "message": "%s's window closes." % str(_definition_ref(play_id).get("display_name", play_id.capitalize()))})
 			continue
 		var detected := false
 		if play_id == "spotter" and action_index > int(active.get("activated_action", action_index)) and environment_key(environment) == str(active.get("environment_key", "")):
 			var pit := run_state.pit_boss_watch_status(environment)
 			if bool(pit.get("watched", false)):
-				detected = _window_detected(run_state, definition(play_id), int(active.get("sequence", 0)), action_index)
+				detected = _window_detected(run_state, _definition_ref(play_id), int(active.get("sequence", 0)), action_index)
 		if detected:
-			var heat := maxi(0, int(definition(play_id).get("detection_heat", 0)))
+			var heat := maxi(0, int(_definition_ref(play_id).get("detection_heat", 0)))
 			var applied := run_state.add_suspicion("crew_play_spotter_burned", heat, "crew_play", true, _environment_context(environment).merged({"action_kind": "cheat"}, true), true)
 			events.append({"type": "crew_play_detected", "play_id": play_id, "suspicion_delta": applied, "message": "The pit sweep catches Switch signaling the count. Spotter burns; Heat +%d." % applied})
 			continue
@@ -366,7 +374,7 @@ static func active_status(state_value: Variant, action_index: int, environment: 
 		var play_id := str(active.get("play_id", ""))
 		result.append({
 			"play_id": play_id,
-			"display_name": str(definition(play_id).get("display_name", play_id.capitalize())),
+			"display_name": str(_definition_ref(play_id).get("display_name", play_id.capitalize())),
 			"member_ids": _string_array(active.get("member_ids", [])),
 			"remaining_boundaries": maxi(0, int(active.get("expires_at_action", 0)) - action_index),
 			"effect": (active.get("effect", {}) as Dictionary).duplicate(true) if typeof(active.get("effect", {})) == TYPE_DICTIONARY else {},
@@ -395,7 +403,7 @@ static func distraction_grievance_candidate(state_value: Variant, action_index: 
 	var liability: Dictionary = state.get("distraction_liability", {}) if typeof(state.get("distraction_liability", {})) == TYPE_DICTIONARY else {}
 	if liability.is_empty() or bool(liability.get("recorded", false)) or action_index > int(liability.get("until_action", -1)):
 		return {}
-	var threshold := maxi(1, int(config().get("security_consequence_heat", 65)))
+	var threshold := maxi(1, int(_config_ref().get("security_consequence_heat", 65)))
 	if heat_before >= threshold or heat_after < threshold:
 		return {}
 	return liability.duplicate(true)
@@ -409,7 +417,7 @@ static func mark_distraction_grievance_recorded(state_value: Variant) -> Diction
 
 static func validate_content(member_ids: Array) -> Array:
 	var failures: Array = []
-	var source := config()
+	var source := _config_ref()
 	if int(source.get("schema_version", 0)) != SCHEMA_VERSION:
 		failures.append("plays.json schema_version must match CrewPlayModel.")
 	var seen: Array = []
@@ -464,11 +472,11 @@ static func _concurrency_allows(state: Dictionary, play_id: String, action_index
 	var active := active_status(state, action_index, environment)
 	if active.is_empty():
 		return true
-	if active.size() < maxi(1, int(config().get("active_window_cap", 1))):
+	if active.size() < maxi(1, int(_config_ref().get("active_window_cap", 1))):
 		return true
 	for active_value in active:
 		var pair := "%s:%s" % [str((active_value as Dictionary).get("play_id", "")), play_id]
-		if _string_array(config().get("pairing_exceptions", [])).has(pair):
+		if _string_array(_config_ref().get("pairing_exceptions", [])).has(pair):
 			return true
 	return false
 
