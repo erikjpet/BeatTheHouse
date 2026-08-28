@@ -8,6 +8,8 @@ const MODE_HOLD := "hold"
 const MODE_GETAWAY := "getaway"
 const MODES := [MODE_PACKAGE, MODE_MULTI_STOP, MODE_HOLD, MODE_GETAWAY]
 const PHYSICAL_STATE_SCHEMA_VERSION := 1
+const AUTHORITY_SCHEMA_VERSION := 1
+const RECEIPT_SCHEMA_VERSION := 1
 const CARGO_CARRIED := "carried"
 const CARGO_STASHED := "stashed"
 const CARGO_DELIVERED := "delivered"
@@ -101,6 +103,10 @@ static func normalize_state(value: Variant) -> Dictionary:
 	var resolution := _copy_dict(source.get("resolution", {}))
 	if status == "resolved" and resolution.is_empty():
 		resolution = _resolution("failed", "invalid_state", source, false)
+	if not _receipt_map_valid(source.get("action_receipts", {})) or not _receipt_map_valid(source.get("target_receipts", {})):
+		return {}
+	if int(source.get("action_sequence", 0)) != _copy_dict(source.get("action_receipts", {})).size():
+		return {}
 	var cargo_state := _normalize_cargo_state(source.get("cargo_state", {}), mode, source)
 	if cargo_state.is_empty():
 		return {}
@@ -205,6 +211,25 @@ static func cargo(state_value: Variant) -> Dictionary:
 	}
 
 
+# The host seals graph and cover facts it already owns. DeliveryRunModel only
+# compares this bounded proof; it never stores a second route graph/adapter.
+static func seal_movement_authority(source_node_id: String, destination_node_id: String, route_id: String) -> Dictionary:
+	var authority := {
+		"schema_version": AUTHORITY_SCHEMA_VERSION,
+		"source_node_id": source_node_id.strip_edges(),
+		"destination_node_id": destination_node_id.strip_edges(),
+		"route_id": route_id.strip_edges(),
+	}
+	authority["content_fingerprint"] = JSON.stringify(authority).sha256_text()
+	return authority
+
+
+static func seal_cover_authority(node_id: String, cover_id: String) -> Dictionary:
+	var authority := {"schema_version": AUTHORITY_SCHEMA_VERSION, "node_id": node_id.strip_edges(), "cover_id": cover_id.strip_edges()}
+	authority["content_fingerprint"] = JSON.stringify(authority).sha256_text()
+	return authority
+
+
 static func advance_boundaries(state_value: Variant, amount: int, current_node_id: String, attention: int, action_index: int) -> Dictionary:
 	var state := normalize_state(state_value)
 	if state.is_empty() or str(state.get("status", "")) != "active" or amount <= 0:
@@ -265,6 +290,11 @@ static func complete_handoff(state_value: Variant, node_id: String) -> Dictionar
 	var clean_node_id := node_id.strip_edges()
 	if clean_node_id.is_empty() or clean_node_id != str(state.get("handoff_pending_node_id", "")):
 		return state
+	var position := _copy_dict(state.get("position_state", {}))
+	var cargo_state := _copy_dict(state.get("cargo_state", {}))
+	if str(position.get("node_id", "")) != clean_node_id or str(cargo_state.get("status", "")) != CARGO_CARRIED \
+			or str(cargo_state.get("node_id", "")) != clean_node_id:
+		return state
 	var targets: Array = state.get("targets", [])
 	var target_index := _pending_target_index(state, clean_node_id)
 	if target_index < 0:
@@ -275,11 +305,8 @@ static func complete_handoff(state_value: Variant, node_id: String) -> Dictionar
 	target["handoff_node_id"] = clean_node_id
 	targets[target_index] = target
 	state["targets"] = targets
-	var target_receipts := _copy_dict(state.get("target_receipts", {}))
 	var target_id := str(target.get("id", "delivery_target_%s" % clean_node_id))
-	if not target_receipts.has(target_id):
-		target_receipts[target_id] = {"fingerprint": JSON.stringify(target).sha256_text(), "sequence": int(state.get("action_sequence", 0)) + 1, "action": ACTION_HANDOFF}
-	state["target_receipts"] = target_receipts
+	state["target_receipts"] = _record_receipt_map(_copy_dict(state.get("target_receipts", {})), target_id, ACTION_HANDOFF, target)
 	state["handoff_pending_node_id"] = ""
 	if _all_targets_delivered(state):
 		state["cargo_state"] = _cargo_at(CARGO_DELIVERED, clean_node_id, "handoff", "")
@@ -334,6 +361,12 @@ static func ditch(state_value: Variant, node_id: String, receipt_key: String, re
 	var cargo := _copy_dict(state.get("cargo_state", {}))
 	if str(cargo.get("status", "")) not in [CARGO_CARRIED, CARGO_STASHED]:
 		return state
+	if str(cargo.get("status", "")) == CARGO_CARRIED:
+		if clean_node.is_empty() or clean_node != str(_copy_dict(state.get("position_state", {})).get("node_id", "")) or clean_node != str(cargo.get("node_id", "")):
+			return state
+	else:
+		if clean_node != str(cargo.get("node_id", "")) or clean_place != str(cargo.get("place_id", "")):
+			return state
 	state["cargo_state"] = _cargo_at(CARGO_DITCHED, clean_node, "street", clean_place)
 	state = _record_action(state, receipt_key, envelope)
 	return _resolve(state, "failed", clean_reason, false)
@@ -384,6 +417,8 @@ static func apply_pursuit_action(state_value: Variant, action_id: String, node_i
 		return state
 	if str(state.get("mode", "")) != MODE_GETAWAY or clean_action not in [ACTION_MOVE, ACTION_WAIT, ACTION_DUCK] or not _action_can_apply(state, receipt_key, envelope):
 		return state
+	if not _street_authority_valid(state, clean_action, clean_node, context):
+		return state
 	if clean_action == ACTION_DUCK:
 		var cover_id := str(context.get("cover_id", "")).strip_edges()
 		if cover_id.is_empty():
@@ -404,10 +439,9 @@ static func apply_pursuit_action(state_value: Variant, action_id: String, node_i
 # methods, not a second state or consequence authority.
 static func apply_action(state_value: Variant, verb: String, context: Dictionary) -> Dictionary:
 	var receipt_key := str(context.get("receipt_key", "")).strip_edges()
-	if typeof(state_value) == TYPE_DICTIONARY and not receipt_key.is_empty() \
-			and _copy_dict(_copy_dict(state_value).get("action_receipts", {})).has(receipt_key):
-		return _copy_dict(state_value)
 	var state := normalize_state(state_value)
+	if state.is_empty():
+		return {}
 	var action := verb.strip_edges()
 	var node_id := str(context.get("node_id", "")).strip_edges()
 	var action_index := maxi(0, int(context.get("action_index", int(state.get("last_boundary_action", 0)) + 1)))
@@ -422,7 +456,7 @@ static func apply_action(state_value: Variant, verb: String, context: Dictionary
 			state["cargo_state"] = _cargo_at(CARGO_CARRIED, node_id, "player", "player")
 			return _record_action(state, receipt_key, pickup_envelope)
 		"handoff":
-			var handoff_envelope := {"action": action, "node_id": node_id, "action_index": action_index}
+			var handoff_envelope := {"action": action, "node_id": node_id, "action_index": action_index, "target_id": str(context.get("target_id", "")).strip_edges()}
 			if _action_replayed(state, receipt_key, handoff_envelope): return state
 			if not _action_can_apply(state, receipt_key, handoff_envelope): return state
 			var next_target_index := _next_pending_target_index(state)
@@ -431,8 +465,8 @@ static func apply_action(state_value: Variant, verb: String, context: Dictionary
 			if str(next_target.get("node_id", "")) != node_id: return state
 			var requested_target_id := str(context.get("target_id", "")).strip_edges()
 			if not requested_target_id.is_empty() and requested_target_id != str(next_target.get("id", "")): return state
-			var arrived := note_arrival(state, node_id)
-			var handed := complete_handoff(arrived, node_id)
+			if str(state.get("handoff_pending_node_id", "")) != node_id: return state
+			var handed := complete_handoff(state, node_id)
 			if JSON.stringify(handed) == JSON.stringify(state): return state
 			return _record_action(handed, receipt_key, handoff_envelope)
 		ACTION_MOVE, ACTION_WAIT, ACTION_DUCK:
@@ -442,7 +476,7 @@ static func apply_action(state_value: Variant, verb: String, context: Dictionary
 		ACTION_RETRIEVE:
 			return retrieve(state, node_id, str(context.get("stash_id", context.get("place_id", ""))), receipt_key)
 		"found":
-			return _apply_cargo_found(state, node_id, receipt_key, str(context.get("finder_id", "unknown")))
+			return _apply_cargo_found(state, node_id, str(context.get("place_id", context.get("stash_id", ""))), receipt_key, str(context.get("finder_id", "unknown")))
 		ACTION_DITCH:
 			return ditch(state, node_id, receipt_key, str(context.get("reason", "ditched")), str(context.get("place_id", "")))
 		"hold_signal":
@@ -628,6 +662,8 @@ static func _apply_ordinary_street_boundary(state_value: Dictionary, action_id: 
 		return state
 	if not _action_can_apply(state, receipt_key, envelope) or action_id not in [ACTION_MOVE, ACTION_WAIT, ACTION_DUCK]:
 		return state
+	if not _street_authority_valid(state, action_id, node_id, context):
+		return state
 	if str(state.get("mode", "")) == MODE_HOLD:
 		return apply_hold_action(state, ACTION_WAIT, node_id, attention, action_index, receipt_key)
 	state = _record_position(state, node_id, action_id)
@@ -638,15 +674,17 @@ static func _apply_ordinary_street_boundary(state_value: Dictionary, action_id: 
 	return state
 
 
-static func _apply_cargo_found(state_value: Dictionary, node_id: String, receipt_key: String, finder_id: String) -> Dictionary:
+static func _apply_cargo_found(state_value: Dictionary, node_id: String, place_id: String, receipt_key: String, finder_id: String) -> Dictionary:
 	var state := normalize_state(state_value)
-	var envelope := {"action": "found", "node_id": node_id.strip_edges(), "finder_id": finder_id.strip_edges()}
+	var clean_place := place_id.strip_edges()
+	var envelope := {"action": "found", "node_id": node_id.strip_edges(), "place_id": clean_place, "finder_id": finder_id.strip_edges()}
 	if _action_replayed(state, receipt_key, envelope):
 		return state
 	if not _action_can_apply(state, receipt_key, envelope):
 		return state
 	var cargo_state := _copy_dict(state.get("cargo_state", {}))
-	if str(cargo_state.get("status", "")) != CARGO_STASHED or str(cargo_state.get("node_id", "")) != node_id.strip_edges():
+	if str(cargo_state.get("status", "")) != CARGO_STASHED or str(cargo_state.get("node_id", "")) != node_id.strip_edges() \
+			or str(cargo_state.get("place_id", "")) != clean_place:
 		return state
 	state["cargo_state"] = _cargo_at(CARGO_FOUND, node_id, "finder", finder_id)
 	state = _record_action(state, receipt_key, envelope)
@@ -680,7 +718,7 @@ static func _action_replayed(state: Dictionary, receipt_key: String, envelope: D
 	if receipt_key.strip_edges().is_empty():
 		return false
 	var existing := _copy_dict(_copy_dict(state.get("action_receipts", {})).get(receipt_key.strip_edges(), {}))
-	return not existing.is_empty() and str(existing.get("fingerprint", "")) == JSON.stringify(envelope).sha256_text()
+	return not existing.is_empty() and str(existing.get("envelope_fingerprint", "")) == _content_fingerprint(envelope)
 
 
 static func _record_action(state_value: Dictionary, receipt_key: String, envelope: Dictionary) -> Dictionary:
@@ -690,23 +728,84 @@ static func _record_action(state_value: Dictionary, receipt_key: String, envelop
 	if receipts.has(clean_key):
 		return state
 	var sequence := int(state.get("action_sequence", 0)) + 1
-	receipts[clean_key] = {"fingerprint": JSON.stringify(envelope).sha256_text(), "sequence": sequence, "action": str(envelope.get("action", ""))}
+	receipts = _record_receipt_map(receipts, clean_key, str(envelope.get("action", "")), envelope, sequence)
 	state["action_receipts"] = receipts
 	state["action_sequence"] = sequence
 	return state
+
+
+static func _record_receipt_map(receipts_value: Dictionary, receipt_key: String, action: String, envelope: Dictionary, sequence: int = 0) -> Dictionary:
+	var receipts := receipts_value.duplicate(true)
+	var next_sequence := sequence if sequence > 0 else receipts.size() + 1
+	var previous_fingerprint := "0".repeat(64)
+	for receipt_value in receipts.values():
+		var candidate := _copy_dict(receipt_value)
+		if int(candidate.get("sequence", 0)) == next_sequence - 1:
+			previous_fingerprint = str(candidate.get("receipt_fingerprint", ""))
+			break
+	var body := {
+		"schema_version": RECEIPT_SCHEMA_VERSION,
+		"receipt_key": receipt_key.strip_edges(),
+		"action": action.strip_edges(),
+		"sequence": next_sequence,
+		"envelope_fingerprint": _content_fingerprint(envelope),
+		"previous_receipt_fingerprint": previous_fingerprint,
+	}
+	body["receipt_fingerprint"] = _content_fingerprint(body)
+	receipts[receipt_key.strip_edges()] = body
+	return receipts
+
+
+static func _receipt_map_valid(value: Variant) -> bool:
+	if typeof(value) != TYPE_DICTIONARY:
+		return false
+	var receipts: Dictionary = value
+	if receipts.is_empty():
+		return true
+	var by_sequence: Dictionary = {}
+	for key_value in receipts.keys():
+		var key := str(key_value)
+		var receipt := _copy_dict(receipts.get(key_value, {}))
+		var exact_keys := ["action", "envelope_fingerprint", "previous_receipt_fingerprint", "receipt_fingerprint", "receipt_key", "schema_version", "sequence"]
+		var actual_keys: Array = receipt.keys()
+		actual_keys.sort()
+		if actual_keys != exact_keys or key.is_empty() or key != str(receipt.get("receipt_key", "")) \
+				or typeof(receipt.get("schema_version")) != TYPE_INT or int(receipt.get("schema_version", 0)) != RECEIPT_SCHEMA_VERSION \
+				or typeof(receipt.get("sequence")) != TYPE_INT or int(receipt.get("sequence", 0)) <= 0 \
+				or typeof(receipt.get("action")) != TYPE_STRING or str(receipt.get("action", "")).strip_edges().is_empty():
+			return false
+		for fingerprint_key in ["envelope_fingerprint", "previous_receipt_fingerprint", "receipt_fingerprint"]:
+			var fingerprint := str(receipt.get(fingerprint_key, ""))
+			if not _lower_hex_sha256(fingerprint):
+				return false
+		var fingerprint_body := receipt.duplicate(true)
+		var stored_fingerprint := str(fingerprint_body.get("receipt_fingerprint", ""))
+		fingerprint_body.erase("receipt_fingerprint")
+		if stored_fingerprint != _content_fingerprint(fingerprint_body):
+			return false
+		var sequence := int(receipt.get("sequence", 0))
+		if by_sequence.has(sequence):
+			return false
+		by_sequence[sequence] = receipt
+	for sequence in range(1, receipts.size() + 1):
+		if not by_sequence.has(sequence):
+			return false
+		var receipt := _copy_dict(by_sequence.get(sequence, {}))
+		var expected_previous := "0".repeat(64) if sequence == 1 else str(_copy_dict(by_sequence.get(sequence - 1, {})).get("receipt_fingerprint", ""))
+		if str(receipt.get("previous_receipt_fingerprint", "")) != expected_previous:
+			return false
+	return true
 
 
 static func _normalize_action_receipts(value: Variant) -> Dictionary:
 	var result: Dictionary = {}
 	if typeof(value) != TYPE_DICTIONARY:
 		return result
-	for key_value in (value as Dictionary).keys():
-		var key := str(key_value).strip_edges()
-		var receipt := _copy_dict((value as Dictionary).get(key_value, {}))
-		var fingerprint := str(receipt.get("fingerprint", "")).strip_edges()
-		if key.is_empty() or fingerprint.length() != 64:
-			continue
-		result[key] = {"fingerprint": fingerprint, "sequence": maxi(1, int(receipt.get("sequence", 1))), "action": str(receipt.get("action", "")).strip_edges()}
+	var rows: Array = []
+	for key_value in (value as Dictionary).keys(): rows.append(_copy_dict((value as Dictionary).get(key_value, {})))
+	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.get("sequence", 0)) < int(b.get("sequence", 0)))
+	for receipt in rows:
+		result[str(receipt.get("receipt_key", ""))] = receipt.duplicate(true)
 	return result
 
 
@@ -725,6 +824,62 @@ static func _normalize_signal_records(value: Variant) -> Array:
 	return result
 
 
+static func _street_authority_valid(state: Dictionary, action_id: String, destination_node_id: String, context: Dictionary) -> bool:
+	var position_node := str(_copy_dict(state.get("position_state", {})).get("node_id", ""))
+	var authority := _copy_dict(context.get("movement_authority", {}))
+	var route_id := str(authority.get("route_id", ""))
+	var expected_destination := destination_node_id.strip_edges()
+	if position_node.is_empty() or expected_destination.is_empty() or route_id.is_empty():
+		return false
+	if action_id in [ACTION_WAIT, ACTION_DUCK]:
+		if expected_destination != position_node or route_id != "stay":
+			return false
+	elif action_id == ACTION_MOVE and expected_destination == position_node:
+		return false
+	else:
+		if action_id != ACTION_MOVE:
+			return false
+	var expected_authority := seal_movement_authority(position_node, expected_destination, route_id)
+	if JSON.stringify(authority) != JSON.stringify(expected_authority):
+		return false
+	if action_id == ACTION_DUCK:
+		var cover_id := str(context.get("cover_id", "")).strip_edges()
+		var cover_authority := _copy_dict(context.get("cover_authority", {}))
+		if cover_id.is_empty() or JSON.stringify(cover_authority) != JSON.stringify(seal_cover_authority(position_node, cover_id)):
+			return false
+	return true
+
+
+static func _content_fingerprint(value: Variant) -> String:
+	return JSON.stringify(_canonical_value(value)).sha256_text()
+
+
+static func _canonical_value(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		var source: Dictionary = value
+		var result: Dictionary = {}
+		var keys: Array = source.keys()
+		keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+		for key_value in keys:
+			result[str(key_value)] = _canonical_value(source.get(key_value))
+		return result
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for entry_value in value as Array: result.append(_canonical_value(entry_value))
+		return result
+	return value
+
+
+static func _lower_hex_sha256(value: String) -> bool:
+	if value.length() != 64 or value != value.to_lower():
+		return false
+	for index in range(value.length()):
+		var code := value.unicode_at(index)
+		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102):
+			return false
+	return true
+
+
 static func _normalize_targets(value: Variant) -> Array:
 	var result: Array = []
 	var seen := {}
@@ -741,7 +896,7 @@ static func _normalize_targets(value: Variant) -> Array:
 		var status := str(source.get("status", "pending")).strip_edges().to_lower()
 		if not ["pending", "delivered"].has(status):
 			status = "pending"
-		result.append({
+		var target := {
 			"id": str(source.get("id", "delivery_target_%s" % node_id)).strip_edges(),
 			"node_id": node_id,
 			"label": str(source.get("label", node_id.replace("_", " ").capitalize())).strip_edges(),
@@ -750,7 +905,10 @@ static func _normalize_targets(value: Variant) -> Array:
 			"was_visible_at_offer": bool(source.get("was_visible_at_offer", false)),
 			"revealed_by_job": bool(source.get("revealed_by_job", false)),
 			"delivered_boundary": maxi(0, int(source.get("delivered_boundary", 0))),
-		})
+		}
+		if source.has("handoff_node_id"):
+			target["handoff_node_id"] = str(source.get("handoff_node_id", "")).strip_edges()
+		result.append(target)
 	return result
 
 
