@@ -422,7 +422,7 @@ static func _validated_visit_records(state: Dictionary) -> Dictionary:
 			errors.append("scenario visit receipt record is not closed, typed, and bounded")
 			continue
 		var receipt_key := str(record.get("receipt_key", ""))
-		var expected := SequenceRuntimeScript.structural_runtime_receipt("visit", [str(state.get("scenario_id", "")), str(state.get("node_id", "")), str(record.get("visit_id", ""))])
+		var expected := "visit:%s" % str(record.get("visit_id", ""))
 		if record_index >= receipts.size() or str(receipts[record_index]) != receipt_key or receipt_key != expected or seen.has(receipt_key):
 			errors.append("scenario visit receipt record does not authenticate its exact visit")
 			continue
