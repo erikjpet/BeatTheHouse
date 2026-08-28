@@ -14,8 +14,13 @@ object state, and three material table-energy tiers. Presentation explicitly
 marks the wheel as non-authoritative.
 
 Pending stacks now support removing one selected denomination from one named
-stack. Clicking a player stack selects the exact target; the stake-down binding
-provides the keyboard/controller equivalent. Late input remains rejected before
-the action boundary while the wheel is locked.
+stack. Placement records that exact named stack as the controller focus; direct
+pointer removal carries the exact stack index, and the stake-down binding
+refuses to infer a last stack when no named focus exists. Late input remains
+rejected before the action boundary while the wheel is locked.
+
+The renderer visibly consumes the ritual projection in a non-color-only status
+strip: phase, croupier behavior, ball state, and material energy tier all change
+the text as well as the scene treatment.
 
 Executable proof: `scripts/tests/foundation/game06_3_depth_contract.gd`.
