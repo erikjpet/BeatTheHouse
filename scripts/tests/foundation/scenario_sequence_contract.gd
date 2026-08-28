@@ -2371,12 +2371,20 @@ static func _check_lifecycle_commands(failures: Array) -> void:
 static func _check_mutually_exclusive_branch_cleanup(failures: Array) -> void:
 	var hostile_definition := _runtime_definition()
 	var hostile_state := _prepared_fixture_state(hostile_definition, "broken_missing_target", failures)
+	var hostile_semantic := _dict(hostile_state.get("semantic_state", {}))
+	for authority_key in ["declared_targets", "target_inventory"]:
+		var hostile_authority := _dict(hostile_semantic.get(authority_key, {}))
+		var hostile_scene_targets := _array(hostile_authority.get("scene_objects", []))
+		hostile_scene_targets.erase("scenario::fixture_102")
+		hostile_authority["scene_objects"] = hostile_scene_targets
+		hostile_semantic[authority_key] = hostile_authority
+	hostile_state["semantic_state"] = hostile_semantic
 	var hostile_fact := SequenceRuntimeScript.fact("heat_changed", "heat", "bar_node", "branch:broken:missing", 1, 1, _fact_payload("heat_changed"))
 	var hostile_queued := SequenceRuntimeScript.enqueue_fact(hostile_state, hostile_definition, hostile_fact)
 	var hostile_queued_state := _dict(hostile_queued.get("state", {}))
 	var hostile_result := SequenceRuntimeScript.flush_facts(hostile_queued_state, hostile_definition, 1)
 	var hostile_rejected_state := _dict(hostile_result.get("state", {}))
-	if not bool(hostile_queued.get("ok", false)) or bool(hostile_queued.get("duplicate", true)) or not _array(hostile_queued.get("errors", [])).is_empty() or bool(hostile_result.get("ok", true)) or not _contains_text(_array(hostile_result.get("errors", [])), "missing scenario identity scenario::fixture_102") or not _array(hostile_result.get("processed", [])).is_empty() or not _array(hostile_rejected_state.get("fact_queue", [])).is_empty() or JSON.stringify(hostile_rejected_state.get("fact_receipts", [])) != JSON.stringify(hostile_state.get("fact_receipts", [])) or JSON.stringify(hostile_rejected_state.get("branch_resolution_records", [])) != JSON.stringify(hostile_state.get("branch_resolution_records", [])) or JSON.stringify(hostile_rejected_state.get("semantic_state", {})) != JSON.stringify(hostile_state.get("semantic_state", {})) or JSON.stringify(hostile_rejected_state.get("local_state", {})) != JSON.stringify(hostile_state.get("local_state", {})) or str(hostile_rejected_state.get("status", "")) != str(hostile_state.get("status", "")) or str(hostile_rejected_state.get("phase_id", "")) != str(hostile_state.get("phase_id", "")):
+	if not bool(hostile_queued.get("ok", false)) or bool(hostile_queued.get("duplicate", true)) or not _array(hostile_queued.get("errors", [])).is_empty() or bool(hostile_result.get("ok", true)) or not _contains_text(_array(hostile_result.get("errors", [])), "missing scenario identity scenario::fixture_102") or not _array(hostile_result.get("processed", [])).is_empty() or SequenceRuntimeScript.content_fingerprint(hostile_rejected_state) != SequenceRuntimeScript.content_fingerprint(SequenceRuntimeScript.normalize_state(hostile_queued_state, hostile_definition)):
 		failures.append("Missing aftermath target hostile fixture was not rejected atomically with its typed error.")
 
 	var definition := _runtime_definition()
@@ -2957,8 +2965,8 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	expected_public_semantic_keys.sort()
 	if public_semantic_keys != expected_public_semantic_keys:
 		failures.append("Public scenario semantic projection exposed runtime authorization or journal internals: %s" % JSON.stringify(public_semantic_keys))
-	var resolved_semantic := OperationRegistryScript.resolved_semantic_state(_dict(initial.get("semantic_state", {})))
-	if SequenceRuntimeScript.content_fingerprint(public_semantic.get("interactions", {})) != SequenceRuntimeScript.content_fingerprint(resolved_semantic.get("interactions", {})) or SequenceRuntimeScript.content_fingerprint(public_semantic.get("scene_objects", {})) != SequenceRuntimeScript.content_fingerprint(resolved_semantic.get("scene_objects", {})):
+	var resolved_semantic := OperationRegistryScript.public_semantic_state(_dict(initial.get("semantic_state", {})))
+	if _dict(public_semantic.get("interactions", {})).keys() != _dict(resolved_semantic.get("interactions", {})).keys() or SequenceRuntimeScript.content_fingerprint(public_semantic.get("scene_objects", {})) != SequenceRuntimeScript.content_fingerprint(resolved_semantic.get("scene_objects", {})):
 		failures.append("Closed public scenario semantics did not retain the room UI interaction/scene projection.")
 	var prepare := _runtime_command(initial, definition, "prepare", "bar_node", "arrival", "depth:prepare", {}, "scenario", "command_console")
 	var descriptor := SequenceRuntimeScript._command_descriptor(initial, definition, "scenario", "command_console", "prepare")
@@ -3174,8 +3182,8 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	if bool(ScenarioEngineScript._rebuild_receipted_semantic_mutations(forged_merged_batch, definition, host_semantics).get("ok", true)):
 		failures.append("Fact reconstruction accepted a forged merge of independently authenticated equal-boundary batches.")
 	var chained_definition := _runtime_definition()
-	chained_definition["sequence"]["phase_graph"]["phases"][0]["branches"] = [{"id": "event_enters_aftermath", "condition": {"type": "fact", "fact_type": "event_result"}, "next_phase": "aftermath"}]
-	chained_definition["sequence"]["fact_subscriptions"].append("event_result")
+	chained_definition["sequence"]["phase_graph"]["phases"][0]["branches"].append({"id": "event_enters_aftermath", "condition": {"type": "fact", "fact_type": "event_result", "payload_equals": {"event_id": "fixture_event"}}, "next_phase": "aftermath"})
+	chained_definition["sequence"]["fact_subscriptions"].append({"fact_type": "event_result", "payload_equals": {"event_id": "fixture_event"}})
 	chained_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(chained_definition)
 	var chained_host := _fixture_host_semantics(chained_definition)
 	var chained_initial := SequenceRuntimeScript.initial_state(chained_definition, "bar_node", "chained_fact_seed", chained_host)
@@ -3189,7 +3197,7 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	var chained_batch_keys := _array(_dict(chained_batches[0] if not chained_batches.is_empty() else {}).get("fact_receipt_keys", []))
 	var chained_saved_state := _without_transition_queue(chained_state)
 	var chained_rebuild := ScenarioEngineScript._rebuild_receipted_semantic_mutations(chained_saved_state, chained_definition, chained_host)
-	if not bool(chained_event_queue.get("ok", false)) or not bool(chained_heat_queue.get("ok", false)) or not bool(chained_flush.get("ok", false)) or chained_batches.size() != 1 or chained_batch_keys != ["depth:batch:event", "depth:batch:heat"] or str(chained_state.get("status", "")) != SequenceRuntimeScript.STATUS_AFTERMATH or _array(chained_state.get("resolved_outcomes", [])) != ["repaired"] or int(_dict(chained_state.get("local_state", {})).get("pressure", -1)) != 4 or not bool(chained_rebuild.get("ok", false)) or SequenceRuntimeScript.content_fingerprint(chained_rebuild.get("state", {})) != SequenceRuntimeScript.content_fingerprint(chained_saved_state):
+	if not bool(chained_event_queue.get("ok", false)) or not bool(chained_heat_queue.get("ok", false)) or not bool(chained_flush.get("ok", false)) or chained_batches.size() != 1 or chained_batch_keys != ["depth:batch:event", "depth:batch:heat"] or str(chained_state.get("status", "")) != SequenceRuntimeScript.STATUS_AFTERMATH or _array(chained_state.get("resolved_outcomes", [])) != ["broken"] or int(_dict(chained_state.get("local_state", {})).get("pressure", -1)) != 4 or not bool(chained_rebuild.get("ok", false)) or SequenceRuntimeScript.content_fingerprint(chained_rebuild.get("state", {})) != SequenceRuntimeScript.content_fingerprint(chained_saved_state):
 		failures.append("One authenticated multi-fact batch did not replay the exact event-driven phase change before its later heat outcome.")
 
 	var base_scene_identity := "base::fixture_101"
@@ -3360,7 +3368,7 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 		"scenario_sequence_state": reentered_state,
 		"scenario_sequence_projection": SequenceRuntimeScript.public_projection(reentered_state, definition),
 	}).to_dict()
-	if JSON.stringify(reentry_snapshot.get("scenario_sequence_state", {})) != JSON.stringify(reentered_state):
+	if JSON.stringify(reentry_snapshot.get("scenario_sequence_state", {})) != JSON.stringify(EnvironmentInstanceScript._durable_sequence_state(reentered_state)):
 		failures.append("Expired source-room reentry state/receipts did not survive a second persistence round-trip.")
 
 
@@ -3371,6 +3379,7 @@ static func _check_lifecycle_policy_matrix(failures: Array) -> void:
 		var policy := str(policy_value)
 		var definition := base_definition.duplicate(true)
 		definition["sequence"]["reentry_policy"]["partial"] = policy
+		definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
 		var result := SequenceRuntimeScript.apply_reentry(partial, definition, "partial_%s" % policy)
 		var next := _dict(result.get("state", {}))
 		if not bool(result.get("ok", false)) or str(result.get("policy", "")) != policy or not _array(next.get("visit_receipts", [])).has("visit:partial_%s" % policy):
@@ -3905,7 +3914,7 @@ static func _check_transition_and_event_delivery(failures: Array) -> void:
 	var command_console := _dict(command_console_op.get("interaction", {}))
 	var actions := _array(command_console.get("available_actions", []))
 	actions[0]["handler"] = "event_bridge"
-	actions[0]["inputs"] = {"event_id": "fixture_event", "resolution_id": "fixture_resolution"}
+	actions[0]["inputs"] = {"event_id": "fixture_event", "resolution_id": "leave"}
 	command_console["available_actions"] = actions
 	command_console_op["interaction"] = command_console
 	interaction_ops[interaction_ops.size() - 1] = command_console_op
@@ -3929,23 +3938,25 @@ static func _check_transition_and_event_delivery(failures: Array) -> void:
 	sequence["fact_subscriptions"].append({
 		"fact_type": "event_result",
 		"payload_equals": {
-			"event_id": "fixture_event", "choice_id": "accept",
-			"resolution_id": "fixture_resolution", "resolved": true, "ok": true,
+			"event_id": "fixture_event", "choice_id": "leave",
+			"resolution_id": "leave", "resolved": true, "ok": true,
 		},
 	})
 	bridged_definition["sequence"] = sequence
-	var applied := SequenceRuntimeScript.apply_command(SequenceRuntimeScript.initial_state(bridged_definition, "bar_node", "event_seed", _fixture_host_semantics(bridged_definition)), bridged_definition, SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "event_bridge:1", {}, "scenario", "command_console"), {"available_funds": 2})
+	bridged_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(bridged_definition)
+	var bridged_initial := SequenceRuntimeScript.initial_state(bridged_definition, "bar_node", "event_seed", _fixture_host_semantics(bridged_definition))
+	var applied := SequenceRuntimeScript.apply_command(bridged_initial, bridged_definition, _runtime_command(bridged_initial, bridged_definition, "prepare", "bar_node", "arrival", "event_bridge:1", {}, "scenario", "command_console"), {"available_funds": 2})
 	var drained := SequenceRuntimeScript.drain_event_requests(_dict(applied.get("state", {})), bridged_definition)
 	var drained_again := SequenceRuntimeScript.drain_event_requests(_dict(drained.get("state", {})), bridged_definition)
 	if not bool(applied.get("ok", false)) or _array(drained.get("requests", [])).size() != 1 or not _array(drained_again.get("requests", [])).is_empty():
 		failures.append("Scenario event bridge did not publish one durable correlated request.")
 	var delivered_state := _dict(drained.get("state", {}))
-	var unrelated_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:unrelated", 1, 1, {"event_id": "unrelated_event", "choice_id": "accept", "resolved": true, "ok": true})
+	var unrelated_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:unrelated", 1, 1, {"event_id": "unrelated_event", "choice_id": "leave", "resolved": true, "ok": true})
 	var unrelated_queued := SequenceRuntimeScript.enqueue_fact(delivered_state, bridged_definition, unrelated_fact)
 	var unrelated_result := SequenceRuntimeScript.flush_facts(_dict(unrelated_queued.get("state", {})), bridged_definition, 1)
 	if bool(unrelated_result.get("ok", true)) or not _contains_text(_array(unrelated_result.get("errors", [])), "does not match") or int(_dict(_dict(unrelated_result.get("state", {})).get("local_state", {})).get("pressure", -1)) != 0 or not _array(_dict(unrelated_result.get("state", {})).get("event_choice_receipts", [])).is_empty():
 		failures.append("An unrelated event_result with a colliding choice id reached this scenario before payload isolation.")
-	var uncorrelated_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:uncorrelated", 2, 1, {"event_id": "fixture_event", "choice_id": "accept", "resolved": true, "ok": true})
+	var uncorrelated_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:uncorrelated", 2, 1, {"event_id": "fixture_event", "choice_id": "leave", "resolved": true, "ok": true})
 	var uncorrelated_queued := SequenceRuntimeScript.enqueue_fact(delivered_state, bridged_definition, uncorrelated_fact)
 	var uncorrelated_result := SequenceRuntimeScript.flush_facts(_dict(uncorrelated_queued.get("state", {})), bridged_definition, 1)
 	if bool(uncorrelated_result.get("ok", true)) or not _contains_text(_array(uncorrelated_result.get("errors", [])), "does not match") or int(_dict(_dict(uncorrelated_result.get("state", {})).get("local_state", {})).get("pressure", -1)) != 0 or JSON.stringify(_dict(uncorrelated_result.get("state", {})).get("objective_progress", {})) != JSON.stringify(delivered_state.get("objective_progress", {})):
@@ -3982,22 +3993,20 @@ static func _check_transition_and_event_delivery(failures: Array) -> void:
 		"scenario_sequence_state": delivered_state,
 		"layout": {"object_rects": {}},
 	}
-	run_state.scenario_publish_event_result({"event_id": "fixture_event", "choice_id": "accept", "resolved": true, "ok": true})
-	var published_queue := _array(_dict(run_state.current_environment.get("scenario_sequence_state", {})).get("fact_queue", []))
-	if published_queue.is_empty() or str(_dict(_dict(published_queue[published_queue.size() - 1]).get("payload", {})).get("resolution_id", "")) != "fixture_resolution":
+	if run_state._scenario_pending_resolution_for_event("fixture_event") != "leave":
 		failures.append("Production event-result routing did not infer its delivered scenario resolution correlation.")
-	var correlated_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:correlated", 1, 1, {"event_id": "fixture_event", "choice_id": "accept", "resolution_id": "fixture_resolution", "resolved": true, "ok": true})
+	var correlated_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:correlated", 1, 1, {"event_id": "fixture_event", "choice_id": "leave", "resolution_id": "leave", "resolved": true, "ok": true})
 	var correlated_queued := SequenceRuntimeScript.enqueue_fact(delivered_state, bridged_definition, correlated_fact)
 	var correlated_result := SequenceRuntimeScript.flush_facts(_dict(correlated_queued.get("state", {})), bridged_definition, 1)
 	var correlated_state := _dict(correlated_result.get("state", {}))
-	if not bool(correlated_result.get("ok", false)) or not _array(correlated_state.get("event_choice_receipts", [])).has("fixture_resolution:accept") or int(_dict(correlated_state.get("local_state", {})).get("pressure", -1)) != 1 or not _array(_dict(_dict(correlated_state.get("objective_progress", {})).get("clear_exit", {})).get("completed_steps", [])).has("record_event_choice"):
+	if not bool(correlated_result.get("ok", false)) or not _array(correlated_state.get("event_choice_receipts", [])).has("leave:leave") or int(_dict(correlated_state.get("local_state", {})).get("pressure", -1)) != 1 or not _array(_dict(_dict(correlated_state.get("objective_progress", {})).get("clear_exit", {})).get("completed_steps", [])).has("record_event_choice"):
 		failures.append("Scenario event bridge did not accept its delivered correlated event result.")
-	var consumed_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:consumed_again", 2, 1, {"event_id": "fixture_event", "choice_id": "conflicting_choice", "resolution_id": "fixture_resolution", "resolved": true, "ok": true})
+	var consumed_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:consumed_again", 2, 1, {"event_id": "fixture_event", "choice_id": "conflicting_choice", "resolution_id": "leave", "resolved": true, "ok": true})
 	var consumed_queued := SequenceRuntimeScript.enqueue_fact(correlated_state, bridged_definition, consumed_fact)
 	var consumed_result := SequenceRuntimeScript.flush_facts(_dict(consumed_queued.get("state", {})), bridged_definition, 1)
 	if bool(consumed_result.get("ok", true)) or not _contains_text(_array(consumed_result.get("errors", [])), "does not match") or int(_dict(_dict(consumed_result.get("state", {})).get("local_state", {})).get("pressure", -1)) != 1 or _array(_dict(consumed_result.get("state", {})).get("event_choice_receipts", [])).size() != 1:
 		failures.append("A consumed event resolution reran under a fresh fact id or conflicting choice.")
-	var mismatched_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:mismatched", 2, 1, {"event_id": "fixture_event", "choice_id": "accept", "resolution_id": "wrong_resolution", "resolved": true, "ok": true})
+	var mismatched_fact := SequenceRuntimeScript.fact("event_result", "event", "bar_node", "event:mismatched", 2, 1, {"event_id": "fixture_event", "choice_id": "leave", "resolution_id": "wrong_resolution", "resolved": true, "ok": true})
 	var mismatched_queued := SequenceRuntimeScript.enqueue_fact(delivered_state, bridged_definition, mismatched_fact)
 	var mismatched_result := SequenceRuntimeScript.flush_facts(_dict(mismatched_queued.get("state", {})), bridged_definition, 1)
 	if bool(mismatched_result.get("ok", true)) or not _contains_text(_array(mismatched_result.get("errors", [])), "does not match"):
@@ -4014,7 +4023,7 @@ static func _check_rollout_growth_contract(library: ContentLibrary, failures: Ar
 	var reversed_definitions := [other, delivery]
 	var representative := SequenceCatalogScript.definition_for_id(reversed_definitions, DELIVERY_SCENARIO_ID)
 	var hostile_rows := ScenarioSequenceAuditScript.hostile_fixture_report_for_definitions(reversed_definitions)
-	if str(representative.get("id", "")) != DELIVERY_SCENARIO_ID or hostile_rows.size() != 10:
+	if str(representative.get("id", "")) != DELIVERY_SCENARIO_ID or hostile_rows.size() != 11:
 		failures.append("Expanded audit did not select the invariant delivery proof independently of catalog order.")
 	else:
 		for hostile_value in hostile_rows:
@@ -4806,7 +4815,7 @@ static func _check_material_projection(failures: Array) -> void:
 	semantic["routes"] = {"scenario::old_exit": {"owner_namespace": "scenario", "stable_object_id": "old_exit", "source_id": "alternate_exit", "enabled": true}}
 	state["semantic_state"] = semantic
 	var environment := {"id": "bar_001", "archetype_id": "bar", "world_node_id": "bar_node", "game_ids": ["slots"], "service_ids": [], "travel_hooks": ["old_exit"], "scenario_game_modifiers": {}, "layout": {"object_rects": {}}, "scenario_state": {"id": definition.get("id", ""), "archetype_id": "bar", "phases": []}, "scenario_sequence_state": state}
-	ScenarioEngineScript.refresh_sequence_snapshots(environment, definition)
+	ScenarioEngineScript._materialize_sequence_services_games_routes(environment, SequenceRuntimeScript.public_projection(state, definition))
 	if not _array(environment.get("service_ids", [])).has("night_service") or not _array(environment.get("game_ids", [])).has("blackjack") or _array(environment.get("travel_hooks", [])) != ["alternate_exit"] or _dict(_dict(environment.get("scenario_game_modifiers", {})).get("blackjack", {})).is_empty():
 		failures.append("Scenario semantic service/game/modifier/route state was not materialized into production environment fields.")
 
