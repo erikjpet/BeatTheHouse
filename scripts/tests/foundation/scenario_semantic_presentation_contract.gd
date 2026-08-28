@@ -227,7 +227,21 @@ static func _check_passive_atomic_commits(library: Variant, failures: Array) -> 
 	aftermath_run.current_environment = _finalization_environment(aftermath_definition)
 	aftermath_run.scenario_prepare_semantic_finalization()
 	var aftermath_finalized := aftermath_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
-	var aftermath_result := aftermath_run.scenario_sequence_command("refuse", "passive_aftermath_refuse", {}, "scenario", "command_console", {"scenario::command_console": true})
+	var finalized_interactions := _dict(_dict(aftermath_run.scenario_sequence_projection().get("semantic_state", {})).get("interactions", {}))
+	var refusal_action: Dictionary = {}
+	for action_value in _array(_dict(finalized_interactions.get("scenario::command_console", {})).get("available_actions", [])):
+		var action := _dict(action_value)
+		if str(action.get("id", "")) == "refuse":
+			refusal_action = action
+			break
+	var aftermath_result := aftermath_run.scenario_sequence_command(
+		"refuse", "passive_aftermath_refuse", {}, "scenario", "command_console", {"scenario::command_console": true},
+		str(refusal_action.get("action_origin_owner_namespace", "")),
+		str(refusal_action.get("action_origin_stable_object_id", "")),
+		str(refusal_action.get("action_origin_receipt_key", "")),
+		str(refusal_action.get("action_origin_boundary_id", "")),
+		str(refusal_action.get("action_origin_fingerprint", ""))
+	)
 	var aftermath_environment := aftermath_run.current_environment
 	var aftermath_projection := _dict(aftermath_environment.get("scenario_sequence_projection", {}))
 	var aftermath_semantic := _dict(aftermath_projection.get("semantic_state", {}))
