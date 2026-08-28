@@ -2100,12 +2100,11 @@ func _invalidate_scenario_semantic_proof(message: String) -> Dictionary:
 	return {"ok": false, "errors": [message]}
 
 
-func _scenario_semantic_finalization_failure(errors: Array, _invalidate_if_ready: bool) -> Dictionary:
+func _scenario_semantic_finalization_failure(errors: Array, invalidate_if_ready: bool) -> Dictionary:
 	var failure_errors := errors.duplicate(true)
 	if failure_errors.is_empty(): failure_errors = ["Scenario semantic finalization failed closed."]
-	# A rejected refresh never became authoritative. Preserve the previously
-	# sealed proof byte-for-byte; explicit proof mismatches use
-	# _invalidate_scenario_semantic_proof at their detection sites.
+	if invalidate_if_ready:
+		_invalidate_scenario_semantic_proof(str(failure_errors[0]))
 	return {"ok": false, "errors": failure_errors}
 
 
