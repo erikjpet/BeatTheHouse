@@ -403,6 +403,7 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_chip_rack(surface, surface_state)
 	_draw_action_console(surface, surface_state)
 	_draw_crew_play_status(surface, surface_state)
+	_draw_baccarat_ritual_status(surface, surface_state)
 	surface.surface_end_design_space()
 	return true
 
@@ -547,10 +548,14 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 	if phase in ["move", "end"] and session.has("baccarat_squeeze_origin"):
 		var origin: Vector2 = session.get("baccarat_squeeze_origin", board_position)
 		var distance := origin.distance_to(board_position)
-		session["baccarat_squeeze_progress"] = clampf(distance / 96.0, 0.0, 1.0)
+		var prior_progress := clampf(float(session.get("baccarat_squeeze_progress", 0.0)), 0.0, 1.0)
+		var next_progress := maxf(prior_progress, clampf(distance / 96.0, 0.0, 1.0))
+		if phase == "end" and next_progress >= 0.85:
+			next_progress = 1.0
+		session["baccarat_squeeze_progress"] = next_progress
 		if phase == "end":
 			session.erase("baccarat_squeeze_origin")
-		return GameModule.surface_command({"ui_state": session, "preserve_surface_ui_state": true, "message": "Card revealed; the authored card and hand remain unchanged." if phase == "end" else ""}, true)
+		return GameModule.surface_command({"ui_state": session, "preserve_surface_ui_state": true, "message": "Card revealed; the authored card and hand remain unchanged." if next_progress >= 1.0 else "The partial squeeze holds; continue from the raised edge." if phase == "end" else ""}, true)
 	return _message_command(session, "The croupier squares the incomplete squeeze; nothing changes.")
 
 
@@ -967,12 +972,17 @@ func _baccarat_deal_events(player_cards: Array, banker_cards: Array, natural: bo
 		order.append({"zone": "player", "card": player_cards[2], "to": _player_card_target(2), "delay": 2460, "label": "Player draw"})
 	if banker_cards.size() >= 3:
 		order.append({"zone": "banker", "card": banker_cards[2], "to": _banker_card_target(2), "delay": 3020, "label": "Banker draw"})
+	var zone_slots := {"player": 0, "banker": 0}
 	for i in range(order.size()):
 		var entry: Dictionary = order[i]
+		var zone := str(entry.get("zone", ""))
+		var zone_card_slot := int(zone_slots.get(zone, 0))
+		zone_slots[zone] = zone_card_slot + 1
 		events.append({
 			"type": "card",
-			"zone": str(entry.get("zone", "")),
+			"zone": zone,
 			"card_index": i,
+			"zone_card_slot": zone_card_slot,
 			"card": _copy_dict(entry.get("card", {})),
 			"from": _event_point(CARD_SHOE_POS),
 			"to": _event_point(entry.get("to", Vector2.ZERO)),
@@ -3119,10 +3129,14 @@ func _draw_card_areas(surface, state: Dictionary) -> void:
 	var deal_active := bool(surface.surface_animation_active(BACCARAT_DEAL_CHANNEL))
 	var visible_cards := _visible_animation_cards(surface, state) if deal_active else []
 	if deal_active and not visible_cards.is_empty():
+		var squeeze_event := _active_squeeze_event(surface, state)
 		for event in visible_cards:
 			var card_event: Dictionary = event
-			_draw_card(surface, card_event.get("card", {}), card_event.get("position", Vector2.ZERO), 1.0)
-		var squeeze_event := _active_squeeze_event(surface, state)
+			var is_squeeze_card := not squeeze_event.is_empty() and str(card_event.get("zone", "")) == str(squeeze_event.get("target_zone", "")) and int(card_event.get("zone_card_slot", -1)) == int(squeeze_event.get("card_slot", -2))
+			if is_squeeze_card:
+				_draw_squeezed_card(surface, card_event.get("card", {}), card_event.get("position", Vector2.ZERO), float(state.get("baccarat_squeeze_progress", 0.0)))
+			else:
+				_draw_card(surface, card_event.get("card", {}), card_event.get("position", Vector2.ZERO), 1.0)
 		if not squeeze_event.is_empty():
 			_draw_squeeze_badge(surface, squeeze_event, state)
 	else:
@@ -3166,7 +3180,43 @@ func _draw_squeeze_badge(surface, event: Dictionary, state: Dictionary) -> void:
 	surface.surface_label_centered("SQUEEZE %d%%" % int(round(progress * 100.0)), Rect2(rect.position + Vector2(6, 4), Vector2(rect.size.x - 12, 12)), 12, C_WHITE)
 	surface.surface_label_centered("%s CARD - VALUE FIXED" % str(event.get("target_zone", "player")).to_upper(), Rect2(rect.position + Vector2(6, 18), Vector2(rect.size.x - 12, 10)), 7, C_YELLOW)
 	if bool(state.get("baccarat_squeeze_available", false)):
-		surface.surface_add_exact_hit(rect, BACCARAT_SQUEEZE_ACTION, 0)
+		surface.surface_add_hold_hit(rect, BACCARAT_SQUEEZE_ACTION, 0)
+
+
+func _draw_squeezed_card(surface, card_value: Variant, pos: Vector2, progress_value: float) -> void:
+	var progress := clampf(progress_value, 0.0, 1.0)
+	if progress >= 1.0:
+		_draw_card(surface, card_value, pos, 1.0)
+		return
+	_draw_card_back(surface, pos, 1.0)
+	var card := _draw_dict_view(card_value)
+	var peel_height := maxf(2.0, CARD_SIZE.y * progress)
+	var reveal := Rect2(pos, Vector2(CARD_SIZE.x, peel_height))
+	surface.draw_rect(reveal, Color(0.96, 0.94, 0.84, 1.0))
+	surface.draw_rect(reveal, C_DARK, false, 1)
+	if progress >= 0.24:
+		var rank := str(card.get("rank", "?"))
+		var suit := str(card.get("suit", "?")).left(1).to_upper()
+		surface.surface_label_centered_plain("%s%s" % [rank, suit], Rect2(pos + Vector2(2, 2), Vector2(CARD_SIZE.x - 4, minf(18.0, peel_height - 2.0))), 9, C_DARK)
+
+
+func _draw_baccarat_ritual_status(surface, state: Dictionary) -> void:
+	var phase := str(state.get("ritual_phase", "betting"))
+	var energy := _draw_dict_view(state.get("ritual_energy", {}))
+	var actors := _draw_array_view(state.get("ritual_actors", []))
+	var objects := _draw_array_view(state.get("ritual_scene_objects", []))
+	var dealer_behavior := "idle"
+	if not actors.is_empty():
+		dealer_behavior = str((actors[0] as Dictionary).get("behavior", "idle"))
+	var shoe_state := "rest"
+	for value in objects:
+		var object: Dictionary = value
+		if str(object.get("id", "")) == "baccarat.shoe":
+			shoe_state = str(object.get("visual_state", "rest"))
+	var rect := Rect2(300, 8, 376, 24)
+	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.76))
+	surface.draw_rect(rect, C_AMBER if phase == "squeeze_reveal" else C_CYAN, false, 2)
+	surface.surface_label_centered_plain("%s | %s | SHOE %s | %s" % [phase.replace("_", " ").to_upper(), dealer_behavior.replace("_", " ").to_upper(), shoe_state.to_upper(), str(energy.get("tier", "quiet")).to_upper()], rect.grow(-3), 7, C_WHITE)
 
 
 func _draw_total_badge(surface, rect: Rect2, label: String, total: int, accent: Color) -> void:
@@ -3191,7 +3241,7 @@ func _visible_animation_cards(surface, state: Dictionary) -> Array:
 		var eased := 1.0 - pow(1.0 - t, 3.0)
 		var from_pos := _event_vector(event.get("from", []), CARD_SHOE_POS)
 		var to_pos := _event_vector(event.get("to", []), CARD_SHOE_POS)
-		visible.append({"card": _draw_dict_view(event.get("card", {})), "position": from_pos.lerp(to_pos, eased)})
+		visible.append({"card": _draw_dict_view(event.get("card", {})), "position": from_pos.lerp(to_pos, eased), "zone": str(event.get("zone", "")), "zone_card_slot": int(event.get("zone_card_slot", -1))})
 	return visible
 
 
