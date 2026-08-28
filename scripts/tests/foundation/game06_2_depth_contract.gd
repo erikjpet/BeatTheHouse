@@ -18,6 +18,7 @@ func _run() -> void:
 	var game: GameModule = module_script.new()
 	game.setup(definition, library)
 	_check_contract(game)
+	_check_declared_projection_ids(game)
 	_check_phase_projection(game)
 	_check_itemized_accounting(game)
 	_check_gesture_rejections_and_equivalence(game)
@@ -67,6 +68,26 @@ func _check_contract(game: GameModule) -> void:
 	_check(persistence.get("save_boundaries", []) == ["wagering", "initial_deal", "player_turn", "dealer_procedure", "settlement"], "Not every Blackjack action phase is a declared save boundary.")
 
 
+func _check_declared_projection_ids(game: GameModule) -> void:
+	var contract: Dictionary = game.call("blackjack_ritual_contract")
+	var declared_actor_ids: Array = []
+	for actor_value in contract.get("actors", []):
+		if typeof(actor_value) == TYPE_DICTIONARY:
+			declared_actor_ids.append(str((actor_value as Dictionary).get("id", "")))
+	var declared_object_ids: Array = []
+	for object_value in contract.get("scene_objects", []):
+		if typeof(object_value) == TYPE_DICTIONARY:
+			declared_object_ids.append(str((object_value as Dictionary).get("id", "")))
+	var fixture := _fixture(game, "GAME06-2-DECLARATION-IDS", 3)
+	var projection: Dictionary = game.surface_state(fixture.run, fixture.environment, {"selected_stake": 5, "surface_time_msec": 10000}).get("ritual_projection", {})
+	for actor_value in projection.get("actors", []):
+		var actor: Dictionary = actor_value if typeof(actor_value) == TYPE_DICTIONARY else {}
+		_check(declared_actor_ids.has(str(actor.get("id", ""))), "Live actor projection used undeclared id %s." % str(actor.get("id", "")))
+	for object_value in projection.get("scene_objects", []):
+		var object_state: Dictionary = object_value if typeof(object_value) == TYPE_DICTIONARY else {}
+		_check(declared_object_ids.has(str(object_state.get("id", ""))), "Live scene-object projection used undeclared id %s." % str(object_state.get("id", "")))
+
+
 func _check_phase_projection(game: GameModule) -> void:
 	var table := {"deck_count": 2, "cut_card_remaining": 28, "last_result": {}}
 	var spec := {"selected_stake": 5, "shoe_remaining": 104, "patrons": [], "side_bets_active": [], "side_bet_stakes": {}, "can_deal": true}
@@ -104,6 +125,11 @@ func _check_itemized_accounting(game: GameModule) -> void:
 	for resolution_value in resolutions:
 		var resolution: Dictionary = resolution_value if typeof(resolution_value) == TYPE_DICTIONARY else {}
 		_check(not str(resolution.get("reason", "")).is_empty(), "An itemized wager resolution has no public reason.")
+		for field in ["item_id", "authoritative_result_id", "stake_disposition", "returned_stake", "payout", "net_change", "public_explanation"]:
+			_check(resolution.has(field), "An itemized wager resolution omitted frozen authority field %s." % field)
+	var pending: Dictionary = game.call("_blackjack_commitment_item", "wager.main", "wager.player", 5, "Main wager", "selected_chip", 2, true, "")
+	for field in ["item_id", "target_id", "denomination", "amount", "source", "edit_ordinal", "eligibility", "disabled_reason"]:
+		_check(pending.has(field), "A staged wager item omitted frozen field %s." % field)
 
 
 func _check_gesture_rejections_and_equivalence(game: GameModule) -> void:
