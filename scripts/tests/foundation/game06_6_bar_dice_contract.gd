@@ -1,0 +1,248 @@
+extends SceneTree
+
+const RitualProjectionScript := preload("res://scripts/core/bar_dice_ritual_projection.gd")
+const CONTRACT_PATH := "res://data/games/bar_dice_game_ritual_v1.json"
+const EXPECTED_PHASES := ["agree_wager", "cover", "shake", "throw", "reveal", "call", "settle"]
+const FORBIDDEN_PRIVATE_FIELDS := ["future_dice", "next_rng", "timing_target", "private_throw", "hidden_sweep", "wall_clock_result"]
+
+var _projection: Variant = RitualProjectionScript
+
+
+func _initialize() -> void:
+	var failures: Array = []
+	var contract_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(CONTRACT_PATH))
+	if typeof(contract_value) != TYPE_DICTIONARY:
+		_finish(["BAR-DICE canonical contract JSON did not parse."])
+		return
+	_check_contract(contract_value as Dictionary, failures)
+	_check_phase_machine(failures)
+	_check_cover_and_money_projection(failures)
+	_check_interruption(failures)
+	_check_ten_seed_noninterference(failures)
+	_check_liveness_performance(failures)
+	_finish(failures)
+
+
+func _check_contract(contract: Dictionary, failures: Array) -> void:
+	if str(contract.get("contract", "")) != "game_ritual/1" or str(contract.get("ritual_id", "")) != _projection.RITUAL_ID:
+		failures.append("Frozen ritual identity changed.")
+	var phases := _array(contract.get("ritual_phases", []))
+	var phase_ids: Array = []
+	var phase_by_id: Dictionary = {}
+	var permitted: Dictionary = {}
+	for phase_value in phases:
+		var phase := _dict(phase_value)
+		var phase_id := str(phase.get("id", ""))
+		phase_ids.append(phase_id)
+		phase_by_id[phase_id] = phase
+		for action_value in _array(phase.get("permitted_actions", [])): permitted[str(action_value)] = true
+	if phase_ids != EXPECTED_PHASES: failures.append("BAR-DICE phase order changed.")
+	var declared_actions: Dictionary = {}
+	for declaration_value in _array(contract.get("action_declarations", [])):
+		var declaration := _dict(declaration_value)
+		declared_actions[str(declaration.get("action_id", ""))] = true
+	for action_id in permitted.keys():
+		if not declared_actions.has(action_id): failures.append("Permitted action %s lacks a declaration." % action_id)
+	var reachable := {"agree_wager":true}
+	var changed := true
+	while changed:
+		changed = false
+		for phase_id in reachable.keys():
+			for transition_value in _array(_dict(phase_by_id.get(phase_id, {})).get("transitions", [])):
+				var next_phase := str(_dict(transition_value).get("next_phase", ""))
+				if phase_by_id.has(next_phase) and not reachable.has(next_phase): reachable[next_phase] = true; changed = true
+	if reachable.size() != EXPECTED_PHASES.size(): failures.append("BAR-DICE graph contains an unreachable phase.")
+	for verb_value in _array(contract.get("pointer_verbs", [])):
+		var verb := _dict(verb_value)
+		var action_id := str(verb.get("accepted_action", ""))
+		if not declared_actions.has(action_id): failures.append("Pointer verb %s lacks a declared action." % str(verb.get("id", "")))
+		for mode in ["keyboard", "controller", "reduced_motion"]:
+			if str(_dict(_dict(verb.get("equivalents", {})).get(mode, {})).get("action_id", "")) != action_id:
+				failures.append("Pointer verb %s lacks identical %s parity." % [str(verb.get("id", "")), mode])
+	for actor_value in _array(contract.get("actors", [])):
+		var actor := _dict(actor_value)
+		if _array(actor.get("behavior_states", [])).is_empty(): failures.append("Actor %s has no bounded states." % str(actor.get("id", "")))
+	for object_value in _array(contract.get("scene_objects", [])):
+		var object := _dict(object_value)
+		var bounds := _dict(object.get("bounds", {}))
+		if int(bounds.get("w", 0)) <= 0 or int(bounds.get("h", 0)) <= 0: failures.append("Object %s lacks bounded geometry." % str(object.get("id", "")))
+		for hit_value in _array(object.get("hit_regions", [])):
+			var hit := _dict(hit_value)
+			var hit_bounds := _dict(hit.get("bounds", {}))
+			if int(hit.get("minimum_touch_target", 0)) < 44 or int(hit_bounds.get("w", 0)) < 44 or int(hit_bounds.get("h", 0)) < 44:
+				failures.append("Object %s violates the 44px target minimum." % str(object.get("id", "")))
+	for tier_value in _array(_dict(contract.get("energy", {})).get("tiers", [])):
+		var tier := _dict(tier_value)
+		if _array(tier.get("actor_operations", [])).is_empty() or _array(tier.get("object_operations", [])).is_empty():
+			failures.append("Energy tier %s must change actor and object state." % str(tier.get("id", "")))
+	var persistence := _dict(contract.get("ritual_persistence", {}))
+	if _array(persistence.get("save_boundaries", [])) != EXPECTED_PHASES or not _array(persistence.get("one_shot_receipted", [])).has("settlement_audio"):
+		failures.append("Persistence does not bind every phase and settlement one-shot.")
+
+
+func _check_phase_machine(failures: Array) -> void:
+	var state: Dictionary = _projection.initial_state(_base_authority(1))
+	var before := _fingerprint(state)
+	var skipped: Dictionary = _projection.apply_transition(state, "throw", "receipt:skip", _throw_authority(1))
+	if bool(skipped.get("ok", false)) or _fingerprint(skipped.get("state", {})) != before:
+		failures.append("Phase machine accepted a skip or mutated on rejection.")
+	var steps := [["cover", "cover"], ["shake", "cover_ack"], ["throw", "shake"], ["reveal", "throw"], ["call", "reveal"], ["settle", "call"]]
+	for index in range(steps.size()):
+		var step := steps[index] as Array
+		var authority := _throw_authority(1) if str(step[0]) in ["reveal", "call", "settle"] else _covered_authority(1)
+		var receipt := "receipt:transition:%02d:%s" % [index, str(step[1])]
+		var result: Dictionary = _projection.apply_transition(state, str(step[0]), receipt, authority)
+		if not bool(result.get("ok", false)): failures.append("Legal phase transition %d failed: %s." % [index, str(result.get("error_code", ""))]); return
+		state = _dict(result.get("state", {}))
+		var replay: Dictionary = _projection.apply_transition(state, str(step[0]), receipt, authority)
+		if not bool(replay.get("ok", false)) or not bool(replay.get("replayed", false)) or _fingerprint(replay.get("state", {})) != _fingerprint(state):
+			failures.append("Transition %d did not replay exactly once." % index)
+		var conflict_authority := authority.duplicate(true); conflict_authority["result_serial"] = 99
+		var conflict: Dictionary = _projection.apply_transition(state, str(step[0]), receipt, conflict_authority)
+		if bool(conflict.get("ok", false)) or _fingerprint(conflict.get("state", {})) != _fingerprint(state): failures.append("Receipt conflict %d mutated state." % index)
+		var restored: Dictionary = _projection.normalize_state(JSON.parse_string(JSON.stringify(state)))
+		if _fingerprint(restored) != _fingerprint(state): failures.append("Phase %s save/load drifted." % str(step[0]))
+	var one_shot: Dictionary = _projection.record_one_shot(state, "settlement_audio", "receipt:one_shot:settle")
+	var replay_one_shot: Dictionary = _projection.record_one_shot(_dict(one_shot.get("state", {})), "settlement_audio", "receipt:one_shot:settle")
+	if not bool(one_shot.get("emit", false)) or bool(replay_one_shot.get("emit", true)) or not bool(replay_one_shot.get("replayed", false)):
+		failures.append("Settlement one-shot replayed.")
+
+
+func _check_cover_and_money_projection(failures: Array) -> void:
+	var ritual: Dictionary = _projection.initial_state(_base_authority(2))
+	var partial := _covered_authority(2)
+	partial["cover_status"] = "partial"; partial["proposed_total"] = 20; partial["covered_total"] = 12; partial["returned_stake"] = 8; partial["at_risk_total"] = 12
+	var projection: Dictionary = _projection.public_projection(ritual, partial)
+	var money := _dict(projection.get("money", {}))
+	if int(money.get("covered_total", -1)) + int(money.get("returned_stake", -1)) != int(money.get("proposed_total", -1)):
+		failures.append("Partial cover projection does not conserve proposed cash.")
+	if int(money.get("payout", -1)) != 0 or int(money.get("net_change", -1)) != 0: failures.append("Unsettled projection exposed a cash settlement.")
+	var refused := partial.duplicate(true); refused["cover_status"] = "refused"; refused["covered_total"] = 0; refused["returned_stake"] = 20; refused["at_risk_total"] = 0; refused["outcome"] = "refused"
+	var terminal: Dictionary = _projection.apply_transition(ritual, "settle", "receipt:refused", refused)
+	if not bool(terminal.get("ok", false)): failures.append("Refused cover did not return through settle.")
+	var refused_projection: Dictionary = _projection.public_projection(_dict(terminal.get("state", {})), refused)
+	var refused_money := _dict(refused_projection.get("money", {}))
+	if int(refused_money.get("returned_stake", 0)) != 20 or int(refused_money.get("at_risk_total", 1)) != 0 or int(refused_money.get("net_change", 1)) != 0:
+		failures.append("Refused cover charged or stranded cash.")
+
+
+func _check_interruption(failures: Array) -> void:
+	var phases := ["agree_wager", "cover", "shake", "throw", "reveal", "call"]
+	for phase_id in phases:
+		var ritual := _state_at_phase(phase_id, 3, failures)
+		if ritual.is_empty(): continue
+		var authority := _covered_authority(3)
+		authority["interrupted"] = true; authority["interruption_reason"] = "sweep_adjacent"; authority["returned_stake"] = 10; authority["at_risk_total"] = 0; authority["outcome"] = "interrupted"; authority["aftermath_receipt"] = "aftermath:sweep:3"
+		var result: Dictionary = _projection.apply_transition(ritual, "settle", "receipt:interrupt:%s" % phase_id, authority)
+		if not bool(result.get("ok", false)): failures.append("Interruption could not settle from %s." % phase_id); continue
+		var public: Dictionary = _projection.public_projection(_dict(result.get("state", {})), authority)
+		var interruption := _dict(public.get("interruption", {}))
+		if not bool(interruption.get("active", false)) or int(interruption.get("returned_stake", 0)) != 10 or str(interruption.get("aftermath_receipt", "")).is_empty():
+			failures.append("Interruption from %s lost refund or aftermath." % phase_id)
+
+
+func _check_ten_seed_noninterference(failures: Array) -> void:
+	for seed in range(1, 11):
+		var authority := _throw_authority(seed)
+		var ritual_a: Dictionary = _projection.initial_state(authority)
+		var hidden_variant := authority.duplicate(true)
+		hidden_variant["future_dice"] = [6, 6, 6, 6, 6]; hidden_variant["next_rng"] = seed * 999; hidden_variant["timing_target"] = 77; hidden_variant["hidden_sweep"] = true
+		var ritual_b: Dictionary = _projection.initial_state(hidden_variant)
+		if _fingerprint(ritual_a) != _fingerprint(ritual_b): failures.append("Private input changed initial ritual at seed %d." % seed)
+		var projection_a: Dictionary = _projection.public_projection(ritual_a, authority)
+		var projection_b: Dictionary = _projection.public_projection(ritual_b, hidden_variant)
+		if _fingerprint(projection_a) != _fingerprint(projection_b): failures.append("Private input changed actor/onlooker projection at seed %d." % seed)
+		for forbidden in FORBIDDEN_PRIVATE_FIELDS:
+			if _contains_key(projection_a, forbidden): failures.append("Projection leaked %s at seed %d." % [forbidden, seed])
+		if str(_dict(_dict(projection_a.get("opponent_actor", {})).get("tell", {})).get("source_fact", "")) not in ["cover_status", "rounds_played", "outcome"]:
+			failures.append("Opponent tell lacks a public source at seed %d." % seed)
+		var web_round_trip: Variant = JSON.parse_string(JSON.stringify(projection_a))
+		if _fingerprint(projection_a) != _fingerprint(web_round_trip): failures.append("Canonical parity drifted at seed %d." % seed)
+
+
+func _check_liveness_performance(failures: Array) -> void:
+	var ritual: Dictionary = _projection.initial_state(_base_authority(1))
+	var started := Time.get_ticks_usec()
+	var digest := ""
+	for index in range(1000):
+		var authority := _covered_authority(index % 10 + 1); authority["attention"] = index % 100
+		digest = _fingerprint(_projection.public_projection(ritual, authority))
+	var elapsed_ms := float(Time.get_ticks_usec() - started) / 1000.0
+	if digest.is_empty() or elapsed_ms <= 0.0 or elapsed_ms > 1000.0: failures.append("Projection liveness/performance failed: %.3f ms." % elapsed_ms)
+
+
+func _state_at_phase(target: String, seed: int, failures: Array) -> Dictionary:
+	var state: Dictionary = _projection.initial_state(_base_authority(seed))
+	if target == "agree_wager": return state
+	var phases := ["cover", "shake", "throw", "reveal", "call"]
+	for index in range(phases.find(target) + 1):
+		var next_phase: String = str(phases[index])
+		var authority := _throw_authority(seed) if next_phase in ["reveal", "call"] else _covered_authority(seed)
+		var result: Dictionary = _projection.apply_transition(state, next_phase, "receipt:build:%s:%d" % [target, index], authority)
+		if not bool(result.get("ok", false)): failures.append("Could not build phase %s." % target); return {}
+		state = _dict(result.get("state", {}))
+	return state
+
+
+func _base_authority(seed: int) -> Dictionary:
+	return {"round_id":"bar:%d" % seed,"result_serial":seed,"available_cash":100,"opponent_available_cash":80,"proposed_total":10,"covered_total":0,"returned_stake":0,"at_risk_total":0,"cover_status":"pending","rounds_played":seed - 1,"attention":seed * 4}
+
+
+func _covered_authority(seed: int) -> Dictionary:
+	var authority := _base_authority(seed)
+	authority["cover_status"] = "accepted"; authority["covered_total"] = 10; authority["at_risk_total"] = 10
+	return authority
+
+
+func _throw_authority(seed: int) -> Dictionary:
+	var authority := _covered_authority(seed)
+	authority["authoritative_result_ref"] = "bar:result:%d" % seed; authority["outcome"] = "win" if seed % 2 == 0 else "lose"; authority["payout"] = 18 if seed % 2 == 0 else 0; authority["net_change"] = 8 if seed % 2 == 0 else -10; authority["rake"] = 2; authority["carryover_pot"] = 0
+	return authority
+
+
+func _fingerprint(value: Variant) -> String:
+	return JSON.stringify(_canonical(value)).sha256_text()
+
+
+func _canonical(value: Variant) -> Variant:
+	if typeof(value) == TYPE_FLOAT and float(value) == floor(float(value)): return int(value)
+	if typeof(value) == TYPE_DICTIONARY:
+		var source := value as Dictionary
+		var keys: Array = source.keys(); keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+		var result: Dictionary = {}
+		for key in keys: result[str(key)] = _canonical(source.get(key))
+		return result
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for item in value as Array: result.append(_canonical(item))
+		return result
+	return value
+
+
+func _contains_key(value: Variant, key_name: String) -> bool:
+	if typeof(value) == TYPE_DICTIONARY:
+		var source := value as Dictionary
+		if source.has(key_name): return true
+		for nested in source.values():
+			if _contains_key(nested, key_name): return true
+	elif typeof(value) == TYPE_ARRAY:
+		for nested in value as Array:
+			if _contains_key(nested, key_name): return true
+	return false
+
+
+func _array(value: Variant) -> Array:
+	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+
+
+func _dict(value: Variant) -> Dictionary:
+	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _finish(failures: Array) -> void:
+	if failures.is_empty():
+		print("GAME06_6_BAR_DICE_CONTRACT_OK phases=7 seeds=10")
+		quit(0)
+		return
+	for failure in failures: printerr("GAME06_6_BAR_DICE_CONTRACT_FAIL: %s" % str(failure))
+	quit(1)

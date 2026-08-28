@@ -59,7 +59,9 @@ static func apply_transition(state_value: Dictionary, next_phase: String, receip
 	var phase_before := str(state.get("phase_id", ""))
 	var public_authority := _public_authority(authority)
 	var result_ref := str(public_authority.get("authoritative_result_ref", ""))
-	var content := {"phase_before":phase_before,"phase_after":next_phase,"authority":public_authority}
+	# The replay identity excludes the caller's current phase: after a successful
+	# transition the same receipt is necessarily observed from phase_after.
+	var content := {"phase_after":next_phase,"authority":public_authority}
 	var fingerprint := _fingerprint(content)
 	var receipts := _dict(state.get("transition_receipts", {}))
 	if receipts.has(receipt):
