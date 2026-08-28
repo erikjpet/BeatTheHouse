@@ -19,6 +19,20 @@ const CONFIGS := [
 	{"id":"jazz_club_union_trouble","archetype":"jazz_club","arrival":"A picket line and management rope split the two entrances while the stage remains unbuilt.","verbs":["read_both_lines","carry_neutral_stand","assemble_agreed_stage","open_entry_route"],"beats":["stand_move","stage_appearance","picket_behavior"],"fact":"heat_band_changed","tags":["entrance_split","setup_mediation","labor_aftermath"],"objects":[["picket_line","Musicians picket line","barrier","left","holding"],["management_rope","Management entry rope","barrier","right","closed"],["unbuilt_stage","Unbuilt jazz stage","worksite","background","stopped"]],"actors":[["union_delegate","Union delegate","actor_union_delegate","left","guard"],["club_manager","Club manager","actor_club_manager","right","guard"]],"outcomes":["mediated_entry","union_entry","management_entry","club_closed"]},
 ]
 
+const DECISIONS := {
+	"bar_wake":{"at":"work_1","options":[["share_wake_toast","terminal_success"],["withhold_wake_toast","terminal_failure"],["decline_wake_toast","terminal_refused"]]},
+	"bar_fight_night":{"at":"work_2","options":[["mediate_fight_lines","work_3"],["choose_fight_side","terminal_failure"],["call_bar_security","terminal_interrupted"]]},
+	"bar_payday_rush":{"at":"work_1","options":[["carry_payday_service","work_2"],["settle_payday_tabs","terminal_success"],["defer_payday_tabs","terminal_failure"]]},
+	"bar_lock_in":{"at":"work_2","options":[["accept_lockin_inclusion","terminal_success"],["take_quiet_cellar_exit","terminal_failure"],["trigger_lockin_reopening","terminal_refused"]]},
+	"bar_darts_league_night":{"at":"work_3","options":[["uphold_disputed_dart","work_4"],["overturn_disputed_dart","terminal_failure"],["forfeit_darts_match","terminal_refused"]]},
+	"bar_live_band":{"at":"work_2","options":[["complete_live_set","work_3"],["fail_live_set","terminal_failure"],["preserve_service_only","terminal_refused"]]},
+	"bar_dead_tuesday":{"at":"arrival","options":[["keep_bartender_company","terminal_success"],["keep_lone_patron_company","terminal_failure"],["take_closed_booth_task","terminal_refused"]]},
+	"jazz_club_guest_legend":{"at":"work_3","options":[["reveal_guest_legend","work_4"],["miss_legend_cue","terminal_failure"],["withhold_guest_reveal","terminal_refused"]]},
+	"jazz_club_rent_party":{"at":"work_2","options":[["mediate_rent_creditor","work_3"],["yield_club_to_creditor","terminal_failure"],["challenge_creditor_terms","terminal_refused"]]},
+	"jazz_club_recording_night":{"at":"work_1","options":[["save_recording_take","work_2"],["ruin_recording_session","terminal_failure"],["relocate_recording_audience","terminal_refused"]]},
+	"jazz_club_union_trouble":{"at":"work_1","options":[["mediate_union_entry","terminal_success"],["cross_union_line","terminal_failure"],["cross_management_line","terminal_refused"]]},
+}
+
 
 func _initialize() -> void:
 	var entries: Array = []
@@ -32,7 +46,7 @@ func _initialize() -> void:
 		var definition := {"id": config.id, "archetype_id": config.archetype, "sequence": entry.sequence}
 		entry["sequence"]["sequence_signature"] = Schema.calculated_signature_hash(definition)
 		definition["sequence"] = entry["sequence"]
-		var errors := Schema.validate_definition(definition)
+		var errors := Schema.validate_definition(definition, null, _target_inventory())
 		if not errors.is_empty(): failures.append({"id":config.id,"errors":errors})
 		var signature := str(entry["sequence"]["sequence_signature"])
 		if signatures.has(signature): failures.append({"duplicate_signature":[signatures[signature],config.id]})
@@ -52,6 +66,7 @@ func _initialize() -> void:
 
 func _entry(c: Dictionary) -> Dictionary:
 	var prefix := str(c.id)
+	var decision := _dict(DECISIONS.get(prefix, {}))
 	var phases: Array = []
 	var cleanup: Array = []
 	var objective_steps: Array = []
@@ -71,23 +86,26 @@ func _entry(c: Dictionary) -> Dictionary:
 	var first_task_id := "%s_task_0" % prefix
 	var arrival_interactions := [
 		_interaction_add(prefix, "arrival", exit_id, "%s clean exit" % prefix.replace("_"," ").capitalize(), "Leave or refuse the %s task without crossing its active work zone." % prefix.replace("_"," "), [_action("ignore_%s" % prefix, "Ignore the sequence", "ui_down"), _action("refuse_%s" % prefix, "Refuse the task", "ui_cancel")], true),
-		_interaction_add(prefix, "arrival", first_task_id, str(c.verbs[0]).replace("_", " ").capitalize(), "Begin the first physical task.", [_step_action(str(c.verbs[0]), prefix, str(c.verbs[0])), _action("fail_%s" % prefix, "Let the pressure win", "ui_right")], false),
+		_interaction_add(prefix, "arrival", first_task_id, str(c.verbs[0]).replace("_", " ").capitalize(), "Begin the first physical task or choose this identity's named route.", [_step_action(str(c.verbs[0]), prefix, str(c.verbs[0])), _action("fail_%s" % prefix, "Let the pressure win", "ui_right")] + _decision_actions(decision, "arrival"), false),
 	]
 	cleanup.append(_remove("interaction_ops", prefix, exit_id))
 	cleanup.append(_remove("interaction_ops", prefix, first_task_id))
 	objective_steps.append({"id":str(c.verbs[0]),"label":str(c.verbs[0]).replace("_"," ").capitalize(),"kind":"command","command_id":str(c.verbs[0])})
-	phases.append(_phase("arrival", "Arrival", str(c.arrival), "The marked clean exit remains available.", ["main_task"], scene_ops, arrival_interactions, actor_ops, [_transition(prefix,"arrival","stage","The %s station opens around %s." % [prefix.replace("_"," "),str(c.verbs[0]).replace("_"," ")])], [
+	var arrival_branches := [
 		_branch(prefix,"arrival_begin",{"type":"command","command_id":str(c.verbs[0])},"work_1","",{"main_task":"success"}),
 		_branch(prefix,"arrival_fail",{"type":"command","command_id":"fail_%s" % prefix},"terminal_failure","",{"main_task":"failure"}),
 		_branch(prefix,"arrival_refuse",{"type":"command","command_id":"refuse_%s" % prefix},"terminal_refused","",{"main_task":"ignore"}),
 		_branch(prefix,"arrival_interrupt",{"type":"fact","fact_type":"travel_departed"},"terminal_interrupted","",{"main_task":"cancel"}),
-	]))
+	]
+	arrival_branches.append_array(_decision_branches(decision, "arrival", prefix))
+	phases.append(_phase("arrival", "Arrival", str(c.arrival), "The marked clean exit remains available.", ["main_task"], scene_ops, arrival_interactions, actor_ops, [_transition(prefix,"arrival","stage","The %s station opens around %s." % [prefix.replace("_"," "),str(c.verbs[0]).replace("_"," ")])], arrival_branches))
 	for index in range(1, c.verbs.size()):
 		var task_id := "%s_task_%d" % [prefix, index]
 		var previous_task_id := "%s_task_%d" % [prefix, index - 1]
 		var gate_id := "%s_gate_%d" % [prefix, index - 1]
 		var operations := _beat_operations(c, index - 1)
-		var interactions := [_gate(prefix,"work_%d" % index,gate_id,previous_task_id), _interaction_add(prefix,"work_%d" % index,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this distinct room operation before the aftermath can settle.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right")],false)]
+		var phase_id := "work_%d" % index
+		var interactions := [_gate(prefix,phase_id,gate_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this operation or choose its identity-specific route.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave","ui_cancel")] + _decision_actions(decision, phase_id),false)]
 		# Remove gate overlays before their underlying task interactions so cleanup
 		# cannot restore an already-removed target and leak it across revisit.
 		cleanup.push_front(_remove("interaction_ops",prefix,gate_id))
@@ -101,6 +119,7 @@ func _entry(c: Dictionary) -> Dictionary:
 			_branch(prefix,"work_%d_refuse" % index,{"type":"command","command_id":"refuse_%s" % prefix},"terminal_refused","",{"main_task":"ignore"}),
 			_branch(prefix,"work_%d_interrupt" % index,{"type":"fact","fact_type":"travel_departed"},"terminal_interrupted","",{"main_task":"cancel"}),
 		]
+		branches.append_array(_decision_branches(decision, phase_id, prefix))
 		phases.append(_phase("work_%d" % index,"Work beat %d" % index,"The room advances to a new physical station and actor arrangement.","The marked clean exit remains available.",["main_task"],operations.scene,interactions,operations.actor,[_transition(prefix,"work_%d" % index,str(["scene_change","feedback","stage"][index % 3]),"The %s beat moves props and actors for %s." % [str(c.beats[(index - 1) % c.beats.size()]).replace("_"," "),str(c.verbs[index]).replace("_"," ")])],branches))
 	for terminal in [["success",c.outcomes[0]],["failure",c.outcomes[1]],["refused",c.outcomes[2]],["interrupted",c.outcomes[3]]]:
 		phases.append(_phase("terminal_%s" % terminal[0],str(terminal[0]).capitalize(),"The active task gives way to a branch-specific room arrangement.","The marked exit remains readable through cleanup.",[],[],[],[],[_transition(prefix,"terminal_%s" % terminal[0],"feedback","The %s aftermath fixes a distinct %s room state for revisit." % [str(terminal[1]).replace("_"," "),prefix.replace("_"," ")])],[{"id":"%s_terminal_%s" % [prefix,terminal[0]],"condition":{"type":"always"},"outcome":terminal[1]}],true))
@@ -114,19 +133,43 @@ func _entry(c: Dictionary) -> Dictionary:
 		"expiry":{"boundary":"night_end","after":1,"policy":"cleanup"},
 		"cleanup":{"operations":cleanup},
 		"aftermath":aftermath,
-		"declared_targets":{"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":[]},
+		"declared_targets":{"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":_target_inventory().zones},
 		"mechanic_tags":c.tags,
 		"sequence_signature":"pending",
 		"owner_exceptions":[],
 		"fact_subscriptions":[str(c.fact),"travel_departed"],
 		"completion_contract":{"arrival_readable":true,"semantic_changes":true,"scenario_interaction":true,"action_boundaries":true,"choice_or_failure":true,"material_outcomes":true,"revisit_coverage":true,"world_connection":true,"primary_verb":true,"feedback_and_exit":true},
 	}
-	return {"scenario_id":c.id,"sequence":sequence,"authoring":{"arrival_summary":c.arrival,"player_verbs":c.verbs + ["refuse_%s" % prefix,"ignore_%s" % prefix],"world_connections":[str(c.fact),"travel_departed"],"references":{"objects":["base::travel:leave"]},"capture_ids":["%s_arrival" % prefix,"%s_partial" % prefix,"%s_success" % prefix,"%s_failure" % prefix,"%s_refused" % prefix,"%s_interrupted" % prefix,"%s_reduced_motion" % prefix,"%s_small_screen" % prefix,"%s_hit_overlay" % prefix],"seed_evidence":{"proof_seed":"%s_seed" % prefix,"save_boundaries":["arrival","partial","success","failure","refused","interrupted"],"minimum_target_size":44,"expected_outcomes":c.outcomes},"masked_visual_explanations":{}}}
+	var decision_verbs: Array = []
+	for option_value in _array(decision.get("options", [])): decision_verbs.append(str((option_value as Array)[0]))
+	return {"scenario_id":c.id,"sequence":sequence,"authoring":{"arrival_summary":c.arrival,"player_verbs":c.verbs + decision_verbs + ["refuse_%s" % prefix,"ignore_%s" % prefix],"world_connections":[str(c.fact),"travel_departed"],"references":{"objects":["base::travel:leave"]},"capture_ids":["%s_arrival" % prefix,"%s_partial" % prefix,"%s_success" % prefix,"%s_failure" % prefix,"%s_refused" % prefix,"%s_interrupted" % prefix,"%s_reduced_motion" % prefix,"%s_small_screen" % prefix,"%s_hit_overlay" % prefix,"%s_obstruction" % prefix],"seed_evidence":{"proof_seed":"%s_seed" % prefix,"save_boundaries":["arrival","partial","success","failure","refused","interrupted"],"minimum_target_size":44,"expected_outcomes":c.outcomes,"identity_decision_phase":decision.at,"identity_decision_verbs":decision_verbs},"masked_visual_explanations":{}}}
 
 
 func _phase(id:String,label:String,feedback:String,exit_prompt:String,objectives:Array,scene:Array,interactions:Array,actors:Array,transitions:Array,branches:Array,terminal:bool=false)->Dictionary:
 	var result := {"id":id,"label":label,"arrival_feedback":feedback,"exit_prompt":exit_prompt,"entry_conditions":[],"objective_ids":objectives,"advance_after_actions":0,"scene_ops":scene,"interaction_ops":interactions,"actor_ops":actors,"transition_ops":transitions,"branches":branches}
 	if terminal: result["terminal"] = true
+	return result
+
+func _decision_actions(decision: Dictionary, phase_id: String) -> Array:
+	if str(decision.get("at", "")) != phase_id: return []
+	var result: Array = []
+	var inputs := ["ui_left","ui_up","ui_right"]
+	for index in range(_array(decision.get("options", [])).size()):
+		var option := _array(decision.get("options", []))[index] as Array
+		result.append(_action(str(option[0]),str(option[0]).replace("_"," ").capitalize(),inputs[index]))
+	return result
+
+func _decision_branches(decision: Dictionary, phase_id: String, prefix: String) -> Array:
+	if str(decision.get("at", "")) != phase_id: return []
+	var result: Array = []
+	for index in range(_array(decision.get("options", [])).size()):
+		var option := _array(decision.get("options", []))[index] as Array
+		var target := str(option[1])
+		var objective := "success"
+		if target == "terminal_failure": objective = "failure"
+		elif target == "terminal_refused": objective = "ignore"
+		elif target == "terminal_interrupted": objective = "cancel"
+		result.append(_branch(prefix,"%s_identity_%d" % [phase_id,index],{"type":"command","command_id":str(option[0])},target,"",{"main_task":objective}))
 	return result
 
 
@@ -231,6 +274,17 @@ func _definitions(entries:Array)->Array:
 
 func _dossier(c:Dictionary,entry:Dictionary)->Dictionary:
 	return {"id":c.id,"archetype_id":c.archetype,"definition_path":OUTPUT,"phase_ids":entry.sequence.phase_graph.phases.map(func(p): return p.id),"terminal_outcomes":c.outcomes,"player_verbs":c.verbs,"changed_objects":c.objects.map(func(o): return o[0]),"changed_actors":c.actors.map(func(a): return a[0]),"world_connections":[c.fact,"travel_departed"],"reentry_policy":entry.sequence.reentry_policy,"sequence_signature":entry.sequence.sequence_signature,"capture_ids":entry.authoring.capture_ids,"exact_receipt_prefix":c.id}
+
+func _target_inventory() -> Dictionary:
+	var zones := ["base::zone:left","base::zone:right","base::zone:center","base::zone:background","base::zone:service_lane","base::zone:foreground","base::zone:exit_lane"]
+	for index in range(6): zones.append("base::zone:work_%d" % index)
+	return {"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":zones,"event_choices":{}}
+
+func _array(value: Variant) -> Array:
+	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+
+func _dict(value: Variant) -> Dictionary:
+	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
 
 
 func _write_json(path:String,value:Variant)->void:

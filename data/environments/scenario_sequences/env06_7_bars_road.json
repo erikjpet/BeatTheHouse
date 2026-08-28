@@ -16,7 +16,8 @@
           "bar_wake_interrupted",
           "bar_wake_reduced_motion",
           "bar_wake_small_screen",
-          "bar_wake_hit_overlay"
+          "bar_wake_hit_overlay",
+          "bar_wake_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -25,6 +26,9 @@
           "receive_remembrance",
           "carry_to_regular",
           "offer_before_toast",
+          "share_wake_toast",
+          "withhold_wake_toast",
+          "decline_wake_toast",
           "refuse_bar_wake",
           "ignore_bar_wake"
         ],
@@ -39,6 +43,12 @@
             "toast_withheld",
             "declined",
             "interrupted"
+          ],
+          "identity_decision_phase": "work_1",
+          "identity_decision_verbs": [
+            "share_wake_toast",
+            "withhold_wake_toast",
+            "decline_wake_toast"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "bar_wake_seed",
@@ -283,7 +293,21 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4",
+            "base::zone:work_5"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -509,7 +533,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_wake_task_0",
-                    "prompt": "Bar Wake: Begin the first physical task.",
+                    "prompt": "Bar Wake: Begin the first physical task or choose this identity's named route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_wake_task_0",
                     "state_label": "Arrival station"
@@ -649,6 +673,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "share_wake_toast",
+                    "type": "command"
+                  },
+                  "id": "bar_wake_work_1_identity_0",
+                  "next_phase": "terminal_success",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "withhold_wake_toast",
+                    "type": "command"
+                  },
+                  "id": "bar_wake_work_1_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "decline_wake_toast",
+                    "type": "command"
+                  },
+                  "id": "bar_wake_work_1_identity_2",
+                  "next_phase": "terminal_refused",
+                  "objective_outcomes": {
+                    "main_task": "ignore"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -688,6 +745,30 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_wake",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "share_wake_toast",
+                        "input_action": "ui_left",
+                        "label": "Share Wake Toast",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "withhold_wake_toast",
+                        "input_action": "ui_up",
+                        "label": "Withhold Wake Toast",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "decline_wake_toast",
+                        "input_action": "ui_right",
+                        "label": "Decline Wake Toast",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -699,14 +780,17 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Carry To Regular",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_wake_task_1",
-                    "prompt": "Bar Wake: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Wake: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_wake_task_1",
                     "state_label": "Work 1 station"
@@ -850,6 +934,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_wake",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -861,14 +951,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Offer Before Toast",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_wake_task_2",
-                    "prompt": "Bar Wake: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Wake: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_wake_task_2",
                     "state_label": "Work 2 station"
@@ -1048,7 +1139,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "8c9cc4bd34405d3dbb70b72ffe9bdbb4e1383cd231e7ee693315f922a8a51e9f"
+        "sequence_signature": "519df0ce826b555aff90307ef2755850bbb942440502a3b6fc48d8aa1aafdd82"
       }
     },
     {
@@ -1063,7 +1154,8 @@
           "bar_fight_night_interrupted",
           "bar_fight_night_reduced_motion",
           "bar_fight_night_small_screen",
-          "bar_fight_night_hit_overlay"
+          "bar_fight_night_hit_overlay",
+          "bar_fight_night_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -1075,6 +1167,9 @@
           "clear_broken_glass",
           "escort_hothead",
           "reset_chairs",
+          "mediate_fight_lines",
+          "choose_fight_side",
+          "call_bar_security",
           "refuse_bar_fight_night",
           "ignore_bar_fight_night"
         ],
@@ -1089,6 +1184,12 @@
             "broken_room",
             "side_chosen",
             "security_controlled"
+          ],
+          "identity_decision_phase": "work_2",
+          "identity_decision_verbs": [
+            "mediate_fight_lines",
+            "choose_fight_side",
+            "call_bar_security"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "bar_fight_night_seed",
@@ -1382,7 +1483,21 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4",
+            "base::zone:work_5"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -1626,7 +1741,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_fight_night_task_0",
-                    "prompt": "Bar Fight Night: Begin the first physical task.",
+                    "prompt": "Bar Fight Night: Begin the first physical task or choose this identity's named route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_fight_night_task_0",
                     "state_label": "Arrival station"
@@ -1825,6 +1940,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_fight_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -1836,14 +1957,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Warn Brawlers",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_fight_night_task_1",
-                    "prompt": "Bar Fight Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Fight Night: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_fight_night_task_1",
                     "state_label": "Work 1 station"
@@ -1948,6 +2070,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "mediate_fight_lines",
+                    "type": "command"
+                  },
+                  "id": "bar_fight_night_work_2_identity_0",
+                  "next_phase": "work_3",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "choose_fight_side",
+                    "type": "command"
+                  },
+                  "id": "bar_fight_night_work_2_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "call_bar_security",
+                    "type": "command"
+                  },
+                  "id": "bar_fight_night_work_2_identity_2",
+                  "next_phase": "terminal_interrupted",
+                  "objective_outcomes": {
+                    "main_task": "cancel"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -1987,6 +2142,30 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_fight_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "mediate_fight_lines",
+                        "input_action": "ui_left",
+                        "label": "Mediate Fight Lines",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "choose_fight_side",
+                        "input_action": "ui_up",
+                        "label": "Choose Fight Side",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "call_bar_security",
+                        "input_action": "ui_right",
+                        "label": "Call Bar Security",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -1998,14 +2177,17 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Separate Sides",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_fight_night_task_2",
-                    "prompt": "Bar Fight Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Fight Night: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_fight_night_task_2",
                     "state_label": "Work 2 station"
@@ -2152,6 +2334,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_fight_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -2163,14 +2351,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Clear Broken Glass",
                     "min_target_size": 44.0,
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_fight_night_task_3",
-                    "prompt": "Bar Fight Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Fight Night: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_fight_night_task_3",
                     "state_label": "Work 3 station"
@@ -2315,6 +2504,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_fight_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -2326,14 +2521,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Escort Hothead",
                     "min_target_size": 44.0,
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_fight_night_task_4",
-                    "prompt": "Bar Fight Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Fight Night: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_fight_night_task_4",
                     "state_label": "Work 4 station"
@@ -2476,6 +2672,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_fight_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -2487,14 +2689,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Reset Chairs",
                     "min_target_size": 44.0,
                     "non_color_state": "work_5_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_fight_night_task_5",
-                    "prompt": "Bar Fight Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Fight Night: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_fight_night_task_5",
                     "state_label": "Work 5 station"
@@ -2674,7 +2877,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0fc995d2c14daadc93a51bf67f71cb9e43bdc9f953b39a016bebf9f1634a7386"
+        "sequence_signature": "679207cfc37fbe1178122cf0c28157555ab8a296753373400848fccc0ed92a8f"
       }
     },
     {
@@ -2689,7 +2892,8 @@
           "bar_payday_rush_interrupted",
           "bar_payday_rush_reduced_motion",
           "bar_payday_rush_small_screen",
-          "bar_payday_rush_hit_overlay"
+          "bar_payday_rush_hit_overlay",
+          "bar_payday_rush_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -2698,6 +2902,9 @@
           "lift_first_tray",
           "deliver_table_round",
           "settle_open_tab",
+          "carry_payday_service",
+          "settle_payday_tabs",
+          "defer_payday_tabs",
           "refuse_bar_payday_rush",
           "ignore_bar_payday_rush"
         ],
@@ -2712,6 +2919,12 @@
             "orders_spilled",
             "tabs_deferred",
             "rush_abandoned"
+          ],
+          "identity_decision_phase": "work_1",
+          "identity_decision_verbs": [
+            "carry_payday_service",
+            "settle_payday_tabs",
+            "defer_payday_tabs"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "bar_payday_rush_seed",
@@ -2963,7 +3176,21 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4",
+            "base::zone:work_5"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -3189,7 +3416,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_payday_rush_task_0",
-                    "prompt": "Bar Payday Rush: Begin the first physical task.",
+                    "prompt": "Bar Payday Rush: Begin the first physical task or choose this identity's named route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_payday_rush_task_0",
                     "state_label": "Arrival station"
@@ -3349,6 +3576,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "carry_payday_service",
+                    "type": "command"
+                  },
+                  "id": "bar_payday_rush_work_1_identity_0",
+                  "next_phase": "work_2",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "settle_payday_tabs",
+                    "type": "command"
+                  },
+                  "id": "bar_payday_rush_work_1_identity_1",
+                  "next_phase": "terminal_success",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "defer_payday_tabs",
+                    "type": "command"
+                  },
+                  "id": "bar_payday_rush_work_1_identity_2",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -3388,6 +3648,30 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_payday_rush",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "carry_payday_service",
+                        "input_action": "ui_left",
+                        "label": "Carry Payday Service",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "settle_payday_tabs",
+                        "input_action": "ui_up",
+                        "label": "Settle Payday Tabs",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "defer_payday_tabs",
+                        "input_action": "ui_right",
+                        "label": "Defer Payday Tabs",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -3399,14 +3683,17 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Deliver Table Round",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_payday_rush_task_1",
-                    "prompt": "Bar Payday Rush: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Payday Rush: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_payday_rush_task_1",
                     "state_label": "Work 1 station"
@@ -3550,6 +3837,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_payday_rush",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -3561,14 +3854,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Settle Open Tab",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_payday_rush_task_2",
-                    "prompt": "Bar Payday Rush: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Payday Rush: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_payday_rush_task_2",
                     "state_label": "Work 2 station"
@@ -3748,7 +4042,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "151eac3ec34959d128aa3bd9c59d87d92090d9d30ec8cb45b12d96754d42760c"
+        "sequence_signature": "dfe1696210f460fe400ada3daa36d5a6db2ed1599332512aa6df83d770a051ea"
       }
     },
     {
@@ -3763,7 +4057,8 @@
           "bar_lock_in_interrupted",
           "bar_lock_in_reduced_motion",
           "bar_lock_in_small_screen",
-          "bar_lock_in_hit_overlay"
+          "bar_lock_in_hit_overlay",
+          "bar_lock_in_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -3774,6 +4069,9 @@
           "earn_host_token",
           "complete_private_task",
           "signal_reopening",
+          "accept_lockin_inclusion",
+          "take_quiet_cellar_exit",
+          "trigger_lockin_reopening",
           "refuse_bar_lock_in",
           "ignore_bar_lock_in"
         ],
@@ -3788,6 +4086,12 @@
             "quiet_exit",
             "reopened",
             "sweep_interrupted"
+          ],
+          "identity_decision_phase": "work_2",
+          "identity_decision_verbs": [
+            "accept_lockin_inclusion",
+            "take_quiet_cellar_exit",
+            "trigger_lockin_reopening"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "bar_lock_in_seed",
@@ -4067,7 +4371,21 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4",
+            "base::zone:work_5"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -4305,7 +4623,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_lock_in_task_0",
-                    "prompt": "Bar Lock In: Begin the first physical task.",
+                    "prompt": "Bar Lock In: Begin the first physical task or choose this identity's named route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_lock_in_task_0",
                     "state_label": "Arrival station"
@@ -4504,6 +4822,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_lock_in",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -4515,14 +4839,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Inspect Cellar Hatch",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_lock_in_task_1",
-                    "prompt": "Bar Lock In: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Lock In: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_lock_in_task_1",
                     "state_label": "Work 1 station"
@@ -4627,6 +4952,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "accept_lockin_inclusion",
+                    "type": "command"
+                  },
+                  "id": "bar_lock_in_work_2_identity_0",
+                  "next_phase": "terminal_success",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "take_quiet_cellar_exit",
+                    "type": "command"
+                  },
+                  "id": "bar_lock_in_work_2_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "trigger_lockin_reopening",
+                    "type": "command"
+                  },
+                  "id": "bar_lock_in_work_2_identity_2",
+                  "next_phase": "terminal_refused",
+                  "objective_outcomes": {
+                    "main_task": "ignore"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -4666,6 +5024,30 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_lock_in",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "accept_lockin_inclusion",
+                        "input_action": "ui_left",
+                        "label": "Accept Lockin Inclusion",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "take_quiet_cellar_exit",
+                        "input_action": "ui_up",
+                        "label": "Take Quiet Cellar Exit",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "trigger_lockin_reopening",
+                        "input_action": "ui_right",
+                        "label": "Trigger Lockin Reopening",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -4677,14 +5059,17 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Earn Host Token",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_lock_in_task_2",
-                    "prompt": "Bar Lock In: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Lock In: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_lock_in_task_2",
                     "state_label": "Work 2 station"
@@ -4831,6 +5216,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_lock_in",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -4842,14 +5233,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Complete Private Task",
                     "min_target_size": 44.0,
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_lock_in_task_3",
-                    "prompt": "Bar Lock In: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Lock In: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_lock_in_task_3",
                     "state_label": "Work 3 station"
@@ -4994,6 +5386,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_lock_in",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -5005,14 +5403,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Signal Reopening",
                     "min_target_size": 44.0,
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_lock_in_task_4",
-                    "prompt": "Bar Lock In: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Lock In: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_lock_in_task_4",
                     "state_label": "Work 4 station"
@@ -5188,7 +5587,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "86a8f80e7dab4feac039379be5b18923dc178bfb25cbdc8bee8010cbe2522db2"
+        "sequence_signature": "a8b3393fd894093f80821c0b3db80328e9ef0a93c64521539902ddb8b02b0ecf"
       }
     },
     {
@@ -5203,7 +5602,8 @@
           "bar_darts_league_night_interrupted",
           "bar_darts_league_night_reduced_motion",
           "bar_darts_league_night_small_screen",
-          "bar_darts_league_night_hit_overlay"
+          "bar_darts_league_night_hit_overlay",
+          "bar_darts_league_night_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -5215,6 +5615,9 @@
           "score_second_round",
           "inspect_disputed_dart",
           "post_final_bracket",
+          "uphold_disputed_dart",
+          "overturn_disputed_dart",
+          "forfeit_darts_match",
           "refuse_bar_darts_league_night",
           "ignore_bar_darts_league_night"
         ],
@@ -5229,6 +5632,12 @@
             "dispute_upheld",
             "match_forfeited",
             "league_paused"
+          ],
+          "identity_decision_phase": "work_3",
+          "identity_decision_verbs": [
+            "uphold_disputed_dart",
+            "overturn_disputed_dart",
+            "forfeit_darts_match"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "bar_darts_league_night_seed",
@@ -5522,7 +5931,21 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4",
+            "base::zone:work_5"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -5766,7 +6189,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_darts_league_night_task_0",
-                    "prompt": "Bar Darts League Night: Begin the first physical task.",
+                    "prompt": "Bar Darts League Night: Begin the first physical task or choose this identity's named route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_darts_league_night_task_0",
                     "state_label": "Arrival station"
@@ -5965,6 +6388,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_darts_league_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -5976,14 +6405,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Score Opening Round",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_darts_league_night_task_1",
-                    "prompt": "Bar Darts League Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Darts League Night: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_darts_league_night_task_1",
                     "state_label": "Work 1 station"
@@ -6127,6 +6557,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_darts_league_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -6138,14 +6574,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Rotate Second Lane",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_darts_league_night_task_2",
-                    "prompt": "Bar Darts League Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Darts League Night: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_darts_league_night_task_2",
                     "state_label": "Work 2 station"
@@ -6253,6 +6690,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "uphold_disputed_dart",
+                    "type": "command"
+                  },
+                  "id": "bar_darts_league_night_work_3_identity_0",
+                  "next_phase": "work_4",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "overturn_disputed_dart",
+                    "type": "command"
+                  },
+                  "id": "bar_darts_league_night_work_3_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "forfeit_darts_match",
+                    "type": "command"
+                  },
+                  "id": "bar_darts_league_night_work_3_identity_2",
+                  "next_phase": "terminal_refused",
+                  "objective_outcomes": {
+                    "main_task": "ignore"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -6292,6 +6762,30 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_darts_league_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "uphold_disputed_dart",
+                        "input_action": "ui_left",
+                        "label": "Uphold Disputed Dart",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "overturn_disputed_dart",
+                        "input_action": "ui_up",
+                        "label": "Overturn Disputed Dart",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "forfeit_darts_match",
+                        "input_action": "ui_right",
+                        "label": "Forfeit Darts Match",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -6303,14 +6797,17 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Score Second Round",
                     "min_target_size": 44.0,
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_darts_league_night_task_3",
-                    "prompt": "Bar Darts League Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Darts League Night: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_darts_league_night_task_3",
                     "state_label": "Work 3 station"
@@ -6455,6 +6952,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_darts_league_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -6466,14 +6969,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Inspect Disputed Dart",
                     "min_target_size": 44.0,
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_darts_league_night_task_4",
-                    "prompt": "Bar Darts League Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Darts League Night: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_darts_league_night_task_4",
                     "state_label": "Work 4 station"
@@ -6616,6 +7120,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_darts_league_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -6627,14 +7137,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Post Final Bracket",
                     "min_target_size": 44.0,
                     "non_color_state": "work_5_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_darts_league_night_task_5",
-                    "prompt": "Bar Darts League Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Darts League Night: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_darts_league_night_task_5",
                     "state_label": "Work 5 station"
@@ -6814,7 +7325,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "49ed8f6543923c3f8147747b1ceb6639cd9ff7f7576639dd28d8bebb9a1d8ec0"
+        "sequence_signature": "46e9fdc3f2cab72a869a62e43a48f096be3733170457f13b287de63c4eeff5de"
       }
     },
     {
@@ -6829,7 +7340,8 @@
           "bar_live_band_interrupted",
           "bar_live_band_reduced_motion",
           "bar_live_band_small_screen",
-          "bar_live_band_hit_overlay"
+          "bar_live_band_hit_overlay",
+          "bar_live_band_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -6840,6 +7352,9 @@
           "balance_speaker_stack",
           "mark_service_crossing",
           "reroute_crowd",
+          "complete_live_set",
+          "fail_live_set",
+          "preserve_service_only",
           "refuse_bar_live_band",
           "ignore_bar_live_band"
         ],
@@ -6854,6 +7369,12 @@
             "set_failed",
             "service_only",
             "show_interrupted"
+          ],
+          "identity_decision_phase": "work_2",
+          "identity_decision_verbs": [
+            "complete_live_set",
+            "fail_live_set",
+            "preserve_service_only"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "bar_live_band_seed",
@@ -7133,7 +7654,21 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4",
+            "base::zone:work_5"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -7371,7 +7906,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_live_band_task_0",
-                    "prompt": "Bar Live Band: Begin the first physical task.",
+                    "prompt": "Bar Live Band: Begin the first physical task or choose this identity's named route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_live_band_task_0",
                     "state_label": "Arrival station"
@@ -7570,6 +8105,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_live_band",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -7581,14 +8122,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Patch Soundcheck",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_live_band_task_1",
-                    "prompt": "Bar Live Band: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Live Band: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_live_band_task_1",
                     "state_label": "Work 1 station"
@@ -7693,6 +8235,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "complete_live_set",
+                    "type": "command"
+                  },
+                  "id": "bar_live_band_work_2_identity_0",
+                  "next_phase": "work_3",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "fail_live_set",
+                    "type": "command"
+                  },
+                  "id": "bar_live_band_work_2_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "preserve_service_only",
+                    "type": "command"
+                  },
+                  "id": "bar_live_band_work_2_identity_2",
+                  "next_phase": "terminal_refused",
+                  "objective_outcomes": {
+                    "main_task": "ignore"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -7732,6 +8307,30 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_live_band",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "complete_live_set",
+                        "input_action": "ui_left",
+                        "label": "Complete Live Set",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "fail_live_set",
+                        "input_action": "ui_up",
+                        "label": "Fail Live Set",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "preserve_service_only",
+                        "input_action": "ui_right",
+                        "label": "Preserve Service Only",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -7743,14 +8342,17 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Balance Speaker Stack",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_live_band_task_2",
-                    "prompt": "Bar Live Band: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Live Band: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_live_band_task_2",
                     "state_label": "Work 2 station"
@@ -7897,6 +8499,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_live_band",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -7908,14 +8516,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Mark Service Crossing",
                     "min_target_size": 44.0,
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_live_band_task_3",
-                    "prompt": "Bar Live Band: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Live Band: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_live_band_task_3",
                     "state_label": "Work 3 station"
@@ -8060,6 +8669,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_live_band",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -8071,14 +8686,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Reroute Crowd",
                     "min_target_size": 44.0,
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_live_band_task_4",
-                    "prompt": "Bar Live Band: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Live Band: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_live_band_task_4",
                     "state_label": "Work 4 station"
@@ -8254,7 +8870,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "96d6500e632243f7e0f007aea4221d9553b37df71fad1a769989de2e2e1a0f4d"
+        "sequence_signature": "bf043931de7a3db9e17452927d702cb1ca6f59af30788c1cf2c8357f6e1d7056"
       }
     },
     {
@@ -8269,7 +8885,8 @@
           "bar_dead_tuesday_interrupted",
           "bar_dead_tuesday_reduced_motion",
           "bar_dead_tuesday_small_screen",
-          "bar_dead_tuesday_hit_overlay"
+          "bar_dead_tuesday_hit_overlay",
+          "bar_dead_tuesday_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -8277,6 +8894,9 @@
         "player_verbs": [
           "choose_company_zone",
           "close_other_zones",
+          "keep_bartender_company",
+          "keep_lone_patron_company",
+          "take_closed_booth_task",
           "refuse_bar_dead_tuesday",
           "ignore_bar_dead_tuesday"
         ],
@@ -8291,6 +8911,12 @@
             "patron_zone_kept",
             "booth_zone_kept",
             "night_left_empty"
+          ],
+          "identity_decision_phase": "arrival",
+          "identity_decision_verbs": [
+            "keep_bartender_company",
+            "keep_lone_patron_company",
+            "take_closed_booth_task"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "bar_dead_tuesday_seed",
@@ -8528,7 +9154,21 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4",
+            "base::zone:work_5"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -8659,6 +9299,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "keep_bartender_company",
+                    "type": "command"
+                  },
+                  "id": "bar_dead_tuesday_arrival_identity_0",
+                  "next_phase": "terminal_success",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "keep_lone_patron_company",
+                    "type": "command"
+                  },
+                  "id": "bar_dead_tuesday_arrival_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "take_closed_booth_task",
+                    "type": "command"
+                  },
+                  "id": "bar_dead_tuesday_arrival_identity_2",
+                  "next_phase": "terminal_refused",
+                  "objective_outcomes": {
+                    "main_task": "ignore"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -8730,6 +9403,24 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "keep_bartender_company",
+                        "input_action": "ui_left",
+                        "label": "Keep Bartender Company",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "keep_lone_patron_company",
+                        "input_action": "ui_up",
+                        "label": "Keep Lone Patron Company",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "take_closed_booth_task",
+                        "input_action": "ui_right",
+                        "label": "Take Closed Booth Task",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -8741,14 +9432,16 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Choose Company Zone",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_dead_tuesday_task_0",
-                    "prompt": "Bar Dead Tuesday: Begin the first physical task.",
+                    "prompt": "Bar Dead Tuesday: Begin the first physical task or choose this identity's named route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_dead_tuesday_task_0",
                     "state_label": "Arrival station"
@@ -8947,6 +9640,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_dead_tuesday",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -8958,14 +9657,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Close Other Zones",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::bar_dead_tuesday_task_1",
-                    "prompt": "Bar Dead Tuesday: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Bar Dead Tuesday: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "bar_dead_tuesday_task_1",
                     "state_label": "Work 1 station"
@@ -9142,7 +9842,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "45cde736a95abf646d38a877e458954a0319b25332f8e95daf12ee9bab99d1c1"
+        "sequence_signature": "1f93940124dd280179cb09ca8e70d547077160794561b74d4a304e37543cbcf3"
       }
     },
     {
@@ -9157,7 +9857,8 @@
           "jazz_club_guest_legend_interrupted",
           "jazz_club_guest_legend_reduced_motion",
           "jazz_club_guest_legend_small_screen",
-          "jazz_club_guest_legend_hit_overlay"
+          "jazz_club_guest_legend_hit_overlay",
+          "jazz_club_guest_legend_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -9169,6 +9870,9 @@
           "prepare_missing_cue",
           "reorder_set_cards",
           "time_guest_reveal",
+          "reveal_guest_legend",
+          "miss_legend_cue",
+          "withhold_guest_reveal",
           "refuse_jazz_club_guest_legend",
           "ignore_jazz_club_guest_legend"
         ],
@@ -9183,6 +9887,12 @@
             "cue_missed",
             "guest_withheld",
             "arrival_interrupted"
+          ],
+          "identity_decision_phase": "work_3",
+          "identity_decision_verbs": [
+            "reveal_guest_legend",
+            "miss_legend_cue",
+            "withhold_guest_reveal"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "jazz_club_guest_legend_seed",
@@ -9476,7 +10186,21 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4",
+            "base::zone:work_5"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -9720,7 +10444,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_guest_legend_task_0",
-                    "prompt": "Jazz Club Guest Legend: Begin the first physical task.",
+                    "prompt": "Jazz Club Guest Legend: Begin the first physical task or choose this identity's named route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_guest_legend_task_0",
                     "state_label": "Arrival station"
@@ -9919,6 +10643,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_guest_legend",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -9930,14 +10660,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Open Backstage Lane",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_guest_legend_task_1",
-                    "prompt": "Jazz Club Guest Legend: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Jazz Club Guest Legend: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_guest_legend_task_1",
                     "state_label": "Work 1 station"
@@ -10081,6 +10812,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_guest_legend",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -10092,14 +10829,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Inspect Missing Piece",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_guest_legend_task_2",
-                    "prompt": "Jazz Club Guest Legend: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Jazz Club Guest Legend: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_guest_legend_task_2",
                     "state_label": "Work 2 station"
@@ -10207,6 +10945,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "reveal_guest_legend",
+                    "type": "command"
+                  },
+                  "id": "jazz_club_guest_legend_work_3_identity_0",
+                  "next_phase": "work_4",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "miss_legend_cue",
+                    "type": "command"
+                  },
+                  "id": "jazz_club_guest_legend_work_3_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "withhold_guest_reveal",
+                    "type": "command"
+                  },
+                  "id": "jazz_club_guest_legend_work_3_identity_2",
+                  "next_phase": "terminal_refused",
+                  "objective_outcomes": {
+                    "main_task": "ignore"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -10246,6 +11017,30 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_guest_legend",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "reveal_guest_legend",
+                        "input_action": "ui_left",
+                        "label": "Reveal Guest Legend",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "miss_legend_cue",
+                        "input_action": "ui_up",
+                        "label": "Miss Legend Cue",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "withhold_guest_reveal",
+                        "input_action": "ui_right",
+                        "label": "Withhold Guest Reveal",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -10257,14 +11052,17 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Prepare Missing Cue",
                     "min_target_size": 44.0,
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_guest_legend_task_3",
-                    "prompt": "Jazz Club Guest Legend: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Jazz Club Guest Legend: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_guest_legend_task_3",
                     "state_label": "Work 3 station"
@@ -10409,6 +11207,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_guest_legend",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -10420,14 +11224,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Reorder Set Cards",
                     "min_target_size": 44.0,
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_guest_legend_task_4",
-                    "prompt": "Jazz Club Guest Legend: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Jazz Club Guest Legend: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_guest_legend_task_4",
                     "state_label": "Work 4 station"
@@ -10570,6 +11375,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_guest_legend",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -10581,14 +11392,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Time Guest Reveal",
                     "min_target_size": 44.0,
                     "non_color_state": "work_5_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_guest_legend_task_5",
-                    "prompt": "Jazz Club Guest Legend: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Jazz Club Guest Legend: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_guest_legend_task_5",
                     "state_label": "Work 5 station"
@@ -10768,7 +11580,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c94bbdad0d9cd8e95569b9c774f979f3d33db0ec887d0b0853c826b193423a33"
+        "sequence_signature": "1aebca1447f82b3aba307e176564afb260423c22c95623b33c448d5df5ee35ec"
       }
     },
     {
@@ -10783,7 +11595,8 @@
           "jazz_club_rent_party_interrupted",
           "jazz_club_rent_party_reduced_motion",
           "jazz_club_rent_party_small_screen",
-          "jazz_club_rent_party_hit_overlay"
+          "jazz_club_rent_party_hit_overlay",
+          "jazz_club_rent_party_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -10793,6 +11606,9 @@
           "run_record_sale",
           "count_rent_marker",
           "answer_creditor",
+          "mediate_rent_creditor",
+          "yield_club_to_creditor",
+          "challenge_creditor_terms",
           "refuse_jazz_club_rent_party",
           "ignore_jazz_club_rent_party"
         ],
@@ -10807,6 +11623,12 @@
             "creditor_occupies",
             "terms_challenged",
             "party_interrupted"
+          ],
+          "identity_decision_phase": "work_2",
+          "identity_decision_verbs": [
+            "mediate_rent_creditor",
+            "yield_club_to_creditor",
+            "challenge_creditor_terms"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "jazz_club_rent_party_seed",
@@ -11072,7 +11894,21 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4",
+            "base::zone:work_5"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -11304,7 +12140,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_rent_party_task_0",
-                    "prompt": "Jazz Club Rent Party: Begin the first physical task.",
+                    "prompt": "Jazz Club Rent Party: Begin the first physical task or choose this identity's named route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_rent_party_task_0",
                     "state_label": "Arrival station"
@@ -11503,6 +12339,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_rent_party",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -11514,14 +12356,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Run Record Sale",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_rent_party_task_1",
-                    "prompt": "Jazz Club Rent Party: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Jazz Club Rent Party: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_rent_party_task_1",
                     "state_label": "Work 1 station"
@@ -11626,6 +12469,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "mediate_rent_creditor",
+                    "type": "command"
+                  },
+                  "id": "jazz_club_rent_party_work_2_identity_0",
+                  "next_phase": "work_3",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "yield_club_to_creditor",
+                    "type": "command"
+                  },
+                  "id": "jazz_club_rent_party_work_2_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "challenge_creditor_terms",
+                    "type": "command"
+                  },
+                  "id": "jazz_club_rent_party_work_2_identity_2",
+                  "next_phase": "terminal_refused",
+                  "objective_outcomes": {
+                    "main_task": "ignore"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -11665,6 +12541,30 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_rent_party",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "mediate_rent_creditor",
+                        "input_action": "ui_left",
+                        "label": "Mediate Rent Creditor",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "yield_club_to_creditor",
+                        "input_action": "ui_up",
+                        "label": "Yield Club To Creditor",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "challenge_creditor_terms",
+                        "input_action": "ui_right",
+                        "label": "Challenge Creditor Terms",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -11676,14 +12576,17 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Count Rent Marker",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_rent_party_task_2",
-                    "prompt": "Jazz Club Rent Party: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Jazz Club Rent Party: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_rent_party_task_2",
                     "state_label": "Work 2 station"
@@ -11830,6 +12733,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_rent_party",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -11841,14 +12750,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Answer Creditor",
                     "min_target_size": 44.0,
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_rent_party_task_3",
-                    "prompt": "Jazz Club Rent Party: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Jazz Club Rent Party: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_rent_party_task_3",
                     "state_label": "Work 3 station"
@@ -12026,7 +12936,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e99a60cff058abc7f484720b7df66d24e0801963411dbad562c527cce35fd1b5"
+        "sequence_signature": "4050655c28b7d585e0fd5803de8a234f85ed5fcc42762c3d78949c86f99f8d7f"
       }
     },
     {
@@ -12041,7 +12951,8 @@
           "jazz_club_recording_night_interrupted",
           "jazz_club_recording_night_reduced_motion",
           "jazz_club_recording_night_small_screen",
-          "jazz_club_recording_night_hit_overlay"
+          "jazz_club_recording_night_hit_overlay",
+          "jazz_club_recording_night_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -12050,6 +12961,9 @@
           "enter_silence_route",
           "reset_microphone_tree",
           "mark_clean_take",
+          "save_recording_take",
+          "ruin_recording_session",
+          "relocate_recording_audience",
           "refuse_jazz_club_recording_night",
           "ignore_jazz_club_recording_night"
         ],
@@ -12064,6 +12978,12 @@
             "session_ruined",
             "audience_relocated",
             "recording_interrupted"
+          ],
+          "identity_decision_phase": "work_1",
+          "identity_decision_verbs": [
+            "save_recording_take",
+            "ruin_recording_session",
+            "relocate_recording_audience"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "jazz_club_recording_night_seed",
@@ -12315,7 +13235,21 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4",
+            "base::zone:work_5"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -12541,7 +13475,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_recording_night_task_0",
-                    "prompt": "Jazz Club Recording Night: Begin the first physical task.",
+                    "prompt": "Jazz Club Recording Night: Begin the first physical task or choose this identity's named route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_recording_night_task_0",
                     "state_label": "Arrival station"
@@ -12701,6 +13635,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "save_recording_take",
+                    "type": "command"
+                  },
+                  "id": "jazz_club_recording_night_work_1_identity_0",
+                  "next_phase": "work_2",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "ruin_recording_session",
+                    "type": "command"
+                  },
+                  "id": "jazz_club_recording_night_work_1_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "relocate_recording_audience",
+                    "type": "command"
+                  },
+                  "id": "jazz_club_recording_night_work_1_identity_2",
+                  "next_phase": "terminal_refused",
+                  "objective_outcomes": {
+                    "main_task": "ignore"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -12740,6 +13707,30 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_recording_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "save_recording_take",
+                        "input_action": "ui_left",
+                        "label": "Save Recording Take",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "ruin_recording_session",
+                        "input_action": "ui_up",
+                        "label": "Ruin Recording Session",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "relocate_recording_audience",
+                        "input_action": "ui_right",
+                        "label": "Relocate Recording Audience",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -12751,14 +13742,17 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Reset Microphone Tree",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_recording_night_task_1",
-                    "prompt": "Jazz Club Recording Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Jazz Club Recording Night: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_recording_night_task_1",
                     "state_label": "Work 1 station"
@@ -12902,6 +13896,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_recording_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -12913,14 +13913,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Mark Clean Take",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_recording_night_task_2",
-                    "prompt": "Jazz Club Recording Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Jazz Club Recording Night: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_recording_night_task_2",
                     "state_label": "Work 2 station"
@@ -13100,7 +14101,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9968a4d57be5aff2efba8e4dad21cebe5320bb6f0e3ffc7102c3afaf02a5fc3a"
+        "sequence_signature": "f801192e5237a6f162d43e8d0bfeffbab4000fbef193c53c639081267d0bc1ed"
       }
     },
     {
@@ -13115,7 +14116,8 @@
           "jazz_club_union_trouble_interrupted",
           "jazz_club_union_trouble_reduced_motion",
           "jazz_club_union_trouble_small_screen",
-          "jazz_club_union_trouble_hit_overlay"
+          "jazz_club_union_trouble_hit_overlay",
+          "jazz_club_union_trouble_obstruction"
         ],
         "masked_visual_explanations": {
 
@@ -13125,6 +14127,9 @@
           "carry_neutral_stand",
           "assemble_agreed_stage",
           "open_entry_route",
+          "mediate_union_entry",
+          "cross_union_line",
+          "cross_management_line",
           "refuse_jazz_club_union_trouble",
           "ignore_jazz_club_union_trouble"
         ],
@@ -13139,6 +14144,12 @@
             "union_entry",
             "management_entry",
             "club_closed"
+          ],
+          "identity_decision_phase": "work_1",
+          "identity_decision_verbs": [
+            "mediate_union_entry",
+            "cross_union_line",
+            "cross_management_line"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "jazz_club_union_trouble_seed",
@@ -13404,7 +14415,21 @@
           "routes": [],
           "scene_objects": [],
           "services": [],
-          "zones": []
+          "zones": [
+            "base::zone:left",
+            "base::zone:right",
+            "base::zone:center",
+            "base::zone:background",
+            "base::zone:service_lane",
+            "base::zone:foreground",
+            "base::zone:exit_lane",
+            "base::zone:work_0",
+            "base::zone:work_1",
+            "base::zone:work_2",
+            "base::zone:work_3",
+            "base::zone:work_4",
+            "base::zone:work_5"
+          ]
         },
         "expiry": {
           "after": 1.0,
@@ -13636,7 +14661,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_union_trouble_task_0",
-                    "prompt": "Jazz Club Union Trouble: Begin the first physical task.",
+                    "prompt": "Jazz Club Union Trouble: Begin the first physical task or choose this identity's named route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_union_trouble_task_0",
                     "state_label": "Arrival station"
@@ -13796,6 +14821,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "mediate_union_entry",
+                    "type": "command"
+                  },
+                  "id": "jazz_club_union_trouble_work_1_identity_0",
+                  "next_phase": "terminal_success",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "cross_union_line",
+                    "type": "command"
+                  },
+                  "id": "jazz_club_union_trouble_work_1_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "cross_management_line",
+                    "type": "command"
+                  },
+                  "id": "jazz_club_union_trouble_work_1_identity_2",
+                  "next_phase": "terminal_refused",
+                  "objective_outcomes": {
+                    "main_task": "ignore"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -13835,6 +14893,30 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_union_trouble",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "mediate_union_entry",
+                        "input_action": "ui_left",
+                        "label": "Mediate Union Entry",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "cross_union_line",
+                        "input_action": "ui_up",
+                        "label": "Cross Union Line",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "cross_management_line",
+                        "input_action": "ui_right",
+                        "label": "Cross Management Line",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -13846,14 +14928,17 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Carry Neutral Stand",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_union_trouble_task_1",
-                    "prompt": "Jazz Club Union Trouble: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Jazz Club Union Trouble: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_union_trouble_task_1",
                     "state_label": "Work 1 station"
@@ -13997,6 +15082,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_union_trouble",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -14008,14 +15099,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Assemble Agreed Stage",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_union_trouble_task_2",
-                    "prompt": "Jazz Club Union Trouble: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Jazz Club Union Trouble: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_union_trouble_task_2",
                     "state_label": "Work 2 station"
@@ -14162,6 +15254,12 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_union_trouble",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -14173,14 +15271,15 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_cancel"
                     ],
                     "label": "Open Entry Route",
                     "min_target_size": 44.0,
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::jazz_club_union_trouble_task_3",
-                    "prompt": "Jazz Club Union Trouble: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Jazz Club Union Trouble: Complete this operation or choose its identity-specific route.",
                     "safe_exit": false,
                     "stable_object_id": "jazz_club_union_trouble_task_3",
                     "state_label": "Work 3 station"
@@ -14358,7 +15457,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "098824161c06c532dcf3bc1376d3fe3a09550391881343f3266a737eab9ba802"
+        "sequence_signature": "b98db8805cc785f04ae281d6778125f9de2a762746a031697edd1d98573620d7"
       }
     }
   ]
