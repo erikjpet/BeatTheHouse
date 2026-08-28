@@ -22,15 +22,15 @@ The exact five-file payload is:
 
 This handoff document is outside that product payload. The product head and tree above remain the immutable review subject.
 
-## Retained producer evidence
+## Reported and retained evidence provenance
 
-The producer reported and retained a focused 5.100-second result covering five profiles and ten seeds, including conservation, receipt, interruption, and save behavior. This is producer evidence only; it is not independent acceptance.
+The focused 5.100-second result is Director-board/producer-reported evidence covering five profiles and ten seeds, including conservation, receipt, interruption, and save behavior. There is no retained on-disk artifact for that result and no exact-head or hash binding for it. It is producer-reported evidence only; it is not independent acceptance.
 
-Additional retained results:
+The following are local retained artifacts:
 
 - Validation: PASS, 66.046 seconds.
 - GDScript load: PASS, 30.437 seconds.
-- Predecessor full `crew_poker`: RED, 76.612 seconds, mostly from inherited environment failures; the timing red was addressed by the final product commit. No qualifying full gate has been run on the final exact product head.
+- Predecessor full `crew_poker`: RED, 76.612 seconds, mostly from inherited environment failures. This predecessor-red artifact is not hash-bound to the final product. The timing red was addressed by the final product commit, but no qualifying full gate has been run on the final exact product head.
 
 ## Intentional formatting exception
 
