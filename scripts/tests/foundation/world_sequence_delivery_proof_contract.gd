@@ -11,6 +11,7 @@ const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_run
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const CrewHeistModelScript := preload("res://scripts/core/crew_heist_model.gd")
 const CrewWorldSequenceAdapterScript := preload("res://scripts/core/crew_world_sequence_adapter.gd")
 
 const PACKAGE_PATH := "res://data/crew/world06_1_crew_favor_delivery_sequence.json"
@@ -257,7 +258,8 @@ func _hidden_observer_fixture(library: ContentLibrary, alternate_private_case: b
 	var private_state := CrewTurnModelScript.empty_state()
 	if alternate_private_case:
 		private_state["m"] = str(CrewStateModelScript.MEMBER_IDS[1])
-	run_state.crew_heist_state = {"x": private_state}
+	run_state.crew_heist_state = CrewHeistModelScript.begin(CrewHeistModelScript.PLAN_COUNT, 0)
+	run_state.crew_heist_state["x"] = private_state
 	run_state.narrative_flags["crew_favor_pending"] = true
 	var module := EventModuleScript.new()
 	module.setup(library.event("crew_favor_delivery"), library)
@@ -276,7 +278,7 @@ func _hidden_observer_fixture(library: ContentLibrary, alternate_private_case: b
 		return {}
 	# Reassert only model-private bytes immediately before the complete public
 	# observer capture. Adapter evidence intentionally excludes that owner envelope.
-	run_state.crew_heist_state = {"x": private_state}
+	run_state.crew_heist_state["x"] = private_state
 	var registration := _dict(run_state.world_sequence_registrations.get(token, {}))
 	var instances := CrewWorldSequenceAdapterScript.durable_container(run_state.current_environment.get("world_sequence_instances", {}))
 	var registration_map := {}
@@ -591,12 +593,17 @@ func _append_checkpoint_field_mutations(cases: Array, authentic: Dictionary) -> 
 		["noncanonical_owner_whitespace", "owner_token", "%s " % str(authentic.get("owner_token", ""))],
 		["noncanonical_public_instance_whitespace", "public_instance_token", " %s" % str(authentic.get("public_instance_token", ""))],
 		["noncanonical_receipt_id_case", "outcome_receipt_id", str(authentic.get("outcome_receipt_id", "")).to_upper()],
-		["noncanonical_public_result", "public_result", {"message": str(_dict(authentic.get("public_result", {})).get("message", "")), "resolved": true, "ok": true}],
 	]:
 		var mutation := _array(mutation_value)
 		var candidate := authentic.duplicate(true)
 		candidate[str(mutation[1])] = mutation[2]
 		cases.append({"id": str(mutation[0]), "checkpoint": candidate})
+	var noncanonical_result := _dict(authentic.get("public_result", {}))
+	noncanonical_result["message"] = "%s " % str(noncanonical_result.get("message", ""))
+	var noncanonical_checkpoint := authentic.duplicate(true)
+	noncanonical_checkpoint["public_result"] = noncanonical_result
+	noncanonical_checkpoint["public_result_fingerprint"] = SequenceRuntimeScript.content_fingerprint(noncanonical_result)
+	cases.append({"id": "noncanonical_public_result", "checkpoint": noncanonical_checkpoint})
 
 
 func _wrong_checkpoint_field_type(field: String, authentic_value: Variant) -> Variant:

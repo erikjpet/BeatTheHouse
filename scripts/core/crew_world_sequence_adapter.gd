@@ -288,12 +288,7 @@ static func preview_outcome(environment: Dictionary, token: String, definition: 
 	if channel_id.is_empty():
 		return {"ok": false, "errors": ["world sequence outcome preview channel is not registered"]}
 	var state := _dict(entry.get("state", {}))
-	var runtime_terminal := _array(state.get("resolved_outcomes", [])).has(clean_outcome)
-	if not runtime_terminal:
-		for record_value in _array(state.get("branch_resolution_records", [])):
-			if str(_dict(record_value).get("terminal_outcome", "")) == clean_outcome:
-				runtime_terminal = true
-				break
+	var runtime_terminal := _has_terminal_outcome(state, clean_outcome)
 	var cause_fingerprint := ""
 	if runtime_terminal:
 		cause_fingerprint = SequenceRuntimeScript.content_fingerprint({
@@ -340,7 +335,7 @@ static func confirm_outcome(environment: Dictionary, token: String, definition: 
 		return {"ok": false, "errors": ["world sequence confirmed outcome differs from its trusted preview"]}
 	var entry := _dict(_container(environment).get(token, {}))
 	var state := _dict(entry.get("state", {}))
-	if not _array(state.get("resolved_outcomes", [])).has(outcome):
+	if not _has_terminal_outcome(state, outcome):
 		var terminal := _apply_runtime_result(environment, token, definition, func(live_state: Dictionary) -> Dictionary:
 			return SequenceRuntimeScript.apply_owner_lifecycle_outcome(live_state, definition, outcome, outcome)
 		, LIFECYCLE_CLEANUP_PENDING)
@@ -360,6 +355,15 @@ static func confirm_outcome(environment: Dictionary, token: String, definition: 
 	container[token] = entry
 	environment[CONTAINER_KEY] = container
 	return {"ok": true, "replayed": false, "receipt": expected_receipt.duplicate(true), "errors": []}
+
+
+static func _has_terminal_outcome(state: Dictionary, outcome: String) -> bool:
+	if _array(state.get("resolved_outcomes", [])).has(outcome):
+		return true
+	for record_value in _array(state.get("branch_resolution_records", [])):
+		if str(_dict(record_value).get("terminal_outcome", "")) == outcome:
+			return true
+	return false
 
 
 # The owning model applies its existing API first, then acknowledges with only

@@ -455,7 +455,10 @@ static func _canonical_public_result(value: Variant) -> Dictionary:
 			or typeof(source.get("resolved")) != TYPE_BOOL or not bool(source.get("resolved", false)) \
 			or typeof(source.get("message")) != TYPE_STRING:
 		return {}
-	var result := {"ok": true, "resolved": true, "message": str(source.get("message", ""))}
+	var message := str(source.get("message", ""))
+	if message != message.strip_edges():
+		return {}
+	var result := {"ok": true, "resolved": true, "message": message}
 	if source.has("outcome"):
 		if typeof(source.get("outcome")) != TYPE_STRING or str(source.get("outcome", "")) not in ["delivered", "expired", "abandoned"]:
 			return {}
