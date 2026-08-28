@@ -2,6 +2,8 @@ extends "res://scripts/tests/foundation/check_slots_surfaces.gd"
 
 const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
 const GameRitualRuntimeContractScript := preload("res://scripts/tests/foundation/game_ritual_runtime_contract.gd")
+const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
+const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
 
 func _check_craps_surface_contract(game: GameModule, failures: Array, library: ContentLibrary = null) -> void:
@@ -3284,7 +3286,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	settle_anim_environment["game_states"] = {"blackjack": generated_state.duplicate(true)}
 	var settle_anim_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, settle_anim_run_state, settle_anim_environment)
 	var settle_anim_stand := game.surface_action_command("blackjack_stand", 0, true, settle_anim_deal.get("ui_state", {}), settle_anim_run_state, settle_anim_environment)
-	var settle_anim_result := game.resolve_with_context("play_basic", 5, settle_anim_run_state, settle_anim_environment, settle_anim_run_state.create_rng("blackjack_stand_animation_resolve"), settle_anim_stand.get("ui_state", {}))
+	var settle_anim_result := _blackjack_authority_resolve(game, "play_basic", 5, settle_anim_run_state, settle_anim_environment, settle_anim_run_state.create_rng("blackjack_stand_animation_resolve"), settle_anim_stand.get("ui_state", {}))
 	if not bool(settle_anim_result.get("ok", false)):
 		failures.append("Blackjack stand animation fixture did not resolve through the normal play_basic path.")
 	var settle_anim_surface := game.surface_state(settle_anim_run_state, settle_anim_environment, {})
@@ -3350,7 +3352,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var clock_stand := game.surface_action_command("blackjack_stand", 0, true, clock_deal_ui, clock_run_state, clock_environment)
 	if not bool(clock_stand.get("resolve", false)):
 		failures.append("Blackjack post-decision clock fixture did not become settleable after the opening deal presentation.")
-	var clock_result := game.resolve_with_context("play_basic", 5, clock_run_state, clock_environment, clock_run_state.create_rng("blackjack_post_decision_clock_resolve"), clock_stand.get("ui_state", {}))
+	var clock_result := _blackjack_authority_resolve(game, "play_basic", 5, clock_run_state, clock_environment, clock_run_state.create_rng("blackjack_post_decision_clock_resolve"), clock_stand.get("ui_state", {}))
 	var clock_dealer: Array = clock_result.get("blackjack_dealer", []) if typeof(clock_result.get("blackjack_dealer", [])) == TYPE_ARRAY else []
 	if clock_dealer.size() != 4:
 		failures.append("Blackjack post-decision fixture did not execute both required dealer draws.")
@@ -3405,7 +3407,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var sit_table: Dictionary = game.generate_environment_state(sit_run_state, sit_environment, sit_run_state.create_rng("blackjack_sitout_table"))
 	sit_environment["game_states"] = {"blackjack": sit_table}
 	sit_run_state.current_environment = sit_environment.duplicate(true)
-	var sit_result := game.resolve_with_context("play_basic", 0, sit_run_state, sit_environment, sit_run_state.create_rng("blackjack_sitout_resolve"), {"blackjack_sit_out": true})
+	var sit_result := _blackjack_authority_resolve(game, "play_basic", 0, sit_run_state, sit_environment, sit_run_state.create_rng("blackjack_sitout_resolve"), {"blackjack_sit_out": true})
 	if not bool(sit_result.get("blackjack_sat_out", false)) or int(sit_result.get("total_wager", int(sit_result.get("stake", -1)))) != 0 or int(sit_result.get("bankroll_delta", 999)) != 0:
 		failures.append("Blackjack sit-out hand did not consume a hand with zero wager and zero bankroll movement.")
 	if not (sit_result.get("blackjack_player_hands", []) as Array).is_empty():
@@ -3534,7 +3536,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var answered_challenge: Dictionary = answer_state.get("count_challenge", {})
 	if int(answered_challenge.get("dealer_attention_risk", 0)) != int(count_challenge.get("dealer_attention_risk", 0)):
 		failures.append("Blackjack successful count pulse hits raised dealer suspicion.")
-	var clean_count_result := game.resolve_with_context("count_cards", 1, run_state, environment, run_state.create_rng("blackjack_clean_count_contract"), answer_state)
+	var clean_count_result := _blackjack_authority_resolve(game, "count_cards", 1, run_state, environment, run_state.create_rng("blackjack_clean_count_contract"), answer_state)
 	if int(clean_count_result.get("suspicion_delta", 0)) != 0:
 		failures.append("Blackjack clean live count produced suspicion heat.")
 	var dirty_count_state: Dictionary = count_state.duplicate(true)
@@ -3547,8 +3549,8 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		dirty_count_state["count_challenge"] = dirty_count_challenge
 		dirty_count_state["count_answered"] = true
 		dirty_count_state["count_correct"] = false
-		var dirty_count_result := game.resolve_with_context("count_cards", 1, run_state, environment, run_state.create_rng("blackjack_dirty_count_contract"), dirty_count_state)
-		if int(dirty_count_result.get("suspicion_delta", 0)) < 14:
+		var dirty_count_result := _blackjack_authority_resolve(game, "count_cards", 1, run_state, environment, run_state.create_rng("blackjack_dirty_count_contract"), dirty_count_state)
+		if int(dirty_count_result.get("blackjack_host_action_suspicion_delta", dirty_count_result.get("suspicion_delta", 0))) < 14:
 			failures.append("Blackjack inaccurate live count did not produce significant heat.")
 	var miss_state: Dictionary = count_state.duplicate(true)
 	var miss_challenge: Dictionary = miss_state.get("count_challenge", {})
@@ -3563,7 +3565,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		miss_state["surface_time_msec"] = test_now
 		if not game.surface_needs_auto_tick(miss_state, run_state, environment):
 			failures.append("Blackjack live count did not request auto tick when a count symbol expired.")
-		var miss_tick := game.surface_auto_action_command(miss_state, run_state, environment, {})
+		var miss_tick := _blackjack_authority_auto_command(game, 1, run_state, environment, miss_state, test_now)
 		var tick_state: Dictionary = miss_tick.get("ui_state", {})
 		var tick_challenge: Dictionary = tick_state.get("count_challenge", {})
 		if (_string_array(tick_challenge.get("missed_icons", []))).is_empty():
@@ -3584,7 +3586,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack watched peek did not resolve as an immediate high-risk cheat.")
 	if not bool(watched_peek_ui.get("peek_caught_watching", false)) or bool(watched_peek_ui.get("dealer_hole_visible", false)):
 		failures.append("Blackjack watched peek exposed the hole card instead of flagging the dealer confrontation.")
-	var watched_peek_result := game.resolve_with_context("peek_hole_card", 0, watched_peek_run_state, watched_peek_environment, watched_peek_run_state.create_rng("blackjack_watched_peek_resolve"), watched_peek_ui)
+	var watched_peek_result := _blackjack_authority_resolve(game, "peek_hole_card", 0, watched_peek_run_state, watched_peek_environment, watched_peek_run_state.create_rng("blackjack_watched_peek_resolve"), watched_peek_ui)
 	if not bool(watched_peek_result.get("blackjack_table_barred", false)):
 		failures.append("Blackjack watched peek did not bar the player from the table.")
 	if int(watched_peek_result.get("blackjack_confiscated_bet", 0)) <= 0 or int(watched_peek_result.get("bankroll_delta", 0)) >= 0:
@@ -3630,7 +3632,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	if int((frozen_peek_a.get("dealer_focus", {}) as Dictionary).get("lookaway_remaining_msec", -1)) != int((frozen_peek_b.get("dealer_focus", {}) as Dictionary).get("lookaway_remaining_msec", -2)):
 		failures.append("Tutorial blackjack Peek time advanced while the supplied simulation clock was frozen.")
 	var tutorial_bad_peek := game.surface_action_command("blackjack_peek", 0, false, tutorial_deal.get("ui_state", {}), tutorial_peek_run, tutorial_peek_environment)
-	var tutorial_peek_result := game.resolve_with_context("peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_reprieve"), tutorial_bad_peek.get("ui_state", {}))
+	var tutorial_peek_result := _blackjack_authority_resolve(game, "peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_reprieve"), tutorial_bad_peek.get("ui_state", {}))
 	var tutorial_after_table: Dictionary = ((tutorial_peek_environment.get("game_states", {}) as Dictionary).get("blackjack", {}) as Dictionary)
 	if not bool(tutorial_peek_result.get("blackjack_tutorial_peek_reprieve", false)) or bool(tutorial_peek_result.get("blackjack_table_barred", true)) or bool(tutorial_after_table.get("barred", true)):
 		failures.append("The first caught tutorial Peek did not leave the blackjack table open through the dealer reprieve.")
@@ -3707,7 +3709,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	tutorial_peek_environment["game_states"] = {"blackjack": second_tutorial_table}
 	var second_tutorial_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5, "surface_time_msec": 8000}, tutorial_peek_run, tutorial_peek_environment)
 	var second_tutorial_peek := game.surface_action_command("blackjack_peek", 0, false, second_tutorial_deal.get("ui_state", {}), tutorial_peek_run, tutorial_peek_environment)
-	var second_tutorial_result := game.resolve_with_context("peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_barred"), second_tutorial_peek.get("ui_state", {}))
+	var second_tutorial_result := _blackjack_authority_resolve(game, "peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_barred"), second_tutorial_peek.get("ui_state", {}))
 	if bool(second_tutorial_result.get("blackjack_table_barred", true)) \
 			or not bool(second_tutorial_result.get("blackjack_tutorial_peek_reprieve", false)):
 		failures.append("A repeated bad Peek barred the tutorial table before the player completed the counting lesson.")
@@ -3717,7 +3719,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	tutorial_peek_environment["game_states"] = {"blackjack": learned_tutorial_table}
 	var learned_tutorial_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5, "surface_time_msec": 12000}, tutorial_peek_run, tutorial_peek_environment)
 	var learned_tutorial_peek := game.surface_action_command("blackjack_peek", 0, false, learned_tutorial_deal.get("ui_state", {}), tutorial_peek_run, tutorial_peek_environment)
-	var learned_tutorial_result := game.resolve_with_context("peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_after_count"), learned_tutorial_peek.get("ui_state", {}))
+	var learned_tutorial_result := _blackjack_authority_resolve(game, "peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_after_count"), learned_tutorial_peek.get("ui_state", {}))
 	if not bool(learned_tutorial_result.get("blackjack_table_barred", false)):
 		failures.append("Tutorial blackjack kept protecting bad Peeks after the counting lesson was complete.")
 	var cufflinks_run_state: RunState = RunStateScript.new()
@@ -3732,18 +3734,18 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	cufflinks_run_state.current_environment = cufflinks_environment.duplicate(true)
 	var cufflinks_deal: Dictionary = game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, cufflinks_run_state, cufflinks_environment)
 	var cufflinks_peek: Dictionary = game.surface_action_command("blackjack_peek", 0, false, cufflinks_deal.get("ui_state", {}), cufflinks_run_state, cufflinks_environment)
-	var cufflinks_result: Dictionary = game.resolve_with_context("peek_hole_card", 0, cufflinks_run_state, cufflinks_environment, cufflinks_run_state.create_rng("blackjack_cufflinks_peek_resolve"), cufflinks_peek.get("ui_state", {}))
+	var cufflinks_result: Dictionary = _blackjack_authority_resolve(game, "peek_hole_card", 0, cufflinks_run_state, cufflinks_environment, cufflinks_run_state.create_rng("blackjack_cufflinks_peek_resolve"), cufflinks_peek.get("ui_state", {}))
 	if int(cufflinks_result.get("suspicion_delta", -1)) != 0:
 		failures.append("Cooler's Cufflinks did not fully absorb failed blackjack peek heat.")
 	if not bool(cufflinks_result.get("blackjack_coolers_cufflinks_broke", false)):
 		failures.append("Cooler's Cufflinks failed peek did not report the break event.")
 	if cufflinks_run_state.inventory.has("coolers_cufflinks") or not cufflinks_run_state.inventory.has("broken_cufflinks"):
 		failures.append("Cooler's Cufflinks did not turn into Broken Cufflinks after a failed peek.")
-	var distract_click := game.surface_action_command("blackjack_distraction", 0, false, deal_ui, run_state, environment)
-	var peek_click := game.surface_action_command("blackjack_peek", 0, false, distract_click.get("ui_state", {}), run_state, environment)
+	var distract_click := _blackjack_authority_surface(game, "blackjack_distraction", 1, run_state, environment)
+	var peek_click := _blackjack_authority_surface(game, "blackjack_peek", 1, run_state, environment)
 	if str(peek_click.get("action_kind", "")) != "cheat" or not bool(peek_click.get("preserve_surface_ui_state", false)) or not bool((peek_click.get("ui_state", {}) as Dictionary).get("dealer_hole_visible", false)):
 		failures.append("Blackjack peek did not expose the dealer hole card after a distraction.")
-	var successful_peek_result := game.resolve_with_context("peek_hole_card", 0, run_state, environment, run_state.create_rng("blackjack_successful_peek_preserves_hand"), peek_click.get("ui_state", {}))
+	var successful_peek_result := _blackjack_authority_resolve(game, "peek_hole_card", 0, run_state, environment, run_state.create_rng("blackjack_successful_peek_preserves_hand"), peek_click.get("ui_state", {}))
 	var successful_peek_state: Dictionary = successful_peek_result.get("blackjack_surface_ui_state", {}) if typeof(successful_peek_result.get("blackjack_surface_ui_state", {})) == TYPE_DICTIONARY else {}
 	if not bool(successful_peek_result.get("preserve_surface_ui_state", false)) \
 			or not bool(successful_peek_state.get("dealer_hole_visible", false)) \
@@ -3777,7 +3779,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	if int((strategy_focus_surface.get("dealer_focus", {}) as Dictionary).get("strategy_pressure", 0)) <= 0:
 		failures.append("Blackjack strategy deviation did not increase dealer watch pressure during the hand.")
 	var strategy_stand := game.surface_action_command("blackjack_stand", 0, false, strategy_hit_ui, strategy_run_state, strategy_environment)
-	var strategy_result := game.resolve_with_context("play_basic", 5, strategy_run_state, strategy_environment, strategy_run_state.create_rng("blackjack_strategy_deviation_resolve"), strategy_stand.get("ui_state", {}))
+	var strategy_result := _blackjack_authority_resolve(game, "play_basic", 5, strategy_run_state, strategy_environment, strategy_run_state.create_rng("blackjack_strategy_deviation_resolve"), strategy_stand.get("ui_state", {}))
 	if not bool(strategy_result.get("blackjack_strategy_confronted", false)) or int(strategy_result.get("suspicion_delta", 0)) <= 0:
 		failures.append("Blackjack strategy deviation confrontation did not resolve into heat.")
 	if int(strategy_result.get("suspicion_delta", 0)) < 12:
@@ -3808,7 +3810,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		"strategy_attention_boost": 1,
 		"strategy_confronted": false,
 	}
-	var ordinary_strategy_result := game.resolve_with_context("play_basic", 5, ordinary_strategy_run, ordinary_strategy_environment, ordinary_strategy_run.create_rng("blackjack_ordinary_strategy_resolve"), ordinary_ui)
+	var ordinary_strategy_result := _blackjack_authority_resolve(game, "play_basic", 5, ordinary_strategy_run, ordinary_strategy_environment, ordinary_strategy_run.create_rng("blackjack_ordinary_strategy_resolve"), ordinary_ui)
 	if int(ordinary_strategy_result.get("suspicion_delta", -1)) < 0 or int(ordinary_strategy_result.get("suspicion_delta", 99)) > 3:
 		failures.append("Blackjack ordinary strategy mistake was punished with too much heat.")
 	var ordinary_strategy_after: Dictionary = ((ordinary_strategy_environment.get("game_states", {}) as Dictionary).get("blackjack", {}) as Dictionary)
@@ -3841,7 +3843,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	count_advantage_ui["strategy_deviation_events"] = [{"chosen": "stand", "recommended": "hit", "score": 2, "information_source": "count"}]
 	count_advantage_ui["strategy_deviation_score"] = 2
 	count_advantage_ui["strategy_attention_boost"] = 12
-	var count_advantage_result := game.resolve_with_context("play_basic", 5, count_advantage_run, count_advantage_environment, count_advantage_run.create_rng("blackjack_count_advantage_resolve"), count_advantage_ui)
+	var count_advantage_result := _blackjack_authority_resolve(game, "play_basic", 5, count_advantage_run, count_advantage_environment, count_advantage_run.create_rng("blackjack_count_advantage_resolve"), count_advantage_ui)
 	if int(count_advantage_result.get("suspicion_delta", 0)) < 14:
 		failures.append("Blackjack count-informed strategy deviation did not receive significant heat.")
 	var count_advantage_after: Dictionary = ((count_advantage_environment.get("game_states", {}) as Dictionary).get("blackjack", {}) as Dictionary)
@@ -3885,7 +3887,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack busted hand still exposed hit or stand controls.")
 	if str(bust_surface.get("table_notice", "")).to_lower().find("bust") < 0:
 		failures.append("Blackjack busted hand did not expose a clear bust table notice.")
-	var bust_result := game.resolve_with_context("play_basic", 5, bust_run_state, bust_environment, bust_run_state.create_rng("blackjack_bust_resolve"), bust_ui)
+	var bust_result := _blackjack_authority_resolve(game, "play_basic", 5, bust_run_state, bust_environment, bust_run_state.create_rng("blackjack_bust_resolve"), bust_ui)
 	var bust_hands: Array = bust_result.get("blackjack_hand_results", []) as Array
 	if bust_hands.is_empty() or str((bust_hands[0] as Dictionary).get("outcome", "")) != "bust":
 		failures.append("Blackjack bust resolve did not settle the hand as a bust.")
@@ -3909,7 +3911,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var natural_ui: Dictionary = natural_deal.get("ui_state", {})
 	var natural_settle := game.surface_action_command("blackjack_deal", 0, false, natural_ui, natural_run_state, natural_environment)
 	natural_ui = natural_settle.get("ui_state", {})
-	var natural_result := game.resolve_with_context("play_basic", 5, natural_run_state, natural_environment, natural_run_state.create_rng("blackjack_natural_resolve"), natural_ui)
+	var natural_result := _blackjack_authority_resolve(game, "play_basic", 5, natural_run_state, natural_environment, natural_run_state.create_rng("blackjack_natural_resolve"), natural_ui)
 	var natural_hands: Array = natural_result.get("blackjack_hand_results", []) as Array
 	if natural_hands.is_empty() or str((natural_hands[0] as Dictionary).get("outcome", "")) != "blackjack":
 		failures.append("Blackjack natural did not settle as a 3:2 blackjack.")
@@ -3956,7 +3958,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	if not bool(surrender_click.get("resolve", false)):
 		failures.append("Blackjack surrender did not immediately resolve the surrendered hand.")
 	surrender_ui = surrender_click.get("ui_state", {})
-	var surrender_result := game.resolve_with_context("play_basic", 5, surrender_run_state, surrender_environment, surrender_run_state.create_rng("blackjack_surrender_resolve"), surrender_ui)
+	var surrender_result := _blackjack_authority_resolve(game, "play_basic", 5, surrender_run_state, surrender_environment, surrender_run_state.create_rng("blackjack_surrender_resolve"), surrender_ui)
 	var surrender_hands: Array = surrender_result.get("blackjack_hand_results", []) as Array
 	if surrender_hands.is_empty() or str((surrender_hands[0] as Dictionary).get("outcome", "")) != "surrender" or int((surrender_hands[0] as Dictionary).get("bankroll_delta", 0)) != -3:
 		failures.append("Blackjack surrender did not settle as a half-wager loss.")
@@ -3979,7 +3981,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	marked_surrender_environment["game_states"] = {"blackjack": marked_surrender_table}
 	var marked_surrender_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, marked_surrender_run_state, marked_surrender_environment)
 	var marked_surrender_click := game.surface_action_command("blackjack_surrender", 0, false, marked_surrender_deal.get("ui_state", {}), marked_surrender_run_state, marked_surrender_environment)
-	var marked_surrender_result := game.resolve_with_context("play_basic", 5, marked_surrender_run_state, marked_surrender_environment, marked_surrender_run_state.create_rng("blackjack_marked_surrender_resolve"), marked_surrender_click.get("ui_state", {}))
+	var marked_surrender_result := _blackjack_authority_resolve(game, "play_basic", 5, marked_surrender_run_state, marked_surrender_environment, marked_surrender_run_state.create_rng("blackjack_marked_surrender_resolve"), marked_surrender_click.get("ui_state", {}))
 	if int(marked_surrender_result.get("bankroll_delta", 0)) != -3 or int(marked_surrender_result.get("blackjack_main_delta", 0)) != -3:
 		failures.append("Blackjack marked cards reduced a legal reveal loss without an actual peek cheat.")
 
@@ -4000,7 +4002,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var all_in_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 10}, all_in_run_state, all_in_environment)
 	if str(all_in_deal.get("action_id", "")) != "blackjack_place_bet":
 		failures.append("Blackjack all-in opening hand did not route through the upfront wager placement action.")
-	var all_in_bet := game.resolve_with_context("blackjack_place_bet", 10, all_in_run_state, all_in_environment, all_in_run_state.create_rng("blackjack_all_in_bet"), all_in_deal.get("ui_state", {}))
+	var all_in_bet := _blackjack_authority_resolve(game, "blackjack_place_bet", 10, all_in_run_state, all_in_environment, all_in_run_state.create_rng("blackjack_all_in_bet"), all_in_deal.get("ui_state", {}))
 	var all_in_bet_ui: Dictionary = all_in_bet.get("ui_state", {})
 	if all_in_run_state.bankroll != 0:
 		failures.append("Blackjack all-in opening wager did not debit bankroll before hand settlement.")
@@ -4013,7 +4015,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	if (all_in_bet_ui.get("player_hands", []) as Array).is_empty():
 		failures.append("Blackjack all-in upfront wager did not keep the dealt hand in surface state.")
 	var all_in_stand := game.surface_action_command("blackjack_stand", 0, true, all_in_bet_ui, all_in_run_state, all_in_environment)
-	var all_in_result := game.resolve_with_context("play_basic", 10, all_in_run_state, all_in_environment, all_in_run_state.create_rng("blackjack_all_in_settle"), all_in_stand.get("ui_state", {}))
+	var all_in_result := _blackjack_authority_resolve(game, "play_basic", 10, all_in_run_state, all_in_environment, all_in_run_state.create_rng("blackjack_all_in_settle"), all_in_stand.get("ui_state", {}))
 	if int(all_in_result.get("blackjack_wager_debited", 0)) != 10:
 		failures.append("Blackjack all-in settlement did not recognize the upfront-debited wager.")
 	if int(all_in_result.get("bankroll_delta", 999)) != 0:
@@ -4038,13 +4040,13 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	]
 	double_prompt_environment["game_states"] = {"blackjack": double_prompt_table}
 	var double_prompt_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 11}, double_prompt_run_state, double_prompt_environment)
-	var double_prompt_bet := game.resolve_with_context("blackjack_place_bet", 11, double_prompt_run_state, double_prompt_environment, double_prompt_run_state.create_rng("blackjack_double_prompt_bet"), double_prompt_deal.get("ui_state", {}))
+	var double_prompt_bet := _blackjack_authority_resolve(game, "blackjack_place_bet", 11, double_prompt_run_state, double_prompt_environment, double_prompt_run_state.create_rng("blackjack_double_prompt_bet"), double_prompt_deal.get("ui_state", {}))
 	var double_prompt_bet_ui: Dictionary = double_prompt_bet.get("ui_state", {})
 	if double_prompt_run_state.bankroll != 21:
 		failures.append("Blackjack double prompt fixture did not leave $21 after the opening wager.")
 	var double_prompt_command := game.surface_action_command("blackjack_double", 0, false, double_prompt_bet_ui, double_prompt_run_state, double_prompt_environment)
 	var double_prompt_ui: Dictionary = double_prompt_command.get("ui_state", {})
-	var double_prompt_remaining_cost := game.wager_cost_for_context("play_basic", 11, double_prompt_run_state, double_prompt_environment, double_prompt_ui)
+	var double_prompt_remaining_cost := _blackjack_authority_preview(game, "play_basic", 11, double_prompt_run_state, double_prompt_environment, double_prompt_ui)
 	if double_prompt_remaining_cost != 11:
 		failures.append("Blackjack double reported total wager instead of unpaid extra wager; expected 11, got %d." % double_prompt_remaining_cost)
 	if double_prompt_run_state.bankroll - double_prompt_remaining_cost <= 0:
@@ -4137,7 +4139,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	insurance_ui = insurance_click.get("ui_state", {})
 	var insurance_stand := game.surface_action_command("blackjack_stand", 0, false, insurance_ui, insurance_run_state, insurance_environment)
 	insurance_ui = insurance_stand.get("ui_state", {})
-	var insurance_result := game.resolve_with_context("play_basic", 10, insurance_run_state, insurance_environment, insurance_run_state.create_rng("blackjack_insurance_resolve"), insurance_ui)
+	var insurance_result := _blackjack_authority_resolve(game, "play_basic", 10, insurance_run_state, insurance_environment, insurance_run_state.create_rng("blackjack_insurance_resolve"), insurance_ui)
 	var insurance_side_results: Array = insurance_result.get("blackjack_side_bet_results", []) as Array
 	if insurance_side_results.is_empty() or int((insurance_side_results[0] as Dictionary).get("stake", 0)) != 5:
 		failures.append("Blackjack insurance was not priced at half the main wager.")
@@ -4194,7 +4196,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 			settlement_has_hole_card = true
 	if not settlement_has_hole_card:
 		failures.append("Blackjack settlement count preview did not include the revealed dealer hole card.")
-	var first_count_result := game.resolve_with_context("play_basic", 5, persistent_count_run_state, persistent_count_environment, persistent_count_run_state.create_rng("blackjack_persistent_count_resolve"), first_count_stand.get("ui_state", {}))
+	var first_count_result := _blackjack_authority_resolve(game, "play_basic", 5, persistent_count_run_state, persistent_count_environment, persistent_count_run_state.create_rng("blackjack_persistent_count_resolve"), first_count_stand.get("ui_state", {}))
 	if not bool(((persistent_count_environment.get("game_states", {}) as Dictionary).get("blackjack", {}) as Dictionary).get("counting_enabled", false)):
 		failures.append("Blackjack count toggle did not remain enabled after hand settlement.")
 	var second_count_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, persistent_count_run_state, persistent_count_environment)
@@ -4224,24 +4226,24 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var multi_first_deal := game.surface_action_command("blackjack_deal", 0, false, multi_arm_count.get("ui_state", {}), multi_count_run_state, multi_count_environment)
 	var multi_first_preview := game.surface_action_command("blackjack_stand", 0, true, multi_first_deal.get("ui_state", {}), multi_count_run_state, multi_count_environment)
 	var multi_first_ui := _blackjack_click_all_count_icons(game, multi_first_preview.get("ui_state", {}), multi_count_run_state, multi_count_environment)
-	var multi_first_count_action := game.resolve_with_context("count_cards", 0, multi_count_run_state, multi_count_environment, multi_count_run_state.create_rng("blackjack_multi_count_action"), multi_first_ui)
+	var multi_first_count_action := _blackjack_authority_resolve(game, "count_cards", 0, multi_count_run_state, multi_count_environment, multi_count_run_state.create_rng("blackjack_multi_count_action"), multi_first_ui)
 	var multi_first_count_action_ui: Dictionary = multi_first_count_action.get("blackjack_surface_ui_state", {}) if typeof(multi_first_count_action.get("blackjack_surface_ui_state", {})) == TYPE_DICTIONARY else {}
 	if not bool(multi_first_count_action.get("preserve_surface_ui_state", false)) or multi_first_count_action_ui.is_empty():
 		failures.append("Blackjack standalone count action did not return preserved hand UI state.")
 	if not bool(multi_first_count_action_ui.get("count_answered", false)) or int(multi_first_count_action_ui.get("count_delta", 999)) != int(multi_first_ui.get("count_delta", 0)):
 		failures.append("Blackjack standalone count action did not preserve the finalized live count delta.")
-	var multi_first_result := game.resolve_with_context("play_basic", 5, multi_count_run_state, multi_count_environment, multi_count_run_state.create_rng("blackjack_multi_count_first"), multi_first_count_action_ui)
+	var multi_first_result := _blackjack_authority_resolve(game, "play_basic", 5, multi_count_run_state, multi_count_environment, multi_count_run_state.create_rng("blackjack_multi_count_first"), multi_first_count_action_ui)
 	var multi_first_expected_count := _blackjack_test_result_count_delta(multi_first_result)
 	var multi_after_first: Dictionary = (multi_count_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
 	if int(multi_after_first.get("recorded_running_count", 999)) != multi_first_expected_count:
 		failures.append("Blackjack recorded count did not persist after the first counted hand.")
-	var multi_second_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, multi_count_run_state, multi_count_environment)
+	var multi_second_deal := _blackjack_authority_surface(game, "blackjack_deal", 5, multi_count_run_state, multi_count_environment)
 	var multi_second_surface := game.surface_state(multi_count_run_state, multi_count_environment, multi_second_deal.get("ui_state", {}))
 	if int(multi_second_surface.get("persisted_recorded_running_count", 999)) != multi_first_expected_count or int(multi_second_surface.get("recorded_running_count", 999)) != multi_first_expected_count:
 		failures.append("Blackjack recorded count was not visible at the start of the next hand.")
-	var multi_second_preview := game.surface_action_command("blackjack_stand", 0, true, multi_second_deal.get("ui_state", {}), multi_count_run_state, multi_count_environment)
-	var multi_second_ui := _blackjack_click_all_count_icons(game, multi_second_preview.get("ui_state", {}), multi_count_run_state, multi_count_environment)
-	var multi_second_result := game.resolve_with_context("play_basic", 5, multi_count_run_state, multi_count_environment, multi_count_run_state.create_rng("blackjack_multi_count_second"), multi_second_ui)
+	var multi_second_preview := _blackjack_authority_surface(game, "blackjack_stand", 5, multi_count_run_state, multi_count_environment, 0, true)
+	var multi_second_ui := _blackjack_authority_click_all_count_icons(game, 5, multi_count_run_state, multi_count_environment, multi_second_preview.get("ui_state", {}))
+	var multi_second_result := _blackjack_authority_resolve(game, "play_basic", 5, multi_count_run_state, multi_count_environment, multi_count_run_state.create_rng("blackjack_multi_count_second"), multi_second_ui)
 	var multi_second_challenge: Dictionary = multi_second_ui.get("count_challenge", {}) if typeof(multi_second_ui.get("count_challenge", {})) == TYPE_DICTIONARY else {}
 	var multi_second_expected_count := multi_first_expected_count + _blackjack_test_result_count_delta(multi_second_result)
 	var multi_after_second: Dictionary = (multi_count_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
@@ -4278,7 +4280,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	if not bool(settle_command.get("resolve", false)):
 		failures.append("Blackjack split hands did not reach a resolvable state after standing.")
 	var split_before := _run_state_result_snapshot(split_run_state)
-	var split_result := game.resolve_with_context("play_basic", 5, split_run_state, split_environment, split_run_state.create_rng("blackjack_split_resolve"), split_ui)
+	var split_result := _blackjack_authority_resolve(game, "play_basic", 5, split_run_state, split_environment, split_run_state.create_rng("blackjack_split_resolve"), split_ui)
 	_check_action_result_shape(split_result, "legal", failures)
 	_check_action_result_applied(split_before, split_run_state, split_result, "blackjack split hand result", failures)
 	if (split_result.get("blackjack_hand_results", []) as Array).size() != 2:
@@ -4311,7 +4313,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	shoe_persist_environment["game_states"] = {"blackjack": shoe_persist_table}
 	var shoe_persist_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, shoe_persist_run_state, shoe_persist_environment)
 	var shoe_persist_stand := game.surface_action_command("blackjack_stand", 0, true, shoe_persist_deal.get("ui_state", {}), shoe_persist_run_state, shoe_persist_environment)
-	var shoe_persist_result := game.resolve_with_context("play_basic", 5, shoe_persist_run_state, shoe_persist_environment, shoe_persist_run_state.create_rng("blackjack_shoe_persist_resolve"), shoe_persist_stand.get("ui_state", {}))
+	var shoe_persist_result := _blackjack_authority_resolve(game, "play_basic", 5, shoe_persist_run_state, shoe_persist_environment, shoe_persist_run_state.create_rng("blackjack_shoe_persist_resolve"), shoe_persist_stand.get("ui_state", {}))
 	var _shoe_persist_delta := int(shoe_persist_result.get("blackjack_main_delta", 0))
 	var shoe_persist_updated: Dictionary = (shoe_persist_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
 	var persisted_shoe: Array = shoe_persist_updated.get("shoe", []) as Array
@@ -4341,7 +4343,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	shuffle_environment["game_states"] = {"blackjack": shuffle_table}
 	var shuffle_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, shuffle_run_state, shuffle_environment)
 	var shuffle_stand := game.surface_action_command("blackjack_stand", 0, true, shuffle_deal.get("ui_state", {}), shuffle_run_state, shuffle_environment)
-	var _shuffle_result := game.resolve_with_context("play_basic", 5, shuffle_run_state, shuffle_environment, shuffle_run_state.create_rng("blackjack_forced_shuffle_resolve"), shuffle_stand.get("ui_state", {}))
+	var _shuffle_result := _blackjack_authority_resolve(game, "play_basic", 5, shuffle_run_state, shuffle_environment, shuffle_run_state.create_rng("blackjack_forced_shuffle_resolve"), shuffle_stand.get("ui_state", {}))
 	var shuffle_updated: Dictionary = (shuffle_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
 	var shuffled_shoe: Array = shuffle_updated.get("shoe", []) as Array
 	var shuffle_composition: Dictionary = shuffle_updated.get("shoe_composition", {}) if typeof(shuffle_updated.get("shoe_composition", {})) == TYPE_DICTIONARY else {}
@@ -4383,7 +4385,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var ladies_ui: Dictionary = ladies_deal.get("ui_state", {})
 	var ladies_settle := game.surface_action_command("blackjack_stand", 0, true, ladies_ui, ladies_run_state, ladies_environment)
 	ladies_ui = ladies_settle.get("ui_state", {})
-	var ladies_result := game.resolve_with_context("play_basic", 5, ladies_run_state, ladies_environment, ladies_run_state.create_rng("blackjack_lucky_ladies_resolve"), ladies_ui)
+	var ladies_result := _blackjack_authority_resolve(game, "play_basic", 5, ladies_run_state, ladies_environment, ladies_run_state.create_rng("blackjack_lucky_ladies_resolve"), ladies_ui)
 	var ladies_side_results: Array = ladies_result.get("blackjack_side_bet_results", []) as Array
 	if ladies_side_results.is_empty():
 		failures.append("Blackjack Lucky Ladies side bet did not settle.")
@@ -4394,7 +4396,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		if int(ladies_side_result.get("payout_mult", 0)) == 200 or str(ladies_side_result.get("detail", "")) == "queen hearts with dealer blackjack":
 			failures.append("Blackjack Lucky Ladies awarded the queen-hearts jackpot with only one queen of hearts.")
 	var cheat_before := _run_state_result_snapshot(split_run_state)
-	var cheat_result := game.resolve_with_context("peek_hole_card", 0, split_run_state, split_environment, split_run_state.create_rng("blackjack_peek_resolve"), peek_click.get("ui_state", {}))
+	var cheat_result := _blackjack_authority_resolve(game, "peek_hole_card", 0, split_run_state, split_environment, split_run_state.create_rng("blackjack_peek_resolve"), peek_click.get("ui_state", {}))
 	_check_action_result_shape(cheat_result, "cheat", failures)
 	_check_action_result_applied(cheat_before, split_run_state, cheat_result, "blackjack peek cheat result", failures)
 	split_run_state.set_environment(split_environment)
@@ -4423,14 +4425,79 @@ func _check_blackjack_surface_time_resolve_determinism(game: GameModule, table_s
 		"selected_stake": 5,
 		"surface_time_msec": 24000,
 	}
-	var result_a: Dictionary = game.resolve_with_context("peek_hole_card", 5, run_a, environment_a, run_a.create_rng(), ui_state.duplicate(true))
-	var result_b: Dictionary = game.resolve_with_context("peek_hole_card", 5, run_b, environment_b, run_b.create_rng(), ui_state.duplicate(true))
+	var result_a: Dictionary = _blackjack_authority_resolve(game, "peek_hole_card", 5, run_a, environment_a, run_a.create_rng(), ui_state.duplicate(true))
+	var result_b: Dictionary = _blackjack_authority_resolve(game, "peek_hole_card", 5, run_b, environment_b, run_b.create_rng(), ui_state.duplicate(true))
 	for key in ["ok", "action_id", "action_kind", "bankroll_delta", "suspicion_delta", "base_suspicion_delta", "blackjack_table_barred", "blackjack_watched_peek", "blackjack_confiscated_bet", "message"]:
 		if result_a.get(key, null) != result_b.get(key, null):
 			failures.append("Blackjack supplied surface_time_msec resolve was not deterministic for %s." % str(key))
 			break
 	if run_a.bankroll != run_b.bankroll or run_a.suspicion_level() != run_b.suspicion_level():
 		failures.append("Blackjack supplied surface_time_msec resolve left divergent RunState economy/heat.")
+
+
+func _blackjack_authority_resolve(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	# Test fixtures are the trusted host in this suite. Seed their authored
+	# mid-hand state into the same durable table ledger production restores, then
+	# submit only the action through the production authority.
+	_blackjack_seed_authority_session(game, run_state, environment, ui_state)
+	var rng_snapshot := rng.snapshot() if rng != null else run_state.create_rng().snapshot()
+	run_state.rng_seed = int(rng_snapshot.get("seed", run_state.rng_seed))
+	run_state.rng_state = int(rng_snapshot.get("state", run_state.rng_state))
+	var host := _blackjack_test_host(game, run_state, stake)
+	return host.call("_blackjack_host_resolve_intent", action_id, stake)
+
+
+func _blackjack_authority_surface(game: GameModule, surface_action: String, stake: int, run_state: RunState, environment: Dictionary, index: int = 0, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:
+	run_state.current_environment = environment
+	var host := _blackjack_test_host(game, run_state, stake)
+	return host.call("_blackjack_host_surface_intent", surface_action, index, confirm_requested, surface_time_msec)
+
+
+func _blackjack_authority_auto_command(game: GameModule, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary, surface_time_msec: int) -> Dictionary:
+	_blackjack_seed_authority_session(game, run_state, environment, ui_state)
+	var host := _blackjack_test_host(game, run_state, stake)
+	return host.call("_blackjack_host_auto_intent", surface_time_msec)
+
+
+func _blackjack_authority_preview(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> int:
+	_blackjack_seed_authority_session(game, run_state, environment, ui_state)
+	var host := _blackjack_test_host(game, run_state, stake)
+	return int(host.call("_blackjack_host_preview_wager_cost", action_id, stake))
+
+
+func _blackjack_test_host(game: GameModule, run_state: RunState, stake: int) -> Control:
+	var host: Control = FoundationMainScript.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {"blackjack": game})
+	host.set("run_state", run_state)
+	host.set("selected_stake", stake)
+	return host
+
+
+func _blackjack_authority_click_all_count_icons(game: GameModule, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> Dictionary:
+	var current := ui_state.duplicate(true)
+	var challenge: Dictionary = current.get("count_challenge", {}) if typeof(current.get("count_challenge", {})) == TYPE_DICTIONARY else {}
+	var icons: Array = challenge.get("icons", []) if typeof(challenge.get("icons", [])) == TYPE_ARRAY else []
+	for icon_index in range(icons.size()):
+		var icon: Dictionary = icons[icon_index] if typeof(icons[icon_index]) == TYPE_DICTIONARY else {}
+		var action_msec := int(icon.get("spawn_msec", 0)) + 10
+		var command := _blackjack_authority_surface(game, "blackjack_count_icon", stake, run_state, environment, icon_index, false, action_msec)
+		if typeof(command.get("ui_state", null)) == TYPE_DICTIONARY:
+			current = (command.get("ui_state", {}) as Dictionary).duplicate(true)
+	return current
+
+
+func _blackjack_seed_authority_session(game: GameModule, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> void:
+	run_state.current_environment = environment
+	var table: Dictionary = game.call("_table_state", run_state, environment)
+	var previous_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var binding := "blackjack:%s:%s" % [str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	var checkpoint := run_state.blackjack_authority_checkpoint_fingerprint()
+	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(previous_ledger, binding, checkpoint)
+	if ledger.is_empty():
+		ledger = BlackjackActionAuthorityScript.default_ledger(binding, checkpoint)
+	table["_blackjack_action_authority"] = BlackjackActionAuthorityScript.stage_session(ledger, ui_state)
+	game.call("_update_environment_table", environment, table)
 
 
 func _check_blackjack_rule_matrix(game: GameModule, base_table: Dictionary, failures: Array) -> void:
@@ -4473,7 +4540,7 @@ func _blackjack_stand_and_resolve(game: GameModule, fixture: Dictionary, stake: 
 	var ui: Dictionary = fixture.get("ui", {})
 	var stand := game.surface_action_command("blackjack_stand", 0, true, ui, run_state, environment)
 	ui = stand.get("ui_state", {})
-	return game.resolve_with_context("play_basic", stake, run_state, environment, run_state.create_rng(rng_key), ui)
+	return _blackjack_authority_resolve(game, "play_basic", stake, run_state, environment, run_state.create_rng(rng_key), ui)
 
 
 func _check_blackjack_soft_17_matrix(game: GameModule, base_table: Dictionary, failures: Array) -> void:
@@ -4542,7 +4609,7 @@ func _check_blackjack_split_policy_matrix(game: GameModule, base_table: Dictiona
 	var split_ace_21_surface := game.surface_state(split_ace_21_run_state, split_ace_21_environment, split_ace_21_ui)
 	if int(split_ace_21_surface.get("active_hand_index", -1)) != 1 or int(split_ace_21_surface.get("blackjack_total", 0)) != 17 or not bool(split_ace_21_surface.get("can_hit", false)) or not bool(split_ace_21_surface.get("can_stand", false)):
 		failures.append("Blackjack split ace 21 did not advance to the next playable split hand.")
-	var split_ace_result := game.resolve_with_context("play_basic", 5, split_ace_21_run_state, split_ace_21_environment, split_ace_21_run_state.create_rng("blackjack_rule_split_aces"), split_ace_21_ui)
+	var split_ace_result := _blackjack_authority_resolve(game, "play_basic", 5, split_ace_21_run_state, split_ace_21_environment, split_ace_21_run_state.create_rng("blackjack_rule_split_aces"), split_ace_21_ui)
 	for hand_value in split_ace_result.get("blackjack_hand_results", []) as Array:
 		if typeof(hand_value) == TYPE_DICTIONARY and bool((hand_value as Dictionary).get("blackjack", false)):
 			failures.append("Blackjack treated a split-ace 21 as a natural blackjack.")
@@ -4615,7 +4682,7 @@ func _check_blackjack_insurance_matrix(game: GameModule, base_table: Dictionary,
 	var click := game.surface_action_command("blackjack_side_bet", insurance_index, false, fixture.get("ui", {}), fixture.get("run_state", null), fixture.get("environment", {}))
 	var stand := game.surface_action_command("blackjack_stand", 0, false, click.get("ui_state", {}), fixture.get("run_state", null), fixture.get("environment", {}))
 	var run_state: RunState = fixture.get("run_state", null)
-	var result := game.resolve_with_context("play_basic", 10, run_state, fixture.get("environment", {}), run_state.create_rng("blackjack_rule_insurance"), stand.get("ui_state", {}))
+	var result := _blackjack_authority_resolve(game, "play_basic", 10, run_state, fixture.get("environment", {}), run_state.create_rng("blackjack_rule_insurance"), stand.get("ui_state", {}))
 	var side_results: Array = result.get("blackjack_side_bet_results", []) as Array
 	if side_results.is_empty() or str((side_results[0] as Dictionary).get("id", "")) != "insurance":
 		failures.append("Blackjack implicit insurance did not settle as the selected side bet.")
