@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "package_id": "env06_7_underground_lounge",
+  "handler_pack": "underground_lounge",
+  "renderer_id": "underground_lounge",
+  "scenarios": [
+    { "scenario_id": "punchline_open_mic_night", "sequence": {}, "authoring": {} },
+    { "scenario_id": "punchline_headliner_night", "sequence": {}, "authoring": {} },
+    { "scenario_id": "punchline_bringer_show", "sequence": {}, "authoring": {} },
+    { "scenario_id": "punchline_high_stakes_night", "sequence": {}, "authoring": {} },
+    { "scenario_id": "punchline_greased_week", "sequence": {}, "authoring": {} },
+    { "scenario_id": "punchline_debt_court", "sequence": {}, "authoring": {} },
+    { "scenario_id": "punchline_new_muscle", "sequence": {}, "authoring": {} },
+    { "scenario_id": "punchline_raid_jitters", "sequence": {}, "authoring": {} },
+    { "scenario_id": "kitty_cat_lounge_amateur_night", "sequence": {}, "authoring": {} },
+    { "scenario_id": "kitty_cat_lounge_buyout", "sequence": {}, "authoring": {} },
+    { "scenario_id": "kitty_cat_lounge_slow_night", "sequence": {}, "authoring": {} },
+    { "scenario_id": "kitty_cat_lounge_bachelorette_storm", "sequence": {}, "authoring": {} }
+  ]
+}

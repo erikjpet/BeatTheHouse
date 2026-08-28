@@ -1,0 +1,1760 @@
+{
+  "schema_version": 1,
+  "package_id": "env06_7_roadside_shelter",
+  "frozen_base": "855a2961",
+  "scenario_count": 12,
+  "scenarios": [
+    {
+      "scenario_id": "motel_conventioneers",
+      "archetype": "motel",
+      "definition_path": "data/environments/scenario_sequences/env06_7_roadside_shelter.json",
+      "handler_pack": "roadside_shelter",
+      "renderer_id": "roadside_shelter",
+      "phase_graph": [
+        {
+          "id": "arrival",
+          "terminal": false,
+          "branches": [
+            "beat_1"
+          ]
+        },
+        {
+          "id": "beat_1",
+          "terminal": false,
+          "branches": [
+            "beat_2"
+          ]
+        },
+        {
+          "id": "beat_2",
+          "terminal": false,
+          "branches": [
+            "beat_3"
+          ]
+        },
+        {
+          "id": "beat_3",
+          "terminal": false,
+          "branches": [
+            "decision"
+          ]
+        },
+        {
+          "id": "decision",
+          "terminal": true,
+          "branches": [
+            "rooms_balanced",
+            "service_wing_open",
+            "crowd_jammed",
+            "mixup_refused",
+            "mixup_interrupted"
+          ]
+        }
+      ],
+      "terminal_branches": [
+        "rooms_balanced",
+        "service_wing_open",
+        "crowd_jammed",
+        "mixup_refused",
+        "mixup_interrupted"
+      ],
+      "semantic_objects": [
+        "motel_conventioneers_luggage_cart",
+        "motel_conventioneers_blue_cases",
+        "motel_conventioneers_red_cases",
+        "motel_conventioneers_room_board"
+      ],
+      "semantic_actors": [
+        "motel_conventioneers_desk_clerk",
+        "motel_conventioneers_coach_party"
+      ],
+      "player_verbs": [
+        "compare_claim_tags",
+        "roll_cart_to_wing",
+        "reassign_room_keys",
+        "motel_conventioneers_resolve_a",
+        "motel_conventioneers_resolve_b",
+        "motel_conventioneers_fail",
+        "motel_conventioneers_refuse"
+      ],
+      "world_connections": [
+        "lodging_rest_service",
+        "service_result",
+        "safe_exit",
+        "save_revisit",
+        "exact_receipts"
+      ],
+      "reentry_policy": {
+        "partial": "resume",
+        "terminal": "aftermath",
+        "expired": "expired"
+      },
+      "expiry": {
+        "boundary": "visit_end",
+        "after": 1,
+        "policy": "cleanup"
+      },
+      "mechanic_signature_axes": {
+        "pressure": "room_mix_deadline",
+        "beat_count": 3,
+        "prop_count": 4,
+        "actor_count": 2,
+        "fact": "service_result",
+        "aftermath": [
+          "set_state:luggage_cart:parked_right",
+          "set_appearance:room_board:reassigned",
+          "set_state:red_cases:misrouted",
+          "set_appearance:luggage_cart:roped_off",
+          "set_state:room_board:paused"
+        ]
+      },
+      "capture_ids": [
+        "motel_conventioneers_arrival",
+        "motel_conventioneers_phase_1",
+        "motel_conventioneers_phase_2",
+        "motel_conventioneers_phase_3",
+        "motel_conventioneers_aftermath_rooms_balanced",
+        "motel_conventioneers_aftermath_service_wing_open",
+        "motel_conventioneers_aftermath_crowd_jammed",
+        "motel_conventioneers_aftermath_mixup_refused",
+        "motel_conventioneers_aftermath_mixup_interrupted",
+        "motel_conventioneers_partial_revisit",
+        "motel_conventioneers_terminal_revisit",
+        "motel_conventioneers_reduced_motion",
+        "motel_conventioneers_small_screen",
+        "motel_conventioneers_obstruction_overlay",
+        "motel_conventioneers_hit_target_overlay"
+      ],
+      "seed_evidence": {
+        "proof_seed": "motel_conventioneers_env06_7_b",
+        "expected_outcomes": [
+          "rooms_balanced",
+          "service_wing_open",
+          "crowd_jammed",
+          "mixup_refused",
+          "mixup_interrupted"
+        ],
+        "phase_count": 5,
+        "branch_count": 9,
+        "save_every_phase": true,
+        "save_every_branch": true,
+        "duplicate_receipt_atomic": true,
+        "conflicting_receipt_rejected": true,
+        "safe_exit_all_phases": true,
+        "reduced_motion": true,
+        "small_screen": true
+      }
+    },
+    {
+      "scenario_id": "motel_stakeout",
+      "archetype": "motel",
+      "definition_path": "data/environments/scenario_sequences/env06_7_roadside_shelter.json",
+      "handler_pack": "roadside_shelter",
+      "renderer_id": "roadside_shelter",
+      "phase_graph": [
+        {
+          "id": "arrival",
+          "terminal": false,
+          "branches": [
+            "beat_1"
+          ]
+        },
+        {
+          "id": "beat_1",
+          "terminal": false,
+          "branches": [
+            "beat_2"
+          ]
+        },
+        {
+          "id": "beat_2",
+          "terminal": false,
+          "branches": [
+            "decision"
+          ]
+        },
+        {
+          "id": "decision",
+          "terminal": true,
+          "branches": [
+            "occupant_warned",
+            "observers_misdirected",
+            "observer_waitout_failed",
+            "stakeout_refused",
+            "stakeout_interrupted"
+          ]
+        }
+      ],
+      "terminal_branches": [
+        "occupant_warned",
+        "observers_misdirected",
+        "observer_waitout_failed",
+        "stakeout_refused",
+        "stakeout_interrupted"
+      ],
+      "semantic_objects": [
+        "motel_stakeout_north_scope",
+        "motel_stakeout_south_camera",
+        "motel_stakeout_laundry_trolley",
+        "motel_stakeout_watched_door",
+        "motel_stakeout_courtyard_gate"
+      ],
+      "semantic_actors": [
+        "motel_stakeout_north_observer",
+        "motel_stakeout_south_observer"
+      ],
+      "player_verbs": [
+        "trace_sight_cones",
+        "shift_laundry_cover",
+        "motel_stakeout_resolve_a",
+        "motel_stakeout_resolve_b",
+        "motel_stakeout_fail",
+        "motel_stakeout_refuse"
+      ],
+      "world_connections": [
+        "security_sweep_sightline",
+        "sweep_changed",
+        "safe_exit",
+        "save_revisit",
+        "exact_receipts"
+      ],
+      "reentry_policy": {
+        "partial": "resume",
+        "terminal": "aftermath",
+        "expired": "expired"
+      },
+      "expiry": {
+        "boundary": "leave",
+        "after": 1,
+        "policy": "ignore"
+      },
+      "mechanic_signature_axes": {
+        "pressure": "moving_sight_cones",
+        "beat_count": 2,
+        "prop_count": 5,
+        "actor_count": 2,
+        "fact": "sweep_changed",
+        "aftermath": [
+          "set_state:watched_door:cleared",
+          "set_appearance:south_camera:false_target",
+          "set_state:north_scope:mobile_watch",
+          "set_appearance:watched_door:watched",
+          "set_state:laundry_trolley:partial_cover"
+        ]
+      },
+      "capture_ids": [
+        "motel_stakeout_arrival",
+        "motel_stakeout_phase_1",
+        "motel_stakeout_phase_2",
+        "motel_stakeout_aftermath_occupant_warned",
+        "motel_stakeout_aftermath_observers_misdirected",
+        "motel_stakeout_aftermath_observer_waitout_failed",
+        "motel_stakeout_aftermath_stakeout_refused",
+        "motel_stakeout_aftermath_stakeout_interrupted",
+        "motel_stakeout_partial_revisit",
+        "motel_stakeout_terminal_revisit",
+        "motel_stakeout_reduced_motion",
+        "motel_stakeout_small_screen",
+        "motel_stakeout_obstruction_overlay",
+        "motel_stakeout_hit_target_overlay"
+      ],
+      "seed_evidence": {
+        "proof_seed": "motel_stakeout_env06_7_b",
+        "expected_outcomes": [
+          "occupant_warned",
+          "observers_misdirected",
+          "observer_waitout_failed",
+          "stakeout_refused",
+          "stakeout_interrupted"
+        ],
+        "phase_count": 4,
+        "branch_count": 8,
+        "save_every_phase": true,
+        "save_every_branch": true,
+        "duplicate_receipt_atomic": true,
+        "conflicting_receipt_rejected": true,
+        "safe_exit_all_phases": true,
+        "reduced_motion": true,
+        "small_screen": true
+      }
+    },
+    {
+      "scenario_id": "motel_weekly_rates",
+      "archetype": "motel",
+      "definition_path": "data/environments/scenario_sequences/env06_7_roadside_shelter.json",
+      "handler_pack": "roadside_shelter",
+      "renderer_id": "roadside_shelter",
+      "phase_graph": [
+        {
+          "id": "arrival",
+          "terminal": false,
+          "branches": [
+            "beat_1"
+          ]
+        },
+        {
+          "id": "beat_1",
+          "terminal": false,
+          "branches": [
+            "beat_2"
+          ]
+        },
+        {
+          "id": "beat_2",
+          "terminal": false,
+          "branches": [
+            "beat_3"
+          ]
+        },
+        {
+          "id": "beat_3",
+          "terminal": false,
+          "branches": [
+            "beat_4"
+          ]
+        },
+        {
+          "id": "beat_4",
+          "terminal": false,
+          "branches": [
+            "decision"
+          ]
+        },
+        {
+          "id": "decision",
+          "terminal": true,
+          "branches": [
+            "room_repaired",
+            "room_accepted",
+            "negotiation_failed",
+            "inspection_refused",
+            "repair_interrupted"
+          ]
+        }
+      ],
+      "terminal_branches": [
+        "room_repaired",
+        "room_accepted",
+        "negotiation_failed",
+        "inspection_refused",
+        "repair_interrupted"
+      ],
+      "semantic_objects": [
+        "motel_weekly_rates_weekly_bed",
+        "motel_weekly_rates_weekly_lamp",
+        "motel_weekly_rates_weekly_sink",
+        "motel_weekly_rates_lease_clipboard"
+      ],
+      "semantic_actors": [
+        "motel_weekly_rates_landlord"
+      ],
+      "player_verbs": [
+        "inspect_room_faults",
+        "isolate_sink_valve",
+        "brace_bed_frame",
+        "negotiate_weekly_terms",
+        "motel_weekly_rates_resolve_a",
+        "motel_weekly_rates_resolve_b",
+        "motel_weekly_rates_fail",
+        "motel_weekly_rates_refuse"
+      ],
+      "world_connections": [
+        "rest_service_authority",
+        "service_result",
+        "safe_exit",
+        "save_revisit",
+        "exact_receipts"
+      ],
+      "reentry_policy": {
+        "partial": "resume",
+        "terminal": "aftermath",
+        "expired": "expired"
+      },
+      "expiry": {
+        "boundary": "town_action",
+        "after": 2,
+        "policy": "fail"
+      },
+      "mechanic_signature_axes": {
+        "pressure": "failing_room_inspection",
+        "beat_count": 4,
+        "prop_count": 4,
+        "actor_count": 1,
+        "fact": "service_result",
+        "aftermath": [
+          "set_appearance:weekly_lamp:lit",
+          "set_state:weekly_bed:accepted_brace",
+          "set_state:lease_clipboard:withdrawn",
+          "set_appearance:weekly_sink:warning_tag",
+          "set_state:weekly_lamp:repair_paused"
+        ]
+      },
+      "capture_ids": [
+        "motel_weekly_rates_arrival",
+        "motel_weekly_rates_phase_1",
+        "motel_weekly_rates_phase_2",
+        "motel_weekly_rates_phase_3",
+        "motel_weekly_rates_phase_4",
+        "motel_weekly_rates_aftermath_room_repaired",
+        "motel_weekly_rates_aftermath_room_accepted",
+        "motel_weekly_rates_aftermath_negotiation_failed",
+        "motel_weekly_rates_aftermath_inspection_refused",
+        "motel_weekly_rates_aftermath_repair_interrupted",
+        "motel_weekly_rates_partial_revisit",
+        "motel_weekly_rates_terminal_revisit",
+        "motel_weekly_rates_reduced_motion",
+        "motel_weekly_rates_small_screen",
+        "motel_weekly_rates_obstruction_overlay",
+        "motel_weekly_rates_hit_target_overlay"
+      ],
+      "seed_evidence": {
+        "proof_seed": "motel_weekly_rates_env06_7_b",
+        "expected_outcomes": [
+          "room_repaired",
+          "room_accepted",
+          "negotiation_failed",
+          "inspection_refused",
+          "repair_interrupted"
+        ],
+        "phase_count": 6,
+        "branch_count": 10,
+        "save_every_phase": true,
+        "save_every_branch": true,
+        "duplicate_receipt_atomic": true,
+        "conflicting_receipt_rejected": true,
+        "safe_exit_all_phases": true,
+        "reduced_motion": true,
+        "small_screen": true
+      }
+    },
+    {
+      "scenario_id": "motel_wedding_overflow",
+      "archetype": "motel",
+      "definition_path": "data/environments/scenario_sequences/env06_7_roadside_shelter.json",
+      "handler_pack": "roadside_shelter",
+      "renderer_id": "roadside_shelter",
+      "phase_graph": [
+        {
+          "id": "arrival",
+          "terminal": false,
+          "branches": [
+            "beat_1"
+          ]
+        },
+        {
+          "id": "beat_1",
+          "terminal": false,
+          "branches": [
+            "beat_2"
+          ]
+        },
+        {
+          "id": "beat_2",
+          "terminal": false,
+          "branches": [
+            "beat_3"
+          ]
+        },
+        {
+          "id": "beat_3",
+          "terminal": false,
+          "branches": [
+            "decision"
+          ]
+        },
+        {
+          "id": "decision",
+          "terminal": true,
+          "branches": [
+            "reception_reunited",
+            "corridor_argument",
+            "corridor_locked",
+            "wedding_refused",
+            "wedding_interrupted"
+          ]
+        }
+      ],
+      "terminal_branches": [
+        "reception_reunited",
+        "corridor_argument",
+        "corridor_locked",
+        "wedding_refused",
+        "wedding_interrupted"
+      ],
+      "semantic_objects": [
+        "motel_wedding_overflow_bouquet_case",
+        "motel_wedding_overflow_garment_rack",
+        "motel_wedding_overflow_room_key_tray",
+        "motel_wedding_overflow_reception_cart",
+        "motel_wedding_overflow_ribbon_stair"
+      ],
+      "semantic_actors": [
+        "motel_wedding_overflow_wedding_runner",
+        "motel_wedding_overflow_best_person",
+        "motel_wedding_overflow_desk_clerk"
+      ],
+      "player_verbs": [
+        "read_room_key_trail",
+        "wheel_garments_clear",
+        "recover_bouquet_case",
+        "motel_wedding_overflow_resolve_a",
+        "motel_wedding_overflow_resolve_b",
+        "motel_wedding_overflow_fail",
+        "motel_wedding_overflow_refuse"
+      ],
+      "world_connections": [
+        "traveler_party_routing",
+        "travel_departed",
+        "safe_exit",
+        "save_revisit",
+        "exact_receipts"
+      ],
+      "reentry_policy": {
+        "partial": "resume",
+        "terminal": "aftermath",
+        "expired": "expired"
+      },
+      "expiry": {
+        "boundary": "night_end",
+        "after": 1,
+        "policy": "cleanup"
+      },
+      "mechanic_signature_axes": {
+        "pressure": "processional_room_clock",
+        "beat_count": 3,
+        "prop_count": 5,
+        "actor_count": 3,
+        "fact": "travel_departed",
+        "aftermath": [
+          "set_state:reception_cart:reception_ready",
+          "set_appearance:bouquet_case:contested",
+          "set_state:room_key_tray:keys_recalled",
+          "set_appearance:garment_rack:unclaimed",
+          "set_state:room_key_tray:clue_pinned"
+        ]
+      },
+      "capture_ids": [
+        "motel_wedding_overflow_arrival",
+        "motel_wedding_overflow_phase_1",
+        "motel_wedding_overflow_phase_2",
+        "motel_wedding_overflow_phase_3",
+        "motel_wedding_overflow_aftermath_reception_reunited",
+        "motel_wedding_overflow_aftermath_corridor_argument",
+        "motel_wedding_overflow_aftermath_corridor_locked",
+        "motel_wedding_overflow_aftermath_wedding_refused",
+        "motel_wedding_overflow_aftermath_wedding_interrupted",
+        "motel_wedding_overflow_partial_revisit",
+        "motel_wedding_overflow_terminal_revisit",
+        "motel_wedding_overflow_reduced_motion",
+        "motel_wedding_overflow_small_screen",
+        "motel_wedding_overflow_obstruction_overlay",
+        "motel_wedding_overflow_hit_target_overlay"
+      ],
+      "seed_evidence": {
+        "proof_seed": "motel_wedding_overflow_env06_7_b",
+        "expected_outcomes": [
+          "reception_reunited",
+          "corridor_argument",
+          "corridor_locked",
+          "wedding_refused",
+          "wedding_interrupted"
+        ],
+        "phase_count": 5,
+        "branch_count": 9,
+        "save_every_phase": true,
+        "save_every_branch": true,
+        "duplicate_receipt_atomic": true,
+        "conflicting_receipt_rejected": true,
+        "safe_exit_all_phases": true,
+        "reduced_motion": true,
+        "small_screen": true
+      }
+    },
+    {
+      "scenario_id": "gas_station_trucker_convoy",
+      "archetype": "gas_station_casino",
+      "definition_path": "data/environments/scenario_sequences/env06_7_roadside_shelter.json",
+      "handler_pack": "roadside_shelter",
+      "renderer_id": "roadside_shelter",
+      "phase_graph": [
+        {
+          "id": "arrival",
+          "terminal": false,
+          "branches": [
+            "beat_1"
+          ]
+        },
+        {
+          "id": "beat_1",
+          "terminal": false,
+          "branches": [
+            "beat_2"
+          ]
+        },
+        {
+          "id": "beat_2",
+          "terminal": false,
+          "branches": [
+            "beat_3"
+          ]
+        },
+        {
+          "id": "beat_3",
+          "terminal": false,
+          "branches": [
+            "decision"
+          ]
+        },
+        {
+          "id": "decision",
+          "terminal": true,
+          "branches": [
+            "convoy_coordinated",
+            "machine_claim_won",
+            "convoy_gridlocked",
+            "convoy_refused",
+            "convoy_interrupted"
+          ]
+        }
+      ],
+      "terminal_branches": [
+        "convoy_coordinated",
+        "machine_claim_won",
+        "convoy_gridlocked",
+        "convoy_refused",
+        "convoy_interrupted"
+      ],
+      "semantic_objects": [
+        "gas_station_trucker_convoy_lead_rig",
+        "gas_station_trucker_convoy_relay_rig",
+        "gas_station_trucker_convoy_tail_rig",
+        "gas_station_trucker_convoy_freight_pallet",
+        "gas_station_trucker_convoy_departure_board"
+      ],
+      "semantic_actors": [
+        "gas_station_trucker_convoy_lead_driver",
+        "gas_station_trucker_convoy_relay_driver",
+        "gas_station_trucker_convoy_machine_driver"
+      ],
+      "player_verbs": [
+        "read_departure_board",
+        "clear_freight_lane",
+        "release_convoy_wave",
+        "gas_station_trucker_convoy_resolve_a",
+        "gas_station_trucker_convoy_resolve_b",
+        "gas_station_trucker_convoy_fail",
+        "gas_station_trucker_convoy_refuse"
+      ],
+      "world_connections": [
+        "traveler_departure_link",
+        "travel_departed",
+        "safe_exit",
+        "save_revisit",
+        "exact_receipts"
+      ],
+      "reentry_policy": {
+        "partial": "resume",
+        "terminal": "aftermath",
+        "expired": "expired"
+      },
+      "expiry": {
+        "boundary": "town_action",
+        "after": 1,
+        "policy": "cleanup"
+      },
+      "mechanic_signature_axes": {
+        "pressure": "departure_wave",
+        "beat_count": 3,
+        "prop_count": 5,
+        "actor_count": 3,
+        "fact": "travel_departed",
+        "aftermath": [
+          "set_state:departure_board:departed_orderly",
+          "set_appearance:relay_rig:loading_hold",
+          "set_state:tail_rig:cross_pumps",
+          "set_appearance:departure_board:no_coordinator",
+          "set_state:lead_rig:departed_partial"
+        ]
+      },
+      "capture_ids": [
+        "gas_station_trucker_convoy_arrival",
+        "gas_station_trucker_convoy_phase_1",
+        "gas_station_trucker_convoy_phase_2",
+        "gas_station_trucker_convoy_phase_3",
+        "gas_station_trucker_convoy_aftermath_convoy_coordinated",
+        "gas_station_trucker_convoy_aftermath_machine_claim_won",
+        "gas_station_trucker_convoy_aftermath_convoy_gridlocked",
+        "gas_station_trucker_convoy_aftermath_convoy_refused",
+        "gas_station_trucker_convoy_aftermath_convoy_interrupted",
+        "gas_station_trucker_convoy_partial_revisit",
+        "gas_station_trucker_convoy_terminal_revisit",
+        "gas_station_trucker_convoy_reduced_motion",
+        "gas_station_trucker_convoy_small_screen",
+        "gas_station_trucker_convoy_obstruction_overlay",
+        "gas_station_trucker_convoy_hit_target_overlay"
+      ],
+      "seed_evidence": {
+        "proof_seed": "gas_station_trucker_convoy_env06_7_b",
+        "expected_outcomes": [
+          "convoy_coordinated",
+          "machine_claim_won",
+          "convoy_gridlocked",
+          "convoy_refused",
+          "convoy_interrupted"
+        ],
+        "phase_count": 5,
+        "branch_count": 9,
+        "save_every_phase": true,
+        "save_every_branch": true,
+        "duplicate_receipt_atomic": true,
+        "conflicting_receipt_rejected": true,
+        "safe_exit_all_phases": true,
+        "reduced_motion": true,
+        "small_screen": true
+      }
+    },
+    {
+      "scenario_id": "gas_station_tour_bus_stop",
+      "archetype": "gas_station_casino",
+      "definition_path": "data/environments/scenario_sequences/env06_7_roadside_shelter.json",
+      "handler_pack": "roadside_shelter",
+      "renderer_id": "roadside_shelter",
+      "phase_graph": [
+        {
+          "id": "arrival",
+          "terminal": false,
+          "branches": [
+            "beat_1"
+          ]
+        },
+        {
+          "id": "beat_1",
+          "terminal": false,
+          "branches": [
+            "beat_2"
+          ]
+        },
+        {
+          "id": "beat_2",
+          "terminal": false,
+          "branches": [
+            "beat_3"
+          ]
+        },
+        {
+          "id": "beat_3",
+          "terminal": false,
+          "branches": [
+            "decision"
+          ]
+        },
+        {
+          "id": "decision",
+          "terminal": true,
+          "branches": [
+            "bus_boarded",
+            "passenger_stranded",
+            "bus_delayed",
+            "count_refused",
+            "count_interrupted"
+          ]
+        }
+      ],
+      "terminal_branches": [
+        "bus_boarded",
+        "passenger_stranded",
+        "bus_delayed",
+        "count_refused",
+        "count_interrupted"
+      ],
+      "semantic_objects": [
+        "gas_station_tour_bus_stop_tour_bus_door",
+        "gas_station_tour_bus_stop_ticket_basket",
+        "gas_station_tour_bus_stop_boarding_counter",
+        "gas_station_tour_bus_stop_restroom_queue"
+      ],
+      "semantic_actors": [
+        "gas_station_tour_bus_stop_bus_driver",
+        "gas_station_tour_bus_stop_stranded_passenger",
+        "gas_station_tour_bus_stop_queue_marshal"
+      ],
+      "player_verbs": [
+        "count_boarding_groups",
+        "trace_lost_ticket",
+        "close_boarding_count",
+        "gas_station_tour_bus_stop_resolve_a",
+        "gas_station_tour_bus_stop_resolve_b",
+        "gas_station_tour_bus_stop_fail",
+        "gas_station_tour_bus_stop_refuse"
+      ],
+      "world_connections": [
+        "timed_travel_manifest",
+        "travel_arrived",
+        "safe_exit",
+        "save_revisit",
+        "exact_receipts"
+      ],
+      "reentry_policy": {
+        "partial": "resume",
+        "terminal": "aftermath",
+        "expired": "expired"
+      },
+      "expiry": {
+        "boundary": "visit_end",
+        "after": 1,
+        "policy": "fail"
+      },
+      "mechanic_signature_axes": {
+        "pressure": "boarding_countdown",
+        "beat_count": 3,
+        "prop_count": 4,
+        "actor_count": 3,
+        "fact": "travel_arrived",
+        "aftermath": [
+          "set_appearance:tour_bus_door:departing",
+          "set_state:stranded_passenger:stranded",
+          "set_state:boarding_counter:recount",
+          "set_appearance:restroom_queue:unmanaged",
+          "set_state:boarding_counter:partial_tally"
+        ]
+      },
+      "capture_ids": [
+        "gas_station_tour_bus_stop_arrival",
+        "gas_station_tour_bus_stop_phase_1",
+        "gas_station_tour_bus_stop_phase_2",
+        "gas_station_tour_bus_stop_phase_3",
+        "gas_station_tour_bus_stop_aftermath_bus_boarded",
+        "gas_station_tour_bus_stop_aftermath_passenger_stranded",
+        "gas_station_tour_bus_stop_aftermath_bus_delayed",
+        "gas_station_tour_bus_stop_aftermath_count_refused",
+        "gas_station_tour_bus_stop_aftermath_count_interrupted",
+        "gas_station_tour_bus_stop_partial_revisit",
+        "gas_station_tour_bus_stop_terminal_revisit",
+        "gas_station_tour_bus_stop_reduced_motion",
+        "gas_station_tour_bus_stop_small_screen",
+        "gas_station_tour_bus_stop_obstruction_overlay",
+        "gas_station_tour_bus_stop_hit_target_overlay"
+      ],
+      "seed_evidence": {
+        "proof_seed": "gas_station_tour_bus_stop_env06_7_b",
+        "expected_outcomes": [
+          "bus_boarded",
+          "passenger_stranded",
+          "bus_delayed",
+          "count_refused",
+          "count_interrupted"
+        ],
+        "phase_count": 5,
+        "branch_count": 9,
+        "save_every_phase": true,
+        "save_every_branch": true,
+        "duplicate_receipt_atomic": true,
+        "conflicting_receipt_rejected": true,
+        "safe_exit_all_phases": true,
+        "reduced_motion": true,
+        "small_screen": true
+      }
+    },
+    {
+      "scenario_id": "gas_station_graveyard_shift",
+      "archetype": "gas_station_casino",
+      "definition_path": "data/environments/scenario_sequences/env06_7_roadside_shelter.json",
+      "handler_pack": "roadside_shelter",
+      "renderer_id": "roadside_shelter",
+      "phase_graph": [
+        {
+          "id": "arrival",
+          "terminal": false,
+          "branches": [
+            "beat_1"
+          ]
+        },
+        {
+          "id": "beat_1",
+          "terminal": false,
+          "branches": [
+            "beat_2"
+          ]
+        },
+        {
+          "id": "beat_2",
+          "terminal": false,
+          "branches": [
+            "beat_3"
+          ]
+        },
+        {
+          "id": "beat_3",
+          "terminal": false,
+          "branches": [
+            "beat_4"
+          ]
+        },
+        {
+          "id": "beat_4",
+          "terminal": false,
+          "branches": [
+            "decision"
+          ]
+        },
+        {
+          "id": "decision",
+          "terminal": true,
+          "branches": [
+            "night_check_complete",
+            "camera_bypass",
+            "lock_cycle_failed",
+            "night_check_refused",
+            "night_check_interrupted"
+          ]
+        }
+      ],
+      "terminal_branches": [
+        "night_check_complete",
+        "camera_bypass",
+        "lock_cycle_failed",
+        "night_check_refused",
+        "night_check_interrupted"
+      ],
+      "semantic_objects": [
+        "gas_station_graveyard_shift_camera_monitor",
+        "gas_station_graveyard_shift_shutter_panel",
+        "gas_station_graveyard_shift_flashlight_dock",
+        "gas_station_graveyard_shift_cooler_gate",
+        "gas_station_graveyard_shift_machine_gate"
+      ],
+      "semantic_actors": [
+        "gas_station_graveyard_shift_night_clerk"
+      ],
+      "player_verbs": [
+        "take_flashlight",
+        "check_cooler_lock",
+        "cycle_machine_shutter",
+        "review_camera_gap",
+        "gas_station_graveyard_shift_resolve_a",
+        "gas_station_graveyard_shift_resolve_b",
+        "gas_station_graveyard_shift_fail",
+        "gas_station_graveyard_shift_refuse"
+      ],
+      "world_connections": [
+        "security_camera_exposure",
+        "sweep_changed",
+        "safe_exit",
+        "save_revisit",
+        "exact_receipts"
+      ],
+      "reentry_policy": {
+        "partial": "resume",
+        "terminal": "aftermath",
+        "expired": "expired"
+      },
+      "expiry": {
+        "boundary": "night_end",
+        "after": 1,
+        "policy": "cleanup"
+      },
+      "mechanic_signature_axes": {
+        "pressure": "alternating_lock_cycle",
+        "beat_count": 4,
+        "prop_count": 5,
+        "actor_count": 1,
+        "fact": "sweep_changed",
+        "aftermath": [
+          "set_state:shutter_panel:verified_cycle",
+          "set_appearance:camera_monitor:bypassed_lane",
+          "set_state:machine_gate:failed_closed",
+          "set_appearance:shutter_panel:manual_lock",
+          "set_state:flashlight_dock:partial_route"
+        ]
+      },
+      "capture_ids": [
+        "gas_station_graveyard_shift_arrival",
+        "gas_station_graveyard_shift_phase_1",
+        "gas_station_graveyard_shift_phase_2",
+        "gas_station_graveyard_shift_phase_3",
+        "gas_station_graveyard_shift_phase_4",
+        "gas_station_graveyard_shift_aftermath_night_check_complete",
+        "gas_station_graveyard_shift_aftermath_camera_bypass",
+        "gas_station_graveyard_shift_aftermath_lock_cycle_failed",
+        "gas_station_graveyard_shift_aftermath_night_check_refused",
+        "gas_station_graveyard_shift_aftermath_night_check_interrupted",
+        "gas_station_graveyard_shift_partial_revisit",
+        "gas_station_graveyard_shift_terminal_revisit",
+        "gas_station_graveyard_shift_reduced_motion",
+        "gas_station_graveyard_shift_small_screen",
+        "gas_station_graveyard_shift_obstruction_overlay",
+        "gas_station_graveyard_shift_hit_target_overlay"
+      ],
+      "seed_evidence": {
+        "proof_seed": "gas_station_graveyard_shift_env06_7_b",
+        "expected_outcomes": [
+          "night_check_complete",
+          "camera_bypass",
+          "lock_cycle_failed",
+          "night_check_refused",
+          "night_check_interrupted"
+        ],
+        "phase_count": 6,
+        "branch_count": 10,
+        "save_every_phase": true,
+        "save_every_branch": true,
+        "duplicate_receipt_atomic": true,
+        "conflicting_receipt_rejected": true,
+        "safe_exit_all_phases": true,
+        "reduced_motion": true,
+        "small_screen": true
+      }
+    },
+    {
+      "scenario_id": "gas_station_road_crew_payday",
+      "archetype": "gas_station_casino",
+      "definition_path": "data/environments/scenario_sequences/env06_7_roadside_shelter.json",
+      "handler_pack": "roadside_shelter",
+      "renderer_id": "roadside_shelter",
+      "phase_graph": [
+        {
+          "id": "arrival",
+          "terminal": false,
+          "branches": [
+            "beat_1"
+          ]
+        },
+        {
+          "id": "beat_1",
+          "terminal": false,
+          "branches": [
+            "beat_2"
+          ]
+        },
+        {
+          "id": "beat_2",
+          "terminal": false,
+          "branches": [
+            "beat_3"
+          ]
+        },
+        {
+          "id": "beat_3",
+          "terminal": false,
+          "branches": [
+            "decision"
+          ]
+        },
+        {
+          "id": "decision",
+          "terminal": true,
+          "branches": [
+            "route_repaired",
+            "floor_occupied",
+            "crew_departed_early",
+            "stake_dispute_refused",
+            "payday_interrupted"
+          ]
+        }
+      ],
+      "terminal_branches": [
+        "route_repaired",
+        "floor_occupied",
+        "crew_departed_early",
+        "stake_dispute_refused",
+        "payday_interrupted"
+      ],
+      "semantic_objects": [
+        "gas_station_road_crew_payday_work_order_board",
+        "gas_station_road_crew_payday_stake_envelope",
+        "gas_station_road_crew_payday_barricade_stack",
+        "gas_station_road_crew_payday_repair_crate"
+      ],
+      "semantic_actors": [
+        "gas_station_road_crew_payday_crew_foreman",
+        "gas_station_road_crew_payday_stake_keeper",
+        "gas_station_road_crew_payday_machine_player"
+      ],
+      "player_verbs": [
+        "audit_pooled_stake",
+        "stage_repair_parts",
+        "reconcile_work_order",
+        "gas_station_road_crew_payday_resolve_a",
+        "gas_station_road_crew_payday_resolve_b",
+        "gas_station_road_crew_payday_fail",
+        "gas_station_road_crew_payday_refuse"
+      ],
+      "world_connections": [
+        "public_game_result_work_order",
+        "game_result",
+        "safe_exit",
+        "save_revisit",
+        "exact_receipts"
+      ],
+      "reentry_policy": {
+        "partial": "resume",
+        "terminal": "aftermath",
+        "expired": "expired"
+      },
+      "expiry": {
+        "boundary": "town_action",
+        "after": 2,
+        "policy": "ignore"
+      },
+      "mechanic_signature_axes": {
+        "pressure": "pooled_stake_rotation",
+        "beat_count": 3,
+        "prop_count": 4,
+        "actor_count": 3,
+        "fact": "game_result",
+        "aftermath": [
+          "set_state:barricade_stack:loaded_out",
+          "set_appearance:stake_envelope:active_pool",
+          "set_state:work_order_board:departed_early",
+          "set_appearance:stake_envelope:sealed_dispute",
+          "set_state:stake_envelope:audit_paused"
+        ]
+      },
+      "capture_ids": [
+        "gas_station_road_crew_payday_arrival",
+        "gas_station_road_crew_payday_phase_1",
+        "gas_station_road_crew_payday_phase_2",
+        "gas_station_road_crew_payday_phase_3",
+        "gas_station_road_crew_payday_aftermath_route_repaired",
+        "gas_station_road_crew_payday_aftermath_floor_occupied",
+        "gas_station_road_crew_payday_aftermath_crew_departed_early",
+        "gas_station_road_crew_payday_aftermath_stake_dispute_refused",
+        "gas_station_road_crew_payday_aftermath_payday_interrupted",
+        "gas_station_road_crew_payday_partial_revisit",
+        "gas_station_road_crew_payday_terminal_revisit",
+        "gas_station_road_crew_payday_reduced_motion",
+        "gas_station_road_crew_payday_small_screen",
+        "gas_station_road_crew_payday_obstruction_overlay",
+        "gas_station_road_crew_payday_hit_target_overlay"
+      ],
+      "seed_evidence": {
+        "proof_seed": "gas_station_road_crew_payday_env06_7_b",
+        "expected_outcomes": [
+          "route_repaired",
+          "floor_occupied",
+          "crew_departed_early",
+          "stake_dispute_refused",
+          "payday_interrupted"
+        ],
+        "phase_count": 5,
+        "branch_count": 9,
+        "save_every_phase": true,
+        "save_every_branch": true,
+        "duplicate_receipt_atomic": true,
+        "conflicting_receipt_rejected": true,
+        "safe_exit_all_phases": true,
+        "reduced_motion": true,
+        "small_screen": true
+      }
+    },
+    {
+      "scenario_id": "gas_station_storm_shelter",
+      "archetype": "gas_station_casino",
+      "definition_path": "data/environments/scenario_sequences/env06_7_roadside_shelter.json",
+      "handler_pack": "roadside_shelter",
+      "renderer_id": "roadside_shelter",
+      "phase_graph": [
+        {
+          "id": "arrival",
+          "terminal": false,
+          "branches": [
+            "beat_1"
+          ]
+        },
+        {
+          "id": "beat_1",
+          "terminal": false,
+          "branches": [
+            "beat_2"
+          ]
+        },
+        {
+          "id": "beat_2",
+          "terminal": false,
+          "branches": [
+            "beat_3"
+          ]
+        },
+        {
+          "id": "beat_3",
+          "terminal": false,
+          "branches": [
+            "beat_4"
+          ]
+        },
+        {
+          "id": "beat_4",
+          "terminal": false,
+          "branches": [
+            "decision"
+          ]
+        },
+        {
+          "id": "decision",
+          "terminal": true,
+          "branches": [
+            "station_reopened",
+            "shelter_blackout",
+            "shelter_crowded",
+            "shelter_refused",
+            "shelter_interrupted"
+          ]
+        }
+      ],
+      "terminal_branches": [
+        "station_reopened",
+        "shelter_blackout",
+        "shelter_crowded",
+        "shelter_refused",
+        "shelter_interrupted"
+      ],
+      "semantic_objects": [
+        "gas_station_storm_shelter_rain_shutters",
+        "gas_station_storm_shelter_generator_cart",
+        "gas_station_storm_shelter_supply_shelves",
+        "gas_station_storm_shelter_safe_zone_tape",
+        "gas_station_storm_shelter_power_panel"
+      ],
+      "semantic_actors": [
+        "gas_station_storm_shelter_shelter_clerk",
+        "gas_station_storm_shelter_family_group",
+        "gas_station_storm_shelter_driver_group"
+      ],
+      "player_verbs": [
+        "close_rain_shutters",
+        "roll_generator_safe",
+        "inventory_storm_supplies",
+        "allocate_safe_space",
+        "gas_station_storm_shelter_resolve_a",
+        "gas_station_storm_shelter_resolve_b",
+        "gas_station_storm_shelter_fail",
+        "gas_station_storm_shelter_refuse"
+      ],
+      "world_connections": [
+        "weather_town_boundary",
+        "town_transition",
+        "safe_exit",
+        "save_revisit",
+        "exact_receipts"
+      ],
+      "reentry_policy": {
+        "partial": "resume",
+        "terminal": "aftermath",
+        "expired": "expired"
+      },
+      "expiry": {
+        "boundary": "town_action",
+        "after": 1,
+        "policy": "cleanup"
+      },
+      "mechanic_signature_axes": {
+        "pressure": "progressive_weather_closure",
+        "beat_count": 4,
+        "prop_count": 5,
+        "actor_count": 3,
+        "fact": "town_transition",
+        "aftermath": [
+          "set_appearance:rain_shutters:open_after_storm",
+          "set_state:power_panel:blackout",
+          "set_state:safe_zone_tape:crowded_split",
+          "set_appearance:power_panel:clerk_only",
+          "set_state:supply_shelves:partial_count"
+        ]
+      },
+      "capture_ids": [
+        "gas_station_storm_shelter_arrival",
+        "gas_station_storm_shelter_phase_1",
+        "gas_station_storm_shelter_phase_2",
+        "gas_station_storm_shelter_phase_3",
+        "gas_station_storm_shelter_phase_4",
+        "gas_station_storm_shelter_aftermath_station_reopened",
+        "gas_station_storm_shelter_aftermath_shelter_blackout",
+        "gas_station_storm_shelter_aftermath_shelter_crowded",
+        "gas_station_storm_shelter_aftermath_shelter_refused",
+        "gas_station_storm_shelter_aftermath_shelter_interrupted",
+        "gas_station_storm_shelter_partial_revisit",
+        "gas_station_storm_shelter_terminal_revisit",
+        "gas_station_storm_shelter_reduced_motion",
+        "gas_station_storm_shelter_small_screen",
+        "gas_station_storm_shelter_obstruction_overlay",
+        "gas_station_storm_shelter_hit_target_overlay"
+      ],
+      "seed_evidence": {
+        "proof_seed": "gas_station_storm_shelter_env06_7_b",
+        "expected_outcomes": [
+          "station_reopened",
+          "shelter_blackout",
+          "shelter_crowded",
+          "shelter_refused",
+          "shelter_interrupted"
+        ],
+        "phase_count": 6,
+        "branch_count": 10,
+        "save_every_phase": true,
+        "save_every_branch": true,
+        "duplicate_receipt_atomic": true,
+        "conflicting_receipt_rejected": true,
+        "safe_exit_all_phases": true,
+        "reduced_motion": true,
+        "small_screen": true
+      }
+    },
+    {
+      "scenario_id": "beach_bonfire_night",
+      "archetype": "beach",
+      "definition_path": "data/environments/scenario_sequences/env06_7_roadside_shelter.json",
+      "handler_pack": "roadside_shelter",
+      "renderer_id": "roadside_shelter",
+      "phase_graph": [
+        {
+          "id": "arrival",
+          "terminal": false,
+          "branches": [
+            "beat_1"
+          ]
+        },
+        {
+          "id": "beat_1",
+          "terminal": false,
+          "branches": [
+            "beat_2"
+          ]
+        },
+        {
+          "id": "beat_2",
+          "terminal": false,
+          "branches": [
+            "beat_3"
+          ]
+        },
+        {
+          "id": "beat_3",
+          "terminal": false,
+          "branches": [
+            "decision"
+          ]
+        },
+        {
+          "id": "decision",
+          "terminal": true,
+          "branches": [
+            "communal_fire",
+            "hidden_fire",
+            "fire_extinguished",
+            "bonfire_refused",
+            "bonfire_interrupted"
+          ]
+        }
+      ],
+      "terminal_branches": [
+        "communal_fire",
+        "hidden_fire",
+        "fire_extinguished",
+        "bonfire_refused",
+        "bonfire_interrupted"
+      ],
+      "semantic_objects": [
+        "beach_bonfire_night_driftwood_bundle",
+        "beach_bonfire_night_bonfire_ring",
+        "beach_bonfire_night_beach_seats",
+        "beach_bonfire_night_tide_marker",
+        "beach_bonfire_night_windbreak"
+      ],
+      "semantic_actors": [
+        "beach_bonfire_night_fire_tender",
+        "beach_bonfire_night_night_swimmers"
+      ],
+      "player_verbs": [
+        "read_tide_wind",
+        "stack_bonfire_fuel",
+        "reposition_beach_seats",
+        "beach_bonfire_night_resolve_a",
+        "beach_bonfire_night_resolve_b",
+        "beach_bonfire_night_fail",
+        "beach_bonfire_night_refuse"
+      ],
+      "world_connections": [
+        "weather_tide_boundary",
+        "world_boundary",
+        "safe_exit",
+        "save_revisit",
+        "exact_receipts"
+      ],
+      "reentry_policy": {
+        "partial": "resume",
+        "terminal": "aftermath",
+        "expired": "expired"
+      },
+      "expiry": {
+        "boundary": "night_end",
+        "after": 1,
+        "policy": "cleanup"
+      },
+      "mechanic_signature_axes": {
+        "pressure": "tide_and_wind_window",
+        "beat_count": 3,
+        "prop_count": 5,
+        "actor_count": 2,
+        "fact": "world_boundary",
+        "aftermath": [
+          "set_state:bonfire_ring:communal_lit",
+          "set_appearance:windbreak:concealing_fire",
+          "set_state:bonfire_ring:extinguished",
+          "set_appearance:driftwood_bundle:untouched",
+          "set_state:tide_marker:partial_build"
+        ]
+      },
+      "capture_ids": [
+        "beach_bonfire_night_arrival",
+        "beach_bonfire_night_phase_1",
+        "beach_bonfire_night_phase_2",
+        "beach_bonfire_night_phase_3",
+        "beach_bonfire_night_aftermath_communal_fire",
+        "beach_bonfire_night_aftermath_hidden_fire",
+        "beach_bonfire_night_aftermath_fire_extinguished",
+        "beach_bonfire_night_aftermath_bonfire_refused",
+        "beach_bonfire_night_aftermath_bonfire_interrupted",
+        "beach_bonfire_night_partial_revisit",
+        "beach_bonfire_night_terminal_revisit",
+        "beach_bonfire_night_reduced_motion",
+        "beach_bonfire_night_small_screen",
+        "beach_bonfire_night_obstruction_overlay",
+        "beach_bonfire_night_hit_target_overlay"
+      ],
+      "seed_evidence": {
+        "proof_seed": "beach_bonfire_night_env06_7_b",
+        "expected_outcomes": [
+          "communal_fire",
+          "hidden_fire",
+          "fire_extinguished",
+          "bonfire_refused",
+          "bonfire_interrupted"
+        ],
+        "phase_count": 5,
+        "branch_count": 9,
+        "save_every_phase": true,
+        "save_every_branch": true,
+        "duplicate_receipt_atomic": true,
+        "conflicting_receipt_rejected": true,
+        "safe_exit_all_phases": true,
+        "reduced_motion": true,
+        "small_screen": true
+      }
+    },
+    {
+      "scenario_id": "beach_storm_coming",
+      "archetype": "beach",
+      "definition_path": "data/environments/scenario_sequences/env06_7_roadside_shelter.json",
+      "handler_pack": "roadside_shelter",
+      "renderer_id": "roadside_shelter",
+      "phase_graph": [
+        {
+          "id": "arrival",
+          "terminal": false,
+          "branches": [
+            "beat_1"
+          ]
+        },
+        {
+          "id": "beat_1",
+          "terminal": false,
+          "branches": [
+            "beat_2"
+          ]
+        },
+        {
+          "id": "beat_2",
+          "terminal": false,
+          "branches": [
+            "beat_3"
+          ]
+        },
+        {
+          "id": "beat_3",
+          "terminal": false,
+          "branches": [
+            "beat_4"
+          ]
+        },
+        {
+          "id": "beat_4",
+          "terminal": false,
+          "branches": [
+            "decision"
+          ]
+        },
+        {
+          "id": "decision",
+          "terminal": true,
+          "branches": [
+            "shoreline_protected",
+            "shoreline_damaged",
+            "shoreline_abandoned",
+            "storm_task_refused",
+            "evacuation_interrupted"
+          ]
+        }
+      ],
+      "terminal_branches": [
+        "shoreline_protected",
+        "shoreline_damaged",
+        "shoreline_abandoned",
+        "storm_task_refused",
+        "evacuation_interrupted"
+      ],
+      "semantic_objects": [
+        "beach_storm_coming_warning_flag",
+        "beach_storm_coming_rental_props",
+        "beach_storm_coming_rescue_skiff",
+        "beach_storm_coming_evacuation_line",
+        "beach_storm_coming_closed_stall"
+      ],
+      "semantic_actors": [
+        "beach_storm_coming_lifeguard",
+        "beach_storm_coming_stall_keeper",
+        "beach_storm_coming_late_swimmer"
+      ],
+      "player_verbs": [
+        "raise_warning_flag",
+        "lash_rental_props",
+        "stage_rescue_skiff",
+        "evacuate_shoreline",
+        "beach_storm_coming_resolve_a",
+        "beach_storm_coming_resolve_b",
+        "beach_storm_coming_fail",
+        "beach_storm_coming_refuse"
+      ],
+      "world_connections": [
+        "weather_evacuation_state",
+        "town_transition",
+        "safe_exit",
+        "save_revisit",
+        "exact_receipts"
+      ],
+      "reentry_policy": {
+        "partial": "resume",
+        "terminal": "aftermath",
+        "expired": "expired"
+      },
+      "expiry": {
+        "boundary": "town_action",
+        "after": 1,
+        "policy": "fail"
+      },
+      "mechanic_signature_axes": {
+        "pressure": "evacuation_warning_phases",
+        "beat_count": 4,
+        "prop_count": 5,
+        "actor_count": 3,
+        "fact": "town_transition",
+        "aftermath": [
+          "set_state:closed_stall:secured",
+          "set_appearance:rental_props:storm_scattered",
+          "set_state:rescue_skiff:abandoned",
+          "set_appearance:warning_flag:people_only_warning",
+          "set_state:evacuation_line:partial_evacuation"
+        ]
+      },
+      "capture_ids": [
+        "beach_storm_coming_arrival",
+        "beach_storm_coming_phase_1",
+        "beach_storm_coming_phase_2",
+        "beach_storm_coming_phase_3",
+        "beach_storm_coming_phase_4",
+        "beach_storm_coming_aftermath_shoreline_protected",
+        "beach_storm_coming_aftermath_shoreline_damaged",
+        "beach_storm_coming_aftermath_shoreline_abandoned",
+        "beach_storm_coming_aftermath_storm_task_refused",
+        "beach_storm_coming_aftermath_evacuation_interrupted",
+        "beach_storm_coming_partial_revisit",
+        "beach_storm_coming_terminal_revisit",
+        "beach_storm_coming_reduced_motion",
+        "beach_storm_coming_small_screen",
+        "beach_storm_coming_obstruction_overlay",
+        "beach_storm_coming_hit_target_overlay"
+      ],
+      "seed_evidence": {
+        "proof_seed": "beach_storm_coming_env06_7_b",
+        "expected_outcomes": [
+          "shoreline_protected",
+          "shoreline_damaged",
+          "shoreline_abandoned",
+          "storm_task_refused",
+          "evacuation_interrupted"
+        ],
+        "phase_count": 6,
+        "branch_count": 10,
+        "save_every_phase": true,
+        "save_every_branch": true,
+        "duplicate_receipt_atomic": true,
+        "conflicting_receipt_rejected": true,
+        "safe_exit_all_phases": true,
+        "reduced_motion": true,
+        "small_screen": true
+      }
+    },
+    {
+      "scenario_id": "beach_festival_weekend",
+      "archetype": "beach",
+      "definition_path": "data/environments/scenario_sequences/env06_7_roadside_shelter.json",
+      "handler_pack": "roadside_shelter",
+      "renderer_id": "roadside_shelter",
+      "phase_graph": [
+        {
+          "id": "arrival",
+          "terminal": false,
+          "branches": [
+            "beat_1"
+          ]
+        },
+        {
+          "id": "beat_1",
+          "terminal": false,
+          "branches": [
+            "beat_2"
+          ]
+        },
+        {
+          "id": "beat_2",
+          "terminal": false,
+          "branches": [
+            "beat_3"
+          ]
+        },
+        {
+          "id": "beat_3",
+          "terminal": false,
+          "branches": [
+            "beat_4"
+          ]
+        },
+        {
+          "id": "beat_4",
+          "terminal": false,
+          "branches": [
+            "beat_5"
+          ]
+        },
+        {
+          "id": "beat_5",
+          "terminal": false,
+          "branches": [
+            "decision"
+          ]
+        },
+        {
+          "id": "decision",
+          "terminal": true,
+          "branches": [
+            "lineup_changed",
+            "stall_closed",
+            "after_hours_beach",
+            "festival_task_refused",
+            "festival_interrupted"
+          ]
+        }
+      ],
+      "terminal_branches": [
+        "lineup_changed",
+        "stall_closed",
+        "after_hours_beach",
+        "festival_task_refused",
+        "festival_interrupted"
+      ],
+      "semantic_objects": [
+        "beach_festival_weekend_food_stall",
+        "beach_festival_weekend_craft_stall",
+        "beach_festival_weekend_festival_stage",
+        "beach_festival_weekend_schedule_board",
+        "beach_festival_weekend_lost_child_marker",
+        "beach_festival_weekend_crowd_rope"
+      ],
+      "semantic_actors": [
+        "beach_festival_weekend_stage_manager",
+        "beach_festival_weekend_lost_child",
+        "beach_festival_weekend_stall_vendor",
+        "beach_festival_weekend_crowd_marshal"
+      ],
+      "player_verbs": [
+        "read_festival_schedule",
+        "move_crowd_rope",
+        "trace_attraction_route",
+        "reset_stage_cables",
+        "reunite_at_meeting_marker",
+        "beach_festival_weekend_resolve_a",
+        "beach_festival_weekend_resolve_b",
+        "beach_festival_weekend_fail",
+        "beach_festival_weekend_refuse"
+      ],
+      "world_connections": [
+        "traveler_festival_schedule",
+        "travel_arrived",
+        "safe_exit",
+        "save_revisit",
+        "exact_receipts"
+      ],
+      "reentry_policy": {
+        "partial": "resume",
+        "terminal": "aftermath",
+        "expired": "expired"
+      },
+      "expiry": {
+        "boundary": "visit_end",
+        "after": 1,
+        "policy": "cleanup"
+      },
+      "mechanic_signature_axes": {
+        "pressure": "moving_show_schedule",
+        "beat_count": 5,
+        "prop_count": 6,
+        "actor_count": 4,
+        "fact": "travel_arrived",
+        "aftermath": [
+          "set_state:schedule_board:revised_lineup",
+          "set_appearance:craft_stall:closed_after_search",
+          "set_state:festival_stage:after_hours",
+          "set_appearance:lost_child_marker:marshal_staffed",
+          "set_state:crowd_rope:partial_route"
+        ]
+      },
+      "capture_ids": [
+        "beach_festival_weekend_arrival",
+        "beach_festival_weekend_phase_1",
+        "beach_festival_weekend_phase_2",
+        "beach_festival_weekend_phase_3",
+        "beach_festival_weekend_phase_4",
+        "beach_festival_weekend_phase_5",
+        "beach_festival_weekend_aftermath_lineup_changed",
+        "beach_festival_weekend_aftermath_stall_closed",
+        "beach_festival_weekend_aftermath_after_hours_beach",
+        "beach_festival_weekend_aftermath_festival_task_refused",
+        "beach_festival_weekend_aftermath_festival_interrupted",
+        "beach_festival_weekend_partial_revisit",
+        "beach_festival_weekend_terminal_revisit",
+        "beach_festival_weekend_reduced_motion",
+        "beach_festival_weekend_small_screen",
+        "beach_festival_weekend_obstruction_overlay",
+        "beach_festival_weekend_hit_target_overlay"
+      ],
+      "seed_evidence": {
+        "proof_seed": "beach_festival_weekend_env06_7_b",
+        "expected_outcomes": [
+          "lineup_changed",
+          "stall_closed",
+          "after_hours_beach",
+          "festival_task_refused",
+          "festival_interrupted"
+        ],
+        "phase_count": 7,
+        "branch_count": 11,
+        "save_every_phase": true,
+        "save_every_branch": true,
+        "duplicate_receipt_atomic": true,
+        "conflicting_receipt_rejected": true,
+        "safe_exit_all_phases": true,
+        "reduced_motion": true,
+        "small_screen": true
+      }
+    }
+  ]
+}
