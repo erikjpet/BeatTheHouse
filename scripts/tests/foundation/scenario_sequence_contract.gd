@@ -2616,7 +2616,7 @@ static func _check_serialized_fact_ingress(failures: Array) -> void:
 
 	var prepared := SequenceRuntimeScript.apply_command(initial, definition, _runtime_command(initial, definition, "prepare", "bar_node", "arrival", "terminal:prepare", {}, "scenario", "command_console"), {"available_funds": 2})
 	var prepared_state := _dict(prepared.get("state", {}))
-	var terminal := SequenceRuntimeScript.apply_command(prepared_state, definition, _runtime_command(prepared_state, definition, "finish", "bar_node", "arrival", "terminal:finish", {}, "scenario", "command_console"), {"available_funds": 4})
+	var terminal := SequenceRuntimeScript.apply_command(prepared_state, definition, _runtime_command(prepared_state, definition, "finish", "bar_node", "complication", "terminal:finish", {}, "scenario", "command_console"), {"available_funds": 4})
 	var terminal_fact := SequenceRuntimeScript.fact("world_boundary", "scenario", "bar_node", "terminal:boundary", 1, 4, _fact_payload("world_boundary"))
 	var terminal_queued := SequenceRuntimeScript.enqueue_fact(_dict(terminal.get("state", {})), definition, terminal_fact)
 	var aftermath := SequenceRuntimeScript.flush_facts(_dict(terminal_queued.get("state", {})), definition, 4)
@@ -2737,7 +2737,7 @@ static func _check_receipt_reconstruction(failures: Array) -> void:
 	var state := SequenceRuntimeScript.initial_state(definition, "bar_node", "rebuild_seed", host_semantics)
 	for command_spec_value in [
 		["prepare", "arrival", "rebuild:prepare", "command_console"],
-		["finish", "arrival", "rebuild:finish", "command_console"],
+		["finish", "complication", "rebuild:finish", "command_console"],
 		["use", "aftermath", "rebuild:outcome", "fixture_201"],
 	]:
 		var command_spec := command_spec_value as Array
@@ -3229,7 +3229,7 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	lifecycle_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(lifecycle_definition)
 	var lifecycle_host := _fixture_host_semantics(lifecycle_definition)
 	var lifecycle_state := SequenceRuntimeScript.initial_state(lifecycle_definition, "bar_node", "cleanup_lifecycle_seed", lifecycle_host)
-	for lifecycle_command_value in [["prepare", "arrival", "lifecycle:prepare", "command_console"], ["finish", "arrival", "lifecycle:finish", "command_console"], ["use", "aftermath", "lifecycle:terminal", "fixture_201"]]:
+	for lifecycle_command_value in [["prepare", "arrival", "lifecycle:prepare", "command_console"], ["finish", "complication", "lifecycle:finish", "command_console"], ["use", "aftermath", "lifecycle:terminal", "fixture_201"]]:
 		var lifecycle_command := lifecycle_command_value as Array
 		var lifecycle_applied := SequenceRuntimeScript.apply_command(lifecycle_state, lifecycle_definition, _runtime_command(lifecycle_state, lifecycle_definition, str(lifecycle_command[0]), "bar_node", str(lifecycle_command[1]), str(lifecycle_command[2]), {}, "scenario", str(lifecycle_command[3])), {"available_funds": 10})
 		if not bool(lifecycle_applied.get("ok", false)):
