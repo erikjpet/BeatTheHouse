@@ -24,9 +24,12 @@ var _host_handlers: Dictionary = {}
 var _operations: Dictionary = {}
 var _session_id := "session.default_01"
 var _authenticated_actions: Dictionary = {}
+var _runtime_capability := RefCounted.new()
 
 
 func configure(ritual_definition: Dictionary, host_handlers: Dictionary = {}, session_id: String = "session.default_01", authenticated_actions: Dictionary = {}) -> Dictionary:
+	if not definition.is_empty():
+		return {"ok": false, "errors": ["ritual runtime is already configured"]}
 	var errors := SchemaScript.validate_definition(ritual_definition)
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors}
@@ -41,7 +44,8 @@ func configure(ritual_definition: Dictionary, host_handlers: Dictionary = {}, se
 
 
 func set_authenticated_actions(authenticated_actions: Dictionary) -> void:
-	_authenticated_actions = authenticated_actions.duplicate(true)
+	if definition.is_empty():
+		_authenticated_actions = authenticated_actions.duplicate(true)
 
 
 # Strict frozen-contract entry point. Caller origin data never establishes
@@ -71,8 +75,12 @@ func process_command(command: Dictionary, context: Dictionary = {}) -> Dictionar
 	var execution_context := context.duplicate(true)
 	execution_context["_ritual_command_boundary"] = (command.get("boundary", {}) as Dictionary).duplicate(true)
 	execution_context["_ritual_command_receipt"] = str(command.get("receipt_key", ""))
-	var legacy: Dictionary = process_action(str(command.get("action_id", "")), command.get("parameters", {}) as Dictionary, request_key, execution_context)
+	var before := state.duplicate(true)
+	var legacy: Dictionary = _reduce_action(str(command.get("action_id", "")), command.get("parameters", {}) as Dictionary, request_key, execution_context, _runtime_capability)
 	var response := _result_envelope(command, legacy) if bool(legacy.get("ok", false)) else _envelope_rejection(command, _taxonomy_code(str(legacy.get("error_code", "handler_rejected"))), str(legacy.get("message", "Action rejected.")), false, "none")
+	if not bool(response.get("ok", false)):
+		state = before
+		return response
 	envelope_cache = state.get("envelope_request_cache", {})
 	envelope_cache[request_key] = {
 		"request_key": request_key,
@@ -105,6 +113,14 @@ func validate_command_envelope(command: Dictionary) -> Dictionary:
 
 
 func process_action(action_id: String, parameters: Dictionary, request_key: String, context: Dictionary = {}) -> Dictionary:
+	# Compatibility guard only. All authoritative actions must enter through the
+	# complete authenticated RitualCommand boundary above.
+	return _rejection("unsealed_authority", action_id, request_key, "Direct ritual action authority is sealed.")
+
+
+func _reduce_action(action_id: String, parameters: Dictionary, request_key: String, context: Dictionary, runtime_capability: RefCounted) -> Dictionary:
+	if runtime_capability != _runtime_capability:
+		return _rejection("unsealed_authority", action_id, request_key, "Ritual reducer capability is not authentic.")
 	if definition.is_empty():
 		return _rejection("runtime_not_configured", action_id, request_key, "Ritual runtime is not configured.")
 	if not _request_key(request_key):
@@ -189,7 +205,13 @@ func process_action(action_id: String, parameters: Dictionary, request_key: Stri
 	return response
 
 
-func restore(serialized_state: Dictionary) -> Dictionary:
+func restore(_serialized_state: Dictionary) -> Dictionary:
+	return {"ok": false, "error_code": "invalid_restore", "errors": ["Raw ritual restore authority is sealed"]}
+
+
+func _restore_state(serialized_state: Dictionary, runtime_capability: RefCounted) -> Dictionary:
+	if runtime_capability != _runtime_capability:
+		return {"ok": false, "error_code": "invalid_restore", "errors": ["Ritual restore capability is not authentic"]}
 	if definition.is_empty():
 		return {"ok": false, "errors": ["runtime is not configured"]}
 	var errors := _validate_restore_state(serialized_state)
@@ -232,7 +254,7 @@ func restore_snapshot(snapshot: Dictionary) -> Dictionary:
 	if typeof(snapshot.get("state")) != TYPE_DICTIONARY or not _fingerprint(str(snapshot.get("content_fingerprint", ""))) or canonical_fingerprint(_without_fingerprint(snapshot)) != str(snapshot.get("content_fingerprint", "")):
 		return {"ok": false, "error_code": "invalid_restore", "errors": ["restore snapshot fingerprint mismatch"]}
 	var before := state.duplicate(true)
-	var result := restore(snapshot.get("state", {}) as Dictionary)
+	var result := _restore_state(snapshot.get("state", {}) as Dictionary, _runtime_capability)
 	if not bool(result.get("ok", false)):
 		state = before
 		result["error_code"] = "invalid_restore"
@@ -257,6 +279,12 @@ func prepared_projection() -> Dictionary:
 
 
 func set_energy_tier(tier_id: String, request_key: String) -> Dictionary:
+	return {"ok": false, "error_code": "unsealed_authority", "energy_tier": tier_id, "request_key": request_key}
+
+
+func _apply_energy_tier(tier_id: String, request_key: String, runtime_capability: RefCounted) -> Dictionary:
+	if runtime_capability != _runtime_capability:
+		return {"ok": false, "error_code": "unsealed_authority"}
 	var energy: Dictionary = definition.get("energy", {}) if typeof(definition.get("energy", {})) == TYPE_DICTIONARY else {}
 	for tier in _dictionary_array(energy.get("tiers", [])):
 		if str(tier.get("id", "")) != tier_id:
@@ -535,19 +563,29 @@ func _validate_parameters(parameters: Dictionary, schema_value: Variant) -> Arra
 		if not schema.has(key): errors.append("unknown parameter %s" % key)
 	for key in schema.keys():
 		if not parameters.has(key): errors.append("missing parameter %s" % key)
-		elif not _value_matches(parameters[key], str(schema[key])): errors.append("parameter %s has wrong type" % key)
+		elif not _value_matches(parameters[key], schema[key]): errors.append("parameter %s violates its declared type or bounds" % key)
 	return errors
 
 
-func _value_matches(value: Variant, type: String) -> bool:
-	match type:
+func _value_matches(value: Variant, descriptor_value: Variant) -> bool:
+	if typeof(descriptor_value) != TYPE_DICTIONARY:
+		return false
+	var descriptor: Dictionary = descriptor_value
+	match str(descriptor.get("type", "")):
 		"bool": return typeof(value) == TYPE_BOOL
-		"int": return typeof(value) == TYPE_INT
-		"float": return typeof(value) == TYPE_FLOAT
-		"string": return typeof(value) == TYPE_STRING
-		"qualified_id": return typeof(value) == TYPE_STRING and str(value).contains(".")
-		"string_array": return typeof(value) == TYPE_ARRAY and (value as Array).all(func(item): return typeof(item) == TYPE_STRING)
-		"int_array": return typeof(value) == TYPE_ARRAY and (value as Array).all(func(item): return typeof(item) == TYPE_INT)
+		"int": return typeof(value) == TYPE_INT and int(value) >= int(descriptor.get("min", 0)) and int(value) <= int(descriptor.get("max", 0))
+		"float": return typeof(value) == TYPE_FLOAT and is_finite(float(value)) and float(value) >= float(descriptor.get("min", 0.0)) and float(value) <= float(descriptor.get("max", 0.0))
+		"string":
+			if typeof(value) != TYPE_STRING: return false
+			var byte_length := str(value).to_utf8_buffer().size()
+			return byte_length >= int(descriptor.get("min_length", 0)) and byte_length <= int(descriptor.get("max_length", 0))
+		"qualified_id": return typeof(value) == TYPE_STRING and str(value).length() <= int(descriptor.get("max_length", 0)) and _qualified_id(str(value))
+		"string_array":
+			if typeof(value) != TYPE_ARRAY or (value as Array).size() < int(descriptor.get("min_items", 0)) or (value as Array).size() > int(descriptor.get("max_items", 0)): return false
+			return (value as Array).all(func(item): return typeof(item) == TYPE_STRING and str(item).to_utf8_buffer().size() <= int(descriptor.get("item_max_length", 0)))
+		"int_array":
+			if typeof(value) != TYPE_ARRAY or (value as Array).size() < int(descriptor.get("min_items", 0)) or (value as Array).size() > int(descriptor.get("max_items", 0)): return false
+			return (value as Array).all(func(item): return typeof(item) == TYPE_INT and int(item) >= int(descriptor.get("item_min", 0)) and int(item) <= int(descriptor.get("item_max", 0)))
 	return false
 
 

@@ -9,7 +9,7 @@ const MAX_RECORDS := 128
 const TOP_LEVEL_KEYS := [
 	"contract", "ritual_id", "initial_phase", "ritual_phases",
 	"action_declarations", "staged_commitment", "pointer_verbs", "actors",
-	"scene_objects", "energy", "game_facts", "ritual_persistence",
+	"scene_objects", "energy", "game_facts", "public_projection_schema", "ritual_persistence",
 	"handler_registry", "declared_targets",
 ]
 const PHASE_KEYS := ["id", "entry_conditions", "permitted_actions", "entry_operations", "transitions", "terminal"]
@@ -53,6 +53,7 @@ static func validate_definition(definition: Dictionary) -> Array[String]:
 
 	var targets := _validate_targets(definition.get("declared_targets", {}), errors)
 	var facts := _validate_facts(definition.get("game_facts", []), errors)
+	_validate_public_projection(definition.get("public_projection_schema", {}), errors)
 	var handlers := _validate_handlers(definition.get("handler_registry", []), actions, facts, errors)
 	for action_id in actions.keys():
 		var handler_id := str((actions[action_id] as Dictionary).get("handler_id", ""))
@@ -445,8 +446,69 @@ static func _validate_type_map(value: Variant, path: String, errors: Array[Strin
 		errors.append("%s must be a schema map" % path)
 		return
 	for key in (value as Dictionary).keys():
-		if not _local_id(str(key)) or not SCHEMA_TYPES.has(str((value as Dictionary)[key])):
-			errors.append("%s contains invalid field/type %s=%s" % [path, key, (value as Dictionary)[key]])
+		if not _local_id(str(key)):
+			errors.append("%s contains invalid field %s" % [path, key])
+			continue
+		_validate_type_descriptor((value as Dictionary)[key], "%s.%s" % [path, key], errors)
+
+
+static func _validate_public_projection(value: Variant, errors: Array[String]) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		errors.append("public_projection_schema must be a dictionary")
+		return
+	var projection: Dictionary = value
+	_closed(projection, ["authority", "fields"], ["authority", "fields"], "public_projection_schema", errors)
+	if str(projection.get("authority", "")) != "public":
+		errors.append("public_projection_schema.authority must be public")
+	_validate_type_map(projection.get("fields", {}), "public_projection_schema.fields", errors)
+
+
+static func _validate_type_descriptor(value: Variant, path: String, errors: Array[String]) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		errors.append("%s must be a closed type descriptor" % path)
+		return
+	var descriptor: Dictionary = value
+	var descriptor_type := str(descriptor.get("type", ""))
+	if not SCHEMA_TYPES.has(descriptor_type):
+		errors.append("%s has an unregistered type" % path)
+		return
+	var keys_by_type := {
+		"bool": ["type"],
+		"int": ["type", "min", "max"],
+		"float": ["type", "min", "max"],
+		"string": ["type", "min_length", "max_length"],
+		"qualified_id": ["type", "max_length"],
+		"string_array": ["type", "min_items", "max_items", "item_max_length"],
+		"int_array": ["type", "min_items", "max_items", "item_min", "item_max"],
+	}
+	var required: Array = keys_by_type[descriptor_type]
+	_closed(descriptor, required, required, path, errors)
+	if descriptor_type == "int":
+		if not _integer_scalar(descriptor.get("min")) or not _integer_scalar(descriptor.get("max")) or int(descriptor.get("min", 0)) < -2147483648 or int(descriptor.get("max", 0)) > 2147483647 or int(descriptor.get("min", 0)) > int(descriptor.get("max", 0)):
+			errors.append("%s has invalid integer bounds" % path)
+	elif descriptor_type == "float":
+		if typeof(descriptor.get("min")) != TYPE_FLOAT or typeof(descriptor.get("max")) != TYPE_FLOAT or not is_finite(float(descriptor.get("min", 0.0))) or not is_finite(float(descriptor.get("max", 0.0))) or float(descriptor.get("min", 0.0)) > float(descriptor.get("max", 0.0)):
+			errors.append("%s has invalid float bounds" % path)
+	elif descriptor_type == "string":
+		if not _bounded_integer_pair(descriptor.get("min_length"), descriptor.get("max_length"), 0, 512):
+			errors.append("%s has invalid string bounds" % path)
+	elif descriptor_type == "qualified_id":
+		if not _integer_scalar(descriptor.get("max_length")) or int(descriptor.get("max_length", 0)) < 3 or int(descriptor.get("max_length", 0)) > 192:
+			errors.append("%s has invalid qualified id bounds" % path)
+	elif descriptor_type == "string_array":
+		if not _bounded_integer_pair(descriptor.get("min_items"), descriptor.get("max_items"), 0, 64) or not _integer_scalar(descriptor.get("item_max_length")) or int(descriptor.get("item_max_length", -1)) < 0 or int(descriptor.get("item_max_length", 129)) > 128:
+			errors.append("%s has invalid string array bounds" % path)
+	elif descriptor_type == "int_array":
+		if not _bounded_integer_pair(descriptor.get("min_items"), descriptor.get("max_items"), 0, 64) or not _integer_scalar(descriptor.get("item_min")) or not _integer_scalar(descriptor.get("item_max")) or int(descriptor.get("item_min", 0)) < -2147483648 or int(descriptor.get("item_max", 0)) > 2147483647 or int(descriptor.get("item_min", 0)) > int(descriptor.get("item_max", 0)):
+			errors.append("%s has invalid integer array bounds" % path)
+
+
+static func _integer_scalar(value: Variant) -> bool:
+	return typeof(value) == TYPE_INT or (typeof(value) == TYPE_FLOAT and is_finite(float(value)) and float(value) == floor(float(value)))
+
+
+static func _bounded_integer_pair(minimum: Variant, maximum: Variant, lower: int, upper: int) -> bool:
+	return _integer_scalar(minimum) and _integer_scalar(maximum) and int(minimum) >= lower and int(maximum) <= upper and int(minimum) <= int(maximum)
 
 
 static func _validate_rect(value: Variant, path: String, errors: Array[String]) -> void:
