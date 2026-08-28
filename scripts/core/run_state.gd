@@ -371,7 +371,7 @@ var _item_effect_total_cache: Dictionary = {}
 var _owned_item_lookup_cache: Dictionary = {}
 var _owned_item_lookup_cache_valid := false
 var _scenario_sequence_definition_cache: Dictionary = {}
-# Debug-only fail-closed probe used by the retained-alias transaction contract.
+# Fail-closed forced-rejection probe used by the retained-alias transaction contract.
 # It can only reject a turn; it cannot grant authority or alter a consequence.
 var _turn_transaction_test_failure_stage: String = ""
 
