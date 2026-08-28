@@ -105,11 +105,15 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var duration := int(_config().get("roll_animation_duration_msec", 0))
 	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var roll_active := roll_started > 0 and now_msec >= roll_started and now_msec < roll_started + duration
-	var presentation_phase := _presentation_phase(last_roll, now_msec, duration, dispersed)
+	var presentation_phase := _presentation_phase(last_roll, now_msec, duration, dispersed, str(ui_state.get("craps_ritual_phase", "")))
 	var setting_challenge := _dict(ui_state.get("craps_setting_challenge", {}))
 	var switching_challenge := _dict(ui_state.get("craps_switching_challenge", {}))
 	var setting_active := not setting_challenge.is_empty() and str(setting_challenge.get("skill_grade", "")).is_empty()
 	var switching_active := not switching_challenge.is_empty() and str(switching_challenge.get("skill_grade", "")).is_empty()
+	var last_result := _dict(table.get("last_result", {}))
+	var accounting := _last_roll_accounting(last_result)
+	var available_cash := int(run_state.bankroll) if run_state != null else 0
+	var available_chips := int(run_state.grand_casino_chips) if run_state != null else 0
 	var spec := GameModule.surface_spec({
 		"surface_renderer": "craps",
 		"surface_life": "street_circle" if street else "immersive_table",
@@ -158,6 +162,13 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"chip_denominations": _chip_denominations(table),
 		"total_wager_cost": total_wager,
 		"craps_total_wager": total_wager,
+		"available_cash": available_cash,
+		"available_chips": available_chips,
+		"available_funds": available_cash if street else available_chips,
+		"at_risk_working_stake": _working_wager_total(table.get("working_bets", {})),
+		"last_returned_stake": int(accounting.get("returned_stake", 0)),
+		"last_payout": int(accounting.get("payout", 0)),
+		"last_net": int(last_result.get("bankroll_delta", 0)),
 		"table_minimum": int(table.get("table_minimum", 0)),
 		"table_maximum": int(table.get("table_maximum", 0)),
 		"can_roll": _can_roll(table, pending) and not roll_active and not dispersed,
@@ -167,7 +178,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"can_repeat": not _dict(table.get("last_committed_bets", {})).is_empty() and pending.is_empty() and not roll_active and not dispersed,
 		"can_rebet": not _dict(table.get("last_resolved_bets", {})).is_empty() and pending.is_empty() and not roll_active and not dispersed,
 		"last_roll": last_roll.duplicate(true),
-		"last_result": _dict(table.get("last_result", {})).duplicate(true),
+		"last_result": last_result.duplicate(true),
 		"roll_history": CrapsSurfaceViewModelScript.roll_history_rows(table.get("roll_history", []), int(_config().get("visible_history_limit", 0))),
 		"hot_shooter_streak": int(table.get("hot_shooter_streak", 0)),
 		"table_energy": int(table.get("table_energy", 0)),
@@ -180,7 +191,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"craps_switching_challenge": switching_challenge.duplicate(true),
 		"craps_setting_item_modifiers": skill_item_modifier_badges(run_state, _string_array(_dict(_config().get("setting", {})).get("item_effect_keys", []))),
 		"craps_switching_item_modifiers": skill_item_modifier_badges(run_state, _string_array(_dict(_config().get("switching", {})).get("item_effect_keys", []))),
-		"result_message": str(_dict(table.get("last_result", {})).get("message", "")),
+		"result_message": str(last_result.get("message", "")),
 		"table_notice": _table_notice(table, pending, street),
 	})
 	if street:
@@ -195,7 +206,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(state.get("craps_variant", "")) == "street_craps":
 		return _draw_street_surface(surface, state)
-	var board := Vector2(900, 430)
+	var board := Vector2(900, 474)
 	surface.surface_begin_design_space(board)
 	surface.draw_rect(Rect2(Vector2.ZERO, board), Color("#071713"))
 	surface.draw_rect(Rect2(54, 52, 704, 332), Color("#0b513c"))
@@ -252,9 +263,12 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			var chips := _chip_denominations(table)
 			if chips.is_empty():
 				return _message_command(session, "No chip rack is posted.")
-			var current := int(session.get("selected_chip", chips[0]))
-			var chip_index := chips.find(current)
-			session["selected_chip"] = int(chips[(chip_index + 1) % chips.size()])
+			if index >= 0 and index < chips.size():
+				session["selected_chip"] = int(chips[index])
+			else:
+				var current := int(session.get("selected_chip", chips[0]))
+				var chip_index := chips.find(current)
+				session["selected_chip"] = int(chips[(chip_index + 1) % chips.size()])
 			return GameModule.surface_command({"ui_state": session, "set_stake": int(session["selected_chip"]), "surface_audio_cue": "blackjack_chip"})
 		"craps_clear":
 			_push_pending_history(session, pending)
@@ -946,16 +960,35 @@ func _resolved_rebet_set(pending: Dictionary, settlement: Dictionary) -> Diction
 	return rebet
 
 
-func _presentation_phase(last_roll: Dictionary, now_msec: int, duration: int, dispersed: bool) -> String:
+func _presentation_phase(last_roll: Dictionary, now_msec: int, duration: int, dispersed: bool, requested_phase: String = "") -> String:
 	if dispersed:
 		return "dispersed"
 	var started := int(last_roll.get("resolved_at_msec", 0))
-	if started <= 0 or duration <= 0 or now_msec < started or now_msec >= started + duration:
-		return "betting"
-	var elapsed := now_msec - started
-	if elapsed < duration * 55 / 100:
-		return "bounce_read"
-	return "dealer_settlement"
+	if started > 0 and duration > 0 and now_msec >= started and now_msec < started + duration:
+		var elapsed := now_msec - started
+		if elapsed < duration * 55 / 100:
+			return "bounce_read"
+		return "dealer_settlement"
+	if requested_phase in ["dice_offered", "aiming_throw"]:
+		return requested_phase
+	return "betting"
+
+
+func _last_roll_accounting(last_result: Dictionary) -> Dictionary:
+	var returned_stake := 0
+	var payout := 0
+	for row_value in _dictionary_array(last_result.get("bet_results", [])):
+		var row: Dictionary = row_value
+		var stake := maxi(0, int(row.get("stake", 0)))
+		var profit := int(row.get("profit", 0))
+		var outcome := str(row.get("outcome", ""))
+		if outcome in ["win", "push", "refund"]:
+			returned_stake += stake
+		if outcome == "win":
+			payout += stake + maxi(0, profit)
+		elif outcome in ["push", "refund"]:
+			payout += stake
+	return {"returned_stake": returned_stake, "payout": payout}
 
 
 func _energy_tier(table: Dictionary) -> String:
@@ -1197,10 +1230,10 @@ func _selected_surface_actions(setting: Dictionary, switching: Dictionary) -> Ar
 
 
 func _draw_street_surface(surface, state: Dictionary) -> bool:
-	var board := Vector2(900, 430)
+	var board := Vector2(900, 474)
 	surface.surface_begin_design_space(board)
 	surface.draw_rect(Rect2(Vector2.ZERO, board), Color("#121416"))
-	for y in range(42, 390, 42):
+	for y in range(42, 432, 42):
 		surface.draw_line(Vector2(24, y), Vector2(876, y), Color(0.24, 0.20, 0.19, 0.44), 2.0)
 		var offset := 22.0 if int(y / 42) % 2 == 0 else 62.0
 		for x in range(int(offset), 880, 84):
@@ -1275,13 +1308,15 @@ func _draw_street_side_panel(surface, state: Dictionary) -> void:
 
 
 func _draw_street_controls(surface, state: Dictionary) -> void:
+	_draw_denomination_controls(surface, state, 42.0, 386.0, true)
 	var actions := [
-		{"id": "craps_chip", "label": "CASH %d" % int(state.get("selected_chip", 0)), "rect": Rect2(42, 384, 102, 32), "enabled": not bool(state.get("street_dispersed", false))},
-		{"id": "craps_remove", "label": "REMOVE", "rect": Rect2(150, 384, 82, 32), "enabled": bool(state.get("can_remove", false))},
-		{"id": "craps_undo", "label": "UNDO", "rect": Rect2(238, 384, 72, 32), "enabled": bool(state.get("can_undo", false))},
-		{"id": "craps_clear", "label": "CLEAR", "rect": Rect2(316, 384, 72, 32), "enabled": bool(state.get("can_clear", false))},
-		{"id": "craps_roll", "label": "OFFER", "rect": Rect2(394, 380, 94, 38), "enabled": bool(state.get("can_roll", false))},
-		{"id": "craps_throw", "label": "THROW", "rect": Rect2(494, 380, 104, 38), "enabled": bool(state.get("can_roll", false))},
+		{"id": "craps_remove", "label": "REMOVE", "rect": Rect2(42, 428, 82, 32), "enabled": bool(state.get("can_remove", false))},
+		{"id": "craps_undo", "label": "UNDO", "rect": Rect2(130, 428, 72, 32), "enabled": bool(state.get("can_undo", false))},
+		{"id": "craps_clear", "label": "CLEAR", "rect": Rect2(208, 428, 72, 32), "enabled": bool(state.get("can_clear", false))},
+		{"id": "craps_repeat", "label": "REPEAT", "rect": Rect2(286, 428, 82, 32), "enabled": bool(state.get("can_repeat", false))},
+		{"id": "craps_rebet", "label": "RE-BET", "rect": Rect2(374, 428, 82, 32), "enabled": bool(state.get("can_rebet", false))},
+		{"id": "craps_roll", "label": "OFFER", "rect": Rect2(462, 424, 94, 38), "enabled": bool(state.get("can_roll", false))},
+		{"id": "craps_throw", "label": "THROW", "rect": Rect2(562, 424, 104, 38), "enabled": bool(state.get("can_roll", false))},
 	]
 	for action_value in actions:
 		var action: Dictionary = action_value
@@ -1400,15 +1435,17 @@ func _draw_working_bets(surface, state: Dictionary) -> void:
 
 
 func _draw_controls(surface, state: Dictionary) -> void:
+	_draw_denomination_controls(surface, state, 64.0, 392.0, false)
 	var actions := [
-		{"id": "craps_chip", "label": "CHIP %d" % int(state.get("selected_chip", 0)), "rect": Rect2(64, 392, 112, 28), "enabled": true},
-		{"id": "craps_clear", "label": "CLEAR", "rect": Rect2(184, 392, 94, 28), "enabled": bool(state.get("can_clear", false))},
-		{"id": "craps_setting", "label": "SET DICE", "rect": Rect2(286, 392, 110, 28), "enabled": bool(state.get("craps_setting_available", false))},
-		{"id": "craps_switch", "label": "SWITCH", "rect": Rect2(404, 392, 100, 28), "enabled": bool(state.get("craps_switching_available", false))},
-		{"id": "craps_remove", "label": "REMOVE", "rect": Rect2(410, 388, 74, 34), "enabled": bool(state.get("can_remove", false))},
-		{"id": "craps_undo", "label": "UNDO", "rect": Rect2(490, 388, 60, 34), "enabled": bool(state.get("can_undo", false))},
-		{"id": "craps_roll", "label": "OFFER", "rect": Rect2(556, 388, 82, 34), "enabled": bool(state.get("can_roll", false))},
-		{"id": "craps_throw", "label": "THROW", "rect": Rect2(644, 388, 92, 34), "enabled": bool(state.get("can_roll", false))},
+		{"id": "craps_clear", "label": "CLEAR", "rect": Rect2(300, 392, 68, 28), "enabled": bool(state.get("can_clear", false))},
+		{"id": "craps_remove", "label": "REMOVE", "rect": Rect2(374, 392, 76, 28), "enabled": bool(state.get("can_remove", false))},
+		{"id": "craps_undo", "label": "UNDO", "rect": Rect2(456, 392, 64, 28), "enabled": bool(state.get("can_undo", false))},
+		{"id": "craps_repeat", "label": "REPEAT", "rect": Rect2(526, 392, 72, 28), "enabled": bool(state.get("can_repeat", false))},
+		{"id": "craps_rebet", "label": "RE-BET", "rect": Rect2(604, 392, 72, 28), "enabled": bool(state.get("can_rebet", false))},
+		{"id": "craps_setting", "label": "SET DICE", "rect": Rect2(300, 430, 110, 30), "enabled": bool(state.get("craps_setting_available", false))},
+		{"id": "craps_switch", "label": "SWITCH", "rect": Rect2(416, 430, 100, 30), "enabled": bool(state.get("craps_switching_available", false))},
+		{"id": "craps_roll", "label": "OFFER", "rect": Rect2(522, 428, 82, 34), "enabled": bool(state.get("can_roll", false))},
+		{"id": "craps_throw", "label": "THROW", "rect": Rect2(610, 428, 92, 34), "enabled": bool(state.get("can_roll", false))},
 	]
 	for action_value in actions:
 		var action: Dictionary = action_value
@@ -1419,6 +1456,19 @@ func _draw_controls(surface, state: Dictionary) -> void:
 		surface.surface_label_centered(str(action.get("label", "")), rect, 10, Color("#fff5d2") if enabled else Color("#80978f"))
 		if enabled:
 			surface.surface_add_exact_hit(rect, str(action.get("id", "")))
+
+
+func _draw_denomination_controls(surface, state: Dictionary, start_x: float, y: float, street: bool) -> void:
+	var denominations := _int_array(state.get("chip_denominations", []))
+	var selected := int(state.get("selected_chip", 0))
+	for index in range(mini(denominations.size(), 4)):
+		var amount := int(denominations[index])
+		var rect := Rect2(start_x + float(index) * 58.0, y, 52, 28)
+		var active := amount == selected
+		surface.draw_rect(rect, Color("#9c7138") if active else Color("#3b493f"))
+		surface.draw_rect(rect, Color("#fff0d0") if active else Color("#7c9388"), false, 1.0)
+		surface.surface_label_centered(("$" if street else "") + str(amount), rect, 10, Color("#fff5d2"))
+		surface.surface_add_exact_hit(rect, "craps_chip", index)
 
 
 func _empty_result(action_id: String, stake: int, environment: Dictionary, text: String) -> Dictionary:
