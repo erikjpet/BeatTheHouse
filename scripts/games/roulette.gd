@@ -24,6 +24,10 @@ const SPIN_ANIMATION_DURATION_MSEC := 5600
 const PAYOUT_ANIMATION_DURATION_MSEC := 1800
 const ROULETTE_RESULT_REVEAL_MSEC := 1600
 const ROULETTE_ROUND_DELAY_MSEC := 40000
+const ROULETTE_NO_MORE_BETS_MSEC := 650
+const ROULETTE_BALL_SETTLE_MSEC := 1100
+const ROULETTE_CLEARING_MSEC := 650
+const ROULETTE_RITUAL_PHASES := ["betting", "no_more_bets", "spin", "ball_settle", "croupier_settlement"]
 const WHEEL_CENTER := Vector2(150, 182)
 const WHEEL_RADIUS := 108.0
 const GRID_RECT := Rect2(332, 156, 360, 108)
@@ -212,6 +216,17 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var visible_last_results := _roulette_visible_last_results(table, last_result_source, result_settled_for_display)
 	var recent_numbers := _roulette_recent_numbers_from_history(visible_last_results)
 	var visible_bankroll := _roulette_visible_bankroll(run_state, environment, last_result_source, result_settled_for_display)
+	var surface_patrons := GameModule.patrons_with_talk_focus(_patrons_for_surface(table, last_result, now_msec), ui_state.get("focused_talk_speaker", {}))
+	var ritual_phase := _roulette_ritual_phase(phase_status, barred)
+	var ritual_projection := _roulette_ritual_projection(
+		ritual_phase,
+		bets,
+		last_result_source,
+		phase_status,
+		visible_bankroll,
+		surface_patrons,
+		run_state.suspicion_level() if run_state != null else 0
+	)
 	var timer_active := not barred and not roulette_wheel_locked
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin", ROULETTE_ROUND_DELAY_MSEC) if timer_active else {}
 	var table_notice := _table_notice(table, session, last_result, spin_active, payout_active or result_reveal_active or not result_settled_for_display, round_timer)
@@ -221,7 +236,6 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		table_notice = "Track the cyan tick and lock it over the timing marker."
 	if barred:
 		table_notice = str(table.get("barred_reason", "The roulette wheel is closed to you."))
-	var surface_patrons := GameModule.patrons_with_talk_focus(_patrons_for_surface(table, last_result, now_msec), ui_state.get("focused_talk_speaker", {}))
 	var patron_layout := _roulette_patron_layout(surface_patrons)
 	var cheat_binding_action := "roulette_past_post" if past_post_available else "roulette_nudge"
 	var past_post_item_modifiers := skill_item_modifier_badges(run_state, PAST_POST_ITEM_EFFECT_KEYS)
@@ -263,6 +277,18 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		],
 		"surface_action_blocks": _surface_action_blocks(roulette_wheel_locked),
 		"phase": "barred" if barred else "spinning" if spin_active else "payout" if payout_active or result_reveal_active else "betting",
+		"ritual_contract": "game_ritual/1",
+		"ritual_id": "roulette.table.v1",
+		"ritual_phase": ritual_phase,
+		"ritual_phase_sequence": ROULETTE_RITUAL_PHASES.duplicate(),
+		"ritual_projection": ritual_projection,
+		"available_funds": int(ritual_projection.get("available_funds", 0)),
+		"total_new_stake": int(ritual_projection.get("total_new_stake", 0)),
+		"at_risk_stake": int(ritual_projection.get("at_risk_stake", 0)),
+		"per_bet_resolutions": _dictionary_array(ritual_projection.get("per_bet_resolutions", [])),
+		"ritual_actors": _dictionary_array(ritual_projection.get("actors", [])),
+		"ritual_scene_objects": _dictionary_array(ritual_projection.get("scene_objects", [])),
+		"ritual_energy": _copy_dict(ritual_projection.get("energy", {})),
 		"table_barred": barred,
 		"barred_reason": str(table.get("barred_reason", "")),
 		"table_name": str(table.get("table_name", "Roulette")),
@@ -374,6 +400,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	var wheel_read_active := not wheel_read_challenge.is_empty() and str(wheel_read_challenge.get("skill_grade", "")).is_empty()
 	var roulette_motion_active := roulette_wheel_locked or past_post_available or wheel_read_active
 	var barred := bool(table.get("table_barred", false))
+	var ritual_phase := _roulette_ritual_phase(phase_status, barred)
 	var visible_last_results := _roulette_visible_last_results(table, last_result_source, result_settled_for_display)
 	var recent_numbers := _roulette_recent_numbers_from_history(visible_last_results)
 	var timer_active := not barred and not roulette_wheel_locked
@@ -409,6 +436,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		],
 		"surface_action_blocks": _surface_action_blocks(roulette_wheel_locked),
 		"phase": "barred" if barred else "spinning" if spin_active else "payout" if payout_active or result_reveal_active else "betting",
+		"ritual_phase": ritual_phase,
 		"dealer_attention_pressure": 12 if spin_active else 8 if payout_active else 0,
 		"can_spin": not barred and not roulette_wheel_locked,
 		"can_undo": not barred and not roulette_wheel_locked and not (_array(session.get("roulette_undo_stack", [])).is_empty()),
@@ -3843,6 +3871,80 @@ func _surface_time_msec_for_result(ui_state: Dictionary, last_result: Dictionary
 
 func _roulette_phase_status(table: Dictionary, now_msec: int) -> Dictionary:
 	return _roulette_phase_status_for_result(table.get("last_result", {}), now_msec)
+
+
+func _roulette_ritual_phase(phase_status: Dictionary, barred: bool = false) -> String:
+	if barred:
+		return "betting"
+	var elapsed_msec := int(phase_status.get("elapsed_msec", -1))
+	if elapsed_msec < 0 or not bool(phase_status.get("motion_active", false)):
+		return "betting"
+	if elapsed_msec < ROULETTE_NO_MORE_BETS_MSEC:
+		return "no_more_bets"
+	if elapsed_msec < SPIN_ANIMATION_DURATION_MSEC - ROULETTE_BALL_SETTLE_MSEC:
+		return "spin"
+	if elapsed_msec < SPIN_ANIMATION_DURATION_MSEC:
+		return "ball_settle"
+	return "croupier_settlement"
+
+
+func _roulette_ritual_projection(ritual_phase: String, pending_bets: Array, last_result: Dictionary, phase_status: Dictionary, visible_bankroll: int, patrons: Array, suspicion: int) -> Dictionary:
+	var settled_bets := _dictionary_array(last_result.get("bet_results", []))
+	var locked_bets := _bet_array(last_result.get("bets", []))
+	var pending_total := _total_wager(pending_bets)
+	var at_risk_total := _total_wager(locked_bets) if ritual_phase != "betting" else 0
+	var payout_elapsed := maxi(0, int(phase_status.get("elapsed_msec", -1)) - SPIN_ANIMATION_DURATION_MSEC)
+	var settlement_beat := "idle"
+	if ritual_phase == "croupier_settlement":
+		settlement_beat = "clear_losers" if payout_elapsed < ROULETTE_CLEARING_MSEC else "pay_winners" if bool(phase_status.get("payout_active", false)) else "place_dolly"
+	var croupier_behavior := {
+		"betting": "accepting_bets",
+		"no_more_bets": "waving_off_bets",
+		"spin": "watching_wheel",
+		"ball_settle": "calling_pocket",
+		"croupier_settlement": settlement_beat,
+	}.get(ritual_phase, "idle")
+	var neighbor_actors: Array = []
+	for patron_index in range(patrons.size()):
+		var patron: Dictionary = patrons[patron_index] if typeof(patrons[patron_index]) == TYPE_DICTIONARY else {}
+		neighbor_actors.append({
+			"id": "roulette.neighbor.%d" % patron_index,
+			"role": "neighbor",
+			"behavior": str(patron.get("reaction", "watching")),
+			"wager": maxi(0, int(patron.get("cosmetic_bet", patron.get("chip_stack", 0)))),
+			"player_money_authority": false,
+		})
+	var actors: Array = [{
+		"id": "roulette.croupier",
+		"role": "croupier",
+		"behavior": croupier_behavior,
+		"settlement_beat": settlement_beat,
+	}]
+	actors.append_array(neighbor_actors)
+	if suspicion > 0:
+		actors.append({
+			"id": "roulette.security",
+			"role": "security",
+			"behavior": "present" if suspicion < 60 else "watching_player",
+			"heat": suspicion,
+		})
+	var energy_tier := "quiet" if patrons.size() <= 1 else "busy" if patrons.size() <= 2 else "packed"
+	return {
+		"phase": ritual_phase,
+		"available_funds": maxi(0, visible_bankroll - pending_total),
+		"total_new_stake": pending_total,
+		"at_risk_stake": at_risk_total,
+		"per_bet_resolutions": settled_bets if ritual_phase == "croupier_settlement" else [],
+		"late_input_policy": "reject_without_charge" if ritual_phase != "betting" else "accept",
+		"actors": actors,
+		"scene_objects": [
+			{"id": "roulette.wheel", "visual_state": "moving" if ritual_phase in ["spin", "ball_settle"] else "still", "authoritative_outcome_source": false},
+			{"id": "roulette.ball", "visual_state": "travel" if ritual_phase == "spin" else "bounce" if ritual_phase == "ball_settle" else "pocket" if ritual_phase == "croupier_settlement" else "rest"},
+			{"id": "roulette.dolly", "visual_state": "on_winner" if settlement_beat == "place_dolly" else "ready"},
+			{"id": "roulette.felt", "functional_state": "locked" if ritual_phase != "betting" else "open", "pending_stack_count": pending_bets.size(), "at_risk_stack_count": locked_bets.size()},
+		],
+		"energy": {"tier": energy_tier, "rail_space": "open" if energy_tier == "quiet" else "limited" if energy_tier == "busy" else "crowded", "croupier_attention": "table" if suspicion <= 0 else "player"},
+	}
 
 
 func _roulette_phase_status_for_result(last_result_value: Variant, now_msec: int) -> Dictionary:
