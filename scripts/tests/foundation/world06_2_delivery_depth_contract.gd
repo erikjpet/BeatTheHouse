@@ -13,6 +13,10 @@ func _initialize() -> void:
 	_check_generic_action_surface(failures)
 	_check_physical_cargo_and_ordered_handoffs(failures)
 	_check_stash_retrieve_found_and_ditch(failures)
+	_check_handoff_physical_authority_matrix(failures)
+	_check_ditch_and_found_location_authority(failures)
+	_check_sealed_movement_authority(failures)
+	_check_closed_receipt_chain(failures)
 	_check_hold_actions_and_interruptions(failures)
 	_check_chase_verbs(failures)
 	_check_terminal_matrix(failures)
@@ -87,6 +91,112 @@ func _check_stash_retrieve_found_and_ditch(failures: Array) -> void:
 	var exact := JSON.stringify(ditched)
 	if JSON.stringify(_act(ditched, "ditch", "stash:ditch", {"node_id": "bar", "place_id": "bar::storm_drain"})) != exact:
 		failures.append("Ditch replay changed terminal cargo state or duplicated failure receipts.")
+
+
+func _check_handoff_physical_authority_matrix(failures: Array) -> void:
+	var carried := _package_state("HANDOFF_HOSTILE")
+	_assert_exact_rejection(_act(carried, "handoff", "handoff:before_arrival", {"node_id": "pawn_shop", "target_id": "first"}), carried, failures, "handoff before an authentic arrival")
+	_assert_exact_rejection(_act(carried, "handoff", "handoff:remote", {"node_id": "motel", "target_id": "second"}), carried, failures, "remote handoff")
+	var stashed := _act(carried, "stash", "handoff:stash", {"node_id": "bar", "place_id": "bar::locker"})
+	_assert_exact_rejection(_act(stashed, "handoff", "handoff:stashed", {"node_id": "pawn_shop", "target_id": "first"}), stashed, failures, "handoff of stashed cargo")
+	var found := _act(stashed, "found", "handoff:found:terminal", {"node_id": "bar", "place_id": "bar::locker", "finder_id": "sweep"})
+	_assert_exact_rejection(_act(found, "handoff", "handoff:found", {"node_id": "pawn_shop", "target_id": "first"}), found, failures, "handoff of found cargo")
+	var ditched := _act(carried, "ditch", "handoff:ditch:terminal", {"node_id": "bar", "place_id": "bar::drain"})
+	_assert_exact_rejection(_act(ditched, "handoff", "handoff:ditched", {"node_id": "pawn_shop", "target_id": "first"}), ditched, failures, "handoff of ditched cargo")
+	var arrived := _act(carried, "move", "handoff:arrive", {"node_id": "pawn_shop"})
+	_assert_cargo(arrived, "carried", "pawn_shop", failures, "authentic arrival")
+	var handed := _act(arrived, "handoff", "handoff:success", {"node_id": "pawn_shop", "target_id": "first"})
+	if _delivered_target_ids(handed) != ["first"] or str(handed.get("handoff_pending_node_id", "not-cleared")) != "":
+		failures.append("Authentic arrival, matching position, and carried cargo did not authorize exactly one handoff.")
+
+
+func _check_ditch_and_found_location_authority(failures: Array) -> void:
+	var carried := _package_state("LOCATION_AUTHORITY")
+	_assert_exact_rejection(_act(carried, "ditch", "ditch:remote", {"node_id": "motel", "place_id": "motel::drain"}), carried, failures, "remote carried-cargo ditch")
+	var carried_ditch := _act(carried, "ditch", "ditch:carried:local", {"node_id": "bar", "place_id": "bar::drain"})
+	_assert_failed_resolution(carried_ditch, "ditched", failures)
+	var stashed := _act(carried, "stash", "location:stash", {"node_id": "bar", "place_id": "bar::locker"})
+	for hostile in [
+		["ditch:stash:wrong_node", {"node_id": "motel", "place_id": "bar::locker"}],
+		["ditch:stash:wrong_place", {"node_id": "bar", "place_id": "bar::drain"}],
+		["found:wrong_node", {"node_id": "motel", "place_id": "bar::locker", "finder_id": "sweep"}],
+		["found:wrong_place", {"node_id": "bar", "place_id": "bar::drain", "finder_id": "sweep"}],
+	]:
+		var verb := "found" if str(hostile[0]).begins_with("found") else "ditch"
+		_assert_exact_rejection(_act(stashed, verb, str(hostile[0]), _dict(hostile[1])), stashed, failures, str(hostile[0]))
+	var exact_ditch := _act(stashed, "ditch", "ditch:stash:exact", {"node_id": "bar", "place_id": "bar::locker"})
+	if str(_dict(exact_ditch.get("cargo_state", {})).get("place_id", "")) != "bar::locker":
+		failures.append("Ditching stashed cargo did not retain its exact stored node and place.")
+	var exact_found := _act(stashed, "found", "found:exact", {"node_id": "bar", "place_id": "bar::locker", "finder_id": "sweep"})
+	_assert_failed_resolution(exact_found, "cargo_found", failures)
+
+
+func _check_sealed_movement_authority(failures: Array) -> void:
+	var state := _package_state("SEALED_MOVEMENT")
+	var move_context := {"node_id": "pawn_shop", "receipt_key": "sealed:move", "movement_authority": _movement_authority("bar", "pawn_shop", "bar_to_pawn")}
+	var moved := DeliveryRunModelScript.apply_action(state, "move", move_context)
+	if JSON.stringify(moved) == JSON.stringify(state):
+		failures.append("Exact sealed source, destination, and route authority did not authorize adjacent movement.")
+	for hostile_value in [
+		{"node_id": "pawn_shop", "receipt_key": "sealed:missing"},
+		{"node_id": "pawn_shop", "receipt_key": "sealed:source", "movement_authority": _with_field(_movement_authority("bar", "pawn_shop", "bar_to_pawn"), "source_node_id", "motel")},
+		{"node_id": "motel", "receipt_key": "sealed:adjacency", "movement_authority": _with_field(_movement_authority("bar", "pawn_shop", "bar_to_pawn"), "destination_node_id", "motel")},
+		{"node_id": "pawn_shop", "receipt_key": "sealed:route", "movement_authority": _with_field(_movement_authority("bar", "pawn_shop", "bar_to_pawn"), "route_id", "forged_route")},
+		{"node_id": "pawn_shop", "receipt_key": "sealed:extra", "movement_authority": _with_extra(_movement_authority("bar", "pawn_shop", "bar_to_pawn"))},
+		{"node_id": "pawn_shop", "receipt_key": "sealed:digest", "movement_authority": _with_bad_content_fingerprint(_movement_authority("bar", "pawn_shop", "bar_to_pawn"))},
+	]:
+		_assert_exact_rejection(DeliveryRunModelScript.apply_action(state, "move", _dict(hostile_value)), state, failures, "forged or malformed movement authority")
+	var wait_ok := DeliveryRunModelScript.apply_action(state, "wait", {"node_id": "bar", "receipt_key": "sealed:wait", "movement_authority": _movement_authority("bar", "bar", "stay")})
+	if JSON.stringify(wait_ok) == JSON.stringify(state):
+		failures.append("Exact sealed stay authority did not authorize wait at the current node.")
+	_assert_exact_rejection(DeliveryRunModelScript.apply_action(state, "wait", {"node_id": "pawn_shop", "receipt_key": "sealed:wait:remote", "movement_authority": _movement_authority("bar", "pawn_shop", "stay")}), state, failures, "remote wait")
+	var duck_context := {"node_id": "bar", "receipt_key": "sealed:duck", "movement_authority": _movement_authority("bar", "bar", "stay"), "cover_id": "bar::dumpster", "cover_authority": _cover_authority("bar", "bar::dumpster")}
+	var ducked := DeliveryRunModelScript.apply_action(state, "duck", duck_context)
+	if JSON.stringify(ducked) == JSON.stringify(state):
+		failures.append("Exact node-bound sealed cover authority did not authorize duck.")
+	for hostile_cover in [
+		{"node_id": "bar", "receipt_key": "sealed:duck:missing", "movement_authority": _movement_authority("bar", "bar", "stay"), "cover_id": "bar::dumpster"},
+		{"node_id": "bar", "receipt_key": "sealed:duck:node", "movement_authority": _movement_authority("bar", "bar", "stay"), "cover_id": "motel::bed", "cover_authority": _cover_authority("motel", "motel::bed")},
+		{"node_id": "bar", "receipt_key": "sealed:duck:id", "movement_authority": _movement_authority("bar", "bar", "stay"), "cover_id": "bar::dumpster", "cover_authority": _cover_authority("bar", "bar::booth")},
+		{"node_id": "bar", "receipt_key": "sealed:duck:forged", "movement_authority": _movement_authority("bar", "bar", "stay"), "cover_id": "bar::dumpster", "cover_authority": _with_bad_content_fingerprint(_cover_authority("bar", "bar::dumpster"))},
+	]:
+		_assert_exact_rejection(DeliveryRunModelScript.apply_action(state, "duck", _dict(hostile_cover)), state, failures, "forged or cross-node cover authority")
+
+
+func _check_closed_receipt_chain(failures: Array) -> void:
+	var state := _act(_package_state("RECEIPTS"), "wait", "receipt:one", {"node_id": "bar"})
+	state = _act(state, "move", "receipt:two", {"node_id": "pawn_shop"})
+	var receipts := _dict(state.get("action_receipts", {}))
+	var expected_keys := ["action", "envelope_fingerprint", "previous_receipt_fingerprint", "receipt_fingerprint", "receipt_key", "schema_version", "sequence"]
+	for key in ["receipt:one", "receipt:two"]:
+		var receipt := _dict(receipts.get(key, {}))
+		var actual_keys: Array = receipt.keys()
+		actual_keys.sort()
+		if actual_keys != expected_keys or int(receipt.get("schema_version", 0)) != 1 or str(receipt.get("receipt_key", "")) != key:
+			failures.append("Action receipt %s did not preserve the exact closed authenticated shape." % key)
+		for digest_key in ["envelope_fingerprint", "previous_receipt_fingerprint", "receipt_fingerprint"]:
+			var digest := str(receipt.get(digest_key, ""))
+			if digest.length() != 64 or digest.to_lower() != digest or not digest.is_valid_hex_number():
+				failures.append("Action receipt %s field %s was not lowercase 64-hex." % [key, digest_key])
+	var conflicting := DeliveryRunModelScript.apply_action(state, "stash", {"node_id": "pawn_shop", "stash_id": "pawn_shop::locker", "receipt_key": "receipt:two"})
+	_assert_exact_rejection(conflicting, state, failures, "conflicting replay envelope")
+	for mutation in ["extra", "key", "action", "sequence", "envelope", "previous", "receipt", "malformed"]:
+		var hostile := state.duplicate(true)
+		var hostile_receipts := _dict(hostile.get("action_receipts", {}))
+		var target := _dict(hostile_receipts.get("receipt:two", {}))
+		match mutation:
+			"extra": target["unexpected"] = true
+			"key": target["receipt_key"] = "receipt:forged"
+			"action": target["action"] = "stash"
+			"sequence": target["sequence"] = 99
+			"envelope": target["envelope_fingerprint"] = "0".repeat(64)
+			"previous": target["previous_receipt_fingerprint"] = "1".repeat(64)
+			"receipt": target["receipt_fingerprint"] = "2".repeat(64)
+			"malformed": target["receipt_fingerprint"] = "not_hex"
+		hostile_receipts["receipt:two"] = target
+		hostile["action_receipts"] = hostile_receipts
+		if not DeliveryRunModelScript.normalize_state(hostile).is_empty():
+			failures.append("Malformed restored receipt chain did not fail closed: %s." % mutation)
 
 
 func _check_hold_actions_and_interruptions(failures: Array) -> void:
@@ -177,7 +287,47 @@ func _package_state(suffix: String, deadline: int = 12) -> Dictionary:
 func _act(state: Dictionary, verb: String, action_id: String, context: Dictionary) -> Dictionary:
 	var payload := context.duplicate(true)
 	payload["receipt_key"] = action_id
+	if verb in ["move", "wait", "duck"] and not payload.has("movement_authority"):
+		var source_node := str(_dict(state.get("position_state", {})).get("node_id", ""))
+		var destination_node := str(payload.get("node_id", source_node))
+		var route_id := "stay" if verb in ["wait", "duck"] else "%s_to_%s" % [source_node, destination_node]
+		payload["movement_authority"] = _movement_authority(source_node, destination_node, route_id)
+	if verb == "duck" and not payload.has("cover_authority"):
+		var cover_id := str(payload.get("cover_id", _dict(payload.get("context", {})).get("cover_id", "")))
+		payload["cover_authority"] = _cover_authority(str(payload.get("node_id", "")), cover_id)
 	return DeliveryRunModelScript.apply_action(state, verb, payload)
+
+
+func _movement_authority(source_node_id: String, destination_node_id: String, route_id: String) -> Dictionary:
+	var authority := {"schema_version": 1, "source_node_id": source_node_id, "destination_node_id": destination_node_id, "route_id": route_id}
+	var canonical := {"destination_node_id": destination_node_id, "route_id": route_id, "schema_version": 1, "source_node_id": source_node_id}
+	authority["content_fingerprint"] = JSON.stringify(canonical).sha256_text()
+	return authority
+
+
+func _cover_authority(node_id: String, cover_id: String) -> Dictionary:
+	var authority := {"schema_version": 1, "node_id": node_id, "cover_id": cover_id}
+	var canonical := {"cover_id": cover_id, "node_id": node_id, "schema_version": 1}
+	authority["content_fingerprint"] = JSON.stringify(canonical).sha256_text()
+	return authority
+
+
+func _with_extra(authority_value: Dictionary) -> Dictionary:
+	var authority := authority_value.duplicate(true)
+	authority["unexpected"] = true
+	return authority
+
+
+func _with_bad_content_fingerprint(authority_value: Dictionary) -> Dictionary:
+	var authority := authority_value.duplicate(true)
+	authority["content_fingerprint"] = "0".repeat(64)
+	return authority
+
+
+func _with_field(authority_value: Dictionary, key: String, value: Variant) -> Dictionary:
+	var authority := authority_value.duplicate(true)
+	authority[key] = value
+	return authority
 
 
 func _assert_cargo(state: Dictionary, expected_status: String, expected_node: String, failures: Array, stage: String) -> void:
