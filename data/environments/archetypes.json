@@ -748,6 +748,21 @@
         ]
       ]
     },
+    "semantic_zones": {
+      "background": {"bounds": [32, 32, 836, 100]},
+      "center": {"bounds": [280, 100, 340, 210]},
+      "exit_lane": {"bounds": [700, 230, 168, 168]},
+      "foreground": {"bounds": [32, 298, 836, 100]},
+      "left": {"bounds": [32, 90, 280, 280]},
+      "right": {"bounds": [620, 90, 248, 280]},
+      "service_lane": {"bounds": [680, 40, 188, 170]}
+    },
+    "semantic_anchors": {
+      "front_desk": {"position": [736, 162], "zone_id": "service_lane"},
+      "parking_exit": {"position": [820, 350], "zone_id": "exit_lane"},
+      "room_walkway": {"position": [430, 154], "zone_id": "center"},
+      "weekly_room": {"position": [150, 260], "zone_id": "left"}
+    },
     "security_profile": {
       "strictness": "private",
       "visible_cues": [
@@ -1209,6 +1224,21 @@
           360
         ]
       ]
+    },
+    "semantic_zones": {
+      "background": {"bounds": [32, 32, 836, 100]},
+      "center": {"bounds": [320, 110, 320, 210]},
+      "exit_lane": {"bounds": [700, 270, 168, 128]},
+      "foreground": {"bounds": [32, 298, 836, 100]},
+      "left": {"bounds": [32, 90, 280, 280]},
+      "right": {"bounds": [620, 90, 248, 280]},
+      "service_lane": {"bounds": [640, 100, 228, 160]}
+    },
+    "semantic_anchors": {
+      "cashier_counter": {"position": [702, 190], "zone_id": "service_lane"},
+      "highway_exit": {"position": [820, 348], "zone_id": "exit_lane"},
+      "machine_bank": {"position": [482, 254], "zone_id": "center"},
+      "truck_lot": {"position": [118, 328], "zone_id": "left"}
     },
     "security_profile": {
       "strictness": "low",
@@ -2538,6 +2568,23 @@
         ]
       ]
     },
+    "semantic_zones": {
+      "background": {"bounds": [32, 32, 836, 100]},
+      "center": {"bounds": [300, 110, 320, 220]},
+      "exit_lane": {"bounds": [32, 250, 210, 148]},
+      "foreground": {"bounds": [32, 298, 836, 100]},
+      "left": {"bounds": [32, 90, 280, 280]},
+      "right": {"bounds": [620, 90, 248, 280]},
+      "service_lane": {"bounds": [190, 240, 360, 140]}
+    },
+    "semantic_anchors": {
+      "casino_deck": {"position": [466, 198], "zone_id": "center"},
+      "dock_exit": {"position": [77, 376], "zone_id": "exit_lane"},
+      "gangway": {"position": [220, 376], "zone_id": "foreground"},
+      "navigation_station": {"position": [600, 210], "zone_id": "center"},
+      "premium_table": {"position": [762, 194], "zone_id": "right"},
+      "river_service": {"position": [466, 292], "zone_id": "service_lane"}
+    },
     "security_profile": {
       "strictness": "licensed-gray",
       "attention_scale": 1.15,
@@ -2735,6 +2782,21 @@
         ]
       ],
       "prioritize_service_spots": true
+    },
+    "semantic_zones": {
+      "background": {"bounds": [32, 32, 836, 100]},
+      "center": {"bounds": [250, 120, 400, 220]},
+      "exit_lane": {"bounds": [700, 230, 168, 168]},
+      "foreground": {"bounds": [32, 298, 836, 100]},
+      "left": {"bounds": [32, 90, 280, 280]},
+      "right": {"bounds": [620, 90, 248, 280]},
+      "service_lane": {"bounds": [120, 220, 560, 160]}
+    },
+    "semantic_anchors": {
+      "boardwalk_service": {"position": [628, 322], "zone_id": "service_lane"},
+      "road_exit": {"position": [812, 322], "zone_id": "exit_lane"},
+      "shoreline": {"position": [450, 330], "zone_id": "foreground"},
+      "shelter_station": {"position": [224, 284], "zone_id": "service_lane"}
     },
     "security_profile": {
       "strictness": "loose",
@@ -3185,6 +3247,24 @@
           350
         ]
       ]
+    },
+    "semantic_zones": {
+      "background": {"bounds": [32, 32, 836, 100]},
+      "center": {"bounds": [300, 100, 400, 240]},
+      "exit_lane": {"bounds": [32, 270, 180, 128]},
+      "foreground": {"bounds": [32, 298, 836, 100]},
+      "left": {"bounds": [32, 90, 280, 280]},
+      "right": {"bounds": [620, 90, 248, 280]},
+      "service_lane": {"bounds": [360, 230, 380, 168]}
+    },
+    "semantic_anchors": {
+      "audit_route": {"position": [600, 260], "zone_id": "center"},
+      "back_room_door": {"position": [808, 350], "zone_id": "right"},
+      "cage_door": {"position": [700, 350], "zone_id": "service_lane"},
+      "floor_exit": {"position": [78, 350], "zone_id": "exit_lane"},
+      "high_limit_door": {"position": [808, 220], "zone_id": "right"},
+      "host_desk": {"position": [450, 292], "zone_id": "service_lane"},
+      "public_floor": {"position": [525, 150], "zone_id": "center"}
     },
     "security_profile": {
       "strictness": "boss",

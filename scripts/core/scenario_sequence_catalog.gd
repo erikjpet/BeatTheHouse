@@ -14,10 +14,11 @@ const PACKAGE_KEYS := ["schema_version", "package_id", "handler_pack", "renderer
 const ENTRY_KEYS := ["scenario_id", "sequence", "authoring"]
 const AUTHORING_KEYS := [
 	"arrival_summary", "player_verbs", "world_connections", "references",
-	"capture_ids", "seed_evidence", "masked_visual_explanations",
+	"capture_ids", "seed_evidence", "masked_visual_explanations", "identity_decision",
 ]
 const PACKAGE_ORDER := [
 	"env06_7_shops_streets",
+	"env06_7_roadside_shelter",
 	"env06_7_bars_road",
 	"env06_7_punchline_clubs",
 	"env06_7_queen_public",
