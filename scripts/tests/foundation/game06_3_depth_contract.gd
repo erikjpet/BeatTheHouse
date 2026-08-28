@@ -145,6 +145,15 @@ func _check_baccarat() -> void:
 	var steps: Array = procedure.get("steps", [])
 	if steps.size() != 2 or str((steps[0] as Dictionary).get("decision", "")) != "draw" or str((steps[1] as Dictionary).get("decision", "")) != "stand":
 		failures.append("Baccarat third-card procedure does not expose the observed player-then-banker decisions.")
+	var squeeze_events: Array = game._baccarat_deal_events([{"rank": 2, "suit": "clubs"}, {"rank": 3, "suit": "hearts"}], [{"rank": 2, "suit": "diamonds"}, {"rank": 2, "suit": "clubs"}], false, false, false, "player")
+	var authored_squeeze: Dictionary = game._authored_squeeze_event({"deal_animation_events": squeeze_events})
+	var target_card_found := false
+	for squeeze_event_value in squeeze_events:
+		var squeeze_event_row: Dictionary = squeeze_event_value
+		if str(squeeze_event_row.get("type", "")) == "card" and str(squeeze_event_row.get("zone", "")) == str(authored_squeeze.get("target_zone", "")) and int(squeeze_event_row.get("zone_card_slot", -1)) == int(authored_squeeze.get("card_slot", -2)):
+			target_card_found = true
+	if authored_squeeze.is_empty() or not target_card_found:
+		failures.append("Baccarat authored squeeze cannot identify the exact face-down card before its reveal window.")
 	var bets := {"banker": 20, "player_pair": 5}
 	var last_result := {
 		"bets": bets,
