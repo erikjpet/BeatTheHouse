@@ -7,6 +7,7 @@ const CREW_CONFIG_PATH := "res://data/crew/crew.json"
 const CREW_JOBS_PATH := "res://data/crew/jobs.json"
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const STATE_SCHEMA_VERSION := 1
+const JOB_EXECUTION_SCHEMA_VERSION := 1
 const MEMBER_IDS := [
 	"crew_rook",
 	"crew_velvet",
@@ -174,6 +175,237 @@ static func normalize_job_definition(value: Dictionary) -> Dictionary:
 			"grievance_weight": maxi(1, int(failure.get("grievance_weight", 1))),
 		},
 	}
+
+
+# Additive player-safe Layer 3 projections. Residency is supplied by the
+# authoritative itinerary owner; this model only renders member/job state.
+static func layer3_room_state(resident_member_ids: Array, trust_value: Variant, grievances_value: Variant, jobs_value: Variant) -> Dictionary:
+	var trust := normalize_trust(trust_value)
+	var grievances := normalize_grievances(grievances_value)
+	var jobs := normalize_jobs(jobs_value)
+	var residents: Array = []
+	for member_value in resident_member_ids:
+		var member_id := str(member_value).strip_edges()
+		if MEMBER_IDS.has(member_id) and not residents.has(member_id): residents.append(member_id)
+	residents.sort()
+	var members: Array = []
+	for member_id in residents: members.append(member_public_state(member_id, int(trust.get(member_id, 0)), grievances, jobs, true))
+	return {
+		"schema_version": JOB_EXECUTION_SCHEMA_VERSION,
+		"occupancy_count": members.size(),
+		"resident_member_ids": residents,
+		"members": members,
+		"objects": layer3_service_states(trust, residents, jobs),
+	}
+
+
+static func member_public_state(member_id: String, trust: int, grievances_value: Variant, jobs_value: Variant, resident: bool = false) -> Dictionary:
+	if not MEMBER_IDS.has(member_id): return {}
+	var grievances: Array = []
+	for grievance in normalize_grievances(grievances_value):
+		if str(grievance.get("member_id", "")) == member_id:
+			grievances.append({"id": str(grievance.get("id", "")), "kind": str(grievance.get("kind", ""))})
+	var active_job_ids: Array = []
+	for job_value in normalize_jobs(jobs_value).values():
+		var job: Dictionary = job_value
+		if str(job.get("member_id", "")) == member_id and str(job.get("status", "")) in ["accepted", "active"]: active_job_ids.append(str(job.get("id", "")))
+	active_job_ids.sort()
+	var rank := rank_for_trust(trust)
+	return {
+		"member_id": member_id,
+		"resident": resident,
+		"rank": rank,
+		"pose": "working" if not active_job_ids.is_empty() else ("guarded" if not grievances.is_empty() else "at_ease"),
+		"behavior_state": "job_out" if not active_job_ids.is_empty() else ("aggrieved" if not grievances.is_empty() else "available"),
+		"active_job_ids": active_job_ids,
+		"grievances": grievances,
+	}
+
+
+static func layer3_service_states(trust_value: Variant, resident_member_ids: Array, jobs_value: Variant = {}) -> Array:
+	var trust := normalize_trust(trust_value)
+	var jobs := normalize_jobs(jobs_value)
+	var services := config().get("member_services", {}) as Dictionary
+	var active_members := {}
+	for job_value in jobs.values():
+		var job: Dictionary = job_value
+		if str(job.get("status", "")) in ["accepted", "active"]: active_members[str(job.get("member_id", ""))] = true
+	var result: Array = [
+		_service("job_board", "crew_job_board", "open", "", true),
+		_service("numbers_desk", "numbers_desk", "available", "crew_lucky", resident_member_ids.has("crew_lucky")),
+		_service("planning_table", "crew_planning_table", "waiting", "", true),
+		_service("mags_bench", "crew_mags_bench", "in_use" if active_members.has("crew_mags") else "ready", "crew_mags", resident_member_ids.has("crew_mags")),
+		_service("rook_ride", "crew_rook_ride", "in_use" if active_members.has("crew_rook") else "ready", "crew_rook", resident_member_ids.has("crew_rook")),
+		_service("practice_rig", "crew_practice_rig", "ready", "", true),
+	]
+	for row in result:
+		match str(row.get("id", "")):
+			"practice_rig": row["successes_required"] = int(services.get("practice_rig_successes_required", 2))
+			"rook_ride":
+				var rank := rank_for_trust(int(trust.get("crew_rook", 0)))
+				row["uses"] = int((services.get("rook_ride_uses_by_rank", {}) as Dictionary).get(rank, 0))
+				row["discount_percent"] = int((services.get("rook_ride_discount_percent_by_rank", {}) as Dictionary).get(rank, 0))
+			"mags_bench": row["catalog_ready"] = true
+	return result
+
+
+static func new_job_execution(definition_id: String, instance_id: String, offered_action: int = 0) -> Dictionary:
+	var definition := job_definition(definition_id)
+	var clean_id := instance_id.strip_edges()
+	if definition.is_empty() or clean_id.is_empty(): return {}
+	return {
+		"schema_version": JOB_EXECUTION_SCHEMA_VERSION,
+		"instance_id": clean_id,
+		"definition_id": definition_id,
+		"member_id": str(definition.get("member_id", "")),
+		"kind": str(definition.get("kind", "")),
+		"phase": "offered",
+		"offered_action": maxi(0, offered_action),
+		"expires_at_action": maxi(0, offered_action) + int(definition.get("expiry_in_actions", 1)),
+		"payload": (definition.get("payload", {}) as Dictionary).duplicate(true),
+		"staged": {},
+		"outcome": "",
+		"public_aftermath": {},
+		"action_receipts": {},
+		"action_sequence": 0,
+	}
+
+
+static func normalize_job_execution(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY: return {}
+	var state: Dictionary = (value as Dictionary).duplicate(true)
+	if int(state.get("schema_version", 0)) != JOB_EXECUTION_SCHEMA_VERSION or job_definition(str(state.get("definition_id", ""))).is_empty(): return {}
+	if str(state.get("phase", "")) not in ["offered", "accepted", "active", "stake_handed", "stake_witnessed", "collection_arrived", "resolved"]: return {}
+	if not _job_receipts_valid(state.get("action_receipts", {}), int(state.get("action_sequence", 0))): return {}
+	return state
+
+
+static func apply_job_action(state_value: Variant, receipt_key: String, action: String, context: Dictionary = {}) -> Dictionary:
+	var state := normalize_job_execution(state_value)
+	if state.is_empty(): return {}
+	var clean_key := receipt_key.strip_edges()
+	var clean_action := action.strip_edges().to_lower()
+	var envelope_fingerprint := _job_fingerprint({"action": clean_action, "context": _canonical_job_value(context)})
+	var existing := (state.get("action_receipts", {}) as Dictionary).get(clean_key, {}) as Dictionary
+	if not existing.is_empty(): return state if str(existing.get("envelope_fingerprint", "")) == envelope_fingerprint else (state_value as Dictionary).duplicate(true)
+	if clean_key.is_empty() or str(state.get("phase", "")) == "resolved": return (state_value as Dictionary).duplicate(true)
+	var before := state.duplicate(true)
+	var definition := job_definition(str(state.get("definition_id", "")))
+	var kind := str(state.get("kind", ""))
+	match clean_action:
+		"accept":
+			if str(state.get("phase", "")) != "offered": return before
+			state["phase"] = "accepted"
+		"start":
+			if str(state.get("phase", "")) not in ["accepted", "offered"]: return before
+			state["phase"] = "active"
+		"stake_hand":
+			if kind != "stake_horse" or str(state.get("phase", "")) not in ["accepted", "active"]: return before
+			state["phase"] = "stake_handed"
+			state["staged"] = {"crew_stake": int((state.get("payload", {}) as Dictionary).get("crew_stake", 0)), "venue_id": str((state.get("payload", {}) as Dictionary).get("venue_id", "")), "game_id": str((state.get("payload", {}) as Dictionary).get("game_id", ""))}
+		"stake_witness":
+			if kind != "stake_horse" or str(state.get("phase", "")) != "stake_handed": return before
+			state["phase"] = "stake_witnessed"
+			state["staged"] = {"bankroll_delta": int(context.get("bankroll_delta", 0))}
+		"collection_arrive":
+			if kind != "collection" or str(state.get("phase", "")) not in ["accepted", "active"]: return before
+			state["phase"] = "collection_arrived"
+			state["staged"] = {"target_node_id": str(context.get("target_node_id", "")), "target_present": bool(context.get("target_present", false))}
+		"collection_friendly", "collection_press":
+			if kind != "collection" or str(state.get("phase", "")) != "collection_arrived" or not bool((state.get("staged", {}) as Dictionary).get("target_present", false)): return before
+			var payload := state.get("payload", {}) as Dictionary
+			var choice := clean_action.trim_prefix("collection_")
+			state["staged"] = {"choice": choice, "cash": int(payload.get("%s_cash" % choice, 0)), "heat": int(payload.get("%s_heat" % choice, 0))}
+			_resolve_job_execution(state, "success", definition, clean_action)
+		"complete": _resolve_job_execution(state, "success", definition, clean_action)
+		"fail", "abandon", "expire": _resolve_job_execution(state, "abandoned" if clean_action == "abandon" else "failed", definition, clean_action)
+		_:
+			return before
+	_record_job_receipt(state, clean_key, clean_action, envelope_fingerprint)
+	return state
+
+
+static func job_execution_public_state(value: Variant) -> Dictionary:
+	var state := normalize_job_execution(value)
+	if state.is_empty(): return {}
+	return {"instance_id": str(state.get("instance_id", "")), "definition_id": str(state.get("definition_id", "")), "member_id": str(state.get("member_id", "")), "kind": str(state.get("kind", "")), "phase": str(state.get("phase", "")), "expires_at_action": int(state.get("expires_at_action", 0)), "outcome": str(state.get("outcome", "")), "staged": (state.get("staged", {}) as Dictionary).duplicate(true), "aftermath": (state.get("public_aftermath", {}) as Dictionary).duplicate(true)}
+
+
+static func _service(id: String, object_id: String, state: String, operator_id: String, occupied: bool) -> Dictionary:
+	return {"id": id, "object_id": object_id, "state": state, "operator_id": operator_id, "occupied": occupied, "reachable": true}
+
+
+static func _resolve_job_execution(state: Dictionary, outcome: String, definition: Dictionary, reason: String) -> void:
+	state["phase"] = "resolved"
+	state["outcome"] = outcome
+	state["public_aftermath"] = {"member_id": str(state.get("member_id", "")), "job_id": str(state.get("instance_id", "")), "outcome": outcome, "reason": reason, "remembered": true}
+	if outcome == "success":
+		state["effect"] = {"cash": int((definition.get("rewards", {}) as Dictionary).get("cash", 0)), "trust": int((definition.get("rewards", {}) as Dictionary).get("trust", 0))}
+	else:
+		var failure := definition.get("failure", {}) as Dictionary
+		state["effect"] = {"cash": 0, "trust": int(failure.get("trust", 0)), "grievance_kind": str(failure.get("grievance_kind", ""))}
+
+
+static func _record_job_receipt(state: Dictionary, receipt_key: String, action: String, envelope_fingerprint: String) -> void:
+	var receipts := (state.get("action_receipts", {}) as Dictionary).duplicate(true)
+	var sequence := int(state.get("action_sequence", 0)) + 1
+	var previous := "0".repeat(64)
+	for receipt_value in receipts.values():
+		var receipt: Dictionary = receipt_value
+		if int(receipt.get("sequence", 0)) == sequence - 1: previous = str(receipt.get("receipt_fingerprint", ""))
+	var receipt := {"schema_version": JOB_EXECUTION_SCHEMA_VERSION, "receipt_key": receipt_key, "action": action, "sequence": sequence, "envelope_fingerprint": envelope_fingerprint, "previous_receipt_fingerprint": previous}
+	receipt["receipt_fingerprint"] = _job_fingerprint(receipt)
+	receipts[receipt_key] = receipt
+	state["action_receipts"] = receipts
+	state["action_sequence"] = sequence
+
+
+static func _job_receipts_valid(value: Variant, sequence_total: int) -> bool:
+	if typeof(value) != TYPE_DICTIONARY: return false
+	var receipts: Dictionary = value
+	if receipts.size() != sequence_total: return false
+	var by_sequence := {}
+	var exact := ["action", "envelope_fingerprint", "previous_receipt_fingerprint", "receipt_fingerprint", "receipt_key", "schema_version", "sequence"]
+	for key_value in receipts.keys():
+		if typeof(receipts.get(key_value)) != TYPE_DICTIONARY: return false
+		var receipt: Dictionary = receipts.get(key_value)
+		var keys := receipt.keys(); keys.sort()
+		if keys != exact or str(key_value) != str(receipt.get("receipt_key", "")) or int(receipt.get("schema_version", 0)) != JOB_EXECUTION_SCHEMA_VERSION: return false
+		for digest_key in ["envelope_fingerprint", "previous_receipt_fingerprint", "receipt_fingerprint"]:
+			if not _job_sha256(str(receipt.get(digest_key, ""))): return false
+		var body := receipt.duplicate(true); var fingerprint := str(body.get("receipt_fingerprint", "")); body.erase("receipt_fingerprint")
+		if fingerprint != _job_fingerprint(body): return false
+		var sequence := int(receipt.get("sequence", 0)); if sequence <= 0 or by_sequence.has(sequence): return false
+		by_sequence[sequence] = receipt
+	for sequence in range(1, sequence_total + 1):
+		if not by_sequence.has(sequence): return false
+		var previous := "0".repeat(64) if sequence == 1 else str((by_sequence.get(sequence - 1) as Dictionary).get("receipt_fingerprint", ""))
+		if str((by_sequence.get(sequence) as Dictionary).get("previous_receipt_fingerprint", "")) != previous: return false
+	return true
+
+
+static func _job_fingerprint(value: Variant) -> String:
+	return JSON.stringify(_canonical_job_value(value)).sha256_text()
+
+
+static func _canonical_job_value(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		var result := {}; var keys := (value as Dictionary).keys(); keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+		for key in keys: result[str(key)] = _canonical_job_value((value as Dictionary).get(key))
+		return result
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for entry in value as Array: result.append(_canonical_job_value(entry))
+		return result
+	return value
+
+
+static func _job_sha256(value: String) -> bool:
+	if value.length() != 64 or value != value.to_lower(): return false
+	for index in range(value.length()):
+		var code := value.unicode_at(index)
+		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102): return false
+	return true
 
 
 static func validate_content() -> Array:
