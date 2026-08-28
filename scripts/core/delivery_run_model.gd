@@ -245,11 +245,11 @@ static func note_arrival(state_value: Variant, node_id: String) -> Dictionary:
 	var state := normalize_state(state_value)
 	if state.is_empty() or str(state.get("status", "")) != "active":
 		return state
-	state["arrival_count"] = int(state.get("arrival_count", 0)) + 1
-	state = _record_position(state, node_id, "arrival")
 	var target_index := _pending_target_index(state, node_id)
 	if target_index < 0:
 		return state
+	state["arrival_count"] = int(state.get("arrival_count", 0)) + 1
+	state = _record_position(state, node_id, "arrival")
 	if str(state.get("mode", "")) == MODE_GETAWAY:
 		return _resolve(state, "success", "escaped", true)
 	if str(state.get("mode", "")) == MODE_HOLD:
@@ -321,11 +321,12 @@ static func retrieve(state_value: Variant, node_id: String, stash_id: String, re
 	return _record_action(state, receipt_key, envelope)
 
 
-static func ditch(state_value: Variant, node_id: String, receipt_key: String, reason: String = "ditched") -> Dictionary:
+static func ditch(state_value: Variant, node_id: String, receipt_key: String, reason: String = "ditched", place_id: String = "") -> Dictionary:
 	var state := normalize_state(state_value)
 	var clean_node := node_id.strip_edges()
 	var clean_reason := reason.strip_edges() if not reason.strip_edges().is_empty() else "ditched"
-	var envelope := {"action": ACTION_DITCH, "node_id": clean_node, "reason": clean_reason}
+	var clean_place := place_id.strip_edges()
+	var envelope := {"action": ACTION_DITCH, "node_id": clean_node, "reason": clean_reason, "place_id": clean_place}
 	if _action_replayed(state, receipt_key, envelope):
 		return state
 	if not _action_can_apply(state, receipt_key, envelope):
@@ -333,7 +334,7 @@ static func ditch(state_value: Variant, node_id: String, receipt_key: String, re
 	var cargo := _copy_dict(state.get("cargo_state", {}))
 	if str(cargo.get("status", "")) not in [CARGO_CARRIED, CARGO_STASHED]:
 		return state
-	state["cargo_state"] = _cargo_at(CARGO_DITCHED, clean_node, "street", "")
+	state["cargo_state"] = _cargo_at(CARGO_DITCHED, clean_node, "street", clean_place)
 	state = _record_action(state, receipt_key, envelope)
 	return _resolve(state, "failed", clean_reason, false)
 
@@ -402,10 +403,13 @@ static func apply_pursuit_action(state_value: Variant, action_id: String, node_i
 # Generic public verb seam. It is a dispatcher over the same immutable model
 # methods, not a second state or consequence authority.
 static func apply_action(state_value: Variant, verb: String, context: Dictionary) -> Dictionary:
+	var receipt_key := str(context.get("receipt_key", "")).strip_edges()
+	if typeof(state_value) == TYPE_DICTIONARY and not receipt_key.is_empty() \
+			and _copy_dict(_copy_dict(state_value).get("action_receipts", {})).has(receipt_key):
+		return _copy_dict(state_value)
 	var state := normalize_state(state_value)
 	var action := verb.strip_edges()
 	var node_id := str(context.get("node_id", "")).strip_edges()
-	var receipt_key := str(context.get("receipt_key", "")).strip_edges()
 	var action_index := maxi(0, int(context.get("action_index", int(state.get("last_boundary_action", 0)) + 1)))
 	var attention := clampi(int(context.get("attention", 0)), 0, 100)
 	match action:
@@ -421,6 +425,12 @@ static func apply_action(state_value: Variant, verb: String, context: Dictionary
 			var handoff_envelope := {"action": action, "node_id": node_id, "action_index": action_index}
 			if _action_replayed(state, receipt_key, handoff_envelope): return state
 			if not _action_can_apply(state, receipt_key, handoff_envelope): return state
+			var next_target_index := _next_pending_target_index(state)
+			if next_target_index < 0: return state
+			var next_target := _copy_dict(_copy_array(state.get("targets", []))[next_target_index])
+			if str(next_target.get("node_id", "")) != node_id: return state
+			var requested_target_id := str(context.get("target_id", "")).strip_edges()
+			if not requested_target_id.is_empty() and requested_target_id != str(next_target.get("id", "")): return state
 			var arrived := note_arrival(state, node_id)
 			var handed := complete_handoff(arrived, node_id)
 			if JSON.stringify(handed) == JSON.stringify(state): return state
@@ -428,13 +438,13 @@ static func apply_action(state_value: Variant, verb: String, context: Dictionary
 		ACTION_MOVE, ACTION_WAIT, ACTION_DUCK:
 			return apply_pursuit_action(state, action, node_id, attention, action_index, receipt_key, _copy_dict(context.get("context", context))) if str(state.get("mode", "")) == MODE_GETAWAY else _apply_ordinary_street_boundary(state, action, node_id, attention, action_index, receipt_key, context)
 		ACTION_STASH:
-			return stash(state, node_id, str(context.get("stash_id", "")), receipt_key)
+			return stash(state, node_id, str(context.get("stash_id", context.get("place_id", ""))), receipt_key)
 		ACTION_RETRIEVE:
-			return retrieve(state, node_id, str(context.get("stash_id", "")), receipt_key)
+			return retrieve(state, node_id, str(context.get("stash_id", context.get("place_id", ""))), receipt_key)
 		"found":
 			return _apply_cargo_found(state, node_id, receipt_key, str(context.get("finder_id", "unknown")))
 		ACTION_DITCH:
-			return ditch(state, node_id, receipt_key, str(context.get("reason", "ditched")))
+			return ditch(state, node_id, receipt_key, str(context.get("reason", "ditched")), str(context.get("place_id", "")))
 		"hold_signal":
 			return apply_hold_action(state, ACTION_SIGNAL, node_id, attention, action_index, receipt_key, str(context.get("signal_id", "signal")))
 		"hold_break":
@@ -516,7 +526,16 @@ static func _pending_target_index(state: Dictionary, node_id: String) -> int:
 		if typeof(targets[index]) != TYPE_DICTIONARY:
 			continue
 		var target: Dictionary = targets[index]
-		if str(target.get("node_id", "")) == clean_node_id and str(target.get("status", "pending")) == "pending":
+		if str(target.get("status", "pending")) != "pending":
+			continue
+		return index if str(target.get("node_id", "")) == clean_node_id else -1
+	return -1
+
+
+static func _next_pending_target_index(state: Dictionary) -> int:
+	var targets := _copy_array(state.get("targets", []))
+	for index in range(targets.size()):
+		if str(_copy_dict(targets[index]).get("status", "pending")) == "pending":
 			return index
 	return -1
 
@@ -529,7 +548,7 @@ static func _all_targets_delivered(state: Dictionary) -> bool:
 
 
 static func _initial_cargo_state(mode: String, spec: Dictionary) -> Dictionary:
-	if mode not in [MODE_PACKAGE, MODE_MULTI_STOP]:
+	if mode == MODE_HOLD:
 		return _cargo_at(CARGO_NONE, "", "none", "")
 	return _cargo_at(CARGO_CARRIED, str(spec.get("pickup_node_id", spec.get("start_node_id", ""))).strip_edges(), "player", "player")
 
