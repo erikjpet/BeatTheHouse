@@ -1,7 +1,7 @@
 # game06_2 Blackjack consumer audit
 
-Status: UNREVIEWED pre-implementation audit  
-Base: `a2760d816c781e711ff0923c296f97b786662453`  
+Status: UNREVIEWED pre-implementation audit
+Base: `a2760d816c781e711ff0923c296f97b786662453`
 Scope: row-local successor only; `scripts/games/blackjack.gd` and row-local tests/docs
 
 This map freezes the shipped consumers that the Blackjack depth pass must keep
@@ -111,4 +111,3 @@ The successor head is not review-ready until row-local evidence proves:
 8. existing Blackjack probes and relevant foundation suites, plus visual,
    accessibility, performance/liveness, native/Web, and RTP gates required by
    the row prompt.
-

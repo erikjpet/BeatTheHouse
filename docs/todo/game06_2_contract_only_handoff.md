@@ -1,8 +1,8 @@
 # game06_2 contract-only successor handoff
 
-Status: UNREVIEWED candidate  
-Branch: `codex/game06_2-contract-only`  
-Frozen base: `a2760d816c781e711ff0923c296f97b786662453`  
+Status: UNREVIEWED candidate
+Branch: `codex/game06_2-contract-only`
+Frozen base: `a2760d816c781e711ff0923c296f97b786662453`
 Supersedes: blocked `codex/game06_2-impl` head `2def171d` (preserved unchanged; do not land)
 
 ## Scope and ancestry
@@ -85,4 +85,3 @@ or `review_artifacts` file is staged.
   bankroll, RNG, phase, facts, and settlement unchanged.
 - Confirm actor/object/energy rendering is legible and non-overlapping in the
   required visual states, especially the compact chip rail and money strip.
-
