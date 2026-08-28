@@ -6,7 +6,6 @@ extends RefCounted
 # boundary as production without adding a module-side write bypass.
 
 const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
-const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 const PROTECTED_PEEK_SETTLEMENT_RNG_STATE := 21
 
@@ -43,12 +42,11 @@ static func surface_intent(game: GameModule, surface_action: String, stake: int,
 	host.set("run_state", run_state)
 	host.set("selected_stake", stake)
 	var command: Dictionary = host.call("_blackjack_host_surface_intent", surface_action, index, confirm_requested, surface_time_msec)
-	print("BJTRACE surface " + JSON.stringify({"surface_action": surface_action, "stake": stake, "confirm": confirm_requested, "command": _command_diagnostic(command), "authority": _authority_diagnostic(game, run_state, environment, stake, host)}))
 	host.free()
 	return command
 
 
-static func resolve_surface_command(game: GameModule, command: Dictionary, stake: int, run_state: RunState, environment: Dictionary) -> Dictionary:
+static func resolve_surface_command(game: GameModule, command: Dictionary, _stake: int, run_state: RunState, environment: Dictionary) -> Dictionary:
 	if game == null or run_state == null:
 		return {"ok": false, "error_code": "invalid_fixture"}
 	var action_id := str(command.get("action_id", ""))
@@ -56,10 +54,12 @@ static func resolve_surface_command(game: GameModule, command: Dictionary, stake
 	if action_id.is_empty() or typeof(delivery_value) != TYPE_DICTIONARY:
 		return {"ok": false, "error_code": "invalid_intent", "message": "The surface command did not carry a sealed Blackjack action."}
 	var delivery: Dictionary = delivery_value
-	var command_stake := int(command.get("set_stake", stake))
+	var command_stake := int(delivery.get("stake", -1))
+	var explicit_stake := int(command.get("set_stake", command_stake))
 	if delivery.is_empty() \
 			or str(delivery.get("action_id", "")) != action_id \
-			or int(delivery.get("stake", -1)) != command_stake:
+			or command_stake < 0 \
+			or explicit_stake != command_stake:
 		return {"ok": false, "error_code": "receipt_content_conflict", "message": "The surface command did not match its sealed Blackjack delivery."}
 	run_state.current_environment = environment
 	var host: Control = FoundationMainScript.new()
@@ -67,70 +67,9 @@ static func resolve_surface_command(game: GameModule, command: Dictionary, stake
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run_state)
 	host.set("selected_stake", command_stake)
-	var before := _authority_diagnostic(game, run_state, environment, command_stake, host)
 	var result: Dictionary = host.call("_blackjack_host_resolve_intent", action_id, command_stake, delivery)
-	print("BJTRACE resolve " + JSON.stringify({"command": _command_diagnostic(command), "before": before, "result": _result_diagnostic(result), "after": _authority_diagnostic(game, run_state, environment, command_stake, host)}))
 	host.free()
 	return result
-
-
-static func _command_diagnostic(command: Dictionary) -> Dictionary:
-	var delivery: Dictionary = command.get("_blackjack_host_delivery", {}) if typeof(command.get("_blackjack_host_delivery", {})) == TYPE_DICTIONARY else {}
-	var ui_state: Dictionary = command.get("ui_state", {}) if typeof(command.get("ui_state", {})) == TYPE_DICTIONARY else {}
-	return {
-		"handled": bool(command.get("handled", false)),
-		"resolve": bool(command.get("resolve", false)) or bool(command.get("direct_resolve", false)),
-		"action_id": str(command.get("action_id", "")),
-		"set_stake": int(command.get("set_stake", -1)),
-		"message": str(command.get("message", "")),
-		"request_key": str(delivery.get("request_key", "")),
-		"delivery_context": str(delivery.get("trusted_context_fingerprint", "")),
-		"delivery_intent": str(delivery.get("intent_fingerprint", "")),
-		"ui_dealt": not ui_state.is_empty() and (not (ui_state.get("player_hand", []) as Array).is_empty() or not (ui_state.get("dealer_hand", []) as Array).is_empty()),
-		"ui_selected_stake": int(ui_state.get("selected_stake", -1)),
-	}
-
-
-static func _result_diagnostic(result: Dictionary) -> Dictionary:
-	return {
-		"ok": bool(result.get("ok", false)),
-		"error_code": str(result.get("error_code", "")),
-		"message": str(result.get("message", "")),
-		"request_key": str(result.get("blackjack_host_request_key", result.get("request_key", ""))),
-		"committed": bool(result.get("blackjack_host_committed", false)),
-		"action_id": str(result.get("action_id", "")),
-	}
-
-
-static func _authority_diagnostic(game: GameModule, run_state: RunState, environment: Dictionary, stake: int, host: Control) -> Dictionary:
-	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var table: Dictionary = game_states.get(game.get_id(), {}) if typeof(game_states.get(game.get_id(), {})) == TYPE_DICTIONARY else {}
-	var binding := "%s:%s:%s" % [game.get_id(), str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
-	var raw_ledger: Dictionary = table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {}) if typeof(table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {})) == TYPE_DICTIONARY else {}
-	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(raw_ledger, binding)
-	var expected_checkpoint := run_state.blackjack_authority_checkpoint_fingerprint()
-	var context: Dictionary = host.call("_blackjack_host_trusted_context", run_state, stake)
-	var pending: Dictionary = ledger.get("pending_delivery", {}) if typeof(ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
-	var session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
-	return {
-		"binding": binding,
-		"raw_ledger": not raw_ledger.is_empty(),
-		"valid_ledger": not ledger.is_empty(),
-		"checkpoint_matches": not ledger.is_empty() and str(ledger.get("checkpoint_fingerprint", "")) == expected_checkpoint,
-		"ledger_checkpoint": str(ledger.get("checkpoint_fingerprint", "")),
-		"expected_checkpoint": expected_checkpoint,
-		"pending_key": str(pending.get("request_key", "")),
-		"pending_action": str(pending.get("action_id", "")),
-		"pending_stake": int(pending.get("stake", -1)),
-		"pending_context": str(pending.get("trusted_context_fingerprint", "")),
-		"current_context": GameRitualRuntimeScript.canonical_fingerprint(context),
-		"session_dealt": not session.is_empty() and bool(game.call("_has_dealt_hand", session)),
-		"session_selected_stake": int(session.get("selected_stake", -1)),
-		"hands_played": int(table.get("hands_played", -1)),
-		"rng_seed": run_state.rng_seed,
-		"rng_state": run_state.rng_state,
-		"bankroll": run_state.bankroll,
-	}
 
 
 static func advance_terminal_presentation(game: GameModule, stake: int, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -161,10 +100,12 @@ static func advance_terminal_presentation(game: GameModule, stake: int, run_stat
 			host.free()
 			return {"ok": false, "error_code": "invalid_intent", "surface_time_msec": surface_time_msec, "command": command}
 		var delivery: Dictionary = delivery_value
-		var command_stake := int(command.get("set_stake", stake))
+		var command_stake := int(delivery.get("stake", -1))
+		var explicit_stake := int(command.get("set_stake", command_stake))
 		if delivery.is_empty() \
 				or str(delivery.get("action_id", "")) != action_id \
-				or int(delivery.get("stake", -1)) != command_stake:
+				or command_stake < 0 \
+				or explicit_stake != command_stake:
 			host.free()
 			return {"ok": false, "error_code": "receipt_content_conflict", "surface_time_msec": surface_time_msec, "command": command}
 		result = host.call("_blackjack_host_resolve_intent", action_id, command_stake, delivery)
