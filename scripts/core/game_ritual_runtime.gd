@@ -13,7 +13,7 @@ const COMMAND_KEYS := ["envelope_version", "ritual_id", "session_id", "command_i
 const AUTHENTICATED_ACTION_KEYS := ["action_id", "origin_owner_id", "origin_stable_id", "operation_receipt_key", "boundary_id", "content_fingerprint"]
 const BOUNDARY_KEYS := ["boundary_id", "kind", "ritual_id", "session_id", "phase_id", "ordinal", "cause_receipt_key"]
 const ERROR_CODES := ["invalid_envelope", "unsupported_version", "invalid_id", "unknown_reference", "stale_phase", "action_not_permitted", "disabled_action", "blocked_action", "unavailable_source", "unavailable_target", "unsealed_authority", "authority_mismatch", "ambiguous_target", "invalid_parameters", "incomplete_gesture", "out_of_bounds", "inaccessible_target", "precondition_failed", "insufficient_funds", "receipt_content_conflict", "handler_rejected", "invalid_restore", "ambiguous_transition", "internal_fail_closed"]
-const STATE_KEYS := ["state_version", "contract", "ritual_id", "session_id", "phase_id", "action_sequence", "transition_sequence", "boundary_ordinal", "last_transition_id", "pending_items", "pending_history", "working_items", "last_commitment", "eligible_resolutions", "item_resolutions", "authoritative_result_refs", "actor_states", "object_states", "energy_tier", "handler_state", "readable_totals", "receipts", "request_cache", "envelope_request_cache"]
+const STATE_KEYS := ["state_version", "contract", "ritual_id", "session_id", "phase_id", "action_sequence", "transition_sequence", "boundary_ordinal", "last_transition_id", "pending_items", "pending_history", "working_items", "last_commitment", "eligible_resolutions", "item_resolutions", "authoritative_result_refs", "actor_states", "object_states", "energy_tier", "handler_state", "readable_totals", "receipts", "envelope_receipts", "fact_envelopes", "operation_envelopes", "request_cache", "envelope_request_cache"]
 
 var definition: Dictionary = {}
 var state: Dictionary = {}
@@ -68,7 +68,10 @@ func process_command(command: Dictionary, context: Dictionary = {}) -> Dictionar
 	var validation := _validate_command_envelope(command)
 	if not validation.is_empty():
 		return _envelope_rejection(command, str(validation.get("error_code", "invalid_envelope")), str(validation.get("message", "Invalid ritual command.")), false, "none")
-	var legacy: Dictionary = process_action(str(command.get("action_id", "")), command.get("parameters", {}) as Dictionary, request_key, context)
+	var execution_context := context.duplicate(true)
+	execution_context["_ritual_command_boundary"] = (command.get("boundary", {}) as Dictionary).duplicate(true)
+	execution_context["_ritual_command_receipt"] = str(command.get("receipt_key", ""))
+	var legacy: Dictionary = process_action(str(command.get("action_id", "")), command.get("parameters", {}) as Dictionary, request_key, execution_context)
 	var response := _result_envelope(command, legacy) if bool(legacy.get("ok", false)) else _envelope_rejection(command, _taxonomy_code(str(legacy.get("error_code", "handler_rejected"))), str(legacy.get("message", "Action rejected.")), false, "none")
 	envelope_cache = state.get("envelope_request_cache", {})
 	envelope_cache[request_key] = {
@@ -88,6 +91,12 @@ func process_command(command: Dictionary, context: Dictionary = {}) -> Dictionar
 	state["handler_state"] = handler_state
 	if bool(response.get("ok", false)):
 		state["boundary_ordinal"] = int((command.get("boundary", {}) as Dictionary).get("ordinal", state.get("boundary_ordinal", 0)))
+	_append_envelope_receipt(_receipt_record(str(command.get("receipt_key", "")), str(command.get("content_fingerprint", "")), str((command.get("boundary", {}) as Dictionary).get("boundary_id", "")), "command", "accepted"))
+	_append_envelope_receipt(_receipt_record(str(response.get("receipt_key", "")), str(response.get("content_fingerprint", "")), str((response.get("boundary", {}) as Dictionary).get("boundary_id", "")), "result" if bool(response.get("ok", false)) else "rejection", "accepted" if bool(response.get("ok", false)) else "rejected"))
+	for fact in state.get("fact_envelopes", []):
+		_append_envelope_receipt(_receipt_record(str((fact as Dictionary).get("receipt_key", "")), str((fact as Dictionary).get("content_fingerprint", "")), str(((fact as Dictionary).get("boundary", {}) as Dictionary).get("boundary_id", "")), "fact", "accepted"))
+	for operation in state.get("operation_envelopes", []):
+		_append_envelope_receipt(_receipt_record(str((operation as Dictionary).get("receipt_key", "")), str((operation as Dictionary).get("content_fingerprint", "")), str(((operation as Dictionary).get("boundary", {}) as Dictionary).get("boundary_id", "")), "operation", "accepted"))
 	return response
 
 
@@ -151,7 +160,7 @@ func process_action(action_id: String, parameters: Dictionary, request_key: Stri
 	candidate["action_sequence"] = int(candidate.get("action_sequence", 0)) + 1
 	var sequence := int(candidate.get("action_sequence", 0))
 	var command_receipt := _receipt("command", "ritual:command:%d" % sequence, command)
-	var facts: Variant = _seal_facts(handler_result.get("facts", []), sequence, action_id)
+	var facts: Variant = _seal_facts(handler_result.get("facts", []), sequence, action_id, context)
 	if typeof(facts) != TYPE_ARRAY:
 		return _cache_rejection(command_fingerprint, request_key, _rejection("fact_rejected", action_id, request_key, "Handler emitted an invalid fact batch."))
 	var result_payload: Dictionary = handler_result.get("result", {}) if typeof(handler_result.get("result", {})) == TYPE_DICTIONARY else {}
@@ -162,6 +171,13 @@ func process_action(action_id: String, parameters: Dictionary, request_key: Stri
 	_append_receipt(candidate, result_receipt)
 	for fact in facts:
 		_append_receipt(candidate, _receipt("fact", str((fact as Dictionary).get("receipt_key", "")), fact as Dictionary))
+	var fact_envelopes: Array = candidate.get("fact_envelopes", [])
+	fact_envelopes.append_array((facts as Array).duplicate(true))
+	candidate["fact_envelopes"] = fact_envelopes
+	var operation_envelopes: Array = candidate.get("operation_envelopes", [])
+	for operation in operations:
+		operation_envelopes.append(_operation_result_envelope(operation as Dictionary, context))
+	candidate["operation_envelopes"] = operation_envelopes
 	var cache: Dictionary = candidate.get("request_cache", {}) if typeof(candidate.get("request_cache", {})) == TYPE_DICTIONARY else {}
 	cache[request_key] = {"command_fingerprint": command_fingerprint, "response": response.duplicate(true)}
 	_trim_dictionary(cache, REQUEST_LIMIT)
@@ -306,7 +322,7 @@ func _fresh_state() -> Dictionary:
 	var object_states := {}
 	for object in _dictionary_array(definition.get("scene_objects", [])):
 		object_states[str(object.get("id", ""))] = {"visual": str(object.get("initial_visual_state", "")), "functional": str(object.get("initial_functional_state", "")), "visible": true, "enabled": true}
-	return {"state_version": 1, "contract": SchemaScript.CONTRACT, "ritual_id": str(definition.get("ritual_id", "")), "session_id": _session_id, "phase_id": str(definition.get("initial_phase", "")), "action_sequence": 0, "transition_sequence": 0, "boundary_ordinal": 0, "last_transition_id": "", "pending_items": {}, "pending_history": [], "working_items": {}, "last_commitment": {}, "eligible_resolutions": {}, "item_resolutions": [], "authoritative_result_refs": [], "actor_states": actor_states, "object_states": object_states, "energy_tier": str((definition.get("energy", {}) as Dictionary).get("initial_tier", "")), "handler_state": {}, "readable_totals": {"available_funds": 0, "pending_total": 0, "at_risk_total": 0, "returned_stake": 0, "payout": 0, "net_change": 0}, "receipts": [], "request_cache": {}, "envelope_request_cache": {}}
+	return {"state_version": 1, "contract": SchemaScript.CONTRACT, "ritual_id": str(definition.get("ritual_id", "")), "session_id": _session_id, "phase_id": str(definition.get("initial_phase", "")), "action_sequence": 0, "transition_sequence": 0, "boundary_ordinal": 0, "last_transition_id": "", "pending_items": {}, "pending_history": [], "working_items": {}, "last_commitment": {}, "eligible_resolutions": {}, "item_resolutions": [], "authoritative_result_refs": [], "actor_states": actor_states, "object_states": object_states, "energy_tier": str((definition.get("energy", {}) as Dictionary).get("initial_tier", "")), "handler_state": {}, "readable_totals": {"available_funds": 0, "pending_total": 0, "at_risk_total": 0, "returned_stake": 0, "payout": 0, "net_change": 0}, "receipts": [], "envelope_receipts": [], "fact_envelopes": [], "operation_envelopes": [], "request_cache": {}, "envelope_request_cache": {}}
 
 
 func _index_definition() -> void:
@@ -464,7 +480,7 @@ func _transition_for_action(phase: Dictionary, action_id: String) -> Array:
 	return result
 
 
-func _seal_facts(value: Variant, sequence: int, action_id: String) -> Variant:
+func _seal_facts(value: Variant, sequence: int, action_id: String, context: Dictionary = {}) -> Variant:
 	if typeof(value) != TYPE_ARRAY: return null
 	var declared := {}
 	for fact in _dictionary_array(definition.get("game_facts", [])): declared[str(fact.get("fact_type", ""))] = fact
@@ -478,8 +494,10 @@ func _seal_facts(value: Variant, sequence: int, action_id: String) -> Variant:
 		var payload: Dictionary = fact.get("payload", {}) if typeof(fact.get("payload", {})) == TYPE_DICTIONARY else {}
 		if not _validate_parameters(payload, (declared[type] as Dictionary).get("payload", {})).is_empty(): return null
 		seen[type] = true
-		var record := {"fact_id": "ritual:fact:%d:%s" % [sequence, type], "fact_type": type, "fact_version": int((declared[type] as Dictionary).get("fact_version", 1)), "visibility": "public", "boundary": "action", "cause": action_id, "payload": payload.duplicate(true), "receipt_key": "ritual:fact:%d:%s" % [sequence, type]}
-		record["content_fingerprint"] = canonical_fingerprint(record)
+		var boundary: Dictionary = context.get("_ritual_command_boundary", {}) if typeof(context.get("_ritual_command_boundary", {})) == TYPE_DICTIONARY else {}
+		if boundary.is_empty(): boundary = {"boundary_id": "boundary.command.%d" % sequence, "kind": "command", "ritual_id": str(definition.get("ritual_id", "")), "session_id": _session_id, "phase_id": str(state.get("phase_id", "")), "ordinal": int(state.get("boundary_ordinal", 0)) + 1, "cause_receipt_key": "receipt:command:%d" % sequence}
+		var record := {"envelope_version": 1, "fact_id": "fact.%s_%d" % [type.replace(".", "_"), sequence], "fact_type": type, "fact_version": int((declared[type] as Dictionary).get("fact_version", 1)), "payload": payload.duplicate(true), "visibility": "public", "boundary": boundary.duplicate(true), "receipt_key": "receipt:fact:%s_%d" % [type.replace(".", "_"), sequence], "content_fingerprint": ""}
+		record["content_fingerprint"] = canonical_fingerprint(_without_fingerprint(record))
 		result.append(record)
 	return result
 
@@ -664,6 +682,27 @@ func _result_envelope(command: Dictionary, legacy: Dictionary) -> Dictionary:
 	return _seal_envelope(envelope)
 
 
+func _operation_result_envelope(operation: Dictionary, context: Dictionary) -> Dictionary:
+	var boundary: Dictionary = context.get("_ritual_command_boundary", {}) if typeof(context.get("_ritual_command_boundary", {})) == TYPE_DICTIONARY else {}
+	if boundary.is_empty(): boundary = {"boundary_id": "boundary.command.internal", "kind": "command", "ritual_id": str(definition.get("ritual_id", "")), "session_id": _session_id, "phase_id": str(state.get("phase_id", "")), "ordinal": int(state.get("boundary_ordinal", 0)) + 1, "cause_receipt_key": "receipt:command:internal"}
+	var envelope := {"envelope_version": 1, "operation_id": str(operation.get("operation_id", "")), "family": str(operation.get("family", "")), "verb": str(operation.get("verb", "")), "target_id": str(operation.get("target_id", "")), "boundary": boundary.duplicate(true), "receipt_key": "receipt:operation:%s" % str(operation.get("operation_id", "")), "content_fingerprint": "", "applied": true}
+	return _seal_envelope(envelope)
+
+
+func _receipt_record(receipt_key: String, fingerprint: String, boundary_id: String, envelope_kind: String, status: String) -> Dictionary:
+	return {"receipt_key": receipt_key, "content_fingerprint": fingerprint, "boundary_id": boundary_id, "envelope_kind": envelope_kind, "status": status}
+
+
+func _append_envelope_receipt(receipt: Dictionary) -> void:
+	var receipts: Array = state.get("envelope_receipts", [])
+	for existing in receipts:
+		if str((existing as Dictionary).get("receipt_key", "")) == str(receipt.get("receipt_key", "")):
+			return
+	receipts.append(receipt.duplicate(true))
+	while receipts.size() > RECEIPT_LIMIT: receipts.pop_front()
+	state["envelope_receipts"] = receipts
+
+
 func _envelope_rejection(command: Dictionary, error_code: String, message: String, retryable: bool, return_policy: String) -> Dictionary:
 	var safe_command_id := str(command.get("command_id", "command.invalid_01"))
 	if not _qualified_id(safe_command_id): safe_command_id = "command.invalid_01"
@@ -720,13 +759,22 @@ func _validate_restore_state(value: Dictionary) -> Array[String]:
 	if int(value.get("transition_sequence", 0)) > int(value.get("action_sequence", 0)): errors.append("restore transition sequence exceeds action sequence")
 	for key in ["pending_items", "working_items", "last_commitment", "eligible_resolutions", "actor_states", "object_states", "handler_state", "readable_totals", "request_cache", "envelope_request_cache"]:
 		if typeof(value.get(key)) != TYPE_DICTIONARY: errors.append("restore %s must be a dictionary" % key)
-	for key in ["pending_history", "item_resolutions", "authoritative_result_refs", "receipts"]:
+	for key in ["pending_history", "item_resolutions", "authoritative_result_refs", "receipts", "envelope_receipts", "fact_envelopes", "operation_envelopes"]:
 		if typeof(value.get(key)) != TYPE_ARRAY: errors.append("restore %s must be an array" % key)
 	for receipt_value in value.get("receipts", []):
 		if typeof(receipt_value) != TYPE_DICTIONARY: errors.append("restore receipt must be a dictionary"); continue
 		var receipt: Dictionary = receipt_value
 		if not _closed_shape(receipt, ["receipt_kind", "receipt_key", "content_fingerprint"]): errors.append("restore receipt has invalid shape")
 		elif not _request_key(str(receipt.get("receipt_key", ""))) or not _fingerprint(str(receipt.get("content_fingerprint", ""))): errors.append("restore receipt identity is invalid")
+	for receipt_value in value.get("envelope_receipts", []):
+		if typeof(receipt_value) != TYPE_DICTIONARY: errors.append("restore envelope receipt must be a dictionary"); continue
+		var receipt: Dictionary = receipt_value
+		if not _closed_shape(receipt, ["receipt_key", "content_fingerprint", "boundary_id", "envelope_kind", "status"]): errors.append("restore envelope receipt has invalid shape")
+		elif not _request_key(str(receipt.get("receipt_key", ""))) or not _request_key(str(receipt.get("boundary_id", ""))) or not _fingerprint(str(receipt.get("content_fingerprint", ""))) or str(receipt.get("envelope_kind", "")) not in ["command", "result", "rejection", "fact", "operation", "state", "transition", "phase_entry", "cleanup", "aftermath"] or str(receipt.get("status", "")) not in ["accepted", "rejected"]: errors.append("restore envelope receipt identity is invalid")
+	for fact_value in value.get("fact_envelopes", []):
+		if typeof(fact_value) != TYPE_DICTIONARY or not _valid_fact_envelope(fact_value as Dictionary): errors.append("restore fact envelope is invalid")
+	for operation_value in value.get("operation_envelopes", []):
+		if typeof(operation_value) != TYPE_DICTIONARY or not _valid_operation_result_envelope(operation_value as Dictionary): errors.append("restore operation envelope is invalid")
 	for request_key in (value.get("envelope_request_cache", {}) as Dictionary).keys():
 		var cache_value: Variant = (value.get("envelope_request_cache", {}) as Dictionary)[request_key]
 		if typeof(cache_value) != TYPE_DICTIONARY: errors.append("restore request cache record must be a dictionary"); continue
@@ -735,11 +783,32 @@ func _validate_restore_state(value: Dictionary) -> Array[String]:
 		if not _closed_shape(cache, cache_keys): errors.append("restore request cache record has invalid shape")
 		elif str(cache.get("request_key", "")) != str(request_key) or not _request_key(str(request_key)) or str(cache.get("status", "")) not in ["pending", "resolved", "rejected"]: errors.append("restore request cache identity/status is invalid")
 		elif not _fingerprint(str(cache.get("command_content_fingerprint", ""))) or not _fingerprint(str(cache.get("response_content_fingerprint", ""))): errors.append("restore request cache fingerprint is invalid")
+	var cached_responses: Dictionary = (value.get("handler_state", {}) as Dictionary).get("_ritual_cached_responses", {}) if typeof((value.get("handler_state", {}) as Dictionary).get("_ritual_cached_responses", {})) == TYPE_DICTIONARY else {}
+	for request_key in (value.get("envelope_request_cache", {}) as Dictionary).keys():
+		var cache: Dictionary = (value.get("envelope_request_cache", {}) as Dictionary)[request_key]
+		var response: Dictionary = cached_responses.get(request_key, {})
+		if response.is_empty() or str(response.get("content_fingerprint", "")) != str(cache.get("response_content_fingerprint", "")) or not _valid_response_envelope(response): errors.append("restore cached response does not match its exact cache binding")
 	for actor_id in (value.get("actor_states", {}) as Dictionary).keys():
 		if not _actors_contains(str(actor_id)): errors.append("restore actor reference is unknown")
 	for object_id in (value.get("object_states", {}) as Dictionary).keys():
 		if not _objects_contains(str(object_id)): errors.append("restore object reference is unknown")
 	return errors
+
+
+func _valid_fact_envelope(fact: Dictionary) -> bool:
+	var keys := ["envelope_version", "fact_id", "fact_type", "fact_version", "payload", "visibility", "boundary", "receipt_key", "content_fingerprint"]
+	return _closed_shape(fact, keys) and int(fact.get("envelope_version", 0)) == 1 and int(fact.get("fact_version", 0)) > 0 and str(fact.get("visibility", "")) == "public" and _qualified_id(str(fact.get("fact_id", ""))) and _qualified_id(str(fact.get("fact_type", ""))) and _request_key(str(fact.get("receipt_key", ""))) and _fingerprint(str(fact.get("content_fingerprint", ""))) and canonical_fingerprint(_without_fingerprint(fact)) == str(fact.get("content_fingerprint", ""))
+
+
+func _valid_operation_result_envelope(operation: Dictionary) -> bool:
+	var keys := ["envelope_version", "operation_id", "family", "verb", "target_id", "boundary", "receipt_key", "content_fingerprint", "applied"]
+	return _closed_shape(operation, keys) and int(operation.get("envelope_version", 0)) == 1 and typeof(operation.get("applied")) == TYPE_BOOL and _request_key(str(operation.get("receipt_key", ""))) and _fingerprint(str(operation.get("content_fingerprint", ""))) and canonical_fingerprint(_without_fingerprint(operation)) == str(operation.get("content_fingerprint", ""))
+
+
+func _valid_response_envelope(response: Dictionary) -> bool:
+	var result_keys := ["envelope_version", "ok", "ritual_id", "session_id", "command_id", "request_key", "phase_before", "phase_after", "authoritative_result_ref", "state_receipts", "operation_receipts", "fact_receipts", "boundary", "receipt_key", "content_fingerprint", "public_projection"]
+	var rejection_keys := ["envelope_version", "ok", "ritual_id", "session_id", "command_id", "request_key", "phase", "error_code", "public_message", "retryable", "return_policy", "boundary", "receipt_key", "content_fingerprint", "public_projection"]
+	return (_closed_shape(response, result_keys) or _closed_shape(response, rejection_keys)) and _fingerprint(str(response.get("content_fingerprint", ""))) and canonical_fingerprint(_without_fingerprint(response)) == str(response.get("content_fingerprint", ""))
 
 
 func _actors_contains(actor_id: String) -> bool:

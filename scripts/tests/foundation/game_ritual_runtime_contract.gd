@@ -87,6 +87,10 @@ static func _check_runtime_trace(definition: Dictionary, failures: Array) -> voi
 	var play: Dictionary = runtime.process_action("play.primary", {"commitment_id": "commitment.one"}, "trace:play", {"seed": 19})
 	if not bool(play.get("ok", false)) or str(play.get("phase_id", "")) != "resolving" or (play.get("facts", []) as Array).size() != 1:
 		failures.append("Allowlisted rules handler did not advance and publish one action-boundary fact.")
+	var fact_envelopes: Array = runtime.serialized_state().get("fact_envelopes", [])
+	var fact_keys := ["envelope_version", "fact_id", "fact_type", "fact_version", "payload", "visibility", "boundary", "receipt_key", "content_fingerprint"]
+	if fact_envelopes.size() != 1 or not _exact_keys(fact_envelopes[0] as Dictionary, fact_keys) or RuntimeScript.canonical_fingerprint(_without_fingerprint(fact_envelopes[0] as Dictionary)) != str((fact_envelopes[0] as Dictionary).get("content_fingerprint", "")):
+		failures.append("Published GameFact did not use the exact closed fingerprinted envelope.")
 	var saved := runtime.serialized_state()
 	var restored = RuntimeScript.new()
 	if not bool(restored.configure(definition, {"play.primary": Callable(GameRitualRuntimeContract, "_play_handler")}).get("ok", false)):
@@ -168,6 +172,14 @@ static func _check_envelope_boundary(definition: Dictionary, failures: Array) ->
 	var result_keys := ["envelope_version", "ok", "ritual_id", "session_id", "command_id", "request_key", "phase_before", "phase_after", "authoritative_result_ref", "state_receipts", "operation_receipts", "fact_receipts", "boundary", "receipt_key", "content_fingerprint", "public_projection"]
 	if not bool(result.get("ok", false)) or result != replay or not _exact_keys(result, result_keys) or RuntimeScript.canonical_fingerprint(_without_fingerprint(result)) != str(result.get("content_fingerprint", "")):
 		failures.append("Complete RitualCommand did not produce an exact fingerprinted replay-safe RitualResult: first=%s replay=%s" % [JSON.stringify(result), JSON.stringify(replay)])
+	var envelope_state := runtime.serialized_state()
+	var cache: Dictionary = (envelope_state.get("envelope_request_cache", {}) as Dictionary).get(str(command.get("request_key", "")), {})
+	var cache_keys := ["request_key", "command_receipt_key", "command_content_fingerprint", "response_receipt_key", "response_content_fingerprint", "status"]
+	var receipt_keys := ["receipt_key", "content_fingerprint", "boundary_id", "envelope_kind", "status"]
+	if not _exact_keys(cache, cache_keys) or str(cache.get("response_content_fingerprint", "")) != str(result.get("content_fingerprint", "")):
+		failures.append("RequestCacheRecord did not bind the exact command/result fingerprints.")
+	for receipt in envelope_state.get("envelope_receipts", []):
+		if not _exact_keys(receipt as Dictionary, receipt_keys): failures.append("ReceiptRecord did not use the exact closed shape.")
 	var hostile := command.duplicate(true)
 	hostile["extra"] = true
 	var rejected: Dictionary = runtime.process_command(hostile)
