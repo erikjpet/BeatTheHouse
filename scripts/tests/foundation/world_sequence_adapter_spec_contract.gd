@@ -7,6 +7,7 @@ extends SceneTree
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
+const AdapterScript := preload("res://scripts/core/crew_world_sequence_adapter.gd")
 
 const DOC_PATH := "res://docs/plans/world06_1_crew_sequence_adapter_contract.md"
 const EVENT_MODULE_PATH := "res://scripts/core/event_module.gd"
@@ -56,6 +57,8 @@ func _initialize() -> void:
 	_check_inventory(failures)
 	_check_frozen_bindings(failures)
 	_check_owner_scoped_registration(failures)
+	_check_diagnostic_wrapper(failures)
+	_check_hidden_identifier_guard(failures)
 	if failures.is_empty():
 		print("World sequence adapter specification contract passed: events=%d concrete_bindings=24 env=855a2961" % REQUIRED_EVENT_IDS.size())
 		quit(0)
@@ -118,6 +121,9 @@ func _check_inventory(failures: Array) -> void:
 		if not actual_ids.has(event_id):
 			failures.append("Inventoried EventModule surface disappeared: %s" % event_id)
 	var source := FileAccess.get_file_as_string(EVENT_MODULE_PATH)
+	var diagnostics := AdapterScript.validate_frozen_event_module_inventory(parsed as Array, source)
+	if not diagnostics.is_empty():
+		failures.append("Frozen EventModule inventory guard rejected production: %s" % JSON.stringify(diagnostics))
 	for kind in REQUIRED_DYNAMIC_KINDS:
 		if not source.contains('"%s"' % kind):
 			failures.append("EventModule dynamic kind is not routed: %s" % kind)
@@ -127,6 +133,23 @@ func _check_inventory(failures: Array) -> void:
 	for direct_id in ["crew_planning_table", "heist_live_table", "crew_favor_delivery"]:
 		if not source.contains('"%s"' % direct_id):
 			failures.append("EventModule direct surface is not routed: %s" % direct_id)
+	var hostile_catalog := (parsed as Array).duplicate(true)
+	hostile_catalog.append({"id": "crew_unclassified_probe", "payload": {"kind": "crew_unclassified_probe"}})
+	var unclassified := AdapterScript.validate_frozen_event_module_inventory(hostile_catalog, source)
+	if not _diagnostics_include(unclassified, "event_catalog", "crew_unclassified_probe", "Unclassified EventModule crew/world surface."):
+		failures.append("Frozen inventory guard did not reject a new data-backed Crew surface.")
+	var hostile_source := source + '\nif str(payload.get("kind", "")) == "crew_shadow_surface": pass\n'
+	var source_unclassified := AdapterScript.validate_frozen_event_module_inventory(parsed as Array, hostile_source)
+	if not _diagnostics_include(source_unclassified, "dynamic_kind", "crew_shadow_surface", "Unclassified EventModule crew/world surface."):
+		failures.append("Frozen inventory guard did not reject a new source-routed Crew surface.")
+	var missing_catalog := (parsed as Array).duplicate(true)
+	for index in range(missing_catalog.size() - 1, -1, -1):
+		if str(_dict(missing_catalog[index]).get("id", "")) == "crew_favor_delivery": missing_catalog.remove_at(index)
+	var missing := AdapterScript.validate_frozen_event_module_inventory(missing_catalog, source)
+	if not _diagnostics_include(missing, "event_catalog", "crew_favor_delivery", "Frozen EventModule crew/world surface is no longer routed."):
+		failures.append("Frozen inventory guard did not reject a removed inventoried Crew surface.")
+	if JSON.stringify(unclassified) != JSON.stringify(AdapterScript.validate_frozen_event_module_inventory(hostile_catalog, source)):
+		failures.append("Frozen inventory diagnostics are not deterministic.")
 
 
 func _check_frozen_bindings(failures: Array) -> void:
@@ -194,6 +217,50 @@ func _check_owner_scoped_registration(failures: Array) -> void:
 	_failures_must_be(proof_special_case, 1, "proof special-case field", failures)
 
 
+func _check_diagnostic_wrapper(failures: Array) -> void:
+	var wrapped := AdapterScript.wrap_validation_errors(
+		"crew_package", "crew_favor_delivery", "crew_favor_delivery", "attempt_7",
+		["Shared validator message preserved.", "res://private/validator.gd:17 rejected content"]
+	)
+	if wrapped.size() != 2 or str(_dict(wrapped[0]).get("error", "")) == str(_dict(wrapped[1]).get("error", "")):
+		failures.append("Diagnostic wrapper did not retain one safe message and redact one path-bearing message.")
+	var expected_keys := ["definition_id", "error", "error_id", "instance_id", "source_id", "source_kind"]
+	for diagnostic_value in wrapped:
+		var diagnostic := _dict(diagnostic_value)
+		var keys := diagnostic.keys()
+		keys.sort()
+		if keys != expected_keys or not str(diagnostic.get("error_id", "")).begins_with("world_sequence_validation_") \
+				or JSON.stringify(diagnostic).contains("res://"):
+			failures.append("Diagnostic wrapper schema, stable id, or path redaction drifted: %s" % JSON.stringify(diagnostic))
+	var reversed := AdapterScript.wrap_validation_errors(
+		"crew_package", "crew_favor_delivery", "crew_favor_delivery", "attempt_7",
+		["res://private/validator.gd:17 rejected content", "Shared validator message preserved."]
+	)
+	if JSON.stringify(wrapped) != JSON.stringify(reversed):
+		failures.append("Diagnostic wrapper order depends on shared-validator error order.")
+	var hidden_source := AdapterScript.wrap_validation_errors("crew_package", "traitor_candidate", "safe_definition", "attempt_7", ["traitor identity rejected"])
+	if JSON.stringify(hidden_source).contains("traitor") or str(_dict(hidden_source[0]).get("source_id", "")) != "redacted":
+		failures.append("Diagnostic wrapper leaked a forbidden hidden identifier or message.")
+
+
+func _check_hidden_identifier_guard(failures: Array) -> void:
+	var ordinary_prose := {"label": "A traitor is mentioned in ordinary authored dialogue.", "prompt": "Ask about the clue in public."}
+	if not AdapterScript.validate_public_identifiers(ordinary_prose).is_empty():
+		failures.append("Hidden identifier guard rejected ordinary prose instead of identifier-bearing fields only.")
+	for hostile in [
+		{"stable_object_id": "traitor_candidate"},
+		{"actor_id": "turncoat_actor"},
+		{"capability": "clue_eligibility"},
+		{"public_instance_token": "actor_0123456789abcdef0123456789abcdef"},
+		{"local_state_schema": {"grievance_weight": {"type": "int"}}},
+	]:
+		if AdapterScript.validate_public_identifiers(hostile).is_empty():
+			failures.append("Hidden identifier guard accepted hostile public identity: %s" % JSON.stringify(hostile))
+	var signature_only := {"sequence_signature": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}
+	if not AdapterScript.validate_public_identifiers(signature_only).is_empty():
+		failures.append("Hidden identifier guard confused the required content signature with a public identity hash.")
+
+
 func _validate_registration(value: Dictionary) -> Array:
 	var failures: Array = []
 	var allowed := ["source", "public_instance_token", "node_id", "definition"]
@@ -239,6 +306,15 @@ func _canonical_id(value: String) -> bool:
 func _check_exact_array(label: String, actual: Array, expected: Array, failures: Array) -> void:
 	if actual != expected:
 		failures.append("%s changed: expected %s, got %s." % [label, JSON.stringify(expected), JSON.stringify(actual)])
+
+
+func _diagnostics_include(diagnostics: Array, source_kind: String, source_id: String, error: String) -> bool:
+	for diagnostic_value in diagnostics:
+		var diagnostic := _dict(diagnostic_value)
+		if str(diagnostic.get("source_kind", "")) == source_kind and str(diagnostic.get("source_id", "")) == source_id \
+				and str(diagnostic.get("error", "")) == error:
+			return true
+	return false
 
 
 func _failures_must_be(value: Dictionary, expected: int, label: String, failures: Array) -> void:

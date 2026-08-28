@@ -20,6 +20,88 @@ const LIFECYCLE_ACTIVE := "active"
 const LIFECYCLE_CLEANUP_PENDING := "cleanup_pending"
 const LIFECYCLE_CLEANED := "cleaned"
 const PROJECTION_COLLECTIONS := ["scene_objects", "interactions", "actors", "services", "games", "routes"]
+const FROZEN_EVENT_SURFACES := [
+	"crew_collection_press", "crew_contact_bishop", "crew_contact_knuckles", "crew_contact_lucky",
+	"crew_contact_mags", "crew_contact_rook", "crew_contact_switch", "crew_contact_velvet",
+	"crew_favor_delivery", "crew_job_board", "crew_mags_bench", "crew_planning_table",
+	"crew_practice_rig", "crew_rook_ride", "crew_stake_horse_loss", "heist_live_table",
+	"numbers_desk", "numbers_knuckles_collection", "numbers_lucky_swept_collection",
+	"police_sweep_adjacent_sighting", "police_sweep_confiscation", "police_sweep_pass_over",
+	"police_sweep_punchline_l2_near_miss", "police_sweep_shakedown", "police_sweep_travel_lock",
+	"recruitment_bishop", "recruitment_knuckles", "recruitment_lucky", "recruitment_mags",
+	"recruitment_rook_leads", "recruitment_rook_signpost", "recruitment_switch", "recruitment_velvet",
+]
+const FROZEN_DYNAMIC_KINDS := [
+	"crew_collection_press", "crew_contact", "crew_job_board", "crew_mags_bench",
+	"crew_practice_rig", "crew_rook_leads", "crew_rook_ride", "crew_rook_signpost",
+	"crew_stake_horse_loss",
+]
+const FROZEN_DIRECT_SURFACES := ["crew_favor_delivery", "crew_planning_table", "heist_live_table"]
+const FROZEN_HOOKS := [
+	"crew_collection_choice", "crew_heist", "crew_job_accept", "crew_knuckles_retrieve",
+	"crew_knuckles_stash", "crew_lucky_collection", "crew_meet", "crew_practice_rig",
+	"crew_recruit", "crew_rook_lead_closed", "crew_rook_ride", "crew_stake_loss_choice",
+	"crew_switch_reveal",
+]
+const HIDDEN_IDENTIFIER_TERMS := [
+	"betrayal", "clue", "grievance", "mole", "rat", "snitch", "theturn", "traitor", "turncoat",
+]
+const HASH_IDENTIFIER_LENGTHS := [32, 40, 64]
+
+
+# Machine-checks the frozen EventModule seam against both the production event
+# catalog and the exact routing syntax used by EventModule. Additions are errors,
+# not silently accepted inventory growth.
+static func validate_frozen_event_module_inventory(event_catalog: Array, event_module_source: String) -> Array:
+	var actual_events: Array = []
+	for event_value in event_catalog:
+		var event := _dict(event_value)
+		var event_id := str(event.get("id", "")).strip_edges()
+		if _is_event_module_surface_id(event_id) and not actual_events.has(event_id): actual_events.append(event_id)
+	var actual_kinds := _source_comparison_literals(event_module_source, 'payload.get("kind"', '== "')
+	var actual_direct := _source_comparison_literals(event_module_source, "get_id()", '== "')
+	var actual_hooks: Array = []
+	for line in event_module_source.split("\n"):
+		var trimmed := str(line).strip_edges()
+		if not trimmed.begins_with('"crew_') or not trimmed.ends_with('":') or trimmed.count('"') != 2: continue
+		var hook_id := trimmed.trim_prefix('"').trim_suffix('":')
+		if not actual_hooks.has(hook_id): actual_hooks.append(hook_id)
+	var diagnostics: Array = []
+	_append_inventory_difference(diagnostics, "event_catalog", actual_events, FROZEN_EVENT_SURFACES)
+	_append_inventory_difference(diagnostics, "dynamic_kind", actual_kinds, FROZEN_DYNAMIC_KINDS)
+	_append_inventory_difference(diagnostics, "direct_surface", actual_direct, FROZEN_DIRECT_SURFACES)
+	_append_inventory_difference(diagnostics, "event_hook", actual_hooks, FROZEN_HOOKS)
+	return _sorted_diagnostics(diagnostics)
+
+
+# Wraps unchanged shared-validator messages when they are safe. A path-bearing
+# or hidden-bearing message is replaced rather than echoed into public reports.
+static func wrap_validation_errors(source_kind: String, source_id: String, definition_id: String, instance_id: String, errors: Array) -> Array:
+	var safe_source := _safe_diagnostic_identifier(source_id)
+	var safe_definition := _safe_diagnostic_identifier(definition_id)
+	var safe_instance := _safe_diagnostic_identifier(instance_id)
+	var result: Array = []
+	for error_value in errors:
+		var shared_error := str(error_value)
+		var safe_error := shared_error if _safe_diagnostic_message(shared_error) else "Shared validator rejected authored content."
+		var identity := "%s\n%s\n%s\n%s\n%s" % [source_kind, safe_source, safe_definition, safe_instance, safe_error]
+		result.append({
+			"error_id": "world_sequence_validation_%s" % identity.sha256_text().substr(0, 16),
+			"source_kind": source_kind,
+			"source_id": safe_source,
+			"definition_id": safe_definition,
+			"instance_id": safe_instance,
+			"error": safe_error,
+		})
+	return _sorted_diagnostics(result)
+
+
+# Checks only identifiers and identifier collections. Narrative labels, prompts,
+# and feedback remain ordinary prose and are intentionally not inspected.
+static func validate_public_identifiers(value: Variant) -> Array:
+	var failures: Array = []
+	_collect_hidden_identifier_failures(value, "", failures)
+	return _unique_strings(failures)
 
 
 static func owner_token(source: Dictionary, public_instance_token: String) -> String:
@@ -46,6 +128,14 @@ static func mount(environment: Dictionary, source: Dictionary, public_instance_t
 	var eligibility_result := eligibility(environment, source, public_instance_token, mount_selector)
 	var errors: Array = _array(eligibility_result.get("errors", []))
 	var token := str(eligibility_result.get("owner_token", ""))
+	errors.append_array(validate_public_identifiers({
+		"source": source,
+		"public_instance_token": public_instance_token,
+		"mount_selector": mount_selector,
+		"definition": definition,
+		"outcome_channels": outcome_channels,
+		"ownership_claims": ownership_claims,
+	}))
 	var host_semantics := ScenarioEngineScript.sequence_host_semantics(environment)
 	var creation_owners := _definition_creation_owner_namespaces(definition)
 	host_semantics["creation_owner_namespaces"] = creation_owners
@@ -543,6 +633,121 @@ static func _definition_creation_owner_namespaces(definition: Dictionary) -> Arr
 			if creates and not owner.is_empty() and not result.has(owner): result.append(owner)
 	result.sort()
 	return result
+
+
+static func _is_event_module_surface_id(value: String) -> bool:
+	return value == "heist_live_table" or value.begins_with("crew_") or value.begins_with("recruitment_") \
+		or value.begins_with("numbers_") or value.begins_with("police_sweep_")
+
+
+static func _source_comparison_literals(source: String, subject_marker: String, comparison_marker: String) -> Array:
+	var result: Array = []
+	for line_value in source.split("\n"):
+		var line := str(line_value)
+		if not line.contains(subject_marker): continue
+		var marker_index := line.find(comparison_marker)
+		if marker_index < 0: continue
+		var value_start := marker_index + comparison_marker.length()
+		var value_end := line.find('"', value_start)
+		if value_end <= value_start: continue
+		var value := line.substr(value_start, value_end - value_start)
+		if _is_event_module_surface_id(value) or value.begins_with("crew_"):
+			if not result.has(value): result.append(value)
+	result.sort()
+	return result
+
+
+static func _append_inventory_difference(diagnostics: Array, source_kind: String, actual_value: Array, frozen_value: Array) -> void:
+	var actual := actual_value.duplicate()
+	var frozen := frozen_value.duplicate()
+	actual.sort()
+	frozen.sort()
+	for source_id_value in actual:
+		var source_id := str(source_id_value)
+		if frozen.has(source_id): continue
+		diagnostics.append_array(wrap_validation_errors(source_kind, source_id, "", "", ["Unclassified EventModule crew/world surface."]))
+	for source_id_value in frozen:
+		var source_id := str(source_id_value)
+		if actual.has(source_id): continue
+		diagnostics.append_array(wrap_validation_errors(source_kind, source_id, "", "", ["Frozen EventModule crew/world surface is no longer routed."]))
+
+
+static func _sorted_diagnostics(value: Array) -> Array:
+	var result := value.duplicate(true)
+	result.sort_custom(func(a: Variant, b: Variant) -> bool:
+		return _diagnostic_sort_key(_dict(a)) < _diagnostic_sort_key(_dict(b))
+	)
+	return result
+
+
+static func _diagnostic_sort_key(value: Dictionary) -> String:
+	return "%s\u001f%s\u001f%s\u001f%s\u001f%s" % [
+		str(value.get("instance_id", "")), str(value.get("source_kind", "")),
+		str(value.get("source_id", "")), str(value.get("definition_id", "")),
+		str(value.get("error_id", "")),
+	]
+
+
+static func _safe_diagnostic_identifier(value: String) -> String:
+	return "redacted" if _identifier_hidden_reason(value) != "" else value
+
+
+static func _safe_diagnostic_message(value: String) -> bool:
+	var lower := value.to_lower()
+	if lower.contains("res://") or lower.contains("user://") or lower.contains(":\\") or lower.contains(":/"):
+		return false
+	for term in HIDDEN_IDENTIFIER_TERMS:
+		if lower.contains(term) or term == "theturn" and lower.contains("the_turn"): return false
+	return _identifier_hidden_reason(value) == ""
+
+
+static func _collect_hidden_identifier_failures(value: Variant, field_name: String, failures: Array) -> void:
+	if typeof(value) == TYPE_DICTIONARY:
+		for key_value in (value as Dictionary).keys():
+			var key := str(key_value)
+			var key_reason := _identifier_hidden_reason(key)
+			if not key_reason.is_empty(): failures.append("world sequence public identifier is forbidden: %s" % key_reason)
+			_collect_hidden_identifier_failures((value as Dictionary).get(key_value), key, failures)
+		return
+	if typeof(value) == TYPE_ARRAY:
+		for item in value as Array: _collect_hidden_identifier_failures(item, field_name, failures)
+		return
+	if typeof(value) != TYPE_STRING or not _identifier_field(field_name): return
+	var reason := _identifier_hidden_reason(str(value))
+	if not reason.is_empty(): failures.append("world sequence public identifier is forbidden: %s" % reason)
+
+
+static func _identifier_field(value: String) -> bool:
+	if value in ["sequence_signature", "operation_fingerprint", "definition_fingerprint", "cause_fingerprint", "result_fingerprint", "content_fingerprint"]:
+		return false
+	return value.ends_with("_id") or value.ends_with("_ids") or value.ends_with("_token") \
+		or value in ["owner_namespace", "handler", "fact", "facts", "outcome", "outcomes", "capability", "capabilities", "mechanic_tags"]
+
+
+static func _identifier_hidden_reason(value: String) -> String:
+	var lower := value.strip_edges().to_lower()
+	if lower.is_empty(): return ""
+	var compact := lower.replace("_", "").replace("-", "").replace(":", "").replace(".", "")
+	var segments := lower.replace("-", "_").replace(":", "_").replace(".", "_").split("_", false)
+	for term in HIDDEN_IDENTIFIER_TERMS:
+		if compact == term or segments.has(term): return "hidden semantic identifier"
+	if _hash_like_identifier(lower): return "opaque identity hash"
+	return ""
+
+
+static func _hash_like_identifier(value: String) -> bool:
+	var pieces := value.replace("-", "_").replace(":", "_").split("_", false)
+	for piece_value in pieces:
+		var piece := str(piece_value)
+		if piece.length() not in HASH_IDENTIFIER_LENGTHS and piece.length() < 16: continue
+		var all_hex := true
+		for index in range(piece.length()):
+			var code := piece.unicode_at(index)
+			if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102):
+				all_hex = false
+				break
+		if all_hex: return true
+	return false
 
 
 static func _valid_component(value: String) -> bool:
