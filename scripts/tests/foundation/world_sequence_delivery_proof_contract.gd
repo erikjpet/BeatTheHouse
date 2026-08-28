@@ -3,6 +3,9 @@ extends SceneTree
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
+const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
+const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const RunStateScript := preload("res://scripts/core/run_state.gd")
 
 const PACKAGE_PATH := "res://data/crew/world06_1_crew_favor_delivery_sequence.json"
 const EVENTS_PATH := "res://data/events/events.json"
@@ -28,6 +31,7 @@ func _initialize() -> void:
 	_check_shared_definition(entry, failures)
 	_check_production_event_contract(failures)
 	_check_generic_integration_surface(failures)
+	_check_production_schedule(failures)
 	if failures.is_empty():
 		print("World sequence delivery proof contract passed: source=crew::crew::crew_favor_delivery proof=crew_favor_delivery")
 		quit(0)
@@ -167,6 +171,68 @@ func _check_generic_integration_surface(failures: Array) -> void:
 	for forbidden_special_case in ["crew_favor_delivery", "run_package", "package_handoff"]:
 		if adapter_source.contains(forbidden_special_case):
 			failures.append("Generic adapter contains proof-specific special case: %s." % forbidden_special_case)
+
+
+func _check_production_schedule(failures: Array) -> void:
+	var library := ContentLibraryScript.new()
+	library.load(false)
+	var run_state := _production_run(library, "WORLD-SEQUENCE-PROOF-SCHEDULE")
+	run_state.narrative_flags["crew_favor_pending"] = true
+	var module := EventModuleScript.new()
+	module.setup(library.event("crew_favor_delivery"), library)
+	var bankroll_before := run_state.bankroll
+	var heat_before := run_state.suspicion_level()
+	var started := module.resolve(run_state, run_state.current_environment, "run_package")
+	var token := str(started.get("world_sequence_owner_token", ""))
+	if not bool(started.get("delivery_started", false)) or not bool(started.get("world_sequence_scheduled", false)) or token.is_empty():
+		failures.append("Production Crew favor acceptance did not schedule its real delivery sequence: %s." % JSON.stringify(started))
+		return
+	if run_state.bankroll != bankroll_before or run_state.suspicion_level() != heat_before or bool(run_state.narrative_flags.get("crew_favor_completed", false)):
+		failures.append("Scheduling the Crew favor sequence applied owner consequences before handoff.")
+	var registration := _dict(run_state.world_sequence_registrations.get(token, {}))
+	var delivery_snapshot := run_state.delivery_snapshot()
+	var targets := _array(delivery_snapshot.get("targets", []))
+	var target_node_id := str(_dict(targets[0]).get("node_id", "")) if not targets.is_empty() else ""
+	if str(registration.get("lifecycle", "")) != "eligible" or str(registration.get("node_id", "")) != target_node_id \
+			or str(_dict(registration.get("source", {})).get("definition_id", "")) != "crew_favor_delivery":
+		failures.append("Scheduled Crew favor registration is not bound to the exact public delivery target and owner: %s." % JSON.stringify(registration))
+	var registration_text := JSON.stringify(registration).to_lower()
+	for forbidden in FORBIDDEN_PACKAGE_TERMS:
+		if registration_text.contains(forbidden):
+			failures.append("Scheduled Crew favor registration leaks owner-private term: %s." % forbidden)
+	var restored := RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	if JSON.stringify(restored.world_sequence_registrations) != JSON.stringify(run_state.world_sequence_registrations) \
+			or JSON.stringify(restored.delivery_snapshot()) != JSON.stringify(delivery_snapshot):
+		failures.append("Scheduled Crew favor sequence and delivery authority did not survive save/load together.")
+
+	var refused_run := _production_run(library, "WORLD-SEQUENCE-PROOF-REFUSAL")
+	refused_run.narrative_flags["crew_favor_pending"] = true
+	refused_run.crew_add_trust("crew_rook", 5, "proof_fixture")
+	var refused_bankroll := refused_run.bankroll
+	var refused_heat := refused_run.suspicion_level()
+	var refused := module.resolve(refused_run, refused_run.current_environment, "refuse")
+	if not refused_run.world_sequence_registrations.is_empty() or refused_run.delivery_has_active_run() \
+			or refused_run.bankroll != refused_bankroll or refused_run.suspicion_level() != refused_heat + 9 \
+			or refused_run.crew_trust("crew_rook") != 0 or not bool(refused_run.narrative_flags.get("crew_favor_refused", false)) \
+			or str(refused.get("message", "")) != "The night stays quiet. Quieter, even.":
+		failures.append("Production Crew favor refusal no longer stays on its unchanged unmounted dialogue path.")
+
+
+func _production_run(library: ContentLibrary, seed: String) -> RunState:
+	var run_state := RunStateScript.new()
+	run_state.start_new(seed)
+	RunGeneratorScript.new(library).next_environment(run_state)
+	run_state.current_environment = {
+		"id": run_state.current_world_node_id(),
+		"archetype_id": run_state.current_world_node_id(),
+		"world_node_id": run_state.current_world_node_id(),
+		"kind": "casino",
+		"tier": 1,
+		"turns": 0,
+		"resolved_event_ids": [],
+	}
+	return run_state
 
 
 func _load_json_dictionary(path: String, failures: Array) -> Dictionary:
