@@ -18,7 +18,7 @@ var _library: Variant = null
 var _composition_cache: Dictionary = {}
 
 
-func _init() -> void:
+func _initialize() -> void:
 	var failures: Array = []
 	_library = ContentLibraryScript.new()
 	_library.load(false)

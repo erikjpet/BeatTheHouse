@@ -38,3 +38,28 @@ acceptance evidence.
 Assembly must preserve the package id, handler/renderer id, scenario ids,
 authoring evidence, stable semantic identities, and sequence signatures. It may
 not merge Package B by replacing the shared catalog or env06_6 runtime files.
+
+## Remediation evidence and hold
+
+The first-rejection remediation replaces the synthetic inventory with the
+production authority consumer above and adds executable partial/terminal
+reentry, every reachable branch save/load, authored expiry/cleanup, hostile
+operation/fact/cleanup-content rollback, paired hidden observers, deterministic
+serialization, transition liveness, and performance counters.
+
+Package-local native and Web probes produced the same semantic SHA-256
+`ed72e2846fb5e26558bf2cc9545a77e2b49e1389da7a8527a68acd6ee3bd1bf7`.
+Native performed 200 serializations in 138.124 ms with a 7.798 ms maximum idle
+frame. Chrome 151 at CPU x4 performed them in 413.875 ms with a 34.105 ms
+maximum idle frame. The tracked manifest contains 185 actual 960x540 raster
+captures and one inspected contact sheet; it records authored hit sizes, rendered
+minimum hit size, keyboard/controller focus, safe-exit visibility, small-screen,
+reduced-motion, and obstruction states.
+
+The package remains held, not accepted-ready: the production-composed contract
+must finish against the ordered assembly's real Motel, Gas-Station Casino, and
+Beach authority. Two exact local attempts with the current dependency lineage
+remained in production content loading until bounded wrapper timeouts at 124 and
+184 seconds and emitted no verdict. These timeouts are retained and are not a
+green claim. Assembly must rerun after the accepted env06_6 successor and real
+zone authority are present.
