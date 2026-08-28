@@ -3,6 +3,10 @@ extends SceneTree
 const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
 const Registry := preload("res://scripts/core/scenario_operation_registry.gd")
 const Runtime := preload("res://scripts/core/scenario_sequence_runtime.gd")
+const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
+const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
+const SemanticInventory := preload("res://scripts/core/environment_semantic_inventory.gd")
 const PACKAGE_PATH := "res://data/environments/scenario_sequences/env06_7_roadside_shelter.json"
 const EXPECTED_IDS := [
 	"motel_conventioneers", "motel_stakeout", "motel_weekly_rates", "motel_wedding_overflow",
@@ -10,14 +14,14 @@ const EXPECTED_IDS := [
 	"gas_station_road_crew_payday", "gas_station_storm_shelter",
 	"beach_bonfire_night", "beach_storm_coming", "beach_festival_weekend",
 ]
-const COMMON_ZONES := [
-	"base::zone:background", "base::zone:center", "base::zone:exit_lane", "base::zone:foreground",
-	"base::zone:left", "base::zone:right", "base::zone:service_lane",
-]
+var _library: Variant = null
+var _composition_cache: Dictionary = {}
 
 
 func _init() -> void:
 	var failures: Array = []
+	_library = ContentLibraryScript.new()
+	_library.load(false)
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(PACKAGE_PATH))
 	if typeof(parsed) != TYPE_DICTIONARY:
 		_finish(["Package B JSON did not parse as an object."])
@@ -36,13 +40,15 @@ func _init() -> void:
 		var row := row_value as Dictionary
 		var scenario_id := str(row.get("scenario_id", ""))
 		actual_ids.append(scenario_id)
-		var definition := {"id": scenario_id, "sequence": row.get("sequence", {})}
+		var definition := {"id": scenario_id, "archetype_id": _archetype_id(scenario_id), "sequence": row.get("sequence", {})}
 		definitions.append(definition)
-		target_inventories[scenario_id] = _target_inventory()
-		var errors := Schema.validate_definition(definition, Registry, _target_inventory())
+		var host := _production_host(definition, failures)
+		var target_inventory: Dictionary = host.get("target_inventory", {})
+		target_inventories[scenario_id] = target_inventory
+		var errors := Schema.validate_definition(definition, Registry, target_inventory)
 		for error_value in errors: failures.append("%s: %s" % [scenario_id, str(error_value)])
 		_check_physical_sequence(scenario_id, row, failures)
-		if errors.is_empty(): _check_runtime_trace(scenario_id, definition, failures)
+		if errors.is_empty(): _check_runtime_trace(scenario_id, definition, host, failures)
 	actual_ids.sort()
 	var expected := EXPECTED_IDS.duplicate()
 	expected.sort()
@@ -82,13 +88,7 @@ func _check_physical_sequence(scenario_id: String, row: Dictionary, failures: Ar
 	if (authoring.get("world_connections", []) as Array).size() < 3: failures.append("%s lacks a material world-system connection record." % scenario_id)
 
 
-func _check_runtime_trace(scenario_id: String, definition: Dictionary, failures: Array) -> void:
-	var host := {
-		"target_inventory": _target_inventory(),
-		"inventory_schema_version": 1,
-		"inventory_digest": str((definition.get("sequence", {}) as Dictionary).get("sequence_signature", "")),
-		"inventory_errors": [], "base_interactions": [], "event_choices": {},
-	}
+func _check_runtime_trace(scenario_id: String, definition: Dictionary, host: Dictionary, failures: Array) -> void:
 	var state := Runtime.initial_state(definition, "%s_node" % scenario_id, "%s_trace" % scenario_id, host)
 	if str(state.get("status", "")) != Runtime.STATUS_ACTIVE:
 		failures.append("%s did not initialize an active runtime trace: %s" % [scenario_id, JSON.stringify(state.get("errors", []))])
@@ -183,8 +183,48 @@ func _find_action_origin(state: Dictionary, command_id: String) -> Dictionary:
 	return {}
 
 
-func _target_inventory() -> Dictionary:
-	return {"scene_objects": [], "interactions": [], "actors": [], "services": [], "games": [], "routes": [], "anchors": [], "zones": COMMON_ZONES.duplicate(), "event_choices": {}}
+func _archetype_id(scenario_id: String) -> String:
+	if scenario_id.begins_with("motel_"): return "motel"
+	if scenario_id.begins_with("gas_station_"): return "gas_station_casino"
+	if scenario_id.begins_with("beach_"): return "beach"
+	return ""
+
+
+func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
+	var scenario_id := str(definition.get("id", ""))
+	var archetype_id := str(definition.get("archetype_id", ""))
+	var archetype: Dictionary = _library.environment_archetype(archetype_id)
+	if archetype.is_empty():
+		failures.append("%s production ContentLibrary lacks archetype %s." % [scenario_id, archetype_id])
+		return {}
+	var composition: Dictionary = _composition_cache.get(archetype_id, {})
+	if composition.is_empty():
+		var rng: Variant = RngStreamScript.new()
+		rng.configure(abs(archetype_id.hash()) + 1)
+		var environment_class: Variant = EnvironmentInstanceScript
+		var environment: Variant = environment_class.from_archetype(archetype, 1, rng, _library, {}, definition)
+		var environment_data: Dictionary = environment.call("to_dict")
+		var sealed: Dictionary = SemanticInventory.for_instance(environment_data, _library, [], [])
+		var inventory_errors: Array = SemanticInventory.validate_instance_binding(sealed, environment_data)
+		var exact: Dictionary = SemanticInventory.exact_collections(sealed)
+		if not inventory_errors.is_empty() or exact.is_empty():
+			failures.append("%s production environment composition did not seal: %s" % [scenario_id, JSON.stringify(inventory_errors)])
+			return {}
+		composition = {"exact": exact, "schema_version": int(sealed.get("schema_version", 0)), "digest": str(sealed.get("digest", "")), "environment_id": str(environment_data.get("id", ""))}
+		_composition_cache[archetype_id] = composition
+	var exact: Dictionary = composition.get("exact", {})
+	var declared: Dictionary = (definition.get("sequence", {}) as Dictionary).get("declared_targets", {})
+	var bounded: Dictionary = {}
+	for collection in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
+		bounded[collection] = []
+		for identity_value in declared.get(collection, []):
+			var identity := str(identity_value)
+			if not (exact.get(collection, []) as Array).has(identity):
+				failures.append("%s declared %s is absent from production-composed %s." % [scenario_id, identity, archetype_id])
+			else:
+				bounded[collection].append(identity)
+	bounded["event_choices"] = exact.get("event_choices", {})
+	return {"target_inventory": bounded, "inventory_schema_version": int(composition.get("schema_version", 0)), "inventory_digest": str(composition.get("digest", "")), "production_inventory_digest": str(composition.get("digest", "")), "environment_id": str(composition.get("environment_id", "")), "inventory_errors": [], "base_interactions": [], "event_choices": exact.get("event_choices", {})}
 
 
 func _fact_producer(fact_type: String) -> String:
