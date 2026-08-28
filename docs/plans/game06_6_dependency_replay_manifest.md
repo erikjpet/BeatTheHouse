@@ -1,12 +1,17 @@
 # game06_6 BAR-DICE dependency replay manifest
 
-Status: **UNREVIEWED / PRE-STAGED ONLY**
+Status: **UNREVIEWED / FIRST-REVIEW REMEDIATION / PRE-STAGED ONLY**
 
 Purpose: define the exact intake, replay, verification and evidence required to
 turn frozen contract-only BAR-DICE head
 `348ecd55886fb6c167b9ca2fa8a51e272a9939fb` into a new implementation
 candidate after its dependencies are resolved. This document authorizes no
 merge, gate, product edit, dependency selection or acceptance verdict.
+
+This successor starts from exact first-review head
+`a9952ded1a7b0407bf89fdf07b91918485b85250`. It changes only the two review
+findings: the missing binding hostile-authority matrix and the incorrect
+row-local/implicit performance cadence. All other manifest scope is unchanged.
 
 The frozen source remains `codex/game06_6-contract-only` at `348ecd55`. Never
 advance, rewrite, rebase or add a documentation commit to that branch. Perform
@@ -164,7 +169,61 @@ All failures, reruns and remediation commits remain in the evidence history.
 Tests, budgets, baselines, economy and tuning may not be weakened to obtain
 green.
 
-## 6. Mandatory platform and broad gates
+### 5.1 Exact binding hostile-authority matrix
+
+BAR-DICE may consume an accepted `game06_1` result only when the trusted host
+verifies an authentic live-action root for the exact run, game instance, phase,
+action, semantic target, boundary, request and result receipt. Authored ritual
+data, presentation state, caller payloads, public facts, save records and test
+fixtures are never root authority. A matching word, shape, signature-looking
+field or self-consistent digest is comparison material only.
+
+The candidate must execute this exact matrix for every authority-bearing BAR-
+DICE ingress: cover commitment, accepted throw, settlement, interruption,
+teaching/dispersal fact and one-shot presentation acknowledgement. Every case
+starts from the same canonical pre-action state and uses an otherwise valid
+action for the legal phase.
+
+| Hostile family | Required construction | Required result |
+| --- | --- | --- |
+| literal claim | put the exact expected authority/channel/handler/root words in a string field such as `authority`, `root`, `trusted`, `authenticated` or `existing_bar_dice_rules`, but provide no host-issued root | reject atomically; no phase, wager, RNG, dice, receipt, fact, cash, heat, teaching, interruption, presentation or cleanup change |
+| nested claim | place the same literal or complete authority-shaped dictionary under every accepted payload nesting location, including action parameters, operation input, fact payload, result reference, receipt metadata and restored ritual state | reject atomically; nesting cannot promote authored/caller data into authority |
+| substituted claim | use an authentic-looking or genuinely issued receipt/root from a different run, game instance, phase, action, semantic target, boundary, request, result, dependency channel or prior replay | reject atomically; a receipt is inseparable from all exact binding fields |
+| signed-looking claim | provide bounded strings named `signature`, `signed`, `key_id`, `mac`, `token`, `certificate`, `root_receipt` or equivalent, with valid-looking lengths/alphabets but no root verifiable by the accepted host | reject atomically; appearance, field name and shape confer no trust |
+| recomputed claim | canonicalize the hostile payload and recompute every caller-visible hash, fingerprint, previous-fingerprint chain, content digest and self-signature so the record is internally consistent | reject atomically; self-consistency is not issuer authenticity |
+
+Each hostile construction has two paired observers:
+
+1. **No-claim observer:** submit the legal-looking action with the authentic
+   host root absent.
+2. **Hostile-claim observer:** submit the same action and public inputs with only
+   the selected literal/nested/substituted/signed-looking/recomputed claim
+   added, still without an authentic host root.
+
+The pair must be byte-equal and behavior-equal after rejection. Compare the
+complete authoritative pre/post serialization, bankroll and at-risk cash,
+working/pending/returned stake, phase, dice and RNG state/consumption, outcome,
+heat, training, interruption/aftermath, action/fact/result/one-shot receipts,
+cleanup and save bytes. Also compare public projection, available controls,
+actors, tells, onlookers, scene/object/interactable state, messages, errors,
+logs, counters and emitted effects. Both observers must return the same stable
+public rejection class without echoing which hostile claim was supplied. The
+comparison is performed before and after save/load and again after revisit.
+
+An authentic positive control uses the accepted host API to issue the root for
+that exact action and proves the intended single mutation. Replaying the exact
+positive control returns the recorded result without a second throw, charge,
+settlement, teaching/dispersal consequence, interruption, receipt, presentation
+effect or cleanup. Mutating any one bound field converts the positive control to
+the substituted-claim rejection above.
+
+Fixture helpers must not mint roots, call a public seal/self-hash helper and then
+trust its output, bypass the accepted host validator, or assert only that a
+dictionary has an expected shape. The matrix report records exact fixture ids,
+pre/post hashes, public-projection hashes, save/revisit hashes and the accepted
+host root-verification result for each pair.
+
+## 6. Mandatory platform and broad functional gates
 
 These are Integrator/Gate Service work on one immutable candidate; the
 implementation squad does not self-accept them:
@@ -177,20 +236,48 @@ implementation squad does not self-accept them:
    parity across ten seeds, including partial/refused cover and interruption.
 4. Probability/RTP and payout nonregression against shipped immutable rules;
    exact economy conservation; no tolerance or sample-count reduction.
-5. Performance and liveness: action paths, idle life, animation windows,
-   disabled-overlay/control probes and low-end Web budgets. Every energy tier
-   changes actor plus object/interactable state.
+5. Functional liveness only: action paths, idle life, animation completion,
+   disabled-overlay/control behavior and proof that every energy tier changes
+   actor plus object/interactable state. This is correctness evidence, not a
+   timing/performance measurement.
 6. Accessibility: keyboard/controller/pointer/reduced-motion equivalence,
    focus, minimum targets, small-screen layout, non-color state labels,
    obstruction and text safety.
-7. Relevant Foundation suites at minimum: contracts, bar_dice, games, systems,
-   UI scene compile/flow, save/migration, determinism and performance.
-8. Complete Smoke, then the program's full gate on the exact candidate head.
-   A pre-existing red main or suite red blocks landing and is not attributed to
-   BAR-DICE without a clean-parent comparison.
+7. Relevant functional Foundation suites at minimum: contracts, bar_dice,
+   games, systems, UI scene compile/flow, save/migration and determinism.
+8. The declared functional-only Smoke/profile on the exact candidate head. Do
+   not invoke a full-Smoke wrapper that implicitly includes performance. A
+   pre-existing functional red main or suite red blocks landing and is not
+   attributed to BAR-DICE without a clean-parent comparison.
 
-The Integrator decides exact suite command lines and locked durations. Broad or
-expensive jobs are never launched from this pre-staging branch.
+The Integrator decides exact functional suite command lines. Broad or expensive
+jobs are never launched from this pre-staging branch.
+
+### 6.1 Binding owner gate cadence
+
+The program cadence is exact and overrides any broader implication elsewhere in
+this manifest:
+
+- **Per candidate:** run functional correctness, determinism, parity,
+  accessibility, visual and functional-liveness gates only. Do not run a
+  row-local performance probe or treat timing as candidate acceptance evidence.
+- **PostLand:** run the exact-current-main functional PostLand profile only.
+  PostLand proves identity and functional health; it does not implicitly
+  schedule performance.
+- **Performance:** run exclusively on a quiesced host after each five completed
+  landings and once immediately before owner playtest. The Integrator owns those
+  program checkpoints. No implementation/replay squad runs them.
+- **No implicit performance:** a command/profile named `Smoke`, `Full`, `all`
+  or similar is ineligible for this row if it includes a performance suite. Use
+  an explicit functional-only profile instead; never accept an implicit full-
+  Smoke performance result as row-local evidence.
+
+A quiesced program performance red may block later program landings under the
+owner's health policy, but it is not attributed to `game06_6` merely because the
+row was among the preceding five landings. Diagnosis requires separately
+authorized causality work. Performance limits, sample counts and assertions
+remain unchanged; cadence changes when the unchanged check runs, not what it
+measures.
 
 ## 7. Visual and playtest evidence
 
@@ -221,13 +308,17 @@ economy_conservation.json
 determinism_10_seed_native.json
 determinism_10_seed_web.json
 native_web_parity.json
-performance_liveness.json
+functional_liveness.json
 accessibility.json
 native_report.json / web_report.json
 native and Web capture manifests/contact sheets
-full_gate_summary.json
+functional_gate_summary.json
 artifact_hash_manifest.json
 ```
+
+Program performance checkpoint reports are external Integrator-owned evidence
+and are referenced by exact checkpoint/main identity when applicable. They are
+not generated, copied or claimed by the `game06_6` candidate handoff.
 
 Reports under `.tmp/`, `.tools/` and `review_artifacts/` stay untracked. The
 handoff references them by absolute path and SHA-256; it never stages owner or
