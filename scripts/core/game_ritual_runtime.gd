@@ -369,8 +369,10 @@ func _seal_facts(value: Variant, sequence: int, action_id: String) -> Variant:
 		var fact: Dictionary = raw
 		var type := str(fact.get("fact_type", ""))
 		if not declared.has(type) or seen.has(type): return null
+		var payload: Dictionary = fact.get("payload", {}) if typeof(fact.get("payload", {})) == TYPE_DICTIONARY else {}
+		if not _validate_parameters(payload, (declared[type] as Dictionary).get("payload", {})).is_empty(): return null
 		seen[type] = true
-		var record := {"fact_id": "ritual:fact:%d:%s" % [sequence, type], "fact_type": type, "fact_version": int((declared[type] as Dictionary).get("fact_version", 1)), "visibility": "public", "boundary": "action", "cause": action_id, "payload": (fact.get("payload", {}) as Dictionary).duplicate(true), "receipt_key": "ritual:fact:%d:%s" % [sequence, type]}
+		var record := {"fact_id": "ritual:fact:%d:%s" % [sequence, type], "fact_type": type, "fact_version": int((declared[type] as Dictionary).get("fact_version", 1)), "visibility": "public", "boundary": "action", "cause": action_id, "payload": payload.duplicate(true), "receipt_key": "ritual:fact:%d:%s" % [sequence, type]}
 		record["content_fingerprint"] = canonical_fingerprint(record)
 		result.append(record)
 	return result

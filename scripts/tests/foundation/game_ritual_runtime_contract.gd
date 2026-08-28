@@ -14,6 +14,7 @@ static func check(_library, failures: Array) -> void:
 		return
 	_check_validation(definition, failures)
 	_check_runtime_trace(definition, failures)
+	_check_seed_parity(definition, failures)
 	_check_layout_and_canvas(definition, failures)
 	_check_neutral_opt_in_seams(failures)
 
@@ -115,6 +116,28 @@ static func _check_layout_and_canvas(definition: Dictionary, failures: Array) ->
 	bounds["x"] = 880
 	if LayoutScript.validate_definition(malformed).is_empty():
 		failures.append("Ritual layout accepted an object outside design space.")
+
+
+static func _check_seed_parity(definition: Dictionary, failures: Array) -> void:
+	for seed in range(10):
+		var left = RuntimeScript.new()
+		var right = RuntimeScript.new()
+		var handlers := {"play.primary": Callable(GameRitualRuntimeContract, "_play_handler")}
+		left.configure(definition, handlers)
+		right.configure(definition, handlers)
+		var left_trace: Array = []
+		var right_trace: Array = []
+		for runtime in [left, right]:
+			var trace: Array = []
+			trace.append(runtime.process_action("commit.place", {"item_id": "layout.primary", "amount": seed + 1}, "seed:%d:place" % seed, {"available_funds": 100}))
+			trace.append(runtime.process_action("commit.confirm", {}, "seed:%d:confirm" % seed, {"available_funds": 100}))
+			trace.append(runtime.process_action("play.primary", {"commitment_id": "commitment.%d" % seed}, "seed:%d:play" % seed, {"seed": seed}))
+			if runtime == left:
+				left_trace = trace
+			else:
+				right_trace = trace
+		if RuntimeScript.canonical_json(left_trace) != RuntimeScript.canonical_json(right_trace) or left.serialized_state() != right.serialized_state():
+			failures.append("Ritual native/Web-equivalent trace diverged at seed %d." % seed)
 
 
 static func _check_neutral_opt_in_seams(failures: Array) -> void:

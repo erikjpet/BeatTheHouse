@@ -58,6 +58,8 @@ static func validate_definition(definition: Dictionary) -> Array[String]:
 		var handler_id := str((actions[action_id] as Dictionary).get("handler_id", ""))
 		if not handlers.has(handler_id):
 			errors.append("action %s references unknown handler %s" % [action_id, handler_id])
+		elif not ((handlers[handler_id] as Dictionary).get("accepted_actions", []) as Array).has(action_id):
+			errors.append("action %s is not accepted by its declared handler %s" % [action_id, handler_id])
 	_validate_commitment(definition.get("staged_commitment", {}), actions, errors)
 	_validate_pointer_verbs(definition.get("pointer_verbs", []), actions, phases, targets, errors)
 	var actors := _validate_actors(definition.get("actors", []), targets, facts, errors)
@@ -120,6 +122,14 @@ static func _validate_phases(value: Variant, actions: Dictionary, errors: Array[
 			if not _local_id(str(transition.get("id", ""))):
 				errors.append("%s.id is invalid" % transition_path)
 			_validate_condition(transition.get("condition", {}), actions, "%s.condition" % transition_path, errors)
+		var accepted_transitions := {}
+		for transition in _dictionary_array(phase.get("transitions", [])):
+			var condition: Dictionary = transition.get("condition", {})
+			if str(condition.get("kind", "")) == "accepted_action":
+				var transition_action := str(condition.get("action_id", ""))
+				if accepted_transitions.has(transition_action):
+					errors.append("%s has ambiguous transitions for action %s" % [path, transition_action])
+				accepted_transitions[transition_action] = true
 	return result
 
 
@@ -213,7 +223,7 @@ static func _validate_pointer_verbs(value: Variant, actions: Dictionary, phases:
 		if not RETURN_POLICIES.has(str(pointer.get("rejection", ""))):
 			errors.append("%s rejection policy is invalid" % path)
 		_validate_pointer_bounds(pointer.get("bounds", {}), "%s.bounds" % path, errors)
-		_validate_equivalents(pointer.get("equivalents", {}), path, errors)
+		_validate_equivalents(pointer.get("equivalents", {}), str(pointer.get("accepted_action", "")), path, errors)
 
 
 static func _validate_pointer_bounds(value: Variant, path: String, errors: Array[String]) -> void:
@@ -226,7 +236,7 @@ static func _validate_pointer_bounds(value: Variant, path: String, errors: Array
 		errors.append("%s is not a valid design-space distance range" % path)
 
 
-static func _validate_equivalents(value: Variant, path: String, errors: Array[String]) -> void:
+static func _validate_equivalents(value: Variant, accepted_action: String, path: String, errors: Array[String]) -> void:
 	if typeof(value) != TYPE_DICTIONARY:
 		errors.append("%s.equivalents must be a dictionary" % path)
 		return
@@ -238,6 +248,8 @@ static func _validate_equivalents(value: Variant, path: String, errors: Array[St
 		if kind == "reduced_motion":
 			keys.append("staging")
 		_closed(equivalent, keys, keys, "%s.equivalents.%s" % [path, kind], errors)
+		if str(equivalent.get("action_id", "")) != accepted_action:
+			errors.append("%s %s equivalent does not preserve accepted action" % [path, kind])
 		if not ["focus", "cycle", "direct_semantic"].has(str(equivalent.get("target_selection", ""))):
 			errors.append("%s %s equivalent has invalid target selection" % [path, kind])
 		if kind == "reduced_motion" and not ["instant", "short", "authored_text"].has(str(equivalent.get("staging", ""))):
@@ -503,7 +515,10 @@ static func _local_id(value: String) -> bool:
 static func _qualified_id(value: String) -> bool:
 	if value.is_empty() or value.length() > 192:
 		return false
-	for atom in value.split(".", false):
+	var atoms := value.split(".", false)
+	if atoms.size() < 2:
+		return false
+	for atom in atoms:
 		if not _local_id(atom):
 			return false
 	return true
