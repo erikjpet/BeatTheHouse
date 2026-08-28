@@ -33,6 +33,113 @@ static func capture(library: ContentLibrary) -> Dictionary:
 	return {"schema_version": 1, "runs": runs}
 
 
+# Separate from capture() so the accepted golden schema and fixture remain
+# byte-for-byte stable. This exercises every generic inactive RunState seam that
+# is specified to be a pure query or an empty-registration boundary no-op.
+static func world_sequence_noop_failures(library: ContentLibrary) -> Array:
+	var failures: Array = []
+	var run_state := RunStateScript.new()
+	run_state.start_new("CREW-IGNORED-WORLD-SEQUENCE-NOOP")
+	_set_world(run_state)
+	RunGeneratorScript.new(library).next_environment(run_state, "bar", true)
+	if not run_state.world_sequence_registrations.is_empty():
+		failures.append("ignored fixture began with world-sequence registrations: %s" % JSON.stringify(run_state.world_sequence_registrations))
+		return failures
+	var baseline := _world_sequence_noop_snapshot(run_state)
+	var token := "crew::crew::ignored_definition::ignored_instance"
+	var calls := [
+		{"label": "activate_current_mounts", "call": func() -> Variant: return run_state.world_sequence_activate_current_mounts()},
+		{"label": "snapshot", "call": func() -> Variant: return run_state.world_sequence_snapshot(token)},
+		{"label": "projection", "call": func() -> Variant: return run_state.world_sequence_projection(token)},
+		{"label": "mounted_owner_lookup", "call": func() -> Variant: return run_state.world_sequence_mounted_owner_for_channel("delivery_handoff")},
+		{"label": "public_instance_owner_lookup", "call": func() -> Variant: return run_state.world_sequence_owner_for_public_instance("delivery_handoff", "ignored_instance")},
+		{"label": "composed_projection", "call": func() -> Variant: return run_state.world_sequence_composed_projection()},
+		{"label": "execute", "call": func() -> Variant: return run_state.world_sequence_execute(token, {})},
+		{"label": "command", "call": func() -> Variant: return run_state.world_sequence_command(token, "ignored_command", "ignored_receipt")},
+		{"label": "enqueue_fact", "call": func() -> Variant: return run_state.world_sequence_enqueue_fact(token, {})},
+		{"label": "flush_facts", "call": func() -> Variant: return run_state.world_sequence_flush_facts(token, 0)},
+		{"label": "record_visit", "call": func() -> Variant: return run_state.world_sequence_record_visit(token, "ignored_visit")},
+		{"label": "apply_reentry", "call": func() -> Variant: return run_state.world_sequence_apply_reentry(token, "ignored_visit")},
+		{"label": "apply_expiry", "call": func() -> Variant: return run_state.world_sequence_apply_expiry(token, "town_action", 1)},
+		{"label": "sync_owner_active", "call": func() -> Variant: return run_state.world_sequence_sync_owner(token, true, "owner_active")},
+		{"label": "sync_owner_ended", "call": func() -> Variant: return run_state.world_sequence_sync_owner(token, false, "owner_ended")},
+		{"label": "unmount", "call": func() -> Variant: return run_state.world_sequence_unmount(token, "abandoned")},
+		{"label": "pending_outcomes", "call": func() -> Variant: return run_state.world_sequence_pending_outcomes(token)},
+		{"label": "ack_outcome", "call": func() -> Variant: return run_state.world_sequence_ack_outcome(token, "ignored_outcome", {"ok": true})},
+		{"label": "prepare_semantic_finalization", "call": func() -> Variant: return run_state.world_sequence_prepare_semantic_finalization()},
+		{"label": "finalize_base_semantics", "call": func() -> Variant: return run_state.world_sequence_finalize_base_semantics([], library, {})},
+	]
+	for call_value in calls:
+		var call_data: Dictionary = call_value
+		var callback: Callable = call_data.get("call", Callable())
+		if not callback.is_valid():
+			failures.append("ignored world-sequence no-op %s has no callable probe" % str(call_data.get("label", "unknown")))
+			continue
+		callback.call()
+		_append_world_sequence_noop_diff(str(call_data.get("label", "unknown")), baseline, _world_sequence_noop_snapshot(run_state), failures)
+	return failures
+
+
+static func _world_sequence_noop_snapshot(run_state: RunState) -> Dictionary:
+	var run_dict := run_state.to_dict()
+	var save_dict := run_state.to_save_snapshot()
+	var current_environment := run_state.current_environment.duplicate(true)
+	var world_map := run_state.world_map.duplicate(true)
+	var registrations := run_state.world_sequence_registrations.duplicate(true)
+	return {
+		"to_dict": _json_identity(run_dict),
+		"to_save_snapshot": _json_identity(save_dict),
+		"current_environment": _json_identity(current_environment),
+		"world_map": _json_identity(world_map),
+		"registrations": _json_identity(registrations),
+		"serialized_key_sets": {
+			"to_dict": _serialized_key_paths(run_dict),
+			"to_save_snapshot": _serialized_key_paths(save_dict),
+			"current_environment": _serialized_key_paths(current_environment),
+			"world_map": _serialized_key_paths(world_map),
+			"registrations": _serialized_key_paths(registrations),
+		},
+	}
+
+
+static func _json_identity(value: Variant) -> Dictionary:
+	var text := JSON.stringify(value)
+	return {"json": text, "bytes": text.to_utf8_buffer().size(), "sha256": text.sha256_text()}
+
+
+static func _serialized_key_paths(value: Variant, path: String = "$") -> Array:
+	var result: Array = []
+	if typeof(value) == TYPE_DICTIONARY:
+		var keys := (value as Dictionary).keys()
+		keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+		for key_value in keys:
+			var child_path := "%s.%s" % [path, str(key_value)]
+			result.append(child_path)
+			result.append_array(_serialized_key_paths((value as Dictionary).get(key_value), child_path))
+	elif typeof(value) == TYPE_ARRAY:
+		for index in range((value as Array).size()):
+			var child_path := "%s[%d]" % [path, index]
+			result.append_array(_serialized_key_paths((value as Array)[index], child_path))
+	return result
+
+
+static func _append_world_sequence_noop_diff(label: String, expected: Dictionary, actual: Dictionary, failures: Array) -> void:
+	for surface in ["to_dict", "to_save_snapshot", "current_environment", "world_map", "registrations"]:
+		var expected_identity: Dictionary = expected.get(surface, {})
+		var actual_identity: Dictionary = actual.get(surface, {})
+		if str(actual_identity.get("json", "")) != str(expected_identity.get("json", "")):
+			failures.append("ignored world-sequence no-op %s changed exact %s JSON bytes (before=%d/%s after=%d/%s)" % [
+				label, surface,
+				int(expected_identity.get("bytes", -1)), str(expected_identity.get("sha256", "")),
+				int(actual_identity.get("bytes", -1)), str(actual_identity.get("sha256", "")),
+			])
+	var expected_keys: Dictionary = expected.get("serialized_key_sets", {})
+	var actual_keys: Dictionary = actual.get("serialized_key_sets", {})
+	for surface in ["to_dict", "to_save_snapshot", "current_environment", "world_map", "registrations"]:
+		if actual_keys.get(surface, []) != expected_keys.get(surface, []):
+			failures.append("ignored world-sequence no-op %s changed the recursive serialized key set for %s" % [label, surface])
+
+
 static func _checkpoint(label: String, run_state: RunState) -> Dictionary:
 	var run_json := JSON.stringify(run_state.to_dict())
 	var environment_json := JSON.stringify(run_state.current_environment)

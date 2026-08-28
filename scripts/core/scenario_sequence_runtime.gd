@@ -112,6 +112,7 @@ static func initial_state(definition: Dictionary, node_id: String, seed_token: S
 		"resolved_branches": [],
 		"resolved_outcomes": [],
 		"semantic_state": {
+			"creation_owner_namespaces": _string_array(host_semantics.get("creation_owner_namespaces", ["scenario"])),
 			"declared_targets": SequenceSchemaScript.verified_declared_targets(definition, target_inventory),
 			"target_inventory": target_inventory.duplicate(true),
 			"base_interactions": _array(host_semantics.get("base_interactions", [])),
@@ -180,6 +181,7 @@ static func normalize_state(value: Variant, definition: Dictionary = {}, trusted
 	var semantic_source := _dict(source.get("semantic_state", {})).duplicate(true)
 	if not trusted_host_semantics.is_empty():
 		semantic_source["event_choices"] = _dict(trusted_host_semantics.get("event_choices", {}))
+		semantic_source["creation_owner_namespaces"] = _string_array(trusted_host_semantics.get("creation_owner_namespaces", ["scenario"]))
 	var state := {
 		"schema_version": STATE_SCHEMA_VERSION,
 		"scenario_id": str(source.get("scenario_id", "")).strip_edges(),
@@ -823,6 +825,27 @@ static func apply_expiry_boundary(state_value: Dictionary, definition: Dictionar
 	return {"ok": true, "state": next, "errors": [], "expired": true, "policy": policy}
 
 
+# Trusted owner adapters use this only when the owning model publicly ends.
+# Travel, save and revisit do not call this boundary.
+static func apply_owner_lifecycle_outcome(state_value: Dictionary, definition: Dictionary, outcome: String, reason: String) -> Dictionary:
+	var state := normalize_state(state_value, definition)
+	if state.is_empty(): return {"ok": false, "state": state, "errors": ["scenario owner lifecycle requires normalized state"]}
+	if reason not in ["expired", "abandoned"] or outcome != reason:
+		return {"ok": false, "state": state, "errors": ["scenario owner lifecycle reason must be exact expired or abandoned outcome"]}
+	if not SequenceSchemaScript.reachable_outcome_ids(definition).has(outcome):
+		return {"ok": false, "state": state, "errors": ["scenario owner lifecycle outcome is not authored: %s" % outcome]}
+	var receipt_id := structural_runtime_receipt("owner_lifecycle", [str(state.get("scenario_id", "")), str(state.get("node_id", "")), reason])
+	if str(state.get("status", "")) == STATUS_AFTERMATH:
+		return {"ok": true, "state": state, "receipt_id": receipt_id, "replayed": true, "errors": []}
+	if str(state.get("status", "")) != STATUS_ACTIVE:
+		return {"ok": false, "state": state, "errors": ["scenario owner lifecycle cannot resolve from current status"]}
+	var resolved := _resolve_outcome(state, definition, outcome, receipt_id)
+	if not bool(resolved.get("ok", false)): return resolved
+	resolved["receipt_id"] = receipt_id
+	resolved["replayed"] = false
+	return resolved
+
+
 static func public_projection(state_value: Dictionary, definition: Dictionary = {}) -> Dictionary:
 	var state := normalize_state(state_value, definition)
 	if state.is_empty():
@@ -924,10 +947,11 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 		}
 	if owner_namespace != "scenario":
 		var external_action := _dict(descriptor.get("action", {}))
-		var sealed_scenario_origin := bool(descriptor.get("action_present", false)) \
-			and str(external_action.get("action_origin_owner_namespace", "")) == "scenario" \
+		var creation_owners := _array(_dict(state.get("semantic_state", {})).get("creation_owner_namespaces", ["scenario"]))
+		var sealed_creation_owner_origin := bool(descriptor.get("action_present", false)) \
+			and creation_owners.has(str(external_action.get("action_origin_owner_namespace", ""))) \
 			and _authored_action_origin_matches(state, definition, owner_namespace, stable_object_id, external_action)
-		if not sealed_scenario_origin:
+		if not sealed_creation_owner_origin:
 			errors.append("scenario command cannot spoof another owner namespace")
 		else:
 			var addressed_identity := OperationRegistryScript.identity(owner_namespace, stable_object_id)
@@ -1589,12 +1613,32 @@ static func _phase_command_ids(state: Dictionary, definition: Dictionary, phase_
 
 
 static func state_semantics_for_definition(definition: Dictionary, phase_id: String) -> Dictionary:
-	var semantic: Dictionary = {"declared_targets": _dict(SequenceSchemaScript.sequence(definition).get("declared_targets", {}))}
+	var semantic: Dictionary = {
+		"declared_targets": _dict(SequenceSchemaScript.sequence(definition).get("declared_targets", {})),
+		"creation_owner_namespaces": _definition_creation_owner_namespaces(definition),
+	}
 	var phase_data := SequenceSchemaScript.phase(definition, phase_id)
 	for family in ["scene_ops", "interaction_ops", "actor_ops", "transition_ops"]:
 		var applied := OperationRegistryScript.apply_operations(semantic, family, _array(phase_data.get(family, [])), "definition:preview:phase:%s" % phase_id)
 		semantic = _dict(applied.get("state", semantic))
 	return semantic
+
+
+static func _definition_creation_owner_namespaces(definition: Dictionary) -> Array:
+	var result: Array = []
+	var authored := SequenceSchemaScript.sequence(definition)
+	for phase_value in _array(_dict(authored.get("phase_graph", {})).get("phases", [])):
+		var phase_data := _dict(phase_value)
+		for family in ["scene_ops", "interaction_ops", "actor_ops", "service_ops", "game_ops"]:
+			for operation_value in _array(phase_data.get(family, [])):
+				var operation := _dict(operation_value)
+				var op_id := str(operation.get("op", ""))
+				var creates: bool = family == "scene_ops" and op_id == "spawn" or family == "interaction_ops" and op_id == "add" or family == "actor_ops" and op_id == "spawn" or family in ["service_ops", "game_ops"] and op_id == "add"
+				var owner := str(operation.get("owner_namespace", ""))
+				if creates and not owner.is_empty() and not result.has(owner): result.append(owner)
+	if result.is_empty(): result.append("scenario")
+	result.sort()
+	return result
 
 
 static func _public_objectives(state: Dictionary, definition: Dictionary) -> Array:
