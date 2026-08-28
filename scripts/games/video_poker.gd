@@ -302,12 +302,13 @@ const SUIT_WORD := {0: "Spades", 1: "Hearts", 2: "Clubs", 3: "Diamonds"}
 var machine_renderer := VideoPokerRendererScript.new()
 var _strategy_hold_cache: Dictionary = {}
 var _strategy_hold_cache_order: Array[String] = []
+var _ritual_host_run_state: RunState = null
 
 
 func video_poker_ritual_contract() -> Dictionary:
 	# Consumer declaration only. Cards, evaluation, paytable, credits, detection,
 	# and RNG stay exclusively in this game's existing authority.
-	var action_ids := ["video_poker_bet_down", "video_poker_bet_one", "video_poker_bet_max", "video_poker_denom", "video_poker_deal", "video_poker_hold", "video_poker_draw", "video_poker_mark", "video_poker_palm", "video_poker_double", "video_poker_double_pick", "video_poker_collect"]
+	var action_ids := ["video_poker_credit_buy_in", "video_poker_credit_cash_out", "video_poker_handpay_acknowledge", "video_poker_bet_down", "video_poker_bet_one", "video_poker_bet_max", "video_poker_denom", "video_poker_deal", "video_poker_hold", "video_poker_draw", "video_poker_mark", "video_poker_palm", "video_poker_double", "video_poker_double_pick", "video_poker_collect"]
 	var declarations: Array = []
 	for action_id in action_ids:
 		var parameters := {"index": "int"} if action_id in ["video_poker_hold", "video_poker_palm", "video_poker_double_pick"] else {}
@@ -317,7 +318,7 @@ func video_poker_ritual_contract() -> Dictionary:
 		"ritual_id": VIDEO_POKER_RITUAL_ID,
 		"initial_phase": "credits",
 		"ritual_phases": [
-			_video_poker_ritual_phase("credits", ["video_poker_bet_down", "video_poker_bet_one", "video_poker_bet_max", "video_poker_denom", "video_poker_deal"], "commitment"),
+			_video_poker_ritual_phase("credits", ["video_poker_credit_buy_in", "video_poker_credit_cash_out", "video_poker_bet_down", "video_poker_bet_one", "video_poker_bet_max", "video_poker_denom", "video_poker_deal"], "commitment"),
 			_video_poker_ritual_phase("commitment", ["video_poker_deal"], "initial_deal"),
 			_video_poker_ritual_phase("initial_deal", [], "hold_selection"),
 			_video_poker_ritual_phase("hold_selection", ["video_poker_hold", "video_poker_mark", "video_poker_palm", "video_poker_draw"], "draw"),
@@ -327,7 +328,7 @@ func video_poker_ritual_contract() -> Dictionary:
 				{"id": "result_to_payout", "condition": {"kind": "public_state_equals", "key": "double_up_offered", "value": false}, "next_phase": "payout_or_handpay", "operations": []},
 			], "terminal": false},
 			_video_poker_ritual_phase("double_up", ["video_poker_double_pick"], "payout_or_handpay"),
-			_video_poker_ritual_phase("payout_or_handpay", ["video_poker_collect"], "credits"),
+			_video_poker_ritual_phase("payout_or_handpay", ["video_poker_collect", "video_poker_handpay_acknowledge"], "credits"),
 		],
 		"action_declarations": declarations,
 		"staged_commitment": {
@@ -396,6 +397,7 @@ func _video_poker_ritual_object(object_id: String, anchor: String, appearances: 
 
 # Creates the entry message for the cabinet.
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
+	_ritual_host_run_state = run_state
 	var result: Dictionary = super.enter(run_state, environment)
 	var state: Dictionary = _machine_state(run_state, environment)
 	result["message"] = "%s: %s %s, %d Play. Bet 1-5 coins, hold, draw, double up." % [
@@ -654,7 +656,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				{"clock_source": "surface"}
 			),
 		],
-		"surface_action_bindings": {},
+		"surface_action_bindings": _video_poker_surface_action_bindings(phase),
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "video_poker_machine",
 			"action_cues": {
@@ -689,13 +691,30 @@ func _video_poker_live_ritual_projection(phase: String, spec: Dictionary, flip: 
 		ritual_phase = "payout_or_handpay"
 	var watched := bool(pit_boss.get("active", false)) and bool(pit_boss.get("watched", false))
 	var win_credits := int(spec.get("win_credits", 0))
-	var handpay := win_credits >= 1000
+	# Video Poker currently has no authoritative hand-pay/lockup boundary. Never
+	# infer one from a locally invented payout threshold.
+	var handpay := bool(last_result.get("handpay_required", false))
 	var energy_tier := "lockup" if handpay or watched else "big_win" if win_credits >= maxi(20, int(spec.get("bet_credits", 0)) * 10) else "engaged" if hand_active else "quiet"
+	var actor_states := {
+		"attendant_primary": {"visible": handpay or watched, "behavior": "handpay" if handpay else "security"},
+		"neighbour_seats": {"visible": true, "behavior": "reacting" if energy_tier in ["big_win", "lockup"] else "playing", "authority": "none"},
+	}
+	var object_states := {
+		"cabinet_body": {"visual_state": "lockup" if handpay else "play" if hand_active else "idle"},
+		"cabinet_playfield": {"visual_state": "draw" if phase == "hold" and not str(flip.get("id", "")).is_empty() else "holds" if phase == "hold" else "result" if phase == "settled" else "deal"},
+		"cabinet_paytable": {"visual_state": "highlighted" if phase == "settled" else "idle"},
+		"cabinet_credit_meter": {"visual_state": "ready", "cash_balance": int(spec.get("credits", 0)), "machine_credit_ledger": "unavailable"},
+		"cabinet_tower_light": {"visual_state": "handpay" if handpay else "security" if watched else "off"},
+		"cabinet_money_path": {"visual_state": "idle", "functional_state": "locked"},
+		"card_0_to_4": {"visual_state": "replaced" if phase == "settled" else "held" if phase == "hold" else "dealt", "functional_state": "selectable" if phase == "hold" else "locked"},
+	}
 	return {
 		"phase_id": ritual_phase,
 		"cabinet_state": "lockup" if handpay else "play" if hand_active else "idle",
 		"energy_tier": energy_tier,
-		"credits": int(spec.get("credits", 0)),
+		"cash_balance": int(spec.get("credits", 0)),
+		"machine_credit_ledger_available": false,
+		"currency_representability_gap": "No authoritative machine-credit ledger or hand-pay boundary exists in the owned Video Poker state; cash play remains the shipped authority.",
 		"denomination_label": str(spec.get("coin_label", "1c")),
 		"tower_state": "handpay" if handpay else "security" if watched else "service" if energy_tier == "big_win" else "off",
 		"validator_state": "locked" if hand_active or handpay else "ready",
@@ -704,9 +723,42 @@ func _video_poker_live_ritual_projection(phase: String, spec: Dictionary, flip: 
 		"held_indices": spec.get("holds", []),
 		"drawn_indices": spec.get("drawn_indices", []),
 		"paytable_line": str(last_result.get("pay_label", "")),
-		"attendant": {"visible": handpay or watched, "behavior": "handpay" if handpay else "security"},
-		"neighbours": {"visible": true, "reaction": "heads_turn" if energy_tier in ["big_win", "lockup"] else "playing", "authority": "none"},
+		"acknowledgement_available": handpay and _ritual_host_run_state != null,
+		"actors": actor_states,
+		"scene_objects": object_states,
 	}
+
+
+func _video_poker_surface_action_bindings(phase: String) -> Dictionary:
+	var primary_action := "video_poker_draw" if phase == "hold" else "video_poker_deal"
+	var bindings := {
+		"surface_legal": {"action": primary_action, "index": 0},
+		"legal": {"action": primary_action, "index": 0},
+		"surface_stake_down": {"action": "video_poker_bet_down", "index": 0},
+		"surface_stake_up": {"action": "video_poker_bet_one", "index": 0},
+		"surface_stake_max": {"action": "video_poker_bet_max", "index": 0},
+		"video_poker_deal": {"action": "video_poker_deal", "index": 0},
+		"video_poker_draw": {"action": "video_poker_draw", "index": 0},
+	}
+	for card_index in range(HAND_SIZE):
+		bindings["video_poker_hold_%d" % card_index] = {"action": "video_poker_hold", "index": card_index}
+	return bindings
+
+
+func video_poker_ritual_input_command(input_kind: String, semantic_action: String, target_index: int, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if not input_kind in ["pointer", "keyboard", "controller", "reduced_motion"]:
+		return {"handled": false, "error_code": "invalid_parameters"}
+	if semantic_action == "video_poker_hold" and (target_index < 0 or target_index >= HAND_SIZE):
+		return {"handled": false, "error_code": "unavailable_target"}
+	if not semantic_action in ["video_poker_hold", "video_poker_deal", "video_poker_draw"]:
+		return {"handled": false, "error_code": "action_not_permitted"}
+	var routed_ui := ui_state.duplicate(true)
+	if input_kind == "reduced_motion":
+		routed_ui["reduce_motion"] = true
+	var command := surface_action_command(semantic_action, target_index, false, routed_ui, run_state, environment)
+	command["ritual_input_kind"] = input_kind
+	command["ritual_target_index"] = target_index
+	return command
 
 
 # The bet is the module-owned ladder wager (2/5/10/15/20 credits), not a host stake.
@@ -736,6 +788,10 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 	next["denomination_index"] = _next_playable_denomination_index(state, _denomination_index(next, state) - 1, run_state, environment)
 	next["bet_level"] = _affordable_bet_level(state, next, run_state, environment)
 	match surface_action:
+		"video_poker_credit_buy_in", "video_poker_credit_cash_out":
+			return GameModule.surface_command({"handled": true, "ui_state": next, "preserve_surface_ui_state": true, "message": "This cabinet has no authoritative machine-credit conversion boundary; cash remains unchanged."})
+		"video_poker_handpay_acknowledge":
+			return GameModule.surface_command({"handled": true, "ui_state": next, "preserve_surface_ui_state": true, "message": "Video Poker exposes no authoritative hand-pay boundary to acknowledge."})
 		"video_poker_bet_down":
 			next["bet_level"] = maxi(0, _bet_level(next) - 1)
 			var down_coins := _coin_count_for_level(_bet_level(next))

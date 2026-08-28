@@ -252,3 +252,21 @@ persists an outcome.
 Both projections reconstruct from the existing saved machine and surface UI
 state. They add no second ledger, future-result field, RNG use, wall-clock
 authority, paytable branch, detection rule, or per-frame deep copy.
+
+## 8. First-review representability correction
+
+The rejected candidate mislabeled the shipped cash bankroll as machine credits
+and inferred Video Poker hand-pay from a locally invented `1000`-credit
+threshold. Both claims are removed. The owned Slot and Video Poker state has no
+authoritative cash-to-machine-credit ledger or conversion boundary, and Video
+Poker has no authoritative hand-pay/lockup boundary. The consumer now fails
+those actions closed and projects the exact gap; it does not construct a second
+ledger or threshold. Slot acknowledgement is available only for an existing
+jackpot/grand presentation and only to the exact `RunState` host object bound at
+entry. Caller strings, nested dictionaries, signed-looking claims, substituted
+objects, and recomputed values cannot establish that identity.
+
+This is a material dependency gap against the row prompt: real buy-in/cash-out
+and Video Poker hand-pay remain unrepresentable without an accepted authority
+boundary. It must be resolved by the owner/Integrator or by a separately owned
+runtime contract; this row cannot silently invent one.

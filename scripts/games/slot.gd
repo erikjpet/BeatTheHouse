@@ -35,12 +35,13 @@ var presentation
 var renderer
 var catalog
 var definition_cache
+var _ritual_host_run_state: RunState = null
 
 
 func slot_machine_ritual_contract() -> Dictionary:
 	# Slot-owned declaration only: resolver authority and RNG remain in the
 	# shipped machine state/resolver. No shared executable ritual is imported.
-	var action_ids := ["slot_bet", "spin", "nudge", "slot_auto_toggle", "launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt"]
+	var action_ids := ["slot_credit_buy_in", "slot_credit_cash_out", "slot_handpay_acknowledge", "slot_bet", "spin", "nudge", "slot_auto_toggle", "launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt"]
 	var declarations: Array = []
 	for action_id in action_ids:
 		declarations.append({"action_id": action_id, "handler_id": "slot_machine_authority", "parameters": {}})
@@ -49,7 +50,7 @@ func slot_machine_ritual_contract() -> Dictionary:
 		"ritual_id": SLOT_RITUAL_ID,
 		"initial_phase": "credits",
 		"ritual_phases": [
-			_slot_ritual_phase("credits", ["slot_bet", "spin", "slot_auto_toggle"], "commitment"),
+			_slot_ritual_phase("credits", ["slot_credit_buy_in", "slot_credit_cash_out", "slot_bet", "spin", "slot_auto_toggle"], "commitment"),
 			_slot_ritual_phase("commitment", ["spin"], "activation"),
 			_slot_ritual_phase("activation", [], "outcome_staging"),
 			{"id": "outcome_staging", "entry_conditions": [], "permitted_actions": ["nudge"], "entry_operations": [], "transitions": [
@@ -57,7 +58,7 @@ func slot_machine_ritual_contract() -> Dictionary:
 				{"id": "outcome_to_payout", "condition": {"kind": "public_state_equals", "key": "feature_active", "value": false}, "next_phase": "payout_or_handpay", "operations": []},
 			], "terminal": false},
 			_slot_ritual_phase("feature", ["launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt"], "payout_or_handpay"),
-			_slot_ritual_phase("payout_or_handpay", [], "credits"),
+			_slot_ritual_phase("payout_or_handpay", ["slot_handpay_acknowledge"], "credits"),
 		],
 		"action_declarations": declarations,
 		"staged_commitment": {
@@ -141,6 +142,7 @@ func gameplay_model() -> String:
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
+	_ritual_host_run_state = run_state
 	_ensure_machine_state(run_state, environment, run_state.create_rng("slot_enter") if run_state != null else null)
 	var result: Dictionary = super.enter(run_state, environment)
 	var machine: Dictionary = _read_machine(environment)
@@ -338,24 +340,64 @@ func _slot_live_ritual_projection(machine: Dictionary, surface: Dictionary, run_
 		phase_id = "payout_or_handpay"
 	var suspicion := run_state.suspicion_level() if run_state != null else 0
 	var celebration := str(surface.get("slot_celebration_tier", "none"))
-	var handpay := celebration in ["jackpot", "grand"]
+	var result_id := _slot_handpay_result_id(machine)
+	var handpay := celebration in ["jackpot", "grand"] and not result_id.is_empty() and str(machine.get("ritual_acknowledged_result_id", "")) != result_id
 	var energy_tier := "lockup" if handpay or suspicion >= 70 else "feature" if feature_active or celebration not in ["", "none"] else "engaged" if not animation_id.is_empty() else "quiet"
 	var tower_state := "handpay" if handpay else "security" if suspicion >= 50 else "feature" if feature_active else "off"
 	var selected_bet := int(surface.get("selected_bet_total_credits", 0))
+	var actor_states := {
+		"attendant_primary": {"visible": handpay or suspicion >= 50, "behavior": "handpay" if handpay else "security"},
+		"neighbour_seats": {"visible": true, "behavior": "reacting" if celebration not in ["", "none"] else "playing", "authority": "none"},
+	}
+	var object_states := {
+		"cabinet_body": {"visual_state": "lockup" if handpay else "feature" if feature_active else "play" if not animation_id.is_empty() else "idle"},
+		"cabinet_reels": {"visual_state": "feature" if feature_active else "spinning" if not animation_id.is_empty() else "stopped"},
+		"cabinet_button_deck": {"visual_state": "locked" if handpay or feature_active else "pressed" if not animation_id.is_empty() else "ready", "functional_state": "locked" if handpay or feature_active else "enabled"},
+		"cabinet_credit_meter": {"visual_state": "ready", "cash_balance": int(surface.get("bankroll", 0)), "machine_credit_ledger": "unavailable"},
+		"cabinet_tower_light": {"visual_state": tower_state},
+		"cabinet_money_path": {"visual_state": "idle", "functional_state": "locked"},
+	}
 	return {
 		"phase_id": phase_id,
 		"cabinet_state": "lockup" if handpay else "feature" if feature_active else "play" if not animation_id.is_empty() else "idle",
 		"energy_tier": energy_tier,
-		"credits": int(surface.get("bankroll", 0)),
+		"cash_balance": int(surface.get("bankroll", 0)),
+		"machine_credit_ledger_available": false,
+		"currency_representability_gap": "No authoritative machine-credit ledger or conversion boundary exists in the owned Slot state; cash play remains the shipped authority.",
 		"denomination_label": "%d CREDIT" % selected_bet,
 		"tower_state": tower_state,
 		"validator_state": "locked" if handpay or not animation_id.is_empty() else "ready",
 		"button_state": "locked" if handpay or feature_active else "pressed" if not animation_id.is_empty() else "ready",
 		"result_stage": "feature" if feature_active else "reel_stops" if not animation_id.is_empty() else "readout" if phase_id == "payout_or_handpay" else "idle",
 		"payout": int(surface.get("slot_payout", 0)),
-		"attendant": {"visible": handpay or suspicion >= 50, "behavior": "handpay" if handpay else "security"},
-		"neighbours": {"visible": true, "reaction": "heads_turn" if celebration not in ["", "none"] else "playing", "authority": "none"},
+		"result_id": result_id,
+		"acknowledgement_available": handpay and run_state != null and is_same(run_state, _ritual_host_run_state),
+		"actors": actor_states,
+		"scene_objects": object_states,
 	}
+
+
+func _slot_handpay_result_id(machine: Dictionary) -> String:
+	var spin_count := maxi(0, int(machine.get("spin_count", 0)))
+	var outcome_id := str(machine.get("last_outcome_id", ""))
+	if spin_count <= 0 or outcome_id.is_empty():
+		return ""
+	return "slot_result_%d_%s" % [spin_count, outcome_id]
+
+
+func _slot_handpay_acknowledgement(run_state: RunState, environment: Dictionary, caller_claims: Dictionary = {}) -> Dictionary:
+	# Caller claims never establish authority. Entry binds the exact live RunState
+	# object supplied by the host; a copied/recomputed/signed-looking dictionary is
+	# intentionally irrelevant.
+	if run_state == null or _ritual_host_run_state == null or not is_same(run_state, _ritual_host_run_state):
+		return {"ok": false, "error_code": "unsealed_authority", "caller_claims_ignored": not caller_claims.is_empty()}
+	var machine := _read_machine(environment)
+	var result_id := _slot_handpay_result_id(machine)
+	if result_id.is_empty() or not str(machine.get("slot_celebration_tier", "none")) in ["jackpot", "grand"]:
+		return {"ok": false, "error_code": "precondition_failed", "caller_claims_ignored": not caller_claims.is_empty()}
+	machine["ritual_acknowledged_result_id"] = result_id
+	_write_machine(environment, machine, false)
+	return {"ok": true, "result_id": result_id, "caller_claims_ignored": not caller_claims.is_empty()}
 
 
 func _saved_checkpoint_presentation_view(machine: Dictionary) -> Dictionary:
@@ -589,6 +631,11 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			"message": "Bonus input.",
 		})
 	match surface_action:
+		"slot_credit_buy_in", "slot_credit_cash_out":
+			return GameModule.surface_command({"handled": true, "message": "This cabinet has no authoritative machine-credit conversion boundary; cash remains unchanged."})
+		"slot_handpay_acknowledge":
+			var acknowledgement := _slot_handpay_acknowledgement(run_state, environment)
+			return GameModule.surface_command({"handled": true, "environment_changed": bool(acknowledgement.get("ok", false)), "message": "Attendant acknowledgement recorded." if bool(acknowledgement.get("ok", false)) else "The attendant cannot acknowledge this result from an unsealed or inactive host session."})
 		"spin", "slot_spin":
 			return GameModule.surface_command({
 				"handled": true,
