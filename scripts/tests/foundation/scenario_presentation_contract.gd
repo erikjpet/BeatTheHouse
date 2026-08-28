@@ -50,6 +50,11 @@ static func _check_composed_actions_and_geometry(failures: Array) -> void:
 		"stable_object_id": "console:night",
 		"command_id": "brace:exit",
 		"idempotency_key": "ui:7:scenario:console%3Anight:brace%3Aexit",
+		"action_origin_owner_namespace": "scenario",
+		"action_origin_stable_object_id": "console:night",
+		"action_origin_receipt_key": "",
+		"action_origin_boundary_id": "",
+		"action_origin_fingerprint": "",
 	}:
 		failures.append("Scenario direct-action token did not resolve to the exact authoritative command descriptor.")
 
@@ -280,7 +285,7 @@ static func _check_competing_augment_presentation(failures: Array) -> void:
 			"owner_namespace": owner,
 			"stable_object_id": "%s_route_augment" % owner,
 			"mode": "augment",
-			"target_owner_namespace": "traveler",
+			"target_owner_namespace": "base",
 			"target_stable_object_id": "travel:leave",
 			"available_actions": [{
 				"id": "%s_shortcut" % owner,
@@ -325,7 +330,7 @@ static func _check_competing_augment_presentation(failures: Array) -> void:
 
 	var collision_overlay := {
 		"owner_namespace": "sweep", "stable_object_id": "collision_augment", "mode": "augment",
-		"target_owner_namespace": "traveler", "target_stable_object_id": "travel:leave",
+		"target_owner_namespace": "base", "target_stable_object_id": "travel:leave",
 		"available_actions": [
 			{"id": "activate", "label": "Colliding activate", "input_action": "ui_accept", "non_color_state": "ready"},
 			{"id": "sweep_unique", "label": "Sweep unique", "input_action": "ui_accept", "non_color_state": "ready"},
@@ -346,7 +351,7 @@ static func _check_competing_augment_presentation(failures: Array) -> void:
 
 	var equal_a := {
 		"owner_namespace": "scenario", "stable_object_id": "a_equal_augment", "mode": "augment",
-		"target_owner_namespace": "traveler", "target_stable_object_id": "travel:leave",
+		"target_owner_namespace": "base", "target_stable_object_id": "travel:leave",
 		"available_actions": [{"id": "duplicate_action", "label": "A duplicate", "input_action": "ui_accept", "non_color_state": "ready"}],
 	}
 	var equal_z := equal_a.duplicate(true)

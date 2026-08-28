@@ -620,10 +620,12 @@ static func apply_reentry(state_value: Dictionary, definition: Dictionary, visit
 			var prior_semantic := _dict(state.get("semantic_state", {}))
 			var restart_semantics := host_semantics.duplicate(true)
 			if restart_semantics.is_empty():
-				restart_semantics = {"target_inventory": _dict(prior_semantic.get("declared_targets", {})), "base_interactions": _array(prior_semantic.get("base_interactions", [])), "inventory_schema_version": int(prior_semantic.get("inventory_schema_version", 0)), "inventory_digest": str(prior_semantic.get("inventory_digest", "")), "event_choices": _dict(prior_semantic.get("event_choices", {}))}
+				restart_semantics = {"target_inventory": _dict(prior_semantic.get("target_inventory", {})), "base_interactions": _array(prior_semantic.get("base_interactions", [])), "inventory_schema_version": int(prior_semantic.get("inventory_schema_version", 0)), "inventory_digest": str(prior_semantic.get("inventory_digest", "")), "event_choices": _dict(prior_semantic.get("event_choices", {}))}
 			var restarted := initial_state(definition, str(state.get("node_id", "")), str(state.get("seed_token", "")), restart_semantics)
 			if restarted.is_empty() or str(restarted.get("status", "")) == STATUS_CLEANED:
-				return {"ok": false, "state": original, "errors": ["scenario restart reentry failed"]}
+				var restart_errors := ["scenario restart reentry failed"]
+				restart_errors.append_array(_array(restarted.get("errors", [])))
+				return {"ok": false, "state": original, "errors": restart_errors}
 			restarted["visit_receipts"] = _array(state.get("visit_receipts", []))
 			restarted["visit_receipt_records"] = _reordinal_visit_records(state.get("visit_receipt_records", []))
 			next = restarted
