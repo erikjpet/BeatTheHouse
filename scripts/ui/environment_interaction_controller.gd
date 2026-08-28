@@ -100,12 +100,11 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var committed_preparation_failure := committed_projection_status_result(host.run_state, preparation_failure, trusted_base_result)
 		return _array(committed_preparation_failure.get("records", trusted_base_result))
 	if ScenarioSequenceSchemaScript.is_sequence(definition):
-		var finalized: Dictionary = _dict(host.run_state.scenario_finalize_base_semantics(result, host.library, layout_context))
+		var finalized: Dictionary = _dict(host.run_state.scenario_finalize_installed_environment(host.library, layout_context))
 		if not bool(finalized.get("ok", false)):
 			var finalization_failure := projection_failure_result(result, _array(finalized.get("errors", [])), _dict(finalized.get("layout_audit", {})))
 			var committed_finalization_failure := committed_projection_status_result(host.run_state, finalization_failure, trusted_base_result)
 			return _array(committed_finalization_failure.get("records", trusted_base_result))
-		result = host._copy_array(finalized.get("records", []))
 		var projection_result := project_finalized_sequence_interaction_result(result, finalized)
 		var committed_result := committed_projection_status_result(host.run_state, projection_result, trusted_base_result)
 		result = _array(committed_result.get("records", trusted_base_result))
