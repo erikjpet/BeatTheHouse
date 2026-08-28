@@ -22,14 +22,16 @@ var _run_state: RunState
 var _environment: Dictionary
 var _trusted_stake := 0
 var _rng_stream_tag := ""
+var _candidate_acceptance_validator: Callable
 
 
-func _init(game, run_state: RunState, environment: Dictionary, trusted_stake: int = 0, rng_stream_tag: String = "") -> void:
+func _init(game, run_state: RunState, environment: Dictionary, trusted_stake: int = 0, rng_stream_tag: String = "", candidate_acceptance_validator: Callable = Callable()) -> void:
 	_game = game
 	_run_state = run_state
 	_environment = environment
 	_trusted_stake = maxi(0, trusted_stake)
 	_rng_stream_tag = rng_stream_tag
+	_candidate_acceptance_validator = candidate_acceptance_validator
 
 
 func preview_wager_cost(action_id: String) -> int:
@@ -215,6 +217,8 @@ func submit_resolve_intent(action_id: String) -> Dictionary:
 		transaction_deltas["suspicion_delta"] = transaction_suspicion_delta
 		result["deltas"] = transaction_deltas
 		GameModule.normalize_skill_cheat_contract(result)
+	if _candidate_acceptance_validator.is_valid() and not bool(_candidate_acceptance_validator.call(candidate, result.duplicate(true))):
+		return _rejection("candidate_rejected", "Blackjack candidate validation rejected the detached transaction.", request_key)
 	var committed_session: Dictionary = {}
 	if typeof(result.get("ui_state", null)) == TYPE_DICTIONARY:
 		committed_session = (result.get("ui_state", {}) as Dictionary).duplicate(true)
