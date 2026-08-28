@@ -162,23 +162,27 @@ func blackjack_ritual_contract() -> Dictionary:
 			_blackjack_gesture_contract("hold", BLACKJACK_TAP_GESTURE, "blackjack_hit", "player_turn", "restore_focus"),
 		],
 		"actors": [
-			_blackjack_actor_contract("dealer_primary", "dealer", "station_dealer", ["idle", "dealing", "watching", "drawing", "settling"], ["open", "working", "attentive", "paying"]),
-			_blackjack_actor_contract("neighbour_seats", "neighbours", "seat_rail", ["seated", "leaning", "reacting"], ["idle", "playing", "watching"]),
-			_blackjack_actor_contract("pit_primary", "pit", "pit_rail", ["absent", "rail", "close"], ["idle", "watching", "intervening"]),
+			_blackjack_actor_contract("dealer.primary", "dealer", "station.dealer", ["idle", "dealing", "watching", "drawing", "settling"], ["open", "working", "attentive", "paying"]),
+			_blackjack_actor_contract("neighbour.0", "neighbour", "seat.0", ["seated", "leaning", "reacting"], ["idle", "playing", "watching"]),
+			_blackjack_actor_contract("neighbour.1", "neighbour", "seat.1", ["seated", "leaning", "reacting"], ["idle", "playing", "watching"]),
+			_blackjack_actor_contract("neighbour.2", "neighbour", "seat.2", ["seated", "leaning", "reacting"], ["idle", "playing", "watching"]),
+			_blackjack_actor_contract("neighbour.3", "neighbour", "seat.3", ["seated", "leaning", "reacting"], ["idle", "playing", "watching"]),
+			_blackjack_actor_contract("pit.primary", "pit", "pit.rail", ["absent", "rail", "close"], ["idle", "watching", "intervening"]),
 		],
 		"scene_objects": [
-			_blackjack_object_contract("shoe_primary", "shoe_anchor", {"space": "design", "x": 686, "y": 92, "w": 92, "h": 92}, ["ready", "dealing", "cut_due"], ["enabled", "locked"]),
-			_blackjack_object_contract("discard_rack_primary", "discard_anchor", {"space": "design", "x": 674, "y": 188, "w": 70, "h": 28}, ["empty", "used", "full"], ["passive"]),
-			_blackjack_object_contract("wager_player", "wager_anchor", {"space": "design", "x": 414, "y": 276, "w": 76, "h": 62}, ["editable", "placed", "at_risk", "settled"], ["editable", "locked"]),
-			_blackjack_object_contract("dealer_hole_card", "dealer_hand_anchor", {"space": "design", "x": 386, "y": 158, "w": 112, "h": 62}, ["concealed", "revealed"], ["read_only"]),
+			_blackjack_object_contract("shoe.primary", "shoe.anchor", {"space": "design", "x": 686, "y": 92, "w": 92, "h": 92}, ["ready", "dealing", "cut_due"], ["enabled", "locked"]),
+			_blackjack_object_contract("discard_rack.primary", "discard.anchor", {"space": "design", "x": 674, "y": 188, "w": 70, "h": 28}, ["empty", "used", "full"], ["passive"]),
+			_blackjack_object_contract("wager.player", "wager.anchor", {"space": "design", "x": 414, "y": 276, "w": 76, "h": 62}, ["editable", "placed", "at_risk", "settled"], ["editable", "locked"]),
+			_blackjack_object_contract("dealer.hole_card", "dealer_hand.anchor", {"space": "design", "x": 386, "y": 158, "w": 112, "h": 62}, ["concealed", "revealed"], ["read_only"]),
+			_blackjack_object_contract("rail.open_space", "rail.open_space", {"space": "design", "x": 790, "y": 208, "w": 68, "h": 44}, ["open", "guarded", "narrow"], ["enabled", "blocked"]),
 		],
 		"energy": {
 			"initial_tier": "quiet",
 			"tiers": [
-				{"id": "quiet", "actor_operations": [{"target": "dealer_primary", "behavior": "open"}], "object_operations": [{"target": "wager_player", "state": "editable"}], "interaction_operations": [], "audio_cues": []},
-				{"id": "engaged", "actor_operations": [{"target": "dealer_primary", "behavior": "working"}], "object_operations": [{"target": "wager_player", "state": "at_risk"}], "interaction_operations": [], "audio_cues": []},
-				{"id": "watched", "actor_operations": [{"target": "pit_primary", "behavior": "watching"}], "object_operations": [{"target": "wager_player", "state": "at_risk"}], "interaction_operations": [{"target": "peek_region", "state": "guarded"}], "audio_cues": []},
-				{"id": "hot", "actor_operations": [{"target": "pit_primary", "behavior": "intervening"}], "object_operations": [{"target": "rail_open_space", "state": "narrow"}], "interaction_operations": [{"target": "peek_region", "state": "blocked"}], "audio_cues": []},
+				{"id": "quiet", "actor_operations": [{"target": "dealer.primary", "behavior": "open"}], "object_operations": [{"target": "wager.player", "state": "editable"}], "interaction_operations": [], "audio_cues": []},
+				{"id": "engaged", "actor_operations": [{"target": "dealer.primary", "behavior": "working"}], "object_operations": [{"target": "wager.player", "state": "at_risk"}], "interaction_operations": [], "audio_cues": []},
+				{"id": "watched", "actor_operations": [{"target": "pit.primary", "behavior": "watching"}], "object_operations": [{"target": "wager.player", "state": "at_risk"}], "interaction_operations": [{"target": "peek.region", "state": "guarded"}], "audio_cues": []},
+				{"id": "hot", "actor_operations": [{"target": "pit.primary", "behavior": "intervening"}], "object_operations": [{"target": "rail.open_space", "state": "narrow"}], "interaction_operations": [{"target": "peek.region", "state": "blocked"}], "audio_cues": []},
 			],
 		},
 		"game_facts": [
@@ -209,8 +213,8 @@ func blackjack_ritual_contract() -> Dictionary:
 			"rejection": "side_effect_free",
 		}],
 		"declared_targets": {
-			"anchors": ["station_dealer", "seat_rail", "pit_rail", "shoe_anchor", "discard_anchor", "wager_anchor", "dealer_hand_anchor"],
-			"regions": ["chip_rail", "wager_circle", "shoe_region", "player_hand_region", "player_wave_region", "peek_region"],
+			"anchors": ["station.dealer", "seat.0", "seat.1", "seat.2", "seat.3", "pit.rail", "shoe.anchor", "discard.anchor", "wager.anchor", "dealer_hand.anchor", "rail.open_space"],
+			"regions": ["chip.rail", "wager.circle", "shoe.region", "player_hand.region", "player_wave.region", "peek.region"],
 			"sealed_host_targets": [],
 		},
 	}
@@ -224,8 +228,8 @@ func _blackjack_gesture_contract(verb: String, gesture_id: String, action_id: St
 	return {
 		"id": gesture_id,
 		"verb": verb,
-		"source_region": "chip_rail" if verb == "place" else "shoe_region" if gesture_id == BLACKJACK_CUT_GESTURE else "player_hand_region",
-		"target_regions": ["wager_circle"] if verb == "place" else ["shoe_region"] if gesture_id == BLACKJACK_CUT_GESTURE else ["player_wave_region"] if gesture_id == BLACKJACK_WAVE_GESTURE else ["player_hand_region"],
+		"source_region": "chip.rail" if verb == "place" else "shoe.region" if gesture_id == BLACKJACK_CUT_GESTURE else "player_hand.region",
+		"target_regions": ["wager.circle"] if verb == "place" else ["shoe.region"] if gesture_id == BLACKJACK_CUT_GESTURE else ["player_wave.region"] if gesture_id == BLACKJACK_WAVE_GESTURE else ["player_hand.region"],
 		"bounds": {"space": "design", "min_distance": 22 if verb == "place" else 42 if gesture_id == BLACKJACK_WAVE_GESTURE else 0, "max_distance": 520},
 		"phases": [phase_id],
 		"accepted_action": action_id,
@@ -756,23 +760,23 @@ func _blackjack_ritual_projection(run_state: RunState, environment: Dictionary, 
 	var selected_stake := maxi(0, int(spec.get("selected_stake", 0)))
 	var pending_items: Array = []
 	if phase_id == "wagering" and selected_stake > 0:
-		pending_items.append(_blackjack_commitment_item("wager.main", "layout.main_wager", selected_stake, "Main wager", true, ""))
+		pending_items.append(_blackjack_commitment_item("wager.main", "wager.player", selected_stake, "Main wager", "selected_chip", int(session.get("wager_edit_ordinal", 0)), true, ""))
 		var side_stakes := _local_copy_dict(spec.get("side_bet_stakes", {}))
 		for side_id in _string_array(spec.get("side_bets_active", [])):
 			var side_amount := maxi(0, int(side_stakes.get(side_id, 0)))
 			if side_amount > 0:
-				pending_items.append(_blackjack_commitment_item("wager.side.%s" % side_id, "layout.side.%s" % side_id, side_amount, str(side_id).replace("_", " ").capitalize(), true, ""))
+				pending_items.append(_blackjack_commitment_item("wager.side.%s" % side_id, "wager.side.%s" % side_id, side_amount, str(side_id).replace("_", " ").capitalize(), "selected_side_wager", int(session.get("wager_edit_ordinal", 0)), true, ""))
 	var working_items: Array = []
 	if dealt:
 		var hands := _hand_array(session.get("player_hands", []))
 		for hand_index in range(hands.size()):
 			var hand: Dictionary = hands[hand_index]
 			var hand_amount := selected_stake * maxi(1, int(hand.get("wager_multiplier", 1)))
-			working_items.append(_blackjack_commitment_item("hand.%d" % hand_index, "layout.player_hand.%d" % hand_index, hand_amount, "Hand %d" % (hand_index + 1), false, "Decision locked to this hand"))
+			working_items.append(_blackjack_commitment_item("hand.%d" % hand_index, "player_hand.%d" % hand_index, hand_amount, "Hand %d" % (hand_index + 1), "accepted_main_wager", hand_index, false, "Decision locked to this hand"))
 		for side_id in _string_array(session.get("blackjack_side_bets", [])):
 			var side_definition := _side_bet_definition(side_id)
 			var side_amount := _side_bet_stake(selected_stake, side_definition, run_state)
-			working_items.append(_blackjack_commitment_item("wager.side.%s" % side_id, "layout.side.%s" % side_id, side_amount, str(side_definition.get("label", side_id)), false, "Resolves with this hand"))
+			working_items.append(_blackjack_commitment_item("wager.side.%s" % side_id, "wager.side.%s" % side_id, side_amount, str(side_definition.get("label", side_id)), "accepted_side_wager", 0, false, "Resolves with this hand"))
 	var last_result := _local_copy_dict(table.get("last_result", {}))
 	var item_resolutions := _blackjack_item_resolutions(last_result)
 	var settlement_totals := _blackjack_settlement_totals(item_resolutions, last_result)
@@ -847,8 +851,20 @@ func _blackjack_ritual_projection(run_state: RunState, environment: Dictionary, 
 	}
 
 
-func _blackjack_commitment_item(item_id: String, target_id: String, amount: int, label: String, editable: bool, disabled_reason: String) -> Dictionary:
-	return {"item_id": item_id, "target_id": target_id, "amount": maxi(0, amount), "label": label, "editable": editable, "disabled_reason": disabled_reason}
+func _blackjack_commitment_item(item_id: String, target_id: String, amount: int, label: String, source: String, edit_ordinal: int, eligible: bool, disabled_reason: String) -> Dictionary:
+	var safe_amount := maxi(0, amount)
+	return {
+		"item_id": item_id,
+		"target_id": target_id,
+		"denomination": safe_amount,
+		"amount": safe_amount,
+		"source": source,
+		"edit_ordinal": maxi(0, edit_ordinal),
+		"eligibility": eligible,
+		"disabled_reason": disabled_reason,
+		"label": label,
+		"editable": eligible,
+	}
 
 
 func _blackjack_commitment_total(items: Array) -> int:
@@ -870,11 +886,14 @@ func _blackjack_item_resolutions(last_result: Dictionary) -> Array:
 		var returned_stake := _blackjack_returned_stake(wager, delta, outcome)
 		resolutions.append({
 			"item_id": "hand.%d" % hand_index,
+			"authoritative_result_id": _blackjack_authoritative_result_id(last_result, "hand.%d" % hand_index),
+			"stake_disposition": _blackjack_stake_disposition(outcome),
 			"outcome": outcome,
 			"stake": wager,
 			"returned_stake": returned_stake,
 			"payout": maxi(0, delta),
 			"net_change": delta,
+			"public_explanation": _blackjack_resolution_reason(outcome),
 			"reason": _blackjack_resolution_reason(outcome),
 		})
 	for side_value in _dictionary_array(last_result.get("side_bet_results", [])):
@@ -884,14 +903,32 @@ func _blackjack_item_resolutions(last_result: Dictionary) -> Array:
 		var won := bool(side.get("won", false))
 		resolutions.append({
 			"item_id": "wager.side.%s" % str(side.get("id", "unknown")),
+			"authoritative_result_id": _blackjack_authoritative_result_id(last_result, "wager.side.%s" % str(side.get("id", "unknown"))),
+			"stake_disposition": "returned_with_profit" if won else "collected",
 			"outcome": "win" if won else "lose",
 			"stake": wager,
 			"returned_stake": wager if won else 0,
 			"payout": maxi(0, delta),
 			"net_change": delta,
+			"public_explanation": str(side.get("detail", "Side wager settled")),
 			"reason": str(side.get("detail", "Side wager settled")),
 		})
 	return resolutions
+
+
+func _blackjack_authoritative_result_id(last_result: Dictionary, item_id: String) -> String:
+	var result_ordinal := maxi(0, int(last_result.get("resolved_at_msec", last_result.get("timestamp_msec", 0))))
+	return "blackjack.result.%d:%s" % [result_ordinal, item_id]
+
+
+func _blackjack_stake_disposition(outcome: String) -> String:
+	if outcome == "surrender":
+		return "partially_returned"
+	if outcome == "push":
+		return "returned"
+	if outcome in ["blackjack", "dealer_bust", "win"]:
+		return "returned_with_profit"
+	return "collected"
 
 
 func _blackjack_returned_stake(wager: int, delta: int, outcome: String) -> int:
