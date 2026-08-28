@@ -9,6 +9,7 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
+const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
@@ -74,6 +75,27 @@ const BJ_CONSOLE_H := 84.0
 const BJ_TABLE_BOTTOM := 334.0
 const DRAW_DEAL_EVENTS_CACHE_KEY := "_blackjack_draw_deal_events"
 const ROURKE_DUEL_VARIANT := "rourke_duel"
+const BLACKJACK_RITUAL_ID := "blackjack.standard_table"
+const BLACKJACK_RITUAL_CONTRACT := "game_ritual/1"
+const BLACKJACK_RITUAL_HANDLER_ID := "blackjack_authority"
+const BLACKJACK_CHARGED_DEAL_ACTION := "blackjack_place_bet"
+const BLACKJACK_WAGER_PLACE_GESTURE := "blackjack_wager_place_gesture"
+const BLACKJACK_CUT_GESTURE := "blackjack_cut_gesture"
+const BLACKJACK_WAVE_GESTURE := "blackjack_wave_gesture"
+const BLACKJACK_TAP_GESTURE := "blackjack_tap_gesture"
+const BLACKJACK_HOST_LEDGER_KEY := "_blackjack_action_authority"
+const BLACKJACK_HOST_TRANSIENT_UI_KEYS := [
+	"surface_time_msec", "drunk_scaled_surface_time_msec",
+	"selected_action_id", "selected_action_kind", "selected_index",
+	"blackjack_gesture_active", "blackjack_gesture_origin",
+	"blackjack_gesture_index", "blackjack_gesture_pointer",
+]
+const BLACKJACK_GESTURE_ACTIONS := [
+	BLACKJACK_WAGER_PLACE_GESTURE,
+	BLACKJACK_CUT_GESTURE,
+	BLACKJACK_WAVE_GESTURE,
+	BLACKJACK_TAP_GESTURE,
+]
 const BJ_RAIL_POINTS := [
 	Vector2(46, 142), Vector2(156, 92), Vector2(334, 76), Vector2(566, 76),
 	Vector2(744, 92), Vector2(854, 142), Vector2(822, BJ_TABLE_BOTTOM), Vector2(78, BJ_TABLE_BOTTOM),
@@ -99,6 +121,278 @@ var draw_deal_events_cache_id := ""
 var draw_deal_events_cache: Array = []
 var draw_dealer_character_style: Dictionary = {}
 var draw_patron_character_style: Dictionary = {}
+
+
+func blackjack_ritual_contract() -> Dictionary:
+	# This is a Blackjack-owned consumer declaration. It deliberately contains no
+	# executable handler reference and does not import a shared ritual runtime.
+	var action_ids := [
+		"blackjack_chip", "blackjack_correct_bet", "blackjack_remove_chip", "blackjack_undo_bet",
+		"blackjack_clear_bet", "blackjack_max_bet", "blackjack_repeat_bet",
+		"blackjack_rebet", "blackjack_side_bet", "blackjack_deal", BLACKJACK_CHARGED_DEAL_ACTION,
+		"blackjack_hit", "blackjack_stand", "blackjack_double",
+		"blackjack_split", "blackjack_surrender", "play_basic",
+	]
+	var action_declarations: Array = []
+	for action_id in action_ids:
+		action_declarations.append({"action_id": action_id, "handler_id": BLACKJACK_RITUAL_HANDLER_ID, "parameters": {}})
+	return {
+		"contract": BLACKJACK_RITUAL_CONTRACT,
+		"ritual_id": BLACKJACK_RITUAL_ID,
+		"initial_phase": "wagering",
+		"ritual_phases": [
+			_blackjack_ritual_phase("wagering", ["blackjack_chip", "blackjack_correct_bet", "blackjack_remove_chip", "blackjack_undo_bet", "blackjack_clear_bet", "blackjack_max_bet", "blackjack_repeat_bet", "blackjack_rebet", "blackjack_side_bet", "blackjack_deal", BLACKJACK_CHARGED_DEAL_ACTION], [{"id": "confirm_to_deal", "condition": {"kind": "accepted_action", "action_id": BLACKJACK_CHARGED_DEAL_ACTION}, "next_phase": "initial_deal", "operations": []}]),
+			_blackjack_ritual_phase("initial_deal", [], [{"id": "deal_to_player", "condition": {"kind": "public_state_equals", "key": "deal_staged", "value": true}, "next_phase": "player_turn", "operations": []}]),
+			_blackjack_ritual_phase("player_turn", ["blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"], [{"id": "player_to_dealer", "condition": {"kind": "public_state_equals", "key": "hand_complete", "value": true}, "next_phase": "dealer_procedure", "operations": []}]),
+			_blackjack_ritual_phase("dealer_procedure", ["play_basic"], [{"id": "dealer_to_settlement", "condition": {"kind": "authoritative_result_present"}, "next_phase": "settlement", "operations": []}]),
+			_blackjack_ritual_phase("settlement", [], [{"id": "settlement_to_wagering", "condition": {"kind": "public_state_equals", "key": "payout_staged", "value": true}, "next_phase": "wagering", "operations": []}]),
+		],
+		"action_declarations": action_declarations,
+		"staged_commitment": {
+			"pending_collection": "pending_items",
+			"working_collection": "working_items",
+			"resolution_collection": "item_resolutions",
+			"funds_authority": "game_rules",
+			"actions": [
+				{"id": "blackjack_chip", "effect": "add_or_increment_one"},
+				{"id": "blackjack_correct_bet", "effect": "correct_one_pending_amount"},
+				{"id": "blackjack_remove_chip", "effect": "remove_one_pending_item"},
+				{"id": "blackjack_undo_bet", "effect": "reverse_last_pending_edit"},
+				{"id": "blackjack_clear_bet", "effect": "remove_all_pending_items"},
+				{"id": "blackjack_repeat_bet", "effect": "copy_last_eligible_commitment"},
+				{"id": "blackjack_rebet", "effect": "copy_eligible_resolved_items"},
+				{"id": BLACKJACK_CHARGED_DEAL_ACTION, "effect": "authorize_pending_set"},
+			],
+			"readable_totals": ["available_funds", "pending_total", "at_risk_total", "returned_stake", "payout", "net_change"],
+		},
+		"pointer_verbs": [
+			_blackjack_gesture_contract("place", BLACKJACK_WAGER_PLACE_GESTURE, "blackjack_chip", "wagering", "return_to_source"),
+			_blackjack_gesture_contract("hold", BLACKJACK_CUT_GESTURE, "blackjack_deal", "wagering", "restore_focus"),
+			_blackjack_gesture_contract("drag", BLACKJACK_WAVE_GESTURE, "blackjack_stand", "player_turn", "restore_focus"),
+			_blackjack_gesture_contract("hold", BLACKJACK_TAP_GESTURE, "blackjack_hit", "player_turn", "restore_focus"),
+		],
+		"actors": [
+			_blackjack_actor_contract("dealer.primary", "dealer", "station.dealer", ["idle", "dealing", "watching", "drawing", "settling"], ["open", "working", "attentive", "paying"]),
+			_blackjack_actor_contract("neighbour.0", "neighbour", "seat.0", ["seated", "leaning", "reacting"], ["idle", "playing", "watching"]),
+			_blackjack_actor_contract("neighbour.1", "neighbour", "seat.1", ["seated", "leaning", "reacting"], ["idle", "playing", "watching"]),
+			_blackjack_actor_contract("neighbour.2", "neighbour", "seat.2", ["seated", "leaning", "reacting"], ["idle", "playing", "watching"]),
+			_blackjack_actor_contract("neighbour.3", "neighbour", "seat.3", ["seated", "leaning", "reacting"], ["idle", "playing", "watching"]),
+			_blackjack_actor_contract("pit.primary", "pit", "pit.rail", ["absent", "rail", "close"], ["idle", "watching", "intervening"]),
+		],
+		"scene_objects": [
+			_blackjack_object_contract("shoe.primary", "shoe.anchor", {"space": "design", "x": 686, "y": 92, "w": 92, "h": 92}, ["ready", "dealing", "cut_due"], ["enabled", "locked"]),
+			_blackjack_object_contract("discard_rack.primary", "discard.anchor", {"space": "design", "x": 674, "y": 188, "w": 70, "h": 28}, ["empty", "used", "full"], ["passive"]),
+			_blackjack_object_contract("wager.player", "wager.anchor", {"space": "design", "x": 414, "y": 276, "w": 76, "h": 62}, ["editable", "placed", "at_risk", "settled"], ["editable", "locked"]),
+			_blackjack_object_contract("dealer.hole_card", "dealer_hand.anchor", {"space": "design", "x": 386, "y": 158, "w": 112, "h": 62}, ["concealed", "revealed"], ["read_only"]),
+			_blackjack_object_contract("rail.open_space", "rail.open_space", {"space": "design", "x": 790, "y": 208, "w": 68, "h": 44}, ["open", "guarded", "narrow"], ["enabled", "blocked"]),
+		],
+		"energy": {
+			"initial_tier": "quiet",
+			"tiers": [
+				{"id": "quiet", "actor_operations": [{"target": "dealer.primary", "behavior": "open"}], "object_operations": [{"target": "wager.player", "state": "editable"}], "interaction_operations": [], "audio_cues": []},
+				{"id": "engaged", "actor_operations": [{"target": "dealer.primary", "behavior": "working"}], "object_operations": [{"target": "wager.player", "state": "at_risk"}], "interaction_operations": [], "audio_cues": []},
+				{"id": "watched", "actor_operations": [{"target": "pit.primary", "behavior": "watching"}], "object_operations": [{"target": "wager.player", "state": "at_risk"}], "interaction_operations": [{"target": "peek.region", "state": "guarded"}], "audio_cues": []},
+				{"id": "hot", "actor_operations": [{"target": "pit.primary", "behavior": "intervening"}], "object_operations": [{"target": "rail.open_space", "state": "narrow"}], "interaction_operations": [{"target": "peek.region", "state": "blocked"}], "audio_cues": []},
+			],
+		},
+		"game_facts": [
+			{"fact_type": "blackjack.commitment_accepted", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"total_wager": "int"}},
+			{"fact_type": "blackjack.hand_resolved", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"net_change": "int", "outcomes": "string_array"}},
+			{"fact_type": "blackjack.heat_changed", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"heat": "int", "tier": "string"}},
+		],
+		"ritual_persistence": {
+			"authoritative_serialized": ["table", "shoe", "session", "wager_debited", "phase_boundary", "last_result"],
+			"derived_projection": ["actors", "scene_objects", "energy", "hit_regions", "readable_totals"],
+			"transient_presentation": ["gesture_origin", "gesture_active", "animation_progress", "hover", "focus"],
+			"one_shot_receipted": ["deal_audio", "reveal_audio", "settlement_audio", "payout_animation"],
+			"save_boundaries": ["wagering", "initial_deal", "player_turn", "dealer_procedure", "settlement"],
+			"restore_policy": "restore_legal_phase_without_replay",
+		},
+		"handler_registry": [{
+			"handler_id": BLACKJACK_RITUAL_HANDLER_ID,
+			"version": 1,
+			"accepted_actions": action_ids,
+			"accepted_operations": [],
+			"inputs": {"phase_id": "string"},
+			"outputs": {"public_projection": "qualified_id"},
+			"authority": "blackjack_game_rules",
+			"persisted_state": ["table", "session", "wager_debited", "last_result"],
+			"transient_state": ["gesture_origin", "animation_progress"],
+			"rng": {"owner": "blackjack_game_rules", "stream": "existing_action_stream", "consumption": "accepted_authoritative_action_only"},
+			"emitted_facts": ["blackjack.commitment_accepted", "blackjack.hand_resolved", "blackjack.heat_changed"],
+			"rejection": "side_effect_free",
+		}],
+		"declared_targets": {
+			"anchors": ["station.dealer", "seat.0", "seat.1", "seat.2", "seat.3", "pit.rail", "shoe.anchor", "discard.anchor", "wager.anchor", "dealer_hand.anchor", "rail.open_space"],
+			"regions": ["chip.rail", "wager.circle", "shoe.region", "player_hand.region", "player_wave.region", "peek.region"],
+			"sealed_host_targets": [],
+		},
+	}
+
+
+func _blackjack_ritual_phase(phase_id: String, permitted_actions: Array, transitions: Array) -> Dictionary:
+	return {"id": phase_id, "entry_conditions": [], "permitted_actions": permitted_actions, "entry_operations": [], "transitions": transitions, "terminal": false}
+
+
+func _blackjack_gesture_contract(verb: String, gesture_id: String, action_id: String, phase_id: String, return_policy: String) -> Dictionary:
+	var equivalent_target_selection := "cycle" if gesture_id == BLACKJACK_WAGER_PLACE_GESTURE else "focus"
+	return {
+		"id": gesture_id,
+		"verb": verb,
+		"source_region": "chip.rail" if verb == "place" else "shoe.region" if gesture_id == BLACKJACK_CUT_GESTURE else "player_hand.region",
+		"target_regions": ["wager.circle"] if verb == "place" else ["shoe.region"] if gesture_id == BLACKJACK_CUT_GESTURE else ["player_wave.region"] if gesture_id == BLACKJACK_WAVE_GESTURE else ["player_hand.region"],
+		"bounds": {"space": "design", "min_distance": 22 if verb == "place" else 42 if gesture_id == BLACKJACK_WAVE_GESTURE else 0, "max_distance": 520},
+		"phases": [phase_id],
+		"accepted_action": action_id,
+		"rejection": return_policy,
+		"rejection_effects": [],
+		"equivalents": {
+			"keyboard": {"action_id": action_id, "target_selection": equivalent_target_selection},
+			"controller": {"action_id": action_id, "target_selection": equivalent_target_selection},
+			"reduced_motion": {"action_id": action_id, "target_selection": equivalent_target_selection, "staging": "instant"},
+		},
+	}
+
+
+func _blackjack_actor_contract(actor_id: String, role: String, anchor: String, poses: Array, behaviors: Array) -> Dictionary:
+	return {"id": actor_id, "role": role, "anchor": anchor, "poses": poses, "behavior_states": behaviors, "initial_pose": str(poses[0]), "initial_behavior": str(behaviors[0]), "fact_reactions": []}
+
+
+func _blackjack_object_contract(object_id: String, anchor: String, bounds: Dictionary, visual_states: Array, functional_states: Array) -> Dictionary:
+	return {"id": object_id, "anchor": anchor, "bounds": bounds, "z_layer": "gameplay", "visual_states": visual_states, "functional_states": functional_states, "initial_visual_state": str(visual_states[0]), "initial_functional_state": str(functional_states[0]), "hit_regions": [], "text_safety_regions": []}
+
+
+func blackjack_ritual_deal_envelope(session: Dictionary, environment: Dictionary) -> Dictionary:
+	var session_id := _blackjack_ritual_safe_id(str(session.get("session_id", "%s:%s:0" % [get_id(), str(environment.get("id", "table"))])))
+	var ordinal := maxi(0, int(session.get("cards_consumed", 0)) + int(session.get("active_hand_index", 0)))
+	var boundary_id := "blackjack:wagering:%d" % ordinal
+	var command_id := "%s:deal:%d" % [session_id, ordinal]
+	var request_key := "%s:request" % command_id
+	var receipt_key := "%s:command" % command_id
+	var operation_receipt_key := "%s:binding" % command_id
+	var authenticated_action := {
+		"origin_owner_id": BLACKJACK_RITUAL_ID,
+		"stable_action_id": BLACKJACK_CHARGED_DEAL_ACTION,
+		"operation_receipt_key": operation_receipt_key,
+		"boundary_id": boundary_id,
+		"fingerprint": ("%s|%s|%s|%s" % [BLACKJACK_RITUAL_ID, BLACKJACK_CHARGED_DEAL_ACTION, operation_receipt_key, boundary_id]).sha256_text(),
+	}
+	var boundary := {
+		"boundary_id": boundary_id,
+		"kind": "command",
+		"ritual_id": BLACKJACK_RITUAL_ID,
+		"session_id": session_id,
+		"phase_id": "wagering",
+		"ordinal": ordinal,
+		"cause_receipt_key": receipt_key,
+	}
+	var envelope := {
+		"envelope_version": 1,
+		"ritual_id": BLACKJACK_RITUAL_ID,
+		"session_id": session_id,
+		"command_id": command_id,
+		"request_key": request_key,
+		"action_id": BLACKJACK_CHARGED_DEAL_ACTION,
+		"expected_phase": "wagering",
+		"source_id": "shoe.primary",
+		"target_id": "wager.player",
+		"parameters": {},
+		"authenticated_action": authenticated_action,
+		"boundary": boundary,
+		"receipt_key": receipt_key,
+		"content_fingerprint": "",
+	}
+	envelope["content_fingerprint"] = _blackjack_ritual_envelope_fingerprint(envelope)
+	return envelope
+
+
+func blackjack_ritual_deal_envelope_authorized(envelope: Dictionary, current_phase: String = "wagering") -> bool:
+	var expected_keys := ["action_id", "authenticated_action", "boundary", "command_id", "content_fingerprint", "envelope_version", "expected_phase", "parameters", "receipt_key", "request_key", "ritual_id", "session_id", "source_id", "target_id"]
+	var actual_keys := envelope.keys()
+	actual_keys.sort()
+	expected_keys.sort()
+	if actual_keys != expected_keys or int(envelope.get("envelope_version", 0)) != 1:
+		return false
+	if str(envelope.get("ritual_id", "")) != BLACKJACK_RITUAL_ID or str(envelope.get("action_id", "")) != BLACKJACK_CHARGED_DEAL_ACTION:
+		return false
+	if str(envelope.get("expected_phase", "")) != current_phase or current_phase != "wagering":
+		return false
+	if str(envelope.get("source_id", "")) != "shoe.primary" or str(envelope.get("target_id", "")) != "wager.player":
+		return false
+	if typeof(envelope.get("parameters", null)) != TYPE_DICTIONARY or not (envelope.get("parameters", {}) as Dictionary).is_empty():
+		return false
+	for id_field in ["session_id", "command_id", "request_key", "receipt_key"]:
+		if not _blackjack_ritual_id_is_safe(str(envelope.get(id_field, ""))):
+			return false
+	if str(envelope.get("content_fingerprint", "")) != _blackjack_ritual_envelope_fingerprint(envelope):
+		return false
+	var authenticated_action: Dictionary = envelope.get("authenticated_action", {}) if typeof(envelope.get("authenticated_action", {})) == TYPE_DICTIONARY else {}
+	var expected_authenticated_keys := ["boundary_id", "fingerprint", "operation_receipt_key", "origin_owner_id", "stable_action_id"]
+	var authenticated_keys := authenticated_action.keys()
+	authenticated_keys.sort()
+	expected_authenticated_keys.sort()
+	if authenticated_keys != expected_authenticated_keys:
+		return false
+	if str(authenticated_action.get("origin_owner_id", "")) != BLACKJACK_RITUAL_ID or str(authenticated_action.get("stable_action_id", "")) != BLACKJACK_CHARGED_DEAL_ACTION:
+		return false
+	if not _blackjack_ritual_id_is_safe(str(authenticated_action.get("operation_receipt_key", ""))) or not _blackjack_ritual_sha256_is_valid(str(authenticated_action.get("fingerprint", ""))):
+		return false
+	var boundary: Dictionary = envelope.get("boundary", {}) if typeof(envelope.get("boundary", {})) == TYPE_DICTIONARY else {}
+	var expected_boundary_keys := ["boundary_id", "cause_receipt_key", "kind", "ordinal", "phase_id", "ritual_id", "session_id"]
+	var boundary_keys := boundary.keys()
+	boundary_keys.sort()
+	expected_boundary_keys.sort()
+	if boundary_keys != expected_boundary_keys:
+		return false
+	if str(boundary.get("kind", "")) != "command" or str(boundary.get("phase_id", "")) != current_phase or int(boundary.get("ordinal", -1)) < 0:
+		return false
+	if str(boundary.get("ritual_id", "")) != BLACKJACK_RITUAL_ID or str(boundary.get("session_id", "")) != str(envelope.get("session_id", "")):
+		return false
+	if str(boundary.get("cause_receipt_key", "")) != str(envelope.get("receipt_key", "")) or str(boundary.get("boundary_id", "")) != str(authenticated_action.get("boundary_id", "")):
+		return false
+	var contract := blackjack_ritual_contract()
+	var declared_handler := ""
+	for declaration_value in contract.get("action_declarations", []):
+		if typeof(declaration_value) == TYPE_DICTIONARY and str((declaration_value as Dictionary).get("action_id", "")) == BLACKJACK_CHARGED_DEAL_ACTION:
+			declared_handler = str((declaration_value as Dictionary).get("handler_id", ""))
+			break
+	if declared_handler != BLACKJACK_RITUAL_HANDLER_ID:
+		return false
+	for handler_value in contract.get("handler_registry", []):
+		if typeof(handler_value) == TYPE_DICTIONARY:
+			var handler: Dictionary = handler_value
+			if str(handler.get("handler_id", "")) == declared_handler:
+				return (handler.get("accepted_actions", []) as Array).has(BLACKJACK_CHARGED_DEAL_ACTION)
+	return false
+
+
+func _blackjack_ritual_envelope_fingerprint(envelope: Dictionary) -> String:
+	var fingerprint_source := envelope.duplicate(true)
+	fingerprint_source.erase("content_fingerprint")
+	return JSON.stringify(fingerprint_source, "", true).sha256_text()
+
+
+func _blackjack_ritual_safe_id(value: String) -> String:
+	var normalized := ""
+	for character in value.to_lower():
+		if character in "abcdefghijklmnopqrstuvwxyz0123456789_.:-":
+			normalized += character
+		else:
+			normalized += "-"
+	return normalized.left(192) if not normalized.is_empty() else "blackjack"
+
+
+func _blackjack_ritual_id_is_safe(value: String) -> bool:
+	return not value.is_empty() and value.length() <= 192 and value == _blackjack_ritual_safe_id(value)
+
+
+func _blackjack_ritual_sha256_is_valid(value: String) -> bool:
+	if value.length() != 64 or value != value.to_lower():
+		return false
+	for character in value:
+		if not character in "0123456789abcdef":
+			return false
+	return true
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -536,16 +830,27 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"shoe_composition": _local_copy_dict(table.get("shoe_composition", CardShoeScript.remaining_composition(table.get("shoe", [])))),
 		"native_selected_surface_actions": _selected_surface_actions(ui_state, session),
 		"surface_action_bindings": {
-			"legal": {"action": "blackjack_deal", "index": 0},
+			"legal": {"action": "blackjack_deal", "index": 0, "ritual_gesture_id": BLACKJACK_CUT_GESTURE, "target_selection": "focus", "target_id": "shoe.primary"},
 			"cheat": {"action": "blackjack_count_toggle", "index": 0},
 			"surface_stake_down": {"action": "blackjack_clear_bet", "index": 0},
-			"surface_stake_up": {"action": "blackjack_chip", "index": 0},
+			"surface_stake_up": {"action": "blackjack_chip", "index": 0, "ritual_gesture_id": BLACKJACK_WAGER_PLACE_GESTURE, "target_selection": "cycle", "target_id": "wager.player"},
 			"surface_stake_max": {"action": "blackjack_max_bet", "index": 0},
+		},
+		"ritual_equivalent_bindings": {
+			BLACKJACK_WAGER_PLACE_GESTURE: {"action": "blackjack_chip", "target_id": "wager.player", "target_selection": ["focus", "cycle"], "keyboard_binding": "surface_stake_up", "controller_binding": "surface_stake_up", "reduced_motion_staging": "instant"},
+			BLACKJACK_CUT_GESTURE: {"action": "blackjack_deal", "target_id": "shoe.primary", "target_selection": ["focus"], "keyboard_binding": "legal", "controller_binding": "legal", "reduced_motion_staging": "instant"},
+			BLACKJACK_TAP_GESTURE: {"action": "blackjack_hit", "target_id": "player_hand.region", "target_selection": ["focus", "cycle"], "keyboard_binding": "focused_surface_region", "controller_binding": "focused_surface_region", "reduced_motion_staging": "instant"},
+			BLACKJACK_WAVE_GESTURE: {"action": "blackjack_stand", "target_id": "player_hand.region", "target_selection": ["focus", "cycle"], "keyboard_binding": "focused_surface_region", "controller_binding": "focused_surface_region", "reduced_motion_staging": "instant"},
 		},
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "blackjack_table",
 			"action_cues": {
 				"blackjack_chip": "blackjack_chip",
+				"blackjack_correct_bet": "blackjack_chip",
+				"blackjack_remove_chip": "blackjack_chip",
+				"blackjack_undo_bet": "blackjack_chip",
+				"blackjack_repeat_bet": "blackjack_chip",
+				"blackjack_rebet": "blackjack_chip",
 				"blackjack_patron_bet": "blackjack_chip",
 				"blackjack_clear_bet": "blackjack_chip",
 				"blackjack_max_bet": "blackjack_chip",
@@ -573,7 +878,268 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			},
 		}),
 	})
+	if not _is_rourke_duel(run_state, environment):
+		spec["ritual_contract"] = BLACKJACK_RITUAL_CONTRACT
+		spec["ritual_id"] = BLACKJACK_RITUAL_ID
+		spec["ritual_projection"] = _blackjack_ritual_projection(
+			run_state,
+			environment,
+			table,
+			session,
+			spec,
+			deal_animation_active,
+			payout_animation_active
+		)
 	return _rourke_duel_surface_state(spec, run_state, environment, session, table)
+
+
+func _blackjack_ritual_projection(run_state: RunState, environment: Dictionary, table: Dictionary, session: Dictionary, spec: Dictionary, deal_animation_active: bool, payout_animation_active: bool) -> Dictionary:
+	var dealt := _has_dealt_hand(session)
+	var round_complete := dealt and _all_hands_complete(session)
+	var dealer_blackjack_pending := dealt and _dealer_has_blackjack(_card_array(session.get("dealer_cards", [])))
+	var phase_id := "wagering"
+	if deal_animation_active:
+		phase_id = "initial_deal"
+	elif dealt and (round_complete or dealer_blackjack_pending):
+		phase_id = "dealer_procedure"
+	elif dealt:
+		phase_id = "player_turn"
+	elif payout_animation_active:
+		phase_id = "settlement"
+	var available_funds := maxi(0, run_state.wager_balance_for_game(get_id(), environment)) if run_state != null else 0
+	var selected_stake := maxi(0, int(spec.get("selected_stake", 0)))
+	var pending_items: Array = []
+	if phase_id == "wagering" and selected_stake > 0:
+		pending_items.append(_blackjack_commitment_item("wager.main", "wager.player", selected_stake, "Main wager", "selected_chip", int(session.get("wager_edit_ordinal", 0)), true, ""))
+		var side_stakes := _local_copy_dict(spec.get("side_bet_stakes", {}))
+		for side_id in _string_array(spec.get("side_bets_active", [])):
+			var side_amount := maxi(0, int(side_stakes.get(side_id, 0)))
+			if side_amount > 0:
+				pending_items.append(_blackjack_commitment_item("wager.side.%s" % side_id, "wager.side.%s" % side_id, side_amount, str(side_id).replace("_", " ").capitalize(), "selected_side_wager", int(session.get("wager_edit_ordinal", 0)), true, ""))
+	var working_items: Array = []
+	if dealt:
+		var hands := _hand_array(session.get("player_hands", []))
+		for hand_index in range(hands.size()):
+			var hand: Dictionary = hands[hand_index]
+			var hand_amount := selected_stake * maxi(1, int(hand.get("wager_multiplier", 1)))
+			working_items.append(_blackjack_commitment_item("hand.%d" % hand_index, "player_hand.%d" % hand_index, hand_amount, "Hand %d" % (hand_index + 1), "accepted_main_wager", hand_index, false, "Decision locked to this hand"))
+		for side_id in _string_array(session.get("blackjack_side_bets", [])):
+			var side_definition := _side_bet_definition(side_id)
+			var side_amount := _side_bet_stake(selected_stake, side_definition, run_state)
+			working_items.append(_blackjack_commitment_item("wager.side.%s" % side_id, "wager.side.%s" % side_id, side_amount, str(side_definition.get("label", side_id)), "accepted_side_wager", 0, false, "Resolves with this hand"))
+	var last_result := _local_copy_dict(table.get("last_result", {}))
+	var item_resolutions := _blackjack_item_resolutions(last_result)
+	var settlement_totals := _blackjack_settlement_totals(item_resolutions, last_result)
+	var heat := run_state.suspicion_level_for_environment_id(str(environment.get("id", ""))) if run_state != null else 0
+	var energy_tier := "hot" if heat >= 70 else "watched" if heat >= 40 else "engaged" if dealt or payout_animation_active else "quiet"
+	var dealer_behavior := "paying" if phase_id == "settlement" else "drawing" if phase_id == "dealer_procedure" else "dealing" if phase_id == "initial_deal" else "watching" if heat >= 40 else "idle"
+	var actors: Array = [{
+		"id": "dealer.primary",
+		"role": "dealer",
+		"pose": dealer_behavior,
+		"behavior": dealer_behavior,
+		"anchor": "station.dealer",
+		"visible": true,
+		"authority": "game_rules",
+	}]
+	var patrons := _dictionary_array(spec.get("patrons", []))
+	for patron_index in range(patrons.size()):
+		var patron: Dictionary = patrons[patron_index]
+		actors.append({
+			"id": "neighbour.%d" % patron_index,
+			"role": "neighbour",
+			"pose": "leaning" if energy_tier in ["watched", "hot"] else "seated",
+			"behavior": "playing" if dealt else "watching" if heat >= 40 else "idle",
+			"anchor": "seat.%d" % patron_index,
+			"visible": true,
+			"authority": "none",
+			"source_patron_id": str(patron.get("id", "seat_%d" % patron_index)),
+		})
+	actors.append({
+		"id": "pit.primary",
+		"role": "pit",
+		"pose": "close" if energy_tier == "hot" else "rail" if energy_tier == "watched" else "absent",
+		"behavior": "intervening" if energy_tier == "hot" else "watching" if energy_tier == "watched" else "idle",
+		"anchor": "pit.rail",
+		"visible": energy_tier in ["watched", "hot"],
+		"authority": "heat_projection",
+	})
+	var shoe_remaining := maxi(0, int(spec.get("shoe_remaining", 0)))
+	var cut_remaining := maxi(0, int(spec.get("cut_card_remaining", 0)))
+	var shoe_state := "cut_due" if shoe_remaining <= cut_remaining else "dealing" if phase_id in ["initial_deal", "dealer_procedure"] else "ready"
+	var at_risk_total := _blackjack_commitment_total(working_items)
+	if dealt:
+		at_risk_total = maxi(at_risk_total, _session_debited_wager(session))
+	return {
+		"contract": BLACKJACK_RITUAL_CONTRACT,
+		"ritual_id": BLACKJACK_RITUAL_ID,
+		"phase_id": phase_id,
+		"boundary_id": _blackjack_ritual_boundary_id(phase_id, session, last_result),
+		"pending_items": pending_items,
+		"working_items": working_items,
+		"item_resolutions": item_resolutions,
+		"readable_totals": {
+			"available_funds": available_funds,
+			"pending_total": _blackjack_commitment_total(pending_items),
+			"at_risk_total": at_risk_total,
+			"returned_stake": int(settlement_totals.get("returned_stake", 0)),
+			"payout": int(settlement_totals.get("payout", 0)),
+			"net_change": int(last_result.get("bankroll_delta", 0)),
+		},
+		"actors": actors,
+		"scene_objects": [
+			{"id": "shoe.primary", "visual": shoe_state, "functional": "locked" if phase_id == "settlement" else "enabled", "visible": true, "enabled": phase_id != "settlement"},
+			{"id": "discard_rack.primary", "visual": "empty" if shoe_remaining >= int(table.get("deck_count", 1)) * CardShoeScript.CARDS_PER_DECK else "full" if shoe_remaining <= cut_remaining else "used", "functional": "passive", "visible": true, "enabled": false},
+			{"id": "wager.player", "visual": "settled" if phase_id == "settlement" else "at_risk" if dealt else "placed", "functional": "locked" if dealt else "editable", "visible": true, "enabled": not dealt},
+			{"id": "dealer.hole_card", "visual": "revealed" if bool(session.get("dealer_hole_visible", false)) else "concealed", "functional": "read_only", "visible": dealt, "enabled": false},
+			{"id": "rail.open_space", "visual": "narrow" if energy_tier == "hot" else "guarded" if energy_tier == "watched" else "open", "functional": "blocked" if energy_tier == "hot" else "enabled", "visible": true, "enabled": energy_tier != "hot"},
+		],
+		"energy_tier": energy_tier,
+		"heat": heat,
+		"action_states": _blackjack_ritual_action_states(spec, phase_id),
+		"gesture_actions": BLACKJACK_GESTURE_ACTIONS,
+	}
+
+
+func _blackjack_commitment_item(item_id: String, target_id: String, amount: int, label: String, source: String, edit_ordinal: int, eligible: bool, disabled_reason: String) -> Dictionary:
+	var safe_amount := maxi(0, amount)
+	return {
+		"item_id": item_id,
+		"target_id": target_id,
+		"denomination": safe_amount,
+		"amount": safe_amount,
+		"source": source,
+		"edit_ordinal": maxi(0, edit_ordinal),
+		"eligibility": eligible,
+		"disabled_reason": disabled_reason,
+		"label": label,
+		"editable": eligible,
+	}
+
+
+func _blackjack_commitment_total(items: Array) -> int:
+	var total := 0
+	for item_value in items:
+		if typeof(item_value) == TYPE_DICTIONARY:
+			total += maxi(0, int((item_value as Dictionary).get("amount", 0)))
+	return total
+
+
+func _blackjack_item_resolutions(last_result: Dictionary) -> Array:
+	var resolutions: Array = []
+	var hand_results := _dictionary_array(last_result.get("hand_results", []))
+	for hand_index in range(hand_results.size()):
+		var hand: Dictionary = hand_results[hand_index]
+		var wager := maxi(0, int(hand.get("wager", 0)))
+		var delta := int(hand.get("bankroll_delta", 0))
+		var outcome := str(hand.get("outcome", "push"))
+		var returned_stake := _blackjack_returned_stake(wager, delta, outcome)
+		resolutions.append({
+			"item_id": "hand.%d" % hand_index,
+			"authoritative_result_id": _blackjack_authoritative_result_id(last_result, "hand.%d" % hand_index),
+			"stake_disposition": _blackjack_stake_disposition(outcome),
+			"outcome": outcome,
+			"stake": wager,
+			"returned_stake": returned_stake,
+			"payout": maxi(0, delta),
+			"net_change": delta,
+			"public_explanation": _blackjack_resolution_reason(outcome),
+			"reason": _blackjack_resolution_reason(outcome),
+		})
+	for side_value in _dictionary_array(last_result.get("side_bet_results", [])):
+		var side: Dictionary = side_value
+		var wager := maxi(0, int(side.get("stake", 0)))
+		var delta := int(side.get("bankroll_delta", 0))
+		var won := bool(side.get("won", false))
+		resolutions.append({
+			"item_id": "wager.side.%s" % str(side.get("id", "unknown")),
+			"authoritative_result_id": _blackjack_authoritative_result_id(last_result, "wager.side.%s" % str(side.get("id", "unknown"))),
+			"stake_disposition": "returned_with_profit" if won else "collected",
+			"outcome": "win" if won else "lose",
+			"stake": wager,
+			"returned_stake": wager if won else 0,
+			"payout": maxi(0, delta),
+			"net_change": delta,
+			"public_explanation": str(side.get("detail", "Side wager settled")),
+			"reason": str(side.get("detail", "Side wager settled")),
+		})
+	return resolutions
+
+
+func _blackjack_authoritative_result_id(last_result: Dictionary, item_id: String) -> String:
+	var stored_result_id := _blackjack_ritual_safe_id(str(last_result.get("payout_animation_id", last_result.get("result_id", ""))))
+	if not stored_result_id.is_empty() and stored_result_id != "blackjack":
+		return "%s:%s" % [stored_result_id, item_id]
+	var result_ordinal := maxi(0, int(last_result.get("resolved_at_msec", last_result.get("timestamp_msec", 0))))
+	return "blackjack.result.%d:%s" % [result_ordinal, item_id]
+
+
+func _blackjack_stake_disposition(outcome: String) -> String:
+	if outcome == "surrender":
+		return "partially_returned"
+	if outcome == "push":
+		return "returned"
+	if outcome in ["blackjack", "dealer_bust", "win"]:
+		return "returned_with_profit"
+	return "collected"
+
+
+func _blackjack_returned_stake(wager: int, delta: int, outcome: String) -> int:
+	if outcome == "surrender":
+		return maxi(0, wager + delta)
+	if outcome in ["push", "blackjack", "dealer_bust", "win"]:
+		return wager
+	return 0
+
+
+func _blackjack_resolution_reason(outcome: String) -> String:
+	match outcome:
+		"blackjack": return "Natural blackjack pays 3:2."
+		"dealer_blackjack": return "Dealer natural takes the wager."
+		"dealer_bust": return "Dealer bust returns stake and pays even money."
+		"win": return "Player total beats dealer; stake returns with even-money payout."
+		"lose": return "Dealer total beats player; wager is collected."
+		"bust": return "Player bust; wager is collected before dealer draw."
+		"surrender": return "Late surrender returns the unlost half of the stake."
+		_: return "Equal totals push and return the stake."
+
+
+func _blackjack_settlement_totals(resolutions: Array, last_result: Dictionary) -> Dictionary:
+	var returned_stake := 0
+	var payout := 0
+	for resolution_value in resolutions:
+		if typeof(resolution_value) != TYPE_DICTIONARY:
+			continue
+		var resolution: Dictionary = resolution_value
+		returned_stake += maxi(0, int(resolution.get("returned_stake", 0)))
+		payout += maxi(0, int(resolution.get("payout", 0)))
+	return {
+		"returned_stake": returned_stake,
+		"payout": payout,
+		"settlement_return_delta": int(last_result.get("bankroll_delta", 0)),
+	}
+
+
+func _blackjack_ritual_boundary_id(phase_id: String, session: Dictionary, last_result: Dictionary) -> String:
+	var ordinal := int(session.get("cards_consumed", 0)) + int(session.get("active_hand_index", 0))
+	if phase_id == "settlement":
+		ordinal = int(last_result.get("resolved_at_msec", last_result.get("timestamp_msec", ordinal)))
+	return "blackjack:%s:%d" % [phase_id, maxi(0, ordinal)]
+
+
+func _blackjack_ritual_action_states(spec: Dictionary, phase_id: String) -> Dictionary:
+	return {
+		"blackjack_deal": _blackjack_ritual_action_state(bool(spec.get("can_deal", false)) and phase_id == "wagering", "Deal is available only after legal chips are staged."),
+		"blackjack_hit": _blackjack_ritual_action_state(bool(spec.get("can_hit", false)) and phase_id == "player_turn", "Hit is available only on the active unfinished hand."),
+		"blackjack_stand": _blackjack_ritual_action_state(bool(spec.get("can_stand", false)) and phase_id == "player_turn", "Stand is available only on the active unfinished hand."),
+		"blackjack_double": _blackjack_ritual_action_state(bool(spec.get("can_double", false)) and phase_id == "player_turn", "Double requires an eligible two-card hand and enough funds."),
+		"blackjack_split": _blackjack_ritual_action_state(bool(spec.get("can_split", false)) and phase_id == "player_turn", "Split requires an eligible pair, hand capacity, and enough funds."),
+		"blackjack_surrender": _blackjack_ritual_action_state(bool(spec.get("can_surrender", false)) and phase_id == "player_turn", "Late surrender is unavailable on this hand or table."),
+	}
+
+
+func _blackjack_ritual_action_state(enabled: bool, disabled_reason: String) -> Dictionary:
+	return {"enabled": enabled, "disabled_reason": "" if enabled else disabled_reason}
 
 
 func _rourke_duel_surface_state(spec: Dictionary, run_state: RunState, environment: Dictionary, session: Dictionary, _table: Dictionary) -> Dictionary:
@@ -688,7 +1254,65 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_chip_payout_animation(surface, surface_state)
 	_draw_count_challenge(surface, surface_state)
 	_draw_crew_play_status(surface, surface_state)
+	if not bool(surface_state.get("boss_duel_active", false)):
+		_draw_blackjack_ritual_layer(surface, surface_state)
 	return true
+
+
+func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
+	var projection := _local_copy_dict(surface_state.get("ritual_projection", {}))
+	if projection.is_empty():
+		return
+	var phase_id := str(projection.get("phase_id", "wagering"))
+	var energy_tier := str(projection.get("energy_tier", "quiet"))
+	var totals := _local_copy_dict(projection.get("readable_totals", {}))
+	var accent := C_PINK if energy_tier == "hot" else C_YELLOW if energy_tier == "watched" else C_TEAL if energy_tier == "engaged" else C_CYAN
+	var phase_rect := Rect2(28, 120, 164, 20)
+	_draw_neon_panel(surface, phase_rect, accent, 0.13)
+	surface.surface_label("RITUAL  %s" % phase_id.replace("_", " ").to_upper().left(16), phase_rect.position + Vector2(8, 13), 8, accent)
+	var money_rect := Rect2(246, 300, 408, 12)
+	surface.draw_rect(money_rect, Color("#071612"))
+	surface.draw_rect(money_rect, Color(accent.r, accent.g, accent.b, 0.38), false, 1)
+	surface.surface_label_centered("AVAILABLE $%d   PENDING $%d   AT RISK $%d   RETURN $%d   PAYS $%d" % [
+		int(totals.get("available_funds", 0)),
+		int(totals.get("pending_total", 0)),
+		int(totals.get("at_risk_total", 0)),
+		int(totals.get("returned_stake", 0)),
+		int(totals.get("payout", 0)),
+	], money_rect, 6, C_WHITE)
+	var pit_actor: Dictionary = {}
+	for actor_value in _dictionary_array(projection.get("actors", [])):
+		var actor: Dictionary = actor_value
+		if str(actor.get("id", "")) == "pit.primary":
+			pit_actor = actor
+			break
+	if bool(pit_actor.get("visible", false)):
+		var pit_pos := Vector2(826, 226 if energy_tier == "hot" else 202)
+		_draw_static_table_character(surface, pit_pos, 0.70, accent, Color("#261827"), "PIT", -2.0, false)
+		surface.draw_line(Vector2(790, 230), Vector2(858, 230), Color(accent.r, accent.g, accent.b, 0.48), 3.0)
+	var discard_state := "empty"
+	for object_value in _dictionary_array(projection.get("scene_objects", [])):
+		var object_state: Dictionary = object_value
+		if str(object_state.get("id", "")) == "discard_rack.primary":
+			discard_state = str(object_state.get("visual", "empty"))
+			break
+	var discard_rect := Rect2(674, 188, 70, 28)
+	surface.draw_rect(discard_rect, Color("#15101a"))
+	surface.draw_rect(discard_rect, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.42), false, 1)
+	surface.surface_label_centered("DISCARD %s" % discard_state.to_upper(), discard_rect, 7, C_SOFT)
+	if phase_id == "wagering":
+		var chips: Array = surface_state.get("chip_denominations", []) if typeof(surface_state.get("chip_denominations", [])) == TYPE_ARRAY else []
+		var chip_origin := Vector2(45, BJ_CONSOLE_Y + 56.0)
+		var chip_spacing := 20.0 if chips.size() > 4 else 30.0
+		for chip_index in range(chips.size()):
+			var chip_center := chip_origin + Vector2(float(chip_index) * chip_spacing, 0)
+			surface.surface_add_drag_hit(Rect2(chip_center - Vector2(13, 13), Vector2(26, 26)), BLACKJACK_WAGER_PLACE_GESTURE, chip_index)
+		surface.surface_add_hold_hit(Rect2(686, 92, 92, 92), BLACKJACK_CUT_GESTURE, 0)
+		surface.surface_label("DRAG CHIP TO YOU / HOLD SHOE TO CUT", Vector2(622, 246), 7, C_SOFT)
+	elif phase_id == "player_turn":
+		surface.surface_add_hold_hit(Rect2(318, 214, 270, 58), BLACKJACK_TAP_GESTURE, 0)
+		surface.surface_add_drag_hit(Rect2(318, 274, 270, 34), BLACKJACK_WAVE_GESTURE, 0)
+		surface.surface_label("TAP HAND FOR CARD / WAVE ACROSS TO STAND", Vector2(622, 246), 7, C_SOFT)
 
 
 func _prepare_draw_deal_events_cache(surface_state: Dictionary) -> void:
@@ -854,6 +1478,96 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 	return _blackjack_surface_action_command(surface_action, index, confirm_requested, ui_state, run_state, environment)
 
 
+func surface_pointer_uses_lightweight_ui_state(surface_action: String) -> bool:
+	# Blackjack's authoritative in-progress hand is carried by the existing UI
+	# session seam. Gesture boundaries therefore need that compact full session.
+	return false
+
+
+func blackjack_ritual_equivalent_command(input_kind: String, gesture_id: String, target_selection: String, target_id: String, target_index: int, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if not input_kind in ["keyboard", "controller", "reduced_motion"]:
+		return _message_command(ui_state.duplicate(true), "Unsupported ritual input; nothing changed.")
+	var state := surface_state(run_state, environment, ui_state)
+	var bindings: Dictionary = state.get("ritual_equivalent_bindings", {}) if typeof(state.get("ritual_equivalent_bindings", {})) == TYPE_DICTIONARY else {}
+	var binding: Dictionary = bindings.get(gesture_id, {}) if typeof(bindings.get(gesture_id, {})) == TYPE_DICTIONARY else {}
+	if binding.is_empty() or not (binding.get("target_selection", []) as Array).has(target_selection):
+		return _message_command(ui_state.duplicate(true), "That ritual target selection is unavailable; nothing changed.")
+	if str(binding.get("target_id", "")) != target_id:
+		return _message_command(ui_state.duplicate(true), "That ritual target belongs to another object; nothing changed.")
+	if target_index < 0:
+		return _message_command(ui_state.duplicate(true), "No ritual target is selected; nothing changed.")
+	var action_id := str(binding.get("action", ""))
+	if action_id.is_empty():
+		return _message_command(ui_state.duplicate(true), "That ritual input has no authoritative action; nothing changed.")
+	var command := _blackjack_surface_action_command(action_id, target_index, false, ui_state, run_state, environment)
+	command["ritual_input_kind"] = input_kind
+	command["ritual_target_selection"] = target_selection
+	command["ritual_target_id"] = target_id
+	command["ritual_reduced_motion"] = input_kind == "reduced_motion"
+	return command
+
+
+func surface_pointer_command(surface_action: String, index: int, pointer_phase: String, board_position: Vector2, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if not surface_action in BLACKJACK_GESTURE_ACTIONS or _is_rourke_duel(run_state, environment):
+		return {"handled": false}
+	var next_state := ui_state.duplicate(false)
+	var active_key := "blackjack_gesture_active"
+	var origin_key := "blackjack_gesture_origin"
+	var index_key := "blackjack_gesture_index"
+	if pointer_phase == "begin":
+		next_state[active_key] = surface_action
+		next_state[origin_key] = board_position
+		next_state[index_key] = index
+		return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true}, true)
+	if pointer_phase == "cancel":
+		_blackjack_clear_gesture_state(next_state)
+		return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "message": "Gesture cancelled; no chips or cards moved."}, true)
+	if str(next_state.get(active_key, "")) != surface_action:
+		return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "message": "That gesture did not begin on an available Blackjack object."}, true)
+	if pointer_phase == "move":
+		next_state["blackjack_gesture_pointer"] = board_position
+		return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true}, true)
+	if pointer_phase != "end":
+		return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true}, true)
+	var origin: Vector2 = next_state.get(origin_key, board_position)
+	var gesture_index := int(next_state.get(index_key, index))
+	var phase_id := str(_local_copy_dict(surface_state(run_state, environment, next_state).get("ritual_projection", {})).get("phase_id", "wagering"))
+	var valid := false
+	var semantic_action := ""
+	var invalid_message := "Incomplete gesture; nothing changed."
+	match surface_action:
+		BLACKJACK_WAGER_PLACE_GESTURE:
+			valid = phase_id == "wagering" and origin.distance_to(board_position) >= 22.0 and Rect2(414, 276, 76, 62).has_point(board_position)
+			semantic_action = "blackjack_chip"
+			invalid_message = "Return the chip to the rail or place it inside your wager circle."
+		BLACKJACK_CUT_GESTURE:
+			valid = phase_id == "wagering" and Rect2(686, 92, 92, 92).has_point(board_position)
+			semantic_action = "blackjack_deal"
+			invalid_message = "Hold and release on the shoe to offer the cut; no wager was charged."
+		BLACKJACK_WAVE_GESTURE:
+			valid = phase_id == "player_turn" and origin.distance_to(board_position) >= 54.0 and absf(board_position.x - origin.x) >= 42.0
+			semantic_action = "blackjack_stand"
+			invalid_message = "Wave clearly across the active hand to stand; the hand remains live."
+		BLACKJACK_TAP_GESTURE:
+			valid = phase_id == "player_turn" and Rect2(318, 214, 270, 96).has_point(board_position)
+			semantic_action = "blackjack_hit"
+			invalid_message = "Tap and release inside the active hand to request a card."
+	_blackjack_clear_gesture_state(next_state)
+	if not valid:
+		return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "message": invalid_message}, true)
+	var semantic_command := _blackjack_surface_action_command(semantic_action, gesture_index, false, next_state, run_state, environment)
+	semantic_command["blackjack_surface_intent"] = semantic_action
+	semantic_command["blackjack_surface_intent_index"] = gesture_index
+	return semantic_command
+
+
+func _blackjack_clear_gesture_state(ui_state: Dictionary) -> void:
+	ui_state.erase("blackjack_gesture_active")
+	ui_state.erase("blackjack_gesture_origin")
+	ui_state.erase("blackjack_gesture_index")
+	ui_state.erase("blackjack_gesture_pointer")
+
+
 func coach_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var count_challenge: Dictionary = ui_state.get("count_challenge", {}) if typeof(ui_state.get("count_challenge", {})) == TYPE_DICTIONARY else {}
 	var cheats: Dictionary = ui_state.get("cheats_used", {}) if typeof(ui_state.get("cheats_used", {})) == TYPE_DICTIONARY else {}
@@ -899,13 +1613,23 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 	match surface_action:
 		"blackjack_chip":
 			return _chip_bet_command(index, next_state, table, run_state, environment, selected_stake)
+		"blackjack_correct_bet":
+			return _correct_chip_bet_command(index, next_state, table, run_state, environment)
+		"blackjack_remove_chip":
+			return _remove_chip_bet_command(index, next_state, table, run_state, environment, selected_stake)
+		"blackjack_undo_bet":
+			return _undo_blackjack_wager_command(index, next_state, table, run_state, environment)
+		"blackjack_repeat_bet", "blackjack_rebet":
+			return _repeat_blackjack_wager_command(index, next_state, table, run_state, environment, surface_action == "blackjack_rebet")
 		"blackjack_patron_bet":
 			return _patron_bet_command(index, next_state, table, run_state, environment)
 		"blackjack_clear_bet":
 			if _has_dealt_hand(next_state):
 				return _message_command(next_state, "Main bets are locked until the hand settles.")
+			_blackjack_push_wager_edit(next_state)
 			var min_bet := _surface_stake_floor(run_state, environment)
 			next_state["selected_stake"] = min_bet
+			next_state["blackjack_side_bets"] = []
 			next_state.erase("table_social_alignment")
 			return GameModule.surface_command({
 				"handled": true,
@@ -917,6 +1641,7 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 		"blackjack_max_bet":
 			if _has_dealt_hand(next_state):
 				return _message_command(next_state, "Main bets are locked until the hand settles.")
+			_blackjack_push_wager_edit(next_state)
 			var max_bet := _max_table_stake_for_blackjack(next_state, table, run_state, environment)
 			next_state["selected_stake"] = max_bet
 			next_state.erase("table_social_alignment")
@@ -938,6 +1663,9 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 						return _settle_completed_round_command(next_state, index, "You wave off the hand. Dealer reveals and settles.", table, run_state)
 					return _action_command("play_basic", "legal", false, next_state, index, "Basic play selected. Click again to stand and settle, or use the live hand buttons.", true)
 				return _settle_completed_round_command(next_state, index, _terminal_round_message(next_state), table, run_state)
+			var ritual_envelope := blackjack_ritual_deal_envelope(next_state, environment)
+			if not blackjack_ritual_deal_envelope_authorized(ritual_envelope, "wagering"):
+				return _message_command(next_state, "The dealer cannot authenticate that wager boundary; no wager was charged.")
 			var dealt_state := next_state.duplicate(true)
 			_start_initial_hand(dealt_state, table, selected_stake, run_state)
 			var projected_cost: int = _wager_cost_from_session(selected_stake, dealt_state, table, run_state)
@@ -947,16 +1675,20 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 				return GameModule.surface_command({
 					"handled": true,
 					"ui_state": _compact_session_for_ui(next_state),
-					"action_id": "blackjack_place_bet",
+					"action_id": BLACKJACK_CHARGED_DEAL_ACTION,
 					"action_kind": "legal",
+					"ritual_command": ritual_envelope,
+					"ritual_handler_id": BLACKJACK_RITUAL_HANDLER_ID,
 					"direct_resolve": true,
 					"preserve_surface_ui_state": true,
 					"selected_index": index,
 					"message": "Confirm the all-in blackjack wager.",
 				})
 			var command := _opening_deal_command(dealt_state, index, _opening_deal_notice(dealt_state, table))
-			command["action_id"] = "blackjack_place_bet"
+			command["action_id"] = BLACKJACK_CHARGED_DEAL_ACTION
 			command["action_kind"] = "legal"
+			command["ritual_command"] = ritual_envelope
+			command["ritual_handler_id"] = BLACKJACK_RITUAL_HANDLER_ID
 			command["direct_resolve"] = true
 			command["preserve_surface_ui_state"] = true
 			return GameModule.surface_command(command)
@@ -1114,17 +1846,45 @@ func _rourke_duel_surface_action_command(surface_action: String, index: int, con
 				command = _message_command(next_state, "You steal a look. Rourke watches your hands.")
 		_:
 			command = _blackjack_surface_action_command(surface_action, index, confirm_requested, next_state, run_state, environment)
-	var saved_state: Variant = command.get("ui_state", next_state)
-	if typeof(saved_state) == TYPE_DICTIONARY:
-		run_state.persist_grand_casino_duel_session(saved_state as Dictionary)
 	return command
 
 
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
-	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
+	return _empty_blackjack_result(action_id, stake, environment, "Blackjack actions require the table host authority.")
 
 
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	return _empty_blackjack_result(action_id, stake, environment, "Blackjack actions require the table host authority.")
+
+
+func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Dictionary, rng_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	# This is a pure proposal boundary: serialized values enter, serialized values
+	# leave, and no live Foundation object can be retained or mutated by the game.
+	var proposal_input := {
+		"action_id": action_id,
+		"stake": stake,
+		"run_snapshot": run_snapshot,
+		"rng_snapshot": rng_snapshot,
+		"ui_state": ui_state,
+	}
+	var input_fingerprint := RuntimeScript.canonical_fingerprint(proposal_input)
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var rng := RngStream.new()
+	rng.restore(rng_snapshot.duplicate(true))
+	var result := _resolve_blackjack_proposal_core(action_id, stake, candidate, candidate.current_environment, rng, ui_state.duplicate(true))
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": input_fingerprint,
+		"result": result.duplicate(true),
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
+	return proposal
+
+
+func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	if action_id.begins_with("crew_play:"):
 		return super.resolve_with_context(action_id, stake, run_state, environment, rng, ui_state)
 	if _is_rourke_duel(run_state, environment):
@@ -1219,6 +1979,9 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	if not sit_out:
 		_apply_patron_rapport_after_blackjack(table, session, table_stake, bankroll_delta)
 	table["last_result"] = _blackjack_last_result_payload(message, hand_results, side_results, main_delta, side_delta, bankroll_delta, suspicion_delta, dealer_cards, hands, patron_hands, patron_action_events, cheat, presentation_msec)
+	(table["last_result"] as Dictionary)["main_stake"] = table_stake
+	(table["last_result"] as Dictionary)["side_bet_ids"] = _string_array(session.get("blackjack_side_bets", []))
+	(table["last_result"] as Dictionary)["total_wager"] = total_wager
 	_update_environment_table(environment, table)
 
 	var story_entry := {
@@ -1291,7 +2054,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["blackjack_pit_boss_heat_bonus"] = int(cheat.get("pit_boss_heat_bonus", 0))
 	result["blackjack_running_count"] = int(table.get("running_count", 0))
 	result["blackjack_recorded_count"] = int(table.get("recorded_running_count", 0))
-	GameModule.apply_result(run_state, result, rng)
+	_apply_blackjack_authority_result(run_state, result, rng)
 	return result
 
 
@@ -1400,21 +2163,31 @@ func _resolve_rourke_duel_hand(action_id: String, run_state: RunState, environme
 
 
 func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
+	return 0
+
+
+func _blackjack_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var environment := candidate.current_environment
 	if action_id != "play_basic" and action_id != "blackjack_place_bet":
-		return 0
+		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
 	# Rourke's fixed ante belongs to the duel's internal player/Rourke stacks.
 	# Charging the normal cash/chip wager again at hand settlement can reject a
 	# completed hand and leave the player trapped behind the SETTLE control.
-	if _is_rourke_duel(run_state, environment):
-		return 0
-	var table: Dictionary = _table_state_preview(run_state, environment)
+	if _is_rourke_duel(candidate, environment):
+		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+	var table: Dictionary = _table_state_preview(candidate, environment)
 	if bool(table.get("barred", false)):
-		return 0
-	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
+		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+	var session: Dictionary = _normalized_session(candidate, environment, ui_state, table)
 	if bool(session.get("blackjack_sit_out", false)):
-		return 0
-	var total_wager := _wager_cost_from_session(_session_stake(stake, session), session, table, run_state)
-	return maxi(0, total_wager - _session_debited_wager(session))
+		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+	var total_wager := _wager_cost_from_session(_session_stake(stake, session), session, table, candidate)
+	return {
+		"cost": maxi(0, total_wager - _session_debited_wager(session)),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
 
 
 func _resolve_place_bet(stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
@@ -1480,7 +2253,7 @@ func _place_bet_result(run_state: RunState, environment: Dictionary, rng: RngStr
 	result["blackjack_wager_debited"] = int(session.get("wager_debited", 0))
 	if run_state != null and run_state.wager_balance_for_game(get_id(), environment) + bankroll_delta <= 0 and _has_dealt_hand(session):
 		result["defer_bankroll_zero_failure"] = true
-	GameModule.apply_result(run_state, result, rng)
+	_apply_blackjack_authority_result(run_state, result, rng)
 	return result
 
 
@@ -1614,7 +2387,7 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 	result["blackjack_pit_boss_watched"] = pit_boss_watched
 	result["blackjack_pit_boss_heat_bonus"] = pit_boss_heat_bonus
 	result["blackjack_coolers_cufflinks_broke"] = cufflinks_broke
-	GameModule.apply_result(run_state, result, rng)
+	_apply_blackjack_authority_result(run_state, result, rng)
 	return result
 
 
@@ -1746,8 +2519,14 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 	if tutorial_practice_protected:
 		result["preserve_surface_ui_state"] = true
 		result["blackjack_surface_ui_state"] = session.duplicate(true)
-	GameModule.apply_result(run_state, result, rng)
+	_apply_blackjack_authority_result(run_state, result, rng)
 	return result
+
+
+func _apply_blackjack_authority_result(run_state: RunState, result: Dictionary, rng: RngStream) -> void:
+	# FoundationMain applies the result to its detached candidate only after it
+	# has validated the complete proposal and staged an exact one-use receipt.
+	result["blackjack_proposal_requires_apply"] = true
 
 
 func _base_suspicion_for_applied_cap(desired_applied_heat: int, run_state: RunState) -> int:
@@ -2246,15 +3025,20 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 	surface.surface_label("BET $%d" % int(surface_state.get("selected_stake", 1)), rack.position + Vector2(112, 15), 12, C_YELLOW)
 	var chips: Array = surface_state.get("chip_denominations", []) if typeof(surface_state.get("chip_denominations", [])) == TYPE_ARRAY else []
 	var chip_origin := rack.position + Vector2(27.0, 48.0)
-	var chip_spacing := 24.0 if chips.size() > 4 else 30.0
+	var chip_spacing := 20.0 if chips.size() > 4 else 30.0
 	for i in range(chips.size()):
 		var chip_center := chip_origin + Vector2(float(i) * chip_spacing, 0.0)
 		if i == 0:
 			surface.surface_add_exact_invisible_hit(Rect2(chip_center - Vector2(12, 12), Vector2(24, 24)), "surface_stake_up")
 		_draw_chip_button(surface, chip_center, int(chips[i]), "blackjack_chip", i)
-	_draw_chip_stack(surface, rack.position + Vector2(222, 48), surface_state.get("chip_stack", []), 0.30)
-	_draw_table_button(surface, Rect2(rack.position.x + 174, rack.position.y + 28, 36, 16), "CLEAR", "blackjack_clear_bet", 0, C_SOFT, true)
-	_draw_table_button(surface, Rect2(rack.position.x + 174, rack.position.y + 50, 36, 16), "MAX", "blackjack_max_bet", 0, C_YELLOW, true)
+		var remove_rect := Rect2(chip_center.x - 8, chip_center.y + 12, 16, 12)
+		_draw_table_button(surface, remove_rect, "", "blackjack_remove_chip", i, C_SOFT, true)
+		surface.draw_line(remove_rect.position + Vector2(4, 6), remove_rect.end - Vector2(4, 6), C_SOFT, 1.0)
+	_draw_table_button(surface, Rect2(rack.position.x + 154, rack.position.y + 25, 40, 16), "CLR", "blackjack_clear_bet", 0, C_SOFT, true)
+	_draw_table_button(surface, Rect2(rack.position.x + 200, rack.position.y + 25, 36, 16), "MAX", "blackjack_max_bet", 0, C_YELLOW, true)
+	_draw_table_button(surface, Rect2(rack.position.x + 154, rack.position.y + 47, 26, 16), "UNDO", "blackjack_undo_bet", 0, C_CYAN, true)
+	_draw_table_button(surface, Rect2(rack.position.x + 184, rack.position.y + 47, 26, 16), "RPT", "blackjack_repeat_bet", 0, C_CYAN, true)
+	_draw_table_button(surface, Rect2(rack.position.x + 214, rack.position.y + 47, 22, 16), "RE", "blackjack_rebet", 0, C_TEAL, true)
 
 
 func _draw_table_actions(surface, surface_state: Dictionary) -> void:
@@ -3271,9 +4055,15 @@ func _normalize_table_state(table: Dictionary) -> Dictionary:
 
 
 func _normalized_session(run_state: RunState, environment: Dictionary, ui_state: Dictionary, table: Dictionary) -> Dictionary:
-	var session: Dictionary = run_state.grand_casino_duel_session() if _is_rourke_duel(run_state, environment) else {}
+	var host_ledger: Dictionary = table.get(BLACKJACK_HOST_LEDGER_KEY, {}) if typeof(table.get(BLACKJACK_HOST_LEDGER_KEY, {})) == TYPE_DICTIONARY else {}
+	var host_session_initialized := bool(host_ledger.get("initialized", false))
+	var session: Dictionary = run_state.grand_casino_duel_session() if _is_rourke_duel(run_state, environment) else (host_ledger.get("session", {}) as Dictionary).duplicate(true) if host_session_initialized and typeof(host_ledger.get("session", {})) == TYPE_DICTIONARY else {}
 	for key in ui_state.keys():
-		session[str(key)] = ui_state[key]
+		# Once the table host has initialized its durable session, caller UI is
+		# presentation-only. Cards, phase, wager debit, cheats and shoe data are
+		# always read from the saved host session.
+		if not host_session_initialized or _is_rourke_duel(run_state, environment) or BLACKJACK_HOST_TRANSIENT_UI_KEYS.has(str(key)):
+			session[str(key)] = ui_state[key]
 	if _is_rourke_duel(run_state, environment):
 		var duel := run_state.grand_casino_duel_status()
 		session["boss_duel_session"] = true
@@ -5215,6 +6005,7 @@ func _chip_bet_command(index: int, ui_state: Dictionary, table: Dictionary, run_
 	var min_bet := _surface_stake_floor(run_state, environment)
 	var max_stake: int = _max_table_stake_for_blackjack(ui_state, table, run_state, environment)
 	var next_stake: int = min_bet if max_stake < min_bet else clampi(maxi(min_bet, selected_stake) + chip_value, min_bet, max_stake)
+	_blackjack_push_wager_edit(ui_state)
 	ui_state["selected_stake"] = next_stake
 	ui_state.erase("table_social_alignment")
 	return GameModule.surface_command({
@@ -5223,6 +6014,115 @@ func _chip_bet_command(index: int, ui_state: Dictionary, table: Dictionary, run_
 		"set_stake": next_stake,
 		"selected_index": index,
 		"message": "You slide a $%d chip forward. Bet $%d." % [chip_value, next_stake],
+	})
+
+
+func _correct_chip_bet_command(index: int, ui_state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if _has_dealt_hand(ui_state):
+		return _message_command(ui_state, "Main bets are locked until the hand settles.")
+	var chips := _chip_denominations(table)
+	if index < 0 or index >= chips.size():
+		return _message_command(ui_state, "That chip is not in your rack.")
+	var min_bet := _surface_stake_floor(run_state, environment)
+	var max_bet := _max_table_stake_for_blackjack(ui_state, table, run_state, environment)
+	var corrected_stake := clampi(int(chips[index]), min_bet, maxi(min_bet, max_bet))
+	if corrected_stake == int(ui_state.get("selected_stake", min_bet)):
+		return _message_command(ui_state, "That exact main wager is already staged.")
+	_blackjack_push_wager_edit(ui_state)
+	ui_state["selected_stake"] = corrected_stake
+	ui_state.erase("table_social_alignment")
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": ui_state,
+		"set_stake": corrected_stake,
+		"selected_index": index,
+		"message": "Main wager corrected to one $%d stack." % corrected_stake,
+	})
+
+
+func _remove_chip_bet_command(index: int, ui_state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary, selected_stake: int) -> Dictionary:
+	if _has_dealt_hand(ui_state):
+		return _message_command(ui_state, "Main bets are locked until the hand settles.")
+	var chips := _chip_denominations(table)
+	if index < 0 or index >= chips.size():
+		return _message_command(ui_state, "That chip is not in your rack.")
+	var chip_value := int(chips[index])
+	var min_bet := _surface_stake_floor(run_state, environment)
+	var next_stake := maxi(min_bet, selected_stake - chip_value)
+	if next_stake == selected_stake:
+		return _message_command(ui_state, "The main wager is already at the table minimum.")
+	_blackjack_push_wager_edit(ui_state)
+	ui_state["selected_stake"] = next_stake
+	ui_state.erase("table_social_alignment")
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": ui_state,
+		"set_stake": next_stake,
+		"selected_index": index,
+		"message": "You pull one $%d chip back. Bet $%d." % [chip_value, next_stake],
+	})
+
+
+func _blackjack_push_wager_edit(ui_state: Dictionary) -> void:
+	var history: Array = ui_state.get("blackjack_wager_history", []).duplicate(true) if typeof(ui_state.get("blackjack_wager_history", [])) == TYPE_ARRAY else []
+	history.append({
+		"selected_stake": maxi(1, int(ui_state.get("selected_stake", 1))),
+		"side_bets": _string_array(ui_state.get("blackjack_side_bets", [])),
+	})
+	while history.size() > 12:
+		history.pop_front()
+	ui_state["blackjack_wager_history"] = history
+
+
+func _undo_blackjack_wager_command(index: int, ui_state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if _has_dealt_hand(ui_state):
+		return _message_command(ui_state, "Wager edits are locked until the hand settles.")
+	var history: Array = ui_state.get("blackjack_wager_history", []).duplicate(true) if typeof(ui_state.get("blackjack_wager_history", [])) == TYPE_ARRAY else []
+	if history.is_empty():
+		return _message_command(ui_state, "There is no pending wager edit to undo.")
+	var previous: Dictionary = history.pop_back() if typeof(history.back()) == TYPE_DICTIONARY else {}
+	var min_bet := _surface_stake_floor(run_state, environment)
+	var max_bet := _max_table_stake_for_blackjack(ui_state, table, run_state, environment)
+	var restored_stake := clampi(int(previous.get("selected_stake", min_bet)), min_bet, maxi(min_bet, max_bet))
+	ui_state["selected_stake"] = restored_stake
+	ui_state["blackjack_side_bets"] = _valid_side_bet_ids_for_session(_string_array(previous.get("side_bets", [])), table, ui_state)
+	ui_state["blackjack_wager_history"] = history
+	ui_state.erase("table_social_alignment")
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": ui_state,
+		"set_stake": restored_stake,
+		"selected_index": index,
+		"message": "Last pending edit undone. Bet $%d." % restored_stake,
+	})
+
+
+func _repeat_blackjack_wager_command(index: int, ui_state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary, rebet: bool) -> Dictionary:
+	if _has_dealt_hand(ui_state):
+		return _message_command(ui_state, "Repeat and re-bet are available between hands.")
+	var last_result := _local_copy_dict(table.get("last_result", {}))
+	if last_result.is_empty() or int(last_result.get("main_stake", 0)) <= 0:
+		return _message_command(ui_state, "No resolved Blackjack wager is available to repeat.")
+	_blackjack_push_wager_edit(ui_state)
+	var min_bet := _surface_stake_floor(run_state, environment)
+	var max_bet := _max_table_stake_for_blackjack(ui_state, table, run_state, environment)
+	var repeated_stake := clampi(int(last_result.get("main_stake", min_bet)), min_bet, maxi(min_bet, max_bet))
+	ui_state["selected_stake"] = repeated_stake
+	ui_state["blackjack_side_bets"] = _valid_side_bet_ids_for_session(_string_array(last_result.get("side_bet_ids", [])), table, ui_state)
+	var repeated_cost := _wager_cost_from_session(repeated_stake, ui_state, table, run_state)
+	var capacity := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else repeated_cost
+	if repeated_cost > capacity:
+		ui_state["blackjack_side_bets"] = []
+		repeated_cost = _wager_cost_from_session(repeated_stake, ui_state, table, run_state)
+	if repeated_cost > capacity:
+		return _undo_blackjack_wager_command(index, ui_state, table, run_state, environment)
+	ui_state.erase("table_social_alignment")
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": ui_state,
+		"set_stake": repeated_stake,
+		"selected_index": index,
+		"message": "%s wager staged: $%d total risk. Press Deal to confirm." % ["Resolved" if rebet else "Previous", repeated_cost],
 	})
 
 
@@ -5236,6 +6136,7 @@ func _patron_bet_command(index: int, ui_state: Dictionary, table: Dictionary, ru
 		return _message_command(ui_state, "That blackjack seat is empty.")
 	var patron: Dictionary = patrons[patron_index]
 	var wager := _blackjack_patron_wager(patron, table)
+	_blackjack_push_wager_edit(ui_state)
 	var min_bet := _surface_stake_floor(run_state, environment)
 	var max_bet := _max_table_stake_for_blackjack(ui_state, table, run_state, environment)
 	var target_stake := int(wager.get("stake", min_bet))
@@ -5468,6 +6369,7 @@ func _toggle_side_bet_command(index: int, ui_state: Dictionary, table: Dictionar
 	var bet: Dictionary = available[index]
 	if not _side_bet_can_toggle_now(bet, ui_state):
 		return _message_command(ui_state, "That side bet is locked for this hand.")
+	_blackjack_push_wager_edit(ui_state)
 	var bet_id := str(bet.get("id", ""))
 	var active: Array = _string_array(ui_state.get("blackjack_side_bets", []))
 	if active.has(bet_id):

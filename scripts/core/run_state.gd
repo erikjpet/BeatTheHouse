@@ -32,6 +32,8 @@ const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.g
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
 const CharacterChainModelScript := preload("res://scripts/core/character_chain_model.gd")
+const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
+const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 
 const ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1 := "ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1"
 const SCENARIO_DERIVED_NONCAUSAL_ENVIRONMENT_FIELDS := [
@@ -3224,6 +3226,36 @@ func wager_capacity_for_game(game_id: String, environment: Dictionary = {}) -> i
 	return bankroll + grand_casino_chips if grand_casino_game_uses_chips(game_id, environment) else bankroll
 
 
+func preview_grand_casino_wager_funding(game_id: String, wager_amount: int, environment: Dictionary = {}) -> Dictionary:
+	# Pure funding lease preview used by the Blackjack transaction authority.
+	# In particular, cash does not equal one chip when the venue exchange rate is
+	# greater than one, so wager_capacity_for_game() is not a sufficient check.
+	var amount := maxi(0, wager_amount)
+	if amount <= 0:
+		return {"ok": true, "wager": amount, "existing_chips_used": 0, "chips_bought": 0, "cash_used": 0}
+	if not grand_casino_game_uses_chips(game_id, environment):
+		return {
+			"ok": amount <= maxi(0, bankroll),
+			"wager": amount,
+			"existing_chips_used": 0,
+			"chips_bought": 0,
+			"cash_used": amount,
+			"message": "You do not have enough bankroll for that wager." if amount > maxi(0, bankroll) else "",
+		}
+	var existing_chips_used := mini(maxi(0, grand_casino_chips), amount)
+	var required_chips := maxi(0, amount - existing_chips_used)
+	var rate := grand_casino_chip_exchange_rate()
+	var cash_cost := required_chips * rate
+	return {
+		"ok": cash_cost <= maxi(0, bankroll),
+		"wager": amount,
+		"existing_chips_used": existing_chips_used,
+		"chips_bought": required_chips if cash_cost <= maxi(0, bankroll) else 0,
+		"cash_used": cash_cost if cash_cost <= maxi(0, bankroll) else 0,
+		"message": "That wager needs %d chips plus $%d cash, but you only have $%d cash available." % [existing_chips_used, cash_cost, bankroll] if cash_cost > maxi(0, bankroll) else "",
+	}
+
+
 func fund_grand_casino_wager(game_id: String, wager_amount: int, environment: Dictionary = {}) -> Dictionary:
 	var amount := maxi(0, wager_amount)
 	if amount <= 0 or not grand_casino_game_uses_chips(game_id, environment):
@@ -3621,6 +3653,61 @@ func route_grand_casino_game_currency(result: Dictionary, deltas: Dictionary) ->
 	result["currency"] = "chips"
 	result["deltas"] = routed
 	return routed
+
+
+func consume_blackjack_authority_result_receipt(result: Dictionary) -> bool:
+	if str(result.get("game_id", result.get("source_id", ""))) != "blackjack":
+		return true
+	if typeof(result.get("blackjack_host_apply_receipt", null)) != TYPE_DICTIONARY:
+		return false
+	var receipt: Dictionary = result.get("blackjack_host_apply_receipt", {})
+	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	if typeof(game_states.get("blackjack", null)) != TYPE_DICTIONARY:
+		return false
+	var table: Dictionary = game_states.get("blackjack", {})
+	var pending: Variant = table.get("_blackjack_pending_apply_receipt", null)
+	var binding := "blackjack:%s:%s" % [str(current_environment.get("id", "unknown")), str(current_environment.get("archetype_id", "unknown"))]
+	if not BlackjackActionAuthorityScript.valid_receipt(receipt, pending, result, binding):
+		return false
+	# Consume before applying any deltas. Foundation applies only to a detached
+	# candidate, so a later failure discards both this consumption and all effects.
+	table.erase("_blackjack_pending_apply_receipt")
+	game_states["blackjack"] = table
+	current_environment["game_states"] = game_states
+	return true
+
+
+func blackjack_authority_checkpoint_fingerprint() -> String:
+	# The durable authority ledger is reconciled against the canonical balances
+	# and RNG cursor on restore. Neither caller-authored UI nor ledger content is
+	# allowed to supply these values.
+	return GameRitualRuntimeScript.canonical_fingerprint({
+		"bankroll": bankroll,
+		"grand_casino_chips": grand_casino_chips,
+		"rng_seed": rng_seed,
+		"rng_state": rng_state,
+	})
+
+
+func _reconcile_blackjack_authority_restore() -> void:
+	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	if typeof(game_states.get("blackjack", null)) != TYPE_DICTIONARY:
+		return
+	var table: Dictionary = (game_states.get("blackjack", {}) as Dictionary).duplicate(true)
+	if not table.has(BlackjackActionAuthorityScript.LEDGER_KEY):
+		return
+	var binding := "blackjack:%s:%s" % [str(current_environment.get("id", "unknown")), str(current_environment.get("archetype_id", "unknown"))]
+	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(
+		table.get(BlackjackActionAuthorityScript.LEDGER_KEY),
+		binding,
+		blackjack_authority_checkpoint_fingerprint()
+	)
+	if ledger.is_empty():
+		table.erase(BlackjackActionAuthorityScript.LEDGER_KEY)
+	else:
+		table[BlackjackActionAuthorityScript.LEDGER_KEY] = ledger
+	game_states["blackjack"] = table
+	current_environment["game_states"] = game_states
 
 
 func _grand_casino_result_wager_funding_amount(result: Dictionary, bankroll_delta: int) -> int:
@@ -13600,6 +13687,7 @@ func from_dict(data: Dictionary) -> void:
 	pending_drunk_absorption = _normalize_pending_drunk_absorption(_copy_array(data.get("pending_drunk_absorption", [])))
 	drunk_distortion_suppression_turns = maxi(0, int(data.get("drunk_distortion_suppression_turns", 0)))
 	current_environment = _normalize_environment(_copy_dict(data.get("current_environment", {})))
+	_reconcile_blackjack_authority_restore()
 	_mark_scenario_restore_pending_trusted_rebuild(current_environment)
 	scenario_host_transaction_ledger = _copy_dict(data.get("scenario_host_transaction_ledger", {}))
 	# Import current-room machine ownership from pre-portable saves, then make
@@ -13700,13 +13788,14 @@ func from_dict(data: Dictionary) -> void:
 	run_failure_reason = str(data.get("run_failure_reason", FAILURE_NONE))
 	run_failure_message = str(data.get("run_failure_message", ""))
 	run_spending_score = maxi(0, int(data.get("run_spending_score", 0)))
-	_refresh_economy()
+	var blackjack_unsettled_wager := _blackjack_authority_has_unsettled_wager()
+	_refresh_economy(blackjack_unsettled_wager)
 	_activate_current_local_suspicion(true)
 	_initialize_grand_casino_objective_runtime()
 	_initialize_grand_casino_staffing()
 	_initialize_grand_casino_living_floor()
 	if saved_run_status != RUN_STATUS_ENDED and saved_run_status != RUN_STATUS_FAILED:
-		_evaluate_immediate_terminal_state()
+		_evaluate_immediate_terminal_state(blackjack_unsettled_wager)
 	if saved_run_status == RUN_STATUS_ENDED:
 		run_status = saved_run_status
 	elif saved_run_status == RUN_STATUS_FAILED:
@@ -14994,6 +15083,20 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	if environment.has("crew_switch_intel_visit_id"):
 		environment["crew_switch_intel_visit_id"] = str(environment.get("crew_switch_intel_visit_id", ""))
 	environment["game_states"] = _normalize_game_states(_copy_dict(environment.get("game_states", {})))
+	var blackjack_states: Dictionary = environment.get("game_states", {})
+	if typeof(blackjack_states.get("blackjack", null)) == TYPE_DICTIONARY:
+		var blackjack_table: Dictionary = (blackjack_states.get("blackjack", {}) as Dictionary).duplicate(true)
+		# Apply receipts are transaction-local and can never survive a save boundary.
+		blackjack_table.erase("_blackjack_pending_apply_receipt")
+		if blackjack_table.has(BlackjackActionAuthorityScript.LEDGER_KEY):
+			var binding := "blackjack:%s:%s" % [str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+			var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(blackjack_table.get(BlackjackActionAuthorityScript.LEDGER_KEY), binding)
+			if ledger.is_empty():
+				blackjack_table.erase(BlackjackActionAuthorityScript.LEDGER_KEY)
+			else:
+				blackjack_table[BlackjackActionAuthorityScript.LEDGER_KEY] = ledger
+		blackjack_states["blackjack"] = blackjack_table
+		environment["game_states"] = blackjack_states
 	environment["visual_context"] = _copy_dict(environment.get("visual_context", {}))
 	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
 	environment["security_profile"] = _copy_dict(environment.get("security_profile", {}))
@@ -15453,3 +15556,14 @@ func _refresh_economy(defer_bankroll_zero: bool = false) -> void:
 	if run_status == RUN_STATUS_ACTIVE:
 		run_failure_reason = FAILURE_NONE
 		run_failure_message = ""
+
+
+func _blackjack_authority_has_unsettled_wager() -> bool:
+	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Dictionary = game_states.get("blackjack", {}) if typeof(game_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
+	var ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
+	var hands: Array = session.get("player_hands", session.get("blackjack_hands", [])) if typeof(session.get("player_hands", session.get("blackjack_hands", []))) == TYPE_ARRAY else []
+	return bool(session.get("bankroll_wager_debited", false)) \
+		and int(session.get("wager_debited", 0)) > 0 \
+		and not hands.is_empty()
