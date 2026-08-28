@@ -1150,6 +1150,7 @@ static func validate_sequence_definition(definition: Dictionary, references: Dic
 		errors.append("scenario %s sequence authoring requires capture_ids and seed_evidence." % scenario_id)
 	_validate_sequence_references(scenario_id, authoring, references, errors)
 	var archetype := _copy_dict(references.get("archetype", {}))
+	var scenario_local_actor_ids := _valid_scenario_local_actor_ids(definition)
 	for operation_value in _sequence_operations(definition):
 		var operation := _copy_dict(operation_value)
 		var owner := str(operation.get("owner_namespace", ""))
@@ -1164,8 +1165,9 @@ static func validate_sequence_definition(definition: Dictionary, references: Dic
 			if not anchor.is_empty() and not _sequence_anchor_exists(archetype, anchor_key, anchor):
 				errors.append("scenario %s sequence references unknown %s %s." % [scenario_id, anchor_key, anchor])
 		if str(operation.get("family", "")) == "actor_ops" and str(operation.get("op", "")) == "spawn":
-			var actor_id := str(_copy_dict(operation.get("actor", {})).get("actor_id", ""))
-			if not _copy_dict(references.get("actor_ids", {})).has(actor_id):
+			var actor_id := str(_copy_dict(operation.get("actor", {})).get("actor_id", "")).strip_edges()
+			var local_identity := OperationRegistryScript.identity(str(operation.get("owner_namespace", "")).strip_edges(), str(operation.get("stable_object_id", "")).strip_edges())
+			if not _copy_dict(references.get("actor_ids", {})).has(actor_id) and str(scenario_local_actor_ids.get(local_identity, "")) != actor_id:
 				errors.append("scenario %s sequence references unknown actor %s." % [scenario_id, actor_id])
 	if errors.is_empty():
 		var layout_environment := {
@@ -1237,6 +1239,26 @@ static func _sequence_operations(definition: Dictionary) -> Array:
 		var aftermath := _copy_dict(aftermath_value)
 		for family in ["scene_ops", "interaction_ops", "actor_ops", "service_ops", "game_ops", "route_ops"]:
 			result.append_array(_copy_array(aftermath.get(family, [])))
+	return result
+
+
+static func _valid_scenario_local_actor_ids(definition: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for operation_value in _sequence_operations(definition):
+		var operation := _copy_dict(operation_value)
+		if str(operation.get("family", "")) != "actor_ops" or str(operation.get("op", "")) != "spawn":
+			continue
+		if str(operation.get("owner_namespace", "")).strip_edges() != "scenario":
+			continue
+		if str(operation.get("stable_object_id", "")).strip_edges().is_empty():
+			continue
+		var actor := _copy_dict(operation.get("actor", {}))
+		var actor_id := str(actor.get("actor_id", "")).strip_edges()
+		if actor_id.is_empty() or str(actor.get("label", "")).strip_edges().is_empty():
+			continue
+		if str(actor.get("anchor_id", "")).strip_edges().is_empty() and str(actor.get("zone_id", "")).strip_edges().is_empty():
+			continue
+		result[OperationRegistryScript.identity("scenario", str(operation.get("stable_object_id", "")).strip_edges())] = actor_id
 	return result
 
 

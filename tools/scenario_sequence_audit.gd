@@ -55,8 +55,7 @@ func _run() -> void:
 	var catalog := ScenarioCatalogScript.load_catalog()
 	var definitions := _definitions(library, catalog)
 	var target_inventories := _target_inventories(library, definitions)
-	var masked_explanations := _masked_explanations(definitions)
-	var authority_report := ScenarioEngineScript.sequence_catalog_audit(definitions, expected_count, masked_explanations, target_inventories)
+	var authority_report := _dict(library.scenario_sequence_catalog.get("uniqueness_audit", {})).duplicate(true)
 	var failures: Array = argument_failures.duplicate(true)
 	failures.append_array(_strings(library.validation_errors))
 	failures.append_array(_strings(catalog.get("failures", [])))
@@ -71,6 +70,10 @@ func _run() -> void:
 	for definition_value in definitions:
 		dossiers.append(_dossier(_dict(definition_value), authority_report))
 	var exact_expected_shape := report_has_exact_shape(authority_report, expected_count)
+	if authority_report.is_empty():
+		failures.append("ContentLibrary did not publish its validated scenario uniqueness audit.")
+	elif not exact_expected_shape:
+		failures.append("ContentLibrary scenario uniqueness audit does not match the required %d-definition exact shape." % expected_count)
 	var exact_proof_shape := expected_count == 1 and exact_expected_shape
 	if expected_count == 1 and not exact_proof_shape:
 		failures.append("env06_6 proof audit requires exactly 1 definition and 0 pairwise comparisons.")
