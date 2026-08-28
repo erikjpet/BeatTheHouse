@@ -9,6 +9,56 @@ const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 var failures: Array = []
 
 
+class FailingAdvanceHost:
+	extends FoundationMain
+	var failures_remaining := 1
+	var refresh_calls := 0
+
+	func _blackjack_host_advance_environment_turn(candidate: RunState) -> Dictionary:
+		if failures_remaining > 0:
+			failures_remaining -= 1
+			return {"ok": false, "error_code": "forced_turn_rejection", "failure_stage": "game06_2_contract"}
+		return super._blackjack_host_advance_environment_turn(candidate)
+
+	func _refresh() -> void:
+		refresh_calls += 1
+
+
+class ReplayAuditHost:
+	extends FoundationMain
+	var autosave_calls := 0
+	var absorption_calls := 0
+	var interrupt_calls := 0
+	var outcome_calls := 0
+	var surface_audio_calls := 0
+	var drink_audio_calls := 0
+	var refresh_calls := 0
+
+	func _autosave_foundation_run(_status_text: String = "Autosaved.", _force: bool = false) -> bool:
+		autosave_calls += 1
+		return true
+
+	func _advance_alcohol_absorption() -> void:
+		absorption_calls += 1
+
+	func _apply_post_action_environment_interrupt(_source: String) -> bool:
+		interrupt_calls += 1
+		return false
+
+	func _schedule_game_result_music_outcome(_result: Dictionary, _action_id: String) -> Dictionary:
+		outcome_calls += 1
+		return {}
+
+	func _play_result_surface_audio_cue(_result: Dictionary) -> void:
+		surface_audio_calls += 1
+
+	func _play_result_drink_audio_cue(_result: Dictionary) -> void:
+		drink_audio_calls += 1
+
+	func _refresh() -> void:
+		refresh_calls += 1
+
+
 func _init() -> void:
 	call_deferred("_run")
 
@@ -32,6 +82,7 @@ func _run() -> void:
 	_check_host_authority_and_replay(game)
 	_check_hostile_delivery_and_restore(game)
 	_check_failure_atomic_rng_retry(game)
+	_check_failed_turn_retry(game)
 	_check_mixed_rate_funding_rejection(game)
 	if failures.is_empty():
 		print("game06_2_depth_contract: PASS")
@@ -281,6 +332,7 @@ func _check_host_authority_and_replay(game: GameModule) -> void:
 	var session: Dictionary = fixture.session
 	var before_direct := RitualRuntimeScript.canonical_json(run.to_save_snapshot())
 	var direct_rng := run.create_rng("game06_2_direct_bypass")
+	var direct_rng_before := RitualRuntimeScript.canonical_json(direct_rng.snapshot())
 	var direct := game.resolve("play_basic", 5, run, environment, direct_rng)
 	var direct_context := game.resolve_with_context("play_basic", 999, run, environment, direct_rng, {
 		"selected_stake": 999,
@@ -288,9 +340,17 @@ func _check_host_authority_and_replay(game: GameModule) -> void:
 		"dealer_cards": [{"rank": 2, "suit": 0}, {"rank": 3, "suit": 1}],
 		"cheats_used": {"peek_hole_card": true},
 	})
-	_check(not bool(direct.get("ok", true)) and not bool(direct_context.get("ok", true)), "Bare Blackjack resolve entry points did not fail closed.")
+	_check(bool(direct.get("ok", false)) and bool(direct.get("blackjack_compatibility_simulation", false)) and not bool(direct.get("blackjack_authoritative", true)), "Legacy Blackjack resolve did not return a clearly non-authoritative detached simulation.")
+	_check(bool(direct_context.get("blackjack_compatibility_simulation", false)) and not direct_context.has("blackjack_host_apply_receipt"), "Contextual Blackjack compatibility result acquired a host receipt.")
 	_check(game.wager_cost_for_context("play_basic", 999, run, environment, session) == 0, "Bare Blackjack wager preview retained caller authority.")
-	_check(RitualRuntimeScript.canonical_json(run.to_save_snapshot()) == before_direct, "Bare Blackjack resolve/cost changed authoritative RunState or RNG.")
+	_check(RitualRuntimeScript.canonical_json(run.to_save_snapshot()) == before_direct and RitualRuntimeScript.canonical_json(direct_rng.snapshot()) == direct_rng_before, "Bare Blackjack simulation/cost changed authoritative RunState or RNG.")
+	var rehashed_direct := direct.duplicate(true)
+	rehashed_direct["bankroll_delta"] = 999999
+	rehashed_direct["deltas"] = (rehashed_direct.get("deltas", {}) as Dictionary).duplicate(true)
+	(rehashed_direct["deltas"] as Dictionary)["bankroll_delta"] = 999999
+	rehashed_direct["blackjack_host_content_fingerprint"] = BlackjackActionAuthorityScript.result_fingerprint(rehashed_direct)
+	GameModule.apply_result(run, rehashed_direct, direct_rng)
+	_check(RitualRuntimeScript.canonical_json(run.to_save_snapshot()) == before_direct, "Self-rehashed compatibility result applied consequences without an exact host receipt.")
 
 	var forged_result := GameModule.build_action_result({
 		"ok": true,
@@ -341,6 +401,15 @@ func _check_host_authority_and_replay(game: GameModule) -> void:
 	_check(RitualRuntimeScript.canonical_json(run.to_save_snapshot()) == committed_snapshot, "Blackjack replay mutated committed state or RNG.")
 	GameModule.apply_result(run, result, run.create_rng("game06_2_duplicate_apply"))
 	_check(RitualRuntimeScript.canonical_json(run.to_save_snapshot()) == committed_snapshot, "Duplicate Blackjack result apply escaped exactly-once receipt consumption.")
+	var replay_host := _replay_audit_host(game, run, 5)
+	replay_host.call("_resolve_game_action", "play_basic", true, true, false, {}, true, 5, result.get("blackjack_host_delivery", {}))
+	_check(RitualRuntimeScript.canonical_json(run.to_save_snapshot()) == committed_snapshot, "Production-path duplicate delivery changed canonical run, table, account, or RNG state.")
+	_check(int(replay_host.get("autosave_calls")) == 0 and int(replay_host.get("absorption_calls")) == 0 and int(replay_host.get("interrupt_calls")) == 0, "Production-path duplicate delivery repeated an authoritative post-result consumer.")
+	_check(int(replay_host.get("outcome_calls")) == 0 and int(replay_host.get("surface_audio_calls")) == 0 and int(replay_host.get("drink_audio_calls")) == 0, "Production-path duplicate delivery repeated outcome or audio one-shots.")
+	_check(int(replay_host.get("refresh_calls")) == 1, "Canonical cache replay did not remain a single presentation-only refresh.")
+	var replay_result: Dictionary = replay_host.get("last_game_result")
+	var replay_marker: Dictionary = replay_result.get("blackjack_host_replay", {})
+	_check(str(replay_marker.get("cause", "")) == BlackjackActionAuthorityScript.REPLAY_CAUSE, "Production-path cache hit lacked the closed canonical replay marker.")
 
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(run.to_save_snapshot())
@@ -360,6 +429,23 @@ func _check_host_authority_and_replay(game: GameModule) -> void:
 	var mismatched_states: Dictionary = mismatched_restore.current_environment.get("game_states", {})
 	var mismatched_table: Dictionary = mismatched_states.get("blackjack", {})
 	_check(not mismatched_table.has("_blackjack_action_authority"), "Restore retained a Blackjack ledger whose checkpoint did not match canonical account/RNG state.")
+
+	var transplanted_snapshot := run.to_save_snapshot()
+	var transplanted_environment: Dictionary = transplanted_snapshot.get("current_environment", {})
+	transplanted_environment["id"] = "%s_transplanted" % str(transplanted_environment.get("id", "room"))
+	var transplanted_states: Dictionary = transplanted_environment.get("game_states", {})
+	var transplanted_table: Dictionary = transplanted_states.get("blackjack", {})
+	var transplanted_ledger: Dictionary = transplanted_table.get("_blackjack_action_authority", {})
+	transplanted_ledger["table_binding"] = "blackjack:%s:%s" % [str(transplanted_environment.get("id", "unknown")), str(transplanted_environment.get("archetype_id", "unknown"))]
+	transplanted_table["_blackjack_action_authority"] = transplanted_ledger
+	transplanted_states["blackjack"] = transplanted_table
+	transplanted_environment["game_states"] = transplanted_states
+	transplanted_snapshot["current_environment"] = transplanted_environment
+	var transplanted_restore := RunStateScript.new()
+	transplanted_restore.from_dict(transplanted_snapshot)
+	var transplant_states: Dictionary = transplanted_restore.current_environment.get("game_states", {})
+	var transplant_table: Dictionary = transplant_states.get("blackjack", {})
+	_check(not transplant_table.has("_blackjack_action_authority"), "Restore accepted a structurally valid cache whose receipt was transplanted from another table binding.")
 
 
 func _check_failure_atomic_rng_retry(game: GameModule) -> void:
@@ -391,6 +477,58 @@ func _check_failure_atomic_rng_retry(game: GameModule) -> void:
 	var control_result: Dictionary = control_host.call("_blackjack_host_resolve_intent", "play_basic", 5)
 	_check(RitualRuntimeScript.canonical_json(retry_result) == RitualRuntimeScript.canonical_json(control_result), "Legitimate retry after post-RNG rejection diverged from clean control.")
 	_check(RitualRuntimeScript.canonical_json(retry_run.to_save_snapshot()) == RitualRuntimeScript.canonical_json(control_fixture.run.to_save_snapshot()), "Post-RNG retry committed different state/RNG than clean control.")
+
+
+func _check_failed_turn_retry(game: GameModule) -> void:
+	var retry_fixture := _prepared_authority_fixture(game, "GAME06-2-TURN-ROLLBACK", 36, 5)
+	var control_fixture := _prepared_authority_fixture(game, "GAME06-2-TURN-ROLLBACK", 36, 5)
+	var retry_run: RunState = retry_fixture.run
+	var control_run: RunState = control_fixture.run
+	var before_bankroll := retry_run.bankroll
+	var before_chips := retry_run.grand_casino_chips
+	var before_rng := retry_run.rng_state
+	var before_town_action := int(retry_run.town_state.action_index)
+	var before_environment_turns := int(retry_run.current_environment.get("turns", 0))
+	var before_table: Dictionary = game.call("_table_state_preview", retry_run, retry_run.current_environment)
+	before_table.erase("_blackjack_action_authority")
+	var retry_host := _failing_authority_host(game, retry_run, 5)
+	var rejected: Dictionary = retry_host.call("_blackjack_host_resolve_intent", "play_basic", 5)
+	_check(not bool(rejected.get("ok", true)) and str(rejected.get("error_code", "")) == "forced_turn_rejection", "Forced environment-turn rejection did not fail the Blackjack transaction at its publish boundary.")
+	var rejected_table: Dictionary = game.call("_table_state_preview", retry_run, retry_run.current_environment)
+	var rejected_ledger: Dictionary = rejected_table.get("_blackjack_action_authority", {})
+	var pending: Dictionary = rejected_ledger.get("pending_delivery", {})
+	var rejected_table_without_authority := rejected_table.duplicate(true)
+	rejected_table_without_authority.erase("_blackjack_action_authority")
+	_check(not pending.is_empty() and str(pending.get("request_key", "")) == str(rejected.get("blackjack_host_request_key", "")), "Failed environment turn did not retain the exact retryable pending delivery key.")
+	_check(retry_run.bankroll == before_bankroll and retry_run.grand_casino_chips == before_chips and retry_run.rng_state == before_rng, "Failed environment turn funded, applied, or advanced RNG on the live run.")
+	_check(int(retry_run.town_state.action_index) == before_town_action and int(retry_run.current_environment.get("turns", 0)) == before_environment_turns, "Failed environment turn advanced a live action boundary.")
+	_check(RitualRuntimeScript.canonical_json(rejected_table_without_authority) == RitualRuntimeScript.canonical_json(before_table), "Failed environment turn published detached Blackjack table/result mutations.")
+	var pending_surface: Dictionary = game.surface_state(retry_run, retry_run.current_environment, {})
+	var pending_bindings: Dictionary = pending_surface.get("surface_action_bindings", {})
+	_check(bool(pending_surface.get("blackjack_host_retry_available", false)) and str((pending_bindings.get("legal", {}) as Dictionary).get("action", "")) == "blackjack_retry_pending", "Failed action did not project a native retry control and legal binding.")
+	_check(bool(pending_surface.get("blackjack_host_cancel_available", false)) and str((pending_bindings.get("cheat", {}) as Dictionary).get("action", "")) == "blackjack_cancel_pending", "Failed action did not project a native cancel control and alternate binding.")
+	var surface_handled: bool = retry_host.call("_handle_module_surface_action", "blackjack_retry_pending", 0, true, true)
+	var retried: Dictionary = retry_host.call("_blackjack_host_replay_request", pending)
+	var control_host := _authority_host(game, control_run, 5)
+	var control: Dictionary = control_host.call("_blackjack_host_resolve_intent", "play_basic", 5)
+	_check(surface_handled, "Native pending-action retry did not travel through the canvas-facing host command path.")
+	_check(bool(retried.get("ok", false)) and bool(retried.get("blackjack_host_committed", false)), "Exact-key retry after an environment-turn rejection did not commit.")
+	_check(str(retried.get("blackjack_host_request_key", "")) == str(pending.get("request_key", "")), "Environment-turn retry replaced its durable delivery key.")
+	_check(RitualRuntimeScript.canonical_json(retried) == RitualRuntimeScript.canonical_json(control), "Environment-turn retry response diverged from a clean single delivery.")
+	_check(RitualRuntimeScript.canonical_json(retry_run.to_save_snapshot()) == RitualRuntimeScript.canonical_json(control_run.to_save_snapshot()), "Environment-turn retry double-funded, double-applied, burned RNG, or crossed two boundaries.")
+
+	var cancel_fixture := _prepared_authority_fixture(game, "GAME06-2-CANCEL-ROLLBACK", 37, 5)
+	var cancel_run: RunState = cancel_fixture.run
+	var cancel_host := _failing_authority_host(game, cancel_run, 5)
+	var before_cancel_table: Dictionary = game.call("_table_state_preview", cancel_run, cancel_run.current_environment)
+	var before_cancel_session: Dictionary = (before_cancel_table.get("_blackjack_action_authority", {}) as Dictionary).get("session", {})
+	var cancel_prepared: Dictionary = cancel_host.call("_blackjack_host_prepare_delivery", "play_basic", 5)
+	_check(bool(cancel_prepared.get("ok", false)), "Host could not stage a pending action for native cancellation coverage.")
+	var cancel_handled: bool = cancel_host.call("_handle_module_surface_action", "blackjack_cancel_pending", 0, true, true)
+	var after_cancel_table: Dictionary = game.call("_table_state_preview", cancel_run, cancel_run.current_environment)
+	var after_cancel_ledger: Dictionary = after_cancel_table.get("_blackjack_action_authority", {})
+	_check(cancel_handled and (after_cancel_ledger.get("pending_delivery", {}) as Dictionary).is_empty(), "Native cancel control did not clear the exact pending delivery through the canvas-facing path.")
+	_check(RitualRuntimeScript.canonical_json(after_cancel_ledger.get("session", {})) == RitualRuntimeScript.canonical_json(before_cancel_session), "Native cancel did not restore the exact pre-delivery Blackjack session.")
 
 
 func _check_hostile_delivery_and_restore(game: GameModule) -> void:
@@ -505,6 +643,24 @@ func _seed_authority_session(game: GameModule, run: RunState, environment: Dicti
 
 func _authority_host(game: GameModule, run: RunState, stake: int) -> Control:
 	var host: Control = FoundationMainScript.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {"blackjack": game})
+	host.set("run_state", run)
+	host.set("selected_stake", stake)
+	return host
+
+
+func _failing_authority_host(game: GameModule, run: RunState, stake: int) -> Control:
+	var host: Control = FailingAdvanceHost.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {"blackjack": game})
+	host.set("run_state", run)
+	host.set("selected_stake", stake)
+	return host
+
+
+func _replay_audit_host(game: GameModule, run: RunState, stake: int) -> Control:
+	var host: Control = ReplayAuditHost.new()
 	host.set("current_game", game)
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run)

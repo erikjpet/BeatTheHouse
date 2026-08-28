@@ -12,6 +12,7 @@ const LEDGER_VERSION := 3
 const CACHE_LIMIT := 128
 const JOURNAL_LIMIT := 128
 const RECEIPT_CAUSE := "foundation_main:blackjack_action"
+const REPLAY_CAUSE := "foundation_main:blackjack_cache_hit"
 
 const LEDGER_KEYS := [
 	"boundary_ordinal",
@@ -21,16 +22,18 @@ const LEDGER_KEYS := [
 	"journal_head",
 	"next_request_ordinal",
 	"pending_delivery",
+	"pending_recovery_session",
 	"request_cache",
 	"request_order",
 	"session",
 	"table_binding",
 	"version",
 ]
-const DELIVERY_KEYS := ["action_id", "boundary_ordinal", "intent_fingerprint", "request_key", "trusted_context_fingerprint"]
-const CACHE_ENTRY_KEYS := ["action_id", "boundary_ordinal", "intent_fingerprint", "proposal_fingerprint", "request_key", "response", "result_fingerprint", "rng_fingerprint", "run_fingerprint", "trusted_context_fingerprint"]
-const JOURNAL_ENTRY_KEYS := ["boundary_ordinal", "entry_fingerprint", "intent_fingerprint", "previous_fingerprint", "proposal_fingerprint", "request_key", "result_fingerprint", "rng_fingerprint", "run_fingerprint", "trusted_context_fingerprint"]
-const RECEIPT_KEYS := ["boundary_ordinal", "cause", "intent_fingerprint", "proposal_fingerprint", "request_key", "result_fingerprint", "rng_fingerprint", "run_fingerprint", "table_binding", "trusted_context_fingerprint", "version"]
+const DELIVERY_KEYS := ["action_id", "boundary_ordinal", "intent_fingerprint", "recovery_session_fingerprint", "request_key", "stake", "trusted_context_fingerprint"]
+const CACHE_ENTRY_KEYS := ["action_id", "boundary_ordinal", "intent_fingerprint", "proposal_fingerprint", "recovery_session_fingerprint", "request_key", "response", "result_fingerprint", "rng_fingerprint", "run_fingerprint", "stake", "trusted_context_fingerprint"]
+const JOURNAL_ENTRY_KEYS := ["boundary_ordinal", "entry_fingerprint", "intent_fingerprint", "previous_fingerprint", "proposal_fingerprint", "recovery_session_fingerprint", "request_key", "result_fingerprint", "rng_fingerprint", "run_fingerprint", "stake", "trusted_context_fingerprint"]
+const RECEIPT_KEYS := ["boundary_ordinal", "cause", "intent_fingerprint", "proposal_fingerprint", "recovery_session_fingerprint", "request_key", "result_fingerprint", "rng_fingerprint", "run_fingerprint", "stake", "table_binding", "trusted_context_fingerprint", "version"]
+const REPLAY_MARKER_KEYS := ["cause", "delivery_fingerprint", "request_key", "response_fingerprint", "version"]
 
 
 static func default_ledger(table_binding: String, checkpoint_fingerprint: String) -> Dictionary:
@@ -43,6 +46,7 @@ static func default_ledger(table_binding: String, checkpoint_fingerprint: String
 		"boundary_ordinal": 0,
 		"session": {},
 		"pending_delivery": {},
+		"pending_recovery_session": {},
 		"request_cache": {},
 		"request_order": [],
 		"journal": [],
@@ -64,12 +68,17 @@ static func validate_persisted_ledger(value: Variant, table_binding: String, exp
 			or int(ledger.get("boundary_ordinal", -1)) < 0 \
 			or typeof(ledger.get("session", null)) != TYPE_DICTIONARY \
 			or typeof(ledger.get("pending_delivery", null)) != TYPE_DICTIONARY \
+			or typeof(ledger.get("pending_recovery_session", null)) != TYPE_DICTIONARY \
 			or typeof(ledger.get("request_cache", null)) != TYPE_DICTIONARY \
 			or typeof(ledger.get("request_order", null)) != TYPE_ARRAY \
 			or typeof(ledger.get("journal", null)) != TYPE_ARRAY:
 		return {}
 	var pending: Dictionary = ledger.get("pending_delivery", {})
 	if not pending.is_empty() and not _valid_delivery(pending, ledger):
+		return {}
+	var recovery_session: Dictionary = ledger.get("pending_recovery_session", {})
+	if (pending.is_empty() and not recovery_session.is_empty()) \
+			or (not pending.is_empty() and str(pending.get("recovery_session_fingerprint", "")) != RuntimeScript.canonical_fingerprint(recovery_session)):
 		return {}
 	var cache: Dictionary = ledger.get("request_cache", {})
 	var order: Array = ledger.get("request_order", [])
@@ -81,7 +90,7 @@ static func validate_persisted_ledger(value: Variant, table_binding: String, exp
 		if request_key.is_empty() or seen.has(request_key) or not cache.has(request_key):
 			return {}
 		seen[request_key] = true
-		if not _valid_cache_entry(cache.get(request_key), request_key):
+		if not _valid_cache_entry(cache.get(request_key), request_key, table_binding):
 			return {}
 	var journal: Array = ledger.get("journal", [])
 	if journal.size() > JOURNAL_LIMIT or journal.size() != order.size():
@@ -98,7 +107,7 @@ static func validate_persisted_ledger(value: Variant, table_binding: String, exp
 		if journal_request_key != str(order[journal_index]) or not cache.has(journal_request_key):
 			return {}
 		var cached_entry: Dictionary = cache.get(journal_request_key, {})
-		for causal_key in ["boundary_ordinal", "intent_fingerprint", "proposal_fingerprint", "request_key", "result_fingerprint", "rng_fingerprint", "run_fingerprint", "trusted_context_fingerprint"]:
+		for causal_key in ["boundary_ordinal", "intent_fingerprint", "proposal_fingerprint", "recovery_session_fingerprint", "request_key", "result_fingerprint", "rng_fingerprint", "run_fingerprint", "stake", "trusted_context_fingerprint"]:
 			if entry.get(causal_key) != cached_entry.get(causal_key):
 				return {}
 		previous = str(entry.get("entry_fingerprint", ""))
@@ -113,17 +122,20 @@ static func stage_session(ledger: Dictionary, session: Dictionary) -> Dictionary
 	return next
 
 
-static func issue_delivery(ledger: Dictionary, action_id: String, trusted_context: Dictionary) -> Dictionary:
+static func issue_delivery(ledger: Dictionary, action_id: String, trusted_context: Dictionary, stake: int, recovery_session: Dictionary) -> Dictionary:
 	var next := ledger.duplicate(true)
 	var intent_fingerprint := RuntimeScript.canonical_fingerprint({
 		"action_id": action_id,
 		"session": next.get("session", {}),
 	})
 	var trusted_context_fingerprint := RuntimeScript.canonical_fingerprint(trusted_context)
+	var recovery_session_fingerprint := RuntimeScript.canonical_fingerprint(recovery_session)
 	var pending: Dictionary = next.get("pending_delivery", {})
 	if not pending.is_empty():
 		if str(pending.get("action_id", "")) != action_id \
+				or int(pending.get("stake", -1)) != stake \
 				or str(pending.get("intent_fingerprint", "")) != intent_fingerprint \
+				or str(pending.get("recovery_session_fingerprint", "")) != recovery_session_fingerprint \
 				or str(pending.get("trusted_context_fingerprint", "")) != trusted_context_fingerprint:
 			return {"ok": false, "error_code": "receipt_content_conflict", "ledger": ledger.duplicate(true)}
 		return {"ok": true, "delivery": pending.duplicate(true), "ledger": next}
@@ -133,24 +145,39 @@ static func issue_delivery(ledger: Dictionary, action_id: String, trusted_contex
 	pending = {
 		"request_key": request_key,
 		"action_id": action_id,
+		"stake": stake,
 		"boundary_ordinal": boundary,
 		"intent_fingerprint": intent_fingerprint,
 		"trusted_context_fingerprint": trusted_context_fingerprint,
+		"recovery_session_fingerprint": recovery_session_fingerprint,
 	}
 	next["pending_delivery"] = pending
+	next["pending_recovery_session"] = recovery_session.duplicate(true)
 	next["boundary_ordinal"] = boundary
 	next["next_request_ordinal"] = ordinal + 1
 	return {"ok": true, "delivery": pending.duplicate(true), "ledger": next}
 
 
-static func delivery_matches(ledger: Dictionary, request_key: String, action_id: String, trusted_context: Dictionary) -> Dictionary:
+static func delivery_matches(ledger: Dictionary, request_key: String, action_id: String, trusted_context: Dictionary, stake: int) -> Dictionary:
 	var pending: Dictionary = ledger.get("pending_delivery", {})
 	if str(pending.get("request_key", "")) != request_key:
 		return {"ok": false, "error_code": "stale_boundary"}
-	var issued := issue_delivery(ledger, action_id, trusted_context)
+	var issued := issue_delivery(ledger, action_id, trusted_context, stake, ledger.get("pending_recovery_session", {}))
 	if not bool(issued.get("ok", false)):
 		return issued
 	return {"ok": true, "delivery": pending.duplicate(true)}
+
+
+static func cancel_delivery(ledger: Dictionary, delivery: Dictionary) -> Dictionary:
+	var pending: Dictionary = ledger.get("pending_delivery", {})
+	if not _closed_shape(delivery, DELIVERY_KEYS) \
+			or RuntimeScript.canonical_json(delivery) != RuntimeScript.canonical_json(pending):
+		return {"ok": false, "error_code": "receipt_content_conflict", "ledger": ledger.duplicate(true)}
+	var next := ledger.duplicate(true)
+	next["session"] = (next.get("pending_recovery_session", {}) as Dictionary).duplicate(true)
+	next["pending_delivery"] = {}
+	next["pending_recovery_session"] = {}
+	return {"ok": true, "ledger": next}
 
 
 static func cached_response(ledger: Dictionary, request_key: String, delivery: Dictionary) -> Dictionary:
@@ -160,12 +187,51 @@ static func cached_response(ledger: Dictionary, request_key: String, delivery: D
 	if not cache.has(request_key):
 		return {}
 	var entry: Dictionary = cache.get(request_key, {})
-	if not _valid_cache_entry(entry, request_key):
+	if not _valid_cache_entry(entry, request_key, str(ledger.get("table_binding", ""))):
 		return {"ok": false, "error_code": "invalid_cache"}
-	for key in ["action_id", "boundary_ordinal", "intent_fingerprint", "trusted_context_fingerprint"]:
+	for key in ["action_id", "boundary_ordinal", "intent_fingerprint", "recovery_session_fingerprint", "request_key", "stake", "trusted_context_fingerprint"]:
 		if entry.get(key) != delivery.get(key):
 			return {"ok": false, "error_code": "receipt_content_conflict"}
 	return (entry.get("response", {}) as Dictionary).duplicate(true)
+
+
+static func cached_replay_response(ledger: Dictionary, request_key: String, delivery: Dictionary) -> Dictionary:
+	var response := cached_response(ledger, request_key, delivery)
+	if response.is_empty() or (not bool(response.get("ok", false)) and response.has("error_code")):
+		return response
+	response["blackjack_host_replay"] = {
+		"version": LEDGER_VERSION,
+		"cause": REPLAY_CAUSE,
+		"request_key": request_key,
+		"delivery_fingerprint": RuntimeScript.canonical_fingerprint(delivery),
+		"response_fingerprint": result_fingerprint(response),
+	}
+	return response
+
+
+static func valid_cached_replay(ledger: Dictionary, replay: Dictionary) -> bool:
+	var marker_value: Variant = replay.get("blackjack_host_replay", null)
+	var delivery_value: Variant = replay.get("blackjack_host_delivery", null)
+	if typeof(marker_value) != TYPE_DICTIONARY or typeof(delivery_value) != TYPE_DICTIONARY:
+		return false
+	var marker: Dictionary = marker_value
+	var delivery: Dictionary = delivery_value
+	var request_key := str(marker.get("request_key", ""))
+	if not _closed_shape(marker, REPLAY_MARKER_KEYS) \
+			or int(marker.get("version", 0)) != LEDGER_VERSION \
+			or str(marker.get("cause", "")) != REPLAY_CAUSE \
+			or request_key.is_empty() \
+			or request_key != str(delivery.get("request_key", "")) \
+			or str(marker.get("delivery_fingerprint", "")) != RuntimeScript.canonical_fingerprint(delivery):
+		return false
+	var canonical_replay := replay.duplicate(true)
+	canonical_replay.erase("blackjack_host_replay")
+	if str(marker.get("response_fingerprint", "")) != result_fingerprint(canonical_replay):
+		return false
+	var cached := cached_response(ledger, request_key, delivery)
+	return not cached.is_empty() \
+		and not (not bool(cached.get("ok", false)) and cached.has("error_code")) \
+		and RuntimeScript.canonical_json(cached) == RuntimeScript.canonical_json(canonical_replay)
 
 
 static func result_fingerprint(result: Dictionary) -> String:
@@ -184,6 +250,8 @@ static func receipt_for(delivery: Dictionary, table_binding: String, result: Dic
 		"boundary_ordinal": int(delivery.get("boundary_ordinal", -1)),
 		"intent_fingerprint": str(delivery.get("intent_fingerprint", "")),
 		"trusted_context_fingerprint": str(delivery.get("trusted_context_fingerprint", "")),
+		"recovery_session_fingerprint": str(delivery.get("recovery_session_fingerprint", "")),
+		"stake": int(delivery.get("stake", 0)),
 		"proposal_fingerprint": proposal_fingerprint,
 		"run_fingerprint": run_fingerprint,
 		"rng_fingerprint": rng_fingerprint,
@@ -221,6 +289,8 @@ static func commit_response(ledger: Dictionary, delivery: Dictionary, response: 
 		"boundary_ordinal": int(delivery.get("boundary_ordinal", -1)),
 		"intent_fingerprint": str(delivery.get("intent_fingerprint", "")),
 		"trusted_context_fingerprint": str(delivery.get("trusted_context_fingerprint", "")),
+		"recovery_session_fingerprint": str(delivery.get("recovery_session_fingerprint", "")),
+		"stake": int(delivery.get("stake", 0)),
 		"proposal_fingerprint": proposal_fingerprint,
 		"run_fingerprint": run_fingerprint,
 		"rng_fingerprint": rng_fingerprint,
@@ -239,6 +309,8 @@ static func commit_response(ledger: Dictionary, delivery: Dictionary, response: 
 		"boundary_ordinal": int(delivery.get("boundary_ordinal", -1)),
 		"intent_fingerprint": str(delivery.get("intent_fingerprint", "")),
 		"trusted_context_fingerprint": str(delivery.get("trusted_context_fingerprint", "")),
+		"recovery_session_fingerprint": str(delivery.get("recovery_session_fingerprint", "")),
+		"stake": int(delivery.get("stake", 0)),
 		"proposal_fingerprint": proposal_fingerprint,
 		"run_fingerprint": run_fingerprint,
 		"rng_fingerprint": rng_fingerprint,
@@ -256,6 +328,7 @@ static func commit_response(ledger: Dictionary, delivery: Dictionary, response: 
 	next["journal"] = journal
 	next["journal_head"] = str((journal[-1] as Dictionary).get("entry_fingerprint", "")) if not journal.is_empty() else ""
 	next["pending_delivery"] = {}
+	next["pending_recovery_session"] = {}
 	next["checkpoint_fingerprint"] = checkpoint_fingerprint
 	return next
 
@@ -264,16 +337,18 @@ static func _valid_delivery(delivery: Dictionary, ledger: Dictionary) -> bool:
 	return _closed_shape(delivery, DELIVERY_KEYS) \
 		and not str(delivery.get("request_key", "")).is_empty() \
 		and not str(delivery.get("action_id", "")).is_empty() \
+		and int(delivery.get("stake", -1)) >= 0 \
 		and int(delivery.get("boundary_ordinal", -1)) == int(ledger.get("boundary_ordinal", -2)) \
 		and str(delivery.get("intent_fingerprint", "")) == RuntimeScript.canonical_fingerprint({
 			"action_id": str(delivery.get("action_id", "")),
 			"session": ledger.get("session", {}),
 		}) \
 		and _fingerprint(delivery.get("intent_fingerprint")) \
+		and _fingerprint(delivery.get("recovery_session_fingerprint")) \
 		and _fingerprint(delivery.get("trusted_context_fingerprint"))
 
 
-static func _valid_cache_entry(value: Variant, request_key: String) -> bool:
+static func _valid_cache_entry(value: Variant, request_key: String, table_binding: String) -> bool:
 	if typeof(value) != TYPE_DICTIONARY:
 		return false
 	var entry: Dictionary = value
@@ -286,22 +361,34 @@ static func _valid_cache_entry(value: Variant, request_key: String) -> bool:
 			or str(response.get("blackjack_host_request_key", "")) != request_key \
 			or str(response.get("blackjack_host_content_fingerprint", "")) != str(entry.get("result_fingerprint", "")):
 		return false
-	for fingerprint_key in ["intent_fingerprint", "proposal_fingerprint", "run_fingerprint", "rng_fingerprint", "trusted_context_fingerprint"]:
+	for fingerprint_key in ["intent_fingerprint", "proposal_fingerprint", "recovery_session_fingerprint", "run_fingerprint", "rng_fingerprint", "trusted_context_fingerprint"]:
 		if not _fingerprint(entry.get(fingerprint_key)):
 			return false
+	if int(entry.get("stake", -1)) < 0:
+		return false
 	var delivery: Dictionary = response.get("blackjack_host_delivery", {}) if typeof(response.get("blackjack_host_delivery", {})) == TYPE_DICTIONARY else {}
 	if not _closed_shape(delivery, DELIVERY_KEYS):
 		return false
-	for delivery_key in ["action_id", "boundary_ordinal", "intent_fingerprint", "request_key", "trusted_context_fingerprint"]:
+	for delivery_key in ["action_id", "boundary_ordinal", "intent_fingerprint", "recovery_session_fingerprint", "request_key", "stake", "trusted_context_fingerprint"]:
 		if delivery.get(delivery_key) != entry.get(delivery_key):
 			return false
 	var receipt: Dictionary = response.get("blackjack_host_apply_receipt", {}) if typeof(response.get("blackjack_host_apply_receipt", {})) == TYPE_DICTIONARY else {}
 	if not _closed_shape(receipt, RECEIPT_KEYS):
 		return false
-	for receipt_key in ["boundary_ordinal", "intent_fingerprint", "proposal_fingerprint", "request_key", "result_fingerprint", "rng_fingerprint", "run_fingerprint", "trusted_context_fingerprint"]:
+	if str(receipt.get("table_binding", "")) != table_binding \
+			or not _binding_matches_response(table_binding, response):
+		return false
+	for receipt_key in ["boundary_ordinal", "intent_fingerprint", "proposal_fingerprint", "recovery_session_fingerprint", "request_key", "result_fingerprint", "rng_fingerprint", "run_fingerprint", "stake", "trusted_context_fingerprint"]:
 		if receipt.get(receipt_key) != entry.get(receipt_key):
 			return false
 	return valid_receipt(receipt, receipt, response, str(receipt.get("table_binding", "")))
+
+
+static func _binding_matches_response(table_binding: String, response: Dictionary) -> bool:
+	var environment_id := str(response.get("environment_id", ""))
+	if environment_id.is_empty():
+		return false
+	return table_binding.begins_with("blackjack:%s:" % environment_id)
 
 
 static func _valid_journal_entry(entry: Dictionary, previous: String) -> bool:
