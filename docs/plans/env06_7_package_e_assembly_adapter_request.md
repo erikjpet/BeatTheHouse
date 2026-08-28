@@ -26,3 +26,25 @@ Assembly also owns registering this package in shared catalog/index probes and
 the combined Grand Casino audit fixture. Package E supplies definitions and a
 focused fixture only; it will not edit the dispatch, catalog loader, pixel
 canvas, shared scenario suite, craps module, or game ritual runtime.
+
+## Production-composition blocker found by the package audit
+
+The package-local production composition audit at WIP `68e569d5` loads the real
+ContentLibrary, generates deterministic Delta Queen and Grand Casino instances,
+and seals each instance through EnvironmentSemanticInventory. It found that
+neither production environment currently publishes any semantic zones. Package
+E therefore cannot replace its former synthetic target inventory with a
+production-proven spatial host until assembly supplies bounded `queen_public`
+zones or anchors for the package's independently interactable route stations.
+
+The same audit found that Grand Casino's existing internal layout objects
+`travel:grand_casino_high_limit`, `travel:grand_casino_back_room`, and
+`travel:grand_casino_cage` are rejected by authoritative base-record production
+because their room routes are not catalog-backed. Assembly must either
+catalog-prove those existing internal routes or provide the sanctioned
+Grand-Casino composition seam that excludes them without weakening ordinary
+production validation.
+
+These are shared assembly requirements. Package E will not add synthetic
+inventory, edit the shared archetypes/catalog/loader, or claim a production
+composition pass before the assembly-owned seam exists.
