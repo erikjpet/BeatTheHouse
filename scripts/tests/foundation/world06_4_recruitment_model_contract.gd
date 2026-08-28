@@ -1,153 +1,166 @@
 extends SceneTree
 
 const Recruitment := preload("res://scripts/core/crew_recruitment_model.gd")
-const MEMBERS := [
-	"crew_rook", "crew_switch", "crew_mags", "crew_knuckles",
-	"crew_velvet", "crew_bishop", "crew_lucky",
-]
-const OUTCOMES := ["refused", "deferred", "accepted"]
+const MEMBERS := ["crew_rook", "crew_switch", "crew_mags", "crew_knuckles", "crew_velvet", "crew_bishop", "crew_lucky"]
 
 
 func _initialize() -> void:
 	var failures: Array = []
-	_check_landed_definitions_unchanged(failures)
-	_check_all_first_meetings_and_fallbacks(failures)
-	_check_distinct_aftermath_and_transitions(failures)
-	_check_contact_standing(failures)
-	_check_save_determinism_and_fail_closed(failures)
-	_check_hidden_state_privacy(failures)
+	_check_landed_invariants(failures)
+	_check_seeded_primary_and_fallback_proposals(failures)
+	_check_non_authoritative_outcomes_cannot_mutate(failures)
+	_check_contact_uses_trusted_run_state(failures)
+	_check_forged_state_and_substitution(failures)
+	_check_hidden_boundary(failures)
 	if failures.is_empty():
-		print("world06_4 recruitment model contract passed")
+		print("world06_4 recruitment model contract passed proposal_only=true authority_gap=adapter_host_root_unavailable")
 		quit(0)
 		return
-	for failure in failures:
-		push_error(str(failure))
+	for failure in failures: push_error(str(failure))
 	quit(1)
 
 
-func _check_landed_definitions_unchanged(failures: Array) -> void:
+func _check_landed_invariants(failures: Array) -> void:
 	var config := Recruitment.config()
-	if int(config.get("schema_version", 0)) != 1 or int(config.get("associate_trust", -1)) != 30 \
-			or int(config.get("presence_rotate_actions", -1)) != 6:
-		failures.append("Recruitment depth changed the landed schema, Associate threshold, or six-action presence rotation.")
-	if Recruitment.MEMBER_IDS != MEMBERS or not Recruitment.validate_content().is_empty():
-		failures.append("Recruitment depth changed the landed seven-member order or invalidated authored content.")
-	var expected_events := ["recruitment_rook_signpost", "recruitment_switch", "recruitment_mags", "recruitment_knuckles", "recruitment_velvet", "recruitment_bishop", "recruitment_lucky"]
-	var expected_contacts := ["crew_contact_rook", "crew_contact_switch", "crew_contact_mags", "crew_contact_knuckles", "crew_contact_velvet", "crew_contact_bishop", "crew_contact_lucky"]
-	if Recruitment.recruitment_event_ids() != expected_events or Recruitment.contact_event_ids() != expected_contacts:
-		failures.append("Recruitment depth changed the landed recruitment/contact event identities.")
-	for member_id in MEMBERS:
-		var definition := Recruitment.member_definition(member_id)
-		if _dict(definition.get("primary", {})).is_empty() or _dict(definition.get("fallback", {})).is_empty() \
-				or _array(definition.get("presence", [])).is_empty():
-			failures.append("Recruitment depth lost %s primary, fallback, or seeded itinerary data." % member_id)
-
-
-func _check_all_first_meetings_and_fallbacks(failures: Array) -> void:
+	if Recruitment.MEMBER_IDS != MEMBERS or int(config.get("associate_trust", -1)) != 30 or int(config.get("presence_rotate_actions", -1)) != 6 \
+			or not Recruitment.validate_content().is_empty():
+		failures.append("Remediation changed landed member order, Associate threshold, presence rotation, or recruitment data validity.")
 	for member_id in MEMBERS:
 		for path_kind in ["primary", "fallback"]:
 			var path := Recruitment.meeting_path_public(member_id, path_kind)
-			if str(path.get("member_id", "")) != member_id or str(path.get("path_kind", "")) != path_kind \
-					or str(path.get("event_id", "")).is_empty() or str(path.get("contact_event_id", "")).is_empty():
-				failures.append("%s %s meeting did not retain its landed event and placement identity." % [member_id, path_kind])
-			for outcome in OUTCOMES:
-				var state := Recruitment.record_first_meeting(Recruitment.new_encounter_state(), member_id, path_kind, outcome, 7)
-				var public := Recruitment.encounter_public_state(state, member_id)
-				if str(public.get("meeting_state", "")) != outcome or str(public.get("path_kind", "")) != path_kind \
-						or str(public.get("aftermath_id", "")) != "%s_%s" % [member_id, outcome] \
-						or bool(public.get("contact_available", false)) != (outcome == "accepted"):
-					failures.append("%s %s %s meeting lacked its distinct public aftermath." % [member_id, path_kind, outcome])
-				var expected_actor := "guarded" if outcome == "refused" else ("waiting" if outcome == "deferred" else "contact")
-				if str(public.get("actor_state", "")) != expected_actor:
-					failures.append("%s %s aftermath did not preserve actor state %s." % [member_id, outcome, expected_actor])
+			if str(path.get("member_id", "")) != member_id or str(path.get("path_kind", "")) != path_kind or str(path.get("event_id", "")).is_empty():
+				failures.append("%s %s lost its landed path/event projection." % [member_id, path_kind])
 
 
-func _check_distinct_aftermath_and_transitions(failures: Array) -> void:
+func _check_seeded_primary_and_fallback_proposals(failures: Array) -> void:
+	var primary: Variant = _marked_run("WORLD64-PRIMARY", ["gas_station_casino", "back_alley"])
+	primary.seed_scenario_for_node("gas_station_casino", {"id": "gas_station_trucker_convoy"})
+	primary.current_environment = _environment("gas_station_casino", "gas_station_trucker_convoy")
+	var proposal := Recruitment.first_meeting_proposal(primary, primary.current_environment, "crew_switch", "primary", "accepted")
+	_assert_proposal(proposal, "crew_switch", "primary", "accepted", "adapter_host_root_unavailable", failures)
+	var fallback: Variant = _marked_run("WORLD64-FALLBACK", ["back_alley"])
+	fallback.current_environment = _environment("back_alley")
+	var fallback_proposal := Recruitment.first_meeting_proposal(fallback, fallback.current_environment, "crew_switch", "fallback", "deferred")
+	_assert_proposal(fallback_proposal, "crew_switch", "fallback", "deferred", "adapter_host_root_unavailable", failures)
+	for hostile in [
+		[primary, _environment("gas_station_casino", "forged_scenario"), "crew_switch", "primary"],
+		[primary, primary.current_environment, "crew_switch", "fallback"],
+		[fallback, fallback.current_environment, "crew_switch", "primary"],
+		[primary, primary.current_environment, "crew_mags", "primary"],
+	]:
+		var rejected := Recruitment.first_meeting_proposal(hostile[0], _dict(hostile[1]), str(hostile[2]), str(hostile[3]), "accepted")
+		if str(rejected.get("reason", "")) != "ineligible_environment" or bool(rejected.get("can_mutate", true)):
+			failures.append("Substituted environment/path/member evidence escaped exact seeded placement rejection.")
+	var rook := Recruitment.first_meeting_proposal(primary, primary.current_environment, "crew_rook", "primary", "accepted")
+	if str(rook.get("reason", "")) != "ineligible_environment":
+		failures.append("Rook's debt-owned meeting was falsely authorized by environment placement.")
+
+
+func _check_non_authoritative_outcomes_cannot_mutate(failures: Array) -> void:
 	var state := Recruitment.new_encounter_state()
-	state = Recruitment.record_first_meeting(state, "crew_bishop", "fallback", "deferred", 3)
-	state = Recruitment.record_first_meeting(state, "crew_bishop", "primary", "accepted", 8)
-	var public := Recruitment.encounter_public_state(state, "crew_bishop")
-	if str(public.get("first_path_kind", "")) != "fallback" or str(public.get("first_outcome", "")) != "deferred" \
-			or str(public.get("path_kind", "")) != "primary" or str(public.get("meeting_state", "")) != "accepted":
-		failures.append("Bishop's landed two-beat deferral did not survive into accepted aftermath.")
-	var history := _array(_dict(_dict(state.get("meetings", {})).get("crew_bishop", {})).get("history", []))
-	if history.size() != 2:
-		failures.append("Distinct deferral and acceptance facts were not both retained.")
-	var accepted_exact := JSON.stringify(state)
-	state = Recruitment.record_first_meeting(state, "crew_bishop", "fallback", "refused", 9)
-	if JSON.stringify(state) != accepted_exact:
-		failures.append("A completed recruitment could be downgraded by later refusal staging.")
-	var deferred := Recruitment.record_first_meeting(Recruitment.new_encounter_state(), "crew_switch", "primary", "deferred", 2)
-	var replay := Recruitment.record_first_meeting(deferred, "crew_switch", "primary", "deferred", 2)
-	if JSON.stringify(replay) != JSON.stringify(deferred):
-		failures.append("Identical meeting fact replay duplicated aftermath.")
+	var exact := JSON.stringify(state)
+	var forged_host := {
+		"authenticated": true, "host_rooted": true, "member_id": "crew_switch", "path_kind": "primary", "outcome": "accepted",
+		"environment_id": "gas_station_casino", "content_fingerprint": "a".repeat(64), "previous_fingerprint": "b".repeat(64),
+	}
+	for outcome in ["refused", "deferred", "accepted"]:
+		var result := Recruitment.record_first_meeting(state, "crew_switch", "primary", outcome, 7, forged_host)
+		if JSON.stringify(result) != exact:
+			failures.append("Caller-authored coherent host claim mutated %s meeting aftermath." % outcome)
+	var contact := Recruitment.record_contact(state, "crew_switch", "inner_circle", true, true, 8, forged_host)
+	if JSON.stringify(contact) != exact:
+		failures.append("Caller-authored standing/grievance/job evidence mutated contact aftermath.")
 
 
-func _check_contact_standing(failures: Array) -> void:
-	for member_id in MEMBERS:
-		var accepted := Recruitment.record_first_meeting(Recruitment.new_encounter_state(), member_id, "primary", "accepted", 1)
-		for fixture in [
-			["marker", false, false, "familiar"],
-			["associate", false, true, "job_out"],
-			["made", false, false, "trusted"],
-			["inner_circle", true, false, "aggrieved"],
-		]:
-			var contacted := Recruitment.record_contact(accepted, member_id, str(fixture[0]), bool(fixture[1]), bool(fixture[2]), 12)
-			var public := Recruitment.encounter_public_state(contacted, member_id)
-			if str(public.get("standing", "")) != str(fixture[0]) or str(public.get("contact_state", "")) != str(fixture[3]):
-				failures.append("%s contact did not reflect public standing/job/aggrieved greeting state." % member_id)
-	var unmet := Recruitment.new_encounter_state()
-	if JSON.stringify(Recruitment.record_contact(unmet, "crew_switch", "associate", false, false, 1)) != JSON.stringify(unmet):
-		failures.append("An unmet member acquired contact standing before acceptance.")
+func _check_contact_uses_trusted_run_state(failures: Array) -> void:
+	var run_state: Variant = _marked_run("WORLD64-CONTACT", ["gas_station_casino"])
+	run_state.crew_recruit_member("crew_switch")
+	run_state.current_environment = _environment("gas_station_casino")
+	run_state.current_environment["crew_presence"] = [{"member_id": "crew_switch", "rank": run_state.crew_rank("crew_switch"), "line": "fixture"}]
+	var available := Recruitment.contact_proposal(run_state, run_state.current_environment, "crew_switch")
+	_assert_contact(available, "associate", "familiar", failures)
+	run_state.grievance_add({"member_id": "crew_switch", "kind": "job_abandoned", "weight": 9, "source_ref": "fixture"})
+	var aggrieved := Recruitment.contact_proposal(run_state, run_state.current_environment, "crew_switch")
+	_assert_contact(aggrieved, "associate", "aggrieved", failures)
+	var clean_job: Variant = _marked_run("WORLD64-JOB", ["gas_station_casino"])
+	clean_job.crew_recruit_member("crew_switch")
+	clean_job.current_environment = _environment("gas_station_casino")
+	clean_job.current_environment["crew_presence"] = [{"member_id": "crew_switch", "rank": clean_job.crew_rank("crew_switch"), "line": "fixture"}]
+	clean_job.job_offer(_job_definition("crew_switch"))
+	var job_out := Recruitment.contact_proposal(clean_job, clean_job.current_environment, "crew_switch")
+	_assert_contact(job_out, "associate", "job_out", failures)
+	var substituted: Dictionary = clean_job.current_environment.duplicate(true); substituted["world_node_id"] = "bar"
+	var rejected := Recruitment.contact_proposal(clean_job, substituted, "crew_switch")
+	if str(rejected.get("reason", "")) != "ineligible_environment":
+		failures.append("Substituted contact environment escaped trusted current-environment binding.")
+	var public_text := JSON.stringify(aggrieved).to_lower()
+	for hidden in ["weight", "source_ref", "turn_recorded", "grievance_id"]:
+		if public_text.contains(hidden): failures.append("Contact proposal exposed hidden ledger field %s." % hidden)
 
 
-func _check_save_determinism_and_fail_closed(failures: Array) -> void:
-	var first := Recruitment.new_encounter_state()
-	var second := Recruitment.new_encounter_state()
-	for member_id in MEMBERS:
-		first = Recruitment.record_first_meeting(first, member_id, "fallback", "accepted", MEMBERS.find(member_id) + 1)
-		second = Recruitment.record_first_meeting(second, member_id, "fallback", "accepted", MEMBERS.find(member_id) + 1)
-		first = Recruitment.record_contact(first, member_id, "associate", false, false, 20)
-		second = Recruitment.record_contact(second, member_id, "associate", false, false, 20)
-	if JSON.stringify(first) != JSON.stringify(second):
-		failures.append("Same recruitment facts did not reproduce byte-identically.")
-	var restored := Recruitment.normalize_encounter_state(first)
-	if JSON.stringify(restored) != JSON.stringify(first):
-		failures.append("Recruitment meeting/contact aftermath did not save round-trip byte-identically.")
-	for mutation in ["schema", "extra", "member", "outcome", "path", "contact"]:
-		var hostile := first.duplicate(true)
-		match mutation:
-			"schema": hostile["schema_version"] = 2
-			"extra": hostile["hidden"] = true
-			"member":
-				var meetings := _dict(hostile.get("meetings", {})); meetings["crew_switch"]["member_id"] = "crew_other"; hostile["meetings"] = meetings
-			"outcome":
-				var meetings := _dict(hostile.get("meetings", {})); meetings["crew_switch"]["outcome"] = "maybe"; hostile["meetings"] = meetings
-			"path":
-				var meetings := _dict(hostile.get("meetings", {})); meetings["crew_switch"]["path_kind"] = "remote"; hostile["meetings"] = meetings
-			"contact":
-				var contacts := _dict(hostile.get("contacts", {})); contacts["crew_switch"]["contact_state"] = "weighted"; hostile["contacts"] = contacts
-		if not Recruitment.normalize_encounter_state(hostile).is_empty():
-			failures.append("Malformed recruitment save did not fail closed: %s." % mutation)
+func _check_forged_state_and_substitution(failures: Array) -> void:
+	var coherent := Recruitment.new_encounter_state()
+	coherent["meetings"] = {"crew_switch": {
+		"member_id": "crew_switch", "first_path_kind": "primary", "first_outcome": "accepted", "path_kind": "primary",
+		"outcome": "accepted", "action_index": 7, "aftermath_id": "crew_switch_accepted",
+		"history": [{"path_kind": "primary", "outcome": "accepted", "action_index": 7}],
+	}}
+	if not Recruitment.normalize_encounter_state(coherent).is_empty():
+		failures.append("A coherent but unrooted meeting chain restored instead of failing closed.")
+	var contact_chain := coherent.duplicate(true)
+	contact_chain["contacts"] = {"crew_switch": {"member_id": "crew_switch", "standing": "associate", "contact_state": "familiar", "action_index": 8}}
+	if not Recruitment.normalize_encounter_state(contact_chain).is_empty():
+		failures.append("A coherent substituted standing/contact chain restored without trusted ledger authority.")
+	var empty := Recruitment.new_encounter_state()
+	if JSON.stringify(Recruitment.normalize_encounter_state(empty)) != JSON.stringify(empty):
+		failures.append("Empty fail-closed encounter state did not round-trip deterministically.")
 
 
-func _check_hidden_state_privacy(failures: Array) -> void:
-	var state := Recruitment.record_first_meeting(Recruitment.new_encounter_state(), "crew_knuckles", "primary", "accepted", 1)
-	state = Recruitment.record_contact(state, "crew_knuckles", "associate", true, false, 2)
-	var public_text := JSON.stringify(Recruitment.encounter_public_state(state, "crew_knuckles")).to_lower()
-	var path_text := JSON.stringify(Recruitment.meeting_path_public("crew_knuckles", "primary")).to_lower()
+func _check_hidden_boundary(failures: Array) -> void:
+	var run_state: Variant = _marked_run("WORLD64-PRIVACY", ["back_alley"])
+	run_state.current_environment = _environment("back_alley")
+	var text := JSON.stringify(Recruitment.first_meeting_proposal(run_state, run_state.current_environment, "crew_switch", "fallback", "refused")).to_lower()
 	for forbidden in ["turn_eligible", "turn_eligibility", "grievance_weight", "selection_weight", "betrayal_score", "rng_state", "seed_value"]:
-		if public_text.contains(forbidden) or path_text.contains(forbidden):
-			failures.append("Recruitment public model exposed hidden Turn/grievance authority: %s." % forbidden)
-	var source := FileAccess.get_file_as_string("res://scripts/core/crew_recruitment_model.gd").to_lower()
-	for forbidden in ["turn_eligibility", "grievance_weight", "selection_weight"]:
-		if source.contains(forbidden):
-			failures.append("Recruitment model coupled to hidden Turn weighting: %s." % forbidden)
+		if text.contains(forbidden): failures.append("Proposal exposed hidden Turn/grievance authority %s." % forbidden)
+
+
+func _assert_proposal(value: Dictionary, member_id: String, path_kind: String, outcome: String, reason: String, failures: Array) -> void:
+	var keys: Array = value.keys(); keys.sort()
+	if keys != ["authoritative", "can_mutate", "environment_id", "event_id", "member_id", "outcome", "path_kind", "proposal_only", "reason"] \
+			or bool(value.get("authoritative", true)) or not bool(value.get("proposal_only", false)) or bool(value.get("can_mutate", true)) \
+			or str(value.get("member_id", "")) != member_id or str(value.get("path_kind", "")) != path_kind \
+			or str(value.get("outcome", "")) != outcome or str(value.get("reason", "")) != reason:
+		failures.append("Meeting proposal was incomplete or falsely authoritative: %s." % JSON.stringify(value))
+
+
+func _assert_contact(value: Dictionary, standing: String, contact_state: String, failures: Array) -> void:
+	if bool(value.get("authoritative", true)) or not bool(value.get("proposal_only", false)) or bool(value.get("can_mutate", true)) \
+			or str(value.get("reason", "")) != "adapter_host_root_unavailable" or str(value.get("standing", "")) != standing \
+			or str(value.get("contact_state", "")) != contact_state:
+		failures.append("Contact proposal did not derive safe standing/aftermath from trusted RunState: %s." % JSON.stringify(value))
+
+
+func _marked_run(seed_text: String, node_ids: Array):
+	var run_state: Variant = load("res://scripts/core/run_state.gd").new()
+	run_state.start_new(seed_text)
+	run_state.crew_add_trust("crew_rook", 10, "fixture")
+	var nodes: Array = []; var edges: Array = []
+	for index in range(node_ids.size()):
+		var node_id := str(node_ids[index])
+		nodes.append({"id": node_id, "archetype_id": node_id, "kind": "casino", "tier": 2, "state": "revealed", "seen": true, "environment": {}})
+		if index > 0: edges.append({"a": str(node_ids[index - 1]), "b": node_id})
+	var start := str(node_ids[0])
+	run_state.set_world_map({"version": 3, "seed_text": seed_text, "start_node_id": start, "current_node_id": start, "nodes": nodes, "edges": edges, "visited_path": [start]})
+	return run_state
+
+
+func _environment(node_id: String, scenario_id: String = "") -> Dictionary:
+	return {"id": node_id, "archetype_id": node_id, "world_node_id": node_id, "kind": "casino", "scenario_id": scenario_id, "event_ids": [], "scenario_patron_ids": []}
+
+
+func _job_definition(member_id: String) -> Dictionary:
+	return {"id": "fixture_job", "label": "Fixture", "member_id": member_id, "kind": "package_run", "min_rank": "associate", "payload": {"target_count": 1, "cargo_id": "fixture", "cargo_label": "fixture", "cargo_heat_per_travel": 0}, "expiry_in_actions": 10, "rewards": {"cash": 0, "trust": 1}, "failure": {"trust": -1, "grievance_kind": "job_abandoned", "grievance_weight": 1}}
 
 
 static func _dict(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []

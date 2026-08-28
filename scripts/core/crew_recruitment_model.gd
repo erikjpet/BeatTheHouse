@@ -73,13 +73,12 @@ static func normalize_encounter_state(value: Variant) -> Dictionary:
 	if exact_keys != ["contacts", "meetings", "schema_version"] or typeof(source.get("schema_version")) != TYPE_INT \
 			or int(source.get("schema_version", 0)) != ENCOUNTER_STATE_SCHEMA_VERSION:
 		return {}
-	var meetings := _normalize_meeting_rows(source.get("meetings", {}))
-	var contacts := _normalize_contact_rows(source.get("contacts", {}), meetings)
-	if meetings.is_empty() and not _dict(source.get("meetings", {})).is_empty():
+	# No host-rooted adapter outcome is available on this base. Persisted meeting
+	# or contact claims therefore cannot be authenticated and fail closed, even
+	# when a forged claim is internally coherent.
+	if not _dict(source.get("meetings", {})).is_empty() or not _dict(source.get("contacts", {})).is_empty():
 		return {}
-	if contacts.is_empty() and not _dict(source.get("contacts", {})).is_empty():
-		return {}
-	return {"schema_version": ENCOUNTER_STATE_SCHEMA_VERSION, "meetings": meetings, "contacts": contacts}
+	return new_encounter_state()
 
 
 static func meeting_path_public(member_id: String, path_kind: String) -> Dictionary:
@@ -101,54 +100,58 @@ static func meeting_path_public(member_id: String, path_kind: String) -> Diction
 	}
 
 
-static func record_first_meeting(state_value: Variant, member_id: String, path_kind: String, outcome: String, action_index: int = 0) -> Dictionary:
-	var state := normalize_encounter_state(state_value)
+static func first_meeting_proposal(run_state: Variant, environment: Dictionary, member_id: String, path_kind: String, outcome: String) -> Dictionary:
 	var clean_member := member_id.strip_edges()
 	var clean_path := path_kind.strip_edges().to_lower()
 	var clean_outcome := outcome.strip_edges().to_lower()
-	if state.is_empty() or not MEMBER_IDS.has(clean_member) or clean_path not in MEETING_PATHS or clean_outcome not in MEETING_OUTCOMES \
-			or meeting_path_public(clean_member, clean_path).is_empty():
-		return state
-	var meetings := _dict(state.get("meetings", {}))
-	var previous := _dict(meetings.get(clean_member, {}))
-	if str(previous.get("outcome", "")) == "accepted":
-		return state
-	var history := _array(previous.get("history", []))
-	var fact := {"path_kind": clean_path, "outcome": clean_outcome, "action_index": maxi(0, action_index)}
-	if not history.is_empty() and JSON.stringify(history.back()) == JSON.stringify(fact):
-		return state
-	history.append(fact)
-	var row := {
+	var eligible := _meeting_environment_eligible(run_state, environment, clean_member, clean_path)
+	var path := meeting_path_public(clean_member, clean_path)
+	return {
+		"authoritative": false,
+		"proposal_only": true,
+		"can_mutate": false,
+		"reason": "adapter_host_root_unavailable" if eligible and clean_outcome in MEETING_OUTCOMES else "ineligible_environment",
 		"member_id": clean_member,
-		"first_path_kind": str(previous.get("first_path_kind", clean_path)),
-		"first_outcome": str(previous.get("first_outcome", clean_outcome)),
 		"path_kind": clean_path,
-		"outcome": clean_outcome,
-		"action_index": maxi(0, action_index),
-		"aftermath_id": "%s_%s" % [clean_member, clean_outcome],
-		"history": history,
+		"outcome": clean_outcome if clean_outcome in MEETING_OUTCOMES else "",
+		"event_id": str(path.get("event_id", "")),
+		"environment_id": str(environment.get("id", environment.get("world_node_id", ""))),
 	}
-	meetings[clean_member] = row
-	state["meetings"] = meetings
+
+
+static func contact_proposal(run_state: Variant, environment: Dictionary, member_id: String) -> Dictionary:
+	var clean_member := member_id.strip_edges()
+	if not (run_state is RunState) or not MEMBER_IDS.has(clean_member) or JSON.stringify(environment) != JSON.stringify(run_state.current_environment) \
+			or not run_state.crew_member_present(clean_member, environment):
+		return {"authoritative": false, "proposal_only": true, "can_mutate": false, "reason": "ineligible_environment", "member_id": clean_member}
+	var standing: String = str(run_state.crew_rank(clean_member))
+	var aggrieved: bool = not run_state.crew_grievances(clean_member).is_empty()
+	var job_out := false
+	for job_value in run_state.crew_jobs.values():
+		var job := _dict(job_value)
+		if str(job.get("member_id", "")) == clean_member and str(job.get("status", "")) in ["offered", "accepted", "active"]:
+			job_out = true
+			break
+	var contact_state := "aggrieved" if aggrieved else ("job_out" if job_out else ("trusted" if standing in ["made", "inner_circle"] else "familiar"))
+	return {
+		"authoritative": false,
+		"proposal_only": true,
+		"can_mutate": false,
+		"reason": "adapter_host_root_unavailable",
+		"member_id": clean_member,
+		"standing": standing,
+		"contact_state": contact_state,
+		"contact_event_id": str(member_definition(clean_member).get("contact_event_id", "")),
+	}
+
+
+static func record_first_meeting(state_value: Variant, _member_id: String, _path_kind: String, _outcome: String, _action_index: int = 0, _authenticated_adapter_outcome: Dictionary = {}) -> Dictionary:
+	var state := normalize_encounter_state(state_value)
 	return state
 
 
-static func record_contact(state_value: Variant, member_id: String, standing: String, aggrieved: bool, job_out: bool, action_index: int = 0) -> Dictionary:
+static func record_contact(state_value: Variant, _member_id: String, _standing: String, _aggrieved: bool, _job_out: bool, _action_index: int = 0, _authenticated_adapter_outcome: Dictionary = {}) -> Dictionary:
 	var state := normalize_encounter_state(state_value)
-	var clean_member := member_id.strip_edges()
-	var clean_standing := standing.strip_edges().to_lower()
-	var meeting := _dict(_dict(state.get("meetings", {})).get(clean_member, {}))
-	if state.is_empty() or not MEMBER_IDS.has(clean_member) or clean_standing not in RANKS or str(meeting.get("outcome", "")) != "accepted":
-		return state
-	var contact_state := "aggrieved" if aggrieved else ("job_out" if job_out else ("trusted" if clean_standing in ["made", "inner_circle"] else "familiar"))
-	var contacts := _dict(state.get("contacts", {}))
-	contacts[clean_member] = {
-		"member_id": clean_member,
-		"standing": clean_standing,
-		"contact_state": contact_state,
-		"action_index": maxi(0, action_index),
-	}
-	state["contacts"] = contacts
 	return state
 
 
@@ -543,6 +546,27 @@ static func _location_matches(location: Dictionary, environment: Dictionary) -> 
 	if not layer_ids.is_empty() and not layer_ids.has(str(environment.get("current_layer_id", ""))):
 		return false
 	return not archetype_ids.is_empty() or not scenario_ids.is_empty()
+
+
+static func _meeting_environment_eligible(run_state: Variant, environment: Dictionary, member_id: String, path_kind: String) -> bool:
+	if not (run_state is RunState) or environment.is_empty() or not MEMBER_IDS.has(member_id) or path_kind not in MEETING_PATHS \
+			or JSON.stringify(environment) != JSON.stringify(run_state.current_environment):
+		return false
+	# Rook's loan/legacy-marker authority is owned by the shipped debt encounter,
+	# not by an environment placement this model can authenticate.
+	if member_id == "crew_rook":
+		return false
+	var definition := member_definition(member_id)
+	var location := _dict(definition.get(path_kind, {}))
+	if location.is_empty() or placement_kind(run_state, environment, definition) != path_kind:
+		return false
+	var scenario_ids := _string_array(location.get("scenario_ids", []))
+	if not scenario_ids.is_empty():
+		var node_id := str(environment.get("world_node_id", environment.get("archetype_id", "")))
+		var seeded_id := str(run_state.seeded_scenario_for_node(node_id).get("id", ""))
+		if seeded_id.is_empty() or seeded_id != str(environment.get("scenario_id", "")) or not scenario_ids.has(seeded_id):
+			return false
+	return true
 
 
 static func _world_node_ids(run_state: RunState) -> Array:
