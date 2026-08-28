@@ -382,7 +382,7 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 	run_state.narrative_flags["tutorial_blackjack_peek_reprieve_used"] = true
 	var peek_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
 	var peek_state: Dictionary = peek_deal.get("ui_state", {})
-	var caught := game.resolve_with_context("peek_hole_card", 0, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_caught"), peek_state)
+	var caught := BlackjackAuthorityTestDriverScript.resolve(game, "peek_hole_card", 0, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_caught"), peek_state)
 	var protected_state: Dictionary = caught.get("blackjack_surface_ui_state", {})
 	table = run_state.current_environment.get("game_states", {}).get("blackjack", {})
 	if not bool(caught.get("blackjack_tutorial_peek_reprieve", false)) \
@@ -392,7 +392,7 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 			or not TutorialFlow.apply_caught_transition(run_state, caught).is_empty():
 		_fail("A repeated/resumed tutorial Peek still barred blackjack or bypassed Count: %s." % str(caught))
 		return false
-	var peek_settlement := game.resolve_with_context("play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_peek_finish"), protected_state)
+	var peek_settlement := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_peek_finish"), protected_state)
 	if not bool(peek_settlement.get("ok", false)):
 		_fail("The protected Peek hand could not be settled before counting: %s." % str(peek_settlement))
 		return false
@@ -423,7 +423,7 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 			or bool(pre_settle_coach.get("tutorial_count_completed", false)):
 		_fail("Selecting the count bubbles either failed or falsely completed the lesson before hand settlement: %s." % str(pre_settle_coach))
 		return false
-	var count_settlement := game.resolve_with_context("play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_settle"), count_state)
+	var count_settlement := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_settle"), count_state)
 	if not bool(count_settlement.get("ok", false)):
 		_fail("The counting hand could not settle through normal blackjack logic: %s." % str(count_settlement))
 		return false
