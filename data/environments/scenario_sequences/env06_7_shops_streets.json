@@ -2093,7 +2093,6 @@
                     "behavior": "work",
                     "label": "Lotto Regular",
                     "pose": "observing",
-                    "route_id": "corner_store_lotto_fever_arrival_route",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -3047,7 +3046,6 @@
                     "behavior": "work",
                     "label": "Plainclothes Officer",
                     "pose": "observing",
-                    "route_id": "corner_store_aftermath_arrival_route",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -4003,7 +4001,6 @@
                     "behavior": "work",
                     "label": "Night Clerk",
                     "pose": "observing",
-                    "route_id": "corner_store_dead_shift_arrival_route",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -4959,7 +4956,6 @@
                     "behavior": "work",
                     "label": "Inventory Clerk",
                     "pose": "observing",
-                    "route_id": "corner_store_inventory_night_arrival_route",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
