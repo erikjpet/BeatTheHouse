@@ -391,6 +391,7 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 	game.enter(run_state, run_state.current_environment)
 	var clean := _deal_and_stand(game, run_state, 2, "tutorial_clean")
 	_check(bool(clean.get("settled", false)), "Tutorial blackjack normal hand did not settle.", route_failures)
+	BlackjackAuthorityTestDriverScript.pin_protected_peek_settlement_rng(run_state)
 	var deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
 	var deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, deal, 4, run_state, run_state.current_environment)
 	var hand_state: Dictionary = deal.get("ui_state", {})
@@ -401,9 +402,6 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 	var peek_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, peek, 0, run_state, run_state.current_environment)
 	_check(bool(peek_state.get("peek_had_window", false)) and bool(peek_state.get("dealer_hole_visible", false)) and bool(peek_result.get("ok", false)), "Tutorial peek did not use the real distraction lookaway window.", route_failures)
 	var preserved_peek_state: Dictionary = peek_result.get("blackjack_surface_ui_state", peek_state) if typeof(peek_result.get("blackjack_surface_ui_state", peek_state)) == TYPE_DICTIONARY else peek_state
-	var peek_authority_before_pin := BlackjackAuthorityTestDriverScript.authority_diagnostic(game, run_state, run_state.current_environment)
-	BlackjackAuthorityTestDriverScript.pin_protected_peek_settlement_rng(run_state)
-	var peek_authority_after_pin := BlackjackAuthorityTestDriverScript.authority_diagnostic(game, run_state, run_state.current_environment)
 	var peek_finish := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_stand", 4, run_state, run_state.current_environment, 0, true)
 	var peek_finish_result: Dictionary = {}
 	if bool(peek_finish.get("resolve", false)):
@@ -413,7 +411,7 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 	var peek_cleanup := BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, 4, run_state, run_state.current_environment)
 	var after_peek_hand := game.coach_state(run_state, run_state.current_environment, {})
 	var peek_settled := bool(peek_finish_result.get("ok", false)) and bool(peek_cleanup.get("ok", false)) and int(after_peek_hand.get("hands_played", 0)) == 2 and bool(after_peek_hand.get("between_hands", false))
-	_check(peek_settled, "Tutorial Peek hand did not settle and clear presentation before the separate counting hand: %s" % JSON.stringify({"authority_before_pin": peek_authority_before_pin, "authority_after_pin": peek_authority_after_pin, "finish_command": _blackjack_command_diagnostic(peek_finish), "finish_result": _blackjack_result_diagnostic(peek_finish_result), "cleanup": peek_cleanup, "coach": after_peek_hand, "preserved_state_dealt": bool(game.call("_has_dealt_hand", preserved_peek_state))}), route_failures)
+	_check(peek_settled, "Tutorial Peek hand did not settle and clear presentation before the separate counting hand: %s" % JSON.stringify({"authority": BlackjackAuthorityTestDriverScript.authority_diagnostic(game, run_state, run_state.current_environment), "finish_command": _blackjack_command_diagnostic(peek_finish), "finish_result": _blackjack_result_diagnostic(peek_finish_result), "cleanup": peek_cleanup, "coach": after_peek_hand, "preserved_state_dealt": bool(game.call("_has_dealt_hand", preserved_peek_state))}), route_failures)
 	var count_toggle := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count_toggle", 4, run_state, run_state.current_environment)
 	var count_deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
 	var count_deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, count_deal, 4, run_state, run_state.current_environment)
@@ -484,7 +482,7 @@ func _settle_grand_blackjack_hands(run_state: RunState, route_failures: Array) -
 
 func _blackjack_command_diagnostic(command: Dictionary) -> Dictionary:
 	var delivery: Dictionary = command.get("_blackjack_host_delivery", {}) if typeof(command.get("_blackjack_host_delivery", {})) == TYPE_DICTIONARY else {}
-	return {"handled": bool(command.get("handled", false)), "resolve": bool(command.get("resolve", false)) or bool(command.get("direct_resolve", false)), "action_id": str(command.get("action_id", "")), "message": str(command.get("message", "")), "set_stake": int(command.get("set_stake", -1)), "delivery_action": str(delivery.get("action_id", "")), "delivery_stake": int(delivery.get("stake", -1)), "request_key": str(delivery.get("request_key", ""))}
+	return {"handled": bool(command.get("handled", false)), "resolve": bool(command.get("resolve", false)) or bool(command.get("direct_resolve", false)), "action_id": str(command.get("action_id", "")), "message": str(command.get("message", "")), "set_stake": int(command.get("set_stake", -1)), "delivery_action": str(delivery.get("action_id", "")), "delivery_stake": int(delivery.get("stake", -1)), "request_key": str(delivery.get("request_key", "")), "authority_context": command.get("_test_authority_context", {})}
 
 
 func _blackjack_result_diagnostic(result: Dictionary) -> Dictionary:
