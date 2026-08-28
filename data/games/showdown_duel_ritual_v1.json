@@ -1,5 +1,5 @@
 {
-  "contract": "game_ritual/1",
+  "contract": "showdown_duel_projection/1",
   "ritual_id": "grand_casino.showdown_duel",
   "initial_phase": "approach",
   "ritual_phases": [

@@ -3,7 +3,8 @@ extends SceneTree
 const RitualProjectionScript := preload("res://scripts/core/grand_casino_duel_ritual_projection.gd")
 const DuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
-const CONTRACT_PATH := "res://data/games/showdown_duel_ritual_v1.json"
+const CONTRACT_PATH := "res://data/games/showdown_duel_game_ritual_v1.json"
+const DESIGN_PATH := "res://data/games/showdown_duel_ritual_v1.json"
 const EVENTS_PATH := "res://data/events/events.json"
 const EXPECTED_PHASES := ["approach", "seating", "response", "commitment", "reveal", "phase_break", "crowd_change", "outcome_staging", "exit"]
 
@@ -18,8 +19,13 @@ func _initialize() -> void:
 		_finish(["SHOWDOWN-DUEL contract JSON did not parse."])
 		return
 	var contract := contract_value as Dictionary
-	_check_contract(contract, failures)
-	_check_ladder(contract, failures)
+	var design_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(DESIGN_PATH))
+	if typeof(design_value) != TYPE_DICTIONARY:
+		_finish(["SHOWDOWN-DUEL design declaration JSON did not parse."])
+		return
+	var design := design_value as Dictionary
+	_check_contract(contract, design, failures)
+	_check_ladder(design, failures)
 	_check_ten_seed_determinism(failures)
 	_check_phase_machine(failures)
 	_check_projection_privacy(failures)
@@ -27,7 +33,7 @@ func _initialize() -> void:
 	_finish(failures)
 
 
-func _check_contract(contract: Dictionary, failures: Array) -> void:
+func _check_contract(contract: Dictionary, design: Dictionary, failures: Array) -> void:
 	if str(contract.get("contract", "")) != "game_ritual/1" or str(contract.get("ritual_id", "")) != _projection.RITUAL_ID: failures.append("Frozen ritual identity changed.")
 	var phases := _array(contract.get("ritual_phases", []))
 	var phase_ids: Array = []
@@ -69,17 +75,20 @@ func _check_contract(contract: Dictionary, failures: Array) -> void:
 		if _array(actor.get("behavior_states", [])).is_empty(): failures.append("Actor %s has no bounded behavior states." % str(actor.get("id", "")))
 	for object_value in _array(contract.get("scene_objects", [])):
 		var object := _dict(object_value)
-		var bounds := _array(object.get("bounds", []))
-		if bounds.size() != 4 or int(bounds[2]) <= 0 or int(bounds[3]) <= 0: failures.append("Scene object %s lacks bounded geometry." % str(object.get("id", "")))
-		if bool(object.get("interactive", false)):
-			var hit := _array(object.get("hit_region", []))
-			if hit.size() != 4 or int(hit[2]) < 44 or int(hit[3]) < 44: failures.append("Interactive object %s violates the 44px target minimum." % str(object.get("id", "")))
+		var bounds := _dict(object.get("bounds", {}))
+		if int(bounds.get("w", 0)) <= 0 or int(bounds.get("h", 0)) <= 0: failures.append("Scene object %s lacks bounded geometry." % str(object.get("id", "")))
+		for hit_value in _array(object.get("hit_regions", [])):
+			var hit := _dict(hit_value)
+			var hit_bounds := _dict(hit.get("bounds", {}))
+			if int(hit.get("minimum_touch_target", 0)) < 44 or int(hit_bounds.get("w", 0)) < 44 or int(hit_bounds.get("h", 0)) < 44: failures.append("Interactive object %s violates the 44px target minimum." % str(object.get("id", "")))
 	for tier_value in _array(_dict(contract.get("energy", {})).get("tiers", [])):
-		var operations := _array(_dict(tier_value).get("operations", []))
-		if operations.is_empty() or operations.all(func(value: Variant) -> bool: return str(value).begins_with("music.")): failures.append("Energy tier touches no actor/object state.")
+		var tier := _dict(tier_value)
+		var state_operations := _array(tier.get("actor_operations", [])) + _array(tier.get("object_operations", [])) + _array(tier.get("interaction_operations", []))
+		if state_operations.is_empty(): failures.append("Energy tier touches no actor/object state.")
 	var persistence := _dict(contract.get("ritual_persistence", {}))
 	if _array(persistence.get("save_boundaries", [])) != EXPECTED_PHASES or not _array(persistence.get("one_shot_receipted", [])).has("ending_audio"): failures.append("Persistence does not bind every phase and ending one-shot.")
-	var privacy := _dict(contract.get("privacy", {}))
+	if str(design.get("contract", "")) != "showdown_duel_projection/1": failures.append("SHOWDOWN-DUEL design declaration identity changed.")
+	var privacy := _dict(design.get("privacy", {}))
 	for forbidden in ["turn_member_id", "turn_eligible_members", "turn_roll", "turn_threshold", "hidden_contradiction", "x"]:
 		if not _array(privacy.get("forbidden_fields", [])).has(forbidden): failures.append("Privacy contract lost forbidden field %s." % forbidden)
 
