@@ -1531,7 +1531,12 @@ static func _set_objective_outcomes(state: Dictionary, definition: Dictionary, f
 		var completed := _string_array(objective_state.get("completed_steps", []))
 		var desired := forced_outcome
 		if desired.is_empty():
-			desired = "success" if completed.size() == _array(objective.get("steps", [])).size() else "failure"
+			# A terminal branch or lifecycle policy may already have resolved this
+			# objective. Finalizing the aftermath must preserve that exact authored
+			# result instead of replacing ignore/cancel with completion-derived state.
+			desired = str(objective_state.get("outcome", ""))
+			if desired.is_empty():
+				desired = "success" if completed.size() == _array(objective.get("steps", [])).size() else "failure"
 		if not allowed.has(desired):
 			desired = str(allowed[0]) if not allowed.is_empty() else ""
 		objective_state["outcome"] = desired
