@@ -361,6 +361,45 @@ var _item_effect_total_cache: Dictionary = {}
 var _owned_item_lookup_cache: Dictionary = {}
 var _owned_item_lookup_cache_valid := false
 var _scenario_sequence_definition_cache: Dictionary = {}
+# Debug-only fail-closed probe used by the retained-alias transaction contract.
+# It can only reject a turn; it cannot grant authority or alter a consequence.
+var _turn_transaction_test_failure_stage: String = ""
+
+const TURN_TRANSACTION_SCALAR_FIELDS := [
+	"seed_text", "seed_value", "rng_seed", "rng_state", "bankroll",
+	"grand_casino_chips", "economic_state", "active_item_id", "baseline_luck",
+	"drunk_level", "alcoholic_level", "drunk_distortion_suppression_turns",
+	"rourke_current_room", "rourke_current_spot", "rourke_facing",
+	"rourke_actions_until_move", "rourke_off_floor_actions",
+	"rourke_floor_action_index", "rival_cheater_day",
+	"event_cadence_rng_create_call_count", "event_cadence_rng_save_call_count",
+	"environment_history_archive_count", "story_log_archive_count",
+	"crew_grievance_sequence", "crew_job_sequence", "simulation_msec",
+	"game_clock_minutes", "grand_casino_atm_interest_boundary_index", "act_index",
+	"run_status", "run_failure_reason", "run_failure_message",
+	"run_spending_score", "defer_next_bankroll_zero_failure",
+	"_item_effects_loaded", "_item_definitions_loaded",
+	"_owned_item_lookup_cache_valid", "_turn_transaction_test_failure_stage",
+]
+const TURN_TRANSACTION_COLLECTION_FIELDS := [
+	"challenge_config", "inventory", "portable_ticket_piles", "debt",
+	"sals_forfeited_item_ids", "suspicion", "pending_drunk_absorption",
+	"current_environment", "world_map", "scenario_recent_by_archetype",
+	"grand_casino_room_states", "grand_casino_staffing", "linda_cage_state",
+	"grand_casino_room_heat_accumulators", "rival_cheaters",
+	"rourke_escort_state", "pending_triggered_events", "pending_bags",
+	"active_triggered_event", "event_cadence", "music_arrangement_state",
+	"music_tempo_state", "music_choreography_state", "environment_history",
+	"unlocked_travel", "narrative_flags", "story_flags", "story_log",
+	"crew_trust_by_member", "crew_grievance_ledger", "crew_jobs",
+	"active_delivery_run", "crew_pattern_memory",
+	"scenario_host_transaction_ledger", "crew_match_marks",
+	"crew_contraband_stash", "crew_play_state", "crew_heist_state",
+	"heat_history", "grand_casino_atm_interest_notifications",
+	"closing_time_state", "home_state", "_item_effects_by_id",
+	"_item_definitions_by_id", "_item_effect_total_cache",
+	"_owned_item_lookup_cache", "_scenario_sequence_definition_cache",
+]
 
 
 # Resets the run from a seed and optional challenge.
@@ -11750,23 +11789,37 @@ func _scenario_preflight_environment_turn(amount: int) -> Dictionary:
 func advance_environment_turns(amount: int = 1) -> Dictionary:
 	if current_environment.is_empty() or is_terminal():
 		return {"ok": true, "applied": false, "errors": []}
+	var candidate := _detached_environment_turn_candidate()
+	var result := candidate._advance_environment_turns_candidate(amount)
+	if not bool(result.get("ok", false)):
+		return result
+	_publish_environment_turn_candidate(candidate)
+	return result
+
+
+# Executes the complete turn against a graph that shares no mutable roots with
+# the live RunState. The caller either discards this object or publishes it as a
+# single graph-consistent tuple through _publish_environment_turn_candidate().
+func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 	var safe_amount := maxi(0, amount)
 	var action_boundary_before := _crew_action_index()
 	var uses_v2_expiry := safe_amount > 0 and _scenario_sequence_uses_expiry_boundary("town_action")
 	var turn_preflight := _scenario_preflight_environment_turn(safe_amount)
 	if not bool(turn_preflight.get("ok", false)):
 		return {"ok": false, "applied": false, "errors": _copy_array(turn_preflight.get("errors", []))}
-	var rollback_snapshot := to_dict()
-	var rollback_environment := current_environment.duplicate(true)
-	var rollback_world_map := world_map.duplicate(true)
-	var rollback_room_states := grand_casino_room_states.duplicate(true)
+	var forced_failure := _environment_turn_test_failure("preflight")
+	if not forced_failure.is_empty(): return forced_failure
 	if uses_v2_expiry:
 		var expiry_result := scenario_sequence_apply_expiry_boundary("town_action", safe_amount)
 		if not bool(expiry_result.get("ok", false)):
 			return {"ok": false, "applied": false, "errors": _copy_array(expiry_result.get("errors", []))}
+	forced_failure = _environment_turn_test_failure("expiry")
+	if not forced_failure.is_empty(): return forced_failure
 	var town_before := JSON.stringify(town_state.public_snapshot()) if town_state != null else ""
 	var sweep_before := JSON.stringify(town_state.sweep_internal_status()) if town_state != null else ""
 	_advance_global_boundary_start(safe_amount)
+	forced_failure = _environment_turn_test_failure("global_start")
+	if not forced_failure.is_empty(): return forced_failure
 	var previous_turns := int(current_environment.get("turns", 0))
 	var next_turns := previous_turns + safe_amount
 	current_environment["turns"] = next_turns
@@ -11774,10 +11827,16 @@ func advance_environment_turns(amount: int = 1) -> Dictionary:
 	if ScenarioEngineScript.advance_environment(current_environment, safe_amount):
 		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 	_advance_travel_lock(safe_amount)
+	forced_failure = _environment_turn_test_failure("environment")
+	if not forced_failure.is_empty(): return forced_failure
 	_apply_town_sweep_generation_context(current_environment)
 	_check_police_sweep_boundary()
+	forced_failure = _environment_turn_test_failure("town_sweep")
+	if not forced_failure.is_empty(): return forced_failure
 	_advance_global_boundary_after_encounter(safe_amount)
 	_advance_grand_casino_living_floor(safe_amount)
+	forced_failure = _environment_turn_test_failure("encounter_and_rooms")
+	if not forced_failure.is_empty(): return forced_failure
 	_advance_global_boundary_before_local_cooldown(safe_amount)
 	var decay_interval := maxi(1, LOCAL_RISK_TURN_DECAY_INTERVAL + int(challenge_modifiers().get("local_heat_turn_decay_interval_delta", 0)))
 	var previous_decay_step := int(floor(float(previous_turns) / float(decay_interval)))
@@ -11785,6 +11844,8 @@ func advance_environment_turns(amount: int = 1) -> Dictionary:
 	_decrease_current_suspicion(next_decay_step - previous_decay_step)
 	_advance_heat_cooldown(safe_amount)
 	_advance_global_boundary_finish(safe_amount)
+	forced_failure = _environment_turn_test_failure("crew_and_world_models")
+	if not forced_failure.is_empty(): return forced_failure
 	if town_state != null:
 		var town_after := town_state.public_snapshot()
 		if JSON.stringify(town_after) != town_before:
@@ -11798,40 +11859,132 @@ func advance_environment_turns(amount: int = 1) -> Dictionary:
 			happening_ids.sort()
 			var town_fact := scenario_enqueue_fact("town_transition", "town", {"action_index": _crew_action_index(), "weather": str(town_after.get("weather", "")), "day_type": str(town_after.get("day_type", "")), "happening_ids": happening_ids})
 			if not bool(town_fact.get("ok", false)) and not bool(town_fact.get("inactive", false)):
-				from_dict(rollback_snapshot)
-				current_environment = rollback_environment
-				world_map = rollback_world_map
-				grand_casino_room_states = rollback_room_states
 				return {"ok": false, "applied": false, "errors": _copy_array(town_fact.get("errors", []))}
+		forced_failure = _environment_turn_test_failure("town_fact")
+		if not forced_failure.is_empty(): return forced_failure
 		var sweep_after := town_state.sweep_internal_status()
 		if JSON.stringify(sweep_after) != sweep_before:
 			var sweep_fact := scenario_enqueue_fact("sweep_changed", "sweep", {"action_index": _crew_action_index(), "node_id": str(sweep_after.get("current_node_id", "")), "segment_index": int(sweep_after.get("segment_index", -1)), "active": bool(sweep_after.get("active", false))})
 			if not bool(sweep_fact.get("ok", false)) and not bool(sweep_fact.get("inactive", false)):
-				from_dict(rollback_snapshot)
-				current_environment = rollback_environment
-				world_map = rollback_world_map
-				grand_casino_room_states = rollback_room_states
 				return {"ok": false, "applied": false, "errors": _copy_array(sweep_fact.get("errors", []))}
+		forced_failure = _environment_turn_test_failure("sweep_fact")
+		if not forced_failure.is_empty(): return forced_failure
 	if safe_amount > 0:
 		var world_fact := scenario_enqueue_fact("world_boundary", "scenario", {"amount": safe_amount, "action_index": _crew_action_index()})
 		if not bool(world_fact.get("ok", false)) and not bool(world_fact.get("inactive", false)):
-			from_dict(rollback_snapshot)
-			current_environment = rollback_environment
-			world_map = rollback_world_map
-			grand_casino_room_states = rollback_room_states
 			return {"ok": false, "applied": false, "errors": _copy_array(world_fact.get("errors", []))}
+		forced_failure = _environment_turn_test_failure("world_fact")
+		if not forced_failure.is_empty(): return forced_failure
 		if not bool(world_fact.get("inactive", false)):
 			var flushed := scenario_flush_facts(_crew_action_index())
 			if not bool(flushed.get("ok", false)):
-				from_dict(rollback_snapshot)
-				current_environment = rollback_environment
-				world_map = rollback_world_map
-				grand_casino_room_states = rollback_room_states
 				return {"ok": false, "applied": false, "errors": _copy_array(flushed.get("errors", []))}
+		forced_failure = _environment_turn_test_failure("fact_flush")
+		if not forced_failure.is_empty(): return forced_failure
 		if not uses_v2_expiry:
 			for offset in range(safe_amount):
-				scenario_apply_expiry("town_action", action_boundary_before + offset + 1)
+				var expiry_result := scenario_apply_expiry("town_action", action_boundary_before + offset + 1)
+				if not bool(expiry_result.get("ok", false)) and not bool(expiry_result.get("inactive", false)):
+					return {"ok": false, "applied": false, "errors": _copy_array(expiry_result.get("errors", []))}
+	forced_failure = _environment_turn_test_failure("legacy_expiry")
+	if not forced_failure.is_empty(): return forced_failure
 	return {"ok": true, "applied": safe_amount > 0, "errors": []}
+
+
+func _environment_turn_test_failure(stage: String) -> Dictionary:
+	if OS.is_debug_build() and _turn_transaction_test_failure_stage == stage:
+		return {
+			"ok": false,
+			"applied": false,
+			"failure_stage": stage,
+			"errors": ["Forced environment-turn transaction rejection after %s." % stage],
+		}
+	return {}
+
+
+func _detached_environment_turn_candidate() -> RunState:
+	var candidate := get_script().new() as RunState
+	candidate._apply_environment_turn_snapshot(_environment_turn_snapshot(), false)
+	return candidate
+
+
+func _publish_environment_turn_candidate(candidate: RunState) -> void:
+	# Build the complete publish tuple before touching a live root. This method is
+	# synchronous and contains the only accepted-turn rebind boundary.
+	var publish_snapshot := candidate._environment_turn_snapshot()
+	_apply_environment_turn_snapshot(publish_snapshot, true)
+
+
+func _environment_turn_snapshot() -> Dictionary:
+	var snapshot: Dictionary = {}
+	for field_name in TURN_TRANSACTION_SCALAR_FIELDS:
+		snapshot[field_name] = get(field_name)
+	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
+		var value: Variant = get(field_name)
+		snapshot[field_name] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
+	snapshot["town_state_object"] = {
+		"present": town_state != null,
+		"state": town_state.snapshot() if town_state != null else {},
+		"conditions": town_state._conditions.duplicate(true) if town_state != null else {},
+	}
+	snapshot["numbers_state_object"] = {
+		"present": numbers_state != null,
+		"state": numbers_state.snapshot() if numbers_state != null else {},
+		"config": numbers_state.config.duplicate(true) if numbers_state != null else {},
+	}
+	return snapshot
+
+
+func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliases: bool) -> void:
+	for field_name in TURN_TRANSACTION_SCALAR_FIELDS:
+		set(field_name, snapshot.get(field_name))
+	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
+		var incoming: Variant = snapshot.get(field_name)
+		var current: Variant = get(field_name)
+		if preserve_live_aliases and _publish_mutable_variant_in_place(current, incoming):
+			continue
+		set(field_name, incoming.duplicate(true) if typeof(incoming) in [TYPE_DICTIONARY, TYPE_ARRAY] else incoming)
+	var town_record := _copy_dict(snapshot.get("town_state_object", {}))
+	if bool(town_record.get("present", false)):
+		if town_state == null or not preserve_live_aliases:
+			town_state = TownStateScript.new()
+		town_state.restore(_copy_dict(town_record.get("state", {})), seed_value, _copy_dict(town_record.get("conditions", {})))
+	else:
+		town_state = null
+	var numbers_record := _copy_dict(snapshot.get("numbers_state_object", {}))
+	if bool(numbers_record.get("present", false)):
+		if numbers_state == null or not preserve_live_aliases:
+			numbers_state = NumbersModelScript.new()
+		numbers_state.restore(_copy_dict(numbers_record.get("state", {})), seed_value, _copy_dict(numbers_record.get("config", {})))
+	else:
+		numbers_state = null
+
+
+static func _publish_mutable_variant_in_place(live_value: Variant, candidate_value: Variant) -> bool:
+	if typeof(live_value) == TYPE_DICTIONARY and typeof(candidate_value) == TYPE_DICTIONARY:
+		var live_dictionary := live_value as Dictionary
+		var candidate_dictionary := candidate_value as Dictionary
+		for key in live_dictionary.keys():
+			if not candidate_dictionary.has(key): live_dictionary.erase(key)
+		for key in candidate_dictionary.keys():
+			var incoming: Variant = candidate_dictionary[key]
+			if live_dictionary.has(key) and _publish_mutable_variant_in_place(live_dictionary[key], incoming):
+				continue
+			live_dictionary[key] = incoming.duplicate(true) if typeof(incoming) in [TYPE_DICTIONARY, TYPE_ARRAY] else incoming
+		return true
+	if typeof(live_value) == TYPE_ARRAY and typeof(candidate_value) == TYPE_ARRAY:
+		var live_array := live_value as Array
+		var candidate_array := candidate_value as Array
+		while live_array.size() > candidate_array.size(): live_array.pop_back()
+		for index in range(candidate_array.size()):
+			var incoming: Variant = candidate_array[index]
+			if index < live_array.size():
+				if _publish_mutable_variant_in_place(live_array[index], incoming): continue
+				live_array[index] = incoming.duplicate(true) if typeof(incoming) in [TYPE_DICTIONARY, TYPE_ARRAY] else incoming
+			else:
+				live_array.append(incoming.duplicate(true) if typeof(incoming) in [TYPE_DICTIONARY, TYPE_ARRAY] else incoming)
+		return true
+	return false
 
 
 func _advance_global_boundary_start(safe_amount: int) -> void:
