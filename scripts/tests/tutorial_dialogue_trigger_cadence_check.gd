@@ -396,6 +396,10 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 	if not bool(peek_settlement.get("ok", false)):
 		_fail("The protected Peek hand could not be settled before counting: %s." % str(peek_settlement))
 		return false
+	var peek_cleanup := BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, 4, run_state, run_state.current_environment)
+	if not bool(peek_cleanup.get("ok", false)) or not bool(peek_cleanup.get("terminal_cleared", false)):
+		_fail("The protected Peek hand did not cross its real presentation cleanup boundary: %s." % str(peek_cleanup))
+		return false
 	table = run_state.current_environment.get("game_states", {}).get("blackjack", {})
 	if int(table.get("hands_played", 0)) != 2 or bool(table.get("tutorial_count_completed", false)):
 		_fail("Settling the Peek hand did not arrive at an incomplete third-hand Count boundary: %s." % str(table))

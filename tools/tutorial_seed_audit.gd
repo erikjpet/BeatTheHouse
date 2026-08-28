@@ -405,8 +405,9 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 	var peek_finish_result: Dictionary = {}
 	if bool(peek_finish.get("resolve", false)):
 		peek_finish_result = BlackjackAuthorityTestDriverScript.resolve_surface_command(game, peek_finish, 4, run_state, run_state.current_environment)
+	var peek_cleanup := BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, 4, run_state, run_state.current_environment)
 	var after_peek_hand := game.coach_state(run_state, run_state.current_environment, {})
-	_check(bool(peek_finish_result.get("ok", false)) and int(after_peek_hand.get("hands_played", 0)) == 2 and bool(after_peek_hand.get("between_hands", false)), "Tutorial Peek hand did not settle before the separate counting hand.", route_failures)
+	_check(bool(peek_finish_result.get("ok", false)) and bool(peek_cleanup.get("ok", false)) and int(after_peek_hand.get("hands_played", 0)) == 2 and bool(after_peek_hand.get("between_hands", false)), "Tutorial Peek hand did not settle and clear presentation before the separate counting hand: %s" % JSON.stringify(peek_cleanup), route_failures)
 	var count_toggle := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count", 4, run_state, run_state.current_environment)
 	var count_deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
 	var count_deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, count_deal, 4, run_state, run_state.current_environment)
@@ -462,7 +463,8 @@ func _deal_and_stand(game: GameModule, run_state: RunState, stake: int, rng_labe
 	var stand_result := {}
 	if bool(stand.get("resolve", false)):
 		stand_result = BlackjackAuthorityTestDriverScript.resolve_surface_command(game, stand, stake, run_state, run_state.current_environment)
-	return {"deal_ok": bool(deal_result.get("ok", false)), "settled": bool(stand_result.get("ok", false)), "result": stand_result}
+	var cleanup := BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, stake, run_state, run_state.current_environment)
+	return {"deal_ok": bool(deal_result.get("ok", false)), "settled": bool(stand_result.get("ok", false)) and bool(cleanup.get("ok", false)), "result": stand_result, "cleanup": cleanup}
 
 
 func _settle_grand_blackjack_hands(run_state: RunState, route_failures: Array) -> Dictionary:

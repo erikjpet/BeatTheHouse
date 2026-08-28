@@ -361,6 +361,11 @@ func _stage_blackjack_lookaway_surface(hand_state: Dictionary) -> void:
 	var distracted_state: Dictionary = distraction.get("ui_state", {})
 	var peek := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_peek", 4, run_state, run_state.current_environment, 0, true)
 	var peek_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, peek, 0, run_state, run_state.current_environment)
+	var stand := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_stand", 4, run_state, run_state.current_environment)
+	var stand_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, stand, 4, run_state, run_state.current_environment) if bool(stand.get("resolve", false)) else {}
+	var cleanup := BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, 4, run_state, run_state.current_environment)
+	if not bool(stand_result.get("ok", false)) or not bool(cleanup.get("ok", false)):
+		push_error("Tutorial capture could not settle and clear the protected Peek hand: %s" % JSON.stringify({"stand": stand_result, "cleanup": cleanup}))
 	app.set("game_surface_ui_state", peek_result.get("blackjack_surface_ui_state", peek.get("ui_state", {})))
 	app.call("_refresh")
 
