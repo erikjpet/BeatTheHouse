@@ -310,6 +310,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"physics_profile_summary": _physics_summary(table),
 		"bet_targets": bet_targets,
 		"roulette_bets": bets,
+		"roulette_focused_stack_id": str(session.get("roulette_focused_stack_id", "")),
 		"roulette_rebet": _bet_array(session.get("roulette_rebet", table.get("last_bets", []))),
 		"selected_chip": selected_chip,
 		"selected_stake": selected_chip,
@@ -491,6 +492,7 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_spin_result(surface, surface_state)
 	_draw_rule_hover_overlay(surface, surface_state)
 	_draw_payout_animation(surface, surface_state)
+	_draw_roulette_ritual_status(surface, surface_state)
 	return true
 
 
@@ -1854,6 +1856,7 @@ func _place_bet_command(index: int, state: Dictionary, table: Dictionary, run_st
 	state["roulette_bets"] = bets
 	state["selected_chip"] = chip
 	state["selected_stake"] = chip
+	state["roulette_focused_stack_id"] = str(target.get("id", ""))
 	state.erase("table_social_alignment")
 	return GameModule.surface_command({
 		"handled": true,
@@ -2076,7 +2079,15 @@ func _remove_bet_chip_command(index: int, state: Dictionary, table: Dictionary) 
 	var bets := _bet_array(state.get("roulette_bets", []))
 	if bets.is_empty():
 		return _message_command(state, "There is no pending roulette chip to remove.")
-	var remove_index := index if index >= 0 and index < bets.size() else bets.size() - 1
+	var remove_index := index if index >= 0 and index < bets.size() else -1
+	if remove_index < 0:
+		var focused_id := str(state.get("roulette_focused_stack_id", ""))
+		for bet_index in range(bets.size()):
+			if str((bets[bet_index] as Dictionary).get("id", "")) == focused_id:
+				remove_index = bet_index
+				break
+	if remove_index < 0:
+		return _message_command(state, "Focus a named roulette stack before removing a chip.")
 	var bet: Dictionary = bets[remove_index]
 	var selected_chip := maxi(1, int(state.get("selected_chip", _chip_denominations(table)[0])))
 	var removed := mini(selected_chip, maxi(0, int(bet.get("stake", 0))))
@@ -2088,6 +2099,7 @@ func _remove_bet_chip_command(index: int, state: Dictionary, table: Dictionary) 
 	_push_undo_state(state)
 	if remaining <= 0:
 		bets.remove_at(remove_index)
+		state["roulette_focused_stack_id"] = str((bets[mini(remove_index, bets.size() - 1)] as Dictionary).get("id", "")) if not bets.is_empty() else ""
 	else:
 		bet["stake"] = remaining
 		bets[remove_index] = bet
@@ -2875,6 +2887,26 @@ func _draw_player_bet_chip(surface, bet: Dictionary, bet_index: int = -1) -> voi
 	surface.surface_label_centered_plain("YOU", Rect2(placement + Vector2(-15, 13), Vector2(30, 9)), 6, C_CYAN)
 	if bet_index >= 0:
 		surface.surface_add_exact_hit(Rect2(placement - Vector2(18, 18), Vector2(36, 38)), "roulette_remove", bet_index)
+
+
+func _draw_roulette_ritual_status(surface, state: Dictionary) -> void:
+	var phase := str(state.get("ritual_phase", "betting"))
+	var energy: Dictionary = _copy_dict(state.get("ritual_energy", {}))
+	var actors: Array = _dictionary_array(state.get("ritual_actors", []))
+	var objects: Array = _dictionary_array(state.get("ritual_scene_objects", []))
+	var croupier_behavior := "idle"
+	if not actors.is_empty():
+		croupier_behavior = str((actors[0] as Dictionary).get("behavior", "idle"))
+	var ball_state := "rest"
+	for value in objects:
+		var object: Dictionary = value
+		if str(object.get("id", "")) == "roulette.ball":
+			ball_state = str(object.get("visual_state", "rest"))
+	var rect := Rect2(300, 8, 306, 25)
+	var accent := C_PINK if phase == "no_more_bets" else C_YELLOW
+	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.76))
+	surface.draw_rect(rect, accent, false, 2)
+	surface.surface_label_centered_plain("%s | %s | BALL %s | %s" % [phase.replace("_", " ").to_upper(), croupier_behavior.replace("_", " ").to_upper(), ball_state.to_upper(), str(energy.get("tier", "quiet")).to_upper()], rect.grow(-3), 7, C_WHITE)
 
 
 func _draw_result_bet_chips(surface, entries_value: Variant, include_losers: bool, winners_paid: bool) -> void:
