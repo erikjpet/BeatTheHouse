@@ -58,8 +58,8 @@ seeded, deterministic, Act 1 only, and optional to the player.
    claims fail without an authentic host-rooted capability. Paired otherwise-
    identical observers without that capability must receive byte-identical and
    behavior-identical output with no hidden-state difference. Game-side common
-   checklist exact `7e42c0b4` is independently accepted; world-side propagation
-   is assigned to its exclusive lane.
+   checklist exact `7e42c0b4` and world-side checklist exact `2c76a9ea` are
+   independently accepted and queued for their serialized main landings.
 8. **Performance cadence.** Functional PostLand gates remain mandatory after
    every landing. The performance probe runs only on a fully quiesced host after
    each five landings and before every playtest build; both worker and director
