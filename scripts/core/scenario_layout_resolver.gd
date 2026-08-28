@@ -1195,10 +1195,13 @@ static func _resolve_route_center_result(environment: Dictionary, semantic_state
 	var parsed := OperationRegistryScript.parse_owned_identity(route_id)
 	var raw_alias := route_id.strip_edges()
 	var sealed_inventory := _dict(environment.get("scenario_semantic_inventory", {}))
-	var inventory := EnvironmentSemanticInventoryScript.exact_collections(sealed_inventory)
+	# Static content validation carries a validated catalog seal; live runtime
+	# resolution carries an instance-bound seal. Both are authoritative for their
+	# boundary, but only the latter may use exact_collections().
+	var inventory := EnvironmentSemanticInventoryScript.guaranteed_collections(sealed_inventory) if str(sealed_inventory.get("kind", "")) == "catalog" else EnvironmentSemanticInventoryScript.exact_collections(sealed_inventory)
 	# Actor spawn payloads may name a room-local endpoint alias rather than a
 	# world route identity. The alias never resolves directly from live geometry:
-	# it must match one exact anchor in the sealed room inventory first.
+	# it must match one guaranteed/exact anchor in the sealed inventory first.
 	if parsed.is_empty():
 		var raw_anchor_matches := _inventory_alias_matches(_array(inventory.get("anchors", [])), raw_alias)
 		if raw_alias.is_empty() or raw_alias != raw_alias.to_lower() or raw_alias.contains("::") or raw_anchor_matches.is_empty():
