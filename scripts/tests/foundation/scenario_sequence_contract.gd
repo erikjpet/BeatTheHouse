@@ -1398,6 +1398,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		for proof_key_value in _dict(proof_case.get("set", {})).keys():
 			engine_environment[proof_key_value] = _dict(proof_case.get("set", {})).get(proof_key_value)
 		var engine_before_state := _dict(engine_environment.get("scenario_sequence_state", {}))
+		var engine_before_environment := JSON.stringify(engine_environment)
 		var engine_command := _runtime_command(
 			engine_before_state,
 			definition,
@@ -1410,8 +1411,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 			"command_console"
 		)
 		var engine_result := ScenarioEngineScript.sequence_command(engine_environment, definition, engine_command, {"available_funds": 10})
-		var engine_after_state := _dict(engine_environment.get("scenario_sequence_state", {}))
-		if bool(engine_result.get("ok", true)) or str(engine_after_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or str(engine_after_state.get("phase_id", "")) != str(engine_before_state.get("phase_id", "")) or int(engine_after_state.get("phase_action_counter", -1)) != int(engine_before_state.get("phase_action_counter", -1)) or SequenceRuntimeScript.content_fingerprint(engine_after_state.get("command_receipts", [])) != SequenceRuntimeScript.content_fingerprint(engine_before_state.get("command_receipts", [])):
+		if bool(engine_result.get("ok", true)) or _array(engine_result.get("errors", [])).is_empty() or JSON.stringify(engine_environment) != engine_before_environment:
 			failures.append("Direct Engine ingress did not fail closed for a %s semantic proof reference." % str(proof_case.get("label", "invalid")))
 		var run_state_hostile := RunStateScript.new()
 		run_state_hostile.current_environment = engine_environment.duplicate(true)
