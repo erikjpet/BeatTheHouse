@@ -2016,7 +2016,17 @@ func world_sequence_consume_delivery_outcome(token: String, receipt_id: String, 
 		var outcome := str(receipt.get("outcome", ""))
 		var owner_result: Dictionary = {}
 		if outcome == "delivered":
-			owner_result = delivery_complete_handoff(node_id)
+			var delivery_instance := str(active_delivery_run.get("job_id", ""))
+			if delivery_instance.is_empty(): delivery_instance = str(active_delivery_run.get("run_id", ""))
+			var already_applied := str(active_delivery_run.get("status", "")) == "resolved" \
+				and bool(active_delivery_run.get("world_applied", false)) \
+				and str(_copy_dict(active_delivery_run.get("resolution", {})).get("outcome", "")) == "success" \
+				and delivery_instance == str(registration.get("public_instance_token", ""))
+			if already_applied:
+				var delivery_receipt := _copy_dict(active_delivery_run.get("receipt", {}))
+				owner_result = {"ok": true, "resolved": true, "message": str(delivery_receipt.get("payment_note", "The package changes hands. Nothing else does."))}
+			else:
+				owner_result = delivery_complete_handoff(node_id)
 		elif outcome in ["expired", "abandoned"] and bool(active_delivery_run.get("world_applied", false)):
 			owner_result = {"ok": true, "resolved": true, "outcome": outcome, "message": ""}
 		else:
