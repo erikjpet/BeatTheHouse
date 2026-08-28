@@ -117,10 +117,12 @@ func _check_identity_branch_matrix(definition: Dictionary, entry: Dictionary, fa
 		var option := _array(options[option_index])
 		var state := _state_at_phase(definition, decision_phase, "%s_identity_%d" % [scenario_id, option_index], failures)
 		if state.is_empty(): return
+		if not _save_round_trip_preserves(state, definition): failures.append("%s identity branch %d pre-branch save/load drifted." % [scenario_id, option_index])
 		var command_id := str(option[0])
 		var target := str(option[1])
 		var result := _apply_named_command(state, definition, command_id, "%s:identity:%d" % [scenario_id, option_index])
 		var next := _dict(result.get("state", {}))
+		if not _save_round_trip_preserves(next, definition): failures.append("%s identity branch %d post-branch save/load drifted." % [scenario_id, option_index])
 		if not bool(result.get("ok", false)) or (target.begins_with("terminal_") and str(next.get("status", "")) != "aftermath") or (not target.begins_with("terminal_") and str(next.get("phase_id", "")) != target):
 			failures.append("%s identity decision %s did not execute its authored target %s: %s" % [scenario_id, command_id, target, JSON.stringify(result.get("errors", []))])
 
@@ -133,11 +135,13 @@ func _check_lifecycle_matrix(definition: Dictionary, entry: Dictionary, failures
 		for branch_kind in ["failure", "refused", "interrupted"]:
 			var state := _state_at_phase(definition, phase_id, "%s_%s_%s" % [scenario_id, phase_id, branch_kind], failures)
 			if state.is_empty(): return
+			if not _save_round_trip_preserves(state, definition): failures.append("%s %s at %s pre-branch save/load drifted." % [scenario_id, branch_kind, phase_id])
 			var result: Dictionary
 			if branch_kind == "interrupted":
 				result = _apply_fact_branch(state, definition, "travel_departed", {"source_id":scenario_id,"target_id":"world_map","travel_kind":"ordinary"}, "%s:%s:interrupt" % [scenario_id, phase_id])
 			else:
 				result = _apply_named_command(state, definition, ("fail_" if branch_kind == "failure" else "refuse_") + scenario_id, "%s:%s:%s" % [scenario_id, phase_id, branch_kind])
+			if not _save_round_trip_preserves(_dict(result.get("state", {})), definition): failures.append("%s %s at %s post-branch save/load drifted." % [scenario_id, branch_kind, phase_id])
 			if not bool(result.get("ok", false)) or str(_dict(result.get("state", {})).get("status", "")) != "aftermath":
 				failures.append("%s %s branch at %s did not reach aftermath atomically: %s" % [scenario_id, branch_kind, phase_id, JSON.stringify(result.get("errors", []))])
 		if phase_id != "arrival":
@@ -146,10 +150,12 @@ func _check_lifecycle_matrix(definition: Dictionary, entry: Dictionary, failures
 			if pressure.is_empty() or pressure_state.is_empty():
 				failures.append("%s lacks executable scenario-specific pressure fact at %s." % [scenario_id, phase_id])
 			else:
+				if not _save_round_trip_preserves(pressure_state, definition): failures.append("%s pressure at %s pre-branch save/load drifted." % [scenario_id, phase_id])
 				var pressure_type := str(pressure.get("fact_type", ""))
 				var pressure_payload := _valid_fact_payload(pressure_type)
 				pressure_payload.merge(_dict(pressure.get("payload_equals", {})), true)
 				var pressure_result := _apply_fact_branch(pressure_state, definition, pressure_type, pressure_payload, "%s:%s:pressure" % [scenario_id, phase_id])
+				if not _save_round_trip_preserves(_dict(pressure_result.get("state", {})), definition): failures.append("%s pressure at %s post-branch save/load drifted." % [scenario_id, phase_id])
 				if not bool(pressure_result.get("ok", false)) or str(_dict(pressure_result.get("state", {})).get("status", "")) != "aftermath": failures.append("%s pressure fact branch at %s did not execute: status=%s errors=%s" % [scenario_id, phase_id, str(_dict(pressure_result.get("state", {})).get("status", "")), JSON.stringify(pressure_result.get("errors", []))])
 	var partial := _state_at_phase(definition, "work_1", "%s_partial_reentry" % scenario_id, failures)
 	var partial_saved := Runtime.normalize_state(JSON.parse_string(JSON.stringify(partial)), definition, _host_semantics())
@@ -261,7 +267,15 @@ func _apply_fact_branch(state: Dictionary, definition: Dictionary, fact_type: St
 	var fact := Runtime.fact(fact_type, producer, "package_d_runtime_node", fact_id, 1, 1, payload)
 	var enqueued := Runtime.enqueue_fact(state, definition, fact)
 	if not bool(enqueued.get("ok", false)): return enqueued
-	return Runtime.flush_facts(_dict(enqueued.get("state", {})), definition, 1)
+	var flushed := Runtime.flush_facts(_dict(enqueued.get("state", {})), definition, 1)
+	# A newly entered phase intentionally grants one world-boundary progression
+	# grace. Exercise the next real boundary so the authored branch is observed.
+	if fact_type == "world_boundary" and bool(flushed.get("ok", false)) and str(_dict(flushed.get("state", {})).get("status", "")) == "active":
+		var second := Runtime.fact(fact_type, producer, "package_d_runtime_node", "%s_next" % fact_id, 2, 2, payload)
+		var second_enqueued := Runtime.enqueue_fact(_dict(flushed.get("state", {})), definition, second)
+		if not bool(second_enqueued.get("ok", false)): return second_enqueued
+		return Runtime.flush_facts(_dict(second_enqueued.get("state", {})), definition, 2)
+	return flushed
 
 
 func _producer_for_fact(fact_type: String) -> String:
@@ -299,6 +313,17 @@ func _semantic_collections_empty(state: Dictionary) -> bool:
 	for key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors"]:
 		if not _dict(semantic.get(key, {})).is_empty(): return false
 	return true
+
+
+func _save_round_trip_preserves(state: Dictionary, definition: Dictionary) -> bool:
+	if state.is_empty(): return false
+	var restored := Runtime.normalize_state(JSON.parse_string(JSON.stringify(state)), definition, _host_semantics())
+	return str(restored.get("phase_id", "")) == str(state.get("phase_id", "")) \
+		and str(restored.get("status", "")) == str(state.get("status", "")) \
+		and _array(restored.get("resolved_outcomes", [])) == _array(state.get("resolved_outcomes", [])) \
+		and _array(restored.get("command_receipts", [])) == _array(state.get("command_receipts", [])) \
+		and _array(restored.get("fact_receipts", [])) == _array(state.get("fact_receipts", [])) \
+		and _array(_dict(restored.get("semantic_state", {})).get("operation_receipts", [])) == _array(_dict(state.get("semantic_state", {})).get("operation_receipts", []))
 
 
 func _host_semantics() -> Dictionary:
