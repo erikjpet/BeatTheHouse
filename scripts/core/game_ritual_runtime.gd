@@ -20,32 +20,33 @@ var state: Dictionary = {}
 var _actions: Dictionary = {}
 var _phases: Dictionary = {}
 var _handlers: Dictionary = {}
-var _host_handlers: Dictionary = {}
 var _operations: Dictionary = {}
 var _session_id := "session.default_01"
-var _authenticated_actions: Dictionary = {}
-var _runtime_capability := RefCounted.new()
+var _host_authority: Object
 
 
-func configure(ritual_definition: Dictionary, host_handlers: Dictionary = {}, session_id: String = "session.default_01", authenticated_actions: Dictionary = {}) -> Dictionary:
+func _init(host_authority: Object = null) -> void:
+	_host_authority = host_authority
+
+
+func configure(ritual_definition: Dictionary) -> Dictionary:
 	if not definition.is_empty():
 		return {"ok": false, "errors": ["ritual runtime is already configured"]}
 	var errors := SchemaScript.validate_definition(ritual_definition)
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors}
+	for method in ["ritual_session_id", "ritual_authenticated_action", "ritual_authorizes_command", "ritual_consume_command", "ritual_handle_action", "ritual_record_snapshot", "ritual_authorizes_snapshot"]:
+		if _host_authority == null or not _host_authority.has_method(method):
+			return {"ok": false, "errors": ["retained ritual host authority is incomplete"]}
 	definition = ritual_definition.duplicate(true)
-	_host_handlers = host_handlers.duplicate()
-	_session_id = session_id
-	_authenticated_actions = authenticated_actions.duplicate(true)
+	_session_id = str(_host_authority.call("ritual_session_id"))
+	if not _qualified_id(_session_id):
+		definition.clear()
+		return {"ok": false, "errors": ["retained ritual host session identity is invalid"]}
 	_index_definition()
 	state = _fresh_state()
 	_apply_phase_entry(str(state.get("phase_id", "")))
 	return {"ok": true, "state": state.duplicate(true), "projection": prepared_projection()}
-
-
-func set_authenticated_actions(authenticated_actions: Dictionary) -> void:
-	if definition.is_empty():
-		_authenticated_actions = authenticated_actions.duplicate(true)
 
 
 # Strict frozen-contract entry point. Caller origin data never establishes
@@ -56,11 +57,9 @@ func process_command(command: Dictionary, context: Dictionary = {}) -> Dictionar
 	var envelope_cache: Dictionary = state.get("envelope_request_cache", {})
 	if envelope_cache.has(request_key):
 		var cached: Dictionary = envelope_cache[request_key]
-		var authenticated: Dictionary = command.get("authenticated_action", {}) if typeof(command.get("authenticated_action")) == TYPE_DICTIONARY else {}
-		var trusted: Dictionary = _authenticated_actions.get(str(command.get("action_id", "")), {})
 		if not _closed_shape(command, COMMAND_KEYS) or not _fingerprint(str(command.get("content_fingerprint", ""))) or canonical_fingerprint(_without_fingerprint(command)) != str(command.get("content_fingerprint", "")):
 			return _envelope_rejection(command, "invalid_envelope", "Replay command envelope is invalid.", false, "none")
-		if trusted.is_empty() or canonical_json(authenticated) != canonical_json(trusted):
+		if not bool(_host_authority.call("ritual_authorizes_command", command.duplicate(true), true)):
 			return _envelope_rejection(command, "authority_mismatch", "Replay action origin is not live and authenticated.", false, "none")
 		if str(cached.get("command_content_fingerprint", "")) != str(command.get("content_fingerprint", "")):
 			return _envelope_rejection(command, "receipt_content_conflict", "Request key is already bound to different command content.", false, "none")
@@ -76,11 +75,15 @@ func process_command(command: Dictionary, context: Dictionary = {}) -> Dictionar
 	execution_context["_ritual_command_boundary"] = (command.get("boundary", {}) as Dictionary).duplicate(true)
 	execution_context["_ritual_command_receipt"] = str(command.get("receipt_key", ""))
 	var before := state.duplicate(true)
-	var legacy: Dictionary = _reduce_action(str(command.get("action_id", "")), command.get("parameters", {}) as Dictionary, request_key, execution_context, _runtime_capability)
+	var proposal: Dictionary = _reduce_action(str(command.get("action_id", "")), command.get("parameters", {}) as Dictionary, request_key, execution_context)
+	var legacy: Dictionary = proposal.get("response", {})
 	var response := _result_envelope(command, legacy) if bool(legacy.get("ok", false)) else _envelope_rejection(command, _taxonomy_code(str(legacy.get("error_code", "handler_rejected"))), str(legacy.get("message", "Action rejected.")), false, "none")
 	if not bool(response.get("ok", false)):
 		state = before
 		return response
+	if not bool(_host_authority.call("ritual_consume_command", command.duplicate(true))):
+		return _envelope_rejection(command, "authority_mismatch", "RitualCommand host nonce was not pending at commit.", false, "none")
+	state = (proposal.get("state", before) as Dictionary).duplicate(true)
 	envelope_cache = state.get("envelope_request_cache", {})
 	envelope_cache[request_key] = {
 		"request_key": request_key,
@@ -118,47 +121,37 @@ func process_action(action_id: String, parameters: Dictionary, request_key: Stri
 	return _rejection("unsealed_authority", action_id, request_key, "Direct ritual action authority is sealed.")
 
 
-func _reduce_action(action_id: String, parameters: Dictionary, request_key: String, context: Dictionary, runtime_capability: RefCounted) -> Dictionary:
-	if runtime_capability != _runtime_capability:
-		return _rejection("unsealed_authority", action_id, request_key, "Ritual reducer capability is not authentic.")
+func _reduce_action(action_id: String, parameters: Dictionary, request_key: String, context: Dictionary) -> Dictionary:
 	if definition.is_empty():
-		return _rejection("runtime_not_configured", action_id, request_key, "Ritual runtime is not configured.")
+		return {"response": _rejection("runtime_not_configured", action_id, request_key, "Ritual runtime is not configured.")}
 	if not _request_key(request_key):
-		return _rejection("invalid_request", action_id, request_key, "Request key is not canonical.")
+		return {"response": _rejection("invalid_request", action_id, request_key, "Request key is not canonical.")}
 	var command := {"ritual_id": str(definition.get("ritual_id", "")), "phase_id": str(state.get("phase_id", "")), "action_id": action_id, "parameters": parameters.duplicate(true), "request_key": request_key}
-	# Phase is observed execution state, not caller-owned request content. Keeping it
-	# out of the binding lets a successful phase-changing request replay exactly.
-	var command_fingerprint := canonical_fingerprint({"ritual_id": command["ritual_id"], "action_id": action_id, "parameters": parameters, "request_key": request_key})
-	var cached: Dictionary = state.get("request_cache", {}).get(request_key, {}) if typeof(state.get("request_cache", {})) == TYPE_DICTIONARY else {}
-	if not cached.is_empty():
-		if str(cached.get("command_fingerprint", "")) != command_fingerprint:
-			return _rejection("request_conflict", action_id, request_key, "Request key was already bound to different canonical content.")
-		return (cached.get("response", {}) as Dictionary).duplicate(true)
 	if not _actions.has(action_id):
-		return _cache_rejection(command_fingerprint, request_key, _rejection("unknown_action", action_id, request_key, "Action is not declared."))
+		return {"response": _rejection("unknown_action", action_id, request_key, "Action is not declared.")}
 	var declaration: Dictionary = _actions[action_id]
 	var parameter_errors := _validate_parameters(parameters, declaration.get("parameters", {}))
 	if not parameter_errors.is_empty():
-		return _cache_rejection(command_fingerprint, request_key, _rejection("invalid_parameters", action_id, request_key, "; ".join(parameter_errors)))
+		return {"response": _rejection("invalid_parameters", action_id, request_key, "; ".join(parameter_errors))}
 	var phase: Dictionary = _phases.get(str(state.get("phase_id", "")), {})
 	if not (phase.get("permitted_actions", []) as Array).has(action_id):
-		return _cache_rejection(command_fingerprint, request_key, _rejection("action_out_of_phase", action_id, request_key, "Action is not permitted in the current phase."))
+		return {"response": _rejection("action_out_of_phase", action_id, request_key, "Action is not permitted in the current phase.")}
 
 	var candidate := state.duplicate(true)
 	var handler_id := str(declaration.get("handler_id", ""))
 	var handler_result := _invoke_handler(handler_id, action_id, parameters, candidate, context)
 	if not bool(handler_result.get("ok", false)):
-		return _cache_rejection(command_fingerprint, request_key, _rejection(str(handler_result.get("error_code", "handler_rejected")), action_id, request_key, str(handler_result.get("message", "Handler rejected the action."))))
+		return {"response": _rejection(str(handler_result.get("error_code", "handler_rejected")), action_id, request_key, str(handler_result.get("message", "Handler rejected the action.")))}
 	var emission_error := _validate_handler_emissions(handler_id, handler_result)
 	if not emission_error.is_empty():
-		return _cache_rejection(command_fingerprint, request_key, _rejection("handler_contract_violation", action_id, request_key, emission_error))
+		return {"response": _rejection("handler_contract_violation", action_id, request_key, emission_error)}
 	var mutation_error := _apply_handler_mutation(candidate, handler_id, handler_result)
 	if not mutation_error.is_empty():
-		return _cache_rejection(command_fingerprint, request_key, _rejection("handler_contract_violation", action_id, request_key, mutation_error))
+		return {"response": _rejection("handler_contract_violation", action_id, request_key, mutation_error)}
 
 	var transition := _transition_for_action(phase, action_id)
 	if transition.size() > 1:
-		return _cache_rejection(command_fingerprint, request_key, _rejection("ambiguous_transition", action_id, request_key, "More than one transition accepts this action."))
+		return {"response": _rejection("ambiguous_transition", action_id, request_key, "More than one transition accepts this action.")}
 	var operations: Array = []
 	if transition.size() == 1:
 		var transition_record: Dictionary = transition[0]
@@ -171,14 +164,14 @@ func _reduce_action(action_id: String, parameters: Dictionary, request_key: Stri
 	operations.append_array(_dictionary_array(handler_result.get("operations", [])))
 	var operation_error := _apply_operations(candidate, operations)
 	if not operation_error.is_empty():
-		return _cache_rejection(command_fingerprint, request_key, _rejection("operation_rejected", action_id, request_key, operation_error))
+		return {"response": _rejection("operation_rejected", action_id, request_key, operation_error)}
 
 	candidate["action_sequence"] = int(candidate.get("action_sequence", 0)) + 1
 	var sequence := int(candidate.get("action_sequence", 0))
 	var command_receipt := _receipt("command", "ritual:command:%d" % sequence, command)
 	var facts: Variant = _seal_facts(handler_result.get("facts", []), sequence, action_id, context)
 	if typeof(facts) != TYPE_ARRAY:
-		return _cache_rejection(command_fingerprint, request_key, _rejection("fact_rejected", action_id, request_key, "Handler emitted an invalid fact batch."))
+		return {"response": _rejection("fact_rejected", action_id, request_key, "Handler emitted an invalid fact batch.")}
 	var result_payload: Dictionary = handler_result.get("result", {}) if typeof(handler_result.get("result", {})) == TYPE_DICTIONARY else {}
 	var result_body := {"ritual_id": str(definition.get("ritual_id", "")), "action_id": action_id, "phase_id": str(candidate.get("phase_id", "")), "sequence": sequence, "payload": result_payload.duplicate(true)}
 	var result_receipt := _receipt("result", "ritual:result:%d" % sequence, result_body)
@@ -194,24 +187,15 @@ func _reduce_action(action_id: String, parameters: Dictionary, request_key: Stri
 	for operation in operations:
 		operation_envelopes.append(_operation_result_envelope(operation as Dictionary, context))
 	candidate["operation_envelopes"] = operation_envelopes
-	var cache: Dictionary = candidate.get("request_cache", {}) if typeof(candidate.get("request_cache", {})) == TYPE_DICTIONARY else {}
-	cache[request_key] = {"command_fingerprint": command_fingerprint, "response": response.duplicate(true)}
-	_trim_dictionary(cache, REQUEST_LIMIT)
-	candidate["request_cache"] = cache
-	state = candidate
-	response["projection"] = prepared_projection()
-	# Cache the final projection-bearing response only after the candidate commits.
-	(state["request_cache"] as Dictionary)[request_key]["response"] = response.duplicate(true)
-	return response
+	response["projection"] = _prepared_projection(candidate)
+	return {"response": response, "state": candidate}
 
 
 func restore(_serialized_state: Dictionary) -> Dictionary:
 	return {"ok": false, "error_code": "invalid_restore", "errors": ["Raw ritual restore authority is sealed"]}
 
 
-func _restore_state(serialized_state: Dictionary, runtime_capability: RefCounted) -> Dictionary:
-	if runtime_capability != _runtime_capability:
-		return {"ok": false, "error_code": "invalid_restore", "errors": ["Ritual restore capability is not authentic"]}
+func _restore_state(serialized_state: Dictionary) -> Dictionary:
 	if definition.is_empty():
 		return {"ok": false, "errors": ["runtime is not configured"]}
 	var errors := _validate_restore_state(serialized_state)
@@ -229,11 +213,8 @@ func _restore_state(serialized_state: Dictionary, runtime_capability: RefCounted
 		errors.append("restore phase is not legal")
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors}
-	state = serialized_state.duplicate(true)
-	state.erase("pointer_path")
-	state.erase("hover")
-	state.erase("animation_progress")
-	return {"ok": true, "state": state.duplicate(true), "projection": prepared_projection(), "replayed_effects": []}
+	var candidate := serialized_state.duplicate(true)
+	return {"ok": true, "state": candidate, "projection": _prepared_projection(candidate), "replayed_effects": []}
 
 
 func serialized_state() -> Dictionary:
@@ -243,6 +224,8 @@ func serialized_state() -> Dictionary:
 func authenticated_snapshot() -> Dictionary:
 	var snapshot := {"envelope_version": 1, "ritual_id": str(definition.get("ritual_id", "")), "session_id": _session_id, "state": state.duplicate(true), "content_fingerprint": ""}
 	snapshot["content_fingerprint"] = canonical_fingerprint(_without_fingerprint(snapshot))
+	if not bool(_host_authority.call("ritual_record_snapshot", str(snapshot.get("content_fingerprint", "")))):
+		return {}
 	return snapshot
 
 
@@ -251,30 +234,35 @@ func restore_snapshot(snapshot: Dictionary) -> Dictionary:
 	if not _closed_shape(snapshot, keys): return {"ok": false, "error_code": "invalid_restore", "errors": ["restore snapshot has invalid closed shape"]}
 	if int(snapshot.get("envelope_version", 0)) != 1: return {"ok": false, "error_code": "invalid_restore", "errors": ["restore snapshot version requires an explicit unavailable migration"]}
 	if str(snapshot.get("ritual_id", "")) != str(definition.get("ritual_id", "")) or str(snapshot.get("session_id", "")) != _session_id: return {"ok": false, "error_code": "invalid_restore", "errors": ["restore snapshot identity mismatch"]}
-	if typeof(snapshot.get("state")) != TYPE_DICTIONARY or not _fingerprint(str(snapshot.get("content_fingerprint", ""))) or canonical_fingerprint(_without_fingerprint(snapshot)) != str(snapshot.get("content_fingerprint", "")):
+	if typeof(snapshot.get("state")) != TYPE_DICTIONARY or not _fingerprint(str(snapshot.get("content_fingerprint", ""))) or canonical_fingerprint(_without_fingerprint(snapshot)) != str(snapshot.get("content_fingerprint", "")) or not bool(_host_authority.call("ritual_authorizes_snapshot", str(snapshot.get("content_fingerprint", "")))):
 		return {"ok": false, "error_code": "invalid_restore", "errors": ["restore snapshot fingerprint mismatch"]}
 	var before := state.duplicate(true)
-	var result := _restore_state(snapshot.get("state", {}) as Dictionary, _runtime_capability)
+	var result := _restore_state(snapshot.get("state", {}) as Dictionary)
 	if not bool(result.get("ok", false)):
-		state = before
 		result["error_code"] = "invalid_restore"
+		return result
+	state = (result.get("state", before) as Dictionary).duplicate(true)
 	return result
 
 
 func prepared_projection() -> Dictionary:
+	return _prepared_projection(state)
+
+
+func _prepared_projection(source_state: Dictionary) -> Dictionary:
 	return {
 		"contract": SchemaScript.CONTRACT,
 		"ritual_id": str(definition.get("ritual_id", "")),
-		"phase_id": str(state.get("phase_id", "")),
-		"pending_items": (state.get("pending_items", {}) as Dictionary).duplicate(true),
-		"working_items": (state.get("working_items", {}) as Dictionary).duplicate(true),
-		"item_resolutions": _dictionary_array(state.get("item_resolutions", [])),
-		"readable_totals": (state.get("readable_totals", {}) as Dictionary).duplicate(true),
-		"actors": _actor_projection(),
-		"scene_objects": _object_projection(),
-		"energy_tier": str(state.get("energy_tier", "")),
-		"pointer_verbs": _pointer_projection(),
-		"action_sequence": int(state.get("action_sequence", 0)),
+		"phase_id": str(source_state.get("phase_id", "")),
+		"pending_items": (source_state.get("pending_items", {}) as Dictionary).duplicate(true),
+		"working_items": (source_state.get("working_items", {}) as Dictionary).duplicate(true),
+		"item_resolutions": _dictionary_array(source_state.get("item_resolutions", [])),
+		"readable_totals": (source_state.get("readable_totals", {}) as Dictionary).duplicate(true),
+		"actors": _actor_projection(source_state),
+		"scene_objects": _object_projection(source_state),
+		"energy_tier": str(source_state.get("energy_tier", "")),
+		"pointer_verbs": _pointer_projection(source_state),
+		"action_sequence": int(source_state.get("action_sequence", 0)),
 	}
 
 
@@ -282,9 +270,7 @@ func set_energy_tier(tier_id: String, request_key: String) -> Dictionary:
 	return {"ok": false, "error_code": "unsealed_authority", "energy_tier": tier_id, "request_key": request_key}
 
 
-func _apply_energy_tier(tier_id: String, request_key: String, runtime_capability: RefCounted) -> Dictionary:
-	if runtime_capability != _runtime_capability:
-		return {"ok": false, "error_code": "unsealed_authority"}
+func _apply_energy_tier(tier_id: String, request_key: String) -> Dictionary:
 	var energy: Dictionary = definition.get("energy", {}) if typeof(definition.get("energy", {})) == TYPE_DICTIONARY else {}
 	for tier in _dictionary_array(energy.get("tiers", [])):
 		if str(tier.get("id", "")) != tier_id:
@@ -306,10 +292,8 @@ func _apply_energy_tier(tier_id: String, request_key: String, runtime_capability
 		cache = candidate.get("request_cache", {})
 		cache[key] = {"command_fingerprint": fingerprint, "response": response.duplicate(true)}
 		candidate["request_cache"] = cache
-		state = candidate
-		response["projection"] = prepared_projection()
-		(state["request_cache"] as Dictionary)[key]["response"] = response.duplicate(true)
-		return response
+		response["projection"] = _prepared_projection(candidate)
+		return {"ok": true, "response": response, "state": candidate}
 	return {"ok": false, "error_code": "unknown_energy_tier"}
 
 
@@ -380,10 +364,7 @@ func _invoke_handler(handler_id: String, action_id: String, parameters: Dictiona
 		return _builtin_commitment(action_id, parameters, candidate, context)
 	if handler_id == "resolution.ack":
 		return {"ok": true, "result": {}, "operations": [], "facts": []}
-	var callback: Variant = _host_handlers.get(handler_id)
-	if typeof(callback) != TYPE_CALLABLE or not (callback as Callable).is_valid():
-		return {"ok": false, "error_code": "handler_unavailable", "message": "No allowlisted host handler is bound."}
-	var response: Variant = (callback as Callable).call(action_id, parameters.duplicate(true), candidate.duplicate(true), context.duplicate(true))
+	var response: Variant = _host_authority.call("ritual_handle_action", handler_id, action_id, parameters.duplicate(true), candidate.duplicate(true), context.duplicate(true))
 	return (response as Dictionary).duplicate(true) if typeof(response) == TYPE_DICTIONARY else {"ok": false, "error_code": "handler_contract_violation", "message": "Handler did not return a record."}
 
 
@@ -548,14 +529,6 @@ func _rejection(error_code: String, action_id: String, request_key: String, mess
 	return body
 
 
-func _cache_rejection(command_fingerprint: String, request_key: String, response: Dictionary) -> Dictionary:
-	var cache: Dictionary = state.get("request_cache", {})
-	cache[request_key] = {"command_fingerprint": command_fingerprint, "response": response.duplicate(true)}
-	_trim_dictionary(cache, REQUEST_LIMIT)
-	state["request_cache"] = cache
-	return response
-
-
 func _validate_parameters(parameters: Dictionary, schema_value: Variant) -> Array[String]:
 	var schema: Dictionary = schema_value if typeof(schema_value) == TYPE_DICTIONARY else {}
 	var errors: Array[String] = []
@@ -589,28 +562,28 @@ func _value_matches(value: Variant, descriptor_value: Variant) -> bool:
 	return false
 
 
-func _actor_projection() -> Array:
+func _actor_projection(source_state: Dictionary) -> Array:
 	var result: Array = []
 	for actor in _dictionary_array(definition.get("actors", [])):
 		var record: Dictionary = actor.duplicate(true)
-		var actor_state: Dictionary = (state.get("actor_states", {}) as Dictionary).get(str(actor.get("id", "")), {})
+		var actor_state: Dictionary = (source_state.get("actor_states", {}) as Dictionary).get(str(actor.get("id", "")), {})
 		record["state"] = actor_state.duplicate(true)
 		result.append(record)
 	return result
 
 
-func _object_projection() -> Array:
+func _object_projection(source_state: Dictionary) -> Array:
 	var result: Array = []
 	for object in _dictionary_array(definition.get("scene_objects", [])):
 		var record: Dictionary = object.duplicate(true)
-		var object_state: Dictionary = (state.get("object_states", {}) as Dictionary).get(str(object.get("id", "")), {})
+		var object_state: Dictionary = (source_state.get("object_states", {}) as Dictionary).get(str(object.get("id", "")), {})
 		record["state"] = object_state.duplicate(true)
 		result.append(record)
 	return result
 
 
-func _pointer_projection() -> Array:
-	var phase := str(state.get("phase_id", "")); var result: Array = []
+func _pointer_projection(source_state: Dictionary) -> Array:
+	var phase := str(source_state.get("phase_id", "")); var result: Array = []
 	for pointer in _dictionary_array(definition.get("pointer_verbs", [])):
 		if (pointer.get("phases", []) as Array).has(phase): result.append(pointer.duplicate(true))
 	return result
@@ -683,9 +656,11 @@ func _validate_command_envelope(command: Dictionary) -> Dictionary:
 	for key in ["operation_receipt_key", "boundary_id"]:
 		if not _request_key(str(authenticated.get(key, ""))): return _validation_error("invalid_id", "Authenticated action %s is invalid." % key)
 	if not _fingerprint(str(authenticated.get("content_fingerprint", ""))): return _validation_error("invalid_envelope", "Authenticated action fingerprint is invalid.")
-	var trusted: Dictionary = _authenticated_actions.get(action_id, {})
+	var trusted_value: Variant = _host_authority.call("ritual_authenticated_action", action_id)
+	var trusted: Dictionary = trusted_value if typeof(trusted_value) == TYPE_DICTIONARY else {}
 	if trusted.is_empty(): return _validation_error("unsealed_authority", "No live authenticated action is bound.")
 	if canonical_json(authenticated) != canonical_json(trusted): return _validation_error("authority_mismatch", "Caller action origin does not match the live authenticated action.")
+	if not bool(_host_authority.call("ritual_authorizes_command", command.duplicate(true), false)): return _validation_error("authority_mismatch", "RitualCommand was not issued by the retained game host.")
 	var boundary: Dictionary = command.get("boundary", {}) if typeof(command.get("boundary")) == TYPE_DICTIONARY else {}
 	var boundary_error := _validate_boundary(boundary, command)
 	if not boundary_error.is_empty(): return boundary_error

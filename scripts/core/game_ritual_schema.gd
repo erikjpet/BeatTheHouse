@@ -445,6 +445,8 @@ static func _validate_type_map(value: Variant, path: String, errors: Array[Strin
 	if typeof(value) != TYPE_DICTIONARY:
 		errors.append("%s must be a schema map" % path)
 		return
+	if (value as Dictionary).size() > 32:
+		errors.append("%s exceeds the bounded schema field limit" % path)
 	for key in (value as Dictionary).keys():
 		if not _local_id(str(key)):
 			errors.append("%s contains invalid field %s" % [path, key])
