@@ -11,7 +11,7 @@ const PlayingCardRendererScript := preload("res://scripts/games/playing_card_ren
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 
 const STATE_SCHEMA := "crew_draw_table"
-const STATE_VERSION := 1
+const STATE_VERSION := 2
 const PLAYER_ID := "player"
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -28,6 +28,10 @@ const MEMBER_NAMES := {
 	"crew_rook": "Rook", "crew_velvet": "Velvet", "crew_knuckles": "Knuckles",
 	"crew_switch": "Switch", "crew_mags": "Mags", "crew_bishop": "Bishop", "crew_lucky": "Lucky",
 }
+const NIGHT_IDS := ["friendly_teaching", "hustle_test", "debt_court", "after_job", "raid_jitters"]
+const OBSERVATION_DURATION_ACTIONS := 3
+const ORDERED_ENGINE := "ordered_v1"
+const MAX_RAISES_PER_ROUND := 2
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -35,8 +39,10 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var state := _table_state(environment)
 	if not _buy_in_open(run_state, state):
 		result["message"] = "The table is friendly, not open. An associate at the table has to vouch for your chair."
+	elif bool(state.get("session_settled", false)):
+		result["message"] = "The last night is settled. A fresh visit can open a newly seeded table."
 	else:
-		result["message"] = "The back-room table plays five-card draw: ante, bet, one draw, bet, showdown. Cash stays friendly."
+		result["message"] = "The back-room table plays five-card draw: ante, ordered bets, one draw, ordered bets, showdown. Cash stays friendly."
 	return result
 
 
@@ -53,11 +59,33 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 	return {
 		"schema": STATE_SCHEMA,
 		"version": STATE_VERSION,
+		"producer_id": "poker",
+		"game_id": get_id(),
 		"members": members,
 		"phase": "idle",
 		"hand_number": 0,
 		"session_swing": 0,
 		"session_settled": false,
+		"session_index": 0,
+		"night_id": _night_id(environment),
+		"action_ordinal": 0,
+		"observation_queue": [],
+		"verified_observation_receipts": [],
+		"turn_engine": ORDERED_ENGINE if _ordered_engine(environment) else "legacy_v1",
+		"button_index": 0,
+		"turn_owner": "",
+		"turn_order": [],
+		"turn_cursor": 0,
+		"current_bet": 0,
+		"round_contributions": {},
+		"acted_since_raise": [],
+		"raise_count": 0,
+		"player_active": true,
+		"player_stack": int(tuning.get("session_swing_cap", 60)),
+		"action_history": [],
+		"session_memory": {},
+		"public_memory_receipt_id": "",
+		"player_folded_hidden": false,
 		"pot": 0,
 		"shoe": [],
 		"player_cards": [],
@@ -72,11 +100,13 @@ func legal_actions(run_state: RunState, environment: Dictionary) -> Array:
 	var state := _table_state(environment)
 	if not _buy_in_open(run_state, state):
 		return []
+	if _ordered_engine(environment):
+		return _ordered_legal_actions(state)
 	var phase := str(state.get("phase", "idle"))
 	match phase:
 		"idle":
 			if bool(state.get("session_settled", false)):
-				return []
+				return [_poker_action("new_session", "Open New Night", "Begin a fresh seeded session after the settlement boundary.")]
 			return [_poker_action("deal", "Ante & Deal", "Ante the friendly stake and deal five cards."), _poker_action("cash_out", "Leave Table", "Settle the session and stand up.")]
 		"before", "after":
 			return [
@@ -100,6 +130,8 @@ func wager_cost_for_context(action_id: String, _stake: int, _run_state: RunState
 		"deal":
 			var ante := int(tuning.get("ante", 2))
 			return ante if _loss_room(state, ante) == ante else 0
+		"new_session":
+			return 0
 		"call":
 			var call_cost := int(state.get("to_call", 0))
 			return call_cost if _loss_room(state, call_cost) == call_cost else 0
@@ -128,6 +160,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		seat.erase("policy")
 		seats.append(seat)
 	var beat := _poker_dict(state.get("beat", {}))
+	var visible_observations := _visible_observations(state)
+	if not visible_observations.is_empty():
+		beat = visible_observations[0]
 	var presentation := {}
 	if not beat.is_empty():
 		var presentation_member := str(beat.get("m", ""))
@@ -138,6 +173,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			for presentation_key in ["channel", "timing_msec", "portrait_variant", "line", "quirk"]:
 				presentation[presentation_key] = authored.get(presentation_key)
 			presentation["member_id"] = presentation_member
+			presentation["observation_id"] = str(beat.get("id", ""))
+			presentation["start_ordinal"] = int(beat.get("start_ordinal", 0))
+			presentation["duration_actions"] = int(beat.get("duration_actions", OBSERVATION_DURATION_ACTIONS))
 	if str(presentation.get("channel", "")) == "portrait":
 		for seat_index in range(seats.size()):
 			var presentation_seat: Dictionary = seats[seat_index]
@@ -159,18 +197,35 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"reduce_motion": bool(ui_state.get("reduce_motion", false)),
 		"display_name": get_display_name(),
 		"phase": phase,
+		"turn_engine": str(state.get("turn_engine", "legacy_v1")),
 		"members": members,
 		"seats": seats,
 		"player_cards": _card_array(state.get("player_cards", [])),
 		"held": held,
 		"pot": int(state.get("pot", 0)),
 		"to_call": int(state.get("to_call", 0)),
+		"turn_owner": str(state.get("turn_owner", "")),
+		"turn_owner_name": _actor_name(str(state.get("turn_owner", ""))),
+		"button_index": int(state.get("button_index", 0)),
+		"current_bet": int(state.get("current_bet", 0)),
+		"amount_to_call": maxi(0, int(state.get("current_bet", 0)) - _actor_round_contribution(state, PLAYER_ID)),
+		"raise_count": int(state.get("raise_count", 0)),
+		"raise_cap": MAX_RAISES_PER_ROUND,
+		"player_stack": int(state.get("player_stack", 0)),
+		"player_contribution": int(state.get("player_contribution", 0)),
+		"action_history": _dict_array(state.get("action_history", [])),
+		"night_scene": _night_scene_state(state),
+		"ritual_actors": _ordered_ritual_actors(state),
+		"ritual_scene_objects": _ordered_ritual_objects(state),
 		"hand_number": int(state.get("hand_number", 0)),
 		"hand_cap": int(CrewPokerModelScript.config().get("session_hand_cap", 5)),
 		"session_swing": int(state.get("session_swing", 0)),
 		"swing_cap": int(CrewPokerModelScript.config().get("session_swing_cap", 60)),
 		"buy_in_open": _buy_in_open(run_state, state),
 		"observation": presentation,
+		"observation_queue": _public_observation_queue(state),
+		"action_ordinal": int(state.get("action_ordinal", 0)),
+		"night_id": str(state.get("night_id", "friendly_teaching")),
 		"banter": _banter_for_state(state),
 		"last_result": last,
 		"result_message": str(last.get("message", "")),
@@ -214,6 +269,8 @@ func resolve(action_id: String, stake: int, run_state: RunState, environment: Di
 
 
 func resolve_with_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	if _ordered_engine(environment):
+		return _resolve_ordered(action_id, run_state, environment, rng, ui_state)
 	var state := _table_state(environment)
 	if not _buy_in_open(run_state, state):
 		return _result(action_id, environment, 0, "Nobody at the table can vouch for your buy-in.", false)
@@ -227,6 +284,9 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	var bankroll_delta := 0
 	var message := ""
 	match action_id:
+		"new_session":
+			_start_new_session(state, environment)
+			message = "A fresh night begins. The button moves and the table cuts a new deck."
 		"deal":
 			var dealt := _deal_hand(run_state, state, rng)
 			if not bool(dealt.get("ok", true)):
@@ -256,11 +316,466 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 			message = _settle_session(state, run_state)
 		_:
 			return _result(action_id, environment, 0, "That move is not open at this table.", false)
+	state["action_ordinal"] = int(state.get("action_ordinal", 0)) + 1
 	_update_environment_state(environment, state)
 	var result := _result(action_id, environment, bankroll_delta, message, true)
 	result["ui_state"] = {} if action_id != "draw" else {"poker_held": []}
 	result["preserve_surface_ui_state"] = action_id == "draw"
 	return result
+
+
+func _ordered_legal_actions(state: Dictionary) -> Array:
+	var phase := str(state.get("phase", "idle"))
+	if phase == "idle":
+		if bool(state.get("session_settled", false)):
+			return [_poker_action("new_session", "Open New Night", "Start a newly seeded session after the settled boundary.")]
+		var night_actions := _night_required_actions(state)
+		if not night_actions.is_empty():
+			return night_actions
+		return [_poker_action("deal", "Ante & Deal", "Post the ante and deal in button order."), _poker_action("cash_out", "Leave Table", "Settle once between hands.")]
+	var owner := str(state.get("turn_owner", ""))
+	if owner.is_empty():
+		return []
+	if owner != PLAYER_ID:
+		return [_poker_action("observe", "Watch %s" % MEMBER_NAMES.get(owner, owner), "Advance exactly one visible Crew decision.")]
+	if phase == "draw":
+		return [_poker_action("draw", "Draw", "Keep selected cards and replace the rest."), _poker_action("fold", "Fold", "Release the hand; hidden cards teach nothing.")]
+	if phase in ["before", "after"]:
+		var actions := [_poker_action("call", "Check / Call", "Match exactly the live amount or check for zero."), _poker_action("fold", "Fold", "Release the hand; hidden cards teach nothing.")]
+		if int(state.get("raise_count", 0)) < _night_raise_cap(state):
+			actions.insert(1, _poker_action("raise", "Raise", "Call and add one bounded friendly raise."))
+		return actions
+	return []
+
+
+func _resolve_ordered(action_id: String, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+	var state := _table_state(environment)
+	if not _buy_in_open(run_state, state):
+		return _result(action_id, environment, 0, "Nobody at the table can vouch for your buy-in.", false)
+	var legal_ids: Array[String] = []
+	for action in _ordered_legal_actions(state):
+		legal_ids.append(str((action as Dictionary).get("id", "")))
+	if not legal_ids.has(action_id):
+		return _result(action_id, environment, 0, "That action is outside the current ordered turn.", false)
+	var outcome := {"ok": true, "delta": 0, "message": "The table acts."}
+	match action_id:
+		"new_session":
+			_start_new_session(state, environment)
+			state["turn_engine"] = ORDERED_ENGINE
+			state["player_stack"] = int(CrewPokerModelScript.config().get("session_swing_cap", 60))
+			outcome["message"] = "A fresh night begins. The button moves and the table cuts a new deck."
+		"deal":
+			outcome = _deal_hand_ordered(run_state, state, rng)
+		"observe":
+			outcome = _ordered_npc_turn(state, rng, run_state)
+		"call", "raise":
+			outcome = _ordered_player_bet(state, action_id == "raise", run_state, rng)
+		"draw":
+			outcome = _ordered_player_draw(state, _index_array(ui_state.get("poker_held", [])), rng)
+		"fold":
+			outcome = _ordered_player_fold(state, run_state, rng)
+		"cash_out":
+			outcome["message"] = _settle_session(state, run_state)
+		"answer_duty", "choose_company", "hide_table", "resume_table":
+			outcome = _resolve_night_task(state, action_id)
+		"abort_night":
+			state["night_aftermath"] = "table_cleared_after_knock"
+			outcome["message"] = _settle_session(state, run_state)
+	if not bool(outcome.get("ok", false)):
+		return _result(action_id, environment, 0, str(outcome.get("message", "The action is rejected without mutation.")), false)
+	state["action_ordinal"] = int(state.get("action_ordinal", 0)) + 1
+	_update_environment_state(environment, state)
+	var result := _result(action_id, environment, int(outcome.get("delta", 0)), str(outcome.get("message", "The table acts.")), true)
+	result["ui_state"] = {} if action_id != "draw" else {"poker_held": []}
+	result["preserve_surface_ui_state"] = action_id == "draw"
+	result["crew_poker_turn_receipt"] = "crew-poker:%d:%d" % [int(state.get("session_index", 0)), int(state.get("action_ordinal", 0))]
+	result["crew_poker_public_facts"] = _ordered_public_facts(state, action_id)
+	if typeof(outcome.get("authority_gaps")) == TYPE_ARRAY and not (outcome.get("authority_gaps") as Array).is_empty():
+		result["crew_poker_authority_gaps"] = (outcome.get("authority_gaps") as Array).duplicate()
+	if not str(outcome.get("dependency_reason", "")).is_empty():
+		result["dependency_reason"] = str(outcome.get("dependency_reason", ""))
+	return result
+
+
+func _deal_hand_ordered(run_state: RunState, state: Dictionary, rng: RngStream) -> Dictionary:
+	if str(state.get("phase", "idle")) != "idle" or bool(state.get("session_settled", false)):
+		return {"ok": false, "delta": 0, "message": "Finish the live hand first."}
+	var tuning := CrewPokerModelScript.config()
+	var ante := int(tuning.get("ante", 2))
+	if _loss_room(state, ante) != ante or run_state.bankroll < ante:
+		return {"ok": false, "delta": 0, "message": "The friendly ante is beyond this session's remaining cash."}
+	var deck := CardShoeScript.build_shoe(1, rng)
+	var draw := CardShoeScript.draw_cards(deck, 5)
+	state["player_cards"] = draw.get("cards", [])
+	deck = draw.get("shoe", [])
+	var cap := int(tuning.get("session_swing_cap", 60))
+	var seats: Array = []
+	for member_id in _string_array(state.get("members", [])):
+		draw = CardShoeScript.draw_cards(deck, 5)
+		deck = draw.get("shoe", [])
+		seats.append({"member_id": member_id, "cards": draw.get("cards", []), "active": true, "revealed": false, "contribution": ante, "round_contribution": 0, "stack": cap - ante, "draw_count": -1, "last_action": "ante"})
+	state["shoe"] = deck
+	state["seats"] = seats
+	state["pot"] = ante * (seats.size() + 1)
+	state["player_contribution"] = ante
+	state["player_stack"] = maxi(0, int(state.get("player_stack", cap)) - ante)
+	state["player_active"] = true
+	state["session_swing"] = int(state.get("session_swing", 0)) - ante
+	state["x"] = []
+	state["beat"] = {}
+	_start_ordered_round(state, "before")
+	return {"ok": true, "delta": -ante, "message": "Five each. %s owns the first decision before the draw." % _actor_name(str(state.get("turn_owner", "")))}
+
+
+func _start_ordered_round(state: Dictionary, phase: String) -> void:
+	state["phase"] = phase
+	var actors: Array = _active_actor_ids(state)
+	if actors.is_empty():
+		state["turn_owner"] = ""
+		return
+	var button := int(state.get("button_index", 0)) % actors.size()
+	var order: Array = []
+	for offset in range(1, actors.size() + 1):
+		order.append(actors[(button + offset) % actors.size()])
+	state["turn_order"] = order
+	state["turn_cursor"] = 0
+	state["turn_owner"] = str(order[0])
+	state["current_bet"] = 0
+	state["round_contributions"] = {}
+	state["acted_since_raise"] = []
+	state["raise_count"] = 0
+	for index in range((state.get("seats", []) as Array).size()):
+		var seat: Dictionary = (state.get("seats", []) as Array)[index]
+		seat["round_contribution"] = 0
+		(state.get("seats", []) as Array)[index] = seat
+
+
+func _start_ordered_draw(state: Dictionary) -> void:
+	state["phase"] = "draw"
+	var order := _active_actor_ids(state)
+	state["turn_order"] = order
+	state["turn_cursor"] = 0
+	state["turn_owner"] = str(order[0]) if not order.is_empty() else ""
+	state["acted_since_raise"] = []
+
+
+func _ordered_npc_turn(state: Dictionary, rng: RngStream, run_state: RunState) -> Dictionary:
+	var actor := str(state.get("turn_owner", ""))
+	if actor.is_empty() or actor == PLAYER_ID:
+		return {"ok": false, "delta": 0, "message": "No Crew decision is waiting."}
+	var seat_index := _seat_index(state, actor)
+	if seat_index < 0:
+		return {"ok": false, "delta": 0, "message": "The turn owner has no live seat."}
+	var seats: Array = state.get("seats", [])
+	var seat: Dictionary = seats[seat_index]
+	var phase := str(state.get("phase", ""))
+	if phase == "draw":
+		_ordered_draw_npc(state, seat_index, rng)
+		_record_ordered_action(state, actor, "draw", int((state.get("seats", []) as Array)[seat_index].get("draw_count", 0)), false)
+		_advance_ordered_turn(state, rng, run_state)
+		return {"ok": true, "delta": 0, "message": "%s draws %d." % [_actor_name(actor), int((state.get("seats", []) as Array)[seat_index].get("draw_count", 0))]}
+	var due := maxi(0, int(state.get("current_bet", 0)) - int(seat.get("round_contribution", 0)))
+	var authenticated := _authenticated_public_session_memory(state, run_state)
+	var authority_gaps: Array = []
+	var action := ""
+	if bool(authenticated.get("ok", false)):
+		action = _adaptive_npc_action(actor, _card_array(seat.get("cards", [])), phase, due > 0, authenticated.get("memory", {}), rng)
+	else:
+		# Restored/caller-authored memory is ignored. The ordinary authored policy
+		# remains playable while adaptive authority is dependency-held.
+		authority_gaps.append("host_poker_memory_authority_unavailable")
+		action = CrewPokerModelScript.npc_action(actor, _card_array(seat.get("cards", [])), phase, due > 0, rng)
+	if action == "raise" and int(state.get("raise_count", 0)) >= _night_raise_cap(state):
+		action = "call"
+	if action == "fold":
+		seat["active"] = false
+		seat["last_action"] = "fold"
+		seats[seat_index] = seat
+		state["seats"] = seats
+		_record_ordered_action(state, actor, "fold", 0, false)
+	else:
+		var raise_amount := int(CrewPokerModelScript.config().get("raise_unit", 2)) if action == "raise" else 0
+		var amount := mini(due + raise_amount, int(seat.get("stack", 0)))
+		seat["stack"] = int(seat.get("stack", 0)) - amount
+		seat["contribution"] = int(seat.get("contribution", 0)) + amount
+		seat["round_contribution"] = int(seat.get("round_contribution", 0)) + amount
+		seat["last_action"] = "raise" if raise_amount > 0 else "call" if due > 0 else "check"
+		seats[seat_index] = seat
+		state["seats"] = seats
+		state["pot"] = int(state.get("pot", 0)) + amount
+		if raise_amount > 0:
+			state["current_bet"] = int(seat.get("round_contribution", 0))
+			state["raise_count"] = int(state.get("raise_count", 0)) + 1
+		_record_ordered_action(state, actor, str(seat.get("last_action", "call")), amount, raise_amount > 0)
+		if phase == "after":
+			_maybe_surface(state, seat, str(seat.get("last_action", "call")), rng)
+	var advance := _advance_ordered_turn(state, rng, run_state)
+	if not str(advance.get("message", "")).is_empty():
+		return {"ok": true, "delta": int(advance.get("payout", 0)), "authority_gaps": authority_gaps + (advance.get("authority_gaps", []) as Array), "dependency_reason": str(advance.get("dependency_reason", "host_poker_memory_authority_unavailable")), "message": str(advance.get("message", ""))}
+	return {"ok": true, "delta": 0, "authority_gaps": authority_gaps, "dependency_reason": "host_poker_memory_authority_unavailable", "message": "%s %s." % [_actor_name(actor), str(seat.get("last_action", action)).capitalize()]}
+
+
+func _ordered_player_bet(state: Dictionary, raising: bool, run_state: RunState, rng: RngStream) -> Dictionary:
+	if str(state.get("turn_owner", "")) != PLAYER_ID:
+		return {"ok": false, "delta": 0, "message": "It is not your turn."}
+	var rounds: Dictionary = state.get("round_contributions", {}) if typeof(state.get("round_contributions", {})) == TYPE_DICTIONARY else {}
+	var due := maxi(0, int(state.get("current_bet", 0)) - int(rounds.get(PLAYER_ID, 0)))
+	var raise_amount := int(CrewPokerModelScript.config().get("raise_unit", 2)) if raising else 0
+	if raising and int(state.get("raise_count", 0)) >= _night_raise_cap(state):
+		return {"ok": false, "delta": 0, "message": "The friendly raise cap is reached."}
+	var cost := due + raise_amount
+	if cost > run_state.bankroll or cost > int(state.get("player_stack", 0)) or _loss_room(state, cost) != cost:
+		return {"ok": false, "delta": 0, "message": "That action exceeds the friendly session ledger."}
+	rounds[PLAYER_ID] = int(rounds.get(PLAYER_ID, 0)) + cost
+	state["round_contributions"] = rounds
+	state["player_contribution"] = int(state.get("player_contribution", 0)) + cost
+	state["player_stack"] = int(state.get("player_stack", 0)) - cost
+	state["pot"] = int(state.get("pot", 0)) + cost
+	state["session_swing"] = int(state.get("session_swing", 0)) - cost
+	if raising:
+		state["current_bet"] = int(rounds.get(PLAYER_ID, 0))
+		state["raise_count"] = int(state.get("raise_count", 0)) + 1
+	_record_ordered_action(state, PLAYER_ID, "raise" if raising else "call" if due > 0 else "check", cost, raising)
+	var advance := _advance_ordered_turn(state, rng, run_state)
+	return {"ok": true, "delta": -cost + int(advance.get("payout", 0)), "authority_gaps": (advance.get("authority_gaps", []) as Array).duplicate(), "dependency_reason": str(advance.get("dependency_reason", "")), "message": str(advance.get("message", "Raised." if raising else "Called."))}
+
+
+func _ordered_player_draw(state: Dictionary, held: Array, rng: RngStream) -> Dictionary:
+	if str(state.get("phase", "")) != "draw" or str(state.get("turn_owner", "")) != PLAYER_ID:
+		return {"ok": false, "delta": 0, "message": "It is not your draw."}
+	var cards := _card_array(state.get("player_cards", []))
+	var replace: Array = []
+	for index in range(cards.size()):
+		if not held.has(index):
+			replace.append(index)
+	var draw := CardShoeScript.draw_cards(_card_array(state.get("shoe", [])), replace.size())
+	var replacements := _card_array(draw.get("cards", []))
+	for index in range(replace.size()):
+		cards[int(replace[index])] = replacements[index]
+	state["player_cards"] = cards
+	state["shoe"] = draw.get("shoe", [])
+	_record_ordered_action(state, PLAYER_ID, "draw", replace.size(), false)
+	_advance_ordered_turn(state, rng)
+	return {"ok": true, "delta": 0, "message": "You draw %d. %s acts next." % [replace.size(), _actor_name(str(state.get("turn_owner", "")))]}
+
+
+func _ordered_player_fold(state: Dictionary, run_state: RunState, rng: RngStream = null) -> Dictionary:
+	state["player_active"] = false
+	_record_ordered_action(state, PLAYER_ID, "fold", 0, false)
+	state["player_folded_hidden"] = true
+	var advance := _advance_ordered_turn(state, rng, run_state)
+	var message := str(advance.get("message", "Your cards stay hidden. %s acts next." % _actor_name(str(state.get("turn_owner", "")))))
+	return {"ok": true, "delta": 0, "message": message}
+
+
+func _ordered_draw_npc(state: Dictionary, seat_index: int, rng: RngStream) -> void:
+	var seats: Array = state.get("seats", [])
+	var seat: Dictionary = seats[seat_index]
+	var cards := _card_array(seat.get("cards", []))
+	var replace := CrewPokerModelScript.draw_indices(cards, CrewPokerModelScript.policy(str(seat.get("member_id", ""))))
+	var draw := CardShoeScript.draw_cards(_card_array(state.get("shoe", [])), replace.size())
+	var replacements := _card_array(draw.get("cards", []))
+	for index in range(replace.size()):
+		cards[int(replace[index])] = replacements[index]
+	seat["cards"] = cards
+	seat["draw_count"] = replace.size()
+	seat["last_action"] = "draw"
+	seats[seat_index] = seat
+	state["seats"] = seats
+	state["shoe"] = draw.get("shoe", [])
+	_maybe_surface(state, seat, "draw", rng)
+
+
+func _advance_ordered_turn(state: Dictionary, rng: RngStream, run_state: RunState = null) -> Dictionary:
+	if _active_actor_ids(state).size() <= 1:
+		if bool(state.get("player_active", false)):
+			var payout := int(state.get("pot", 0))
+			state["session_swing"] = int(state.get("session_swing", 0)) + payout
+			_finish_hand(state, run_state, {"winners": [PLAYER_ID], "payout": payout, "message": "The table folds to you. You take $%d." % payout})
+			return {"payout": payout, "message": "The table folds to you. You take $%d." % payout}
+		var remaining := _active_actor_ids(state)
+		var winners: Array = [str(remaining[0])] if not remaining.is_empty() else []
+		var message := "%s gathers the pot. Your folded cards stay hidden." % _winner_names(winners)
+		_finish_hand(state, run_state, {"winners": winners, "payout": 0, "message": message})
+		return {"payout": 0, "message": message}
+	var phase := str(state.get("phase", ""))
+	if phase == "draw":
+		if _advance_cursor(state):
+			_start_ordered_round(state, "after")
+		return {}
+	if _ordered_round_closed(state):
+		if phase == "before":
+			_start_ordered_draw(state)
+			return {"message": "Betting closes. Discards proceed in order."}
+		if run_state != null:
+			var showdown := _showdown(state, run_state)
+			state["turn_owner"] = ""
+			return showdown
+	_advance_cursor(state)
+	return {}
+
+
+func _advance_cursor(state: Dictionary) -> bool:
+	var order: Array = state.get("turn_order", []) if typeof(state.get("turn_order", [])) == TYPE_ARRAY else []
+	if order.is_empty():
+		state["turn_owner"] = ""
+		return true
+	var cursor := int(state.get("turn_cursor", 0))
+	for offset in range(1, order.size() + 1):
+		var next := (cursor + offset) % order.size()
+		var actor := str(order[next])
+		if _actor_active(state, actor):
+			state["turn_cursor"] = next
+			state["turn_owner"] = actor
+			return next <= cursor
+	state["turn_owner"] = ""
+	return true
+
+
+func _ordered_round_closed(state: Dictionary) -> bool:
+	var active := _active_actor_ids(state)
+	var acted := _string_array(state.get("acted_since_raise", []))
+	for actor in active:
+		if not acted.has(str(actor)) or _actor_round_contribution(state, str(actor)) != int(state.get("current_bet", 0)):
+			return false
+	return true
+
+
+func _record_ordered_action(state: Dictionary, actor: String, action: String, amount: int, raised: bool) -> void:
+	var acted := _string_array(state.get("acted_since_raise", []))
+	if raised:
+		acted = [actor]
+	elif not acted.has(actor):
+		acted.append(actor)
+	state["acted_since_raise"] = acted
+	var history := _dict_array(state.get("action_history", []))
+	history.append({"ordinal": int(state.get("action_ordinal", 0)), "phase": str(state.get("phase", "")), "actor": actor, "action": action, "amount": amount, "pot_after": int(state.get("pot", 0)), "current_bet": int(state.get("current_bet", 0))})
+	while history.size() > 40:
+		history.pop_front()
+	state["action_history"] = history
+	var memory := derive_public_session_memory(history, int(state.get("session_swing", 0)))
+	memory.erase("table")
+	state["session_memory"] = memory
+	# A host command must authenticate the new public memory before it can drive
+	# another NPC policy decision.
+	state["public_memory_receipt_id"] = ""
+
+
+static func derive_public_session_memory(action_history_value: Variant, session_swing: int) -> Dictionary:
+	var result: Dictionary = {"table": {"raises": 0, "folds": 0, "session_swing": session_swing}}
+	if typeof(action_history_value) != TYPE_ARRAY:
+		return result
+	var history: Array = action_history_value
+	var start := maxi(0, history.size() - 40)
+	for index in range(start, history.size()):
+		if typeof(history[index]) != TYPE_DICTIONARY:
+			continue
+		var row: Dictionary = history[index]
+		var actor := str(row.get("actor", ""))
+		var action := str(row.get("action", ""))
+		if actor.is_empty() or not ["ante", "check", "call", "raise", "fold", "draw"].has(action):
+			continue
+		var actor_memory: Dictionary = result.get(actor, {}) if typeof(result.get(actor, {})) == TYPE_DICTIONARY else {}
+		actor_memory["raises"] = int(actor_memory.get("raises", 0)) + (1 if action == "raise" else 0)
+		actor_memory["folds"] = int(actor_memory.get("folds", 0)) + (1 if action == "fold" else 0)
+		actor_memory["last_action"] = action
+		result[actor] = actor_memory
+		var table: Dictionary = result["table"]
+		table["raises"] = int(table.get("raises", 0)) + (1 if action == "raise" else 0)
+		table["folds"] = int(table.get("folds", 0)) + (1 if action == "fold" else 0)
+		result["table"] = table
+	return result
+
+
+func _authenticated_public_session_memory(state: Dictionary, run_state: RunState) -> Dictionary:
+	# The current generic host-command facade accepts caller-asserted producer
+	# identity, so neither its receipt dictionary nor a matching restored fact is
+	# an authentic poker producer root. Ignore both until a host-owned API exists.
+	return {"ok": false, "authority_gap": "host_poker_memory_authority_unavailable"}
+
+
+func _adaptive_npc_action(member_id: String, cards: Array, phase: String, facing_raise: bool, public_memory: Dictionary, rng: RngStream) -> String:
+	var profile := CrewPokerModelScript.policy(member_id)
+	var score := CrewPokerModelScript.evaluate_hand(cards)
+	var category := int(score.get("category", 0))
+	var strength := category * 12 + clampi(int(score.get("high", 0)) - 8, 0, 6)
+	var table: Dictionary = public_memory.get("table", {}) if typeof(public_memory.get("table", {})) == TYPE_DICTIONARY else {}
+	var player: Dictionary = public_memory.get(PLAYER_ID, {}) if typeof(public_memory.get(PLAYER_ID, {})) == TYPE_DICTIONARY else {}
+	var self_memory: Dictionary = public_memory.get(member_id, {}) if typeof(public_memory.get(member_id, {})) == TYPE_DICTIONARY else {}
+	# These bounded deltas consume only the authenticated public action ledger.
+	# Each authored profile retains its distinct base policy and the one-roll RNG contract.
+	var pressure := clampi(int(table.get("raises", 0)) + int(player.get("raises", 0)) - int(self_memory.get("raises", 0)), -3, 6)
+	var swing_pressure := clampi(abs(int(table.get("session_swing", 0))) / 10, 0, 6)
+	var tightness := clampi(int(profile.get("tightness", 50)) + pressure * 2, 1, 99)
+	var aggression := clampi(int(profile.get("aggression", 50)) + int(self_memory.get("folds", 0)) * 2 - pressure + swing_pressure, 1, 99)
+	var bluff := clampi(int(profile.get("bluff", 20)) + int(player.get("folds", 0)) * 3 - pressure, 0, 99)
+	var roll: int = rng.randi_range(1, 100)
+	if facing_raise and category == 0 and roll <= clampi(tightness - 25, 8, 72):
+		return "fold"
+	var raise_chance := clampi(int(float(aggression) / 3.0) + strength + (int(float(bluff) / 2.0) if category == 0 else 0) - (10 if phase == "before" else 0), 4, 88)
+	if roll <= raise_chance:
+		return "raise"
+	if facing_raise and roll >= clampi(118 - tightness + strength, 30, 94):
+		return "fold"
+	return "call"
+
+
+func _active_actor_ids(state: Dictionary) -> Array:
+	var result: Array = []
+	if bool(state.get("player_active", true)):
+		result.append(PLAYER_ID)
+	for seat in _dict_array(state.get("seats", [])):
+		if bool(seat.get("active", false)):
+			result.append(str(seat.get("member_id", "")))
+	return result
+
+
+func _actor_active(state: Dictionary, actor: String) -> bool:
+	return bool(state.get("player_active", true)) if actor == PLAYER_ID else _seat_active(_dict_array(state.get("seats", [])), actor)
+
+
+func _actor_round_contribution(state: Dictionary, actor: String) -> int:
+	if actor == PLAYER_ID:
+		var rounds: Dictionary = state.get("round_contributions", {}) if typeof(state.get("round_contributions", {})) == TYPE_DICTIONARY else {}
+		return int(rounds.get(PLAYER_ID, 0))
+	var index := _seat_index(state, actor)
+	return int((state.get("seats", []) as Array)[index].get("round_contribution", 0)) if index >= 0 else 0
+
+
+func _seat_index(state: Dictionary, member_id: String) -> int:
+	var seats: Array = state.get("seats", []) if typeof(state.get("seats", [])) == TYPE_ARRAY else []
+	for index in range(seats.size()):
+		if str((seats[index] as Dictionary).get("member_id", "")) == member_id:
+			return index
+	return -1
+
+
+func _actor_name(actor: String) -> String:
+	return "You" if actor == PLAYER_ID else str(MEMBER_NAMES.get(actor, actor))
+
+
+func _ordered_public_facts(state: Dictionary, action_id: String) -> Array:
+	var boundary := "crew-poker:%d:%d" % [int(state.get("session_index", 0)), int(state.get("action_ordinal", 0))]
+	var fact := {"fact_id": "%s:%s" % [boundary, action_id], "fact_type": "crew_poker.action_boundary", "fact_version": 1, "visibility": "public", "boundary": boundary, "cause": "action_resolution", "receipt_key": "%s:%s" % [boundary, action_id], "payload": {"night_id": str(state.get("night_id", "friendly_teaching")), "phase": str(state.get("phase", "idle")), "turn_owner": str(state.get("turn_owner", "")), "pot": int(state.get("pot", 0))}}
+	fact["content_fingerprint"] = _canonical_ritual_json(fact).sha256_text()
+	return [fact]
+
+
+func _canonical_ritual_json(value: Variant) -> String:
+	if typeof(value) == TYPE_DICTIONARY:
+		var source: Dictionary = value
+		var keys := _string_array(source.keys())
+		keys.sort()
+		var members: Array[String] = []
+		for key in keys:
+			members.append("%s:%s" % [JSON.stringify(key), _canonical_ritual_json(source.get(key))])
+		return "{%s}" % ",".join(members)
+	if typeof(value) == TYPE_ARRAY:
+		var items: Array[String] = []
+		for item in value:
+			items.append(_canonical_ritual_json(item))
+		return "[%s]" % ",".join(items)
+	return JSON.stringify(value)
 
 
 func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) -> bool:
@@ -269,7 +784,10 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_room(surface)
 	surface.surface_title("BACK-ROOM DRAW", Vector2(330, 30), C_YELLOW)
-	surface.surface_label("POT $%d   SESSION %s / %d" % [int(state.get("pot", 0)), _signed_cash(int(state.get("session_swing", 0))), int(state.get("swing_cap", 60))], Vector2(312, 54), 14, C_SOFT)
+	if str(state.get("turn_engine", "legacy_v1")) == ORDERED_ENGINE:
+		surface.surface_label("POT $%d   STACK $%d   CALL $%d   TURN %s" % [int(state.get("pot", 0)), int(state.get("player_stack", 0)), int(state.get("amount_to_call", 0)), str(state.get("turn_owner_name", "TABLE")).to_upper()], Vector2(220, 54), 13, C_SOFT)
+	else:
+		surface.surface_label("POT $%d   SESSION %s / %d" % [int(state.get("pot", 0)), _signed_cash(int(state.get("session_swing", 0))), int(state.get("swing_cap", 60))], Vector2(312, 54), 14, C_SOFT)
 	_draw_seats(surface, state)
 	_draw_player(surface, state)
 	_draw_observation(surface, state)
@@ -291,6 +809,37 @@ func surface_motion_signature(surface, state: Dictionary) -> Dictionary:
 
 func environment_object_state(_run_state: RunState, _environment: Dictionary) -> Dictionary:
 	return {"prop": "card_table", "label": "Back-Room Poker", "status": "A friendly five-card draw is running."}
+
+
+func interrupt_for_room_scenario(_run_state: RunState, environment: Dictionary, disposition: String, reason: String) -> Dictionary:
+	# This is deliberately a pure proposal seam. Caller strings never authorize a
+	# live table mutation or refund. ScenarioHostTransaction must atomically commit
+	# the exact replacement table/account effects; pause/resume remain held until
+	# that host integration supplies a real command source.
+	var state := _table_state(environment)
+	var live := ["before", "draw", "after", "paused"].has(str(state.get("phase", "idle")))
+	if not live or not ["pause", "resume", "abort"].has(disposition):
+		return {"ok": false, "authoritative": false, "proposal_only": true, "bankroll_delta": 0, "message": "That interruption boundary is not legal now."}
+	return {
+		"ok": false,
+		"authoritative": false,
+		"proposal_only": true,
+		"requires_host_transaction": true,
+		"authority_gap": "host_room_interrupt_authority_unavailable",
+		"bankroll_delta": 0,
+		"proposal": {
+			"kind": "interruption",
+			"producer_id": "poker",
+			"game_id": get_id(),
+			"table_id": get_id(),
+			"disposition": disposition,
+			"reason_id": reason.strip_edges(),
+			"session_index": int(state.get("session_index", 0)),
+			"action_ordinal": int(state.get("action_ordinal", 0)),
+			"refund_amount": maxi(0, int(state.get("player_contribution", 0))) if disposition == "abort" else 0,
+		},
+		"message": "The room host must commit this interruption atomically.",
+	}
 
 
 static func scripted_session(seed: int, member_id: String, force_showdown: bool = true) -> Dictionary:
@@ -455,6 +1004,26 @@ func _maybe_surface(state: Dictionary, seat: Dictionary, action: String, rng: Rn
 		return
 	var neutral := {"m": member_id, "i": authored_index}
 	state["beat"] = neutral
+	var queue := _dict_array(state.get("observation_queue", []))
+	var source_ordinal := int(state.get("action_ordinal", 0))
+	var source_record := _source_action_record(state, member_id, action, source_ordinal)
+	if source_record.is_empty():
+		return
+	var observation_id := "%s:%d:%s:%d" % [member_id, source_ordinal, action, queue.size()]
+	queue.append({
+		"id": observation_id,
+		"m": member_id,
+		"i": authored_index,
+		"source_action": action,
+		"source_record": source_record,
+		"source_host_receipt_id": "",
+		"start_ordinal": source_ordinal,
+		"duration_actions": OBSERVATION_DURATION_ACTIONS,
+		"channel": str(authored.get("channel", "posture")),
+		"consumed": false,
+		"verified": false,
+	})
+	state["observation_queue"] = queue
 	var shown: Array = state.get("x", [])
 	if not shown.has(neutral):
 		shown.append(neutral)
@@ -462,7 +1031,9 @@ func _maybe_surface(state: Dictionary, seat: Dictionary, action: String, rng: Rn
 
 
 func _showdown(state: Dictionary, run_state: RunState) -> Dictionary:
-	var contenders: Array = [{"id": PLAYER_ID, "cards": _card_array(state.get("player_cards", []))}]
+	var contenders: Array = []
+	if bool(state.get("player_active", true)):
+		contenders.append({"id": PLAYER_ID, "cards": _card_array(state.get("player_cards", []))})
 	var seats: Array = state.get("seats", [])
 	for index in range(seats.size()):
 		var seat: Dictionary = seats[index]
@@ -485,17 +1056,77 @@ func _showdown(state: Dictionary, run_state: RunState) -> Dictionary:
 	var raw_payout := int(shares.get(PLAYER_ID, 0))
 	var payout := mini(raw_payout, _win_room(state, raw_payout))
 	state["session_swing"] = int(state.get("session_swing", 0)) + payout
-	for shown_value in _dict_array(state.get("x", [])):
-		var shown: Dictionary = shown_value
+	var verified_receipts := _string_array(state.get("verified_observation_receipts", []))
+	var queue := _dict_array(state.get("observation_queue", []))
+	var authority_gaps: Array = []
+	for queue_index in range(queue.size()):
+		var shown: Dictionary = queue[queue_index]
 		var shown_member := str(shown.get("m", ""))
 		var shown_patterns := CrewPokerModelScript.patterns(shown_member)
 		var shown_index := int(shown.get("i", -1))
-		if shown_index >= 0 and shown_index < shown_patterns.size() and (winners.has(shown_member) or _seat_active(seats, shown_member)):
-			run_state.crew_record_pattern(shown_member, str((shown_patterns[shown_index] as Dictionary).get("state_key", "")))
-	var player_score := CrewPokerModelScript.evaluate_hand(state.get("player_cards", []))
-	var message := "%s. %s" % [str(player_score.get("label", "Hand")), "You take $%d." % payout if raw_payout > 0 else "%s takes it." % _winner_names(winners)]
+		var verification_receipt := "tell-verify:%s" % str(shown.get("id", ""))
+		if not bool(state.get("player_folded_hidden", false)) and _observation_provenance_valid(state, seats, shown, shown_patterns, run_state) and not verified_receipts.has(verification_receipt):
+			# The host transaction already applied the exactly-once tell delta. This
+			# model only acknowledges its sealed observation receipt; it never applies
+			# a second authority from restored queue data.
+			verified_receipts.append(verification_receipt)
+			shown["verified"] = true
+			shown["verification_receipt"] = verification_receipt
+		queue[queue_index] = shown
+	state["observation_queue"] = queue
+	state["verified_observation_receipts"] = verified_receipts
+	if not queue.is_empty() and not bool(state.get("player_folded_hidden", false)):
+		authority_gaps.append("host_tell_observation_authority_unavailable")
+	var player_score := CrewPokerModelScript.evaluate_hand(state.get("player_cards", [])) if bool(state.get("player_active", true)) else {}
+	var hand_label := str(player_score.get("label", "Hand")) if bool(state.get("player_active", true)) else "Your folded cards stay hidden"
+	var message := "%s. %s" % [hand_label, "You take $%d." % payout if raw_payout > 0 else "%s takes it." % _winner_names(winners)]
 	_finish_hand(state, run_state, {"winners": winners, "payout": payout, "message": message})
-	return {"payout": payout, "message": message}
+	return {"payout": payout, "authority_gaps": authority_gaps, "dependency_reason": "host_tell_observation_authority_unavailable" if not authority_gaps.is_empty() else "", "message": message}
+
+
+func _source_action_record(state: Dictionary, member_id: String, action: String, ordinal: int) -> Dictionary:
+	var history := _dict_array(state.get("action_history", []))
+	for index in range(history.size() - 1, -1, -1):
+		var row: Dictionary = history[index]
+		if int(row.get("ordinal", -1)) == ordinal and str(row.get("actor", "")) == member_id and str(row.get("action", "")) == action:
+			return row.duplicate(true)
+	return {}
+
+
+func _observation_provenance_valid(state: Dictionary, seats: Array, observation: Dictionary, authored_patterns: Array, run_state: RunState) -> bool:
+	var allowed := ["id", "m", "i", "source_action", "source_record", "source_host_receipt_id", "start_ordinal", "duration_actions", "channel", "consumed", "verified", "verification_receipt"]
+	for key_value in observation.keys():
+		if not allowed.has(str(key_value)):
+			return false
+	var member_id := str(observation.get("m", ""))
+	var pattern_index := int(observation.get("i", -1))
+	if pattern_index < 0 or pattern_index >= authored_patterns.size() or not _seat_revealed(seats, member_id):
+		return false
+	var action := str(observation.get("source_action", ""))
+	var ordinal := int(observation.get("start_ordinal", -1))
+	var source := _source_action_record(state, member_id, action, ordinal)
+	if source.is_empty() or typeof(observation.get("source_record")) != TYPE_DICTIONARY or (observation.get("source_record") as Dictionary) != source:
+		return false
+	var authored: Dictionary = authored_patterns[pattern_index]
+	if str(observation.get("channel", "")) != str(authored.get("channel", "posture")):
+		return false
+	var seat_index := -1
+	for index in range(seats.size()):
+		if str((seats[index] as Dictionary).get("member_id", "")) == member_id:
+			seat_index = index
+			break
+	if seat_index < 0:
+		return false
+	var seat: Dictionary = seats[seat_index]
+	if not CrewPokerModelScript.condition_matches(str(authored.get("condition", "")), _card_array(seat.get("cards", [])), action, int(seat.get("draw_count", -1))):
+		return false
+	return _host_observation_applied(run_state, state, observation, str(authored.get("state_key", "")))
+
+
+func _host_observation_applied(run_state: RunState, state: Dictionary, observation: Dictionary, state_key: String) -> bool:
+	# A generic caller-mintable receipt cannot authorize tell mutation. This stays
+	# false until a host-owned observation producer seals the authored condition.
+	return false
 
 
 func _finish_fold(state: Dictionary, run_state: RunState) -> String:
@@ -518,6 +1149,12 @@ func _finish_hand(state: Dictionary, run_state: RunState, last: Dictionary) -> v
 	state["to_call"] = 0
 	state["x"] = []
 	state["beat"] = {}
+	state["observation_queue"] = []
+	state["player_folded_hidden"] = false
+	state["turn_owner"] = ""
+	state["turn_order"] = []
+	state["acted_since_raise"] = []
+	state["button_index"] = int(state.get("button_index", 0)) + 1
 	if int(state.get("hand_number", 0)) >= int(CrewPokerModelScript.config().get("session_hand_cap", 5)):
 		_settle_session(state, run_state)
 
@@ -529,6 +1166,41 @@ func _settle_session(state: Dictionary, run_state: RunState) -> String:
 		run_state.crew_record_poker_session(_string_array(state.get("members", [])), int(state.get("session_swing", 0)))
 	state["session_settled"] = true
 	return "The table settles at %s. Nobody makes it bigger than it is." % _signed_cash(int(state.get("session_swing", 0)))
+
+
+func _start_new_session(state: Dictionary, environment: Dictionary) -> void:
+	# The settlement boundary is the cooldown. Reentry is explicit and advances a
+	# durable session identity; it never reuses a live deck or settlement receipt.
+	state["session_index"] = int(state.get("session_index", 0)) + 1
+	state["hand_number"] = 0
+	state["session_swing"] = 0
+	state["session_settled"] = false
+	state["phase"] = "idle"
+	state["pot"] = 0
+	state["shoe"] = []
+	state["player_cards"] = []
+	state["seats"] = []
+	state["x"] = []
+	state["beat"] = {}
+	state["observation_queue"] = []
+	state["verified_observation_receipts"] = []
+	state["night_id"] = _night_id(environment)
+	state["last_result"] = {}
+	state["turn_owner"] = ""
+	state["turn_order"] = []
+	state["turn_cursor"] = 0
+	state["current_bet"] = 0
+	state["round_contributions"] = {}
+	state["acted_since_raise"] = []
+	state["raise_count"] = 0
+	state["player_active"] = true
+	state["player_stack"] = int(CrewPokerModelScript.config().get("session_swing_cap", 60))
+	state["action_history"] = []
+	state["session_memory"] = {}
+	state["public_memory_receipt_id"] = ""
+	state["player_folded_hidden"] = false
+	state["night_task_receipt"] = ""
+	state["night_aftermath"] = ""
 
 
 func _buy_in_open(run_state: RunState, state: Dictionary) -> bool:
@@ -554,8 +1226,41 @@ func _table_state(environment: Dictionary) -> Dictionary:
 	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var value: Variant = states.get(get_id(), {})
 	if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("schema", "")) == STATE_SCHEMA:
-		return (value as Dictionary).duplicate(true)
-	return {"schema": STATE_SCHEMA, "version": STATE_VERSION, "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "pot": 0, "shoe": [], "player_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}}
+		var migrated := (value as Dictionary).duplicate(true)
+		migrated["version"] = STATE_VERSION
+		if not migrated.has("session_index"):
+			migrated["session_index"] = 0
+		if not migrated.has("night_id"):
+			migrated["night_id"] = _night_id(environment)
+		if not migrated.has("action_ordinal"):
+			migrated["action_ordinal"] = 0
+		if not migrated.has("observation_queue"):
+			migrated["observation_queue"] = []
+		if not migrated.has("verified_observation_receipts"):
+			migrated["verified_observation_receipts"] = []
+		for key in ["turn_order", "acted_since_raise", "action_history"]:
+			if not migrated.has(key):
+				migrated[key] = []
+		for key in ["round_contributions", "session_memory"]:
+			if not migrated.has(key):
+				migrated[key] = {}
+		for key in ["button_index", "turn_cursor", "current_bet", "raise_count"]:
+			if not migrated.has(key):
+				migrated[key] = 0
+		if not migrated.has("turn_owner"):
+			migrated["turn_owner"] = ""
+		if not migrated.has("turn_engine"):
+			migrated["turn_engine"] = ORDERED_ENGINE if _ordered_engine(environment) else "legacy_v1"
+		if not migrated.has("player_active"):
+			migrated["player_active"] = true
+		if not migrated.has("player_stack"):
+			migrated["player_stack"] = int(CrewPokerModelScript.config().get("session_swing_cap", 60))
+		if not migrated.has("public_memory_receipt_id"):
+			migrated["public_memory_receipt_id"] = ""
+		if not migrated.has("player_folded_hidden"):
+			migrated["player_folded_hidden"] = false
+		return migrated
+	return {"schema": STATE_SCHEMA, "version": STATE_VERSION, "producer_id": "poker", "game_id": get_id(), "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "session_index": 0, "night_id": _night_id(environment), "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [], "pot": 0, "shoe": [], "player_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}, "action_history": [], "session_memory": {}, "public_memory_receipt_id": "", "player_folded_hidden": false}
 
 
 func _update_environment_state(environment: Dictionary, state: Dictionary) -> void:
@@ -585,6 +1290,121 @@ func _seat_active(seats: Array, member_id: String) -> bool:
 		if typeof(seat_value) == TYPE_DICTIONARY and str((seat_value as Dictionary).get("member_id", "")) == member_id:
 			return bool((seat_value as Dictionary).get("active", false))
 	return false
+
+
+func _seat_revealed(seats: Array, member_id: String) -> bool:
+	for seat_value in seats:
+		if typeof(seat_value) == TYPE_DICTIONARY and str((seat_value as Dictionary).get("member_id", "")) == member_id:
+			return bool((seat_value as Dictionary).get("revealed", false))
+	return false
+
+
+func _night_id(environment: Dictionary) -> String:
+	var requested := str(environment.get("crew_poker_night_id", "friendly_teaching"))
+	return requested if NIGHT_IDS.has(requested) else "friendly_teaching"
+
+
+func _ordered_engine(environment: Dictionary) -> bool:
+	return str(environment.get("crew_poker_turn_engine", "")) == ORDERED_ENGINE
+
+
+func _night_raise_cap(state: Dictionary) -> int:
+	return 3 if str(state.get("night_id", "")) == "hustle_test" else MAX_RAISES_PER_ROUND
+
+
+func _night_required_actions(state: Dictionary) -> Array:
+	if not str(state.get("night_task_receipt", "")).is_empty():
+		return []
+	match str(state.get("night_id", "friendly_teaching")):
+		"debt_court":
+			return [_poker_action("answer_duty", "Answer the Ledger", "Resolve the room duty before the next hand.")]
+		"after_job":
+			return [_poker_action("choose_company", "Choose Who Stays", "Set the table roster before cards are dealt.")]
+		"raid_jitters":
+			return [_poker_action("hide_table", "Hide the Table", "Clear the visible pot and wait out the knock."), _poker_action("abort_night", "End the Night", "Settle safely and leave the room changed.")]
+	return []
+
+
+func _resolve_night_task(state: Dictionary, action_id: String) -> Dictionary:
+	var session := int(state.get("session_index", 0))
+	state["night_task_receipt"] = "crew-poker-night:%s:%d:%s" % [str(state.get("night_id", "friendly_teaching")), session, action_id]
+	match action_id:
+		"answer_duty":
+			state["night_aftermath"] = "ledger_duty_answered"
+			return {"ok": true, "delta": 0, "message": "The ledger duty is answered. The waiting chair opens again."}
+		"choose_company":
+			state["night_aftermath"] = "company_choice_persisted"
+			return {"ok": true, "delta": 0, "message": "The room accepts who stays. The remaining chairs define the night."}
+		"hide_table":
+			state["night_aftermath"] = "table_hidden_after_knock"
+			return {"ok": true, "delta": 0, "message": "Chips vanish, cards flatten, and the lamp goes dark until the knock passes."}
+		"resume_table":
+			state["night_aftermath"] = "table_resumed_after_knock"
+			return {"ok": true, "delta": 0, "message": "The lamp returns and the same ordered session resumes."}
+	return {"ok": false, "delta": 0, "message": "That room task is not open."}
+
+
+func _night_scene_state(state: Dictionary) -> Dictionary:
+	match str(state.get("night_id", "friendly_teaching")):
+		"hustle_test":
+			return {"task": "survive_two_bounded_raises", "lamp": "hard_focus", "door": "closed", "chairs": "tight", "aftermath": "respect_test_recorded"}
+		"debt_court":
+			return {"task": "answer_duty_between_hands", "lamp": "ledger_pool", "door": "waiting_service", "chairs": "court", "aftermath": "duty_resolved"}
+		"after_job":
+			return {"task": "choose_who_stays", "lamp": "low_warm", "door": "open_to_hall", "chairs": "roster_dependent", "aftermath": "company_choice_persists"}
+		"raid_jitters":
+			return {"task": "pause_hide_or_abort", "lamp": "knock_blackout", "door": "barred", "chairs": "ready_to_clear", "aftermath": "table_hidden_or_aborted"}
+		_:
+			return {"task": "complete_teaching_hand", "lamp": "warm_table", "door": "private_open", "chairs": "friendly", "aftermath": "lesson_complete"}
+
+
+func _ordered_ritual_actors(state: Dictionary) -> Array:
+	var actors: Array = [{"id": PLAYER_ID, "anchor": "seat_south", "behavior": "acting" if str(state.get("turn_owner", "")) == PLAYER_ID else "watching", "bounds": Rect2(294, 220, 308, 94), "attention": str(state.get("turn_owner", ""))}]
+	var positions := [Rect2(78, 92, 190, 92), Rect2(342, 66, 190, 92), Rect2(650, 92, 190, 92)]
+	var seats := _dict_array(state.get("seats", []))
+	for index in range(seats.size()):
+		var seat: Dictionary = seats[index]
+		actors.append({"id": str(seat.get("member_id", "")), "anchor": "seat_%d" % index, "behavior": str(seat.get("last_action", "watching")), "bounds": positions[index] if index < positions.size() else Rect2(), "attention": str(state.get("turn_owner", "")), "present": bool(seat.get("active", false))})
+	return actors
+
+
+func _ordered_ritual_objects(state: Dictionary) -> Array:
+	var scene := _night_scene_state(state)
+	return [
+		{"id": "poker_table", "state": str(state.get("phase", "idle")), "bounds": Rect2(118, 104, 664, 224), "functional_state": "live" if str(state.get("phase", "idle")) != "idle" else "ready", "z_order": 3},
+		{"id": "pot", "state": "occupied" if int(state.get("pot", 0)) > 0 else "clear", "bounds": Rect2(410, 158, 80, 48), "amount": int(state.get("pot", 0)), "z_order": 7},
+		{"id": "discard_pile", "state": "used" if str(state.get("phase", "")) in ["after", "idle"] and int(state.get("hand_number", 0)) > 0 else "clear", "bounds": Rect2(620, 182, 72, 52), "z_order": 6},
+		{"id": "room_lamp", "state": str(scene.get("lamp", "warm_table")), "bounds": Rect2(424, 42, 52, 52), "functional_state": "lit", "z_order": 9},
+		{"id": "private_door", "state": str(scene.get("door", "private_open")), "bounds": Rect2(802, 84, 56, 176), "functional_state": "available" if str(scene.get("door", "")) != "barred" else "blocked", "z_order": 2},
+	]
+
+
+func _visible_observations(state: Dictionary) -> Array:
+	var result: Array = []
+	var ordinal := int(state.get("action_ordinal", 0))
+	for value in _dict_array(state.get("observation_queue", [])):
+		var start := int(value.get("start_ordinal", 0))
+		var duration := maxi(1, int(value.get("duration_actions", OBSERVATION_DURATION_ACTIONS)))
+		if ordinal >= start and ordinal < start + duration:
+			result.append(value)
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return int(a.get("start_ordinal", 0)) < int(b.get("start_ordinal", 0)) or (int(a.get("start_ordinal", 0)) == int(b.get("start_ordinal", 0)) and str(a.get("id", "")) < str(b.get("id", "")))
+	)
+	return result
+
+
+func _public_observation_queue(state: Dictionary) -> Array:
+	var result: Array = []
+	for value in _visible_observations(state):
+		result.append({
+			"observation_id": str(value.get("id", "")),
+			"member_id": str(value.get("m", "")),
+			"source_action": str(value.get("source_action", "")),
+			"start_ordinal": int(value.get("start_ordinal", 0)),
+			"duration_actions": int(value.get("duration_actions", OBSERVATION_DURATION_ACTIONS)),
+			"channel": str(value.get("channel", "posture")),
+		})
+	return result
 
 
 func _winner_names(winners: Array) -> String:
@@ -654,11 +1474,15 @@ func _draw_observation(surface, state: Dictionary) -> void:
 		"portrait":
 			text = str(observation.get("quirk", ""))
 		"timing":
-			var elapsed_msec := int(surface.surface_render_elapsed_msec()) if surface != null and surface.has_method("surface_render_elapsed_msec") else int(observation.get("timing_msec", 0))
-			if elapsed_msec >= int(observation.get("timing_msec", 0)):
-				text = str(observation.get("line", ""))
+			# Timing is authored against the source action ordinal. Reduced motion
+			# changes travel, never whether an ordered cue is present. Legacy v1
+			# observations retain their shipped elapsed presentation contract until
+			# assembly opts the table into ordered_v1.
+			if str(observation.get("observation_id", "")).is_empty():
+				var elapsed_msec := int(surface.surface_render_elapsed_msec()) if surface != null and surface.has_method("surface_render_elapsed_msec") else int(observation.get("timing_msec", 0))
+				text = str(observation.get("line", "")) if elapsed_msec >= int(observation.get("timing_msec", 0)) else "The room holds one quiet beat."
 			else:
-				text = "The room holds one quiet beat."
+				text = str(observation.get("line", "The room holds one quiet beat."))
 		_:
 			text = str(observation.get("quirk", observation.get("line", "")))
 	if text.is_empty():
