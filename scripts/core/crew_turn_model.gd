@@ -141,3 +141,78 @@ static func _int_array(value: Variant) -> Array:
 		for entry_value in value:
 			result.append(int(entry_value))
 	return result
+
+
+# WORLD06_6_PUBLIC_SURFACE_BEGIN
+# These projections contain authored presentation only. The model cannot verify
+# a live host observation or apply any resulting consequence at this boundary.
+const PUBLIC_SURFACE_VERSION := 1
+const PUBLIC_AUTHORITY_GAP := "host_observation_authority_unavailable"
+const PUBLIC_PLAN_IDS := ["the_count", "the_whale_game"]
+
+
+static func observable_signal_proposal(signal_id: String) -> Dictionary:
+	var authored := {
+		SIGNAL_PATTERN: {"surface_id": "table_rhythm_shift", "place_role": "table", "line": "A familiar rhythm lands wrong in the room."},
+		SIGNAL_ROUTE: {"surface_id": "route_detail_shift", "place_role": "planning_table", "line": "A route detail does not match what the room remembers."},
+		SIGNAL_PAYMENT: {"surface_id": "envelope_shortfall", "place_role": "planning_table", "line": "The envelope feels light against the posted figure."},
+	}
+	if not authored.has(signal_id):
+		return {}
+	var presentation: Dictionary = (authored.get(signal_id, {}) as Dictionary).duplicate(true)
+	presentation["actor_roles"] = ["player", "crew_voice"]
+	presentation["public_verbs"] = ["notice", "look", "continue"]
+	return _public_proposal(presentation)
+
+
+static func confrontation_surface_proposal(plan_id: String) -> Dictionary:
+	if not PUBLIC_PLAN_IDS.has(plan_id):
+		return {}
+	return _public_proposal({
+		"surface_id": "quiet_table_question",
+		"place_role": "planning_table",
+		"actor_roles": ["player", "crew_voice"],
+		"line": "The room goes quiet enough for one careful question.",
+		"public_verbs": ["press", "step_back", "change_role"],
+	})
+
+
+static func confrontation_aftermath_proposal(public_beat: String) -> Dictionary:
+	var authored := {
+		"right": {"beat_id": "crew_tightens", "line": "The answer comes clean. The crew closes ranks and carries a small edge forward.", "public_effect": "one_play_edge_pending_host"},
+		"wrong": {"beat_id": "room_darkens", "line": "The question lands badly. The table goes cold around you.", "public_effect": "trust_cost_pending_host"},
+		"hedge": {"beat_id": "role_shift", "line": "You quietly change your place in the plan and keep an exit within reach.", "public_effect": "partial_exit_pending_host"},
+	}
+	if not authored.has(public_beat):
+		return {}
+	return _public_proposal(authored.get(public_beat, {}))
+
+
+static func plan_failure_beat_proposal(plan_id: String, failure_kind: String) -> Dictionary:
+	var authored := {
+		"the_count": {
+			"fracture": {"beat_id": "corridor_break", "place_role": "corridor", "line": "The corridor folds before the exit opens."},
+			"mechanical": {"beat_id": "floor_pressure", "place_role": "casino_floor", "line": "The floor play comes apart under the house's pressure."},
+		},
+		"the_whale_game": {
+			"fracture": {"beat_id": "rig_exposure", "place_role": "high_limit_table", "line": "The house points at the rig before the cage clears."},
+			"mechanical": {"beat_id": "name_break", "place_role": "cage_interview", "line": "The borrowed name breaks under the cage lights."},
+		},
+	}
+	if not authored.has(plan_id) or not (authored.get(plan_id, {}) as Dictionary).has(failure_kind):
+		return {}
+	return _public_proposal((authored.get(plan_id, {}) as Dictionary).get(failure_kind, {}))
+
+
+static func _public_proposal(authored_value: Variant) -> Dictionary:
+	var authored: Dictionary = authored_value if typeof(authored_value) == TYPE_DICTIONARY else {}
+	if authored.is_empty():
+		return {}
+	return {
+		"schema_version": PUBLIC_SURFACE_VERSION,
+		"authoritative": false,
+		"proposal_only": true,
+		"can_mutate": false,
+		"authority_gap": PUBLIC_AUTHORITY_GAP,
+		"presentation": authored.duplicate(true),
+	}
