@@ -4,14 +4,26 @@
     "schema_version": 1,
     "associate_trust": 30,
     "presence_rotate_actions": 6,
+    "back_room_semantics": {
+      "place_role": "crew_back_room",
+      "occupancy_states": ["empty", "rotating", "occupied", "in_use"],
+      "objects": [
+        {"object_id": "job_board", "service_id": "open_jobs", "actor_role": "crew_member", "public_verbs": ["approach", "read", "ask_owner"], "occupancy_states": ["open", "in_use"], "aftermath": ["unchanged", "job_open", "job_out"]},
+        {"object_id": "numbers_desk", "service_id": "numbers", "actor_role": "bookmaker", "public_verbs": ["approach", "read_closes", "speak"], "occupancy_states": ["open", "busy", "closed"], "aftermath": ["unchanged", "transaction"]},
+        {"object_id": "planning_table", "service_id": "planning", "actor_role": "crew_planner", "public_verbs": ["approach", "inspect", "speak"], "occupancy_states": ["open", "in_use"], "aftermath": ["unchanged", "plan_out"]},
+        {"object_id": "mags_bench", "service_id": "mags_bench", "actor_role": "crew_mags", "public_verbs": ["approach", "inspect", "speak"], "occupancy_states": ["open", "in_use"], "aftermath": ["unchanged", "service_used"]},
+        {"object_id": "rook_ride", "service_id": "rook_ride", "actor_role": "crew_rook", "public_verbs": ["approach", "inspect", "speak"], "occupancy_states": ["parked", "in_use"], "aftermath": ["unchanged", "service_used"]},
+        {"object_id": "practice_rig", "service_id": "practice", "actor_role": "crew_member", "public_verbs": ["approach", "inspect", "practice"], "occupancy_states": ["idle", "in_use"], "aftermath": ["unchanged", "progressed"]}
+      ]
+    },
     "members": [
       {
         "member_id": "crew_rook",
         "event_id": "recruitment_rook_signpost",
         "contact_event_id": "crew_contact_rook",
         "job_offer_line": "Rook keeps the next handoff short and the terms shorter.",
-        "primary": {"kind": "crew_loan"},
-        "fallback": {"kind": "legacy_marker"},
+        "primary": {"kind": "crew_loan", "semantics": {"place_role": "loan_handoff", "actor_role": "crew_rook", "object_role": "crew_marker", "public_verbs": ["approach", "observe", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
+        "fallback": {"kind": "legacy_marker", "semantics": {"place_role": "marker_revisit", "actor_role": "crew_rook", "object_role": "crew_marker", "public_verbs": ["approach", "observe", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
         "presence": ["small_underground_casino", "gas_station_casino", "back_alley"],
         "presence_lines": {
           "marker": "Rook keeps one eye on the door.",
@@ -25,8 +37,8 @@
         "event_id": "recruitment_switch",
         "contact_event_id": "crew_contact_switch",
         "job_offer_line": "Switch has a route open now, not later.",
-        "primary": {"archetype_ids": ["gas_station_casino"], "scenario_ids": ["gas_station_trucker_convoy"]},
-        "fallback": {"archetype_ids": ["back_alley"]},
+        "primary": {"archetype_ids": ["gas_station_casino"], "scenario_ids": ["gas_station_trucker_convoy"], "semantics": {"place_role": "truck_stop_convoy", "actor_role": "crew_switch", "object_role": "route_map", "public_verbs": ["approach", "observe", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
+        "fallback": {"archetype_ids": ["back_alley"], "semantics": {"place_role": "back_alley_route", "actor_role": "crew_switch", "object_role": "route_map", "public_verbs": ["approach", "observe", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
         "presence": ["gas_station_casino", "back_alley", "small_underground_casino"],
         "presence_lines": {
           "marker": "Switch watches both ends of the road.",
@@ -41,8 +53,8 @@
         "event_id": "recruitment_mags",
         "contact_event_id": "crew_contact_mags",
         "job_offer_line": "Mags has the work ordered before she names it.",
-        "primary": {"archetype_ids": ["back_alley"], "scenario_ids": ["back_alley_fence_night"]},
-        "fallback": {"archetype_ids": ["small_underground_casino"], "layer_ids": ["casino"]},
+        "primary": {"archetype_ids": ["back_alley"], "scenario_ids": ["back_alley_fence_night"], "semantics": {"place_role": "fence_night_market", "actor_role": "crew_mags", "object_role": "parts_case", "public_verbs": ["approach", "observe", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
+        "fallback": {"archetype_ids": ["small_underground_casino"], "layer_ids": ["casino"], "semantics": {"place_role": "punchline_casino_corner", "actor_role": "crew_mags", "object_role": "parts_case", "public_verbs": ["approach", "observe", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
         "presence": ["pawn_shop", "back_alley", "small_underground_casino"],
         "presence_lines": {
           "marker": "Mags checks the room twice.",
@@ -57,8 +69,8 @@
         "event_id": "recruitment_knuckles",
         "contact_event_id": "crew_contact_knuckles",
         "job_offer_line": "Knuckles has work that improves when nobody explains it.",
-        "primary": {"archetype_ids": ["bar"], "scenario_ids": ["bar_fight_night"]},
-        "fallback": {"archetype_ids": ["small_underground_casino"], "layer_ids": ["club"]},
+        "primary": {"archetype_ids": ["bar"], "scenario_ids": ["bar_fight_night"], "semantics": {"place_role": "fight_night_edge", "actor_role": "crew_knuckles", "object_role": "fight_crowd", "public_verbs": ["approach", "observe", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
+        "fallback": {"archetype_ids": ["small_underground_casino"], "layer_ids": ["club"], "semantics": {"place_role": "punchline_door", "actor_role": "crew_knuckles", "object_role": "club_door", "public_verbs": ["approach", "observe", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
         "presence": ["bar", "small_underground_casino", "back_alley"],
         "presence_lines": {
           "marker": "Knuckles watches the room make mistakes.",
@@ -73,8 +85,8 @@
         "event_id": "recruitment_velvet",
         "contact_event_id": "crew_contact_velvet",
         "job_offer_line": "Velvet has an introduction that needs a steady guest.",
-        "primary": {"archetype_ids": ["kitty_cat_lounge"], "scenario_ids": ["kitty_cat_lounge_buyout"]},
-        "fallback": {"archetype_ids": ["kitty_cat_lounge"], "scenario_ids": ["kitty_cat_lounge_slow_night"]},
+        "primary": {"archetype_ids": ["kitty_cat_lounge"], "scenario_ids": ["kitty_cat_lounge_buyout"], "semantics": {"place_role": "lounge_buyout_rope", "actor_role": "crew_velvet", "object_role": "guest_rope", "public_verbs": ["approach", "observe", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
+        "fallback": {"archetype_ids": ["kitty_cat_lounge"], "scenario_ids": ["kitty_cat_lounge_slow_night"], "semantics": {"place_role": "lounge_slow_night", "actor_role": "crew_velvet", "object_role": "guest_rope", "public_verbs": ["approach", "observe", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
         "presence": ["kitty_cat_lounge", "delta_queen", "small_underground_casino"],
         "presence_lines": {
           "marker": "Velvet makes the worn room feel invited.",
@@ -89,8 +101,8 @@
         "event_id": "recruitment_bishop",
         "contact_event_id": "crew_contact_bishop",
         "job_offer_line": "Bishop has an appointment the floor must never notice.",
-        "primary": {"archetype_ids": ["grand_casino"]},
-        "fallback": {"archetype_ids": ["grand_casino_cage"], "available_with_primary": true},
+        "primary": {"archetype_ids": ["grand_casino"], "semantics": {"place_role": "grand_casino_periphery", "actor_role": "crew_bishop", "object_role": "cage_window", "public_verbs": ["approach", "observe", "wait", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
+        "fallback": {"archetype_ids": ["grand_casino_cage"], "available_with_primary": true, "semantics": {"place_role": "grand_casino_cage_window", "actor_role": "crew_bishop", "object_role": "cage_window", "public_verbs": ["approach", "observe", "wait", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
         "presence": ["grand_casino", "grand_casino_cage", "grand_casino_high_limit"],
         "presence_lines": {
           "marker": "Bishop stands where the ceiling expects him.",
@@ -105,8 +117,8 @@
         "event_id": "recruitment_lucky",
         "contact_event_id": "crew_contact_lucky",
         "job_offer_line": "Lucky has a short run and a dangerous definition of short.",
-        "primary": {"archetype_ids": ["beach"], "scenario_ids": ["beach_festival_weekend"]},
-        "fallback": {"archetype_ids": ["small_underground_casino", "bar", "motel", "gas_station_casino", "corner_store"], "requires_system": "numbers"},
+        "primary": {"archetype_ids": ["beach"], "scenario_ids": ["beach_festival_weekend"], "semantics": {"place_role": "festival_route_stall", "actor_role": "crew_lucky", "object_role": "route_bag", "public_verbs": ["approach", "observe", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
+        "fallback": {"archetype_ids": ["small_underground_casino", "bar", "motel", "gas_station_casino", "corner_store"], "requires_system": "numbers", "semantics": {"place_role": "numbers_book", "actor_role": "crew_lucky", "object_role": "route_bag", "public_verbs": ["approach", "observe", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
         "presence": ["small_underground_casino", "bar", "gas_station_casino"],
         "presence_lines": {
           "marker": "Lucky looks ready to race the tide.",
