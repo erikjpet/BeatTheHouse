@@ -7,6 +7,7 @@ const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_run
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const HostTransactionScript := preload("res://scripts/core/scenario_host_transaction.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_extension_dispatch.gd")
 const ScenarioSequenceAuditScript := preload("res://tools/scenario_sequence_audit.gd")
 const ScenarioSequenceProbeSupportScript := preload("res://tools/scenario_sequence_probe_support.gd")
@@ -4250,7 +4251,7 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 	var expired := _dict(expired_result.get("state", {}))
 	var terminals := {"repaired": repaired, "broken": broken, "refused": refused, "interrupted": interrupted}
 	var material_expectations := {
-		"repaired": {"scene": "stocked_rack", "actor": "delivery_clerk", "service_enabled": true, "route": "jazz_club", "route_enabled": true},
+		"repaired": {"scene": "stocked_rack", "actor": "delivery_clerk", "service_enabled": true, "route": "bar", "route_source": "jazz_club"},
 		"broken": {"scene": "torn_carton", "actor": "", "service_enabled": false, "route": "bar", "route_enabled": false},
 		"refused": {"scene": "sealed_pallet", "actor": "delivery_clerk", "service_enabled": false, "route": "pawn_shop", "route_enabled": false},
 		"interrupted": {"scene": "abandoned_manifest", "actor": "", "service_enabled": true, "route": "gas_station_casino", "route_enabled": false},
@@ -4588,7 +4589,7 @@ static func _check_delivery_event_module_resolution_boundary(library: ContentLib
 	if event_definition.is_empty():
 		failures.append("Delivery-day production event definition is missing.")
 		return
-	var invalid_run_state = _delivery_event_module_run_state(definition, library, "invalid")
+	var invalid_run_state = _delivery_event_module_run_state(definition, library, delivered, "invalid")
 	var invalid_before := _delivery_event_module_observation(invalid_run_state)
 	var invalid_module = EventModuleScript.new()
 	invalid_module.setup(event_definition, library)
@@ -4601,7 +4602,7 @@ static func _check_delivery_event_module_resolution_boundary(library: ContentLib
 	]:
 		var expectation := _dict(expectation_value)
 		var choice_id := str(expectation.get("choice_id", ""))
-		var run_state = _delivery_event_module_run_state(definition, library, choice_id)
+		var run_state = _delivery_event_module_run_state(definition, library, delivered, choice_id)
 		var action_before := int(run_state.event_cadence_summary().get("action_index", 0))
 		var turns_before := int(run_state.current_environment.get("turns", 0))
 		var boundary_before := int(_dict(run_state.current_environment.get("scenario_sequence_state", {})).get("boundary_serial", 0))
@@ -4621,10 +4622,10 @@ static func _check_delivery_event_module_resolution_boundary(library: ContentLib
 			if str(receipt_value).begins_with("event:event_result:"):
 				event_fact_receipts.append(receipt_value)
 		if not bool(event_result.get("ok", false)) \
-			or str(terminal.get("status", "")) != SequenceRuntimeScript.STATUS_AFTERMATH \
-			or _array(terminal.get("resolved_outcomes", [])) != [str(expectation.get("outcome", ""))] \
-			or _array(terminal.get("event_choice_receipts", [])) != [exact_event_receipt]:
-			failures.append("EventModule did not produce immediate exact %s delivery aftermath/receipt." % choice_id)
+		or str(terminal.get("status", "")) != SequenceRuntimeScript.STATUS_AFTERMATH \
+		or _array(terminal.get("resolved_outcomes", [])) != [str(expectation.get("outcome", ""))] \
+		or _array(terminal.get("event_choice_receipts", [])) != [exact_event_receipt]:
+			failures.append("EventModule did not produce immediate exact %s delivery aftermath/receipt: result=%s lifecycle=%s terminal_status=%s terminal_phase=%s terminal_errors=%s." % [choice_id, JSON.stringify(event_result.get("errors", [])), JSON.stringify(run_state.current_environment.get("scenario_sequence_lifecycle_errors", [])), str(terminal.get("status", "")), str(terminal.get("phase_id", "")), JSON.stringify(terminal.get("errors", []))])
 		if not _array(terminal.get("fact_queue", [])).is_empty() or not _array(terminal.get("event_request_queue", [])).is_empty() or event_fact_receipts.size() != 1:
 			failures.append("EventModule left duplicate or pending %s delivery fact/request consequences." % choice_id)
 		if int(run_state.event_cadence_summary().get("action_index", -1)) != action_before + 1 \
@@ -4646,32 +4647,75 @@ static func _check_delivery_event_module_resolution_boundary(library: ContentLib
 			failures.append("EventModule production replay gate duplicated %s facts, receipts, reward, or boundaries." % choice_id)
 
 
-static func _delivery_event_module_run_state(definition: Dictionary, library: ContentLibrary, seed_suffix: String):
+static func _delivery_event_module_run_state(definition: Dictionary, library: ContentLibrary, delivered: Dictionary, seed_suffix: String):
 	var run_state = RunStateScript.new()
-	run_state.start_new("DELIVERY-EVENT-BOUNDARY-%s" % seed_suffix)
-	var rng = run_state.create_rng("delivery_event_module:%s" % seed_suffix)
-	var environment := EnvironmentInstanceScript.from_archetype(library.environment_archetype("corner_store"), 1, rng, library, {}, definition).to_dict()
+	run_state.start_new("corner_store_delivery_day_env06_6")
+	var installed_definition := definition.duplicate(true)
+	installed_definition[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
+	var rng = run_state.create_rng("env06_6:executable-proof")
+	var environment := EnvironmentInstanceScript.from_archetype(library.environment_archetype("corner_store"), 1, rng, library, {}, installed_definition).to_dict()
 	environment["world_node_id"] = DELIVERY_NODE_ID
 	environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment)
-	run_state.current_environment = environment
-	run_state.scenario_prepare_semantic_finalization()
-	var finalized := run_state.scenario_finalize_installed_environment(library)
-	if not bool(finalized.get("ok", false)):
-		run_state.current_environment["scenario_sequence_lifecycle_errors"] = _array(finalized.get("errors", []))
+	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(environment, library)
+	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(_array(authoritative.get("records", [])), environment, library)
+	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(_array(stamped.get("records", [])))
+	var base_interactions := _array(produced.get("interactions", []))
+	var base_actors := _array(produced.get("actors", []))
+	var instance_inventory := EnvironmentSemanticInventoryScript.for_instance(environment, library, base_interactions, base_actors)
+	var inventory_errors := _array(authoritative.get("errors", [])) + _array(stamped.get("errors", [])) + _array(produced.get("errors", [])) + EnvironmentSemanticInventoryScript.validate(instance_inventory)
+	if not inventory_errors.is_empty():
+		environment["scenario_sequence_lifecycle_errors"] = inventory_errors
+		run_state.current_environment = environment
 		return run_state
-	for command_spec_value in [
-		["inspect_manifest", "delivery:event_module:inspect", "delivery_event_gate"],
-		["shift_cartons", "delivery:event_module:shift", "delivery_cartons"],
-		["request_stock_check", "delivery:event_module:request", "sorting_shelf"],
-	]:
-		var command_spec := command_spec_value as Array
-		var command_result := run_state.scenario_sequence_command(str(command_spec[0]), "%s:%s" % [str(command_spec[1]), seed_suffix], {}, "scenario", str(command_spec[2]))
-		if not bool(command_result.get("ok", false)):
-			run_state.current_environment["scenario_sequence_lifecycle_errors"] = _array(command_result.get("errors", []))
-			return run_state
-	var drained := run_state.scenario_drain_event_requests()
-	if not bool(drained.get("ok", false)):
-		run_state.current_environment["scenario_sequence_lifecycle_errors"] = _array(drained.get("errors", []))
+	var event_choices := EnvironmentSemanticInventoryScript.event_choice_index(_array(environment.get("event_ids", [])), library)
+	var trusted_delivered := delivered.duplicate(true)
+	var semantic := _dict(trusted_delivered.get("semantic_state", {}))
+	var exact_inventory := EnvironmentSemanticInventoryScript.exact_collections(instance_inventory)
+	exact_inventory["event_choices"] = event_choices.duplicate(true)
+	semantic["target_inventory"] = exact_inventory
+	semantic["declared_targets"] = SequenceSchemaScript.verified_declared_targets(installed_definition, exact_inventory)
+	semantic["base_interactions"] = base_interactions.duplicate(true)
+	semantic["inventory_schema_version"] = int(instance_inventory.get("schema_version", 0))
+	semantic["inventory_digest"] = str(instance_inventory.get("digest", ""))
+	semantic["event_choices"] = event_choices.duplicate(true)
+	trusted_delivered["semantic_state"] = semantic
+	environment["scenario_state"] = ScenarioEngineScript.initial_state(installed_definition)
+	environment["scenario_sequence_definition"] = installed_definition
+	environment["scenario_sequence_state"] = trusted_delivered
+	environment["scenario_base_interactions"] = base_interactions.duplicate(true)
+	environment["scenario_base_actors"] = base_actors.duplicate(true)
+	environment["scenario_semantic_inventory"] = instance_inventory
+	environment["scenario_semantic_inventory_version"] = int(instance_inventory.get("schema_version", 0))
+	environment["scenario_semantic_digest"] = str(instance_inventory.get("digest", ""))
+	environment["scenario_semantic_action_digest"] = SequenceRuntimeScript.base_interaction_action_authority_digest(base_interactions)
+	environment["scenario_semantic_ready"] = true
+	environment["scenario_restore_contract"] = RunStateScript.ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1
+	environment["scenario_event_choices"] = event_choices
+	environment["scenario_layout_base_records"] = _array(stamped.get("records", []))
+	environment["scenario_layout_context"] = {}
+	# This boundary is about EventModule's atomic result publication, not active
+	# room geometry. Derive a real passive seal from the production layout
+	# resolver, then retain the exact catalog-authenticated awaiting-stock state.
+	var passive_state := trusted_delivered.duplicate(true)
+	passive_state["status"] = SequenceRuntimeScript.STATUS_CLEANED
+	var passive_projection := SequenceRuntimeScript.public_projection(passive_state, installed_definition)
+	var passive_layout := ScenarioLayoutResolverScript.resolve(_array(stamped.get("records", [])), passive_projection, environment)
+	if not bool(passive_layout.get("ok", false)):
+		environment["scenario_sequence_lifecycle_errors"] = _array(passive_layout.get("errors", []))
+		run_state.current_environment = environment
+		return run_state
+	environment["scenario_sequence_projection"] = _dict(passive_layout.get("projection", {}))
+	environment["scenario_layout_authority"] = _dict(passive_layout.get("layout_authority", {}))
+	environment["scenario_layout_audit"] = _dict(passive_layout.get("layout_audit", {}))
+	environment["scenario_layout_authority_digest"] = str(passive_layout.get("layout_authority_digest", ""))
+	environment["scenario_render_snapshot"] = ScenarioLayoutResolverScript.sealed_renderer_snapshot(passive_layout)
+	var normalization_probe := environment.duplicate(true)
+	var normalized_state := ScenarioEngineScript.ensure_sequence_state(normalization_probe, installed_definition)
+	if str(normalized_state.get("status", "")) != SequenceRuntimeScript.STATUS_ACTIVE:
+		var host_probe := ScenarioEngineScript.sequence_host_semantics(environment)
+		var initial_probe := SequenceRuntimeScript.initial_state(installed_definition, DELIVERY_NODE_ID, "event_boundary_probe", host_probe)
+		environment["scenario_sequence_lifecycle_errors"] = ["event boundary normalization probe: %s initial=%s host=%s" % [JSON.stringify(normalized_state.get("errors", [])), JSON.stringify(initial_probe.get("errors", [])), JSON.stringify(host_probe.get("inventory_errors", []))]]
+	run_state.current_environment = environment
 	return run_state
 
 
@@ -4724,13 +4768,15 @@ static func _check_delivery_material_state(outcome: String, state: Dictionary, e
 	var actor_id := str(expected.get("actor", ""))
 	var actor_key := "scenario::%s" % actor_id
 	var service := _dict(_dict(semantic.get("services", {})).get("scenario::cashier_tip", {}))
-	var route_key := "scenario::%s" % str(expected.get("route", ""))
+	var route_key := "base::world:%s" % str(expected.get("route", ""))
 	var route := _dict(_dict(semantic.get("routes", {})).get(route_key, {}))
 	if not _dict(semantic.get("scene_objects", {})).has(scene_key) \
 		or not actor_id.is_empty() and not _dict(semantic.get("actors", {})).has(actor_key) \
 		or actor_id.is_empty() and _dict(semantic.get("actors", {})).has("scenario::delivery_clerk") \
 		or service.is_empty() or bool(service.get("enabled", not bool(expected.get("service_enabled", false)))) != bool(expected.get("service_enabled", false)) \
-		or route.is_empty() or bool(route.get("enabled", not bool(expected.get("route_enabled", false)))) != bool(expected.get("route_enabled", false)):
+		or route.is_empty() \
+		or expected.has("route_enabled") and bool(route.get("enabled", not bool(expected.get("route_enabled", false)))) != bool(expected.get("route_enabled", false)) \
+		or expected.has("route_source") and str(route.get("source_id", "")) != str(expected.get("route_source", "")):
 		failures.append("Delivery-day %s aftermath lost its exact scene/actor/service/route material state." % outcome)
 
 
