@@ -64,7 +64,8 @@ func _initialize() -> void:
 		var receipts: Dictionary = {}
 		_collect_receipts(definition.sequence, receipts, failures, scenario_id)
 		_check_frozen_identity(definition, entry, failures)
-		_check_runtime_matrix(definition, entry, failures)
+		if _requested_scenario().is_empty() or _requested_scenario() == scenario_id:
+			_check_runtime_matrix(definition, entry, failures)
 	actual_ids.sort()
 	var expected := EXPECTED_IDS.duplicate()
 	expected.sort()
@@ -432,6 +433,13 @@ func _finish(failures: Array) -> void:
 	else:
 		for failure in failures: printerr("ENV06_7_PACKAGE_E_CONTRACT_FAIL %s" % failure)
 		quit(1)
+
+
+func _requested_scenario() -> String:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--scenario="):
+			return argument.trim_prefix("--scenario=")
+	return ""
 
 
 func _array(value: Variant) -> Array:
