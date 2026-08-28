@@ -6,7 +6,7 @@ This packet presents only the two dispositions authorized by the binding board
 row. It does not select, rank or recommend either option. No product, evidence
 tool, gate, assertion, budget, geometry or machine behavior is changed here.
 
-## Binding record and absent row prompt
+## Binding record and off-main row prompt
 
 The binding `fix06_24` board row is preserved at board commit
 `a3865e4db286f1c876b03012eacfb93f699a0688` (tree
@@ -14,12 +14,18 @@ The binding `fix06_24` board row is preserved at board commit
 blocked product-physics defect requiring an owner decision and binds it to exact
 `fix06_8` evidence `1f0595af`.
 
-No `fix06_24` row prompt currently exists on main
-`00ee744fa6269e8a7eb34f67b2659f32d55febaa`; specifically,
-`docs/todo/fix06_24_coin_pusher_adjacent_coin_movement_defect_prompt.md` is
-absent. The path named by the preserved board record is therefore not a current
-binding prompt. This decision packet derives no additional implementation scope
-from an unlanded or inferred prompt.
+The prompt does not exist on main
+`00ee744fa6269e8a7eb34f67b2659f32d55febaa`, but it is not absent from the
+repository. Board commit
+`a3865e4db286f1c876b03012eacfb93f699a0688` introduced the tracked off-main
+prompt at
+`docs/todo/fix06_24_coin_pusher_adjacent_coin_movement_defect_prompt.md` with
+blob `8011fa543d9d5e14fba02c0803011f6c94c13e94`; it remains present on the
+`codex/program06-board` lineage. That prompt is classification and owner
+escalation only: it expressly authorizes no diagnosis, correction, rerun,
+search, physics, geometry, transport, contact, tuning or neighboring-stock
+change. This packet therefore derives no implementation or physics authority
+from either the off-main prompt or its board row.
 
 The exact evidence commit is
 `1f0595af567494f1c7d69f319a1ee8e4bead26dc`, tree
