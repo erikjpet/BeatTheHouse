@@ -2155,11 +2155,13 @@ func _invalidate_scenario_semantic_proof(message: String) -> Dictionary:
 	return {"ok": false, "errors": [message]}
 
 
-func _scenario_semantic_finalization_failure(errors: Array, invalidate_if_ready: bool) -> Dictionary:
+func _scenario_semantic_finalization_failure(errors: Array, _invalidate_if_ready: bool) -> Dictionary:
 	var failure_errors := errors.duplicate(true)
 	if failure_errors.is_empty(): failure_errors = ["Scenario semantic finalization failed closed."]
-	if invalidate_if_ready:
-		_invalidate_scenario_semantic_proof(str(failure_errors[0]))
+	# Finalization is evaluated against detached candidates. A rejected refresh
+	# never supersedes the already sealed environment proof, so preserve it
+	# byte-for-byte. Explicit live-proof mismatches invalidate through
+	# _invalidate_scenario_semantic_proof() at their detection sites.
 	return {"ok": false, "errors": failure_errors}
 
 
@@ -2262,7 +2264,11 @@ func scenario_sequence_apply_expiry_boundary(boundary: String, amount: int = 1) 
 	if authored_boundary == "none" or authored_boundary != boundary:
 		return {"ok": true, "inactive": true, "errors": []}
 	if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized."]}
-	return ScenarioEngineScript.sequence_apply_expiry_boundary(current_environment, definition, boundary, amount)
+	var environment_before := current_environment.duplicate(true)
+	var result := ScenarioEngineScript.sequence_apply_expiry_boundary(current_environment, definition, boundary, amount)
+	if not bool(result.get("ok", false)):
+		current_environment = environment_before
+	return result
 
 
 # Public cross-consumer table-game transaction context. The returned state is an
@@ -2702,7 +2708,11 @@ func scenario_enqueue_fact(fact_type: String, producer: String, payload: Diction
 		maxi(int(state.get("boundary_serial", 0)), _crew_action_index()),
 		payload
 	)
-	return ScenarioEngineScript.enqueue_sequence_fact(current_environment, definition, typed_fact)
+	var environment_before := current_environment.duplicate(true)
+	var result := ScenarioEngineScript.enqueue_sequence_fact(current_environment, definition, typed_fact)
+	if not bool(result.get("ok", false)):
+		current_environment = environment_before
+	return result
 
 
 func scenario_flush_facts(boundary_serial: int = -1) -> Dictionary:
