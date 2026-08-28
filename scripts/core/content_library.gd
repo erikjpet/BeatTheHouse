@@ -5,10 +5,16 @@ extends RefCounted
 
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const ScenarioSequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
+const ScenarioOperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
+const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
+const ScenarioSequenceRolloutManifestScript := preload("res://scripts/core/scenario_sequence_rollout_manifest.gd")
+const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 
 const ENVIRONMENT_ARCHETYPES_PATH := "res://data/environments/archetypes.json"
 const ENVIRONMENT_SCENARIOS_PATH := "res://data/environments/scenarios.json"
+const ENVIRONMENT_SCENARIO_SEQUENCES_PATH := "res://data/environments/scenario_sequences"
 const GAMES_PATH := "res://data/games/games.json"
 const SCRATCH_TICKETS_PATH := "res://data/games/scratch_tickets.json"
 const ITEMS_PATH := "res://data/items/items.json"
@@ -43,6 +49,7 @@ static var _music_wav_info_cache_misses := 0
 
 var environment_archetypes: Array = []
 var environment_scenarios: Dictionary = {}
+var scenario_sequence_catalog: Dictionary = {}
 var games: Array = []
 var scratch_ticket_types: Array = []
 var items: Array = []
@@ -82,6 +89,7 @@ static func required_pack_paths() -> Dictionary:
 	return {
 		"environment_archetypes": ENVIRONMENT_ARCHETYPES_PATH,
 		"environment_scenarios": ENVIRONMENT_SCENARIOS_PATH,
+		"environment_scenario_sequences": ENVIRONMENT_SCENARIO_SEQUENCES_PATH,
 		"games": GAMES_PATH,
 		"scratch_ticket_types": SCRATCH_TICKETS_PATH,
 		"items": ITEMS_PATH,
@@ -115,6 +123,9 @@ func load(run_validation: bool = true) -> Dictionary:
 	validation_complete = false
 	environment_archetypes = _load_array(ENVIRONMENT_ARCHETYPES_PATH, true)
 	environment_scenarios = _load_dictionary(ENVIRONMENT_SCENARIOS_PATH, true)
+	scenario_sequence_catalog = ScenarioSequenceCatalogScript.load_catalog(ENVIRONMENT_SCENARIO_SEQUENCES_PATH)
+	for failure_value in scenario_sequence_catalog.get("failures", []):
+		_load_errors.append(str(failure_value))
 	games = _load_array(GAMES_PATH, true)
 	scratch_ticket_types = _load_array(SCRATCH_TICKETS_PATH, true)
 	items = _load_array(ITEMS_PATH, true)
@@ -152,6 +163,7 @@ func load(run_validation: bool = true) -> Dictionary:
 	return {
 		"environment_archetypes": environment_archetypes,
 		"environment_scenarios": environment_scenarios,
+		"scenario_sequence_catalog": scenario_sequence_catalog,
 		"games": games,
 		"scratch_ticket_types": scratch_ticket_types,
 		"items": items,
@@ -604,7 +616,13 @@ func environment_archetype(archetype_id: String) -> Dictionary:
 # Returns scenario definitions for an archetype in authored order.
 func scenarios_for_archetype(archetype_id: String) -> Array:
 	var value: Variant = environment_scenarios.get(archetype_id, [])
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for definition_value in value as Array:
+		if typeof(definition_value) == TYPE_DICTIONARY:
+			result.append(_scenario_with_runtime_validation_receipt(definition_value as Dictionary))
+	return result
 
 
 # Finds one scenario definition without regenerating any environment state.
@@ -617,8 +635,21 @@ func scenario(scenario_id: String) -> Dictionary:
 			continue
 		for scenario_value in pool_value as Array:
 			if typeof(scenario_value) == TYPE_DICTIONARY and str((scenario_value as Dictionary).get("id", "")) == wanted:
-				return (scenario_value as Dictionary).duplicate(true)
+				return _scenario_with_runtime_validation_receipt(scenario_value as Dictionary)
 	return {}
+
+
+func _scenario_with_runtime_validation_receipt(definition: Dictionary) -> Dictionary:
+	var result := ScenarioSequenceCatalogScript.apply_overlay(definition, scenario_sequence_catalog)
+	# The staged load validates sequence overlays against the exact independent
+	# semantic target inventory. Runtime has no ContentLibrary at its migration
+	# seam, so complete deferred validation at the first sequence lookup and carry
+	# only that all-green receipt forward. Non-sequence startup remains deferred.
+	if ScenarioSequenceSchemaScript.is_sequence(result) and not validation_complete:
+		validate()
+	if validation_complete and validation_errors.is_empty() and ScenarioSequenceSchemaScript.is_sequence(result):
+		result[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
+	return result
 
 
 # Finds a game definition by id.
@@ -893,6 +924,69 @@ func service(service_id: String) -> Dictionary:
 # Finds a travel route definition by id.
 func route(route_id: String) -> Dictionary:
 	return _lookup("travel_routes", travel_routes, route_id)
+
+
+# Pure static authorization catalog for a sequence definition. Consumers use
+# this instead of reproducing the effective-layer + legacy-mutation census.
+func scenario_target_catalog(definition: Dictionary) -> Dictionary:
+	if definition.is_empty(): return {}
+	var archetype_id := str(definition.get("archetype_id", "")).strip_edges()
+	var requested_layer := str(definition.get("layer_id", "")).strip_edges()
+	var archetype := environment_archetype(archetype_id)
+	if archetype.is_empty():
+		var invalid_id := archetype_id if not archetype_id.is_empty() else "unknown_archetype"
+		var invalid_inventory := EnvironmentSemanticInventoryScript.invalid_catalog(invalid_id, requested_layer, ["scenario target catalog references unknown archetype %s." % (archetype_id if not archetype_id.is_empty() else "<empty>")])
+		return {"schema_version": 1, "kind": "scenario_target_catalog", "inventory": invalid_inventory, "guaranteed": {}, "possible": {}, "records": [], "provenance": {}, "event_choices": {}, "diagnostics": [], "errors": EnvironmentSemanticInventoryScript.validate(invalid_inventory)}
+	var effective := EnvironmentSemanticInventoryScript.effective_archetype(archetype, requested_layer)
+	if effective.is_empty():
+		var invalid_inventory := EnvironmentSemanticInventoryScript.for_archetype(archetype, self, requested_layer)
+		return {"schema_version": 1, "kind": "scenario_target_catalog", "inventory": invalid_inventory, "guaranteed": EnvironmentSemanticInventoryScript.guaranteed_collections(invalid_inventory), "possible": EnvironmentSemanticInventoryScript.possible_collections(invalid_inventory), "records": _copy_array(invalid_inventory.get("records", [])), "provenance": _as_dict(invalid_inventory.get("provenance", {})), "event_choices": {}, "diagnostics": [], "errors": EnvironmentSemanticInventoryScript.validate(invalid_inventory)}
+	var scenario_state := ScenarioEngineScript.initial_state(definition)
+	effective = ScenarioEngineScript.apply_to_archetype(effective, scenario_state)
+	var inventory := EnvironmentSemanticInventoryScript.for_archetype(effective, self)
+	var catalog_event_ids := EnvironmentSemanticInventoryScript.guaranteed_event_ids(effective, self)
+	var event_choice_index := EnvironmentSemanticInventoryScript.event_choice_index(catalog_event_ids, self)
+	var alternate_layers: Dictionary = {}
+	var layers := _as_dict(archetype.get("layers", {}))
+	if not requested_layer.is_empty():
+		for layer_id_value in layers.keys():
+			var layer_id := str(layer_id_value)
+			if layer_id == requested_layer: continue
+			var alternate_effective := EnvironmentSemanticInventoryScript.effective_archetype(archetype, layer_id)
+			alternate_effective = ScenarioEngineScript.apply_to_archetype(alternate_effective, scenario_state)
+			var alternate_inventory := EnvironmentSemanticInventoryScript.for_archetype(alternate_effective, self)
+			alternate_layers[layer_id] = {"guaranteed": EnvironmentSemanticInventoryScript.guaranteed_collections(alternate_inventory), "possible": EnvironmentSemanticInventoryScript.possible_collections(alternate_inventory)}
+	var declared_targets := _as_dict(ScenarioSequenceSchemaScript.sequence(definition).get("declared_targets", {}))
+	var structured_diagnostics := EnvironmentSemanticInventoryScript.diagnose_declared_targets_structured(inventory, declared_targets, alternate_layers)
+	var diagnostics := EnvironmentSemanticInventoryScript.validate(inventory)
+	for diagnostic_value in structured_diagnostics: diagnostics.append(str(_as_dict(diagnostic_value).get("message", "")))
+	return {
+		"schema_version": 1,
+		"kind": "scenario_target_catalog",
+		"inventory": inventory,
+		"guaranteed": EnvironmentSemanticInventoryScript.guaranteed_collections(inventory),
+		"possible": EnvironmentSemanticInventoryScript.possible_collections(inventory),
+		"records": _copy_array(inventory.get("records", [])),
+		"provenance": _as_dict(inventory.get("provenance", {})),
+		"event_choices": event_choice_index,
+		"diagnostics": structured_diagnostics,
+		"errors": diagnostics,
+	}
+
+
+func scenario_target_catalog_messages(scenario_id: String, target_catalog: Dictionary) -> Array:
+	var result: Array = []
+	var structured := _copy_array(target_catalog.get("diagnostics", []))
+	for diagnostic_value in structured:
+		var diagnostic := _as_dict(diagnostic_value)
+		result.append("environment_scenarios %s target_catalog[%s]: %s" % [scenario_id, str(diagnostic.get("code", "unknown_target")), str(diagnostic.get("message", ""))])
+	var structured_messages: Array = []
+	for diagnostic_value in structured: structured_messages.append(str(_as_dict(diagnostic_value).get("message", "")))
+	for catalog_error_value in _copy_array(target_catalog.get("errors", [])):
+		var catalog_error := str(catalog_error_value)
+		if not structured_messages.has(catalog_error): result.append("environment_scenarios %s target_catalog[source_invalid]: %s" % [scenario_id, catalog_error])
+	if target_catalog.is_empty(): result.append("environment_scenarios %s target_catalog[source_invalid]: catalog is empty" % scenario_id)
+	return result
 
 
 # Finds an authored music track manifest entry by id.
@@ -2062,7 +2156,9 @@ func _validate_art_asset(label: String, entry: Dictionary) -> void:
 	if not asset_path.begins_with("res://assets/art/"):
 		validation_errors.append("%s asset_path must stay under res://assets/art/." % label)
 		return
-	if not ResourceLoader.exists(asset_path):
+	# Source-art validation must not depend on whether this checkout's editor
+	# import cache finished before a headless content/audit run.
+	if not FileAccess.file_exists(asset_path):
 		validation_errors.append("%s references missing asset_path: %s" % [label, asset_path])
 
 
@@ -3130,6 +3226,14 @@ func _validate_environment_references() -> void:
 			continue
 		var archetype_id := str(archetype.get("id", "")).strip_edges()
 		_validate_environment_layers(archetype, archetype_ids, route_ids, game_ids, item_ids, event_ids, service_ids, lender_ids)
+		var semantic_layer_ids: Array = [""]
+		for layer_id_value in _as_dict(archetype.get("layers", {})).keys(): semantic_layer_ids.append(str(layer_id_value))
+		for semantic_layer_id_value in semantic_layer_ids:
+			var semantic_layer_id := str(semantic_layer_id_value)
+			if semantic_layer_id.is_empty() and not _as_dict(archetype.get("layers", {})).is_empty(): continue
+			var semantic_inventory := EnvironmentSemanticInventoryScript.for_archetype(archetype, self, semantic_layer_id)
+			for semantic_error_value in EnvironmentSemanticInventoryScript.validate(semantic_inventory):
+				validation_errors.append("environment %s semantic_inventory%s: %s" % [archetype_id, "[%s]" % semantic_layer_id if not semantic_layer_id.is_empty() else "", str(semantic_error_value)])
 		_validate_environment_open_hours(archetype_id, archetype.get("open_hours", null))
 		_validate_id_references("environment %s game_pool" % archetype_id, archetype.get("game_pool", []), game_ids)
 		_validate_id_references("environment %s required_game_ids" % archetype_id, archetype.get("required_game_ids", []), game_ids)
@@ -3232,7 +3336,12 @@ func _validate_scenario_definitions() -> void:
 	var service_ids := _ids_for(services)
 	var game_ids := _ids_for(games)
 	var item_ids := _ids_for(items)
+	var character_ids := _ids_for(characters)
 	var seen_ids: Dictionary = {}
+	var sequence_definitions: Array = []
+	var target_inventories: Dictionary = {}
+	var masked_visual_explanations: Dictionary = {}
+	var rollout_definitions: Array = []
 	for archetype_key_value in environment_scenarios.keys():
 		var archetype_key := str(archetype_key_value).strip_edges()
 		if archetype_key.is_empty() or not archetype_ids.has(archetype_key):
@@ -3246,7 +3355,8 @@ func _validate_scenario_definitions() -> void:
 			if typeof(scenario_value) != TYPE_DICTIONARY:
 				validation_errors.append("environment_scenarios %s[%d] must be a dictionary." % [archetype_key, index])
 				continue
-			var definition: Dictionary = scenario_value
+			var definition := ScenarioSequenceCatalogScript.apply_overlay(scenario_value as Dictionary, scenario_sequence_catalog)
+			rollout_definitions.append(definition)
 			var scenario_id := str(definition.get("id", "")).strip_edges()
 			var declared_archetype := str(definition.get("archetype_id", "")).strip_edges()
 			if scenario_id.is_empty():
@@ -3287,6 +3397,59 @@ func _validate_scenario_definitions() -> void:
 				elif int(advance_value) < 0 or (phase_index < phases.size() - 1 and int(advance_value) <= 0):
 					validation_errors.append("environment_scenarios %s phase[%d] advance_after_actions is not sane." % [scenario_id, phase_index])
 				_validate_scenario_mutations(scenario_id, "phase[%d].mutations" % phase_index, phase.get("mutations", {}), event_ids, service_ids, game_ids, item_ids)
+			if definition.has("sequence"):
+				sequence_definitions.append(definition.duplicate(true))
+				var sequence_target_catalog := scenario_target_catalog(definition)
+				if sequence_target_catalog.is_empty() or not _copy_array(sequence_target_catalog.get("errors", [])).is_empty():
+					validation_errors.append_array(scenario_target_catalog_messages(scenario_id, sequence_target_catalog))
+				else:
+					var sequence_target_inventory := _as_dict(sequence_target_catalog.get("guaranteed", {})).duplicate(true)
+					sequence_target_inventory["event_choices"] = _as_dict(sequence_target_catalog.get("event_choices", {}))
+					target_inventories[scenario_id] = sequence_target_inventory
+				for pair_key_value in _as_dict(_as_dict(definition.get("sequence_authoring", {})).get("masked_visual_explanations", {})).keys():
+					masked_visual_explanations[str(pair_key_value)] = str(_as_dict(_as_dict(definition.get("sequence_authoring", {})).get("masked_visual_explanations", {})).get(pair_key_value, ""))
+				validation_errors.append_array(ScenarioEngineScript.validate_sequence_definition(definition, {
+					"archetype_ids": archetype_ids,
+					"event_ids": event_ids,
+					"service_ids": service_ids,
+					"game_ids": game_ids,
+					"item_ids": item_ids,
+					"actor_ids": character_ids,
+					"archetype": environment_archetype(archetype_key),
+				}, _as_dict(target_inventories.get(scenario_id, {}))))
+	var overlay_ids := _as_dict(scenario_sequence_catalog.get("overlays", {})).keys()
+	for overlay_id_value in overlay_ids:
+		if not seen_ids.has(str(overlay_id_value)):
+			validation_errors.append("scenario sequence overlay references unknown legacy scenario: %s" % str(overlay_id_value))
+	# Validate every present overlay transactionally during the staged conversion.
+	# The strict env06_7 completion gate calls the same report with expected_count
+	# 55 (and therefore exactly 1,485 comparisons); env06_6's production proof
+	# intentionally runs with expected_count 1 without pretending rollout is done.
+	for definition_value in rollout_definitions:
+		if typeof(definition_value) != TYPE_DICTIONARY: continue
+		var definition := definition_value as Dictionary
+		var scenario_id := str(definition.get("id", ""))
+		if target_inventories.has(scenario_id): continue
+		var target_catalog := scenario_target_catalog(definition)
+		if target_catalog.is_empty() or not _copy_array(target_catalog.get("errors", [])).is_empty():
+			validation_errors.append_array(scenario_target_catalog_messages(scenario_id, target_catalog))
+			continue
+		var target_inventory := _as_dict(target_catalog.get("guaranteed", {})).duplicate(true)
+		target_inventory["event_choices"] = _as_dict(target_catalog.get("event_choices", {}))
+		target_inventories[scenario_id] = target_inventory
+	if not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty():
+		var uniqueness_audit := ScenarioEngineScript.sequence_catalog_audit(sequence_definitions, sequence_definitions.size(), masked_visual_explanations, target_inventories)
+		scenario_sequence_catalog["uniqueness_audit"] = uniqueness_audit
+		for failure_value in _copy_array(uniqueness_audit.get("failures", [])):
+			validation_errors.append(str(failure_value))
+		for warning_value in _copy_array(uniqueness_audit.get("warnings", [])):
+			validation_warnings.append(str(warning_value))
+	var rollout_ids := ScenarioSequenceRolloutManifestScript.expected_ids()
+	if ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT != 55 or rollout_ids.size() != ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT:
+		validation_errors.append("scenario sequence rollout manifest must contain exactly 55 catalog ids.")
+	var rollout_report := ScenarioSequenceSchemaScript.catalog_rollout_report(rollout_definitions, rollout_ids, ScenarioOperationRegistryScript, {}, ScenarioSequenceRolloutManifestScript.required_sequence_ids(), target_inventories)
+	validation_errors.append_array(_copy_array(rollout_report.get("failures", [])))
+	validation_warnings.append_array(_copy_array(rollout_report.get("warnings", [])))
 
 
 func _validate_scenario_mutations(scenario_id: String, label: String, value: Variant, event_ids: Dictionary, service_ids: Dictionary, game_ids: Dictionary, item_ids: Dictionary) -> void:
@@ -3614,6 +3777,10 @@ static func _as_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
 	return (value as Dictionary).duplicate(true)
+
+
+static func _copy_array(value: Variant) -> Array:
+	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
 
 
 # Recursively combines dictionaries without mutating either authored source.
