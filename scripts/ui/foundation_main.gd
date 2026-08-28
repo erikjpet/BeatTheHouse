@@ -1104,7 +1104,11 @@ func _on_game_surface_pointer_action(action: String, index: int, phase: String, 
 	ui_state["selected_action_id"] = selected_action_id
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
-	var command := current_game.surface_pointer_command(action, index, phase, board_position, ui_state, run_state, run_state.current_environment)
+	var command: Dictionary
+	if _current_game_uses_blackjack_action_authority() and current_game.has_method("_table_game_resolve_proposal"):
+		command = _blackjack_host_pointer_intent(action, index, phase, board_position, ui_state)
+	else:
+		command = current_game.surface_pointer_command(action, index, phase, board_position, ui_state, run_state, run_state.current_environment)
 	if _current_game_uses_blackjack_action_authority() and command.has("blackjack_surface_intent"):
 		command = _blackjack_host_surface_intent(
 			str(command.get("blackjack_surface_intent", "")),
@@ -1154,8 +1158,10 @@ func _current_game_uses_blackjack_action_authority() -> bool:
 	return not game_id.is_empty() \
 		and canonical is GameModule \
 		and current_game == canonical \
-		and current_game.has_method("_blackjack_resolve_proposal") \
-		and current_game.has_method("_blackjack_wager_cost_proposal")
+		and ((current_game.has_method("_blackjack_resolve_proposal") \
+				and current_game.has_method("_blackjack_wager_cost_proposal")) \
+			or (current_game.has_method("_table_game_resolve_proposal") \
+				and current_game.has_method("_table_game_wager_cost_proposal")))
 
 
 func _blackjack_host_table_binding(environment: Dictionary = {}) -> String:
@@ -1278,7 +1284,9 @@ func _blackjack_host_surface_intent(surface_action: String, index: int, confirm_
 	ledger = _blackjack_host_ledger(candidate, true)
 	var pending: Dictionary = ledger.get("pending_delivery", {})
 	if not pending.is_empty():
-		if surface_action in ["blackjack_retry_pending", "blackjack_deal"]:
+		var game_id := current_game.get_id()
+		var retry_actions := ["blackjack_retry_pending", "blackjack_deal", "table_game_retry_pending", "%s_retry_pending" % game_id]
+		if surface_action in retry_actions:
 			return GameModule.surface_command({
 				"handled": true,
 				"action_id": str(pending.get("action_id", "")),
@@ -1290,7 +1298,7 @@ func _blackjack_host_surface_intent(surface_action: String, index: int, confirm_
 				"_blackjack_host_delivery": pending.duplicate(true),
 				"message": "Retrying the sealed Blackjack action.",
 			})
-		if surface_action == "blackjack_cancel_pending":
+		if surface_action in ["blackjack_cancel_pending", "table_game_cancel_pending", "%s_cancel_pending" % game_id]:
 			var cancelled := BlackjackActionAuthorityScript.cancel_delivery(ledger, pending)
 			if not bool(cancelled.get("ok", false)):
 				return _blackjack_host_rejection(str(cancelled.get("error_code", "receipt_content_conflict")), "Blackjack cancellation did not match the pending action.", str(pending.get("request_key", "")))
@@ -1308,7 +1316,7 @@ func _blackjack_host_surface_intent(surface_action: String, index: int, confirm_
 	var recovery_session := session.duplicate(true)
 	if surface_time_msec >= 0:
 		session["surface_time_msec"] = surface_time_msec
-	if not current_game.call("_has_dealt_hand", session) and _current_selected_stake() > 0:
+	if current_game.has_method("_has_dealt_hand") and not current_game.call("_has_dealt_hand", session) and _current_selected_stake() > 0:
 		session["selected_stake"] = _current_selected_stake()
 	var command: Dictionary = current_game.surface_action_command(surface_action, index, confirm_requested, session, candidate, candidate.current_environment)
 	if bool(command.get("handled", false)):
@@ -1344,6 +1352,27 @@ func _blackjack_host_needs_auto_tick(surface_time_msec: int) -> bool:
 	if run_state == null or current_game == null or not current_game.has_method("_blackjack_host_needs_auto_tick"):
 		return false
 	return bool(current_game.call("_blackjack_host_needs_auto_tick", surface_time_msec, run_state, run_state.current_environment))
+
+
+func _blackjack_host_pointer_intent(surface_action: String, index: int, phase: String, board_position: Vector2, ui_state: Dictionary) -> Dictionary:
+	var candidate := _blackjack_host_detached()
+	if candidate == null:
+		return _blackjack_host_rejection("invalid_intent", "Table pointer intent is unavailable.")
+	var ledger := _blackjack_host_ledger(candidate, true)
+	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
+		return _blackjack_host_rejection("pending_delivery", "Retry or cancel the pending table action before changing the ceremony.")
+	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
+	for transient_key in ["surface_time_msec", "drunk_scaled_surface_time_msec", "reduce_motion"]:
+		if ui_state.has(transient_key):
+			session[transient_key] = ui_state[transient_key]
+	var command := current_game.surface_pointer_command(surface_action, index, phase, board_position, session, candidate, candidate.current_environment)
+	if bool(command.get("handled", false)):
+		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
+		ledger = BlackjackActionAuthorityScript.stage_session(ledger, next_session)
+	_blackjack_host_store_ledger(candidate, ledger)
+	if not _blackjack_host_publish(candidate):
+		return _blackjack_host_rejection("internal_fail_closed", "Table pointer intent could not be persisted.")
+	return command
 
 
 func _blackjack_host_auto_intent(surface_time_msec: int) -> Dictionary:
@@ -1388,7 +1417,8 @@ func _blackjack_host_preview_wager_cost(action_id: String, stake: int) -> int:
 	_blackjack_host_store_ledger(candidate, ledger)
 	var snapshot := candidate.to_save_snapshot()
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
-	var proposal: Dictionary = current_game.call("_blackjack_wager_cost_proposal", action_id, stake, snapshot, session)
+	var wager_method := "_blackjack_wager_cost_proposal" if current_game.has_method("_blackjack_wager_cost_proposal") else "_table_game_wager_cost_proposal"
+	var proposal: Dictionary = current_game.call(wager_method, action_id, stake, snapshot, session)
 	var expected_input := GameRitualRuntimeScript.canonical_fingerprint({
 		"action_id": action_id,
 		"stake": stake,
@@ -1507,8 +1537,9 @@ func _blackjack_host_proposal_valid(proposal: Dictionary, proposal_input: Dictio
 	# The host replays the canonical module from the sealed serialized input and
 	# compares the entire output. A producer cannot bless a modified snapshot by
 	# merely recomputing its own hash.
+	var proposal_method := "_blackjack_resolve_proposal" if current_game.has_method("_blackjack_resolve_proposal") else "_table_game_resolve_proposal"
 	var canonical: Dictionary = current_game.call(
-		"_blackjack_resolve_proposal",
+		proposal_method,
 		str(proposal_input.get("action_id", "")),
 		int(proposal_input.get("stake", 0)),
 		(proposal_input.get("run_snapshot", {}) as Dictionary).duplicate(true),
@@ -1549,7 +1580,8 @@ func _blackjack_host_resolve_intent(action_id: String, stake: int, delivery_clai
 		return _blackjack_host_rejection("stale_boundary", "Blackjack delivery was not present on the canonical candidate.", request_key)
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
 	var wager_snapshot := candidate.to_save_snapshot()
-	var wager_proposal: Dictionary = current_game.call("_blackjack_wager_cost_proposal", action_id, stake, wager_snapshot, session)
+	var wager_method := "_blackjack_wager_cost_proposal" if current_game.has_method("_blackjack_wager_cost_proposal") else "_table_game_wager_cost_proposal"
+	var wager_proposal: Dictionary = current_game.call(wager_method, action_id, stake, wager_snapshot, session)
 	var wager_input_fingerprint := GameRitualRuntimeScript.canonical_fingerprint({
 		"action_id": action_id,
 		"stake": stake,
@@ -1585,8 +1617,9 @@ func _blackjack_host_resolve_intent(action_id: String, stake: int, delivery_clai
 		"rng_snapshot": rng.snapshot(),
 		"ui_state": session,
 	}
+	var proposal_method := "_blackjack_resolve_proposal" if current_game.has_method("_blackjack_resolve_proposal") else "_table_game_resolve_proposal"
 	var proposal: Dictionary = current_game.call(
-		"_blackjack_resolve_proposal",
+		proposal_method,
 		action_id,
 		stake,
 		proposal_input.get("run_snapshot", {}),
@@ -1613,8 +1646,12 @@ func _blackjack_host_resolve_intent(action_id: String, stake: int, delivery_clai
 		return _blackjack_host_rejection("invalid_proposal", "Blackjack proposal changed its delivery authority.", request_key)
 	var proposed_rng := RngStream.new()
 	proposed_rng.restore((proposal.get("rng_snapshot", {}) as Dictionary).duplicate(true))
-	var requires_apply := bool(result.get("blackjack_proposal_requires_apply", false))
+	var table_game_requires_apply := bool(result.get("table_game_proposal_requires_apply", false))
+	var requires_apply := bool(result.get("blackjack_proposal_requires_apply", false)) or table_game_requires_apply
 	result.erase("blackjack_proposal_requires_apply")
+	result.erase("table_game_proposal_requires_apply")
+	if table_game_requires_apply:
+		result["table_game_authoritative"] = true
 	result["blackjack_host_committed"] = true
 	result["blackjack_host_request_key"] = request_key
 	result["blackjack_host_delivery"] = delivery.duplicate(true)

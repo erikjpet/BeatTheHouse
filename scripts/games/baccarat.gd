@@ -9,6 +9,7 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
+const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -32,6 +33,11 @@ const BACCARAT_SQUEEZE_PHASE_MSEC := 2400
 const BACCARAT_THIRD_CARD_PHASE_MSEC := 3600
 const BACCARAT_RITUAL_PHASES := ["betting", "shoe", "deal", "squeeze_reveal", "third_card_rule", "settlement"]
 const BACCARAT_SQUEEZE_ACTION := "baccarat_squeeze"
+const TABLE_GAME_HOST_TRANSIENT_UI_KEYS := [
+	"surface_time_msec", "drunk_scaled_surface_time_msec", "reduce_motion",
+	"selected_action_id", "selected_action_kind", "selected_index",
+	"focused_talk_speaker",
+]
 const HISTORY_LIMIT := 72
 const BACCARAT_ROAD_ROWS := 6
 const BACCARAT_ROAD_COLUMNS := 12
@@ -183,7 +189,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var crew_status := run_state.crew_play_active_status(get_id(), environment) if run_state != null else []
 	var ritual_projection := _baccarat_ritual_projection(ritual_phase, bets, last_result, table, surface_patrons, crew_status, visible_bankroll, run_state.suspicion_level() if run_state != null else 0)
 	var squeeze_progress := 1.0 if bool(ui_state.get("reduce_motion", false)) else clampf(float(session.get("baccarat_squeeze_progress", 0.0)), 0.0, 1.0)
-	return GameModule.surface_spec({
+	var authority_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var pending_delivery: Dictionary = authority_ledger.get("pending_delivery", {}) if typeof(authority_ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
+	var spec := GameModule.surface_spec({
 		"surface_renderer": "baccarat",
 		"surface_life": "immersive_table",
 		"surface_cast": "dealer_table",
@@ -321,6 +329,23 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			},
 		}),
 	})
+	if not pending_delivery.is_empty():
+		spec["table_game_host_pending_delivery"] = pending_delivery.duplicate(true)
+		spec["table_game_host_retry_available"] = true
+		spec["table_game_host_cancel_available"] = true
+		spec["table_notice"] = "A sealed action is waiting. Retry it or cancel back to the prior table ceremony."
+		spec["can_deal"] = false
+		spec["can_clear"] = false
+		spec["can_undo"] = false
+		spec["can_rebet"] = false
+		spec["surface_action_bindings"] = {
+			"legal": {"action": "table_game_retry_pending", "index": 0},
+			"cheat": {"action": "table_game_cancel_pending", "index": 0},
+			"surface_stake_down": {"action": "table_game_cancel_pending", "index": 0},
+			"surface_stake_up": {"action": "table_game_retry_pending", "index": 0},
+			"surface_stake_max": {"action": "table_game_retry_pending", "index": 0},
+		}
+	return spec
 
 
 func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
@@ -568,6 +593,60 @@ func wager_cost_for_context(action_id: String, stake: int, _run_state: RunState,
 
 
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	return _table_game_compatibility_simulation(action_id, stake, run_state, environment, rng, ui_state)
+
+
+func _table_game_compatibility_simulation(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+	# Legacy callers may inspect a Baccarat outcome, but live settlement belongs
+	# exclusively to FoundationMain. Resolve serialized copies so neither the
+	# caller's table/account nor its RNG cursor can move through this API.
+	if run_state == null or rng == null:
+		return _empty_baccarat_result(action_id, stake, environment, "Baccarat simulation requires serialized run and RNG inputs.")
+	var proposal := _table_game_resolve_proposal(action_id, stake, run_state.to_save_snapshot(), rng.snapshot(), ui_state.duplicate(true))
+	var result: Dictionary = (proposal.get("result", {}) as Dictionary).duplicate(true)
+	result.erase("table_game_proposal_requires_apply")
+	result.erase("blackjack_host_apply_receipt")
+	result.erase("blackjack_host_content_fingerprint")
+	result["table_game_compatibility_simulation"] = true
+	result["table_game_authoritative"] = false
+	return result
+
+
+func _table_game_resolve_proposal(action_id: String, stake: int, run_snapshot: Dictionary, rng_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var proposal_input := {
+		"action_id": action_id,
+		"stake": stake,
+		"run_snapshot": run_snapshot,
+		"rng_snapshot": rng_snapshot,
+		"ui_state": ui_state,
+	}
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var proposal_rng := RngStream.new()
+	proposal_rng.restore(rng_snapshot.duplicate(true))
+	var result := _resolve_baccarat_proposal_core(action_id, stake, candidate, candidate.current_environment, proposal_rng, ui_state.duplicate(true))
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
+		"result": result.duplicate(true),
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": proposal_rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
+	return proposal
+
+
+func _table_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var cost := wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+	return {
+		"cost": maxi(0, cost),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
+
+
+func _resolve_baccarat_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	if action_id == "read_baccarat_shoe":
 		return _resolve_read_shoe(action_id, stake, run_state, environment, rng, ui_state)
 	if action_id == EDGE_SORT_ACTION_ID:
@@ -647,7 +726,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["baccarat_edge_sort_edge_remaining"] = int(_copy_dict(table.get("edge_sort_edge", {})).get("hands_remaining", 0))
 	result["baccarat_road"] = _baccarat_road_state(table.get("hand_history", []))
 	result["baccarat_shoe_penetration"] = _baccarat_shoe_penetration(table)
-	GameModule.apply_result(run_state, result, rng)
+	result["table_game_proposal_requires_apply"] = true
 	return result
 
 
@@ -769,7 +848,7 @@ func _resolve_read_shoe(action_id: String, stake: int, run_state: RunState, envi
 	result["baccarat_pit_boss_watched"] = bool(pit_boss_status.get("watched", false))
 	result["baccarat_pit_boss_heat_bonus"] = pit_bonus
 	result["baccarat_table_pressure"] = table_pressure
-	GameModule.apply_result(run_state, result, rng)
+	result["table_game_proposal_requires_apply"] = true
 	return result
 
 
@@ -1984,7 +2063,7 @@ func _resolve_edge_sort(action_id: String, run_state: RunState, environment: Dic
 	result["skill_margin_msec"] = int(challenge.get("skill_margin_msec", 0))
 	result["base_suspicion_delta"] = base_suspicion_delta
 	GameModule.normalize_skill_cheat_contract(result, result)
-	GameModule.apply_result(run_state, result, rng)
+	result["table_game_proposal_requires_apply"] = true
 	return result
 
 
@@ -2838,7 +2917,13 @@ func _refresh_shoe_remaining_metadata(table: Dictionary) -> void:
 func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_state: Dictionary, table: Dictionary) -> Dictionary:
 	# Every nested field changed below is replaced with a normalized copy. A shallow
 	# shell avoids cloning unrelated UI payload on every command/surface read.
-	var session := ui_state.duplicate(false)
+	var host_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var host_session_initialized := bool(host_ledger.get("initialized", false))
+	var session: Dictionary = (host_ledger.get("session", {}) as Dictionary).duplicate(true) if host_session_initialized and typeof(host_ledger.get("session", {})) == TYPE_DICTIONARY else ui_state.duplicate(false)
+	if host_session_initialized:
+		for key in TABLE_GAME_HOST_TRANSIENT_UI_KEYS:
+			if ui_state.has(key):
+				session[key] = ui_state[key]
 	var denoms := _chip_denominations(table)
 	var selected_chip := int(session.get("selected_chip", session.get("selected_stake", denoms[0])))
 	if not denoms.has(selected_chip):
@@ -3490,6 +3575,12 @@ func _draw_action_console(surface, state: Dictionary) -> void:
 	var panel := Rect2(0, CONSOLE_Y, 900, 86)
 	surface.draw_rect(panel, Color(0.02, 0.02, 0.05, 0.84))
 	surface.draw_rect(panel, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.18), false, 1)
+	if bool(state.get("table_game_host_retry_available", false)):
+		surface.surface_label("SEALED ACTION", Vector2(342, CONSOLE_Y + 24), 12, C_YELLOW)
+		surface.surface_label("Retry or restore the pre-delivery ceremony.", Vector2(342, CONSOLE_Y + 48), 10, C_SOFT)
+		_draw_table_button(surface, Rect2(650, CONSOLE_Y + 15, 104, 42), "RETRY", "table_game_retry_pending", 0, C_YELLOW, true, true)
+		_draw_table_button(surface, Rect2(762, CONSOLE_Y + 15, 112, 42), "CANCEL", "table_game_cancel_pending", 0, C_SOFT, bool(state.get("table_game_host_cancel_available", false)))
+		return
 	surface.surface_label("MIN $%d  MAX $%d" % [int(state.get("table_minimum", 20)), int(state.get("table_maximum", 500))], Vector2(342, CONSOLE_Y + 22), 12, C_SOFT)
 	surface.surface_label("WAGER $%d" % int(state.get("total_wager_cost", 0)), Vector2(342, CONSOLE_Y + 42), 14, C_YELLOW)
 	surface.surface_label("COMM $%d" % int(state.get("commission_owed", 0)), Vector2(342, CONSOLE_Y + 62), 12, C_PINK_2)

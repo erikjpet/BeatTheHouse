@@ -764,7 +764,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	if not bool(result.get("ok", false)):
 		run_state.clear_deferred_bankroll_zero_resolution()
 		return
-	if str(result.get("game_id", result.get("source_id", ""))) == "blackjack" \
+	if (str(result.get("game_id", result.get("source_id", ""))) == "blackjack" or result.has("table_game_authoritative")) \
 			and not run_state.consume_blackjack_authority_result_receipt(result):
 		return
 	normalize_skill_cheat_contract(result)
