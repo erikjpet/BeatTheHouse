@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <vector>
 
 using namespace godot;
@@ -215,6 +216,11 @@ struct Kernel {
   int64_t collisions = 0, candidate_peak = 0;
   bool energy_ok = true, conservation_ok = true;
   Kernel(Dictionary s, Dictionary c) : state(s), config(c), g(geometry(s)) {}
+  void resume(Dictionary s, Dictionary c) {
+    state = s;
+    config = c;
+    g = geometry(s);
+  }
   bool load() {
     if (String(state.get("schema", "")) != "coin_pusher_machine_v3" ||
         int64_t(state.get("version", 0)) != 3)
@@ -1248,14 +1254,32 @@ struct Kernel {
     }
     state["bodies"] = a;
   }
-  Dictionary run(int64_t ticks) {
+  Dictionary run(int64_t ticks, bool reload = true) {
     auto start = std::chrono::steady_clock::now();
-    if (!load() || ticks < 0)
+    if (ticks < 0)
       return Dictionary();
+    Array state_bodies = state.get("bodies", Array());
+    if (reload || state_bodies.size() != int64_t(b.size())) {
+      b.clear();
+      if (!load())
+        return Dictionary();
+    }
+    events = Array();
+    collisions = 0;
+    candidate_peak = 0;
+    energy_ok = true;
+    conservation_ok = true;
     Array trace = config.get("input_trace", Array());
     int64_t cursor = 0;
     Grid grid;
+    std::vector<Body> presentation_previous;
+    int64_t presentation_previous_face_y = state.get("face_y", face_y(g, 0));
+    const bool capture_previous = bool(config.get("capture_previous_views", false));
     for (int64_t t = 0; t < ticks; ++t) {
+      if (capture_previous && t == ticks - 1) {
+        presentation_previous = b;
+        presentation_previous_face_y = state.get("face_y", face_y(g, 0));
+      }
       inputs(trace, cursor);
       int64_t before = energy(), oldf = state.get("face_y", face_y(g, 0));
       bool cycle_completed = update_motor();
@@ -1363,8 +1387,42 @@ struct Kernel {
     out["events"] = events;
     out["metrics"] = m;
     out["invariants"] = inv;
+    auto presentation_views = [](const std::vector<Body> &source) {
+      Array views;
+      views.resize(source.size());
+      for (int64_t i = 0; i < int64_t(source.size()); ++i) {
+        const Body &q = source[size_t(i)];
+        Dictionary view;
+        view["id"] = q.id;
+        view["kind"] = q.kind;
+        view["x"] = q.x;
+        view["y"] = q.y;
+        view["z"] = q.z;
+        view["rest_state"] = q.rest;
+        view["support_kind"] = q.support;
+        view["support_root"] = q.support == "platform" || (q.support == "body" && q.carried)
+                                   ? String("platform")
+                               : !q.support.is_empty() ? String("deck")
+                                                       : String();
+        views[i] = view;
+      }
+      return views;
+    };
+    if (capture_previous) {
+      out["presentation_previous_bodies"] = presentation_views(presentation_previous);
+      out["presentation_previous_face_y"] = presentation_previous_face_y;
+    }
+    if (bool(config.get("capture_current_views", false))) {
+      out["presentation_current_bodies"] = presentation_views(b);
+      out["presentation_current_face_y"] = int64_t(state.get("face_y", face_y(g, 0)));
+    }
     return out;
   }
+};
+
+struct LiveKernelCache {
+  String key;
+  std::unique_ptr<Kernel> kernel;
 };
 } // namespace
 
@@ -1377,6 +1435,20 @@ bool CoinPusherNativeCore::can_step(const Dictionary &state,
 Dictionary CoinPusherNativeCore::step_ticks(Dictionary state,
                                             const Dictionary &config,
                                             int64_t tick_count) const {
+  String cache_key = config.get("live_cache_key", "");
+  if (!cache_key.is_empty()) {
+    static LiveKernelCache *live_cache = nullptr;
+    bool reset = bool(config.get("live_cache_reset", false));
+    if (!live_cache)
+      live_cache = new LiveKernelCache;
+    if (reset || !live_cache->kernel || live_cache->key != cache_key) {
+      live_cache->key = cache_key;
+      live_cache->kernel = std::make_unique<Kernel>(state, config);
+      return live_cache->kernel->run(tick_count);
+    }
+    live_cache->kernel->resume(state, config);
+    return live_cache->kernel->run(tick_count, false);
+  }
   Kernel k(state, config);
   return k.run(tick_count);
 }
