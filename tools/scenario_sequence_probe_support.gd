@@ -156,7 +156,7 @@ static func obstruction_target_contract(records_value: Variant) -> Dictionary:
 		var expected_stable_id := "delivery_event_gate" if object_id == EXPECTED_OBSTRUCTION_TARGET_IDS[0] else "delivery_exit"
 		var expected_safe_exit := object_id == EXPECTED_OBSTRUCTION_TARGET_IDS[1]
 		var expected_role := "workstation" if not expected_safe_exit else "exit"
-		if str(record.get("object_type", "")) != "scenario_sequence" \
+		if str(record.get("object_type", "")) not in ["scenario", "scenario_sequence"] \
 			or str(record.get("owner_namespace", "")) != "scenario" \
 			or str(record.get("stable_object_id", "")) != expected_stable_id \
 			or str(record.get("semantic_role", record.get("role", ""))) != expected_role:
@@ -167,18 +167,21 @@ static func obstruction_target_contract(records_value: Variant) -> Dictionary:
 			failures.append("Production obstruction target %s has incorrect safe-exit authority." % object_id)
 		var expected_command_ids := ["inspect_manifest"] if not expected_safe_exit else ["ignore_delivery", "refuse_sort"]
 		var enabled_command_ids: Array = []
-		for action_value in _array(record.get("scenario_sequence_actions", [])):
+		var action_rows := _array(record.get("scenario_sequence_actions", record.get("inline_actions", [])))
+		for action_value in action_rows:
 			var action := _dict(action_value)
 			if not bool(action.get("enabled", true)):
 				continue
-			var command_id := str(action.get("id", ""))
+			var command_id := str(action.get("scenario_command_id", action.get("id", "")))
 			enabled_command_ids.append(command_id)
-			if command_id.is_empty() \
-				or str(action.get("action_origin_owner_namespace", "")) != "scenario" \
-				or str(action.get("action_origin_stable_object_id", "")) != expected_stable_id \
-				or str(action.get("action_origin_receipt_key", "")).is_empty() \
-				or str(action.get("action_origin_boundary_id", "")).is_empty() \
-				or str(action.get("action_origin_fingerprint", "")).length() != 64:
+			var token := str(action.get("emit_object_id", ""))
+			var exact_public_token := token.begins_with("scenario_action:") and token.contains(":scenario:%s:" % expected_stable_id) and token.ends_with(":" + command_id)
+			var has_sealed_origin := str(action.get("action_origin_owner_namespace", "")) == "scenario" \
+				and str(action.get("action_origin_stable_object_id", "")) == expected_stable_id \
+				and not str(action.get("action_origin_receipt_key", "")).is_empty() \
+				and not str(action.get("action_origin_boundary_id", "")).is_empty() \
+				and str(action.get("action_origin_fingerprint", "")).length() == 64
+			if command_id.is_empty() or not exact_public_token or not has_sealed_origin:
 				failures.append("Production obstruction target %s contains an enabled action without exact sealed origin authority." % object_id)
 		if enabled_command_ids != expected_command_ids:
 			failures.append("Production obstruction target %s lost its exact enabled scenario actions." % object_id)

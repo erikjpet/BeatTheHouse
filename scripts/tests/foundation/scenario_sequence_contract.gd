@@ -4286,14 +4286,14 @@ static func _check_executable_evidence_contract(failures: Array) -> void:
 			"object_id": "scenario:scenario:delivery_exit", "object_type": "scenario", "owner_namespace": "scenario",
 			"stable_object_id": "delivery_exit", "role": "exit", "enabled": true, "interactive": true, "safe_exit": true,
 			"inline_actions": [
-				{"enabled": true, "emit_object_id": "scenario_action:1:scenario:delivery_exit:ignore_delivery", "scenario_command_id": "ignore_delivery"},
-				{"enabled": true, "emit_object_id": "scenario_action:1:scenario:delivery_exit:refuse_sort", "scenario_command_id": "refuse_sort"},
+				{"enabled": true, "emit_object_id": "scenario_action:1:scenario:delivery_exit:ignore_delivery", "scenario_command_id": "ignore_delivery", "action_origin_owner_namespace": "scenario", "action_origin_stable_object_id": "delivery_exit", "action_origin_receipt_key": "obstruction:exit:ignore", "action_origin_boundary_id": "phase:arrival", "action_origin_fingerprint": "a".repeat(64)},
+				{"enabled": true, "emit_object_id": "scenario_action:1:scenario:delivery_exit:refuse_sort", "scenario_command_id": "refuse_sort", "action_origin_owner_namespace": "scenario", "action_origin_stable_object_id": "delivery_exit", "action_origin_receipt_key": "obstruction:exit:refuse", "action_origin_boundary_id": "phase:arrival", "action_origin_fingerprint": "b".repeat(64)},
 			],
 		},
 		{
 			"object_id": "scenario:scenario:delivery_event_gate", "object_type": "scenario", "owner_namespace": "scenario",
 			"stable_object_id": "delivery_event_gate", "role": "workstation", "enabled": true, "interactive": true, "safe_exit": false,
-			"inline_actions": [{"enabled": true, "emit_object_id": "scenario_action:1:scenario:delivery_event_gate:inspect_manifest", "scenario_command_id": "inspect_manifest"}],
+			"inline_actions": [{"enabled": true, "emit_object_id": "scenario_action:1:scenario:delivery_event_gate:inspect_manifest", "scenario_command_id": "inspect_manifest", "action_origin_owner_namespace": "scenario", "action_origin_stable_object_id": "delivery_event_gate", "action_origin_receipt_key": "obstruction:event:inspect", "action_origin_boundary_id": "phase:arrival", "action_origin_fingerprint": "c".repeat(64)}],
 		},
 	]
 	var obstruction_contract := ScenarioSequenceProbeSupportScript.obstruction_target_contract(obstruction_records)
@@ -4371,7 +4371,9 @@ static func _check_executable_evidence_contract(failures: Array) -> void:
 	if ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(timing_only) != str(valid_report.get("semantic_sha256", "")):
 		failures.append("Executable probe canonical hash includes timing data.")
 	var missing_checkpoint := valid_report.duplicate(true)
-	_array(missing_checkpoint["semantic"]["checkpoints"]).pop_back()
+	var missing_checkpoint_rows := _array(missing_checkpoint["semantic"]["checkpoints"])
+	missing_checkpoint_rows.pop_back()
+	missing_checkpoint["semantic"]["checkpoints"] = missing_checkpoint_rows
 	missing_checkpoint["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(missing_checkpoint)
 	if ScenarioSequenceProbeSupportScript.validate_probe_report(missing_checkpoint, "Windows").is_empty():
 		failures.append("Executable probe validator accepted a missing runtime checkpoint.")
@@ -4385,6 +4387,7 @@ static func _check_executable_evidence_contract(failures: Array) -> void:
 	var first_row := _dict(reordered_rows[0]).duplicate(true)
 	reordered_rows[0] = _dict(reordered_rows[1]).duplicate(true)
 	reordered_rows[1] = first_row
+	reordered_checkpoints["semantic"]["checkpoints"] = reordered_rows
 	reordered_checkpoints["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(reordered_checkpoints)
 	if ScenarioSequenceProbeSupportScript.validate_probe_report(reordered_checkpoints, "Windows").is_empty():
 		failures.append("Executable probe validator accepted reordered runtime checkpoints.")
@@ -4421,7 +4424,9 @@ static func _check_executable_evidence_contract(failures: Array) -> void:
 	if ScenarioSequenceProbeSupportScript.validate_probe_report(wrong_outcome, "Windows").is_empty():
 		failures.append("Executable probe validator accepted the wrong checkpoint outcome.")
 	var missing_semantic_capture := valid_report.duplicate(true)
-	_array(missing_semantic_capture["semantic"]["capture_ids"]).pop_back()
+	var missing_capture_ids := _array(missing_semantic_capture["semantic"]["capture_ids"])
+	missing_capture_ids.pop_back()
+	missing_semantic_capture["semantic"]["capture_ids"] = missing_capture_ids
 	missing_semantic_capture["semantic_sha256"] = ScenarioSequenceProbeSupportScript.canonical_semantic_sha256(missing_semantic_capture)
 	if ScenarioSequenceProbeSupportScript.validate_probe_report(missing_semantic_capture, "Windows").is_empty():
 		failures.append("Executable probe validator accepted a missing semantic capture id.")
@@ -4478,6 +4483,7 @@ static func _check_executable_evidence_contract(failures: Array) -> void:
 	var first_capture := _dict(reordered_capture_rows[0]).duplicate(true)
 	reordered_capture_rows[0] = _dict(reordered_capture_rows[1]).duplicate(true)
 	reordered_capture_rows[1] = first_capture
+	reordered_capture["captures"] = reordered_capture_rows
 	if ScenarioSequenceProbeSupportScript.validate_capture_manifest(reordered_capture).is_empty():
 		failures.append("Executable visual validator accepted reordered runtime capture rows.")
 	var wrong_capture_identity := valid_manifest.duplicate(true)

@@ -112,17 +112,17 @@ static func action_descriptor_for_token(records: Array, token: String) -> Dictio
 			var action := _dict(action_value)
 			if str(action.get("emit_object_id", "")) != wanted or not bool(action.get("enabled", true)):
 				continue
-			return {
+			var descriptor := {
 				"owner_namespace": str(action.get("scenario_owner_namespace", record.get("scenario_owner_namespace", "scenario"))),
 				"stable_object_id": str(action.get("scenario_stable_object_id", record.get("scenario_stable_object_id", ""))),
 				"command_id": str(action.get("scenario_command_id", action.get("id", ""))),
 				"idempotency_key": str(action.get("scenario_idempotency_key", "")),
-				"action_origin_owner_namespace": str(action.get("action_origin_owner_namespace", "")),
-				"action_origin_stable_object_id": str(action.get("action_origin_stable_object_id", "")),
-				"action_origin_receipt_key": str(action.get("action_origin_receipt_key", "")),
-				"action_origin_boundary_id": str(action.get("action_origin_boundary_id", "")),
-				"action_origin_fingerprint": str(action.get("action_origin_fingerprint", "")),
 			}
+			for origin_key in ["action_origin_owner_namespace", "action_origin_stable_object_id", "action_origin_receipt_key", "action_origin_boundary_id", "action_origin_fingerprint"]:
+				var origin_value := str(action.get(origin_key, ""))
+				if not origin_value.is_empty():
+					descriptor[origin_key] = origin_value
+			return descriptor
 	return {}
 
 
@@ -189,9 +189,10 @@ static func _append_augmented_actions(record: Dictionary, augment_descriptors: A
 				"cost": maxi(0, int(action.get("cost", 0))),
 			})
 	result["scenario_augmented_inline_actions"] = inline
-	var existing := _array(result.get("inline_actions", []))
-	existing.append_array(inline)
-	result["inline_actions"] = existing
+	# An accepted augment owns the target's public action surface for this
+	# boundary. Keeping the base activation beside it would expose a second,
+	# unauthenticated route around the reducer winner.
+	result["inline_actions"] = inline.duplicate(true)
 	return result
 
 
