@@ -459,6 +459,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "manage_open_mic_bill",
+                    "type": "command"
+                  },
+                  "id": "punchline_open_mic_night_arrival_identity_0",
+                  "next_phase": "work_1",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "support_waiting_comic",
+                    "type": "command"
+                  },
+                  "id": "punchline_open_mic_night_arrival_identity_1",
+                  "next_phase": "work_1",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "sabotage_open_mic",
+                    "type": "command"
+                  },
+                  "id": "punchline_open_mic_night_arrival_identity_2",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -530,6 +563,24 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "manage_open_mic_bill",
+                        "input_action": "ui_left",
+                        "label": "Manage Open Mic Bill",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "support_waiting_comic",
+                        "input_action": "ui_up",
+                        "label": "Support Waiting Comic",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "sabotage_open_mic",
+                        "input_action": "ui_right",
+                        "label": "Sabotage Open Mic",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -541,14 +592,16 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Pin Signup Slot",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_open_mic_night_task_0",
-                    "prompt": "Punchline Open Mic Night: Begin the first physical task.",
+                    "prompt": "Punchline Open Mic Night: Begin the first physical task or commit to this scenario's named strategy.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_open_mic_night_task_0",
                     "state_label": "Arrival station"
@@ -765,7 +818,7 @@
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_open_mic_night_task_1",
-                    "prompt": "Punchline Open Mic Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Open Mic Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_open_mic_night_task_1",
                     "state_label": "Work 1 station"
@@ -927,7 +980,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_open_mic_night_task_2",
-                    "prompt": "Punchline Open Mic Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Open Mic Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_open_mic_night_task_2",
                     "state_label": "Work 2 station"
@@ -1092,7 +1145,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_open_mic_night_task_3",
-                    "prompt": "Punchline Open Mic Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Open Mic Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_open_mic_night_task_3",
                     "state_label": "Work 3 station"
@@ -1270,7 +1323,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "fe06b5a6fa7ea1318ee8e2b9bcceefa4202818e57e7a09155c688ad241c5d636"
+        "sequence_signature": "89937eca7ad332811524ed3d837514096d914f7c8b2426e0e87919a633918ca2"
       }
     },
     {
@@ -1839,7 +1892,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_headliner_night_task_0",
-                    "prompt": "Punchline Headliner Night: Begin the first physical task.",
+                    "prompt": "Punchline Headliner Night: Begin the first physical task or commit to this scenario's named strategy.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_headliner_night_task_0",
                     "state_label": "Arrival station"
@@ -1999,6 +2052,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "honor_headliner_route",
+                    "type": "command"
+                  },
+                  "id": "punchline_headliner_night_work_1_identity_0",
+                  "next_phase": "work_2",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "escort_headliner_direct",
+                    "type": "command"
+                  },
+                  "id": "punchline_headliner_night_work_1_identity_1",
+                  "next_phase": "work_2",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "divert_headliner_runner",
+                    "type": "command"
+                  },
+                  "id": "punchline_headliner_night_work_1_identity_2",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -2038,6 +2124,24 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "honor_headliner_route",
+                        "input_action": "ui_left",
+                        "label": "Honor Headliner Route",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "escort_headliner_direct",
+                        "input_action": "ui_up",
+                        "label": "Escort Headliner Direct",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "divert_headliner_runner",
+                        "input_action": "ui_right",
+                        "label": "Divert Headliner Runner",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -2049,14 +2153,16 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Carry L 2 Runner Case",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_headliner_night_task_1",
-                    "prompt": "Punchline Headliner Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Headliner Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_headliner_night_task_1",
                     "state_label": "Work 1 station"
@@ -2218,7 +2324,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_headliner_night_task_2",
-                    "prompt": "Punchline Headliner Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Headliner Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_headliner_night_task_2",
                     "state_label": "Work 2 station"
@@ -2383,7 +2489,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_headliner_night_task_3",
-                    "prompt": "Punchline Headliner Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Headliner Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_headliner_night_task_3",
                     "state_label": "Work 3 station"
@@ -2546,7 +2652,7 @@
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_headliner_night_task_4",
-                    "prompt": "Punchline Headliner Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Headliner Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_headliner_night_task_4",
                     "state_label": "Work 4 station"
@@ -2722,7 +2828,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "493d65adc86ec59cf52610302d30d890296749a2747778e80dcb4fece4f76f29"
+        "sequence_signature": "7ce36ee297133339f16e9dfdb11107af2e7708161ac6cc2f762971319f3b2739"
       }
     },
     {
@@ -3269,7 +3375,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_bringer_show_task_0",
-                    "prompt": "Punchline Bringer Show: Begin the first physical task.",
+                    "prompt": "Punchline Bringer Show: Begin the first physical task or commit to this scenario's named strategy.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_bringer_show_task_0",
                     "state_label": "Arrival station"
@@ -3429,6 +3535,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "seat_bringer_supporters",
+                    "type": "command"
+                  },
+                  "id": "punchline_bringer_show_work_1_identity_0",
+                  "next_phase": "work_2",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "defend_bringer_minimum",
+                    "type": "command"
+                  },
+                  "id": "punchline_bringer_show_work_1_identity_1",
+                  "next_phase": "terminal_success",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "accept_hostile_pitch",
+                    "type": "command"
+                  },
+                  "id": "punchline_bringer_show_work_1_identity_2",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -3468,6 +3607,24 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "seat_bringer_supporters",
+                        "input_action": "ui_left",
+                        "label": "Seat Bringer Supporters",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "defend_bringer_minimum",
+                        "input_action": "ui_up",
+                        "label": "Defend Bringer Minimum",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "accept_hostile_pitch",
+                        "input_action": "ui_right",
+                        "label": "Accept Hostile Pitch",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -3479,14 +3636,16 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Usher Supporters To Block",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_bringer_show_task_1",
-                    "prompt": "Punchline Bringer Show: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Bringer Show: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_bringer_show_task_1",
                     "state_label": "Work 1 station"
@@ -3648,7 +3807,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_bringer_show_task_2",
-                    "prompt": "Punchline Bringer Show: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Bringer Show: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_bringer_show_task_2",
                     "state_label": "Work 2 station"
@@ -3813,7 +3972,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_bringer_show_task_3",
-                    "prompt": "Punchline Bringer Show: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Bringer Show: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_bringer_show_task_3",
                     "state_label": "Work 3 station"
@@ -3991,7 +4150,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5f69365614627cf55f803b233dba81cd8a358cbd3459fa11c4bc23a707b346e5"
+        "sequence_signature": "b9494e5f5b1dde1bce8d6540dd661c29d2d9f8ea6f038adcd18a55c4c2b64ff1"
       }
     },
     {
@@ -4544,7 +4703,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_high_stakes_night_task_0",
-                    "prompt": "Punchline High Stakes Night: Begin the first physical task.",
+                    "prompt": "Punchline High Stakes Night: Begin the first physical task or commit to this scenario's named strategy.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_high_stakes_night_task_0",
                     "state_label": "Arrival station"
@@ -4765,7 +4924,7 @@
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_high_stakes_night_task_1",
-                    "prompt": "Punchline High Stakes Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline High Stakes Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_high_stakes_night_task_1",
                     "state_label": "Work 1 station"
@@ -4874,6 +5033,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "serve_protected_table",
+                    "type": "command"
+                  },
+                  "id": "punchline_high_stakes_night_work_2_identity_0",
+                  "next_phase": "work_3",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "open_public_observer_rail",
+                    "type": "command"
+                  },
+                  "id": "punchline_high_stakes_night_work_2_identity_1",
+                  "next_phase": "terminal_success",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "seal_public_game_lane",
+                    "type": "command"
+                  },
+                  "id": "punchline_high_stakes_night_work_2_identity_2",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -4913,6 +5105,24 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "serve_protected_table",
+                        "input_action": "ui_left",
+                        "label": "Serve Protected Table",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "open_public_observer_rail",
+                        "input_action": "ui_up",
+                        "label": "Open Public Observer Rail",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "seal_public_game_lane",
+                        "input_action": "ui_right",
+                        "label": "Seal Public Game Lane",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -4924,14 +5134,16 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Open Observer Rail",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_high_stakes_night_task_2",
-                    "prompt": "Punchline High Stakes Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline High Stakes Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_high_stakes_night_task_2",
                     "state_label": "Work 2 station"
@@ -5100,7 +5312,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_high_stakes_night_task_3",
-                    "prompt": "Punchline High Stakes Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline High Stakes Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_high_stakes_night_task_3",
                     "state_label": "Work 3 station"
@@ -5278,7 +5490,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "7d28ad6f75f07636e531add72aee101f2779ceeff457f5c8449ab5e5a5fed8e1"
+        "sequence_signature": "4f5ddbc65620aefb38bddb6df7941135c40412f65e498c559bc108587bbe861b"
       }
     },
     {
@@ -5847,7 +6059,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_greased_week_task_0",
-                    "prompt": "Punchline Greased Week: Begin the first physical task.",
+                    "prompt": "Punchline Greased Week: Begin the first physical task or commit to this scenario's named strategy.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_greased_week_task_0",
                     "state_label": "Arrival station"
@@ -6007,6 +6219,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "expose_payoff_chain",
+                    "type": "command"
+                  },
+                  "id": "punchline_greased_week_work_1_identity_0",
+                  "next_phase": "terminal_success",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "maintain_payoff_route",
+                    "type": "command"
+                  },
+                  "id": "punchline_greased_week_work_1_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "redirect_inspector_route",
+                    "type": "command"
+                  },
+                  "id": "punchline_greased_week_work_1_identity_2",
+                  "next_phase": "work_2",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -6046,6 +6291,24 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "expose_payoff_chain",
+                        "input_action": "ui_left",
+                        "label": "Expose Payoff Chain",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "maintain_payoff_route",
+                        "input_action": "ui_up",
+                        "label": "Maintain Payoff Route",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "redirect_inspector_route",
+                        "input_action": "ui_right",
+                        "label": "Redirect Inspector Route",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -6057,14 +6320,16 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Carry Ledger To L 2",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_greased_week_task_1",
-                    "prompt": "Punchline Greased Week: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Greased Week: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_greased_week_task_1",
                     "state_label": "Work 1 station"
@@ -6226,7 +6491,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_greased_week_task_2",
-                    "prompt": "Punchline Greased Week: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Greased Week: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_greased_week_task_2",
                     "state_label": "Work 2 station"
@@ -6391,7 +6656,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_greased_week_task_3",
-                    "prompt": "Punchline Greased Week: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Greased Week: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_greased_week_task_3",
                     "state_label": "Work 3 station"
@@ -6554,7 +6819,7 @@
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_greased_week_task_4",
-                    "prompt": "Punchline Greased Week: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Greased Week: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_greased_week_task_4",
                     "state_label": "Work 4 station"
@@ -6730,7 +6995,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4a40e4f2670e6ea928a677b5e86d44a8751f2352e1b302d2439755640edb106d"
+        "sequence_signature": "c1e960874682eb2af92c64193875b522217e645c619902567df03da4f6fb48fd"
       }
     },
     {
@@ -7283,7 +7548,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_debt_court_task_0",
-                    "prompt": "Punchline Debt Court: Begin the first physical task.",
+                    "prompt": "Punchline Debt Court: Begin the first physical task or commit to this scenario's named strategy.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_debt_court_task_0",
                     "state_label": "Arrival station"
@@ -7504,7 +7769,7 @@
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_debt_court_task_1",
-                    "prompt": "Punchline Debt Court: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Debt Court: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_debt_court_task_1",
                     "state_label": "Work 1 station"
@@ -7613,6 +7878,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "uphold_debt_ruling",
+                    "type": "command"
+                  },
+                  "id": "punchline_debt_court_work_2_identity_0",
+                  "next_phase": "terminal_success",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "contest_debt_ruling",
+                    "type": "command"
+                  },
+                  "id": "punchline_debt_court_work_2_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "adjourn_debt_court",
+                    "type": "command"
+                  },
+                  "id": "punchline_debt_court_work_2_identity_2",
+                  "next_phase": "terminal_refused",
+                  "objective_outcomes": {
+                    "main_task": "ignore"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -7652,6 +7950,24 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "uphold_debt_ruling",
+                        "input_action": "ui_left",
+                        "label": "Uphold Debt Ruling",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "contest_debt_ruling",
+                        "input_action": "ui_up",
+                        "label": "Contest Debt Ruling",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "adjourn_debt_court",
+                        "input_action": "ui_right",
+                        "label": "Adjourn Debt Court",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -7663,14 +7979,16 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Call Room Witness",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_debt_court_task_2",
-                    "prompt": "Punchline Debt Court: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Debt Court: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_debt_court_task_2",
                     "state_label": "Work 2 station"
@@ -7839,7 +8157,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_debt_court_task_3",
-                    "prompt": "Punchline Debt Court: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Debt Court: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_debt_court_task_3",
                     "state_label": "Work 3 station"
@@ -8017,7 +8335,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "91fac9af9a4088f15d174c6745bfbeaffd467ef7e329051578084f32cc07893d"
+        "sequence_signature": "39f007c42b9525872920689de7352e0f17f8bf61cb1165b833e9729c126098c1"
       }
     },
     {
@@ -8497,6 +8815,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "train_new_guard_posts",
+                    "type": "command"
+                  },
+                  "id": "punchline_new_muscle_arrival_identity_0",
+                  "next_phase": "work_1",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "test_guard_loyalty",
+                    "type": "command"
+                  },
+                  "id": "punchline_new_muscle_arrival_identity_1",
+                  "next_phase": "work_1",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "entrench_checkpoint_posts",
+                    "type": "command"
+                  },
+                  "id": "punchline_new_muscle_arrival_identity_2",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -8568,6 +8919,24 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "train_new_guard_posts",
+                        "input_action": "ui_left",
+                        "label": "Train New Guard Posts",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "test_guard_loyalty",
+                        "input_action": "ui_up",
+                        "label": "Test Guard Loyalty",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "entrench_checkpoint_posts",
+                        "input_action": "ui_right",
+                        "label": "Entrench Checkpoint Posts",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -8579,14 +8948,16 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Present Item At L 1 Tray",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_new_muscle_task_0",
-                    "prompt": "Punchline New Muscle: Begin the first physical task.",
+                    "prompt": "Punchline New Muscle: Begin the first physical task or commit to this scenario's named strategy.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_new_muscle_task_0",
                     "state_label": "Arrival station"
@@ -8803,7 +9174,7 @@
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_new_muscle_task_1",
-                    "prompt": "Punchline New Muscle: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline New Muscle: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_new_muscle_task_1",
                     "state_label": "Work 1 station"
@@ -8965,7 +9336,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_new_muscle_task_2",
-                    "prompt": "Punchline New Muscle: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline New Muscle: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_new_muscle_task_2",
                     "state_label": "Work 2 station"
@@ -9130,7 +9501,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_new_muscle_task_3",
-                    "prompt": "Punchline New Muscle: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline New Muscle: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_new_muscle_task_3",
                     "state_label": "Work 3 station"
@@ -9293,7 +9664,7 @@
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_new_muscle_task_4",
-                    "prompt": "Punchline New Muscle: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline New Muscle: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_new_muscle_task_4",
                     "state_label": "Work 4 station"
@@ -9469,7 +9840,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "dae5aa32f79f20ec073007c0a9226399cc56a287a1c58511be794af27b1159b5"
+        "sequence_signature": "c68b32a81a969740779d47413f742786c9eb1461be26b8e10d198ae373a300a2"
       }
     },
     {
@@ -10038,7 +10409,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_raid_jitters_task_0",
-                    "prompt": "Punchline Raid Jitters: Begin the first physical task.",
+                    "prompt": "Punchline Raid Jitters: Begin the first physical task or commit to this scenario's named strategy.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_raid_jitters_task_0",
                     "state_label": "Arrival station"
@@ -10255,7 +10626,7 @@
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_raid_jitters_task_1",
-                    "prompt": "Punchline Raid Jitters: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Raid Jitters: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_raid_jitters_task_1",
                     "state_label": "Work 1 station"
@@ -10417,7 +10788,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_raid_jitters_task_2",
-                    "prompt": "Punchline Raid Jitters: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Raid Jitters: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_raid_jitters_task_2",
                     "state_label": "Work 2 station"
@@ -10525,6 +10896,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "hide_raid_evidence",
+                    "type": "command"
+                  },
+                  "id": "punchline_raid_jitters_work_3_identity_0",
+                  "next_phase": "work_4",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "abort_raid_night",
+                    "type": "command"
+                  },
+                  "id": "punchline_raid_jitters_work_3_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "reopen_after_false_alarm",
+                    "type": "command"
+                  },
+                  "id": "punchline_raid_jitters_work_3_identity_2",
+                  "next_phase": "terminal_success",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -10564,6 +10968,24 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "hide_raid_evidence",
+                        "input_action": "ui_left",
+                        "label": "Hide Raid Evidence",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "abort_raid_night",
+                        "input_action": "ui_up",
+                        "label": "Abort Raid Night",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "reopen_after_false_alarm",
+                        "input_action": "ui_right",
+                        "label": "Reopen After False Alarm",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -10575,14 +10997,16 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Answer Outer Knock",
                     "min_target_size": 44.0,
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_raid_jitters_task_3",
-                    "prompt": "Punchline Raid Jitters: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Raid Jitters: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_raid_jitters_task_3",
                     "state_label": "Work 3 station"
@@ -10745,7 +11169,7 @@
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::punchline_raid_jitters_task_4",
-                    "prompt": "Punchline Raid Jitters: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Punchline Raid Jitters: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "punchline_raid_jitters_task_4",
                     "state_label": "Work 4 station"
@@ -10921,7 +11345,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3bbd7940525d454da4d91b4a893507792f1c1303c31df03cb9721b3b07f6f9a5"
+        "sequence_signature": "49337578317cf5785c53b600cc609b51c44d966d714f1bd26f4aefb0321f4d21"
       }
     },
     {
@@ -11490,7 +11914,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_amateur_night_task_0",
-                    "prompt": "Kitty Cat Lounge Amateur Night: Begin the first physical task.",
+                    "prompt": "Kitty Cat Lounge Amateur Night: Begin the first physical task or commit to this scenario's named strategy.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_amateur_night_task_0",
                     "state_label": "Arrival station"
@@ -11707,7 +12131,7 @@
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_amateur_night_task_1",
-                    "prompt": "Kitty Cat Lounge Amateur Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Amateur Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_amateur_night_task_1",
                     "state_label": "Work 1 station"
@@ -11812,6 +12236,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "judge_amateur_bracket",
+                    "type": "command"
+                  },
+                  "id": "kitty_cat_lounge_amateur_night_work_2_identity_0",
+                  "next_phase": "work_3",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "reseed_amateur_lineup",
+                    "type": "command"
+                  },
+                  "id": "kitty_cat_lounge_amateur_night_work_2_identity_1",
+                  "next_phase": "work_3",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "stall_amateur_bracket",
+                    "type": "command"
+                  },
+                  "id": "kitty_cat_lounge_amateur_night_work_2_identity_2",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -11851,6 +12308,24 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "judge_amateur_bracket",
+                        "input_action": "ui_left",
+                        "label": "Judge Amateur Bracket",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "reseed_amateur_lineup",
+                        "input_action": "ui_up",
+                        "label": "Reseed Amateur Lineup",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "stall_amateur_bracket",
+                        "input_action": "ui_right",
+                        "label": "Stall Amateur Bracket",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -11862,14 +12337,16 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Set Stage Mark",
                     "min_target_size": 44.0,
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_amateur_night_task_2",
-                    "prompt": "Kitty Cat Lounge Amateur Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Amateur Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_amateur_night_task_2",
                     "state_label": "Work 2 station"
@@ -12034,7 +12511,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_amateur_night_task_3",
-                    "prompt": "Kitty Cat Lounge Amateur Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Amateur Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_amateur_night_task_3",
                     "state_label": "Work 3 station"
@@ -12197,7 +12674,7 @@
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_amateur_night_task_4",
-                    "prompt": "Kitty Cat Lounge Amateur Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Amateur Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_amateur_night_task_4",
                     "state_label": "Work 4 station"
@@ -12373,7 +12850,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a204c5d6bad3a88c6ec9524468d5d6f1fe0848223ca11920fd286b087bcae462"
+        "sequence_signature": "e563f7a19203485bdd5f49b52a32f3d4f92b83da2b92f0406a5b61b5433eb7ab"
       }
     },
     {
@@ -12942,7 +13419,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_buyout_task_0",
-                    "prompt": "Kitty Cat Lounge Buyout: Begin the first physical task.",
+                    "prompt": "Kitty Cat Lounge Buyout: Begin the first physical task or commit to this scenario's named strategy.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_buyout_task_0",
                     "state_label": "Arrival station"
@@ -13102,6 +13579,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "split_buyout_floor",
+                    "type": "command"
+                  },
+                  "id": "kitty_cat_lounge_buyout_work_1_identity_0",
+                  "next_phase": "work_2",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "claim_full_buyout",
+                    "type": "command"
+                  },
+                  "id": "kitty_cat_lounge_buyout_work_1_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "preserve_public_half",
+                    "type": "command"
+                  },
+                  "id": "kitty_cat_lounge_buyout_work_1_identity_2",
+                  "next_phase": "work_2",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -13141,6 +13651,24 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "split_buyout_floor",
+                        "input_action": "ui_left",
+                        "label": "Split Buyout Floor",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "claim_full_buyout",
+                        "input_action": "ui_up",
+                        "label": "Claim Full Buyout",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "preserve_public_half",
+                        "input_action": "ui_right",
+                        "label": "Preserve Public Half",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -13152,14 +13680,16 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Advance Buyout Rope",
                     "min_target_size": 44.0,
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_buyout_task_1",
-                    "prompt": "Kitty Cat Lounge Buyout: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Buyout: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_buyout_task_1",
                     "state_label": "Work 1 station"
@@ -13321,7 +13851,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_buyout_task_2",
-                    "prompt": "Kitty Cat Lounge Buyout: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Buyout: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_buyout_task_2",
                     "state_label": "Work 2 station"
@@ -13486,7 +14016,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_buyout_task_3",
-                    "prompt": "Kitty Cat Lounge Buyout: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Buyout: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_buyout_task_3",
                     "state_label": "Work 3 station"
@@ -13649,7 +14179,7 @@
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_buyout_task_4",
-                    "prompt": "Kitty Cat Lounge Buyout: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Buyout: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_buyout_task_4",
                     "state_label": "Work 4 station"
@@ -13825,7 +14355,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "49b7ec6242a473cfab8c449814066196080b7223799be8a5b2b1bf46a8d30145"
+        "sequence_signature": "bc6424afab41eba83e4b4580a42f68ea917428182b007895ea3eb6b2d01becf2"
       }
     },
     {
@@ -14283,6 +14813,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "reactivate_mini_stage",
+                    "type": "command"
+                  },
+                  "id": "kitty_cat_lounge_slow_night_arrival_identity_0",
+                  "next_phase": "work_1",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "maintain_conversation_booth",
+                    "type": "command"
+                  },
+                  "id": "kitty_cat_lounge_slow_night_arrival_identity_1",
+                  "next_phase": "work_1",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "close_wrong_lounge_zone",
+                    "type": "command"
+                  },
+                  "id": "kitty_cat_lounge_slow_night_arrival_identity_2",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -14354,6 +14917,24 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "reactivate_mini_stage",
+                        "input_action": "ui_left",
+                        "label": "Reactivate Mini Stage",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "maintain_conversation_booth",
+                        "input_action": "ui_up",
+                        "label": "Maintain Conversation Booth",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "close_wrong_lounge_zone",
+                        "input_action": "ui_right",
+                        "label": "Close Wrong Lounge Zone",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -14365,14 +14946,16 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Choose Zone To Reactivate",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_slow_night_task_0",
-                    "prompt": "Kitty Cat Lounge Slow Night: Begin the first physical task.",
+                    "prompt": "Kitty Cat Lounge Slow Night: Begin the first physical task or commit to this scenario's named strategy.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_slow_night_task_0",
                     "state_label": "Arrival station"
@@ -14589,7 +15172,7 @@
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_slow_night_task_1",
-                    "prompt": "Kitty Cat Lounge Slow Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Slow Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_slow_night_task_1",
                     "state_label": "Work 1 station"
@@ -14751,7 +15334,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_slow_night_task_2",
-                    "prompt": "Kitty Cat Lounge Slow Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Slow Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_slow_night_task_2",
                     "state_label": "Work 2 station"
@@ -14916,7 +15499,7 @@
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_slow_night_task_3",
-                    "prompt": "Kitty Cat Lounge Slow Night: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Slow Night: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_slow_night_task_3",
                     "state_label": "Work 3 station"
@@ -15094,7 +15677,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3726d89cf78ace1d72f94695cc99a7d08469f6b072f1418a89c8a7b2350874dc"
+        "sequence_signature": "d5743542fde4c35ceb98995424f588d10257b5f418340982598a29d25b92d82c"
       }
     },
     {
@@ -15685,7 +16268,7 @@
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_bachelorette_storm_task_0",
-                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Begin the first physical task.",
+                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Begin the first physical task or commit to this scenario's named strategy.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_0",
                     "state_label": "Arrival station"
@@ -15902,7 +16485,7 @@
                     "non_color_state": "work_1_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_bachelorette_storm_task_1",
-                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_1",
                     "state_label": "Work 1 station"
@@ -16064,7 +16647,7 @@
                     "non_color_state": "work_2_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_bachelorette_storm_task_2",
-                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_2",
                     "state_label": "Work 2 station"
@@ -16172,6 +16755,39 @@
                   "objective_outcomes": {
                     "main_task": "cancel"
                   }
+                },
+                {
+                  "condition": {
+                    "command_id": "rescue_missing_guest",
+                    "type": "command"
+                  },
+                  "id": "kitty_cat_lounge_bachelorette_storm_work_3_identity_0",
+                  "next_phase": "work_4",
+                  "objective_outcomes": {
+                    "main_task": "success"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "commandeer_lounge_stage",
+                    "type": "command"
+                  },
+                  "id": "kitty_cat_lounge_bachelorette_storm_work_3_identity_1",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
+                    "command_id": "evacuate_party_groups",
+                    "type": "command"
+                  },
+                  "id": "kitty_cat_lounge_bachelorette_storm_work_3_identity_2",
+                  "next_phase": "terminal_interrupted",
+                  "objective_outcomes": {
+                    "main_task": "cancel"
+                  }
                 }
               ],
               "entry_conditions": [],
@@ -16211,6 +16827,24 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "id": "rescue_missing_guest",
+                        "input_action": "ui_left",
+                        "label": "Rescue Missing Guest",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "commandeer_lounge_stage",
+                        "input_action": "ui_up",
+                        "label": "Commandeer Lounge Stage",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "evacuate_party_groups",
+                        "input_action": "ui_right",
+                        "label": "Evacuate Party Groups",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -16222,14 +16856,16 @@
                     },
                     "input_actions": [
                       "ui_accept",
-                      "ui_right"
+                      "ui_right",
+                      "ui_left",
+                      "ui_up"
                     ],
                     "label": "Return Stage Prop",
                     "min_target_size": 44.0,
                     "non_color_state": "work_3_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_bachelorette_storm_task_3",
-                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_3",
                     "state_label": "Work 3 station"
@@ -16392,7 +17028,7 @@
                     "non_color_state": "work_4_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_bachelorette_storm_task_4",
-                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_4",
                     "state_label": "Work 4 station"
@@ -16553,7 +17189,7 @@
                     "non_color_state": "work_5_ready",
                     "owner_namespace": "scenario",
                     "presentation_object_id": "scenario::kitty_cat_lounge_bachelorette_storm_task_5",
-                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Complete this distinct room operation before the aftermath can settle.",
+                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Complete this distinct room operation or take its identity-specific branch.",
                     "safe_exit": false,
                     "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_5",
                     "state_label": "Work 5 station"
@@ -16733,7 +17369,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "2bb43e315e582a583d1733324ce1a3d1fb3ec47ab95c59640ea214ecf3530b1c"
+        "sequence_signature": "4ad65a6683bbea6dc0bd6be7176126668d9ae3847c94039dc73eab36dd127b3a"
       }
     }
   ]
