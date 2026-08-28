@@ -72,6 +72,7 @@ The normative JSON-like shape is:
   "scene_objects": [],
   "energy": {},
   "game_facts": [],
+  "public_projection_schema": {"authority": "public", "fields": {}},
   "ritual_persistence": {},
   "handler_registry": [],
   "declared_targets": {}
@@ -140,6 +141,13 @@ RequestCacheRecord {
   response_receipt_key, response_content_fingerprint, status
 }
 ```
+
+`public_projection_schema` is the single shared allowlist for both result and
+rejection projections. It is a closed `{authority, fields}` record;
+`authority` must be exactly `public`, and `fields` is a bounded schema map using
+the type records and ceilings in §3.10. Every declared projection field is
+required. Private authority, undeclared fields, missing fields, wrong types, and
+over-limit values reject before publication.
 
 `authenticated_action` is the current live resolved action descriptor obtained
 from trusted surface state. It includes origin owner/stable identity, operation
@@ -291,7 +299,12 @@ must not escape.
 Every fact declaration freezes a qualified `fact_type`, positive
 `fact_version`, closed typed payload schema, `boundary=action`, and
 `visibility=public`. A publisher produces `GameFact` only after its authoritative
-boundary commits. Facts cannot expose hidden/revealed-later state, reducer
+boundary commits. At ingress, `fact_type` must resolve to exactly one declaration;
+the runtime version and visibility must equal that declaration, the boundary
+must be its declared action boundary, and `payload` must contain exactly every
+declared field with its declared type and bounds. Unknown fact types, duplicate
+declarations, unknown or missing payload fields, and wrong-type or over-limit
+values reject before publication. Facts cannot expose hidden/revealed-later state, reducer
 journals, inventory seals/digests, private actor state, future outcomes, or
 unrevealed results. Consumers respond at their own next safe boundary.
 
@@ -409,6 +422,10 @@ diagnostic and no mutation.
 | handler | `handler_id`, `version`, `accepted_actions`, `accepted_operations`, `inputs`, `outputs`, `authority`, `persisted_state`, `transient_state`, `rng`, `emitted_facts`, `rejection` | — |
 | handler RNG | `owner`, `stream`, `consumption` | — |
 | declared targets | `anchors`, `regions`, `sealed_host_targets` | — |
+
+The top-level `public_projection_schema` ledger record requires exactly
+`authority` and `fields`; its `fields` member uses the same closed schema-map
+ledger as action parameters, fact payloads, and handler I/O.
 
 Every authored operation record requires exactly `operation_id`, `family`,
 `verb`, `source_owner_id`, `target_id`, and `arguments`. Argument records are

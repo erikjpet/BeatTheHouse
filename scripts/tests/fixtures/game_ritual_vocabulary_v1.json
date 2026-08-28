@@ -385,6 +385,14 @@
       }
     }
   ],
+  "public_projection_schema": {
+    "authority": "public",
+    "fields": {
+      "phase_id": {"type": "string", "min_length": 1, "max_length": 64},
+      "pending_total": {"type": "int", "min": 0, "max": 2147483647},
+      "at_risk_total": {"type": "int", "min": 0, "max": 2147483647}
+    }
+  },
   "ritual_persistence": {
     "authoritative_serialized": [
       "contract",

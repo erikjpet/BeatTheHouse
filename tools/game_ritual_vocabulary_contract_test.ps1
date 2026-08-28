@@ -237,6 +237,18 @@ function Get-DeclaredValueError {
     return ""
 }
 
+function Add-DeclaredMapErrors {
+    param([System.Collections.Generic.List[string]]$Errors, [string]$Label, $Value, $Schema)
+    $required = @(Property-Names $Schema)
+    Add-ClosedShapeErrors $Errors $Label $Value $required
+    $actual = @(Property-Names $Value)
+    foreach ($fieldName in $required) {
+        if ($fieldName -notin $actual) { continue }
+        $valueError = Get-DeclaredValueError $Value.$fieldName $Schema.$fieldName
+        if ($valueError) { Add-Error $Errors "$Label field $fieldName $valueError" }
+    }
+}
+
 function Test-RitualDefinition {
     param([Parameter(Mandatory)]$Definition)
 
@@ -244,7 +256,7 @@ function Test-RitualDefinition {
     $allowedTop = @(
         "contract", "ritual_id", "initial_phase", "ritual_phases", "action_declarations",
         "staged_commitment", "pointer_verbs", "actors", "scene_objects",
-        "energy", "game_facts", "ritual_persistence", "handler_registry",
+        "energy", "game_facts", "public_projection_schema", "ritual_persistence", "handler_registry",
         "declared_targets"
     )
     foreach ($key in (Property-Names $Definition)) {
@@ -470,15 +482,21 @@ function Test-RitualDefinition {
         if ($materialCount -eq 0) { Add-Error $errors "energy tier must change actor, object, or interactable: $($tier.id)" }
     }
 
+    $factTypes = [System.Collections.Generic.HashSet[string]]::new()
     foreach ($fact in @($Definition.game_facts)) {
         Add-ClosedShapeErrors $errors "fact declaration" $fact @("fact_type", "fact_version", "boundary", "visibility", "payload")
         if (-not (Test-QualifiedId ([string]$fact.fact_type))) { Add-Error $errors "fact type must be a qualified id" }
+        elseif (-not $factTypes.Add([string]$fact.fact_type)) { Add-Error $errors "duplicate fact type: $($fact.fact_type)" }
         if ([int]$fact.fact_version -lt 1) { Add-Error $errors "fact version must be positive" }
         if ([string]$fact.boundary -ne "action") { Add-Error $errors "fact must publish at an action boundary" }
         if ([string]$fact.visibility -ne "public") { Add-Error $errors "fixture fact must have public visibility" }
         if (@(Property-Names $fact.payload).Count -eq 0) { Add-Error $errors "fact payload must be typed" }
         Test-SchemaMap $errors "fact payload" $fact.payload
     }
+
+    Add-ClosedShapeErrors $errors "public projection schema" $Definition.public_projection_schema @("authority", "fields")
+    if ([string]$Definition.public_projection_schema.authority -cne "public") { Add-Error $errors "public projection schema authority must be public" }
+    Test-SchemaMap $errors "public projection" $Definition.public_projection_schema.fields
 
     $handlerById = @{}
     $actionHandlerBindings = @{}
@@ -494,6 +512,9 @@ function Test-RitualDefinition {
             if ($key -notin (Property-Names $handler)) { Add-Error $errors "handler is missing contract field: $key" }
         }
         foreach ($schemaName in @("inputs", "outputs")) { Test-SchemaMap $errors "handler $schemaName" $handler.$schemaName }
+        foreach ($emittedFactType in @($handler.emitted_facts)) {
+            if (-not $factTypes.Contains([string]$emittedFactType)) { Add-Error $errors "handler emits undeclared fact: $emittedFactType" }
+        }
         foreach ($actionId in @($handler.accepted_actions)) {
             $actionId = [string]$actionId
             if (-not $actionById.ContainsKey($actionId)) { Add-Error $errors "handler accepts undeclared action: $actionId" }
@@ -654,6 +675,8 @@ function Test-EnvelopeFixture {
 
     Add-ClosedShapeErrors $errors "result" $Fixture.result @("envelope_version", "ok", "ritual_id", "session_id", "command_id", "request_key", "phase_before", "phase_after", "authoritative_result_ref", "state_receipts", "operation_receipts", "fact_receipts", "boundary", "receipt_key", "content_fingerprint", "public_projection")
     if (-not [bool]$Fixture.result.ok) { Add-Error $errors "result must be accepted" }
+    if ([string]$Definition.public_projection_schema.authority -cne "public") { Add-Error $errors "result public projection authority must be public" }
+    Add-DeclaredMapErrors $errors "result public projection" $Fixture.result.public_projection $Definition.public_projection_schema.fields
     foreach ($receiptArrayName in @("state_receipts", "operation_receipts", "fact_receipts")) {
         $receiptArray = @($Fixture.result.$receiptArrayName)
         if ($receiptArray.Count -gt 64) { Add-Error $errors "result $receiptArrayName over limit" }
@@ -664,13 +687,22 @@ function Test-EnvelopeFixture {
 
     Add-ClosedShapeErrors $errors "rejection" $Fixture.rejection @("envelope_version", "ok", "ritual_id", "session_id", "command_id", "request_key", "phase", "error_code", "public_message", "retryable", "return_policy", "boundary", "receipt_key", "content_fingerprint", "public_projection")
     if ([bool]$Fixture.rejection.ok) { Add-Error $errors "rejection must have ok=false" }
+    if ([string]$Definition.public_projection_schema.authority -cne "public") { Add-Error $errors "rejection public projection authority must be public" }
+    Add-DeclaredMapErrors $errors "rejection public projection" $Fixture.rejection.public_projection $Definition.public_projection_schema.fields
     $errorCodes = @("invalid_envelope", "unsupported_version", "invalid_id", "unknown_reference", "stale_phase", "action_not_permitted", "disabled_action", "blocked_action", "unavailable_source", "unavailable_target", "unsealed_authority", "authority_mismatch", "ambiguous_target", "invalid_parameters", "incomplete_gesture", "out_of_bounds", "inaccessible_target", "precondition_failed", "insufficient_funds", "receipt_content_conflict", "handler_rejected", "invalid_restore", "ambiguous_transition", "internal_fail_closed")
     if ([string]$Fixture.rejection.error_code -notin $errorCodes) { Add-Error $errors "unknown rejection code" }
     if ([string]$Fixture.rejection.return_policy -notin @("none", "return_to_source", "restore_focus")) { Add-Error $errors "unknown rejection return policy" }
 
     Add-ClosedShapeErrors $errors "fact" $Fixture.fact @("envelope_version", "fact_id", "fact_type", "fact_version", "payload", "visibility", "boundary", "receipt_key", "content_fingerprint")
-    if ([string]$Fixture.fact.visibility -ne "public") { Add-Error $errors "fact visibility must be public" }
-    if ([int]$Fixture.fact.fact_version -lt 1) { Add-Error $errors "fact version must be positive" }
+    $factDeclarations = @($Definition.game_facts | Where-Object { [string]$_.fact_type -ceq [string]$Fixture.fact.fact_type })
+    if ($factDeclarations.Count -ne 1) { Add-Error $errors "runtime fact type must resolve to exactly one declaration" }
+    else {
+        $factDeclaration = $factDeclarations[0]
+        if (-not (Test-IntegerScalar $Fixture.fact.fact_version) -or [int]$Fixture.fact.fact_version -ne [int]$factDeclaration.fact_version) { Add-Error $errors "runtime fact version does not match declaration" }
+        if ([string]$Fixture.fact.visibility -cne [string]$factDeclaration.visibility) { Add-Error $errors "runtime fact visibility does not match declaration" }
+        if ([string]$factDeclaration.boundary -cne "action" -or [string]$Fixture.fact.boundary.kind -cne "command") { Add-Error $errors "runtime fact publication boundary does not match declaration" }
+        Add-DeclaredMapErrors $errors "runtime fact payload" $Fixture.fact.payload $factDeclaration.payload
+    }
 
     $operationFields = @("envelope_version", "operation_id", "family", "verb", "source_owner_id", "target_id", "arguments")
     Add-ClosedShapeErrors $errors "operation envelope" $Fixture.operation $operationFields
@@ -935,7 +967,8 @@ Assert-EnvelopeRejected "open error taxonomy" $badEnvelope $definition "unknown 
 
 $badEnvelope = Copy-Definition $envelopes
 $badEnvelope.fact.visibility = "private"
-Assert-EnvelopeRejected "private outward fact" $badEnvelope $definition "fact visibility must be public"; $negativeCount++
+Set-CanonicalFingerprint $badEnvelope.fact
+Assert-EnvelopeRejected "private outward fact" $badEnvelope $definition "visibility does not match declaration"; $negativeCount++
 
 $badEnvelope = Copy-Definition $envelopes
 $badEnvelope.command.authenticated_action.PSObject.Properties.Remove("content_fingerprint")
@@ -958,6 +991,101 @@ foreach ($case in $envelopeUnknownCases) {
     Assert-EnvelopeRejected "nested envelope unknown field $($case.name)" $badEnvelope $definition $case.expected
     $negativeCount++
 }
+
+# Runtime facts bind to exactly one declaration and its exact bounded payload.
+foreach ($factBound in @(
+    @{ name = "fact payload minima"; commitment_id = "a"; at_risk_total = 0 },
+    @{ name = "fact payload maxima"; commitment_id = ("c" * 128); at_risk_total = 2147483647 }
+)) {
+    $factEnvelope = Copy-Definition $envelopes
+    $factEnvelope.fact.payload.commitment_id = $factBound.commitment_id
+    $factEnvelope.fact.payload.at_risk_total = $factBound.at_risk_total
+    Set-CanonicalFingerprint $factEnvelope.fact
+    Assert-EnvelopeNoErrors $factBound.name $factEnvelope $definition
+}
+
+$factCases = @(
+    @{ name = "fact unknown ten thousand byte field"; expected = "runtime fact payload unknown field"; mutate = { param($x) $x.fact.payload | Add-Member -NotePropertyName hidden_blob -NotePropertyValue ("x" * 10000) } },
+    @{ name = "fact missing required field"; expected = "runtime fact payload missing field: commitment_id"; mutate = { param($x) $x.fact.payload.PSObject.Properties.Remove("commitment_id") } },
+    @{ name = "fact wrong declared integer type"; expected = "at_risk_total wrong declared type"; mutate = { param($x) $x.fact.payload.at_risk_total = "5" } },
+    @{ name = "fact declared integer overflow"; expected = "at_risk_total over limit"; mutate = { param($x) $x.fact.payload.at_risk_total = [int64]2147483648 } },
+    @{ name = "fact oversized declared string"; expected = "commitment_id over limit"; mutate = { param($x) $x.fact.payload.commitment_id = "c" * 129 } },
+    @{ name = "fact unknown type"; expected = "exactly one declaration"; mutate = { param($x) $x.fact.fact_type = "unknown.fact" } },
+    @{ name = "fact wrong version"; expected = "version does not match declaration"; mutate = { param($x) $x.fact.fact_version = 2 } }
+)
+foreach ($case in $factCases) {
+    $badEnvelope = Copy-Definition $envelopes
+    & $case.mutate $badEnvelope
+    Set-CanonicalFingerprint $badEnvelope.fact
+    Assert-EnvelopeRejected $case.name $badEnvelope $definition $case.expected; $negativeCount++
+}
+
+# Result projections use the explicit public bounded allowlist.
+foreach ($projectionBound in @(
+    @{ name = "result projection lower bounds"; phase_id = "a"; pending_total = 0; at_risk_total = 0 },
+    @{ name = "result projection upper bounds"; phase_id = ("p" * 64); pending_total = 2147483647; at_risk_total = 2147483647 }
+)) {
+    $projectionEnvelope = Copy-Definition $envelopes
+    $projectionEnvelope.result.public_projection.phase_id = $projectionBound.phase_id
+    $projectionEnvelope.result.public_projection.pending_total = $projectionBound.pending_total
+    $projectionEnvelope.result.public_projection.at_risk_total = $projectionBound.at_risk_total
+    Set-CanonicalFingerprint $projectionEnvelope.result
+    $projectionEnvelope.request_cache.response_content_fingerprint = $projectionEnvelope.result.content_fingerprint
+    Assert-EnvelopeNoErrors $projectionBound.name $projectionEnvelope $definition
+}
+
+$resultProjectionCases = @(
+    @{ name = "result projection unknown ten thousand byte field"; expected = "result public projection unknown field"; mutate = { param($x) $x.result.public_projection | Add-Member -NotePropertyName hidden_blob -NotePropertyValue ("x" * 10000) } },
+    @{ name = "result projection missing field"; expected = "result public projection missing field: phase_id"; mutate = { param($x) $x.result.public_projection.PSObject.Properties.Remove("phase_id") } },
+    @{ name = "result projection wrong type"; expected = "pending_total wrong declared type"; mutate = { param($x) $x.result.public_projection.pending_total = "5" } },
+    @{ name = "result projection above maximum"; expected = "pending_total over limit"; mutate = { param($x) $x.result.public_projection.pending_total = [int64]2147483648 } },
+    @{ name = "result projection below minimum"; expected = "pending_total over limit"; mutate = { param($x) $x.result.public_projection.pending_total = -1 } }
+)
+foreach ($case in $resultProjectionCases) {
+    $badEnvelope = Copy-Definition $envelopes
+    & $case.mutate $badEnvelope
+    Set-CanonicalFingerprint $badEnvelope.result
+    $badEnvelope.request_cache.response_content_fingerprint = $badEnvelope.result.content_fingerprint
+    Assert-EnvelopeRejected $case.name $badEnvelope $definition $case.expected; $negativeCount++
+}
+
+$bad = Copy-Definition $definition
+$bad.game_facts += @(Copy-Definition $bad.game_facts[0])
+Assert-Rejected "duplicate fact declaration" $bad "duplicate fact type"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.game_facts[0].fact_type = "Noncanonical"
+Assert-Rejected "noncanonical fact declaration" $bad "fact type must be a qualified id"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.handler_registry[0].emitted_facts = @("unknown.fact")
+Assert-Rejected "handler emits unknown fact declaration" $bad "handler emits undeclared fact"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.PSObject.Properties.Remove("public_projection_schema")
+Assert-Rejected "missing public projection schema" $bad "missing top-level field: public_projection_schema"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.public_projection_schema | Add-Member -NotePropertyName extra -NotePropertyValue $true
+Assert-Rejected "open public projection schema record" $bad "public projection schema unknown field"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.public_projection_schema.fields.phase_id | Add-Member -NotePropertyName private -NotePropertyValue $true
+Assert-Rejected "open public projection type record" $bad "schema string unknown field"; $negativeCount++
+
+$bad = Copy-Definition $definition
+for ($index = 0; $index -lt 30; $index++) {
+    $bad.public_projection_schema.fields | Add-Member -NotePropertyName ("field_{0}" -f $index) -NotePropertyValue ([pscustomobject]@{ type = "bool" })
+}
+Assert-Rejected "public projection schema over 32 fields" $bad "schema field count over limit"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.public_projection_schema.fields.phase_id.max_length = 513
+Assert-Rejected "public projection invalid bounds" $bad "string bounds over limit"; $negativeCount++
+
+$bad = Copy-Definition $definition
+$bad.public_projection_schema.authority = "private"
+Assert-Rejected "private public projection authority" $bad "authority must be public"; $negativeCount++
 
 # Declared schemas are closed and bounded, and runtime values enforce every bound.
 $schemaMaximum = Copy-Definition $definition
@@ -1052,6 +1180,39 @@ $rejectedCache.request_cache.status = "rejected"
 $rejectedCache.request_cache.response_receipt_key = $rejectedCache.rejection.receipt_key
 $rejectedCache.request_cache.response_content_fingerprint = $rejectedCache.rejection.content_fingerprint
 Assert-EnvelopeNoErrors "rejected request cache branch" $rejectedCache $definition
+
+foreach ($projectionBound in @(
+    @{ name = "rejection projection lower bounds"; phase_id = "a"; pending_total = 0; at_risk_total = 0 },
+    @{ name = "rejection projection upper bounds"; phase_id = ("p" * 64); pending_total = 2147483647; at_risk_total = 2147483647 }
+)) {
+    $projectionEnvelope = Copy-Definition $rejectedCache
+    $projectionEnvelope.rejection.public_projection.phase_id = $projectionBound.phase_id
+    $projectionEnvelope.rejection.public_projection.pending_total = $projectionBound.pending_total
+    $projectionEnvelope.rejection.public_projection.at_risk_total = $projectionBound.at_risk_total
+    Set-CanonicalFingerprint $projectionEnvelope.rejection
+    $projectionEnvelope.request_cache.response_content_fingerprint = $projectionEnvelope.rejection.content_fingerprint
+    Assert-EnvelopeNoErrors $projectionBound.name $projectionEnvelope $definition
+}
+
+$rejectionProjectionCases = @(
+    @{ name = "rejection projection unknown ten thousand byte field"; expected = "rejection public projection unknown field"; mutate = { param($x) $x.rejection.public_projection | Add-Member -NotePropertyName hidden_blob -NotePropertyValue ("x" * 10000) } },
+    @{ name = "rejection projection missing field"; expected = "rejection public projection missing field: phase_id"; mutate = { param($x) $x.rejection.public_projection.PSObject.Properties.Remove("phase_id") } },
+    @{ name = "rejection projection wrong type"; expected = "pending_total wrong declared type"; mutate = { param($x) $x.rejection.public_projection.pending_total = "5" } },
+    @{ name = "rejection projection above maximum"; expected = "pending_total over limit"; mutate = { param($x) $x.rejection.public_projection.pending_total = [int64]2147483648 } },
+    @{ name = "rejection projection below minimum"; expected = "pending_total over limit"; mutate = { param($x) $x.rejection.public_projection.pending_total = -1 } }
+)
+foreach ($case in $rejectionProjectionCases) {
+    $badEnvelope = Copy-Definition $rejectedCache
+    & $case.mutate $badEnvelope
+    Set-CanonicalFingerprint $badEnvelope.rejection
+    $badEnvelope.request_cache.response_content_fingerprint = $badEnvelope.rejection.content_fingerprint
+    Assert-EnvelopeRejected $case.name $badEnvelope $definition $case.expected; $negativeCount++
+}
+
+$privateProjectionDefinition = Copy-Definition $definition
+$privateProjectionDefinition.public_projection_schema.authority = "private"
+Assert-EnvelopeRejected "result private projection authority" $envelopes $privateProjectionDefinition "result public projection authority must be public"; $negativeCount++
+Assert-EnvelopeRejected "rejection private projection authority" $rejectedCache $privateProjectionDefinition "rejection public projection authority must be public"; $negativeCount++
 
 $cacheCases = @(
     @{ name = "cache wrong request key"; expected = "exact command"; mutate = { param($x) $x.request_cache.request_key = "request:command:other" } },
