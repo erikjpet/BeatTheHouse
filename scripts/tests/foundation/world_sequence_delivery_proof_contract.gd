@@ -353,7 +353,7 @@ func _check_delivery_failure_injection_matrix(failures: Array) -> void:
 	_check_owner_lifecycle_retry(library, "abandoned", true, failures)
 
 
-func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures: Array) -> Dictionary:
+func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures: Array, issue_command: bool = true) -> Dictionary:
 	# Reuse the accepted production proof seed so every injected checkpoint is
 	# exercised against the same catalog-proven target semantic inventory.
 	var run_state := _production_run(library, "WORLD-SEQUENCE-PROOF-SCHEDULE")
@@ -378,6 +378,16 @@ func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures:
 		return {}
 	var interactions := _dict(_dict(_dict(finalized.get("projection", {})).get("semantic_state", {})).get("interactions", {}))
 	var handoff := _dict(interactions.get("crew::package_handoff", {}))
+	var base_fixture := {
+		"run_state": run_state,
+		"token": token,
+		"receipt_id": "",
+		"target_node_id": target_node_id,
+		"bankroll_before": bankroll_before,
+		"heat_before": heat_before,
+	}
+	if not issue_command:
+		return base_fixture
 	var actions := _array(handoff.get("available_actions", []))
 	var action := _dict(actions[0]) if not actions.is_empty() else {}
 	var command := run_state.world_sequence_command(
@@ -393,14 +403,8 @@ func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures:
 	if not bool(command.get("ok", false)) or pending.size() != 1:
 		failures.append("P1 injection fixture did not produce exactly one authenticated neutral outcome: command=%s pending=%s." % [JSON.stringify(command), JSON.stringify(pending)])
 		return {}
-	return {
-		"run_state": run_state,
-		"token": token,
-		"receipt_id": str(_dict(pending[0]).get("receipt_id", "")),
-		"target_node_id": target_node_id,
-		"bankroll_before": bankroll_before,
-		"heat_before": heat_before,
-	}
+	base_fixture["receipt_id"] = str(_dict(pending[0]).get("receipt_id", ""))
+	return base_fixture
 
 
 func _persist_owner_result_checkpoint(run_state: RunState, token: String, receipt_id: String, owner_result: Dictionary) -> Dictionary:
@@ -430,7 +434,7 @@ func _assert_delivered_resume(stage: String, run_state: RunState, token: String,
 
 
 func _check_owner_lifecycle_retry(library: ContentLibrary, outcome: String, inject_after_sync: bool, failures: Array) -> void:
-	var fixture := _prepared_delivery_outcome(library, "WORLD-SEQUENCE-P1-%s-SYNC" % outcome, failures)
+	var fixture := _prepared_delivery_outcome(library, "WORLD-SEQUENCE-P1-%s-SYNC" % outcome, failures, false)
 	if fixture.is_empty(): return
 	var run_state: RunState = fixture.get("run_state")
 	var token := str(fixture.get("token", ""))
@@ -484,8 +488,12 @@ func _travel_away_and_revisit(run_state: RunState, library: ContentLibrary, targ
 	if away_id.is_empty(): return false
 	var generator := RunGeneratorScript.new(library)
 	generator.next_environment(run_state, away_id, true)
-	if run_state.current_world_node_id() != away_id: return false
+	if run_state.current_world_node_id() != away_id:
+		push_warning("P1 travel/revisit departure remained at %s instead of %s; registration=%s" % [run_state.current_world_node_id(), away_id, JSON.stringify(run_state.world_sequence_registrations)])
+		return false
 	generator.next_environment(run_state, target_node_id, true)
+	if run_state.current_world_node_id() != target_node_id:
+		push_warning("P1 travel/revisit return remained at %s instead of %s; registration=%s" % [run_state.current_world_node_id(), target_node_id, JSON.stringify(run_state.world_sequence_registrations)])
 	return run_state.current_world_node_id() == target_node_id
 
 
