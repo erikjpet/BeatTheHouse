@@ -6,6 +6,8 @@ extends RefCounted
 const CONFIG_PATH := "res://data/crew/heist.json"
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const SCHEMA_VERSION := 1
+const SURFACE_SCHEMA_VERSION := 1
+const SURFACE_AUTHORITY_GAP := "host_heist_evidence_not_verifiable_in_model"
 const PLAN_COUNT := "the_count"
 const PLAN_WHALE := "the_whale_game"
 const PLAN_IDS := [PLAN_COUNT, PLAN_WHALE]
@@ -132,6 +134,163 @@ static func payout_for(state_value: Variant, outcome: String) -> int:
 
 static func ending_line(plan_id: String, outcome: String) -> String:
 	return str(_copy_dict(_copy_dict(config().get("ending_copy", {})).get(plan_id, {})).get(outcome, "The crew leaves before the room can name what happened."))
+
+
+static func plan_surface(plan_id: String) -> Dictionary:
+	if not PLAN_IDS.has(plan_id) or plan(plan_id).is_empty(): return {}
+	if plan_id == PLAN_COUNT:
+		return {
+			"plan_id": PLAN_COUNT, "label": "The Count", "phases": [
+				_phase("setup", "crew_planning_table", ["identity", "schedule", "swap_cart"]),
+				_phase("play", "grand_casino_count_floor", ["hold_boring_blackjack_session"]),
+				_phase("getaway", "grand_casino_service_perimeter", ["move_count_cart"]),
+				_phase("aftermath", "exit", ["leave_the_count"]),
+			],
+			"decisions": [
+				_decision("go", "play", 0, "count_floor", ["call_early", "hold"]),
+				_decision("distraction", "play", 1, "count_floor", ["cause_incident", "stay_quiet"]),
+				_decision("exit", "play", 2, "count_cart", ["dock", "corridor"]),
+			],
+			"exits": [
+				{"id": "dock", "place": "loading_dock", "dependency": "route_open", "shared_chase_required": true, "tone": "fast_loud"},
+				{"id": "corridor", "place": "back_corridor", "dependency": "no_heat_spike_during_window", "guard_marker_effect": "guard_walks", "shared_chase_required": true, "tone": "slow_quiet"},
+			],
+		}
+	return {
+		"plan_id": PLAN_WHALE, "label": "The Whale Game", "phases": [
+			_phase("setup", "crew_planning_table", ["vouch", "rig", "name", "drunk"]),
+			_phase("play", "grand_casino_high_limit", ["complete_mixed_invitational"]),
+			_phase("interview", "grand_casino_cage", ["cash_out", "answer_cage_interview"]),
+			_phase("getaway", "grand_casino_front_door", ["leave_with_receipt"]),
+			_phase("aftermath", "exit", ["leave_the_whale_game"]),
+		],
+		"decisions": [
+			_decision("show_receipt", "interview", -1, "grand_casino_cage", ["show_receipt"]),
+			_decision("cut_short", "interview", -1, "grand_casino_cage", ["cut_short"]),
+		],
+		"exits": [
+			{"id": "clean_walk", "place": "grand_casino_front_door", "dependency": "cage_receipt_verified_and_clean_score", "pursuit_pressure": 0, "later_boundaries_keep_zero": true},
+			{"id": "hot_exit", "place": "grand_casino_front_door", "dependency": "interview_cut_short_or_name_cracked", "shared_chase_required": true, "shared_chase_verbs": ["travel", "alternate_exit", "resolve_pursuit"]},
+		],
+	}
+
+
+static func objective_evidence_requirements(plan_id: String, objective_id: String) -> Dictionary:
+	var requirements := {
+		"the_count:identity": {"source_kind": "settled_game_session", "distinct_session_ids": true, "game_id": "blackjack", "venue_role": "grand_casino", "requires_settled_result": true},
+		"the_count:schedule": {"source_kind": "world_hold_completion", "place_role": "grand_casino_cage", "requires_action_boundaries": true},
+		"the_count:swap_cart": {"source_kind": "delivery_resolution", "destination_role": "loading_dock", "requires_delivered_cargo": true},
+		"the_count:guard_marker": {"source_kind": "debt_court_settlement", "optional": true},
+		"the_whale_game:vouch": {"source_kind": "scenario_table_settlement", "requires_authored_whale_table": true, "requires_deliberate_loss": true},
+		"the_whale_game:rig": {"source_kind": "inventory_and_training", "component_item": "false_bottom_cup", "training_flag": "craps_setting_trained"},
+		"the_whale_game:name": {"source_kind": "venue_spend_witness", "requires_real_spend": true, "requires_distinct_sightings": true},
+		"the_whale_game:drunk": {"source_kind": "automatic_plan_beat"},
+		"the_whale_game:invitational": {"source_kind": "settled_game_sequence", "game_sequence": ["craps", "blackjack", "craps", "baccarat", "blackjack"], "requires_game_specific_settlement": true, "lifelines_source": "finite_coordinated_play_state"},
+	}
+	return _copy_dict(requirements.get("%s:%s" % [plan_id, objective_id], {}))
+
+
+static func phase_public_state(state_value: Variant) -> Dictionary:
+	var state := normalize_state(state_value)
+	if state.is_empty(): return {}
+	var plan_id := str(state.get("plan_id", ""))
+	var status := str(state.get("status", ""))
+	var surface := plan_surface(plan_id)
+	var phase_id := "aftermath" if status in [STATUS_COMPLETED, STATUS_ABORTED] else status
+	var phase := _phase_by_id(surface.get("phases", []), phase_id)
+	if phase.is_empty(): return {}
+	return {
+		"schema_version": SURFACE_SCHEMA_VERSION, "plan_id": plan_id, "phase": phase_id, "place": str(phase.get("place", "")),
+		"objectives": (phase.get("objectives", []) as Array).duplicate(), "available_decisions": _available_decisions(state, surface),
+		"authoritative": false, "can_mutate": false, "authority_gap": SURFACE_AUTHORITY_GAP,
+	}
+
+
+static func decision_proposal(state_value: Variant, decision_id: String, evidence: Dictionary) -> Dictionary:
+	var state := normalize_state(state_value)
+	if state.is_empty(): return {}
+	var surface := plan_surface(str(state.get("plan_id", "")))
+	var available := _available_decisions(state, surface)
+	if not available.has(decision_id) or not _production_decision_evidence_valid(state, decision_id, evidence): return {}
+	return {
+		"plan_id": str(state.get("plan_id", "")), "decision_id": decision_id, "phase": str(state.get("status", "")), "evidence_kind": str(evidence.get("source_kind", "")),
+		"next_step_proposal": "host_apply_decision", "authoritative": false, "can_mutate": false, "authority_gap": SURFACE_AUTHORITY_GAP,
+	}
+
+
+static func sequence_mount_marker(state_value: Variant) -> Dictionary:
+	var state := normalize_state(state_value)
+	if state.is_empty(): return {}
+	return {
+		"schema_version": SURFACE_SCHEMA_VERSION, "plan_id": str(state.get("plan_id", "")), "registration_marker_required": true,
+		"mounted": false, "scan_world_nodes": false, "authoritative": false, "can_mutate": false, "authority_gap": SURFACE_AUTHORITY_GAP,
+	}
+
+
+static func outcome_ladder_public() -> Array:
+	var result: Array = []
+	for outcome_value in config().get("outcomes", []):
+		var outcome := _copy_dict(outcome_value)
+		result.append({"id": str(outcome.get("id", "")), "label": str(outcome.get("label", "")), "score_min": int(outcome.get("score_min", 0))})
+	return result
+
+
+static func aftermath_public(plan_id: String, outcome: String, cause: String) -> Dictionary:
+	if not PLAN_IDS.has(plan_id) or outcome not in ["somebody_got_pinched", "closed"] or cause not in ["mechanical", "plan_broke"]: return {}
+	var beat := "cart_route_failed" if plan_id == PLAN_COUNT and cause == "mechanical" else "corridor_did_not_hold" if plan_id == PLAN_COUNT else "table_loss" if cause == "mechanical" else "rig_pointed_back"
+	return {
+		"plan_id": plan_id, "outcome": outcome, "cause_public": cause, "aftermath_beat": beat, "place": "service_exit" if plan_id == PLAN_COUNT else "grand_casino_high_limit",
+		"ending_line": ending_line(plan_id, outcome), "authoritative": false, "can_mutate": false, "authority_gap": SURFACE_AUTHORITY_GAP,
+	}
+
+
+static func _phase(id: String, place: String, objectives: Array) -> Dictionary:
+	return {"id": id, "place": place, "objectives": objectives.duplicate()}
+
+
+static func _decision(id: String, phase: String, round: int, place: String, choices: Array) -> Dictionary:
+	return {"id": id, "phase": phase, "round": round, "place": place, "choices": choices.duplicate()}
+
+
+static func _phase_by_id(phases_value: Variant, phase_id: String) -> Dictionary:
+	for phase_value in _copy_array(phases_value):
+		var phase := _copy_dict(phase_value)
+		if str(phase.get("id", "")) == phase_id: return phase
+	return {}
+
+
+static func _available_decisions(state: Dictionary, surface: Dictionary) -> Array:
+	var result: Array = []
+	var status := str(state.get("status", ""))
+	var play := _copy_dict(state.get("play", {}))
+	var made: Dictionary = _copy_dict(play.get("decisions", {}))
+	for decision_value in _copy_array(surface.get("decisions", [])):
+		var decision := _copy_dict(decision_value)
+		var decision_id := str(decision.get("id", ""))
+		if str(decision.get("phase", "")) != status or made.has(decision_id): continue
+		var boundary := int(decision.get("round", -1))
+		if boundary >= 0 and int(play.get("round", -1)) != boundary: continue
+		result.append(decision_id)
+	return result
+
+
+static func _production_decision_evidence_valid(state: Dictionary, decision_id: String, evidence: Dictionary) -> bool:
+	var plan_id := str(state.get("plan_id", ""))
+	if plan_id == PLAN_COUNT:
+		if not _exact_keys(evidence, ["environment_archetype_id", "game_id", "round", "session_id", "settled", "source_kind"]): return false
+		return str(evidence.get("source_kind", "")) == "settled_game_session" and bool(evidence.get("settled", false)) \
+			and str(evidence.get("session_id", "")).strip_edges().length() > 0 and str(evidence.get("game_id", "")) == "blackjack" \
+			and str(evidence.get("environment_archetype_id", "")) in ["grand_casino", "grand_casino_high_limit"] \
+			and int(evidence.get("round", -1)) == int(_copy_dict(state.get("play", {})).get("round", -2))
+	if not _exact_keys(evidence, ["place_role", "receipt_verified", "source_kind"]): return false
+	if str(evidence.get("source_kind", "")) != "cage_interview" or str(evidence.get("place_role", "")) != "grand_casino_cage": return false
+	return decision_id == "cut_short" or bool(evidence.get("receipt_verified", false))
+
+
+static func _exact_keys(value: Dictionary, expected: Array) -> bool:
+	var keys := value.keys(); keys.sort()
+	var exact := expected.duplicate(); exact.sort()
+	return keys == exact
 
 
 static func validate_content() -> Array:
