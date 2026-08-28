@@ -25,9 +25,13 @@ func _initialize() -> void:
 
 
 static func _check_scenario_local_actor_authority(library: Variant, failures: Array) -> void:
-	var definition: Dictionary = library.scenario(LOCAL_ACTOR_SCENARIO_ID)
-	if definition.is_empty():
+	var production_definition: Dictionary = library.scenario(LOCAL_ACTOR_SCENARIO_ID)
+	if production_definition.is_empty():
 		failures.append("Production scenario %s is missing." % LOCAL_ACTOR_SCENARIO_ID)
+		return
+	var definition := _actor_authority_projection(production_definition)
+	if definition.is_empty():
+		failures.append("Production scenario %s has no actor spawn fixture." % LOCAL_ACTOR_SCENARIO_ID)
 		return
 	var references := {
 		"archetype_ids": {str(definition.get("archetype_id", "")): true},
@@ -39,9 +43,7 @@ static func _check_scenario_local_actor_authority(library: Variant, failures: Ar
 		failures.append("Structurally valid scenario-owned local actor was rejected: %s" % _matching(positive_errors, "references unknown actor"))
 
 	var malformed: Dictionary = definition.duplicate(true)
-	if not _mutate_first_actor_spawn(malformed, "malformed"):
-		failures.append("Production scenario %s has no actor spawn fixture." % LOCAL_ACTOR_SCENARIO_ID)
-	else:
+	if _mutate_first_actor_spawn(malformed, "malformed"):
 		var malformed_errors := ScenarioEngineScript.validate_sequence_definition(malformed, references)
 		if not _contains(malformed_errors, "actor requires label and actor_id") or not _contains(malformed_errors, "references unknown actor"):
 			failures.append("Malformed scenario-local actor did not fail both structure and actor authority checks.")
@@ -63,13 +65,47 @@ static func _check_unproven_zone_rejection(library: Variant, failures: Array) ->
 	var inventory := _dict(catalog.get("guaranteed", {}))
 	inventory["event_choices"] = _dict(catalog.get("event_choices", {}))
 	for zone_id in ["work_2", "hostile_arbitrary_zone"]:
-		var hostile: Dictionary = definition.duplicate(true)
+		var hostile := {
+			"id": str(definition.get("id", "")),
+			"archetype_id": str(definition.get("archetype_id", "")),
+			"sequence": {
+				"schema_version": int(_dict(definition.get("sequence", {})).get("schema_version", 0)),
+				"declared_targets": _dict(_dict(definition.get("sequence", {})).get("declared_targets", {})),
+			},
+		}
 		var zones := _array(hostile["sequence"]["declared_targets"].get("zones", []))
 		zones.append("base::zone:%s" % zone_id)
 		hostile["sequence"]["declared_targets"]["zones"] = zones
 		var errors := SequenceSchemaScript.validate_definition(hostile, OperationRegistryScript, inventory)
 		if not _contains(errors, "is not present in the validated archetype/base inventory"):
 			failures.append("Unproven production zone %s was not rejected." % zone_id)
+
+
+static func _actor_authority_projection(definition: Dictionary) -> Dictionary:
+	var source_sequence := _dict(definition.get("sequence", {}))
+	var source_phases := _array(_dict(source_sequence.get("phase_graph", {})).get("phases", []))
+	for source_phase_value in source_phases:
+		for operation_value in _array(_dict(source_phase_value).get("actor_ops", [])):
+			var operation := _dict(operation_value)
+			if str(operation.get("family", "")) != "actor_ops" or str(operation.get("op", "")) != "spawn":
+				continue
+			return {
+				"id": str(definition.get("id", "")),
+				"archetype_id": str(definition.get("archetype_id", "")),
+				"sequence": {
+					"schema_version": int(source_sequence.get("schema_version", 0)),
+					"phase_graph": {
+						"initial_phase": "actor_authority",
+						"phases": [{
+							"id": "actor_authority", "label": "Actor authority", "arrival_feedback": "Authority fixture.",
+							"exit_prompt": "Exit.", "terminal": true, "entry_conditions": [], "objective_ids": [],
+							"advance_after_actions": 0, "scene_ops": [], "interaction_ops": [], "actor_ops": [operation],
+							"transition_ops": [], "branches": [{"id": "actor_authority_done", "condition": {"type": "always"}, "outcome": "authority_done"}],
+						}],
+					},
+				},
+			}
+	return {}
 
 
 static func _mutate_first_actor_spawn(definition: Dictionary, mode: String) -> bool:
