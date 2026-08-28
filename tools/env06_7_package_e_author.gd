@@ -247,7 +247,7 @@ func _beat_operations(c:Dictionary,index:int)->Dictionary:
 func _aftermath(c:Dictionary)->Dictionary:
 	var result := {}
 	var prefix := str(c.id)
-	var axes := [["scene","actor"],["scene","service"],["actor"],["scene"]]
+	var axes := [["scene","actor"],["scene","actor"],["actor"],["scene"]]
 	for index in range(c.outcomes.size()):
 		var outcome := str(c.outcomes[index])
 		var row := {"label":outcome.replace("_"," ").capitalize(),"revisit_feedback":"The %s arrangement remains physically readable on revisit." % outcome}
@@ -285,7 +285,6 @@ func _write_json(path:String,value:Variant)->void:
 	var file := FileAccess.open(path,FileAccess.WRITE)
 	file.store_string(JSON.stringify(value,"  ",false)+"\n")
 	file.close()
-
 
 
 

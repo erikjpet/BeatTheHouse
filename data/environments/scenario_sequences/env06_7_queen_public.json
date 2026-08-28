@@ -159,6 +159,22 @@
             ]
           },
           "table_opportunity": {
+            "actor_ops": [
+              {
+                "actor": {
+                  "actor_id": "actor_table_opportunity",
+                  "behavior": "guard",
+                  "label": "Table Opportunity remaining actor",
+                  "pose": "arrival",
+                  "zone_id": "right"
+                },
+                "family": "actor_ops",
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "delta_queen_wedding_charter_aftermath_table_opportunity_spawn_delta_queen_wedding_charter_aftermath_table_opportunity_actor",
+                "stable_object_id": "delta_queen_wedding_charter_aftermath_table_opportunity_actor"
+              }
+            ],
             "label": "Table Opportunity",
             "revisit_feedback": "The table_opportunity arrangement remains physically readable on revisit.",
             "scene_ops": [
@@ -181,21 +197,6 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "delta_queen_wedding_charter_aftermath_table_opportunity_spawn_delta_queen_wedding_charter_aftermath_table_opportunity_prop",
                 "stable_object_id": "delta_queen_wedding_charter_aftermath_table_opportunity_prop"
-              }
-            ],
-            "service_ops": [
-              {
-                "family": "service_ops",
-                "object": {
-                  "disabled_reason": "The failed branch closes this service.",
-                  "enabled": false,
-                  "id": "delta_queen_wedding_charter_table_opportunity_service",
-                  "label": "Table Opportunity aftermath service"
-                },
-                "op": "add",
-                "owner_namespace": "scenario",
-                "receipt_id": "delta_queen_wedding_charter_aftermath_table_opportunity_service",
-                "stable_object_id": "delta_queen_wedding_charter_table_opportunity_service"
               }
             ]
           }
@@ -1357,7 +1358,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a09ce418bc284a0760233464e1f36e3c95ae4dc33bc0f15bc8392bcbcd9c0d19"
+        "sequence_signature": "9220c1f7d82f58e7fcab017ff878039b0a412116194f554b2f5a4b46b281ffc5"
       }
     },
     {
@@ -1489,6 +1490,22 @@
             "revisit_feedback": "The security_lock arrangement remains physically readable on revisit."
           },
           "shadowed_entourage": {
+            "actor_ops": [
+              {
+                "actor": {
+                  "actor_id": "actor_shadowed_entourage",
+                  "behavior": "guard",
+                  "label": "Shadowed Entourage remaining actor",
+                  "pose": "arrival",
+                  "zone_id": "right"
+                },
+                "family": "actor_ops",
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "delta_queen_whale_aboard_aftermath_shadowed_entourage_spawn_delta_queen_whale_aboard_aftermath_shadowed_entourage_actor",
+                "stable_object_id": "delta_queen_whale_aboard_aftermath_shadowed_entourage_actor"
+              }
+            ],
             "label": "Shadowed Entourage",
             "revisit_feedback": "The shadowed_entourage arrangement remains physically readable on revisit.",
             "scene_ops": [
@@ -1511,21 +1528,6 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "delta_queen_whale_aboard_aftermath_shadowed_entourage_spawn_delta_queen_whale_aboard_aftermath_shadowed_entourage_prop",
                 "stable_object_id": "delta_queen_whale_aboard_aftermath_shadowed_entourage_prop"
-              }
-            ],
-            "service_ops": [
-              {
-                "family": "service_ops",
-                "object": {
-                  "disabled_reason": "The failed branch closes this service.",
-                  "enabled": false,
-                  "id": "delta_queen_whale_aboard_shadowed_entourage_service",
-                  "label": "Shadowed Entourage aftermath service"
-                },
-                "op": "add",
-                "owner_namespace": "scenario",
-                "receipt_id": "delta_queen_whale_aboard_aftermath_shadowed_entourage_service",
-                "stable_object_id": "delta_queen_whale_aboard_shadowed_entourage_service"
               }
             ]
           },
@@ -2713,7 +2715,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9d0f953de8c97e16930796f8df8bb2bc2fb95512a74de7570b464948c10fd3f6"
+        "sequence_signature": "7953c413e4b4deaffa64ce03b519e77b163561c15d8d87b1a1ba2aa8dab56e09"
       }
     },
     {
@@ -2871,6 +2873,22 @@
             ]
           },
           "safe_wait": {
+            "actor_ops": [
+              {
+                "actor": {
+                  "actor_id": "actor_safe_wait",
+                  "behavior": "guard",
+                  "label": "Safe Wait remaining actor",
+                  "pose": "arrival",
+                  "zone_id": "right"
+                },
+                "family": "actor_ops",
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "delta_queen_fog_delay_aftermath_safe_wait_spawn_delta_queen_fog_delay_aftermath_safe_wait_actor",
+                "stable_object_id": "delta_queen_fog_delay_aftermath_safe_wait_actor"
+              }
+            ],
             "label": "Safe Wait",
             "revisit_feedback": "The safe_wait arrangement remains physically readable on revisit.",
             "scene_ops": [
@@ -2893,21 +2911,6 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "delta_queen_fog_delay_aftermath_safe_wait_spawn_delta_queen_fog_delay_aftermath_safe_wait_prop",
                 "stable_object_id": "delta_queen_fog_delay_aftermath_safe_wait_prop"
-              }
-            ],
-            "service_ops": [
-              {
-                "family": "service_ops",
-                "object": {
-                  "disabled_reason": "The failed branch closes this service.",
-                  "enabled": false,
-                  "id": "delta_queen_fog_delay_safe_wait_service",
-                  "label": "Safe Wait aftermath service"
-                },
-                "op": "add",
-                "owner_namespace": "scenario",
-                "receipt_id": "delta_queen_fog_delay_aftermath_safe_wait_service",
-                "stable_object_id": "delta_queen_fog_delay_safe_wait_service"
               }
             ]
           }
@@ -4069,7 +4072,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "50f37c6f94351dfddad1d29a0c71993f336de5646a778ea18db36b3c733acf67"
+        "sequence_signature": "7a5b2ffa63246bc1e7db0a09ca3c5e3e4ea37a32f157870dd8dee79f45c0a6c5"
       }
     },
     {
@@ -4186,6 +4189,22 @@
             "revisit_feedback": "The evacuation_staged arrangement remains physically readable on revisit."
           },
           "limited_power": {
+            "actor_ops": [
+              {
+                "actor": {
+                  "actor_id": "actor_limited_power",
+                  "behavior": "guard",
+                  "label": "Limited Power remaining actor",
+                  "pose": "arrival",
+                  "zone_id": "right"
+                },
+                "family": "actor_ops",
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "delta_queen_engine_trouble_aftermath_limited_power_spawn_delta_queen_engine_trouble_aftermath_limited_power_actor",
+                "stable_object_id": "delta_queen_engine_trouble_aftermath_limited_power_actor"
+              }
+            ],
             "label": "Limited Power",
             "revisit_feedback": "The limited_power arrangement remains physically readable on revisit.",
             "scene_ops": [
@@ -4208,21 +4227,6 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "delta_queen_engine_trouble_aftermath_limited_power_spawn_delta_queen_engine_trouble_aftermath_limited_power_prop",
                 "stable_object_id": "delta_queen_engine_trouble_aftermath_limited_power_prop"
-              }
-            ],
-            "service_ops": [
-              {
-                "family": "service_ops",
-                "object": {
-                  "disabled_reason": "The failed branch closes this service.",
-                  "enabled": false,
-                  "id": "delta_queen_engine_trouble_limited_power_service",
-                  "label": "Limited Power aftermath service"
-                },
-                "op": "add",
-                "owner_namespace": "scenario",
-                "receipt_id": "delta_queen_engine_trouble_aftermath_limited_power_service",
-                "stable_object_id": "delta_queen_engine_trouble_limited_power_service"
               }
             ]
           },
@@ -5641,7 +5645,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "bc191dcbe9b8f342d94ea0fa3a6cdfa3deb5ed31b0d543b7396bf8c78f6ee60b"
+        "sequence_signature": "9f8bcf707fe9160d0633c3e6a16f4e681946c4d448cd5729506629bd9f272217"
       }
     },
     {
@@ -5732,6 +5736,22 @@
             "revisit_feedback": "The disputed_final arrangement remains physically readable on revisit."
           },
           "observed_final": {
+            "actor_ops": [
+              {
+                "actor": {
+                  "actor_id": "actor_observed_final",
+                  "behavior": "guard",
+                  "label": "Observed Final remaining actor",
+                  "pose": "arrival",
+                  "zone_id": "right"
+                },
+                "family": "actor_ops",
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "delta_queen_captains_invitational_aftermath_observed_final_spawn_delta_queen_captains_invitational_aftermath_observed_final_actor",
+                "stable_object_id": "delta_queen_captains_invitational_aftermath_observed_final_actor"
+              }
+            ],
             "label": "Observed Final",
             "revisit_feedback": "The observed_final arrangement remains physically readable on revisit.",
             "scene_ops": [
@@ -5754,21 +5774,6 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "delta_queen_captains_invitational_aftermath_observed_final_spawn_delta_queen_captains_invitational_aftermath_observed_final_prop",
                 "stable_object_id": "delta_queen_captains_invitational_aftermath_observed_final_prop"
-              }
-            ],
-            "service_ops": [
-              {
-                "family": "service_ops",
-                "object": {
-                  "disabled_reason": "The failed branch closes this service.",
-                  "enabled": false,
-                  "id": "delta_queen_captains_invitational_observed_final_service",
-                  "label": "Observed Final aftermath service"
-                },
-                "op": "add",
-                "owner_namespace": "scenario",
-                "receipt_id": "delta_queen_captains_invitational_aftermath_observed_final_service",
-                "stable_object_id": "delta_queen_captains_invitational_observed_final_service"
               }
             ]
           },
@@ -7186,7 +7191,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "52abf514c4e5cb5d86b1ca2d5512fa294622277e30e83e44b9ecaaf8e8f3d06c"
+        "sequence_signature": "f6531541c4534889245ec8ddaf1977cd7f35948aab983d3faeeca91001e5b319"
       }
     },
     {
@@ -7344,6 +7349,22 @@
             ]
           },
           "public_floor_reopened": {
+            "actor_ops": [
+              {
+                "actor": {
+                  "actor_id": "actor_public_floor_reopened",
+                  "behavior": "guard",
+                  "label": "Public Floor Reopened remaining actor",
+                  "pose": "arrival",
+                  "zone_id": "right"
+                },
+                "family": "actor_ops",
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "grand_casino_gala_night_aftermath_public_floor_reopened_spawn_grand_casino_gala_night_aftermath_public_floor_reopened_actor",
+                "stable_object_id": "grand_casino_gala_night_aftermath_public_floor_reopened_actor"
+              }
+            ],
             "label": "Public Floor Reopened",
             "revisit_feedback": "The public_floor_reopened arrangement remains physically readable on revisit.",
             "scene_ops": [
@@ -7366,21 +7387,6 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "grand_casino_gala_night_aftermath_public_floor_reopened_spawn_grand_casino_gala_night_aftermath_public_floor_reopened_prop",
                 "stable_object_id": "grand_casino_gala_night_aftermath_public_floor_reopened_prop"
-              }
-            ],
-            "service_ops": [
-              {
-                "family": "service_ops",
-                "object": {
-                  "disabled_reason": "The failed branch closes this service.",
-                  "enabled": false,
-                  "id": "grand_casino_gala_night_public_floor_reopened_service",
-                  "label": "Public Floor Reopened aftermath service"
-                },
-                "op": "add",
-                "owner_namespace": "scenario",
-                "receipt_id": "grand_casino_gala_night_aftermath_public_floor_reopened_service",
-                "stable_object_id": "grand_casino_gala_night_public_floor_reopened_service"
               }
             ]
           }
@@ -8542,7 +8548,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "fbb3f44eb8cd0fbaf9ff3f0c681233af166ec2c7284180b03b3552fa20692f64"
+        "sequence_signature": "9258af52c68f12bf778bc75fc3571e16475a8b4490bf91f1bc6b067a80d60b90"
       }
     },
     {
@@ -8700,6 +8706,22 @@
             "revisit_feedback": "The floor_standoff arrangement remains physically readable on revisit."
           },
           "split_schedule": {
+            "actor_ops": [
+              {
+                "actor": {
+                  "actor_id": "actor_split_schedule",
+                  "behavior": "guard",
+                  "label": "Split Schedule remaining actor",
+                  "pose": "arrival",
+                  "zone_id": "right"
+                },
+                "family": "actor_ops",
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "grand_casino_convention_crowd_aftermath_split_schedule_spawn_grand_casino_convention_crowd_aftermath_split_schedule_actor",
+                "stable_object_id": "grand_casino_convention_crowd_aftermath_split_schedule_actor"
+              }
+            ],
             "label": "Split Schedule",
             "revisit_feedback": "The split_schedule arrangement remains physically readable on revisit.",
             "scene_ops": [
@@ -8722,21 +8744,6 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "grand_casino_convention_crowd_aftermath_split_schedule_spawn_grand_casino_convention_crowd_aftermath_split_schedule_prop",
                 "stable_object_id": "grand_casino_convention_crowd_aftermath_split_schedule_prop"
-              }
-            ],
-            "service_ops": [
-              {
-                "family": "service_ops",
-                "object": {
-                  "disabled_reason": "The failed branch closes this service.",
-                  "enabled": false,
-                  "id": "grand_casino_convention_crowd_split_schedule_service",
-                  "label": "Split Schedule aftermath service"
-                },
-                "op": "add",
-                "owner_namespace": "scenario",
-                "receipt_id": "grand_casino_convention_crowd_aftermath_split_schedule_service",
-                "stable_object_id": "grand_casino_convention_crowd_split_schedule_service"
               }
             ]
           }
@@ -9898,7 +9905,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "fc004192efc8c30e671a2f352f0d0f9402b69c55e291082c8abb11a3f6df99ba"
+        "sequence_signature": "079ec5bc2c80d72f0284bdbbfe3c21b9514d79833113b20d21ec0ee1ea59bc49"
       }
     },
     {
@@ -10056,6 +10063,22 @@
             ]
           },
           "redirected_audit": {
+            "actor_ops": [
+              {
+                "actor": {
+                  "actor_id": "actor_redirected_audit",
+                  "behavior": "guard",
+                  "label": "Redirected Audit remaining actor",
+                  "pose": "arrival",
+                  "zone_id": "right"
+                },
+                "family": "actor_ops",
+                "op": "spawn",
+                "owner_namespace": "scenario",
+                "receipt_id": "grand_casino_audit_night_aftermath_redirected_audit_spawn_grand_casino_audit_night_aftermath_redirected_audit_actor",
+                "stable_object_id": "grand_casino_audit_night_aftermath_redirected_audit_actor"
+              }
+            ],
             "label": "Redirected Audit",
             "revisit_feedback": "The redirected_audit arrangement remains physically readable on revisit.",
             "scene_ops": [
@@ -10078,21 +10101,6 @@
                 "owner_namespace": "scenario",
                 "receipt_id": "grand_casino_audit_night_aftermath_redirected_audit_spawn_grand_casino_audit_night_aftermath_redirected_audit_prop",
                 "stable_object_id": "grand_casino_audit_night_aftermath_redirected_audit_prop"
-              }
-            ],
-            "service_ops": [
-              {
-                "family": "service_ops",
-                "object": {
-                  "disabled_reason": "The failed branch closes this service.",
-                  "enabled": false,
-                  "id": "grand_casino_audit_night_redirected_audit_service",
-                  "label": "Redirected Audit aftermath service"
-                },
-                "op": "add",
-                "owner_namespace": "scenario",
-                "receipt_id": "grand_casino_audit_night_aftermath_redirected_audit_service",
-                "stable_object_id": "grand_casino_audit_night_redirected_audit_service"
               }
             ]
           }
@@ -11281,7 +11289,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f7ad46bfb4e79b4b7bf75dae8cc25b12f00dd435d08934da63faa899ed15b985"
+        "sequence_signature": "c2765236c48da74654fd38af073f966b35fc4e21f3751fd1a2ab028e6f863b45"
       }
     }
   ]

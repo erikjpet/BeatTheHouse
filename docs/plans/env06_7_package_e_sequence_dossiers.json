@@ -48,7 +48,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "a09ce418bc284a0760233464e1f36e3c95ae4dc33bc0f15bc8392bcbcd9c0d19",
+      "sequence_signature": "9220c1f7d82f58e7fcab017ff878039b0a412116194f554b2f5a4b46b281ffc5",
       "capture_ids": [
         "delta_queen_wedding_charter_arrival",
         "delta_queen_wedding_charter_partial",
@@ -107,7 +107,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "9d0f953de8c97e16930796f8df8bb2bc2fb95512a74de7570b464948c10fd3f6",
+      "sequence_signature": "7953c413e4b4deaffa64ce03b519e77b163561c15d8d87b1a1ba2aa8dab56e09",
       "capture_ids": [
         "delta_queen_whale_aboard_arrival",
         "delta_queen_whale_aboard_partial",
@@ -166,7 +166,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "50f37c6f94351dfddad1d29a0c71993f336de5646a778ea18db36b3c733acf67",
+      "sequence_signature": "7a5b2ffa63246bc1e7db0a09ca3c5e3e4ea37a32f157870dd8dee79f45c0a6c5",
       "capture_ids": [
         "delta_queen_fog_delay_arrival",
         "delta_queen_fog_delay_partial",
@@ -228,7 +228,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "bc191dcbe9b8f342d94ea0fa3a6cdfa3deb5ed31b0d543b7396bf8c78f6ee60b",
+      "sequence_signature": "9f8bcf707fe9160d0633c3e6a16f4e681946c4d448cd5729506629bd9f272217",
       "capture_ids": [
         "delta_queen_engine_trouble_arrival",
         "delta_queen_engine_trouble_partial",
@@ -289,7 +289,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "52abf514c4e5cb5d86b1ca2d5512fa294622277e30e83e44b9ecaaf8e8f3d06c",
+      "sequence_signature": "f6531541c4534889245ec8ddaf1977cd7f35948aab983d3faeeca91001e5b319",
       "capture_ids": [
         "delta_queen_captains_invitational_arrival",
         "delta_queen_captains_invitational_partial",
@@ -348,7 +348,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "fbb3f44eb8cd0fbaf9ff3f0c681233af166ec2c7284180b03b3552fa20692f64",
+      "sequence_signature": "9258af52c68f12bf778bc75fc3571e16475a8b4490bf91f1bc6b067a80d60b90",
       "capture_ids": [
         "grand_casino_gala_night_arrival",
         "grand_casino_gala_night_partial",
@@ -407,7 +407,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "fc004192efc8c30e671a2f352f0d0f9402b69c55e291082c8abb11a3f6df99ba",
+      "sequence_signature": "079ec5bc2c80d72f0284bdbbfe3c21b9514d79833113b20d21ec0ee1ea59bc49",
       "capture_ids": [
         "grand_casino_convention_crowd_arrival",
         "grand_casino_convention_crowd_partial",
@@ -467,7 +467,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "f7ad46bfb4e79b4b7bf75dae8cc25b12f00dd435d08934da63faa899ed15b985",
+      "sequence_signature": "c2765236c48da74654fd38af073f966b35fc4e21f3751fd1a2ab028e6f863b45",
       "capture_ids": [
         "grand_casino_audit_night_arrival",
         "grand_casino_audit_night_partial",
@@ -1567,6 +1567,46 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "observed_final",
+                    "bounds": {
+                      "h": 54.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Observed Final room marker",
+                    "role": "debris",
+                    "state": "observed_final",
+                    "visible": true,
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ],
+            "actor_ops": [
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "actor": {
+                    "actor_id": "actor_observed_final",
+                    "behavior": "guard",
+                    "label": "Observed Final remaining actor",
+                    "pose": "arrival",
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ]
+          },
+          {
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "qualified_final",
                     "bounds": {
                       "h": 48.0,
@@ -1596,45 +1636,6 @@
                     "zone_id": "center"
                   },
                   "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ]
-          },
-          {
-            "scene_ops": [
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "observed_final",
-                    "bounds": {
-                      "h": 54.0,
-                      "w": 72.0
-                    },
-                    "enabled": true,
-                    "label": "Observed Final room marker",
-                    "role": "debris",
-                    "state": "observed_final",
-                    "visible": true,
-                    "zone_id": "right"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ],
-            "service_ops": [
-              {
-                "family": "service_ops",
-                "effect": {
-                  "object": {
-                    "disabled_reason": "The failed branch closes this service.",
-                    "enabled": false,
-                    "id": "delta_queen_captains_invitational_observed_final_service",
-                    "label": "Observed Final aftermath service"
-                  },
-                  "op": "add",
                   "owner_namespace": "scenario"
                 }
               }
@@ -1797,10 +1798,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "52abf514c4e5cb5d86b1ca2d5512fa294622277e30e83e44b9ecaaf8e8f3d06c",
-      "calculated_signature": "52abf514c4e5cb5d86b1ca2d5512fa294622277e30e83e44b9ecaaf8e8f3d06c",
+      "authored_signature": "f6531541c4534889245ec8ddaf1977cd7f35948aab983d3faeeca91001e5b319",
+      "calculated_signature": "f6531541c4534889245ec8ddaf1977cd7f35948aab983d3faeeca91001e5b319",
       "nearest_id": "delta_queen_engine_trouble",
-      "nearest_similarity": 0.640490797546012
+      "nearest_similarity": 0.667496886674969
     },
     {
       "id": "delta_queen_engine_trouble",
@@ -2905,6 +2906,46 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "limited_power",
+                    "bounds": {
+                      "h": 54.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Limited Power room marker",
+                    "role": "debris",
+                    "state": "limited_power",
+                    "visible": true,
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ],
+            "actor_ops": [
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "actor": {
+                    "actor_id": "actor_limited_power",
+                    "behavior": "guard",
+                    "label": "Limited Power remaining actor",
+                    "pose": "arrival",
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ]
+          },
+          {
+            "scene_ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "travel_resumed",
                     "bounds": {
                       "h": 48.0,
@@ -2958,45 +2999,6 @@
                     "zone_id": "exit_lane"
                   },
                   "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ]
-          },
-          {
-            "scene_ops": [
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "limited_power",
-                    "bounds": {
-                      "h": 54.0,
-                      "w": 72.0
-                    },
-                    "enabled": true,
-                    "label": "Limited Power room marker",
-                    "role": "debris",
-                    "state": "limited_power",
-                    "visible": true,
-                    "zone_id": "right"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ],
-            "service_ops": [
-              {
-                "family": "service_ops",
-                "effect": {
-                  "object": {
-                    "disabled_reason": "The failed branch closes this service.",
-                    "enabled": false,
-                    "id": "delta_queen_engine_trouble_limited_power_service",
-                    "label": "Limited Power aftermath service"
-                  },
-                  "op": "add",
                   "owner_namespace": "scenario"
                 }
               }
@@ -3142,10 +3144,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "bc191dcbe9b8f342d94ea0fa3a6cdfa3deb5ed31b0d543b7396bf8c78f6ee60b",
-      "calculated_signature": "bc191dcbe9b8f342d94ea0fa3a6cdfa3deb5ed31b0d543b7396bf8c78f6ee60b",
+      "authored_signature": "9f8bcf707fe9160d0633c3e6a16f4e681946c4d448cd5729506629bd9f272217",
+      "calculated_signature": "9f8bcf707fe9160d0633c3e6a16f4e681946c4d448cd5729506629bd9f272217",
       "nearest_id": "delta_queen_captains_invitational",
-      "nearest_similarity": 0.640490797546012
+      "nearest_similarity": 0.667496886674969
     },
     {
       "id": "delta_queen_fog_delay",
@@ -4115,30 +4117,6 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "appearance": "fog_departure",
-                    "bounds": {
-                      "h": 66.0,
-                      "w": 88.0
-                    },
-                    "enabled": true,
-                    "label": "Fog Departure room marker",
-                    "role": "route_marker",
-                    "state": "fog_departure",
-                    "visible": true,
-                    "zone_id": "exit_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ]
-          },
-          {
-            "scene_ops": [
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
                     "appearance": "safe_wait",
                     "bounds": {
                       "h": 54.0,
@@ -4156,17 +4134,42 @@
                 }
               }
             ],
-            "service_ops": [
+            "actor_ops": [
               {
-                "family": "service_ops",
+                "family": "actor_ops",
+                "effect": {
+                  "actor": {
+                    "actor_id": "actor_safe_wait",
+                    "behavior": "guard",
+                    "label": "Safe Wait remaining actor",
+                    "pose": "arrival",
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ]
+          },
+          {
+            "scene_ops": [
+              {
+                "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "disabled_reason": "The failed branch closes this service.",
-                    "enabled": false,
-                    "id": "delta_queen_fog_delay_safe_wait_service",
-                    "label": "Safe Wait aftermath service"
+                    "appearance": "fog_departure",
+                    "bounds": {
+                      "h": 66.0,
+                      "w": 88.0
+                    },
+                    "enabled": true,
+                    "label": "Fog Departure room marker",
+                    "role": "route_marker",
+                    "state": "fog_departure",
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
-                  "op": "add",
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               }
@@ -4291,10 +4294,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "50f37c6f94351dfddad1d29a0c71993f336de5646a778ea18db36b3c733acf67",
-      "calculated_signature": "50f37c6f94351dfddad1d29a0c71993f336de5646a778ea18db36b3c733acf67",
+      "authored_signature": "7a5b2ffa63246bc1e7db0a09ca3c5e3e4ea37a32f157870dd8dee79f45c0a6c5",
+      "calculated_signature": "7a5b2ffa63246bc1e7db0a09ca3c5e3e4ea37a32f157870dd8dee79f45c0a6c5",
       "nearest_id": "delta_queen_wedding_charter",
-      "nearest_similarity": 0.696612665684831
+      "nearest_similarity": 0.697058823529412
     },
     {
       "id": "delta_queen_wedding_charter",
@@ -5264,30 +5267,6 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "appearance": "departure_interrupted",
-                    "bounds": {
-                      "h": 66.0,
-                      "w": 88.0
-                    },
-                    "enabled": true,
-                    "label": "Departure Interrupted room marker",
-                    "role": "route_marker",
-                    "state": "departure_interrupted",
-                    "visible": true,
-                    "zone_id": "exit_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ]
-          },
-          {
-            "scene_ops": [
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
                     "appearance": "table_opportunity",
                     "bounds": {
                       "h": 54.0,
@@ -5305,17 +5284,42 @@
                 }
               }
             ],
-            "service_ops": [
+            "actor_ops": [
               {
-                "family": "service_ops",
+                "family": "actor_ops",
+                "effect": {
+                  "actor": {
+                    "actor_id": "actor_table_opportunity",
+                    "behavior": "guard",
+                    "label": "Table Opportunity remaining actor",
+                    "pose": "arrival",
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ]
+          },
+          {
+            "scene_ops": [
+              {
+                "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "disabled_reason": "The failed branch closes this service.",
-                    "enabled": false,
-                    "id": "delta_queen_wedding_charter_table_opportunity_service",
-                    "label": "Table Opportunity aftermath service"
+                    "appearance": "departure_interrupted",
+                    "bounds": {
+                      "h": 66.0,
+                      "w": 88.0
+                    },
+                    "enabled": true,
+                    "label": "Departure Interrupted room marker",
+                    "role": "route_marker",
+                    "state": "departure_interrupted",
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
-                  "op": "add",
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               }
@@ -5440,10 +5444,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "a09ce418bc284a0760233464e1f36e3c95ae4dc33bc0f15bc8392bcbcd9c0d19",
-      "calculated_signature": "a09ce418bc284a0760233464e1f36e3c95ae4dc33bc0f15bc8392bcbcd9c0d19",
+      "authored_signature": "9220c1f7d82f58e7fcab017ff878039b0a412116194f554b2f5a4b46b281ffc5",
+      "calculated_signature": "9220c1f7d82f58e7fcab017ff878039b0a412116194f554b2f5a4b46b281ffc5",
       "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.696612665684831
+      "nearest_similarity": 0.697058823529412
     },
     {
       "id": "delta_queen_whale_aboard",
@@ -6430,17 +6434,18 @@
                 }
               }
             ],
-            "service_ops": [
+            "actor_ops": [
               {
-                "family": "service_ops",
+                "family": "actor_ops",
                 "effect": {
-                  "object": {
-                    "disabled_reason": "The failed branch closes this service.",
-                    "enabled": false,
-                    "id": "delta_queen_whale_aboard_shadowed_entourage_service",
-                    "label": "Shadowed Entourage aftermath service"
+                  "actor": {
+                    "actor_id": "actor_shadowed_entourage",
+                    "behavior": "guard",
+                    "label": "Shadowed Entourage remaining actor",
+                    "pose": "arrival",
+                    "zone_id": "right"
                   },
-                  "op": "add",
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               }
@@ -6589,10 +6594,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "9d0f953de8c97e16930796f8df8bb2bc2fb95512a74de7570b464948c10fd3f6",
-      "calculated_signature": "9d0f953de8c97e16930796f8df8bb2bc2fb95512a74de7570b464948c10fd3f6",
+      "authored_signature": "7953c413e4b4deaffa64ce03b519e77b163561c15d8d87b1a1ba2aa8dab56e09",
+      "calculated_signature": "7953c413e4b4deaffa64ce03b519e77b163561c15d8d87b1a1ba2aa8dab56e09",
       "nearest_id": "grand_casino_convention_crowd",
-      "nearest_similarity": 0.671988388969521
+      "nearest_similarity": 0.704579025110783
     },
     {
       "id": "grand_casino_audit_night",
@@ -7582,30 +7587,6 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "appearance": "audit_interrupted",
-                    "bounds": {
-                      "h": 66.0,
-                      "w": 88.0
-                    },
-                    "enabled": true,
-                    "label": "Audit Interrupted room marker",
-                    "role": "route_marker",
-                    "state": "audit_interrupted",
-                    "visible": true,
-                    "zone_id": "exit_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ]
-          },
-          {
-            "scene_ops": [
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
                     "appearance": "redirected_audit",
                     "bounds": {
                       "h": 54.0,
@@ -7623,17 +7604,42 @@
                 }
               }
             ],
-            "service_ops": [
+            "actor_ops": [
               {
-                "family": "service_ops",
+                "family": "actor_ops",
+                "effect": {
+                  "actor": {
+                    "actor_id": "actor_redirected_audit",
+                    "behavior": "guard",
+                    "label": "Redirected Audit remaining actor",
+                    "pose": "arrival",
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ]
+          },
+          {
+            "scene_ops": [
+              {
+                "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "disabled_reason": "The failed branch closes this service.",
-                    "enabled": false,
-                    "id": "grand_casino_audit_night_redirected_audit_service",
-                    "label": "Redirected Audit aftermath service"
+                    "appearance": "audit_interrupted",
+                    "bounds": {
+                      "h": 66.0,
+                      "w": 88.0
+                    },
+                    "enabled": true,
+                    "label": "Audit Interrupted room marker",
+                    "role": "route_marker",
+                    "state": "audit_interrupted",
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
-                  "op": "add",
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               }
@@ -7765,10 +7771,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "f7ad46bfb4e79b4b7bf75dae8cc25b12f00dd435d08934da63faa899ed15b985",
-      "calculated_signature": "f7ad46bfb4e79b4b7bf75dae8cc25b12f00dd435d08934da63faa899ed15b985",
+      "authored_signature": "c2765236c48da74654fd38af073f966b35fc4e21f3751fd1a2ab028e6f863b45",
+      "calculated_signature": "c2765236c48da74654fd38af073f966b35fc4e21f3751fd1a2ab028e6f863b45",
       "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.667142857142857
+      "nearest_similarity": 0.667617689015692
     },
     {
       "id": "grand_casino_convention_crowd",
@@ -8738,30 +8744,6 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "appearance": "convention_departed",
-                    "bounds": {
-                      "h": 66.0,
-                      "w": 88.0
-                    },
-                    "enabled": true,
-                    "label": "Convention Departed room marker",
-                    "role": "route_marker",
-                    "state": "convention_departed",
-                    "visible": true,
-                    "zone_id": "exit_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ]
-          },
-          {
-            "scene_ops": [
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
                     "appearance": "split_schedule",
                     "bounds": {
                       "h": 54.0,
@@ -8779,17 +8761,42 @@
                 }
               }
             ],
-            "service_ops": [
+            "actor_ops": [
               {
-                "family": "service_ops",
+                "family": "actor_ops",
+                "effect": {
+                  "actor": {
+                    "actor_id": "actor_split_schedule",
+                    "behavior": "guard",
+                    "label": "Split Schedule remaining actor",
+                    "pose": "arrival",
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ]
+          },
+          {
+            "scene_ops": [
+              {
+                "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "disabled_reason": "The failed branch closes this service.",
-                    "enabled": false,
-                    "id": "grand_casino_convention_crowd_split_schedule_service",
-                    "label": "Split Schedule aftermath service"
+                    "appearance": "convention_departed",
+                    "bounds": {
+                      "h": 66.0,
+                      "w": 88.0
+                    },
+                    "enabled": true,
+                    "label": "Convention Departed room marker",
+                    "role": "route_marker",
+                    "state": "convention_departed",
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
-                  "op": "add",
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               }
@@ -8914,10 +8921,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "fc004192efc8c30e671a2f352f0d0f9402b69c55e291082c8abb11a3f6df99ba",
-      "calculated_signature": "fc004192efc8c30e671a2f352f0d0f9402b69c55e291082c8abb11a3f6df99ba",
+      "authored_signature": "079ec5bc2c80d72f0284bdbbfe3c21b9514d79833113b20d21ec0ee1ea59bc49",
+      "calculated_signature": "079ec5bc2c80d72f0284bdbbfe3c21b9514d79833113b20d21ec0ee1ea59bc49",
       "nearest_id": "grand_casino_gala_night",
-      "nearest_similarity": 0.706666666666667
+      "nearest_similarity": 0.707100591715976
     },
     {
       "id": "grand_casino_gala_night",
@@ -9887,30 +9894,6 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "appearance": "gala_interrupted",
-                    "bounds": {
-                      "h": 66.0,
-                      "w": 88.0
-                    },
-                    "enabled": true,
-                    "label": "Gala Interrupted room marker",
-                    "role": "route_marker",
-                    "state": "gala_interrupted",
-                    "visible": true,
-                    "zone_id": "exit_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ]
-          },
-          {
-            "scene_ops": [
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
                     "appearance": "public_floor_reopened",
                     "bounds": {
                       "h": 54.0,
@@ -9928,17 +9911,42 @@
                 }
               }
             ],
-            "service_ops": [
+            "actor_ops": [
               {
-                "family": "service_ops",
+                "family": "actor_ops",
+                "effect": {
+                  "actor": {
+                    "actor_id": "actor_public_floor_reopened",
+                    "behavior": "guard",
+                    "label": "Public Floor Reopened remaining actor",
+                    "pose": "arrival",
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ]
+          },
+          {
+            "scene_ops": [
+              {
+                "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "disabled_reason": "The failed branch closes this service.",
-                    "enabled": false,
-                    "id": "grand_casino_gala_night_public_floor_reopened_service",
-                    "label": "Public Floor Reopened aftermath service"
+                    "appearance": "gala_interrupted",
+                    "bounds": {
+                      "h": 66.0,
+                      "w": 88.0
+                    },
+                    "enabled": true,
+                    "label": "Gala Interrupted room marker",
+                    "role": "route_marker",
+                    "state": "gala_interrupted",
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
-                  "op": "add",
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               }
@@ -10063,17 +10071,17 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "fbb3f44eb8cd0fbaf9ff3f0c681233af166ec2c7284180b03b3552fa20692f64",
-      "calculated_signature": "fbb3f44eb8cd0fbaf9ff3f0c681233af166ec2c7284180b03b3552fa20692f64",
+      "authored_signature": "9258af52c68f12bf778bc75fc3571e16475a8b4490bf91f1bc6b067a80d60b90",
+      "calculated_signature": "9258af52c68f12bf778bc75fc3571e16475a8b4490bf91f1bc6b067a80d60b90",
       "nearest_id": "grand_casino_convention_crowd",
-      "nearest_similarity": 0.706666666666667
+      "nearest_similarity": 0.707100591715976
     }
   ],
   "pairwise_similarity": [
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.344790547798067,
+      "similarity": 0.346938775510204,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10085,7 +10093,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.32725321888412,
+      "similarity": 0.338012958963283,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10097,7 +10105,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.321581196581197,
+      "similarity": 0.332258064516129,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10109,7 +10117,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.640490797546012,
+      "similarity": 0.667496886674969,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -10121,7 +10129,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.347872340425532,
+      "similarity": 0.331584470094439,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10133,7 +10141,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.324867724867725,
+      "similarity": 0.317226890756303,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10145,7 +10153,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.324867724867725,
+      "similarity": 0.317226890756303,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10157,7 +10165,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.32725321888412,
+      "similarity": 0.338012958963283,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10169,7 +10177,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.330499468650372,
+      "similarity": 0.322784810126582,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10181,7 +10189,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.667142857142857,
+      "similarity": 0.667617689015692,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -10193,7 +10201,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.490297542043984,
+      "similarity": 0.490956072351421,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10205,7 +10213,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.480719794344473,
+      "similarity": 0.481386392811297,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10217,7 +10225,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.32583065380493,
+      "similarity": 0.336569579288026,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10229,7 +10237,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.329087048832272,
+      "similarity": 0.321390937829294,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10241,7 +10249,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.696612665684831,
+      "similarity": 0.697058823529412,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -10253,7 +10261,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_whale_aboard",
-      "similarity": 0.458227848101266,
+      "similarity": 0.483290488431877,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10265,7 +10273,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.648305084745763,
+      "similarity": 0.648801128349788,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -10277,7 +10285,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.480719794344473,
+      "similarity": 0.481386392811297,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10289,7 +10297,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.476923076923077,
+      "similarity": 0.477592829705506,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10301,7 +10309,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.346028291621328,
+      "similarity": 0.338012958963283,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10313,7 +10321,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.306889352818372,
+      "similarity": 0.317226890756303,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10325,7 +10333,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.454545454545455,
+      "similarity": 0.47948717948718,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10337,7 +10345,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.424908424908425,
+      "similarity": 0.448574969021066,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10349,7 +10357,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.671988388969521,
+      "similarity": 0.704579025110783,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -10361,7 +10369,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.669565217391304,
+      "similarity": 0.702064896755162,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -10373,7 +10381,7 @@
     {
       "left_id": "grand_casino_convention_crowd",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.456928838951311,
+      "similarity": 0.457605985037406,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10385,7 +10393,7 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.451492537313433,
+      "similarity": 0.452173913043478,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -10397,7 +10405,7 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.706666666666667,
+      "similarity": 0.707100591715976,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -10417,11 +10425,11 @@
     "scenario grand_casino_convention_crowd is invalid: [\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
     "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
     "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.697 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_wedding_charter vs grand_casino_audit_night: 0.648 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_whale_aboard vs grand_casino_gala_night: 0.670 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_whale_aboard vs grand_casino_convention_crowd: 0.672 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_fog_delay vs grand_casino_audit_night: 0.667 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_engine_trouble vs delta_queen_captains_invitational: 0.640 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_wedding_charter vs grand_casino_audit_night: 0.649 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_whale_aboard vs grand_casino_gala_night: 0.702 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_whale_aboard vs grand_casino_convention_crowd: 0.705 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_fog_delay vs grand_casino_audit_night: 0.668 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_engine_trouble vs delta_queen_captains_invitational: 0.667 (warning). Missing receipt-bound masked visual evidence.",
     "scenario grand_casino_gala_night vs grand_casino_convention_crowd: 0.707 (warning). Missing receipt-bound masked visual evidence."
   ],
   "pair_count": 28

@@ -2,6 +2,28 @@ param([string]$OutPath = "data/environments/scenario_sequences/env06_7_queen_pub
 
 $ErrorActionPreference = "Stop"
 
+# The package's canonical author is the schema-aware GDScript tool. Keep this
+# preserved PowerShell entry point as a compatibility launcher so older task
+# notes cannot regenerate the superseded linear envelope below.
+$projectRoot = Split-Path -Parent $PSScriptRoot
+$godot = $env:GODOT_BIN
+if (-not $godot) {
+    $commonGitDir = (& git -C $projectRoot rev-parse --path-format=absolute --git-common-dir).Trim()
+    if ($LASTEXITCODE -eq 0 -and $commonGitDir) {
+        $commonRoot = Split-Path -Parent $commonGitDir
+        $godot = Join-Path $commonRoot ".tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe"
+    }
+}
+if (-not $godot -or -not (Test-Path -LiteralPath $godot)) {
+    throw "Godot 4.6 was not found. Set GODOT_BIN or install the shared project toolchain."
+}
+if ($OutPath -ne "data/environments/scenario_sequences/env06_7_queen_public.json") {
+    throw "Package E's canonical author writes only its frozen package path."
+}
+& $godot --headless --path $projectRoot --script res://tools/env06_7_package_e_author.gd
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+return
+
 $specs = @(
     @{ id="delta_queen_wedding_charter"; place="delta_queen"; title="Wedding Charter"; arrival="Ceremony ropes split the promenade while a ring case and guest cart block opposite deck lanes."; verbs=@("inspect_ring_case","route_guests","deliver_rings"); objects=@("ring_case","guest_cart","ceremony_rope"); actor="deck_coordinator"; outcomes=@("ceremony","delay","broken_charter","interrupted"); connection="travel_departed"; pressure="timed_procession" },
     @{ id="delta_queen_whale_aboard"; place="delta_queen"; title="Whale Aboard"; arrival="An entourage advances between a guarded salon and a reserved premium table, closing each lane behind it."; verbs=@("observe_entourage","carry_service_tray","choose_access_route"); objects=@("premium_table","service_tray","guard_post"); actor="whale_host"; outcomes=@("earned_access","avoided_attention","security_lock","interrupted"); connection="game_result"; pressure="moving_security" },

@@ -10,6 +10,16 @@ const EXPECTED_IDS := [
 	"delta_queen_captains_invitational", "grand_casino_gala_night",
 	"grand_casino_convention_crowd", "grand_casino_audit_night",
 ]
+const IDENTITY_CONTRACTS := {
+	"delta_queen_wedding_charter":{"phase":"work_1","choices":["return_rings_to_best_man","exploit_loose_wedding_tables","delay_wedding_charter"],"tags":["open_bar","loose_tables","best_man_pressure"],"outcomes":["ceremony_delivered","table_opportunity","charter_delayed","departure_interrupted"]},
+	"delta_queen_whale_aboard":{"phase":"work_2","choices":["earn_whale_service_access","shadow_whale_entourage","trigger_whale_security_lock"],"tags":["whale_attention","stake_shift","heist_plan_b_anchor"],"outcomes":["earned_whale_access","shadowed_entourage","security_lock","whale_departed"]},
+	"delta_queen_fog_delay":{"phase":"work_1","choices":["assist_fog_reroute","wait_out_fog_safely","exploit_trapped_fog_crowd"],"tags":["fog_closure","trapped_crowd","phase_stake_drift"],"outcomes":["assisted_reroute","safe_wait","crowd_exploited","fog_departure"]},
+	"delta_queen_engine_trouble":{"phase":"work_3","choices":["repair_engine_for_departure","ration_limited_engine_power","stage_engine_evacuation"],"tags":["travel_locked","power_decay","rising_tension"],"outcomes":["travel_resumed","limited_power","evacuation_staged","engine_abandoned"]},
+	"delta_queen_captains_invitational":{"phase":"work_3","choices":["qualify_for_captains_final","observe_captains_final","dispute_captains_bracket"],"tags":["captain_invitational","qualification","disputed_bracket"],"outcomes":["qualified_final","observed_final","disputed_final","tournament_interrupted"]},
+	"grand_casino_gala_night":{"phase":"work_2","choices":["assume_gala_cover_identity","reopen_public_gala_floor","fail_gala_credentials"],"tags":["gala_cover","charity_crowd","boss_gate_sacred"],"outcomes":["cover_identity_accepted","public_floor_reopened","credential_failed","gala_interrupted"]},
+	"grand_casino_convention_crowd":{"phase":"work_2","choices":["blend_with_badge_crowd","split_convention_schedule","trigger_convention_standoff"],"tags":["badge_camouflage","comp_reduction","reservation_rotation"],"outcomes":["camouflage_route","split_schedule","floor_standoff","convention_departed"]},
+	"grand_casino_audit_night":{"phase":"work_1","choices":["comply_with_audit_route","redirect_public_audit","close_audited_games"],"tags":["strict_cage","nervous_floor","heist_plan_a_anchor"],"outcomes":["compliant_floor","redirected_audit","closed_games","audit_interrupted"]},
+}
 
 
 func _initialize() -> void:
@@ -42,6 +52,7 @@ func _initialize() -> void:
 		if _array(_dict(entry.get("authoring", {})).get("player_verbs", [])).size() < 4: failures.append("%s lacks scenario-specific verbs." % scenario_id)
 		var receipts: Dictionary = {}
 		_collect_receipts(definition.sequence, receipts, failures, scenario_id)
+		_check_frozen_identity(definition, entry, failures)
 		_check_runtime_matrix(definition, entry, failures)
 	actual_ids.sort()
 	var expected := EXPECTED_IDS.duplicate()
@@ -51,6 +62,34 @@ func _initialize() -> void:
 	var equal_pairs := _array(report.get("pairs", [])).filter(func(pair): return bool(_dict(pair).get("equal_normalized_hash", false)))
 	if not equal_pairs.is_empty(): failures.append("Package E contains equivalent normalized sequences.")
 	_finish(failures)
+
+func _check_frozen_identity(definition: Dictionary, entry: Dictionary, failures: Array) -> void:
+	var sid := str(definition.get("id", ""))
+	var contract := _dict(IDENTITY_CONTRACTS.get(sid, {}))
+	if contract.is_empty():
+		failures.append("%s lacks a frozen Package E identity contract." % sid)
+		return
+	var evidence := _dict(_dict(entry.get("authoring", {})).get("seed_evidence", {}))
+	if str(evidence.get("identity_decision_phase", "")) != str(contract.get("phase", "")) or _array(evidence.get("identity_decision_verbs", [])) != _array(contract.get("choices", [])):
+		failures.append("%s identity choice contract drifted." % sid)
+	var tags := _array(_dict(definition.get("sequence", {})).get("mechanic_tags", []))
+	for tag in _array(contract.get("tags", [])):
+		if not tags.has(tag): failures.append("%s lost required identity tag %s." % [sid, tag])
+	var outcomes := Schema.reachable_outcome_ids(definition)
+	var expected_outcomes := _array(contract.get("outcomes", []))
+	outcomes.sort()
+	expected_outcomes.sort()
+	if outcomes != expected_outcomes: failures.append("%s exact identity aftermath inventory drifted." % sid)
+	if sid.begins_with("grand_casino_"):
+		_reject_authority_ops(definition.get("sequence", {}), sid, failures)
+
+func _reject_authority_ops(value: Variant, sid: String, failures: Array) -> void:
+	if typeof(value) == TYPE_DICTIONARY:
+		var row := value as Dictionary
+		if ["game_ops", "route_ops"].has(str(row.get("family", ""))): failures.append("%s attempts to alter the sacred game/travel authority." % sid)
+		for nested in row.values(): _reject_authority_ops(nested, sid, failures)
+	elif typeof(value) == TYPE_ARRAY:
+		for nested in value as Array: _reject_authority_ops(nested, sid, failures)
 
 func _check_runtime_matrix(definition: Dictionary, entry: Dictionary, failures: Array) -> void:
 	var sid := str(definition.get("id", ""))
