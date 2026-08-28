@@ -90,7 +90,7 @@ func _check_document(failures: Array) -> void:
 			continue
 		var row_end := text.find("\n", row_start)
 		var row := text.substr(row_start, row_end - row_start if row_end >= 0 else text.length() - row_start)
-		if not row.ends_with("| RESOLVED |"):
+		if not row.strip_edges().ends_with("| RESOLVED |"):
 			failures.append("Adapter contract binding %s is not resolved." % binding_id)
 	if text.contains("CONCRETE BINDING UNRESOLVED") or text.contains("| UNRESOLVED |"):
 		failures.append("Adapter contract retains an unresolved concrete binding.")
