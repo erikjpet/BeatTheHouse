@@ -1300,12 +1300,14 @@ func _seat_revealed(seats: Array, member_id: String) -> bool:
 
 
 func _night_id(environment: Dictionary) -> String:
-	var requested := str(environment.get("crew_poker_night_id", "friendly_teaching"))
+	var authoring: Dictionary = environment.get("sequence_authoring", {}) if typeof(environment.get("sequence_authoring", {})) == TYPE_DICTIONARY else {}
+	var requested := str(environment.get("crew_poker_night_id", authoring.get("crew_poker_night_id", "friendly_teaching")))
 	return requested if NIGHT_IDS.has(requested) else "friendly_teaching"
 
 
 func _ordered_engine(environment: Dictionary) -> bool:
-	return str(environment.get("crew_poker_turn_engine", "")) == ORDERED_ENGINE
+	var authoring: Dictionary = environment.get("sequence_authoring", {}) if typeof(environment.get("sequence_authoring", {})) == TYPE_DICTIONARY else {}
+	return str(environment.get("crew_poker_turn_engine", authoring.get("crew_poker_turn_engine", ""))) == ORDERED_ENGINE
 
 
 func _night_raise_cap(state: Dictionary) -> int:

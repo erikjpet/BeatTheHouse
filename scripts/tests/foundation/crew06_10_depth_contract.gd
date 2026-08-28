@@ -67,7 +67,8 @@ func _check_executable_nights(library: ContentLibrary) -> void:
 		var ids := _legal_ids(game, run)
 		if task_by_night.has(night_id):
 			var task_id := str(task_by_night[night_id])
-			if ids != [task_id]:
+			var expected_ids := [task_id, "abort_night"] if night_id == "raid_jitters" else [task_id]
+			if ids != expected_ids:
 				failures.append("Night %s did not expose its authored room task as an executable first boundary: %s." % [night_id, JSON.stringify(ids)])
 				continue
 			var task_result := _act(game, run, task_id, "night_%s_task" % night_id)
