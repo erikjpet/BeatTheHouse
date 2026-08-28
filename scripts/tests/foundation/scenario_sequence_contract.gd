@@ -658,12 +658,21 @@ static func _install_active_tutorial_presentation(probe: LifecycleCallerProbe, l
 	game_surface_canvas.continuous_redraw_was_active = true
 	game_surface_canvas.flicker = 1.25
 	game_surface_canvas.surface_render_elapsed_sec = 2.75
+	# The runner constructs this attached presentation synchronously. Exercise one
+	# no-op lifecycle restore so Container-managed controls reach the same stable
+	# post-layout geometry used by every transaction rollback below.
+	var settled_presentation := probe._foundation_lifecycle_snapshot()
+	probe._restore_foundation_lifecycle_snapshot(settled_presentation)
 	if dock.choice_list.get_child_count() > 0:
 		var response := dock.choice_list.get_child(0)
 		for response_child in response.get_children():
 			if response_child is Button:
 				(response_child as Button).grab_focus()
 				break
+	# Opening the authored Coach dialogue during fixture setup is itself a valid
+	# committed boundary. The caller assertions below measure only work emitted by
+	# the transaction under test.
+	probe.autosave_count = 0
 
 
 static func _clear_talk_dock_choice_hierarchy(dock: TalkDock) -> void:
