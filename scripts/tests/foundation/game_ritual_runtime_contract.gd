@@ -6,6 +6,7 @@ const SchemaScript := preload("res://scripts/core/game_ritual_schema.gd")
 const LayoutScript := preload("res://scripts/core/game_ritual_layout.gd")
 const CanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const FIXTURE_PATH := "res://scripts/tests/fixtures/game_ritual_vocabulary_v1.json"
+const ENVELOPE_FIXTURE_PATH := "res://scripts/tests/fixtures/game_ritual_shared_envelopes_v1.json"
 
 
 static func check(_library, failures: Array) -> void:
@@ -15,6 +16,9 @@ static func check(_library, failures: Array) -> void:
 	_check_validation(definition, failures)
 	_check_runtime_trace(definition, failures)
 	_check_seed_parity(definition, failures)
+	_check_envelope_boundary(definition, failures)
+	_check_handler_allowlists(definition, failures)
+	_check_hostile_restore(definition, failures)
 	_check_layout_and_canvas(definition, failures)
 	_check_neutral_opt_in_seams(failures)
 
@@ -140,6 +144,90 @@ static func _check_seed_parity(definition: Dictionary, failures: Array) -> void:
 			failures.append("Ritual native/Web-equivalent trace diverged at seed %d." % seed)
 
 
+static func _check_envelope_boundary(definition: Dictionary, failures: Array) -> void:
+	var fixture_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(ENVELOPE_FIXTURE_PATH))
+	if typeof(fixture_value) != TYPE_DICTIONARY:
+		failures.append("Shared ritual envelope fixture is not valid JSON.")
+		return
+	var fixture: Dictionary = fixture_value
+	var command: Dictionary = (fixture.get("command", {}) as Dictionary).duplicate(true)
+	# Godot's JSON parser materializes every JSON number as float; restore the
+	# frozen schema's integer semantics before exercising the live envelope.
+	(command["parameters"] as Dictionary)["amount"] = int((command["parameters"] as Dictionary).get("amount", 0))
+	(command["boundary"] as Dictionary)["ordinal"] = int((command["boundary"] as Dictionary).get("ordinal", 0))
+	command["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(command))
+	var authenticated: Dictionary = command.get("authenticated_action", {})
+	var runtime = RuntimeScript.new()
+	var configured: Dictionary = runtime.configure(definition, {}, str(command.get("session_id", "")), {str(command.get("action_id", "")): authenticated})
+	var command_validation: Dictionary = runtime.validate_command_envelope(command)
+	if not bool(configured.get("ok", false)) or not command_validation.is_empty():
+		failures.append("Runtime rejected the complete frozen RitualCommand envelope: %s" % JSON.stringify(command_validation))
+		return
+	var result: Dictionary = runtime.process_command(command, {"available_funds": 100})
+	var replay: Dictionary = runtime.process_command(command, {"available_funds": 100})
+	var result_keys := ["envelope_version", "ok", "ritual_id", "session_id", "command_id", "request_key", "phase_before", "phase_after", "authoritative_result_ref", "state_receipts", "operation_receipts", "fact_receipts", "boundary", "receipt_key", "content_fingerprint", "public_projection"]
+	if not bool(result.get("ok", false)) or result != replay or not _exact_keys(result, result_keys) or RuntimeScript.canonical_fingerprint(_without_fingerprint(result)) != str(result.get("content_fingerprint", "")):
+		failures.append("Complete RitualCommand did not produce an exact fingerprinted replay-safe RitualResult: first=%s replay=%s" % [JSON.stringify(result), JSON.stringify(replay)])
+	var hostile := command.duplicate(true)
+	hostile["extra"] = true
+	var rejected: Dictionary = runtime.process_command(hostile)
+	var rejection_keys := ["envelope_version", "ok", "ritual_id", "session_id", "command_id", "request_key", "phase", "error_code", "public_message", "retryable", "return_policy", "boundary", "receipt_key", "content_fingerprint", "public_projection"]
+	if bool(rejected.get("ok", true)) or str(rejected.get("error_code", "")) != "invalid_envelope" or not _exact_keys(rejected, rejection_keys) or RuntimeScript.canonical_fingerprint(_without_fingerprint(rejected)) != str(rejected.get("content_fingerprint", "")):
+		failures.append("Hostile open command did not return the exact closed RitualRejection taxonomy envelope.")
+	hostile = command.duplicate(true)
+	(hostile["authenticated_action"] as Dictionary)["origin_stable_id"] = "action.hostile_origin"
+	hostile["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(hostile))
+	if str(runtime.validate_command_envelope(hostile).get("error_code", "")) != "authority_mismatch":
+		failures.append("Caller-supplied authenticated origin overrode the live trusted action descriptor.")
+	hostile = command.duplicate(true)
+	hostile["content_fingerprint"] = "f".repeat(64)
+	var fingerprint_runtime = RuntimeScript.new()
+	fingerprint_runtime.configure(definition, {}, str(command.get("session_id", "")), {str(command.get("action_id", "")): authenticated})
+	if str(fingerprint_runtime.validate_command_envelope(hostile).get("error_code", "")) != "receipt_content_conflict":
+		failures.append("Supplied noncanonical command fingerprint did not fail closed.")
+
+
+static func _check_handler_allowlists(definition: Dictionary, failures: Array) -> void:
+	for callback in [Callable(GameRitualRuntimeContract, "_hostile_operation_handler"), Callable(GameRitualRuntimeContract, "_hostile_fact_handler")]:
+		var runtime = RuntimeScript.new()
+		runtime.configure(definition, {"play.primary": callback})
+		runtime.process_action("commit.place", {"item_id": "layout.primary", "amount": 5}, "allow:place", {"available_funds": 20})
+		runtime.process_action("commit.confirm", {}, "allow:confirm", {"available_funds": 20})
+		var before := runtime.serialized_state()
+		var rejected: Dictionary = runtime.process_action("play.primary", {"commitment_id": "commitment.one"}, "allow:hostile:%d" % callback.hash(), {})
+		var after := runtime.serialized_state()
+		if bool(rejected.get("ok", true)) or str(rejected.get("error_code", "")) != "handler_contract_violation":
+			failures.append("Handler emitted an operation/fact outside its own allowlist without rejection.")
+		for key in before.keys():
+			if key != "request_cache" and before[key] != after.get(key): failures.append("Hostile cross-handler emission mutated %s." % key)
+
+
+static func _check_hostile_restore(definition: Dictionary, failures: Array) -> void:
+	var runtime = RuntimeScript.new()
+	runtime.configure(definition)
+	var valid := runtime.authenticated_snapshot()
+	var restored = RuntimeScript.new()
+	restored.configure(definition)
+	if not bool(restored.restore_snapshot(valid).get("ok", false)):
+		failures.append("Authenticated closed restore rejected its own exact snapshot.")
+	var hostile_cases: Array = []
+	var state: Dictionary
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["unknown"] = true; hostile_cases.append(_sealed_snapshot(valid, state))
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["action_sequence"] = "1"; hostile_cases.append(_sealed_snapshot(valid, state))
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["actor_states"] as Dictionary)["ghost.actor"] = {}; hostile_cases.append(_sealed_snapshot(valid, state))
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); (state["envelope_request_cache"] as Dictionary)["request:bad"] = {"extra": true}; hostile_cases.append(_sealed_snapshot(valid, state))
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["contract"] = "game_ritual/2"; hostile_cases.append(_sealed_snapshot(valid, state))
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["transition_sequence"] = 2; state["action_sequence"] = 1; hostile_cases.append(_sealed_snapshot(valid, state))
+	state = (valid.get("state", {}) as Dictionary).duplicate(true); state["state_version"] = 2; hostile_cases.append(_sealed_snapshot(valid, state))
+	var fingerprint_hostile := valid.duplicate(true); fingerprint_hostile["content_fingerprint"] = "0".repeat(64); hostile_cases.append(fingerprint_hostile)
+	var migration_hostile := valid.duplicate(true); migration_hostile["envelope_version"] = 2; migration_hostile["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(migration_hostile)); hostile_cases.append(migration_hostile)
+	for index in range(hostile_cases.size()):
+		var before := restored.serialized_state()
+		var result: Dictionary = restored.restore_snapshot(hostile_cases[index])
+		if bool(result.get("ok", true)) or str(result.get("error_code", "")) != "invalid_restore" or restored.serialized_state() != before:
+			failures.append("Hostile restore/migration case %d did not fail closed without mutation." % index)
+
+
 static func _check_neutral_opt_in_seams(failures: Array) -> void:
 	var runtime_source := FileAccess.get_file_as_string("res://scripts/core/game_ritual_runtime.gd").to_lower()
 	var layout_source := FileAccess.get_file_as_string("res://scripts/core/game_ritual_layout.gd").to_lower()
@@ -160,6 +248,34 @@ static func _play_handler(_action_id: String, parameters: Dictionary, _candidate
 		"facts": [{"fact_type": "resolution.completed", "payload": {"result_id": result_id, "net_change": 10}}],
 		"operations": [],
 	}
+
+
+static func _hostile_operation_handler(_action_id: String, _parameters: Dictionary, _candidate: Dictionary, _context: Dictionary) -> Dictionary:
+	return {"ok": true, "persisted_state": {}, "result": {}, "facts": [], "operations": [{"operation_id": "staff_offer", "family": "actor_ops", "verb": "set_pose", "source_owner_id": "example_table.standard_session", "target_id": "staff.primary", "arguments": {"pose": "offer"}}]}
+
+
+static func _hostile_fact_handler(_action_id: String, _parameters: Dictionary, _candidate: Dictionary, _context: Dictionary) -> Dictionary:
+	return {"ok": true, "persisted_state": {}, "result": {}, "facts": [{"fact_type": "commitment.accepted", "payload": {"commitment_id": "commitment.hostile", "at_risk_total": 5}}], "operations": []}
+
+
+static func _without_fingerprint(value: Dictionary) -> Dictionary:
+	var copy := value.duplicate(true)
+	copy.erase("content_fingerprint")
+	return copy
+
+
+static func _exact_keys(value: Dictionary, keys: Array) -> bool:
+	if value.size() != keys.size(): return false
+	for key in keys:
+		if not value.has(key): return false
+	return true
+
+
+static func _sealed_snapshot(base: Dictionary, state: Dictionary) -> Dictionary:
+	var snapshot := base.duplicate(true)
+	snapshot["state"] = state
+	snapshot["content_fingerprint"] = RuntimeScript.canonical_fingerprint(_without_fingerprint(snapshot))
+	return snapshot
 
 
 static func _fixture(failures: Array) -> Dictionary:
