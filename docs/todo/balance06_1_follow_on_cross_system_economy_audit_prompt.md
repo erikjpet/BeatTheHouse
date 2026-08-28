@@ -225,9 +225,14 @@ The final internal research archive may contain privileged diagnostics only in
 a clearly separated, access-labelled payload that is never fed back into the
 policy.
 
-## 5. Determinism, platform, save, migration, composition, and performance
+## 5. Functional qualification and quiesced-checkpoint evidence
 
-Verify on the exact final source:
+This row qualifies its own exact head with functional checks only. It does not
+own performance qualification. It must not schedule, run, rerun, extend, or
+hold a verdict on a performance suite or checkpoint, even if an older prompt
+or handoff lists that suite among broad gates.
+
+Verify the following functional requirements on the exact final source:
 
 - repeated native runs with the same manifest are byte-identical after removal
   only of explicitly documented timestamps/paths;
@@ -241,17 +246,25 @@ Verify on the exact final source:
   authority;
 - maximal composition covers all accepted Families 1 and 2 systems together,
   including no-sequence and crew-ignoring paths, without double settlement,
-  orphaned work, receipt reuse, or cross-system RNG drift;
-- runtime, memory, liveness, worker failures, timeouts, and artifact sizes are
-  recorded for every shard and aggregate. Existing budgets and timeout policy
-  do not move to accommodate the audit.
+  orphaned work, receipt reuse, or cross-system RNG drift.
 
 Use the exact applicable commands discovered from the accepted input records,
 including `tools/validate_project.ps1`, focused Foundation/system suites,
 `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10`, relevant
-save/migration/parity/composition/performance gates, the cross-economy harness,
-and the pusher EV harness. Do not invent a green command by omitting a required
-suite or native/Web mode.
+save/migration/parity/composition functional gates, the cross-economy harness,
+and the pusher EV harness. Do not invent a green functional command by omitting
+a required suite or native/Web mode.
+
+Performance evidence comes only from the next Integrator-owned quiesced
+checkpoint for which this head is eligible under the binding cadence: the
+five-landing checkpoint or the pre-playtest checkpoint, whichever occurs next.
+The audit consumes and links that checkpoint's exact head/tree, native-plugin
+hash, commands, durations, budgets, liveness result, and verdict. It may not
+trigger the checkpoint, substitute row-local timing, or describe its own shard
+durations as performance acceptance. If the eligible checkpoint has not yet
+run, hand off the functionally qualified exact head and mark performance
+evidence `PENDING INTEGRATOR CHECKPOINT`; do not idle, rerun it locally, or
+withhold the head.
 
 ## 6. Cost-aware execution cadence
 
@@ -267,8 +280,10 @@ commit evidence in this order:
 5. freeze hashes, then run the 64-seed-per-playstyle full distribution in
    resumable deterministic shards;
 6. run 200,000 accepted paid drops per pusher machine in deterministic shards;
-7. rerun the required exact-final-source focused, composition, save/migration,
-   determinism, parity, performance, and broad gates.
+7. rerun the required exact-final-source focused functional, composition,
+   save/migration, determinism, parity, and broad non-performance gates; hand
+   the exact head to the Integrator and link the next cadence-eligible quiesced
+   performance checkpoint when it exists.
 
 Each invocation record includes command, working directory, exact commit/tree,
 input/output hashes, start/end timestamps, wall duration, exit code, stdout,
