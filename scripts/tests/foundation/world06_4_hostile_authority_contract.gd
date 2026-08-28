@@ -36,7 +36,7 @@ func _check_job_envelope_authority(failures: Array) -> void:
 		"kind": ["kind", "collection"],
 		"deadline": ["expires_at_action", int(clean.get("expires_at_action", 0)) + 1],
 		"payload": ["payload", {"game_id": "blackjack", "venue_id": "forged", "crew_stake": 20, "profit_target": 12, "success_split": 10}],
-		"instance": ["instance_id", ""],
+		"empty instance": ["instance_id", ""],
 	}
 	for label in substitutions:
 		var hostile: Dictionary = clean.duplicate(true)
@@ -76,43 +76,26 @@ func _check_job_lifecycle_authority(failures: Array) -> void:
 		_assert_exact_noop(state, CrewStateModelScript.apply_job_action(state, "illegal:expire", "expire", {"action_index": int(state.get("expires_at_action", 0)) - 1}), "Job %s expired before its deadline." % definition_id, failures)
 		_assert_exact_noop(state, CrewStateModelScript.apply_job_action(state, "illegal:unknown", "host_commit", {"host_root": "forged"}), "Job %s accepted an unknown host action." % definition_id, failures)
 		_assert_exact_noop(state, CrewStateModelScript.apply_job_action(state, "forged:accept", "accept", {"owner_member_id": str(definition.get("member_id", "")), "owner_present": true, "owner_trust": 999, "host_root": "caller-authored"}), "Job %s accepted extra caller-authored host evidence." % definition_id, failures)
-		var accepted := CrewStateModelScript.apply_job_action(state, "proposal:accept", "accept", {
+		var caller_job_evidence := _caller_evidence(state, "job", "offer", "caller:offer:%s" % definition_id)
+		var accepted := CrewStateModelScript.apply_job_action(state, "caller:accept", "accept", {
 			"owner_member_id": str(definition.get("member_id", "")),
 			"owner_present": true,
-			"owner_trust": CrewStateModelScript.rank_threshold(str(definition.get("min_rank", "associate"))),
+			"job_evidence": caller_job_evidence,
 		})
-		if bool(accepted.get("authoritative", true)) or str(accepted.get("phase", "")) != "accepted_proposal":
-			failures.append("Job %s acceptance did not remain an explicitly non-authoritative proposal." % definition_id)
-			continue
-		var active := CrewStateModelScript.apply_job_action(accepted, "proposal:start", "start")
-		var before_step := active.duplicate(true)
-		var verbs: Array = active.get("verbs", [])
-		if verbs.is_empty():
-			failures.append("Job %s exposes no modeled execution verbs." % definition_id)
-			continue
-		_assert_exact_noop(active, CrewStateModelScript.apply_job_action(active, "wrong:verb", "play_step", {"verb": "caller_substitution", "evidence_claim": {"settled": true}}), "Job %s accepted a substituted execution verb." % definition_id, failures)
-		for index in range(verbs.size()):
-			var evidence := {"claimed_environment": "caller-authored", "claimed_path": ["a", "b"], "claimed_ledger_delta": 999, "claimed_job_settled": true}
-			active = CrewStateModelScript.apply_job_action(active, "claim:%s:%d" % [definition_id, index], "play_step", {"verb": str(verbs[index]), "evidence_claim": evidence})
-			var claims: Array = active.get("evidence_claims", [])
-			if claims.size() != index + 1 or bool((claims.back() as Dictionary).get("trusted", true)):
-				failures.append("Job %s promoted caller-authored evidence at step %d." % [definition_id, index])
-				break
-		if JSON.stringify(active) == JSON.stringify(before_step):
-			failures.append("Job %s did not record any proposal evidence." % definition_id)
-		var terminal := CrewStateModelScript.apply_job_action(active, "proposal:complete", "complete")
-		if str(terminal.get("phase", "")) != "terminal_proposal" or str(terminal.get("outcome_proposal", "")) != "success" or bool(terminal.get("authoritative", true)):
-			failures.append("Job %s did not end as a non-authoritative terminal proposal." % definition_id)
-		for forbidden_key in ["effect", "rewards", "failure", "cash", "heat", "trust", "grievance", "job_record", "host_root"]:
-			if terminal.has(forbidden_key): failures.append("Job %s proposal committed forbidden %s state." % [definition_id, forbidden_key])
-		var public_text := JSON.stringify(CrewStateModelScript.job_execution_public_state(terminal)).to_lower()
+		_assert_exact_noop(state, accepted, "Job %s trusted caller-authored committed offer evidence." % definition_id, failures)
+		var verbs: Array = state.get("verbs", [])
+		if verbs.is_empty(): failures.append("Job %s exposes no modeled execution verbs." % definition_id)
+		var public_text := JSON.stringify(CrewStateModelScript.job_execution_public_state(state)).to_lower()
+		if not public_text.contains("host_commitment_not_verifiable_in_model"):
+			failures.append("Job %s public proposal omitted the exact host-authority gap." % definition_id)
 		for hidden in ["grievance_weight", "traitor", "turn_eligibility", "clue_weight", "receipt_fingerprint"]:
 			if public_text.contains(hidden): failures.append("Job %s public projection leaked %s." % [definition_id, hidden])
-		_assert_exact_noop(terminal, CrewStateModelScript.apply_job_action(terminal, "after:terminal", "play_step", {"verb": str(verbs[0]), "evidence_claim": {}}), "Job %s mutated after terminal proposal." % definition_id, failures)
 	var expiring := CrewStateModelScript.new_job_execution("knuckles_friendly_collection", "hostile:expiry", 10)
-	var expired := CrewStateModelScript.apply_job_action(expiring, "proposal:expiry", "expire", {"action_index": int(expiring.get("expires_at_action", 0))})
-	if str(expired.get("phase", "")) != "terminal_proposal" or str(expired.get("outcome_proposal", "")) != "abandoned" or bool(expired.get("authoritative", true)):
-		failures.append("Deadline-valid expiry did not remain a non-authoritative abandoned proposal.")
+	var expired := CrewStateModelScript.apply_job_action(expiring, "caller:expiry", "expire", {
+		"action_index": int(expiring.get("expires_at_action", 0)),
+		"job_evidence": _caller_evidence(expiring, "job", "expire", "caller:expire"),
+	})
+	_assert_exact_noop(expiring, expired, "Deadline-valid expiry trusted caller-authored committed evidence.", failures)
 
 
 func _check_recruitment_authority(failures: Array) -> void:
@@ -151,3 +134,14 @@ func _check_recruitment_authority(failures: Array) -> void:
 func _assert_exact_noop(before: Dictionary, after: Dictionary, message: String, failures: Array) -> void:
 	if JSON.stringify(before) != JSON.stringify(after):
 		failures.append(message)
+
+
+func _caller_evidence(state: Dictionary, source_kind: String, verb: String, evidence_id: String) -> Dictionary:
+	return {
+		"committed": true,
+		"definition_id": str(state.get("definition_id", "")),
+		"evidence_id": evidence_id,
+		"instance_id": str(state.get("instance_id", "")),
+		"source_kind": source_kind,
+		"verb": verb,
+	}
