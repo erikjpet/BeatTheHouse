@@ -698,6 +698,8 @@ Require-Text "tools/check_godot.ps1" 'Get-SplitTestRunnerLines' "Godot check scr
 Require-Text "tools/check_godot.ps1" 'ValidateSet("Smoke", "Contract", "Audit", "Full")' "Godot check script must expose suite selection."
 Require-Text "tools/check_godot.ps1" '[switch]$PostLand' "Godot check script must expose the fail-closed post-land mode."
 Require-Text "tools/check_godot.ps1" 'Add-PostLandIdentityStage' "Post-land verification must bind exact main, tree, and native identities at both gate boundaries."
+Require-Text "tools/check_godot.ps1" 'ExpectedNativePluginSha256' "Post-land verification must bind the supplied plugin to the approved Gate Service build hash."
+Require-Text "tools/check_godot.ps1" 'native_coin_pusher_smoke.gd' "Post-land verification must prove the supplied Windows plugin executes as native_v3."
 Require-Text "tools/check_godot.ps1" 'eligible_for_done' "Post-land reports must make DONE eligibility explicitly fail closed."
 Require-Text "tools/check_godot.ps1" 'gdscript_load_check.gd' "Godot check script must run the one-process GDScript load checker."
 Require-Text "tools/check_godot.ps1" 'Stop-NewGodotProcesses' "Godot check script must clean up timed-out Godot child processes."
