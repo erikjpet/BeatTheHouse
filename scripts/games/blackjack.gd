@@ -116,54 +116,119 @@ var draw_patron_character_style: Dictionary = {}
 func blackjack_ritual_contract() -> Dictionary:
 	# This is a Blackjack-owned consumer declaration. It deliberately contains no
 	# executable handler reference and does not import a shared ritual runtime.
+	var action_ids := [
+		"blackjack_chip", "blackjack_correct_bet", "blackjack_remove_chip", "blackjack_undo_bet",
+		"blackjack_clear_bet", "blackjack_max_bet", "blackjack_repeat_bet",
+		"blackjack_rebet", "blackjack_side_bet", "blackjack_deal",
+		"blackjack_hit", "blackjack_stand", "blackjack_double",
+		"blackjack_split", "blackjack_surrender", "play_basic",
+	]
+	var action_declarations: Array = []
+	for action_id in action_ids:
+		action_declarations.append({"action_id": action_id, "handler_id": "blackjack_authority", "parameters": {}})
 	return {
 		"contract": BLACKJACK_RITUAL_CONTRACT,
 		"ritual_id": BLACKJACK_RITUAL_ID,
 		"initial_phase": "wagering",
-		"phases": ["wagering", "initial_deal", "player_turn", "dealer_procedure", "settlement"],
-		"transitions": [
-			{"from": "wagering", "action": "blackjack_deal", "to": "initial_deal"},
-			{"from": "initial_deal", "action": "deal_staged", "to": "player_turn"},
-			{"from": "player_turn", "action": "hand_complete", "to": "dealer_procedure"},
-			{"from": "dealer_procedure", "action": "play_basic", "to": "settlement"},
-			{"from": "settlement", "action": "payout_staged", "to": "wagering"},
+		"ritual_phases": [
+			_blackjack_ritual_phase("wagering", ["blackjack_chip", "blackjack_correct_bet", "blackjack_remove_chip", "blackjack_undo_bet", "blackjack_clear_bet", "blackjack_max_bet", "blackjack_repeat_bet", "blackjack_rebet", "blackjack_side_bet", "blackjack_deal"], [{"id": "confirm_to_deal", "condition": {"kind": "accepted_action", "action_id": "blackjack_deal"}, "next_phase": "initial_deal", "operations": []}]),
+			_blackjack_ritual_phase("initial_deal", [], [{"id": "deal_to_player", "condition": {"kind": "public_state_equals", "key": "deal_staged", "value": true}, "next_phase": "player_turn", "operations": []}]),
+			_blackjack_ritual_phase("player_turn", ["blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"], [{"id": "player_to_dealer", "condition": {"kind": "public_state_equals", "key": "hand_complete", "value": true}, "next_phase": "dealer_procedure", "operations": []}]),
+			_blackjack_ritual_phase("dealer_procedure", ["play_basic"], [{"id": "dealer_to_settlement", "condition": {"kind": "authoritative_result_present"}, "next_phase": "settlement", "operations": []}]),
+			_blackjack_ritual_phase("settlement", [], [{"id": "settlement_to_wagering", "condition": {"kind": "public_state_equals", "key": "payout_staged", "value": true}, "next_phase": "wagering", "operations": []}]),
 		],
-		"commitment_actions": ["place", "correct", "remove_one", "undo", "clear", "repeat", "rebet", "confirm"],
-		"readable_totals": ["available_funds", "pending_total", "at_risk_total", "returned_stake", "payout", "net_change"],
-		"gestures": [
+		"action_declarations": action_declarations,
+		"staged_commitment": {
+			"pending_collection": "pending_items",
+			"working_collection": "working_items",
+			"resolution_collection": "item_resolutions",
+			"funds_authority": "game_rules",
+			"actions": [
+				{"id": "blackjack_chip", "effect": "add_or_increment_one"},
+				{"id": "blackjack_correct_bet", "effect": "correct_one_pending_amount"},
+				{"id": "blackjack_remove_chip", "effect": "remove_one_pending_item"},
+				{"id": "blackjack_undo_bet", "effect": "reverse_last_pending_edit"},
+				{"id": "blackjack_clear_bet", "effect": "remove_all_pending_items"},
+				{"id": "blackjack_repeat_bet", "effect": "copy_last_eligible_commitment"},
+				{"id": "blackjack_rebet", "effect": "copy_eligible_resolved_items"},
+				{"id": "blackjack_deal", "effect": "authorize_pending_set"},
+			],
+			"readable_totals": ["available_funds", "pending_total", "at_risk_total", "returned_stake", "payout", "net_change"],
+		},
+		"pointer_verbs": [
 			_blackjack_gesture_contract("place", BLACKJACK_WAGER_PLACE_GESTURE, "blackjack_chip", "wagering", "return_to_source"),
 			_blackjack_gesture_contract("hold", BLACKJACK_CUT_GESTURE, "blackjack_deal", "wagering", "restore_focus"),
 			_blackjack_gesture_contract("drag", BLACKJACK_WAVE_GESTURE, "blackjack_stand", "player_turn", "restore_focus"),
 			_blackjack_gesture_contract("hold", BLACKJACK_TAP_GESTURE, "blackjack_hit", "player_turn", "restore_focus"),
 		],
 		"actors": [
-			{"id": "dealer.primary", "role": "dealer", "poses": ["idle", "dealing", "watching", "drawing", "settling"], "behaviors": ["open", "working", "attentive", "paying"]},
-			{"id": "neighbour.seats", "role": "neighbours", "poses": ["seated", "leaning", "reacting"], "behaviors": ["idle", "playing", "watching"]},
-			{"id": "pit.primary", "role": "pit", "poses": ["absent", "rail", "close"], "behaviors": ["idle", "watching", "intervening"]},
+			_blackjack_actor_contract("dealer_primary", "dealer", "station_dealer", ["idle", "dealing", "watching", "drawing", "settling"], ["open", "working", "attentive", "paying"]),
+			_blackjack_actor_contract("neighbour_seats", "neighbours", "seat_rail", ["seated", "leaning", "reacting"], ["idle", "playing", "watching"]),
+			_blackjack_actor_contract("pit_primary", "pit", "pit_rail", ["absent", "rail", "close"], ["idle", "watching", "intervening"]),
 		],
-		"objects": [
-			{"id": "shoe.primary", "states": ["ready", "dealing", "cut_due"]},
-			{"id": "discard_rack.primary", "states": ["empty", "used", "full"]},
-			{"id": "wager.player", "states": ["editable", "placed", "at_risk", "settled"]},
-			{"id": "dealer.hole_card", "states": ["concealed", "revealed"]},
+		"scene_objects": [
+			_blackjack_object_contract("shoe_primary", "shoe_anchor", {"space": "design", "x": 686, "y": 92, "w": 92, "h": 92}, ["ready", "dealing", "cut_due"], ["enabled", "locked"]),
+			_blackjack_object_contract("discard_rack_primary", "discard_anchor", {"space": "design", "x": 674, "y": 188, "w": 70, "h": 28}, ["empty", "used", "full"], ["passive"]),
+			_blackjack_object_contract("wager_player", "wager_anchor", {"space": "design", "x": 414, "y": 276, "w": 76, "h": 62}, ["editable", "placed", "at_risk", "settled"], ["editable", "locked"]),
+			_blackjack_object_contract("dealer_hole_card", "dealer_hand_anchor", {"space": "design", "x": 386, "y": 158, "w": 112, "h": 62}, ["concealed", "revealed"], ["read_only"]),
 		],
-		"energy_tiers": ["quiet", "engaged", "watched", "hot"],
-		"persistence": {
-			"authoritative": ["table", "shoe", "session", "wager_debited", "phase_boundary", "last_result"],
-			"derived": ["actors", "objects", "energy", "hit_regions", "readable_totals"],
-			"transient": ["gesture_origin", "gesture_active", "animation_progress", "hover", "focus"],
-			"one_shot": ["deal_audio", "reveal_audio", "settlement_audio", "payout_animation"],
+		"energy": {
+			"initial_tier": "quiet",
+			"tiers": [
+				{"id": "quiet", "actor_operations": [{"target": "dealer_primary", "behavior": "open"}], "object_operations": [{"target": "wager_player", "state": "editable"}], "interaction_operations": [], "audio_cues": []},
+				{"id": "engaged", "actor_operations": [{"target": "dealer_primary", "behavior": "working"}], "object_operations": [{"target": "wager_player", "state": "at_risk"}], "interaction_operations": [], "audio_cues": []},
+				{"id": "watched", "actor_operations": [{"target": "pit_primary", "behavior": "watching"}], "object_operations": [{"target": "wager_player", "state": "at_risk"}], "interaction_operations": [{"target": "peek_region", "state": "guarded"}], "audio_cues": []},
+				{"id": "hot", "actor_operations": [{"target": "pit_primary", "behavior": "intervening"}], "object_operations": [{"target": "rail_open_space", "state": "narrow"}], "interaction_operations": [{"target": "peek_region", "state": "blocked"}], "audio_cues": []},
+			],
+		},
+		"game_facts": [
+			{"fact_type": "blackjack.commitment_accepted", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"total_wager": "int"}},
+			{"fact_type": "blackjack.hand_resolved", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"net_change": "int", "outcomes": "string_array"}},
+			{"fact_type": "blackjack.heat_changed", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"heat": "int", "tier": "string"}},
+		],
+		"ritual_persistence": {
+			"authoritative_serialized": ["table", "shoe", "session", "wager_debited", "phase_boundary", "last_result"],
+			"derived_projection": ["actors", "scene_objects", "energy", "hit_regions", "readable_totals"],
+			"transient_presentation": ["gesture_origin", "gesture_active", "animation_progress", "hover", "focus"],
+			"one_shot_receipted": ["deal_audio", "reveal_audio", "settlement_audio", "payout_animation"],
 			"save_boundaries": ["wagering", "initial_deal", "player_turn", "dealer_procedure", "settlement"],
+			"restore_policy": "restore_legal_phase_without_replay",
+		},
+		"handler_registry": [{
+			"handler_id": "blackjack_authority",
+			"version": 1,
+			"accepted_actions": action_ids,
+			"accepted_operations": [],
+			"inputs": {"phase_id": "string"},
+			"outputs": {"public_projection": "qualified_id"},
+			"authority": "blackjack_game_rules",
+			"persisted_state": ["table", "session", "wager_debited", "last_result"],
+			"transient_state": ["gesture_origin", "animation_progress"],
+			"rng": {"owner": "blackjack_game_rules", "stream": "existing_action_stream", "consumption": "accepted_authoritative_action_only"},
+			"emitted_facts": ["blackjack.commitment_accepted", "blackjack.hand_resolved", "blackjack.heat_changed"],
+			"rejection": "side_effect_free",
+		}],
+		"declared_targets": {
+			"anchors": ["station_dealer", "seat_rail", "pit_rail", "shoe_anchor", "discard_anchor", "wager_anchor", "dealer_hand_anchor"],
+			"regions": ["chip_rail", "wager_circle", "shoe_region", "player_hand_region", "player_wave_region", "peek_region"],
+			"sealed_host_targets": [],
 		},
 	}
+
+
+func _blackjack_ritual_phase(phase_id: String, permitted_actions: Array, transitions: Array) -> Dictionary:
+	return {"id": phase_id, "entry_conditions": [], "permitted_actions": permitted_actions, "entry_operations": [], "transitions": transitions, "terminal": false}
 
 
 func _blackjack_gesture_contract(verb: String, gesture_id: String, action_id: String, phase_id: String, return_policy: String) -> Dictionary:
 	return {
 		"id": gesture_id,
 		"verb": verb,
-		"action": action_id,
-		"phase": phase_id,
+		"source_region": "chip_rail" if verb == "place" else "shoe_region" if gesture_id == BLACKJACK_CUT_GESTURE else "player_hand_region",
+		"target_regions": ["wager_circle"] if verb == "place" else ["shoe_region"] if gesture_id == BLACKJACK_CUT_GESTURE else ["player_wave_region"] if gesture_id == BLACKJACK_WAVE_GESTURE else ["player_hand_region"],
+		"bounds": {"space": "design", "min_distance": 22 if verb == "place" else 42 if gesture_id == BLACKJACK_WAVE_GESTURE else 0, "max_distance": 520},
+		"phases": [phase_id],
+		"accepted_action": action_id,
 		"rejection": return_policy,
 		"rejection_effects": [],
 		"equivalents": {
@@ -172,6 +237,14 @@ func _blackjack_gesture_contract(verb: String, gesture_id: String, action_id: St
 			"reduced_motion": {"action": action_id, "target_selection": "focus", "staging": "short"},
 		},
 	}
+
+
+func _blackjack_actor_contract(actor_id: String, role: String, anchor: String, poses: Array, behaviors: Array) -> Dictionary:
+	return {"id": actor_id, "role": role, "anchor": anchor, "poses": poses, "behavior_states": behaviors, "initial_pose": str(poses[0]), "initial_behavior": str(behaviors[0]), "fact_reactions": []}
+
+
+func _blackjack_object_contract(object_id: String, anchor: String, bounds: Dictionary, visual_states: Array, functional_states: Array) -> Dictionary:
+	return {"id": object_id, "anchor": anchor, "bounds": bounds, "z_layer": "gameplay", "visual_states": visual_states, "functional_states": functional_states, "initial_visual_state": str(visual_states[0]), "initial_functional_state": str(functional_states[0]), "hit_regions": [], "text_safety_regions": []}
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -619,6 +692,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			"profile_id": "blackjack_table",
 			"action_cues": {
 				"blackjack_chip": "blackjack_chip",
+				"blackjack_correct_bet": "blackjack_chip",
 				"blackjack_remove_chip": "blackjack_chip",
 				"blackjack_undo_bet": "blackjack_chip",
 				"blackjack_repeat_bet": "blackjack_chip",
@@ -1006,7 +1080,7 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 	var phase_rect := Rect2(28, 120, 164, 20)
 	_draw_neon_panel(surface, phase_rect, accent, 0.13)
 	surface.surface_label("RITUAL  %s" % phase_id.replace("_", " ").to_upper().left(16), phase_rect.position + Vector2(8, 13), 8, accent)
-	var money_rect := Rect2(246, 282, 408, 22)
+	var money_rect := Rect2(246, 300, 408, 12)
 	surface.draw_rect(money_rect, Color("#071612"))
 	surface.draw_rect(money_rect, Color(accent.r, accent.g, accent.b, 0.38), false, 1)
 	surface.surface_label_centered("AVAILABLE $%d   PENDING $%d   AT RISK $%d   RETURN $%d   PAYS $%d" % [
@@ -1015,7 +1089,7 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 		int(totals.get("at_risk_total", 0)),
 		int(totals.get("returned_stake", 0)),
 		int(totals.get("payout", 0)),
-	], money_rect, 8, C_WHITE)
+	], money_rect, 6, C_WHITE)
 	var pit_actor: Dictionary = {}
 	for actor_value in _dictionary_array(projection.get("actors", [])):
 		var actor: Dictionary = actor_value
@@ -1039,7 +1113,7 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 	if phase_id == "wagering":
 		var chips: Array = surface_state.get("chip_denominations", []) if typeof(surface_state.get("chip_denominations", [])) == TYPE_ARRAY else []
 		var chip_origin := Vector2(45, BJ_CONSOLE_Y + 56.0)
-		var chip_spacing := 24.0 if chips.size() > 4 else 30.0
+		var chip_spacing := 20.0 if chips.size() > 4 else 30.0
 		for chip_index in range(chips.size()):
 			var chip_center := chip_origin + Vector2(float(chip_index) * chip_spacing, 0)
 			surface.surface_add_drag_hit(Rect2(chip_center - Vector2(13, 13), Vector2(26, 26)), BLACKJACK_WAGER_PLACE_GESTURE, chip_index)
@@ -1323,6 +1397,8 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 	match surface_action:
 		"blackjack_chip":
 			return _chip_bet_command(index, next_state, table, run_state, environment, selected_stake)
+		"blackjack_correct_bet":
+			return _correct_chip_bet_command(index, next_state, table, run_state, environment)
 		"blackjack_remove_chip":
 			return _remove_chip_bet_command(index, next_state, table, run_state, environment, selected_stake)
 		"blackjack_undo_bet":
@@ -2682,14 +2758,16 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 	surface.surface_label("BET $%d" % int(surface_state.get("selected_stake", 1)), rack.position + Vector2(112, 15), 12, C_YELLOW)
 	var chips: Array = surface_state.get("chip_denominations", []) if typeof(surface_state.get("chip_denominations", [])) == TYPE_ARRAY else []
 	var chip_origin := rack.position + Vector2(27.0, 48.0)
-	var chip_spacing := 24.0 if chips.size() > 4 else 30.0
+	var chip_spacing := 20.0 if chips.size() > 4 else 30.0
 	for i in range(chips.size()):
 		var chip_center := chip_origin + Vector2(float(i) * chip_spacing, 0.0)
 		if i == 0:
 			surface.surface_add_exact_invisible_hit(Rect2(chip_center - Vector2(12, 12), Vector2(24, 24)), "surface_stake_up")
 		_draw_chip_button(surface, chip_center, int(chips[i]), "blackjack_chip", i)
-		_draw_table_button(surface, Rect2(chip_center.x - 8, chip_center.y + 12, 16, 12), "-", "blackjack_remove_chip", i, C_SOFT, true)
-	_draw_table_button(surface, Rect2(rack.position.x + 154, rack.position.y + 25, 40, 16), "CLEAR", "blackjack_clear_bet", 0, C_SOFT, true)
+		var remove_rect := Rect2(chip_center.x - 8, chip_center.y + 12, 16, 12)
+		_draw_table_button(surface, remove_rect, "", "blackjack_remove_chip", i, C_SOFT, true)
+		surface.draw_line(remove_rect.position + Vector2(4, 6), remove_rect.end - Vector2(4, 6), C_SOFT, 1.0)
+	_draw_table_button(surface, Rect2(rack.position.x + 154, rack.position.y + 25, 40, 16), "CLR", "blackjack_clear_bet", 0, C_SOFT, true)
 	_draw_table_button(surface, Rect2(rack.position.x + 200, rack.position.y + 25, 36, 16), "MAX", "blackjack_max_bet", 0, C_YELLOW, true)
 	_draw_table_button(surface, Rect2(rack.position.x + 154, rack.position.y + 47, 26, 16), "UNDO", "blackjack_undo_bet", 0, C_CYAN, true)
 	_draw_table_button(surface, Rect2(rack.position.x + 184, rack.position.y + 47, 26, 16), "RPT", "blackjack_repeat_bet", 0, C_CYAN, true)
@@ -5663,6 +5741,29 @@ func _chip_bet_command(index: int, ui_state: Dictionary, table: Dictionary, run_
 		"set_stake": next_stake,
 		"selected_index": index,
 		"message": "You slide a $%d chip forward. Bet $%d." % [chip_value, next_stake],
+	})
+
+
+func _correct_chip_bet_command(index: int, ui_state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if _has_dealt_hand(ui_state):
+		return _message_command(ui_state, "Main bets are locked until the hand settles.")
+	var chips := _chip_denominations(table)
+	if index < 0 or index >= chips.size():
+		return _message_command(ui_state, "That chip is not in your rack.")
+	var min_bet := _surface_stake_floor(run_state, environment)
+	var max_bet := _max_table_stake_for_blackjack(ui_state, table, run_state, environment)
+	var corrected_stake := clampi(int(chips[index]), min_bet, maxi(min_bet, max_bet))
+	if corrected_stake == int(ui_state.get("selected_stake", min_bet)):
+		return _message_command(ui_state, "That exact main wager is already staged.")
+	_blackjack_push_wager_edit(ui_state)
+	ui_state["selected_stake"] = corrected_stake
+	ui_state.erase("table_social_alignment")
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": ui_state,
+		"set_stake": corrected_stake,
+		"selected_index": index,
+		"message": "Main wager corrected to one $%d stack." % corrected_stake,
 	})
 
 
