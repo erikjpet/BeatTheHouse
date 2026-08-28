@@ -1004,6 +1004,16 @@ func _maybe_surface(state: Dictionary, seat: Dictionary, action: String, rng: Rn
 		return
 	var neutral := {"m": member_id, "i": authored_index}
 	state["beat"] = neutral
+	# Legacy tables already own their live observation boundary: the authored
+	# pattern is selected from hidden game state here and is learned only after
+	# that seat reveals at showdown. Keep that shipped path intact while ordered
+	# tables wait for the new host-sealed observation authority below.
+	if str(state.get("turn_engine", "legacy_v1")) != ORDERED_ENGINE:
+		var legacy_shown: Array = state.get("x", [])
+		if not legacy_shown.has(neutral):
+			legacy_shown.append(neutral)
+		state["x"] = legacy_shown
+		return
 	var queue := _dict_array(state.get("observation_queue", []))
 	var source_ordinal := int(state.get("action_ordinal", 0))
 	var source_record := _source_action_record(state, member_id, action, source_ordinal)
@@ -1056,6 +1066,14 @@ func _showdown(state: Dictionary, run_state: RunState) -> Dictionary:
 	var raw_payout := int(shares.get(PLAYER_ID, 0))
 	var payout := mini(raw_payout, _win_room(state, raw_payout))
 	state["session_swing"] = int(state.get("session_swing", 0)) + payout
+	if str(state.get("turn_engine", "legacy_v1")) != ORDERED_ENGINE:
+		for shown_value in _dict_array(state.get("x", [])):
+			var legacy_shown: Dictionary = shown_value
+			var legacy_member := str(legacy_shown.get("m", ""))
+			var legacy_patterns := CrewPokerModelScript.patterns(legacy_member)
+			var legacy_index := int(legacy_shown.get("i", -1))
+			if legacy_index >= 0 and legacy_index < legacy_patterns.size() and (winners.has(legacy_member) or _seat_active(seats, legacy_member)):
+				run_state.crew_record_pattern(legacy_member, str((legacy_patterns[legacy_index] as Dictionary).get("state_key", "")))
 	var verified_receipts := _string_array(state.get("verified_observation_receipts", []))
 	var queue := _dict_array(state.get("observation_queue", []))
 	var authority_gaps: Array = []
