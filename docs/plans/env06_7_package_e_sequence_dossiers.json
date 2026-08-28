@@ -48,7 +48,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "3248c3e6ee69e8dbf5f3d695ebd76f3c02b318e9fe2a2da4b61d8c8b09a8c4cd",
+      "sequence_signature": "4a2e47211198da49ce4624e5da23a13f845e923f332d66d47e71192909780fe0",
       "capture_ids": [
         "delta_queen_wedding_charter_arrival",
         "delta_queen_wedding_charter_partial",
@@ -107,7 +107,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "4d0351999c26004d67b10f6422945423f4eb964d0fd955f6e0cbe3505b2f5edd",
+      "sequence_signature": "c99e4a7cccb02a628b27c73e83a6a41518ce14ca07ccb49104450ba38cf77ccc",
       "capture_ids": [
         "delta_queen_whale_aboard_arrival",
         "delta_queen_whale_aboard_partial",
@@ -166,7 +166,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "6ddff62833ab21ba47b25485845389ccee5293ffe5462087185f64368b649416",
+      "sequence_signature": "e1252ed44d160859a30e682e2805f2d61f0ea447e47844581a4996d3159c4d29",
       "capture_ids": [
         "delta_queen_fog_delay_arrival",
         "delta_queen_fog_delay_partial",
@@ -228,7 +228,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "57d459106d51207329764636691139c0134cf30f97c322a11e60c8d6e3a7243a",
+      "sequence_signature": "26ec3521de1c54a6fff1b65e75bb4ebb52de3316783e51964247b07f70c1d98e",
       "capture_ids": [
         "delta_queen_engine_trouble_arrival",
         "delta_queen_engine_trouble_partial",
@@ -289,7 +289,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "9b231ff741045b4d4cbbebfd2e45ea76fbe78b4dab1f517a0067df78bd7b392a",
+      "sequence_signature": "676eabd49f8a8b1ed16ea3961e8aa8bb99fa8e1768284467e352565562f295af",
       "capture_ids": [
         "delta_queen_captains_invitational_arrival",
         "delta_queen_captains_invitational_partial",
@@ -348,7 +348,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "54ef6e98265ed54106c4b5c4e16512cb65f0310285dac036943a45abdeb849cd",
+      "sequence_signature": "07e24e030cfe3a27685b40ef6a7255512be6c85be87d6166e93acd700fd637a5",
       "capture_ids": [
         "grand_casino_gala_night_arrival",
         "grand_casino_gala_night_partial",
@@ -407,7 +407,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "d034ae2268b16fb58d0a64c84f52e687b79f78b5a3efca3252024a92ae0acc2c",
+      "sequence_signature": "d0afd5a7e66e5a9bcc0b6ec290288e52146479ee3adbaa7a5708138324a34e46",
       "capture_ids": [
         "grand_casino_convention_crowd_arrival",
         "grand_casino_convention_crowd_partial",
@@ -467,7 +467,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "641b392b80fcb123203d43ba95c4fa133a7f163b1fd6e6e61d98f896d365bccd",
+      "sequence_signature": "8b6c0b6b2713c9ac30f50d41d1cfce1427eed2da4ef399151964d79642152eae",
       "capture_ids": [
         "grand_casino_audit_night_arrival",
         "grand_casino_audit_night_partial",
@@ -920,7 +920,7 @@
                 "effect": {
                   "op": "set_position",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               }
             ],
@@ -1203,7 +1203,7 @@
                 "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 }
               },
               {
@@ -1972,7 +1972,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 13
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -1985,8 +1985,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "9b231ff741045b4d4cbbebfd2e45ea76fbe78b4dab1f517a0067df78bd7b392a",
-      "calculated_signature": "9b231ff741045b4d4cbbebfd2e45ea76fbe78b4dab1f517a0067df78bd7b392a",
+      "authored_signature": "676eabd49f8a8b1ed16ea3961e8aa8bb99fa8e1768284467e352565562f295af",
+      "calculated_signature": "676eabd49f8a8b1ed16ea3961e8aa8bb99fa8e1768284467e352565562f295af",
       "nearest_id": "delta_queen_engine_trouble",
       "nearest_similarity": 0.666666666666667
     },
@@ -2426,7 +2426,7 @@
                 "effect": {
                   "op": "set_position",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               }
             ],
@@ -2709,7 +2709,7 @@
                 "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 }
               },
               {
@@ -3505,7 +3505,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 13
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -3518,8 +3518,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "57d459106d51207329764636691139c0134cf30f97c322a11e60c8d6e3a7243a",
-      "calculated_signature": "57d459106d51207329764636691139c0134cf30f97c322a11e60c8d6e3a7243a",
+      "authored_signature": "26ec3521de1c54a6fff1b65e75bb4ebb52de3316783e51964247b07f70c1d98e",
+      "calculated_signature": "26ec3521de1c54a6fff1b65e75bb4ebb52de3316783e51964247b07f70c1d98e",
       "nearest_id": "delta_queen_captains_invitational",
       "nearest_similarity": 0.666666666666667
     },
@@ -3774,7 +3774,7 @@
                 "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 }
               },
               {
@@ -3958,7 +3958,7 @@
                 "effect": {
                   "op": "set_position",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               }
             ],
@@ -4842,7 +4842,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 13
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -4855,8 +4855,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "6ddff62833ab21ba47b25485845389ccee5293ffe5462087185f64368b649416",
-      "calculated_signature": "6ddff62833ab21ba47b25485845389ccee5293ffe5462087185f64368b649416",
+      "authored_signature": "e1252ed44d160859a30e682e2805f2d61f0ea447e47844581a4996d3159c4d29",
+      "calculated_signature": "e1252ed44d160859a30e682e2805f2d61f0ea447e47844581a4996d3159c4d29",
       "nearest_id": "delta_queen_wedding_charter",
       "nearest_similarity": 0.691542288557214
     },
@@ -5111,7 +5111,7 @@
                 "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 }
               },
               {
@@ -5295,7 +5295,7 @@
                 "effect": {
                   "op": "set_position",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               }
             ],
@@ -6179,7 +6179,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 13
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -6192,8 +6192,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "3248c3e6ee69e8dbf5f3d695ebd76f3c02b318e9fe2a2da4b61d8c8b09a8c4cd",
-      "calculated_signature": "3248c3e6ee69e8dbf5f3d695ebd76f3c02b318e9fe2a2da4b61d8c8b09a8c4cd",
+      "authored_signature": "4a2e47211198da49ce4624e5da23a13f845e923f332d66d47e71192909780fe0",
+      "calculated_signature": "4a2e47211198da49ce4624e5da23a13f845e923f332d66d47e71192909780fe0",
       "nearest_id": "delta_queen_fog_delay",
       "nearest_similarity": 0.691542288557214
     },
@@ -6459,7 +6459,7 @@
                 "effect": {
                   "op": "set_position",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               }
             ],
@@ -6771,7 +6771,7 @@
                 "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 }
               },
               {
@@ -7516,7 +7516,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 13
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -7529,8 +7529,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "4d0351999c26004d67b10f6422945423f4eb964d0fd955f6e0cbe3505b2f5edd",
-      "calculated_signature": "4d0351999c26004d67b10f6422945423f4eb964d0fd955f6e0cbe3505b2f5edd",
+      "authored_signature": "c99e4a7cccb02a628b27c73e83a6a41518ce14ca07ccb49104450ba38cf77ccc",
+      "calculated_signature": "c99e4a7cccb02a628b27c73e83a6a41518ce14ca07ccb49104450ba38cf77ccc",
       "nearest_id": "grand_casino_convention_crowd",
       "nearest_similarity": 0.723700887198986
     },
@@ -7785,7 +7785,7 @@
                 "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 }
               },
               {
@@ -7969,7 +7969,7 @@
                 "effect": {
                   "op": "set_position",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               }
             ],
@@ -8880,7 +8880,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 13
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -8893,8 +8893,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "641b392b80fcb123203d43ba95c4fa133a7f163b1fd6e6e61d98f896d365bccd",
-      "calculated_signature": "641b392b80fcb123203d43ba95c4fa133a7f163b1fd6e6e61d98f896d365bccd",
+      "authored_signature": "8b6c0b6b2713c9ac30f50d41d1cfce1427eed2da4ef399151964d79642152eae",
+      "calculated_signature": "8b6c0b6b2713c9ac30f50d41d1cfce1427eed2da4ef399151964d79642152eae",
       "nearest_id": "delta_queen_fog_delay",
       "nearest_similarity": 0.674786845310597
     },
@@ -9160,7 +9160,7 @@
                 "effect": {
                   "op": "set_position",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               }
             ],
@@ -9472,7 +9472,7 @@
                 "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 }
               },
               {
@@ -10217,7 +10217,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 13
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -10230,8 +10230,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "d034ae2268b16fb58d0a64c84f52e687b79f78b5a3efca3252024a92ae0acc2c",
-      "calculated_signature": "d034ae2268b16fb58d0a64c84f52e687b79f78b5a3efca3252024a92ae0acc2c",
+      "authored_signature": "d0afd5a7e66e5a9bcc0b6ec290288e52146479ee3adbaa7a5708138324a34e46",
+      "calculated_signature": "d0afd5a7e66e5a9bcc0b6ec290288e52146479ee3adbaa7a5708138324a34e46",
       "nearest_id": "delta_queen_whale_aboard",
       "nearest_similarity": 0.723700887198986
     },
@@ -10497,7 +10497,7 @@
                 "effect": {
                   "op": "set_position",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               }
             ],
@@ -10809,7 +10809,7 @@
                 "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 }
               },
               {
@@ -11554,7 +11554,7 @@
           "games": 0,
           "routes": 0,
           "anchors": 0,
-          "zones": 13
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -11567,8 +11567,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "54ef6e98265ed54106c4b5c4e16512cb65f0310285dac036943a45abdeb849cd",
-      "calculated_signature": "54ef6e98265ed54106c4b5c4e16512cb65f0310285dac036943a45abdeb849cd",
+      "authored_signature": "07e24e030cfe3a27685b40ef6a7255512be6c85be87d6166e93acd700fd637a5",
+      "calculated_signature": "07e24e030cfe3a27685b40ef6a7255512be6c85be87d6166e93acd700fd637a5",
       "nearest_id": "grand_casino_convention_crowd",
       "nearest_similarity": 0.708542713567839
     }
@@ -11912,14 +11912,14 @@
     }
   ],
   "assembly_evidence_needed": [
-    "scenario delta_queen_wedding_charter is invalid: [\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario delta_queen_whale_aboard is invalid: [\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario delta_queen_fog_delay is invalid: [\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario delta_queen_engine_trouble is invalid: [\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario delta_queen_captains_invitational is invalid: [\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario grand_casino_gala_night is invalid: [\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario grand_casino_convention_crowd is invalid: [\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
+    "scenario delta_queen_wedding_charter is invalid: [\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario delta_queen_whale_aboard is invalid: [\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario delta_queen_fog_delay is invalid: [\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario delta_queen_engine_trouble is invalid: [\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario delta_queen_captains_invitational is invalid: [\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario grand_casino_gala_night is invalid: [\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario grand_casino_convention_crowd is invalid: [\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.692 (warning). Missing receipt-bound masked visual evidence.",
     "scenario delta_queen_wedding_charter vs grand_casino_audit_night: 0.659 (warning). Missing receipt-bound masked visual evidence.",
     "scenario delta_queen_whale_aboard vs grand_casino_gala_night: 0.704 (warning). Missing receipt-bound masked visual evidence.",

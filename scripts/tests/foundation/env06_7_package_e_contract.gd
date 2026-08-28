@@ -2,6 +2,10 @@ extends SceneTree
 
 const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
 const Runtime := preload("res://scripts/core/scenario_sequence_runtime.gd")
+const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
+const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
+const SemanticInventory := preload("res://scripts/core/environment_semantic_inventory.gd")
 
 const PACKAGE_PATH := "res://data/environments/scenario_sequences/env06_7_queen_public.json"
 const EXPECTED_IDS := [
@@ -21,9 +25,15 @@ const IDENTITY_CONTRACTS := {
 	"grand_casino_audit_night":{"phase":"work_1","choices":["comply_with_audit_route","redirect_public_audit","close_audited_games"],"tags":["strict_cage","nervous_floor","heist_plan_a_anchor"],"outcomes":["compliant_floor","redirected_audit","closed_games","audit_interrupted"]},
 }
 
+var _library: Variant = null
+var _current_host: Dictionary = {}
+var _composition_cache: Dictionary = {}
+
 
 func _initialize() -> void:
 	var failures: Array = []
+	_library = ContentLibraryScript.new()
+	_library.load(false)
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(PACKAGE_PATH))
 	if typeof(parsed) != TYPE_DICTIONARY:
 		_finish(["Package E is not a JSON dictionary."])
@@ -40,7 +50,8 @@ func _initialize() -> void:
 		actual_ids.append(scenario_id)
 		var definition := {"id":scenario_id,"archetype_id":"delta_queen" if scenario_id.begins_with("delta_queen_") else "grand_casino","sequence":_dict(entry.get("sequence", {})),"sequence_package_id":"env06_7_queen_public","sequence_handler_pack":"queen_public","sequence_renderer_id":"queen_public","sequence_authoring":_dict(entry.get("authoring", {}))}
 		definitions.append(definition)
-		var errors := Schema.validate_definition(definition, null, _target_inventory())
+		_current_host = _production_host(definition, failures)
+		var errors := Schema.validate_definition(definition, null, _dict(_current_host.get("target_inventory", {})))
 		if not errors.is_empty(): failures.append("%s schema errors: %s" % [scenario_id, JSON.stringify(errors)])
 		var signature := str(definition.sequence.get("sequence_signature", ""))
 		if signature.length() != 64 or signatures.has(signature): failures.append("%s lacks a unique calculated signature." % scenario_id)
@@ -62,6 +73,39 @@ func _initialize() -> void:
 	var equal_pairs := _array(report.get("pairs", [])).filter(func(pair): return bool(_dict(pair).get("equal_normalized_hash", false)))
 	if not equal_pairs.is_empty(): failures.append("Package E contains equivalent normalized sequences.")
 	_finish(failures)
+
+func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
+	var sid := str(definition.get("id", ""))
+	var archetype_id := str(definition.get("archetype_id", ""))
+	var archetype := _dict(_library.environment_archetype(archetype_id))
+	if archetype.is_empty():
+		failures.append("%s production ContentLibrary lacks its environment archetype." % sid)
+		return {}
+	var composition := _dict(_composition_cache.get(archetype_id, {}))
+	if composition.is_empty():
+		var rng: Variant = RngStreamScript.new()
+		rng.configure(abs(archetype_id.hash()) + 1)
+		var environment_class: Variant = EnvironmentInstanceScript
+		var environment: Variant = environment_class.from_archetype(archetype, 1, rng, _library, {}, definition)
+		var environment_data: Dictionary = environment.call("to_dict")
+		var sealed := SemanticInventory.for_instance(environment_data, _library, [], [])
+		var inventory_errors := SemanticInventory.validate_instance_binding(sealed, environment_data)
+		var exact := SemanticInventory.exact_collections(sealed)
+		if not inventory_errors.is_empty() or exact.is_empty():
+			failures.append("%s production environment composition did not seal: %s" % [sid,JSON.stringify(inventory_errors)])
+			return {}
+		composition = {"exact":exact,"schema_version":int(sealed.get("schema_version",0)),"digest":str(sealed.get("digest","")),"environment_id":str(environment_data.get("id",""))}
+		_composition_cache[archetype_id] = composition
+	var exact := _dict(composition.get("exact", {}))
+	var bounded: Dictionary = {}
+	var declared := _dict(_dict(definition.get("sequence", {})).get("declared_targets", {}))
+	for collection in ["scene_objects","interactions","actors","services","games","routes","anchors","zones"]:
+		bounded[collection] = []
+		for identity in _array(declared.get(collection, [])):
+			if not _array(exact.get(collection, [])).has(identity): failures.append("%s declared %s is absent from its production-composed environment." % [sid,identity])
+			else: bounded[collection].append(identity)
+	bounded["event_choices"] = _dict(exact.get("event_choices",{}))
+	return {"target_inventory":bounded,"inventory_schema_version":int(composition.get("schema_version",0)),"inventory_digest":str(composition.get("digest","")),"inventory_errors":[],"base_interactions":[],"event_choices":_dict(exact.get("event_choices",{})),"environment_id":str(composition.get("environment_id","")),"production_inventory_digest":str(composition.get("digest",""))}
 
 func _check_frozen_identity(definition: Dictionary, entry: Dictionary, failures: Array) -> void:
 	var sid := str(definition.get("id", ""))
@@ -363,11 +407,10 @@ func _valid_payload(fact_type: String) -> Dictionary:
 
 func _target_inventory() -> Dictionary:
 	var zones := ["base::zone:left","base::zone:right","base::zone:center","base::zone:background","base::zone:service_lane","base::zone:foreground","base::zone:exit_lane"]
-	for index in range(6): zones.append("base::zone:work_%d" % index)
 	return {"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":zones,"event_choices":{}}
 
 func _host_semantics() -> Dictionary:
-	return {"target_inventory":_target_inventory(),"inventory_schema_version":1,"inventory_digest":"package_e_production_inventory","inventory_errors":[],"base_interactions":[],"event_choices":{}}
+	return _current_host.duplicate(true)
 
 
 func _collect_receipts(value: Variant, receipts: Dictionary, failures: Array, scenario_id: String) -> void:

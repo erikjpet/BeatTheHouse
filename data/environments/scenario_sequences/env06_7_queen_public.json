@@ -365,13 +365,7 @@
             "base::zone:background",
             "base::zone:service_lane",
             "base::zone:foreground",
-            "base::zone:exit_lane",
-            "base::zone:work_0",
-            "base::zone:work_1",
-            "base::zone:work_2",
-            "base::zone:work_3",
-            "base::zone:work_4",
-            "base::zone:work_5"
+            "base::zone:exit_lane"
           ]
         },
         "expiry": {
@@ -994,7 +988,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_rope_move_move",
                   "stable_object_id": "delta_queen_wedding_charter_ceremony_rope",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -1077,7 +1071,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_ring_state_position",
                   "stable_object_id": "delta_queen_wedding_charter_deck_coordinator",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -1551,7 +1545,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3248c3e6ee69e8dbf5f3d695ebd76f3c02b318e9fe2a2da4b61d8c8b09a8c4cd"
+        "sequence_signature": "4a2e47211198da49ce4624e5da23a13f845e923f332d66d47e71192909780fe0"
       }
     },
     {
@@ -1915,13 +1909,7 @@
             "base::zone:background",
             "base::zone:service_lane",
             "base::zone:foreground",
-            "base::zone:exit_lane",
-            "base::zone:work_0",
-            "base::zone:work_1",
-            "base::zone:work_2",
-            "base::zone:work_3",
-            "base::zone:work_4",
-            "base::zone:work_5"
+            "base::zone:exit_lane"
           ]
         },
         "expiry": {
@@ -2400,7 +2388,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_entourage_move_move",
                   "stable_object_id": "delta_queen_whale_aboard_premium_table",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 }
               ],
               "transition_ops": [
@@ -2423,7 +2411,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_table_state_position",
                   "stable_object_id": "delta_queen_whale_aboard_entourage_runner",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -3101,7 +3089,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4d0351999c26004d67b10f6422945423f4eb964d0fd955f6e0cbe3505b2f5edd"
+        "sequence_signature": "c99e4a7cccb02a628b27c73e83a6a41518ce14ca07ccb49104450ba38cf77ccc"
       }
     },
     {
@@ -3465,13 +3453,7 @@
             "base::zone:background",
             "base::zone:service_lane",
             "base::zone:foreground",
-            "base::zone:exit_lane",
-            "base::zone:work_0",
-            "base::zone:work_1",
-            "base::zone:work_2",
-            "base::zone:work_3",
-            "base::zone:work_4",
-            "base::zone:work_5"
+            "base::zone:exit_lane"
           ]
         },
         "expiry": {
@@ -4094,7 +4076,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_signal_appearance_move",
                   "stable_object_id": "delta_queen_fog_delay_fog_signal",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -4177,7 +4159,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_crowd_position_position",
                   "stable_object_id": "delta_queen_fog_delay_waiting_crowd",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -4651,7 +4633,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "6ddff62833ab21ba47b25485845389ccee5293ffe5462087185f64368b649416"
+        "sequence_signature": "e1252ed44d160859a30e682e2805f2d61f0ea447e47844581a4996d3159c4d29"
       }
     },
     {
@@ -5037,13 +5019,7 @@
             "base::zone:background",
             "base::zone:service_lane",
             "base::zone:foreground",
-            "base::zone:exit_lane",
-            "base::zone:work_0",
-            "base::zone:work_1",
-            "base::zone:work_2",
-            "base::zone:work_3",
-            "base::zone:work_4",
-            "base::zone:work_5"
+            "base::zone:exit_lane"
           ]
         },
         "expiry": {
@@ -5548,7 +5524,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_bulkhead_state_move",
                   "stable_object_id": "delta_queen_engine_trouble_engine_bulkhead",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 }
               ],
               "transition_ops": [
@@ -5571,7 +5547,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_gauge_appearance_position",
                   "stable_object_id": "delta_queen_engine_trouble_deck_guard",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -6417,7 +6393,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "57d459106d51207329764636691139c0134cf30f97c322a11e60c8d6e3a7243a"
+        "sequence_signature": "26ec3521de1c54a6fff1b65e75bb4ebb52de3316783e51964247b07f70c1d98e"
       }
     },
     {
@@ -6796,13 +6772,7 @@
             "base::zone:background",
             "base::zone:service_lane",
             "base::zone:foreground",
-            "base::zone:exit_lane",
-            "base::zone:work_0",
-            "base::zone:work_1",
-            "base::zone:work_2",
-            "base::zone:work_3",
-            "base::zone:work_4",
-            "base::zone:work_5"
+            "base::zone:exit_lane"
           ]
         },
         "expiry": {
@@ -7287,7 +7257,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_card_state_move",
                   "stable_object_id": "delta_queen_captains_invitational_entry_cards",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 }
               ],
               "transition_ops": [
@@ -7310,7 +7280,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_bracket_move_position",
                   "stable_object_id": "delta_queen_captains_invitational_eliminated_players",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -8156,7 +8126,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9b231ff741045b4d4cbbebfd2e45ea76fbe78b4dab1f517a0067df78bd7b392a"
+        "sequence_signature": "676eabd49f8a8b1ed16ea3961e8aa8bb99fa8e1768284467e352565562f295af"
       }
     },
     {
@@ -8520,13 +8490,7 @@
             "base::zone:background",
             "base::zone:service_lane",
             "base::zone:foreground",
-            "base::zone:exit_lane",
-            "base::zone:work_0",
-            "base::zone:work_1",
-            "base::zone:work_2",
-            "base::zone:work_3",
-            "base::zone:work_4",
-            "base::zone:work_5"
+            "base::zone:exit_lane"
           ]
         },
         "expiry": {
@@ -9005,7 +8969,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_token_move_move",
                   "stable_object_id": "grand_casino_gala_night_coat_check",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 }
               ],
               "transition_ops": [
@@ -9028,7 +8992,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_badge_state_position",
                   "stable_object_id": "grand_casino_gala_night_stage_hand",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -9706,7 +9670,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "54ef6e98265ed54106c4b5c4e16512cb65f0310285dac036943a45abdeb849cd"
+        "sequence_signature": "07e24e030cfe3a27685b40ef6a7255512be6c85be87d6166e93acd700fd637a5"
       }
     },
     {
@@ -10070,13 +10034,7 @@
             "base::zone:background",
             "base::zone:service_lane",
             "base::zone:foreground",
-            "base::zone:exit_lane",
-            "base::zone:work_0",
-            "base::zone:work_1",
-            "base::zone:work_2",
-            "base::zone:work_3",
-            "base::zone:work_4",
-            "base::zone:work_5"
+            "base::zone:exit_lane"
           ]
         },
         "expiry": {
@@ -10555,7 +10513,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_board_state_move",
                   "stable_object_id": "grand_casino_convention_crowd_booking_board",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 }
               ],
               "transition_ops": [
@@ -10578,7 +10536,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_badge_move_position",
                   "stable_object_id": "grand_casino_convention_crowd_badge_delegations",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -11256,7 +11214,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d034ae2268b16fb58d0a64c84f52e687b79f78b5a3efca3252024a92ae0acc2c"
+        "sequence_signature": "d0afd5a7e66e5a9bcc0b6ec290288e52146479ee3adbaa7a5708138324a34e46"
       }
     },
     {
@@ -11627,13 +11585,7 @@
             "base::zone:background",
             "base::zone:service_lane",
             "base::zone:foreground",
-            "base::zone:exit_lane",
-            "base::zone:work_0",
-            "base::zone:work_1",
-            "base::zone:work_2",
-            "base::zone:work_3",
-            "base::zone:work_4",
-            "base::zone:work_5"
+            "base::zone:exit_lane"
           ]
         },
         "expiry": {
@@ -12276,7 +12228,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_seal_state_move",
                   "stable_object_id": "grand_casino_audit_night_cage_seal",
-                  "zone_id": "work_0"
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -12359,7 +12311,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_ledger_move_position",
                   "stable_object_id": "grand_casino_audit_night_pit_manager",
-                  "zone_id": "work_1"
+                  "zone_id": "center"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -12833,7 +12785,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "641b392b80fcb123203d43ba95c4fa133a7f163b1fd6e6e61d98f896d365bccd"
+        "sequence_signature": "8b6c0b6b2713c9ac30f50d41d1cfce1427eed2da4ef399151964d79642152eae"
       }
     }
   ]
