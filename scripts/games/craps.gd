@@ -148,7 +148,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			{"label": "New wagers", "value": "%d cash" % total_wager if street else "%d chips" % total_wager},
 			{"label": "Circle", "value": "SCATTERED" if dispersed else "LIVE"} if street else {"label": "Energy", "value": str(table.get("table_energy", 0))},
 		],
-		"phase": presentation_phase,
+		# Keep the shipped surface phase stable for existing legal-boundary and
+		# animation consumers; ritual_phase carries the finer authored sequence.
+		"phase": "dispersed" if dispersed else "rolling" if roll_active else "betting",
 		"ritual_phase": presentation_phase,
 		"ritual_sequence": int(table.get("ritual_sequence", 0)),
 		"table_name": str(table.get("table_name", "Craps")),
@@ -243,6 +245,12 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 	if street and bool(table.get("street_dispersed", false)):
 		return _message_command(session, "The chalk ring is empty for the rest of tonight.")
 	var pending := _pending_bets(session.get("craps_pending_bets", {}))
+	var last_roll := _dict(table.get("last_roll", {}))
+	var now_msec := GameModule.deterministic_time_msec(run_state, session)
+	var roll_duration := int(_config().get("roll_animation_duration_msec", 0))
+	var roll_active := int(last_roll.get("resolved_at_msec", 0)) > 0 and now_msec >= int(last_roll.get("resolved_at_msec", 0)) and now_msec < int(last_roll.get("resolved_at_msec", 0)) + roll_duration
+	if roll_active and surface_action in ["craps_bet", "craps_chip", "craps_clear", "craps_remove", "craps_undo", "craps_repeat", "craps_rebet", "craps_roll", "craps_throw", "craps_setting", "craps_switch"]:
+		return _message_command(session, "The dice are in motion; the stickperson returns that input without charge.")
 	var warning_reason := _street_disperse_reason(run_state, environment, 0) if street else ""
 	if not warning_reason.is_empty():
 		if surface_action == "craps_roll":
@@ -320,8 +328,11 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 		"craps_roll":
 			if not _can_roll(table, pending):
 				return _message_command(session, "Place a wager before the dice are offered.")
-			session["craps_ritual_phase"] = "dice_offered"
-			return GameModule.surface_command({"ui_state": session, "preserve_surface_ui_state": true, "message": "Dice offered. Drag across the throw lane, or press Throw for the equivalent house toss.", "surface_audio_cue": "dice_shake"})
+			# The established legal action remains the keyboard/controller and
+			# reduced-motion equivalent. It resolves through the normal boundary;
+			# pointer throws use the same action id and settlement path.
+			session["craps_ritual_phase"] = "aiming_throw"
+			return _throw_resolve_command(session, pending)
 		"craps_throw":
 			if not _can_roll(table, pending):
 				return _message_command(session, "The dice return without a wager being charged.")
@@ -353,7 +364,7 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 			return _message_command(session, "Begin the throw inside the marked dice lane.")
 		session["craps_throw_origin"] = board_position
 		session["craps_throw_position"] = board_position
-		session["craps_ritual_phase"] = "aiming_throw"
+		session["craps_ritual_phase"] = "dice_offered"
 		return GameModule.surface_command({"ui_state": session, "preserve_surface_ui_state": true, "surface_audio_cue": "dice_shake"}, true)
 	if phase == "cancel":
 		return _reject_throw(session, "The stickperson gathers the incomplete throw. No wager is charged.")
@@ -361,6 +372,7 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 		if not session.has("craps_throw_origin"):
 			return _reject_throw(session, "The dice remain in the stickperson's hand.")
 		session["craps_throw_position"] = board_position
+		session["craps_ritual_phase"] = "aiming_throw"
 		return GameModule.surface_command({"ui_state": session, "preserve_surface_ui_state": true}, true)
 	if phase != "end" or not session.has("craps_throw_origin"):
 		return _reject_throw(session, "The dice remain in the stickperson's hand.")
@@ -483,6 +495,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"point_after": int(settlement.get("point_after", 0)),
 		"animation_id": "craps:%d:%d-%d" % [int(table.get("roll_count", 0)), int(dice[0]), int(dice[1])],
 		"resolved_at_msec": now_msec,
+		"throw_trajectory": _throw_trajectory(ui_state.get("craps_throw_vector", Vector2(0, -140))),
 	}
 	table["last_roll"] = last_roll
 	var history := _dictionary_array(table.get("roll_history", []))
@@ -986,6 +999,49 @@ func _presentation_phase(last_roll: Dictionary, now_msec: int, duration: int, di
 	return "betting"
 
 
+func _throw_trajectory(vector_value: Variant) -> Dictionary:
+	var throw_vector := Vector2(0, -140)
+	if typeof(vector_value) == TYPE_VECTOR2:
+		throw_vector = vector_value
+	elif typeof(vector_value) == TYPE_DICTIONARY:
+		var vector_dict := _dict(vector_value)
+		throw_vector = Vector2(float(vector_dict.get("x", 0.0)), float(vector_dict.get("y", -140.0)))
+	var lateral := clampf(throw_vector.x * 0.22, -68.0, 68.0)
+	var start := Vector2(426, 278)
+	var wall := Vector2(426 + lateral, THROW_REGION.position.y + 8.0)
+	var rebound := Vector2(426 + lateral * 0.55, 176)
+	var rest := Vector2(650 + lateral * 0.18, 152)
+	return {
+		"source": "gesture_projection",
+		"authoritative_outcome_source": false,
+		"contacts": ["far_wall", "die_pair"],
+		"die_a": [_trajectory_point(start, "offer"), _trajectory_point(start.lerp(wall, 0.55), "travel"), _trajectory_point(wall, "wall_contact"), _trajectory_point(rebound + Vector2(-18, 4), "bounce"), _trajectory_point(rest + Vector2(-26, 4), "rest")],
+		"die_b": [_trajectory_point(start + Vector2(18, 8), "offer"), _trajectory_point(start.lerp(wall, 0.52) + Vector2(18, 10), "travel"), _trajectory_point(wall + Vector2(12, 5), "die_contact"), _trajectory_point(rebound + Vector2(28, 16), "separate"), _trajectory_point(rest + Vector2(28, 18), "rest")],
+	}
+
+
+func _trajectory_point(position: Vector2, beat: String) -> Dictionary:
+	return {"x": snappedf(position.x, 0.01), "y": snappedf(position.y, 0.01), "beat": beat}
+
+
+func _trajectory_position(trajectory: Dictionary, die_id: String, progress: float, fallback: Vector2) -> Vector2:
+	var points := _dictionary_array(trajectory.get(die_id, []))
+	if points.is_empty():
+		return fallback
+	if points.size() == 1 or progress >= 1.0:
+		var final_point: Dictionary = points.back()
+		return Vector2(float(final_point.get("x", fallback.x)), float(final_point.get("y", fallback.y)))
+	var scaled := clampf(progress, 0.0, 1.0) * float(points.size() - 1)
+	var index := mini(int(floor(scaled)), points.size() - 2)
+	var local_progress := scaled - float(index)
+	var from: Dictionary = points[index]
+	var to: Dictionary = points[index + 1]
+	return Vector2(float(from.get("x", fallback.x)), float(from.get("y", fallback.y))).lerp(
+		Vector2(float(to.get("x", fallback.x)), float(to.get("y", fallback.y))),
+		local_progress
+	)
+
+
 func _last_roll_accounting(last_result: Dictionary) -> Dictionary:
 	var returned_stake := 0
 	var payout := 0
@@ -1328,9 +1384,13 @@ func _draw_street_dice(surface, state: Dictionary) -> void:
 	if dice.size() != 2:
 		return
 	var progress: float = float(surface.surface_animation_progress(ROLL_CHANNEL)) if surface.surface_animation_active(ROLL_CHANNEL) else 1.0
-	var wobble := sin(progress * TAU * 3.0) * (1.0 - progress) * 10.0
+	if bool(state.get("reduce_motion", false)):
+		progress = 1.0
+	var trajectory := _dict(_dict(state.get("last_roll", {})).get("throw_trajectory", {}))
 	for index in range(2):
-		var rect := Rect2(350 + index * 56 + wobble * (1.0 if index == 0 else -1.0), 124 + absf(wobble) * 0.5, 44, 44)
+		var fallback := Vector2(372 + index * 56, 146)
+		var center := _trajectory_position(trajectory, "die_a" if index == 0 else "die_b", progress, fallback)
+		var rect := Rect2(center - Vector2(22, 22), Vector2(44, 44))
 		surface.draw_rect(rect, Color("#d7c9ad"))
 		surface.draw_rect(rect, Color("#4a4034"), false, 2.0)
 		surface.surface_label_centered(str(dice[index]), rect, 20, Color("#171717"))
@@ -1452,9 +1512,13 @@ func _draw_dice(surface, state: Dictionary) -> void:
 	if dice.size() != 2:
 		return
 	var progress: float = float(surface.surface_animation_progress(ROLL_CHANNEL)) if surface.surface_animation_active(ROLL_CHANNEL) else 1.0
-	var wobble: float = sin(progress * TAU * 3.0) * (1.0 - progress) * 12.0
+	if bool(state.get("reduce_motion", false)):
+		progress = 1.0
+	var trajectory := _dict(roll.get("throw_trajectory", {}))
 	for index in range(2):
-		var rect := Rect2(638 + index * 54 + wobble * (1.0 if index == 0 else -1.0), 140 + absf(wobble) * 0.5, 42, 42)
+		var fallback := Vector2(659 + index * 54, 161)
+		var center := _trajectory_position(trajectory, "die_a" if index == 0 else "die_b", progress, fallback)
+		var rect := Rect2(center - Vector2(21, 21), Vector2(42, 42))
 		surface.draw_rect(rect, Color("#eee7d2"))
 		surface.draw_rect(rect, Color("#9a7735"), false, 2)
 		surface.surface_label_centered(str(dice[index]), rect, 20, Color("#171b19"))

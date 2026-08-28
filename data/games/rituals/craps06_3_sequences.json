@@ -9,6 +9,13 @@
       "initial_phase": "betting",
       "phases": ["betting", "dice_offered", "aiming_throw", "bounce_read", "dealer_settlement"],
       "required_actions": ["place", "correct", "remove_one", "undo", "clear", "repeat", "rebet", "confirm", "flick"],
+      "sequence": [
+        {"from": "betting", "action": "confirm", "to": "dice_offered"},
+        {"from": "dice_offered", "action": "flick", "to": "aiming_throw"},
+        {"from": "aiming_throw", "action": "flick", "to": "bounce_read"},
+        {"from": "bounce_read", "action": "confirm", "to": "dealer_settlement"},
+        {"from": "dealer_settlement", "action": "confirm", "to": "betting"}
+      ],
       "actors": ["stickperson", "base_dealer_left", "base_dealer_right", "boxperson", "pit_boss", "crowd_rail"],
       "objects": ["table_layout", "dice_pair", "working_chips", "point_puck", "crowd_rail"],
       "material_operations": ["actor.set_behavior", "object.set_state", "interaction.set_availability"],
@@ -19,6 +26,14 @@
       "initial_phase": "betting",
       "phases": ["betting", "attention_call", "dice_offered", "aiming_throw", "bounce_read", "dealer_settlement"],
       "required_actions": ["place", "correct", "remove_one", "undo", "clear", "repeat", "rebet", "confirm", "flick"],
+      "sequence": [
+        {"from": "betting", "action": "confirm", "to": "attention_call"},
+        {"from": "attention_call", "action": "confirm", "to": "dice_offered"},
+        {"from": "dice_offered", "action": "flick", "to": "aiming_throw"},
+        {"from": "aiming_throw", "action": "flick", "to": "bounce_read"},
+        {"from": "bounce_read", "action": "confirm", "to": "dealer_settlement"},
+        {"from": "dealer_settlement", "action": "confirm", "to": "betting"}
+      ],
       "actors": ["stickperson", "base_dealer_left", "base_dealer_right", "boxperson", "pit_boss", "expanded_crowd"],
       "objects": ["table_layout", "dice_pair", "working_chips", "point_puck", "high_stakes_marker", "crowd_rail"],
       "material_operations": ["actor.move", "actor.set_attention", "object.set_state", "interaction.set_availability"],
@@ -29,6 +44,14 @@
       "initial_phase": "betting",
       "phases": ["betting", "audit_hold", "dice_offered", "aiming_throw", "bounce_read", "dealer_settlement"],
       "required_actions": ["place", "remove_one", "confirm", "flick"],
+      "sequence": [
+        {"from": "betting", "action": "confirm", "to": "audit_hold"},
+        {"from": "audit_hold", "action": "confirm", "to": "dice_offered"},
+        {"from": "dice_offered", "action": "flick", "to": "aiming_throw"},
+        {"from": "aiming_throw", "action": "flick", "to": "bounce_read"},
+        {"from": "bounce_read", "action": "confirm", "to": "dealer_settlement"},
+        {"from": "dealer_settlement", "action": "confirm", "to": "betting"}
+      ],
       "actors": ["stickperson", "base_dealer_left", "base_dealer_right", "pit_boss", "security_observer"],
       "objects": ["table_layout", "dice_pair", "audit_marker", "service_gate", "security_rail"],
       "material_operations": ["actor.move", "actor.set_attention", "object.set_state", "interaction.set_availability"],
@@ -39,6 +62,14 @@
       "initial_phase": "arrival",
       "phases": ["arrival", "cash_commit", "dice_offered", "aiming_throw", "bounce_read", "cash_settlement"],
       "required_actions": ["place", "correct", "remove_one", "undo", "clear", "repeat", "rebet", "confirm", "flick"],
+      "sequence": [
+        {"from": "arrival", "action": "place", "to": "cash_commit"},
+        {"from": "cash_commit", "action": "confirm", "to": "dice_offered"},
+        {"from": "dice_offered", "action": "flick", "to": "aiming_throw"},
+        {"from": "aiming_throw", "action": "flick", "to": "bounce_read"},
+        {"from": "bounce_read", "action": "confirm", "to": "cash_settlement"},
+        {"from": "cash_settlement", "action": "confirm", "to": "arrival"}
+      ],
       "actors": ["caller", "lookout", "shooter", "street_participants"],
       "objects": ["chalk_ring", "cash_ring", "dice_pair", "lookout_post"],
       "material_operations": ["actor.set_behavior", "object.set_state", "interaction.set_availability"],
@@ -49,6 +80,13 @@
       "initial_phase": "arrival",
       "phases": ["arrival", "cash_commit", "warning", "break_up", "escape_or_relocate", "terminal_session"],
       "required_actions": ["place", "remove_one", "confirm", "escape", "relocate"],
+      "sequence": [
+        {"from": "arrival", "action": "place", "to": "cash_commit"},
+        {"from": "cash_commit", "action": "confirm", "to": "warning"},
+        {"from": "warning", "action": "escape", "to": "break_up"},
+        {"from": "break_up", "action": "relocate", "to": "escape_or_relocate"},
+        {"from": "escape_or_relocate", "action": "relocate", "to": "terminal_session"}
+      ],
       "actors": ["caller", "lookout", "shooter", "street_participants", "approaching_pressure"],
       "objects": ["chalk_ring", "cash_ring", "alternate_circle_request", "exit_interaction"],
       "material_operations": ["actor.move", "actor.set_behavior", "object.set_state", "interaction.set_availability", "route.request_relocation"],
