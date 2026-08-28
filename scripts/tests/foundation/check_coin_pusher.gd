@@ -20,6 +20,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_plinko_bounce_and_variance(machine_definition, failures)
 	_check_pusher_v3_alive_cabinet(library, machine_definition, failures)
 	_check_pusher_v3_realtime_redraw_ownership(failures)
+	_check_pusher_v3_native_live_cache_ownership(machine_definition, failures)
 	_check_pusher_v3_presentation_view(machine_definition, failures)
 	_check_pusher_v3_rejected_mechanics_deleted(failures)
 	_check_pusher_v3_landing_skill(machine_definition, failures)
@@ -83,6 +84,27 @@ func _check_pusher_v3_realtime_redraw_ownership(failures: Array) -> void:
 			or int(reduced_counters.get("reduced_motion_measurement_redraw_requests", 0)) != 1:
 		failures.append("Coin Pusher reduced-motion measurement did not request exactly one real dirty draw while keeping the animation scheduler frozen.")
 	canvas.free()
+
+
+func _check_pusher_v3_native_live_cache_ownership(machine_definition: Dictionary, failures: Array) -> void:
+	if not ClassDB.class_exists("CoinPusherNativeCore"):
+		return
+	var native: Object = ClassDB.instantiate("CoinPusherNativeCore")
+	if native == null or not native.has_method("supports_live_batch_capture") or not bool(native.call("supports_live_batch_capture")):
+		return
+	var state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-LIVE-CACHE-OWNERSHIP-OPENING"), machine_definition, 0)
+	var rng: RngStream = _pusher_v3_rng("PUSHER-V3-LIVE-CACHE-OWNERSHIP-RNG")
+	var rng_weak := weakref(rng)
+	native.call("step_ticks", state, {
+		"input_trace": [{"tick": int(state.get("tick", 0)), "kind": "drop", "x": 50000, "density": 1}],
+		"rng": rng,
+		"motor_enabled": false,
+		"live_cache_key": "foundation:ownership",
+		"live_cache_reset": true,
+	}, 1)
+	rng = null
+	if rng_weak.get_ref() != null:
+		failures.append("Coin Pusher native live cache retained its per-call RngStream after the step completed.")
 
 
 func _check_pusher_v3_10_idle_queue_cups_and_stack(library: ContentLibrary, game_definition: Dictionary, machine: Dictionary, failures: Array) -> void:

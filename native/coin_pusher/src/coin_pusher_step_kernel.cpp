@@ -221,6 +221,12 @@ struct Kernel {
     config = c;
     g = geometry(s);
   }
+  void release_call_context() {
+    // A cached kernel owns only the numeric solver state between calls. The
+    // call config can contain RefCounted helpers such as RngStream; retaining
+    // it in the process-lifetime live cache leaks that object at shutdown.
+    config.clear();
+  }
   bool load() {
     if (String(state.get("schema", "")) != "coin_pusher_machine_v3" ||
         int64_t(state.get("version", 0)) != 3)
@@ -1444,10 +1450,14 @@ Dictionary CoinPusherNativeCore::step_ticks(Dictionary state,
     if (reset || !live_cache->kernel || live_cache->key != cache_key) {
       live_cache->key = cache_key;
       live_cache->kernel = std::make_unique<Kernel>(state, config);
-      return live_cache->kernel->run(tick_count);
+      Dictionary result = live_cache->kernel->run(tick_count);
+      live_cache->kernel->release_call_context();
+      return result;
     }
     live_cache->kernel->resume(state, config);
-    return live_cache->kernel->run(tick_count, false);
+    Dictionary result = live_cache->kernel->run(tick_count, false);
+    live_cache->kernel->release_call_context();
+    return result;
   }
   Kernel k(state, config);
   return k.run(tick_count);
