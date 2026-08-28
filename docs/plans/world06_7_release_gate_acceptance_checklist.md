@@ -152,8 +152,8 @@ Apply every case to every `world06_2`–`world06_6` seam listed below:
   byte-equal and behavior-equal before contract-authorized disclosure.
 - [ ] Compare raw and decoded save, key sets, public projections, availability,
   scene graph, object/actor identity/order/state/pose, interactions, objectives,
-  receipts, errors, logs, reports, captures, audio/event staging, timing,
-  allocations, scans, and work counters.
+  receipts, errors, logs, reports, test fixture content and fixture names,
+  captures, audio/event staging, timing, allocations, scans, and work counters.
 - [ ] Cases include future Numbers result, private rig route, recruitment private
   standing/ledger state, play detection future, sweep hidden track/pressure,
   heist private identity/weight/state, observation availability, and no-private-
@@ -189,11 +189,19 @@ Apply every case to every `world06_2`–`world06_6` seam listed below:
 - [ ] Keyboard, controller, reduced-motion, accessibility, native, Web, low-end,
   deterministic, performance/liveness, save, project, content, systems, UI,
   Rourke duel, Players Card route, and visual gates pass on the exact tree.
+- [ ] Every tactile verb's keyboard, controller, and reduced-motion equivalent
+  produces the identical authoritative outcome with fair timing.
+- [ ] Idle-liveness evidence exists for every touched surface; an idle draw cost
+  reported as `0.000` is a failure, not a pass.
 - [ ] Unlabeled contact sheets prove each sequence from room/actor/object state,
   not titles or reward text.
 - [ ] The closure report maps every checklist item to code, data, automated
-  evidence, captures, authentic root provenance, and exact result.
+  evidence, captures, authentic root provenance, and exact result. It includes a
+  per-system table with converted interactions, verbs and their equivalents,
+  actor set, aftermath persistence, unchanged-value verdict, and overall verdict.
+- [ ] Attach the complete hidden-information audit as its own closure-report
+  section with the exact method, paired cases, compared surfaces, digests,
+  provenance, and results.
 - [ ] ACCEPT only when every blocking item passes independently. Any authority
   bypass, distinguishability, double-fire, moved value, no-op regression, or
   missing provenance requires REJECT; unresolved external authority is BLOCKED.
-

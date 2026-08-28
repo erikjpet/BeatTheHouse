@@ -92,6 +92,10 @@ rejection:
 - [ ] Each observation remains at its landed rate and boundary. Staging may not
   emit early, emit twice, improve detectability, expose absence, or reveal why a
   public line became available.
+- [ ] A correctly read authenticated observation is actionable in the staged
+  scene through the landed public path; observability without a usable player
+  action fails. Exercise the poker observation against the landed `crew06_10`
+  implementation, not a fixture or parallel tell producer.
 - [ ] Public scene, actor, interaction, save, log, error, fixture, capture, and
   timing surfaces contain no hidden identity, weight, candidate set, resolution
   state, eligibility, evidence count, or forbidden semantic alias.
@@ -151,6 +155,11 @@ rejection:
 
 ## 8. Production-shape and composition negatives
 
+- [ ] Play both plans end to end in production shape: planning, every authored
+  phase, every decision at its authored boundary, the full setup and play, both
+  exit classes, and every rung of both outcome ladders. The positive matrix must
+  prove Plan A's planning table, floor, count, dock/corridor, and exit, and Plan
+  B's planning table, mixed invitational tables, cage, interview, and exit.
 - [ ] Plan A rejects early decisions, generic action counts, repeated actions
   presented as distinct sessions, wrong-game settlement, and fixture-only flags.
 - [ ] Plan B rejects generic rounds in place of mixed craps/card play,
@@ -170,8 +179,11 @@ rejection:
 - [ ] Run project, content, systems, UI, save, accessibility, determinism,
   native/Web, performance/liveness, Rourke duel, Players Card route, and visual
   gates on the exact candidate.
+- [ ] Visual evidence explicitly covers the planning table, every phase of both
+  plans, floor/count, dock, corridor, mixed invitational tables, cage, interview,
+  clean walk, hot chase, quiet confrontation, hedge, both plan-specific fracture
+  beats, both mechanical failure beats, reduced motion, and small screen.
 - [ ] Any distinguishing signal, unauthorized mutation, moved contract value,
   double-fire, or missing authentic provenance is an automatic rejection.
 - [ ] ACCEPT only after an independent reviewer checks every blocking item;
   otherwise record REJECT or BLOCKED with the exact unmet item.
-
