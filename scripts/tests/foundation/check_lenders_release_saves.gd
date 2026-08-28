@@ -5,6 +5,7 @@ const RunReportTimelineCanvasScript := preload("res://scripts/ui/run_report_time
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
+const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const StaffBlackjackGameScript := preload("res://scripts/games/blackjack.gd")
 const StaffBaccaratGameScript := preload("res://scripts/games/baccarat.gd")
 const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
@@ -2228,7 +2229,11 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		elif game.wager_cost_for_context("play_basic", int(duel_state.get("ante", 20)), hit_run, hit_run.current_environment, hit_command_ui) != 0:
 			failures.append("Rourke hit-to-21 settlement incorrectly requested another cash/chip ante.")
 		else:
-			var hit_result := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), hit_run, hit_run.current_environment, hit_run.create_rng("duel_hit_21_unused"), hit_command_ui)
+			var hit_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(hit_run.to_dict()))
+			var hit_compat := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), hit_run, hit_run.current_environment, hit_run.create_rng("duel_hit_21_unused"), hit_command_ui)
+			if not bool(hit_compat.get("blackjack_compatibility_simulation", false)) or JSON.stringify(_save_load_canonical_run_snapshot(hit_run.to_dict())) != hit_before_compat:
+				failures.append("Detached Rourke hit compatibility resolve mutated live RunState.")
+			var hit_result := _blackjack_authority_resolve_for_test(game, "play_basic", int(duel_state.get("ante", 20)), hit_run, hit_command_ui)
 			var hit_hands_after := _copy_array(hit_run.grand_casino_duel_status().get("hands", [])).size()
 			if not bool(hit_result.get("ok", false)) or hit_hands_after != hit_hands_before + 1:
 				failures.append("Rourke hit-to-21 SETTLE path did not advance exactly one duel hand: result=%s state=%s." % [JSON.stringify(hit_result), JSON.stringify(hit_run.grand_casino_duel_status())])
@@ -2265,7 +2270,11 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		if str(double_settle_command.get("action_id", "")) != "play_basic" or not bool(double_settle_command.get("resolve", double_settle_command.get("direct_resolve", false))):
 			failures.append("Rourke duel double did not become settleable after its card animation: %s." % JSON.stringify(double_settle_command))
 		else:
-			var doubled_result := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), double_run, double_run.current_environment, double_run.create_rng("duel_double_unused"), double_command_ui)
+			var double_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(double_run.to_dict()))
+			var double_compat := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), double_run, double_run.current_environment, double_run.create_rng("duel_double_unused"), double_command_ui)
+			if not bool(double_compat.get("blackjack_compatibility_simulation", false)) or JSON.stringify(_save_load_canonical_run_snapshot(double_run.to_dict())) != double_before_compat:
+				failures.append("Detached Rourke double compatibility resolve mutated live RunState.")
+			var doubled_result := _blackjack_authority_resolve_for_test(game, "play_basic", int(duel_state.get("ante", 20)), double_run, double_command_ui)
 			var doubled_status := double_run.grand_casino_duel_status()
 			var doubled_hands := _copy_array(doubled_status.get("hands", []))
 			var result_hands := _copy_array(doubled_result.get("blackjack_hand_results", []))
@@ -2284,8 +2293,14 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		var loaded_surface := game.surface_state(loaded_mid_duel, loaded_mid_duel.current_environment, {}) if loaded_mid_duel != null else {}
 		if loaded_mid_duel != null and _copy_array(loaded_surface.get("player_hands", [])).is_empty():
 			failures.append("Rourke's saved mid-hand cards did not reopen on the boss surface.")
-		var settled_replay := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), replay_run, replay_run.current_environment, replay_run.create_rng("duel_test_unused"), replay_ui)
-		var settled_original := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), win_run, win_run.current_environment, win_run.create_rng("duel_test_unused"), dealt_ui)
+		var replay_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(replay_run.to_dict()))
+		var original_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(win_run.to_dict()))
+		game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), replay_run, replay_run.current_environment, replay_run.create_rng("duel_test_unused"), replay_ui)
+		game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), win_run, win_run.current_environment, win_run.create_rng("duel_test_unused"), dealt_ui)
+		if JSON.stringify(_save_load_canonical_run_snapshot(replay_run.to_dict())) != replay_before_compat or JSON.stringify(_save_load_canonical_run_snapshot(win_run.to_dict())) != original_before_compat:
+			failures.append("Detached deterministic Rourke compatibility probes mutated live RunState.")
+		var settled_replay := _blackjack_authority_resolve_for_test(game, "play_basic", int(duel_state.get("ante", 20)), replay_run, replay_ui)
+		var settled_original := _blackjack_authority_resolve_for_test(game, "play_basic", int(duel_state.get("ante", 20)), win_run, dealt_ui)
 		if JSON.stringify(_save_load_canonical_value([settled_original.get("blackjack_hand_results", []), win_run.grand_casino_duel_status()])) != JSON.stringify(_save_load_canonical_value([settled_replay.get("blackjack_hand_results", []), replay_run.grand_casino_duel_status()])):
 			failures.append("Identical Rourke duel actions did not reproduce the settled hand and duel state.")
 
@@ -3155,7 +3170,13 @@ func _check_grand_casino_staff_game_state_reset(library: ContentLibrary, main_en
 	# seeding familiarity. Passive surface projection is intentionally
 	# observational and must not make a later dealer look like a rotation.
 	run_state.bankroll = maxi(run_state.bankroll, 100)
-	blackjack.resolve_with_context("blackjack_place_bet", 1, run_state, run_state.current_environment, run_state.create_rng("gc_staff_initial_assignment_action"), {"selected_stake": 1})
+	var staff_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(run_state.to_dict()))
+	var staff_compat := blackjack.resolve_with_context("blackjack_place_bet", 1, run_state, run_state.current_environment, run_state.create_rng("gc_staff_initial_assignment_action"), {"selected_stake": 1})
+	if not bool(staff_compat.get("blackjack_compatibility_simulation", false)) or JSON.stringify(_save_load_canonical_run_snapshot(run_state.to_dict())) != staff_before_compat:
+		failures.append("Detached blackjack staff-assignment compatibility resolve mutated live RunState.")
+	var staff_result := _blackjack_authority_resolve_for_test(blackjack, "blackjack_place_bet", 1, run_state, {"selected_stake": 1})
+	if not bool(staff_result.get("blackjack_host_committed", false)):
+		failures.append("Blackjack host did not commit the initial dealer assignment exactly once.")
 	var blackjack_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var blackjack_table: Dictionary = blackjack_states.get("blackjack", {}) if typeof(blackjack_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
 	var first_blackjack_id := str(blackjack_table.get("staff_assignment_id", ""))
@@ -3196,17 +3217,51 @@ func _check_grand_casino_staff_game_state_reset(library: ContentLibrary, main_en
 	var rotated_profile: Dictionary = rotated_surface.get("dealer_profile", {}) if typeof(rotated_surface.get("dealer_profile", {})) == TYPE_DICTIONARY else {}
 	if str(rotated_surface.get("dealer_name", "")) != str(rotated_assignment.get("name", "")) or str(rotated_profile.get("identity_id", "")) != str(rotated_assignment.get("id", "")) or int(rotated_surface.get("strategy_watch_pressure", -1)) != 0:
 		failures.append("Fresh blackjack dealer preview did not project the rotated identity with cleared strategy pressure.")
-	# Resolution is the write boundary. The durable ban intentionally rejects the
-	# wager after _table_state() commits the dealer-local reset, without dealing a
-	# hand or disturbing the physical table history this contract also protects.
+	# The fresh identity is projected immediately. The durable ban rejects the
+	# wager atomically, so only its retryable delivery may persist; dealer-local
+	# familiarity remains nonauthoritative projection until an accepted boundary.
 	run_state.bankroll = maxi(run_state.bankroll, 100)
+	var reset_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(run_state.to_dict()))
 	blackjack.resolve_with_context("blackjack_place_bet", 1, run_state, run_state.current_environment, run_state.create_rng("gc_staff_reset_action"), {"selected_stake": 1})
-	if int(blackjack_table.get("strategy_deviation_strikes", -1)) != 0 or int(blackjack_table.get("strategy_watch_pressure", -1)) != 0 or not str(blackjack_table.get("strategy_last_notice", "missing")).is_empty():
-		failures.append("Fresh blackjack dealer action boundary did not reset exactly the existing dealer-local strategy familiarity state.")
+	if JSON.stringify(_save_load_canonical_run_snapshot(run_state.to_dict())) != reset_before_compat:
+		failures.append("Detached blackjack dealer-reset compatibility resolve mutated live RunState.")
+	var reset_result := _blackjack_authority_resolve_for_test(blackjack, "blackjack_place_bet", 1, run_state, {"selected_stake": 1})
+	blackjack_states = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	blackjack_table = blackjack_states.get("blackjack", {}) if typeof(blackjack_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
+	if bool(reset_result.get("ok", true)) or str(reset_result.get("blackjack_host_request_key", "")).is_empty():
+		failures.append("Durably barred blackjack dealer reset did not fail atomically behind a retryable host delivery.")
+	var rotated_projection := blackjack.surface_state(run_state, run_state.current_environment, {})
+	if int(rotated_projection.get("strategy_watch_pressure", -1)) != 0:
+		failures.append("Fresh blackjack dealer projection retained the prior dealer's strategy familiarity.")
 	if int(blackjack_table.get("hands_played", 0)) != 9 or int(blackjack_table.get("running_count", 0)) != 4 or not bool(blackjack_table.get("barred", false)) or str(blackjack_table.get("barred_reason", "")) != "Casino memory persists.":
 		failures.append("Dealer rotation reset physical table history or durable casino ban state.")
 	if run_state.suspicion_level() != 28 or int(run_state.narrative_flags.get("grand_casino_games_played", 0)) != 4 or not bool(run_state.narrative_flags.get("grand_casino_cheat_evidence", false)) or str(run_state.narrative_flags.get("grand_casino_players_card_highest_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER or int(run_state.narrative_flags.get("grand_casino_comp_drink_tokens", 0)) != 2:
 		failures.append("Dealer rotation changed heat, evidence, counters, Players Card progress, or durable comp tokens.")
+
+
+func _blackjack_authority_resolve_for_test(game: GameModule, action_id: String, stake: int, run_state: RunState, session: Dictionary) -> Dictionary:
+	var environment := run_state.current_environment
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Dictionary = (game_states.get("blackjack", {}) as Dictionary).duplicate(true) if typeof(game_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
+	var binding := "blackjack:%s:%s" % [str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(
+		table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {}),
+		binding,
+		run_state.blackjack_authority_checkpoint_fingerprint()
+	)
+	if ledger.is_empty():
+		ledger = BlackjackActionAuthorityScript.default_ledger(binding, run_state.blackjack_authority_checkpoint_fingerprint())
+	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
+		return {"ok": false, "error_code": "pending_delivery", "message": "Test host already has a pending Blackjack action."}
+	table[BlackjackActionAuthorityScript.LEDGER_KEY] = BlackjackActionAuthorityScript.stage_session(ledger, session)
+	game.call("_update_environment_table", environment, table)
+	run_state.current_environment = environment
+	var host: Control = FoundationMain.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {"blackjack": game})
+	host.set("run_state", run_state)
+	host.set("selected_stake", stake)
+	return host.call("_blackjack_host_resolve_intent", action_id, stake)
 
 
 func _check_grand_casino_memory_entry_lines(main_environment: Dictionary, outside_environment: Dictionary, failures: Array) -> void:
