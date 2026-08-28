@@ -34,6 +34,10 @@ if ($PostLand) {
         $FoundationSuite = ""
         $foundationSuiteKey = ""
     }
+    if ($NoImport) {
+        $postLandInvocationErrors.Add("Post-land verification cannot skip the required Godot import with NoImport.")
+        $NoImport = $false
+    }
     $RequireGodot = $true
     $KeepGoing = $true
     $VerboseStages = $true
@@ -360,6 +364,25 @@ function Get-GitIdentityValue {
     return ([string]($value -join "`n")).Trim()
 }
 
+function Get-GDExtensionWindowsDebugTarget {
+    param([string]$DescriptorPath)
+    $inLibraries = $false
+    foreach ($rawLine in Get-Content -LiteralPath $DescriptorPath) {
+        $line = ([string]$rawLine).Trim()
+        if ($line -match '^\[([^\]]+)\]$') {
+            $inLibraries = $Matches[1] -ceq "libraries"
+            continue
+        }
+        if (-not $inLibraries -or $line.StartsWith("#") -or $line.StartsWith(";")) {
+            continue
+        }
+        if ($line -match '^windows\.debug\.x86_64\s*=\s*"([^"]+)"\s*$') {
+            return $Matches[1]
+        }
+    }
+    return ""
+}
+
 function Add-PostLandIdentityStage {
     param([ValidateSet("start", "end")][string]$Phase)
     $errors = New-Object System.Collections.Generic.List[string]
@@ -375,6 +398,8 @@ function Add-PostLandIdentityStage {
         tracked_clean = $false
         native_descriptor_path = ""
         native_descriptor_sha256 = ""
+        native_descriptor_windows_debug_target = ""
+        native_descriptor_windows_debug_path = ""
         native_plugin_path = ""
         native_plugin_sha256 = ""
         expected_native_plugin_sha256 = $ExpectedNativePluginSha256.Trim().ToUpperInvariant()
@@ -407,16 +432,18 @@ function Add-PostLandIdentityStage {
         $descriptorPath = Join-Path $root "addons\coin_pusher_native\coin_pusher_native.gdextension"
         $pluginPath = $NativePluginPath.Trim()
         if ([string]::IsNullOrWhiteSpace($pluginPath)) {
-            $pluginPath = Join-Path $root "addons\coin_pusher_native\bin\coin_pusher_native_v3_10.windows.template_debug.x86_64.nothreads.dll"
+            $errors.Add("NativePluginPath must explicitly name the canonical Windows debug library loaded by the GDExtension descriptor.")
         }
         elseif (-not [System.IO.Path]::IsPathRooted($pluginPath)) {
             $pluginPath = Join-Path $root $pluginPath
         }
         $descriptorPath = [System.IO.Path]::GetFullPath($descriptorPath)
-        $pluginPath = [System.IO.Path]::GetFullPath($pluginPath)
+        if (-not [string]::IsNullOrWhiteSpace($pluginPath)) {
+            $pluginPath = [System.IO.Path]::GetFullPath($pluginPath)
+        }
         $identity.native_descriptor_path = $descriptorPath
         $identity.native_plugin_path = $pluginPath
-        if (-not (Test-PathInsideDirectory -Path $pluginPath -Directory $root)) {
+        if (-not [string]::IsNullOrWhiteSpace($pluginPath) -and -not (Test-PathInsideDirectory -Path $pluginPath -Directory $root)) {
             $errors.Add("Native plugin is outside the exact post-land checkout: $pluginPath")
         }
         if (-not (Test-Path -LiteralPath $descriptorPath -PathType Leaf)) {
@@ -424,8 +451,29 @@ function Add-PostLandIdentityStage {
         }
         else {
             $identity.native_descriptor_sha256 = (Get-FileHash -LiteralPath $descriptorPath -Algorithm SHA256).Hash
+            $descriptorTarget = Get-GDExtensionWindowsDebugTarget -DescriptorPath $descriptorPath
+            $identity.native_descriptor_windows_debug_target = $descriptorTarget
+            if ([string]::IsNullOrWhiteSpace($descriptorTarget)) {
+                $errors.Add("Native plugin descriptor has no canonical windows.debug.x86_64 library target.")
+            }
+            elseif (-not $descriptorTarget.StartsWith("res://", [System.StringComparison]::Ordinal)) {
+                $errors.Add("Native plugin descriptor windows.debug.x86_64 target is not a canonical res:// path: $descriptorTarget")
+            }
+            else {
+                $descriptorPluginPath = [System.IO.Path]::GetFullPath((Join-Path $root $descriptorTarget.Substring(6).Replace('/', [System.IO.Path]::DirectorySeparatorChar)))
+                $identity.native_descriptor_windows_debug_path = $descriptorPluginPath
+                if (-not (Test-PathInsideDirectory -Path $descriptorPluginPath -Directory $root)) {
+                    $errors.Add("Native plugin descriptor Windows debug target is outside the exact post-land checkout: $descriptorPluginPath")
+                }
+                if (-not [string]::IsNullOrWhiteSpace($pluginPath) -and -not [string]::Equals($pluginPath, $descriptorPluginPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+                    $errors.Add("NativePluginPath is not the canonical Windows debug library loaded by the descriptor: supplied=$pluginPath descriptor=$descriptorPluginPath")
+                }
+            }
         }
-        if (-not (Test-Path -LiteralPath $pluginPath -PathType Leaf)) {
+        if ([string]::IsNullOrWhiteSpace($pluginPath)) {
+            # The explicit parameter error above is the authoritative failure.
+        }
+        elseif (-not (Test-Path -LiteralPath $pluginPath -PathType Leaf)) {
             $errors.Add("Built native plugin is missing: $pluginPath")
         }
         else {
@@ -441,7 +489,7 @@ function Add-PostLandIdentityStage {
             $errors.Add("Godot executable identity is missing before the post-land gate starts.")
         }
         if ($Phase -eq "end" -and $null -ne $script:PostLandIdentity) {
-            foreach ($key in @("expected_main", "main_commit", "head_commit", "tree", "native_source_tree", "native_descriptor_sha256", "native_plugin_sha256", "expected_native_plugin_sha256", "godot_path", "godot_sha256")) {
+            foreach ($key in @("expected_main", "main_commit", "head_commit", "tree", "native_source_tree", "native_descriptor_sha256", "native_descriptor_windows_debug_target", "native_descriptor_windows_debug_path", "native_plugin_path", "native_plugin_sha256", "expected_native_plugin_sha256", "godot_path", "godot_sha256")) {
                 if ([string]$identity[$key] -cne [string]$script:PostLandIdentity[$key]) {
                     $errors.Add("Post-land identity changed during the gate at ${key}: start=$($script:PostLandIdentity[$key]) end=$($identity[$key]).")
                 }
@@ -637,6 +685,8 @@ function Write-TestSummary {
     if ($PostLand) {
         $summary["post_land"] = [ordered]@{
             enabled = $true
+            invocation_errors = @($postLandInvocationErrors)
+            complete_import_forced = (-not $NoImport)
             exact_main_identity = $script:PostLandIdentity
             end_identity_verified = $script:PostLandEndVerified
             eligible_for_done = ($failed.Count -eq 0 -and $script:PostLandEndVerified)
