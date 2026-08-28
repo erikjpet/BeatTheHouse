@@ -287,7 +287,7 @@ an automatic P0 and blocks the program.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| world06_1 | `world06_1_crew_sequence_adapter_prompt.md` | TODO | env06_6 | world06_2..6 | — | — | — | Bridges crew/world systems onto the env06_6 runtime; owns the EventModule crew seam and the hidden-state leak test. |
+| world06_1 | `world06_1_crew_sequence_adapter_prompt.md` | IN_PROGRESS | env06_6 | world06_2..6 | Codex/lane:world06_1 | 2026-08-27 | — | Claimed against frozen env06_6 head `855a2961`; bridges crew/world systems onto the runtime, owns the EventModule crew seam and hidden-state leak test, and uses `crew_favor_delivery` as the proof conversion. |
 | world06_2 | `world06_2_streets_sequences_prompt.md` | TODO | world06_1 | world06_6 | — | — | — | Deliveries, multi-stop routes, holds, stash/ditch, pursuit. Owns the reusable chase verbs. |
 | world06_3 | `world06_3_numbers_depth_prompt.md` | TODO | world06_1, world06_2 | — | — | — | — | Book as a place, slips as objects, the draw as an occasion, both rig routes staged. |
 | world06_4 | `world06_4_backroom_jobs_recruitment_prompt.md` | TODO | world06_1 | — | — | — | — | L3 occupancy, job board, all 13 jobs, seven recruitment encounters. `stake_horse` and `collection` need real sequences. |
