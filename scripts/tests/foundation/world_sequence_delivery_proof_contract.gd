@@ -205,6 +205,7 @@ func _check_production_schedule(failures: Array) -> void:
 	if JSON.stringify(restored.world_sequence_registrations) != JSON.stringify(run_state.world_sequence_registrations) \
 			or JSON.stringify(restored.delivery_snapshot()) != JSON.stringify(delivery_snapshot):
 		failures.append("Scheduled Crew favor sequence and delivery authority did not survive save/load together.")
+	_check_target_handoff(run_state, library, token, target_node_id, bankroll_before, heat_before, failures)
 
 	var refused_run := _production_run(library, "WORLD-SEQUENCE-PROOF-REFUSAL")
 	refused_run.narrative_flags["crew_favor_pending"] = true
@@ -217,6 +218,74 @@ func _check_production_schedule(failures: Array) -> void:
 			or refused_run.crew_trust("crew_rook") != 0 or not bool(refused_run.narrative_flags.get("crew_favor_refused", false)) \
 			or str(refused.get("message", "")) != "The night stays quiet. Quieter, even.":
 		failures.append("Production Crew favor refusal no longer stays on its unchanged unmounted dialogue path.")
+
+
+func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: String, target_node_id: String, bankroll_before: int, heat_before: int, failures: Array) -> void:
+	if target_node_id.is_empty():
+		failures.append("Production delivery did not expose a public target for the proof conversion.")
+		return
+	RunGeneratorScript.new(library).next_environment(run_state, target_node_id, true)
+	if run_state.current_world_node_id() != target_node_id:
+		failures.append("Production world generation did not install the exact public Crew favor target.")
+		return
+	var arrival := run_state.delivery_resolve_travel_arrival({}, {})
+	if not bool(arrival.get("ok", false)) or not bool(arrival.get("handoff_ready", false)):
+		failures.append("Production delivery did not reach its real public handoff boundary: %s." % JSON.stringify(arrival))
+		return
+	var finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
+	if not bool(finalized.get("ok", false)):
+		failures.append("Crew favor sequence did not mount after exact-target semantic finalization: %s." % JSON.stringify(finalized))
+		return
+	var projection := _dict(finalized.get("projection", {}))
+	var semantic := _dict(projection.get("semantic_state", {}))
+	var interactions := _dict(semantic.get("interactions", {}))
+	var handoff := _dict(interactions.get("crew::package_handoff", {}))
+	if str(handoff.get("world_sequence_owner_token", "")) != token:
+		failures.append("Composed target-room handoff is not routed by its exact owner-scoped sequence token: %s." % JSON.stringify(handoff))
+	if run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_node_id) != token:
+		failures.append("Mounted Crew favor sequence did not become the sole delivery_handoff presentation owner.")
+	var before_command := run_state.to_dict()
+	var actions := _array(handoff.get("available_actions", []))
+	var handoff_action := _dict(actions[0]) if not actions.is_empty() else {}
+	var command := run_state.world_sequence_command(
+		token,
+		"make_handoff",
+		"proof:crew_favor:handoff",
+		{},
+		"crew",
+		"package_handoff",
+		{"crew::package_handoff": true},
+		str(handoff_action.get("action_origin_owner_namespace", "")),
+		str(handoff_action.get("action_origin_stable_object_id", "")),
+		str(handoff_action.get("action_origin_receipt_key", "")),
+		str(handoff_action.get("action_origin_boundary_id", "")),
+		str(handoff_action.get("action_origin_fingerprint", ""))
+	)
+	if not bool(command.get("ok", false)):
+		failures.append("Authenticated Crew favor handoff command failed: %s." % JSON.stringify(command))
+		return
+	if run_state.bankroll != int(before_command.get("bankroll", -1)) or run_state.suspicion_level() != int(before_command.get("suspicion", -1)):
+		failures.append("Adapter command applied Crew economy consequences before the owning delivery model consumed the neutral outcome.")
+	var pending := run_state.world_sequence_pending_outcomes(token)
+	if pending.size() != 1 or str(_dict(pending[0]).get("channel_id", "")) != "delivery_handoff" \
+			or str(_dict(pending[0]).get("outcome", "")) != "delivered":
+		failures.append("Crew favor handoff did not emit exactly one neutral delivered receipt: %s." % JSON.stringify(pending))
+		return
+	var owner_result := run_state.delivery_complete_handoff(target_node_id)
+	if not bool(owner_result.get("ok", false)) or run_state.bankroll != bankroll_before + 22 \
+			or run_state.suspicion_level() != heat_before + 4 or not bool(run_state.narrative_flags.get("crew_favor_completed", false)):
+		failures.append("Existing delivery authority did not apply the unchanged Crew favor result exactly at outcome consumption: %s." % JSON.stringify(owner_result))
+		return
+	var receipt_id := str(_dict(pending[0]).get("receipt_id", ""))
+	var public_result := {"ok": true, "resolved": bool(owner_result.get("resolved", false)), "message": str(owner_result.get("message", ""))}
+	var acknowledgement := run_state.world_sequence_ack_outcome(token, receipt_id, public_result)
+	var cleanup := run_state.world_sequence_sync_owner(token, false, "owner_ended")
+	if not bool(acknowledgement.get("ok", false)) or not bool(cleanup.get("ok", false)) or not run_state.world_sequence_pending_outcomes(token).is_empty():
+		failures.append("Crew favor delivered outcome did not acknowledge and clean up through the generic lifecycle seam.")
+	var replay_command := run_state.world_sequence_command(token, "make_handoff", "proof:crew_favor:handoff", {}, "crew", "package_handoff", {"crew::package_handoff": true})
+	var replay_owner := run_state.delivery_complete_handoff(target_node_id)
+	if bool(replay_owner.get("ok", false)) or run_state.bankroll != bankroll_before + 22 or run_state.suspicion_level() != heat_before + 4:
+		failures.append("Crew favor replay applied the owning delivery result more than once: command=%s owner=%s." % [JSON.stringify(replay_command), JSON.stringify(replay_owner)])
 
 
 func _production_run(library: ContentLibrary, seed: String) -> RunState:
