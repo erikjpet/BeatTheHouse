@@ -1060,13 +1060,13 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 	# contact must retain authored placement so the later small-screen hit, label,
 	# lane, and reachability validators can reject the exact authored conflict
 	# instead of silently manufacturing different room geometry.
-	if not _substantially_overlaps(identity, authored, occupied):
+	if not _normal_hit_overlaps(identity, authored, occupied):
 		return {"rect": _clamp_inside_board(authored), "adjusted": false, "colliding": false}
 	for offset_value in COLLISION_OFFSETS:
 		var offset := offset_value as Vector2
 		var candidate := _clamp_inside_board(Rect2(authored.position + offset, authored.size))
 		var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
-		if not _substantially_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
+		if not _normal_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
 			return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false}
 	return {"rect": authored, "adjusted": false, "colliding": true}
 
@@ -1081,6 +1081,17 @@ static func _substantially_overlaps(identity: String, rect: Rect2, occupied: Arr
 			continue
 		var overlap := rect.intersection(other).get_area()
 		if overlap > minf(rect.get_area(), other.get_area()) * COLLISION_RATIO:
+			return true
+	return false
+
+
+static func _normal_hit_overlaps(identity: String, rect: Rect2, occupied: Array) -> bool:
+	for occupied_value in occupied:
+		var occupied_record := _dict(occupied_value)
+		if str(occupied_record.get("identity", "")) == identity:
+			continue
+		var other: Rect2 = occupied_record.get("rect", Rect2())
+		if other.has_area() and rect.intersects(other) and rect.intersection(other).get_area() > 0.01:
 			return true
 	return false
 
