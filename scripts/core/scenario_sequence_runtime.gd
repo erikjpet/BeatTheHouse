@@ -546,15 +546,9 @@ static func flush_facts(state_value: Dictionary, definition: Dictionary, boundar
 			var response := _apply_fact(state, definition, typed_fact, fingerprint)
 			if not bool(response.get("ok", false)):
 				errors.append_array(_array(response.get("errors", [])))
-				# Reject this identity without committing its journal entry, while
-				# preserving the exact order of every other durable queued fact.
-				var rejected_state := original.duplicate(true)
-				var retained_queue: Array = []
-				for queued_value in _fact_array(original.get("fact_queue", [])):
-					if str((queued_value as Dictionary).get("fact_id", "")) != fact_id:
-						retained_queue.append((queued_value as Dictionary).duplicate(true))
-				rejected_state["fact_queue"] = retained_queue
-				return {"ok": false, "state": rejected_state, "processed": [], "errors": errors}
+				# The whole flush is one transaction. A failed fact remains queued so
+				# the durable input journal is byte-for-byte identical on rejection.
+				return {"ok": false, "state": original, "processed": [], "errors": errors}
 			state = _dict(response.get("state", state))
 		state["last_flushed_fact_serial"] = maxi(int(state.get("last_flushed_fact_serial", 0)), int(typed_fact.get("ingress_serial", 0)))
 		processed.append(fact_id)
@@ -1096,7 +1090,7 @@ static func _run_handler(state: Dictionary, definition: Dictionary, handler_id: 
 			var event_id := str(inputs.get("event_id", ""))
 			var resolution_id := str(inputs.get("resolution_id", ""))
 			var trigger_id := str(trigger.get("receipt_id", trigger.get("fact_id", trigger.get("command_id", ""))))
-			if event_id != event_id.strip_edges() or resolution_id != resolution_id.strip_edges() or not _valid_id(event_id) or not _valid_id(resolution_id) or trigger_id != trigger_id.strip_edges() or not _valid_id(trigger_id) or trigger_id.length() > OperationRegistryScript.MAX_VARIANT_TEXT:
+			if event_id != event_id.strip_edges() or resolution_id != resolution_id.strip_edges() or not _valid_id(event_id) or not _valid_id(resolution_id) or not _valid_persisted_text(trigger_id):
 				return {"ok": false, "state": state, "errors": ["scenario event correlation requires exact canonical event, resolution, and trigger ids"]}
 			var event_choices := _dict(_dict(next.get("semantic_state", {})).get("event_choices", {}))
 			if not _array(event_choices.get(event_id, [])).has(resolution_id):
@@ -1182,7 +1176,8 @@ static func _apply_fact(state: Dictionary, definition: Dictionary, fact_value: D
 	if fact_type == "world_boundary":
 		# Presentation stages expire on real world boundaries even when a newly
 		# entered phase consumes its one-boundary progression grace.
-		next["active_stages"] = _unexpired_stages(next.get("active_stages", []), int(next.get("boundary_serial", 0)))
+		var fact_boundary := maxi(int(next.get("boundary_serial", 0)), int(fact_value.get("boundary_serial", 0)))
+		next["active_stages"] = _unexpired_stages(next.get("active_stages", []), fact_boundary)
 		if not skip_phase_boundary:
 			next["phase_action_counter"] = _saturating_nonnegative_add(int(next.get("phase_action_counter", 0)), maxi(1, int(payload.get("amount", 1))))
 	var trigger := {"kind": "fact", "fact_type": "world_boundary_grace" if skip_phase_boundary else fact_type, "fact_id": str(fact_value.get("fact_id", "")), "payload": payload, "cause_fingerprint": cause_fingerprint}
@@ -2163,7 +2158,7 @@ static func _normalized_event_correlations(value: Variant, event_choices: Dictio
 		var resolution_id := str(source.get("resolution_id", ""))
 		var trigger_kind := str(source.get("trigger_kind", ""))
 		var trigger_id := str(source.get("trigger_id", ""))
-		if event_id != event_id.strip_edges() or resolution_id != resolution_id.strip_edges() or not _valid_id(event_id) or not _valid_id(resolution_id) or trigger_kind not in ["command", "fact"] or not _valid_id(trigger_id) or trigger_id != trigger_id.strip_edges() or trigger_id.length() > 512:
+		if event_id != event_id.strip_edges() or resolution_id != resolution_id.strip_edges() or not _valid_id(event_id) or not _valid_id(resolution_id) or trigger_kind not in ["command", "fact"] or not _valid_persisted_text(trigger_id):
 			continue
 		if event_choices.is_empty() or not _array(event_choices.get(event_id, [])).has(resolution_id):
 			continue
