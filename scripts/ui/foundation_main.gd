@@ -4967,6 +4967,7 @@ func abandon_run_from_menu() -> void:
 func _foundation_lifecycle_snapshot() -> Dictionary:
 	var snapshot := {
 		"run_state_ref": run_state,
+		"run_state_storage": _run_state_lifecycle_storage_snapshot(),
 		"run": run_state.to_dict() if run_state != null else {},
 		"environment": run_state.current_environment.duplicate(true) if run_state != null else {},
 		"world_map": run_state.world_map.duplicate(true) if run_state != null else {},
@@ -5025,15 +5026,46 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 	return snapshot
 
 
+func _run_state_lifecycle_storage_snapshot() -> Dictionary:
+	var result := {}
+	if run_state == null:
+		return result
+	for property_value in run_state.get_property_list():
+		if typeof(property_value) != TYPE_DICTIONARY:
+			continue
+		var property: Dictionary = property_value
+		if (int(property.get("usage", 0)) & PROPERTY_USAGE_STORAGE) == 0:
+			continue
+		var property_name := str(property.get("name", "")).strip_edges()
+		if property_name.is_empty() or property_name == "script":
+			continue
+		var value: Variant = run_state.get(property_name)
+		result[property_name] = value.duplicate(true) if typeof(value) == TYPE_DICTIONARY or typeof(value) == TYPE_ARRAY else value
+	return result
+
+
+func _restore_run_state_lifecycle_storage(snapshot: Dictionary) -> void:
+	if run_state == null:
+		return
+	for property_name_value in snapshot.keys():
+		var property_name := str(property_name_value)
+		var value: Variant = snapshot.get(property_name)
+		run_state.set(property_name, value.duplicate(true) if typeof(value) == TYPE_DICTIONARY or typeof(value) == TYPE_ARRAY else value)
+
+
 func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	var restored_run: Variant = snapshot.get("run_state_ref", null)
 	run_state = restored_run as RunState if restored_run is RunState else null
 	if run_state != null:
-		run_state.from_dict(_copy_dict(snapshot.get("run", {})))
-		run_state.current_environment = _copy_dict(snapshot.get("environment", {}))
-		run_state.world_map = _copy_dict(snapshot.get("world_map", {}))
-		run_state.grand_casino_room_states = _copy_dict(snapshot.get("room_states", {}))
-		run_state.home_state = _copy_dict(snapshot.get("home_state", {}))
+		var storage_snapshot := _copy_dict(snapshot.get("run_state_storage", {}))
+		if storage_snapshot.is_empty():
+			run_state.from_dict(_copy_dict(snapshot.get("run", {})))
+			run_state.current_environment = _copy_dict(snapshot.get("environment", {}))
+			run_state.world_map = _copy_dict(snapshot.get("world_map", {}))
+			run_state.grand_casino_room_states = _copy_dict(snapshot.get("room_states", {}))
+			run_state.home_state = _copy_dict(snapshot.get("home_state", {}))
+		else:
+			_restore_run_state_lifecycle_storage(storage_snapshot)
 	var fields := _copy_dict(snapshot.get("fields", {}))
 	for field_name_value in fields.keys():
 		var field_name := str(field_name_value)
