@@ -45,7 +45,7 @@ func _initialize() -> void:
 		quit(1)
 		return
 	_write_json(OUTPUT, {"schema_version":1,"package_id":"env06_7_bars_road","handler_pack":"bars_road","renderer_id":"bars_road","scenarios":entries})
-	_write_json(DOSSIERS, {"schema_version":1,"package_id":"env06_7_bars_road","base_head":"855a296126e8b4747b78fbe89cb5a2d02daf61f5","scenario_count":entries.size(),"dossiers":dossiers,"uniqueness_rows":report.rows,"pair_count":report.comparison_count})
+	_write_json(DOSSIERS, {"schema_version":1,"package_id":"env06_7_bars_road","base_head":"855a296126e8b4747b78fbe89cb5a2d02daf61f5","scenario_count":entries.size(),"dossiers":dossiers,"uniqueness_rows":report.rows,"pairwise_similarity":report.pairs,"assembly_evidence_needed":report.failures,"pair_count":report.comparison_count})
 	print("ENV06_7_PACKAGE_C_AUTHOR_OK scenarios=%d pairs=%d" % [entries.size(), report.comparison_count])
 	quit(0)
 

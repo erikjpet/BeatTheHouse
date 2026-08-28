@@ -13000,5 +13000,677 @@
       "nearest_similarity": 0.640243902439024
     }
   ],
+  "pairwise_similarity": [
+    {
+      "left_id": "bar_darts_league_night",
+      "right_id": "bar_dead_tuesday",
+      "similarity": 0.18412348401323,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_darts_league_night",
+      "right_id": "bar_live_band",
+      "similarity": 0.416309012875536,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_darts_league_night",
+      "right_id": "jazz_club_guest_legend",
+      "similarity": 0.667458432304038,
+      "equal_normalized_hash": false,
+      "status": "warning",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_darts_league_night",
+      "right_id": "jazz_club_recording_night",
+      "similarity": 0.255965292841649,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_darts_league_night",
+      "right_id": "jazz_club_rent_party",
+      "similarity": 0.365638766519824,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_darts_league_night",
+      "right_id": "jazz_club_union_trouble",
+      "similarity": 0.32762312633833,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_dead_tuesday",
+      "right_id": "jazz_club_guest_legend",
+      "similarity": 0.18412348401323,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_dead_tuesday",
+      "right_id": "jazz_club_recording_night",
+      "similarity": 0.245112781954887,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_dead_tuesday",
+      "right_id": "jazz_club_rent_party",
+      "similarity": 0.244870041039672,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_dead_tuesday",
+      "right_id": "jazz_club_union_trouble",
+      "similarity": 0.244870041039672,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_fight_night",
+      "right_id": "bar_darts_league_night",
+      "similarity": 0.718482252141983,
+      "equal_normalized_hash": false,
+      "status": "warning",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_fight_night",
+      "right_id": "bar_dead_tuesday",
+      "similarity": 0.18412348401323,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_fight_night",
+      "right_id": "bar_live_band",
+      "similarity": 0.416309012875536,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_fight_night",
+      "right_id": "bar_lock_in",
+      "similarity": 0.436343852013058,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_fight_night",
+      "right_id": "bar_payday_rush",
+      "similarity": 0.292410714285714,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_fight_night",
+      "right_id": "jazz_club_guest_legend",
+      "similarity": 0.665480427046263,
+      "equal_normalized_hash": false,
+      "status": "warning",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_fight_night",
+      "right_id": "jazz_club_recording_night",
+      "similarity": 0.255965292841649,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_fight_night",
+      "right_id": "jazz_club_rent_party",
+      "similarity": 0.365638766519824,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_fight_night",
+      "right_id": "jazz_club_union_trouble",
+      "similarity": 0.32762312633833,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_live_band",
+      "right_id": "bar_dead_tuesday",
+      "similarity": 0.191335740072202,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_live_band",
+      "right_id": "jazz_club_guest_legend",
+      "similarity": 0.416309012875536,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_live_band",
+      "right_id": "jazz_club_recording_night",
+      "similarity": 0.309756097560976,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_live_band",
+      "right_id": "jazz_club_rent_party",
+      "similarity": 0.356807511737089,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_live_band",
+      "right_id": "jazz_club_union_trouble",
+      "similarity": 0.356807511737089,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_lock_in",
+      "right_id": "bar_darts_league_night",
+      "similarity": 0.436343852013058,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_lock_in",
+      "right_id": "bar_dead_tuesday",
+      "similarity": 0.210268948655257,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_lock_in",
+      "right_id": "bar_live_band",
+      "similarity": 0.695473251028807,
+      "equal_normalized_hash": false,
+      "status": "warning",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_lock_in",
+      "right_id": "jazz_club_guest_legend",
+      "similarity": 0.396825396825397,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_lock_in",
+      "right_id": "jazz_club_recording_night",
+      "similarity": 0.289315726290516,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_lock_in",
+      "right_id": "jazz_club_rent_party",
+      "similarity": 0.377830750893921,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_lock_in",
+      "right_id": "jazz_club_union_trouble",
+      "similarity": 0.336416184971098,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_payday_rush",
+      "right_id": "bar_darts_league_night",
+      "similarity": 0.292410714285714,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_payday_rush",
+      "right_id": "bar_dead_tuesday",
+      "similarity": 0.245112781954887,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_payday_rush",
+      "right_id": "bar_live_band",
+      "similarity": 0.309756097560976,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_payday_rush",
+      "right_id": "bar_lock_in",
+      "similarity": 0.330855018587361,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_payday_rush",
+      "right_id": "jazz_club_guest_legend",
+      "similarity": 0.255965292841649,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_payday_rush",
+      "right_id": "jazz_club_recording_night",
+      "similarity": 0.634408602150538,
+      "equal_normalized_hash": false,
+      "status": "warning",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_payday_rush",
+      "right_id": "jazz_club_rent_party",
+      "similarity": 0.337819650067295,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_payday_rush",
+      "right_id": "jazz_club_union_trouble",
+      "similarity": 0.2925877763329,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_wake",
+      "right_id": "bar_darts_league_night",
+      "similarity": 0.257425742574257,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_wake",
+      "right_id": "bar_dead_tuesday",
+      "similarity": 0.250769230769231,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_wake",
+      "right_id": "bar_fight_night",
+      "similarity": 0.257425742574257,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_wake",
+      "right_id": "bar_live_band",
+      "similarity": 0.312267657992565,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_wake",
+      "right_id": "bar_lock_in",
+      "similarity": 0.291463414634146,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_wake",
+      "right_id": "bar_payday_rush",
+      "similarity": 0.610412926391382,
+      "equal_normalized_hash": false,
+      "status": "warning",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_wake",
+      "right_id": "jazz_club_guest_legend",
+      "similarity": 0.29445073612684,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_wake",
+      "right_id": "jazz_club_recording_night",
+      "similarity": 0.692452830188679,
+      "equal_normalized_hash": false,
+      "status": "warning",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_wake",
+      "right_id": "jazz_club_rent_party",
+      "similarity": 0.293262879788639,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_wake",
+      "right_id": "jazz_club_union_trouble",
+      "similarity": 0.339261285909713,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "jazz_club_guest_legend",
+      "right_id": "jazz_club_recording_night",
+      "similarity": 0.292410714285714,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "jazz_club_guest_legend",
+      "right_id": "jazz_club_rent_party",
+      "similarity": 0.32762312633833,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "jazz_club_guest_legend",
+      "right_id": "jazz_club_union_trouble",
+      "similarity": 0.365638766519824,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "jazz_club_recording_night",
+      "right_id": "jazz_club_union_trouble",
+      "similarity": 0.337819650067295,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "jazz_club_rent_party",
+      "right_id": "jazz_club_recording_night",
+      "similarity": 0.2925877763329,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "jazz_club_rent_party",
+      "right_id": "jazz_club_union_trouble",
+      "similarity": 0.640243902439024,
+      "equal_normalized_hash": false,
+      "status": "warning",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    }
+  ],
+  "assembly_evidence_needed": [
+    "scenario bar_wake vs bar_payday_rush: 0.610 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_wake vs jazz_club_recording_night: 0.692 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_fight_night vs bar_darts_league_night: 0.718 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_fight_night vs jazz_club_guest_legend: 0.665 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_payday_rush vs jazz_club_recording_night: 0.634 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_lock_in vs bar_live_band: 0.695 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_darts_league_night vs jazz_club_guest_legend: 0.667 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario jazz_club_rent_party vs jazz_club_union_trouble: 0.640 (warning). Missing receipt-bound masked visual evidence."
+  ],
   "pair_count": 55
 }
