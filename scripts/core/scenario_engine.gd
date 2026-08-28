@@ -1006,12 +1006,6 @@ static func _refresh_sequence_snapshots(environment: Dictionary, definition: Dic
 static func _commit_sequence_candidate(environment: Dictionary, candidate_value: Dictionary, definition: Dictionary, result_value: Dictionary) -> Dictionary:
 	var result := result_value.duplicate(true)
 	if not bool(result.get("ok", false)):
-		var rejected_state := _copy_dict(result.get("state", {}))
-		if str(rejected_state.get("status", "")) == SequenceRuntimeScript.STATUS_CLEANED and str(_copy_dict(environment.get("scenario_sequence_state", {})).get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED:
-			var rejected_candidate := candidate_value.duplicate(true)
-			rejected_candidate["scenario_sequence_state"] = rejected_state
-			environment.clear()
-			environment.merge(rejected_candidate, true)
 		return result
 	var candidate := candidate_value.duplicate(true)
 	var next := _copy_dict(result.get("state", {}))
