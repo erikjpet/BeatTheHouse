@@ -401,10 +401,13 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 	var peek_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, peek, 0, run_state, run_state.current_environment)
 	_check(bool(peek_state.get("peek_had_window", false)) and bool(peek_state.get("dealer_hole_visible", false)) and bool(peek_result.get("ok", false)), "Tutorial peek did not use the real distraction lookaway window.", route_failures)
 	var preserved_peek_state: Dictionary = peek_result.get("blackjack_surface_ui_state", peek_state) if typeof(peek_result.get("blackjack_surface_ui_state", peek_state)) == TYPE_DICTIONARY else peek_state
+	BlackjackAuthorityTestDriverScript.pin_protected_peek_settlement_rng(run_state)
 	var peek_finish := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_stand", 4, run_state, run_state.current_environment)
 	var peek_finish_result: Dictionary = {}
 	if bool(peek_finish.get("resolve", false)):
 		peek_finish_result = BlackjackAuthorityTestDriverScript.resolve_surface_command(game, peek_finish, 4, run_state, run_state.current_environment)
+	var peek_finish_table: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})
+	_check(not bool(peek_finish_result.get("dealer_caught_cheat", false)) and not bool(peek_finish_table.get("barred", false)), "The fixed tutorial Peek settlement was caught or barred: %s" % JSON.stringify(peek_finish_result), route_failures)
 	var peek_cleanup := BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, 4, run_state, run_state.current_environment)
 	var after_peek_hand := game.coach_state(run_state, run_state.current_environment, {})
 	_check(bool(peek_finish_result.get("ok", false)) and bool(peek_cleanup.get("ok", false)) and int(after_peek_hand.get("hands_played", 0)) == 2 and bool(after_peek_hand.get("between_hands", false)), "Tutorial Peek hand did not settle and clear presentation before the separate counting hand: %s" % JSON.stringify(peek_cleanup), route_failures)

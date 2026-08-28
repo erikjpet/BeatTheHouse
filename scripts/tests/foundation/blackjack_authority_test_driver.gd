@@ -7,6 +7,7 @@ extends RefCounted
 
 const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
+const PROTECTED_PEEK_SETTLEMENT_RNG_STATE := 21
 
 
 static func resolve(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, _rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
@@ -22,6 +23,13 @@ static func resolve(game: GameModule, action_id: String, stake: int, run_state: 
 	var result: Dictionary = host.call("_blackjack_host_resolve_intent", action_id, stake)
 	host.free()
 	return result
+
+
+static func pin_protected_peek_settlement_rng(run_state: RunState) -> void:
+	if run_state == null:
+		return
+	run_state.rng_seed = PROTECTED_PEEK_SETTLEMENT_RNG_STATE
+	run_state.rng_state = PROTECTED_PEEK_SETTLEMENT_RNG_STATE
 
 
 static func surface_intent(game: GameModule, surface_action: String, stake: int, run_state: RunState, environment: Dictionary, index: int = 0, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:
@@ -107,44 +115,6 @@ static func advance_terminal_presentation(game: GameModule, stake: int, run_stat
 		"command": command,
 		"result": result,
 		"session": post_session,
-	}
-
-
-static func authority_diagnostic(game: GameModule, stake: int, run_state: RunState, environment: Dictionary) -> Dictionary:
-	if game == null or run_state == null:
-		return {"error_code": "invalid_fixture"}
-	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var table: Dictionary = (game_states.get(game.get_id(), {}) as Dictionary).duplicate(true) if typeof(game_states.get(game.get_id(), {})) == TYPE_DICTIONARY else {}
-	var binding := "%s:%s:%s" % [game.get_id(), str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
-	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {}), binding, run_state.blackjack_authority_checkpoint_fingerprint())
-	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
-	var surface := game.surface_state(run_state, environment, session)
-	var ritual: Dictionary = surface.get("ritual_projection", {}) if typeof(surface.get("ritual_projection", {})) == TYPE_DICTIONARY else {}
-	return {
-		"phase": str(surface.get("phase", "")),
-		"dealt": bool(game.call("_has_dealt_hand", session)),
-		"ritual_phase": str(ritual.get("phase_id", "")),
-		"ritual_boundary": str(ritual.get("boundary_id", "")),
-		"table": {
-			"barred": bool(table.get("barred", false)),
-			"hands_played": int(table.get("hands_played", 0)),
-			"counting_enabled": bool(table.get("counting_enabled", false)),
-			"active_bet": int(table.get("active_bet", table.get("wager_debited", 0))),
-			"last_result": table.get("last_result", {}),
-		},
-		"funds": {
-			"bankroll": run_state.bankroll,
-			"grand_casino_chips": run_state.grand_casino_chips,
-			"wager_balance": run_state.wager_balance_for_game(game.get_id(), environment),
-			"wager_capacity": run_state.wager_capacity_for_game(game.get_id(), environment),
-			"requested_stake": stake,
-		},
-		"ledger": {
-			"binding": str(ledger.get("table_binding", "")),
-			"checkpoint": str(ledger.get("checkpoint_fingerprint", "")),
-			"pending_delivery": ledger.get("pending_delivery", {}),
-			"session": session,
-		},
 	}
 
 

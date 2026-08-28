@@ -361,11 +361,13 @@ func _stage_blackjack_lookaway_surface(hand_state: Dictionary) -> void:
 	var distracted_state: Dictionary = distraction.get("ui_state", {})
 	var peek := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_peek", 4, run_state, run_state.current_environment, 0, true)
 	var peek_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, peek, 0, run_state, run_state.current_environment)
+	BlackjackAuthorityTestDriverScript.pin_protected_peek_settlement_rng(run_state)
 	var stand := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_stand", 4, run_state, run_state.current_environment)
 	var stand_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, stand, 4, run_state, run_state.current_environment) if bool(stand.get("resolve", false)) else {}
+	var stand_table: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})
 	var cleanup := BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, 4, run_state, run_state.current_environment)
-	if not bool(stand_result.get("ok", false)) or not bool(cleanup.get("ok", false)):
-		push_error("Tutorial capture could not settle and clear the protected Peek hand: %s" % JSON.stringify({"stand": stand_result, "cleanup": cleanup}))
+	if not bool(stand_result.get("ok", false)) or bool(stand_result.get("dealer_caught_cheat", false)) or bool(stand_table.get("barred", false)) or not bool(cleanup.get("ok", false)):
+		push_error("Tutorial capture protected Peek boundary failed: stand_ok=%s caught=%s barred=%s cleanup_ok=%s" % [str(stand_result.get("ok", false)), str(stand_result.get("dealer_caught_cheat", false)), str(stand_table.get("barred", false)), str(cleanup.get("ok", false))])
 	app.set("game_surface_ui_state", peek_result.get("blackjack_surface_ui_state", peek.get("ui_state", {})))
 	app.call("_refresh")
 

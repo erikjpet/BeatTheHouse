@@ -392,9 +392,16 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 			or not TutorialFlow.apply_caught_transition(run_state, caught).is_empty():
 		_fail("A repeated/resumed tutorial Peek still barred blackjack or bypassed Count: %s." % str(caught))
 		return false
+	# The authority host owns its RNG, so pin one discovered fixture state rather
+	# than passing a cosmetic caller stream or retrying until the hand is safe.
+	BlackjackAuthorityTestDriverScript.pin_protected_peek_settlement_rng(run_state)
 	var peek_settlement := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_peek_finish"), protected_state)
 	if not bool(peek_settlement.get("ok", false)):
 		_fail("The protected Peek hand could not be settled before counting: %s." % str(peek_settlement))
+		return false
+	table = run_state.current_environment.get("game_states", {}).get("blackjack", {})
+	if bool(peek_settlement.get("dealer_caught_cheat", false)) or bool(table.get("barred", false)):
+		_fail("The fixed protected Peek settlement was caught or barred: rng=%d result=%s table_barred=%s." % [BlackjackAuthorityTestDriverScript.PROTECTED_PEEK_SETTLEMENT_RNG_STATE, str(peek_settlement), str(table.get("barred", false))])
 		return false
 	var peek_cleanup := BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, 4, run_state, run_state.current_environment)
 	if not bool(peek_cleanup.get("ok", false)) or not bool(peek_cleanup.get("terminal_cleared", false)):
@@ -408,7 +415,7 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 	var count_toggle := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count_toggle", 4, run_state, run_state.current_environment)
 	var count_deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
 	if str(count_deal.get("action_id", "")).is_empty() or not count_deal.has("_blackjack_host_delivery"):
-		_fail("The required Count deal did not issue a sealed action: toggle=%s deal=%s authority=%s." % [str(count_toggle), str(count_deal), str(BlackjackAuthorityTestDriverScript.authority_diagnostic(game, 4, run_state, run_state.current_environment))])
+		_fail("The required Count deal did not issue a sealed action: toggle_action=%s toggle_message=%s deal_handled=%s deal_message=%s." % [str(count_toggle.get("action_id", "")), str(count_toggle.get("message", "")), str(count_deal.get("handled", false)), str(count_deal.get("message", ""))])
 		return false
 	var count_deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, count_deal, 4, run_state, run_state.current_environment)
 	var count_state: Dictionary = count_deal_result.get("ui_state", count_deal.get("ui_state", {})) if typeof(count_deal_result.get("ui_state", count_deal.get("ui_state", {}))) == TYPE_DICTIONARY else count_deal.get("ui_state", {})
