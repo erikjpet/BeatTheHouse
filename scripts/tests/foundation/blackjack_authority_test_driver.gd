@@ -38,6 +38,30 @@ static func surface_intent(game: GameModule, surface_action: String, stake: int,
 	return command
 
 
+static func resolve_surface_command(game: GameModule, command: Dictionary, stake: int, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if game == null or run_state == null:
+		return {"ok": false, "error_code": "invalid_fixture"}
+	var action_id := str(command.get("action_id", ""))
+	var delivery_value: Variant = command.get("_blackjack_host_delivery", null)
+	if action_id.is_empty() or typeof(delivery_value) != TYPE_DICTIONARY:
+		return {"ok": false, "error_code": "invalid_intent", "message": "The surface command did not carry a sealed Blackjack action."}
+	var delivery: Dictionary = delivery_value
+	var command_stake := int(command.get("set_stake", stake))
+	if delivery.is_empty() \
+			or str(delivery.get("action_id", "")) != action_id \
+			or int(delivery.get("stake", -1)) != command_stake:
+		return {"ok": false, "error_code": "receipt_content_conflict", "message": "The surface command did not match its sealed Blackjack delivery."}
+	run_state.current_environment = environment
+	var host: Control = FoundationMainScript.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {"blackjack": game})
+	host.set("run_state", run_state)
+	host.set("selected_stake", command_stake)
+	var result: Dictionary = host.call("_blackjack_host_resolve_intent", action_id, command_stake, delivery)
+	host.free()
+	return result
+
+
 static func _seed_session(game: GameModule, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> void:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var table: Dictionary = (game_states.get("blackjack", {}) as Dictionary).duplicate(true) if typeof(game_states.get("blackjack", {})) == TYPE_DICTIONARY else {}

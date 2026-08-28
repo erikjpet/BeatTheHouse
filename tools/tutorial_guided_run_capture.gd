@@ -360,7 +360,7 @@ func _stage_blackjack_lookaway_surface(hand_state: Dictionary) -> void:
 	var distraction := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_distraction", 4, run_state, run_state.current_environment)
 	var distracted_state: Dictionary = distraction.get("ui_state", {})
 	var peek := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_peek", 4, run_state, run_state.current_environment, 0, true)
-	var peek_result := BlackjackAuthorityTestDriverScript.resolve(game, str(peek.get("action_id", "peek_hole_card")), 0, run_state, run_state.current_environment, run_state.create_rng("capture_peek"), peek.get("ui_state", {}))
+	var peek_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, peek, 0, run_state, run_state.current_environment)
 	app.set("game_surface_ui_state", peek_result.get("blackjack_surface_ui_state", peek.get("ui_state", {})))
 	app.call("_refresh")
 
@@ -371,7 +371,7 @@ func _stage_blackjack_count_surface() -> void:
 	if game == null or run_state == null:
 		return
 	var deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
-	var deal_result := BlackjackAuthorityTestDriverScript.resolve(game, str(deal.get("action_id", "blackjack_place_bet")), 4, run_state, run_state.current_environment, run_state.create_rng("capture_count_deal"), deal.get("ui_state", {}))
+	var deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, deal, 4, run_state, run_state.current_environment)
 	var count := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count", 4, run_state, run_state.current_environment)
 	app.set("game_surface_ui_state", count.get("ui_state", deal_result.get("ui_state", {})))
 	app.call("_refresh")
