@@ -135,6 +135,12 @@ from an implementation rather than specified, or weakened to match a schedule.
   required/optional field shape, rejects unknown fields, and has a focused
   unknown-field negative fixture; declared payload/I/O maps validate ids and
   registered value types rather than accepting arbitrary records.
+- [ ] Every remaining `game06_*` acceptance package keeps a standing hostile
+  authority case: never trust caller-supplied capability or authority claims.
+  Literal, nested, substituted, signed-looking, and recomputed claims all reject
+  without an authentic host root. Paired otherwise-identical observers without
+  authentic capability must be byte-equal in projection and behavior-equal in
+  authoritative outcome.
 - [ ] A static neutrality scan proves shared contract vocabulary and fixtures
   contain no craps id, special-case switch, or rules term.
 - [ ] A consumer conformance matrix shows how ordinary casino craps, hot table,
