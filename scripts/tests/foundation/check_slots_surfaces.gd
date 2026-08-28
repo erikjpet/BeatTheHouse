@@ -1,5 +1,7 @@
 extends "res://scripts/tests/foundation/check_core_content.gd"
 
+const SlotsBlackjackAuthorityDriver := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
+
 
 class MotionSymbolHarness:
 	extends RefCounted
@@ -2628,7 +2630,7 @@ func _skill_cheat_clean_result(game_id: String, game: GameModule, run_state: Run
 		"video_poker":
 			return _video_poker_play_hand(game, run_state, run_state.create_rng("c5_video_poker_clean"), "draw")
 		"blackjack":
-			return game.resolve_with_context("play_basic", 10, run_state, environment, run_state.create_rng("c5_blackjack_clean"), _xgame_blackjack_win_ui())
+			return SlotsBlackjackAuthorityDriver.resolve(game, "play_basic", 10, run_state, environment, run_state.create_rng("c5_blackjack_clean"), _xgame_blackjack_win_ui())
 		"pull_tabs":
 			var buy_command: Dictionary = game.surface_action_command("pull_tab_buy", 0, false, {}, run_state, environment)
 			return game.resolve_with_context("buy_tab", int(buy_command.get("set_stake", 1)), run_state, environment, run_state.create_rng("c5_pull_tabs_clean"), buy_command.get("ui_state", {}))
@@ -2799,10 +2801,10 @@ func _grand_casino_game_cheat_result_for_action(game_id: String, action_id: Stri
 			return game.resolve_with_context("mark_holds", 5, run_state, environment, rng, poker_ui)
 		"blackjack":
 			if action_id == "peek_hole_card":
-				return game.resolve_with_context("peek_hole_card", 0, run_state, environment, rng, {})
+				return SlotsBlackjackAuthorityDriver.resolve(game, "peek_hole_card", 0, run_state, environment, rng, {})
 			if action_id == "count_cards":
-				return game.resolve_with_context("count_cards", 0, run_state, environment, rng, _xgame_blackjack_dirty_count_ui())
-			return game.resolve_with_context("play_basic", 10, run_state, environment, rng, _xgame_blackjack_dirty_count_ui())
+				return SlotsBlackjackAuthorityDriver.resolve(game, "count_cards", 0, run_state, environment, rng, _xgame_blackjack_dirty_count_ui())
+			return SlotsBlackjackAuthorityDriver.resolve(game, "play_basic", 10, run_state, environment, rng, _xgame_blackjack_dirty_count_ui())
 		"pull_tabs":
 			run_state.add_item("tab_detector")
 			return game.resolve_with_context("tab_detector_scan", 0, run_state, environment, rng, {})
@@ -3169,13 +3171,13 @@ func _xgame_blackjack_dirty_count_ui() -> Dictionary:
 
 func _xgame_blackjack_win_metric(game: GameModule, luck: int, item_id: String) -> int:
 	var run_state: RunState = _xgame_blackjack_run(game, "XGAME-BLACKJACK-WIN", luck, false, false, item_id)
-	var result: Dictionary = game.resolve_with_context("play_basic", 10, run_state, run_state.current_environment, run_state.create_rng("xgame_blackjack_win"), _xgame_blackjack_win_ui())
+	var result: Dictionary = SlotsBlackjackAuthorityDriver.resolve(game, "play_basic", 10, run_state, run_state.current_environment, run_state.create_rng("xgame_blackjack_win"), _xgame_blackjack_win_ui())
 	return int(result.get("bankroll_delta", 0))
 
 
 func _xgame_blackjack_heat_metric(game: GameModule, seed: String, drunk: bool, watched: bool, item_id: String) -> int:
 	var run_state: RunState = _xgame_blackjack_run(game, seed, 0, drunk, watched, item_id)
-	var result: Dictionary = game.resolve_with_context("count_cards", 10, run_state, run_state.current_environment, run_state.create_rng("xgame_blackjack_heat"), _xgame_blackjack_dirty_count_ui())
+	var result: Dictionary = SlotsBlackjackAuthorityDriver.resolve(game, "count_cards", 10, run_state, run_state.current_environment, run_state.create_rng("xgame_blackjack_heat"), _xgame_blackjack_dirty_count_ui())
 	return int(result.get("suspicion_delta", 0))
 
 
@@ -3532,7 +3534,7 @@ func _sb4_check_background_runtime_does_not_block_active_game(library: ContentLi
 	environment["game_states"] = {"blackjack": blackjack_table, "slot": SlotMachineStateScript.normalize(slot_machine)}
 	run_state.set_environment(environment)
 	var deal_command := blackjack.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 60}, run_state, run_state.current_environment)
-	var placed := blackjack.resolve_with_context("blackjack_place_bet", 60, run_state, run_state.current_environment, run_state.create_rng("sb4_blackjack_place"), deal_command.get("ui_state", {}))
+	var placed := SlotsBlackjackAuthorityDriver.resolve(blackjack, "blackjack_place_bet", 60, run_state, run_state.current_environment, run_state.create_rng("sb4_blackjack_place"), deal_command.get("ui_state", {}))
 	var placed_ui: Dictionary = placed.get("ui_state", {}) if typeof(placed.get("ui_state", {})) == TYPE_DICTIONARY else {}
 	if run_state.bankroll != 40:
 		failures.append("SB.4 blackjack/slot fixture did not leave the expected $40 after a $60 upfront blackjack wager.")

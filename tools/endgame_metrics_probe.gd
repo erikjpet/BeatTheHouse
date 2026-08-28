@@ -13,6 +13,7 @@ const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
+const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 
 const DEFAULT_SEEDS_PER_SCENARIO := 2
 const DEFAULT_SEED_PREFIX := "ACT1-BALANCE"
@@ -533,7 +534,7 @@ func _play_rourke_duel_hand(run_state: RunState, run: Dictionary, policy: String
 					return true
 	ui_state = _play_metrics_blackjack_hand(game, run_state, ui_state)
 	var ante := maxi(1, int(duel_before.get("ante", 20)))
-	var result := game.resolve_with_context("play_basic", ante, run_state, run_state.current_environment, run_state.create_rng("duel_metrics_unused"), ui_state)
+	var result := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", ante, run_state, run_state.current_environment, run_state.create_rng("duel_metrics_unused"), ui_state)
 	if not bool(result.get("ok", false)):
 		failures.append("Rourke duel metrics could not settle a dealt hand: %s" % str(result.get("message", "unknown error")))
 		return false

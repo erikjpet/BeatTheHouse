@@ -7,6 +7,7 @@ const EnvironmentInstanceScript := preload("res://scripts/core/environment_insta
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 
 const SEED_COUNT := 10
 const ACTIVATION_METHODS := [
@@ -511,7 +512,7 @@ static func _commit_staff_action_boundary(game_id: String, game: GameModule, run
 	var rng := run_state.create_rng("staff_rollover_action:%s" % game_id)
 	match game_id:
 		"blackjack":
-			game.resolve_with_context("blackjack_place_bet", 10, run_state, environment, rng, {})
+			BlackjackAuthorityTestDriverScript.resolve(game, "blackjack_place_bet", 10, run_state, environment, rng, {})
 		"roulette":
 			game.resolve_with_context("spin_roulette", 10, run_state, environment, rng, {"roulette_bets": [game.call("_default_smoke_bet", 10)]})
 		"bar_dice":
