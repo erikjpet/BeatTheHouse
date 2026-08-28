@@ -5034,7 +5034,11 @@ func _run_state_lifecycle_storage_snapshot() -> Dictionary:
 		if typeof(property_value) != TYPE_DICTIONARY:
 			continue
 		var property: Dictionary = property_value
-		if (int(property.get("usage", 0)) & PROPERTY_USAGE_STORAGE) == 0:
+		# RunState's authoritative runtime fields are ordinary script variables,
+		# not exported/storage properties. Capture that closed script-owned set so
+		# rollback restores live runtime authority exactly without round-tripping a
+		# lossy persistent-save projection.
+		if (int(property.get("usage", 0)) & PROPERTY_USAGE_SCRIPT_VARIABLE) == 0:
 			continue
 		var property_name := str(property.get("name", "")).strip_edges()
 		if property_name.is_empty() or property_name == "script":
