@@ -4,6 +4,7 @@ const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_
 const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
+const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 
 
 class EmbeddedCoachFixtureGame:
@@ -220,7 +221,7 @@ func _check_normal_coach_lifecycle_rollback() -> bool:
 	if failure_old_tween is Tween:
 		failure_old_tween_advanced = (failure_old_tween as Tween).custom_step(0.03)
 	var failure_old_tween_progressed := failure_coach.panel.modulate.a > failure_old_alpha
-	var failure_exact := failure_initial_exact \
+	var failure_exact: bool = failure_initial_exact \
 			and not failure_ok \
 			and failure_before == failure_after \
 			and int(failure_probe.get("lifecycle_guard_count")) == 1 \
@@ -252,7 +253,7 @@ func _check_normal_coach_lifecycle_rollback() -> bool:
 	var success_observed_next := (success_probe.get("lifecycle_refresh_active_ids") as Array).find(NEXT_TIP_ID)
 	var success_new_tween: Variant = success_coach.attention_tween
 	var success_parent := success_coach.get_parent()
-	var success_exact := success_ok \
+	var success_exact: bool = success_ok \
 			and int(success_probe.get("lifecycle_guard_count")) == 1 \
 			and success_run.delivery_resolve_count == 1 \
 			and success_observed_next >= 0 \
@@ -296,6 +297,11 @@ func _normal_coach_lifecycle_probe(reject_delivery: bool) -> Control:
 	environment["world_node_id"] = "bar_node"
 	environment["current_layer_id"] = "club"
 	environment["scenario_id"] = "ui_normal_coach_lifecycle_scenario"
+	environment["scenario_state"] = ScenarioEngineScript.initial_state({
+		"id": "ui_normal_coach_lifecycle_scenario",
+		"archetype_id": "small_underground_casino",
+		"display_name": "UI Normal Coach Lifecycle Scenario",
+	})
 	run.set_environment(environment)
 	run.world_map = {
 		"version": 3,
@@ -317,6 +323,7 @@ func _normal_coach_lifecycle_probe(reject_delivery: bool) -> Control:
 	probe.call("_refresh_run_action_service")
 	var coach: CoachOverlay = probe.get("coach_overlay")
 	coach.suspend()
+	coach.set_lessons([library.tutorial_lesson("tip06_tonight_changes_rooms")])
 	coach.restore_seen({})
 	coach.set_tips_enabled(true)
 	coach.set_reduce_motion(false)
