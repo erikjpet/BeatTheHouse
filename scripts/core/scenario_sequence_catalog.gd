@@ -15,7 +15,6 @@ const ENTRY_KEYS := ["scenario_id", "sequence", "authoring"]
 const AUTHORING_KEYS := [
 	"arrival_summary", "player_verbs", "world_connections", "references",
 	"capture_ids", "seed_evidence", "masked_visual_explanations", "identity_decision",
-	"crew_poker_turn_engine", "crew_poker_night_id",
 ]
 const PACKAGE_ORDER := [
 	"env06_7_shops_streets",
