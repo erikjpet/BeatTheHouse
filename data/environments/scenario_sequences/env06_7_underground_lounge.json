@@ -4314,7 +4314,13 @@
           "policy": "cleanup"
         },
         "fact_subscriptions": [
-          "game_result",
+          {
+            "fact_type": "game_result",
+            "payload_equals": {
+              "action_id": "session_ended",
+              "game_id": "underground_high_stakes"
+            }
+          },
           "travel_departed"
         ],
         "local_state_schema": {
@@ -4658,6 +4664,10 @@
                 {
                   "condition": {
                     "fact_type": "game_result",
+                    "payload_equals": {
+                      "action_id": "session_ended",
+                      "game_id": "underground_high_stakes"
+                    },
                     "type": "fact"
                   },
                   "id": "punchline_high_stakes_night_work_1_pressure",
@@ -4820,6 +4830,10 @@
                 {
                   "condition": {
                     "fact_type": "game_result",
+                    "payload_equals": {
+                      "action_id": "session_ended",
+                      "game_id": "underground_high_stakes"
+                    },
                     "type": "fact"
                   },
                   "id": "punchline_high_stakes_night_work_2_pressure",
@@ -4985,6 +4999,10 @@
                 {
                   "condition": {
                     "fact_type": "game_result",
+                    "payload_equals": {
+                      "action_id": "session_ended",
+                      "game_id": "underground_high_stakes"
+                    },
                     "type": "fact"
                   },
                   "id": "punchline_high_stakes_night_work_3_pressure",
@@ -7035,7 +7053,13 @@
           "policy": "cleanup"
         },
         "fact_subscriptions": [
-          "game_result",
+          {
+            "fact_type": "game_result",
+            "payload_equals": {
+              "action_id": "room_duty_boundary",
+              "game_id": "crew_draw_poker"
+            }
+          },
           "travel_departed"
         ],
         "local_state_schema": {
@@ -7379,6 +7403,10 @@
                 {
                   "condition": {
                     "fact_type": "game_result",
+                    "payload_equals": {
+                      "action_id": "room_duty_boundary",
+                      "game_id": "crew_draw_poker"
+                    },
                     "type": "fact"
                   },
                   "id": "punchline_debt_court_work_1_pressure",
@@ -7541,6 +7569,10 @@
                 {
                   "condition": {
                     "fact_type": "game_result",
+                    "payload_equals": {
+                      "action_id": "room_duty_boundary",
+                      "game_id": "crew_draw_poker"
+                    },
                     "type": "fact"
                   },
                   "id": "punchline_debt_court_work_2_pressure",
@@ -7706,6 +7738,10 @@
                 {
                   "condition": {
                     "fact_type": "game_result",
+                    "payload_equals": {
+                      "action_id": "room_duty_boundary",
+                      "game_id": "crew_draw_poker"
+                    },
                     "type": "fact"
                   },
                   "id": "punchline_debt_court_work_3_pressure",

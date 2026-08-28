@@ -97,7 +97,7 @@ func _entry(c: Dictionary) -> Dictionary:
 		var next_phase := "terminal_success" if index == c.verbs.size() - 1 else "work_%d" % (index + 1)
 		var branches := [
 			_branch(prefix,"work_%d_complete" % index,{"type":"command","command_id":str(c.verbs[index])},next_phase,"",{"main_task":"success"}),
-			_branch(prefix,"work_%d_pressure" % index,{"type":"fact","fact_type":str(c.fact)},"terminal_failure","",{"main_task":"failure"}),
+			_branch(prefix,"work_%d_pressure" % index,_fact_condition(c),"terminal_failure","",{"main_task":"failure"}),
 			_branch(prefix,"work_%d_fail" % index,{"type":"command","command_id":"fail_%s" % prefix},"terminal_failure","",{"main_task":"failure"}),
 			_branch(prefix,"work_%d_refuse" % index,{"type":"command","command_id":"refuse_%s" % prefix},"terminal_refused","",{"main_task":"ignore"}),
 			_branch(prefix,"work_%d_interrupt" % index,{"type":"fact","fact_type":"travel_departed"},"terminal_interrupted","",{"main_task":"cancel"}),
@@ -121,7 +121,7 @@ func _entry(c: Dictionary) -> Dictionary:
 		"mechanic_tags":c.tags,
 		"sequence_signature":"pending",
 		"owner_exceptions":[],
-		"fact_subscriptions":[str(c.fact),"travel_departed"],
+		"fact_subscriptions":[_fact_subscription(c),"travel_departed"],
 		"completion_contract":{"arrival_readable":true,"semantic_changes":true,"scenario_interaction":true,"action_boundaries":true,"choice_or_failure":true,"material_outcomes":true,"revisit_coverage":true,"world_connection":true,"primary_verb":true,"feedback_and_exit":true},
 	}
 	return {"scenario_id":c.id,"sequence":sequence,"authoring":{"arrival_summary":c.arrival,"player_verbs":c.verbs + ["refuse_%s" % prefix,"ignore_%s" % prefix],"world_connections":[str(c.fact),"travel_departed"],"references":{"objects":["base::travel:leave"]},"capture_ids":["%s_arrival" % prefix,"%s_partial" % prefix,"%s_success" % prefix,"%s_failure" % prefix,"%s_refused" % prefix,"%s_interrupted" % prefix,"%s_reduced_motion" % prefix,"%s_small_screen" % prefix,"%s_hit_overlay" % prefix],"seed_evidence":{"proof_seed":"%s_seed" % prefix,"save_boundaries":["arrival","partial","success","failure","refused","interrupted"],"minimum_target_size":44,"expected_outcomes":c.outcomes},"masked_visual_explanations":{}}}
@@ -131,6 +131,24 @@ func _phase(id:String,label:String,feedback:String,exit_prompt:String,objectives
 	var result := {"id":id,"label":label,"arrival_feedback":feedback,"exit_prompt":exit_prompt,"entry_conditions":[],"objective_ids":objectives,"advance_after_actions":0,"scene_ops":scene,"interaction_ops":interactions,"actor_ops":actors,"transition_ops":transitions,"branches":branches}
 	if terminal: result["terminal"] = true
 	return result
+
+
+func _fact_payload(c: Dictionary) -> Dictionary:
+	if str(c.id) == "punchline_debt_court": return {"game_id":"crew_draw_poker","action_id":"room_duty_boundary"}
+	if str(c.id) == "punchline_high_stakes_night": return {"game_id":"underground_high_stakes","action_id":"session_ended"}
+	return {}
+
+
+func _fact_condition(c: Dictionary) -> Dictionary:
+	var result := {"type":"fact","fact_type":str(c.fact)}
+	var payload := _fact_payload(c)
+	if not payload.is_empty(): result["payload_equals"] = payload
+	return result
+
+
+func _fact_subscription(c: Dictionary) -> Variant:
+	var payload := _fact_payload(c)
+	return {"fact_type":str(c.fact),"payload_equals":payload} if not payload.is_empty() else str(c.fact)
 
 
 func _branch(prefix:String,id:String,condition:Dictionary,next_phase:String,outcome:String,objective_outcomes:Dictionary={})->Dictionary:
