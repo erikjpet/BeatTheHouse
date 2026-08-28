@@ -110,6 +110,44 @@ static func advance_terminal_presentation(game: GameModule, stake: int, run_stat
 	}
 
 
+static func authority_diagnostic(game: GameModule, stake: int, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if game == null or run_state == null:
+		return {"error_code": "invalid_fixture"}
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Dictionary = (game_states.get(game.get_id(), {}) as Dictionary).duplicate(true) if typeof(game_states.get(game.get_id(), {})) == TYPE_DICTIONARY else {}
+	var binding := "%s:%s:%s" % [game.get_id(), str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {}), binding, run_state.blackjack_authority_checkpoint_fingerprint())
+	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
+	var surface := game.surface_state(run_state, environment, session)
+	var ritual: Dictionary = surface.get("ritual_projection", {}) if typeof(surface.get("ritual_projection", {})) == TYPE_DICTIONARY else {}
+	return {
+		"phase": str(surface.get("phase", "")),
+		"dealt": bool(game.call("_has_dealt_hand", session)),
+		"ritual_phase": str(ritual.get("phase_id", "")),
+		"ritual_boundary": str(ritual.get("boundary_id", "")),
+		"table": {
+			"barred": bool(table.get("barred", false)),
+			"hands_played": int(table.get("hands_played", 0)),
+			"counting_enabled": bool(table.get("counting_enabled", false)),
+			"active_bet": int(table.get("active_bet", table.get("wager_debited", 0))),
+			"last_result": table.get("last_result", {}),
+		},
+		"funds": {
+			"bankroll": run_state.bankroll,
+			"grand_casino_chips": run_state.grand_casino_chips,
+			"wager_balance": run_state.wager_balance_for_game(game.get_id(), environment),
+			"wager_capacity": run_state.wager_capacity_for_game(game.get_id(), environment),
+			"requested_stake": stake,
+		},
+		"ledger": {
+			"binding": str(ledger.get("table_binding", "")),
+			"checkpoint": str(ledger.get("checkpoint_fingerprint", "")),
+			"pending_delivery": ledger.get("pending_delivery", {}),
+			"session": session,
+		},
+	}
+
+
 static func _canonical_session(game: GameModule, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var table_value: Variant = game_states.get(game.get_id(), null)

@@ -407,6 +407,9 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 
 	var count_toggle := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count_toggle", 4, run_state, run_state.current_environment)
 	var count_deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
+	if str(count_deal.get("action_id", "")).is_empty() or not count_deal.has("_blackjack_host_delivery"):
+		_fail("The required Count deal did not issue a sealed action: toggle=%s deal=%s authority=%s." % [str(count_toggle), str(count_deal), str(BlackjackAuthorityTestDriverScript.authority_diagnostic(game, 4, run_state, run_state.current_environment))])
+		return false
 	var count_deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, count_deal, 4, run_state, run_state.current_environment)
 	var count_state: Dictionary = count_deal_result.get("ui_state", count_deal.get("ui_state", {})) if typeof(count_deal_result.get("ui_state", count_deal.get("ui_state", {}))) == TYPE_DICTIONARY else count_deal.get("ui_state", {})
 	var challenge: Dictionary = count_state.get("count_challenge", {})
