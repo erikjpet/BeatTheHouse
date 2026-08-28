@@ -6,6 +6,8 @@ const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
+const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
 const PACKAGE_PATH := "res://data/crew/world06_1_crew_favor_delivery_sequence.json"
 const EVENTS_PATH := "res://data/events/events.json"
@@ -32,6 +34,7 @@ func _initialize() -> void:
 	_check_production_event_contract(failures)
 	_check_generic_integration_surface(failures)
 	_check_production_schedule(failures)
+	_check_delivery_failure_injection_matrix(failures)
 	if failures.is_empty():
 		print("World sequence delivery proof contract passed: source=crew::crew::crew_favor_delivery proof=crew_favor_delivery")
 		quit(0)
@@ -287,6 +290,207 @@ func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: 
 	var replay_owner := run_state.delivery_complete_handoff(target_node_id)
 	if bool(replay_owner.get("ok", false)) or run_state.bankroll != bankroll_before + 22 or run_state.suspicion_level() != heat_before + 4:
 		failures.append("Crew favor replay applied the owning delivery result more than once: command=%s owner=%s." % [JSON.stringify(replay_command), JSON.stringify(replay_owner)])
+
+
+func _check_delivery_failure_injection_matrix(failures: Array) -> void:
+	var library := ContentLibraryScript.new()
+	library.load(false)
+	for stage in ["before_owner_apply", "after_owner_apply", "before_ack", "after_ack", "save_load", "refresh", "travel_revisit"]:
+		var fixture := _prepared_delivery_outcome(library, "WORLD-SEQUENCE-P1-%s" % stage, failures)
+		if fixture.is_empty():
+			continue
+		var run_state: RunState = fixture.get("run_state")
+		var token := str(fixture.get("token", ""))
+		var receipt_id := str(fixture.get("receipt_id", ""))
+		var target_node_id := str(fixture.get("target_node_id", ""))
+		var bankroll_before := int(fixture.get("bankroll_before", 0))
+		var heat_before := int(fixture.get("heat_before", 0))
+		var command_receipts_before := _world_sequence_command_receipt_count(run_state, token)
+		match stage:
+			"before_owner_apply":
+				var before := JSON.stringify(run_state.to_dict())
+				var rejected := run_state.world_sequence_consume_delivery_outcome(token, receipt_id, "wrong_node")
+				if bool(rejected.get("ok", false)) or JSON.stringify(run_state.to_dict()) != before:
+					failures.append("P1 before-owner injection did not reject byte-identically.")
+			"after_owner_apply":
+				var owner_result := run_state.delivery_complete_handoff(target_node_id)
+				if not bool(owner_result.get("ok", false)):
+					failures.append("P1 after-owner injection could not establish the committed owner consequence.")
+					continue
+			"before_ack":
+				var owner_result := run_state.delivery_complete_handoff(target_node_id)
+				if not bool(owner_result.get("ok", false)):
+					failures.append("P1 before-ack injection could not establish the committed owner consequence.")
+					continue
+				_persist_owner_result_checkpoint(run_state, token, receipt_id, owner_result)
+			"after_ack", "save_load", "refresh", "travel_revisit":
+				var owner_result := run_state.delivery_complete_handoff(target_node_id)
+				if not bool(owner_result.get("ok", false)):
+					failures.append("P1 %s injection could not establish the committed owner consequence." % stage)
+					continue
+				var public_result := _persist_owner_result_checkpoint(run_state, token, receipt_id, owner_result)
+				var acknowledged := run_state.world_sequence_ack_outcome(token, receipt_id, public_result)
+				if not bool(acknowledged.get("ok", false)):
+					failures.append("P1 %s injection could not establish the acknowledged cleanup checkpoint." % stage)
+					continue
+				if stage == "save_load" or stage == "refresh":
+					run_state = _round_trip_run(run_state)
+				elif stage == "travel_revisit":
+					if not _travel_away_and_revisit(run_state, library, target_node_id):
+						failures.append("P1 travel/revisit injection could not cross the real room boundary and revisit its owner state.")
+						continue
+		var resumed: Dictionary
+		if stage == "refresh":
+			var app := FoundationMainScript.new()
+			app.set("run_state", run_state)
+			resumed = _dict(app.call("_resume_pending_world_sequence_outcomes"))
+			app.free()
+		else:
+			resumed = run_state.world_sequence_consume_delivery_outcome(token, receipt_id, target_node_id)
+		_assert_delivered_resume(stage, run_state, token, receipt_id, resumed, bankroll_before, heat_before, command_receipts_before, failures)
+
+	_check_owner_lifecycle_retry(library, "expired", false, failures)
+	_check_owner_lifecycle_retry(library, "abandoned", true, failures)
+
+
+func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures: Array) -> Dictionary:
+	var run_state := _production_run(library, seed)
+	run_state.narrative_flags["crew_favor_pending"] = true
+	var module := EventModuleScript.new()
+	module.setup(library.event("crew_favor_delivery"), library)
+	var bankroll_before := run_state.bankroll
+	var heat_before := run_state.suspicion_level()
+	var started := module.resolve(run_state, run_state.current_environment, "run_package")
+	var token := str(started.get("world_sequence_owner_token", ""))
+	var delivery_snapshot := run_state.delivery_snapshot()
+	var targets := _array(delivery_snapshot.get("targets", []))
+	var target_node_id := str(_dict(targets[0]).get("node_id", "")) if not targets.is_empty() else ""
+	if token.is_empty() or target_node_id.is_empty():
+		failures.append("P1 injection fixture could not schedule a public delivery owner.")
+		return {}
+	RunGeneratorScript.new(library).next_environment(run_state, target_node_id, true)
+	var arrival := run_state.delivery_resolve_travel_arrival({}, {})
+	var finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
+	if not bool(arrival.get("ok", false)) or not bool(finalized.get("ok", false)):
+		failures.append("P1 injection fixture could not mount at the delivery target.")
+		return {}
+	var interactions := _dict(_dict(_dict(finalized.get("projection", {})).get("semantic_state", {})).get("interactions", {}))
+	var handoff := _dict(interactions.get("crew::package_handoff", {}))
+	var actions := _array(handoff.get("available_actions", []))
+	var action := _dict(actions[0]) if not actions.is_empty() else {}
+	var command := run_state.world_sequence_command(
+		token, "make_handoff", "p1:%s:handoff" % seed, {}, "crew", "package_handoff",
+		{"crew::package_handoff": true},
+		str(action.get("action_origin_owner_namespace", "")),
+		str(action.get("action_origin_stable_object_id", "")),
+		str(action.get("action_origin_receipt_key", "")),
+		str(action.get("action_origin_boundary_id", "")),
+		str(action.get("action_origin_fingerprint", ""))
+	)
+	var pending := run_state.world_sequence_pending_outcomes(token)
+	if not bool(command.get("ok", false)) or pending.size() != 1:
+		failures.append("P1 injection fixture did not produce exactly one authenticated neutral outcome.")
+		return {}
+	return {
+		"run_state": run_state,
+		"token": token,
+		"receipt_id": str(_dict(pending[0]).get("receipt_id", "")),
+		"target_node_id": target_node_id,
+		"bankroll_before": bankroll_before,
+		"heat_before": heat_before,
+	}
+
+
+func _persist_owner_result_checkpoint(run_state: RunState, token: String, receipt_id: String, owner_result: Dictionary) -> Dictionary:
+	var public_result := {
+		"ok": true,
+		"resolved": bool(owner_result.get("resolved", false)),
+		"message": str(owner_result.get("message", "")),
+	}
+	var registration := _dict(run_state.world_sequence_registrations.get(token, {}))
+	var results := _dict(registration.get("owner_outcome_results", {}))
+	results[receipt_id] = public_result.duplicate(true)
+	registration["owner_outcome_results"] = results
+	run_state.world_sequence_registrations[token] = registration
+	return public_result
+
+
+func _assert_delivered_resume(stage: String, run_state: RunState, token: String, receipt_id: String, resumed: Dictionary, bankroll_before: int, heat_before: int, command_receipts_before: int, failures: Array) -> void:
+	if not bool(resumed.get("ok", false)) or run_state.bankroll != bankroll_before + 22 or run_state.suspicion_level() != heat_before + 4:
+		failures.append("P1 %s resume did not finish the owner transaction exactly once: %s." % [stage, JSON.stringify(resumed)])
+		return
+	if not run_state.world_sequence_pending_outcomes(token).is_empty() or _world_sequence_command_receipt_count(run_state, token) != command_receipts_before:
+		failures.append("P1 %s resume reran the terminal command or retained pending work." % stage)
+	var after := JSON.stringify(run_state.to_dict())
+	var replay := run_state.world_sequence_consume_delivery_outcome(token, receipt_id, run_state.current_world_node_id())
+	if bool(replay.get("ok", false)) or JSON.stringify(run_state.to_dict()) != after:
+		failures.append("P1 %s replay was not an exact idempotent no-op." % stage)
+
+
+func _check_owner_lifecycle_retry(library: ContentLibrary, outcome: String, inject_after_sync: bool, failures: Array) -> void:
+	var fixture := _prepared_delivery_outcome(library, "WORLD-SEQUENCE-P1-%s-SYNC" % outcome, failures)
+	if fixture.is_empty(): return
+	var run_state: RunState = fixture.get("run_state")
+	var token := str(fixture.get("token", ""))
+	var target_node_id := str(fixture.get("target_node_id", ""))
+	var bankroll_before := int(fixture.get("bankroll_before", 0))
+	var heat_before := int(fixture.get("heat_before", 0))
+	var command_count := _world_sequence_command_receipt_count(run_state, token)
+	# Lifecycle outcomes are owner-driven and must not reuse the delivered command.
+	var registration := _dict(run_state.world_sequence_registrations.get(token, {}))
+	run_state.world_sequence_registrations.erase(token)
+	run_state.active_delivery_run = DeliveryRunModelScript.abandon(run_state.active_delivery_run, "deadline" if outcome == "expired" else "abandoned")
+	run_state.call("_apply_delivery_resolution")
+	run_state.world_sequence_registrations[token] = registration
+	run_state.active_delivery_run["world_sequence_lifecycle_retry"] = {"owner_token": token, "outcome": outcome}
+	if inject_after_sync:
+		var synced := run_state.world_sequence_sync_owner(token, false, outcome)
+		if not bool(synced.get("ok", false)):
+			failures.append("P1 %s after-sync injection could not establish its pending outcome." % outcome)
+			return
+		run_state = _round_trip_run(run_state)
+	var first := _dict(run_state.call("_retry_delivery_world_sequence_lifecycle"))
+	var expected_heat := heat_before + (9 if outcome == "expired" else 0)
+	if not bool(first.get("ok", false)) or run_state.bankroll != bankroll_before or run_state.suspicion_level() != expected_heat \
+			or run_state.active_delivery_run.has("world_sequence_lifecycle_retry") or _world_sequence_command_receipt_count(run_state, token) != command_count:
+		failures.append("P1 %s lifecycle retry did not resume exactly once without a terminal command: %s." % [outcome, JSON.stringify(first)])
+		return
+	var exact := JSON.stringify(run_state.to_dict())
+	var replay := _dict(run_state.call("_retry_delivery_world_sequence_lifecycle"))
+	if not bool(replay.get("inactive", false)) or JSON.stringify(run_state.to_dict()) != exact:
+		failures.append("P1 %s lifecycle retry replay was not byte-identical and inactive." % outcome)
+
+
+func _round_trip_run(run_state: RunState) -> RunState:
+	var restored := RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	return restored
+
+
+func _travel_away_and_revisit(run_state: RunState, library: ContentLibrary, target_node_id: String) -> bool:
+	var away_id := ""
+	for edge_value in _array(run_state.world_map.get("edges", [])):
+		var edge := _dict(edge_value)
+		var from_id := str(edge.get("from", ""))
+		var to_id := str(edge.get("to", ""))
+		if from_id == target_node_id:
+			away_id = to_id
+			break
+		if to_id == target_node_id:
+			away_id = from_id
+			break
+	if away_id.is_empty(): return false
+	var generator := RunGeneratorScript.new(library)
+	generator.next_environment(run_state, away_id, true)
+	if run_state.current_world_node_id() != away_id: return false
+	generator.next_environment(run_state, target_node_id, true)
+	return run_state.current_world_node_id() == target_node_id
+
+
+func _world_sequence_command_receipt_count(run_state: RunState, token: String) -> int:
+	var container := _dict(run_state.current_environment.get("world_sequence_instances", {}))
+	var entry := _dict(container.get(token, {}))
+	return _array(_dict(entry.get("state", {})).get("command_receipt_records", [])).size()
 
 
 func _production_run(library: ContentLibrary, seed: String) -> RunState:
