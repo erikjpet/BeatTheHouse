@@ -418,7 +418,6 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 			if not bool(_commit_travel_departure(run_state, current_node_id, target_id, "world").get("ok", false)):
 				_restore_travel_snapshot(run_state, rollback)
 				return EnvironmentInstance.from_dict(run_state.current_environment)
-		run_state.store_current_world_node_environment()
 	var environment_data := _world_environment_data_for_node(run_state, map_data, node, rng)
 	var installed := _install_environment(run_state, environment_data)
 	if not bool(installed.get("ok", false)):
