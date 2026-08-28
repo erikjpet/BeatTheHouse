@@ -1451,9 +1451,9 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		and _array(expiry_state.get("cleanup_receipt_records", [])).is_empty()
 	var expiry_can_rebind := ScenarioEngineScript._sequence_state_can_bind_initial_node(expiry_state, expiry_recipient) if expiry_is_only_progress else true
 	var expiry_command := _runtime_command(expiry_state, expiry_transplant_definition, "prepare", str(expiry_recipient.get("world_node_id", "")), str(expiry_state.get("phase_id", "")), "expiry_only:transplant", {}, "scenario", "command_console")
+	var expiry_recipient_before := JSON.stringify(expiry_recipient)
 	var expiry_ingress := ScenarioEngineScript.sequence_command(expiry_recipient, expiry_transplant_definition, expiry_command, {"available_funds": 10})
-	var expiry_rejected_state := _dict(expiry_recipient.get("scenario_sequence_state", {}))
-	if not expiry_is_only_progress or expiry_can_rebind or bool(expiry_ingress.get("ok", true)) or str(expiry_rejected_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or str(expiry_rejected_state.get("node_id", "")) != "bar" or SequenceRuntimeScript.content_fingerprint(expiry_rejected_state.get("expiry_boundary_records", [])) != SequenceRuntimeScript.content_fingerprint(expiry_state.get("expiry_boundary_records", [])) or not _array(expiry_rejected_state.get("command_receipt_records", [])).is_empty():
+	if not expiry_is_only_progress or expiry_can_rebind or bool(expiry_ingress.get("ok", true)) or not _contains_text(_array(expiry_ingress.get("errors", [])), "bound to another world node") or JSON.stringify(expiry_recipient) != expiry_recipient_before:
 		failures.append("Expiry-only sequence progress transplanted across nodes and authorized ingress.")
 	var production_projection := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), finalized)
 	var projected_records := _array(production_projection.get("records", []))
@@ -1565,32 +1565,21 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 			recipient_environment["scenario_semantic_inventory_version"] = int(recipient_inventory.get("schema_version", 0))
 			recipient_environment["scenario_semantic_digest"] = str(recipient_inventory.get("digest", ""))
 			recipient_environment["scenario_semantic_ready"] = true
-			var transplant_rejected_states: Dictionary = {}
+			var transplant_rejection_errors: Dictionary = {}
+			var progressed_state_before := JSON.stringify(progressed_state)
 			for ingress_kind in ["command", "fact"]:
 				var node_transplant := RunStateScript.new()
 				node_transplant.current_environment = recipient_environment.duplicate(true)
+				var recipient_before := JSON.stringify(node_transplant.current_environment)
 				var ingress_result: Dictionary = node_transplant.scenario_sequence_command("finish", "node-binding:command", {}, "scenario", "command_console") if ingress_kind == "command" else node_transplant.scenario_enqueue_fact("world_boundary", "scenario", {"amount": 1, "action_index": 0}, "node-binding:fact")
-				var rejected_state := _dict(node_transplant.current_environment.get("scenario_sequence_state", {}))
-				transplant_rejected_states[ingress_kind] = rejected_state.duplicate(true)
-				if bool(ingress_result.get("ok", true)) or int(ingress_result.get("cost", 0)) != 0 or ingress_result.has("bankroll_delta") or str(rejected_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or str(rejected_state.get("node_id", "")) != str(progressed_state.get("node_id", "")) or str(rejected_state.get("phase_id", "")) != str(progressed_state.get("phase_id", "")) or int(rejected_state.get("phase_action_counter", -1)) != int(progressed_state.get("phase_action_counter", -1)) or SequenceRuntimeScript.content_fingerprint(rejected_state.get("command_receipts", [])) != SequenceRuntimeScript.content_fingerprint(progressed_state.get("command_receipts", [])) or SequenceRuntimeScript.content_fingerprint(rejected_state.get("fact_receipts", [])) != SequenceRuntimeScript.content_fingerprint(progressed_state.get("fact_receipts", [])) or SequenceRuntimeScript.content_fingerprint(rejected_state.get("transition_receipts", [])) != SequenceRuntimeScript.content_fingerprint(progressed_state.get("transition_receipts", [])) or SequenceRuntimeScript.content_fingerprint(rejected_state.get("transition_delivery_receipts", [])) != SequenceRuntimeScript.content_fingerprint(progressed_state.get("transition_delivery_receipts", [])) or SequenceRuntimeScript.content_fingerprint(rejected_state.get("resolved_outcomes", [])) != SequenceRuntimeScript.content_fingerprint(progressed_state.get("resolved_outcomes", [])):
+				var rejection_errors := _array(ingress_result.get("errors", []))
+				transplant_rejection_errors[ingress_kind] = rejection_errors.duplicate(true)
+				if bool(ingress_result.get("ok", true)) or int(ingress_result.get("cost", 0)) != 0 or ingress_result.has("bankroll_delta") or not _contains_text(rejection_errors, "bound to another world node") or JSON.stringify(node_transplant.current_environment) != recipient_before:
 					failures.append("Progressed sequence state transplanted to another current node advanced through %s ingress." % ingress_kind)
-			var command_quarantine := _dict(transplant_rejected_states.get("command", {}))
-			var fact_quarantine := _dict(transplant_rejected_states.get("fact", {}))
-			if SequenceRuntimeScript.content_fingerprint(command_quarantine) != SequenceRuntimeScript.content_fingerprint(fact_quarantine):
-				failures.append("Command and fact ingress did not persist the same authenticated node-binding quarantine state.")
-			if not command_quarantine.is_empty():
-				var quarantine_run := RunStateScript.new()
-				quarantine_run.current_environment = recipient_environment.duplicate(true)
-				quarantine_run.current_environment["scenario_sequence_state"] = command_quarantine.duplicate(true)
-				var cleanup_hash_before := SequenceRuntimeScript.content_fingerprint(command_quarantine.get("cleanup_receipt_records", []))
-				var retry_result := quarantine_run.scenario_sequence_command("finish", "node-binding:command:retry", {}, "scenario", "command_console")
-				var retried_state := _dict(quarantine_run.current_environment.get("scenario_sequence_state", {}))
-				var quarantine_save := quarantine_run.to_dict()
-				var quarantine_restored := RunStateScript.new()
-				quarantine_restored.from_dict(quarantine_save)
-				var restored_quarantine := _dict(quarantine_restored.current_environment.get("scenario_sequence_state", {}))
-				if bool(retry_result.get("ok", true)) or SequenceRuntimeScript.content_fingerprint(retried_state.get("cleanup_receipt_records", [])) != cleanup_hash_before or SequenceRuntimeScript.content_fingerprint(restored_quarantine.get("cleanup_receipt_records", [])) != cleanup_hash_before or str(restored_quarantine.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or JSON.stringify(command_quarantine).contains("recipient_node"):
-					failures.append("Node-binding quarantine was not exactly-once, save-stable, or free of recipient hidden-state leakage.")
+			var command_errors := _array(transplant_rejection_errors.get("command", []))
+			var fact_errors := _array(transplant_rejection_errors.get("fact", []))
+			if SequenceRuntimeScript.content_fingerprint(command_errors) != SequenceRuntimeScript.content_fingerprint(fact_errors) or JSON.stringify(command_errors).contains("recipient_node") or JSON.stringify(progressed_state) != progressed_state_before:
+				failures.append("Node-binding quarantine was not exactly-once, save-stable, or free of recipient hidden-state leakage.")
 			var hostile_candidate := recipient_environment.duplicate(true)
 			var hostile_state := progressed_state.duplicate(true)
 			hostile_state["status"] = SequenceRuntimeScript.STATUS_CLEANED
