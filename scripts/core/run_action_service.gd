@@ -239,7 +239,9 @@ func buy_item_offer(item_id: String) -> Dictionary:
 	}
 	var effect_result: Dictionary = item_effect.apply(context)
 	var result := purchase_item_result(effect_result, item_definition, offer)
-	run_state.advance_environment_turns(1)
+	var turn_result := run_state.advance_environment_turns(1)
+	if not bool(turn_result.get("ok", false)):
+		return _boundary_service_error(turn_result, "The purchase boundary could not advance safely.")
 	GameModule.apply_result(run_state, result)
 	if _definition_is_active_item(item_definition):
 		_auto_select_active_item_after_gain(item_id)
@@ -353,7 +355,9 @@ func buy_cage_gift_shop_offer(item_id: String) -> Dictionary:
 	result["message"] = message
 	if not bool(result.get("ok", false)):
 		return _service_error(str(result.get("message", "The gift case declines the purchase.")))
-	run_state.advance_environment_turns(1)
+	var turn_result := run_state.advance_environment_turns(1)
+	if not bool(turn_result.get("ok", false)):
+		return _boundary_service_error(turn_result, "The gift-case purchase boundary could not advance safely.")
 	GameModule.apply_result(run_state, result)
 	if _definition_is_active_item(item_definition):
 		_auto_select_active_item_after_gain(item_id)
@@ -575,6 +579,8 @@ func pawn_inventory_item(item_id: String, lender_id: String = SALS_PAWN_COUNTER_
 	if not bool(status.get("available", true)):
 		return _service_error(str(status.get("disabled_reason", "Pawn counter is not available.")))
 	if RunState.is_portable_ticket_pile_item(item_id):
+		var rollback_run := run_state.to_dict()
+		var rollback_environment := run_state.current_environment.duplicate(true)
 		var surrendered := run_state.surrender_portable_ticket_winners_to_sal(item_id)
 		if not bool(surrendered.get("ok", false)):
 			return _service_error(str(surrendered.get("message", "Sal cannot cash those tickets.")))
@@ -609,7 +615,11 @@ func pawn_inventory_item(item_id: String, lender_id: String = SALS_PAWN_COUNTER_
 			"environment_id": str(run_state.current_environment.get("id", "")),
 			"message": message,
 		})
-		run_state.advance_environment_turns(1)
+		var cashout_turn_result := run_state.advance_environment_turns(1)
+		if not bool(cashout_turn_result.get("ok", false)):
+			run_state.from_dict(rollback_run)
+			run_state.current_environment = rollback_environment
+			return _boundary_service_error(cashout_turn_result, "The ticket cash-out boundary could not advance safely.")
 		GameModule.apply_result(run_state, cashout_result)
 		return _service_success(cashout_result)
 	var quote := _pawn_quote_for_item(item_id, _copy_dict(definition.get("debt_profile", {})))
@@ -618,7 +628,9 @@ func pawn_inventory_item(item_id: String, lender_id: String = SALS_PAWN_COUNTER_
 	var result := _dynamic_lender_result(lender_id, definition, status, quote)
 	if result.is_empty():
 		return _service_error("Pawn counter is not available.")
-	run_state.advance_environment_turns(1)
+	var pawn_turn_result := run_state.advance_environment_turns(1)
+	if not bool(pawn_turn_result.get("ok", false)):
+		return _boundary_service_error(pawn_turn_result, "The pawn boundary could not advance safely.")
 	GameModule.apply_result(run_state, result)
 	return _service_success(result)
 
@@ -939,22 +951,37 @@ func use_hook(kind: String, hook_id: String) -> Dictionary:
 		return _service_error("This %s is only informational right now." % kind)
 	var definition := hook_definition(kind, hook_id)
 	if kind == "service" and hook_id == JAZZ_SHOW_GLASSES_SERVICE_ID:
+		var rollback_run := run_state.to_dict()
+		var rollback_environment := run_state.current_environment.duplicate(true)
+		var rollback_world_map := run_state.world_map.duplicate(true)
+		var rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
 		GameModule.apply_result(run_state, result)
-		_advance_hook_clock(kind, definition)
+		var jazz_clock_result := _advance_hook_clock(kind, definition)
+		if not bool(jazz_clock_result.get("ok", false)):
+			run_state.from_dict(rollback_run)
+			run_state.current_environment = rollback_environment
+			run_state.world_map = rollback_world_map
+			run_state.grand_casino_room_states = rollback_room_states
+			var jazz_errors: Array = jazz_clock_result.get("errors", []) if typeof(jazz_clock_result.get("errors", [])) == TYPE_ARRAY else []
+			return _service_error(str(jazz_errors[0]) if not jazz_errors.is_empty() else "The service boundary could not advance safely.")
+		run_state.scenario_publish_service_result(kind, hook_id, result)
 		return _service_success(result)
-	_advance_hook_clock(kind, definition)
+	var clock_result := _advance_hook_clock(kind, definition)
+	if not bool(clock_result.get("ok", false)):
+		var clock_errors: Array = clock_result.get("errors", []) if typeof(clock_result.get("errors", [])) == TYPE_ARRAY else []
+		return _service_error(str(clock_errors[0]) if not clock_errors.is_empty() else "The service boundary could not advance safely.")
 	GameModule.apply_result(run_state, result)
 	if kind == "lender" and hook_id == "the_crew":
 		_apply_crew_loan_trust(definition)
+	run_state.scenario_publish_service_result(kind, hook_id, result)
 	return _service_success(result)
 
 
-func _advance_hook_clock(kind: String, definition: Dictionary) -> void:
+func _advance_hook_clock(kind: String, definition: Dictionary) -> Dictionary:
 	var duration_minutes := maxi(0, int(definition.get("duration_minutes", 0))) if kind == "service" else 0
 	if duration_minutes > 0:
-		run_state.advance_game_clock_minutes(duration_minutes)
-	else:
-		run_state.advance_environment_turns(1)
+		return run_state.advance_game_clock_minutes(duration_minutes)
+	return run_state.advance_environment_turns(1)
 
 
 # Converts an ItemEffect result plus offer data into a purchase result.
@@ -2138,6 +2165,11 @@ func _service_success(result: Dictionary) -> Dictionary:
 		"result": result.duplicate(true),
 		"message": str(result.get("message", "")),
 	}
+
+
+func _boundary_service_error(boundary_result: Dictionary, fallback: String) -> Dictionary:
+	var errors := _copy_array(boundary_result.get("errors", []))
+	return _service_error(str(errors[0]) if not errors.is_empty() else fallback)
 
 
 func _service_error(message: String) -> Dictionary:
