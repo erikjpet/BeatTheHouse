@@ -3216,7 +3216,7 @@ func _draw_baccarat_ritual_status(surface, state: Dictionary) -> void:
 	var rect := Rect2(300, 8, 376, 24)
 	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.76))
 	surface.draw_rect(rect, C_AMBER if phase == "squeeze_reveal" else C_CYAN, false, 2)
-	surface.surface_label_centered_plain("%s | %s | SHOE %s | %s" % [phase.replace("_", " ").to_upper(), dealer_behavior.replace("_", " ").to_upper(), shoe_state.to_upper(), str(energy.get("tier", "quiet")).to_upper()], rect.grow(-3), 7, C_WHITE)
+	surface.surface_label_centered("%s | %s | SHOE %s | %s" % [phase.replace("_", " ").to_upper(), dealer_behavior.replace("_", " ").to_upper(), shoe_state.to_upper(), str(energy.get("tier", "quiet")).to_upper()], rect.grow(-3), 7, C_WHITE)
 
 
 func _draw_total_badge(surface, rect: Rect2, label: String, total: int, accent: Color) -> void:
