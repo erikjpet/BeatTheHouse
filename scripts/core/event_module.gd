@@ -6,12 +6,6 @@ extends RefCounted
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const CharacterChainModelScript := preload("res://scripts/core/character_chain_model.gd")
 
-const WORLD_SEQUENCE_PACKAGE_PATHS := {
-	"world06_1_crew_favor_delivery": "res://data/crew/world06_1_crew_favor_delivery_sequence.json",
-}
-
-static var _world_sequence_package_cache: Dictionary = {}
-
 var definition: Dictionary = {}
 var content_library: ContentLibrary = null
 
@@ -291,9 +285,6 @@ func _schedule_choice_world_sequence(run_state: RunState, selected_choice: Dicti
 	var package_id := str(selected_choice.get("world_sequence_package_id", "")).strip_edges()
 	if package_id.is_empty():
 		return {"ok": true, "inactive": true}
-	var entry := _world_sequence_package_entry(package_id)
-	if entry.is_empty():
-		return {"ok": false, "errors": ["Registered world sequence package is unavailable: %s." % package_id]}
 	var snapshot := _copy_dict(owner_start_result.get("snapshot", {}))
 	var targets := _copy_array(snapshot.get("targets", []))
 	var target := _copy_dict(targets[0]) if not targets.is_empty() else {}
@@ -303,33 +294,11 @@ func _schedule_choice_world_sequence(run_state: RunState, selected_choice: Dicti
 		public_instance_token = str(snapshot.get("run_id", "")).strip_edges()
 	if node_id.is_empty() or public_instance_token.is_empty():
 		return {"ok": false, "errors": ["World sequence owner start result lacks a public instance or target."]}
-	var mount := _copy_dict(entry.get("mount", {}))
 	return run_state.world_sequence_schedule_mount(
-		_copy_dict(entry.get("source", {})),
+		package_id,
 		public_instance_token,
-		{"node_id": node_id, "zone_id": str(mount.get("zone_id", "")).strip_edges()},
-		_copy_dict(entry.get("definition", {})),
-		_copy_dict(entry.get("outcome_channels", {})),
-		_copy_array(entry.get("ownership_claims", [])),
-		"world_sequence:%s" % public_instance_token
+		node_id
 	)
-
-
-static func _world_sequence_package_entry(package_id: String) -> Dictionary:
-	if _world_sequence_package_cache.has(package_id):
-		return _copy_dict(_world_sequence_package_cache.get(package_id, {}))
-	var path := str(WORLD_SEQUENCE_PACKAGE_PATHS.get(package_id, ""))
-	if path.is_empty():
-		return {}
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return {}
-	var definitions := _copy_array((parsed as Dictionary).get("definitions", []))
-	if definitions.size() != 1 or typeof(definitions[0]) != TYPE_DICTIONARY:
-		return {}
-	var entry := _copy_dict(definitions[0])
-	_world_sequence_package_cache[package_id] = entry.duplicate(true)
-	return entry
 
 
 # Applies a shared event result and records event-specific outcomes.

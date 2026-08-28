@@ -11158,6 +11158,13 @@ func _activate_world_sequence_action(owner_token: String, object_data: Dictionar
 		_show_message(str(errors[0]) if not errors.is_empty() else "That Crew action is no longer available.")
 		_refresh()
 		return false
+	if _copy_array(result.get("outcomes", [])).has("delivered"):
+		var committed := run_state.world_sequence_commit_delivery_outcome(owner_token, run_state.current_world_node_id())
+		if not bool(committed.get("ok", false)):
+			var commit_errors := _copy_array(committed.get("errors", []))
+			_show_message(str(commit_errors[0]) if not commit_errors.is_empty() else "That delivery outcome could not be committed safely.")
+			_refresh()
+			return false
 	var outcome_result := _consume_world_sequence_outcomes(owner_token)
 	if not bool(outcome_result.get("ok", false)):
 		var outcome_errors := _copy_array(outcome_result.get("errors", []))
@@ -11188,6 +11195,9 @@ func _consume_world_sequence_outcomes(owner_token: String) -> Dictionary:
 
 func _resume_pending_world_sequence_outcomes() -> Dictionary:
 	var resumed := false
+	var materialized := run_state.world_sequence_resume_delivery_checkpoint()
+	if not bool(materialized.get("ok", false)): return materialized
+	if not bool(materialized.get("inactive", false)): resumed = true
 	for token_value in run_state.world_sequence_pending_owner_tokens():
 		var result := _consume_world_sequence_outcomes(str(token_value))
 		if not bool(result.get("ok", false)): return result

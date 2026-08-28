@@ -1,0 +1,33 @@
+class_name WorldSequencePackageCatalog
+extends RefCounted
+
+# Trusted package discovery is deliberately separate from both EventModule and
+# the generic adapter. Callers name an allowlisted package; only this catalog
+# can turn that id into authored source, definition, channel and claim bytes.
+
+const PACKAGE_PATHS := {
+	"world06_1_crew_favor_delivery": "res://data/crew/world06_1_crew_favor_delivery_sequence.json",
+}
+
+static var _cache: Dictionary = {}
+
+
+static func entry(package_id: String) -> Dictionary:
+	var clean_id := package_id.strip_edges()
+	if clean_id.is_empty() or clean_id != package_id or not PACKAGE_PATHS.has(clean_id):
+		return {}
+	if _cache.has(clean_id):
+		return _copy_dict(_cache.get(clean_id, {}))
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(str(PACKAGE_PATHS.get(clean_id, ""))))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {}
+	var definitions: Array = (parsed as Dictionary).get("definitions", []) if typeof((parsed as Dictionary).get("definitions", [])) == TYPE_ARRAY else []
+	if definitions.size() != 1 or typeof(definitions[0]) != TYPE_DICTIONARY:
+		return {}
+	var result := _copy_dict(definitions[0])
+	_cache[clean_id] = result.duplicate(true)
+	return result
+
+
+static func _copy_dict(value: Variant) -> Dictionary:
+	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}

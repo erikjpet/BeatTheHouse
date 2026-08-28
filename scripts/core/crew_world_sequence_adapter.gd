@@ -24,8 +24,6 @@ const HIDDEN_IDENTIFIER_TERMS := [
 	"betrayal", "clue", "grievance", "mole", "rat", "snitch", "theturn", "traitor", "turncoat",
 ]
 const HASH_IDENTIFIER_LENGTHS := [32, 40, 64]
-
-
 # Machine-checks the frozen EventModule seam against both the production event
 # catalog and the exact routing syntax used by EventModule. Additions are errors,
 # not silently accepted inventory growth.
@@ -165,7 +163,6 @@ static func mount(environment: Dictionary, source: Dictionary, public_instance_t
 		"outcome_receipts": {},
 		"outcome_acknowledgements": {},
 	}
-	_capture_terminal_outcomes(entry, definition)
 	container[token] = entry
 	environment[CONTAINER_KEY] = container
 	return {"ok": true, "replayed": false, "owner_token": token, "registration_marker": marker, "projection": SequenceRuntimeScript.public_projection(state, definition), "errors": []}
@@ -275,6 +272,94 @@ static func pending_outcomes(environment: Dictionary, token: String) -> Array:
 		if not acknowledgements.has(receipt_id):
 			result.append(_dict(receipts.get(receipt_id, {})))
 	return result
+
+
+# Computes the neutral terminal receipt from the exact mounted registration,
+# trusted definition fingerprint and live terminal cause. It does not persist a
+# receipt, acknowledgement or lifecycle mutation.
+static func preview_outcome(environment: Dictionary, token: String, definition: Dictionary, outcome: String, owner_cause: Dictionary = {}) -> Dictionary:
+	var entry := _dict(_container(environment).get(token, {}))
+	var clean_outcome := outcome.strip_edges()
+	if entry.is_empty() or str(entry.get("owner_token", "")) != token:
+		return {"ok": false, "errors": ["world sequence outcome preview is not bound to a mounted owner"]}
+	if str(entry.get("definition_fingerprint", "")) != SequenceRuntimeScript.content_fingerprint(definition):
+		return {"ok": false, "errors": ["world sequence outcome preview definition does not match"]}
+	var channel_id := str(_dict(entry.get("outcome_channels", {})).get(clean_outcome, ""))
+	if channel_id.is_empty():
+		return {"ok": false, "errors": ["world sequence outcome preview channel is not registered"]}
+	var state := _dict(entry.get("state", {}))
+	var runtime_terminal := _array(state.get("resolved_outcomes", [])).has(clean_outcome)
+	if not runtime_terminal:
+		for record_value in _array(state.get("branch_resolution_records", [])):
+			if str(_dict(record_value).get("terminal_outcome", "")) == clean_outcome:
+				runtime_terminal = true
+				break
+	var cause_fingerprint := ""
+	if runtime_terminal:
+		cause_fingerprint = SequenceRuntimeScript.content_fingerprint({
+			"owner_token": token,
+			"outcome": clean_outcome,
+			"definition_fingerprint": str(entry.get("definition_fingerprint", "")),
+			"runtime_status": str(state.get("status", "")),
+		})
+	elif clean_outcome in ["expired", "abandoned"]:
+		var expected_owner_cause := {
+			"schema_version": 1,
+			"owner_token": token,
+			"public_instance_token": str(entry.get("public_instance_token", "")),
+			"outcome": clean_outcome,
+			"delivery_resolution_fingerprint": str(owner_cause.get("delivery_resolution_fingerprint", "")),
+		}
+		if owner_cause != expected_owner_cause or str(expected_owner_cause.get("delivery_resolution_fingerprint", "")).is_empty():
+			return {"ok": false, "errors": ["world sequence owner terminal cause is not exact"]}
+		cause_fingerprint = SequenceRuntimeScript.content_fingerprint(expected_owner_cause)
+	else:
+		return {"ok": false, "errors": ["world sequence runtime has not reached the requested terminal outcome"]}
+	var receipt_id := "world_outcome:%s:%s" % [token, clean_outcome]
+	var receipt := {
+		"receipt_id": receipt_id,
+		"owner_token": token,
+		"public_instance_token": str(entry.get("public_instance_token", "")),
+		"channel_id": channel_id,
+		"outcome": clean_outcome,
+		"cause_fingerprint": cause_fingerprint,
+	}
+	receipt["receipt_fingerprint"] = SequenceRuntimeScript.content_fingerprint(receipt)
+	return {"ok": true, "receipt": receipt, "errors": []}
+
+
+# Materializes exactly the previously previewed receipt after the owner model's
+# closed checkpoint is durable. Owner-driven expiry/abandon also reaches its
+# shared-runtime terminal here; acknowledgement and cleanup remain independent.
+static func confirm_outcome(environment: Dictionary, token: String, definition: Dictionary, expected_receipt: Dictionary, owner_cause: Dictionary = {}) -> Dictionary:
+	var outcome := str(expected_receipt.get("outcome", ""))
+	var preview := preview_outcome(environment, token, definition, outcome, owner_cause)
+	if not bool(preview.get("ok", false)):
+		return preview
+	if _dict(preview.get("receipt", {})) != expected_receipt:
+		return {"ok": false, "errors": ["world sequence confirmed outcome differs from its trusted preview"]}
+	var entry := _dict(_container(environment).get(token, {}))
+	var state := _dict(entry.get("state", {}))
+	if not _array(state.get("resolved_outcomes", [])).has(outcome):
+		var terminal := _apply_runtime_result(environment, token, definition, func(live_state: Dictionary) -> Dictionary:
+			return SequenceRuntimeScript.apply_owner_lifecycle_outcome(live_state, definition, outcome, outcome)
+		, LIFECYCLE_CLEANUP_PENDING)
+		if not bool(terminal.get("ok", false)):
+			return terminal
+	entry = _dict(_container(environment).get(token, {}))
+	var receipts := _dict(entry.get("outcome_receipts", {}))
+	var receipt_id := str(expected_receipt.get("receipt_id", ""))
+	if receipts.has(receipt_id):
+		if _dict(receipts.get(receipt_id, {})) != expected_receipt:
+			return {"ok": false, "errors": ["world sequence outcome receipt was reused with different content"]}
+		return {"ok": true, "replayed": true, "receipt": expected_receipt.duplicate(true), "errors": []}
+	receipts[receipt_id] = expected_receipt.duplicate(true)
+	entry["outcome_receipts"] = receipts
+	entry["lifecycle"] = LIFECYCLE_CLEANUP_PENDING
+	var container := _container(environment)
+	container[token] = entry
+	environment[CONTAINER_KEY] = container
+	return {"ok": true, "replayed": false, "receipt": expected_receipt.duplicate(true), "errors": []}
 
 
 # The owning model applies its existing API first, then acknowledges with only
@@ -412,7 +497,6 @@ static func _apply_runtime_result(environment: Dictionary, token: String, defini
 		entry["lifecycle"] = LIFECYCLE_CLEANUP_PENDING
 	elif str(next.get("status", "")) == SequenceRuntimeScript.STATUS_CLEANED:
 		entry["lifecycle"] = LIFECYCLE_CLEANED
-	_capture_terminal_outcomes(entry, definition)
 	container[token] = entry
 	environment[CONTAINER_KEY] = container
 	result["state"] = next.duplicate(true)
@@ -431,27 +515,6 @@ static func _rehydrate_entry(entry_value: Dictionary, definition: Dictionary, ho
 		return {"ok": false, "errors": ["persisted world sequence state cannot be normalized"]}
 	entry["state"] = state
 	return {"ok": true, "entry": entry, "errors": []}
-
-
-static func _capture_terminal_outcomes(entry: Dictionary, definition: Dictionary) -> void:
-	var state := _dict(entry.get("state", {}))
-	var channels := _dict(entry.get("outcome_channels", {}))
-	var receipts := _dict(entry.get("outcome_receipts", {}))
-	for outcome_value in _array(state.get("resolved_outcomes", [])):
-		var outcome := str(outcome_value)
-		var channel_id := str(channels.get(outcome, ""))
-		if channel_id.is_empty():
-			continue
-		var receipt_id := "world_outcome:%s:%s" % [str(entry.get("owner_token", "")), outcome]
-		if not receipts.has(receipt_id):
-			receipts[receipt_id] = {
-				"receipt_id": receipt_id,
-				"owner_token": str(entry.get("owner_token", "")),
-				"channel_id": channel_id,
-				"outcome": outcome,
-				"cause_fingerprint": SequenceRuntimeScript.content_fingerprint({"owner_token": str(entry.get("owner_token", "")), "outcome": outcome, "definition": str(entry.get("definition_fingerprint", ""))}),
-			}
-	entry["outcome_receipts"] = receipts
 
 
 static func _source_definition_errors(source: Dictionary, definition: Dictionary) -> Array:

@@ -18,6 +18,7 @@ const ScenarioOperationRegistryScript := preload("res://scripts/core/scenario_op
 const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const CrewWorldSequenceAdapterScript := preload("res://scripts/core/crew_world_sequence_adapter.gd")
+const WorldSequencePackageCatalogScript := preload("res://scripts/core/world_sequence_package_catalog.gd")
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
@@ -1854,9 +1855,30 @@ func restore_scenario_definition_cache(snapshot: Dictionary) -> void:
 # Registers an owner request for a future public node. This is boundary-driven:
 # the definition is not mounted and no environment registration marker exists
 # until the exact target room has a sealed semantic inventory.
-func world_sequence_schedule_mount(source: Dictionary, public_instance_token: String, mount_selector: Dictionary, definition: Dictionary, outcome_channels: Dictionary, ownership_claims: Array, seed_token: String = "") -> Dictionary:
+
+# The caller names only a trusted package and compares the public delivery
+# instance/target it just received. Source, definition, channels, claims, mount
+# zone and seed authority are all resolved again from trusted live state here.
+func world_sequence_schedule_mount(package_id: String, public_instance_token: String, node_id_value: String) -> Dictionary:
+	var entry := WorldSequencePackageCatalogScript.entry(package_id)
+	if entry.is_empty():
+		return {"ok": false, "owner_token": "", "errors": ["registered world sequence package is unavailable"]}
+	var delivery := DeliveryRunModelScript.snapshot(active_delivery_run)
+	var trusted_instance := str(delivery.get("job_id", "")).strip_edges()
+	if trusted_instance.is_empty(): trusted_instance = str(delivery.get("run_id", "")).strip_edges()
+	var targets := _copy_array(delivery.get("targets", []))
+	var trusted_node := str(_copy_dict(targets[0]).get("node_id", "")).strip_edges() if targets.size() == 1 else ""
+	if trusted_instance.is_empty() or trusted_instance != public_instance_token or trusted_node.is_empty() or trusted_node != node_id_value:
+		return {"ok": false, "owner_token": "", "errors": ["world sequence schedule does not match the live delivery registration"]}
+	var source := _copy_dict(entry.get("source", {}))
+	var definition := _copy_dict(entry.get("definition", {}))
+	var outcome_channels := _copy_dict(entry.get("outcome_channels", {}))
+	var ownership_claims := _copy_array(entry.get("ownership_claims", []))
+	var authored_mount := _copy_dict(entry.get("mount", {}))
+	var mount_selector := {"node_id": trusted_node, "zone_id": str(authored_mount.get("zone_id", "")).strip_edges()}
+	var seed_token := "world_sequence:%s" % trusted_instance
 	var token := CrewWorldSequenceAdapterScript.owner_token(source, public_instance_token)
-	var node_id := str(mount_selector.get("node_id", "")).strip_edges()
+	var node_id := trusted_node
 	var errors: Array = []
 	if token.is_empty(): errors.append("world sequence registration source or public instance token is invalid")
 	if node_id.is_empty() or node_id != node_id.strip_edges(): errors.append("world sequence registration requires an exact public target node")
@@ -2114,38 +2136,16 @@ func world_sequence_consume_delivery_outcome(token: String, receipt_id: String, 
 	if receipt.is_empty(): return {"ok": false, "errors": ["world sequence pending outcome receipt is missing"]}
 	if str(receipt.get("channel_id", "")) != "delivery_handoff":
 		return {"ok": false, "errors": ["world sequence outcome is not routed to delivery_handoff"]}
+	var checkpoint_errors := DeliveryRunModelScript.closed_checkpoint_errors(active_delivery_run, _world_sequence_delivery_binding(receipt))
+	if not checkpoint_errors.is_empty(): return {"ok": false, "errors": checkpoint_errors}
+	var checkpoint := DeliveryRunModelScript.closed_checkpoint(active_delivery_run)
+	var public_result := _copy_dict(checkpoint.get("public_result", {}))
 	var owner_results := _copy_dict(registration.get("owner_outcome_results", {}))
-	var public_result := _copy_dict(owner_results.get(receipt_id, {}))
-	if public_result.is_empty():
-		var outcome := str(receipt.get("outcome", ""))
-		var owner_result: Dictionary = {}
-		if outcome == "delivered":
-			var delivery_instance := str(active_delivery_run.get("job_id", ""))
-			if delivery_instance.is_empty(): delivery_instance = str(active_delivery_run.get("run_id", ""))
-			var already_applied := str(active_delivery_run.get("status", "")) == "resolved" \
-				and bool(active_delivery_run.get("world_applied", false)) \
-				and str(_copy_dict(active_delivery_run.get("resolution", {})).get("outcome", "")) == "success" \
-				and delivery_instance == str(registration.get("public_instance_token", ""))
-			if already_applied:
-				var delivery_receipt := _copy_dict(active_delivery_run.get("receipt", {}))
-				owner_result = {"ok": true, "resolved": true, "message": str(delivery_receipt.get("payment_note", "The package changes hands. Nothing else does."))}
-			else:
-				owner_result = delivery_complete_handoff(node_id)
-		elif outcome in ["expired", "abandoned"] and bool(active_delivery_run.get("world_applied", false)):
-			owner_result = {"ok": true, "resolved": true, "outcome": outcome, "message": ""}
-		else:
-			return {"ok": false, "errors": ["delivery owner is not ready to consume world sequence outcome %s" % outcome]}
-		if not bool(owner_result.get("ok", false)):
-			return {"ok": false, "errors": [str(owner_result.get("message", "The owning delivery model rejected this outcome."))]}
-		public_result = {
-			"ok": true,
-			"resolved": bool(owner_result.get("resolved", false)),
-			"message": str(owner_result.get("message", "")),
-		}
-		if owner_result.has("outcome"): public_result["outcome"] = str(owner_result.get("outcome", ""))
-		owner_results[receipt_id] = public_result.duplicate(true)
-		registration["owner_outcome_results"] = owner_results
-		world_sequence_registrations[token] = registration
+	if owner_results.has(receipt_id) and _copy_dict(owner_results.get(receipt_id, {})) != public_result:
+		return {"ok": false, "errors": ["world sequence delivery result checkpoint conflicts with registration"]}
+	owner_results[receipt_id] = public_result.duplicate(true)
+	registration["owner_outcome_results"] = owner_results
+	world_sequence_registrations[token] = registration
 	var acknowledgement := world_sequence_ack_outcome(token, receipt_id, public_result)
 	if not bool(acknowledgement.get("ok", false)):
 		return {"ok": false, "errors": _copy_array(acknowledgement.get("errors", ["World sequence outcome acknowledgement failed."]))}
@@ -2153,6 +2153,33 @@ func world_sequence_consume_delivery_outcome(token: String, receipt_id: String, 
 	if not bool(cleanup.get("ok", false)):
 		return {"ok": false, "errors": _copy_array(cleanup.get("errors", ["World sequence cleanup failed."]))}
 	return {"ok": true, "message": str(public_result.get("message", "")), "public_result": public_result, "errors": []}
+
+
+func _world_sequence_delivery_binding(receipt: Dictionary) -> Dictionary:
+	return {
+		"owner_token": str(receipt.get("owner_token", "")),
+		"public_instance_token": str(receipt.get("public_instance_token", "")),
+		"outcome_receipt_id": str(receipt.get("receipt_id", "")),
+		"outcome_receipt_fingerprint": str(receipt.get("receipt_fingerprint", "")),
+		"outcome_cause_fingerprint": str(receipt.get("cause_fingerprint", "")),
+	}
+
+
+func _world_sequence_delivery_owner_cause(token: String, outcome: String) -> Dictionary:
+	if outcome not in ["expired", "abandoned"]: return {}
+	return {
+		"schema_version": 1,
+		"owner_token": token,
+		"public_instance_token": str(_copy_dict(world_sequence_registrations.get(token, {})).get("public_instance_token", "")),
+		"outcome": outcome,
+		"delivery_resolution_fingerprint": ScenarioSequenceRuntimeScript.content_fingerprint(_copy_dict(active_delivery_run.get("resolution", {}))),
+	}
+
+
+func _delivery_checkpoint_outcome() -> String:
+	var resolution := _copy_dict(active_delivery_run.get("resolution", {}))
+	if str(resolution.get("outcome", "")) == "success": return "delivered"
+	return "abandoned" if str(resolution.get("reason", "")) == "abandoned" else "expired"
 
 
 func _refresh_world_sequence_registration(token: String, preserve_pending: bool = true) -> void:
@@ -10451,7 +10478,10 @@ func delivery_complete_handoff(node_id: String = "") -> Dictionary:
 	active_delivery_run = DeliveryRunModelScript.complete_handoff(active_delivery_run, target_id)
 	if JSON.stringify(delivery_snapshot()) == before:
 		return {"ok": false, "message": "This is not the marked handoff."}
-	_apply_delivery_resolution()
+	var applied := _apply_delivery_resolution()
+	if not bool(applied.get("ok", false)):
+		var apply_errors := _copy_array(applied.get("errors", []))
+		return {"ok": false, "message": str(apply_errors[0]) if not apply_errors.is_empty() else "The delivery consequence could not be committed.", "errors": apply_errors}
 	var receipt := _copy_dict(active_delivery_run.get("receipt", {}))
 	var handoff_message := str(receipt.get("payment_note", "The package changes hands. Nothing else does."))
 	return {"ok": true, "resolved": not delivery_has_active_run(), "snapshot": delivery_snapshot(), "message": handoff_message}
@@ -10691,17 +10721,49 @@ func _delivery_arrival_security_heat() -> int:
 	return heat
 
 
-func _apply_delivery_resolution() -> void:
+func _apply_delivery_resolution(expected_receipt: Dictionary = {}) -> Dictionary:
 	if active_delivery_run.is_empty() or str(active_delivery_run.get("status", "")) != "resolved":
-		return
+		return {"ok": true, "inactive": true, "errors": []}
 	if bool(active_delivery_run.get("world_applied", false)):
-		_retry_delivery_world_sequence_lifecycle()
-		return
+		var checkpoint := DeliveryRunModelScript.closed_checkpoint(active_delivery_run)
+		var applied_instance := str(active_delivery_run.get("job_id", "")).strip_edges()
+		if applied_instance.is_empty(): applied_instance = str(active_delivery_run.get("run_id", "")).strip_edges()
+		var applied_owner := world_sequence_owner_for_public_instance("delivery_handoff", applied_instance)
+		var applied_entry := _copy_dict(_copy_dict(current_environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {})).get(applied_owner, {}))
+		if checkpoint.is_empty() and not applied_owner.is_empty() and not applied_entry.is_empty():
+			return {"ok": false, "errors": ["mounted applied delivery is missing its closed checkpoint"]}
+		if not checkpoint.is_empty():
+			var checkpoint_token := str(checkpoint.get("owner_token", ""))
+			var materialized := world_sequence_materialize_delivery_checkpoint(checkpoint_token)
+			if not bool(materialized.get("ok", false)): return materialized
+		var retried := _retry_delivery_world_sequence_lifecycle()
+		if not bool(retried.get("ok", false)): return retried
+		return {"ok": true, "replayed": true, "public_result": _copy_dict(checkpoint.get("public_result", {})), "errors": []}
 	var resolution := _copy_dict(active_delivery_run.get("resolution", {}))
 	var succeeded := str(resolution.get("outcome", "")) == "success"
+	var reason := str(resolution.get("reason", "failed"))
+	var job_id := str(active_delivery_run.get("job_id", ""))
+	var run_id := str(active_delivery_run.get("run_id", ""))
+	var public_instance_token := job_id if not job_id.is_empty() else run_id
+	var owner_token := world_sequence_owner_for_public_instance("delivery_handoff", public_instance_token)
+	var live_entry := _copy_dict(_copy_dict(current_environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {})).get(owner_token, {}))
+	var mounted := not owner_token.is_empty() and not live_entry.is_empty()
+	var outcome_id := "delivered" if succeeded else ("abandoned" if reason == "abandoned" else "expired")
+	var owner_cause := _world_sequence_delivery_owner_cause(owner_token, outcome_id) if mounted else {}
+	var receipt := expected_receipt.duplicate(true)
+	if mounted:
+		var preview := CrewWorldSequenceAdapterScript.preview_outcome(current_environment, owner_token, _world_sequence_definition(owner_token), outcome_id, owner_cause)
+		if not bool(preview.get("ok", false)): return preview
+		var trusted_receipt := _copy_dict(preview.get("receipt", {}))
+		if not receipt.is_empty() and receipt != trusted_receipt:
+			return {"ok": false, "errors": ["delivery consequence preview changed before commit"]}
+		receipt = trusted_receipt
+	var rollback_run := to_dict()
+	var rollback_environment := current_environment.duplicate(true)
+	var rollback_world_map := world_map.duplicate(true)
+	var rollback_room_states := grand_casino_room_states.duplicate(true)
 	var payload := _copy_dict(active_delivery_run.get("consumer_payload", {}))
 	var effects := _copy_dict(payload.get("success" if succeeded else "failure", {}))
-	var reason := str(resolution.get("reason", "failed"))
 	var cash := maxi(0, int(effects.get("cash", 0)))
 	if succeeded and bool(resolution.get("clean", false)) and bool(resolution.get("fast", false)):
 		cash += maxi(0, int(effects.get("clean_speed_bonus_cash", 0)))
@@ -10714,7 +10776,6 @@ func _apply_delivery_resolution() -> void:
 		add_suspicion("delivery:%s" % reason, heat, "contraband", true, {"run_id": str(active_delivery_run.get("run_id", ""))}, true)
 	for flag_value in _copy_dict(effects.get("flags", {})).keys():
 		narrative_flags[str(flag_value)] = _copy_dict(effects.get("flags", {})).get(flag_value)
-	var job_id := str(active_delivery_run.get("job_id", ""))
 	if not job_id.is_empty():
 		var job_result := job_resolve(job_id, "success" if succeeded else "failed")
 		var payment_note := str(job_result.get("payment_note", "")).strip_edges()
@@ -10724,7 +10785,6 @@ func _apply_delivery_resolution() -> void:
 				"paid_cash": int(job_result.get("paid_cash", 0)),
 				"payment_note": payment_note,
 			}
-	var run_id := str(active_delivery_run.get("run_id", ""))
 	if run_id.begins_with("heist:"):
 		_crew_heist_apply_delivery_resolution(run_id, succeeded, resolution)
 	if run_id.begins_with("crew_collection:"):
@@ -10752,14 +10812,36 @@ func _apply_delivery_resolution() -> void:
 	if reporting_mode in [DeliveryRunModelScript.MODE_PACKAGE, DeliveryRunModelScript.MODE_MULTI_STOP]:
 		var reporting_key := "profile_delivery_runs_completed" if succeeded else "profile_delivery_packages_lost"
 		narrative_flags[reporting_key] = maxi(0, int(narrative_flags.get(reporting_key, 0))) + 1
-	active_delivery_run["world_applied"] = true
+	var delivery_receipt := _copy_dict(active_delivery_run.get("receipt", {}))
+	var public_result := {"ok": true, "resolved": true, "message": str(delivery_receipt.get("payment_note", "The package changes hands. Nothing else does.")) if succeeded else ""}
+	if not succeeded: public_result["outcome"] = outcome_id
+	if mounted:
+		var checkpointed := DeliveryRunModelScript.commit_closed_checkpoint(active_delivery_run, _world_sequence_delivery_binding(receipt), public_result)
+		if not bool(checkpointed.get("ok", false)):
+			from_dict(rollback_run)
+			current_environment = rollback_environment
+			world_map = rollback_world_map
+			grand_casino_room_states = rollback_room_states
+			return checkpointed
+		active_delivery_run = _copy_dict(checkpointed.get("state", {}))
+		var confirmed := CrewWorldSequenceAdapterScript.confirm_outcome(current_environment, owner_token, _world_sequence_definition(owner_token), receipt, owner_cause)
+		if not bool(confirmed.get("ok", false)):
+			from_dict(rollback_run)
+			current_environment = rollback_environment
+			world_map = rollback_world_map
+			grand_casino_room_states = rollback_room_states
+			return confirmed
+		_refresh_world_sequence_registration(owner_token, false)
+	else:
+		# Separate legacy/unmounted delivery path: it retains its established
+		# exactly-once world bit and never manufactures an adapter checkpoint.
+		active_delivery_run["world_applied"] = true
 	var lifecycle_reason := "expired" if reason == "deadline" else ("abandoned" if reason == "abandoned" else "")
-	if not lifecycle_reason.is_empty():
-		var public_instance_token := job_id if not job_id.is_empty() else run_id
-		var owner_token := world_sequence_owner_for_public_instance("delivery_handoff", public_instance_token)
-		if not owner_token.is_empty():
-			active_delivery_run["world_sequence_lifecycle_retry"] = {"owner_token": owner_token, "outcome": lifecycle_reason}
-			_retry_delivery_world_sequence_lifecycle()
+	if not lifecycle_reason.is_empty() and mounted:
+		active_delivery_run["world_sequence_lifecycle_retry"] = {"owner_token": owner_token, "outcome": lifecycle_reason}
+		var lifecycle := _retry_delivery_world_sequence_lifecycle()
+		if not bool(lifecycle.get("ok", false)): return lifecycle
+	return {"ok": true, "public_result": public_result, "errors": []}
 
 
 func _retry_delivery_world_sequence_lifecycle() -> Dictionary:
@@ -13972,6 +14054,57 @@ func to_dict() -> Dictionary:
 		result.erase("scenario_host_transaction_ledger")
 	if not world_sequence_registrations.is_empty(): result["world_sequence_registrations"] = world_sequence_registrations.duplicate(true)
 	return result
+
+
+func world_sequence_preview_delivery_outcome(token: String, outcome: String = "delivered") -> Dictionary:
+	var registration := _copy_dict(world_sequence_registrations.get(token, {}))
+	if registration.is_empty(): return {"ok": false, "errors": ["world sequence delivery registration is missing"]}
+	return CrewWorldSequenceAdapterScript.preview_outcome(current_environment, token, _world_sequence_definition(token), outcome, _world_sequence_delivery_owner_cause(token, outcome))
+
+
+func world_sequence_commit_delivery_outcome(token: String, node_id: String = "") -> Dictionary:
+	var preview := world_sequence_preview_delivery_outcome(token, "delivered")
+	if not bool(preview.get("ok", false)): return preview
+	var target_id := node_id.strip_edges()
+	if target_id.is_empty(): target_id = current_world_node_id()
+	if not delivery_has_active_run(): return {"ok": false, "errors": ["delivery owner is not active at the terminal handoff"]}
+	var before := JSON.stringify(delivery_snapshot())
+	active_delivery_run = DeliveryRunModelScript.complete_handoff(active_delivery_run, target_id)
+	if JSON.stringify(delivery_snapshot()) == before or str(active_delivery_run.get("status", "")) != "resolved":
+		return {"ok": false, "errors": ["delivery owner rejected the terminal handoff"]}
+	var applied := _apply_delivery_resolution(_copy_dict(preview.get("receipt", {})))
+	if not bool(applied.get("ok", false)): return applied
+	return {"ok": true, "resolved": true, "message": str(_copy_dict(applied.get("public_result", {})).get("message", "")), "public_result": _copy_dict(applied.get("public_result", {})), "errors": []}
+
+
+func world_sequence_materialize_delivery_checkpoint(token: String) -> Dictionary:
+	var checkpoint := DeliveryRunModelScript.closed_checkpoint(active_delivery_run)
+	if checkpoint.is_empty() or str(checkpoint.get("owner_token", "")) != token:
+		return {"ok": true, "inactive": true, "errors": []}
+	var expected_receipt := {
+		"receipt_id": str(checkpoint.get("outcome_receipt_id", "")),
+		"owner_token": str(checkpoint.get("owner_token", "")),
+		"public_instance_token": str(checkpoint.get("public_instance_token", "")),
+		"channel_id": "delivery_handoff",
+		"outcome": _delivery_checkpoint_outcome(),
+		"cause_fingerprint": str(checkpoint.get("outcome_cause_fingerprint", "")),
+		"receipt_fingerprint": str(checkpoint.get("outcome_receipt_fingerprint", "")),
+	}
+	var checkpoint_errors := DeliveryRunModelScript.closed_checkpoint_errors(active_delivery_run, _world_sequence_delivery_binding(expected_receipt))
+	if not checkpoint_errors.is_empty(): return {"ok": false, "errors": checkpoint_errors}
+	var confirmed := CrewWorldSequenceAdapterScript.confirm_outcome(current_environment, token, _world_sequence_definition(token), expected_receipt, _world_sequence_delivery_owner_cause(token, str(expected_receipt.get("outcome", ""))))
+	if bool(confirmed.get("ok", false)): _refresh_world_sequence_registration(token, false)
+	return confirmed
+
+
+func world_sequence_resume_delivery_checkpoint() -> Dictionary:
+	var checkpoint := DeliveryRunModelScript.closed_checkpoint(active_delivery_run)
+	if checkpoint.is_empty(): return {"ok": true, "inactive": true, "errors": []}
+	var token := str(checkpoint.get("owner_token", ""))
+	var registration := _copy_dict(world_sequence_registrations.get(token, {}))
+	if str(registration.get("lifecycle", "")) == "cleaned" and _copy_dict(registration.get("outcome_acknowledgements", {})).has(str(checkpoint.get("outcome_receipt_id", ""))):
+		return {"ok": true, "inactive": true, "errors": []}
+	return world_sequence_materialize_delivery_checkpoint(token)
 
 
 # Captures a worker-safe save generation without first deep-copying duplicated

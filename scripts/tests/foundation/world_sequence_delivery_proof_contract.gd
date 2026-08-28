@@ -9,6 +9,9 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
 const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
+const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
+const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const CrewWorldSequenceAdapterScript := preload("res://scripts/core/crew_world_sequence_adapter.gd")
 
 const PACKAGE_PATH := "res://data/crew/world06_1_crew_favor_delivery_sequence.json"
 const EVENTS_PATH := "res://data/events/events.json"
@@ -40,6 +43,7 @@ func _initialize() -> void:
 	_check_production_event_contract(failures)
 	_check_generic_integration_surface(failures)
 	_check_production_schedule(failures)
+	_check_hidden_observer_equivalence(failures)
 	_check_delivery_failure_injection_matrix(failures)
 	if failures.is_empty():
 		print("World sequence delivery proof contract passed: source=crew::crew::crew_favor_delivery proof=crew_favor_delivery")
@@ -229,6 +233,75 @@ func _check_production_schedule(failures: Array) -> void:
 		failures.append("Production Crew favor refusal no longer stays on its unchanged unmounted dialogue path.")
 
 
+func _check_hidden_observer_equivalence(failures: Array) -> void:
+	var library := ContentLibraryScript.new()
+	library.load(false)
+	var clean := _hidden_observer_fixture(library, false, failures)
+	var alternate := _hidden_observer_fixture(library, true, failures)
+	if clean.is_empty() or alternate.is_empty(): return
+	if JSON.stringify(clean) != JSON.stringify(alternate):
+		failures.append("Turned/no-turn differential observer changed adapter save bytes/key sets, scene, render, actors, interactions, logs or timing.")
+
+
+func _hidden_observer_fixture(library: ContentLibrary, alternate_private_case: bool, failures: Array) -> Dictionary:
+	var run_state := _production_run(library, "WORLD-SEQUENCE-HIDDEN-OBSERVER")
+	var private_state := CrewTurnModelScript.empty_state()
+	if alternate_private_case:
+		private_state["m"] = str(CrewStateModelScript.MEMBER_IDS[1])
+	run_state.crew_heist_state = {"x": private_state}
+	run_state.narrative_flags["crew_favor_pending"] = true
+	var module := EventModuleScript.new()
+	module.setup(library.event("crew_favor_delivery"), library)
+	var started := module.resolve(run_state, run_state.current_environment, "run_package")
+	var token := str(started.get("world_sequence_owner_token", ""))
+	var targets := _array(run_state.delivery_snapshot().get("targets", []))
+	var target_node_id := str(_dict(targets[0]).get("node_id", "")) if not targets.is_empty() else ""
+	if token.is_empty() or target_node_id.is_empty():
+		failures.append("Differential observer fixture could not schedule its public sequence.")
+		return {}
+	RunGeneratorScript.new(library).next_environment(run_state, target_node_id, true)
+	var arrival := run_state.delivery_resolve_travel_arrival({}, {})
+	var finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
+	if not bool(arrival.get("ok", false)) or not bool(finalized.get("ok", false)):
+		failures.append("Differential observer fixture could not mount its public sequence.")
+		return {}
+	# Reassert only model-private bytes immediately before the complete public
+	# observer capture. Adapter evidence intentionally excludes that owner envelope.
+	run_state.crew_heist_state = {"x": private_state}
+	var registration := _dict(run_state.world_sequence_registrations.get(token, {}))
+	var instances := CrewWorldSequenceAdapterScript.durable_container(run_state.current_environment.get("world_sequence_instances", {}))
+	var registration_map := {}
+	registration_map[token] = registration
+	var adapter_save := {"registrations": registration_map, "instances": instances}
+	var projection := run_state.world_sequence_composed_projection()
+	var semantic := _dict(projection.get("semantic_state", {}))
+	var instance_state := _dict(_dict(instances.get(token, {})).get("state", {}))
+	return {
+		"saved_bytes": JSON.stringify(adapter_save),
+		"saved_key_sets": _observer_key_tree(adapter_save),
+		"scene": _dict(semantic.get("scene_objects", {})),
+		"render": _dict(run_state.current_environment.get("scenario_render_snapshot", {})),
+		"actors": _dict(semantic.get("actors", {})),
+		"interactions": _dict(semantic.get("interactions", {})),
+		"logs": run_state.story_log.duplicate(true),
+		"timing": {"boundary_serial": int(instance_state.get("boundary_serial", 0)), "performance_counters": _dict(instance_state.get("performance_counters", {}))},
+	}
+
+
+func _observer_key_tree(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		var result: Dictionary = {}
+		var keys := (value as Dictionary).keys()
+		keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+		for key_value in keys: result[str(key_value)] = _observer_key_tree((value as Dictionary).get(key_value))
+		return result
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for entry in value as Array: result.append(_observer_key_tree(entry))
+		return result
+	return typeof(value)
+
+
 func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: String, target_node_id: String, bankroll_before: int, heat_before: int, failures: Array) -> void:
 	if target_node_id.is_empty():
 		failures.append("Production delivery did not expose a public target for the proof conversion.")
@@ -276,21 +349,26 @@ func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: 
 		return
 	if run_state.bankroll != bankroll_at_command or run_state.suspicion_level() != heat_at_command:
 		failures.append("Adapter command applied Crew economy consequences before the owning delivery model consumed the neutral outcome.")
-	var pending := run_state.world_sequence_pending_outcomes(token)
-	if pending.size() != 1 or str(_dict(pending[0]).get("channel_id", "")) != "delivery_handoff" \
-			or str(_dict(pending[0]).get("outcome", "")) != "delivered":
-		failures.append("Crew favor handoff did not emit exactly one neutral delivered receipt: %s." % JSON.stringify(pending))
+	if not run_state.world_sequence_pending_outcomes(token).is_empty():
+		failures.append("Crew favor handoff persisted a neutral receipt before the owner checkpoint committed.")
 		return
-	var owner_result := run_state.delivery_complete_handoff(target_node_id)
+	var preview := run_state.world_sequence_preview_delivery_outcome(token, "delivered")
+	var preview_receipt := _dict(preview.get("receipt", {}))
+	if not bool(preview.get("ok", false)) or preview_receipt.is_empty() or not run_state.world_sequence_pending_outcomes(token).is_empty():
+		failures.append("Crew favor handoff did not expose one non-persisting trusted receipt preview.")
+		return
+	var owner_result := run_state.world_sequence_commit_delivery_outcome(token, target_node_id)
 	if not bool(owner_result.get("ok", false)) or run_state.bankroll != bankroll_before + 22 \
 			or run_state.suspicion_level() != heat_before + 4 or not bool(run_state.narrative_flags.get("crew_favor_completed", false)):
-		failures.append("Existing delivery authority did not apply the unchanged Crew favor result exactly at outcome consumption: %s." % JSON.stringify(owner_result))
+		failures.append("Existing delivery authority did not atomically apply the unchanged Crew favor result and checkpoint: %s." % JSON.stringify(owner_result))
 		return
-	var receipt_id := str(_dict(pending[0]).get("receipt_id", ""))
-	var public_result := {"ok": true, "resolved": bool(owner_result.get("resolved", false)), "message": str(owner_result.get("message", ""))}
-	var acknowledgement := run_state.world_sequence_ack_outcome(token, receipt_id, public_result)
-	var cleanup := run_state.world_sequence_sync_owner(token, false, "owner_ended")
-	if not bool(acknowledgement.get("ok", false)) or not bool(cleanup.get("ok", false)) or not run_state.world_sequence_pending_outcomes(token).is_empty():
+	var pending := run_state.world_sequence_pending_outcomes(token)
+	if pending.size() != 1 or _dict(pending[0]) != preview_receipt:
+		failures.append("Crew favor checkpoint did not materialize its exact previewed receipt.")
+		return
+	var receipt_id := str(preview_receipt.get("receipt_id", ""))
+	var consumed := run_state.world_sequence_consume_delivery_outcome(token, receipt_id, target_node_id)
+	if not bool(consumed.get("ok", false)) or not run_state.world_sequence_pending_outcomes(token).is_empty():
 		failures.append("Crew favor delivered outcome did not acknowledge and clean up through the generic lifecycle seam.")
 	var replay_command := run_state.world_sequence_command(token, "make_handoff", "proof:crew_favor:handoff", {}, "crew", "package_handoff", {"crew::package_handoff": true})
 	var replay_owner := run_state.delivery_complete_handoff(target_node_id)
@@ -318,27 +396,17 @@ func _check_delivery_failure_injection_matrix(failures: Array) -> void:
 				var rejected := run_state.world_sequence_consume_delivery_outcome(token, receipt_id, "wrong_node")
 				if bool(rejected.get("ok", false)) or JSON.stringify(run_state.to_dict()) != before:
 					failures.append("P1 before-owner injection did not reject byte-identically.")
-			"after_owner_apply":
-				var owner_result := run_state.delivery_complete_handoff(target_node_id)
+			"after_owner_apply", "before_ack", "after_ack", "save_load", "refresh", "travel_revisit":
+				var owner_result := run_state.world_sequence_commit_delivery_outcome(token, target_node_id)
 				if not bool(owner_result.get("ok", false)):
-					failures.append("P1 after-owner injection could not establish the committed owner consequence.")
+					failures.append("P1 %s injection could not establish the atomic owner checkpoint." % stage)
 					continue
-			"before_ack":
-				var owner_result := run_state.delivery_complete_handoff(target_node_id)
-				if not bool(owner_result.get("ok", false)):
-					failures.append("P1 before-ack injection could not establish the committed owner consequence.")
-					continue
-				_persist_owner_result_checkpoint(run_state, token, receipt_id, owner_result)
-			"after_ack", "save_load", "refresh", "travel_revisit":
-				var owner_result := run_state.delivery_complete_handoff(target_node_id)
-				if not bool(owner_result.get("ok", false)):
-					failures.append("P1 %s injection could not establish the committed owner consequence." % stage)
-					continue
-				var public_result := _persist_owner_result_checkpoint(run_state, token, receipt_id, owner_result)
-				var acknowledged := run_state.world_sequence_ack_outcome(token, receipt_id, public_result)
-				if not bool(acknowledged.get("ok", false)):
-					failures.append("P1 %s injection could not establish the acknowledged cleanup checkpoint." % stage)
-					continue
+				if stage in ["after_ack", "travel_revisit"]:
+					var checkpoint := DeliveryRunModelScript.closed_checkpoint(run_state.active_delivery_run)
+					var acknowledged := run_state.world_sequence_ack_outcome(token, receipt_id, _dict(checkpoint.get("public_result", {})))
+					if not bool(acknowledged.get("ok", false)):
+						failures.append("P1 %s injection could not establish the acknowledged cleanup checkpoint." % stage)
+						continue
 				if stage == "save_load" or stage == "refresh":
 					run_state = _round_trip_run(run_state)
 				elif stage == "travel_revisit":
@@ -346,6 +414,8 @@ func _check_delivery_failure_injection_matrix(failures: Array) -> void:
 						failures.append("P1 travel/revisit injection could not cross the real room boundary and revisit its owner state.")
 						continue
 		var resumed: Dictionary
+		if stage == "before_owner_apply":
+			continue
 		if stage == "refresh":
 			var app := FoundationMainScript.new()
 			app.set("run_state", run_state)
@@ -408,19 +478,14 @@ func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures:
 		str(action.get("action_origin_boundary_id", "")),
 		str(action.get("action_origin_fingerprint", ""))
 	)
+	var preview := run_state.world_sequence_preview_delivery_outcome(token, "delivered")
 	var pending := run_state.world_sequence_pending_outcomes(token)
-	if not bool(command.get("ok", false)) or pending.size() != 1:
-		failures.append("P1 injection fixture did not produce exactly one authenticated neutral outcome: command=%s pending=%s." % [JSON.stringify(command), JSON.stringify(pending)])
+	if not bool(command.get("ok", false)) or not bool(preview.get("ok", false)) or not pending.is_empty():
+		failures.append("P1 injection fixture did not produce one non-persisting authenticated neutral preview: command=%s preview=%s pending=%s." % [JSON.stringify(command), JSON.stringify(preview), JSON.stringify(pending)])
 		return {}
-	base_fixture["receipt_id"] = str(_dict(pending[0]).get("receipt_id", ""))
+	base_fixture["receipt_id"] = str(_dict(preview.get("receipt", {})).get("receipt_id", ""))
+	base_fixture["preview_receipt"] = _dict(preview.get("receipt", {}))
 	return base_fixture
-
-
-func _persist_owner_result_checkpoint(run_state: RunState, token: String, receipt_id: String, owner_result: Dictionary) -> Dictionary:
-	var checkpointed := run_state.world_sequence_checkpoint_delivery_outcome(token, receipt_id, owner_result)
-	if not bool(checkpointed.get("ok", false)):
-		return {}
-	return _dict(checkpointed.get("public_result", {}))
 
 
 func _check_delivery_checkpoint_hostile_matrix(library: ContentLibrary, failures: Array) -> void:
@@ -453,13 +518,13 @@ func _prepared_checkpoint_fixture(library: ContentLibrary, label: String, failur
 	var token := str(fixture.get("token", ""))
 	var receipt_id := str(fixture.get("receipt_id", ""))
 	var target_node_id := str(fixture.get("target_node_id", ""))
-	var owner_result := run_state.delivery_complete_handoff(target_node_id)
+	var owner_result := run_state.world_sequence_commit_delivery_outcome(token, target_node_id)
 	if not bool(owner_result.get("ok", false)):
-		failures.append("P1 %s checkpoint fixture could not apply the owner consequence." % label)
+		failures.append("P1 %s checkpoint fixture could not atomically commit the owner consequence." % label)
 		return {}
-	var checkpointed := run_state.world_sequence_checkpoint_delivery_outcome(token, receipt_id, owner_result)
-	if not bool(checkpointed.get("ok", false)):
-		failures.append("P1 %s fixture did not persist through the product checkpoint path: %s." % [label, JSON.stringify(checkpointed)])
+	var checkpointed := DeliveryRunModelScript.closed_checkpoint(run_state.active_delivery_run)
+	if checkpointed.is_empty():
+		failures.append("P1 %s fixture did not persist through the product checkpoint path." % label)
 		return {}
 	fixture["owner_result"] = owner_result.duplicate(true)
 	fixture["public_result"] = _dict(checkpointed.get("public_result", {}))
@@ -586,28 +651,18 @@ func _check_owner_lifecycle_retry(library: ContentLibrary, outcome: String, inje
 	if fixture.is_empty(): return
 	var run_state: RunState = fixture.get("run_state")
 	var token := str(fixture.get("token", ""))
-	var target_node_id := str(fixture.get("target_node_id", ""))
 	var bankroll_before := int(fixture.get("bankroll_before", 0))
 	var heat_before := int(fixture.get("heat_before", 0))
 	var command_count := _world_sequence_command_receipt_count(run_state, token)
-	# Lifecycle outcomes are owner-driven and must not reuse the delivered command.
-	var registration := _dict(run_state.world_sequence_registrations.get(token, {}))
-	run_state.world_sequence_registrations.erase(token)
+	# Lifecycle outcomes are owner-driven and must preview/commit without reusing
+	# the delivered command or accepting a caller-created receipt.
 	run_state.active_delivery_run = DeliveryRunModelScript.abandon(run_state.active_delivery_run, "deadline" if outcome == "expired" else "abandoned")
-	run_state.call("_apply_delivery_resolution")
-	run_state.world_sequence_registrations[token] = registration
-	run_state.active_delivery_run["world_sequence_lifecycle_retry"] = {"owner_token": token, "outcome": outcome}
-	if inject_after_sync:
-		var synced := run_state.world_sequence_sync_owner(token, false, outcome)
-		if not bool(synced.get("ok", false)):
-			failures.append("P1 %s after-sync injection could not establish its pending outcome." % outcome)
-			return
-		run_state = _round_trip_run(run_state)
-	var first := _dict(run_state.call("_retry_delivery_world_sequence_lifecycle"))
+	var first := _dict(run_state.call("_apply_delivery_resolution"))
 	var expected_heat := heat_before + (9 if outcome == "expired" else 0)
 	if not bool(first.get("ok", false)) or run_state.bankroll != bankroll_before or run_state.suspicion_level() != expected_heat \
-			or run_state.active_delivery_run.has("world_sequence_lifecycle_retry") or _world_sequence_command_receipt_count(run_state, token) != command_count:
-		failures.append("P1 %s lifecycle retry did not resume exactly once without a terminal command: %s." % [outcome, JSON.stringify(first)])
+			or run_state.active_delivery_run.has("world_sequence_lifecycle_retry") or _world_sequence_command_receipt_count(run_state, token) != command_count \
+			or DeliveryRunModelScript.closed_checkpoint(run_state.active_delivery_run).is_empty():
+		failures.append("P1 %s lifecycle transaction did not commit exactly once without a terminal command: %s." % [outcome, JSON.stringify(first)])
 		return
 	var exact := JSON.stringify(run_state.to_dict())
 	var replay := _dict(run_state.call("_retry_delivery_world_sequence_lifecycle"))
@@ -625,11 +680,9 @@ func _check_after_cleanup_replay(library: ContentLibrary, failures: Array) -> vo
 	var bankroll_before := int(fixture.get("bankroll_before", 0))
 	var heat_before := int(fixture.get("heat_before", 0))
 	var command_count := _world_sequence_command_receipt_count(run_state, token)
-	var owner_result := run_state.delivery_complete_handoff(target_node_id)
-	var public_result := _persist_owner_result_checkpoint(run_state, token, receipt_id, owner_result)
-	var acknowledged := run_state.world_sequence_ack_outcome(token, receipt_id, public_result)
-	var cleaned := run_state.world_sequence_sync_owner(token, false, "owner_ended")
-	if not bool(owner_result.get("ok", false)) or not bool(acknowledged.get("ok", false)) or not bool(cleaned.get("ok", false)):
+	var owner_result := run_state.world_sequence_commit_delivery_outcome(token, target_node_id)
+	var cleaned := run_state.world_sequence_consume_delivery_outcome(token, receipt_id, target_node_id)
+	if not bool(owner_result.get("ok", false)) or not bool(cleaned.get("ok", false)):
 		failures.append("P1 after-cleanup injection could not establish its completed transaction checkpoint.")
 		return
 	var exact := JSON.stringify(run_state.to_dict())
