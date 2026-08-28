@@ -96,7 +96,7 @@ automated evidence, and capture provenance.
 | Grand Casino | `grand_casino_convention_crowd` | TBD | TBD | TBD | TBD | TBD | BLOCKED — UNVERIFIED |
 | Grand Casino | `grand_casino_audit_night` | TBD | TBD | TBD | TBD | TBD | BLOCKED — UNVERIFIED |
 
-Catalog cardinality requirement: exactly 55 distinct stable ids in 13
+Catalog cardinality requirement: exactly 55 distinct stable ids in 12
 archetypes, with counts 5/4/4/7/5/8/4/4/5/3/3/3 by the table's archetype
 order. The final audit must compare this contract to the landed machine-readable
 catalog and report additions, omissions, duplicates, and renamed ids; this
@@ -274,4 +274,3 @@ review sheet. A contact sheet without exact per-cell provenance is not evidence.
 | Poker multi-night depth and hidden-information safety | BLOCKED — UNVERIFIED |
 | Full exact-tree gate matrix | BLOCKED — UNVERIFIED |
 | Final `depth06_1` verdict | BLOCKED — UNVERIFIED |
-
