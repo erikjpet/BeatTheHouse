@@ -57,17 +57,32 @@ func _check_encounter_proposals(failures: Array) -> void:
 	if str(cargo_public.get("cargo_id", "")) != "delivery:numbers_slips" or not bool(cargo_public.get("contraband", false)) or cargo_public.has("hidden_value"):
 		failures.append("Sweep encounter did not preserve player-safe delivery cargo context.")
 	var intel: Dictionary = public_state.get("intel_projection", {})
-	if bool(intel.get("usable", true)) or not str(intel.get("heading_node_id", "")).is_empty():
-		failures.append("Sweep encounter leaked track intel without capability.")
+	if bool(intel.get("available", true)) or str(intel.get("authority_gap", "")) != PoliceSweepModelScript.INTEL_AUTHORITY_GAP:
+		failures.append("Sweep encounter did not report the exact unrepresentable intel authority gap.")
 	if not PoliceSweepModelScript.encounter_action_proposal(proposal, "use_intel").is_empty():
 		failures.append("Sweep encounter allowed unavailable intel to be used.")
 	var observe := PoliceSweepModelScript.encounter_action_proposal(proposal, "observe_officers")
 	if bool(observe.get("authoritative", true)) or bool(observe.get("can_mutate", true)) or str(observe.get("next_phase_proposal", "")) != "route_choice_proposal" or JSON.stringify(proposal) != JSON.stringify(PoliceSweepModelScript.normalize_encounter_proposal(proposal)):
 		failures.append("Sweep observation was not a non-mutating route-choice proposal.")
-	var intel_proposal := model.encounter_proposal(claim, cargo, ["pawn_shop", "bar"], {"sweep_intel": true})
-	var used_intel := PoliceSweepModelScript.encounter_action_proposal(intel_proposal, "use_intel")
-	if used_intel.is_empty() or str(used_intel.get("heading_node_id", "")) != str(model.status().get("heading_node_id", "")) or bool(used_intel.get("can_mutate", true)):
-		failures.append("Capability-gated sweep intel was not usable in the encounter proposal.")
+	var observer_outputs := [
+		model.encounter_proposal(claim, cargo, ["pawn_shop", "bar", "bar"], true),
+		model.encounter_proposal(claim, cargo, ["pawn_shop", "bar", "bar"], {"sweep_intel": true}),
+		model.encounter_proposal(claim, cargo, ["pawn_shop", "bar", "bar"], {"sweep_intel": {"host_signed": true}, "authority": "substituted"}),
+	]
+	for observer_output in observer_outputs:
+		if JSON.stringify(observer_output) != JSON.stringify(proposal): failures.append("Otherwise-identical observer changed proposal bytes from caller-authored capability input.")
+	var status_without := model.intel_status({})
+	for hostile_capability in [true, {"sweep_intel": true}, {"capability": "recomputed", "sweep_intel": {"available": true}}]:
+		if JSON.stringify(model.intel_status(hostile_capability)) != JSON.stringify(status_without): failures.append("Caller-authored capability changed public intel behavior or bytes.")
+	var before_report := JSON.stringify(model.snapshot())
+	if JSON.stringify(model.report_intel_at_boundary({"sweep_intel": true})) != JSON.stringify(status_without) or JSON.stringify(model.snapshot()) != before_report:
+		failures.append("Caller-authored intel report mutated model state or exposed track facts.")
+	var sighting := model.record_personal_sighting("direct")
+	for hostile_capability in [true, {"sweep_intel": true}, {"sweep_intel": {"host_signed": true}}]:
+		if JSON.stringify(model.map_marker(hostile_capability)) != JSON.stringify(sighting): failures.append("Caller-authored capability changed personal-marker observer bytes.")
+	var marker_text := JSON.stringify(sighting).to_lower()
+	for hidden in ["node_id", "heading", "segment", "action", "stale_actions"]:
+		if marker_text.contains(hidden): failures.append("Personal marker leaked unauthenticated %s intel." % hidden)
 	var before_model := JSON.stringify(model.snapshot())
 	for outcome_value in PoliceSweepModelScript.ENCOUNTER_OUTCOMES:
 		var outcome := str(outcome_value)
@@ -85,17 +100,25 @@ func _check_encounter_proposals(failures: Array) -> void:
 	var hostile: Dictionary = proposal.duplicate(true)
 	hostile["host_committed"] = true
 	if not PoliceSweepModelScript.normalize_encounter_proposal(hostile).is_empty(): failures.append("Sweep proposal accepted an invented host authority key.")
-	for key in ["node_id", "segment_index", "cargo_context", "costed_rungs", "authority_gap"]:
+	var forged_identity: Dictionary = proposal.duplicate(true)
+	forged_identity["encounter_id"] = JSON.stringify(proposal).sha256_text()
+	if not PoliceSweepModelScript.normalize_encounter_proposal(forged_identity).is_empty(): failures.append("Sweep proposal treated a recomputed self-identity as authority.")
+	var forged_track: Dictionary = proposal.duplicate(true)
+	forged_track["encounter_id"] = JSON.stringify(proposal).sha256_text()
+	forged_track["current_node_id"] = str(model.status().get("current_node_id", ""))
+	forged_track["heading_node_id"] = str(model.status().get("heading_node_id", ""))
+	forged_track["next_move_action"] = int(model.status().get("next_move_action", -1))
+	if not PoliceSweepModelScript.normalize_encounter_proposal(forged_track).is_empty(): failures.append("Sweep proposal accepted recomputed identity plus substituted live track facts.")
+	for key in ["positions", "costed_rungs", "authority_gap", "intel_projection"]:
 		var tampered: Dictionary = proposal.duplicate(true)
 		match key:
-			"node_id": tampered[key] = "forged_node"
-			"segment_index": tampered[key] = int(tampered[key]) + 1
-			"cargo_context": (tampered[key] as Dictionary)["cargo_id"] = "forged"
+			"positions": (tampered[key] as Dictionary)["officers"] = "caller_claims_clear"
 			"costed_rungs": ((tampered[key] as Array)[0] as Dictionary)["run_continues"] = false
 			"authority_gap": tampered[key] = "caller_says_committed"
+			"intel_projection": tampered[key] = {"available": true, "authority_gap": "caller_says_capable"}
 		if not PoliceSweepModelScript.normalize_encounter_proposal(tampered).is_empty(): failures.append("Sweep proposal accepted substituted %s state." % key)
 	var public_text := JSON.stringify(public_state).to_lower()
-	for hidden in ["segment_index", "encounter_seed", "pressure", "turn", "heist", "grievance_weight", "traitor", "hidden_value"]:
+	for hidden in ["current_node_id", "previous_node_id", "heading_node_id", "next_move_action", "start_action", "end_action", "action_index", "segment_index", "encounter_seed", "encounter_id", "pressure", "turn", "heist", "grievance_weight", "traitor", "hidden_value"]:
 		if public_text.contains(hidden): failures.append("Sweep player-safe encounter projection leaked %s." % hidden)
 
 
