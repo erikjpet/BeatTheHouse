@@ -75,7 +75,7 @@ The five blobs above describe reconstructable source material, not an accepted
 five-file product. The accepted verdict remains limited to the two-file partial
 semantics and hostile proofs.
 
-### Rejected game06_1 contract binding is not replay authority
+### Accepted landed game06_1 frozen contract binding
 
 Three frozen source locations hardcode game06_1 contract head
 `a2760d816c781e711ff0923c296f97b786662453`, tree
@@ -86,21 +86,22 @@ Three frozen source locations hardcode game06_1 contract head
 - the `_check_night_package` assertion in
   `scripts/tests/foundation/crew06_10_depth_contract.gd`.
 
-The current owner record treats `a2760d81...` as a rejected game06_1 contract
-head with unresolved validator P1s. Its historical presence in main ancestry
-does not supersede that later rejection. Validator-closure branch head
+Contract `a2760d81...` is independently accepted and landed through merge
+`6d8755394c6374ef66364f035e67827fb6e6bf6e`, tree
+`bf40316ef8bdc0b6f2ef3709e981a2d6b9b324dc`, an ancestor of manifest-base green
+main. All three bindings are accurate frozen-contract custody and must be
+preserved unless the game06_1 contract owner later accepts and lands a
+successor.
+
+Runtime product `932287ba0e049f1110cb748f02cb09047d3b42f5`, tree
+`9a33aebef2d37fc0093e6cca43bbc01fbc3710a0`, is rejected. Its rejection does not
+reject or supersede the accepted frozen contract. Accepted replacement runtime
+authority remains **MISSING / not yet representable**, so public-memory and tell
+mutation remain blocked. Validator-closure branch head
 `70568bdef8544bed76685ed43092b201cd5788e0`, tree
 `1af94164dd3528bf03f7a55f9fcb51a516e638ff`, is not in manifest-base main
-ancestry and is not inferred accepted or landable.
-
-All three hardcoded bindings are mandatory game06_1-owned semantic rebase
-points. Replay must replace them coherently only after an authentic replacement
-contract is independently accepted and landed. That exact replacement
-commit/tree is **MISSING / not yet representable**. Preserving `a2760d81...` to
-obtain byte equivalence, or substituting `70568bde...` without a new accepted
-and landed owner record, is prohibited. The candidate must not reproduce the
-rejected `a2760d81...` assertion. Consequently no full five-file
-byte-for-byte reconstruction or full-row claim is currently possible.
+ancestry and supplies no acceptance authority, but it cannot be used to reject
+`a2760d81...`.
 
 ## Accepted partial boundary
 
@@ -167,15 +168,15 @@ Replay from an exact clean current main in this order:
 3. Record the accepted and landed environment interruption/refund root. Verify
    that mutation and exactly-once application remain exclusively host-owned.
 4. Reconstruct the three unchanged row-source semantics listed above against
-   current-main catalogs and documentation, but replace the rejected
-   `a2760d81...` JSON/document bindings with the exact accepted-and-landed
-   game06_1 contract identity. Do not overwrite newer shared catalog entries or
-   owner documentation.
+   current-main catalogs and documentation, preserving the accepted landed
+   `a2760d81...` JSON/document contract bindings unless the game06_1 owner has
+   accepted and landed a successor. Do not overwrite newer shared catalog
+   entries or owner documentation.
 5. Port only the accepted two-file partial semantics from successor blobs
-   `f260d885...` and `9fc0982a...`, replacing the rejected `a2760d81...` test
-   assertion with that same accepted-and-landed identity. Resolve all conflicts
-   semantically against accepted dependency APIs; do not preserve obsolete
-   ancestry merely to obtain a blob match.
+   `f260d885...` and `9fc0982a...`, preserving the `a2760d81...` test assertion
+   unless the game06_1 owner has accepted and landed a successor. Resolve all
+   conflicts semantically against accepted dependency APIs; do not preserve
+   obsolete ancestry merely to obtain a blob match.
 6. Add the smallest owner-approved adapters that consume the already-landed
    authentic roots. Adapter ownership, files, commits, and reviewers must be
    declared before editing. No crew-local fallback may mint authority.
