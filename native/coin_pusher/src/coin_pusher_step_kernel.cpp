@@ -225,7 +225,9 @@ struct Kernel {
     // A cached kernel owns only the numeric solver state between calls. The
     // call config can contain RefCounted helpers such as RngStream; retaining
     // it in the process-lifetime live cache leaks that object at shutdown.
-    config.clear();
+    // Replace our Dictionary reference rather than clearing shared caller
+    // storage: Godot Dictionary assignment is reference-counted, not a copy.
+    config = Dictionary();
   }
   bool load() {
     if (String(state.get("schema", "")) != "coin_pusher_machine_v3" ||

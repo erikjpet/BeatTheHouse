@@ -93,18 +93,53 @@ func _check_pusher_v3_native_live_cache_ownership(machine_definition: Dictionary
 	if native == null or not native.has_method("supports_live_batch_capture") or not bool(native.call("supports_live_batch_capture")):
 		return
 	var state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-LIVE-CACHE-OWNERSHIP-OPENING"), machine_definition, 0)
-	var rng: RngStream = _pusher_v3_rng("PUSHER-V3-LIVE-CACHE-OWNERSHIP-RNG")
-	var rng_weak := weakref(rng)
-	native.call("step_ticks", state, {
+	var reset_rng: RngStream = _pusher_v3_rng("PUSHER-V3-LIVE-CACHE-OWNERSHIP-RESET-RNG")
+	var reset_rng_weak := weakref(reset_rng)
+	var reset_config := {
 		"input_trace": [{"tick": int(state.get("tick", 0)), "kind": "drop", "x": 50000, "density": 1}],
-		"rng": rng,
+		"rng": reset_rng,
 		"motor_enabled": false,
 		"live_cache_key": "foundation:ownership",
 		"live_cache_reset": true,
-	}, 1)
-	rng = null
-	if rng_weak.get_ref() != null:
-		failures.append("Coin Pusher native live cache retained its per-call RngStream after the step completed.")
+		"capture_previous_views": false,
+		"capture_current_views": true,
+	}
+	var reset_value_bytes := _coin_pusher_live_cache_config_value_bytes(reset_config)
+	var reset_keys: Array = reset_config.keys().duplicate()
+	native.call("step_ticks", state, reset_config, 1)
+	if reset_config.keys() != reset_keys or _coin_pusher_live_cache_config_value_bytes(reset_config) != reset_value_bytes or reset_config.get("rng") != reset_rng:
+		failures.append("Coin Pusher native live-cache reset/new path mutated the caller's per-call config.")
+	reset_config = {}
+	reset_rng = null
+	if reset_rng_weak.get_ref() != null:
+		failures.append("Coin Pusher native live-cache reset/new path retained its per-call RngStream after caller release.")
+
+	var reuse_rng: RngStream = _pusher_v3_rng("PUSHER-V3-LIVE-CACHE-OWNERSHIP-REUSE-RNG")
+	var reuse_rng_weak := weakref(reuse_rng)
+	var reuse_config := {
+		"input_trace": [{"tick": int(state.get("tick", 0)), "kind": "carriage", "x": 61000}],
+		"rng": reuse_rng,
+		"motor_enabled": true,
+		"live_cache_key": "foundation:ownership",
+		"live_cache_reset": false,
+		"capture_previous_views": true,
+		"capture_current_views": false,
+	}
+	var reuse_value_bytes := _coin_pusher_live_cache_config_value_bytes(reuse_config)
+	var reuse_keys: Array = reuse_config.keys().duplicate()
+	native.call("step_ticks", state, reuse_config, 1)
+	if reuse_config.keys() != reuse_keys or _coin_pusher_live_cache_config_value_bytes(reuse_config) != reuse_value_bytes or reuse_config.get("rng") != reuse_rng:
+		failures.append("Coin Pusher native live-cache reuse path mutated the caller's per-call config.")
+	reuse_config = {}
+	reuse_rng = null
+	if reuse_rng_weak.get_ref() != null:
+		failures.append("Coin Pusher native live-cache reuse path retained its per-call RngStream after caller release.")
+
+
+func _coin_pusher_live_cache_config_value_bytes(config: Dictionary) -> PackedByteArray:
+	var values := config.duplicate(false)
+	values.erase("rng")
+	return var_to_bytes(values)
 
 
 func _check_pusher_v3_10_idle_queue_cups_and_stack(library: ContentLibrary, game_definition: Dictionary, machine: Dictionary, failures: Array) -> void:
