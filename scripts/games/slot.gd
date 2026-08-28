@@ -26,6 +26,8 @@ const SPLIT_REEL_NOTE_ITEM_ID := "split_reel_note"
 const CUMQUAT_SANDWICH_ITEM_ID := "cumquat_sandwich"
 const SLOT_RITUAL_CONTRACT := "game_ritual/1"
 const SLOT_RITUAL_ID := "slot.machine_session"
+const SLOT_HANDLE_PULL_GESTURE := "slot_handle_pull_gesture"
+const SLOT_HANDLE_MIN_PULL := 36.0
 
 var generator
 var resolver
@@ -318,7 +320,42 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var surface: Dictionary = presentation.surface_state(presentation_machine, run_state, definition, ui_state)
 	if bool(surface.get("slot_bonus_trigger_revealed", false)):
 		_commit_bonus_trigger_reveal(environment, machine)
+	surface["ritual_contract"] = SLOT_RITUAL_CONTRACT
+	surface["ritual_id"] = SLOT_RITUAL_ID
+	surface["ritual_projection"] = _slot_live_ritual_projection(machine, surface, run_state)
 	return surface
+
+
+func _slot_live_ritual_projection(machine: Dictionary, surface: Dictionary, run_state: RunState) -> Dictionary:
+	var animation_id := str(machine.get("slot_animation_id", ""))
+	var feature_active := StateScript.active_bonus_incomplete(machine)
+	var phase_id := "credits"
+	if feature_active:
+		phase_id = "feature"
+	elif not animation_id.is_empty():
+		phase_id = "outcome_staging"
+	elif str(machine.get("last_classification", "idle")) != "idle":
+		phase_id = "payout_or_handpay"
+	var suspicion := run_state.suspicion_level() if run_state != null else 0
+	var celebration := str(surface.get("slot_celebration_tier", "none"))
+	var handpay := celebration in ["jackpot", "grand"]
+	var energy_tier := "lockup" if handpay or suspicion >= 70 else "feature" if feature_active or celebration not in ["", "none"] else "engaged" if not animation_id.is_empty() else "quiet"
+	var tower_state := "handpay" if handpay else "security" if suspicion >= 50 else "feature" if feature_active else "off"
+	var selected_bet := int(surface.get("selected_bet_total_credits", 0))
+	return {
+		"phase_id": phase_id,
+		"cabinet_state": "lockup" if handpay else "feature" if feature_active else "play" if not animation_id.is_empty() else "idle",
+		"energy_tier": energy_tier,
+		"credits": int(surface.get("bankroll", 0)),
+		"denomination_label": "%d CREDIT" % selected_bet,
+		"tower_state": tower_state,
+		"validator_state": "locked" if handpay or not animation_id.is_empty() else "ready",
+		"button_state": "locked" if handpay or feature_active else "pressed" if not animation_id.is_empty() else "ready",
+		"result_stage": "feature" if feature_active else "reel_stops" if not animation_id.is_empty() else "readout" if phase_id == "payout_or_handpay" else "idle",
+		"payout": int(surface.get("slot_payout", 0)),
+		"attendant": {"visible": handpay or suspicion >= 50, "behavior": "handpay" if handpay else "security"},
+		"neighbours": {"visible": true, "reaction": "heads_turn" if celebration not in ["", "none"] else "playing", "authority": "none"},
+	}
 
 
 func _saved_checkpoint_presentation_view(machine: Dictionary) -> Dictionary:
@@ -496,6 +533,35 @@ func minimum_wager_return_for_context(action_id: String, _stake: int, wager_cost
 		if refund_percent > 0:
 			guaranteed_return += mini(wager_cost, maxi(1, int(round(float(wager_cost) * float(refund_percent) / 100.0))))
 	return mini(wager_cost, guaranteed_return)
+
+
+func surface_pointer_command(surface_action: String, index: int, phase: String, board_position: Vector2, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if surface_action != SLOT_HANDLE_PULL_GESTURE:
+		return {"handled": false}
+	var next := ui_state
+	if phase == "begin":
+		next["slot_handle_active"] = true
+		next["slot_handle_origin"] = board_position
+		next["slot_handle_distance"] = 0.0
+		return GameModule.surface_command({"handled": true, "ui_state": next, "preserve_surface_ui_state": true})
+	if phase == "move" and bool(next.get("slot_handle_active", false)):
+		var origin: Vector2 = next.get("slot_handle_origin", board_position)
+		next["slot_handle_distance"] = maxf(0.0, board_position.y - origin.y)
+		return GameModule.surface_command({"handled": true, "ui_state": next, "preserve_surface_ui_state": true})
+	if phase in ["cancel", "end"]:
+		var end_origin: Vector2 = next.get("slot_handle_origin", board_position)
+		var pull_distance := maxf(float(next.get("slot_handle_distance", 0.0)), board_position.y - end_origin.y)
+		var pulled := pull_distance >= SLOT_HANDLE_MIN_PULL
+		next.erase("slot_handle_active")
+		next.erase("slot_handle_origin")
+		next.erase("slot_handle_distance")
+		if phase == "end" and pulled:
+			var command := surface_action_command("slot_spin", index, false, next, run_state, environment)
+			command["ui_state"] = next
+			command["preserve_surface_ui_state"] = true
+			return command
+		return GameModule.surface_command({"handled": true, "ui_state": next, "preserve_surface_ui_state": true, "message": "Pull the handle through its full travel to spin."})
+	return GameModule.surface_command({"handled": true, "ui_state": next, "preserve_surface_ui_state": true})
 
 
 func surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:

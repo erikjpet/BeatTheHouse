@@ -229,3 +229,26 @@ and byte-equal otherwise-identical observers without authentic capability.
 
 Native, Web, full RTP, performance, accessibility, save/restore, and visual
 evidence remain Integrator-owned gates. This WIP is not an acceptance verdict.
+
+## 7. Row-local live adoption
+
+The Slot surface now prepares a bounded ritual projection only during ordinary
+surface rebuilds. Its realtime patch remains the existing scalar presentation
+patch and does not copy the projection or machine. The projection consumes the
+authoritative selected credit bet, bankroll, animation id, bonus state, payout,
+celebration tier, and suspicion to drive visible cabinet, tower-light,
+validator, attendant, neighbour, energy, and staged-result states. A cabinet
+handle drag reaches the same shipped `slot_spin` command as the button; an
+incomplete pull returns without an action or debit.
+
+Video Poker prepares the corresponding projection from its existing machine,
+UI hand, flip, result, paytable, credit, denomination, and pit-watch state. The
+authored renderer consumes it for tower/validator/actor state and explicit
+replacement/paytable-read staging. Existing per-card exact hold targets and the
+DEAL/DRAW deck remain the tactile authority, so held and drawn indices remain
+identical to the shipped resolver inputs/result. Neither renderer owns or
+persists an outcome.
+
+Both projections reconstruct from the existing saved machine and surface UI
+state. They add no second ledger, future-result field, RNG use, wall-clock
+authority, paytable branch, detection rule, or per-frame deep copy.
