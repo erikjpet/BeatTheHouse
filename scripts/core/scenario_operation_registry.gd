@@ -631,8 +631,10 @@ static func _validate_operation_target(state: Dictionary, family: String, operat
 			errors.append("actor set_route requires an exact owned route identity, got %s." % route_id)
 	var create_operation := family == "scene_ops" and op_id == "spawn" or family == "interaction_ops" and op_id == "add" or family == "actor_ops" and op_id == "spawn" or family in ["service_ops", "game_ops"] and op_id == "add"
 	if create_operation:
-		if str(operation.get("owner_namespace", "")) != "scenario":
-			errors.append("%s %s requires scenario ownership." % [family, op_id])
+		var create_owner := str(operation.get("owner_namespace", ""))
+		var authorized_create_owners := _string_array(state.get("creation_owner_namespaces", ["scenario"]))
+		if not authorized_create_owners.has(create_owner):
+			errors.append("%s %s requires exact mounted sequence ownership." % [family, op_id])
 		elif collection.has(key) or _inventory_has(state, collection_key, key):
 			errors.append("%s %s cannot create existing identity %s." % [family, op_id, key])
 		return errors
@@ -660,6 +662,7 @@ static func _normalize_semantic_state(value: Dictionary) -> Dictionary:
 	return {
 		"base_interactions": _array(value.get("base_interactions", [])),
 		"event_choices": _dict(value.get("event_choices", {})),
+		"creation_owner_namespaces": _string_array(value.get("creation_owner_namespaces", ["scenario"])),
 		"inventory_schema_version": maxi(0, int(value.get("inventory_schema_version", 0))),
 		"inventory_digest": str(value.get("inventory_digest", "")),
 		"scene_objects": _dict(value.get("scene_objects", {})),
@@ -735,7 +738,7 @@ static func _public_collection_with_tombstones(resolved: Dictionary, collection_
 		# Scenario-created identities have no immutable base presentation to
 		# suppress. Their removal is represented by absence; only declared,
 		# inventory-backed producer identities need a closed public tombstone.
-		if parsed.is_empty() or str(parsed.get("owner_namespace", "")) == "scenario" or not _target_authorized(resolved, collection_key, identity_key):
+		if parsed.is_empty() or _string_array(resolved.get("creation_owner_namespaces", ["scenario"])).has(str(parsed.get("owner_namespace", ""))) or not _target_authorized(resolved, collection_key, identity_key):
 			continue
 		result[identity_key] = {
 			"owner_namespace": str(parsed.get("owner_namespace", "")),

@@ -17,6 +17,7 @@ const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioOperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
+const CrewWorldSequenceAdapterScript := preload("res://scripts/core/crew_world_sequence_adapter.gd")
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
@@ -347,6 +348,10 @@ var _item_effect_total_cache: Dictionary = {}
 var _owned_item_lookup_cache: Dictionary = {}
 var _owned_item_lookup_cache_valid := false
 var _scenario_sequence_definition_cache: Dictionary = {}
+var world_sequence_registrations: Dictionary = {}
+var _world_sequence_definition_cache: Dictionary = {}
+
+const WORLD_SEQUENCE_OUTCOME_CHANNELS := ["delivery_handoff"]
 
 
 # Resets the run from a seed and optional challenge.
@@ -378,6 +383,8 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	world_map = {}
 	scenario_recent_by_archetype = {}
 	_scenario_sequence_definition_cache = {}
+	world_sequence_registrations = {}
+	_world_sequence_definition_cache = {}
 	grand_casino_room_states = {}
 	grand_casino_staffing = {}
 	rourke_current_room = ""
@@ -1740,6 +1747,182 @@ func restore_scenario_definition_cache(snapshot: Dictionary) -> void:
 	_scenario_sequence_definition_cache = snapshot.duplicate(true)
 
 
+# Registers an owner request for a future public node. This is boundary-driven:
+# the definition is not mounted and no environment registration marker exists
+# until the exact target room has a sealed semantic inventory.
+func world_sequence_schedule_mount(source: Dictionary, public_instance_token: String, mount_selector: Dictionary, definition: Dictionary, outcome_channels: Dictionary, ownership_claims: Array, seed_token: String = "") -> Dictionary:
+	var token := CrewWorldSequenceAdapterScript.owner_token(source, public_instance_token)
+	var node_id := str(mount_selector.get("node_id", "")).strip_edges()
+	var errors: Array = []
+	if token.is_empty(): errors.append("world sequence registration source or public instance token is invalid")
+	if node_id.is_empty() or node_id != node_id.strip_edges(): errors.append("world sequence registration requires an exact public target node")
+	if not ScenarioSequenceSchemaScript.is_sequence(definition): errors.append("world sequence registration requires an env06_6 sequence definition")
+	if str(source.get("definition_id", "")) != str(definition.get("id", "")): errors.append("world sequence registration source does not match definition id")
+	if seed_token.length() > ScenarioOperationRegistryScript.MAX_VARIANT_TEXT: errors.append("world sequence registration seed token exceeds its bound")
+	if not errors.is_empty(): return {"ok": false, "owner_token": token, "errors": errors}
+	var fingerprint := ScenarioSequenceRuntimeScript.content_fingerprint(definition)
+	if world_sequence_registrations.has(token):
+		var existing := _copy_dict(world_sequence_registrations.get(token, {}))
+		if str(existing.get("definition_fingerprint", "")) != fingerprint or str(existing.get("node_id", "")) != node_id:
+			return {"ok": false, "owner_token": token, "errors": ["world sequence registration token was reused for different content or node"]}
+		_world_sequence_definition_cache[token] = definition.duplicate(true)
+		return {"ok": true, "replayed": true, "owner_token": token, "lifecycle": str(existing.get("lifecycle", "eligible")), "errors": []}
+	world_sequence_registrations[token] = {
+		"schema_version": CrewWorldSequenceAdapterScript.REGISTRATION_SCHEMA_VERSION,
+		"owner_token": token,
+		"source": source.duplicate(true),
+		"public_instance_token": public_instance_token,
+		"node_id": node_id,
+		"mount_selector": mount_selector.duplicate(true),
+		"definition": definition.duplicate(true),
+		"definition_fingerprint": fingerprint,
+		"outcome_channels": outcome_channels.duplicate(true),
+		"ownership_claims": ownership_claims.duplicate(true),
+		"seed_token": seed_token,
+		"lifecycle": "eligible",
+	}
+	_world_sequence_definition_cache[token] = definition.duplicate(true)
+	return {"ok": true, "replayed": false, "owner_token": token, "lifecycle": "eligible", "errors": []}
+
+
+# Called after semantic finalization/arrival. Empty registration state returns
+# immediately, preserving the crew-ignoring no-scan contract.
+func world_sequence_activate_current_mounts() -> Dictionary:
+	if world_sequence_registrations.is_empty(): return {"ok": true, "inactive": true, "mounted": [], "errors": []}
+	if not bool(current_environment.get("scenario_semantic_ready", false)):
+		return {"ok": true, "pending": true, "mounted": [], "errors": []}
+	var node_id := current_world_node_id()
+	var mounted: Array = []
+	var errors: Array = []
+	var tokens := world_sequence_registrations.keys()
+	tokens.sort()
+	for token_value in tokens:
+		var token := str(token_value)
+		var registration := _copy_dict(world_sequence_registrations.get(token, {}))
+		if str(registration.get("node_id", "")) != node_id or not ["eligible", "mounted"].has(str(registration.get("lifecycle", ""))): continue
+		var definition := _copy_dict(_world_sequence_definition_cache.get(token, registration.get("definition", {})))
+		var result := CrewWorldSequenceAdapterScript.mount(
+			current_environment,
+			_copy_dict(registration.get("source", {})),
+			str(registration.get("public_instance_token", "")),
+			_copy_dict(registration.get("mount_selector", {})),
+			definition,
+			_copy_dict(registration.get("outcome_channels", {})),
+			_copy_array(registration.get("ownership_claims", [])),
+			WORLD_SEQUENCE_OUTCOME_CHANNELS,
+			str(registration.get("seed_token", ""))
+		)
+		if not bool(result.get("ok", false)):
+			errors.append_array(_copy_array(result.get("errors", [])))
+			continue
+		registration["lifecycle"] = "mounted"
+		registration["registration_marker"] = str(result.get("registration_marker", ""))
+		world_sequence_registrations[token] = registration
+		_world_sequence_definition_cache[token] = definition.duplicate(true)
+		mounted.append(token)
+	return {"ok": errors.is_empty(), "mounted": mounted, "errors": errors}
+
+
+func world_sequence_snapshot(token: String) -> Dictionary:
+	if token == CrewWorldSequenceAdapterScript.RESERVED_ENVIRONMENT_OWNER_TOKEN:
+		return {
+			"owner_token": token,
+			"source": {"domain": "environment", "owner_id": "environment", "definition_id": str(scenario_sequence_definition().get("id", ""))},
+			"lifecycle": "active" if scenario_sequence_present() else "inactive",
+			"projection": scenario_sequence_projection(),
+		}
+	return CrewWorldSequenceAdapterScript.snapshot(current_environment, token, _world_sequence_definition(token))
+
+
+func world_sequence_projection(token: String) -> Dictionary:
+	if token == CrewWorldSequenceAdapterScript.RESERVED_ENVIRONMENT_OWNER_TOKEN: return scenario_sequence_projection()
+	return CrewWorldSequenceAdapterScript.projection(current_environment, token, _world_sequence_definition(token))
+
+
+func world_sequence_composed_projection() -> Dictionary:
+	return CrewWorldSequenceAdapterScript.composed_projection(current_environment, _world_sequence_definition_cache, scenario_sequence_projection())
+
+
+func world_sequence_execute(token: String, command: Dictionary, public_context: Dictionary = {}) -> Dictionary:
+	return CrewWorldSequenceAdapterScript.execute(current_environment, token, _world_sequence_definition(token), command, public_context)
+
+
+func world_sequence_enqueue_fact(token: String, fact: Dictionary) -> Dictionary:
+	return CrewWorldSequenceAdapterScript.enqueue_fact(current_environment, token, _world_sequence_definition(token), fact)
+
+
+func world_sequence_flush_facts(token: String, boundary_serial: int) -> Dictionary:
+	return CrewWorldSequenceAdapterScript.flush_facts(current_environment, token, _world_sequence_definition(token), boundary_serial)
+
+
+func world_sequence_record_visit(token: String, visit_id: String = "") -> Dictionary:
+	var exact_visit := visit_id.strip_edges()
+	if exact_visit.is_empty(): exact_visit = str(current_environment.get("environment_visit_id", ""))
+	return CrewWorldSequenceAdapterScript.record_visit(current_environment, token, _world_sequence_definition(token), exact_visit)
+
+
+func world_sequence_apply_reentry(token: String, visit_id: String = "") -> Dictionary:
+	var exact_visit := visit_id.strip_edges()
+	if exact_visit.is_empty(): exact_visit = str(current_environment.get("environment_visit_id", ""))
+	return CrewWorldSequenceAdapterScript.apply_reentry(current_environment, token, _world_sequence_definition(token), exact_visit)
+
+
+func world_sequence_apply_expiry(token: String, boundary: String, amount: int = 1) -> Dictionary:
+	return CrewWorldSequenceAdapterScript.apply_expiry_boundary(current_environment, token, _world_sequence_definition(token), boundary, amount)
+
+
+func world_sequence_sync_owner(token: String, owner_active: bool, reason: String = "owner_ended") -> Dictionary:
+	var registration := _copy_dict(world_sequence_registrations.get(token, {}))
+	if registration.is_empty(): return {"ok": true, "inactive": true, "errors": []}
+	if not owner_active and str(registration.get("lifecycle", "")) == "eligible":
+		registration["lifecycle"] = "cleaned"
+		world_sequence_registrations[token] = registration
+		return {"ok": true, "cancelled_pending": true, "errors": []}
+	var result := CrewWorldSequenceAdapterScript.sync_owner(current_environment, token, _world_sequence_definition(token), owner_active, reason)
+	if bool(result.get("ok", false)) and not owner_active:
+		registration["lifecycle"] = "cleaned"
+		world_sequence_registrations[token] = registration
+	return result
+
+
+func world_sequence_unmount(token: String, reason: String = "abandoned") -> Dictionary:
+	return world_sequence_sync_owner(token, false, reason)
+
+
+func world_sequence_pending_outcomes(token: String) -> Array:
+	return CrewWorldSequenceAdapterScript.pending_outcomes(current_environment, token)
+
+
+func world_sequence_ack_outcome(token: String, receipt_id: String, public_result: Dictionary) -> Dictionary:
+	return CrewWorldSequenceAdapterScript.acknowledge_outcome(current_environment, token, receipt_id, public_result)
+
+
+func _world_sequence_definition(token: String) -> Dictionary:
+	if _world_sequence_definition_cache.has(token): return _copy_dict(_world_sequence_definition_cache.get(token, {}))
+	var registration := _copy_dict(world_sequence_registrations.get(token, {}))
+	var definition := _copy_dict(registration.get("definition", {}))
+	if not definition.is_empty(): _world_sequence_definition_cache[token] = definition.duplicate(true)
+	return definition
+
+
+static func _normalize_world_sequence_registrations(value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	if typeof(value) != TYPE_DICTIONARY or not ScenarioOperationRegistryScript.validate_bounded_variant("persisted world sequence registrations", value).is_empty(): return result
+	for token_value in (value as Dictionary).keys():
+		var token := str(token_value)
+		var registration := _copy_dict((value as Dictionary).get(token_value, {}))
+		var source := _copy_dict(registration.get("source", {}))
+		var definition := _copy_dict(registration.get("definition", {}))
+		var public_instance_token := str(registration.get("public_instance_token", ""))
+		if CrewWorldSequenceAdapterScript.owner_token(source, public_instance_token) != token: continue
+		if not ScenarioSequenceSchemaScript.is_sequence(definition): continue
+		if str(registration.get("definition_fingerprint", "")) != ScenarioSequenceRuntimeScript.content_fingerprint(definition): continue
+		if str(registration.get("lifecycle", "")) not in ["eligible", "mounted", "cleaned"]: continue
+		if str(registration.get("node_id", "")).strip_edges().is_empty(): continue
+		result[token] = registration
+	return result
+
+
 func scenario_sequence_is_suppressed(scenario_id: String, archetype_id: String = "") -> bool:
 	var modifiers := _copy_dict(challenge_config.get("modifiers", {}))
 	if bool(modifiers.get("scenario_pins_apply_mutations", true)):
@@ -1923,7 +2106,7 @@ func _resolve_scenario_layout_candidate(candidate: Dictionary, stamped_records: 
 
 
 func _finalized_scenario_layout_result(replayed: bool, digest: String, state: Dictionary, records: Array, layout_result: Dictionary) -> Dictionary:
-	return {
+	var result := {
 		"ok": true,
 		"replayed": replayed,
 		"digest": digest,
@@ -1936,6 +2119,12 @@ func _finalized_scenario_layout_result(replayed: bool, digest: String, state: Di
 		"warnings": _copy_array(layout_result.get("warnings", [])),
 		"errors": [],
 	}
+	var world_activation := world_sequence_activate_current_mounts()
+	result["world_sequences"] = world_activation
+	if not bool(world_activation.get("ok", false)):
+		result["ok"] = false
+		result["errors"] = _copy_array(world_activation.get("errors", []))
+	return result
 
 
 func _scenario_declared_base_records(records: Array, definition: Dictionary, collection_keys: Array) -> Array:
@@ -13178,6 +13367,7 @@ func to_dict() -> Dictionary:
 		"current_environment": _environment_for_persistent_storage(current_environment),
 		"world_map": _compact_world_map_ticket_storage(WorldMap.normalize(world_map)),
 		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
+		"world_sequence_registrations": world_sequence_registrations.duplicate(true),
 		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(true),
 		"grand_casino_room_states": _grand_casino_room_states_for_save(),
 		"grand_casino_staffing": grand_casino_staffing.duplicate(true),
@@ -13259,6 +13449,7 @@ func to_save_snapshot() -> Dictionary:
 		"current_environment": _environment_for_persistent_storage(current_environment, false),
 		"world_map": _world_map_for_save_snapshot(world_map),
 		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
+		"world_sequence_registrations": world_sequence_registrations.duplicate(false),
 		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(false),
 		"grand_casino_room_states": _grand_casino_room_states_for_save(false),
 		"grand_casino_staffing": grand_casino_staffing.duplicate(false),
@@ -13311,6 +13502,8 @@ func to_save_snapshot() -> Dictionary:
 # Restores the run from saved data.
 func from_dict(data: Dictionary) -> void:
 	_scenario_sequence_definition_cache = {}
+	_world_sequence_definition_cache = {}
+	world_sequence_registrations = _normalize_world_sequence_registrations(data.get("world_sequence_registrations", {}))
 	var saved_crew_state: Dictionary = data.get("crew_state", {}) if typeof(data.get("crew_state", {})) == TYPE_DICTIONARY else {}
 	var legacy_streets_migration := _copy_dict(data.get("active_streets_run", {}))
 	seed_text = str(data.get("seed_text", "FOUNDATION-SEED"))
@@ -13756,6 +13949,10 @@ static func _strip_scenario_semantic_ephemera(environment: Dictionary) -> void:
 		environment["scenario_sequence_pending_visit_id"] = str(environment.get("environment_visit_id", environment.get("scenario_sequence_pending_visit_id", "")))
 	else:
 		environment.erase("scenario_sequence_pending_visit_id")
+	if environment.has(CrewWorldSequenceAdapterScript.CONTAINER_KEY):
+		var world_instances := CrewWorldSequenceAdapterScript.durable_container(environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {}))
+		if world_instances.is_empty(): environment.erase(CrewWorldSequenceAdapterScript.CONTAINER_KEY)
+		else: environment[CrewWorldSequenceAdapterScript.CONTAINER_KEY] = world_instances
 	var layer_states := _copy_dict(environment.get("layer_states", {}))
 	if not layer_states.is_empty():
 		for layer_id_value in layer_states.keys():
@@ -14746,6 +14943,10 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 		environment["scenario_sequence_base_game_modifiers"] = _copy_dict(environment.get("scenario_sequence_base_game_modifiers", environment.get("scenario_game_modifiers", {})))
 	if environment.has("scenario_sequence_migration"):
 		environment["scenario_sequence_migration"] = _copy_dict(environment.get("scenario_sequence_migration", {}))
+	if environment.has(CrewWorldSequenceAdapterScript.CONTAINER_KEY):
+		var world_instances := CrewWorldSequenceAdapterScript.durable_container(environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {}))
+		if world_instances.is_empty(): environment.erase(CrewWorldSequenceAdapterScript.CONTAINER_KEY)
+		else: environment[CrewWorldSequenceAdapterScript.CONTAINER_KEY] = world_instances
 	_normalize_environment_layers(environment)
 	# Semantic authorization is a render-time proof. Saved or layer-stored copies
 	# can retain only the expected schema/digest and must be rebuilt before ingress.

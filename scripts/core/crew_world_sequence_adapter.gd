@@ -47,10 +47,13 @@ static func mount(environment: Dictionary, source: Dictionary, public_instance_t
 	var errors: Array = _array(eligibility_result.get("errors", []))
 	var token := str(eligibility_result.get("owner_token", ""))
 	var host_semantics := ScenarioEngineScript.sequence_host_semantics(environment)
+	var creation_owners := _definition_creation_owner_namespaces(definition)
+	host_semantics["creation_owner_namespaces"] = creation_owners
 	var target_inventory := _dict(host_semantics.get("target_inventory", {}))
 	target_inventory["event_choices"] = _dict(host_semantics.get("event_choices", {}))
 	errors.append_array(SequenceSchemaScript.validate_definition(definition, OperationRegistryScript, target_inventory))
 	errors.append_array(_source_definition_errors(source, definition))
+	errors.append_array(_creation_owner_errors(source, creation_owners))
 	errors.append_array(_outcome_channel_errors(definition, outcome_channels, registered_outcome_channels))
 	var claims := _normalized_claims(ownership_claims, errors)
 	var container := _container(environment)
@@ -177,6 +180,10 @@ static func sync_owner(environment: Dictionary, token: String, definition: Dicti
 		return {"ok": true, "inactive": true, "errors": []}
 	if owner_active:
 		return {"ok": true, "inactive": false, "unchanged": true, "errors": []}
+	if reason in ["expired", "abandoned"]:
+		return _apply_runtime_result(environment, token, definition, func(state: Dictionary) -> Dictionary:
+			return SequenceRuntimeScript.apply_owner_lifecycle_outcome(state, definition, reason, reason)
+		, LIFECYCLE_CLEANUP_PENDING)
 	return _apply_runtime_result(environment, token, definition, func(state: Dictionary) -> Dictionary:
 		return SequenceRuntimeScript._apply_cleanup(state, definition, reason)
 	, LIFECYCLE_CLEANED)
@@ -326,7 +333,9 @@ static func _rehydrate_entry(entry_value: Dictionary, definition: Dictionary, ho
 	var entry := entry_value.duplicate(true)
 	if str(entry.get("definition_fingerprint", "")) != SequenceRuntimeScript.content_fingerprint(definition):
 		return {"ok": false, "errors": ["world sequence definition fingerprint changed"]}
-	var state := SequenceRuntimeScript.normalize_state(entry.get("state", {}), definition, host_semantics)
+	var bound_host := host_semantics.duplicate(true)
+	bound_host["creation_owner_namespaces"] = _definition_creation_owner_namespaces(definition)
+	var state := SequenceRuntimeScript.normalize_state(entry.get("state", {}), definition, bound_host)
 	if state.is_empty():
 		return {"ok": false, "errors": ["persisted world sequence state cannot be normalized"]}
 	entry["state"] = state
@@ -361,6 +370,16 @@ static func _source_definition_errors(source: Dictionary, definition: Dictionary
 	for key in source.keys():
 		if not ["domain", "owner_id", "definition_id"].has(str(key)):
 			errors.append("world sequence source contains unknown field %s" % str(key))
+	return errors
+
+
+static func _creation_owner_errors(source: Dictionary, owners: Array) -> Array:
+	var errors: Array = []
+	if owners.is_empty(): return errors
+	if owners.has("base") or owners.has("scenario"):
+		errors.append("crew/world sequence cannot claim base or reserved environment creation ownership")
+	if str(source.get("domain", "")) == "crew" and owners != ["crew"]:
+		errors.append("crew sequence creates must use only the crew owner namespace")
 	return errors
 
 
@@ -468,6 +487,20 @@ static func _all_operations(authored: Dictionary, family: String) -> Array:
 	for aftermath_value in _dict(authored.get("aftermath", {})).values():
 		result.append_array(_array(_dict(aftermath_value).get(family, [])))
 	result.append_array(_array(_dict(authored.get("cleanup", {})).get(family, [])))
+	return result
+
+
+static func _definition_creation_owner_namespaces(definition: Dictionary) -> Array:
+	var result: Array = []
+	var authored := SequenceSchemaScript.sequence(definition)
+	for family in ["scene_ops", "interaction_ops", "actor_ops", "service_ops", "game_ops"]:
+		for operation_value in _all_operations(authored, family):
+			var operation := _dict(operation_value)
+			var op_id := str(operation.get("op", ""))
+			var creates: bool = family == "scene_ops" and op_id == "spawn" or family == "interaction_ops" and op_id == "add" or family == "actor_ops" and op_id == "spawn" or family in ["service_ops", "game_ops"] and op_id == "add"
+			var owner := str(operation.get("owner_namespace", ""))
+			if creates and not owner.is_empty() and not result.has(owner): result.append(owner)
+	result.sort()
 	return result
 
 
