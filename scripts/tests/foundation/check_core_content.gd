@@ -5306,7 +5306,12 @@ func _check_single_table_environment_entry_contract(library: ContentLibrary, app
 		return
 	var wager_balance := run_state.wager_balance_for_game(game_id, run_state.current_environment)
 	var stake := clampi(int(snapshot.get("stake_min", actions.get("stake_floor", 1))), 1, maxi(1, wager_balance))
-	var result := game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, run_state.create_rng("table_resolve:%s" % game_id), {})
+	var result: Dictionary
+	if game.has_method("_blackjack_resolve_proposal"):
+		app.call("_resolve_game_action", action_id, false, false, false, {}, true, stake)
+		result = (app.get("last_game_result") as Dictionary).duplicate(true)
+	else:
+		result = game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, run_state.create_rng("table_resolve:%s" % game_id), {})
 	if not bool(result.get("ok", false)):
 		failures.append("Table environment explicit action did not resolve for %s action %s: %s" % [game_id, action_id, str(result.get("message", "no result message"))])
 	if str(app.get("current_screen")) != "GAME":
