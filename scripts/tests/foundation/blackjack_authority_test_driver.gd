@@ -25,6 +25,8 @@ static func resolve(game: GameModule, action_id: String, stake: int, run_state: 
 static func _seed_session(game: GameModule, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> void:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var table: Dictionary = (game_states.get("blackjack", {}) as Dictionary).duplicate(true) if typeof(game_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
+	if table.is_empty():
+		table = game.call("_table_state_preview", run_state, environment)
 	var binding := "blackjack:%s:%s" % [str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
 	var checkpoint := run_state.blackjack_authority_checkpoint_fingerprint()
 	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {}), binding, checkpoint)
