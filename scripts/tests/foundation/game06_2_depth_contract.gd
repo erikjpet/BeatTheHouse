@@ -21,6 +21,7 @@ func _run() -> void:
 	_check_phase_projection(game)
 	_check_itemized_accounting(game)
 	_check_gesture_rejections_and_equivalence(game)
+	_check_energy_and_restore_projection(game)
 	_check_ten_seed_projection_isolation(game)
 	if failures.is_empty():
 		print("game06_2_depth_contract: PASS")
@@ -150,6 +151,54 @@ func _check_ten_seed_projection_isolation(game: GameModule) -> void:
 				_check(str((actor_value as Dictionary).get("authority", "")) == "none", "Seed %d projected a neighbour with outcome authority." % seed_index)
 		var table_after: Dictionary = (environment.get("game_states", {}) as Dictionary).get("blackjack", {})
 		_check(table_before == table_after, "Seed %d ritual projection mutated authoritative table state." % seed_index)
+
+
+func _check_energy_and_restore_projection(game: GameModule) -> void:
+	var contract: Dictionary = game.call("blackjack_ritual_contract")
+	var energy: Dictionary = contract.get("energy", {}) if typeof(contract.get("energy", {})) == TYPE_DICTIONARY else {}
+	for tier_value in energy.get("tiers", []):
+		var tier: Dictionary = tier_value if typeof(tier_value) == TYPE_DICTIONARY else {}
+		var material_count := (tier.get("actor_operations", []) as Array).size() + (tier.get("object_operations", []) as Array).size() + (tier.get("interaction_operations", []) as Array).size()
+		_check(material_count > 0, "Energy tier %s changes only text/music." % str(tier.get("id", "unknown")))
+	var fixture := _fixture(game, "GAME06-2-ENERGY-RESTORE", 20)
+	var run: RunState = fixture.run
+	var environment: Dictionary = fixture.environment
+	var quiet := game.surface_state(run, environment, {"selected_stake": 5, "surface_time_msec": 15000})
+	_check(str((quiet.get("ritual_projection", {}) as Dictionary).get("energy_tier", "")) == "quiet", "Open table did not begin with material quiet energy.")
+	run.add_suspicion("game06_2_watch", 45, "behavior", true, {"environment_id": str(environment.get("id", ""))})
+	var watched := game.surface_state(run, environment, {"selected_stake": 5, "surface_time_msec": 15001})
+	var watched_projection: Dictionary = watched.get("ritual_projection", {})
+	_check(str(watched_projection.get("energy_tier", "")) == "watched", "Mid heat did not move the pit actor to the rail.")
+	_check(_actor_visible(watched_projection, "pit.primary"), "Watched energy remained metadata-only; pit actor was not visible.")
+	run.add_suspicion("game06_2_hot", 30, "behavior", true, {"environment_id": str(environment.get("id", ""))})
+	var hot := game.surface_state(run, environment, {"selected_stake": 5, "surface_time_msec": 15002})
+	var hot_projection: Dictionary = hot.get("ritual_projection", {})
+	_check(str(hot_projection.get("energy_tier", "")) == "hot", "High heat did not project hot table energy.")
+	_check(not _object_enabled(hot_projection, "rail.open_space"), "Hot energy did not materially block/narrow the open rail interaction.")
+	var shoe_before: Array = (((environment.get("game_states", {}) as Dictionary).get("blackjack", {}) as Dictionary).get("shoe", []) as Array).duplicate(true)
+	var snapshot := run.to_save_snapshot()
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(snapshot)
+	var restored_environment := restored.current_environment
+	var restored_state := game.surface_state(restored, restored_environment, {"selected_stake": 5, "surface_time_msec": 15002})
+	var restored_projection: Dictionary = restored_state.get("ritual_projection", {})
+	var shoe_after: Array = ((((restored_environment.get("game_states", {}) as Dictionary).get("blackjack", {}) as Dictionary).get("shoe", [])) as Array)
+	_check(shoe_before == shoe_after, "Restore rerolled or reordered the authoritative Blackjack shoe.")
+	_check(str(restored_projection.get("phase_id", "")) == "wagering" and str(restored_projection.get("energy_tier", "")) == "hot", "Restore did not rebuild the same legal phase and material energy projection.")
+
+
+func _actor_visible(projection: Dictionary, actor_id: String) -> bool:
+	for actor_value in projection.get("actors", []):
+		if typeof(actor_value) == TYPE_DICTIONARY and str((actor_value as Dictionary).get("id", "")) == actor_id:
+			return bool((actor_value as Dictionary).get("visible", false))
+	return false
+
+
+func _object_enabled(projection: Dictionary, object_id: String) -> bool:
+	for object_value in projection.get("scene_objects", []):
+		if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("id", "")) == object_id:
+			return bool((object_value as Dictionary).get("enabled", false))
+	return false
 
 
 func _fixture(game: GameModule, seed_text: String, seed_index: int) -> Dictionary:
