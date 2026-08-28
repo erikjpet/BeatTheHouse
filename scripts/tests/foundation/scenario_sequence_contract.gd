@@ -3550,19 +3550,26 @@ static func _check_atomic_runtime_failures(failures: Array) -> void:
 
 static func _check_authoritative_receipt_capacity(failures: Array) -> void:
 	var definition := _runtime_definition()
-	var state := SequenceRuntimeScript.initial_state(definition, "bar_node", "receipt_seed", _fixture_host_semantics(definition))
-	var first_command := _runtime_command(state, definition, "prepare", "bar_node", "arrival", "capacity:command:0", {}, "scenario", "command_console")
+	var capacity_definition := definition.duplicate(true)
+	var capacity_interaction := _dict(capacity_definition["sequence"]["phase_graph"]["phases"][0]["interaction_ops"][-1]["interaction"])
+	var capacity_actions := _array(capacity_interaction.get("available_actions", []))
+	capacity_actions.append({"id": "observe", "label": "Observe", "input_action": "confirm", "non_color_state": "ready"})
+	capacity_interaction["available_actions"] = capacity_actions
+	capacity_definition["sequence"]["phase_graph"]["phases"][0]["interaction_ops"][-1]["interaction"] = capacity_interaction
+	capacity_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(capacity_definition)
+	var state := SequenceRuntimeScript.initial_state(capacity_definition, "bar_node", "receipt_seed", _fixture_host_semantics(capacity_definition))
+	var first_command := _runtime_command(state, capacity_definition, "observe", "bar_node", "arrival", "capacity:command:0", {}, "scenario", "command_console")
 	for index in range(SequenceRuntimeScript.MAX_RECEIPTS):
-		var command := first_command if index == 0 else _runtime_command(state, definition, "prepare", "bar_node", "arrival", "capacity:command:%d" % index, {}, "scenario", "command_console")
-		var applied := SequenceRuntimeScript.apply_command(state, definition, command, {"available_funds": 2})
+		var command := first_command if index == 0 else _runtime_command(state, capacity_definition, "observe", "bar_node", "arrival", "capacity:command:%d" % index, {}, "scenario", "command_console")
+		var applied := SequenceRuntimeScript.apply_command(state, capacity_definition, command, {"available_funds": 2})
 		if not bool(applied.get("ok", false)):
 			failures.append("Authoritative command receipt capacity failed before its declared limit at %d." % index)
 			return
 		state = _dict(applied.get("state", {}))
-	var overflow := SequenceRuntimeScript.apply_command(state, definition, _runtime_command(state, definition, "prepare", "bar_node", "arrival", "capacity:command:overflow", {}, "scenario", "command_console"), {"available_funds": 2})
+	var overflow := SequenceRuntimeScript.apply_command(state, capacity_definition, _runtime_command(state, capacity_definition, "observe", "bar_node", "arrival", "capacity:command:overflow", {}, "scenario", "command_console"), {"available_funds": 2})
 	if bool(overflow.get("ok", true)) or not _contains_text(_array(overflow.get("errors", [])), "lifetime receipt limit"):
 		failures.append("Sequence command lifetime did not fail closed at receipt capacity.")
-	var old_replay := SequenceRuntimeScript.apply_command(state, definition, first_command, {"available_funds": 0})
+	var old_replay := SequenceRuntimeScript.apply_command(state, capacity_definition, first_command, {"available_funds": 0})
 	if not bool(old_replay.get("ok", false)) or not bool(old_replay.get("replayed", false)):
 		failures.append("Old command receipt became replayable after reaching capacity.")
 
