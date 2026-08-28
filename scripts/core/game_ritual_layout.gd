@@ -50,8 +50,10 @@ static func compile_pointer_hits(definition: Dictionary, phase_id: String) -> Ar
 		if typeof(pointer_value) != TYPE_DICTIONARY: continue
 		var pointer: Dictionary = pointer_value
 		if not (pointer.get("phases", []) as Array).has(phase_id): continue
-		var source := str(pointer.get("source_region", ""))
-		if regions.has(source): result.append({"rect": regions[source], "action": str(pointer.get("accepted_action", "")), "pointer_id": str(pointer.get("id", "")), "verb": str(pointer.get("verb", "")), "capture": str(pointer.get("verb", "")) in ["drag", "hold", "flick", "reveal"]})
+		for target_value in pointer.get("target_regions", []):
+			var target := str(target_value)
+			if regions.has(target):
+				result.append({"rect": regions[target], "action": str(pointer.get("accepted_action", "")), "pointer_id": str(pointer.get("id", "")), "verb": str(pointer.get("verb", "")), "target_region": target, "capture": str(pointer.get("verb", "")) in ["drag", "hold", "flick", "reveal"]})
 	return result
 
 

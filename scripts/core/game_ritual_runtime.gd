@@ -36,7 +36,9 @@ func process_action(action_id: String, parameters: Dictionary, request_key: Stri
 	if not _request_key(request_key):
 		return _rejection("invalid_request", action_id, request_key, "Request key is not canonical.")
 	var command := {"ritual_id": str(definition.get("ritual_id", "")), "phase_id": str(state.get("phase_id", "")), "action_id": action_id, "parameters": parameters.duplicate(true), "request_key": request_key}
-	var command_fingerprint := canonical_fingerprint(command)
+	# Phase is observed execution state, not caller-owned request content. Keeping it
+	# out of the binding lets a successful phase-changing request replay exactly.
+	var command_fingerprint := canonical_fingerprint({"ritual_id": command["ritual_id"], "action_id": action_id, "parameters": parameters, "request_key": request_key})
 	var cached: Dictionary = state.get("request_cache", {}).get(request_key, {}) if typeof(state.get("request_cache", {})) == TYPE_DICTIONARY else {}
 	if not cached.is_empty():
 		if str(cached.get("command_fingerprint", "")) != command_fingerprint:
@@ -81,7 +83,7 @@ func process_action(action_id: String, parameters: Dictionary, request_key: Stri
 	candidate["action_sequence"] = int(candidate.get("action_sequence", 0)) + 1
 	var sequence := int(candidate.get("action_sequence", 0))
 	var command_receipt := _receipt("command", "ritual:command:%d" % sequence, command)
-	var facts := _seal_facts(handler_result.get("facts", []), sequence, action_id)
+	var facts: Variant = _seal_facts(handler_result.get("facts", []), sequence, action_id)
 	if typeof(facts) != TYPE_ARRAY:
 		return _cache_rejection(command_fingerprint, request_key, _rejection("fact_rejected", action_id, request_key, "Handler emitted an invalid fact batch."))
 	var result_payload: Dictionary = handler_result.get("result", {}) if typeof(handler_result.get("result", {})) == TYPE_DICTIONARY else {}
@@ -426,14 +428,20 @@ func _value_matches(value: Variant, type: String) -> bool:
 func _actor_projection() -> Array:
 	var result: Array = []
 	for actor in _dictionary_array(definition.get("actors", [])):
-		var record := actor.duplicate(true); record["state"] = (state.get("actor_states", {}) as Dictionary).get(str(actor.get("id", "")), {}).duplicate(true); result.append(record)
+		var record: Dictionary = actor.duplicate(true)
+		var actor_state: Dictionary = (state.get("actor_states", {}) as Dictionary).get(str(actor.get("id", "")), {})
+		record["state"] = actor_state.duplicate(true)
+		result.append(record)
 	return result
 
 
 func _object_projection() -> Array:
 	var result: Array = []
 	for object in _dictionary_array(definition.get("scene_objects", [])):
-		var record := object.duplicate(true); record["state"] = (state.get("object_states", {}) as Dictionary).get(str(object.get("id", "")), {}).duplicate(true); result.append(record)
+		var record: Dictionary = object.duplicate(true)
+		var object_state: Dictionary = (state.get("object_states", {}) as Dictionary).get(str(object.get("id", "")), {})
+		record["state"] = object_state.duplicate(true)
+		result.append(record)
 	return result
 
 

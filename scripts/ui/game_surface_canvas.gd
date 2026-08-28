@@ -736,6 +736,31 @@ func surface_add_hold_hit(rect: Rect2, action: String, index: int = -1) -> void:
 	hit_regions.append({"rect": rect, "action": action, "index": index, "drag": true, "keyboard_hold": true})
 
 
+# Opt-in adapter for GameRitualLayout.compile_pointer_hits(). Existing games do
+# not call this method, so their hit registration and input traces are unchanged.
+func surface_add_ritual_hits(compiled_hits: Array) -> void:
+	for index in range(compiled_hits.size()):
+		var hit_value: Variant = compiled_hits[index]
+		if typeof(hit_value) != TYPE_DICTIONARY:
+			continue
+		var hit: Dictionary = hit_value
+		var rect: Rect2 = hit.get("rect", Rect2())
+		var action := str(hit.get("action", ""))
+		if not rect.has_area() or action.is_empty():
+			continue
+		var verb := str(hit.get("verb", ""))
+		if verb == "hold":
+			surface_add_hold_hit(rect, action, index)
+		elif bool(hit.get("capture", false)):
+			surface_add_drag_hit(rect, action, index)
+		else:
+			surface_add_exact_hit(rect, action, index)
+		var registered: Dictionary = hit_regions[-1]
+		registered["ritual_pointer_id"] = str(hit.get("pointer_id", ""))
+		registered["ritual_target_region"] = str(hit.get("target_region", ""))
+		hit_regions[-1] = registered
+
+
 func surface_region_hovered(action: String, index: int = -1) -> bool:
 	return hovered_surface_action == action and (index < 0 or hovered_surface_index == index)
 

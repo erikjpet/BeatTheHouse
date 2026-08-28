@@ -1,6 +1,12 @@
 extends "res://scripts/tests/foundation/check_slots_surfaces.gd"
 
 const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
+const GameRitualRuntimeContractScript := preload("res://scripts/tests/foundation/game_ritual_runtime_contract.gd")
+
+
+func _check_all_game_module_contracts(library: ContentLibrary, failures: Array) -> void:
+	super._check_all_game_module_contracts(library, failures)
+	GameRitualRuntimeContractScript.check(library, failures)
 
 
 func _check_craps_surface_contract(game: GameModule, failures: Array, library: ContentLibrary = null) -> void:
