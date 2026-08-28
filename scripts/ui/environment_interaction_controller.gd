@@ -563,6 +563,10 @@ static func committed_projection_status_result(run_state: Variant, projection_re
 				projected_digest,
 				_dict(projection_result.get("projection", {}))
 			)
+		var projected_semantics := _dict(_dict(projection_result.get("projection", {})).get("semantic_state", {}))
+		var committed_semantics := _dict(_dict(run_state.current_environment.get("scenario_sequence_projection", {})).get("semantic_state", {}))
+		if JSON.stringify(projected_semantics) != JSON.stringify(committed_semantics):
+			integrity_errors.append("Projected scenario semantics diverged from the exact committed semantic state.")
 		if committed_digest == projected_digest and integrity_errors.is_empty():
 			run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 			return projection_result.duplicate(true)
@@ -685,8 +689,9 @@ static func _semantic_projection_coverage_errors(projection: Dictionary, authori
 				errors.append("Semantic coverage identity %s has non-boolean presence." % identity)
 			else:
 				presence_values[bool(semantic.get("present", true))] = true
-		if presence_values.has(true) and presence_values.has(false):
-			errors.append("Semantic identity %s conflicts between live and tombstoned presentation entries." % identity)
+		# A tombstone in either finalized collection suppresses the shared base
+		# canvas record. Exact collection membership below, plus the committed
+		# semantic-state comparison at the public gate, authenticates the split.
 		var required := not presence_values.has(false)
 		if not authority.has(identity):
 			errors.append("Semantic presentation %s has no sealed collection-membership authority." % identity)

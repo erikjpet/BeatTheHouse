@@ -145,7 +145,7 @@ static func _check_atomic_post_operation_layout(library: Variant, failures: Arra
 	hostile_context["reserved_overlay_board_rect"] = {"x": 0.0, "y": 0.0, "w": BOARD_SIZE.x, "h": BOARD_SIZE.y}
 	run_state.current_environment["scenario_layout_context"] = hostile_context
 	var hostile_before := JSON.stringify(run_state.current_environment)
-	var fact_result := run_state.scenario_enqueue_fact("heat_changed", "fixture", {"previous": 1, "current": 2, "applied_delta": 1, "source": "fixture"}, "hostile_layout_fact")
+	var fact_result := run_state.scenario_enqueue_fact("heat_changed", "heat", {"previous": 1, "current": 2, "applied_delta": 1, "source": "fixture"}, "hostile_layout_fact")
 	if bool(fact_result.get("ok", true)) or JSON.stringify(run_state.current_environment) != hostile_before or not _contains_text(_array(fact_result.get("errors", [])), "overlay"):
 		failures.append("Fact ingress retained queue/journal or environment mutations after post-layout validation rejected the candidate.")
 	var expiry_result := run_state.scenario_sequence_apply_expiry_boundary("night_end", 1)
@@ -159,10 +159,6 @@ static func _check_atomic_post_operation_layout(library: Variant, failures: Arra
 static func _check_passive_atomic_commits(library: Variant, failures: Array) -> void:
 	var expiry_definition := ScenarioSequenceContractScript.finalization_fixture_definition()
 	expiry_definition["sequence"]["expiry"] = {"boundary": "night_end", "after": 1, "policy": "cleanup"}
-	expiry_definition["sequence"]["cleanup"]["operations"].append({
-		"family": "interaction_ops", "op": "remove", "receipt_id": "cleanup_fixture_interaction",
-		"owner_namespace": "scenario", "stable_object_id": "fixture_100",
-	})
 	_reseal_definition(expiry_definition)
 	var expiry_run := RunStateScript.new()
 	expiry_run.current_environment = _finalization_environment(expiry_definition)
@@ -196,24 +192,32 @@ static func _check_passive_atomic_commits(library: Variant, failures: Array) -> 
 
 	var aftermath_definition := ScenarioSequenceContractScript.finalization_fixture_definition()
 	var arrival := _dict(aftermath_definition["sequence"]["phase_graph"]["phases"][0])
-	arrival["terminal"] = true
+	arrival.erase("terminal")
 	arrival["advance_after_actions"] = 0
-	arrival["branches"] = [{"id": "passive_aftermath", "condition": {"type": "command", "command_id": "refuse"}, "outcome": "refused"}]
-	aftermath_definition["sequence"]["phase_graph"]["phases"] = [arrival]
+	arrival["branches"] = [
+		{"id": "passive_continue", "condition": {"type": "command", "command_id": "prepare"}, "next_phase": "complication"},
+		{"id": "passive_refuse_entry", "condition": {"type": "command", "command_id": "refuse"}, "next_phase": "aftermath"},
+		{"id": "passive_break_entry", "condition": {"type": "fact", "fact_type": "heat_changed"}, "next_phase": "aftermath"},
+	]
+	var passive_phases := _array(aftermath_definition["sequence"]["phase_graph"].get("phases", []))
+	passive_phases[0] = arrival
+	aftermath_definition["sequence"]["phase_graph"]["phases"] = passive_phases
 	aftermath_definition["sequence"]["cleanup"]["operations"] = [
 		{"family": "scene_ops", "op": "remove", "receipt_id": "cleanup_aftermath_fixture_scene", "owner_namespace": "scenario", "stable_object_id": "fixture_100"},
 		{"family": "scene_ops", "op": "remove", "receipt_id": "cleanup_aftermath_command_scene", "owner_namespace": "scenario", "stable_object_id": "command_console"},
-		{"family": "interaction_ops", "op": "remove", "receipt_id": "cleanup_aftermath_fixture_interaction", "owner_namespace": "scenario", "stable_object_id": "fixture_100"},
+		{"family": "interaction_ops", "op": "remove", "receipt_id": "cleanup_aftermath_terminal_interaction", "owner_namespace": "scenario", "stable_object_id": "fixture_201"},
 		{"family": "interaction_ops", "op": "remove", "receipt_id": "cleanup_aftermath_command_interaction", "owner_namespace": "scenario", "stable_object_id": "command_console"},
 	]
-	aftermath_definition["sequence"]["aftermath"] = {"refused": {
+	var passive_aftermath := _dict(aftermath_definition["sequence"].get("aftermath", {}))
+	passive_aftermath["refused"] = {
 		"label": "Closed hooks", "revisit_feedback": "Only the room hooks change.", "scene_ops": [], "interaction_ops": [], "actor_ops": [],
 		"service_ops": [{"family": "service_ops", "op": "gate", "receipt_id": "passive_service_gate", "owner_namespace": "service", "stable_object_id": "house_drink", "enabled": false, "disabled_reason": "Closed by aftermath."}],
 		"game_ops": [{"family": "game_ops", "op": "gate", "receipt_id": "passive_game_gate", "owner_namespace": "game", "stable_object_id": "slot", "enabled": false, "disabled_reason": "Closed by aftermath."}],
 		"route_ops": [{"family": "route_ops", "op": "close", "receipt_id": "passive_route_close", "owner_namespace": "base", "stable_object_id": "world:bar", "disabled_reason": "Closed by aftermath."}],
-	}}
+	}
+	aftermath_definition["sequence"]["aftermath"] = passive_aftermath
 	aftermath_definition["sequence"]["declared_targets"] = {
-		"scene_objects": [], "interactions": [], "actors": [],
+		"scene_objects": ["game::game:slot"], "interactions": ["game::game:slot"], "actors": [],
 		"services": ["service::house_drink"], "games": ["game::slot"], "routes": ["base::world:bar"],
 		"anchors": ["base::anchor:bar_floor_100", "base::anchor:bar_actor"], "zones": [],
 	}
@@ -1273,6 +1277,24 @@ static func _configure_alternate_exit_proof(definition: Dictionary) -> void:
 
 
 static func _reseal_definition(definition: Dictionary) -> void:
+	# Hostile layout fixtures author additional semantic anchors directly on their
+	# scene operations. Keep the definition's declared target envelope consistent
+	# so each case reaches the intended sealed layout check; an anchor absent from
+	# the trusted environment inventory still fails closed during schema ingress.
+	var sequence := _dict(definition.get("sequence", {}))
+	var declared_targets := _dict(sequence.get("declared_targets", {}))
+	var anchors := _array(declared_targets.get("anchors", []))
+	var graph := _dict(sequence.get("phase_graph", {}))
+	for phase_value in _array(graph.get("phases", [])):
+		for operation_value in _array(_dict(phase_value).get("scene_ops", [])):
+			var anchor_id := str(_dict(_dict(operation_value).get("object", {})).get("anchor_id", "")).strip_edges()
+			var identity := "base::anchor:%s" % anchor_id
+			if not anchor_id.is_empty() and not anchors.has(identity):
+				anchors.append(identity)
+	anchors.sort()
+	declared_targets["anchors"] = anchors
+	sequence["declared_targets"] = declared_targets
+	definition["sequence"] = sequence
 	definition["sequence"]["sequence_signature"] = ScenarioSequenceSchemaScript.calculated_signature_hash(definition)
 
 
