@@ -39,20 +39,20 @@ static func _check_scenario_local_actor_authority(library: Variant, failures: Ar
 		"archetype": library.environment_archetype(str(definition.get("archetype_id", ""))),
 	}
 	var positive_errors := ScenarioEngineScript.validate_sequence_definition(definition, references)
-	if _contains(positive_errors, "references unknown actor"):
+	if _contains(positive_errors, "references unknown actor") or _contains(positive_errors, "references unknown actors id"):
 		failures.append("Structurally valid scenario-owned local actor was rejected: %s" % _matching(positive_errors, "references unknown actor"))
 
 	var malformed: Dictionary = definition.duplicate(true)
 	if _mutate_first_actor_spawn(malformed, "malformed"):
 		var malformed_errors := ScenarioEngineScript.validate_sequence_definition(malformed, references)
-		if not _contains(malformed_errors, "actor requires label and actor_id") or not _contains(malformed_errors, "references unknown actor"):
-			failures.append("Malformed scenario-local actor did not fail both structure and actor authority checks.")
+		if not _contains(malformed_errors, "actor requires label and actor_id") or not _contains(malformed_errors, "references unknown actor") or not _contains(malformed_errors, "references unknown actors id"):
+			failures.append("Malformed scenario-local actor did not fail structure, spawn authority, and authoring-reference authority checks.")
 
 	var external: Dictionary = definition.duplicate(true)
 	if _mutate_first_actor_spawn(external, "external"):
 		var external_errors := ScenarioEngineScript.validate_sequence_definition(external, references)
-		if not _contains(external_errors, "references unknown actor hostile_external_actor"):
-			failures.append("External unknown actor was not rejected by actor authority.")
+		if not _contains(external_errors, "references unknown actor hostile_external_actor") or not _contains(external_errors, "references unknown actors id"):
+			failures.append("External unknown actor was not rejected by spawn and authoring-reference authority.")
 
 
 static func _check_unproven_zone_rejection(library: Variant, failures: Array) -> void:
@@ -92,6 +92,7 @@ static func _actor_authority_projection(definition: Dictionary) -> Dictionary:
 			return {
 				"id": str(definition.get("id", "")),
 				"archetype_id": str(definition.get("archetype_id", "")),
+				"sequence_authoring": {"references": {"actors": [str(_dict(operation.get("actor", {})).get("actor_id", ""))]}},
 				"sequence": {
 					"schema_version": int(source_sequence.get("schema_version", 0)),
 					"phase_graph": {
