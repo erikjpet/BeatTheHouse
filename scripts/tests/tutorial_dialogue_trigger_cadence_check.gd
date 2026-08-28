@@ -401,23 +401,19 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 		_fail("Settling the Peek hand did not arrive at an incomplete third-hand Count boundary: %s." % str(table))
 		return false
 
-	var count_toggle := game.surface_action_command("blackjack_count_toggle", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
-	var count_deal := game.surface_action_command("blackjack_deal", 0, false, count_toggle.get("ui_state", {}), run_state, run_state.current_environment)
-	var count_state: Dictionary = count_deal.get("ui_state", {})
+	var count_toggle := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count_toggle", 4, run_state, run_state.current_environment)
+	var count_deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
+	var count_deal_result := BlackjackAuthorityTestDriverScript.resolve(game, str(count_deal.get("action_id", "blackjack_place_bet")), 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_deal"), count_deal.get("ui_state", {}))
+	var count_state: Dictionary = count_deal_result.get("ui_state", count_deal.get("ui_state", {})) if typeof(count_deal_result.get("ui_state", count_deal.get("ui_state", {}))) == TYPE_DICTIONARY else count_deal.get("ui_state", {})
 	var challenge: Dictionary = count_state.get("count_challenge", {})
 	var icons: Array = challenge.get("icons", [])
 	if icons.is_empty():
-		_fail("The required third blackjack hand did not create the counting bubbles.")
+		_fail("The required third blackjack hand did not create the counting bubbles: %s." % str(count_deal_result))
 		return false
-	count_state["surface_time_msec"] = 0
-	for icon_value in icons:
-		var icon: Dictionary = icon_value
-		icon["spawn_msec"] = 0
-		icon["duration_msec"] = 60000
-	challenge["icons"] = icons
-	count_state["count_challenge"] = challenge
 	for icon_index in range(icons.size()):
-		count_state = game.surface_action_command("blackjack_count_icon", icon_index, false, count_state, run_state, run_state.current_environment).get("ui_state", count_state)
+		var icon: Dictionary = icons[icon_index]
+		var action_msec := int(icon.get("spawn_msec", 0)) + 10
+		count_state = BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count_icon", 4, run_state, run_state.current_environment, icon_index, false, action_msec).get("ui_state", count_state)
 	var pre_settle_coach := game.coach_state(run_state, run_state.current_environment, count_state)
 	if not bool(pre_settle_coach.get("count_all_selected", false)) \
 			or bool(pre_settle_coach.get("tutorial_count_completed", false)):

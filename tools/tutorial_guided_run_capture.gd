@@ -357,10 +357,11 @@ func _stage_blackjack_lookaway_surface(hand_state: Dictionary) -> void:
 	var run_state: RunState = app.get("run_state")
 	if game == null or run_state == null:
 		return
-	var distraction := game.surface_action_command("blackjack_distraction", 0, false, hand_state, run_state, run_state.current_environment)
+	var distraction := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_distraction", 4, run_state, run_state.current_environment)
 	var distracted_state: Dictionary = distraction.get("ui_state", {})
-	var peek := game.surface_action_command("blackjack_peek", 0, true, distracted_state, run_state, run_state.current_environment)
-	app.set("game_surface_ui_state", peek.get("ui_state", {}))
+	var peek := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_peek", 4, run_state, run_state.current_environment, 0, true)
+	var peek_result := BlackjackAuthorityTestDriverScript.resolve(game, str(peek.get("action_id", "peek_hole_card")), 0, run_state, run_state.current_environment, run_state.create_rng("capture_peek"), peek.get("ui_state", {}))
+	app.set("game_surface_ui_state", peek_result.get("blackjack_surface_ui_state", peek.get("ui_state", {})))
 	app.call("_refresh")
 
 
@@ -369,9 +370,10 @@ func _stage_blackjack_count_surface() -> void:
 	var run_state: RunState = app.get("run_state")
 	if game == null or run_state == null:
 		return
-	var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
-	var count := game.surface_action_command("blackjack_count", 0, false, deal.get("ui_state", {}), run_state, run_state.current_environment)
-	app.set("game_surface_ui_state", count.get("ui_state", {}))
+	var deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
+	var deal_result := BlackjackAuthorityTestDriverScript.resolve(game, str(deal.get("action_id", "blackjack_place_bet")), 4, run_state, run_state.current_environment, run_state.create_rng("capture_count_deal"), deal.get("ui_state", {}))
+	var count := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count", 4, run_state, run_state.current_environment)
+	app.set("game_surface_ui_state", count.get("ui_state", deal_result.get("ui_state", {})))
 	app.call("_refresh")
 
 

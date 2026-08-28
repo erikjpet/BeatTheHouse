@@ -24,6 +24,20 @@ static func resolve(game: GameModule, action_id: String, stake: int, run_state: 
 	return result
 
 
+static func surface_intent(game: GameModule, surface_action: String, stake: int, run_state: RunState, environment: Dictionary, index: int = 0, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:
+	if game == null or run_state == null:
+		return {"handled": false, "error_code": "invalid_fixture"}
+	run_state.current_environment = environment
+	var host: Control = FoundationMainScript.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {"blackjack": game})
+	host.set("run_state", run_state)
+	host.set("selected_stake", stake)
+	var command: Dictionary = host.call("_blackjack_host_surface_intent", surface_action, index, confirm_requested, surface_time_msec)
+	host.free()
+	return command
+
+
 static func _seed_session(game: GameModule, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> void:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var table: Dictionary = (game_states.get("blackjack", {}) as Dictionary).duplicate(true) if typeof(game_states.get("blackjack", {})) == TYPE_DICTIONARY else {}

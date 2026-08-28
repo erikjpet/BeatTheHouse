@@ -394,21 +394,21 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 	var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
 	var deal_result := BlackjackAuthorityTestDriverScript.resolve(game, str(deal.get("action_id", "blackjack_place_bet")), 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_raised_deal"), deal.get("ui_state", {}))
 	var hand_state: Dictionary = deal.get("ui_state", {})
-	var distraction := game.surface_action_command("blackjack_distraction", 0, false, hand_state, run_state, run_state.current_environment)
+	var distraction := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_distraction", 4, run_state, run_state.current_environment)
 	var distracted_state: Dictionary = distraction.get("ui_state", {})
-	var peek := game.surface_action_command("blackjack_peek", 0, true, distracted_state, run_state, run_state.current_environment)
+	var peek := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_peek", 4, run_state, run_state.current_environment, 0, true)
 	var peek_state: Dictionary = peek.get("ui_state", {})
 	var peek_result := BlackjackAuthorityTestDriverScript.resolve(game, "peek_hole_card", 0, run_state, run_state.current_environment, run_state.create_rng("tutorial_peek"), peek_state)
 	_check(bool(peek_state.get("peek_had_window", false)) and bool(peek_state.get("dealer_hole_visible", false)) and bool(peek_result.get("ok", false)), "Tutorial peek did not use the real distraction lookaway window.", route_failures)
 	var preserved_peek_state: Dictionary = peek_result.get("blackjack_surface_ui_state", peek_state) if typeof(peek_result.get("blackjack_surface_ui_state", peek_state)) == TYPE_DICTIONARY else peek_state
-	var peek_finish := game.surface_action_command("blackjack_stand", 0, false, preserved_peek_state, run_state, run_state.current_environment)
+	var peek_finish := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_stand", 4, run_state, run_state.current_environment)
 	var peek_finish_result: Dictionary = {}
 	if bool(peek_finish.get("resolve", false)):
 		peek_finish_result = BlackjackAuthorityTestDriverScript.resolve(game, str(peek_finish.get("action_id", "play_basic")), 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_peek_hand_finish"), peek_finish.get("ui_state", {}))
 	var after_peek_hand := game.coach_state(run_state, run_state.current_environment, {})
 	_check(bool(peek_finish_result.get("ok", false)) and int(after_peek_hand.get("hands_played", 0)) == 2 and bool(after_peek_hand.get("between_hands", false)), "Tutorial Peek hand did not settle before the separate counting hand.", route_failures)
-	var count_toggle := game.surface_action_command("blackjack_count", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
-	var count_deal := game.surface_action_command("blackjack_deal", 0, false, count_toggle.get("ui_state", {}), run_state, run_state.current_environment)
+	var count_toggle := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count", 4, run_state, run_state.current_environment)
+	var count_deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
 	var count_deal_result := BlackjackAuthorityTestDriverScript.resolve(game, str(count_deal.get("action_id", "blackjack_place_bet")), 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_deal"), count_deal.get("ui_state", {}))
 	var count_state: Dictionary = count_deal_result.get("ui_state", count_deal.get("ui_state", {})) if typeof(count_deal_result.get("ui_state", count_deal.get("ui_state", {}))) == TYPE_DICTIONARY else count_deal.get("ui_state", {})
 	var challenge: Dictionary = count_state.get("count_challenge", {}) if typeof(count_state.get("count_challenge", {})) == TYPE_DICTIONARY else {}
@@ -441,13 +441,15 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 	var miss_perfect := bool(miss_result.get("blackjack_count_perfect", miss_final_challenge.get("perfect", true)))
 	_check(not miss_perfect and int(miss_result.get("suspicion_delta", 0)) > 0, "Missing real count pulses did not add heat: %s" % JSON.stringify(miss_result), route_failures)
 	for icon_index in range(icons.size()):
-		count_state = game.surface_action_command("blackjack_count_icon", icon_index, false, count_state, run_state, run_state.current_environment).get("ui_state", {})
+		var live_icon: Dictionary = icons[icon_index]
+		var icon_action_msec := int(live_icon.get("spawn_msec", now)) + 10
+		count_state = BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count_icon", 4, run_state, run_state.current_environment, icon_index, false, icon_action_msec).get("ui_state", {})
 	var coach_state := game.coach_state(run_state, run_state.current_environment, count_state)
 	_check(not icons.is_empty() and bool(coach_state.get("count_all_selected", false)), "Tutorial count did not select every real count pulse.", route_failures)
 	var count_result := BlackjackAuthorityTestDriverScript.resolve(game, "count_cards", 0, run_state, run_state.current_environment, run_state.create_rng("tutorial_count"), count_state)
 	var final_count_state: Dictionary = count_result.get("blackjack_surface_ui_state", count_state) if typeof(count_result.get("blackjack_surface_ui_state", count_state)) == TYPE_DICTIONARY else count_state
 	_check(bool(count_result.get("blackjack_count_answered", false)), "Tutorial count did not finalize through the real count action.", route_failures)
-	var stand := game.surface_action_command("blackjack_stand", 0, false, final_count_state, run_state, run_state.current_environment)
+	var stand := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_stand", 4, run_state, run_state.current_environment)
 	if bool(stand.get("resolve", false)):
 		BlackjackAuthorityTestDriverScript.resolve(game, str(stand.get("action_id", "play_basic")), 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_raised_stand"), stand.get("ui_state", {}))
 	return {"normal_hand_settled": bool(clean.get("settled", false)), "peek_hand_settled": bool(peek_finish_result.get("ok", false)), "raised_bet": 4, "lookaway_id": str(distracted_state.get("dealer_lookaway_id", "")), "peek_had_window": bool(peek_state.get("peek_had_window", false)), "count_icon_count": icons.size(), "count_all_selected": bool(coach_state.get("count_all_selected", false)), "count_miss_heat_delta": int(miss_result.get("suspicion_delta", 0)), "raised_deal_ok": bool(deal_result.get("ok", false)), "count_deal_ok": bool(count_deal_result.get("ok", false))}
@@ -456,7 +458,7 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 func _deal_and_stand(game: GameModule, run_state: RunState, stake: int, rng_label: String) -> Dictionary:
 	var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": stake}, run_state, run_state.current_environment)
 	var deal_result := BlackjackAuthorityTestDriverScript.resolve(game, str(deal.get("action_id", "blackjack_place_bet")), stake, run_state, run_state.current_environment, run_state.create_rng("%s_deal" % rng_label), deal.get("ui_state", {}))
-	var stand := game.surface_action_command("blackjack_stand", 0, false, deal.get("ui_state", {}), run_state, run_state.current_environment)
+	var stand := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_stand", stake, run_state, run_state.current_environment)
 	var stand_result := {}
 	if bool(stand.get("resolve", false)):
 		stand_result = BlackjackAuthorityTestDriverScript.resolve(game, str(stand.get("action_id", "play_basic")), stake, run_state, run_state.current_environment, run_state.create_rng("%s_stand" % rng_label), stand.get("ui_state", {}))
