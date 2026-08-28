@@ -381,7 +381,7 @@ func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures:
 	var actions := _array(handoff.get("available_actions", []))
 	var action := _dict(actions[0]) if not actions.is_empty() else {}
 	var command := run_state.world_sequence_command(
-		token, "make_handoff", "p1:%s:handoff" % seed, {}, "crew", "package_handoff",
+		token, "make_handoff", "proof:p1:%s:handoff" % seed.to_lower().replace("-", "_"), {}, "crew", "package_handoff",
 		{"crew::package_handoff": true},
 		str(action.get("action_origin_owner_namespace", "")),
 		str(action.get("action_origin_stable_object_id", "")),
