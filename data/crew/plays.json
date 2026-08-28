@@ -27,6 +27,12 @@
         "voice_lines": {
           "crew_switch": "Switch takes the rail. 'Count your cards. I'll count the room.'"
         },
+        "semantics": {
+          "actor_role": "selected_crew_member",
+          "games": {
+            "blackjack": {"place_role": "blackjack_table_rail", "object_role": "blackjack_shoe_and_count", "public_verbs": ["arrive", "watch", "signal", "withdraw"], "arrival": "member_takes_the_rail", "work": "member_reads_room_and_signals_count", "detected": "security_notices_the_signals", "leave": "member_clears_the_rail", "aftermath": "rail_returns_to_ordinary_play"}
+          }
+        },
         "intent": "Four blackjack boundaries of assistance; meaningful relief without erasing dirty-count heat."
       },
       {
@@ -46,6 +52,16 @@
         "voice_lines": {
           "crew_velvet": "Velvet turns the whole rail toward her smile. 'You were never the story.'",
           "crew_lucky": "Lucky clips a chair and catches three drinks. 'Good news: everybody saw me.'"
+        },
+        "semantics": {
+          "actor_role": "selected_crew_member",
+          "games": {
+            "blackjack": {"place_role": "blackjack_table_rail", "object_role": "table_attention", "public_verbs": ["arrive", "draw_attention", "cover", "leave"], "arrival": "member_enters_the_rail", "work": "member_turns_attention_from_player", "detected": "security_recognizes_the_diversion", "leave": "member_exits_with_the_attention", "aftermath": "table_attention_settles"},
+            "baccarat": {"place_role": "baccarat_table_rail", "object_role": "table_attention", "public_verbs": ["arrive", "draw_attention", "cover", "leave"], "arrival": "member_enters_the_rail", "work": "member_turns_attention_from_player", "detected": "security_recognizes_the_diversion", "leave": "member_exits_with_the_attention", "aftermath": "table_attention_settles"},
+            "roulette": {"place_role": "roulette_table_rail", "object_role": "table_attention", "public_verbs": ["arrive", "draw_attention", "cover", "leave"], "arrival": "member_enters_the_rail", "work": "member_turns_attention_from_player", "detected": "security_recognizes_the_diversion", "leave": "member_exits_with_the_attention", "aftermath": "table_attention_settles"},
+            "craps": {"place_role": "craps_table_rail", "object_role": "table_attention", "public_verbs": ["arrive", "draw_attention", "cover", "leave"], "arrival": "member_enters_the_rail", "work": "member_turns_attention_from_player", "detected": "security_recognizes_the_diversion", "leave": "member_exits_with_the_attention", "aftermath": "table_attention_settles"},
+            "video_poker": {"place_role": "video_poker_bank", "object_role": "bank_attention", "public_verbs": ["arrive", "draw_attention", "cover", "leave"], "arrival": "member_enters_the_machine_bank", "work": "member_turns_attention_from_player", "detected": "security_recognizes_the_diversion", "leave": "member_exits_with_the_attention", "aftermath": "machine_bank_attention_settles"}
+          }
         },
         "intent": "One immediate local heat release; its long spent window keeps the security consequence meaningful."
       },
@@ -73,6 +89,12 @@
           "crew_bishop": "Bishop crosses the rope on somebody else's name.",
           "crew_lucky": "Lucky drops into the hot seat. 'About time.'"
         },
+        "semantics": {
+          "actor_role": "selected_inactive_crew_member",
+          "games": {
+            "blackjack": {"place_role": "blackjack_hot_seat", "object_role": "prewarmed_blackjack_shoe", "public_verbs": ["arrive", "take_seat", "play_shoe", "leave"], "arrival": "member_brings_the_buy_in", "work": "member_takes_the_warmed_seat", "detected": "security_connects_the_call_in", "leave": "member_cashes_out_and_clears_the_seat", "aftermath": "hot_seat_returns_to_player"}
+          }
+        },
         "intent": "Consumes the spotted count into the current pre-warmed shoe; only legal while Spotter is live."
       },
       {
@@ -98,6 +120,12 @@
           "crew_bishop": "Bishop moves the chips under a perfectly ordinary receipt.",
           "crew_lucky": "Lucky loses the stack to you with theatrical disappointment."
         },
+        "semantics": {
+          "actor_role": "selected_crew_member",
+          "games": {
+            "baccarat": {"place_role": "baccarat_chip_rail", "object_role": "player_funded_chip_stack", "public_verbs": ["arrive", "take_cash", "pass_chips", "leave"], "arrival": "member_joins_with_empty_hands", "work": "member_exchanges_player_cash_for_chips", "detected": "security_notices_the_hand_to_hand_exchange", "leave": "member_clears_the_chip_rail", "aftermath": "chips_remain_with_player"}
+          }
+        },
         "intent": "Moves $40 cash into casino chips for a $6 fee; detection preserves laundering risk and never creates value."
       },
       {
@@ -122,6 +150,16 @@
           "crew_velvet": "Velvet brings a crowd that knows exactly when to laugh.",
           "crew_bishop": "Bishop makes the busy table look house-approved.",
           "crew_lucky": "Lucky starts three arguments and loses track of none of them."
+        },
+        "semantics": {
+          "actor_role": "selected_crew_pair",
+          "games": {
+            "blackjack": {"place_role": "blackjack_table_rail", "object_role": "crowded_table_sightlines", "public_verbs": ["arrive", "fill_rail", "screen_action", "leave"], "arrival": "crew_pair_fills_the_rail", "work": "crew_pair_breaks_clean_sightlines", "detected": "security_reads_the_crowd_as_cover", "leave": "crew_pair_peels_away", "aftermath": "blackjack_rail_opens_again"},
+            "baccarat": {"place_role": "baccarat_table_rail", "object_role": "crowded_table_sightlines", "public_verbs": ["arrive", "fill_rail", "screen_action", "leave"], "arrival": "crew_pair_fills_the_rail", "work": "crew_pair_breaks_clean_sightlines", "detected": "security_reads_the_crowd_as_cover", "leave": "crew_pair_peels_away", "aftermath": "baccarat_rail_opens_again"},
+            "roulette": {"place_role": "roulette_table_rail", "object_role": "crowded_table_sightlines", "public_verbs": ["arrive", "fill_rail", "screen_action", "leave"], "arrival": "crew_pair_fills_the_rail", "work": "crew_pair_breaks_clean_sightlines", "detected": "security_reads_the_crowd_as_cover", "leave": "crew_pair_peels_away", "aftermath": "roulette_rail_opens_again"},
+            "craps": {"place_role": "craps_table_rail", "object_role": "crowded_table_sightlines", "public_verbs": ["arrive", "fill_rail", "screen_action", "leave"], "arrival": "crew_pair_fills_the_rail", "work": "crew_pair_breaks_clean_sightlines", "detected": "security_reads_the_crowd_as_cover", "leave": "crew_pair_peels_away", "aftermath": "craps_rail_opens_again"},
+            "video_poker": {"place_role": "video_poker_bank", "object_role": "crowded_machine_sightlines", "public_verbs": ["arrive", "fill_bank", "screen_action", "leave"], "arrival": "crew_pair_fills_the_machine_bank", "work": "crew_pair_breaks_clean_sightlines", "detected": "security_reads_the_crowd_as_cover", "leave": "crew_pair_peels_away", "aftermath": "machine_bank_opens_again"}
+          }
         },
         "intent": "Three cheat boundaries at 60% detection odds; costs two members and does not reduce heat itself."
       }
