@@ -15,6 +15,7 @@ var app: Control
 var out_dir := "res://.tmp/tutorial_rework/captures"
 var capture_size := Vector2i(1280, 720)
 var layout_failure_count := 0
+var blackjack_seed_probe_mode := false
 var blackjack_fixture_baseline: Dictionary = {}
 var blackjack_count_fixture_baseline: Dictionary = {}
 var blackjack_risky_peek_state: Dictionary = {}
@@ -28,6 +29,8 @@ func _init() -> void:
 			var dimensions := argument.trim_prefix("--size=").to_lower().split("x", false, 1)
 			if dimensions.size() == 2:
 				capture_size = Vector2i(maxi(320, int(dimensions[0])), maxi(240, int(dimensions[1])))
+		elif argument == "--blackjack-seed-probe":
+			blackjack_seed_probe_mode = true
 	call_deferred("_run")
 
 
@@ -45,6 +48,9 @@ func _run() -> void:
 	await _settle(10)
 	app.call("start_tutorial_run")
 	await _settle(14)
+	if blackjack_seed_probe_mode:
+		await _run_blackjack_seed_probe()
+		return
 	await _save_shot("01_dialogue_highlight_apartment_pal")
 	if not await _save_stability_record():
 		quit(1)
@@ -343,6 +349,65 @@ func _play_and_redeem_pull_tab() -> int:
 		GameModuleScript.apply_result(run_state, redeem_result, run_state.create_rng("capture_pull_apply"))
 	app.set("last_hook_result", redeem_result)
 	return int(redeem_result.get("pull_tab_redeemed_payout", 0))
+
+
+func _run_blackjack_seed_probe() -> void:
+	var live_run: RunState = app.get("run_state")
+	if live_run == null:
+		push_error("Blackjack capture seed probe could not start a tutorial run.")
+		quit(1)
+		return
+	if not live_run.inventory.has("xray_glasses"):
+		live_run.add_item("xray_glasses")
+	_stage_environment("corner_store")
+	_resolve_event("call_brother_in_law", "make_call")
+	_resolve_event("family_loan", "accept")
+	_resolve_event("parking_lot_tip", "follow_tip")
+	_stage_environment("gas_station_casino")
+	app.call("enter_game", "pull_tabs", "pull_tabs")
+	_play_and_redeem_pull_tab()
+	app.call("back_to_environment")
+	_stage_environment("small_underground_casino")
+	app.call("enter_game", "blackjack", "blackjack")
+	await _settle(4)
+	var game: GameModule = app.get("current_game")
+	live_run = app.get("run_state")
+	blackjack_fixture_baseline = _blackjack_capture_fixture_baseline(game, live_run, false)
+	var candidates := [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233]
+	var satisfying: Array = []
+	for candidate_state in candidates:
+		var fixture := _restore_blackjack_capture_fixture(blackjack_fixture_baseline)
+		var run_state: RunState = fixture.get("run_state")
+		run_state.rng_seed = int(candidate_state)
+		run_state.rng_state = int(candidate_state)
+		var deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
+		var deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, deal, 4, run_state, run_state.current_environment)
+		var distraction := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_distraction", 4, run_state, run_state.current_environment)
+		var peek := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_peek", 4, run_state, run_state.current_environment, 0, true)
+		var peek_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, peek, 0, run_state, run_state.current_environment)
+		var protected_state: Dictionary = peek_result.get("blackjack_surface_ui_state", {})
+		var settlement: Dictionary = {}
+		if not protected_state.is_empty():
+			settlement = BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("capture_seed_probe_terminal"), protected_state)
+		var table: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})
+		var surface := game.surface_state(run_state, run_state.current_environment, {})
+		var record := {
+			"state": int(candidate_state),
+			"deal_ok": bool(deal_result.get("ok", false)),
+			"distraction_ok": bool(distraction.get("handled", false)),
+			"peek_sealed": peek.has("_blackjack_host_delivery"),
+			"peek_ok": bool(peek_result.get("ok", false)),
+			"caught": bool(peek_result.get("dealer_caught_cheat", false)),
+			"reprieve": bool(peek_result.get("blackjack_tutorial_peek_reprieve", false)),
+			"settle_ok": bool(settlement.get("ok", false)),
+			"barred": bool(table.get("barred", false)),
+			"terminal": bool(surface.get("table_barred", false)) and str(surface.get("phase", "")) == "barred" and not bool(surface.get("can_deal", true)),
+		}
+		if bool(record.get("deal_ok", false)) and bool(record.get("distraction_ok", false)) and bool(record.get("peek_sealed", false)) and bool(record.get("peek_ok", false)) and bool(record.get("caught", false)) and bool(record.get("reprieve", false)) and bool(record.get("settle_ok", false)) and bool(record.get("barred", false)) and bool(record.get("terminal", false)):
+			satisfying.append(int(candidate_state))
+		print("BLACKJACK_CAPTURE_SEED_PROBE %s" % JSON.stringify(record))
+	print("BLACKJACK_CAPTURE_SEED_PROBE_DONE satisfying=%s" % JSON.stringify(satisfying))
+	quit(0)
 
 
 func _stage_blackjack_raised_bet_surface() -> Dictionary:
