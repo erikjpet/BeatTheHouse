@@ -5913,7 +5913,7 @@
                     "behavior": "work",
                     "label": "Street Shooter",
                     "pose": "observing",
-                    "route_id": "back_alley_street_craps_arrival_route",
+                    "route_id": "alley_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -6368,7 +6368,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "65e6aa8cb1f87e96cf913714396e175db830236680d34692e138bb7bc45814b7"
+        "sequence_signature": "a8f1d66ead872dc5de0c0895d45056e867e987836867e2f14347db4105246b41"
       }
     },
     {
@@ -6867,7 +6867,7 @@
                     "behavior": "work",
                     "label": "Patrol Officer",
                     "pose": "observing",
-                    "route_id": "back_alley_cruiser_parked_arrival_route",
+                    "route_id": "alley_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -7322,7 +7322,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3617e2b46d031057efe731827374832e5a1f763d69995d0480d9fdd4f4dacbd3"
+        "sequence_signature": "239191a6721a70a6cf3bf4945ae194d8fb42871d9dddf1e8847f3dd0f7f938dc"
       }
     },
     {
@@ -7823,7 +7823,7 @@
                     "behavior": "work",
                     "label": "Rotating Buyer",
                     "pose": "observing",
-                    "route_id": "back_alley_fence_night_arrival_route",
+                    "route_id": "alley_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -8278,7 +8278,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1fc20f35abce05fd2eb0de2351f826754521221e614fbcd6d299cf125bcfafcb"
+        "sequence_signature": "ffe18f38b8ea4868e33bd602be3e24344af8f2aa9035793e1336ed0eaa633a3b"
       }
     },
     {
@@ -8777,7 +8777,7 @@
                     "behavior": "work",
                     "label": "Returning Regular",
                     "pose": "observing",
-                    "route_id": "back_alley_nothing_moving_arrival_route",
+                    "route_id": "alley_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -9232,7 +9232,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "751dd2e08a9f6321f92384ed786482ad2e8365cbe8129d3e6b4c1f07f3befd62"
+        "sequence_signature": "612f79b62c8459a5180f45daeeb962468610c9c0864e0f57b8903f569ac72865"
       }
     },
     {
@@ -9733,7 +9733,7 @@
                     "behavior": "work",
                     "label": "Estate Appraiser",
                     "pose": "observing",
-                    "route_id": "pawn_shop_estate_lot_day_arrival_route",
+                    "route_id": "pawn_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -10188,7 +10188,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0d2086b8c6ad2f135e40cf99261bf3c1fdbb80c070064136949afa8e84e78291"
+        "sequence_signature": "363a182a6c982ef545c6de8c7aa843f8fac435be04e5755d4766a99cf37f101c"
       }
     },
     {
@@ -10687,7 +10687,7 @@
                     "behavior": "work",
                     "label": "Records Clerk",
                     "pose": "observing",
-                    "route_id": "pawn_shop_serial_check_day_arrival_route",
+                    "route_id": "pawn_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -11142,7 +11142,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "940948affd208e314c8b7b1bd438d570bd2a2d1340af3bf0125e91b7aedb5612"
+        "sequence_signature": "ad61dbfb99b2ac336395fdbc724d6f17dff5c834c87538331b22ddfbab48f67e"
       }
     },
     {
@@ -11643,7 +11643,7 @@
                     "behavior": "work",
                     "label": "Sal Shopkeeper",
                     "pose": "observing",
-                    "route_id": "pawn_shop_sals_mood_arrival_route",
+                    "route_id": "pawn_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -12098,7 +12098,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "195af7742f492dfa4b5469fc55aa0927bf88cc5dcf0701138be6363bfb644815"
+        "sequence_signature": "54b4d6ec61c06745858b7711100df65109c2f9f84ea363b606f44d5010a0d05b"
       }
     }
   ]
