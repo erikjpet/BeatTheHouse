@@ -28,17 +28,19 @@ const DECISIONS := {
 }
 
 const SPATIAL_OVERRIDES := {
-	"delta_queen_wedding_charter":{"task_zone":"foreground","zones":{"best_man_table":"foreground","best_man":"background","deck_coordinator":"service_lane"}},
-	"delta_queen_whale_aboard":{"task_zone":"foreground","zones":{"stake_placards":"foreground","entourage_runner":"background","whale_host":"service_lane"}},
-	"delta_queen_fog_delay":{"task_zone":"service_lane","zones":{"gangway_shutter":"foreground","safe_exit":"background"}},
-	"delta_queen_engine_trouble":{"task_zone":"background","zones":{"locked_gangway":"foreground","safe_exit":"background","deck_guard":"service_lane","engine_mate":"foreground"}},
-	"delta_queen_captains_invitational":{"task_zone":"service_lane","zones":{"captain_scorer":"foreground"}},
+	"delta_queen_wedding_charter":{"task_anchor":"delta_wedding_task","aftermath_scene_anchor":"delta_wedding_aftermath_scene","aftermath_actor_anchor":"delta_wedding_aftermath_actor","zones":{},"anchors":{"ceremony_rope":"delta_wedding_rope","best_man_table":"delta_wedding_table","best_man":"delta_wedding_best_man","deck_coordinator":"delta_wedding_coordinator","safe_exit":"delta_wedding_safe_exit","work_1_choice_0":"delta_wedding_choice_left","work_1_choice_1":"delta_wedding_choice_middle","work_1_choice_2":"delta_wedding_choice_right"}},
+	"delta_queen_whale_aboard":{"task_anchor":"delta_scenario_task","aftermath_scene_anchor":"delta_aftermath_scene","aftermath_actor_anchor":"delta_aftermath_actor","zones":{},"anchors":{"stake_placards":"delta_scenario_spare","service_lane":"delta_secondary_top","premium_table":"delta_noninteractive_right","whale_host":"delta_bottom_left","entourage_runner":"delta_bottom_middle","safe_exit":"delta_scenario_safe_exit","work_2_choice_0":"delta_decision_left","work_2_choice_1":"delta_decision_middle","work_2_choice_2":"delta_decision_right"}},
+	"delta_queen_fog_delay":{"task_anchor":"delta_scenario_task","aftermath_scene_anchor":"delta_aftermath_scene","aftermath_actor_anchor":"delta_aftermath_actor","zones":{},"anchors":{"drift_board":"delta_scenario_spare","fog_signal":"delta_secondary_top","gangway_shutter":"delta_noninteractive_right","deck_officer":"delta_fog_officer","waiting_crowd":"delta_fog_waiting_crowd","safe_exit":"delta_scenario_safe_exit","work_1_choice_0":"delta_decision_left","work_1_choice_1":"delta_decision_middle","work_1_choice_2":"delta_decision_right"}},
+	"delta_queen_engine_trouble":{"task_anchor":"delta_scenario_task","aftermath_scene_anchor":"delta_aftermath_scene","aftermath_actor_anchor":"delta_aftermath_actor","zones":{},"anchors":{"engine_bulkhead":"delta_scenario_spare","pressure_gauge":"delta_bottom_left","evacuation_benches":"delta_engine_benches","locked_gangway":"delta_noninteractive_right","engine_mate":"delta_secondary_top","deck_guard":"delta_engine_guard","safe_exit":"delta_scenario_safe_exit","work_3_choice_0":"delta_decision_left","work_3_choice_1":"delta_decision_middle","work_3_choice_2":"delta_decision_right"}},
+	"delta_queen_captains_invitational":{"task_anchor":"delta_scenario_task","aftermath_scene_anchor":"delta_aftermath_scene","aftermath_actor_anchor":"delta_aftermath_actor","zones":{},"anchors":{"scorer_rail":"delta_scenario_spare","entry_cards":"delta_captains_entry","bracket_tables":"delta_noninteractive_right","captain_scorer":"delta_bottom_left","safe_exit":"delta_scenario_safe_exit","work_3_choice_0":"delta_decision_left","work_3_choice_1":"delta_decision_middle","work_3_choice_2":"delta_decision_right"}},
 	"grand_casino_gala_night":{"task_anchor":"grand_scenario_top_800","aftermath_scene_anchor":"grand_aftermath_scene","aftermath_actor_anchor":"grand_aftermath_actor","zones":{"coat_check":"foreground"},"anchors":{"charity_badges":"grand_scenario_top_520","gala_host":"grand_scenario_top_400","safe_exit":"grand_scenario_safe_exit","stage_hand":"grand_scenario_bottom_830","stage_lift":"grand_scenario_top_650_low","work_2_choice_0":"grand_decision_left","work_2_choice_1":"grand_decision_middle","work_2_choice_2":"grand_decision_middle_right"}},
 	"grand_casino_convention_crowd":{"task_anchor":"grand_scenario_top_800","aftermath_scene_anchor":"grand_aftermath_scene","aftermath_actor_anchor":"grand_aftermath_actor","zones":{},"anchors":{"badge_delegations":"grand_convention_badge_delegations","booking_board":"grand_scenario_bottom_830","convention_coordinator":"grand_scenario_top_400","machine_banks":"grand_convention_machine_banks","safe_exit":"grand_scenario_safe_exit","table_block":"grand_convention_table_block","work_2_choice_0":"grand_decision_left","work_2_choice_1":"grand_decision_middle","work_2_choice_2":"grand_decision_middle_right"}},
-	"grand_casino_audit_night":{"task_anchor":"grand_scenario_top_520","aftermath_scene_anchor":"grand_aftermath_scene","aftermath_actor_anchor":"grand_aftermath_actor","zones":{"pit_ledger":"foreground"},"anchors":{"audit_barrier":"grand_scenario_top_800_low","cage_seal":"grand_scenario_top_650","lead_auditor":"grand_scenario_top_400","open_exit_marker":"grand_scenario_bottom_830","pit_manager":"grand_scenario_top_50_actor","safe_exit":"grand_scenario_safe_exit","work_1_choice_0":"grand_decision_left","work_1_choice_1":"grand_decision_middle_right","work_1_choice_2":"grand_decision_right"}},
+	"grand_casino_audit_night":{"task_anchor":"grand_scenario_top_520","aftermath_scene_anchor":"grand_aftermath_scene","aftermath_actor_anchor":"grand_aftermath_actor","zones":{},"anchors":{"audit_barrier":"grand_scenario_top_800_low","cage_seal":"grand_scenario_top_650","pit_ledger":"grand_audit_pit_ledger","lead_auditor":"grand_scenario_top_400","open_exit_marker":"grand_scenario_bottom_830","pit_manager":"grand_scenario_top_50_actor","safe_exit":"grand_scenario_safe_exit","work_1_choice_0":"grand_decision_left","work_1_choice_1":"grand_decision_middle_right","work_1_choice_2":"grand_decision_right"}},
 }
 
 const PHASE_RELOCATIONS := {
+	"delta_queen_wedding_charter":{"work_1":{"scene":{"ring_case":"delta_wedding_ring_phase"},"actor":{}}},
+	"delta_queen_captains_invitational":{"work_2":{"scene":{"entry_cards":"delta_phase_left","bracket_tables":"delta_noninteractive_right"},"actor":{"eliminated_players":"delta_secondary_top","captain_scorer":"delta_captain_scorer_phase"}}},
 	"grand_casino_gala_night":{"work_2":{"scene":{"charity_badges":"grand_work_object_middle","stage_lift":"grand_work_object_left"},"actor":{"gala_host":"grand_work_actor_right"}}},
 	"grand_casino_convention_crowd":{"work_2":{"scene":{"machine_banks":"grand_work_object_middle","table_block":"grand_work_object_left"},"actor":{"convention_coordinator":"grand_work_actor_right"}}},
 	"grand_casino_audit_night":{"work_1":{"scene":{"audit_barrier":"grand_work_object_left","cage_seal":"grand_audit_cage"},"actor":{"lead_auditor":"grand_work_actor_right"}}},
@@ -97,18 +99,22 @@ func _entry(c: Dictionary) -> Dictionary:
 	scene_ops.append(_scene_spawn(prefix, "arrival", exit_id, "Marked clean exit", "exit", _spatial_zone(prefix, "safe_exit", "exit_lane"), "marked_lane", 56, 56))
 	cleanup.append(_remove("scene_ops", prefix, exit_id))
 	var first_task_id := "%s_task_0" % prefix
-	scene_ops.append(_task_scene_spawn(prefix, "arrival", first_task_id, str(c.verbs[0])))
-	cleanup.append(_remove("scene_ops", prefix, first_task_id))
+	var arrival_is_decision := str(decision.get("at", "")) == "arrival"
+	if not arrival_is_decision:
+		scene_ops.append(_task_scene_spawn(prefix, "arrival", first_task_id, str(c.verbs[0])))
+		cleanup.append(_remove("scene_ops", prefix, first_task_id))
 	var arrival_interactions := [
 		_interaction_add(prefix, "arrival", exit_id, "%s clean exit" % prefix.replace("_"," ").capitalize(), "Leave or refuse the %s task without crossing its active work zone." % prefix.replace("_"," "), [_action("ignore_%s" % prefix, "Ignore the sequence", "ui_down"), _action("refuse_%s" % prefix, "Refuse the task", "ui_cancel")], true),
-		_interaction_add(prefix, "arrival", first_task_id, str(c.verbs[0]).replace("_", " ").capitalize(), "Begin the first physical task; named routes use their own marked stations.", [_step_action(str(c.verbs[0]), prefix, str(c.verbs[0])), _action("fail_%s" % prefix, "Let the pressure win", "ui_right")], false),
 	]
-	var arrival_choices := _decision_semantics(prefix, "arrival", decision)
+	if not arrival_is_decision:
+		arrival_interactions.append(_interaction_add(prefix, "arrival", first_task_id, str(c.verbs[0]).replace("_", " ").capitalize(), "Begin the first physical task; named routes use their own marked stations.", [_step_action(str(c.verbs[0]), prefix, str(c.verbs[0])), _action("fail_%s" % prefix, "Let the pressure win", "ui_right")], false))
+	var arrival_choices := _decision_semantics(prefix, "arrival", decision, str(c.verbs[0]))
 	scene_ops.append_array(arrival_choices.scene)
 	arrival_interactions.append_array(arrival_choices.interactions)
 	cleanup.append_array(arrival_choices.cleanup)
 	cleanup.append(_remove("interaction_ops", prefix, exit_id))
-	cleanup.append(_remove("interaction_ops", prefix, first_task_id))
+	if not arrival_is_decision:
+		cleanup.append(_remove("interaction_ops", prefix, first_task_id))
 	objective_steps.append({"id":str(c.verbs[0]),"label":str(c.verbs[0]).replace("_"," ").capitalize(),"kind":"command","command_id":str(c.verbs[0])})
 	var arrival_branches := [
 		_branch(prefix,"arrival_begin",{"type":"command","command_id":str(c.verbs[0])},"work_1","",{"main_task":"success"}),
@@ -123,25 +129,36 @@ func _entry(c: Dictionary) -> Dictionary:
 		var previous_task_id := "%s_task_%d" % [prefix, index - 1]
 		var operations := _beat_operations(c, index - 1)
 		var phase_id := "work_%d" % index
+		var previous_phase_id := "arrival" if index == 1 else "work_%d" % (index - 1)
+		var previous_was_decision := str(decision.get("at", "")) == previous_phase_id
 		var relocations := _phase_relocation_operations(prefix, phase_id)
 		operations.scene.append_array(relocations.scene)
 		operations.actor.append_array(relocations.actor)
-		operations.scene.append(_scene_remove(prefix, phase_id, previous_task_id))
-		operations.scene.append(_task_scene_spawn(prefix, phase_id, task_id, str(c.verbs[index])))
-		var interactions := [_interaction_remove(prefix,phase_id,previous_task_id)]
-		var previous_phase_id := "arrival" if index == 1 else "work_%d" % (index - 1)
-		if str(decision.get("at", "")) == previous_phase_id:
+		if not previous_was_decision:
+			operations.scene.append(_scene_remove(prefix, phase_id, previous_task_id))
+		if previous_was_decision:
 			for choice_index in range(_array(decision.get("options", [])).size()):
 				var previous_choice_id := "%s_%s_choice_%d" % [prefix, previous_phase_id, choice_index]
 				operations.scene.append(_scene_remove(prefix, phase_id, previous_choice_id))
+		var is_decision_phase := str(decision.get("at", "")) == phase_id
+		if not is_decision_phase:
+			operations.scene.append(_task_scene_spawn(prefix, phase_id, task_id, str(c.verbs[index])))
+		var interactions: Array = []
+		if not previous_was_decision:
+			interactions.append(_interaction_remove(prefix,phase_id,previous_task_id))
+		if previous_was_decision:
+			for choice_index in range(_array(decision.get("options", [])).size()):
+				var previous_choice_id := "%s_%s_choice_%d" % [prefix, previous_phase_id, choice_index]
 				interactions.append(_interaction_remove(prefix, phase_id, previous_choice_id))
-		interactions.append(_interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this operation; named routes use their own marked stations.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave","ui_cancel")],false))
-		var phase_choices := _decision_semantics(prefix, phase_id, decision)
+		if not is_decision_phase:
+			interactions.append(_interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this operation; named routes use their own marked stations.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave","ui_cancel")],false))
+		var phase_choices := _decision_semantics(prefix, phase_id, decision, str(c.verbs[index]))
 		operations.scene.append_array(phase_choices.scene)
 		interactions.append_array(phase_choices.interactions)
 		cleanup.append_array(phase_choices.cleanup)
-		cleanup.append(_remove("scene_ops",prefix,task_id))
-		cleanup.append(_remove("interaction_ops",prefix,task_id))
+		if not is_decision_phase:
+			cleanup.append(_remove("scene_ops",prefix,task_id))
+			cleanup.append(_remove("interaction_ops",prefix,task_id))
 		objective_steps.append({"id":str(c.verbs[index]),"label":str(c.verbs[index]).replace("_"," ").capitalize(),"kind":"command","command_id":str(c.verbs[index])})
 		var next_phase := "terminal_success" if index == c.verbs.size() - 1 else "work_%d" % (index + 1)
 		var branches := [
@@ -186,7 +203,7 @@ func _phase(id:String,label:String,feedback:String,exit_prompt:String,objectives
 	if terminal: result["terminal"] = true
 	return result
 
-func _decision_semantics(prefix: String, phase_id: String, decision: Dictionary) -> Dictionary:
+func _decision_semantics(prefix: String, phase_id: String, decision: Dictionary, primary_command: String) -> Dictionary:
 	var result := {"scene":[], "interactions":[], "cleanup":[]}
 	if str(decision.get("at", "")) != phase_id: return result
 	var inputs := ["ui_left","ui_up","ui_right"]
@@ -196,7 +213,10 @@ func _decision_semantics(prefix: String, phase_id: String, decision: Dictionary)
 		var command_id := str(option[0])
 		var target_id := "%s_%s_choice_%d" % [prefix,phase_id,index]
 		result.scene.append(_scene_spawn(prefix,phase_id,target_id,command_id.replace("_"," ").capitalize(),"decision_route",zones[index],"route_%d_ready" % index,68,56))
-		var interaction := _interaction_add(prefix,phase_id,target_id,command_id.replace("_"," ").capitalize(),"Use this marked spatial route; the other two stations remain independently focusable.",[_action(command_id,command_id.replace("_"," ").capitalize(),inputs[index])],false)
+		var actions := [_action(command_id,command_id.replace("_"," ").capitalize(),inputs[index])]
+		if index == 0 and not primary_command.is_empty():
+			actions.append(_step_action(primary_command, prefix, primary_command))
+		var interaction := _interaction_add(prefix,phase_id,target_id,command_id.replace("_"," ").capitalize(),"Use this marked spatial route; the other two stations remain independently focusable.",actions,false)
 		interaction.interaction.focus_order = 10 + index
 		interaction.interaction.non_color_state = "route_%d_ready" % index
 		result.interactions.append(interaction)
@@ -380,7 +400,7 @@ func _dossier(c:Dictionary,entry:Dictionary)->Dictionary:
 func _target_inventory() -> Dictionary:
 	var zones := ["base::zone:left","base::zone:right","base::zone:center","base::zone:background","base::zone:service_lane","base::zone:foreground","base::zone:exit_lane"]
 	var room_controls := ["base::travel:grand_casino_high_limit", "base::travel:grand_casino_back_room", "base::travel:grand_casino_cage"]
-	var anchors := ["grand_aftermath_scene", "grand_aftermath_actor", "grand_decision_left", "grand_decision_middle", "grand_decision_middle_right", "grand_decision_right", "grand_work_object_left", "grand_work_object_middle", "grand_audit_cage", "grand_work_actor_right", "grand_scenario_safe_exit", "grand_scenario_top_50_actor", "grand_convention_badge_delegations", "grand_scenario_top_400", "grand_scenario_top_520", "grand_convention_machine_banks", "grand_scenario_top_650", "grand_scenario_top_650_low", "grand_scenario_top_800", "grand_scenario_top_800_low", "grand_scenario_bottom_830", "grand_convention_table_block"].map(func(anchor_id): return "base::anchor:%s" % anchor_id)
+	var anchors := ["delta_scenario_task", "delta_scenario_safe_exit", "delta_scenario_spare", "delta_secondary_top", "delta_noninteractive_right", "delta_bottom_left", "delta_bottom_middle", "delta_fog_officer", "delta_fog_waiting_crowd", "delta_captains_entry", "delta_phase_left", "delta_captain_scorer_phase", "delta_engine_benches", "delta_engine_guard", "delta_decision_left", "delta_decision_middle", "delta_decision_right", "delta_aftermath_scene", "delta_aftermath_actor", "delta_wedding_task", "delta_wedding_rope", "delta_wedding_table", "delta_wedding_best_man", "delta_wedding_coordinator", "delta_wedding_ring_phase", "delta_wedding_safe_exit", "delta_wedding_choice_left", "delta_wedding_choice_middle", "delta_wedding_choice_right", "delta_wedding_aftermath_scene", "delta_wedding_aftermath_actor", "grand_aftermath_scene", "grand_aftermath_actor", "grand_decision_left", "grand_decision_middle", "grand_decision_middle_right", "grand_decision_right", "grand_work_object_left", "grand_work_object_middle", "grand_audit_cage", "grand_audit_pit_ledger", "grand_work_actor_right", "grand_scenario_safe_exit", "grand_scenario_top_50_actor", "grand_convention_badge_delegations", "grand_scenario_top_400", "grand_scenario_top_520", "grand_convention_machine_banks", "grand_scenario_top_650", "grand_scenario_top_650_low", "grand_scenario_top_800", "grand_scenario_top_800_low", "grand_scenario_bottom_830", "grand_convention_table_block"].map(func(anchor_id): return "base::anchor:%s" % anchor_id)
 	return {"scene_objects":room_controls.duplicate(),"interactions":room_controls.duplicate(),"actors":[],"services":[],"games":[],"routes":[],"anchors":anchors,"zones":zones,"event_choices":{}}
 
 func _declared_anchors(prefix: String) -> Array:

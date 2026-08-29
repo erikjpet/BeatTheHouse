@@ -48,7 +48,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "9fb89b0424fa0dab5258e5dd05f947f1f06e3c81d6682b2d2a210f4b1a7b3c06",
+      "sequence_signature": "c435e2a25253534afb8ccebd5be36005ec1f7b91b103980b56d917f0cd4e8fd2",
       "capture_ids": [
         "delta_queen_wedding_charter_arrival",
         "delta_queen_wedding_charter_partial",
@@ -107,7 +107,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "53a7c59364a74795088b525420cc844e48c01e178fa20afffced0ec89cb848a9",
+      "sequence_signature": "fa34f794908f40a1fef8ebf14381dfdf757d046fa649a84f0752fc9ec4fbba8f",
       "capture_ids": [
         "delta_queen_whale_aboard_arrival",
         "delta_queen_whale_aboard_partial",
@@ -166,7 +166,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "1668f91a5078d352a46356796dbfaa57a1ae0a45861b6e3574fc2803ef88ca05",
+      "sequence_signature": "b1a5061355134677d715a3bccab77907d9990416cca620774fe1c709fab21f33",
       "capture_ids": [
         "delta_queen_fog_delay_arrival",
         "delta_queen_fog_delay_partial",
@@ -228,7 +228,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "2ee6140e8e5beb441b5859ff25d9689235ac6701e2bf1be0b47c1435a6cd4376",
+      "sequence_signature": "8f7481f5b977043c3f9b805e78c2dbb0a48729763eb3f54af9147838e08a9bd1",
       "capture_ids": [
         "delta_queen_engine_trouble_arrival",
         "delta_queen_engine_trouble_partial",
@@ -289,7 +289,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "554cac8b89b9d17bf8cda6cc3290fd0b7b672f8f1ee759b80b73d1ab6438200f",
+      "sequence_signature": "d0cb12e9f6a7576e821e4ddf96af655968376fd26539ea78c3529e581c77de2d",
       "capture_ids": [
         "delta_queen_captains_invitational_arrival",
         "delta_queen_captains_invitational_partial",
@@ -348,7 +348,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "641c3d91235e1dcd1ccdab2de7fafe64c6fae5e89df563251c7586e283aadc04",
+      "sequence_signature": "d37e32a6eacd74adb359b5fac9de6b073da64325f2baf5243ba6e64fe96ab05a",
       "capture_ids": [
         "grand_casino_gala_night_arrival",
         "grand_casino_gala_night_partial",
@@ -407,7 +407,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "f5ac2f8ec35a4c46376e8db50a3b42ff16d4df5dd22b629e7504454e292e8277",
+      "sequence_signature": "5d5d545829f9a32609ad0e3f05647e8250417b93f1f7a6f8aac7c34e138c2877",
       "capture_ids": [
         "grand_casino_convention_crowd_arrival",
         "grand_casino_convention_crowd_partial",
@@ -467,7 +467,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "c95a88178e78be1abb6e54aca53ae1801efb0b708ad6aa11ecea3feee5801ab3",
+      "sequence_signature": "58927d5add3713ba2f8ec338200ccbef63ccf39dda5bf64ff2837b3423fe0542",
       "capture_ids": [
         "grand_casino_audit_night_arrival",
         "grand_casino_audit_night_partial",
@@ -506,60 +506,6 @@
                   "channel": "room",
                   "message": "The spectator behavior beat moves props and actors for choose invitational role.",
                   "op": "scene_change",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "choose_invitational_role",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "choose_invitational_role"
-                        },
-                        "label": "Choose Invitational Role",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_delta_queen_captains_invitational",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_delta_queen_captains_invitational",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Choose Invitational Role",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_3_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Delta Queen Captains Invitational: Complete this operation; named routes use their own marked stations.",
-                    "safe_exit": false,
-                    "state_label": "Work 3 station"
-                  },
-                  "op": "add",
                   "owner_namespace": "scenario"
                 }
               },
@@ -644,6 +590,17 @@
                         "input_action": "ui_left",
                         "label": "Qualify For Captains Final",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "choose_invitational_role",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "choose_invitational_role"
+                        },
+                        "label": "Choose Invitational Role",
+                        "non_color_state": "work"
                       }
                     ],
                     "disabled_reason": "",
@@ -654,7 +611,8 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_left"
+                      "ui_left",
+                      "ui_accept"
                     ],
                     "label": "Qualify For Captains Final",
                     "min_target_size": 44.0,
@@ -672,6 +630,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_decision_left",
                     "appearance": "route_0_ready",
                     "bounds": {
                       "h": 56.0,
@@ -681,8 +640,7 @@
                     "label": "Qualify For Captains Final",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true,
-                    "zone_id": "left"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -692,6 +650,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_decision_middle",
                     "appearance": "route_1_ready",
                     "bounds": {
                       "h": 56.0,
@@ -701,8 +660,7 @@
                     "label": "Observe Captains Final",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -712,6 +670,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_decision_right",
                     "appearance": "route_2_ready",
                     "bounds": {
                       "h": 56.0,
@@ -721,28 +680,7 @@
                     "label": "Dispute Captains Bracket",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true,
-                    "zone_id": "right"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Choose Invitational Role",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -854,6 +792,38 @@
           {
             "ops": [
               {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "delta_captain_scorer_phase",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "delta_noninteractive_right",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "delta_phase_left",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "delta_secondary_top",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "appearance": "bracket_move_changed",
@@ -931,6 +901,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -940,8 +911,7 @@
                     "label": "Rotate Eliminated Table",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -1026,6 +996,14 @@
           {
             "ops": [
               {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "delta_captains_entry",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "transition_ops",
                 "effect": {
                   "channel": "room",
@@ -1092,6 +1070,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -1101,19 +1080,10 @@
                     "label": "Score Opening Bracket",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "left"
                 }
               },
               {
@@ -1261,6 +1231,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -1270,8 +1241,7 @@
                     "label": "Seat Finalists",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -1307,20 +1277,6 @@
               },
               {
                 "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -1408,10 +1364,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_captain_scorer",
+                    "anchor_id": "delta_bottom_left",
                     "behavior": "work",
                     "label": "Captain scorer",
-                    "pose": "arrival",
-                    "zone_id": "foreground"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -1536,26 +1492,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "appearance": "active",
-                    "bounds": {
-                      "h": 58.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Scorer rail",
-                    "role": "scoreboard",
-                    "state": "active",
-                    "visible": true,
-                    "zone_id": "right"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
+                    "anchor_id": "delta_captains_entry",
                     "appearance": "checking",
                     "bounds": {
                       "h": 46.0,
@@ -1565,8 +1502,7 @@
                     "label": "Invitational entry cards",
                     "role": "credential",
                     "state": "checking",
-                    "visible": true,
-                    "zone_id": "left"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -1576,26 +1512,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "appearance": "marked_lane",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 56.0
-                    },
-                    "enabled": true,
-                    "label": "Marked clean exit",
-                    "role": "exit",
-                    "state": "marked_lane",
-                    "visible": true,
-                    "zone_id": "exit_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
+                    "anchor_id": "delta_noninteractive_right",
                     "appearance": "opening",
                     "bounds": {
                       "h": 52.0,
@@ -1605,8 +1522,7 @@
                     "label": "Captain bracket tables",
                     "role": "game_station",
                     "state": "opening",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -1616,6 +1532,47 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_safe_exit",
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "delta_scenario_spare",
+                    "appearance": "active",
+                    "bounds": {
+                      "h": 58.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Scorer rail",
+                    "role": "scoreboard",
+                    "state": "active",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "delta_scenario_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -1625,8 +1582,7 @@
                     "label": "Verify Entry Card",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -1868,10 +1824,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_disputed_final",
+                    "anchor_id": "delta_aftermath_actor",
                     "behavior": "watch",
                     "label": "Disputed Final remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "left"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -1885,6 +1841,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_aftermath_scene",
                     "appearance": "observed_final",
                     "bounds": {
                       "h": 54.0,
@@ -1894,8 +1851,7 @@
                     "label": "Observed Final room marker",
                     "role": "debris",
                     "state": "observed_final",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -1908,10 +1864,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_observed_final",
+                    "anchor_id": "delta_aftermath_actor",
                     "behavior": "guard",
                     "label": "Observed Final remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "right"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -1925,6 +1881,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_aftermath_scene",
                     "appearance": "qualified_final",
                     "bounds": {
                       "h": 48.0,
@@ -1934,8 +1891,7 @@
                     "label": "Qualified Final room marker",
                     "role": "arrangement",
                     "state": "qualified_final",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -1948,10 +1904,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_qualified_final",
+                    "anchor_id": "delta_aftermath_actor",
                     "behavior": "work",
                     "label": "Qualified Final remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "center"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -1965,6 +1921,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_aftermath_scene",
                     "appearance": "tournament_interrupted",
                     "bounds": {
                       "h": 66.0,
@@ -1974,8 +1931,7 @@
                     "label": "Tournament Interrupted room marker",
                     "role": "route_marker",
                     "state": "tournament_interrupted",
-                    "visible": true,
-                    "zone_id": "exit_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -2050,20 +2006,6 @@
           },
           {
             "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "scene_ops",
             "effect": {
               "op": "remove",
               "owner_namespace": "scenario"
@@ -2158,7 +2100,7 @@
           "services": 0,
           "games": 0,
           "routes": 0,
-          "anchors": 0,
+          "anchors": 14,
           "zones": 7
         },
         "reentry": {
@@ -2172,10 +2114,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "554cac8b89b9d17bf8cda6cc3290fd0b7b672f8f1ee759b80b73d1ab6438200f",
-      "calculated_signature": "554cac8b89b9d17bf8cda6cc3290fd0b7b672f8f1ee759b80b73d1ab6438200f",
+      "authored_signature": "d0cb12e9f6a7576e821e4ddf96af655968376fd26539ea78c3529e581c77de2d",
+      "calculated_signature": "d0cb12e9f6a7576e821e4ddf96af655968376fd26539ea78c3529e581c77de2d",
       "nearest_id": "delta_queen_engine_trouble",
-      "nearest_similarity": 0.663776493256262
+      "nearest_similarity": 0.57074569789675
     },
     {
       "id": "delta_queen_engine_trouble",
@@ -2199,60 +2141,6 @@
                   "channel": "room",
                   "message": "The bench move beat moves props and actors for choose engine response.",
                   "op": "scene_change",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "choose_engine_response",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "choose_engine_response"
-                        },
-                        "label": "Choose Engine Response",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_delta_queen_engine_trouble",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_delta_queen_engine_trouble",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Choose Engine Response",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_3_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Delta Queen Engine Trouble: Complete this operation; named routes use their own marked stations.",
-                    "safe_exit": false,
-                    "state_label": "Work 3 station"
-                  },
-                  "op": "add",
                   "owner_namespace": "scenario"
                 }
               },
@@ -2302,6 +2190,17 @@
                         "input_action": "ui_left",
                         "label": "Repair Engine For Departure",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "choose_engine_response",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "choose_engine_response"
+                        },
+                        "label": "Choose Engine Response",
+                        "non_color_state": "work"
                       }
                     ],
                     "disabled_reason": "",
@@ -2312,7 +2211,8 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_left"
+                      "ui_left",
+                      "ui_accept"
                     ],
                     "label": "Repair Engine For Departure",
                     "min_target_size": 44.0,
@@ -2365,6 +2265,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_decision_left",
                     "appearance": "route_0_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2374,8 +2275,7 @@
                     "label": "Repair Engine For Departure",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true,
-                    "zone_id": "left"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -2385,6 +2285,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_decision_middle",
                     "appearance": "route_1_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2394,8 +2295,7 @@
                     "label": "Ration Limited Engine Power",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -2405,6 +2305,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_decision_right",
                     "appearance": "route_2_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2414,28 +2315,7 @@
                     "label": "Stage Engine Evacuation",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true,
-                    "zone_id": "right"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Choose Engine Response",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "background"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -2547,6 +2427,14 @@
           {
             "ops": [
               {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "delta_engine_guard",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "appearance": "gauge_appearance_changed",
@@ -2624,6 +2512,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2633,8 +2522,7 @@
                     "label": "Fetch Impeller Key",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "background"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -2652,14 +2540,6 @@
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "service_lane"
                 }
               }
             ],
@@ -2718,6 +2598,14 @@
           },
           {
             "ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "delta_scenario_spare",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "transition_ops",
                 "effect": {
@@ -2785,6 +2673,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2794,19 +2683,10 @@
                     "label": "Diagnose Pressure",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "background"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "left"
                 }
               },
               {
@@ -2954,6 +2834,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2963,8 +2844,7 @@
                     "label": "Restart Engine",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "background"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3000,20 +2880,6 @@
               },
               {
                 "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -3101,10 +2967,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_deck_guard",
+                    "anchor_id": "delta_engine_guard",
                     "behavior": "guard",
                     "label": "Gangway guard",
-                    "pose": "arrival",
-                    "zone_id": "service_lane"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3115,10 +2981,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_engine_mate",
+                    "anchor_id": "delta_secondary_top",
                     "behavior": "work",
                     "label": "Engine mate",
-                    "pose": "arrival",
-                    "zone_id": "foreground"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3229,6 +3095,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_bottom_left",
                     "appearance": "critical",
                     "bounds": {
                       "h": 52.0,
@@ -3238,8 +3105,7 @@
                     "label": "Falling pressure gauge",
                     "role": "instrument",
                     "state": "critical",
-                    "visible": true,
-                    "zone_id": "left"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3249,6 +3115,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_engine_benches",
                     "appearance": "empty",
                     "bounds": {
                       "h": 58.0,
@@ -3258,8 +3125,7 @@
                     "label": "Evacuation benches",
                     "role": "safety",
                     "state": "empty",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3269,6 +3135,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_noninteractive_right",
                     "appearance": "locked",
                     "bounds": {
                       "h": 64.0,
@@ -3278,8 +3145,7 @@
                     "label": "Locked mid-river gangway",
                     "role": "route_marker",
                     "state": "locked",
-                    "visible": true,
-                    "zone_id": "foreground"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3289,6 +3155,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_safe_exit",
                     "appearance": "marked_lane",
                     "bounds": {
                       "h": 56.0,
@@ -3298,8 +3165,7 @@
                     "label": "Marked clean exit",
                     "role": "exit",
                     "state": "marked_lane",
-                    "visible": true,
-                    "zone_id": "background"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3309,6 +3175,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_spare",
                     "appearance": "sealed",
                     "bounds": {
                       "h": 46.0,
@@ -3318,8 +3185,7 @@
                     "label": "Hot engine bulkhead",
                     "role": "barrier",
                     "state": "sealed",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3329,6 +3195,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -3338,8 +3205,7 @@
                     "label": "Seal Engine Lane",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "background"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3581,10 +3447,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_evacuation_staged",
+                    "anchor_id": "delta_aftermath_actor",
                     "behavior": "watch",
                     "label": "Evacuation Staged remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "left"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3598,6 +3464,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_aftermath_scene",
                     "appearance": "limited_power",
                     "bounds": {
                       "h": 54.0,
@@ -3607,8 +3474,7 @@
                     "label": "Limited Power room marker",
                     "role": "debris",
                     "state": "limited_power",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3621,10 +3487,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_limited_power",
+                    "anchor_id": "delta_aftermath_actor",
                     "behavior": "guard",
                     "label": "Limited Power remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "right"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3638,6 +3504,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_aftermath_scene",
                     "appearance": "travel_resumed",
                     "bounds": {
                       "h": 48.0,
@@ -3647,8 +3514,7 @@
                     "label": "Travel Resumed room marker",
                     "role": "arrangement",
                     "state": "travel_resumed",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3661,10 +3527,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_travel_resumed",
+                    "anchor_id": "delta_aftermath_actor",
                     "behavior": "work",
                     "label": "Travel Resumed remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "center"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3678,6 +3544,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_aftermath_scene",
                     "appearance": "engine_abandoned",
                     "bounds": {
                       "h": 66.0,
@@ -3687,8 +3554,7 @@
                     "label": "Engine Abandoned room marker",
                     "role": "route_marker",
                     "state": "engine_abandoned",
-                    "visible": true,
-                    "zone_id": "exit_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3763,20 +3629,6 @@
           },
           {
             "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "scene_ops",
             "effect": {
               "op": "remove",
               "owner_namespace": "scenario"
@@ -3878,7 +3730,7 @@
           "services": 0,
           "games": 0,
           "routes": 0,
-          "anchors": 0,
+          "anchors": 13,
           "zones": 7
         },
         "reentry": {
@@ -3892,10 +3744,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "2ee6140e8e5beb441b5859ff25d9689235ac6701e2bf1be0b47c1435a6cd4376",
-      "calculated_signature": "2ee6140e8e5beb441b5859ff25d9689235ac6701e2bf1be0b47c1435a6cd4376",
+      "authored_signature": "8f7481f5b977043c3f9b805e78c2dbb0a48729763eb3f54af9147838e08a9bd1",
+      "calculated_signature": "8f7481f5b977043c3f9b805e78c2dbb0a48729763eb3f54af9147838e08a9bd1",
       "nearest_id": "delta_queen_captains_invitational",
-      "nearest_similarity": 0.663776493256262
+      "nearest_similarity": 0.57074569789675
     },
     {
       "id": "delta_queen_fog_delay",
@@ -3904,6 +3756,14 @@
         "phases": [
           {
             "ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "delta_secondary_top",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "transition_ops",
                 "effect": {
@@ -3920,6 +3780,12 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "id": "assist_fog_reroute",
+                        "input_action": "ui_left",
+                        "label": "Assist Fog Reroute",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "handler": "complete_objective_step",
                         "id": "organize_waiting_crowd",
                         "input_action": "ui_accept",
@@ -3929,55 +3795,6 @@
                         },
                         "label": "Organize Waiting Crowd",
                         "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_delta_queen_fog_delay",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_delta_queen_fog_delay",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Organize Waiting Crowd",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_1_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Delta Queen Fog Delay: Complete this operation; named routes use their own marked stations.",
-                    "safe_exit": false,
-                    "state_label": "Work 1 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "id": "assist_fog_reroute",
-                        "input_action": "ui_left",
-                        "label": "Assist Fog Reroute",
-                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -3988,7 +3805,8 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_left"
+                      "ui_left",
+                      "ui_accept"
                     ],
                     "label": "Assist Fog Reroute",
                     "min_target_size": 44.0,
@@ -4076,6 +3894,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_decision_left",
                     "appearance": "route_0_ready",
                     "bounds": {
                       "h": 56.0,
@@ -4085,8 +3904,7 @@
                     "label": "Assist Fog Reroute",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true,
-                    "zone_id": "left"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -4096,6 +3914,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_decision_middle",
                     "appearance": "route_1_ready",
                     "bounds": {
                       "h": 56.0,
@@ -4105,8 +3924,7 @@
                     "label": "Wait Out Fog Safely",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -4116,6 +3934,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_decision_right",
                     "appearance": "route_2_ready",
                     "bounds": {
                       "h": 56.0,
@@ -4125,39 +3944,10 @@
                     "label": "Exploit Trapped Fog Crowd",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Organize Waiting Crowd",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "left"
                 }
               },
               {
@@ -4266,6 +4056,14 @@
           {
             "ops": [
               {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "delta_fog_waiting_crowd",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "appearance": "crowd_position_changed",
@@ -4343,6 +4141,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -4352,8 +4151,7 @@
                     "label": "Mark Stake Drift",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -4381,13 +4179,6 @@
                 }
               },
               {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
                 "family": "scene_ops",
                 "effect": {
                   "op": "remove",
@@ -4406,21 +4197,6 @@
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "center"
                 }
               }
             ],
@@ -4555,6 +4331,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -4564,8 +4341,7 @@
                     "label": "Choose Dock Plan",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -4654,10 +4430,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_deck_officer",
+                    "anchor_id": "delta_fog_officer",
                     "behavior": "work",
                     "label": "Deck officer",
-                    "pose": "arrival",
-                    "zone_id": "background"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -4668,10 +4444,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_waiting_crowd",
+                    "anchor_id": "delta_fog_waiting_crowd",
                     "behavior": "watch",
                     "label": "Waiting crowd",
-                    "pose": "arrival",
-                    "zone_id": "center"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -4782,66 +4558,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "appearance": "closed",
-                    "bounds": {
-                      "h": 46.0,
-                      "w": 52.0
-                    },
-                    "enabled": true,
-                    "label": "Fog signal lamp",
-                    "role": "navigation",
-                    "state": "closed",
-                    "visible": true,
-                    "zone_id": "left"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "marked_lane",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 56.0
-                    },
-                    "enabled": true,
-                    "label": "Marked clean exit",
-                    "role": "exit",
-                    "state": "marked_lane",
-                    "visible": true,
-                    "zone_id": "background"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "phase_one",
-                    "bounds": {
-                      "h": 58.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Rising stake board",
-                    "role": "scoreboard",
-                    "state": "phase_one",
-                    "visible": true,
-                    "zone_id": "right"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
+                    "anchor_id": "delta_noninteractive_right",
                     "appearance": "sealed",
                     "bounds": {
                       "h": 52.0,
@@ -4851,8 +4568,7 @@
                     "label": "Closed gangway",
                     "role": "barrier",
                     "state": "sealed",
-                    "visible": true,
-                    "zone_id": "foreground"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -4862,6 +4578,47 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_safe_exit",
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "delta_scenario_spare",
+                    "appearance": "phase_one",
+                    "bounds": {
+                      "h": 58.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Rising stake board",
+                    "role": "scoreboard",
+                    "state": "phase_one",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "delta_scenario_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -4871,8 +4628,27 @@
                     "label": "Read Fog Signal",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "delta_secondary_top",
+                    "appearance": "closed",
+                    "bounds": {
+                      "h": 46.0,
+                      "w": 52.0
+                    },
+                    "enabled": true,
+                    "label": "Fog signal lamp",
+                    "role": "navigation",
+                    "state": "closed",
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -5103,6 +4879,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_aftermath_scene",
                     "appearance": "assisted_reroute",
                     "bounds": {
                       "h": 48.0,
@@ -5112,8 +4889,7 @@
                     "label": "Assisted Reroute room marker",
                     "role": "arrangement",
                     "state": "assisted_reroute",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -5126,10 +4902,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_assisted_reroute",
+                    "anchor_id": "delta_aftermath_actor",
                     "behavior": "work",
                     "label": "Assisted Reroute remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "center"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -5144,10 +4920,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_crowd_exploited",
+                    "anchor_id": "delta_aftermath_actor",
                     "behavior": "watch",
                     "label": "Crowd Exploited remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "left"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -5161,6 +4937,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_aftermath_scene",
                     "appearance": "safe_wait",
                     "bounds": {
                       "h": 54.0,
@@ -5170,8 +4947,7 @@
                     "label": "Safe Wait room marker",
                     "role": "debris",
                     "state": "safe_wait",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -5184,10 +4960,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_safe_wait",
+                    "anchor_id": "delta_aftermath_actor",
                     "behavior": "guard",
                     "label": "Safe Wait remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "right"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -5201,6 +4977,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_aftermath_scene",
                     "appearance": "fog_departure",
                     "bounds": {
                       "h": 66.0,
@@ -5210,8 +4987,7 @@
                     "label": "Fog Departure room marker",
                     "role": "route_marker",
                     "state": "fog_departure",
-                    "visible": true,
-                    "zone_id": "exit_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -5279,20 +5055,6 @@
           },
           {
             "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "scene_ops",
             "effect": {
               "op": "remove",
               "owner_namespace": "scenario"
@@ -5380,7 +5142,7 @@
           "services": 0,
           "games": 0,
           "routes": 0,
-          "anchors": 0,
+          "anchors": 12,
           "zones": 7
         },
         "reentry": {
@@ -5394,10 +5156,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "1668f91a5078d352a46356796dbfaa57a1ae0a45861b6e3574fc2803ef88ca05",
-      "calculated_signature": "1668f91a5078d352a46356796dbfaa57a1ae0a45861b6e3574fc2803ef88ca05",
+      "authored_signature": "b1a5061355134677d715a3bccab77907d9990416cca620774fe1c709fab21f33",
+      "calculated_signature": "b1a5061355134677d715a3bccab77907d9990416cca620774fe1c709fab21f33",
       "nearest_id": "delta_queen_wedding_charter",
-      "nearest_similarity": 0.696767001114827
+      "nearest_similarity": 0.622298065984073
     },
     {
       "id": "delta_queen_wedding_charter",
@@ -5407,65 +5169,27 @@
           {
             "ops": [
               {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "delta_wedding_ring_phase",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "delta_wedding_rope",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "transition_ops",
                 "effect": {
                   "channel": "room",
                   "message": "The rope move beat moves props and actors for recover ring case.",
                   "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "recover_ring_case",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "recover_ring_case"
-                        },
-                        "label": "Recover Ring Case",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_delta_queen_wedding_charter",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_delta_queen_wedding_charter",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Recover Ring Case",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_1_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Delta Queen Wedding Charter: Complete this operation; named routes use their own marked stations.",
-                    "safe_exit": false,
-                    "state_label": "Work 1 station"
-                  },
-                  "op": "add",
                   "owner_namespace": "scenario"
                 }
               },
@@ -5550,6 +5274,17 @@
                         "input_action": "ui_left",
                         "label": "Return Rings To Best Man",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "recover_ring_case",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "recover_ring_case"
+                        },
+                        "label": "Recover Ring Case",
+                        "non_color_state": "work"
                       }
                     ],
                     "disabled_reason": "",
@@ -5560,7 +5295,8 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_left"
+                      "ui_left",
+                      "ui_accept"
                     ],
                     "label": "Return Rings To Best Man",
                     "min_target_size": 44.0,
@@ -5578,6 +5314,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_wedding_choice_left",
                     "appearance": "route_0_ready",
                     "bounds": {
                       "h": 56.0,
@@ -5587,8 +5324,7 @@
                     "label": "Return Rings To Best Man",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true,
-                    "zone_id": "left"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -5598,6 +5334,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_wedding_choice_middle",
                     "appearance": "route_1_ready",
                     "bounds": {
                       "h": 56.0,
@@ -5607,8 +5344,7 @@
                     "label": "Exploit Loose Wedding Tables",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -5618,6 +5354,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_wedding_choice_right",
                     "appearance": "route_2_ready",
                     "bounds": {
                       "h": 56.0,
@@ -5627,39 +5364,10 @@
                     "label": "Delay Wedding Charter",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Recover Ring Case",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "foreground"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "left"
                 }
               },
               {
@@ -5768,6 +5476,14 @@
           {
             "ops": [
               {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "delta_wedding_coordinator",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "appearance": "ring_state_changed",
@@ -5845,6 +5561,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_wedding_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -5854,8 +5571,7 @@
                     "label": "Steady Best Man",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "foreground"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -5883,13 +5599,6 @@
                 }
               },
               {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
                 "family": "scene_ops",
                 "effect": {
                   "op": "remove",
@@ -5908,21 +5617,6 @@
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "service_lane"
                 }
               }
             ],
@@ -6057,6 +5751,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_wedding_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -6066,8 +5761,7 @@
                     "label": "Deliver Rings",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "foreground"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6156,10 +5850,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_best_man",
+                    "anchor_id": "delta_wedding_best_man",
                     "behavior": "watch",
                     "label": "Losing best man",
-                    "pose": "arrival",
-                    "zone_id": "background"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6170,10 +5864,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_deck_coordinator",
+                    "anchor_id": "delta_wedding_coordinator",
                     "behavior": "work",
                     "label": "Deck coordinator",
-                    "pose": "arrival",
-                    "zone_id": "service_lane"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6284,46 +5978,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "appearance": "losing",
-                    "bounds": {
-                      "h": 58.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Best man table",
-                    "role": "game_station",
-                    "state": "losing",
-                    "visible": true,
-                    "zone_id": "foreground"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "marked_lane",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 56.0
-                    },
-                    "enabled": true,
-                    "label": "Marked clean exit",
-                    "role": "exit",
-                    "state": "marked_lane",
-                    "visible": true,
-                    "zone_id": "exit_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
+                    "anchor_id": "delta_wedding_rope",
                     "appearance": "split",
                     "bounds": {
                       "h": 46.0,
@@ -6333,8 +5988,7 @@
                     "label": "Ceremony rope",
                     "role": "barrier",
                     "state": "split",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6344,6 +5998,47 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_wedding_safe_exit",
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "delta_wedding_table",
+                    "appearance": "losing",
+                    "bounds": {
+                      "h": 58.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Best man table",
+                    "role": "game_station",
+                    "state": "losing",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "delta_wedding_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -6353,8 +6048,7 @@
                     "label": "Secure Ceremony Lane",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "foreground"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6605,6 +6299,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_wedding_aftermath_scene",
                     "appearance": "ceremony_delivered",
                     "bounds": {
                       "h": 48.0,
@@ -6614,8 +6309,7 @@
                     "label": "Ceremony Delivered room marker",
                     "role": "arrangement",
                     "state": "ceremony_delivered",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6628,10 +6322,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_ceremony_delivered",
+                    "anchor_id": "delta_wedding_aftermath_actor",
                     "behavior": "work",
                     "label": "Ceremony Delivered remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "center"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6646,10 +6340,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_charter_delayed",
+                    "anchor_id": "delta_wedding_aftermath_actor",
                     "behavior": "watch",
                     "label": "Charter Delayed remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "left"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6663,6 +6357,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_wedding_aftermath_scene",
                     "appearance": "table_opportunity",
                     "bounds": {
                       "h": 54.0,
@@ -6672,8 +6367,7 @@
                     "label": "Table Opportunity room marker",
                     "role": "debris",
                     "state": "table_opportunity",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6686,10 +6380,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_table_opportunity",
+                    "anchor_id": "delta_wedding_aftermath_actor",
                     "behavior": "guard",
                     "label": "Table Opportunity remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "right"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6703,6 +6397,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_wedding_aftermath_scene",
                     "appearance": "departure_interrupted",
                     "bounds": {
                       "h": 66.0,
@@ -6712,8 +6407,7 @@
                     "label": "Departure Interrupted room marker",
                     "role": "route_marker",
                     "state": "departure_interrupted",
-                    "visible": true,
-                    "zone_id": "exit_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6781,20 +6475,6 @@
           },
           {
             "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "scene_ops",
             "effect": {
               "op": "remove",
               "owner_namespace": "scenario"
@@ -6882,7 +6562,7 @@
           "services": 0,
           "games": 0,
           "routes": 0,
-          "anchors": 0,
+          "anchors": 12,
           "zones": 7
         },
         "reentry": {
@@ -6896,10 +6576,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "9fb89b0424fa0dab5258e5dd05f947f1f06e3c81d6682b2d2a210f4b1a7b3c06",
-      "calculated_signature": "9fb89b0424fa0dab5258e5dd05f947f1f06e3c81d6682b2d2a210f4b1a7b3c06",
+      "authored_signature": "c435e2a25253534afb8ccebd5be36005ec1f7b91b103980b56d917f0cd4e8fd2",
+      "calculated_signature": "c435e2a25253534afb8ccebd5be36005ec1f7b91b103980b56d917f0cd4e8fd2",
       "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.696767001114827
+      "nearest_similarity": 0.622298065984073
     },
     {
       "id": "delta_queen_whale_aboard",
@@ -6908,6 +6588,14 @@
         "phases": [
           {
             "ops": [
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "delta_bottom_middle",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "scene_ops",
                 "effect": {
@@ -6935,6 +6623,12 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "id": "earn_whale_service_access",
+                        "input_action": "ui_left",
+                        "label": "Earn Whale Service Access",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "handler": "complete_objective_step",
                         "id": "read_stake_shift",
                         "input_action": "ui_accept",
@@ -6944,55 +6638,6 @@
                         },
                         "label": "Read Stake Shift",
                         "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_delta_queen_whale_aboard",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_delta_queen_whale_aboard",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Read Stake Shift",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_2_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Delta Queen Whale Aboard: Complete this operation; named routes use their own marked stations.",
-                    "safe_exit": false,
-                    "state_label": "Work 2 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "id": "earn_whale_service_access",
-                        "input_action": "ui_left",
-                        "label": "Earn Whale Service Access",
-                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -7003,7 +6648,8 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_left"
+                      "ui_left",
+                      "ui_accept"
                     ],
                     "label": "Earn Whale Service Access",
                     "min_target_size": 44.0,
@@ -7091,6 +6737,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_decision_left",
                     "appearance": "route_0_ready",
                     "bounds": {
                       "h": 56.0,
@@ -7100,8 +6747,7 @@
                     "label": "Earn Whale Service Access",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true,
-                    "zone_id": "left"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -7111,6 +6757,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_decision_middle",
                     "appearance": "route_1_ready",
                     "bounds": {
                       "h": 56.0,
@@ -7120,8 +6767,7 @@
                     "label": "Shadow Whale Entourage",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -7131,6 +6777,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_decision_right",
                     "appearance": "route_2_ready",
                     "bounds": {
                       "h": 56.0,
@@ -7140,28 +6787,7 @@
                     "label": "Trigger Whale Security Lock",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true,
-                    "zone_id": "right"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Read Stake Shift",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "foreground"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -7179,14 +6805,6 @@
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "background"
                 }
               }
             ],
@@ -7254,6 +6872,175 @@
                 "edge": "phase",
                 "objective_outcomes": [
                   "success"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "delta_noninteractive_right",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The entourage move beat moves props and actors for carry whale service.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "carry_whale_service",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "carry_whale_service"
+                        },
+                        "label": "Carry Whale Service",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_delta_queen_whale_aboard",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_delta_queen_whale_aboard",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Carry Whale Service",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_1_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Delta Queen Whale Aboard: Complete this operation; named routes use their own marked stations.",
+                    "safe_exit": false,
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "delta_scenario_task",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Carry Whale Service",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "entourage_move"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "game_result"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
                 ]
               },
               {
@@ -7348,6 +7135,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -7357,8 +7145,7 @@
                     "label": "Choose Whale Access",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "foreground"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -7380,20 +7167,6 @@
               },
               {
                 "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -7485,183 +7258,14 @@
           {
             "ops": [
               {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The entourage move beat moves props and actors for carry whale service.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "carry_whale_service",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "carry_whale_service"
-                        },
-                        "label": "Carry Whale Service",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_delta_queen_whale_aboard",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_delta_queen_whale_aboard",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Carry Whale Service",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_1_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Delta Queen Whale Aboard: Complete this operation; named routes use their own marked stations.",
-                    "safe_exit": false,
-                    "state_label": "Work 1 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Carry Whale Service",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "foreground"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "left"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_pose",
-                  "owner_namespace": "scenario",
-                  "pose": "entourage_move"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "game_result"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
                 "family": "actor_ops",
                 "effect": {
                   "actor": {
                     "actor_id": "actor_entourage_runner",
+                    "anchor_id": "delta_bottom_middle",
                     "behavior": "work",
                     "label": "Entourage runner",
-                    "pose": "arrival",
-                    "zone_id": "background"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -7672,10 +7276,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_whale_host",
+                    "anchor_id": "delta_bottom_left",
                     "behavior": "guard",
                     "label": "Whale host",
-                    "pose": "arrival",
-                    "zone_id": "service_lane"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -7786,46 +7390,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "appearance": "marked_lane",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 56.0
-                    },
-                    "enabled": true,
-                    "label": "Marked clean exit",
-                    "role": "exit",
-                    "state": "marked_lane",
-                    "visible": true,
-                    "zone_id": "exit_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "raised",
-                    "bounds": {
-                      "h": 52.0,
-                      "w": 60.0
-                    },
-                    "enabled": true,
-                    "label": "Shifted stake placards",
-                    "role": "scoreboard",
-                    "state": "raised",
-                    "visible": true,
-                    "zone_id": "foreground"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
+                    "anchor_id": "delta_noninteractive_right",
                     "appearance": "reserved",
                     "bounds": {
                       "h": 46.0,
@@ -7835,8 +7400,7 @@
                     "label": "Whale premium table",
                     "role": "game_station",
                     "state": "reserved",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -7846,17 +7410,17 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "appearance": "restricted",
+                    "anchor_id": "delta_scenario_safe_exit",
+                    "appearance": "marked_lane",
                     "bounds": {
-                      "h": 58.0,
-                      "w": 68.0
+                      "h": 56.0,
+                      "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Whale service lane",
-                    "role": "route_marker",
-                    "state": "restricted",
-                    "visible": true,
-                    "zone_id": "left"
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -7866,6 +7430,27 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_scenario_spare",
+                    "appearance": "raised",
+                    "bounds": {
+                      "h": 52.0,
+                      "w": 60.0
+                    },
+                    "enabled": true,
+                    "label": "Shifted stake placards",
+                    "role": "scoreboard",
+                    "state": "raised",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "delta_scenario_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -7875,8 +7460,27 @@
                     "label": "Map Entourage Route",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "foreground"
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "delta_secondary_top",
+                    "appearance": "restricted",
+                    "bounds": {
+                      "h": 58.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Whale service lane",
+                    "role": "route_marker",
+                    "state": "restricted",
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -8107,6 +7711,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_aftermath_scene",
                     "appearance": "earned_whale_access",
                     "bounds": {
                       "h": 48.0,
@@ -8116,8 +7721,7 @@
                     "label": "Earned Whale Access room marker",
                     "role": "arrangement",
                     "state": "earned_whale_access",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -8130,10 +7734,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_earned_whale_access",
+                    "anchor_id": "delta_aftermath_actor",
                     "behavior": "work",
                     "label": "Earned Whale Access remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "center"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -8148,10 +7752,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_security_lock",
+                    "anchor_id": "delta_aftermath_actor",
                     "behavior": "watch",
                     "label": "Security Lock remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "left"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -8165,6 +7769,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_aftermath_scene",
                     "appearance": "shadowed_entourage",
                     "bounds": {
                       "h": 54.0,
@@ -8174,8 +7779,7 @@
                     "label": "Shadowed Entourage room marker",
                     "role": "debris",
                     "state": "shadowed_entourage",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -8188,10 +7792,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_shadowed_entourage",
+                    "anchor_id": "delta_aftermath_actor",
                     "behavior": "guard",
                     "label": "Shadowed Entourage remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "right"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -8205,6 +7809,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "delta_aftermath_scene",
                     "appearance": "whale_departed",
                     "bounds": {
                       "h": 66.0,
@@ -8214,8 +7819,7 @@
                     "label": "Whale Departed room marker",
                     "role": "route_marker",
                     "state": "whale_departed",
-                    "visible": true,
-                    "zone_id": "exit_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -8283,20 +7887,6 @@
           },
           {
             "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "scene_ops",
             "effect": {
               "op": "remove",
               "owner_namespace": "scenario"
@@ -8384,7 +7974,7 @@
           "services": 0,
           "games": 0,
           "routes": 0,
-          "anchors": 0,
+          "anchors": 12,
           "zones": 7
         },
         "reentry": {
@@ -8398,10 +7988,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "53a7c59364a74795088b525420cc844e48c01e178fa20afffced0ec89cb848a9",
-      "calculated_signature": "53a7c59364a74795088b525420cc844e48c01e178fa20afffced0ec89cb848a9",
-      "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.509920634920635
+      "authored_signature": "fa34f794908f40a1fef8ebf14381dfdf757d046fa649a84f0752fc9ec4fbba8f",
+      "calculated_signature": "fa34f794908f40a1fef8ebf14381dfdf757d046fa649a84f0752fc9ec4fbba8f",
+      "nearest_id": "delta_queen_wedding_charter",
+      "nearest_similarity": 0.536637931034483
     },
     {
       "id": "grand_casino_audit_night",
@@ -8458,60 +8048,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "handler": "complete_objective_step",
-                        "id": "present_pit_ledger",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "present_pit_ledger"
-                        },
-                        "label": "Present Pit Ledger",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_grand_casino_audit_night",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_grand_casino_audit_night",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Present Pit Ledger",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_1_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Grand Casino Audit Night: Complete this operation; named routes use their own marked stations.",
-                    "safe_exit": false,
-                    "state_label": "Work 1 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
                         "id": "close_audited_games",
                         "input_action": "ui_right",
                         "label": "Close Audited Games",
@@ -8551,6 +8087,17 @@
                         "input_action": "ui_left",
                         "label": "Comply With Audit Route",
                         "non_color_state": "ready"
+                      },
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "present_pit_ledger",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "present_pit_ledger"
+                        },
+                        "label": "Present Pit Ledger",
+                        "non_color_state": "work"
                       }
                     ],
                     "disabled_reason": "",
@@ -8561,7 +8108,8 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_left"
+                      "ui_left",
+                      "ui_accept"
                     ],
                     "label": "Comply With Audit Route",
                     "min_target_size": 44.0,
@@ -8664,26 +8212,6 @@
                     "label": "Close Audited Games",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "anchor_id": "grand_scenario_top_520",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Present Pit Ledger",
-                    "role": "task_station",
-                    "state": "ready",
                     "visible": true
                   },
                   "op": "spawn",
@@ -8913,20 +8441,6 @@
               },
               {
                 "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -9312,6 +8826,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_audit_pit_ledger",
+                    "appearance": "requested",
+                    "bounds": {
+                      "h": 52.0,
+                      "w": 60.0
+                    },
+                    "enabled": true,
+                    "label": "Pit audit ledger",
+                    "role": "ledger",
+                    "state": "requested",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "anchor_id": "grand_scenario_bottom_830",
                     "appearance": "open",
                     "bounds": {
@@ -9403,26 +8937,6 @@
                     "role": "barrier",
                     "state": "moving",
                     "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "requested",
-                    "bounds": {
-                      "h": 52.0,
-                      "w": 60.0
-                    },
-                    "enabled": true,
-                    "label": "Pit audit ledger",
-                    "role": "ledger",
-                    "state": "requested",
-                    "visible": true,
-                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -9835,20 +9349,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "scene_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -9937,7 +9437,7 @@
           "services": 0,
           "games": 0,
           "routes": 0,
-          "anchors": 15,
+          "anchors": 16,
           "zones": 7
         },
         "reentry": {
@@ -9951,10 +9451,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "c95a88178e78be1abb6e54aca53ae1801efb0b708ad6aa11ecea3feee5801ab3",
-      "calculated_signature": "c95a88178e78be1abb6e54aca53ae1801efb0b708ad6aa11ecea3feee5801ab3",
-      "nearest_id": "grand_casino_convention_crowd",
-      "nearest_similarity": 0.448051948051948
+      "authored_signature": "58927d5add3713ba2f8ec338200ccbef63ccf39dda5bf64ff2837b3423fe0542",
+      "calculated_signature": "58927d5add3713ba2f8ec338200ccbef63ccf39dda5bf64ff2837b3423fe0542",
+      "nearest_id": "delta_queen_wedding_charter",
+      "nearest_similarity": 0.527865404837014
     },
     {
       "id": "grand_casino_convention_crowd",
@@ -10022,6 +9522,12 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "id": "blend_with_badge_crowd",
+                        "input_action": "ui_left",
+                        "label": "Blend With Badge Crowd",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "handler": "complete_objective_step",
                         "id": "move_machine_markers",
                         "input_action": "ui_accept",
@@ -10031,55 +9537,6 @@
                         },
                         "label": "Move Machine Markers",
                         "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_grand_casino_convention_crowd",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_grand_casino_convention_crowd",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Move Machine Markers",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_2_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Grand Casino Convention Crowd: Complete this operation; named routes use their own marked stations.",
-                    "safe_exit": false,
-                    "state_label": "Work 2 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "id": "blend_with_badge_crowd",
-                        "input_action": "ui_left",
-                        "label": "Blend With Badge Crowd",
-                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -10090,7 +9547,8 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_left"
+                      "ui_left",
+                      "ui_accept"
                     ],
                     "label": "Blend With Badge Crowd",
                     "min_target_size": 44.0,
@@ -10228,26 +9686,6 @@
                     "label": "Trigger Convention Standoff",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "anchor_id": "grand_scenario_top_800",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Move Machine Markers",
-                    "role": "task_station",
-                    "state": "ready",
                     "visible": true
                   },
                   "op": "spawn",
@@ -10628,20 +10066,6 @@
               },
               {
                 "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -11368,20 +10792,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "scene_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -11477,10 +10887,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "f5ac2f8ec35a4c46376e8db50a3b42ff16d4df5dd22b629e7504454e292e8277",
-      "calculated_signature": "f5ac2f8ec35a4c46376e8db50a3b42ff16d4df5dd22b629e7504454e292e8277",
+      "authored_signature": "5d5d545829f9a32609ad0e3f05647e8250417b93f1f7a6f8aac7c34e138c2877",
+      "calculated_signature": "5d5d545829f9a32609ad0e3f05647e8250417b93f1f7a6f8aac7c34e138c2877",
       "nearest_id": "grand_casino_gala_night",
-      "nearest_similarity": 0.579162410623085
+      "nearest_similarity": 0.57516339869281
     },
     {
       "id": "grand_casino_gala_night",
@@ -11548,6 +10958,12 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "id": "assume_gala_cover_identity",
+                        "input_action": "ui_left",
+                        "label": "Assume Gala Cover Identity",
+                        "non_color_state": "ready"
+                      },
+                      {
                         "handler": "complete_objective_step",
                         "id": "reset_stage_lift",
                         "input_action": "ui_accept",
@@ -11557,55 +10973,6 @@
                         },
                         "label": "Reset Stage Lift",
                         "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_grand_casino_gala_night",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_grand_casino_gala_night",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Reset Stage Lift",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_2_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Grand Casino Gala Night: Complete this operation; named routes use their own marked stations.",
-                    "safe_exit": false,
-                    "state_label": "Work 2 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "id": "assume_gala_cover_identity",
-                        "input_action": "ui_left",
-                        "label": "Assume Gala Cover Identity",
-                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -11616,7 +10983,8 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_left"
+                      "ui_left",
+                      "ui_accept"
                     ],
                     "label": "Assume Gala Cover Identity",
                     "min_target_size": 44.0,
@@ -11754,26 +11122,6 @@
                     "label": "Fail Gala Credentials",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "anchor_id": "grand_scenario_top_800",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Reset Stage Lift",
-                    "role": "task_station",
-                    "state": "ready",
                     "visible": true
                   },
                   "op": "spawn",
@@ -11985,20 +11333,6 @@
               },
               {
                 "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -12894,20 +12228,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "scene_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -13003,17 +12323,17 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "641c3d91235e1dcd1ccdab2de7fafe64c6fae5e89df563251c7586e283aadc04",
-      "calculated_signature": "641c3d91235e1dcd1ccdab2de7fafe64c6fae5e89df563251c7586e283aadc04",
+      "authored_signature": "d37e32a6eacd74adb359b5fac9de6b073da64325f2baf5243ba6e64fe96ab05a",
+      "calculated_signature": "d37e32a6eacd74adb359b5fac9de6b073da64325f2baf5243ba6e64fe96ab05a",
       "nearest_id": "grand_casino_convention_crowd",
-      "nearest_similarity": 0.579162410623085
+      "nearest_similarity": 0.57516339869281
     }
   ],
   "pairwise_similarity": [
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.23330832708177,
+      "similarity": 0.272430668841762,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13025,7 +12345,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.253076923076923,
+      "similarity": 0.257119609438568,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13037,7 +12357,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.287747035573123,
+      "similarity": 0.233040702314445,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13049,9 +12369,9 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.663776493256262,
+      "similarity": 0.57074569789675,
       "equal_normalized_hash": false,
-      "status": "warning",
+      "status": "pass",
       "blocking": false,
       "masked_visual_evidence": {
 
@@ -13061,7 +12381,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.224354243542435,
+      "similarity": 0.301335559265442,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13073,7 +12393,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.239819004524887,
+      "similarity": 0.247172859450727,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13085,7 +12405,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.277389277389277,
+      "similarity": 0.219589257503949,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13097,7 +12417,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.323240589198036,
+      "similarity": 0.350660792951542,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13109,7 +12429,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.302474062250599,
+      "similarity": 0.385171790235081,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13121,7 +12441,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.408181818181818,
+      "similarity": 0.503112033195021,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13133,7 +12453,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.433644859813084,
+      "similarity": 0.410029498525074,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13145,7 +12465,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.402193784277879,
+      "similarity": 0.384169884169884,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13157,7 +12477,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.3125,
+      "similarity": 0.305862361937128,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13169,7 +12489,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.309791332263242,
+      "similarity": 0.336814621409922,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13181,7 +12501,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.696767001114827,
+      "similarity": 0.622298065984073,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -13193,7 +12513,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_whale_aboard",
-      "similarity": 0.500986193293886,
+      "similarity": 0.536637931034483,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13205,7 +12525,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.40562613430127,
+      "similarity": 0.527865404837014,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13217,7 +12537,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.433644859813084,
+      "similarity": 0.409803921568627,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13229,7 +12549,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.406049495875344,
+      "similarity": 0.380038387715931,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13241,7 +12561,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.417177914110429,
+      "similarity": 0.305792163543441,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13253,7 +12573,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.398457583547558,
+      "similarity": 0.304940374787053,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13265,7 +12585,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.509920634920635,
+      "similarity": 0.51115834218916,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13277,7 +12597,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.359964881474978,
+      "similarity": 0.426181102362205,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13289,7 +12609,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.39963503649635,
+      "similarity": 0.519067796610169,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13301,7 +12621,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.490767735665695,
+      "similarity": 0.422619047619048,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13313,7 +12633,7 @@
     {
       "left_id": "grand_casino_convention_crowd",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.448051948051948,
+      "similarity": 0.469818913480885,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13325,7 +12645,7 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.41780199818347,
+      "similarity": 0.43516699410609,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13337,7 +12657,7 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.579162410623085,
+      "similarity": 0.57516339869281,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13348,16 +12668,15 @@
     }
   ],
   "assembly_evidence_needed": [
-    "scenario delta_queen_wedding_charter is invalid: [\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario delta_queen_whale_aboard is invalid: [\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario delta_queen_fog_delay is invalid: [\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario delta_queen_engine_trouble is invalid: [\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario delta_queen_captains_invitational is invalid: [\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario delta_queen_wedding_charter is invalid: [\"scenario delta_queen_wedding_charter sequence declared_targets.anchors identity base::anchor:delta_wedding_aftermath_actor has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.anchors identity base::anchor:delta_wedding_aftermath_scene has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.anchors identity base::anchor:delta_wedding_best_man has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.anchors identity base::anchor:delta_wedding_choice_left has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.anchors identity base::anchor:delta_wedding_choice_middle has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.anchors identity base::anchor:delta_wedding_choice_right has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.anchors identity base::anchor:delta_wedding_coordinator has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.anchors identity base::anchor:delta_wedding_ring_phase has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.anchors identity base::anchor:delta_wedding_rope has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.anchors identity base::anchor:delta_wedding_safe_exit has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.anchors identity base::anchor:delta_wedding_table has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.anchors identity base::anchor:delta_wedding_task has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_wedding_charter sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario delta_queen_whale_aboard is invalid: [\"scenario delta_queen_whale_aboard sequence declared_targets.anchors identity base::anchor:delta_aftermath_actor has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.anchors identity base::anchor:delta_aftermath_scene has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.anchors identity base::anchor:delta_bottom_left has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.anchors identity base::anchor:delta_bottom_middle has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.anchors identity base::anchor:delta_decision_left has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.anchors identity base::anchor:delta_decision_middle has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.anchors identity base::anchor:delta_decision_right has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.anchors identity base::anchor:delta_noninteractive_right has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.anchors identity base::anchor:delta_scenario_safe_exit has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.anchors identity base::anchor:delta_scenario_spare has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.anchors identity base::anchor:delta_scenario_task has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.anchors identity base::anchor:delta_secondary_top has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_whale_aboard sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario delta_queen_fog_delay is invalid: [\"scenario delta_queen_fog_delay sequence declared_targets.anchors identity base::anchor:delta_aftermath_actor has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.anchors identity base::anchor:delta_aftermath_scene has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.anchors identity base::anchor:delta_decision_left has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.anchors identity base::anchor:delta_decision_middle has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.anchors identity base::anchor:delta_decision_right has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.anchors identity base::anchor:delta_fog_officer has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.anchors identity base::anchor:delta_fog_waiting_crowd has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.anchors identity base::anchor:delta_noninteractive_right has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.anchors identity base::anchor:delta_scenario_safe_exit has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.anchors identity base::anchor:delta_scenario_spare has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.anchors identity base::anchor:delta_scenario_task has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.anchors identity base::anchor:delta_secondary_top has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario delta_queen_engine_trouble is invalid: [\"scenario delta_queen_engine_trouble sequence declared_targets.anchors identity base::anchor:delta_aftermath_actor has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.anchors identity base::anchor:delta_aftermath_scene has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.anchors identity base::anchor:delta_bottom_left has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.anchors identity base::anchor:delta_decision_left has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.anchors identity base::anchor:delta_decision_middle has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.anchors identity base::anchor:delta_decision_right has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.anchors identity base::anchor:delta_engine_benches has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.anchors identity base::anchor:delta_engine_guard has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.anchors identity base::anchor:delta_noninteractive_right has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.anchors identity base::anchor:delta_scenario_safe_exit has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.anchors identity base::anchor:delta_scenario_spare has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.anchors identity base::anchor:delta_scenario_task has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.anchors identity base::anchor:delta_secondary_top has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario delta_queen_captains_invitational is invalid: [\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_aftermath_actor has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_aftermath_scene has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_bottom_left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_captain_scorer_phase has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_captains_entry has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_decision_left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_decision_middle has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_decision_right has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_noninteractive_right has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_phase_left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_scenario_safe_exit has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_scenario_spare has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_scenario_task has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_secondary_top has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario grand_casino_gala_night is invalid: [\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_actor has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_scene has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_decision_left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_decision_middle has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_decision_middle_right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_520 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_650_low has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_work_actor_right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_work_object_left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_work_object_middle has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario grand_casino_convention_crowd is invalid: [\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_aftermath_actor has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_aftermath_scene has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_badge_delegations has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_machine_banks has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_table_block has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_decision_left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_decision_middle has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_decision_middle_right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_work_actor_right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_work_object_left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_work_object_middle has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_actor has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_scene has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_audit_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_middle_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_50_actor has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_520 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_650 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800_low has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_work_actor_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_work_object_left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.697 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_engine_trouble vs delta_queen_captains_invitational: 0.664 (warning). Missing receipt-bound masked visual evidence."
+    "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_actor has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_scene has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_audit_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_audit_pit_ledger has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_middle_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_50_actor has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_520 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_650 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800_low has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_work_actor_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_work_object_left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.622 (warning). Missing receipt-bound masked visual evidence."
   ],
   "pair_count": 28
 }
