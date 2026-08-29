@@ -3026,16 +3026,16 @@ func _redeemer_label(environment: Dictionary) -> String:
 
 func _pull_tab_remaining_count(machine: Dictionary) -> int:
 	var total := 0
-	for deal_value in _deal_array(machine.get("deals", [])):
+	for deal_value in _array_view(machine.get("deals", [])):
 		total += maxi(0, int((deal_value as Dictionary).get("remaining", 0)))
 	return total
 
 
 func _pull_tab_counter_ritual(machine: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	var winners := _ticket_array(machine.get("winner_pile", []))
-	var losers := _ticket_array(machine.get("loser_pile", []))
-	var play_stack := _ticket_array(machine.get("ticket_stack", []))
-	var tray := _ticket_array(machine.get("tray_stack", []))
+	var winners := _array_view(machine.get("winner_pile", []))
+	var losers := _array_view(machine.get("loser_pile", []))
+	var play_stack := _array_view(machine.get("ticket_stack", []))
+	var tray := _array_view(machine.get("tray_stack", []))
 	var suspicion := run_state.suspicion_level() if run_state != null else 0
 	var transaction := _pt_copy_dict(machine.get("last_counter_transaction", {}))
 	var phase := "selection"
@@ -3059,7 +3059,7 @@ func _pull_tab_counter_ritual(machine: Dictionary, run_state: RunState, environm
 	elif _pull_tab_remaining_count(machine) <= 0:
 		clerk_state = "bored"
 	var deal_rows: Array = []
-	for deal_value in _deal_array(machine.get("deals", [])):
+	for deal_value in _array_view(machine.get("deals", [])):
 		var deal: Dictionary = deal_value
 		deal_rows.append({
 			"deal_id": str(deal.get("id", "")),
