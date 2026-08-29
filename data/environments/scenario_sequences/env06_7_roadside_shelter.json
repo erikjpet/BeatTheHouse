@@ -112,6 +112,26 @@
                     "state": "arrival",
                     "appearance": "room_board_arrival"
                   }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_motel_conventioneers_exit_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_conventioneers_safe_exit",
+                  "object": {
+                    "label": "Marked safe exit",
+                    "role": "exit",
+                    "zone_id": "exit_lane",
+                    "bounds": {
+                      "w": 56.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "clear",
+                    "appearance": "marked_lane"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -820,6 +840,13 @@
               "stable_object_id": "motel_conventioneers_coach_party"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_conventioneers_exit_visual",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_conventioneers_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_motel_conventioneers_exit",
@@ -1043,7 +1070,7 @@
           "props_4",
           "actors_2"
         ],
-        "sequence_signature": "2f8469a3704ca1eda29a1922fea4edfa20c6d2a768d2d66a8c6a762b22eb3245",
+        "sequence_signature": "bbdff65904f388b1330fd28ed6cfa68c0ad11ddeee8dccb155f394ae851c6909",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1288,6 +1315,26 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "courtyard_gate_arrival"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_motel_stakeout_exit_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_stakeout_safe_exit",
+                  "object": {
+                    "label": "Marked safe exit",
+                    "role": "exit",
+                    "zone_id": "exit_lane",
+                    "bounds": {
+                      "w": 56.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "clear",
+                    "appearance": "marked_lane"
                   }
                 }
               ],
@@ -1896,6 +1943,13 @@
               "stable_object_id": "motel_stakeout_south_observer"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_stakeout_exit_visual",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_stakeout_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_motel_stakeout_exit",
@@ -2083,7 +2137,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "07e9d6e6e53c2c1608fcbd214d01e97263e05cb5b2c9e81f62c3057233ec4758",
+        "sequence_signature": "bffe0577bca7d5d87eea7744bc625646a097f6a537a2b1c6f913aaae7431f023",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -2307,6 +2361,26 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "lease_clipboard_arrival"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_motel_weekly_rates_exit_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_weekly_rates_safe_exit",
+                  "object": {
+                    "label": "Marked safe exit",
+                    "role": "exit",
+                    "zone_id": "exit_lane",
+                    "bounds": {
+                      "w": 56.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "clear",
+                    "appearance": "marked_lane"
                   }
                 }
               ],
@@ -3102,6 +3176,13 @@
               "stable_object_id": "motel_weekly_rates_landlord"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_weekly_rates_exit_visual",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_weekly_rates_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_motel_weekly_rates_exit",
@@ -3305,7 +3386,7 @@
           "props_4",
           "actors_1"
         ],
-        "sequence_signature": "9aec23b74659f33983f3c14ec74357e0dac6c20d77e76366e5d59f1fcb91cfff",
+        "sequence_signature": "1fe965541a2d87d1b08f7ba273db0ab06a4f6f03e3e21b94612f7a9c5ed3d8ef",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -3551,6 +3632,26 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "ribbon_stair_arrival"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_motel_wedding_overflow_exit_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_wedding_overflow_safe_exit",
+                  "object": {
+                    "label": "Marked safe exit",
+                    "role": "exit",
+                    "zone_id": "exit_lane",
+                    "bounds": {
+                      "w": 56.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "clear",
+                    "appearance": "marked_lane"
                   }
                 }
               ],
@@ -4288,6 +4389,13 @@
               "stable_object_id": "motel_wedding_overflow_desk_clerk"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_wedding_overflow_exit_visual",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_wedding_overflow_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_motel_wedding_overflow_exit",
@@ -4495,7 +4603,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "5d6446acb566eb13f3c7420e6be6d398cfef26ba0aaaad4279d281f489326964",
+        "sequence_signature": "a01fbb11d074623d60a6e18f8edd8bd22b6242ede8c6b30616dbab581d42bf73",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -4742,6 +4850,26 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "departure_board_arrival"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_gas_station_trucker_convoy_exit_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_trucker_convoy_safe_exit",
+                  "object": {
+                    "label": "Marked safe exit",
+                    "role": "exit",
+                    "zone_id": "exit_lane",
+                    "bounds": {
+                      "w": 56.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "clear",
+                    "appearance": "marked_lane"
                   }
                 }
               ],
@@ -5479,6 +5607,13 @@
               "stable_object_id": "gas_station_trucker_convoy_machine_driver"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_trucker_convoy_exit_visual",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_trucker_convoy_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_gas_station_trucker_convoy_exit",
@@ -5682,7 +5817,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "f4cf9202680b3946636d7bf3a5795e5033e54df9a8c1272d8fad977d4417ecb0",
+        "sequence_signature": "9d0581f81aa9a582ab896e1cf3455c63e045f3681b5f1a8a965b68736c993a8d",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -5909,6 +6044,26 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "restroom_queue_arrival"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_gas_station_tour_bus_stop_exit_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_tour_bus_stop_safe_exit",
+                  "object": {
+                    "label": "Marked safe exit",
+                    "role": "exit",
+                    "zone_id": "exit_lane",
+                    "bounds": {
+                      "w": 56.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "clear",
+                    "appearance": "marked_lane"
                   }
                 }
               ],
@@ -6639,6 +6794,13 @@
               "stable_object_id": "gas_station_tour_bus_stop_queue_marshal"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_tour_bus_stop_exit_visual",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_tour_bus_stop_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_gas_station_tour_bus_stop_exit",
@@ -6826,7 +6988,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "546deb4866cb9df88c518880461dfea729f1e853ebfd4a9174aa2b6946cc0f2c",
+        "sequence_signature": "e4947723e5e56793811719453fd6419c5e9384d49e990747d4f06d56f14b8dbf",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -7072,6 +7234,26 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "machine_gate_arrival"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_gas_station_graveyard_shift_exit_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_graveyard_shift_safe_exit",
+                  "object": {
+                    "label": "Marked safe exit",
+                    "role": "exit",
+                    "zone_id": "exit_lane",
+                    "bounds": {
+                      "w": 56.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "clear",
+                    "appearance": "marked_lane"
                   }
                 }
               ],
@@ -7874,6 +8056,13 @@
               "stable_object_id": "gas_station_graveyard_shift_night_clerk"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_graveyard_shift_exit_visual",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_graveyard_shift_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_gas_station_graveyard_shift_exit",
@@ -8097,7 +8286,7 @@
           "props_5",
           "actors_1"
         ],
-        "sequence_signature": "50c208231996778ae5a5b7ce220f738c75fe4f1e0dcd6fb14a5c26b80e4f1a19",
+        "sequence_signature": "68ccb663ff6d23ffeafb6b991b63c0b0679968dbbb69cec9c1ade81021cb8a16",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -8324,6 +8513,26 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "repair_crate_arrival"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_gas_station_road_crew_payday_exit_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_road_crew_payday_safe_exit",
+                  "object": {
+                    "label": "Marked safe exit",
+                    "role": "exit",
+                    "zone_id": "exit_lane",
+                    "bounds": {
+                      "w": 56.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "clear",
+                    "appearance": "marked_lane"
                   }
                 }
               ],
@@ -9054,6 +9263,13 @@
               "stable_object_id": "gas_station_road_crew_payday_machine_player"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_road_crew_payday_exit_visual",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_road_crew_payday_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_gas_station_road_crew_payday_exit",
@@ -9241,7 +9457,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "4d89bb335c50ab47f249bf6a4fe8f8eee9e5725f254e456b8ef36ee090bb58c4",
+        "sequence_signature": "434c0a26cf41fc1531680761d02a87d8c3ae472bc8ba77f22d02018b4c334154",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -9487,6 +9703,26 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "power_panel_arrival"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_gas_station_storm_shelter_exit_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_storm_shelter_safe_exit",
+                  "object": {
+                    "label": "Marked safe exit",
+                    "role": "exit",
+                    "zone_id": "exit_lane",
+                    "bounds": {
+                      "w": 56.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "clear",
+                    "appearance": "marked_lane"
                   }
                 }
               ],
@@ -10331,6 +10567,13 @@
               "stable_object_id": "gas_station_storm_shelter_driver_group"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_storm_shelter_exit_visual",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_storm_shelter_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_gas_station_storm_shelter_exit",
@@ -10534,7 +10777,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "2d0c73d3e69418e1695aa315cd17f895ee6c02e6fe075308ecf29577b24a9225",
+        "sequence_signature": "48a7e69d760aea365ef451228e8f43ede14638bc83a467664ebd49a10e86baf1",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -10783,6 +11026,26 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "windbreak_arrival"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_beach_bonfire_night_exit_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_bonfire_night_safe_exit",
+                  "object": {
+                    "label": "Marked safe exit",
+                    "role": "exit",
+                    "zone_id": "exit_lane",
+                    "bounds": {
+                      "w": 56.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "clear",
+                    "appearance": "marked_lane"
                   }
                 }
               ],
@@ -11499,6 +11762,13 @@
               "stable_object_id": "beach_bonfire_night_night_swimmers"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_bonfire_night_exit_visual",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_bonfire_night_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_beach_bonfire_night_exit",
@@ -11706,7 +11976,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "fa49fb9bf2d69726d8f0a63eca767db635745410fb31384c30fbe730d0888d3d",
+        "sequence_signature": "2ca047de318d27a68573d5b4630a5ac6e374509ba55c6cb39945d9666cb6662d",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -11952,6 +12222,26 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "closed_stall_arrival"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_beach_storm_coming_exit_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_storm_coming_safe_exit",
+                  "object": {
+                    "label": "Marked safe exit",
+                    "role": "exit",
+                    "zone_id": "exit_lane",
+                    "bounds": {
+                      "w": 56.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "clear",
+                    "appearance": "marked_lane"
                   }
                 }
               ],
@@ -12796,6 +13086,13 @@
               "stable_object_id": "beach_storm_coming_late_swimmer"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_storm_coming_exit_visual",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_storm_coming_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_beach_storm_coming_exit",
@@ -12999,7 +13296,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "39b9a31ade20ea87e9ee6a705e8cf12063902241aef3152f5587248ceda16a8a",
+        "sequence_signature": "883a290b21385029e917993fc8df3337ef510c3b14f44b6f97fd88e87a6e242b",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -13268,6 +13565,26 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "crowd_rope_arrival"
+                  }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "arrival_beach_festival_weekend_exit_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_safe_exit",
+                  "object": {
+                    "label": "Marked safe exit",
+                    "role": "exit",
+                    "zone_id": "exit_lane",
+                    "bounds": {
+                      "w": 56.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "clear",
+                    "appearance": "marked_lane"
                   }
                 }
               ],
@@ -14248,6 +14565,13 @@
               "stable_object_id": "beach_festival_weekend_crowd_marshal"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_festival_weekend_exit_visual",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_festival_weekend_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "receipt_id": "cleanup_beach_festival_weekend_exit",
@@ -14435,7 +14759,7 @@
           "props_6",
           "actors_4"
         ],
-        "sequence_signature": "c621d29d83ce854cf843319ca6c3a948cabbee2a57baea4c19ae5fd9c6b1af2c",
+        "sequence_signature": "a0786c84fdc12acbc819b198000556768f011876eda7a689b7f128b9f065814c",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],

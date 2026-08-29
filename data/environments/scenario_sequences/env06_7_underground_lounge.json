@@ -258,6 +258,13 @@
               "stable_object_id": "punchline_open_mic_night_waiting_comic"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_open_mic_night_cleanup_remove_punchline_open_mic_night_safe_exit",
+              "stable_object_id": "punchline_open_mic_night_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -686,6 +693,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_open_mic_night_arrival_spawn_punchline_open_mic_night_chair_bank",
                   "stable_object_id": "punchline_open_mic_night_chair_bank"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_open_mic_night_arrival_spawn_punchline_open_mic_night_safe_exit",
+                  "stable_object_id": "punchline_open_mic_night_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -1354,7 +1381,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0a7c24d326645f4a9cf003068a94e56f27a7d92e16eb55b026e08e24dd37babd"
+        "sequence_signature": "51ad3eae8a656e8a9755851d7bb113e2da7217c4c8f5d6b3ceb7579122b9ae4d"
       }
     },
     {
@@ -1618,6 +1645,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "punchline_headliner_night_cleanup_despawn_punchline_headliner_night_door_guard",
               "stable_object_id": "punchline_headliner_night_door_guard"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_headliner_night_cleanup_remove_punchline_headliner_night_safe_exit",
+              "stable_object_id": "punchline_headliner_night_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -2008,6 +2042,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_headliner_night_arrival_spawn_punchline_headliner_night_service_door",
                   "stable_object_id": "punchline_headliner_night_service_door"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_headliner_night_arrival_spawn_punchline_headliner_night_safe_exit",
+                  "stable_object_id": "punchline_headliner_night_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -2897,7 +2951,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e71d9af24ce087ab9a210a4fbe4a4fb79d6584fcc9145de337fff85827f43ef2"
+        "sequence_signature": "24ddea3e5b468e8fc26a90d04ac4f82684e261d364a078ceb9f87d53eea5d4d7"
       }
     },
     {
@@ -3153,6 +3207,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "punchline_bringer_show_cleanup_despawn_punchline_bringer_show_crowd_captain",
               "stable_object_id": "punchline_bringer_show_crowd_captain"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_bringer_show_cleanup_remove_punchline_bringer_show_safe_exit",
+              "stable_object_id": "punchline_bringer_show_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -3530,6 +3591,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_bringer_show_arrival_spawn_punchline_bringer_show_unlit_stage",
                   "stable_object_id": "punchline_bringer_show_unlit_stage"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_bringer_show_arrival_spawn_punchline_bringer_show_safe_exit",
+                  "stable_object_id": "punchline_bringer_show_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -4251,7 +4332,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "fd7ff6092d6cb914e393ba06b85ef4bb7cdc8b200902743626c9768bdaf11db8"
+        "sequence_signature": "90c63407c98d2314a443448e69ec5f98feafe989e232237865b54728029832f2"
       }
     },
     {
@@ -4507,6 +4588,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "punchline_high_stakes_night_cleanup_despawn_punchline_high_stakes_night_floor_service_runner",
               "stable_object_id": "punchline_high_stakes_night_floor_service_runner"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_high_stakes_night_cleanup_remove_punchline_high_stakes_night_safe_exit",
+              "stable_object_id": "punchline_high_stakes_night_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -4890,6 +4978,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_high_stakes_night_arrival_spawn_punchline_high_stakes_night_chair_stack",
                   "stable_object_id": "punchline_high_stakes_night_chair_stack"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_high_stakes_night_arrival_spawn_punchline_high_stakes_night_safe_exit",
+                  "stable_object_id": "punchline_high_stakes_night_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -5623,7 +5731,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "cf959fe1413e0b3efb06f625f1b561e23fd8195e5815cc05dd1cb6c8c49b5824"
+        "sequence_signature": "472d382acb0a703212bd229a8f6c86e0fb9e832f335efe149ff1ab5d87de5ea5"
       }
     },
     {
@@ -5887,6 +5995,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "punchline_greased_week_cleanup_despawn_punchline_greased_week_payoff_runner",
               "stable_object_id": "punchline_greased_week_payoff_runner"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_greased_week_cleanup_remove_punchline_greased_week_safe_exit",
+              "stable_object_id": "punchline_greased_week_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -6277,6 +6392,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_greased_week_arrival_spawn_punchline_greased_week_service_barrier",
                   "stable_object_id": "punchline_greased_week_service_barrier"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_greased_week_arrival_spawn_punchline_greased_week_safe_exit",
+                  "stable_object_id": "punchline_greased_week_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -7166,7 +7301,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "df7c893e775943281f513d036290aea37eb107ef3bc89f7b39b740d4ad8dfc57"
+        "sequence_signature": "bf8efd67c89661143846ed61236ee37340eb2c9934aac44341dd58635b3ffd64"
       }
     },
     {
@@ -7422,6 +7557,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "punchline_debt_court_cleanup_despawn_punchline_debt_court_room_witness",
               "stable_object_id": "punchline_debt_court_room_witness"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_debt_court_cleanup_remove_punchline_debt_court_safe_exit",
+              "stable_object_id": "punchline_debt_court_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -7805,6 +7947,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_debt_court_arrival_spawn_punchline_debt_court_paused_table_rope",
                   "stable_object_id": "punchline_debt_court_paused_table_rope"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_debt_court_arrival_spawn_punchline_debt_court_safe_exit",
+                  "stable_object_id": "punchline_debt_court_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -8538,7 +8700,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "63f88e92663f18978802aacc6909051ba7a3c7cdd5bfdb14908877d9218a1bc2"
+        "sequence_signature": "0b8b99c3abdb4ae91b43e38a09a5f0b7dfaa3b97f3a9601a0a98290ec64fcd0b"
       }
     },
     {
@@ -8802,6 +8964,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "punchline_new_muscle_cleanup_despawn_punchline_new_muscle_checkpoint_rover",
               "stable_object_id": "punchline_new_muscle_checkpoint_rover"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_new_muscle_cleanup_remove_punchline_new_muscle_safe_exit",
+              "stable_object_id": "punchline_new_muscle_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -9245,6 +9414,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_new_muscle_arrival_spawn_punchline_new_muscle_bypass_lane",
                   "stable_object_id": "punchline_new_muscle_bypass_lane"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_new_muscle_arrival_spawn_punchline_new_muscle_safe_exit",
+                  "stable_object_id": "punchline_new_muscle_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -10081,7 +10270,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d6ba2e67de57d842a2d21a49c7b13be8f521fe3c80874d2aee8958d2135d127f"
+        "sequence_signature": "05889cbd9d008e17e8350dfe153d830df90734dfdc5010a7f9884c2245aa0d5b"
       }
     },
     {
@@ -10345,6 +10534,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "punchline_raid_jitters_cleanup_despawn_punchline_raid_jitters_reopen_steward",
               "stable_object_id": "punchline_raid_jitters_reopen_steward"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_raid_jitters_cleanup_remove_punchline_raid_jitters_safe_exit",
+              "stable_object_id": "punchline_raid_jitters_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -10735,6 +10931,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_raid_jitters_arrival_spawn_punchline_raid_jitters_room_screen",
                   "stable_object_id": "punchline_raid_jitters_room_screen"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_raid_jitters_arrival_spawn_punchline_raid_jitters_safe_exit",
+                  "stable_object_id": "punchline_raid_jitters_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -11624,7 +11840,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f2dfdbd780dd3904fa0916adfd3209d1d24b3edc1387085533d33591ff2c41cb"
+        "sequence_signature": "715e5eb4a0fd37cb069b0d8f48f57f36c7429371f8309ff30ff0908087c8f7ca"
       }
     },
     {
@@ -11888,6 +12104,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_amateur_night_cleanup_despawn_kitty_cat_lounge_amateur_night_amateur_judge",
               "stable_object_id": "kitty_cat_lounge_amateur_night_amateur_judge"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_amateur_night_cleanup_remove_kitty_cat_lounge_amateur_night_safe_exit",
+              "stable_object_id": "kitty_cat_lounge_amateur_night_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -12278,6 +12501,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_amateur_night_arrival_spawn_kitty_cat_lounge_amateur_night_judging_desk",
                   "stable_object_id": "kitty_cat_lounge_amateur_night_judging_desk"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_amateur_night_arrival_spawn_kitty_cat_lounge_amateur_night_safe_exit",
+                  "stable_object_id": "kitty_cat_lounge_amateur_night_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -13167,7 +13410,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a15b6e7649748eb2ae5f518878617a7b10b97fc4f3137bad1c784f63961a5e18"
+        "sequence_signature": "648144bd4bfaa4c7804577ca23ec9a31acc651c2ef74111e40d297965ff2b3fe"
       }
     },
     {
@@ -13431,6 +13674,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_buyout_cleanup_despawn_kitty_cat_lounge_buyout_public_floor_steward",
               "stable_object_id": "kitty_cat_lounge_buyout_public_floor_steward"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_buyout_cleanup_remove_kitty_cat_lounge_buyout_safe_exit",
+              "stable_object_id": "kitty_cat_lounge_buyout_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -13821,6 +14071,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_buyout_arrival_spawn_kitty_cat_lounge_buyout_request_cart",
                   "stable_object_id": "kitty_cat_lounge_buyout_request_cart"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_buyout_arrival_spawn_kitty_cat_lounge_buyout_safe_exit",
+                  "stable_object_id": "kitty_cat_lounge_buyout_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -14710,7 +14980,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "810dc995d9edf3dcecab2e95d4e9f7c6ddebb0a4e850ef3678d2810dc45c2a16"
+        "sequence_signature": "7505ef4823710abad521a504b85bda369ee4f4c8a7fd6cd357d787fb6b9c284b"
       }
     },
     {
@@ -14966,6 +15236,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_slow_night_cleanup_despawn_kitty_cat_lounge_slow_night_booth_regular",
               "stable_object_id": "kitty_cat_lounge_slow_night_booth_regular"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_slow_night_cleanup_remove_kitty_cat_lounge_slow_night_safe_exit",
+              "stable_object_id": "kitty_cat_lounge_slow_night_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -15396,6 +15673,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_slow_night_arrival_spawn_kitty_cat_lounge_slow_night_maintenance_panel",
                   "stable_object_id": "kitty_cat_lounge_slow_night_maintenance_panel"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_slow_night_arrival_spawn_kitty_cat_lounge_slow_night_safe_exit",
+                  "stable_object_id": "kitty_cat_lounge_slow_night_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -16064,7 +16361,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9b4c00a3d49a6085dbbd297b26f9f9bbc88f569df9b88768c7538e61e747fde9"
+        "sequence_signature": "164777f04ca76792c320ead5e88e5d41643f6a2b140ec07275ec977534ea46a9"
       }
     },
     {
@@ -16336,6 +16633,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_bachelorette_storm_cleanup_despawn_kitty_cat_lounge_bachelorette_storm_floor_recovery_host",
               "stable_object_id": "kitty_cat_lounge_bachelorette_storm_floor_recovery_host"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_bachelorette_storm_cleanup_remove_kitty_cat_lounge_bachelorette_storm_safe_exit",
+              "stable_object_id": "kitty_cat_lounge_bachelorette_storm_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -16739,6 +17043,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_arrival_spawn_kitty_cat_lounge_bachelorette_storm_bar_route_rope",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_bar_route_rope"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_arrival_spawn_kitty_cat_lounge_bachelorette_storm_safe_exit",
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -17800,7 +18124,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "895015e2027457af8016c5f9366bf4e8ddae4cb7262f28f9afd777b433bd2a85"
+        "sequence_signature": "226b1efa96a2a7be815135fa524dae20e8ea5776b1e1afbaa1952fe2cbab5ece"
       }
     }
   ],

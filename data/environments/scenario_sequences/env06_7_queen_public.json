@@ -260,6 +260,13 @@
               "stable_object_id": "delta_queen_wedding_charter_deck_coordinator"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_scene_ops_remove_delta_queen_wedding_charter_safe_exit",
+              "stable_object_id": "delta_queen_wedding_charter_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -673,6 +680,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_arrival_spawn_delta_queen_wedding_charter_best_man_table",
                   "stable_object_id": "delta_queen_wedding_charter_best_man_table"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_arrival_spawn_delta_queen_wedding_charter_safe_exit",
+                  "stable_object_id": "delta_queen_wedding_charter_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -1545,7 +1572,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4a2e47211198da49ce4624e5da23a13f845e923f332d66d47e71192909780fe0"
+        "sequence_signature": "f33e4709e6e4cb1ac13625caaca70daa08dd1370be4203c3d1482e155a3e38e3"
       }
     },
     {
@@ -1802,6 +1829,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "delta_queen_whale_aboard_cleanup_despawn_delta_queen_whale_aboard_entourage_runner",
               "stable_object_id": "delta_queen_whale_aboard_entourage_runner"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_scene_ops_remove_delta_queen_whale_aboard_safe_exit",
+              "stable_object_id": "delta_queen_whale_aboard_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -2217,6 +2251,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_arrival_spawn_delta_queen_whale_aboard_service_lane",
                   "stable_object_id": "delta_queen_whale_aboard_service_lane"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_arrival_spawn_delta_queen_whale_aboard_safe_exit",
+                  "stable_object_id": "delta_queen_whale_aboard_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -3089,7 +3143,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c99e4a7cccb02a628b27c73e83a6a41518ce14ca07ccb49104450ba38cf77ccc"
+        "sequence_signature": "3477df94b1edf73477e576a84caf751faf922fabc6a758381cb358e000f73a47"
       }
     },
     {
@@ -3346,6 +3400,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "delta_queen_fog_delay_cleanup_despawn_delta_queen_fog_delay_waiting_crowd",
               "stable_object_id": "delta_queen_fog_delay_waiting_crowd"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_fog_delay_cleanup_scene_ops_remove_delta_queen_fog_delay_safe_exit",
+              "stable_object_id": "delta_queen_fog_delay_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -3761,6 +3822,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_arrival_spawn_delta_queen_fog_delay_drift_board",
                   "stable_object_id": "delta_queen_fog_delay_drift_board"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_arrival_spawn_delta_queen_fog_delay_safe_exit",
+                  "stable_object_id": "delta_queen_fog_delay_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -4633,7 +4714,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e1252ed44d160859a30e682e2805f2d61f0ea447e47844581a4996d3159c4d29"
+        "sequence_signature": "d33dc4a4e2a899685edbc9ea10219256df1104083c397f9ec41de398c5fe13cb"
       }
     },
     {
@@ -4905,6 +4986,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "delta_queen_engine_trouble_cleanup_despawn_delta_queen_engine_trouble_deck_guard",
               "stable_object_id": "delta_queen_engine_trouble_deck_guard"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_scene_ops_remove_delta_queen_engine_trouble_safe_exit",
+              "stable_object_id": "delta_queen_engine_trouble_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -5353,6 +5441,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_arrival_spawn_delta_queen_engine_trouble_locked_gangway",
                   "stable_object_id": "delta_queen_engine_trouble_locked_gangway"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_arrival_spawn_delta_queen_engine_trouble_safe_exit",
+                  "stable_object_id": "delta_queen_engine_trouble_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -6393,7 +6501,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "26ec3521de1c54a6fff1b65e75bb4ebb52de3316783e51964247b07f70c1d98e"
+        "sequence_signature": "9f71233d4976fa66aef2c746229e1be302c8e0aeacc1f9bd8cdcb5e0db7f5200"
       }
     },
     {
@@ -6658,6 +6766,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "delta_queen_captains_invitational_cleanup_despawn_delta_queen_captains_invitational_eliminated_players",
               "stable_object_id": "delta_queen_captains_invitational_eliminated_players"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_scene_ops_remove_delta_queen_captains_invitational_safe_exit",
+              "stable_object_id": "delta_queen_captains_invitational_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -7086,6 +7201,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_arrival_spawn_delta_queen_captains_invitational_scorer_rail",
                   "stable_object_id": "delta_queen_captains_invitational_scorer_rail"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_arrival_spawn_delta_queen_captains_invitational_safe_exit",
+                  "stable_object_id": "delta_queen_captains_invitational_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -8126,7 +8261,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "676eabd49f8a8b1ed16ea3961e8aa8bb99fa8e1768284467e352565562f295af"
+        "sequence_signature": "61cd2e73de185215e930406b585e408e93289d8974b6069560466d5744c54c2e"
       }
     },
     {
@@ -8383,6 +8518,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "grand_casino_gala_night_cleanup_despawn_grand_casino_gala_night_stage_hand",
               "stable_object_id": "grand_casino_gala_night_stage_hand"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_safe_exit",
+              "stable_object_id": "grand_casino_gala_night_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -8798,6 +8940,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_arrival_spawn_grand_casino_gala_night_stage_lift",
                   "stable_object_id": "grand_casino_gala_night_stage_lift"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_arrival_spawn_grand_casino_gala_night_safe_exit",
+                  "stable_object_id": "grand_casino_gala_night_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -9670,7 +9832,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "07e24e030cfe3a27685b40ef6a7255512be6c85be87d6166e93acd700fd637a5"
+        "sequence_signature": "4e06aa39e968fc9b47dc363c198f58629287b3cc1e717b31bb4e1763a09e7901"
       }
     },
     {
@@ -9927,6 +10089,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "grand_casino_convention_crowd_cleanup_despawn_grand_casino_convention_crowd_badge_delegations",
               "stable_object_id": "grand_casino_convention_crowd_badge_delegations"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_scene_ops_remove_grand_casino_convention_crowd_safe_exit",
+              "stable_object_id": "grand_casino_convention_crowd_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -10342,6 +10511,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_arrival_spawn_grand_casino_convention_crowd_table_block",
                   "stable_object_id": "grand_casino_convention_crowd_table_block"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_arrival_spawn_grand_casino_convention_crowd_safe_exit",
+                  "stable_object_id": "grand_casino_convention_crowd_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -11214,7 +11403,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d0afd5a7e66e5a9bcc0b6ec290288e52146479ee3adbaa7a5708138324a34e46"
+        "sequence_signature": "a2883536a6596838e0f11dd5fd488afbcbae0d08b82037a3e57f739a05f23289"
       }
     },
     {
@@ -11478,6 +11667,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "grand_casino_audit_night_cleanup_despawn_grand_casino_audit_night_pit_manager",
               "stable_object_id": "grand_casino_audit_night_pit_manager"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_audit_night_cleanup_scene_ops_remove_grand_casino_audit_night_safe_exit",
+              "stable_object_id": "grand_casino_audit_night_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -11913,6 +12109,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_arrival_spawn_grand_casino_audit_night_open_exit_marker",
                   "stable_object_id": "grand_casino_audit_night_open_exit_marker"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_arrival_spawn_grand_casino_audit_night_safe_exit",
+                  "stable_object_id": "grand_casino_audit_night_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -12785,7 +13001,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "8b6c0b6b2713c9ac30f50d41d1cfce1427eed2da4ef399151964d79642152eae"
+        "sequence_signature": "36fd248daf26186ed4bd6eef706159c9d1c88bfa790398f81748d836f849f3bf"
       }
     }
   ]

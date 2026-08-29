@@ -244,6 +244,13 @@
               "stable_object_id": "bar_wake_wake_host"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "bar_wake_cleanup_remove_bar_wake_safe_exit",
+              "stable_object_id": "bar_wake_safe_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -587,6 +594,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_wake_arrival_spawn_bar_wake_remembrance_tray",
                   "stable_object_id": "bar_wake_remembrance_tray"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "bar_wake_arrival_spawn_bar_wake_safe_exit",
+                  "stable_object_id": "bar_wake_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -1138,7 +1165,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "efd3fde80f5c72667d59aca5fb1c9f38d0c05a29170b4b305659b42dd0cca27e"
+        "sequence_signature": "30e422b2338cdca51e314fe49b4b0a030f9c140fd0917dfa3d366da3d9d80689"
       }
     },
     {
@@ -1410,6 +1437,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "bar_fight_night_cleanup_despawn_bar_fight_night_right_brawler",
               "stable_object_id": "bar_fight_night_right_brawler"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_safe_exit",
+              "stable_object_id": "bar_fight_night_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -1814,6 +1848,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_fight_night_arrival_spawn_bar_fight_night_door_buffer",
                   "stable_object_id": "bar_fight_night_door_buffer"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "bar_fight_night_arrival_spawn_bar_fight_night_safe_exit",
+                  "stable_object_id": "bar_fight_night_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -2875,7 +2929,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1781feb9de6edfd5c396609a5c929b18948f20a29080fcecd6889ebb1e8d2fd7"
+        "sequence_signature": "912a89ffd99c84f732b0e95b1c874bb69879695c8815cf98a0b0c9d0078f33eb"
       }
     },
     {
@@ -3123,6 +3177,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "bar_payday_rush_cleanup_despawn_bar_payday_rush_payday_runner",
               "stable_object_id": "bar_payday_rush_payday_runner"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_safe_exit",
+              "stable_object_id": "bar_payday_rush_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -3488,6 +3549,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_payday_rush_arrival_spawn_bar_payday_rush_tab_envelopes",
                   "stable_object_id": "bar_payday_rush_tab_envelopes"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "bar_payday_rush_arrival_spawn_bar_payday_rush_safe_exit",
+                  "stable_object_id": "bar_payday_rush_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -4039,7 +4120,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5edaedf7baf6874d3d75485acc263900a8fe6c7051045300047ad3dd5e37296c"
+        "sequence_signature": "53957a30a6cce9ad5b87b0433991f92a6087f048766d0a27e466ca4b9c024a39"
       }
     },
     {
@@ -4303,6 +4384,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "bar_lock_in_cleanup_despawn_bar_lock_in_afterhours_regular",
               "stable_object_id": "bar_lock_in_afterhours_regular"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_safe_exit",
+              "stable_object_id": "bar_lock_in_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -4694,6 +4782,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_lock_in_arrival_spawn_bar_lock_in_private_bench",
                   "stable_object_id": "bar_lock_in_private_bench"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "bar_lock_in_arrival_spawn_bar_lock_in_safe_exit",
+                  "stable_object_id": "bar_lock_in_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -5583,7 +5691,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e37402a2bb236b1799a2c645bb07dc553a960144bb36572d3d2cfc1e3a91cf52"
+        "sequence_signature": "68afdf57f5a3e7ad336204f9e2cf3118ef59b9dd835a977fe01c03f5326ddb2c"
       }
     },
     {
@@ -5855,6 +5963,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "bar_darts_league_night_cleanup_despawn_bar_darts_league_night_darts_scorer",
               "stable_object_id": "bar_darts_league_night_darts_scorer"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_safe_exit",
+              "stable_object_id": "bar_darts_league_night_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -6259,6 +6374,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_darts_league_night_arrival_spawn_bar_darts_league_night_disputed_dart",
                   "stable_object_id": "bar_darts_league_night_disputed_dart"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "bar_darts_league_night_arrival_spawn_bar_darts_league_night_safe_exit",
+                  "stable_object_id": "bar_darts_league_night_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -7320,7 +7455,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "12fe03480b943014089d7c8a67d6faf1b8cbd4ddc06b25a849d1219802355bb4"
+        "sequence_signature": "189746ee3fddf4584caf398522d6ef72e20a60e48ffe73d12327341bd5882879"
       }
     },
     {
@@ -7584,6 +7719,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "bar_live_band_cleanup_despawn_bar_live_band_floor_runner",
               "stable_object_id": "bar_live_band_floor_runner"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_safe_exit",
+              "stable_object_id": "bar_live_band_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -7975,6 +8117,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_live_band_arrival_spawn_bar_live_band_band_stage",
                   "stable_object_id": "bar_live_band_band_stage"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "bar_live_band_arrival_spawn_bar_live_band_safe_exit",
+                  "stable_object_id": "bar_live_band_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -8864,7 +9026,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ded8bf97d43afdd8cb966ce3a59b475cb3acf43b9edc34c8af32c65aa1580ded"
+        "sequence_signature": "5007bd516bc56fae1ede69ef82923a733f4c4bbd578ca4ee641bf8db1f863495"
       }
     },
     {
@@ -9104,6 +9266,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "bar_dead_tuesday_cleanup_despawn_bar_dead_tuesday_lone_patron",
               "stable_object_id": "bar_dead_tuesday_lone_patron"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "bar_dead_tuesday_cleanup_remove_bar_dead_tuesday_safe_exit",
+              "stable_object_id": "bar_dead_tuesday_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -9508,6 +9677,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_dead_tuesday_arrival_spawn_bar_dead_tuesday_booth_zone",
                   "stable_object_id": "bar_dead_tuesday_booth_zone"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "bar_dead_tuesday_arrival_spawn_bar_dead_tuesday_safe_exit",
+                  "stable_object_id": "bar_dead_tuesday_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -9834,7 +10023,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5ffd86654645e77d09a5135fb17475cb1986553262655f992aa3a91d71be38e1"
+        "sequence_signature": "692eab7cbf64a13b1788078f88bc3746ea18136b8b49ad1ab16011530fac2b37"
       }
     },
     {
@@ -10106,6 +10295,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "jazz_club_guest_legend_cleanup_despawn_jazz_club_guest_legend_stage_manager",
               "stable_object_id": "jazz_club_guest_legend_stage_manager"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_safe_exit",
+              "stable_object_id": "jazz_club_guest_legend_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -10510,6 +10706,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_guest_legend_arrival_spawn_jazz_club_guest_legend_cue_stand",
                   "stable_object_id": "jazz_club_guest_legend_cue_stand"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "jazz_club_guest_legend_arrival_spawn_jazz_club_guest_legend_safe_exit",
+                  "stable_object_id": "jazz_club_guest_legend_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -11571,7 +11787,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c25582c4c11b8338518c2552e9d28bd1143b4fdee6aaee423c48e97a460bd2b5"
+        "sequence_signature": "2ff190b3aa64c4fc78c0636ba549d1e145ce90450a610e1b7a9ee81a42f85d1b"
       }
     },
     {
@@ -11827,6 +12043,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "jazz_club_rent_party_cleanup_despawn_jazz_club_rent_party_club_creditor",
               "stable_object_id": "jazz_club_rent_party_club_creditor"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_safe_exit",
+              "stable_object_id": "jazz_club_rent_party_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -12205,6 +12428,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_rent_party_arrival_spawn_jazz_club_rent_party_rent_marker",
                   "stable_object_id": "jazz_club_rent_party_rent_marker"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "jazz_club_rent_party_arrival_spawn_jazz_club_rent_party_safe_exit",
+                  "stable_object_id": "jazz_club_rent_party_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -12926,7 +13169,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "44116c71aa99260efb08605ecaf1caced33a2bf93841057926ff2e5493856098"
+        "sequence_signature": "53474a07f956aa6f0a8c01a26588c3ba771677df18cebfa1a0df5f69d771637b"
       }
     },
     {
@@ -13174,6 +13417,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "jazz_club_recording_night_cleanup_despawn_jazz_club_recording_night_waiting_audience",
               "stable_object_id": "jazz_club_recording_night_waiting_audience"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_safe_exit",
+              "stable_object_id": "jazz_club_recording_night_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -13539,6 +13789,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_recording_night_arrival_spawn_jazz_club_recording_night_recording_desk",
                   "stable_object_id": "jazz_club_recording_night_recording_desk"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "jazz_club_recording_night_arrival_spawn_jazz_club_recording_night_safe_exit",
+                  "stable_object_id": "jazz_club_recording_night_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -14090,7 +14360,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "8494f605926de99104cceec781ce8241a8710f6ccf2db8a8f385c8c70d149105"
+        "sequence_signature": "c9dd18503c959449c62aac81780e5d8faa00e17f42236d630509b0ab22eb10c6"
       }
     },
     {
@@ -14346,6 +14616,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "jazz_club_union_trouble_cleanup_despawn_jazz_club_union_trouble_club_manager",
               "stable_object_id": "jazz_club_union_trouble_club_manager"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_safe_exit",
+              "stable_object_id": "jazz_club_union_trouble_safe_exit"
             },
             {
               "family": "interaction_ops",
@@ -14724,6 +15001,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_union_trouble_arrival_spawn_jazz_club_union_trouble_unbuilt_stage",
                   "stable_object_id": "jazz_club_union_trouble_unbuilt_stage"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "jazz_club_union_trouble_arrival_spawn_jazz_club_union_trouble_safe_exit",
+                  "stable_object_id": "jazz_club_union_trouble_safe_exit"
                 }
               ],
               "transition_ops": [
@@ -15445,7 +15742,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "20f4b11216f571ed1312fd9df2467caeac0e4c6ec300280c4c87d7349ad526ca"
+        "sequence_signature": "047486e27e7483d754c918485d5f6cbb1b0f8513bdbd9035fe36c8a5e4982773"
       }
     }
   ]

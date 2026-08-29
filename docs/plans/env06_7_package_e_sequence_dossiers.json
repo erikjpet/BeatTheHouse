@@ -48,7 +48,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "4a2e47211198da49ce4624e5da23a13f845e923f332d66d47e71192909780fe0",
+      "sequence_signature": "f33e4709e6e4cb1ac13625caaca70daa08dd1370be4203c3d1482e155a3e38e3",
       "capture_ids": [
         "delta_queen_wedding_charter_arrival",
         "delta_queen_wedding_charter_partial",
@@ -107,7 +107,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "c99e4a7cccb02a628b27c73e83a6a41518ce14ca07ccb49104450ba38cf77ccc",
+      "sequence_signature": "3477df94b1edf73477e576a84caf751faf922fabc6a758381cb358e000f73a47",
       "capture_ids": [
         "delta_queen_whale_aboard_arrival",
         "delta_queen_whale_aboard_partial",
@@ -166,7 +166,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "e1252ed44d160859a30e682e2805f2d61f0ea447e47844581a4996d3159c4d29",
+      "sequence_signature": "d33dc4a4e2a899685edbc9ea10219256df1104083c397f9ec41de398c5fe13cb",
       "capture_ids": [
         "delta_queen_fog_delay_arrival",
         "delta_queen_fog_delay_partial",
@@ -228,7 +228,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "26ec3521de1c54a6fff1b65e75bb4ebb52de3316783e51964247b07f70c1d98e",
+      "sequence_signature": "9f71233d4976fa66aef2c746229e1be302c8e0aeacc1f9bd8cdcb5e0db7f5200",
       "capture_ids": [
         "delta_queen_engine_trouble_arrival",
         "delta_queen_engine_trouble_partial",
@@ -289,7 +289,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "676eabd49f8a8b1ed16ea3961e8aa8bb99fa8e1768284467e352565562f295af",
+      "sequence_signature": "61cd2e73de185215e930406b585e408e93289d8974b6069560466d5744c54c2e",
       "capture_ids": [
         "delta_queen_captains_invitational_arrival",
         "delta_queen_captains_invitational_partial",
@@ -348,7 +348,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "07e24e030cfe3a27685b40ef6a7255512be6c85be87d6166e93acd700fd637a5",
+      "sequence_signature": "4e06aa39e968fc9b47dc363c198f58629287b3cc1e717b31bb4e1763a09e7901",
       "capture_ids": [
         "grand_casino_gala_night_arrival",
         "grand_casino_gala_night_partial",
@@ -407,7 +407,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "d0afd5a7e66e5a9bcc0b6ec290288e52146479ee3adbaa7a5708138324a34e46",
+      "sequence_signature": "a2883536a6596838e0f11dd5fd488afbcbae0d08b82037a3e57f739a05f23289",
       "capture_ids": [
         "grand_casino_convention_crowd_arrival",
         "grand_casino_convention_crowd_partial",
@@ -467,7 +467,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "8b6c0b6b2713c9ac30f50d41d1cfce1427eed2da4ef399151964d79642152eae",
+      "sequence_signature": "36fd248daf26186ed4bd6eef706159c9d1c88bfa790398f81748d836f849f3bf",
       "capture_ids": [
         "grand_casino_audit_night_arrival",
         "grand_casino_audit_night_partial",
@@ -1443,6 +1443,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "opening",
                     "bounds": {
                       "h": 52.0,
@@ -1958,6 +1978,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -1985,10 +2012,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "676eabd49f8a8b1ed16ea3961e8aa8bb99fa8e1768284467e352565562f295af",
-      "calculated_signature": "676eabd49f8a8b1ed16ea3961e8aa8bb99fa8e1768284467e352565562f295af",
+      "authored_signature": "61cd2e73de185215e930406b585e408e93289d8974b6069560466d5744c54c2e",
+      "calculated_signature": "61cd2e73de185215e930406b585e408e93289d8974b6069560466d5744c54c2e",
       "nearest_id": "delta_queen_engine_trouble",
-      "nearest_similarity": 0.666666666666667
+      "nearest_similarity": 0.661392405063291
     },
     {
       "id": "delta_queen_engine_trouble",
@@ -2969,6 +2996,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "sealed",
                     "bounds": {
                       "h": 46.0,
@@ -3491,6 +3538,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -3518,10 +3572,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "26ec3521de1c54a6fff1b65e75bb4ebb52de3316783e51964247b07f70c1d98e",
-      "calculated_signature": "26ec3521de1c54a6fff1b65e75bb4ebb52de3316783e51964247b07f70c1d98e",
+      "authored_signature": "9f71233d4976fa66aef2c746229e1be302c8e0aeacc1f9bd8cdcb5e0db7f5200",
+      "calculated_signature": "9f71233d4976fa66aef2c746229e1be302c8e0aeacc1f9bd8cdcb5e0db7f5200",
       "nearest_id": "delta_queen_captains_invitational",
-      "nearest_similarity": 0.666666666666667
+      "nearest_similarity": 0.661392405063291
     },
     {
       "id": "delta_queen_fog_delay",
@@ -4317,6 +4371,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "phase_one",
                     "bounds": {
                       "h": 58.0,
@@ -4828,6 +4902,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -4855,10 +4936,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "e1252ed44d160859a30e682e2805f2d61f0ea447e47844581a4996d3159c4d29",
-      "calculated_signature": "e1252ed44d160859a30e682e2805f2d61f0ea447e47844581a4996d3159c4d29",
+      "authored_signature": "d33dc4a4e2a899685edbc9ea10219256df1104083c397f9ec41de398c5fe13cb",
+      "calculated_signature": "d33dc4a4e2a899685edbc9ea10219256df1104083c397f9ec41de398c5fe13cb",
       "nearest_id": "delta_queen_wedding_charter",
-      "nearest_similarity": 0.691542288557214
+      "nearest_similarity": 0.697191697191697
     },
     {
       "id": "delta_queen_wedding_charter",
@@ -5654,6 +5735,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "split",
                     "bounds": {
                       "h": 46.0,
@@ -6165,6 +6266,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -6192,10 +6300,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "4a2e47211198da49ce4624e5da23a13f845e923f332d66d47e71192909780fe0",
-      "calculated_signature": "4a2e47211198da49ce4624e5da23a13f845e923f332d66d47e71192909780fe0",
+      "authored_signature": "f33e4709e6e4cb1ac13625caaca70daa08dd1370be4203c3d1482e155a3e38e3",
+      "calculated_signature": "f33e4709e6e4cb1ac13625caaca70daa08dd1370be4203c3d1482e155a3e38e3",
       "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.691542288557214
+      "nearest_similarity": 0.697191697191697
     },
     {
       "id": "delta_queen_whale_aboard",
@@ -6971,6 +7079,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "raised",
                     "bounds": {
                       "h": 52.0,
@@ -7502,6 +7630,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -7529,10 +7664,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "c99e4a7cccb02a628b27c73e83a6a41518ce14ca07ccb49104450ba38cf77ccc",
-      "calculated_signature": "c99e4a7cccb02a628b27c73e83a6a41518ce14ca07ccb49104450ba38cf77ccc",
+      "authored_signature": "3477df94b1edf73477e576a84caf751faf922fabc6a758381cb358e000f73a47",
+      "calculated_signature": "3477df94b1edf73477e576a84caf751faf922fabc6a758381cb358e000f73a47",
       "nearest_id": "grand_casino_convention_crowd",
-      "nearest_similarity": 0.723700887198986
+      "nearest_similarity": 0.716049382716049
     },
     {
       "id": "grand_casino_audit_night",
@@ -8328,6 +8463,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "moving",
                     "bounds": {
                       "h": 58.0,
@@ -8866,6 +9021,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -8893,10 +9055,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "8b6c0b6b2713c9ac30f50d41d1cfce1427eed2da4ef399151964d79642152eae",
-      "calculated_signature": "8b6c0b6b2713c9ac30f50d41d1cfce1427eed2da4ef399151964d79642152eae",
+      "authored_signature": "36fd248daf26186ed4bd6eef706159c9d1c88bfa790398f81748d836f849f3bf",
+      "calculated_signature": "36fd248daf26186ed4bd6eef706159c9d1c88bfa790398f81748d836f849f3bf",
       "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.674786845310597
+      "nearest_similarity": 0.680622009569378
     },
     {
       "id": "grand_casino_convention_crowd",
@@ -9712,6 +9874,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "split",
                     "bounds": {
                       "h": 52.0,
@@ -10203,6 +10385,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -10230,10 +10419,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "d0afd5a7e66e5a9bcc0b6ec290288e52146479ee3adbaa7a5708138324a34e46",
-      "calculated_signature": "d0afd5a7e66e5a9bcc0b6ec290288e52146479ee3adbaa7a5708138324a34e46",
+      "authored_signature": "a2883536a6596838e0f11dd5fd488afbcbae0d08b82037a3e57f739a05f23289",
+      "calculated_signature": "a2883536a6596838e0f11dd5fd488afbcbae0d08b82037a3e57f739a05f23289",
       "nearest_id": "delta_queen_whale_aboard",
-      "nearest_similarity": 0.723700887198986
+      "nearest_similarity": 0.716049382716049
     },
     {
       "id": "grand_casino_gala_night",
@@ -11049,6 +11238,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "stalled",
                     "bounds": {
                       "h": 58.0,
@@ -11540,6 +11749,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -11567,17 +11783,17 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "07e24e030cfe3a27685b40ef6a7255512be6c85be87d6166e93acd700fd637a5",
-      "calculated_signature": "07e24e030cfe3a27685b40ef6a7255512be6c85be87d6166e93acd700fd637a5",
+      "authored_signature": "4e06aa39e968fc9b47dc363c198f58629287b3cc1e717b31bb4e1763a09e7901",
+      "calculated_signature": "4e06aa39e968fc9b47dc363c198f58629287b3cc1e717b31bb4e1763a09e7901",
       "nearest_id": "grand_casino_convention_crowd",
-      "nearest_similarity": 0.708542713567839
+      "nearest_similarity": 0.713933415536375
     }
   ],
   "pairwise_similarity": [
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.374764595103578,
+      "similarity": 0.368227731864096,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11589,7 +11805,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.377502383222116,
+      "similarity": 0.370817843866171,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11601,7 +11817,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.367076631977294,
+      "similarity": 0.36070110701107,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11613,7 +11829,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.666666666666667,
+      "similarity": 0.661392405063291,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -11625,7 +11841,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.355698529411765,
+      "similarity": 0.349775784753363,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11637,7 +11853,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.358139534883721,
+      "similarity": 0.352087114337568,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11649,7 +11865,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.353104726598703,
+      "similarity": 0.347197106690778,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11661,7 +11877,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.372269705603039,
+      "similarity": 0.365740740740741,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11673,7 +11889,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.348107109879963,
+      "similarity": 0.342342342342342,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11685,7 +11901,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.674786845310597,
+      "similarity": 0.680622009569378,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -11697,7 +11913,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.502762430939227,
+      "similarity": 0.494623655913979,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11709,7 +11925,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.487964989059081,
+      "similarity": 0.485042735042735,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11721,7 +11937,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.360640301318267,
+      "similarity": 0.3544536271809,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11733,7 +11949,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.356877323420074,
+      "similarity": 0.350861287398005,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11745,7 +11961,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.691542288557214,
+      "similarity": 0.697191697191697,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -11757,7 +11973,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_whale_aboard",
-      "similarity": 0.489594742606791,
+      "similarity": 0.485042735042735,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11769,7 +11985,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.658624849215923,
+      "similarity": 0.664691943127962,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -11781,7 +11997,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.487964989059081,
+      "similarity": 0.483457844183565,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11793,7 +12009,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.48471615720524,
+      "similarity": 0.480298189563365,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11805,7 +12021,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.377502383222116,
+      "similarity": 0.370817843866171,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11817,7 +12033,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.358139534883721,
+      "similarity": 0.352087114337568,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11829,7 +12045,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.492864983534577,
+      "similarity": 0.489817792068596,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11841,7 +12057,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.472162740899358,
+      "similarity": 0.469665271966527,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11853,10 +12069,10 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.723700887198986,
+      "similarity": 0.716049382716049,
       "equal_normalized_hash": false,
-      "status": "blocking_review",
-      "blocking": true,
+      "status": "warning",
+      "blocking": false,
       "masked_visual_evidence": {
 
       },
@@ -11865,7 +12081,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.704260651629073,
+      "similarity": 0.697191697191697,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -11877,7 +12093,7 @@
     {
       "left_id": "grand_casino_convention_crowd",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.480086114101184,
+      "similarity": 0.471204188481675,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11889,7 +12105,7 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.469017094017094,
+      "similarity": 0.466597077244259,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11901,7 +12117,7 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.708542713567839,
+      "similarity": 0.713933415536375,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -11920,13 +12136,13 @@
     "scenario grand_casino_gala_night is invalid: [\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario grand_casino_convention_crowd is invalid: [\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.692 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_wedding_charter vs grand_casino_audit_night: 0.659 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_whale_aboard vs grand_casino_gala_night: 0.704 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_whale_aboard vs grand_casino_convention_crowd: 0.724 (blocking_review).",
-    "scenario delta_queen_fog_delay vs grand_casino_audit_night: 0.675 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_engine_trouble vs delta_queen_captains_invitational: 0.667 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario grand_casino_gala_night vs grand_casino_convention_crowd: 0.709 (warning). Missing receipt-bound masked visual evidence."
+    "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.697 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_wedding_charter vs grand_casino_audit_night: 0.665 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_whale_aboard vs grand_casino_gala_night: 0.697 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_whale_aboard vs grand_casino_convention_crowd: 0.716 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_fog_delay vs grand_casino_audit_night: 0.681 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_engine_trouble vs delta_queen_captains_invitational: 0.661 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario grand_casino_gala_night vs grand_casino_convention_crowd: 0.714 (warning). Missing receipt-bound masked visual evidence."
   ],
   "pair_count": 28
 }

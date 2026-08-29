@@ -1208,7 +1208,7 @@
           },
           "refused": {
             "label": "Delivery refused",
-            "revisit_feedback": "A sealed pallet remains under Ada's watch; the cashier tip is disabled and the pawn-shop route is closed.",
+            "revisit_feedback": "A sealed pallet remains under Ada's watch; the cashier tip is disabled and the bar route is closed.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -1268,16 +1268,16 @@
               {
                 "family": "route_ops",
                 "op": "close",
-                "receipt_id": "aftermath_refused_pawn_route",
+                "receipt_id": "aftermath_refused_bar_route",
                 "owner_namespace": "base",
-                "stable_object_id": "world:pawn_shop",
-                "disabled_reason": "The return pickup occupies the pawn-shop route."
+                "stable_object_id": "world:bar",
+                "disabled_reason": "The return pickup occupies the bar route."
               }
             ]
           },
           "interrupted": {
             "label": "Delivery interrupted",
-            "revisit_feedback": "An abandoned manifest remains after Priya departs; the cashier tip stays enabled and the gas-station casino route is closed.",
+            "revisit_feedback": "An abandoned manifest remains after Priya departs; the cashier tip stays enabled and the bar route is closed.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -1320,10 +1320,10 @@
               {
                 "family": "route_ops",
                 "op": "close",
-                "receipt_id": "aftermath_interrupted_casino_route",
+                "receipt_id": "aftermath_interrupted_bar_route",
                 "owner_namespace": "base",
-                "stable_object_id": "world:gas_station_casino",
-                "disabled_reason": "The interrupted unloading closes the casino route for this visit."
+                "stable_object_id": "world:bar",
+                "disabled_reason": "The interrupted unloading closes the bar route for this visit."
               }
             ]
           }
@@ -1338,7 +1338,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "4d65a114025abafb43cd54b5d0d3c3dc8c5058d671a50b9b2dfcf8b1f1aa2a9b",
+        "sequence_signature": "ae80c61659bbfe202b095595de7fc44392f47b9fee9526e83231e4ab7b96cb8a",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1349,9 +1349,7 @@
           "services": [],
           "games": [],
           "routes": [
-            "base::world:bar",
-            "base::world:gas_station_casino",
-            "base::world:pawn_shop"
+            "base::world:bar"
           ],
           "anchors": [
             "base::anchor:delivery_clerk",
@@ -1929,6 +1927,13 @@
               "stable_object_id": "number_board"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "corner_store_lotto_fever_cleanup_exit_visual",
+              "stable_object_id": "corner_store_lotto_fever_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -2301,6 +2306,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_arrival_b",
                   "stable_object_id": "number_board"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Marked Clear Exit",
+                    "role": "exit",
+                    "state": "clear",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_lotto_fever_exit_visual",
+                  "stable_object_id": "corner_store_lotto_fever_exit"
                 }
               ],
               "transition_ops": [
@@ -2547,7 +2572,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b77a89e5e70b29be26a60039c3c6064708eeca5941880a7e44d13255268a843f"
+        "sequence_signature": "276dd9f6eb157f5c6b9f2a6756b7ce89427450bd9744710b3a1b6e21775e9879"
       }
     },
     {
@@ -2882,6 +2907,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_aftermath_cleanup_b",
               "stable_object_id": "suspect_object"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "corner_store_aftermath_cleanup_exit_visual",
+              "stable_object_id": "corner_store_aftermath_exit"
             },
             {
               "family": "interaction_ops",
@@ -3254,6 +3286,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_arrival_b",
                   "stable_object_id": "suspect_object"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Marked Clear Exit",
+                    "role": "exit",
+                    "state": "clear",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_aftermath_exit_visual",
+                  "stable_object_id": "corner_store_aftermath_exit"
                 }
               ],
               "transition_ops": [
@@ -3500,7 +3552,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f0f6b7456306b9ef0440081c4cec56dff70f3b39c775c0d73837f3bb14da5697"
+        "sequence_signature": "0b785a89646840a05382cab405044c7089888aa187b8208a89539276d3ed7420"
       }
     },
     {
@@ -3835,6 +3887,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_dead_shift_cleanup_b",
               "stable_object_id": "cooler_circuit"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "corner_store_dead_shift_cleanup_exit_visual",
+              "stable_object_id": "corner_store_dead_shift_exit"
             },
             {
               "family": "interaction_ops",
@@ -4183,7 +4242,7 @@
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "left"
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -4209,6 +4268,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_arrival_b",
                   "stable_object_id": "cooler_circuit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Marked Clear Exit",
+                    "role": "exit",
+                    "state": "clear",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_dead_shift_exit_visual",
+                  "stable_object_id": "corner_store_dead_shift_exit"
                 }
               ],
               "transition_ops": [
@@ -4455,7 +4534,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "54df9422c239d8577b7eb5f8b55d721d4ff30325095dded6bbec68e27671bfa0"
+        "sequence_signature": "e34d9bc2dbde9aa9ed330cd42ab7889106f5307bdf3959fa69361f68ed5ffb65"
       }
     },
     {
@@ -4792,6 +4871,13 @@
               "stable_object_id": "discrepancy_shelf"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "corner_store_inventory_night_cleanup_exit_visual",
+              "stable_object_id": "corner_store_inventory_night_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -4835,7 +4921,9 @@
         },
         "declared_targets": {
           "actors": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:delivery_manifest"
+          ],
           "games": [],
           "interactions": [],
           "routes": [],
@@ -5128,6 +5216,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "delivery_manifest",
                     "appearance": "count_cage",
                     "bounds": {
                       "h": 56.0,
@@ -5164,6 +5253,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_arrival_b",
                   "stable_object_id": "discrepancy_shelf"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Marked Clear Exit",
+                    "role": "exit",
+                    "state": "clear",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_inventory_night_exit_visual",
+                  "stable_object_id": "corner_store_inventory_night_exit"
                 }
               ],
               "transition_ops": [
@@ -5410,7 +5519,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d6100f9379c242e203bf3234450c152c58c00c5cc08ae31de356941b622b1f7d"
+        "sequence_signature": "a4ada3bddfb56673a1551faff8c86006df734bb2fde70506a2c10acb2c581389"
       }
     },
     {
@@ -5747,6 +5856,13 @@
               "stable_object_id": "lookout_marker"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "back_alley_street_craps_cleanup_exit_visual",
+              "stable_object_id": "back_alley_street_craps_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -5913,7 +6029,6 @@
                     "behavior": "work",
                     "label": "Street Shooter",
                     "pose": "observing",
-                    "route_id": "alley_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -6122,6 +6237,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_arrival_b",
                   "stable_object_id": "lookout_marker"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Marked Clear Exit",
+                    "role": "exit",
+                    "state": "clear",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_street_craps_exit_visual",
+                  "stable_object_id": "back_alley_street_craps_exit"
                 }
               ],
               "transition_ops": [
@@ -6368,7 +6503,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a8f1d66ead872dc5de0c0895d45056e867e987836867e2f14347db4105246b41"
+        "sequence_signature": "d563055bd9c4c94ca9386b6a92fe624777fc0aa9370a7ee2f7c55126eefd9111"
       }
     },
     {
@@ -6705,6 +6840,13 @@
               "stable_object_id": "stacked_cover"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "back_alley_cruiser_parked_cleanup_exit_visual",
+              "stable_object_id": "back_alley_cruiser_parked_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -6867,7 +7009,6 @@
                     "behavior": "work",
                     "label": "Patrol Officer",
                     "pose": "observing",
-                    "route_id": "alley_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -7076,6 +7217,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_arrival_b",
                   "stable_object_id": "stacked_cover"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Marked Clear Exit",
+                    "role": "exit",
+                    "state": "clear",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_cruiser_parked_exit_visual",
+                  "stable_object_id": "back_alley_cruiser_parked_exit"
                 }
               ],
               "transition_ops": [
@@ -7322,7 +7483,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "239191a6721a70a6cf3bf4945ae194d8fb42871d9dddf1e8847f3dd0f7f938dc"
+        "sequence_signature": "25606cdd46fa10edbf6f22fbf6c5e937fd3674e85f4c976c835d1419a84a1e39"
       }
     },
     {
@@ -8641,6 +8802,13 @@
               "stable_object_id": "shutter_gap"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "back_alley_nothing_moving_cleanup_exit_visual",
+              "stable_object_id": "back_alley_nothing_moving_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -8803,7 +8971,6 @@
                     "behavior": "work",
                     "label": "Returning Regular",
                     "pose": "observing",
-                    "route_id": "alley_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -9012,6 +9179,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_arrival_b",
                   "stable_object_id": "shutter_gap"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Marked Clear Exit",
+                    "role": "exit",
+                    "state": "clear",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_nothing_moving_exit_visual",
+                  "stable_object_id": "back_alley_nothing_moving_exit"
                 }
               ],
               "transition_ops": [
@@ -9258,7 +9445,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "612f79b62c8459a5180f45daeeb962468610c9c0864e0f57b8903f569ac72865"
+        "sequence_signature": "1eab2f98bdab7665357df9e484a95d3376a3058460d0c673b94317a4f3a8673c"
       }
     },
     {
@@ -9593,6 +9780,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_estate_lot_day_cleanup_b",
               "stable_object_id": "provenance_marks"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "pawn_shop_estate_lot_day_cleanup_exit_visual",
+              "stable_object_id": "pawn_shop_estate_lot_day_exit"
             },
             {
               "family": "interaction_ops",
@@ -9968,6 +10162,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_arrival_b",
                   "stable_object_id": "provenance_marks"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Marked Clear Exit",
+                    "role": "exit",
+                    "state": "clear",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_estate_lot_day_exit_visual",
+                  "stable_object_id": "pawn_shop_estate_lot_day_exit"
                 }
               ],
               "transition_ops": [
@@ -10214,7 +10428,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "363a182a6c982ef545c6de8c7aa843f8fac435be04e5755d4766a99cf37f101c"
+        "sequence_signature": "f7ba40062e2ced18600d253d6476ba3eeee298b747d0754f4408ff69bda48c32"
       }
     },
     {
@@ -10549,6 +10763,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_serial_check_day_cleanup_b",
               "stable_object_id": "hold_object"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "pawn_shop_serial_check_day_cleanup_exit_visual",
+              "stable_object_id": "pawn_shop_serial_check_day_exit"
             },
             {
               "family": "interaction_ops",
@@ -10922,6 +11143,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_arrival_b",
                   "stable_object_id": "hold_object"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Marked Clear Exit",
+                    "role": "exit",
+                    "state": "clear",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_serial_check_day_exit_visual",
+                  "stable_object_id": "pawn_shop_serial_check_day_exit"
                 }
               ],
               "transition_ops": [
@@ -11168,7 +11409,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ad61dbfb99b2ac336395fdbc724d6f17dff5c834c87538331b22ddfbab48f67e"
+        "sequence_signature": "a06c06b523c99f0f77dc671980d32371f6245813227bd7a666e65177a56ec001"
       }
     },
     {
@@ -11503,6 +11744,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_sals_mood_cleanup_b",
               "stable_object_id": "private_appraisal"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "pawn_shop_sals_mood_cleanup_exit_visual",
+              "stable_object_id": "pawn_shop_sals_mood_exit"
             },
             {
               "family": "interaction_ops",
@@ -11878,6 +12126,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_arrival_b",
                   "stable_object_id": "private_appraisal"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Marked Clear Exit",
+                    "role": "exit",
+                    "state": "clear",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_sals_mood_exit_visual",
+                  "stable_object_id": "pawn_shop_sals_mood_exit"
                 }
               ],
               "transition_ops": [
@@ -12124,7 +12392,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "54b4d6ec61c06745858b7711100df65109c2f9f84ea363b606f44d5010a0d05b"
+        "sequence_signature": "5e221d440296ac912b79df26494c83e84bcb89f71343751810b1c64900ff60bd"
       }
     }
   ]

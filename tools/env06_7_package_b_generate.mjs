@@ -218,6 +218,12 @@ function spawnScene(spec, row, index) {
     object: {label, role, zone_id: zone, bounds: {w: 48 + (index % 3) * 12, h: 44 + (index % 2) * 12}, visible: true, enabled: true, state: "arrival", appearance: `${id}_arrival`}};
 }
 
+function spawnExitScene(spec) {
+  const exitId = `${spec.id}_safe_exit`;
+  return {family: "scene_ops", op: "spawn", receipt_id: `arrival_${spec.id}_exit_visual`, owner_namespace: "scenario", stable_object_id: exitId,
+    object: {label: "Marked safe exit", role: "exit", zone_id: "exit_lane", bounds: {w: 56, h: 56}, visible: true, enabled: true, state: "clear", appearance: "marked_lane"}};
+}
+
 function spawnActor(spec, row, index) {
   const [id, label, actorId, behavior, zone] = row;
   return {family: "actor_ops", op: "spawn", receipt_id: `arrival_${spec.id}_${id}`, owner_namespace: "scenario", stable_object_id: `${spec.id}_${id}`,
@@ -232,7 +238,7 @@ function buildScenario(spec, scenarioIndex) {
   phases.push({
     id: "arrival", label: "Arrival tableau", arrival_feedback: spec.arrival, exit_prompt: spec.exit,
     entry_conditions: [{type: "always"}], objective_ids: [objectiveId], advance_after_actions: 0,
-    scene_ops: spec.props.map((row, i) => spawnScene(spec, row, i)),
+    scene_ops: [...spec.props.map((row, i) => spawnScene(spec, row, i)), spawnExitScene(spec)],
     interaction_ops: [
       interactionOp(`arrival_${spec.id}_exit`, exitId, "Marked safe exit", [action(`${spec.id}_leave_safe`, "Leave by the safe route", 5)], true),
       interactionOp(`arrival_${spec.id}_${firstVerb}`, `${spec.id}_station_0`, spec.beats[0][1], [action(firstVerb, spec.beats[0][1], 0, "complete_objective_step", {objective_id: objectiveId, step_id: firstVerb})])
@@ -290,6 +296,7 @@ function buildScenario(spec, scenarioIndex) {
   const cleanup = [];
   for (const row of spec.props) cleanup.push(sceneOp("remove", `cleanup_${spec.id}_${row[0]}`, `${spec.id}_${row[0]}`));
   for (const row of spec.actors) cleanup.push({family: "actor_ops", op: "despawn", receipt_id: `cleanup_${spec.id}_${row[0]}`, owner_namespace: "scenario", stable_object_id: `${spec.id}_${row[0]}`});
+  cleanup.push(sceneOp("remove", `cleanup_${spec.id}_exit_visual`, exitId));
   cleanup.push({family: "interaction_ops", op: "remove", receipt_id: `cleanup_${spec.id}_exit`, owner_namespace: "scenario", stable_object_id: exitId});
   cleanup.push({family: "interaction_ops", op: "remove", receipt_id: `cleanup_${spec.id}_decision_station`, owner_namespace: "scenario", stable_object_id: `${spec.id}_decision_station`});
 

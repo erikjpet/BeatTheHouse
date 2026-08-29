@@ -52,7 +52,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "efd3fde80f5c72667d59aca5fb1c9f38d0c05a29170b4b305659b42dd0cca27e",
+      "sequence_signature": "30e422b2338cdca51e314fe49b4b0a030f9c140fd0917dfa3d366da3d9d80689",
       "capture_ids": [
         "bar_wake_arrival",
         "bar_wake_partial",
@@ -122,7 +122,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "1781feb9de6edfd5c396609a5c929b18948f20a29080fcecd6889ebb1e8d2fd7",
+      "sequence_signature": "912a89ffd99c84f732b0e95b1c874bb69879695c8815cf98a0b0c9d0078f33eb",
       "capture_ids": [
         "bar_fight_night_arrival",
         "bar_fight_night_partial",
@@ -186,7 +186,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "5edaedf7baf6874d3d75485acc263900a8fe6c7051045300047ad3dd5e37296c",
+      "sequence_signature": "53957a30a6cce9ad5b87b0433991f92a6087f048766d0a27e466ca4b9c024a39",
       "capture_ids": [
         "bar_payday_rush_arrival",
         "bar_payday_rush_partial",
@@ -254,7 +254,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "e37402a2bb236b1799a2c645bb07dc553a960144bb36572d3d2cfc1e3a91cf52",
+      "sequence_signature": "68afdf57f5a3e7ad336204f9e2cf3118ef59b9dd835a977fe01c03f5326ddb2c",
       "capture_ids": [
         "bar_lock_in_arrival",
         "bar_lock_in_partial",
@@ -324,7 +324,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "12fe03480b943014089d7c8a67d6faf1b8cbd4ddc06b25a849d1219802355bb4",
+      "sequence_signature": "189746ee3fddf4584caf398522d6ef72e20a60e48ffe73d12327341bd5882879",
       "capture_ids": [
         "bar_darts_league_night_arrival",
         "bar_darts_league_night_partial",
@@ -392,7 +392,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "ded8bf97d43afdd8cb966ce3a59b475cb3acf43b9edc34c8af32c65aa1580ded",
+      "sequence_signature": "5007bd516bc56fae1ede69ef82923a733f4c4bbd578ca4ee641bf8db1f863495",
       "capture_ids": [
         "bar_live_band_arrival",
         "bar_live_band_partial",
@@ -453,7 +453,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "5ffd86654645e77d09a5135fb17475cb1986553262655f992aa3a91d71be38e1",
+      "sequence_signature": "692eab7cbf64a13b1788078f88bc3746ea18136b8b49ad1ab16011530fac2b37",
       "capture_ids": [
         "bar_dead_tuesday_arrival",
         "bar_dead_tuesday_partial",
@@ -523,7 +523,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "c25582c4c11b8338518c2552e9d28bd1143b4fdee6aaee423c48e97a460bd2b5",
+      "sequence_signature": "2ff190b3aa64c4fc78c0636ba549d1e145ce90450a610e1b7a9ee81a42f85d1b",
       "capture_ids": [
         "jazz_club_guest_legend_arrival",
         "jazz_club_guest_legend_partial",
@@ -589,7 +589,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "44116c71aa99260efb08605ecaf1caced33a2bf93841057926ff2e5493856098",
+      "sequence_signature": "53474a07f956aa6f0a8c01a26588c3ba771677df18cebfa1a0df5f69d771637b",
       "capture_ids": [
         "jazz_club_rent_party_arrival",
         "jazz_club_rent_party_partial",
@@ -653,7 +653,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "8494f605926de99104cceec781ce8241a8710f6ccf2db8a8f385c8c70d149105",
+      "sequence_signature": "c9dd18503c959449c62aac81780e5d8faa00e17f42236d630509b0ab22eb10c6",
       "capture_ids": [
         "jazz_club_recording_night_arrival",
         "jazz_club_recording_night_partial",
@@ -719,7 +719,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "20f4b11216f571ed1312fd9df2467caeac0e4c6ec300280c4c87d7349ad526ca",
+      "sequence_signature": "047486e27e7483d754c918485d5f6cbb1b0f8513bdbd9035fe36c8a5e4982773",
       "capture_ids": [
         "jazz_club_union_trouble_arrival",
         "jazz_club_union_trouble_partial",
@@ -1679,6 +1679,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "open",
                     "bounds": {
                       "h": 52.0,
@@ -2195,6 +2215,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -2222,10 +2249,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "12fe03480b943014089d7c8a67d6faf1b8cbd4ddc06b25a849d1219802355bb4",
-      "calculated_signature": "12fe03480b943014089d7c8a67d6faf1b8cbd4ddc06b25a849d1219802355bb4",
+      "authored_signature": "189746ee3fddf4584caf398522d6ef72e20a60e48ffe73d12327341bd5882879",
+      "calculated_signature": "189746ee3fddf4584caf398522d6ef72e20a60e48ffe73d12327341bd5882879",
       "nearest_id": "bar_fight_night",
-      "nearest_similarity": 0.547987616099071
+      "nearest_similarity": 0.554878048780488
     },
     {
       "id": "bar_dead_tuesday",
@@ -2584,6 +2611,26 @@
                     "state": "available",
                     "visible": true,
                     "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3000,6 +3047,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -3027,10 +3081,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "5ffd86654645e77d09a5135fb17475cb1986553262655f992aa3a91d71be38e1",
-      "calculated_signature": "5ffd86654645e77d09a5135fb17475cb1986553262655f992aa3a91d71be38e1",
+      "authored_signature": "692eab7cbf64a13b1788078f88bc3746ea18136b8b49ad1ab16011530fac2b37",
+      "calculated_signature": "692eab7cbf64a13b1788078f88bc3746ea18136b8b49ad1ab16011530fac2b37",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.324242424242424
+      "nearest_similarity": 0.315866084425036
     },
     {
       "id": "bar_fight_night",
@@ -3975,6 +4029,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "narrow",
                     "bounds": {
                       "h": 58.0,
@@ -4491,6 +4565,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -4518,10 +4599,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "1781feb9de6edfd5c396609a5c929b18948f20a29080fcecd6889ebb1e8d2fd7",
-      "calculated_signature": "1781feb9de6edfd5c396609a5c929b18948f20a29080fcecd6889ebb1e8d2fd7",
+      "authored_signature": "912a89ffd99c84f732b0e95b1c874bb69879695c8815cf98a0b0c9d0078f33eb",
+      "calculated_signature": "912a89ffd99c84f732b0e95b1c874bb69879695c8815cf98a0b0c9d0078f33eb",
       "nearest_id": "bar_darts_league_night",
-      "nearest_similarity": 0.547987616099071
+      "nearest_similarity": 0.554878048780488
     },
     {
       "id": "bar_live_band",
@@ -5317,6 +5398,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "soundcheck",
                     "bounds": {
                       "h": 58.0,
@@ -5809,6 +5910,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -5836,10 +5944,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "ded8bf97d43afdd8cb966ce3a59b475cb3acf43b9edc34c8af32c65aa1580ded",
-      "calculated_signature": "ded8bf97d43afdd8cb966ce3a59b475cb3acf43b9edc34c8af32c65aa1580ded",
+      "authored_signature": "5007bd516bc56fae1ede69ef82923a733f4c4bbd578ca4ee641bf8db1f863495",
+      "calculated_signature": "5007bd516bc56fae1ede69ef82923a733f4c4bbd578ca4ee641bf8db1f863495",
       "nearest_id": "bar_lock_in",
-      "nearest_similarity": 0.669191919191919
+      "nearest_similarity": 0.675340768277571
     },
     {
       "id": "bar_lock_in",
@@ -6635,6 +6743,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "ready",
                     "bounds": {
                       "h": 58.0,
@@ -7127,6 +7255,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -7154,10 +7289,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "e37402a2bb236b1799a2c645bb07dc553a960144bb36572d3d2cfc1e3a91cf52",
-      "calculated_signature": "e37402a2bb236b1799a2c645bb07dc553a960144bb36572d3d2cfc1e3a91cf52",
+      "authored_signature": "68afdf57f5a3e7ad336204f9e2cf3118ef59b9dd835a977fe01c03f5326ddb2c",
+      "calculated_signature": "68afdf57f5a3e7ad336204f9e2cf3118ef59b9dd835a977fe01c03f5326ddb2c",
       "nearest_id": "bar_live_band",
-      "nearest_similarity": 0.669191919191919
+      "nearest_similarity": 0.675340768277571
     },
     {
       "id": "bar_payday_rush",
@@ -7661,6 +7796,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "queued",
                     "bounds": {
                       "h": 46.0,
@@ -8105,6 +8260,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -8132,10 +8294,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "5edaedf7baf6874d3d75485acc263900a8fe6c7051045300047ad3dd5e37296c",
-      "calculated_signature": "5edaedf7baf6874d3d75485acc263900a8fe6c7051045300047ad3dd5e37296c",
-      "nearest_id": "jazz_club_recording_night",
-      "nearest_similarity": 0.621890547263682
+      "authored_signature": "53957a30a6cce9ad5b87b0433991f92a6087f048766d0a27e466ca4b9c024a39",
+      "calculated_signature": "53957a30a6cce9ad5b87b0433991f92a6087f048766d0a27e466ca4b9c024a39",
+      "nearest_id": "bar_wake",
+      "nearest_similarity": 0.612012987012987
     },
     {
       "id": "bar_wake",
@@ -8639,6 +8801,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "sealed",
                     "bounds": {
                       "h": 52.0,
@@ -9056,6 +9238,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -9083,10 +9272,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "efd3fde80f5c72667d59aca5fb1c9f38d0c05a29170b4b305659b42dd0cca27e",
-      "calculated_signature": "efd3fde80f5c72667d59aca5fb1c9f38d0c05a29170b4b305659b42dd0cca27e",
+      "authored_signature": "30e422b2338cdca51e314fe49b4b0a030f9c140fd0917dfa3d366da3d9d80689",
+      "calculated_signature": "30e422b2338cdca51e314fe49b4b0a030f9c140fd0917dfa3d366da3d9d80689",
       "nearest_id": "jazz_club_recording_night",
-      "nearest_similarity": 0.677700348432056
+      "nearest_similarity": 0.666107382550336
     },
     {
       "id": "jazz_club_guest_legend",
@@ -10031,6 +10220,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "reserved",
                     "bounds": {
                       "h": 46.0,
@@ -10547,6 +10756,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -10574,10 +10790,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "c25582c4c11b8338518c2552e9d28bd1143b4fdee6aaee423c48e97a460bd2b5",
-      "calculated_signature": "c25582c4c11b8338518c2552e9d28bd1143b4fdee6aaee423c48e97a460bd2b5",
+      "authored_signature": "2ff190b3aa64c4fc78c0636ba549d1e145ce90450a610e1b7a9ee81a42f85d1b",
+      "calculated_signature": "2ff190b3aa64c4fc78c0636ba549d1e145ce90450a610e1b7a9ee81a42f85d1b",
       "nearest_id": "bar_darts_league_night",
-      "nearest_similarity": 0.533742331288344
+      "nearest_similarity": 0.540785498489426
     },
     {
       "id": "jazz_club_recording_night",
@@ -11101,6 +11317,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "ready",
                     "bounds": {
                       "h": 58.0,
@@ -11525,6 +11761,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -11552,10 +11795,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "8494f605926de99104cceec781ce8241a8710f6ccf2db8a8f385c8c70d149105",
-      "calculated_signature": "8494f605926de99104cceec781ce8241a8710f6ccf2db8a8f385c8c70d149105",
+      "authored_signature": "c9dd18503c959449c62aac81780e5d8faa00e17f42236d630509b0ab22eb10c6",
+      "calculated_signature": "c9dd18503c959449c62aac81780e5d8faa00e17f42236d630509b0ab22eb10c6",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.677700348432056
+      "nearest_similarity": 0.666107382550336
     },
     {
       "id": "jazz_club_rent_party",
@@ -12186,6 +12429,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "open",
                     "bounds": {
                       "h": 46.0,
@@ -12674,6 +12937,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -12701,10 +12971,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "44116c71aa99260efb08605ecaf1caced33a2bf93841057926ff2e5493856098",
-      "calculated_signature": "44116c71aa99260efb08605ecaf1caced33a2bf93841057926ff2e5493856098",
+      "authored_signature": "53474a07f956aa6f0a8c01a26588c3ba771677df18cebfa1a0df5f69d771637b",
+      "calculated_signature": "53474a07f956aa6f0a8c01a26588c3ba771677df18cebfa1a0df5f69d771637b",
       "nearest_id": "bar_lock_in",
-      "nearest_similarity": 0.479665071770335
+      "nearest_similarity": 0.468134414831981
     },
     {
       "id": "jazz_club_union_trouble",
@@ -13375,6 +13645,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "stopped",
                     "bounds": {
                       "h": 58.0,
@@ -13823,6 +14113,13 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -13850,17 +14147,17 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "20f4b11216f571ed1312fd9df2467caeac0e4c6ec300280c4c87d7349ad526ca",
-      "calculated_signature": "20f4b11216f571ed1312fd9df2467caeac0e4c6ec300280c4c87d7349ad526ca",
-      "nearest_id": "bar_wake",
-      "nearest_similarity": 0.456310679611651
+      "authored_signature": "047486e27e7483d754c918485d5f6cbb1b0f8513bdbd9035fe36c8a5e4982773",
+      "calculated_signature": "047486e27e7483d754c918485d5f6cbb1b0f8513bdbd9035fe36c8a5e4982773",
+      "nearest_id": "jazz_club_rent_party",
+      "nearest_similarity": 0.446756425948592
     }
   ],
   "pairwise_similarity": [
     {
       "left_id": "bar_darts_league_night",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.200417536534447,
+      "similarity": 0.196754563894523,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13872,7 +14169,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "bar_live_band",
-      "similarity": 0.363285024154589,
+      "similarity": 0.356873822975518,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13884,7 +14181,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.533742331288344,
+      "similarity": 0.540785498489426,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13896,7 +14193,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.24024024024024,
+      "similarity": 0.235637779941577,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13908,7 +14205,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.310276679841897,
+      "similarity": 0.303846153846154,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13920,7 +14217,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.276227141482194,
+      "similarity": 0.270852858481724,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13932,7 +14229,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.195426195426195,
+      "similarity": 0.191919191919192,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13944,7 +14241,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.317037037037037,
+      "similarity": 0.309116809116809,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13956,7 +14253,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.216957605985037,
+      "similarity": 0.212048192771084,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13968,7 +14265,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.267532467532468,
+      "similarity": 0.260651629072682,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13980,7 +14277,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.547987616099071,
+      "similarity": 0.554878048780488,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13992,7 +14289,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.162790697674419,
+      "similarity": 0.160275319567355,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14004,7 +14301,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_live_band",
-      "similarity": 0.488396624472574,
+      "similarity": 0.477948717948718,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14016,7 +14313,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_lock_in",
-      "similarity": 0.505869797225187,
+      "similarity": 0.494813278008299,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14028,7 +14325,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_payday_rush",
-      "similarity": 0.224308300395257,
+      "similarity": 0.220192307692308,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14040,7 +14337,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.497005988023952,
+      "similarity": 0.504424778761062,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14052,7 +14349,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.195945945945946,
+      "similarity": 0.192669172932331,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14064,7 +14361,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.418181818181818,
+      "similarity": 0.40809968847352,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14076,7 +14373,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.265267175572519,
+      "similarity": 0.260223048327138,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14088,7 +14385,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.169790518191841,
+      "similarity": 0.166844919786096,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14100,7 +14397,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.354126679462572,
+      "similarity": 0.34798877455566,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14112,7 +14409,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.240560949298813,
+      "similarity": 0.235602094240838,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14124,7 +14421,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.45358401880141,
+      "similarity": 0.443052391799544,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14136,7 +14433,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.318763326226013,
+      "similarity": 0.312953367875648,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14148,7 +14445,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.3779296875,
+      "similarity": 0.371075166508088,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14160,7 +14457,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.186800894854586,
+      "similarity": 0.183297180043384,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14172,7 +14469,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "bar_live_band",
-      "similarity": 0.669191919191919,
+      "similarity": 0.675340768277571,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -14184,7 +14481,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.334910122989593,
+      "similarity": 0.329335793357934,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14196,7 +14493,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.223404255319149,
+      "similarity": 0.21900826446281,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14208,7 +14505,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.479665071770335,
+      "similarity": 0.468134414831981,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14220,7 +14517,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.29800629590766,
+      "similarity": 0.292857142857143,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14232,7 +14529,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.270769230769231,
+      "similarity": 0.265204386839482,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14244,7 +14541,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.317037037037037,
+      "similarity": 0.309116809116809,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14256,7 +14553,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_live_band",
-      "similarity": 0.23789020452099,
+      "similarity": 0.233019853709509,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14268,7 +14565,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_lock_in",
-      "similarity": 0.255458515283843,
+      "similarity": 0.25,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14280,7 +14577,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.290625,
+      "similarity": 0.284412955465587,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14292,7 +14589,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.621890547263682,
+      "similarity": 0.607655502392344,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -14304,7 +14601,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.29404617253949,
+      "similarity": 0.288235294117647,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14316,7 +14613,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.401315789473684,
+      "similarity": 0.39135959339263,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14328,7 +14625,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.240121580547112,
+      "similarity": 0.235467980295567,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14340,7 +14637,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.324242424242424,
+      "similarity": 0.315866084425036,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14352,7 +14649,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_fight_night",
-      "similarity": 0.1953125,
+      "similarity": 0.192015209125475,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14364,7 +14661,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_live_band",
-      "similarity": 0.240437158469945,
+      "similarity": 0.23541887592789,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14376,7 +14673,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_lock_in",
-      "similarity": 0.223060344827586,
+      "similarity": 0.218619246861925,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14388,7 +14685,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_payday_rush",
-      "similarity": 0.602329450915141,
+      "similarity": 0.612012987012987,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -14400,7 +14697,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.330434782608696,
+      "similarity": 0.322784810126582,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14412,7 +14709,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.677700348432056,
+      "similarity": 0.666107382550336,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -14424,7 +14721,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.255980861244019,
+      "similarity": 0.251448435689455,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14436,7 +14733,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.456310679611651,
+      "similarity": 0.443850267379679,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14448,7 +14745,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.329399141630901,
+      "similarity": 0.321875,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14460,7 +14757,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.267686424474187,
+      "similarity": 0.262569832402235,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14472,7 +14769,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.40169133192389,
+      "similarity": 0.392197125256674,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14484,7 +14781,7 @@
     {
       "left_id": "jazz_club_recording_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.450953678474114,
+      "similarity": 0.438896189224704,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14496,7 +14793,7 @@
     {
       "left_id": "jazz_club_rent_party",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.257378984651712,
+      "similarity": 0.252860411899314,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14508,7 +14805,7 @@
     {
       "left_id": "jazz_club_rent_party",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.443609022556391,
+      "similarity": 0.446756425948592,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14530,10 +14827,10 @@
     "scenario jazz_club_rent_party is invalid: [\"scenario jazz_club_rent_party sequence declared_targets.routes identity base::world:motel has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.anchors identity base::anchor:rent_party_donation has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.anchors identity base::anchor:rent_party_creditor has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario jazz_club_recording_night is invalid: [\"scenario jazz_club_recording_night sequence declared_targets.routes identity base::world:corner_store has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.anchors identity base::anchor:recording_microphone has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.anchors identity base::anchor:recording_audience has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario jazz_club_union_trouble is invalid: [\"scenario jazz_club_union_trouble sequence declared_targets.routes identity base::world:bar has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.anchors identity base::anchor:union_picket has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.anchors identity base::anchor:union_manager has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario bar_wake vs bar_payday_rush: 0.602 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_wake vs jazz_club_recording_night: 0.678 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_payday_rush vs jazz_club_recording_night: 0.622 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_lock_in vs bar_live_band: 0.669 (warning). Missing receipt-bound masked visual evidence."
+    "scenario bar_wake vs bar_payday_rush: 0.612 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_wake vs jazz_club_recording_night: 0.666 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_payday_rush vs jazz_club_recording_night: 0.608 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_lock_in vs bar_live_band: 0.675 (warning). Missing receipt-bound masked visual evidence."
   ],
   "pair_count": 55
 }

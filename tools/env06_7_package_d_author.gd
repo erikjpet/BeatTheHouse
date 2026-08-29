@@ -89,6 +89,8 @@ func _entry(c: Dictionary) -> Dictionary:
 		actor_ops.append(_actor_spawn(prefix, "arrival", actor_id, str(a[1]), str(a[2]), str(a[3]), str(a[4])))
 		cleanup.append(_despawn(prefix, actor_id))
 	var exit_id := "%s_safe_exit" % prefix
+	scene_ops.append(_scene_spawn(prefix, "arrival", exit_id, "Marked clean exit", "exit", "exit_lane", "marked_lane", 56, 56))
+	cleanup.append(_remove("scene_ops", prefix, exit_id))
 	var first_task_id := "%s_task_0" % prefix
 	var arrival_interactions := [
 		_interaction_add(prefix, "arrival", exit_id, "%s clean exit" % prefix.replace("_"," ").capitalize(), "Leave or refuse the %s task without crossing its active work zone." % prefix.replace("_"," "), [_action("ignore_%s" % prefix, "Ignore the sequence", "ui_down"), _action("refuse_%s" % prefix, "Refuse the task", "ui_cancel")], true),

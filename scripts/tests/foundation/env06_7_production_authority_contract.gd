@@ -4,17 +4,19 @@ const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
+const RolloutManifestScript := preload("res://scripts/core/scenario_sequence_rollout_manifest.gd")
 
 const LOCAL_ACTOR_SCENARIO_ID := "bar_fight_night"
 const PROVEN_TARGET_SCENARIO_ID := "corner_store_delivery_day"
-const LOCAL_ROUTE_SCENARIOS := {
-	"back_alley_street_craps": "alley_service_counter",
-	"back_alley_cruiser_parked": "alley_service_counter",
-	"back_alley_fence_night": "",
-	"back_alley_nothing_moving": "alley_service_counter",
-	"pawn_shop_estate_lot_day": "pawn_service_counter",
-	"pawn_shop_serial_check_day": "pawn_service_counter",
-	"pawn_shop_sals_mood": "pawn_service_counter",
+const ROUTE_FREE_WORK_MOVES := {
+	"back_alley_street_craps": "street_shooter",
+	"back_alley_cruiser_parked": "patrol_officer",
+	"back_alley_nothing_moving": "returning_regular",
+}
+const PRESERVED_ROUTE_WORK_MOVES := {
+	"pawn_shop_estate_lot_day": "estate_appraiser",
+	"pawn_shop_serial_check_day": "records_clerk",
+	"pawn_shop_sals_mood": "sal_shopkeeper",
 }
 
 
@@ -23,11 +25,13 @@ func _initialize() -> void:
 	var library := ContentLibraryScript.new()
 	library.load(false)
 	_check_scenario_local_actor_authority(library, failures)
-	_check_scenario_local_route_authority(library, failures)
+	_check_manifest_exit_authority(library, failures)
+	_check_route_free_work_moves(library, failures)
+	_check_preserved_route_work_moves(library, failures)
 	_check_fence_night_route_free_authority(library, failures)
 	_check_unproven_zone_rejection(library, failures)
 	if failures.is_empty():
-		print("ENV06_7_PRODUCTION_AUTHORITY_CONTRACT_OK local_actor=1 hostile_actor=2 local_route=6 hostile_route=6 fence_route_free=1 fence_exit=1 hostile_zone=2")
+		print("ENV06_7_PRODUCTION_AUTHORITY_CONTRACT_OK local_actor=1 hostile_actor=2 exit_authority=55 exit_cleanup=55 route_free_work_move=3 preserved_route_work_move=3 fence_route_free=1 fence_exit=1 hostile_zone=2")
 		quit(0)
 		return
 	for failure_value in failures:
@@ -92,45 +96,97 @@ static func _check_unproven_zone_rejection(library: Variant, failures: Array) ->
 			failures.append("Unproven production zone %s was not rejected." % zone_id)
 
 
-static func _check_scenario_local_route_authority(library: Variant, failures: Array) -> void:
-	for scenario_id_value in LOCAL_ROUTE_SCENARIOS.keys():
+static func _check_manifest_exit_authority(library: Variant, failures: Array) -> void:
+	var scenario_ids := RolloutManifestScript.expected_ids()
+	if scenario_ids.size() != RolloutManifestScript.EXPECTED_COUNT:
+		failures.append("Rollout manifest no longer contains the exact 55-scenario authority set.")
+		return
+	for scenario_id_value in scenario_ids:
 		var scenario_id := str(scenario_id_value)
-		var expected_route := str(LOCAL_ROUTE_SCENARIOS.get(scenario_id, ""))
 		var definition: Dictionary = library.scenario(scenario_id)
-		var operation := _first_actor_spawn(definition)
-		var actor := _dict(operation.get("actor", {}))
-		if expected_route.is_empty():
-			if not str(actor.get("route_id", "")).is_empty():
-				failures.append("Production scenario %s retained a forbidden arrival actor route." % scenario_id)
+		if definition.is_empty():
+			failures.append("Production scenario %s is missing from the manifest-backed catalog." % scenario_id)
 			continue
-		if str(actor.get("route_id", "")) != expected_route:
-			failures.append("Production scenario %s does not bind its local actor to exact canonical route %s." % [scenario_id, expected_route])
+		var catalog_errors := _array(library.scenario_target_catalog(definition).get("errors", []))
+		if not catalog_errors.is_empty():
+			failures.append("Production scenario %s lacks valid target authority: %s" % [scenario_id, JSON.stringify(catalog_errors)])
+		var sequence := _dict(definition.get("sequence", {}))
+		var cleanup := _array(_dict(sequence.get("cleanup", {})).get("operations", []))
+		var exit_ids: Array = []
+		var exit_scenes: Dictionary = {}
+		for phase_value in _array(_dict(sequence.get("phase_graph", {})).get("phases", [])):
+			var phase := _dict(phase_value)
+			for operation_value in _array(phase.get("interaction_ops", [])):
+				var operation := _dict(operation_value)
+				var interaction := _dict(operation.get("interaction", {}))
+				if str(operation.get("op", "")) == "add" and bool(interaction.get("safe_exit", false)) and bool(interaction.get("enabled", false)):
+					exit_ids.append(str(operation.get("stable_object_id", "")))
+			for operation_value in _array(phase.get("scene_ops", [])):
+				var operation := _dict(operation_value)
+				var object := _dict(operation.get("object", {}))
+				if str(operation.get("op", "")) == "spawn" \
+						and str(object.get("role", "")) == "exit" \
+						and str(object.get("zone_id", "")) == "exit_lane" \
+						and bool(object.get("visible", false)) \
+						and bool(object.get("enabled", false)):
+					exit_scenes[str(operation.get("stable_object_id", ""))] = true
+		if exit_ids.is_empty():
+			failures.append("Production scenario %s has no enabled safe-exit interaction." % scenario_id)
 			continue
-		var catalog: Dictionary = library.scenario_target_catalog(definition)
-		var catalog_errors := _array(catalog.get("errors", []))
-		var inventory := _dict(catalog.get("guaranteed", {}))
-		inventory["event_choices"] = _dict(catalog.get("event_choices", {}))
-		if not catalog_errors.is_empty() or not _array(inventory.get("anchors", [])).has("base::anchor:%s" % expected_route):
-			failures.append("Production scenario %s lacks sealed anchor proof for local route %s: %s" % [scenario_id, expected_route, JSON.stringify(catalog_errors)])
-			continue
-		var references := {
-			"archetype_ids": {str(definition.get("archetype_id", "")): true},
-			"actor_ids": {},
-			"archetype": library.environment_archetype(str(definition.get("archetype_id", ""))),
-			"scenario_semantic_inventory": _dict(catalog.get("inventory", {})),
-		}
-		var positive_errors := ScenarioEngineScript.validate_sequence_definition(definition, references, inventory)
-		if not positive_errors.is_empty():
-			failures.append("Canonical local route %s/%s did not resolve from production authority: %s" % [scenario_id, expected_route, JSON.stringify(positive_errors)])
-			continue
-		var hostile := definition.duplicate(true)
-		if not _mutate_first_actor_route(hostile, "%s_unproven_route" % scenario_id):
-			failures.append("Production scenario %s has no local actor route fixture." % scenario_id)
-			continue
-		hostile["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(hostile)
-		var hostile_errors := ScenarioEngineScript.validate_sequence_definition(hostile, references, inventory)
-		if not _contains(hostile_errors, "unresolved route") or not _contains(hostile_errors, "unknown sealed route/anchor alias"):
-			failures.append("Hostile local route alias for %s was not rejected by sealed production authority: %s" % [scenario_id, JSON.stringify(hostile_errors)])
+		for exit_id_value in exit_ids:
+			var exit_id := str(exit_id_value)
+			if exit_id.is_empty() or not exit_scenes.has(exit_id):
+				failures.append("Production scenario %s lacks same-identity exit layout authority for %s." % [scenario_id, exit_id])
+			var scene_removed := false
+			var interaction_removed := false
+			for cleanup_value in cleanup:
+				var operation := _dict(cleanup_value)
+				if str(operation.get("op", "")) != "remove" or str(operation.get("stable_object_id", "")) != exit_id:
+					continue
+				scene_removed = scene_removed or str(operation.get("family", "")) == "scene_ops"
+				interaction_removed = interaction_removed or str(operation.get("family", "")) == "interaction_ops"
+			if not scene_removed or not interaction_removed:
+				failures.append("Production scenario %s lacks symmetric exit cleanup for %s." % [scenario_id, exit_id])
+
+
+static func _check_route_free_work_moves(library: Variant, failures: Array) -> void:
+	for scenario_id_value in ROUTE_FREE_WORK_MOVES.keys():
+		var scenario_id := str(scenario_id_value)
+		var actor_id := str(ROUTE_FREE_WORK_MOVES.get(scenario_id, ""))
+		var definition: Dictionary = library.scenario(scenario_id)
+		var arrival_actor := _dict(_first_actor_spawn(definition).get("actor", {}))
+		if str(arrival_actor.get("actor_id", "")) != actor_id or not str(arrival_actor.get("route_id", "")).is_empty():
+			failures.append("Production scenario %s did not keep %s route-free at arrival." % [scenario_id, actor_id])
+		var work_move := false
+		for phase_value in _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", [])):
+			for operation_value in _array(_dict(phase_value).get("actor_ops", [])):
+				var operation := _dict(operation_value)
+				if str(operation.get("op", "")) == "set_position" \
+						and str(operation.get("stable_object_id", "")) == actor_id \
+						and str(operation.get("zone_id", "")) == "service_lane":
+					work_move = true
+		if not work_move:
+			failures.append("Production scenario %s lost the later %s move to service_lane." % [scenario_id, actor_id])
+
+
+static func _check_preserved_route_work_moves(library: Variant, failures: Array) -> void:
+	for scenario_id_value in PRESERVED_ROUTE_WORK_MOVES.keys():
+		var scenario_id := str(scenario_id_value)
+		var actor_id := str(PRESERVED_ROUTE_WORK_MOVES.get(scenario_id, ""))
+		var definition: Dictionary = library.scenario(scenario_id)
+		var arrival_actor := _dict(_first_actor_spawn(definition).get("actor", {}))
+		if str(arrival_actor.get("actor_id", "")) != actor_id or str(arrival_actor.get("route_id", "")) != "pawn_service_counter":
+			failures.append("Production scenario %s did not preserve %s on pawn_service_counter at arrival." % [scenario_id, actor_id])
+		var work_move := false
+		for phase_value in _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", [])):
+			for operation_value in _array(_dict(phase_value).get("actor_ops", [])):
+				var operation := _dict(operation_value)
+				if str(operation.get("op", "")) == "set_position" \
+						and str(operation.get("stable_object_id", "")) == actor_id \
+						and str(operation.get("zone_id", "")) == "service_lane":
+					work_move = true
+		if not work_move:
+			failures.append("Production scenario %s lost the later %s move to service_lane." % [scenario_id, actor_id])
 
 
 static func _check_fence_night_route_free_authority(library: Variant, failures: Array) -> void:
