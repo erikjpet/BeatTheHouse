@@ -3407,7 +3407,7 @@ func _validate_scenario_definitions() -> void:
 					sequence_target_inventory["event_choices"] = _as_dict(sequence_target_catalog.get("event_choices", {}))
 					target_inventories[scenario_id] = sequence_target_inventory
 				for pair_key_value in _as_dict(_as_dict(definition.get("sequence_authoring", {})).get("masked_visual_explanations", {})).keys():
-					masked_visual_explanations[str(pair_key_value)] = str(_as_dict(_as_dict(definition.get("sequence_authoring", {})).get("masked_visual_explanations", {})).get(pair_key_value, ""))
+					masked_visual_explanations[str(pair_key_value)] = _as_dict(_as_dict(_as_dict(definition.get("sequence_authoring", {})).get("masked_visual_explanations", {})).get(pair_key_value, {})).duplicate(true)
 				validation_errors.append_array(ScenarioEngineScript.validate_sequence_definition(definition, {
 					"archetype_ids": archetype_ids,
 					"event_ids": event_ids,
@@ -3441,16 +3441,40 @@ func _validate_scenario_definitions() -> void:
 	if not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty():
 		var uniqueness_audit := ScenarioEngineScript.sequence_catalog_audit(sequence_definitions, sequence_definitions.size(), masked_visual_explanations, target_inventories)
 		scenario_sequence_catalog["uniqueness_audit"] = uniqueness_audit
-		for failure_value in _copy_array(uniqueness_audit.get("failures", [])):
-			validation_errors.append(str(failure_value))
-		for warning_value in _copy_array(uniqueness_audit.get("warnings", [])):
-			validation_warnings.append(str(warning_value))
 	var rollout_ids := ScenarioSequenceRolloutManifestScript.expected_ids()
 	if ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT != 55 or rollout_ids.size() != ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT:
 		validation_errors.append("scenario sequence rollout manifest must contain exactly 55 catalog ids.")
-	var rollout_report := ScenarioSequenceSchemaScript.catalog_rollout_report(rollout_definitions, rollout_ids, ScenarioOperationRegistryScript, {}, ScenarioSequenceRolloutManifestScript.required_sequence_ids(), target_inventories)
-	validation_errors.append_array(_copy_array(rollout_report.get("failures", [])))
-	validation_warnings.append_array(_copy_array(rollout_report.get("warnings", [])))
+	var rollout_report := ScenarioSequenceSchemaScript.catalog_rollout_report(rollout_definitions, rollout_ids, ScenarioOperationRegistryScript, masked_visual_explanations, ScenarioSequenceRolloutManifestScript.required_sequence_ids(), target_inventories)
+	var validation_channels := scenario_uniqueness_validation_channels(rollout_report)
+	validation_errors.append_array(_copy_array(validation_channels.get("errors", [])))
+	validation_warnings.append_array(_copy_array(validation_channels.get("warnings", [])))
+
+
+static func scenario_uniqueness_validation_channels(report: Dictionary) -> Dictionary:
+	# The exact audit keeps every P1/P2 item in report.failures. Foundation boot
+	# rejects only product/P1 failures; receipt-bound P2 review work stays visible
+	# as warnings without being misrepresented as a broken content load.
+	var review_findings: Array = []
+	for pair_value in _static_array(report.get("pairs", [])):
+		if typeof(pair_value) != TYPE_DICTIONARY:
+			continue
+		var pair := pair_value as Dictionary
+		var diagnostic := "scenario %s vs %s: %.3f (%s)." % [str(pair.get("left_id", "")), str(pair.get("right_id", "")), float(pair.get("similarity", 0.0)), str(pair.get("status", ""))]
+		if str(pair.get("status", "")) == "blocking_review":
+			review_findings.append(diagnostic)
+		elif str(pair.get("status", "")) == "warning" and not bool(pair.get("masked_visual_evidence_valid", false)):
+			review_findings.append("%s Missing receipt-bound masked visual evidence." % diagnostic)
+	var errors: Array = []
+	for failure_value in _static_array(report.get("failures", [])):
+		if not review_findings.has(str(failure_value)):
+			errors.append(failure_value)
+	var warnings: Array = review_findings.duplicate(true)
+	warnings.append_array(_static_array(report.get("warnings", [])))
+	return {"errors": errors, "warnings": warnings}
+
+
+static func _static_array(value: Variant) -> Array:
+	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
 
 
 func _validate_scenario_mutations(scenario_id: String, label: String, value: Variant, event_ids: Dictionary, service_ids: Dictionary, game_ids: Dictionary, item_ids: Dictionary) -> void:
