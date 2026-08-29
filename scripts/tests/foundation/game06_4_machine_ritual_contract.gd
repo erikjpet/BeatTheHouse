@@ -170,6 +170,12 @@ func _check_slot_spin_and_host_ack(library) -> void:
 	substitute.start_new("GAME06-4-SUBSTITUTE")
 	var hostile: Dictionary = slot.call("_slot_handpay_acknowledgement", substitute, run_state.current_environment, {"authority": "sealed_host_slot_game_rules", "signature": "signed-looking"})
 	_check(not bool(hostile.get("ok", false)) and str(hostile.get("error_code", "")) == "unsealed_authority", "Slot accepted substituted/signed-looking hand-pay authority.")
+	var hostile_snapshot := RuntimeScript.canonical_json(run_state.to_save_snapshot())
+	var hostile_live: Dictionary = slot.call("_slot_handpay_acknowledgement", run_state, run_state.current_environment, {"authority": "sealed_host_slot_game_rules"}, true)
+	var hostile_direct_sealed: Dictionary = slot.call("_slot_sealed_handpay_acknowledgement_result", run_state, run_state.current_environment)
+	_check(not bool(hostile_live.get("ok", false)) and str(hostile_live.get("error_code", "")) == "unsealed_authority", "Slot accepted a cached live RunState plus caller-authored proposal flag.")
+	_check(not bool(hostile_direct_sealed.get("ok", false)), "Slot direct sealed acknowledgement helper returned a committable result.")
+	_check(RuntimeScript.canonical_json(run_state.to_save_snapshot()) == hostile_snapshot, "Slot direct acknowledgement helpers mutated canonical state outside Foundation.")
 	var ack_before := RuntimeScript.canonical_json(run_state.to_save_snapshot())
 	var ack_cash_before := int(run_state.bankroll)
 	var ack_rng_before := run_state.rng_state

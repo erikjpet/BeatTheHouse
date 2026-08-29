@@ -37,9 +37,6 @@ var presentation
 var renderer
 var catalog
 var definition_cache
-var _ritual_host_run_state: RunState = null
-
-
 func sealed_action_authority_script() -> Script:
 	return ActionAuthorityScript
 
@@ -165,7 +162,6 @@ func gameplay_model() -> String:
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
-	_ritual_host_run_state = run_state
 	_ensure_machine_state(run_state, environment, run_state.create_rng("slot_enter") if run_state != null else null)
 	var result: Dictionary = super.enter(run_state, environment)
 	var machine: Dictionary = _read_machine(environment)
@@ -394,7 +390,7 @@ func _slot_live_ritual_projection(machine: Dictionary, surface: Dictionary, run_
 		"result_stage": "feature" if feature_active else "reel_stops" if not animation_id.is_empty() else "readout" if phase_id == "payout_or_handpay" else "idle",
 		"payout": int(surface.get("slot_payout", 0)),
 		"result_id": result_id,
-		"acknowledgement_available": handpay and run_state != null and is_same(run_state, _ritual_host_run_state),
+		"acknowledgement_available": handpay and run_state != null,
 		"actors": actor_states,
 		"scene_objects": object_states,
 	}
@@ -409,30 +405,31 @@ func _slot_handpay_result_id(machine: Dictionary) -> String:
 
 
 func _slot_handpay_acknowledgement(run_state: RunState, environment: Dictionary, caller_claims: Dictionary = {}, sealed_host_proposal: bool = false) -> Dictionary:
-	# Caller claims never establish authority. Entry binds the exact live RunState
-	# object supplied by the host; a copied/recomputed/signed-looking dictionary is
-	# intentionally irrelevant.
-	if run_state == null or (not sealed_host_proposal and (_ritual_host_run_state == null or not is_same(run_state, _ritual_host_run_state))):
-		return {"ok": false, "error_code": "unsealed_authority", "caller_claims_ignored": not caller_claims.is_empty()}
-	var machine := _read_machine(environment)
+	# Compatibility seam is deliberately non-authoritative. Neither a cached live
+	# RunState identity nor a caller-authored boolean/capability may mutate Slot.
+	return {
+		"ok": false,
+		"error_code": "unsealed_authority",
+		"caller_claims_ignored": not caller_claims.is_empty(),
+		"live_identity_ignored": run_state != null,
+		"caller_proposal_flag_ignored": sealed_host_proposal,
+		"environment_observed_only": not environment.is_empty(),
+	}
+
+
+func _slot_handpay_acknowledgement_proposal(environment: Dictionary) -> Dictionary:
+	# Pure proposal construction. Only _machine_game_resolve_proposal writes this
+	# candidate into its detached RunState snapshot; Foundation alone can commit it.
+	var machine := _read_machine(environment).duplicate(true)
 	var result_id := _slot_handpay_result_id(machine)
 	if result_id.is_empty() or not str(machine.get("slot_celebration_tier", "none")) in ["jackpot", "grand"]:
-		return {"ok": false, "error_code": "precondition_failed", "caller_claims_ignored": not caller_claims.is_empty()}
+		return {"ok": false, "error_code": "precondition_failed"}
 	if str(machine.get("ritual_acknowledged_result_id", "")) == result_id:
-		return {"ok": false, "error_code": "already_acknowledged", "result_id": result_id, "caller_claims_ignored": not caller_claims.is_empty()}
+		return {"ok": false, "error_code": "already_acknowledged", "result_id": result_id}
 	machine["ritual_acknowledged_result_id"] = result_id
-	_write_machine(environment, machine, false)
-	return {"ok": true, "result_id": result_id, "caller_claims_ignored": not caller_claims.is_empty()}
-
-
-func _slot_sealed_handpay_acknowledgement_result(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var acknowledgement := _slot_handpay_acknowledgement(run_state, environment, {}, true)
-	if not bool(acknowledgement.get("ok", false)):
-		return _empty_slot_result("slot_handpay_acknowledge", environment, "The attendant acknowledgement is unavailable or already receipted.")
-	var result_id := str(acknowledgement.get("result_id", ""))
 	var deltas := GameModule.empty_result_deltas()
 	deltas["messages"] = ["The attendant acknowledges jackpot %s." % result_id]
-	return GameModule.build_action_result({
+	var result := GameModule.build_action_result({
 		"ok": true,
 		"type": "game_action",
 		"source_id": get_id(),
@@ -449,6 +446,13 @@ func _slot_sealed_handpay_acknowledgement_result(run_state: RunState, environmen
 		ActionAuthorityScript.SKIP_ENVIRONMENT_TURN_KEY: true,
 		"message": str((deltas.get("messages", []) as Array)[0]),
 	})
+	return {"ok": true, "machine": machine, "result": result}
+
+
+func _slot_sealed_handpay_acknowledgement_result(_run_state: RunState, environment: Dictionary) -> Dictionary:
+	# Kept only as a hostile compatibility target: direct invocation never returns
+	# a committable acknowledgement, regardless of live-object identity.
+	return _empty_slot_result("slot_handpay_acknowledge", environment, "The attendant acknowledgement requires the sealed host.")
 
 
 func _saved_checkpoint_presentation_view(machine: Dictionary) -> Dictionary:
@@ -525,7 +529,12 @@ func _machine_game_resolve_proposal(action_id: String, stake: int, run_snapshot:
 	proposal_rng.restore(rng_snapshot.duplicate(true))
 	var result: Dictionary
 	if action_id == "slot_handpay_acknowledge":
-		result = _slot_sealed_handpay_acknowledgement_result(candidate, candidate.current_environment)
+		var acknowledgement := _slot_handpay_acknowledgement_proposal(candidate.current_environment)
+		if bool(acknowledgement.get("ok", false)):
+			_write_machine(candidate.current_environment, (acknowledgement.get("machine", {}) as Dictionary).duplicate(true), false)
+			result = (acknowledgement.get("result", {}) as Dictionary).duplicate(true)
+		else:
+			result = _empty_slot_result("slot_handpay_acknowledge", candidate.current_environment, "The attendant acknowledgement is unavailable or already receipted.")
 	else:
 		result = resolve_with_context(action_id, stake, candidate, candidate.current_environment, proposal_rng, ui_state.duplicate(true))
 		if bool(result.get("ok", false)) and bool(result.get("host_apply_result", false)):
