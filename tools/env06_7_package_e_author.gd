@@ -141,6 +141,10 @@ func _entry(c: Dictionary) -> Dictionary:
 	for terminal in [["success",c.outcomes[0]],["failure",c.outcomes[1]],["refused",c.outcomes[2]],["interrupted",c.outcomes[3]]]:
 		phases.append(_phase("terminal_%s" % terminal[0],str(terminal[0]).capitalize(),"The active task gives way to a branch-specific room arrangement.","The marked exit remains readable through cleanup.",[],[],[],[],[_transition(prefix,"terminal_%s" % terminal[0],"feedback","The %s aftermath fixes a distinct %s room state for revisit." % [str(terminal[1]).replace("_"," "),prefix.replace("_"," ")])],[{"id":"%s_terminal_%s" % [prefix,terminal[0]],"condition":{"type":"always"},"outcome":terminal[1]}],true))
 	var aftermath := _aftermath(c)
+	var declared_room_controls: Array = []
+	if str(c.archetype) == "grand_casino":
+		for room_id in ["grand_casino_high_limit", "grand_casino_back_room", "grand_casino_cage"]:
+			declared_room_controls.append("base::travel:%s" % room_id)
 	var sequence := {
 		"schema_version":2,
 		"local_state_schema":{"pressure_seen":{"type":"bool","default":false,"visibility":"public"}},
@@ -150,7 +154,7 @@ func _entry(c: Dictionary) -> Dictionary:
 		"expiry":{"boundary":"night_end","after":1,"policy":"cleanup"},
 		"cleanup":{"operations":cleanup},
 		"aftermath":aftermath,
-		"declared_targets":{"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":_target_inventory().zones},
+		"declared_targets":{"scene_objects":declared_room_controls.duplicate(),"interactions":declared_room_controls.duplicate(),"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":_target_inventory().zones},
 		"mechanic_tags":c.tags,
 		"sequence_signature":"pending",
 		"owner_exceptions":[],
@@ -317,7 +321,8 @@ func _dossier(c:Dictionary,entry:Dictionary)->Dictionary:
 
 func _target_inventory() -> Dictionary:
 	var zones := ["base::zone:left","base::zone:right","base::zone:center","base::zone:background","base::zone:service_lane","base::zone:foreground","base::zone:exit_lane"]
-	return {"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":zones,"event_choices":{}}
+	var room_controls := ["base::travel:grand_casino_high_limit", "base::travel:grand_casino_back_room", "base::travel:grand_casino_cage"]
+	return {"scene_objects":room_controls.duplicate(),"interactions":room_controls.duplicate(),"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":zones,"event_choices":{}}
 
 func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []

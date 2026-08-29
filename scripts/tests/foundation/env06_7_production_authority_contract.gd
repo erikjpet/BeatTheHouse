@@ -7,6 +7,7 @@ const OperationRegistryScript := preload("res://scripts/core/scenario_operation_
 const RolloutManifestScript := preload("res://scripts/core/scenario_sequence_rollout_manifest.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 
 const LOCAL_ACTOR_SCENARIO_ID := "bar_fight_night"
 const PROVEN_TARGET_SCENARIO_ID := "corner_store_delivery_day"
@@ -28,13 +29,41 @@ class ProductionInstallProbe:
 	var last_result: Dictionary = {}
 
 	func _install_environment(run_state: RunState, environment_data: Dictionary) -> Dictionary:
-		var installed := run_state.set_environment(environment_data)
-		var finalized := run_state.scenario_finalize_installed_environment(library) if bool(installed.get("ok", false)) else installed
+		var requested_scenario_id := str(environment_data.get("scenario_id", ""))
+		var finalized := super._install_environment(run_state, environment_data)
+		var inventory_value: Variant = run_state.current_environment.get("scenario_semantic_inventory", {})
+		var inventory: Dictionary = (inventory_value as Dictionary).duplicate(true) if typeof(inventory_value) == TYPE_DICTIONARY else {}
+		var definition := run_state.scenario_sequence_definition()
+		var projection := run_state.scenario_sequence_projection()
+		var inventory_errors := EnvironmentSemanticInventoryScript.validate(inventory)
+		var strict_ok := bool(finalized.get("ok", false)) \
+				and bool(run_state.current_environment.get("scenario_semantic_ready", false)) \
+				and str(inventory.get("kind", "")) == "instance" \
+				and not str(inventory.get("digest", "")).is_empty() \
+				and inventory_errors.is_empty() \
+				and run_state.scenario_sequence_present() \
+				and run_state.scenario_sequence_active() \
+				and not definition.is_empty() \
+				and not projection.is_empty() \
+				and str(definition.get("id", "")) == requested_scenario_id \
+				and str(projection.get("scenario_id", "")) == requested_scenario_id
+		var errors := (finalized.get("errors", []) as Array).duplicate(true) if typeof(finalized.get("errors", [])) == TYPE_ARRAY else []
+		if not strict_ok and errors.is_empty():
+			errors.append("installed semantic activation was incomplete (ready=%s kind=%s digest=%s present=%s active=%s definition=%s projection=%s inventory_errors=%s)." % [
+				str(run_state.current_environment.get("scenario_semantic_ready", false)),
+				str(inventory.get("kind", "")),
+				str(inventory.get("digest", "")),
+				str(run_state.scenario_sequence_present()),
+				str(run_state.scenario_sequence_active()),
+				str(definition.get("id", "")),
+				str(projection.get("scenario_id", "")),
+				JSON.stringify(inventory_errors),
+			])
 		last_result = {
 			"archetype_id": str(environment_data.get("archetype_id", "")),
-			"scenario_id": str(environment_data.get("scenario_id", "")),
-			"ok": bool(finalized.get("ok", false)),
-			"errors": (finalized.get("errors", []) as Array).duplicate(true) if typeof(finalized.get("errors", [])) == TYPE_ARRAY else [],
+			"scenario_id": requested_scenario_id,
+			"ok": strict_ok,
+			"errors": errors,
 		}
 		return finalized
 
@@ -43,6 +72,7 @@ func _initialize() -> void:
 	var failures: Array = []
 	var library := ContentLibraryScript.new()
 	library.load(false)
+	_check_trusted_production_definition_attachment(library, failures)
 	_check_scenario_local_actor_authority(library, failures)
 	_check_manifest_exit_authority(library, failures)
 	_check_manifest_installed_finalization(library, failures)
@@ -57,6 +87,35 @@ func _initialize() -> void:
 	for failure_value in failures:
 		printerr("ENV06_7_PRODUCTION_AUTHORITY_CONTRACT_FAIL %s" % str(failure_value))
 	quit(1)
+
+
+static func _check_trusted_production_definition_attachment(library: Variant, failures: Array) -> void:
+	var scenario_id := "grand_casino_gala_night"
+	var definition := _dict(library.scenario(scenario_id))
+	var archetype_id := str(definition.get("archetype_id", ""))
+	var generator := ProductionInstallProbe.new(library)
+	var run_state := RunStateScript.new()
+	var spoofed := {
+		"id": "definition_attach_fixture",
+		"scenario_id": scenario_id,
+		"archetype_id": archetype_id,
+		"world_node_id": archetype_id,
+		"scenario_sequence_definition": {"id": "hostile_preloaded_definition", "archetype_id": "bar"},
+	}
+	var trusted := generator._trusted_scenario_install_data(run_state, spoofed)
+	var trusted_environment := _dict(trusted.get("environment", {}))
+	var trusted_definition := _dict(trusted_environment.get("scenario_sequence_definition", {}))
+	if not bool(trusted.get("ok", false)) or str(trusted_definition.get("id", "")) != scenario_id or str(trusted_definition.get("archetype_id", "")) != archetype_id or not SequenceSchemaScript.is_sequence(trusted_definition):
+		failures.append("Production installer trusted a caller-preloaded scenario definition instead of the exact selected catalog definition.")
+	var unknown := spoofed.duplicate(true)
+	unknown["scenario_id"] = "hostile_unknown_scenario"
+	if bool(generator._trusted_scenario_install_data(run_state, unknown).get("ok", true)):
+		failures.append("Production installer accepted an unknown selected scenario id.")
+	var mismatch := spoofed.duplicate(true)
+	mismatch["archetype_id"] = "bar"
+	mismatch["world_node_id"] = "bar"
+	if bool(generator._trusted_scenario_install_data(run_state, mismatch).get("ok", true)):
+		failures.append("Production installer accepted a selected scenario/archetype mismatch.")
 
 
 static func _check_scenario_local_actor_authority(library: Variant, failures: Array) -> void:

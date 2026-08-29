@@ -909,10 +909,11 @@ static func _check_semantic_inventory(library: ContentLibrary, failures: Array) 
 	wrong_layer_definition["layer_id"] = "ghost_layer"
 	if not _contains_text(_array(library.scenario_target_catalog(wrong_layer_definition).get("errors", [])), "layer"):
 		failures.append("Public scenario target catalog did not diagnose an authored layer mismatch.")
-	var exact_environment := {"id": "grand_casino_001", "world_node_id": "node_1", "archetype_id": "grand_casino", "game_ids": ["slot"], "event_ids": ["late_shift_discount"], "item_offers": [{"id": "marked_cards"}], "service_ids": ["house_drink"], "lender_hooks": ["street_lender"], "next_archetypes": ["bar"], "travel_hooks": ["bar"], "current_layer_id": "main", "layer_ids": ["main", "cage"], "layer_transitions": [{"target_layer_id": "cage"}], "local_narrative_flags": {"casino_room_targets": ["grand_casino_cage"]}, "layout": {"object_rects": {"game:slot": {"x": 0.1, "y": 0.1, "w": 0.12, "h": 0.18}, "game:slot:2": {"x": 0.1, "y": 0.1, "w": 0.12, "h": 0.18}}}}
+	var exact_environment := {"id": "grand_casino_001", "world_node_id": "node_1", "archetype_id": "grand_casino", "game_ids": ["slot"], "event_ids": ["late_shift_discount"], "item_offers": [{"id": "marked_cards"}], "service_ids": ["house_drink"], "lender_hooks": ["street_lender"], "next_archetypes": ["bar"], "travel_hooks": ["bar"], "current_layer_id": "main", "layer_ids": ["main", "cage"], "layer_transitions": [{"target_layer_id": "cage"}], "local_narrative_flags": {"casino_room_targets": ["grand_casino_cage"]}, "layout": {"object_rects": {"game:slot": {"x": 0.1, "y": 0.1, "w": 0.12, "h": 0.18}, "game:slot:2": {"x": 0.1, "y": 0.1, "w": 0.12, "h": 0.18}, "travel:grand_casino_cage": {"x": 0.3, "y": 0.1, "w": 0.12, "h": 0.18}}}}
 	var exact_stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records([
 		_presentation_record("game:slot", "game", "slot", Rect2(0.1, 0.1, 0.12, 0.18)),
 		_presentation_record("game:slot:2", "game", "slot", Rect2(0.1, 0.1, 0.12, 0.18)),
+		_presentation_record("travel:grand_casino_cage", "travel", "grand_casino_cage", Rect2(0.3, 0.1, 0.12, 0.18)),
 	], exact_environment, library)
 	var exact_records := _array(exact_stamped.get("records", []))
 	var exact := EnvironmentSemanticInventoryScript.for_instance(exact_environment, library, exact_records)

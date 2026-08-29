@@ -77,6 +77,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_noninteractive_actor_independence(failures)
 	_check_game_interactable_authority(library, failures)
 	_check_dynamic_interaction_revalidation(library, failures)
+	_check_casino_room_route_authority(failures)
 	_check_instance_source_binding(failures)
 	_check_consumed_dynamic_source_binding(failures)
 	_check_record_contract(library, failures)
@@ -603,7 +604,7 @@ static func _check_instance_source_binding(failures: Array) -> void:
 	environment["current_layer_id"] = "front"
 	environment["layer_ids"] = ["front", "back", "side"]
 	environment["layer_transitions"] = [{"target_layer_id": "back"}]
-	environment["local_narrative_flags"] = {"casino_room_targets": ["casino_room_a"], "casino_fixtures": [{"id": "roulette_table"}]}
+	environment["local_narrative_flags"] = {"casino_fixtures": [{"id": "roulette_table"}]}
 	environment["crew_presence"] = [{"member_id": "crew_rook"}]
 	environment["home_profile"] = {"status": "tenant", "bed": "cot", "place": "back_room"}
 	environment["home_containers"] = [{"id": "footlocker"}]
@@ -656,9 +657,6 @@ static func _check_instance_source_binding(failures: Array) -> void:
 	changed["layer_transitions"][0]["target_layer_id"] = "side"
 	mutations.append(["layer_transitions", changed])
 	changed = environment.duplicate(true)
-	changed["local_narrative_flags"]["casino_room_targets"] = ["casino_room_b"]
-	mutations.append(["casino_room_targets", changed])
-	changed = environment.duplicate(true)
 	changed["local_narrative_flags"]["casino_fixtures"][0]["id"] = "forged_table"
 	mutations.append(["casino fixture authority", changed])
 	changed = environment.duplicate(true)
@@ -698,6 +696,100 @@ static func _check_instance_source_binding(failures: Array) -> void:
 	var unrelated_inventory := EnvironmentSemanticInventoryScript.for_instance(unrelated_context, library, interactions, actors)
 	if not EnvironmentSemanticInventoryScript.validate_instance_binding(inventory, unrelated_context).is_empty() or str(unrelated_inventory.get("digest", "")) != str(inventory.get("digest", "")):
 		failures.append("Unconsumed Numbers/Silas/delivery producer churn invalidated or changed a stable semantic inventory.")
+
+
+static func _check_casino_room_route_authority(failures: Array) -> void:
+	var library := FixtureLibrary.new()
+	var room_ids := ["grand_casino_high_limit", "grand_casino_back_room", "grand_casino_cage"]
+	library.archetypes_by_id = {
+		"grand_casino": {"id": "grand_casino", "local_narrative_flags": {"casino_room_targets": room_ids.duplicate()}},
+		"grand_casino_high_limit": {"id": "grand_casino_high_limit", "display_name": "High-Limit Room"},
+		"grand_casino_back_room": {"id": "grand_casino_back_room", "display_name": "Back Room"},
+		"grand_casino_cage": {"id": "grand_casino_cage", "display_name": "Cage"},
+	}
+	var rects: Dictionary = {}
+	for room_id in room_ids: rects["travel:%s" % room_id] = {"x": 0.1, "y": 0.1, "w": 0.1, "h": 0.2}
+	var environment := {
+		"id": "grand_casino_fixture_001",
+		"archetype_id": "grand_casino",
+		"world_node_id": "grand_casino",
+		"current_layer_id": "",
+		"layout": {"object_rects": rects},
+		"local_narrative_flags": {"casino_room_targets": room_ids.duplicate()},
+		"game_ids": [], "event_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [], "travel_hooks": [], "next_archetypes": [],
+	}
+	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(environment, library)
+	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(_array(authoritative.get("records", [])), environment, library)
+	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(_array(stamped.get("records", [])))
+	var interactions := _array(produced.get("interactions", []))
+	environment["scenario_base_interactions"] = interactions.duplicate(true)
+	environment["scenario_base_actors"] = []
+	var inventory := EnvironmentSemanticInventoryScript.for_instance(environment, library, interactions)
+	var exact := EnvironmentSemanticInventoryScript.exact_collections(inventory)
+	if not bool(authoritative.get("ok", false)) or not bool(stamped.get("ok", false)) or not bool(produced.get("ok", false)) or not EnvironmentSemanticInventoryScript.validate(inventory).is_empty() or interactions.size() != room_ids.size():
+		failures.append("Exact Grand Casino room controls did not survive authoritative production and instance sealing: %s" % JSON.stringify(_array(authoritative.get("errors", [])) + _array(stamped.get("errors", [])) + _array(produced.get("errors", [])) + _array(inventory.get("errors", []))))
+		return
+	for room_id in room_ids:
+		var route_identity := "base::room:%s" % room_id
+		var rendered_identity := "base::travel:%s" % room_id
+		if not _array(exact.get("routes", [])).has(route_identity) or not _array(exact.get("interactions", [])).has(rendered_identity) or not _array(exact.get("scene_objects", [])).has(rendered_identity):
+			failures.append("Grand Casino room %s lost its semantic-room/rendered-travel identity split." % room_id)
+		var route_provenance := _dict(_dict(inventory.get("provenance", {})).get("routes|%s" % route_identity, {}))
+		var rendered_provenance := _dict(_dict(inventory.get("provenance", {})).get("interactions|%s" % rendered_identity, {}))
+		if str(route_provenance.get("source_field", "")) != "local_narrative_flags.casino_room_targets" or str(route_provenance.get("source_record_id", "")) != room_id or str(rendered_provenance.get("source_kind", "")) != "environment_instance_ui" or str(rendered_provenance.get("source_record_id", "")) != room_id:
+			failures.append("Grand Casino room %s lost exact room-target provenance." % room_id)
+	var missing_interaction := interactions.duplicate(true)
+	missing_interaction.pop_front()
+	if EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(environment, library, missing_interaction)).is_empty():
+		failures.append("Casino room route survived without its exact rendered travel interaction.")
+
+	var caller_only := environment.duplicate(true)
+	var caller_library := FixtureLibrary.new()
+	caller_library.archetypes_by_id = library.archetypes_by_id.duplicate(true)
+	caller_library.archetypes_by_id["grand_casino"]["local_narrative_flags"]["casino_room_targets"] = []
+	if EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(caller_only, caller_library, interactions)).is_empty():
+		failures.append("Caller-only casino_room_targets flags bypassed selected-archetype authority.")
+
+	var authored_without_flag := environment.duplicate(true)
+	authored_without_flag["local_narrative_flags"]["casino_room_targets"] = []
+	var authored_record := _producer_presentation_record("travel:%s" % room_ids[0], "travel", str(room_ids[0]), "")
+	if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records([authored_record], authored_without_flag, library).get("ok", true)):
+		failures.append("Authored casino room target without an exact installed flag produced a travel interaction.")
+
+	var flag_without_layout := environment.duplicate(true)
+	flag_without_layout["layout"]["object_rects"].erase("travel:%s" % room_ids[0])
+	if EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(flag_without_layout, library, interactions)).is_empty():
+		failures.append("Casino room flag without exact travel layout geometry survived instance sealing.")
+
+	var mismatched := _producer_presentation_record("travel:%s" % room_ids[0], "travel", str(room_ids[1]), "")
+	if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records([mismatched], environment, library).get("ok", true)):
+		failures.append("Mismatched casino room presentation/source identity survived producer stamping.")
+	var spoofed := _producer_presentation_record("travel:%s" % room_ids[0], "travel", str(room_ids[0]), "")
+	spoofed["source_kind"] = "environment_archetype"
+	spoofed["source_field"] = "travel_hooks"
+	spoofed["source_record_id"] = str(room_ids[1])
+	if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records([spoofed], environment, library).get("ok", true)):
+		failures.append("Spoofed casino room provenance survived producer stamping.")
+	var ghost_library := FixtureLibrary.new()
+	ghost_library.archetypes_by_id = {
+		"grand_casino": {"id": "grand_casino", "local_narrative_flags": {"casino_room_targets": ["ghost_room"]}},
+	}
+	var ghost_environment := environment.duplicate(true)
+	ghost_environment["local_narrative_flags"]["casino_room_targets"] = ["ghost_room"]
+	ghost_environment["layout"]["object_rects"] = {"travel:ghost_room": {"x": 0.1, "y": 0.1, "w": 0.1, "h": 0.2}}
+	var ghost_authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(ghost_environment, ghost_library)
+	var ghost_inventory := EnvironmentSemanticInventoryScript.for_instance(ghost_environment, ghost_library, [])
+	if bool(ghost_authoritative.get("ok", true)) or EnvironmentSemanticInventoryScript.validate(ghost_inventory).is_empty():
+		failures.append("Parent-authored nonexistent casino room target bypassed target-catalog existence checks.")
+
+	var changed_flag := environment.duplicate(true)
+	changed_flag["local_narrative_flags"]["casino_room_targets"].erase(room_ids[0])
+	if EnvironmentSemanticInventoryScript.validate_instance_binding(inventory, changed_flag).is_empty():
+		failures.append("Post-seal casino room flag mutation retained stale semantic authority.")
+	var changed_layout := environment.duplicate(true)
+	changed_layout["layout"]["object_rects"]["travel:%s" % room_ids[0]]["x"] = 0.2
+	if EnvironmentSemanticInventoryScript.validate_instance_binding(inventory, changed_layout).is_empty():
+		failures.append("Post-seal casino room layout mutation retained stale semantic authority.")
 
 
 static func _check_consumed_dynamic_source_binding(failures: Array) -> void:

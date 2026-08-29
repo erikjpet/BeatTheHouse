@@ -348,7 +348,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "1ac881ca27673c9f0629cecf3deb1e319fd277f4cb2053141777c617b08a4d2e",
+      "sequence_signature": "8a8806e551f4ab02d3dbb5cfea0e9c6eeab9d86dd7652f6669bf5dbe5060318d",
       "capture_ids": [
         "grand_casino_gala_night_arrival",
         "grand_casino_gala_night_partial",
@@ -407,7 +407,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "ff93a104f361e8fdd2693fa4167cb625413f7b64e4216e34d1cfc3492e58dae9",
+      "sequence_signature": "92e36c458559acd65367d810d39a11590391fe8cc338b00619c6ea49f9ee57b7",
       "capture_ids": [
         "grand_casino_convention_crowd_arrival",
         "grand_casino_convention_crowd_partial",
@@ -467,7 +467,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "3b5a13e7b93284fe80e77dba1174b21cddd7eb297238e6fa7ddb992784f2fe76",
+      "sequence_signature": "99aa904e75394c96b8da06f054f3dcd714902aea0539e6906d7cee121cac8e2c",
       "capture_ids": [
         "grand_casino_audit_night_arrival",
         "grand_casino_audit_night_partial",
@@ -8380,7 +8380,7 @@
       "authored_signature": "7d1c106d01a4b63b935ba5d268e0ec57a3d91bab4739942e103f056e59d8c362",
       "calculated_signature": "7d1c106d01a4b63b935ba5d268e0ec57a3d91bab4739942e103f056e59d8c362",
       "nearest_id": "grand_casino_convention_crowd",
-      "nearest_similarity": 0.720720720720721
+      "nearest_similarity": 0.71685393258427
     },
     {
       "id": "grand_casino_audit_night",
@@ -9877,8 +9877,8 @@
           "travel_departed"
         ],
         "declared_target_counts": {
-          "scene_objects": 0,
-          "interactions": 0,
+          "scene_objects": 3,
+          "interactions": 3,
           "actors": 0,
           "services": 0,
           "games": 0,
@@ -9897,10 +9897,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "3b5a13e7b93284fe80e77dba1174b21cddd7eb297238e6fa7ddb992784f2fe76",
-      "calculated_signature": "3b5a13e7b93284fe80e77dba1174b21cddd7eb297238e6fa7ddb992784f2fe76",
+      "authored_signature": "99aa904e75394c96b8da06f054f3dcd714902aea0539e6906d7cee121cac8e2c",
+      "calculated_signature": "99aa904e75394c96b8da06f054f3dcd714902aea0539e6906d7cee121cac8e2c",
       "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.682660850599782
+      "nearest_similarity": 0.678998911860718
     },
     {
       "id": "grand_casino_convention_crowd",
@@ -11370,8 +11370,8 @@
           "travel_departed"
         ],
         "declared_target_counts": {
-          "scene_objects": 0,
-          "interactions": 0,
+          "scene_objects": 3,
+          "interactions": 3,
           "actors": 0,
           "services": 0,
           "games": 0,
@@ -11390,8 +11390,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "ff93a104f361e8fdd2693fa4167cb625413f7b64e4216e34d1cfc3492e58dae9",
-      "calculated_signature": "ff93a104f361e8fdd2693fa4167cb625413f7b64e4216e34d1cfc3492e58dae9",
+      "authored_signature": "92e36c458559acd65367d810d39a11590391fe8cc338b00619c6ea49f9ee57b7",
+      "calculated_signature": "92e36c458559acd65367d810d39a11590391fe8cc338b00619c6ea49f9ee57b7",
       "nearest_id": "grand_casino_gala_night",
       "nearest_similarity": 0.728506787330317
     },
@@ -12863,8 +12863,8 @@
           "travel_departed"
         ],
         "declared_target_counts": {
-          "scene_objects": 0,
-          "interactions": 0,
+          "scene_objects": 3,
+          "interactions": 3,
           "actors": 0,
           "services": 0,
           "games": 0,
@@ -12883,8 +12883,8 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "1ac881ca27673c9f0629cecf3deb1e319fd277f4cb2053141777c617b08a4d2e",
-      "calculated_signature": "1ac881ca27673c9f0629cecf3deb1e319fd277f4cb2053141777c617b08a4d2e",
+      "authored_signature": "8a8806e551f4ab02d3dbb5cfea0e9c6eeab9d86dd7652f6669bf5dbe5060318d",
+      "calculated_signature": "8a8806e551f4ab02d3dbb5cfea0e9c6eeab9d86dd7652f6669bf5dbe5060318d",
       "nearest_id": "grand_casino_convention_crowd",
       "nearest_similarity": 0.728506787330317
     }
@@ -12893,7 +12893,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.3785594639866,
+      "similarity": 0.376254180602007,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12905,7 +12905,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.376371308016878,
+      "similarity": 0.374052232518955,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12917,7 +12917,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.367141659681475,
+      "similarity": 0.364853556485356,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12941,7 +12941,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.359247135842881,
+      "similarity": 0.35702614379085,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12953,7 +12953,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.356966199505359,
+      "similarity": 0.354732510288066,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12965,7 +12965,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.352506162695152,
+      "similarity": 0.350287120590648,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13001,7 +13001,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.682660850599782,
+      "similarity": 0.678998911860718,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -13013,7 +13013,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.502458210422812,
+      "similarity": 0.499509322865554,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13025,7 +13025,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.493646138807429,
+      "similarity": 0.490731707317073,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13085,7 +13085,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.66991341991342,
+      "similarity": 0.666306695464363,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -13097,7 +13097,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.47918683446273,
+      "similarity": 0.476328502415459,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13109,7 +13109,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.47918683446273,
+      "similarity": 0.476328502415459,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13157,7 +13157,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.46952380952381,
+      "similarity": 0.466730038022814,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13169,10 +13169,10 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.720720720720721,
+      "similarity": 0.71685393258427,
       "equal_normalized_hash": false,
-      "status": "blocking_review",
-      "blocking": true,
+      "status": "warning",
+      "blocking": false,
       "masked_visual_evidence": {
 
       },
@@ -13181,7 +13181,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.705357142857143,
+      "similarity": 0.701559020044543,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -13233,14 +13233,14 @@
     "scenario delta_queen_fog_delay is invalid: [\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario delta_queen_engine_trouble is invalid: [\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario delta_queen_captains_invitational is invalid: [\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario grand_casino_gala_night is invalid: [\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario grand_casino_convention_crowd is invalid: [\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario grand_casino_gala_night is invalid: [\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario grand_casino_convention_crowd is invalid: [\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.694 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_wedding_charter vs grand_casino_audit_night: 0.670 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_whale_aboard vs grand_casino_gala_night: 0.705 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_whale_aboard vs grand_casino_convention_crowd: 0.721 (blocking_review).",
-    "scenario delta_queen_fog_delay vs grand_casino_audit_night: 0.683 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_wedding_charter vs grand_casino_audit_night: 0.666 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_whale_aboard vs grand_casino_gala_night: 0.702 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_whale_aboard vs grand_casino_convention_crowd: 0.717 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_fog_delay vs grand_casino_audit_night: 0.679 (warning). Missing receipt-bound masked visual evidence.",
     "scenario delta_queen_engine_trouble vs delta_queen_captains_invitational: 0.663 (warning). Missing receipt-bound masked visual evidence.",
     "scenario grand_casino_gala_night vs grand_casino_convention_crowd: 0.729 (blocking_review)."
   ],

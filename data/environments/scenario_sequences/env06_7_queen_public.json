@@ -9362,9 +9362,17 @@
           "actors": [],
           "anchors": [],
           "games": [],
-          "interactions": [],
+          "interactions": [
+            "base::travel:grand_casino_high_limit",
+            "base::travel:grand_casino_back_room",
+            "base::travel:grand_casino_cage"
+          ],
           "routes": [],
-          "scene_objects": [],
+          "scene_objects": [
+            "base::travel:grand_casino_high_limit",
+            "base::travel:grand_casino_back_room",
+            "base::travel:grand_casino_cage"
+          ],
           "services": [],
           "zones": [
             "base::zone:left",
@@ -10674,7 +10682,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1ac881ca27673c9f0629cecf3deb1e319fd277f4cb2053141777c617b08a4d2e"
+        "sequence_signature": "8a8806e551f4ab02d3dbb5cfea0e9c6eeab9d86dd7652f6669bf5dbe5060318d"
       }
     },
     {
@@ -11062,9 +11070,17 @@
           "actors": [],
           "anchors": [],
           "games": [],
-          "interactions": [],
+          "interactions": [
+            "base::travel:grand_casino_high_limit",
+            "base::travel:grand_casino_back_room",
+            "base::travel:grand_casino_cage"
+          ],
           "routes": [],
-          "scene_objects": [],
+          "scene_objects": [
+            "base::travel:grand_casino_high_limit",
+            "base::travel:grand_casino_back_room",
+            "base::travel:grand_casino_cage"
+          ],
           "services": [],
           "zones": [
             "base::zone:left",
@@ -12374,7 +12390,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ff93a104f361e8fdd2693fa4167cb625413f7b64e4216e34d1cfc3492e58dae9"
+        "sequence_signature": "92e36c458559acd65367d810d39a11590391fe8cc338b00619c6ea49f9ee57b7"
       }
     },
     {
@@ -12769,9 +12785,17 @@
           "actors": [],
           "anchors": [],
           "games": [],
-          "interactions": [],
+          "interactions": [
+            "base::travel:grand_casino_high_limit",
+            "base::travel:grand_casino_back_room",
+            "base::travel:grand_casino_cage"
+          ],
           "routes": [],
-          "scene_objects": [],
+          "scene_objects": [
+            "base::travel:grand_casino_high_limit",
+            "base::travel:grand_casino_back_room",
+            "base::travel:grand_casino_cage"
+          ],
           "services": [],
           "zones": [
             "base::zone:left",
@@ -14101,7 +14125,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3b5a13e7b93284fe80e77dba1174b21cddd7eb297238e6fa7ddb992784f2fe76"
+        "sequence_signature": "99aa904e75394c96b8da06f054f3dcd714902aea0539e6906d7cee121cac8e2c"
       }
     }
   ]
