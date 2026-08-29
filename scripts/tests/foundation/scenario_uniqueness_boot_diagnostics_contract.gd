@@ -111,7 +111,7 @@ func _exact_audit_inputs(library) -> Dictionary:
 				continue
 			sequence_definitions.append(definition.duplicate(true))
 			var scenario_id := str(definition.get("id", ""))
-			var target_catalog := library.scenario_target_catalog(definition)
+			var target_catalog: Dictionary = library.scenario_target_catalog(definition)
 			if not target_catalog.is_empty() and (target_catalog.get("errors", []) as Array).is_empty():
 				var inventory: Dictionary = (target_catalog.get("guaranteed", {}) as Dictionary).duplicate(true)
 				inventory["event_choices"] = (target_catalog.get("event_choices", {}) as Dictionary).duplicate(true)
