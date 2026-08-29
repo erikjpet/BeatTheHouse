@@ -1220,7 +1220,7 @@ func _rourke_duel_surface_state(spec: Dictionary, run_state: RunState, environme
 	spec["patrons"] = []
 	spec["can_split"] = false
 	spec["can_surrender"] = false
-	spec["can_double"] = _can_double(session, _table, ante, run_state)
+	spec["can_double"] = _can_double(session, table, ante, run_state)
 	spec["table_rules_text"] = "Five fixed-ante hands. Final stack margin decides the door."
 	spec["table_notice"] = str(session.get("table_notice", duel.get("last_bark", "Rourke cuts the cards.")))
 	spec["surface_ui_protected_regions"] = _rourke_duel_ui_protected_regions()
