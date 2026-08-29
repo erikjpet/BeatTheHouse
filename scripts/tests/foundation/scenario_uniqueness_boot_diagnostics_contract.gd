@@ -50,7 +50,7 @@ func _init() -> void:
 	if (hostile_channels.get("errors", []) as Array).is_empty() or not _contains(hostile_channels.get("errors", []), "expected 1 definitions"):
 		failures.append("Catalog cardinality/product failure did not remain boot-fatal.")
 	var library = ContentLibraryScript.new()
-	library.load_all(true)
+	library.load(true)
 	if not library.validation_errors.is_empty():
 		failures.append("The exact production catalog still emits boot-fatal validation errors: %s" % JSON.stringify(library.validation_errors))
 	var audit: Dictionary = library.scenario_sequence_catalog.get("uniqueness_audit", {})
