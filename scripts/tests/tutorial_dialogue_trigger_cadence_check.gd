@@ -38,6 +38,14 @@ func _run_dialogue_trigger_cadence_check() -> void:
 	app.set("continuous_environment_clock_enabled", false)
 	root.add_child(app)
 	await _settle(8)
+	# A prior aborted cadence run must not become input to the next one. This is
+	# the fixture's dedicated slot; player/user save slots are never touched.
+	var initial_save_service: SaveService = app.get("save_service")
+	if initial_save_service == null \
+			or initial_save_service.clear_run(TEST_SAVE_SLOT) != OK \
+			or initial_save_service.has_run(TEST_SAVE_SLOT):
+		_fail("Tutorial dialogue cadence check could not prepare its isolated save slot.")
+		return
 	app.call("start_tutorial_run")
 	await _settle(10)
 	var run_state: RunState = app.get("run_state")
