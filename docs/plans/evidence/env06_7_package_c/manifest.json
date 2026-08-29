@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "package_id": "env06_7_bars_road",
+  "status": "pending_warden_slot",
+  "capture_directory": "docs/plans/evidence/env06_7_package_c",
+  "raster_file_pattern": "{scenario_id}_{state_suffix}.png",
+  "contact_sheet": "env06_7_package_c_contact_sheet.png",
+  "required_state_suffixes": [
+    "arrival",
+    "partial",
+    "success",
+    "failure",
+    "refused",
+    "interrupted",
+    "reduced_motion",
+    "small_screen",
+    "hit_overlay",
+    "obstruction"
+  ],
+  "scenario_ids": [
+    "bar_wake",
+    "bar_fight_night",
+    "bar_payday_rush",
+    "bar_lock_in",
+    "bar_darts_league_night",
+    "bar_live_band",
+    "bar_dead_tuesday",
+    "jazz_club_guest_legend",
+    "jazz_club_rent_party",
+    "jazz_club_recording_night",
+    "jazz_club_union_trouble"
+  ],
+  "expected_raster_count": 110,
+  "actual_raster_count": 0,
+  "contact_sheet_status": "pending",
+  "source_candidate": "ordered_a_b_plus_c_static_wip"
+}
