@@ -122,6 +122,7 @@ static func _check_scenario_local_route_authority(library: Variant, failures: Ar
 		if not _mutate_first_actor_route(hostile, "%s_unproven_route" % scenario_id):
 			failures.append("Production scenario %s has no local actor route fixture." % scenario_id)
 			continue
+		hostile["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(hostile)
 		var hostile_errors := ScenarioEngineScript.validate_sequence_definition(hostile, references, inventory)
 		if not _contains(hostile_errors, "unresolved route") or not _contains(hostile_errors, "unknown sealed route/anchor alias"):
 			failures.append("Hostile local route alias for %s was not rejected by sealed production authority: %s" % [scenario_id, JSON.stringify(hostile_errors)])
