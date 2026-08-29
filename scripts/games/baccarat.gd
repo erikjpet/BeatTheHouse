@@ -452,6 +452,30 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 	return typeof(last_result) == TYPE_DICTIONARY and not (last_result as Dictionary).is_empty()
 
 
+func _table_game_host_needs_auto_tick(surface_time_msec: int, _run_state: RunState, environment: Dictionary) -> bool:
+	# Foundation calls this before constructing any per-frame UI snapshot. Keep
+	# the authoritative idle probe scalar-only and operate on the stored table.
+	var states_value: Variant = environment.get("game_states")
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return false
+	var table_value: Variant = (states_value as Dictionary).get("baccarat")
+	if typeof(table_value) != TYPE_DICTIONARY:
+		return false
+	var table: Dictionary = table_value
+	if str(table.get("schema")) != "baccarat_table_state":
+		return false
+	var last_result_value: Variant = table.get("last_result")
+	if typeof(last_result_value) != TYPE_DICTIONARY or (last_result_value as Dictionary).is_empty():
+		return false
+	var elapsed_msec := surface_time_msec - int((last_result_value as Dictionary).get("resolved_at_msec", 0))
+	if elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC:
+		return false
+	var timer_started_msec := int(table.get("table_round_timer_started_msec", 0))
+	if timer_started_msec == 0:
+		return true
+	return maxi(0, surface_time_msec - timer_started_msec) >= GameModule.TABLE_ROUND_START_DELAY_MSEC
+
+
 func _peek_table_state(environment: Dictionary) -> Dictionary:
 	# Zero-copy view of the stored table for read-mostly per-frame checks.
 	# Callers must not mutate it or hold it across writes.
@@ -585,11 +609,11 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 
 
 func wager_cost_for_context(action_id: String, stake: int, _run_state: RunState, _environment: Dictionary, ui_state: Dictionary = {}) -> int:
-	if action_id.begins_with("crew_play:"):
-		return 0
 	if action_id == "deal_baccarat":
 		return _total_wager(_bet_dict(ui_state.get("baccarat_bets", {})))
-	return maxi(0, stake)
+	# Reads, advantage play, crew verbs, stale actions, and unknown actions do not
+	# acquire a wager lease. Only the canonical deal consumes table stake.
+	return 0
 
 
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
@@ -711,6 +735,7 @@ func _resolve_baccarat_proposal_core(action_id: String, stake: int, run_state: R
 		"deltas": deltas,
 		"won": bankroll_delta > 0,
 		"environment_id": environment.get("id", ""),
+		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": message,
 	})
 	result["baccarat_winner"] = str(hand.get("winner", ""))
@@ -966,7 +991,12 @@ func _settle_baccarat_bets(bets_value: Variant, hand: Dictionary, rules: Diction
 					payout = stake * int(rules.get("banker_pair_payout", 11))
 			_:
 				pass
-		var net := 0 if push else payout if won else -stake
+		# The host guarantees that the complete stake can be funded before this
+		# proposal runs. Settlement remains a net delta: winning and pushed stake
+		# is returned exactly once, while payout is profit after commission.
+		var stake_return := stake if won or push else 0
+		var gross_return := stake_return + (payout if won else 0)
+		var net := gross_return - stake
 		bankroll_delta += net
 		commission_total += commission
 		bet_results.append({
@@ -975,6 +1005,8 @@ func _settle_baccarat_bets(bets_value: Variant, hand: Dictionary, rules: Diction
 			"won": won,
 			"push": push,
 			"payout": payout,
+			"stake_return": stake_return,
+			"gross_return": gross_return,
 			"commission": commission,
 			"net": net,
 			"label": _target_label(str(bet_id)),
@@ -2776,6 +2808,7 @@ func _empty_baccarat_result(action_id: String, stake: int, environment: Dictiona
 		"stake": stake,
 		"won": false,
 		"environment_id": environment.get("id", ""),
+		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": text,
 	})
 

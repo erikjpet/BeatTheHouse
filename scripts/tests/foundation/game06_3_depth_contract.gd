@@ -3,6 +3,9 @@ extends SceneTree
 const RouletteGameScript := preload("res://scripts/games/roulette.gd")
 const BaccaratGameScript := preload("res://scripts/games/baccarat.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
+const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
+const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 
 var failures: Array[String] = []
 
@@ -28,6 +31,8 @@ class RitualDrawProbe:
 func _init() -> void:
 	_check_roulette()
 	_check_baccarat()
+	_check_exact_settlement_accounting()
+	_check_authoritative_host_matrix()
 	if failures.is_empty():
 		print("GAME06_3_DEPTH_CONTRACT PASS roulette=true baccarat=true")
 		quit(0)
@@ -284,6 +289,219 @@ func _check_baccarat_neighbor_isolation(game) -> void:
 		var result_b: Dictionary = game.resolve_with_context("deal_baccarat", 20, run_b, run_b.current_environment, run_b.create_rng("deal"), {"baccarat_bets": {"player": 20}})
 		if JSON.stringify(result_a.get("hand", {})) != JSON.stringify(result_b.get("hand", {})) or int(result_a.get("bankroll_delta", 0)) != int(result_b.get("bankroll_delta", 0)):
 			failures.append("Baccarat neighbors changed player authority at seed %d." % seed_index)
+
+
+func _check_exact_settlement_accounting() -> void:
+	var baccarat = BaccaratGameScript.new()
+	_setup_game_definition(baccarat, "baccarat")
+	var banker_win: Dictionary = baccarat._settle_baccarat_bets(
+		{"banker": 20},
+		{"winner": "banker", "player_pair": false, "banker_pair": false},
+		{"banker_payout": 1, "banker_commission_rate": 0.05, "banker_commission_rounding": "ceil_whole_unit"}
+	)
+	var banker_row: Dictionary = (banker_win.get("bet_results", []) as Array)[0]
+	if int(banker_row.get("stake_return", -1)) != 20 or int(banker_row.get("gross_return", -1)) != 39 or int(banker_row.get("commission", -1)) != 1 or int(banker_row.get("net", -999)) != 19 or int(banker_win.get("bankroll_delta", -999)) != 19:
+		failures.append("Baccarat banker settlement did not return one stake plus profit minus explicit commission.")
+	var push: Dictionary = baccarat._settle_baccarat_bets(
+		{"player": 20},
+		{"winner": "tie", "player_pair": false, "banker_pair": false},
+		{}
+	)
+	var push_row: Dictionary = (push.get("bet_results", []) as Array)[0]
+	if int(push_row.get("stake_return", -1)) != 20 or int(push_row.get("gross_return", -1)) != 20 or int(push_row.get("net", -999)) != 0:
+		failures.append("Baccarat push did not return the stake exactly once.")
+	var loss: Dictionary = baccarat._settle_baccarat_bets(
+		{"player": 20},
+		{"winner": "banker", "player_pair": false, "banker_pair": false},
+		{}
+	)
+	var loss_row: Dictionary = (loss.get("bet_results", []) as Array)[0]
+	if int(loss_row.get("stake_return", -1)) != 0 or int(loss_row.get("gross_return", -1)) != 0 or int(loss_row.get("net", -999)) != -20:
+		failures.append("Baccarat loss did not debit exactly one stake.")
+
+	var roulette = RouletteGameScript.new()
+	_setup_game_definition(roulette, "roulette")
+	var roulette_rows: Array = roulette._settle_roulette_bets("17", [
+		{"id": "straight:17", "label": "17", "family": "inside", "numbers": ["17"], "stake": 5, "payout": 35},
+		{"id": "outside:red", "label": "Red", "family": "outside", "numbers": ["1"], "stake": 10, "payout": 1},
+	], {"rules": {"la_partage": false}})
+	var straight: Dictionary = roulette_rows[0]
+	var outside_loss: Dictionary = roulette_rows[1]
+	if int(straight.get("stake_return", -1)) != 5 or int(straight.get("payout_profit", -1)) != 175 or int(straight.get("gross_return", -1)) != 180 or int(straight.get("bankroll_delta", -999)) != 175:
+		failures.append("Roulette win did not return one stake in addition to its to-one profit.")
+	if int(outside_loss.get("gross_return", -1)) != 0 or int(outside_loss.get("bankroll_delta", -999)) != -10:
+		failures.append("Roulette multi-bet loss did not debit exactly its own stake.")
+	if int(straight.get("bankroll_delta", 0)) + int(outside_loss.get("bankroll_delta", 0)) != 165:
+		failures.append("Roulette multi-bet settlement did not conserve the exact combined net.")
+	var partage_rows: Array = roulette._settle_roulette_bets("0", [
+		{"id": "outside:red", "label": "Red", "family": "outside", "numbers": ["1"], "stake": 5, "payout": 1},
+	], {"rules": {"la_partage": true}})
+	var partage: Dictionary = partage_rows[0]
+	if int(partage.get("stake_return", -1)) != 2 or int(partage.get("gross_return", -1)) != 2 or int(partage.get("bankroll_delta", -999)) != -3:
+		failures.append("Roulette la partage did not return the retained half and charge only the rounded house half.")
+
+
+func _check_authoritative_host_matrix() -> void:
+	_check_authoritative_game("roulette", RouletteGameScript.new(), "spin_roulette", 15, {
+		"roulette_bets": [
+			{"id": "straight:17", "type": "straight", "label": "17", "family": "inside", "numbers": ["17"], "stake": 5, "payout": 35},
+			{"id": "outside:red", "type": "outside", "label": "Red", "family": "outside", "numbers": ["1", "3", "5", "7", "9", "12", "14", "16", "18", "19", "21", "23", "25", "27", "30", "32", "34", "36"], "stake": 10, "payout": 1},
+		],
+	})
+	_check_authoritative_game("baccarat", BaccaratGameScript.new(), "deal_baccarat", 20, {"baccarat_bets": {"banker": 20}})
+
+
+func _check_authoritative_game(game_id: String, game, action_id: String, stake: int, session: Dictionary) -> void:
+	_setup_game_definition(game, game_id)
+	var run = RunStateScript.new()
+	run.start_new("GAME06-3-HOST-%s" % game_id.to_upper())
+	run.bankroll = 1000
+	run.grand_casino_chips = 100
+	var environment := {
+		"id": "game06_3_host_%s" % game_id,
+		"archetype_id": "grand_casino",
+		"kind": "boss",
+		"game_ids": [game_id],
+		"economic_profile": {"stake_floor": 5, "stake_ceiling": 1000},
+		"security_profile": {"strictness": "high"},
+	}
+	run.current_environment = environment
+	var table: Dictionary = game.generate_environment_state(run, environment, run.create_rng("game06_3_host_table"))
+	var game_states := {}
+	game_states[game_id] = table
+	environment["game_states"] = game_states
+	run.current_environment = environment
+	_seed_host_session(game, run, session)
+
+	var snapshot := run.to_save_snapshot()
+	var zero_cost_actions := ["unknown_action", "crew_play:chip_dump"]
+	if game_id == "roulette":
+		zero_cost_actions.append("read_wheel_bias")
+	else:
+		zero_cost_actions.append("read_baccarat_shoe")
+		zero_cost_actions.append("edge_sort")
+	for zero_action_value in zero_cost_actions:
+		var zero_action := str(zero_action_value)
+		var zero_proposal: Dictionary = game.call("_table_game_wager_cost_proposal", zero_action, 999, snapshot, session)
+		if int(zero_proposal.get("cost", -1)) != 0:
+			failures.append("%s wager proposal charged the non-wager action %s." % [game_id.capitalize(), zero_action])
+	var wager_proposal: Dictionary = game.call("_table_game_wager_cost_proposal", action_id, stake, snapshot, session)
+	if int(wager_proposal.get("cost", -1)) != stake:
+		failures.append("%s authoritative wager proposal did not lease the exact table stake." % game_id.capitalize())
+
+	var total_before := run.grand_casino_total_money()
+	var rng_before := run.rng_state
+	var result := _host_resolve(game, run, action_id, stake)
+	if not bool(result.get("ok", false)) or not bool(result.get("blackjack_host_committed", false)) or not bool(result.get("table_game_authoritative", false)):
+		failures.append("%s did not commit through the authentic Foundation host." % game_id.capitalize())
+		return
+	var delivery_value: Variant = result.get("blackjack_host_delivery", null)
+	var receipt_value: Variant = result.get("blackjack_host_apply_receipt", null)
+	if typeof(delivery_value) != TYPE_DICTIONARY or typeof(receipt_value) != TYPE_DICTIONARY:
+		failures.append("%s authentic host result did not carry its delivery and apply receipt." % game_id.capitalize())
+		return
+	var delivery: Dictionary = delivery_value
+	var receipt: Dictionary = receipt_value
+	var expected_binding := "%s:%s:%s" % [game_id, str(environment.get("id", "")), str(environment.get("archetype_id", ""))]
+	if str(receipt.get("table_binding", "")) != expected_binding or str(receipt.get("request_key", "")) != str(delivery.get("request_key", "")):
+		failures.append("%s host receipt was not bound to the exact game/table/request." % game_id.capitalize())
+	var net_delta := int(result.get("chips_delta", result.get("cash_equivalent_delta", result.get("bankroll_delta", 0))))
+	if run.grand_casino_total_money() != total_before + net_delta:
+		failures.append("%s host settlement did not conserve money across funding and apply." % game_id.capitalize())
+	if run.rng_state == rng_before:
+		failures.append("%s first authentic host settlement did not advance canonical RNG." % game_id.capitalize())
+	var settled_table: Dictionary = game.call("_table_state_preview", run, run.current_environment)
+	var last_result: Dictionary = settled_table.get("last_result", {}) if typeof(settled_table.get("last_result", {})) == TYPE_DICTIONARY else {}
+	var resolved_at_msec := int(last_result.get("resolved_at_msec", 0))
+	var predicate_host = _host(game, run, stake)
+	if not game.has_method("_table_game_host_needs_auto_tick") \
+			or bool(predicate_host.call("_blackjack_host_needs_auto_tick", resolved_at_msec + 1)) \
+			or not bool(predicate_host.call("_blackjack_host_needs_auto_tick", resolved_at_msec + 100000)):
+		failures.append("%s sealed-host auto predicate did not remain quiet during ceremony and become due afterward." % game_id.capitalize())
+	predicate_host.free()
+
+	var committed_snapshot := RuntimeScript.canonical_json(run.to_save_snapshot())
+	var replay := _host_resolve(game, run, action_id, stake, delivery)
+	var replay_canonical := replay.duplicate(true)
+	replay_canonical.erase("blackjack_host_replay")
+	if not replay.has("blackjack_host_replay") or RuntimeScript.canonical_json(replay_canonical) != RuntimeScript.canonical_json(result):
+		failures.append("%s replay did not return the exact cached authoritative response." % game_id.capitalize())
+	if RuntimeScript.canonical_json(run.to_save_snapshot()) != committed_snapshot:
+		failures.append("%s replay repeated RNG, money, story, or another one-shot effect." % game_id.capitalize())
+
+	var hostile_delivery := delivery.duplicate(true)
+	hostile_delivery["stake"] = stake + 1
+	var before_hostile := RuntimeScript.canonical_json(run.to_save_snapshot())
+	var hostile := _host_resolve(game, run, action_id, stake + 1, hostile_delivery)
+	if bool(hostile.get("ok", true)) or str(hostile.get("error_code", "")) not in ["receipt_content_conflict", "stale_boundary"]:
+		failures.append("%s host did not reject hostile or stale delivery content." % game_id.capitalize())
+	if RuntimeScript.canonical_json(run.to_save_snapshot()) != before_hostile:
+		failures.append("%s hostile delivery rejection changed canonical state." % game_id.capitalize())
+
+	_check_pending_retry_cancel(game_id, game, action_id, stake, session)
+
+
+func _check_pending_retry_cancel(game_id: String, game, action_id: String, stake: int, session: Dictionary) -> void:
+	var run = RunStateScript.new()
+	run.start_new("GAME06-3-PENDING-%s" % game_id.to_upper())
+	run.bankroll = 500
+	run.grand_casino_chips = 100
+	var environment := {"id": "game06_3_pending_%s" % game_id, "archetype_id": "grand_casino", "kind": "boss", "game_ids": [game_id], "economic_profile": {"stake_floor": 5, "stake_ceiling": 1000}, "security_profile": {"strictness": "high"}}
+	run.current_environment = environment
+	var game_states := {}
+	game_states[game_id] = game.generate_environment_state(run, environment, run.create_rng("pending_table"))
+	environment["game_states"] = game_states
+	run.current_environment = environment
+	_seed_host_session(game, run, session)
+	var host = _host(game, run, stake)
+	var money_before := run.grand_casino_total_money()
+	var rng_before := run.rng_state
+	var prepared: Dictionary = host.call("_blackjack_host_prepare_delivery", action_id, stake, {})
+	var delivery: Dictionary = prepared.get("delivery", {})
+	var retry: Dictionary = host.call("_blackjack_host_surface_intent", "table_game_retry_pending", 0, false, run.simulation_time_msec())
+	if delivery.is_empty() or not bool(retry.get("handled", false)) or RuntimeScript.canonical_json(retry.get("_blackjack_host_delivery", {})) != RuntimeScript.canonical_json(delivery):
+		failures.append("%s pending retry did not preserve the exact sealed delivery." % game_id.capitalize())
+	var cancelled: Dictionary = host.call("_blackjack_host_surface_intent", "table_game_cancel_pending", 0, false, run.simulation_time_msec())
+	if not bool(cancelled.get("handled", false)):
+		failures.append("%s pending cancellation was not accepted by the authentic host." % game_id.capitalize())
+	var ledger := _host_ledger(game, run)
+	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty() or run.grand_casino_total_money() != money_before or run.rng_state != rng_before:
+		failures.append("%s pending retry/cancel consumed money, RNG, or left a delivery stranded." % game_id.capitalize())
+	host.free()
+
+
+func _host_resolve(game, run, action_id: String, stake: int, delivery: Dictionary = {}) -> Dictionary:
+	var host = _host(game, run, stake)
+	var result: Dictionary = host.call("_blackjack_host_resolve_intent", action_id, stake, delivery)
+	host.free()
+	return result
+
+
+func _host(game, run, stake: int):
+	var host = FoundationMainScript.new()
+	host.set("current_game", game)
+	var cache := {}
+	cache[game.get_id()] = game
+	host.set("game_module_cache", cache)
+	host.set("run_state", run)
+	host.set("selected_stake", stake)
+	return host
+
+
+func _seed_host_session(game, run, session: Dictionary) -> void:
+	var table: Dictionary = game.call("_table_state", run, run.current_environment)
+	var binding := "%s:%s:%s" % [game.get_id(), str(run.current_environment.get("id", "unknown")), str(run.current_environment.get("archetype_id", "unknown"))]
+	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {}), binding, run.blackjack_authority_checkpoint_fingerprint())
+	if ledger.is_empty():
+		ledger = BlackjackActionAuthorityScript.default_ledger(binding, run.blackjack_authority_checkpoint_fingerprint())
+	table[BlackjackActionAuthorityScript.LEDGER_KEY] = BlackjackActionAuthorityScript.stage_session(ledger, session)
+	game.call("_update_environment_table", run.current_environment, table)
+
+
+func _host_ledger(game, run) -> Dictionary:
+	var table: Dictionary = game.call("_table_state_preview", run, run.current_environment)
+	var binding := "%s:%s:%s" % [game.get_id(), str(run.current_environment.get("id", "unknown")), str(run.current_environment.get("archetype_id", "unknown"))]
+	return BlackjackActionAuthorityScript.validate_persisted_ledger(table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {}), binding, run.blackjack_authority_checkpoint_fingerprint())
 
 
 func _setup_game_definition(game, game_id: String) -> void:

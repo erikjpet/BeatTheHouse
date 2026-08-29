@@ -547,6 +547,32 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 	return not last_result.is_empty()
 
 
+func _table_game_host_needs_auto_tick(surface_time_msec: int, _run_state: RunState, environment: Dictionary) -> bool:
+	# Foundation calls this before constructing any per-frame UI snapshot. Keep
+	# the authoritative idle probe scalar-only and operate on the stored table.
+	var states_value: Variant = environment.get("game_states")
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return false
+	var table_value: Variant = (states_value as Dictionary).get("roulette")
+	if typeof(table_value) != TYPE_DICTIONARY:
+		return false
+	var table: Dictionary = table_value
+	if table.is_empty() or bool(table.get("table_barred")):
+		return false
+	var last_result_value: Variant = table.get("last_result")
+	if typeof(last_result_value) != TYPE_DICTIONARY or (last_result_value as Dictionary).is_empty():
+		return false
+	var elapsed_msec := surface_time_msec - int((last_result_value as Dictionary).get("resolved_at_msec", 0))
+	var reveal_end_msec := SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC + ROULETTE_RESULT_REVEAL_MSEC
+	var timer_started_msec := int(table.get("table_round_timer_started_msec", 0))
+	var timer_due := timer_started_msec != 0 and maxi(0, surface_time_msec - timer_started_msec) >= ROULETTE_ROUND_DELAY_MSEC
+	if elapsed_msec >= 0 and elapsed_msec < reveal_end_msec and not timer_due:
+		return false
+	if timer_started_msec != 0:
+		return timer_due
+	return true
+
+
 func _peek_table_state(environment: Dictionary) -> Dictionary:
 	# Zero-copy view of the stored table for read-mostly per-frame checks.
 	# Callers must not mutate it or hold it across writes.
@@ -1799,9 +1825,14 @@ func _settle_roulette_bets(winning_number: String, bets: Array, table: Dictionar
 		var stake := maxi(0, int(bet.get("stake", 0)))
 		var payout := maxi(0, int(bet.get("payout", 0)))
 		var won := numbers.has(winning_number)
-		var bankroll_delta := stake * payout if won else -stake
+		# Payout odds are profit-to-one. Express the returned stake separately so
+		# the net result cannot accidentally short-pay a win or debit a loss twice.
+		var stake_return := stake if won else 0
+		var payout_profit := stake * payout if won else 0
 		if not won and _is_zero(winning_number) and la_partage_enabled and str(bet.get("family", "")) == "outside" and payout == 1:
-			bankroll_delta = -int(ceil(float(stake) * 0.5))
+			stake_return = int(floor(float(stake) * 0.5))
+		var gross_return := stake_return + payout_profit
+		var bankroll_delta := gross_return - stake
 		var celebration_score := _roulette_celebration_score(bet, won)
 		results.append({
 			"id": str(bet.get("id", "")),
@@ -1810,6 +1841,9 @@ func _settle_roulette_bets(winning_number: String, bets: Array, table: Dictionar
 			"numbers": numbers,
 			"stake": stake,
 			"payout": payout,
+			"stake_return": stake_return,
+			"payout_profit": payout_profit,
+			"gross_return": gross_return,
 			"won": won,
 			"winning_number": winning_number,
 			"winning_color": color,
