@@ -371,6 +371,16 @@ static func advance_boundaries(state_value: Variant, amount: int, current_node_i
 				continue
 		if int(state.get("deadline_remaining", 0)) <= 0:
 			state = _resolve(state, "failed", "deadline", false)
+	if str(state.get("status", "")) == "resolved" and str(state.get("mode", "")) in [MODE_HOLD, MODE_GETAWAY]:
+		var depth := _copy_dict(state.get("depth_state", {}))
+		var aftermath_key := "hold_aftermath" if str(state.get("mode", "")) == MODE_HOLD else "pursuit_aftermath"
+		if _copy_dict(depth.get(aftermath_key, {})).is_empty():
+			depth[aftermath_key] = {
+				"outcome": str(_copy_dict(state.get("resolution", {})).get("reason", "failed")),
+				"node_id": current_node_id.strip_edges(),
+				"action_index": maxi(0, action_index),
+			}
+			state["depth_state"] = depth
 	return state
 
 
