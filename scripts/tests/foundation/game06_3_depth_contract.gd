@@ -32,6 +32,8 @@ func _init() -> void:
 	_check_roulette()
 	_check_baccarat()
 	_check_exact_settlement_accounting()
+	_check_host_owned_authority_marker()
+	_check_overlapping_ritual_status_strips_removed()
 	_check_authoritative_host_matrix()
 	if failures.is_empty():
 		print("GAME06_3_DEPTH_CONTRACT PASS roulette=true baccarat=true")
@@ -99,10 +101,6 @@ func _check_roulette() -> void:
 	var unfocused_remove: Dictionary = game._remove_bet_chip_command(-1, unfocused_state, table)
 	if JSON.stringify((unfocused_remove.get("ui_state", {}) as Dictionary).get("roulette_bets", [])) != JSON.stringify(bets) or unfocused_before != JSON.stringify(unfocused_state):
 		failures.append("Roulette controller remove without a named focus mutated an implicit last stack.")
-	var roulette_probe := RitualDrawProbe.new()
-	game._draw_roulette_ritual_status(roulette_probe, {"ritual_phase": "no_more_bets", "ritual_energy": {"tier": "packed"}, "ritual_actors": [{"behavior": "waving_off_bets"}], "ritual_scene_objects": [{"id": "roulette.ball", "visual_state": "travel"}]})
-	if roulette_probe.labels.is_empty() or (roulette_probe.labels[0] as String).find("WAVING OFF BETS") < 0 or (roulette_probe.labels[0] as String).find("PACKED") < 0:
-		failures.append("Roulette renderer did not visibly consume actor/object/energy ritual state.")
 	var phase_run = RunStateScript.new()
 	phase_run.start_new("GAME06-3-ROULETTE-PHASE-RESTORE")
 	var phase_environment := {"id": "game06_3_roulette_restore", "archetype_id": "grand_casino", "kind": "boss", "game_ids": ["roulette"], "economic_profile": {"stake_floor": 5, "stake_ceiling": 1000}, "security_profile": {"strictness": "high"}}
@@ -204,9 +202,6 @@ func _check_baccarat() -> void:
 	if (late_pointer.get("ui_state", {}) as Dictionary).has("baccarat_squeeze_origin") or JSON.stringify(pointer_environment) != pointer_before:
 		failures.append("Baccarat accepted late squeeze input after the reveal window or changed authority.")
 	var baccarat_probe := RitualDrawProbe.new()
-	game._draw_baccarat_ritual_status(baccarat_probe, {"ritual_phase": "squeeze_reveal", "ritual_energy": {"tier": "busy"}, "ritual_actors": [{"behavior": "offering_squeeze"}], "ritual_scene_objects": [{"id": "baccarat.shoe", "visual_state": "in_use"}]})
-	if baccarat_probe.labels.is_empty() or (baccarat_probe.labels[0] as String).find("OFFERING SQUEEZE") < 0 or (baccarat_probe.labels[0] as String).find("BUSY") < 0:
-		failures.append("Baccarat renderer did not visibly consume actor/object/energy ritual state.")
 	game._draw_squeeze_badge(baccarat_probe, squeeze_result.get("animation_events", [])[0], {"baccarat_squeeze_progress": 0.5, "baccarat_squeeze_available": true})
 	if baccarat_probe.hits.is_empty() or not bool((baccarat_probe.hits[0] as Dictionary).get("keyboard_hold", false)) or not bool((baccarat_probe.hits[0] as Dictionary).get("drag", false)):
 		failures.append("Baccarat squeeze renderer did not register the shared pointer/keyboard/controller hold route.")
@@ -341,6 +336,47 @@ func _check_exact_settlement_accounting() -> void:
 		failures.append("Roulette la partage did not return the retained half and charge only the rounded house half.")
 
 
+func _check_host_owned_authority_marker() -> void:
+	var host = FoundationMainScript.new()
+	var provider_contract := {
+		"proposal_requires_apply_key": "table_game_proposal_requires_apply",
+		"authoritative_result_marker": "table_game_authoritative",
+	}
+	for hostile_case_value in [
+		{"label": "false", "result": {"table_game_proposal_requires_apply": false, "table_game_authoritative": true}},
+		{"label": "absent", "result": {"table_game_authoritative": true}},
+	]:
+		var hostile_case: Dictionary = hostile_case_value
+		var hostile_result: Dictionary = (hostile_case.get("result", {}) as Dictionary).duplicate(true)
+		var requires_apply := bool(host.call("_sealed_action_host_normalize_result_authority", hostile_result, provider_contract))
+		if requires_apply or hostile_result.has("table_game_proposal_requires_apply") or hostile_result.has("table_game_authoritative"):
+			failures.append("Foundation host trusted a caller-supplied table authority marker when requires-apply was %s." % str(hostile_case.get("label", "unknown")))
+	var authentic_result := {
+		"table_game_proposal_requires_apply": true,
+		"table_game_authoritative": false,
+	}
+	var authentic_requires_apply := bool(host.call("_sealed_action_host_normalize_result_authority", authentic_result, provider_contract))
+	if not authentic_requires_apply \
+			or authentic_result.has("table_game_proposal_requires_apply") \
+			or not authentic_result.has("table_game_authoritative") \
+			or typeof(authentic_result.get("table_game_authoritative")) != TYPE_BOOL \
+			or authentic_result.get("table_game_authoritative") != true:
+		failures.append("Foundation host did not mint the exact authority marker after observing requires-apply.")
+	host.free()
+
+
+func _check_overlapping_ritual_status_strips_removed() -> void:
+	var roulette_source := FileAccess.get_file_as_string("res://scripts/games/roulette.gd")
+	var baccarat_source := FileAccess.get_file_as_string("res://scripts/games/baccarat.gd")
+	if roulette_source.find("_draw_roulette_ritual_status") >= 0 or roulette_source.find("Rect2(300, 8, 306, 25)") >= 0:
+		failures.append("Roulette retained the ritual status strip that repainted its recent-numbers band.")
+	if baccarat_source.find("_draw_baccarat_ritual_status") >= 0 or baccarat_source.find("Rect2(300, 8, 376, 24)") >= 0:
+		failures.append("Baccarat retained the ritual status strip that repainted shared table header chrome.")
+	var roulette = RouletteGameScript.new()
+	if roulette._roulette_recent_panel_rect() != Rect2(250, 6, 436, 28):
+		failures.append("Roulette overlap repair moved or resized the established recent-numbers band.")
+
+
 func _check_authoritative_host_matrix() -> void:
 	_check_authoritative_game("roulette", RouletteGameScript.new(), "spin_roulette", 15, {
 		"roulette_bets": [
@@ -382,6 +418,14 @@ func _check_authoritative_game(game_id: String, game, action_id: String, stake: 
 	environment["game_states"] = game_states
 	run.current_environment = environment
 	_seed_host_session(game, run, session)
+	var baccarat_shoe_id_before := ""
+	var baccarat_reshuffle_count_before := -1
+	var baccarat_shoe_remaining_before := -1
+	if game_id == "baccarat":
+		var baccarat_table_before: Dictionary = game.call("_table_state_preview", run, run.current_environment)
+		baccarat_shoe_id_before = str(baccarat_table_before.get("shoe_id", ""))
+		baccarat_reshuffle_count_before = int(baccarat_table_before.get("reshuffle_count", -1))
+		baccarat_shoe_remaining_before = int(baccarat_table_before.get("shoe_remaining", -1))
 
 	var snapshot := run.to_save_snapshot()
 	var zero_cost_actions := ["unknown_action", "crew_play:chip_dump"]
@@ -400,9 +444,13 @@ func _check_authoritative_game(game_id: String, game, action_id: String, stake: 
 		failures.append("%s authoritative wager proposal did not lease the exact table stake." % game_id.capitalize())
 
 	var total_before := run.grand_casino_total_money()
-	var rng_before := run.rng_state
+	var rng_before: int = int(run.rng_state)
 	var result := _host_resolve(game, run, action_id, stake)
-	if not bool(result.get("ok", false)) or not bool(result.get("blackjack_host_committed", false)) or not bool(result.get("table_game_authoritative", false)):
+	if not bool(result.get("ok", false)) \
+			or not bool(result.get("blackjack_host_committed", false)) \
+			or not result.has("table_game_authoritative") \
+			or typeof(result.get("table_game_authoritative")) != TYPE_BOOL \
+			or result.get("table_game_authoritative") != true:
 		failures.append("%s did not commit through the authentic Foundation host." % game_id.capitalize())
 		return
 	var delivery_value: Variant = result.get("blackjack_host_delivery", null)
@@ -418,9 +466,17 @@ func _check_authoritative_game(game_id: String, game, action_id: String, stake: 
 	var net_delta := int(result.get("chips_delta", result.get("cash_equivalent_delta", result.get("bankroll_delta", 0))))
 	if run.grand_casino_total_money() != total_before + net_delta:
 		failures.append("%s host settlement did not conserve money across funding and apply." % game_id.capitalize())
-	if run.rng_state == rng_before:
-		failures.append("%s first authentic host settlement did not advance canonical RNG." % game_id.capitalize())
+	if game_id == "roulette" and run.rng_state == rng_before:
+		failures.append("Roulette first authentic host settlement did not advance canonical RNG.")
+	if game_id == "baccarat" and run.rng_state != rng_before:
+		failures.append("Baccarat advanced canonical RNG while dealing from its already-authored shoe.")
 	var settled_table: Dictionary = game.call("_table_state_preview", run, run.current_environment)
+	if game_id == "baccarat" \
+			and (baccarat_shoe_id_before.is_empty() \
+				or str(settled_table.get("shoe_id", "")) != baccarat_shoe_id_before \
+				or int(settled_table.get("reshuffle_count", -1)) != baccarat_reshuffle_count_before \
+				or int(settled_table.get("shoe_remaining", -1)) >= baccarat_shoe_remaining_before):
+		failures.append("Baccarat RNG ownership fixture did not prove a draw from the existing shoe without reshuffle.")
 	var last_result: Dictionary = settled_table.get("last_result", {}) if typeof(settled_table.get("last_result", {})) == TYPE_DICTIONARY else {}
 	var resolved_at_msec := int(last_result.get("resolved_at_msec", 0))
 	var predicate_host = _host(game, run, stake)
@@ -466,7 +522,7 @@ func _check_pending_retry_cancel(game_id: String, game, action_id: String, stake
 	_seed_host_session(game, run, session)
 	var host = _host(game, run, stake)
 	var money_before := run.grand_casino_total_money()
-	var rng_before := run.rng_state
+	var rng_before: int = int(run.rng_state)
 	var prepared: Dictionary = host.call("_sealed_action_host_prepare_delivery", action_id, stake, {})
 	var delivery: Dictionary = prepared.get("delivery", {})
 	var retry: Dictionary = host.call("_sealed_action_host_surface_intent", "table_game_retry_pending", 0, false, run.simulation_time_msec())

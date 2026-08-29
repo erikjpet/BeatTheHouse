@@ -1677,13 +1677,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal changed its delivery authority.", request_key)
 	var proposed_rng := RngStream.new()
 	proposed_rng.restore((proposal.get("rng_snapshot", {}) as Dictionary).duplicate(true))
-	var proposal_requires_apply_key := str(provider_contract.get("proposal_requires_apply_key", ""))
-	var requires_apply := not proposal_requires_apply_key.is_empty() and bool(result.get(proposal_requires_apply_key, false))
-	if not proposal_requires_apply_key.is_empty():
-		result.erase(proposal_requires_apply_key)
-	var authoritative_result_marker := str(provider_contract.get("authoritative_result_marker", ""))
-	if requires_apply and not authoritative_result_marker.is_empty():
-		result[authoritative_result_marker] = true
+	var requires_apply := _sealed_action_host_normalize_result_authority(result, provider_contract)
 	result[ActionAuthorityScript.HOST_COMMITTED_KEY] = true
 	result[ActionAuthorityScript.HOST_REQUEST_KEY] = request_key
 	result[ActionAuthorityScript.HOST_DELIVERY_KEY] = delivery.duplicate(true)
@@ -1769,6 +1763,21 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	if not _sealed_action_host_publish(proposed_candidate):
 		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack host could not publish the accepted transaction.", request_key)
 	return result
+
+
+func _sealed_action_host_normalize_result_authority(result: Dictionary, provider_contract: Dictionary) -> bool:
+	var proposal_requires_apply_key := str(provider_contract.get("proposal_requires_apply_key", ""))
+	var requires_apply := not proposal_requires_apply_key.is_empty() and bool(result.get(proposal_requires_apply_key, false))
+	if not proposal_requires_apply_key.is_empty():
+		result.erase(proposal_requires_apply_key)
+	var authoritative_result_marker := str(provider_contract.get("authoritative_result_marker", ""))
+	if not authoritative_result_marker.is_empty():
+		# The host owns capability minting even when a canonical provider authored
+		# the proposal. Strip every inbound claim before observing host policy.
+		result.erase(authoritative_result_marker)
+		if requires_apply:
+			result[authoritative_result_marker] = true
+	return requires_apply
 
 
 # `input_route_guarded` is trusted call-stack context only. It is never read
