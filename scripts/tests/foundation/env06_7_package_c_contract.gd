@@ -5,7 +5,7 @@ const Catalog := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const Runtime := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const OperationRegistry := preload("res://scripts/core/scenario_operation_registry.gd")
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
-const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const EnvironmentInstanceScript: Script = preload("res://scripts/core/environment_instance.gd")
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const SemanticInventory := preload("res://scripts/core/environment_semantic_inventory.gd")
 
