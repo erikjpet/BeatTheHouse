@@ -37,14 +37,14 @@ const SPATIAL_BINDINGS := {
 	"bar_wake":{"task_anchor":"wake_task","anchors":["wake_memorial_tables","wake_host"],"phase_actor_anchors":{"work_1":{"wake_regular":"wake_regular_work_1"}}},
 	"bar_fight_night":{"task_anchor":"fight_task","anchors":["fight_toppled_chair","fight_right_brawler"],"actor_anchors":{"right_brawler":"fight_right_brawler_arrival"},"object_anchors":{"door_buffer":"fight_door_buffer"}},
 	"bar_payday_rush":{"task_anchor":"payday_task","anchors":["payday_order_rail","payday_runner"]},
-	"bar_lock_in":{"anchors":["lockin_shutters","lockin_regular"]},
-	"bar_darts_league_night":{"anchors":["darts_oche","darts_scorer"]},
-	"bar_live_band":{"anchors":["live_band_speakers","live_band_runner"]},
-	"bar_dead_tuesday":{"anchors":["dead_tuesday_bartender"]},
-	"jazz_club_guest_legend":{"anchors":["guest_legend_table","guest_legend_stage_manager"]},
-	"jazz_club_rent_party":{"anchors":["rent_party_donation","rent_party_creditor"]},
-	"jazz_club_recording_night":{"anchors":["recording_microphone","recording_audience"]},
-	"jazz_club_union_trouble":{"anchors":["union_picket","union_manager"]},
+	"bar_lock_in":{"task_anchor":"lockin_task","anchors":["lockin_shutters","lockin_regular"]},
+	"bar_darts_league_night":{"task_anchor":"darts_task","anchors":["darts_oche","darts_scorer"],"actor_anchors":{"darts_scorer":"darts_scorer"}},
+	"bar_live_band":{"task_anchor":"live_band_task","anchors":["live_band_speakers","live_band_runner"],"actor_anchors":{"band_leader":"live_band_leader_arrival"}},
+	"bar_dead_tuesday":{"task_anchor":"dead_tuesday_task","anchors":["dead_tuesday_bartender"],"object_anchors":{"booth_zone":"dead_tuesday_booth"},"actor_anchors":{"lone_patron":"dead_tuesday_lone_patron"}},
+	"jazz_club_guest_legend":{"task_anchor":"guest_legend_task","anchors":["guest_legend_table","guest_legend_stage_manager"],"actor_anchors":{"stage_manager":"guest_legend_manager_arrival"}},
+	"jazz_club_rent_party":{"task_anchor":"rent_party_task","anchors":["rent_party_donation","rent_party_creditor"],"actor_anchors":{"club_creditor":"rent_party_creditor_arrival"}},
+	"jazz_club_recording_night":{"task_anchor":"recording_task","anchors":["recording_microphone","recording_audience"],"actor_anchors":{"waiting_audience":"recording_audience"}},
+	"jazz_club_union_trouble":{"task_anchor":"union_task","anchors":["union_picket","union_manager"],"actor_anchors":{"union_delegate":"union_delegate_arrival","club_manager":"union_manager_arrival"}},
 }
 
 

@@ -4722,7 +4722,8 @@
           "actors": [],
           "anchors": [
             "base::anchor:lockin_shutters",
-            "base::anchor:lockin_regular"
+            "base::anchor:lockin_regular",
+            "base::anchor:lockin_task"
           ],
           "games": [],
           "interactions": [],
@@ -5067,7 +5068,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "lockin_shutters",
+                    "anchor_id": "lockin_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -5261,7 +5262,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "lockin_shutters",
+                    "anchor_id": "lockin_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -5505,7 +5506,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "lockin_shutters",
+                    "anchor_id": "lockin_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -5699,7 +5700,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "lockin_shutters",
+                    "anchor_id": "lockin_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -5889,7 +5890,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "lockin_shutters",
+                    "anchor_id": "lockin_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -6059,7 +6060,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "6711a32cc5738413458d20f2ec6625d8b7fcd07b5418c74ff6465ce62c4b038c"
+        "sequence_signature": "5501a654ae409a7e0a4a1cd3669efa8c6c7f18753fb38d918eccef881321dca0"
       }
     },
     {
@@ -6412,7 +6413,8 @@
           "actors": [],
           "anchors": [
             "base::anchor:darts_oche",
-            "base::anchor:darts_scorer"
+            "base::anchor:darts_scorer",
+            "base::anchor:darts_task"
           ],
           "games": [],
           "interactions": [],
@@ -6524,6 +6526,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_darts_scorer",
+                    "anchor_id": "darts_scorer",
                     "behavior": "work",
                     "label": "Darts scorer",
                     "pose": "arrival",
@@ -6763,7 +6766,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "darts_oche",
+                    "anchor_id": "darts_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -6957,7 +6960,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "darts_oche",
+                    "anchor_id": "darts_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -7148,7 +7151,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "darts_oche",
+                    "anchor_id": "darts_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -7395,7 +7398,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "darts_oche",
+                    "anchor_id": "darts_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -7585,7 +7588,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "darts_oche",
+                    "anchor_id": "darts_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -7776,7 +7779,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "darts_oche",
+                    "anchor_id": "darts_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -7949,7 +7952,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "02d81de53190f7e106f99c6bb97e1d370fa5f1af97cf2822bb7ec70a14a620a2"
+        "sequence_signature": "cf29e6fecdda66d11f72dc174d0a9d4788b8872b4b4071a2207a45b33a96f42c"
       }
     },
     {
@@ -8287,7 +8290,9 @@
           "actors": [],
           "anchors": [
             "base::anchor:live_band_speakers",
-            "base::anchor:live_band_runner"
+            "base::anchor:live_band_runner",
+            "base::anchor:live_band_task",
+            "base::anchor:live_band_leader_arrival"
           ],
           "games": [],
           "interactions": [],
@@ -8379,6 +8384,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_band_leader",
+                    "anchor_id": "live_band_leader_arrival",
                     "behavior": "work",
                     "label": "Band leader",
                     "pose": "arrival",
@@ -8632,7 +8638,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "live_band_speakers",
+                    "anchor_id": "live_band_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -8826,7 +8832,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "live_band_speakers",
+                    "anchor_id": "live_band_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -9070,7 +9076,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "live_band_speakers",
+                    "anchor_id": "live_band_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -9264,7 +9270,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "live_band_speakers",
+                    "anchor_id": "live_band_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -9454,7 +9460,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "live_band_speakers",
+                    "anchor_id": "live_band_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -9624,7 +9630,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "8f6e951b34cde922dd7ad2577f904888090b21ceb65994ee8220652b1be86699"
+        "sequence_signature": "7c78d8de0097c43b69d5a93d0e1b9675a7f8adca35dfe61a16432c1a408ab0e1"
       }
     },
     {
@@ -9916,7 +9922,10 @@
         "declared_targets": {
           "actors": [],
           "anchors": [
-            "base::anchor:dead_tuesday_bartender"
+            "base::anchor:dead_tuesday_bartender",
+            "base::anchor:dead_tuesday_task",
+            "base::anchor:dead_tuesday_booth",
+            "base::anchor:dead_tuesday_lone_patron"
           ],
           "games": [],
           "interactions": [],
@@ -10004,6 +10013,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_lone_patron",
+                    "anchor_id": "dead_tuesday_lone_patron",
                     "behavior": "idle",
                     "label": "Lone Tuesday patron",
                     "pose": "arrival",
@@ -10256,6 +10266,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "dead_tuesday_booth",
                     "appearance": "available",
                     "bounds": {
                       "h": 58.0,
@@ -10296,7 +10307,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "dead_tuesday_bartender",
+                    "anchor_id": "dead_tuesday_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -10490,7 +10501,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "dead_tuesday_bartender",
+                    "anchor_id": "dead_tuesday_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -10660,7 +10671,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "806f7d465a2716161c53360555e0959bf49cb7023bb3ff342a909be841bdb146"
+        "sequence_signature": "efd13a8dac53d954ad0e96615f787bd9e9918ac3fa0442ed5947ffe2683db554"
       }
     },
     {
@@ -11013,7 +11024,9 @@
           "actors": [],
           "anchors": [
             "base::anchor:guest_legend_table",
-            "base::anchor:guest_legend_stage_manager"
+            "base::anchor:guest_legend_stage_manager",
+            "base::anchor:guest_legend_task",
+            "base::anchor:guest_legend_manager_arrival"
           ],
           "games": [],
           "interactions": [],
@@ -11125,6 +11138,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_stage_manager",
+                    "anchor_id": "guest_legend_manager_arrival",
                     "behavior": "work",
                     "label": "Jazz stage manager",
                     "pose": "arrival",
@@ -11364,7 +11378,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "guest_legend_table",
+                    "anchor_id": "guest_legend_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -11558,7 +11572,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "guest_legend_table",
+                    "anchor_id": "guest_legend_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -11749,7 +11763,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "guest_legend_table",
+                    "anchor_id": "guest_legend_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -11996,7 +12010,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "guest_legend_table",
+                    "anchor_id": "guest_legend_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -12186,7 +12200,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "guest_legend_table",
+                    "anchor_id": "guest_legend_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -12377,7 +12391,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "guest_legend_table",
+                    "anchor_id": "guest_legend_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -12550,7 +12564,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1c0745090b51fc24ec21580595db1865666fb6dee2b532faeba957c5736a5d88"
+        "sequence_signature": "8431f3ba51f4a6b84c5885bd1dfbced396d6a11c0618df2e851441f3d01e5c56"
       }
     },
     {
@@ -12873,7 +12887,9 @@
           "actors": [],
           "anchors": [
             "base::anchor:rent_party_donation",
-            "base::anchor:rent_party_creditor"
+            "base::anchor:rent_party_creditor",
+            "base::anchor:rent_party_task",
+            "base::anchor:rent_party_creditor_arrival"
           ],
           "games": [],
           "interactions": [],
@@ -12973,6 +12989,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_creditor",
+                    "anchor_id": "rent_party_creditor_arrival",
                     "behavior": "watch",
                     "label": "Waiting creditor",
                     "pose": "arrival",
@@ -13212,7 +13229,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "rent_party_donation",
+                    "anchor_id": "rent_party_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -13406,7 +13423,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "rent_party_donation",
+                    "anchor_id": "rent_party_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -13650,7 +13667,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "rent_party_donation",
+                    "anchor_id": "rent_party_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -13844,7 +13861,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "rent_party_donation",
+                    "anchor_id": "rent_party_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -14015,7 +14032,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "412f206234f2de99b4ffd6161b5194838d2a028dfad953907f0ea81c6f87c86e"
+        "sequence_signature": "506ea4aedb9ae2d7836874bd893c32c4706c6fc36a2fa5f3b169485a7a911bf0"
       }
     },
     {
@@ -14323,7 +14340,8 @@
           "actors": [],
           "anchors": [
             "base::anchor:recording_microphone",
-            "base::anchor:recording_audience"
+            "base::anchor:recording_audience",
+            "base::anchor:recording_task"
           ],
           "games": [],
           "interactions": [],
@@ -14417,6 +14435,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_audience",
+                    "anchor_id": "recording_audience",
                     "behavior": "watch",
                     "label": "Relocated audience",
                     "pose": "arrival",
@@ -14656,7 +14675,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "recording_microphone",
+                    "anchor_id": "recording_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -14903,7 +14922,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "recording_microphone",
+                    "anchor_id": "recording_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -15094,7 +15113,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "recording_microphone",
+                    "anchor_id": "recording_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -15267,7 +15286,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "cbc94ba3ce5d017782dc7efecfb6484fff8c852f7a7f066ffdf2325264ae90fe"
+        "sequence_signature": "4007569f037d0dbb66d3ad982a3bb0a7c7f9908cbaee33b2dab82ad281dd708d"
       }
     },
     {
@@ -15590,7 +15609,10 @@
           "actors": [],
           "anchors": [
             "base::anchor:union_picket",
-            "base::anchor:union_manager"
+            "base::anchor:union_manager",
+            "base::anchor:union_task",
+            "base::anchor:union_delegate_arrival",
+            "base::anchor:union_manager_arrival"
           ],
           "games": [],
           "interactions": [],
@@ -15676,6 +15698,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_union_delegate",
+                    "anchor_id": "union_delegate_arrival",
                     "behavior": "guard",
                     "label": "Union delegate",
                     "pose": "arrival",
@@ -15690,6 +15713,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_club_manager",
+                    "anchor_id": "union_manager_arrival",
                     "behavior": "guard",
                     "label": "Club manager",
                     "pose": "arrival",
@@ -15929,7 +15953,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "union_picket",
+                    "anchor_id": "union_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -16176,7 +16200,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "union_picket",
+                    "anchor_id": "union_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -16367,7 +16391,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "union_picket",
+                    "anchor_id": "union_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -16561,7 +16585,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "union_picket",
+                    "anchor_id": "union_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -16732,7 +16756,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "eb634d4310cdfe4bdc1e94d19cf5cfe049dd1630829c8d355e38109edcb30cec"
+        "sequence_signature": "b20905403ac6d3e22cf6ff8e29bc853b5dfaaa9d5c4f77e87a1be77a5029a91f"
       }
     }
   ]
