@@ -413,6 +413,8 @@ $objectJsonFiles = @(
     "data/art/art_manifest.json",
     "data/art/attribute_glyphs.json",
     "data/games/bar_dice_game_ritual_v1.json",
+    "data/games/showdown_duel_game_ritual_v1.json",
+    "data/games/showdown_duel_ritual_v1.json",
     "data/games/scratch_ticket_regions.json",
     "data/environments/scenarios.json",
     "data/story/character_chains.json"
