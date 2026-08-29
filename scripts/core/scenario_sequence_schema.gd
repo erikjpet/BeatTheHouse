@@ -78,6 +78,14 @@ const MAX_PHASES := 16
 const MAX_BRANCHES_PER_PHASE := 8
 const MAX_OBJECTIVES := 8
 const MAX_STEPS_PER_OBJECTIVE := 8
+const SUCCESSFUL_VALIDATION_MEMO_VERSION := 1
+const SUCCESSFUL_VALIDATION_MEMO_MAX_ENTRIES := 256
+
+static var _successful_validation_memo: Dictionary = {}
+static var _successful_validation_memo_order: Array[String] = []
+static var _successful_validation_memo_hits := 0
+static var _successful_validation_full_runs := 0
+static var _successful_validation_memo_evictions := 0
 const MAX_LOCAL_FIELDS := 32
 const MAX_FACT_SUBSCRIPTIONS := 32
 const MAX_AFTERMATHS := 8
@@ -106,10 +114,16 @@ static func is_sequence(definition: Dictionary) -> bool:
 static func validate_definition(definition: Dictionary, operation_registry: Variant = null, target_inventory: Dictionary = {}) -> Array:
 	if operation_registry == null:
 		operation_registry = DefaultOperationRegistryScript
+	var memo_key := _successful_validation_memo_key(definition, target_inventory, operation_registry)
+	if _successful_validation_memo.has(memo_key):
+		_successful_validation_memo_hits += 1
+		return []
+	_successful_validation_full_runs += 1
 	var errors: Array = []
 	var scenario_id := str(definition.get("id", "")).strip_edges()
 	var authored := sequence(definition)
 	if authored.is_empty():
+		_remember_successful_validation(memo_key)
 		return errors
 	var label := "scenario %s sequence" % scenario_id
 	_append_unknown_keys(label, authored, ALLOWED_SEQUENCE_KEYS, errors)
@@ -136,7 +150,69 @@ static func validate_definition(definition: Dictionary, operation_registry: Vari
 	var calculated_signature := calculated_signature_hash(definition)
 	if authored_signature != calculated_signature:
 		errors.append("%s sequence_signature mismatch (authored %s, calculated %s)." % [label, authored_signature, calculated_signature])
+	if errors.is_empty():
+		_remember_successful_validation(memo_key)
 	return errors
+
+
+static func _successful_validation_memo_key(definition: Dictionary, target_inventory: Dictionary, operation_registry: Variant) -> String:
+	return JSON.stringify(_canonical_variant({
+		"memo_version": SUCCESSFUL_VALIDATION_MEMO_VERSION,
+		"definition": definition,
+		"target_inventory": target_inventory,
+		"operation_registry": _operation_registry_memo_identity(operation_registry),
+	})).sha256_text()
+
+
+static func _operation_registry_memo_identity(operation_registry: Variant) -> Dictionary:
+	var identity := {
+		"variant_type": typeof(operation_registry),
+		"instance_id": 0,
+		"resource_path": "",
+		"registered_operations": {},
+		"registered_handlers": {},
+	}
+	if typeof(operation_registry) != TYPE_OBJECT or operation_registry == null:
+		return identity
+	var registry_object := operation_registry as Object
+	identity["instance_id"] = registry_object.get_instance_id()
+	if operation_registry is Resource:
+		identity["resource_path"] = str((operation_registry as Resource).resource_path)
+	if operation_registry.has_method("registered_operations"):
+		identity["registered_operations"] = _dict(operation_registry.call("registered_operations")).duplicate(true)
+	if operation_registry.has_method("registered_handlers"):
+		identity["registered_handlers"] = _dict(operation_registry.call("registered_handlers")).duplicate(true)
+	return identity
+
+
+static func _remember_successful_validation(memo_key: String) -> void:
+	if memo_key.is_empty() or _successful_validation_memo.has(memo_key):
+		return
+	while _successful_validation_memo_order.size() >= SUCCESSFUL_VALIDATION_MEMO_MAX_ENTRIES:
+		var evicted_key := str(_successful_validation_memo_order.pop_front())
+		_successful_validation_memo.erase(evicted_key)
+		_successful_validation_memo_evictions += 1
+	_successful_validation_memo[memo_key] = true
+	_successful_validation_memo_order.append(memo_key)
+
+
+static func _clear_successful_validation_memo_for_tests() -> void:
+	_successful_validation_memo.clear()
+	_successful_validation_memo_order.clear()
+	_successful_validation_memo_hits = 0
+	_successful_validation_full_runs = 0
+	_successful_validation_memo_evictions = 0
+
+
+static func _successful_validation_memo_stats_for_tests() -> Dictionary:
+	return {
+		"entries": _successful_validation_memo.size(),
+		"order_entries": _successful_validation_memo_order.size(),
+		"hits": _successful_validation_memo_hits,
+		"full_runs": _successful_validation_full_runs,
+		"evictions": _successful_validation_memo_evictions,
+		"max_entries": SUCCESSFUL_VALIDATION_MEMO_MAX_ENTRIES,
+	}
 
 
 static func default_local_state(definition: Dictionary) -> Dictionary:
