@@ -3339,6 +3339,7 @@ func _validate_scenario_definitions() -> void:
 	var character_ids := _ids_for(characters)
 	var seen_ids: Dictionary = {}
 	var sequence_definitions: Array = []
+	var sequence_validation_references: Array = []
 	var target_inventories: Dictionary = {}
 	var masked_visual_explanations: Dictionary = {}
 	var rollout_definitions: Array = []
@@ -3400,15 +3401,7 @@ func _validate_scenario_definitions() -> void:
 			if definition.has("sequence"):
 				sequence_definitions.append(definition.duplicate(true))
 				var sequence_target_catalog := scenario_target_catalog(definition)
-				if sequence_target_catalog.is_empty() or not _copy_array(sequence_target_catalog.get("errors", [])).is_empty():
-					validation_errors.append_array(scenario_target_catalog_messages(scenario_id, sequence_target_catalog))
-				else:
-					var sequence_target_inventory := _as_dict(sequence_target_catalog.get("guaranteed", {})).duplicate(true)
-					sequence_target_inventory["event_choices"] = _as_dict(sequence_target_catalog.get("event_choices", {}))
-					target_inventories[scenario_id] = sequence_target_inventory
-				for pair_key_value in _as_dict(_as_dict(definition.get("sequence_authoring", {})).get("masked_visual_explanations", {})).keys():
-					masked_visual_explanations[str(pair_key_value)] = _as_dict(_as_dict(_as_dict(definition.get("sequence_authoring", {})).get("masked_visual_explanations", {})).get(pair_key_value, {})).duplicate(true)
-				validation_errors.append_array(ScenarioEngineScript.validate_sequence_definition(definition, {
+				sequence_validation_references.append({
 					"archetype_ids": archetype_ids,
 					"event_ids": event_ids,
 					"service_ids": service_ids,
@@ -3417,7 +3410,15 @@ func _validate_scenario_definitions() -> void:
 					"actor_ids": character_ids,
 					"archetype": environment_archetype(archetype_key),
 					"scenario_semantic_inventory": _as_dict(sequence_target_catalog.get("inventory", {})),
-				}, _as_dict(target_inventories.get(scenario_id, {}))))
+				})
+				if sequence_target_catalog.is_empty() or not _copy_array(sequence_target_catalog.get("errors", [])).is_empty():
+					validation_errors.append_array(scenario_target_catalog_messages(scenario_id, sequence_target_catalog))
+				else:
+					var sequence_target_inventory := _as_dict(sequence_target_catalog.get("guaranteed", {})).duplicate(true)
+					sequence_target_inventory["event_choices"] = _as_dict(sequence_target_catalog.get("event_choices", {}))
+					target_inventories[scenario_id] = sequence_target_inventory
+				for pair_key_value in _as_dict(_as_dict(definition.get("sequence_authoring", {})).get("masked_visual_explanations", {})).keys():
+					masked_visual_explanations[str(pair_key_value)] = _as_dict(_as_dict(_as_dict(definition.get("sequence_authoring", {})).get("masked_visual_explanations", {})).get(pair_key_value, {})).duplicate(true)
 	var overlay_ids := _as_dict(scenario_sequence_catalog.get("overlays", {})).keys()
 	for overlay_id_value in overlay_ids:
 		if not seen_ids.has(str(overlay_id_value)):
@@ -3438,8 +3439,10 @@ func _validate_scenario_definitions() -> void:
 		var target_inventory := _as_dict(target_catalog.get("guaranteed", {})).duplicate(true)
 		target_inventory["event_choices"] = _as_dict(target_catalog.get("event_choices", {}))
 		target_inventories[scenario_id] = target_inventory
+	var sequence_validation_batch := ScenarioEngineScript.validate_sequence_catalog_and_audit(sequence_definitions, sequence_validation_references, sequence_definitions.size(), masked_visual_explanations, target_inventories)
+	validation_errors.append_array(_copy_array(sequence_validation_batch.get("validation_errors", [])))
 	if not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty():
-		var uniqueness_audit := ScenarioEngineScript.sequence_catalog_audit(sequence_definitions, sequence_definitions.size(), masked_visual_explanations, target_inventories)
+		var uniqueness_audit := _as_dict(sequence_validation_batch.get("audit", {}))
 		scenario_sequence_catalog["uniqueness_audit"] = uniqueness_audit
 		var authority_channels := scenario_uniqueness_validation_channels(uniqueness_audit)
 		validation_errors.append_array(_copy_array(authority_channels.get("errors", [])))

@@ -4,6 +4,7 @@ extends RefCounted
 const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const SequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
+const SequenceRolloutManifestScript := preload("res://scripts/core/scenario_sequence_rollout_manifest.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_extension_dispatch.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
@@ -1194,6 +1195,78 @@ static func validate_sequence_definition(definition: Dictionary, references: Dic
 
 static func sequence_catalog_audit(definitions: Array, expected_count: int, masked_visual_explanations: Dictionary = {}, target_inventories: Dictionary = {}) -> Dictionary:
 	return SequenceSchemaScript.catalog_uniqueness_report(definitions, expected_count, OperationRegistryScript, masked_visual_explanations, target_inventories)
+
+
+# Validates each definition through the full Engine path and consumes the
+# resulting receipts inside this call. Callers cannot request a bypass or
+# provide validation authority. Any incomplete or stale receipt set takes the
+# unchanged public Schema audit path.
+static func validate_sequence_catalog_and_audit(definitions: Array, validation_references: Array, expected_count: int, masked_visual_explanations: Dictionary = {}, target_inventories: Dictionary = {}) -> Dictionary:
+	var validation_errors: Array = []
+	var validation_receipts: Array = []
+	var registry_context_fingerprint := _sequence_validation_registry_context_fingerprint()
+	for definition_index in range(definitions.size()):
+		var definition := _copy_dict(definitions[definition_index])
+		var references := _copy_dict(validation_references[definition_index]) if definition_index < validation_references.size() else {}
+		var scenario_id := str(definition.get("id", "")).strip_edges()
+		var target_inventory := _copy_dict(target_inventories.get(scenario_id, {}))
+		var definition_fingerprint_before := SequenceRuntimeScript.content_fingerprint(definition)
+		var target_inventory_fingerprint_before := SequenceRuntimeScript.content_fingerprint(target_inventory)
+		var definition_errors := validate_sequence_definition(definition, references, target_inventory)
+		validation_errors.append_array(definition_errors)
+		if definition_errors.is_empty() and definition_fingerprint_before == SequenceRuntimeScript.content_fingerprint(definition) and target_inventory_fingerprint_before == SequenceRuntimeScript.content_fingerprint(target_inventory):
+			# Receipt creation is deliberately adjacent to the successful full
+			# validation; no mutable or cross-instance state exists between them.
+			validation_receipts.append(_sequence_validation_receipt(definition, target_inventory, registry_context_fingerprint))
+	var reuse_validations := _sequence_validation_receipts_match(definitions, expected_count, target_inventories, validation_receipts, registry_context_fingerprint)
+	validation_receipts.clear() # One-shot authority is consumed in this call.
+	var audit := SequenceSchemaScript._catalog_uniqueness_report_after_same_call_validation(definitions, expected_count, OperationRegistryScript, masked_visual_explanations, target_inventories) if reuse_validations else SequenceSchemaScript.catalog_uniqueness_report(definitions, expected_count, OperationRegistryScript, masked_visual_explanations, target_inventories)
+	return {"validation_errors": validation_errors, "audit": audit}
+
+
+static func _sequence_validation_registry_context_fingerprint() -> String:
+	return SequenceRuntimeScript.content_fingerprint({
+		"registry": "res://scripts/core/scenario_operation_registry.gd",
+		"operation_families": OperationRegistryScript.registered_operations(),
+		"handlers": OperationRegistryScript.registered_handlers(),
+		"max_operations_per_batch": OperationRegistryScript.MAX_OPERATIONS_PER_BATCH,
+		"max_actions_per_interaction": OperationRegistryScript.MAX_ACTIONS_PER_INTERACTION,
+		"max_variant_depth": OperationRegistryScript.MAX_VARIANT_DEPTH,
+		"max_variant_values": OperationRegistryScript.MAX_VARIANT_VALUES,
+		"max_variant_text": OperationRegistryScript.MAX_VARIANT_TEXT,
+		"max_variant_collection": OperationRegistryScript.MAX_VARIANT_COLLECTION,
+	})
+
+
+static func _sequence_validation_receipt(definition: Dictionary, target_inventory: Dictionary, registry_context_fingerprint: String) -> Dictionary:
+	var authority := {
+		"scenario_id": str(definition.get("id", "")).strip_edges(),
+		"definition_fingerprint": SequenceRuntimeScript.content_fingerprint(definition),
+		"target_inventory_fingerprint": SequenceRuntimeScript.content_fingerprint(target_inventory),
+		"registry_context_fingerprint": registry_context_fingerprint,
+	}
+	var receipt := authority.duplicate(true)
+	receipt["receipt_fingerprint"] = SequenceRuntimeScript.content_fingerprint(authority)
+	return receipt
+
+
+static func _sequence_validation_receipts_match(definitions: Array, expected_count: int, target_inventories: Dictionary, receipts: Array, registry_context_fingerprint: String) -> bool:
+	if expected_count != SequenceRolloutManifestScript.EXPECTED_COUNT or definitions.size() != expected_count or receipts.size() != expected_count:
+		return false
+	var seen_ids: Dictionary = {}
+	var actual_ids: Array = []
+	for definition_index in range(definitions.size()):
+		var definition := _copy_dict(definitions[definition_index])
+		var scenario_id := str(definition.get("id", "")).strip_edges()
+		if scenario_id.is_empty() or seen_ids.has(scenario_id) or definition_index >= receipts.size():
+			return false
+		seen_ids[scenario_id] = true
+		actual_ids.append(scenario_id)
+		var expected_receipt := _sequence_validation_receipt(definition, _copy_dict(target_inventories.get(scenario_id, {})), registry_context_fingerprint)
+		if SequenceRuntimeScript.content_fingerprint(_copy_dict(receipts[definition_index])) != SequenceRuntimeScript.content_fingerprint(expected_receipt):
+			return false
+	actual_ids.sort()
+	return actual_ids == SequenceRolloutManifestScript.expected_ids()
 
 
 static func _without_sequence_overlay(definition: Dictionary) -> Dictionary:
