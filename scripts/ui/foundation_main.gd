@@ -1349,9 +1349,12 @@ func _blackjack_host_surface_intent(surface_action: String, index: int, confirm_
 
 
 func _blackjack_host_needs_auto_tick(surface_time_msec: int) -> bool:
-	if run_state == null or current_game == null or not current_game.has_method("_blackjack_host_needs_auto_tick"):
+	if run_state == null or current_game == null:
 		return false
-	return bool(current_game.call("_blackjack_host_needs_auto_tick", surface_time_msec, run_state, run_state.current_environment))
+	var predicate_method := "_blackjack_host_needs_auto_tick" if current_game.has_method("_blackjack_host_needs_auto_tick") else "_table_game_host_needs_auto_tick"
+	if not current_game.has_method(predicate_method):
+		return false
+	return bool(current_game.call(predicate_method, surface_time_msec, run_state, run_state.current_environment))
 
 
 func _blackjack_host_pointer_intent(surface_action: String, index: int, phase: String, board_position: Vector2, ui_state: Dictionary) -> Dictionary:
@@ -1895,22 +1898,29 @@ func _advance_game_surface_automation() -> void:
 		return
 	if _simulation_progression_paused():
 		return
-	var tick_state := _current_game_surface_auto_tick_state()
-	var ui_state := tick_state
-	var command: Dictionary
 	if _current_game_uses_blackjack_action_authority():
-		var surface_time_msec := int(ui_state.get("surface_time_msec", _environment_simulation_time_msec()))
+		# The module-specific host predicate is the per-frame fast path. Build a
+		# surface snapshot only after it reports a due action boundary.
+		var surface_time_msec := _environment_simulation_time_msec()
 		if not _blackjack_host_needs_auto_tick(surface_time_msec):
 			return
-		command = _blackjack_host_auto_intent(surface_time_msec)
-	else:
-		if not current_game.surface_needs_auto_tick(tick_state, run_state, run_state.current_environment):
-			return
-		if not current_game.surface_auto_action_uses_lightweight_ui_state():
-			ui_state = _current_game_surface_ui_state()
-		if not is_same(ui_state, tick_state) and not current_game.surface_needs_auto_tick(ui_state, run_state, run_state.current_environment):
-			return
-		command = current_game.surface_auto_action_command(ui_state, run_state, run_state.current_environment, {})
+		var authority_ui_state := _current_game_surface_auto_tick_state()
+		var authority_command := _blackjack_host_auto_intent(surface_time_msec)
+		_apply_game_surface_automation_command(authority_command, authority_ui_state)
+		return
+	var tick_state := _current_game_surface_auto_tick_state()
+	var ui_state := tick_state
+	if not current_game.surface_needs_auto_tick(tick_state, run_state, run_state.current_environment):
+		return
+	if not current_game.surface_auto_action_uses_lightweight_ui_state():
+		ui_state = _current_game_surface_ui_state()
+	if not is_same(ui_state, tick_state) and not current_game.surface_needs_auto_tick(ui_state, run_state, run_state.current_environment):
+		return
+	var command := current_game.surface_auto_action_command(ui_state, run_state, run_state.current_environment, {})
+	_apply_game_surface_automation_command(command, ui_state)
+
+
+func _apply_game_surface_automation_command(command: Dictionary, ui_state: Dictionary) -> void:
 	if command.is_empty() or not bool(command.get("handled", false)):
 		return
 	# Reuse the action-boundary snapshot already built above. Rebuilding it in
