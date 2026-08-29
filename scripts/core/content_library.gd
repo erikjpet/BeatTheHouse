@@ -3441,13 +3441,17 @@ func _validate_scenario_definitions() -> void:
 	if not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty():
 		var uniqueness_audit := ScenarioEngineScript.sequence_catalog_audit(sequence_definitions, sequence_definitions.size(), masked_visual_explanations, target_inventories)
 		scenario_sequence_catalog["uniqueness_audit"] = uniqueness_audit
+		var authority_channels := scenario_uniqueness_validation_channels(uniqueness_audit)
+		validation_errors.append_array(_copy_array(authority_channels.get("errors", [])))
+		validation_warnings.append_array(_copy_array(authority_channels.get("warnings", [])))
 	var rollout_ids := ScenarioSequenceRolloutManifestScript.expected_ids()
 	if ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT != 55 or rollout_ids.size() != ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT:
 		validation_errors.append("scenario sequence rollout manifest must contain exactly 55 catalog ids.")
 	var rollout_report := ScenarioSequenceSchemaScript.catalog_rollout_report(rollout_definitions, rollout_ids, ScenarioOperationRegistryScript, masked_visual_explanations, ScenarioSequenceRolloutManifestScript.required_sequence_ids(), target_inventories)
 	var validation_channels := scenario_uniqueness_validation_channels(rollout_report)
-	validation_errors.append_array(_copy_array(validation_channels.get("errors", [])))
-	validation_warnings.append_array(_copy_array(validation_channels.get("warnings", [])))
+	for rollout_error_value in _copy_array(validation_channels.get("errors", [])):
+		if not validation_errors.has(rollout_error_value):
+			validation_errors.append(rollout_error_value)
 
 
 static func scenario_uniqueness_validation_channels(report: Dictionary) -> Dictionary:
