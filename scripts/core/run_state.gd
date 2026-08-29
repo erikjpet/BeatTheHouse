@@ -3689,6 +3689,10 @@ func blackjack_authority_checkpoint_fingerprint() -> String:
 	})
 
 
+func action_authority_checkpoint_fingerprint() -> String:
+	return blackjack_authority_checkpoint_fingerprint()
+
+
 func _reconcile_blackjack_authority_restore() -> void:
 	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	if typeof(game_states.get("blackjack", null)) != TYPE_DICTIONARY:

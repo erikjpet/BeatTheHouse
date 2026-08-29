@@ -14,6 +14,34 @@ const JOURNAL_LIMIT := 128
 const RECEIPT_CAUSE := "foundation_main:blackjack_action"
 const REPLAY_CAUSE := "foundation_main:blackjack_cache_hit"
 
+# Closed module/host vocabulary. FoundationMain consumes these generic constant
+# names so the live transaction host does not embed any game-specific action,
+# method, table-key, or result-key literals.
+const RESOLVE_PROPOSAL_METHOD := &"_blackjack_resolve_proposal"
+const WAGER_COST_PROPOSAL_METHOD := &"_blackjack_wager_cost_proposal"
+const HOST_AUTO_TICK_METHOD := &"_blackjack_host_needs_auto_tick"
+const SURFACE_INTENT_KEY := "blackjack_surface_intent"
+const SURFACE_INTENT_INDEX_KEY := "blackjack_surface_intent_index"
+const PENDING_APPLY_RECEIPT_KEY := "_blackjack_pending_apply_receipt"
+const PROPOSAL_REQUIRES_APPLY_KEY := "blackjack_proposal_requires_apply"
+const SURFACE_UI_STATE_KEY := "blackjack_surface_ui_state"
+const HOST_REQUEST_KEY := "blackjack_host_request_key"
+const HOST_COMMITTED_KEY := "blackjack_host_committed"
+const HOST_BOUNDARY_ORDINAL_KEY := "blackjack_host_boundary_ordinal"
+const HOST_DELIVERY_KEY := "blackjack_host_delivery"
+const HOST_WAGER_COST_KEY := "blackjack_host_wager_cost"
+const HOST_FUNDING_LEASE_KEY := "blackjack_host_funding_lease"
+const HOST_INTENT_FINGERPRINT_KEY := "blackjack_host_intent_fingerprint"
+const HOST_CONTEXT_FINGERPRINT_KEY := "blackjack_host_context_fingerprint"
+const HOST_CONTENT_FINGERPRINT_KEY := "blackjack_host_content_fingerprint"
+const HOST_APPLY_RECEIPT_KEY := "blackjack_host_apply_receipt"
+const HOST_ACTION_SUSPICION_DELTA_KEY := "blackjack_host_action_suspicion_delta"
+const HOST_ENVIRONMENT_TURN_SUSPICION_DELTA_KEY := "blackjack_host_environment_turn_suspicion_delta"
+const HOST_REPLAY_KEY := "blackjack_host_replay"
+const PLACE_BET_ACTION := "blackjack_place_bet"
+const RETRY_SURFACE_ACTIONS := ["blackjack_retry_pending", "blackjack_deal"]
+const CANCEL_SURFACE_ACTION := "blackjack_cancel_pending"
+
 const LEDGER_KEYS := [
 	"boundary_ordinal",
 	"checkpoint_fingerprint",

@@ -14,6 +14,7 @@ const CrewDrawPokerGameScript := preload("res://scripts/games/crew_draw_poker.gd
 const CrewPokerCrewStateScript := preload("res://scripts/core/crew_state_model.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
+const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
@@ -4447,8 +4448,14 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	run_a.narrative_flags.erase("grand_casino_showdown_pending")
 	run_a.narrative_flags.erase("the_house_calls_pending")
 	run_a.suspicion["level"] = 0
-	for settled_hand_index in range(2):
-		GameModule.apply_result(run_a, {
+	var tutorial_blackjack_definition := library.game("blackjack")
+	var tutorial_blackjack_script: Script = load(str(tutorial_blackjack_definition.get("module_path", "")))
+	var tutorial_blackjack: GameModule = tutorial_blackjack_script.new() if tutorial_blackjack_script != null else null
+	if tutorial_blackjack == null:
+		failures.append("Tutorial Bronze fixture could not load the Blackjack module for sealed settlement.")
+		return
+	tutorial_blackjack.setup(tutorial_blackjack_definition, library)
+	var rejected_direct_result := {
 			"ok": true,
 			"type": "game_action",
 			"action_id": "play_basic",
@@ -4460,8 +4467,34 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 			"suspicion_delta": 0,
 			"deltas": {"bankroll_delta": -1, "suspicion_delta": 0},
 			"state": GameModule.RESULT_CONTINUE,
-			"message": "Tutorial table hand %d complete." % (settled_hand_index + 1),
-		})
+			"message": "Unsealed tutorial table hand.",
+	}
+	var before_rejected_direct := JSON.stringify(run_a.to_save_snapshot())
+	GameModule.apply_result(run_a, rejected_direct_result, run_a.create_rng("tutorial_unsealed_blackjack_rejection"))
+	if JSON.stringify(run_a.to_save_snapshot()) != before_rejected_direct:
+		failures.append("Tutorial Bronze fixture accepted a direct unsealed Blackjack result.")
+	var tutorial_hand_ui := {
+		"selected_stake": 1,
+		"locked_stake": 1,
+		"bankroll_wager_debited": true,
+		"wager_debited": 1,
+		"player_hands": [{"cards": [{"rank": 10, "suit": 0}, {"rank": 9, "suit": 1}], "stood": true, "wager_multiplier": 1, "blackjack_eligible": true}],
+		"dealer_cards": [{"rank": 10, "suit": 2}, {"rank": 7, "suit": 3}],
+		"patron_hands": [],
+		"moves_made": true,
+	}
+	for settled_hand_index in range(2):
+		var settled_result: Dictionary = BlackjackAuthorityTestDriverScript.resolve(
+			tutorial_blackjack,
+			"play_basic",
+			1,
+			run_a,
+			run_a.current_environment,
+			run_a.create_rng("tutorial_sealed_blackjack_%d" % settled_hand_index),
+			tutorial_hand_ui.duplicate(true)
+		)
+		if not bool(settled_result.get("ok", false)) or not bool(settled_result.get("blackjack_host_committed", false)):
+			failures.append("Tutorial Main Floor hand %d did not settle through the sealed host." % (settled_hand_index + 1))
 	var ready_status := run_a.demo_objective_status()
 	if int(ready_status.get("grand_casino_games_played", 0)) != 2 or str(ready_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_NONE or str(ready_status.get("players_card_next_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE or not bool(ready_status.get("players_card_ready_to_claim", false)):
 		failures.append("Two settled tutorial Main Floor hands did not reach the Bronze review: %s" % JSON.stringify(ready_status))

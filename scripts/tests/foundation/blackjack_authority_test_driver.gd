@@ -21,7 +21,7 @@ static func resolve(game: GameModule, action_id: String, stake: int, run_state: 
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run_state)
 	host.set("selected_stake", stake)
-	var result: Dictionary = host.call("_blackjack_host_resolve_intent", action_id, stake)
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, stake)
 	host.free()
 	return result
 
@@ -49,7 +49,7 @@ static func surface_intent(game: GameModule, surface_action: String, stake: int,
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run_state)
 	host.set("selected_stake", stake)
-	var command: Dictionary = host.call("_blackjack_host_surface_intent", surface_action, index, confirm_requested, surface_time_msec)
+	var command: Dictionary = host.call("_sealed_action_host_surface_intent", surface_action, index, confirm_requested, surface_time_msec)
 	host.free()
 	return command
 
@@ -58,7 +58,7 @@ static func resolve_surface_command(game: GameModule, command: Dictionary, _stak
 	if game == null or run_state == null:
 		return {"ok": false, "error_code": "invalid_fixture"}
 	var action_id := str(command.get("action_id", ""))
-	var delivery_value: Variant = command.get("_blackjack_host_delivery", null)
+	var delivery_value: Variant = command.get("_sealed_action_host_delivery", null)
 	if action_id.is_empty() or typeof(delivery_value) != TYPE_DICTIONARY:
 		return {"ok": false, "error_code": "invalid_intent", "message": "The surface command did not carry a sealed Blackjack action."}
 	var delivery: Dictionary = delivery_value
@@ -75,7 +75,7 @@ static func resolve_surface_command(game: GameModule, command: Dictionary, _stak
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run_state)
 	host.set("selected_stake", command_stake)
-	var result: Dictionary = host.call("_blackjack_host_resolve_intent", action_id, command_stake, delivery)
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, command_stake, delivery)
 	host.free()
 	return result
 
@@ -93,17 +93,17 @@ static func advance_terminal_presentation(game: GameModule, stake: int, run_stat
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run_state)
 	host.set("selected_stake", stake)
-	if not bool(host.call("_blackjack_host_needs_auto_tick", surface_time_msec)):
+	if not bool(host.call("_sealed_action_host_needs_auto_tick", surface_time_msec)):
 		host.free()
 		return {"ok": false, "error_code": "terminal_not_ready", "surface_time_msec": surface_time_msec, "session": session}
-	var command: Dictionary = host.call("_blackjack_host_auto_intent", surface_time_msec)
+	var command: Dictionary = host.call("_sealed_action_host_auto_intent", surface_time_msec)
 	if command.is_empty() or not bool(command.get("handled", false)):
 		host.free()
 		return {"ok": false, "error_code": "invalid_intent", "surface_time_msec": surface_time_msec, "command": command}
 	var result: Dictionary = {"ok": true}
 	var action_id := str(command.get("action_id", ""))
 	if not action_id.is_empty():
-		var delivery_value: Variant = command.get("_blackjack_host_delivery", null)
+		var delivery_value: Variant = command.get("_sealed_action_host_delivery", null)
 		if typeof(delivery_value) != TYPE_DICTIONARY:
 			host.free()
 			return {"ok": false, "error_code": "invalid_intent", "surface_time_msec": surface_time_msec, "command": command}
@@ -116,7 +116,7 @@ static func advance_terminal_presentation(game: GameModule, stake: int, run_stat
 				or explicit_stake != command_stake:
 			host.free()
 			return {"ok": false, "error_code": "receipt_content_conflict", "surface_time_msec": surface_time_msec, "command": command}
-		result = host.call("_blackjack_host_resolve_intent", action_id, command_stake, delivery)
+		result = host.call("_sealed_action_host_resolve_intent", action_id, command_stake, delivery)
 	host.free()
 	var post_session := _canonical_session(game, run_state, environment)
 	var terminal_cleared := post_session.is_empty() or not bool(game.call("_has_dealt_hand", post_session))

@@ -66,7 +66,7 @@ func _check_craps_surface_contract(game: GameModule, failures: Array, library: C
 	_check_craps_energy_projection(game, table, failures)
 	_check_craps_street_variant(game, library, failures)
 	_check_craps_casino_activation_invariant(game, failures)
-	_check_craps_currency_routing(failures)
+	_check_craps_currency_routing(library, failures)
 	if library != null:
 		_check_craps_room_registration_and_duel(game, library, failures)
 
@@ -687,7 +687,7 @@ func _check_craps_energy_projection(game: GameModule, base_table: Dictionary, fa
 		failures.append("An unrelated Roulette result boundary leaked Craps music or patron projection state.")
 
 
-func _check_craps_currency_routing(failures: Array) -> void:
+func _check_craps_currency_routing(library: ContentLibrary, failures: Array) -> void:
 	for game_id in ["blackjack", "baccarat", "roulette", "craps"]:
 		var run_state: RunState = RunStateScript.new()
 		run_state.start_new("CRAPS-CHIPS-REGRESSION-%s" % game_id)
@@ -700,7 +700,24 @@ func _check_craps_currency_routing(failures: Array) -> void:
 		result["baccarat_total_wager"] = 5
 		result["roulette_total_wager"] = 5
 		result["craps_total_wager"] = 5
-		GameModule.apply_result(run_state, result, run_state.create_rng("currency_apply"))
+		if game_id == "blackjack":
+			var before_unsealed := JSON.stringify(run_state.to_save_snapshot())
+			GameModule.apply_result(run_state, result, run_state.create_rng("currency_unsealed_rejection"))
+			if JSON.stringify(run_state.to_save_snapshot()) != before_unsealed:
+				failures.append("Grand Casino Blackjack shared-chips fixture accepted an unsealed direct result.")
+			var definition := library.game("blackjack")
+			var module_script: Script = load(str(definition.get("module_path", "")))
+			var blackjack: GameModule = module_script.new() if module_script != null else null
+			if blackjack == null:
+				failures.append("Grand Casino Blackjack shared-chips fixture could not load its module.")
+				continue
+			blackjack.setup(definition, library)
+			var table := blackjack.generate_environment_state(run_state, run_state.current_environment, run_state.create_rng("currency_blackjack_table"))
+			run_state.current_environment["game_states"] = {"blackjack": table}
+			var deal_command := SlotsBlackjackAuthorityDriver.surface_intent(blackjack, "blackjack_deal", 5, run_state, run_state.current_environment)
+			result = SlotsBlackjackAuthorityDriver.resolve_surface_command(blackjack, deal_command, 5, run_state, run_state.current_environment)
+		else:
+			GameModule.apply_result(run_state, result, run_state.create_rng("currency_apply"))
 		if run_state.bankroll != 100 or run_state.grand_casino_chips != 45 or str(result.get("currency", "")) != "chips":
 			failures.append("Grand Casino %s no longer routes through the shared chips seam." % game_id)
 	var outside: RunState = RunStateScript.new()
@@ -4442,7 +4459,7 @@ func _blackjack_authority_resolve(game: GameModule, action_id: String, stake: in
 	# The production host owns the canonical run RNG. The legacy parameter stays
 	# for call compatibility but may not rebase the durable ledger to a named fork.
 	var host := _blackjack_test_host(game, run_state, stake)
-	var result: Dictionary = host.call("_blackjack_host_resolve_intent", action_id, stake)
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, stake)
 	host.free()
 	return result
 
@@ -4450,7 +4467,7 @@ func _blackjack_authority_resolve(game: GameModule, action_id: String, stake: in
 func _blackjack_authority_surface(game: GameModule, surface_action: String, stake: int, run_state: RunState, environment: Dictionary, index: int = 0, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:
 	run_state.current_environment = environment
 	var host := _blackjack_test_host(game, run_state, stake)
-	var command: Dictionary = host.call("_blackjack_host_surface_intent", surface_action, index, confirm_requested, surface_time_msec)
+	var command: Dictionary = host.call("_sealed_action_host_surface_intent", surface_action, index, confirm_requested, surface_time_msec)
 	host.free()
 	return command
 
@@ -4458,7 +4475,7 @@ func _blackjack_authority_surface(game: GameModule, surface_action: String, stak
 func _blackjack_authority_auto_command(game: GameModule, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary, surface_time_msec: int) -> Dictionary:
 	_blackjack_seed_authority_session(game, run_state, environment, ui_state)
 	var host := _blackjack_test_host(game, run_state, stake)
-	var command: Dictionary = host.call("_blackjack_host_auto_intent", surface_time_msec)
+	var command: Dictionary = host.call("_sealed_action_host_auto_intent", surface_time_msec)
 	host.free()
 	return command
 
@@ -4466,7 +4483,7 @@ func _blackjack_authority_auto_command(game: GameModule, stake: int, run_state: 
 func _blackjack_authority_preview(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> int:
 	_blackjack_seed_authority_session(game, run_state, environment, ui_state)
 	var host := _blackjack_test_host(game, run_state, stake)
-	var cost := int(host.call("_blackjack_host_preview_wager_cost", action_id, stake))
+	var cost := int(host.call("_sealed_action_host_preview_wager_cost", action_id, stake))
 	host.free()
 	return cost
 

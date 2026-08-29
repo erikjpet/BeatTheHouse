@@ -360,7 +360,7 @@ func _stage_blackjack_raised_bet_surface() -> Dictionary:
 		return {}
 	BlackjackAuthorityTestDriverScript.pin_tutorial_safe_peek_flow_rng(run_state)
 	var deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
-	if str(deal.get("action_id", "")).is_empty() or not deal.has("_blackjack_host_delivery"):
+	if str(deal.get("action_id", "")).is_empty() or not deal.has("_sealed_action_host_delivery"):
 		push_error("Tutorial capture Peek Deal did not issue a sealed Blackjack action: %s" % str(deal))
 		return {}
 	var deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, deal, 4, run_state, run_state.current_environment)
@@ -384,7 +384,7 @@ func _stage_blackjack_lookaway_surface() -> void:
 	var lookaway_state: Dictionary = peek_result.get("blackjack_surface_ui_state", {})
 	var table: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})
 	if not bool(distraction.get("handled", false)) \
-			or not peek.has("_blackjack_host_delivery") \
+			or not peek.has("_sealed_action_host_delivery") \
 			or not bool(peek_result.get("ok", false)) \
 			or bool(peek_result.get("dealer_caught_cheat", false)) \
 			or bool(peek_result.get("blackjack_tutorial_peek_reprieve", false)) \
@@ -464,7 +464,7 @@ func _stage_blackjack_count_surface() -> void:
 		return
 	var count_toggle := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count_toggle", 4, run_state, run_state.current_environment)
 	var count_deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
-	if str(count_deal.get("action_id", "")).is_empty() or not count_deal.has("_blackjack_host_delivery"):
+	if str(count_deal.get("action_id", "")).is_empty() or not count_deal.has("_sealed_action_host_delivery"):
 		push_error("Tutorial capture Count Deal did not issue a sealed Blackjack action: toggle=%s deal=%s" % [str(count_toggle), str(count_deal)])
 		return
 	var count_deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, count_deal, 4, run_state, run_state.current_environment)

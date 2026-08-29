@@ -1904,14 +1904,17 @@ func _blackjack_compatibility_simulation(action_id: String, stake: int, run_stat
 	# and returns a receipt-free result that GameModule.apply_result rejects.
 	if run_state == null or rng == null:
 		return _empty_blackjack_result(action_id, stake, environment, "Blackjack simulation requires serialized run and RNG inputs.")
-	var proposal := _blackjack_resolve_proposal(
-		action_id,
-		stake,
-		run_state.to_save_snapshot(),
-		rng.snapshot(),
-		ui_state.duplicate(true)
-	)
-	var result: Dictionary = (proposal.get("result", {}) as Dictionary).duplicate(true)
+	# Compatibility callers do not receive proposal fingerprints, serialized
+	# outputs, or receipts. Resolve their serialized copies directly; canonical
+	# proposal replay remains exclusive to the live Foundation host.
+	var candidate := RunState.new()
+	candidate.from_dict(run_state.to_save_snapshot())
+	var simulation_rng := RngStream.new()
+	simulation_rng.restore(rng.snapshot())
+	var resolution_ui_state := ui_state.duplicate(true)
+	if not resolution_ui_state.has("surface_time_msec"):
+		resolution_ui_state["surface_time_msec"] = GameModule.deterministic_time_msec(candidate, {})
+	var result := _resolve_blackjack_proposal_core(action_id, stake, candidate, candidate.current_environment, simulation_rng, resolution_ui_state)
 	result.erase("blackjack_proposal_requires_apply")
 	result.erase("blackjack_host_apply_receipt")
 	result.erase("blackjack_host_content_fingerprint")
