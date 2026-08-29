@@ -7659,6 +7659,13 @@
               "stable_object_id": "auth_station"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "back_alley_fence_night_cleanup_exit_visual",
+              "stable_object_id": "back_alley_fence_night_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -7823,7 +7830,6 @@
                     "behavior": "work",
                     "label": "Rotating Buyer",
                     "pose": "observing",
-                    "route_id": "alley_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -8032,6 +8038,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_arrival_b",
                   "stable_object_id": "auth_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Marked Clear Exit",
+                    "role": "exit",
+                    "state": "clear",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_fence_night_exit_visual",
+                  "stable_object_id": "back_alley_fence_night_exit"
                 }
               ],
               "transition_ops": [
@@ -8278,7 +8304,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ffe18f38b8ea4868e33bd602be3e24344af8f2aa9035793e1336ed0eaa633a3b"
+        "sequence_signature": "09d8057d012adfc4f0f61f37d231304ce47590de270a51f182cdcf8db2384708"
       }
     },
     {

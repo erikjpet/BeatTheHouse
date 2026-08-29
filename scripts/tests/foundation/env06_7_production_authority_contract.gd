@@ -10,7 +10,7 @@ const PROVEN_TARGET_SCENARIO_ID := "corner_store_delivery_day"
 const LOCAL_ROUTE_SCENARIOS := {
 	"back_alley_street_craps": "alley_service_counter",
 	"back_alley_cruiser_parked": "alley_service_counter",
-	"back_alley_fence_night": "alley_service_counter",
+	"back_alley_fence_night": "",
 	"back_alley_nothing_moving": "alley_service_counter",
 	"pawn_shop_estate_lot_day": "pawn_service_counter",
 	"pawn_shop_serial_check_day": "pawn_service_counter",
@@ -24,9 +24,10 @@ func _initialize() -> void:
 	library.load(false)
 	_check_scenario_local_actor_authority(library, failures)
 	_check_scenario_local_route_authority(library, failures)
+	_check_fence_night_route_free_authority(library, failures)
 	_check_unproven_zone_rejection(library, failures)
 	if failures.is_empty():
-		print("ENV06_7_PRODUCTION_AUTHORITY_CONTRACT_OK local_actor=1 hostile_actor=2 local_route=7 hostile_route=7 hostile_zone=2")
+		print("ENV06_7_PRODUCTION_AUTHORITY_CONTRACT_OK local_actor=1 hostile_actor=2 local_route=6 hostile_route=6 fence_route_free=1 fence_exit=1 hostile_zone=2")
 		quit(0)
 		return
 	for failure_value in failures:
@@ -98,6 +99,10 @@ static func _check_scenario_local_route_authority(library: Variant, failures: Ar
 		var definition: Dictionary = library.scenario(scenario_id)
 		var operation := _first_actor_spawn(definition)
 		var actor := _dict(operation.get("actor", {}))
+		if expected_route.is_empty():
+			if not str(actor.get("route_id", "")).is_empty():
+				failures.append("Production scenario %s retained a forbidden arrival actor route." % scenario_id)
+			continue
 		if str(actor.get("route_id", "")) != expected_route:
 			failures.append("Production scenario %s does not bind its local actor to exact canonical route %s." % [scenario_id, expected_route])
 			continue
@@ -126,6 +131,60 @@ static func _check_scenario_local_route_authority(library: Variant, failures: Ar
 		var hostile_errors := ScenarioEngineScript.validate_sequence_definition(hostile, references, inventory)
 		if not _contains(hostile_errors, "unresolved route") or not _contains(hostile_errors, "unknown sealed route/anchor alias"):
 			failures.append("Hostile local route alias for %s was not rejected by sealed production authority: %s" % [scenario_id, JSON.stringify(hostile_errors)])
+
+
+static func _check_fence_night_route_free_authority(library: Variant, failures: Array) -> void:
+	var definition: Dictionary = library.scenario("back_alley_fence_night")
+	var arrival_actor := _dict(_first_actor_spawn(definition).get("actor", {}))
+	if str(arrival_actor.get("actor_id", "")) != "rotating_buyer" or not str(arrival_actor.get("route_id", "")).is_empty():
+		failures.append("Fence Night arrival buyer did not remain route-free at the collision boundary.")
+		return
+	var phases := _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", []))
+	var work_move := false
+	var exit_scene := false
+	var exit_interaction := false
+	var exit_scene_cleanup := false
+	var exit_interaction_cleanup := false
+	var cleanup := _dict(_dict(definition.get("sequence", {})).get("cleanup", {}))
+	for operation_value in _array(cleanup.get("operations", [])):
+		var operation := _dict(operation_value)
+		if str(operation.get("op", "")) != "remove" or str(operation.get("stable_object_id", "")) != "back_alley_fence_night_exit":
+			continue
+		exit_scene_cleanup = exit_scene_cleanup or str(operation.get("family", "")) == "scene_ops"
+		exit_interaction_cleanup = exit_interaction_cleanup or str(operation.get("family", "")) == "interaction_ops"
+	for phase_value in phases:
+		var phase := _dict(phase_value)
+		if str(phase.get("id", "")) == "work":
+			for operation_value in _array(phase.get("actor_ops", [])):
+				var operation := _dict(operation_value)
+				if str(operation.get("op", "")) == "set_position" \
+						and str(operation.get("stable_object_id", "")) == "rotating_buyer" \
+						and str(operation.get("zone_id", "")) == "service_lane":
+					work_move = true
+		if str(phase.get("id", "")) != "arrival":
+			continue
+		for operation_value in _array(phase.get("scene_ops", [])):
+			var operation := _dict(operation_value)
+			var object := _dict(operation.get("object", {}))
+			if str(operation.get("op", "")) == "spawn" \
+					and str(operation.get("stable_object_id", "")) == "back_alley_fence_night_exit" \
+					and str(object.get("zone_id", "")) == "exit_lane" \
+					and str(object.get("role", "")) == "exit":
+				exit_scene = true
+		for operation_value in _array(phase.get("interaction_ops", [])):
+			var operation := _dict(operation_value)
+			var interaction := _dict(operation.get("interaction", {}))
+			if str(operation.get("op", "")) == "add" \
+					and str(operation.get("stable_object_id", "")) == "back_alley_fence_night_exit" \
+					and str(interaction.get("stable_object_id", "")) == "back_alley_fence_night_exit" \
+					and bool(interaction.get("safe_exit", false)):
+				exit_interaction = true
+	if not work_move:
+		failures.append("Fence Night lost the exact work-phase rotating_buyer move to service_lane.")
+	if not exit_scene or not exit_interaction:
+		failures.append("Fence Night lacks matching arrival exit visual/interaction authority in exit_lane.")
+	if not exit_scene_cleanup or not exit_interaction_cleanup:
+		failures.append("Fence Night cleanup is not symmetric for its exit scene and interaction identity.")
 
 
 static func _actor_authority_projection(definition: Dictionary) -> Dictionary:

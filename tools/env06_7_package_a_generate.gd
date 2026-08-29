@@ -12,7 +12,7 @@ const CONFIGS := [
 	{"id":"corner_store_inventory_night","archetype":"corner_store","arrival":"Rolling count cages close two aisles while shelf tags form a visible discrepancy trail.","task":"Resolve the shelf count","object_a":"count_cage","object_b":"discrepancy_shelf","actor":"inventory_clerk","verb_a":"compare_tags","verb_b":"recount_shelf","fail":"quarantine_stock","tags":["section_count","discrepancy_trail","stock_rearrange"],"world":"economy_inventory","success":"reopened_sections","failure":"quarantined_section","ignored":"closed_aisles"},
 	{"id":"back_alley_street_craps","archetype":"back_alley","arrival":"Chalk, a curb backstop, and waiting shooters form a physical dice ring beside a clear escape lane.","task":"Take a street shooter turn","object_a":"chalk_ring","object_b":"lookout_marker","actor":"street_shooter","actor_route":"alley_service_counter","verb_a":"read_ring","verb_b":"shoot_dice","fail":"answer_lookout","tags":["chalk_assembly","public_craps_fact","lookout_escalation"],"world":"game_craps_public","success":"ring_continues","failure":"ring_relocated","ignored":"ring_dispersed"},
 	{"id":"back_alley_cruiser_parked","archetype":"back_alley","arrival":"A parked cruiser throws a hard sightline across stacked cover and the target doorway.","task":"Cross the patrol sightline","object_a":"cruiser_beam","object_b":"stacked_cover","actor":"patrol_officer","actor_route":"alley_service_counter","verb_a":"map_sightline","verb_b":"move_cover","fail":"create_diversion","tags":["sightline_cover","cruiser_reposition","public_sweep_fact"],"world":"sweep_public_pressure","success":"cruiser_departed","failure":"diverted_patrol","ignored":"watched_route"},
-	{"id":"back_alley_fence_night","archetype":"back_alley","arrival":"Three visible goods lots occupy separate stations as buyers rotate toward a contested crate.","task":"Resolve the contested lot","object_a":"goods_lot","object_b":"auth_station","actor":"rotating_buyer","actor_route":"alley_service_counter","verb_a":"inspect_marks","verb_b":"authenticate_lot","fail":"broker_lot","tags":["lot_rotation","authentication","stall_control"],"world":"economy_fence","success":"verified_stall","failure":"brokered_exit","ignored":"buyer_control"},
+	{"id":"back_alley_fence_night","archetype":"back_alley","arrival":"Three visible goods lots occupy separate stations as buyers rotate toward a contested crate.","task":"Resolve the contested lot","object_a":"goods_lot","object_b":"auth_station","actor":"rotating_buyer","seal_exit_visual":true,"verb_a":"inspect_marks","verb_b":"authenticate_lot","fail":"broker_lot","tags":["lot_rotation","authentication","stall_control"],"world":"economy_fence","success":"verified_stall","failure":"brokered_exit","ignored":"buyer_control"},
 	{"id":"back_alley_nothing_moving","archetype":"back_alley","arrival":"Closed shutters expose three physical traces: a wet print, dragged crate line, and snapped seal.","task":"Follow the silent trail","object_a":"three_traces","object_b":"shutter_gap","actor":"returning_regular","actor_route":"alley_service_counter","verb_a":"compare_traces","verb_b":"follow_trail","fail":"erase_trail","tags":["three_trace_investigation","exit_discovery","returning_actor"],"world":"rumor_route","success":"opened_follow_exit","failure":"erased_rumor_exit","ignored":"empty_alley"},
 	{"id":"pawn_shop_estate_lot_day","archetype":"pawn_shop","arrival":"Estate carts divide the floor into appraisal, display, and police-hold lanes.","task":"Establish the estate provenance","object_a":"estate_cart","object_b":"provenance_marks","actor":"estate_appraiser","actor_route":"pawn_service_counter","verb_a":"stage_lot","verb_b":"match_provenance","fail":"return_lot","tags":["appraisal_flow","provenance_clues","lot_zones"],"world":"economy_provenance","success":"displayed_lot","failure":"returned_cart","ignored":"quarantined_lot"},
 	{"id":"pawn_shop_serial_check_day","archetype":"pawn_shop","arrival":"A serial station and taped hold zone restrict the cases while records wait beside one tagged object.","task":"Trace the held serial","object_a":"serial_station","object_b":"hold_object","actor":"records_clerk","actor_route":"pawn_service_counter","verb_a":"copy_serial","verb_b":"trace_record","fail":"withdraw_object","tags":["serial_trace","police_hold","record_object_match"],"world":"security_inventory","success":"disclosed_hold","failure":"withdrawn_stock","ignored":"waiting_hold"},
@@ -72,6 +72,15 @@ func _entry(c: Dictionary) -> Dictionary:
 	var sid := str(c.id)
 	var task := str(c.task)
 	var world := _world_contract(c)
+	var cleanup_operations := [
+		_remove("scene_ops",sid+"_cleanup_a",c.object_a), _remove("scene_ops",sid+"_cleanup_b",c.object_b),
+	]
+	if bool(c.get("seal_exit_visual", false)):
+		cleanup_operations.append(_remove("scene_ops",sid+"_cleanup_exit_visual",sid+"_exit"))
+	cleanup_operations.append_array([
+		_remove("interaction_ops",sid+"_cleanup_task",c.object_a), _remove("interaction_ops",sid+"_cleanup_work",c.object_b), _remove("interaction_ops",sid+"_cleanup_exit",sid+"_exit"),
+		{"family":"actor_ops","op":"despawn","receipt_id":sid+"_cleanup_actor","owner_namespace":"scenario","stable_object_id":c.actor},
+	])
 	var sequence := {
 		"schema_version": 2,
 		"local_state_schema": {"path":{"type":"enum","default":"none","values":["none","success","failure","ignored","refused","interrupted","public"],"visibility":"private"},str(world.field):world.local_schema},
@@ -84,11 +93,7 @@ func _entry(c: Dictionary) -> Dictionary:
 		],"outcomes":["success","failure","ignore","cancel"]}],
 		"reentry_policy":{"partial":"resume","terminal":"aftermath","expired":"expired"},
 		"expiry":{"boundary":"night_end","after":1,"policy":"ignore"},
-		"cleanup":{"operations":[
-			_remove("scene_ops",sid+"_cleanup_a",c.object_a), _remove("scene_ops",sid+"_cleanup_b",c.object_b),
-			_remove("interaction_ops",sid+"_cleanup_task",c.object_a), _remove("interaction_ops",sid+"_cleanup_work",c.object_b), _remove("interaction_ops",sid+"_cleanup_exit",sid+"_exit"),
-			{"family":"actor_ops","op":"despawn","receipt_id":sid+"_cleanup_actor","owner_namespace":"scenario","stable_object_id":c.actor}
-		]},
+		"cleanup":{"operations":cleanup_operations},
 		"aftermath":{
 			"success":_aftermath(c,"success",c.success,"open"),
 			"failure":_aftermath(c,"failure",c.failure,"restricted"),
@@ -119,8 +124,13 @@ func _phase_arrival(c: Dictionary) -> Dictionary:
 	var actor := {"label":_label(c.actor),"actor_id":c.actor,"zone_id":"background","behavior":"work","pose":"observing"}
 	var actor_route := str(c.get("actor_route", "")).strip_edges()
 	if not actor_route.is_empty(): actor["route_id"] = actor_route
+	var scene_ops := [_spawn(sid+"_arrival_a",c.object_a,_label(c.object_a),"primary_task","left","arrival"),_spawn(sid+"_arrival_b",c.object_b,_label(c.object_b),"evidence","right","unread")]
+	if bool(c.get("seal_exit_visual", false)):
+		var exit_visual := _spawn(sid+"_exit_visual",sid+"_exit","Marked Clear Exit","exit","exit_lane","clear")
+		exit_visual["object"]["appearance"] = "marked_lane"
+		scene_ops.append(exit_visual)
 	return {"id":"arrival","label":_label(c.object_a),"arrival_feedback":c.arrival,"exit_prompt":"A marked exit remains open while you inspect the scene.","entry_conditions":[{"type":"always"}],"objective_ids":["complete_%s" % c.object_a],"advance_after_actions":0,
-		"scene_ops":[_spawn(sid+"_arrival_a",c.object_a,_label(c.object_a),"primary_task","left","arrival"),_spawn(sid+"_arrival_b",c.object_b,_label(c.object_b),"evidence","right","unread")],
+		"scene_ops":scene_ops,
 		"interaction_ops":[_interaction(sid+"_arrival_task",c.object_a,c.task,[ _action(c.verb_a,"Begin: "+_label(c.verb_a),"ui_accept","path","none"), _action("ignore_sequence","Ignore the scene","ui_down","path","ignored"), _action("refuse_sequence","Refuse the task","ui_cancel","path","refused")],false),_exit(c)],
 		"actor_ops":[{"family":"actor_ops","op":"spawn","receipt_id":sid+"_arrival_actor","owner_namespace":"scenario","stable_object_id":c.actor,"actor":actor}],
 		"transition_ops":[_transition(sid+"_arrival_stage","stage",str(c.arrival))],
