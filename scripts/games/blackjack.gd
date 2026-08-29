@@ -91,6 +91,7 @@ const BLACKJACK_HOST_TRANSIENT_UI_KEYS := [
 	"blackjack_gesture_active", "blackjack_gesture_origin",
 	"blackjack_gesture_index", "blackjack_gesture_pointer",
 ]
+const COMPATIBILITY_READ_ONLY_ACTIONS := ["play_basic", "blackjack_place_bet", "peek_hole_card", "count_cards"]
 const BLACKJACK_GESTURE_ACTIONS := [
 	BLACKJACK_WAGER_PLACE_GESTURE,
 	BLACKJACK_CUT_GESTURE,
@@ -1909,23 +1910,35 @@ func _blackjack_compatibility_simulation(action_id: String, stake: int, run_stat
 	# and returns a receipt-free result that GameModule.apply_result rejects.
 	if run_state == null or rng == null:
 		return _empty_blackjack_result(action_id, stake, environment, "Blackjack simulation requires serialized run and RNG inputs.")
-	# Compatibility callers do not receive proposal fingerprints, serialized
-	# outputs, or receipts. Resolve their serialized copies directly; canonical
-	# proposal replay remains exclusive to the live Foundation host.
-	var candidate := RunState.new()
-	candidate.from_dict(run_state.to_save_snapshot())
+	# Standard compatibility actions use the proven read-only core against the
+	# live RunState and a detached environment graph. Crew and Rourke paths can
+	# author run-owned state, so they retain the full detached restore fallback.
+	var simulation_run_state := run_state
+	var simulation_environment := run_state.current_environment.duplicate(true)
+	var read_only_core := _blackjack_compatibility_read_only_core_allowed(action_id, run_state)
+	if not read_only_core:
+		var candidate := RunState.new()
+		candidate.from_dict(run_state.to_save_snapshot())
+		simulation_run_state = candidate
+		simulation_environment = candidate.current_environment
 	var simulation_rng := RngStream.new()
 	simulation_rng.restore(rng.snapshot())
 	var resolution_ui_state := ui_state.duplicate(true)
 	if not resolution_ui_state.has("surface_time_msec"):
-		resolution_ui_state["surface_time_msec"] = GameModule.deterministic_time_msec(candidate, {})
-	var result := _resolve_blackjack_proposal_core(action_id, stake, candidate, candidate.current_environment, simulation_rng, resolution_ui_state)
+		resolution_ui_state["surface_time_msec"] = GameModule.deterministic_time_msec(simulation_run_state, {})
+	var result := _resolve_blackjack_proposal_core(action_id, stake, simulation_run_state, simulation_environment, simulation_rng, resolution_ui_state, read_only_core)
 	result.erase("blackjack_proposal_requires_apply")
 	result.erase("blackjack_host_apply_receipt")
 	result.erase("blackjack_host_content_fingerprint")
 	result["blackjack_compatibility_simulation"] = true
 	result["blackjack_authoritative"] = false
 	return result
+
+
+func _blackjack_compatibility_read_only_core_allowed(action_id: String, run_state: RunState) -> bool:
+	if run_state == null or not COMPATIBILITY_READ_ONLY_ACTIONS.has(action_id):
+		return false
+	return not _is_rourke_duel(run_state, run_state.current_environment)
 
 
 func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Dictionary, rng_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
@@ -1963,20 +1976,22 @@ func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Di
 	return proposal
 
 
-func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}, read_only_run_state: bool = false) -> Dictionary:
+	if read_only_run_state and (not _blackjack_compatibility_read_only_core_allowed(action_id, run_state) or _is_rourke_duel(run_state, environment)):
+		return _empty_blackjack_result(action_id, stake, environment, "That blackjack action requires a detached authoritative candidate.")
 	if action_id.begins_with("crew_play:"):
 		return super.resolve_with_context(action_id, stake, run_state, environment, rng, ui_state)
 	if _is_rourke_duel(run_state, environment):
 		return _resolve_rourke_duel_hand(action_id, run_state, environment, ui_state)
 	if action_id == "blackjack_place_bet":
-		return _resolve_place_bet(stake, run_state, environment, rng, ui_state)
+		return _resolve_place_bet(stake, run_state, environment, rng, ui_state, read_only_run_state)
 	if action_id == "peek_hole_card" or action_id == "count_cards":
-		return _resolve_cheat_only(action_id, run_state, environment, rng, ui_state)
+		return _resolve_cheat_only(action_id, run_state, environment, rng, ui_state, read_only_run_state)
 	if action_id != "play_basic":
 		return _empty_blackjack_result(action_id, stake, environment, "That blackjack action is not available.")
 	var result_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var presentation_msec := _blackjack_presentation_time_msec(ui_state, result_msec)
-	var table: Dictionary = _table_state(run_state, environment)
+	var table: Dictionary = _table_state(run_state, environment, read_only_run_state)
 	if bool(table.get("barred", false)):
 		return _empty_blackjack_result(action_id, stake, environment, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
@@ -2273,9 +2288,9 @@ func _blackjack_wager_cost_proposal(action_id: String, stake: int, run_snapshot:
 	}
 
 
-func _resolve_place_bet(stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+func _resolve_place_bet(stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary, read_only_run_state: bool = false) -> Dictionary:
 	var result_msec := GameModule.deterministic_time_msec(run_state, ui_state)
-	var table: Dictionary = _table_state(run_state, environment)
+	var table: Dictionary = _table_state(run_state, environment, read_only_run_state)
 	if bool(table.get("barred", false)):
 		return _empty_blackjack_result("blackjack_place_bet", stake, environment, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
@@ -2378,8 +2393,8 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 	}
 
 
-func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
-	var table: Dictionary = _table_state(run_state, environment)
+func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary, read_only_run_state: bool = false) -> Dictionary:
+	var table: Dictionary = _table_state(run_state, environment, read_only_run_state)
 	if bool(table.get("barred", false)):
 		return _empty_blackjack_result(action_id, 0, environment, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
@@ -3822,14 +3837,14 @@ func _draw_count_pulse_icon(surface, center: Vector2, value: int, accent: Color,
 		surface.surface_label_centered("MISS", Rect2(center - Vector2(20, 22), Vector2(40, 10)), 7, C_ORANGE)
 
 
-func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+func _table_state(run_state: RunState, environment: Dictionary, observational: bool = false) -> Dictionary:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var table: Dictionary = game_states.get(get_id(), {}) if typeof(game_states.get(get_id(), {})) == TYPE_DICTIONARY else {}
 	if table.is_empty():
 		table = _fallback_table_state(run_state, environment)
 		game_states[get_id()] = table
 		environment["game_states"] = game_states
-	_apply_grand_casino_dealer_assignment(table, run_state, environment)
+	_apply_grand_casino_dealer_assignment(table, run_state, environment, observational)
 	var normalized := _normalize_table_state(table)
 	# Peek is a mandatory guided-run lesson, so its real setup controls cannot be
 	# sampled out of the table. Repair both newly generated tables and resumed

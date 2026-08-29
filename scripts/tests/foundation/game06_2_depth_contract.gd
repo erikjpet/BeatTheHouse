@@ -415,6 +415,61 @@ func _check_energy_and_restore_projection(game: GameModule) -> void:
 	_check(str(restored_projection.get("phase_id", "")) == "wagering" and str(restored_projection.get("energy_tier", "")) == "hot", "Restore did not rebuild the same legal phase and material energy projection.")
 
 
+func _check_read_only_compatibility_equivalence(game: GameModule, run: RunState, environment: Dictionary, session: Dictionary) -> void:
+	var run_before := RitualRuntimeScript.canonical_json(run.to_save_snapshot())
+	var environment_before := RitualRuntimeScript.canonical_json(environment)
+	for action_id in ["play_basic", "blackjack_place_bet", "peek_hole_card", "count_cards"]:
+		var action_rng := run.create_rng("game06_2_read_only_%s" % action_id)
+		var rng_before := RitualRuntimeScript.canonical_json(action_rng.snapshot())
+		var ui := session.duplicate(true)
+		var direct: Dictionary = game.resolve_with_context(action_id, 5, run, environment, action_rng, ui)
+		var proposal: Dictionary = game.call("_blackjack_resolve_proposal", action_id, 5, run.to_save_snapshot(), action_rng.snapshot(), ui)
+		var canonical: Dictionary = (proposal.get("result", {}) as Dictionary).duplicate(true)
+		canonical.erase("blackjack_proposal_requires_apply")
+		canonical.erase("blackjack_host_apply_receipt")
+		canonical.erase("blackjack_host_content_fingerprint")
+		canonical["blackjack_compatibility_simulation"] = true
+		canonical["blackjack_authoritative"] = false
+		_check(RitualRuntimeScript.canonical_json(direct) == RitualRuntimeScript.canonical_json(canonical), "Read-only %s compatibility result diverged from the canonical detached proposal." % action_id)
+		_check(RitualRuntimeScript.canonical_json(run.to_save_snapshot()) == run_before, "Read-only %s compatibility resolve mutated live RunState." % action_id)
+		_check(RitualRuntimeScript.canonical_json(environment) == environment_before, "Read-only %s compatibility resolve mutated the live environment graph." % action_id)
+		_check(RitualRuntimeScript.canonical_json(action_rng.snapshot()) == rng_before, "Read-only %s compatibility resolve mutated the caller RNG." % action_id)
+	_check(not bool(game.call("_blackjack_compatibility_read_only_core_allowed", "crew_play:inside_man", run)), "Crew action was misclassified as read-only Blackjack compatibility.")
+	_check(not bool(game.call("_blackjack_compatibility_read_only_core_allowed", "hostile_unknown_action", run)), "Unknown action was misclassified as read-only Blackjack compatibility.")
+
+	var duel_run: RunState = RunStateScript.new()
+	duel_run.start_new("GAME06-2-HOSTILE-READ-ONLY-DUEL")
+	duel_run.current_environment = {
+		"id": "game06_2_hostile_read_only_duel",
+		"archetype_id": RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID,
+		"kind": "boss",
+		"local_narrative_flags": {"blackjack_boss_variant": "rourke_duel"},
+		"game_states": {},
+	}
+	duel_run.narrative_flags["grand_casino_showdown_active"] = true
+	duel_run.narrative_flags["grand_casino_showdown_step"] = "duel"
+	duel_run.narrative_flags["grand_casino_duel_state"] = {"status": "active"}
+	_check(not bool(game.call("_blackjack_compatibility_read_only_core_allowed", "play_basic", duel_run)), "Rourke duel was misclassified as read-only Blackjack compatibility.")
+	var duel_before := RitualRuntimeScript.canonical_json(duel_run.to_save_snapshot())
+	var hostile_core: Dictionary = game.call("_resolve_blackjack_proposal_core", "play_basic", 5, duel_run, duel_run.current_environment, duel_run.create_rng("hostile_read_only_duel"), {"read_only_run_state": true}, true)
+	_check(not bool(hostile_core.get("ok", true)), "Hostile caller forced Rourke's mutating path through the read-only core.")
+	_check(RitualRuntimeScript.canonical_json(duel_run.to_save_snapshot()) == duel_before, "Hostile read-only core flag mutated Rourke's live RunState.")
+
+	var source := FileAccess.get_file_as_string("res://scripts/games/blackjack.gd")
+	var core_start := source.find("func _resolve_blackjack_proposal_core(")
+	var core_end := source.find("\nfunc ", core_start + 1)
+	var core_source := source.substr(core_start, core_end - core_start) if core_start >= 0 and core_end > core_start else ""
+	var table_start := source.find("func _table_state(")
+	var table_end := source.find("\nfunc ", table_start + 1)
+	var table_source := source.substr(table_start, table_end - table_start) if table_start >= 0 and table_end > table_start else ""
+	_check(
+		core_source.contains("read_only_run_state and (not _blackjack_compatibility_read_only_core_allowed")
+			and core_source.contains("_table_state(run_state, environment, read_only_run_state)")
+			and table_source.contains("_apply_grand_casino_dealer_assignment(table, run_state, environment, observational)"),
+		"Read-only compatibility core no longer proves its closed classifier and observational table projection."
+	)
+
+
 func _check_host_authority_and_replay(game: GameModule) -> void:
 	var fixture := _prepared_authority_fixture(game, "GAME06-2-HOST-AUTHORITY", 31, 5)
 	var run: RunState = fixture.run
@@ -445,6 +500,7 @@ func _check_host_authority_and_replay(game: GameModule) -> void:
 	var proposal_start := blackjack_source.find("func _blackjack_resolve_proposal", compatibility_start)
 	var compatibility_source := blackjack_source.substr(compatibility_start, proposal_start - compatibility_start)
 	_check(compatibility_start >= 0 and proposal_start > compatibility_start and compatibility_source.find("_blackjack_resolve_proposal(") < 0, "Receipt-free compatibility simulation re-entered the full fingerprinted proposal path.")
+	_check_read_only_compatibility_equivalence(game, run, environment, session)
 	_check(game.wager_cost_for_context("play_basic", 999, run, environment, session) == 0, "Bare Blackjack wager preview retained caller authority.")
 	_check(RitualRuntimeScript.canonical_json(run.to_save_snapshot()) == before_direct and RitualRuntimeScript.canonical_json(direct_rng.snapshot()) == direct_rng_before, "Bare Blackjack simulation/cost changed authoritative RunState or RNG.")
 	var rehashed_direct := direct.duplicate(true)
