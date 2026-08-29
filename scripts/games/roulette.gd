@@ -538,7 +538,6 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_spin_result(surface, surface_state)
 	_draw_rule_hover_overlay(surface, surface_state)
 	_draw_payout_animation(surface, surface_state)
-	_draw_roulette_ritual_status(surface, surface_state)
 	return true
 
 
@@ -3018,26 +3017,6 @@ func _draw_player_bet_chip(surface, bet: Dictionary, bet_index: int = -1) -> voi
 	surface.surface_label_centered_plain("YOU", Rect2(placement + Vector2(-15, 13), Vector2(30, 9)), 6, C_CYAN)
 	if bet_index >= 0:
 		surface.surface_add_exact_hit(Rect2(placement - Vector2(18, 18), Vector2(36, 38)), "roulette_remove", bet_index)
-
-
-func _draw_roulette_ritual_status(surface, state: Dictionary) -> void:
-	var phase := str(state.get("ritual_phase", "betting"))
-	var energy: Dictionary = _copy_dict(state.get("ritual_energy", {}))
-	var actors: Array = _dictionary_array(state.get("ritual_actors", []))
-	var objects: Array = _dictionary_array(state.get("ritual_scene_objects", []))
-	var croupier_behavior := "idle"
-	if not actors.is_empty():
-		croupier_behavior = str((actors[0] as Dictionary).get("behavior", "idle"))
-	var ball_state := "rest"
-	for value in objects:
-		var object: Dictionary = value
-		if str(object.get("id", "")) == "roulette.ball":
-			ball_state = str(object.get("visual_state", "rest"))
-	var rect := Rect2(300, 8, 306, 25)
-	var accent := C_PINK if phase == "no_more_bets" else C_YELLOW
-	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.76))
-	surface.draw_rect(rect, accent, false, 2)
-	surface.surface_label_centered("%s | %s | BALL %s | %s" % [phase.replace("_", " ").to_upper(), croupier_behavior.replace("_", " ").to_upper(), ball_state.to_upper(), str(energy.get("tier", "quiet")).to_upper()], rect.grow(-3), 7, C_WHITE)
 
 
 func _draw_result_bet_chips(surface, entries_value: Variant, include_losers: bool, winners_paid: bool) -> void:

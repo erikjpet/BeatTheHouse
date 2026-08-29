@@ -531,7 +531,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var holdout_meter: Dictionary = _holdout_meter(holdout_challenge, ui) if not holdout_challenge.is_empty() else {}
 	var win_credits := int(last_result.get("win_credits", 0)) if (phase == "settled" or phase == "double_up" or phase == "double_result") else 0
 	var pending_double := _pending_double_credits(last_result)
-	var double_view: Dictionary = _double_up_result_view(last_result) if phase == "double_result" else (_double_up_view(run_state, state, ui, last_result) if phase == "double_up" else {})
+	var double_view: Dictionary = _double_up_result_view(last_result) if phase == "double_result" else (_public_double_up_view(_double_up_view(run_state, state, ui, last_result)) if phase == "double_up" else {})
 	var flip: Dictionary = _active_flip(ui, last_result, hand_active)
 	var pit_boss: Dictionary = run_state.pit_boss_watch_status(environment)
 	var holdout_item_modifiers := skill_item_modifier_badges(run_state, HOLDOUT_ITEM_EFFECT_KEYS)
@@ -2986,6 +2986,17 @@ func _double_up_view(run_state: RunState, state: Dictionary, ui: Dictionary, las
 		"pick_ranks": pick_ranks,
 		"selected_pick": clampi(int(ui.get("double_pick", -1)), -1, 3),
 		"at_risk": _pending_double_credits(last_result),
+	}
+
+
+func _public_double_up_view(sealed_view: Dictionary) -> Dictionary:
+	# The dealer is already face-up. Candidate picks remain sealed until one is
+	# chosen; the renderer can draw its four backs without receiving future cards.
+	return {
+		"dealer": _copy_dict(sealed_view.get("dealer", {})),
+		"dealer_rank": int(sealed_view.get("dealer_rank", 7)),
+		"selected_pick": clampi(int(sealed_view.get("selected_pick", -1)), -1, 3),
+		"at_risk": maxi(0, int(sealed_view.get("at_risk", 0))),
 	}
 
 

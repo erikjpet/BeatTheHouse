@@ -113,6 +113,9 @@ const GAME_SURFACE_UI_PREFERENCE_KEYS := [
 	"bet_level",
 	"denomination_index",
 ]
+const SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST := {
+	"slot": ["slot_handpay_acknowledge"],
+}
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
@@ -1677,15 +1680,8 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal changed its delivery authority.", request_key)
 	var proposed_rng := RngStream.new()
 	proposed_rng.restore((proposal.get("rng_snapshot", {}) as Dictionary).duplicate(true))
-	var skip_environment_turn := bool(result.get(ActionAuthorityScript.SKIP_ENVIRONMENT_TURN_KEY, false))
-	result.erase(ActionAuthorityScript.SKIP_ENVIRONMENT_TURN_KEY)
-	var proposal_requires_apply_key := str(provider_contract.get("proposal_requires_apply_key", ""))
-	var requires_apply := not proposal_requires_apply_key.is_empty() and bool(result.get(proposal_requires_apply_key, false))
-	if not proposal_requires_apply_key.is_empty():
-		result.erase(proposal_requires_apply_key)
-	var authoritative_result_marker := str(provider_contract.get("authoritative_result_marker", ""))
-	if requires_apply and not authoritative_result_marker.is_empty():
-		result[authoritative_result_marker] = true
+	var skip_environment_turn := _sealed_action_host_normalize_environment_turn(result, action_id)
+	var requires_apply := _sealed_action_host_normalize_result_authority(result, provider_contract)
 	result[ActionAuthorityScript.HOST_COMMITTED_KEY] = true
 	result[ActionAuthorityScript.HOST_REQUEST_KEY] = request_key
 	result[ActionAuthorityScript.HOST_DELIVERY_KEY] = delivery.duplicate(true)
@@ -1771,6 +1767,35 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	if not _sealed_action_host_publish(proposed_candidate):
 		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack host could not publish the accepted transaction.", request_key)
 	return result
+
+
+func _sealed_action_host_normalize_result_authority(result: Dictionary, provider_contract: Dictionary) -> bool:
+	var proposal_requires_apply_key := str(provider_contract.get("proposal_requires_apply_key", ""))
+	var requires_apply := not proposal_requires_apply_key.is_empty() and bool(result.get(proposal_requires_apply_key, false))
+	if not proposal_requires_apply_key.is_empty():
+		result.erase(proposal_requires_apply_key)
+	var authoritative_result_marker := str(provider_contract.get("authoritative_result_marker", ""))
+	if not authoritative_result_marker.is_empty():
+		# The host owns capability minting even when a canonical provider authored
+		# the proposal. Strip every inbound claim before observing host policy.
+		result.erase(authoritative_result_marker)
+		if requires_apply:
+			result[authoritative_result_marker] = true
+	return requires_apply
+
+
+func _sealed_action_host_normalize_environment_turn(result: Dictionary, action_id: String) -> bool:
+	# A proposal may describe an internal preference, but it cannot grant itself
+	# authority over the host's environment clock. Erase the inbound marker and
+	# derive the exception only from this host-owned, exact game/action allowlist.
+	result.erase(ActionAuthorityScript.SKIP_ENVIRONMENT_TURN_KEY)
+	if current_game == null:
+		return false
+	var game_id := current_game.get_id()
+	var allowed_value: Variant = SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST.get(game_id, [])
+	if typeof(allowed_value) != TYPE_ARRAY:
+		return false
+	return (allowed_value as Array).has(action_id)
 
 
 # `input_route_guarded` is trusted call-stack context only. It is never read
