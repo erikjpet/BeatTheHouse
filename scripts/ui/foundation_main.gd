@@ -1306,6 +1306,12 @@ func _blackjack_host_surface_intent(surface_action: String, index: int, confirm_
 		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
 		ledger = BlackjackActionAuthorityScript.stage_session(ledger, next_session)
 		if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)):
+			# Persist and reload the detached staged session before sealing. On a
+			# table's first action, storing the session may materialize canonical
+			# non-ledger defaults. The delivery must fingerprint that exact stable
+			# candidate, which is the one published below.
+			_blackjack_host_store_ledger(candidate, ledger)
+			ledger = _blackjack_host_ledger(candidate, true)
 			var action_id := str(command.get("action_id", ""))
 			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
 			var issued := BlackjackActionAuthorityScript.issue_delivery(ledger, action_id, _blackjack_host_trusted_context(candidate, delivery_stake), delivery_stake, recovery_session)
@@ -1343,6 +1349,8 @@ func _blackjack_host_auto_intent(surface_time_msec: int) -> Dictionary:
 		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
 		ledger = BlackjackActionAuthorityScript.stage_session(ledger, next_session)
 		if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)):
+			_blackjack_host_store_ledger(candidate, ledger)
+			ledger = _blackjack_host_ledger(candidate, true)
 			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
 			var issued := BlackjackActionAuthorityScript.issue_delivery(ledger, str(command.get("action_id", "")), _blackjack_host_trusted_context(candidate, delivery_stake), delivery_stake, recovery_session)
 			if not bool(issued.get("ok", false)):

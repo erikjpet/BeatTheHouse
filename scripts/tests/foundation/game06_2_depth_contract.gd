@@ -111,11 +111,14 @@ func _check_first_entry_surface_delivery(game: GameModule) -> void:
 	}
 	run.current_environment = environment
 	var host := _authority_host(game, run, 5)
+	var pre_seal_bankroll := run.bankroll
+	var pre_seal_rng := [run.rng_seed, run.rng_state]
 	var command: Dictionary = host.call("_blackjack_host_surface_intent", "blackjack_deal", 0, false, 20000)
 	var delivery: Dictionary = command.get("_blackjack_host_delivery", {}) if typeof(command.get("_blackjack_host_delivery", {})) == TYPE_DICTIONARY else {}
 	var sealed_stake := int(delivery.get("stake", -1))
 	var trusted_context: Dictionary = host.call("_blackjack_host_trusted_context", run, sealed_stake)
 	_check(not delivery.is_empty() and str(command.get("action_id", "")) == "blackjack_place_bet", "First Grand entry did not issue a sealed Deal delivery.")
+	_check(run.bankroll == pre_seal_bankroll and [run.rng_seed, run.rng_state] == pre_seal_rng, "First Grand entry sealing mutated bankroll or consumed gameplay RNG before resolution.")
 	_check(str(delivery.get("trusted_context_fingerprint", "")) == RitualRuntimeScript.canonical_fingerprint(trusted_context), "First Grand entry changed canonical table context between Deal sealing and resolution.")
 	var result: Dictionary = host.call("_blackjack_host_resolve_intent", "blackjack_place_bet", sealed_stake, delivery)
 	_check(bool(result.get("ok", false)) and bool(result.get("blackjack_host_committed", false)), "First Grand entry could not consume its exact sealed Deal delivery: %s" % str(result))
