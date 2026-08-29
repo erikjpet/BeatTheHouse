@@ -295,8 +295,10 @@ static func calculated_signature_hash(definition: Dictionary) -> String:
 
 
 static func signature_similarity(left: Dictionary, right: Dictionary) -> float:
-	var left_tokens := _signature_tokens(left)
-	var right_tokens := _signature_tokens(right)
+	return _signature_similarity_from_tokens(_signature_tokens(left), _signature_tokens(right))
+
+
+static func _signature_similarity_from_tokens(left_tokens: Dictionary, right_tokens: Dictionary) -> float:
 	if left_tokens.is_empty() and right_tokens.is_empty():
 		return 1.0
 	var union: Dictionary = left_tokens.duplicate(true)
@@ -315,6 +317,8 @@ static func catalog_uniqueness_report(definitions: Array, expected_count: int, o
 	var rows: Array = []
 	var dossiers: Array = []
 	var pairs: Array = []
+	var signature_tokens: Array = []
+	var canonical_signature_texts: Array = []
 	var ids: Dictionary = {}
 	if definitions.size() != expected_count:
 		failures.append("scenario sequence rollout expected %d definitions, got %d." % [expected_count, definitions.size()])
@@ -334,7 +338,10 @@ static func catalog_uniqueness_report(definitions: Array, expected_count: int, o
 		var phases := _array(_dict(authored.get("phase_graph", {})).get("phases", []))
 		var branch_count := 0
 		for phase_value in phases: branch_count += _array(_dict(phase_value).get("branches", [])).size()
-		rows.append({"id": scenario_id, "signature": normalized_signature(definition), "authored_signature": str(authored.get("sequence_signature", "")), "calculated_signature": calculated_signature_hash(definition), "nearest_id": "", "nearest_similarity": 0.0})
+		var signature := normalized_signature(definition)
+		rows.append({"id": scenario_id, "signature": signature, "authored_signature": str(authored.get("sequence_signature", "")), "calculated_signature": calculated_signature_hash(definition), "nearest_id": "", "nearest_similarity": 0.0})
+		signature_tokens.append(_signature_tokens(signature))
+		canonical_signature_texts.append(JSON.stringify(_canonical_variant(signature)))
 		dossiers.append({
 			"id": scenario_id,
 			"package_id": str(definition.get("sequence_package_id", "")),
@@ -356,7 +363,7 @@ static func catalog_uniqueness_report(definitions: Array, expected_count: int, o
 			var right_row := _dict(rows[right_index])
 			var left_signature := _dict(left_row.get("signature", {}))
 			var right_signature := _dict(right_row.get("signature", {}))
-			var similarity := signature_similarity(left_signature, right_signature)
+			var similarity := _signature_similarity_from_tokens(_dict(signature_tokens[left_index]), _dict(signature_tokens[right_index]))
 			if similarity > float(left_row.get("nearest_similarity", 0.0)):
 				left_row["nearest_similarity"] = similarity
 				left_row["nearest_id"] = str(right_row.get("id", ""))
@@ -365,7 +372,7 @@ static func catalog_uniqueness_report(definitions: Array, expected_count: int, o
 				right_row["nearest_similarity"] = similarity
 				right_row["nearest_id"] = str(left_row.get("id", ""))
 				rows[right_index] = right_row
-			var equal_hash := JSON.stringify(_canonical_variant(left_signature)) == JSON.stringify(_canonical_variant(right_signature))
+			var equal_hash := str(canonical_signature_texts[left_index]) == str(canonical_signature_texts[right_index])
 			var band := uniqueness_band(similarity, equal_hash)
 			var pair_ids := [str(left_row.get("id", "")), str(right_row.get("id", ""))]
 			pair_ids.sort()
