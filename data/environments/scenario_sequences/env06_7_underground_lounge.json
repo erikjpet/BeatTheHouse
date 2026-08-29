@@ -324,6 +324,7 @@
           "anchors": [
             "base::anchor:punchline_open_mic_signup",
             "base::anchor:punchline_open_mic_waiting_comic",
+            "base::anchor:punchline_open_mic_lectern_work_1",
             "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
@@ -893,7 +894,7 @@
               ],
               "scene_ops": [
                 {
-                  "anchor_id": "punchline_open_mic_signup",
+                  "anchor_id": "punchline_open_mic_lectern_work_1",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
@@ -1466,7 +1467,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "404b50592c1be8483b4adb323d83aba5f7f213491e689ecfbda2f40cf5fb38aa"
+        "sequence_signature": "a0ddbb289de58f54e863ec8fa1c0fe88f05752058fa9192720a4747e9a183d1a"
       }
     },
     {
@@ -1804,7 +1805,10 @@
           "actors": [],
           "anchors": [
             "base::anchor:punchline_headliner_credential_rope",
-            "base::anchor:punchline_headliner_door_guard"
+            "base::anchor:punchline_headliner_door_guard",
+            "base::anchor:punchline_headliner_task",
+            "base::anchor:punchline_headliner_runner_arrival",
+            "base::anchor:punchline_headliner_rope_work_1"
           ],
           "games": [],
           "interactions": [],
@@ -1895,6 +1899,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_headliner_runner",
+                    "anchor_id": "punchline_headliner_runner_arrival",
                     "behavior": "watch",
                     "label": "Headliner runner",
                     "pose": "arrival",
@@ -2149,7 +2154,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_headliner_credential_rope",
+                    "anchor_id": "punchline_headliner_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2379,7 +2384,7 @@
               ],
               "scene_ops": [
                 {
-                  "anchor_id": "punchline_headliner_credential_rope",
+                  "anchor_id": "punchline_headliner_rope_work_1",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
@@ -2396,7 +2401,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_headliner_credential_rope",
+                    "anchor_id": "punchline_headliner_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2587,7 +2592,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_headliner_credential_rope",
+                    "anchor_id": "punchline_headliner_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2781,7 +2786,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_headliner_credential_rope",
+                    "anchor_id": "punchline_headliner_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2971,7 +2976,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_headliner_credential_rope",
+                    "anchor_id": "punchline_headliner_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -3141,7 +3146,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b6694fda6a47aa97e0c4ddef4aa6122f580e1af7c4fb7da1d2d8312dae61eedc"
+        "sequence_signature": "9745f1afa73cf82187ca3e4d798b14251314d189e99d734ae2f6b1b2434cf179"
       }
     },
     {
@@ -3465,6 +3470,9 @@
           "anchors": [
             "base::anchor:punchline_bringer_crowd_ropes",
             "base::anchor:punchline_bringer_crowd_captain",
+            "base::anchor:punchline_bringer_unlit_stage",
+            "base::anchor:punchline_bringer_performer_arrival",
+            "base::anchor:punchline_bringer_ropes_work_1",
             "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
@@ -3550,6 +3558,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_bringer_performer",
+                    "anchor_id": "punchline_bringer_performer_arrival",
                     "behavior": "watch",
                     "label": "Bringer performer",
                     "pose": "arrival",
@@ -3763,6 +3772,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "punchline_bringer_unlit_stage",
                     "appearance": "dark",
                     "bounds": {
                       "h": 58.0,
@@ -4034,7 +4044,7 @@
               ],
               "scene_ops": [
                 {
-                  "anchor_id": "punchline_bringer_crowd_ropes",
+                  "anchor_id": "punchline_bringer_ropes_work_1",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
@@ -4607,7 +4617,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f530c423e565f2c1d4b3c5368692f37a4b2a53a3b33d27fe219abd9e91041775"
+        "sequence_signature": "bcb0689f49247b0ae38ae8b0f5a75374035f89d355ccc919a8e5e0d07890b516"
       }
     },
     {
@@ -4931,6 +4941,8 @@
           "anchors": [
             "base::anchor:punchline_high_stakes_protected_table",
             "base::anchor:punchline_high_stakes_floor_runner",
+            "base::anchor:punchline_high_stakes_task",
+            "base::anchor:punchline_high_stakes_runner_work_2",
             "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
@@ -5276,7 +5288,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_high_stakes_protected_table",
+                    "anchor_id": "punchline_high_stakes_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -5474,7 +5486,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_high_stakes_protected_table",
+                    "anchor_id": "punchline_high_stakes_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -5507,7 +5519,7 @@
             {
               "actor_ops": [
                 {
-                  "anchor_id": "punchline_high_stakes_floor_runner",
+                  "anchor_id": "punchline_high_stakes_runner_work_2",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
@@ -5722,7 +5734,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_high_stakes_protected_table",
+                    "anchor_id": "punchline_high_stakes_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -5920,7 +5932,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_high_stakes_protected_table",
+                    "anchor_id": "punchline_high_stakes_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -6091,7 +6103,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "6cf8e8edb7b68146f219ccde0a65c787ebfba0303677ea45da897b82f4d9df78"
+        "sequence_signature": "093a6d46262e5034081054d16f86bea6ac523a5dffac2a3e7ce70a254fc24660"
       }
     },
     {
@@ -6430,6 +6442,7 @@
           "anchors": [
             "base::anchor:punchline_greased_inspection_seals",
             "base::anchor:punchline_greased_payoff_runner",
+            "base::anchor:punchline_greased_seals_work_1",
             "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
@@ -7005,7 +7018,7 @@
               ],
               "scene_ops": [
                 {
-                  "anchor_id": "punchline_greased_inspection_seals",
+                  "anchor_id": "punchline_greased_seals_work_1",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
@@ -7767,7 +7780,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "cd0add3ebff0725b856342265670f2c9b61b01a8faa803f48508a7cb60116b9a"
+        "sequence_signature": "59ed751bf59b45a76d1360cf2db95a3d18e969bea70f2b40c84ab199d7addf5e"
       }
     },
     {
@@ -8091,6 +8104,9 @@
           "anchors": [
             "base::anchor:punchline_debt_hearing_chairs",
             "base::anchor:punchline_debt_room_witness",
+            "base::anchor:punchline_debt_task",
+            "base::anchor:punchline_debt_chairs_work_1",
+            "base::anchor:punchline_debt_witness_work_2",
             "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
@@ -8355,6 +8371,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "punchline_debt_chairs_work_1",
                     "appearance": "formed",
                     "bounds": {
                       "h": 46.0,
@@ -8436,7 +8453,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_debt_hearing_chairs",
+                    "anchor_id": "punchline_debt_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -8617,7 +8634,7 @@
               ],
               "scene_ops": [
                 {
-                  "anchor_id": "punchline_debt_hearing_chairs",
+                  "anchor_id": "punchline_debt_chairs_work_1",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
@@ -8634,7 +8651,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_debt_hearing_chairs",
+                    "anchor_id": "punchline_debt_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -8667,7 +8684,7 @@
             {
               "actor_ops": [
                 {
-                  "anchor_id": "punchline_debt_room_witness",
+                  "anchor_id": "punchline_debt_witness_work_2",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
@@ -8882,7 +8899,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_debt_hearing_chairs",
+                    "anchor_id": "punchline_debt_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -9080,7 +9097,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_debt_hearing_chairs",
+                    "anchor_id": "punchline_debt_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -9251,7 +9268,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "6261a37b9d18bf7c178f034e092d0fcb452b167d8a1fe7728e3853273cb99de0"
+        "sequence_signature": "0bc69ad9ecf0dc822ccdb46bd1c7745ab8fef363e45906d0584e841e93644822"
       }
     },
     {
@@ -9590,6 +9607,9 @@
           "anchors": [
             "base::anchor:punchline_new_muscle_inspection_tray",
             "base::anchor:punchline_new_muscle_checkpoint_rover",
+            "base::anchor:punchline_new_muscle_task",
+            "base::anchor:punchline_new_muscle_rover_arrival",
+            "base::anchor:punchline_new_muscle_tray_work_1",
             "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
@@ -9695,6 +9715,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_checkpoint_rover",
+                    "anchor_id": "punchline_new_muscle_rover_arrival",
                     "behavior": "watch",
                     "label": "Checkpoint rover",
                     "pose": "arrival",
@@ -9988,7 +10009,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "anchor_id": "punchline_new_muscle_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -10165,7 +10186,7 @@
               ],
               "scene_ops": [
                 {
-                  "anchor_id": "punchline_new_muscle_inspection_tray",
+                  "anchor_id": "punchline_new_muscle_tray_work_1",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
@@ -10182,7 +10203,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "anchor_id": "punchline_new_muscle_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -10373,7 +10394,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "anchor_id": "punchline_new_muscle_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -10567,7 +10588,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "anchor_id": "punchline_new_muscle_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -10757,7 +10778,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "anchor_id": "punchline_new_muscle_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -10927,7 +10948,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4929180917ed12a8f075286e48ae70de9a8a606ae0027d89c4c8143defa232d6"
+        "sequence_signature": "5cb369a071a453fd38199fea648834f8e1d49638feef543da16e74bc29794b79"
       }
     },
     {
@@ -11266,6 +11287,8 @@
           "anchors": [
             "base::anchor:punchline_raid_hide_cart",
             "base::anchor:punchline_raid_reopen_steward",
+            "base::anchor:punchline_raid_steward_arrival",
+            "base::anchor:punchline_raid_cart_work_1",
             "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
@@ -11371,6 +11394,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_reopen_steward",
+                    "anchor_id": "punchline_raid_steward_arrival",
                     "behavior": "work",
                     "label": "Reopen steward",
                     "pose": "arrival",
@@ -11788,7 +11812,7 @@
               ],
               "scene_ops": [
                 {
-                  "anchor_id": "punchline_raid_hide_cart",
+                  "anchor_id": "punchline_raid_cart_work_1",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
@@ -12603,7 +12627,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d5eb2532fe79cffcf5db870a8df75c15fcfad6963d96c34b656cf76b23185e20"
+        "sequence_signature": "8932abf25fdd255c6f6df5ad93c90dddbfa114865504ed9f30de5652596975f6"
       }
     },
     {
@@ -12941,7 +12965,10 @@
           "actors": [],
           "anchors": [
             "base::anchor:kitty_amateur_signup",
-            "base::anchor:kitty_amateur_judge"
+            "base::anchor:kitty_amateur_judge",
+            "base::anchor:kitty_amateur_task",
+            "base::anchor:kitty_amateur_contestant_arrival",
+            "base::anchor:kitty_amateur_judge_arrival"
           ],
           "games": [],
           "interactions": [],
@@ -13032,6 +13059,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_amateur_contestant",
+                    "anchor_id": "kitty_amateur_contestant_arrival",
                     "behavior": "watch",
                     "label": "Amateur contestant",
                     "pose": "arrival",
@@ -13046,6 +13074,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_amateur_judge",
+                    "anchor_id": "kitty_amateur_judge_arrival",
                     "behavior": "watch",
                     "label": "Amateur-night judge",
                     "pose": "arrival",
@@ -13285,7 +13314,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_amateur_signup",
+                    "anchor_id": "kitty_amateur_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -13479,7 +13508,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_amateur_signup",
+                    "anchor_id": "kitty_amateur_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -13723,7 +13752,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_amateur_signup",
+                    "anchor_id": "kitty_amateur_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -13917,7 +13946,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_amateur_signup",
+                    "anchor_id": "kitty_amateur_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -14107,7 +14136,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_amateur_signup",
+                    "anchor_id": "kitty_amateur_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -14277,7 +14306,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "63457594e9c55ff62adc8060642d3b3c1c741ce2a349f6703a7e8092a87d2eea"
+        "sequence_signature": "c0b591fc9a1b75f96b3bb265a408847c4a3342fc8aba2014bff359830314f5d7"
       }
     },
     {
@@ -14615,7 +14644,9 @@
           "actors": [],
           "anchors": [
             "base::anchor:kitty_buyout_ropes",
-            "base::anchor:kitty_buyout_steward"
+            "base::anchor:kitty_buyout_steward",
+            "base::anchor:kitty_buyout_request_cart",
+            "base::anchor:kitty_buyout_steward_arrival"
           ],
           "games": [],
           "interactions": [],
@@ -14720,6 +14751,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_floor_steward",
+                    "anchor_id": "kitty_buyout_steward_arrival",
                     "behavior": "guard",
                     "label": "Public floor steward",
                     "pose": "arrival",
@@ -14919,6 +14951,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "kitty_buyout_request_cart",
                     "appearance": "loaded",
                     "bounds": {
                       "h": 58.0,
@@ -15951,7 +15984,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e7d5b66308d642c1520f26fce67b800fed23d84294b7905fc97f14fd7357a527"
+        "sequence_signature": "dc659f1402ecb1bf37e70afa31d5fd5b1829155f106a385ff221da26ccf6b9b4"
       }
     },
     {
@@ -16274,7 +16307,11 @@
           "actors": [],
           "anchors": [
             "base::anchor:kitty_slow_closed_section",
-            "base::anchor:kitty_slow_booth_regular"
+            "base::anchor:kitty_slow_booth_regular",
+            "base::anchor:kitty_slow_mini_stage",
+            "base::anchor:kitty_slow_maintenance",
+            "base::anchor:kitty_slow_host_arrival",
+            "base::anchor:kitty_slow_regular_arrival"
           ],
           "games": [],
           "interactions": [],
@@ -16359,6 +16396,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_slow_night_host",
+                    "anchor_id": "kitty_slow_host_arrival",
                     "behavior": "watch",
                     "label": "Slow-night host",
                     "pose": "arrival",
@@ -16373,6 +16411,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_booth_regular",
+                    "anchor_id": "kitty_slow_regular_arrival",
                     "behavior": "idle",
                     "label": "Remaining booth regular",
                     "pose": "arrival",
@@ -16605,6 +16644,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "kitty_slow_mini_stage",
                     "appearance": "dark",
                     "bounds": {
                       "h": 52.0,
@@ -16625,6 +16665,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "kitty_slow_maintenance",
                     "appearance": "open",
                     "bounds": {
                       "h": 58.0,
@@ -17415,7 +17456,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "75dbb80a6dc37143045e8f66caaf21179595a752cd055b6e5b0e2ff5701f1d5e"
+        "sequence_signature": "eac4b2d0ccb5c072a2436976fe105d2de05317ea5806d2c13ae68220a1a13c71"
       }
     },
     {
@@ -17768,7 +17809,12 @@
           "actors": [],
           "anchors": [
             "base::anchor:kitty_storm_prop_trunk",
-            "base::anchor:kitty_storm_floor_host"
+            "base::anchor:kitty_storm_floor_host",
+            "base::anchor:kitty_storm_task",
+            "base::anchor:kitty_storm_bar_rope",
+            "base::anchor:kitty_storm_party_leader",
+            "base::anchor:kitty_storm_host_arrival",
+            "base::anchor:kitty_storm_safe_exit"
           ],
           "games": [],
           "interactions": [],
@@ -17865,6 +17911,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_party_leader",
+                    "anchor_id": "kitty_storm_party_leader",
                     "behavior": "watch",
                     "label": "Bachelorette party leader",
                     "pose": "arrival",
@@ -17879,6 +17926,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_floor_host",
+                    "anchor_id": "kitty_storm_host_arrival",
                     "behavior": "work",
                     "label": "Floor recovery host",
                     "pose": "arrival",
@@ -18078,6 +18126,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "kitty_storm_bar_rope",
                     "appearance": "buried",
                     "bounds": {
                       "h": 58.0,
@@ -18098,6 +18147,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "kitty_storm_safe_exit",
                     "appearance": "marked_lane",
                     "bounds": {
                       "h": 56.0,
@@ -18118,7 +18168,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_storm_prop_trunk",
+                    "anchor_id": "kitty_storm_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -18312,7 +18362,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_storm_prop_trunk",
+                    "anchor_id": "kitty_storm_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -18503,7 +18553,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_storm_prop_trunk",
+                    "anchor_id": "kitty_storm_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -18750,7 +18800,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_storm_prop_trunk",
+                    "anchor_id": "kitty_storm_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -18940,7 +18990,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_storm_prop_trunk",
+                    "anchor_id": "kitty_storm_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -19131,7 +19181,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_storm_prop_trunk",
+                    "anchor_id": "kitty_storm_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -19304,7 +19354,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "18822281b32eeaf995597c85c820a5b5b7855bb30806c6cdf1db5f196b844551"
+        "sequence_signature": "6263e57e725fe80e64f480fe76cd09377abf59c1bbdc7e754697c86407ca3e25"
       }
     }
   ],

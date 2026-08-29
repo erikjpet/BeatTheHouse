@@ -21,18 +21,18 @@ const CONFIGS := [
 ]
 
 const SPATIAL_BINDINGS := {
-	"punchline_open_mic_night":{"layer":"club","anchors":["punchline_open_mic_signup","punchline_open_mic_waiting_comic"],"route":"base::layer:casino"},
-	"punchline_headliner_night":{"layer":"back_room","anchors":["punchline_headliner_credential_rope","punchline_headliner_door_guard"],"route":"base::layer:casino"},
-	"punchline_bringer_show":{"layer":"club","anchors":["punchline_bringer_crowd_ropes","punchline_bringer_crowd_captain"],"route":"base::layer:casino"},
-	"punchline_high_stakes_night":{"layer":"casino","anchors":["punchline_high_stakes_protected_table","punchline_high_stakes_floor_runner"],"route":"base::layer:casino"},
-	"punchline_greased_week":{"layer":"casino","anchors":["punchline_greased_inspection_seals","punchline_greased_payoff_runner"],"route":"base::layer:casino"},
-	"punchline_debt_court":{"layer":"club","anchors":["punchline_debt_hearing_chairs","punchline_debt_room_witness"],"route":"base::layer:casino"},
-	"punchline_new_muscle":{"layer":"casino","anchors":["punchline_new_muscle_inspection_tray","punchline_new_muscle_checkpoint_rover"],"route":"base::layer:casino"},
-	"punchline_raid_jitters":{"layer":"club","anchors":["punchline_raid_hide_cart","punchline_raid_reopen_steward"],"route":"base::layer:casino"},
-	"kitty_cat_lounge_amateur_night":{"layer":"flat","anchors":["kitty_amateur_signup","kitty_amateur_judge"],"route":"base::world:bar"},
-	"kitty_cat_lounge_buyout":{"layer":"flat","anchors":["kitty_buyout_ropes","kitty_buyout_steward"],"route":"base::world:bar"},
-	"kitty_cat_lounge_slow_night":{"layer":"flat","anchors":["kitty_slow_closed_section","kitty_slow_booth_regular"],"route":"base::world:gas_station_casino"},
-	"kitty_cat_lounge_bachelorette_storm":{"layer":"flat","anchors":["kitty_storm_prop_trunk","kitty_storm_floor_host"],"route":"base::world:gas_station_casino"},
+	"punchline_open_mic_night":{"layer":"club","task_anchor":"punchline_open_mic_signup","anchors":["punchline_open_mic_signup","punchline_open_mic_waiting_comic"],"phase_object_anchors":{"work_1":{"signup_lectern":"punchline_open_mic_lectern_work_1"}},"route":"base::layer:casino"},
+	"punchline_headliner_night":{"layer":"back_room","task_anchor":"punchline_headliner_task","anchors":["punchline_headliner_credential_rope","punchline_headliner_door_guard"],"phase_object_anchors":{"work_1":{"credential_rope":"punchline_headliner_rope_work_1"}},"actor_anchors":{"credential_runner":"punchline_headliner_runner_arrival"},"route":"base::layer:casino"},
+	"punchline_bringer_show":{"layer":"club","task_anchor":"punchline_bringer_crowd_ropes","anchors":["punchline_bringer_crowd_ropes","punchline_bringer_crowd_captain"],"object_anchors":{"unlit_stage":"punchline_bringer_unlit_stage"},"actor_anchors":{"bringer_performer":"punchline_bringer_performer_arrival"},"phase_object_anchors":{"work_1":{"crowd_ropes":"punchline_bringer_ropes_work_1"}},"route":"base::layer:casino"},
+	"punchline_high_stakes_night":{"layer":"casino","task_anchor":"punchline_high_stakes_task","anchors":["punchline_high_stakes_protected_table","punchline_high_stakes_floor_runner"],"phase_actor_anchors":{"work_2":{"floor_service_runner":"punchline_high_stakes_runner_work_2"}},"route":"base::layer:casino"},
+	"punchline_greased_week":{"layer":"casino","task_anchor":"punchline_greased_inspection_seals","anchors":["punchline_greased_inspection_seals","punchline_greased_payoff_runner"],"phase_object_anchors":{"work_1":{"inspection_seals":"punchline_greased_seals_work_1"}},"route":"base::layer:casino"},
+	"punchline_debt_court":{"layer":"club","task_anchor":"punchline_debt_task","anchors":["punchline_debt_hearing_chairs","punchline_debt_room_witness"],"object_anchors":{"hearing_chairs":"punchline_debt_chairs_work_1"},"phase_object_anchors":{"work_1":{"hearing_chairs":"punchline_debt_chairs_work_1"}},"phase_actor_anchors":{"work_2":{"room_witness":"punchline_debt_witness_work_2"}},"route":"base::layer:casino"},
+	"punchline_new_muscle":{"layer":"casino","task_anchor":"punchline_new_muscle_task","anchors":["punchline_new_muscle_inspection_tray","punchline_new_muscle_checkpoint_rover"],"actor_anchors":{"checkpoint_rover":"punchline_new_muscle_rover_arrival"},"phase_object_anchors":{"work_1":{"inspection_tray":"punchline_new_muscle_tray_work_1"}},"route":"base::layer:casino"},
+	"punchline_raid_jitters":{"layer":"club","task_anchor":"punchline_raid_hide_cart","anchors":["punchline_raid_hide_cart","punchline_raid_reopen_steward"],"actor_anchors":{"reopen_steward":"punchline_raid_steward_arrival"},"phase_object_anchors":{"work_1":{"hide_cart":"punchline_raid_cart_work_1"}},"route":"base::layer:casino"},
+	"kitty_cat_lounge_amateur_night":{"layer":"flat","task_anchor":"kitty_amateur_task","anchors":["kitty_amateur_signup","kitty_amateur_judge"],"actor_anchors":{"amateur_contestant":"kitty_amateur_contestant_arrival","amateur_judge":"kitty_amateur_judge_arrival"},"route":"base::world:bar"},
+	"kitty_cat_lounge_buyout":{"layer":"flat","anchors":["kitty_buyout_ropes","kitty_buyout_steward"],"object_anchors":{"request_cart":"kitty_buyout_request_cart"},"actor_anchors":{"public_floor_steward":"kitty_buyout_steward_arrival"},"route":"base::world:bar"},
+	"kitty_cat_lounge_slow_night":{"layer":"flat","anchors":["kitty_slow_closed_section","kitty_slow_booth_regular"],"object_anchors":{"mini_stage":"kitty_slow_mini_stage","maintenance_panel":"kitty_slow_maintenance"},"actor_anchors":{"slow_night_host":"kitty_slow_host_arrival","booth_regular":"kitty_slow_regular_arrival"},"route":"base::world:gas_station_casino"},
+	"kitty_cat_lounge_bachelorette_storm":{"layer":"flat","task_anchor":"kitty_storm_task","exit_anchor":"kitty_storm_safe_exit","anchors":["kitty_storm_prop_trunk","kitty_storm_floor_host"],"object_anchors":{"bar_route_rope":"kitty_storm_bar_rope"},"actor_anchors":{"party_leader":"kitty_storm_party_leader","floor_recovery_host":"kitty_storm_host_arrival"},"route":"base::world:gas_station_casino"},
 }
 
 
@@ -80,13 +80,15 @@ func _entry(c: Dictionary) -> Dictionary:
 	for object_index in range(c.objects.size()):
 		var o: Array = c.objects[object_index]
 		var object_id := "%s_%s" % [prefix, o[0]]
-		scene_ops.append(_scene_spawn(prefix, "arrival", object_id, str(o[1]), str(o[2]), str(o[3]), str(o[4]), 52 + object_index * 8, 46 + object_index * 6))
+		var object_anchor := str(_dict(spatial.get("object_anchors", {})).get(str(o[0]), ""))
+		scene_ops.append(_scene_spawn(prefix, "arrival", object_id, str(o[1]), str(o[2]), str(o[3]), str(o[4]), 52 + object_index * 8, 46 + object_index * 6, object_anchor))
 		cleanup.append(_remove("scene_ops", prefix, object_id))
 	var actor_ops: Array = []
 	for actor_index in range(c.actors.size()):
 		var a: Array = c.actors[actor_index]
 		var actor_id := "%s_%s" % [prefix, a[0]]
-		actor_ops.append(_actor_spawn(prefix, "arrival", actor_id, str(a[1]), str(a[2]), str(a[3]), str(a[4])))
+		var actor_anchor := str(_dict(spatial.get("actor_anchors", {})).get(str(a[0]), ""))
+		actor_ops.append(_actor_spawn(prefix, "arrival", actor_id, str(a[1]), str(a[2]), str(a[3]), str(a[4]), actor_anchor))
 		cleanup.append(_despawn(prefix, actor_id))
 	var exit_id := "%s_safe_exit" % prefix
 	var exit_scene := _scene_spawn(prefix, "arrival", exit_id, "Marked clean exit", "exit", "exit_lane", "marked_lane", 56, 56)
@@ -219,14 +221,18 @@ func _branch(prefix:String,id:String,condition:Dictionary,next_phase:String,outc
 	return result
 
 
-func _scene_spawn(prefix:String,boundary:String,id:String,label:String,role:String,zone:String,state:String,w:int,h:int)->Dictionary:
-	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":{"label":label,"role":role,"zone_id":zone,"bounds":{"w":w,"h":h},"visible":true,"enabled":true,"state":state,"appearance":state}}
+func _scene_spawn(prefix:String,boundary:String,id:String,label:String,role:String,zone:String,state:String,w:int,h:int,anchor_id:String="")->Dictionary:
+	var object := {"label":label,"role":role,"zone_id":zone,"bounds":{"w":w,"h":h},"visible":true,"enabled":true,"state":state,"appearance":state}
+	if not anchor_id.is_empty(): object["anchor_id"] = anchor_id
+	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":object}
 
 
 func _task_scene_spawn(prefix:String,boundary:String,id:String,verb:String,spatial:Dictionary)->Dictionary:
 	var anchors := _array(spatial.get("anchors", []))
 	var object := {"label":verb.replace("_", " ").capitalize(),"role":"task_station","bounds":{"w":64,"h":56},"visible":true,"enabled":true,"state":"ready","appearance":"task_ready"}
-	if not anchors.is_empty(): object["anchor_id"] = str(anchors[0])
+	var task_anchor := str(spatial.get("task_anchor", ""))
+	if not task_anchor.is_empty(): object["anchor_id"] = task_anchor
+	elif not anchors.is_empty(): object["anchor_id"] = str(anchors[0])
 	else: object["zone_id"] = "service_lane"
 	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":object}
 
@@ -235,9 +241,10 @@ func _scene_remove(prefix:String,boundary:String,id:String)->Dictionary:
 	return {"family":"scene_ops","op":"remove","receipt_id":"%s_%s_remove_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id}
 
 
-func _actor_spawn(prefix:String,boundary:String,id:String,label:String,actor_id:String,zone:String,behavior:String)->Dictionary:
+func _actor_spawn(prefix:String,boundary:String,id:String,label:String,actor_id:String,zone:String,behavior:String,anchor_id:String="")->Dictionary:
 	var bounded_behavior := behavior if ["idle", "watch", "patrol", "guard", "flee", "fight", "work", "depart"].has(behavior) else "watch"
 	var actor := {"label":label,"actor_id":actor_id,"zone_id":zone,"behavior":bounded_behavior,"pose":"arrival"}
+	if not anchor_id.is_empty(): actor["anchor_id"] = anchor_id
 	return {"family":"actor_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"actor":actor}
 
 
@@ -279,17 +286,24 @@ func _transition(prefix:String,boundary:String,kind:String,message:String)->Dict
 func _beat_operations(c:Dictionary,index:int,spatial:Dictionary)->Dictionary:
 	var prefix := str(c.id)
 	var beat := str(c.beats[index % c.beats.size()])
-	var object_id := "%s_%s" % [prefix,c.objects[index % c.objects.size()][0]]
-	var actor_id := "%s_%s" % [prefix,c.actors[index % c.actors.size()][0]]
+	var object_suffix := str(c.objects[index % c.objects.size()][0])
+	var actor_suffix := str(c.actors[index % c.actors.size()][0])
+	var object_id := "%s_%s" % [prefix,object_suffix]
+	var actor_id := "%s_%s" % [prefix,actor_suffix]
+	var phase_id := "work_%d" % (index + 1)
+	var phase_object_anchor := str(_dict(_dict(spatial.get("phase_object_anchors", {})).get(phase_id, {})).get(object_suffix, ""))
+	var phase_actor_anchor := str(_dict(_dict(spatial.get("phase_actor_anchors", {})).get(phase_id, {})).get(actor_suffix, ""))
 	var scene: Array = []
 	var actor: Array = []
 	match index % 5:
 		0:
-			scene.append({"family":"scene_ops","op":"move","receipt_id":"%s_%s_move" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"anchor_id":str(_array(spatial.get("anchors", []))[0])})
+			var move_anchor := phase_object_anchor if not phase_object_anchor.is_empty() else str(_array(spatial.get("anchors", []))[0])
+			scene.append({"family":"scene_ops","op":"move","receipt_id":"%s_%s_move" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"anchor_id":move_anchor})
 			actor.append({"family":"actor_ops","op":"set_pose","receipt_id":"%s_%s_pose" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"pose":beat})
 		1:
 			scene.append({"family":"scene_ops","op":"set_appearance","receipt_id":"%s_%s_appearance" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"appearance":"%s_changed" % beat})
-			actor.append({"family":"actor_ops","op":"set_position","receipt_id":"%s_%s_position" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"anchor_id":str(_array(spatial.get("anchors", []))[1])})
+			var position_anchor := phase_actor_anchor if not phase_actor_anchor.is_empty() else str(_array(spatial.get("anchors", []))[1])
+			actor.append({"family":"actor_ops","op":"set_position","receipt_id":"%s_%s_position" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"anchor_id":position_anchor})
 		2:
 			scene.append({"family":"scene_ops","op":"set_state","receipt_id":"%s_%s_state" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"state":"%s_resolved" % beat})
 			actor.append({"family":"actor_ops","op":"set_behavior","receipt_id":"%s_%s_behavior" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"behavior":"watch"})
@@ -331,12 +345,25 @@ func _base_zones() -> Array:
 func _declared_anchor_ids(spatial: Dictionary) -> Array:
 	var result: Array = []
 	for anchor_value in _array(spatial.get("anchors", [])): result.append("base::anchor:%s" % str(anchor_value))
+	var task_anchor := str(spatial.get("task_anchor", ""))
+	if not task_anchor.is_empty() and not result.has("base::anchor:%s" % task_anchor): result.append("base::anchor:%s" % task_anchor)
+	for group_name in ["object_anchors", "actor_anchors"]:
+		for anchor_value in _dict(spatial.get(group_name, {})).values():
+			var identity := "base::anchor:%s" % str(anchor_value)
+			if not result.has(identity): result.append(identity)
+	for group_name in ["phase_object_anchors", "phase_actor_anchors"]:
+		for phase_value in _dict(spatial.get(group_name, {})).values():
+			for anchor_value in _dict(phase_value).values():
+				var identity := "base::anchor:%s" % str(anchor_value)
+				if not result.has(identity): result.append(identity)
 	var exit_anchor := _exit_anchor(spatial)
 	if not exit_anchor.is_empty() and not result.has("base::anchor:%s" % exit_anchor): result.append("base::anchor:%s" % exit_anchor)
 	return result
 
 
 func _exit_anchor(spatial: Dictionary) -> String:
+	var configured := str(spatial.get("exit_anchor", ""))
+	if not configured.is_empty(): return configured
 	return "punchline_headliner_door_guard" if str(spatial.get("layer", "")) != "flat" else ""
 
 

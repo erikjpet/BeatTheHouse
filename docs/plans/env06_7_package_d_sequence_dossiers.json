@@ -1,12 +1,10 @@
 {
   "assembly_evidence_needed": [
-    "scenario punchline_open_mic_night vs punchline_bringer_show: 0.602 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_headliner_night vs punchline_greased_week: 0.690 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_headliner_night vs kitty_cat_lounge_buyout: 0.710 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_high_stakes_night vs punchline_debt_court: 0.647 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_greased_week vs kitty_cat_lounge_buyout: 0.658 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_debt_court vs kitty_cat_lounge_slow_night: 0.600 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_new_muscle vs kitty_cat_lounge_amateur_night: 0.627 (warning). Missing receipt-bound masked visual evidence."
+    "scenario punchline_headliner_night vs punchline_greased_week: 0.668 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_headliner_night vs kitty_cat_lounge_buyout: 0.708 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_high_stakes_night vs punchline_debt_court: 0.640 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_greased_week vs kitty_cat_lounge_buyout: 0.655 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_new_muscle vs kitty_cat_lounge_amateur_night: 0.624 (warning). Missing receipt-bound masked visual evidence."
   ],
   "base_head": "a4c57bf681dd74d3a4ae24b1bda6dae410c8cb70",
   "dossiers": [
@@ -58,10 +56,11 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [],
-      "sequence_signature": "404b50592c1be8483b4adb323d83aba5f7f213491e689ecfbda2f40cf5fb38aa",
+      "sequence_signature": "a0ddbb289de58f54e863ec8fa1c0fe88f05752058fa9192720a4747e9a183d1a",
       "spatial_anchors": [
         "base::anchor:punchline_open_mic_signup",
         "base::anchor:punchline_open_mic_waiting_comic",
+        "base::anchor:punchline_open_mic_lectern_work_1",
         "base::anchor:punchline_headliner_door_guard"
       ],
       "spatial_layer": "club",
@@ -126,10 +125,13 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [],
-      "sequence_signature": "b6694fda6a47aa97e0c4ddef4aa6122f580e1af7c4fb7da1d2d8312dae61eedc",
+      "sequence_signature": "9745f1afa73cf82187ca3e4d798b14251314d189e99d734ae2f6b1b2434cf179",
       "spatial_anchors": [
         "base::anchor:punchline_headliner_credential_rope",
-        "base::anchor:punchline_headliner_door_guard"
+        "base::anchor:punchline_headliner_door_guard",
+        "base::anchor:punchline_headliner_task",
+        "base::anchor:punchline_headliner_runner_arrival",
+        "base::anchor:punchline_headliner_rope_work_1"
       ],
       "spatial_layer": "back_room",
       "terminal_outcomes": [
@@ -191,10 +193,13 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [],
-      "sequence_signature": "f530c423e565f2c1d4b3c5368692f37a4b2a53a3b33d27fe219abd9e91041775",
+      "sequence_signature": "bcb0689f49247b0ae38ae8b0f5a75374035f89d355ccc919a8e5e0d07890b516",
       "spatial_anchors": [
         "base::anchor:punchline_bringer_crowd_ropes",
         "base::anchor:punchline_bringer_crowd_captain",
+        "base::anchor:punchline_bringer_unlit_stage",
+        "base::anchor:punchline_bringer_performer_arrival",
+        "base::anchor:punchline_bringer_ropes_work_1",
         "base::anchor:punchline_headliner_door_guard"
       ],
       "spatial_layer": "club",
@@ -257,10 +262,12 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [],
-      "sequence_signature": "6cf8e8edb7b68146f219ccde0a65c787ebfba0303677ea45da897b82f4d9df78",
+      "sequence_signature": "093a6d46262e5034081054d16f86bea6ac523a5dffac2a3e7ce70a254fc24660",
       "spatial_anchors": [
         "base::anchor:punchline_high_stakes_protected_table",
         "base::anchor:punchline_high_stakes_floor_runner",
+        "base::anchor:punchline_high_stakes_task",
+        "base::anchor:punchline_high_stakes_runner_work_2",
         "base::anchor:punchline_headliner_door_guard"
       ],
       "spatial_layer": "casino",
@@ -325,10 +332,11 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [],
-      "sequence_signature": "cd0add3ebff0725b856342265670f2c9b61b01a8faa803f48508a7cb60116b9a",
+      "sequence_signature": "59ed751bf59b45a76d1360cf2db95a3d18e969bea70f2b40c84ab199d7addf5e",
       "spatial_anchors": [
         "base::anchor:punchline_greased_inspection_seals",
         "base::anchor:punchline_greased_payoff_runner",
+        "base::anchor:punchline_greased_seals_work_1",
         "base::anchor:punchline_headliner_door_guard"
       ],
       "spatial_layer": "casino",
@@ -391,10 +399,13 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [],
-      "sequence_signature": "6261a37b9d18bf7c178f034e092d0fcb452b167d8a1fe7728e3853273cb99de0",
+      "sequence_signature": "0bc69ad9ecf0dc822ccdb46bd1c7745ab8fef363e45906d0584e841e93644822",
       "spatial_anchors": [
         "base::anchor:punchline_debt_hearing_chairs",
         "base::anchor:punchline_debt_room_witness",
+        "base::anchor:punchline_debt_task",
+        "base::anchor:punchline_debt_chairs_work_1",
+        "base::anchor:punchline_debt_witness_work_2",
         "base::anchor:punchline_headliner_door_guard"
       ],
       "spatial_layer": "club",
@@ -459,10 +470,13 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [],
-      "sequence_signature": "4929180917ed12a8f075286e48ae70de9a8a606ae0027d89c4c8143defa232d6",
+      "sequence_signature": "5cb369a071a453fd38199fea648834f8e1d49638feef543da16e74bc29794b79",
       "spatial_anchors": [
         "base::anchor:punchline_new_muscle_inspection_tray",
         "base::anchor:punchline_new_muscle_checkpoint_rover",
+        "base::anchor:punchline_new_muscle_task",
+        "base::anchor:punchline_new_muscle_rover_arrival",
+        "base::anchor:punchline_new_muscle_tray_work_1",
         "base::anchor:punchline_headliner_door_guard"
       ],
       "spatial_layer": "casino",
@@ -527,10 +541,12 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [],
-      "sequence_signature": "d5eb2532fe79cffcf5db870a8df75c15fcfad6963d96c34b656cf76b23185e20",
+      "sequence_signature": "8932abf25fdd255c6f6df5ad93c90dddbfa114865504ed9f30de5652596975f6",
       "spatial_anchors": [
         "base::anchor:punchline_raid_hide_cart",
         "base::anchor:punchline_raid_reopen_steward",
+        "base::anchor:punchline_raid_steward_arrival",
+        "base::anchor:punchline_raid_cart_work_1",
         "base::anchor:punchline_headliner_door_guard"
       ],
       "spatial_layer": "club",
@@ -595,10 +611,13 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [],
-      "sequence_signature": "63457594e9c55ff62adc8060642d3b3c1c741ce2a349f6703a7e8092a87d2eea",
+      "sequence_signature": "c0b591fc9a1b75f96b3bb265a408847c4a3342fc8aba2014bff359830314f5d7",
       "spatial_anchors": [
         "base::anchor:kitty_amateur_signup",
-        "base::anchor:kitty_amateur_judge"
+        "base::anchor:kitty_amateur_judge",
+        "base::anchor:kitty_amateur_task",
+        "base::anchor:kitty_amateur_contestant_arrival",
+        "base::anchor:kitty_amateur_judge_arrival"
       ],
       "spatial_layer": "flat",
       "terminal_outcomes": [
@@ -662,10 +681,12 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [],
-      "sequence_signature": "e7d5b66308d642c1520f26fce67b800fed23d84294b7905fc97f14fd7357a527",
+      "sequence_signature": "dc659f1402ecb1bf37e70afa31d5fd5b1829155f106a385ff221da26ccf6b9b4",
       "spatial_anchors": [
         "base::anchor:kitty_buyout_ropes",
-        "base::anchor:kitty_buyout_steward"
+        "base::anchor:kitty_buyout_steward",
+        "base::anchor:kitty_buyout_request_cart",
+        "base::anchor:kitty_buyout_steward_arrival"
       ],
       "spatial_layer": "flat",
       "terminal_outcomes": [
@@ -727,10 +748,14 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [],
-      "sequence_signature": "75dbb80a6dc37143045e8f66caaf21179595a752cd055b6e5b0e2ff5701f1d5e",
+      "sequence_signature": "eac4b2d0ccb5c072a2436976fe105d2de05317ea5806d2c13ae68220a1a13c71",
       "spatial_anchors": [
         "base::anchor:kitty_slow_closed_section",
-        "base::anchor:kitty_slow_booth_regular"
+        "base::anchor:kitty_slow_booth_regular",
+        "base::anchor:kitty_slow_mini_stage",
+        "base::anchor:kitty_slow_maintenance",
+        "base::anchor:kitty_slow_host_arrival",
+        "base::anchor:kitty_slow_regular_arrival"
       ],
       "spatial_layer": "flat",
       "terminal_outcomes": [
@@ -796,10 +821,15 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [],
-      "sequence_signature": "18822281b32eeaf995597c85c820a5b5b7855bb30806c6cdf1db5f196b844551",
+      "sequence_signature": "6263e57e725fe80e64f480fe76cd09377abf59c1bbdc7e754697c86407ca3e25",
       "spatial_anchors": [
         "base::anchor:kitty_storm_prop_trunk",
-        "base::anchor:kitty_storm_floor_host"
+        "base::anchor:kitty_storm_floor_host",
+        "base::anchor:kitty_storm_task",
+        "base::anchor:kitty_storm_bar_rope",
+        "base::anchor:kitty_storm_party_leader",
+        "base::anchor:kitty_storm_host_arrival",
+        "base::anchor:kitty_storm_safe_exit"
       ],
       "spatial_layer": "flat",
       "terminal_outcomes": [
@@ -826,7 +856,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.280197206244864,
+      "similarity": 0.277777777777778,
       "status": "pass"
     },
     {
@@ -838,7 +868,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.50775594622544,
+      "similarity": 0.494887525562372,
       "status": "pass"
     },
     {
@@ -850,7 +880,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.373991935483871,
+      "similarity": 0.37037037037037,
       "status": "pass"
     },
     {
@@ -862,7 +892,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.366666666666667,
+      "similarity": 0.363557105492589,
       "status": "pass"
     },
     {
@@ -874,7 +904,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.273831775700935,
+      "similarity": 0.271123491179201,
       "status": "pass"
     },
     {
@@ -886,7 +916,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.238780694326842,
+      "similarity": 0.236134453781513,
       "status": "pass"
     },
     {
@@ -898,7 +928,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.273576097105509,
+      "similarity": 0.272558139534884,
       "status": "pass"
     },
     {
@@ -910,7 +940,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.355555555555556,
+      "similarity": 0.353591160220994,
       "status": "pass"
     },
     {
@@ -922,7 +952,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.425287356321839,
+      "similarity": 0.423517169614984,
       "status": "pass"
     },
     {
@@ -934,7 +964,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.440408626560726,
+      "similarity": 0.439051918735892,
       "status": "pass"
     },
     {
@@ -946,7 +976,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
-      "similarity": 0.475029036004646,
+      "similarity": 0.468281430219146,
       "status": "pass"
     },
     {
@@ -958,7 +988,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_greased_week",
-      "similarity": 0.453674121405751,
+      "similarity": 0.451167728237792,
       "status": "pass"
     },
     {
@@ -970,7 +1000,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.451428571428571,
+      "similarity": 0.447098976109215,
       "status": "pass"
     },
     {
@@ -982,7 +1012,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.27689429373246,
+      "similarity": 0.276119402985075,
       "status": "pass"
     },
     {
@@ -994,7 +1024,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.293838862559242,
+      "similarity": 0.291784702549575,
       "status": "pass"
     },
     {
@@ -1006,7 +1036,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.425287356321839,
+      "similarity": 0.423958333333333,
       "status": "pass"
     },
     {
@@ -1018,7 +1048,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.238578680203046,
+      "similarity": 0.237573715248526,
       "status": "pass"
     },
     {
@@ -1030,7 +1060,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.305263157894737,
+      "similarity": 0.304389312977099,
       "status": "pass"
     },
     {
@@ -1042,8 +1072,8 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.600252206809584,
-      "status": "warning"
+      "similarity": 0.576732673267327,
+      "status": "pass"
     },
     {
       "blocking": false,
@@ -1054,7 +1084,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.378787878787879,
+      "similarity": 0.378024193548387,
       "status": "pass"
     },
     {
@@ -1066,7 +1096,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.278089887640449,
+      "similarity": 0.276377217553688,
       "status": "pass"
     },
     {
@@ -1078,7 +1108,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.469284994964753,
+      "similarity": 0.468341708542714,
       "status": "pass"
     },
     {
@@ -1090,7 +1120,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.37842617152962,
+      "similarity": 0.377092511013216,
       "status": "pass"
     },
     {
@@ -1102,7 +1132,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.657954545454545,
+      "similarity": 0.654586636466591,
       "status": "warning"
     },
     {
@@ -1114,7 +1144,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.281954887218045,
+      "similarity": 0.280898876404494,
       "status": "pass"
     },
     {
@@ -1126,235 +1156,235 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
+      "similarity": 0.285042333019755,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_greased_week",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "punchline_new_muscle",
+      "similarity": 0.478744939271255,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_greased_week",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "punchline_raid_jitters",
+      "similarity": 0.490816326530612,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_headliner_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "kitty_cat_lounge_amateur_night",
+      "similarity": 0.494887525562372,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_headliner_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "kitty_cat_lounge_bachelorette_storm",
+      "similarity": 0.363557105492589,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_headliner_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "kitty_cat_lounge_buyout",
+      "similarity": 0.707943925233645,
+      "status": "warning"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_headliner_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "kitty_cat_lounge_slow_night",
+      "similarity": 0.271123491179201,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_headliner_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "punchline_bringer_show",
+      "similarity": 0.423517169614984,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_headliner_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "punchline_debt_court",
+      "similarity": 0.304389312977099,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_headliner_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "punchline_greased_week",
+      "similarity": 0.667808219178082,
+      "status": "warning"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_headliner_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "punchline_high_stakes_night",
+      "similarity": 0.275443510737628,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_headliner_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "punchline_new_muscle",
+      "similarity": 0.485772357723577,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_headliner_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "punchline_raid_jitters",
+      "similarity": 0.493360572012257,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_high_stakes_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "kitty_cat_lounge_amateur_night",
+      "similarity": 0.427377220480669,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_high_stakes_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "kitty_cat_lounge_bachelorette_storm",
+      "similarity": 0.26442721791559,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_high_stakes_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "kitty_cat_lounge_buyout",
+      "similarity": 0.274253731343284,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_high_stakes_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "kitty_cat_lounge_slow_night",
+      "similarity": 0.585305105853051,
+      "status": "pass"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_high_stakes_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "punchline_debt_court",
+      "similarity": 0.64,
+      "status": "warning"
+    },
+    {
+      "blocking": false,
+      "equal_normalized_hash": false,
+      "left_id": "punchline_high_stakes_night",
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false,
+      "right_id": "punchline_greased_week",
       "similarity": 0.286522148916117,
       "status": "pass"
     },
     {
       "blocking": false,
       "equal_normalized_hash": false,
-      "left_id": "punchline_greased_week",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "punchline_new_muscle",
-      "similarity": 0.480730223123732,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_greased_week",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "punchline_raid_jitters",
-      "similarity": 0.492842535787321,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_headliner_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.502574665293512,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_headliner_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.366345311130587,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_headliner_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.710433763188746,
-      "status": "warning"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_headliner_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.273576097105509,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_headliner_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "punchline_bringer_show",
-      "similarity": 0.424843423799582,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_headliner_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "punchline_debt_court",
-      "similarity": 0.304971319311663,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_headliner_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "punchline_greased_week",
-      "similarity": 0.689814814814815,
-      "status": "warning"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_headliner_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "punchline_high_stakes_night",
-      "similarity": 0.274509803921569,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_headliner_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "punchline_new_muscle",
-      "similarity": 0.470292044310171,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_headliner_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "punchline_raid_jitters",
-      "similarity": 0.47623862487361,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_high_stakes_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.426778242677824,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_high_stakes_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.265341400172861,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_high_stakes_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.274766355140187,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_high_stakes_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.58625,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_high_stakes_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "punchline_debt_court",
-      "similarity": 0.647211413748379,
-      "status": "warning"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
-      "left_id": "punchline_high_stakes_night",
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false,
-      "right_id": "punchline_greased_week",
-      "similarity": 0.287735849056604,
-      "status": "pass"
-    },
-    {
-      "blocking": false,
-      "equal_normalized_hash": false,
       "left_id": "punchline_high_stakes_night",
       "masked_visual_evidence": {
 
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.41597510373444,
+      "similarity": 0.41407867494824,
       "status": "pass"
     },
     {
@@ -1366,7 +1396,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.311239193083574,
+      "similarity": 0.310940499040307,
       "status": "pass"
     },
     {
@@ -1378,7 +1408,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.626532887402453,
+      "similarity": 0.624444444444444,
       "status": "warning"
     },
     {
@@ -1390,7 +1420,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.288429752066116,
+      "similarity": 0.287242798353909,
       "status": "pass"
     },
     {
@@ -1402,7 +1432,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.457542457542458,
+      "similarity": 0.464929859719439,
       "status": "pass"
     },
     {
@@ -1414,7 +1444,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.39611054247697,
+      "similarity": 0.395514780835882,
       "status": "pass"
     },
     {
@@ -1426,7 +1456,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.522419186652763,
+      "similarity": 0.51975051975052,
       "status": "pass"
     },
     {
@@ -1438,7 +1468,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.292890995260664,
+      "similarity": 0.292336802270577,
       "status": "pass"
     },
     {
@@ -1450,7 +1480,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.358070500927644,
+      "similarity": 0.356746765249538,
       "status": "pass"
     },
     {
@@ -1462,7 +1492,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.386178861788618,
+      "similarity": 0.386802030456853,
       "status": "pass"
     },
     {
@@ -1474,7 +1504,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.461981566820277,
+      "similarity": 0.459862385321101,
       "status": "pass"
     },
     {
@@ -1486,8 +1516,8 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_bringer_show",
-      "similarity": 0.601513240857503,
-      "status": "warning"
+      "similarity": 0.595984943538268,
+      "status": "pass"
     },
     {
       "blocking": false,
@@ -1498,7 +1528,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
-      "similarity": 0.426966292134831,
+      "similarity": 0.424887892376682,
       "status": "pass"
     },
     {
@@ -1522,7 +1552,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_headliner_night",
-      "similarity": 0.385786802030457,
+      "similarity": 0.385395537525355,
       "status": "pass"
     },
     {
@@ -1534,7 +1564,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.483644859813084,
+      "similarity": 0.481913652275379,
       "status": "pass"
     },
     {
@@ -1546,7 +1576,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.30622009569378,
+      "similarity": 0.304680038204393,
       "status": "pass"
     },
     {
@@ -1558,7 +1588,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.293838862559242,
+      "similarity": 0.292336802270577,
       "status": "pass"
     },
     {
@@ -1570,7 +1600,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.502574665293512,
+      "similarity": 0.50256937307297,
       "status": "pass"
     },
     {
@@ -1582,7 +1612,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.308984047019311,
+      "similarity": 0.307692307692308,
       "status": "pass"
     },
     {
@@ -1594,7 +1624,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.478216818642351,
+      "similarity": 0.488798370672098,
       "status": "pass"
     },
     {
@@ -1606,7 +1636,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.275958840037418,
+      "similarity": 0.274674115456238,
       "status": "pass"
     }
   ],
@@ -1614,11 +1644,11 @@
   "schema_version": 1,
   "uniqueness_rows": [
     {
-      "authored_signature": "63457594e9c55ff62adc8060642d3b3c1c741ce2a349f6703a7e8092a87d2eea",
-      "calculated_signature": "63457594e9c55ff62adc8060642d3b3c1c741ce2a349f6703a7e8092a87d2eea",
+      "authored_signature": "c0b591fc9a1b75f96b3bb265a408847c4a3342fc8aba2014bff359830314f5d7",
+      "calculated_signature": "c0b591fc9a1b75f96b3bb265a408847c4a3342fc8aba2014bff359830314f5d7",
       "id": "kitty_cat_lounge_amateur_night",
       "nearest_id": "punchline_new_muscle",
-      "nearest_similarity": 0.626532887402453,
+      "nearest_similarity": 0.624444444444444,
       "signature": {
         "aftermath": [
           {
@@ -1866,7 +1896,7 @@
         ],
         "declared_target_counts": {
           "actors": 0,
-          "anchors": 2,
+          "anchors": 5,
           "games": 0,
           "interactions": 0,
           "routes": 0,
@@ -2097,7 +2127,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "kitty_amateur_signup",
+                    "anchor_id": "kitty_amateur_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2258,7 +2288,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "kitty_amateur_signup",
+                    "anchor_id": "kitty_amateur_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2428,7 +2458,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "kitty_amateur_signup",
+                    "anchor_id": "kitty_amateur_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2589,7 +2619,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "kitty_amateur_signup",
+                    "anchor_id": "kitty_amateur_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2684,6 +2714,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_amateur_contestant",
+                    "anchor_id": "kitty_amateur_contestant_arrival",
                     "behavior": "watch",
                     "label": "Amateur contestant",
                     "pose": "arrival",
@@ -2698,6 +2729,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_amateur_judge",
+                    "anchor_id": "kitty_amateur_judge_arrival",
                     "behavior": "watch",
                     "label": "Amateur-night judge",
                     "pose": "arrival",
@@ -2805,7 +2837,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "kitty_amateur_signup",
+                    "anchor_id": "kitty_amateur_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -3070,11 +3102,11 @@
       }
     },
     {
-      "authored_signature": "18822281b32eeaf995597c85c820a5b5b7855bb30806c6cdf1db5f196b844551",
-      "calculated_signature": "18822281b32eeaf995597c85c820a5b5b7855bb30806c6cdf1db5f196b844551",
+      "authored_signature": "6263e57e725fe80e64f480fe76cd09377abf59c1bbdc7e754697c86407ca3e25",
+      "calculated_signature": "6263e57e725fe80e64f480fe76cd09377abf59c1bbdc7e754697c86407ca3e25",
       "id": "kitty_cat_lounge_bachelorette_storm",
       "nearest_id": "punchline_greased_week",
-      "nearest_similarity": 0.37842617152962,
+      "nearest_similarity": 0.377092511013216,
       "signature": {
         "aftermath": [
           {
@@ -3336,7 +3368,7 @@
         ],
         "declared_target_counts": {
           "actors": 0,
-          "anchors": 2,
+          "anchors": 7,
           "games": 0,
           "interactions": 0,
           "routes": 0,
@@ -3561,7 +3593,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "kitty_storm_prop_trunk",
+                    "anchor_id": "kitty_storm_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -3741,7 +3773,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "kitty_storm_prop_trunk",
+                    "anchor_id": "kitty_storm_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -3902,7 +3934,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "kitty_storm_prop_trunk",
+                    "anchor_id": "kitty_storm_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -4074,7 +4106,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "kitty_storm_prop_trunk",
+                    "anchor_id": "kitty_storm_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -4235,7 +4267,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "kitty_storm_prop_trunk",
+                    "anchor_id": "kitty_storm_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -4330,6 +4362,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_floor_host",
+                    "anchor_id": "kitty_storm_host_arrival",
                     "behavior": "work",
                     "label": "Floor recovery host",
                     "pose": "arrival",
@@ -4344,6 +4377,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_party_leader",
+                    "anchor_id": "kitty_storm_party_leader",
                     "behavior": "watch",
                     "label": "Bachelorette party leader",
                     "pose": "arrival",
@@ -4451,7 +4485,49 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "kitty_storm_prop_trunk",
+                    "anchor_id": "kitty_storm_bar_rope",
+                    "appearance": "buried",
+                    "bounds": {
+                      "h": 58.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Bar route rope",
+                    "role": "route_marker",
+                    "state": "buried",
+                    "visible": true,
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "object": {
+                    "anchor_id": "kitty_storm_safe_exit",
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "object": {
+                    "anchor_id": "kitty_storm_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -4491,26 +4567,6 @@
               {
                 "effect": {
                   "object": {
-                    "appearance": "buried",
-                    "bounds": {
-                      "h": 58.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Bar route rope",
-                    "role": "route_marker",
-                    "state": "buried",
-                    "visible": true,
-                    "zone_id": "right"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "object": {
                     "appearance": "fresh",
                     "bounds": {
                       "h": 52.0,
@@ -4522,26 +4578,6 @@
                     "state": "fresh",
                     "visible": true,
                     "zone_id": "left"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "object": {
-                    "appearance": "marked_lane",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 56.0
-                    },
-                    "enabled": true,
-                    "label": "Marked clean exit",
-                    "role": "exit",
-                    "state": "marked_lane",
-                    "visible": true,
-                    "zone_id": "exit_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -4722,11 +4758,11 @@
       }
     },
     {
-      "authored_signature": "e7d5b66308d642c1520f26fce67b800fed23d84294b7905fc97f14fd7357a527",
-      "calculated_signature": "e7d5b66308d642c1520f26fce67b800fed23d84294b7905fc97f14fd7357a527",
+      "authored_signature": "dc659f1402ecb1bf37e70afa31d5fd5b1829155f106a385ff221da26ccf6b9b4",
+      "calculated_signature": "dc659f1402ecb1bf37e70afa31d5fd5b1829155f106a385ff221da26ccf6b9b4",
       "id": "kitty_cat_lounge_buyout",
       "nearest_id": "punchline_headliner_night",
-      "nearest_similarity": 0.710433763188746,
+      "nearest_similarity": 0.707943925233645,
       "signature": {
         "aftermath": [
           {
@@ -4974,7 +5010,7 @@
         ],
         "declared_target_counts": {
           "actors": 0,
-          "anchors": 2,
+          "anchors": 4,
           "games": 0,
           "interactions": 0,
           "routes": 0,
@@ -5806,6 +5842,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_floor_steward",
+                    "anchor_id": "kitty_buyout_steward_arrival",
                     "behavior": "guard",
                     "label": "Public floor steward",
                     "pose": "arrival",
@@ -5913,6 +5950,27 @@
               {
                 "effect": {
                   "object": {
+                    "anchor_id": "kitty_buyout_request_cart",
+                    "appearance": "loaded",
+                    "bounds": {
+                      "h": 58.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Private request cart",
+                    "role": "service",
+                    "state": "loaded",
+                    "visible": true,
+                    "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "object": {
                     "anchor_id": "kitty_buyout_ropes",
                     "appearance": "task_ready",
                     "bounds": {
@@ -5964,26 +6022,6 @@
                     "state": "checking",
                     "visible": true,
                     "zone_id": "left"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "object": {
-                    "appearance": "loaded",
-                    "bounds": {
-                      "h": 58.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Private request cart",
-                    "role": "service",
-                    "state": "loaded",
-                    "visible": true,
-                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6178,11 +6216,11 @@
       }
     },
     {
-      "authored_signature": "75dbb80a6dc37143045e8f66caaf21179595a752cd055b6e5b0e2ff5701f1d5e",
-      "calculated_signature": "75dbb80a6dc37143045e8f66caaf21179595a752cd055b6e5b0e2ff5701f1d5e",
+      "authored_signature": "eac4b2d0ccb5c072a2436976fe105d2de05317ea5806d2c13ae68220a1a13c71",
+      "calculated_signature": "eac4b2d0ccb5c072a2436976fe105d2de05317ea5806d2c13ae68220a1a13c71",
       "id": "kitty_cat_lounge_slow_night",
-      "nearest_id": "punchline_debt_court",
-      "nearest_similarity": 0.600252206809584,
+      "nearest_id": "punchline_high_stakes_night",
+      "nearest_similarity": 0.585305105853051,
       "signature": {
         "aftermath": [
           {
@@ -6416,7 +6454,7 @@
         ],
         "declared_target_counts": {
           "actors": 0,
-          "anchors": 2,
+          "anchors": 6,
           "games": 0,
           "interactions": 0,
           "routes": 0,
@@ -7043,6 +7081,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_booth_regular",
+                    "anchor_id": "kitty_slow_regular_arrival",
                     "behavior": "idle",
                     "label": "Remaining booth regular",
                     "pose": "arrival",
@@ -7057,6 +7096,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_slow_night_host",
+                    "anchor_id": "kitty_slow_host_arrival",
                     "behavior": "watch",
                     "label": "Slow-night host",
                     "pose": "arrival",
@@ -7204,17 +7244,18 @@
               {
                 "effect": {
                   "object": {
-                    "appearance": "consolidated",
+                    "anchor_id": "kitty_slow_maintenance",
+                    "appearance": "open",
                     "bounds": {
-                      "h": 46.0,
-                      "w": 52.0
+                      "h": 58.0,
+                      "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Closed section ropes",
-                    "role": "barrier",
-                    "state": "consolidated",
+                    "label": "Exposed maintenance panel",
+                    "role": "workstation",
+                    "state": "open",
                     "visible": true,
-                    "zone_id": "center"
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -7224,6 +7265,7 @@
               {
                 "effect": {
                   "object": {
+                    "anchor_id": "kitty_slow_mini_stage",
                     "appearance": "dark",
                     "bounds": {
                       "h": 52.0,
@@ -7244,6 +7286,26 @@
               {
                 "effect": {
                   "object": {
+                    "appearance": "consolidated",
+                    "bounds": {
+                      "h": 46.0,
+                      "w": 52.0
+                    },
+                    "enabled": true,
+                    "label": "Closed section ropes",
+                    "role": "barrier",
+                    "state": "consolidated",
+                    "visible": true,
+                    "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "object": {
                     "appearance": "marked_lane",
                     "bounds": {
                       "h": 56.0,
@@ -7255,26 +7317,6 @@
                     "state": "marked_lane",
                     "visible": true,
                     "zone_id": "exit_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "object": {
-                    "appearance": "open",
-                    "bounds": {
-                      "h": 58.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Exposed maintenance panel",
-                    "role": "workstation",
-                    "state": "open",
-                    "visible": true,
-                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -7443,11 +7485,11 @@
       }
     },
     {
-      "authored_signature": "f530c423e565f2c1d4b3c5368692f37a4b2a53a3b33d27fe219abd9e91041775",
-      "calculated_signature": "f530c423e565f2c1d4b3c5368692f37a4b2a53a3b33d27fe219abd9e91041775",
+      "authored_signature": "bcb0689f49247b0ae38ae8b0f5a75374035f89d355ccc919a8e5e0d07890b516",
+      "calculated_signature": "bcb0689f49247b0ae38ae8b0f5a75374035f89d355ccc919a8e5e0d07890b516",
       "id": "punchline_bringer_show",
       "nearest_id": "punchline_open_mic_night",
-      "nearest_similarity": 0.601513240857503,
+      "nearest_similarity": 0.595984943538268,
       "signature": {
         "aftermath": [
           {
@@ -7681,7 +7723,7 @@
         ],
         "declared_target_counts": {
           "actors": 0,
-          "anchors": 3,
+          "anchors": 6,
           "games": 0,
           "interactions": 0,
           "routes": 0,
@@ -7805,7 +7847,7 @@
             "ops": [
               {
                 "effect": {
-                  "anchor_id": "punchline_bringer_crowd_ropes",
+                  "anchor_id": "punchline_bringer_ropes_work_1",
                   "op": "move",
                   "owner_namespace": "scenario"
                 },
@@ -8328,6 +8370,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_bringer_performer",
+                    "anchor_id": "punchline_bringer_performer_arrival",
                     "behavior": "watch",
                     "label": "Bringer performer",
                     "pose": "arrival",
@@ -8469,6 +8512,27 @@
               {
                 "effect": {
                   "object": {
+                    "anchor_id": "punchline_bringer_unlit_stage",
+                    "appearance": "dark",
+                    "bounds": {
+                      "h": 58.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Bringer stage",
+                    "role": "performance",
+                    "state": "dark",
+                    "visible": true,
+                    "zone_id": "background"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "object": {
                     "anchor_id": "punchline_headliner_door_guard",
                     "appearance": "marked_lane",
                     "bounds": {
@@ -8481,26 +8545,6 @@
                     "state": "marked_lane",
                     "visible": true,
                     "zone_id": "exit_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "object": {
-                    "appearance": "dark",
-                    "bounds": {
-                      "h": 58.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Bringer stage",
-                    "role": "performance",
-                    "state": "dark",
-                    "visible": true,
-                    "zone_id": "background"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -8709,11 +8753,11 @@
       }
     },
     {
-      "authored_signature": "6261a37b9d18bf7c178f034e092d0fcb452b167d8a1fe7728e3853273cb99de0",
-      "calculated_signature": "6261a37b9d18bf7c178f034e092d0fcb452b167d8a1fe7728e3853273cb99de0",
+      "authored_signature": "0bc69ad9ecf0dc822ccdb46bd1c7745ab8fef363e45906d0584e841e93644822",
+      "calculated_signature": "0bc69ad9ecf0dc822ccdb46bd1c7745ab8fef363e45906d0584e841e93644822",
       "id": "punchline_debt_court",
       "nearest_id": "punchline_high_stakes_night",
-      "nearest_similarity": 0.647211413748379,
+      "nearest_similarity": 0.64,
       "signature": {
         "aftermath": [
           {
@@ -8947,7 +8991,7 @@
         ],
         "declared_target_counts": {
           "actors": 0,
-          "anchors": 3,
+          "anchors": 6,
           "games": 0,
           "interactions": 0,
           "routes": 0,
@@ -9071,7 +9115,7 @@
             "ops": [
               {
                 "effect": {
-                  "anchor_id": "punchline_debt_room_witness",
+                  "anchor_id": "punchline_debt_witness_work_2",
                   "op": "set_position",
                   "owner_namespace": "scenario"
                 },
@@ -9174,7 +9218,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_debt_hearing_chairs",
+                    "anchor_id": "punchline_debt_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -9263,7 +9307,7 @@
             "ops": [
               {
                 "effect": {
-                  "anchor_id": "punchline_debt_hearing_chairs",
+                  "anchor_id": "punchline_debt_chairs_work_1",
                   "op": "move",
                   "owner_namespace": "scenario"
                 },
@@ -9335,7 +9379,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_debt_hearing_chairs",
+                    "anchor_id": "punchline_debt_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -9505,7 +9549,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_debt_hearing_chairs",
+                    "anchor_id": "punchline_debt_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -9715,7 +9759,28 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_debt_hearing_chairs",
+                    "anchor_id": "punchline_debt_chairs_work_1",
+                    "appearance": "formed",
+                    "bounds": {
+                      "h": 46.0,
+                      "w": 52.0
+                    },
+                    "enabled": true,
+                    "label": "Debt-court hearing chairs",
+                    "role": "seating",
+                    "state": "formed",
+                    "visible": true,
+                    "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "object": {
+                    "anchor_id": "punchline_debt_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -9767,26 +9832,6 @@
                     "state": "empty",
                     "visible": true,
                     "zone_id": "left"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "object": {
-                    "appearance": "formed",
-                    "bounds": {
-                      "h": 46.0,
-                      "w": 52.0
-                    },
-                    "enabled": true,
-                    "label": "Debt-court hearing chairs",
-                    "role": "seating",
-                    "state": "formed",
-                    "visible": true,
-                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -9975,11 +10020,11 @@
       }
     },
     {
-      "authored_signature": "cd0add3ebff0725b856342265670f2c9b61b01a8faa803f48508a7cb60116b9a",
-      "calculated_signature": "cd0add3ebff0725b856342265670f2c9b61b01a8faa803f48508a7cb60116b9a",
+      "authored_signature": "59ed751bf59b45a76d1360cf2db95a3d18e969bea70f2b40c84ab199d7addf5e",
+      "calculated_signature": "59ed751bf59b45a76d1360cf2db95a3d18e969bea70f2b40c84ab199d7addf5e",
       "id": "punchline_greased_week",
       "nearest_id": "punchline_headliner_night",
-      "nearest_similarity": 0.689814814814815,
+      "nearest_similarity": 0.667808219178082,
       "signature": {
         "aftermath": [
           {
@@ -10227,7 +10272,7 @@
         ],
         "declared_target_counts": {
           "actors": 0,
-          "anchors": 3,
+          "anchors": 4,
           "games": 0,
           "interactions": 0,
           "routes": 0,
@@ -10355,7 +10400,7 @@
             "ops": [
               {
                 "effect": {
-                  "anchor_id": "punchline_greased_inspection_seals",
+                  "anchor_id": "punchline_greased_seals_work_1",
                   "op": "move",
                   "owner_namespace": "scenario"
                 },
@@ -11432,11 +11477,11 @@
       }
     },
     {
-      "authored_signature": "b6694fda6a47aa97e0c4ddef4aa6122f580e1af7c4fb7da1d2d8312dae61eedc",
-      "calculated_signature": "b6694fda6a47aa97e0c4ddef4aa6122f580e1af7c4fb7da1d2d8312dae61eedc",
+      "authored_signature": "9745f1afa73cf82187ca3e4d798b14251314d189e99d734ae2f6b1b2434cf179",
+      "calculated_signature": "9745f1afa73cf82187ca3e4d798b14251314d189e99d734ae2f6b1b2434cf179",
       "id": "punchline_headliner_night",
       "nearest_id": "kitty_cat_lounge_buyout",
-      "nearest_similarity": 0.710433763188746,
+      "nearest_similarity": 0.707943925233645,
       "signature": {
         "aftermath": [
           {
@@ -11684,7 +11729,7 @@
         ],
         "declared_target_counts": {
           "actors": 0,
-          "anchors": 2,
+          "anchors": 5,
           "games": 0,
           "interactions": 0,
           "routes": 0,
@@ -11812,7 +11857,7 @@
             "ops": [
               {
                 "effect": {
-                  "anchor_id": "punchline_headliner_credential_rope",
+                  "anchor_id": "punchline_headliner_rope_work_1",
                   "op": "move",
                   "owner_namespace": "scenario"
                 },
@@ -11904,7 +11949,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_headliner_credential_rope",
+                    "anchor_id": "punchline_headliner_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -12084,7 +12129,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_headliner_credential_rope",
+                    "anchor_id": "punchline_headliner_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -12246,7 +12291,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_headliner_credential_rope",
+                    "anchor_id": "punchline_headliner_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -12407,7 +12452,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_headliner_credential_rope",
+                    "anchor_id": "punchline_headliner_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -12516,6 +12561,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_headliner_runner",
+                    "anchor_id": "punchline_headliner_runner_arrival",
                     "behavior": "watch",
                     "label": "Headliner runner",
                     "pose": "arrival",
@@ -12623,26 +12669,6 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_headliner_credential_rope",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Verify L 1 Credential",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "object": {
                     "anchor_id": "punchline_headliner_door_guard",
                     "appearance": "marked_lane",
                     "bounds": {
@@ -12655,6 +12681,26 @@
                     "state": "marked_lane",
                     "visible": true,
                     "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "object": {
+                    "anchor_id": "punchline_headliner_task",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Verify L 1 Credential",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -12889,11 +12935,11 @@
       }
     },
     {
-      "authored_signature": "6cf8e8edb7b68146f219ccde0a65c787ebfba0303677ea45da897b82f4d9df78",
-      "calculated_signature": "6cf8e8edb7b68146f219ccde0a65c787ebfba0303677ea45da897b82f4d9df78",
+      "authored_signature": "093a6d46262e5034081054d16f86bea6ac523a5dffac2a3e7ce70a254fc24660",
+      "calculated_signature": "093a6d46262e5034081054d16f86bea6ac523a5dffac2a3e7ce70a254fc24660",
       "id": "punchline_high_stakes_night",
       "nearest_id": "punchline_debt_court",
-      "nearest_similarity": 0.647211413748379,
+      "nearest_similarity": 0.64,
       "signature": {
         "aftermath": [
           {
@@ -13127,7 +13173,7 @@
         ],
         "declared_target_counts": {
           "actors": 0,
-          "anchors": 3,
+          "anchors": 5,
           "games": 0,
           "interactions": 0,
           "routes": 0,
@@ -13251,7 +13297,7 @@
             "ops": [
               {
                 "effect": {
-                  "anchor_id": "punchline_high_stakes_floor_runner",
+                  "anchor_id": "punchline_high_stakes_runner_work_2",
                   "op": "set_position",
                   "owner_namespace": "scenario"
                 },
@@ -13354,7 +13400,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_high_stakes_protected_table",
+                    "anchor_id": "punchline_high_stakes_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -13515,7 +13561,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_high_stakes_protected_table",
+                    "anchor_id": "punchline_high_stakes_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -13685,7 +13731,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_high_stakes_protected_table",
+                    "anchor_id": "punchline_high_stakes_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -13916,7 +13962,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_high_stakes_protected_table",
+                    "anchor_id": "punchline_high_stakes_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -14155,11 +14201,11 @@
       }
     },
     {
-      "authored_signature": "4929180917ed12a8f075286e48ae70de9a8a606ae0027d89c4c8143defa232d6",
-      "calculated_signature": "4929180917ed12a8f075286e48ae70de9a8a606ae0027d89c4c8143defa232d6",
+      "authored_signature": "5cb369a071a453fd38199fea648834f8e1d49638feef543da16e74bc29794b79",
+      "calculated_signature": "5cb369a071a453fd38199fea648834f8e1d49638feef543da16e74bc29794b79",
       "id": "punchline_new_muscle",
       "nearest_id": "kitty_cat_lounge_amateur_night",
-      "nearest_similarity": 0.626532887402453,
+      "nearest_similarity": 0.624444444444444,
       "signature": {
         "aftermath": [
           {
@@ -14407,7 +14453,7 @@
         ],
         "declared_target_counts": {
           "actors": 0,
-          "anchors": 3,
+          "anchors": 6,
           "games": 0,
           "interactions": 0,
           "routes": 0,
@@ -14591,7 +14637,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "anchor_id": "punchline_new_muscle_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -14680,7 +14726,7 @@
             "ops": [
               {
                 "effect": {
-                  "anchor_id": "punchline_new_muscle_inspection_tray",
+                  "anchor_id": "punchline_new_muscle_tray_work_1",
                   "op": "move",
                   "owner_namespace": "scenario"
                 },
@@ -14752,7 +14798,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "anchor_id": "punchline_new_muscle_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -14922,7 +14968,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "anchor_id": "punchline_new_muscle_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -15083,7 +15129,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "anchor_id": "punchline_new_muscle_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -15205,6 +15251,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_checkpoint_rover",
+                    "anchor_id": "punchline_new_muscle_rover_arrival",
                     "behavior": "watch",
                     "label": "Checkpoint rover",
                     "pose": "arrival",
@@ -15367,7 +15414,7 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "anchor_id": "punchline_new_muscle_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -15612,11 +15659,11 @@
       }
     },
     {
-      "authored_signature": "404b50592c1be8483b4adb323d83aba5f7f213491e689ecfbda2f40cf5fb38aa",
-      "calculated_signature": "404b50592c1be8483b4adb323d83aba5f7f213491e689ecfbda2f40cf5fb38aa",
+      "authored_signature": "a0ddbb289de58f54e863ec8fa1c0fe88f05752058fa9192720a4747e9a183d1a",
+      "calculated_signature": "a0ddbb289de58f54e863ec8fa1c0fe88f05752058fa9192720a4747e9a183d1a",
       "id": "punchline_open_mic_night",
       "nearest_id": "punchline_bringer_show",
-      "nearest_similarity": 0.601513240857503,
+      "nearest_similarity": 0.595984943538268,
       "signature": {
         "aftermath": [
           {
@@ -15850,7 +15897,7 @@
         ],
         "declared_target_counts": {
           "actors": 0,
-          "anchors": 3,
+          "anchors": 4,
           "games": 0,
           "interactions": 0,
           "routes": 0,
@@ -15947,7 +15994,7 @@
             "ops": [
               {
                 "effect": {
-                  "anchor_id": "punchline_open_mic_signup",
+                  "anchor_id": "punchline_open_mic_lectern_work_1",
                   "op": "move",
                   "owner_namespace": "scenario"
                 },
@@ -16878,11 +16925,11 @@
       }
     },
     {
-      "authored_signature": "d5eb2532fe79cffcf5db870a8df75c15fcfad6963d96c34b656cf76b23185e20",
-      "calculated_signature": "d5eb2532fe79cffcf5db870a8df75c15fcfad6963d96c34b656cf76b23185e20",
+      "authored_signature": "8932abf25fdd255c6f6df5ad93c90dddbfa114865504ed9f30de5652596975f6",
+      "calculated_signature": "8932abf25fdd255c6f6df5ad93c90dddbfa114865504ed9f30de5652596975f6",
       "id": "punchline_raid_jitters",
       "nearest_id": "punchline_new_muscle",
-      "nearest_similarity": 0.522419186652763,
+      "nearest_similarity": 0.51975051975052,
       "signature": {
         "aftermath": [
           {
@@ -17130,7 +17177,7 @@
         ],
         "declared_target_counts": {
           "actors": 0,
-          "anchors": 3,
+          "anchors": 5,
           "games": 0,
           "interactions": 0,
           "routes": 0,
@@ -17448,7 +17495,7 @@
             "ops": [
               {
                 "effect": {
-                  "anchor_id": "punchline_raid_hide_cart",
+                  "anchor_id": "punchline_raid_cart_work_1",
                   "op": "move",
                   "owner_namespace": "scenario"
                 },
@@ -17962,6 +18009,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_reopen_steward",
+                    "anchor_id": "punchline_raid_steward_arrival",
                     "behavior": "work",
                     "label": "Reopen steward",
                     "pose": "arrival",
