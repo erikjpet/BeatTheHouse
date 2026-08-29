@@ -258,7 +258,7 @@ func _bar_dice_wager_cost_proposal(action_id: String, stake: int, run_snapshot: 
 			cost = mini(maxi(1, int(offer.get("risk", stake))), maxi(0, candidate.wager_balance_for_game(get_id(), candidate.current_environment)))
 	elif action_id in ["roll", "loaded_toss", "palmed_swap"]:
 		var table := _dice_state_preview(candidate, candidate.current_environment)
-		cost = _active_stake_from_context(stake, table, ui_state, candidate, candidate.current_environment)
+		cost = _sealed_bar_dice_stake(stake, table, ui_state, candidate, candidate.current_environment)
 	return {
 		"cost": maxi(0, cost),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint(input),
@@ -786,9 +786,11 @@ func _resolve_bar_dice_proposal_core(action_id: String, stake: int, run_state: R
 		return _empty_result(action_id, stake, environment, "No run is active for bar dice.")
 	var is_cheat := action_id == "loaded_toss" or action_id == "palmed_swap"
 	var state := _dice_state(run_state, environment)
+	var adjusted_stake := _sealed_bar_dice_stake(stake, state, ui_state, run_state, environment)
+	if adjusted_stake <= 0:
+		return _empty_result(action_id, stake, environment, "That ante is not available at this table.")
 	var ui := _normalized_ui_state(run_state, environment, ui_state, state)
-	var adjusted_stake := _active_stake_from_context(stake, state, ui, run_state, environment)
-	if adjusted_stake <= 0 or adjusted_stake > run_state.wager_balance_for_game(get_id(), environment):
+	if adjusted_stake > run_state.wager_balance_for_game(get_id(), environment):
 		return _empty_result(action_id, stake, environment, "You do not have enough bankroll for this ante.")
 	var table_result := _resolve_table_round(action_id, adjusted_stake, run_state, state, rng, ui)
 	var outcome := str(table_result.get("outcome", "lose"))
@@ -2205,6 +2207,30 @@ func _active_stake_from_context(stake: int, state: Dictionary, ui_state: Diction
 		bankroll_limit = maxi(0, run_state.wager_capacity_for_game(get_id(), environment))
 		stake_ceiling = run_state.wager_stake_ceiling(int(economic_profile.get("stake_ceiling", bankroll_limit)))
 	return mini(mini(int(ladder[selected]), maxi(0, stake_ceiling)), bankroll_limit)
+
+
+func _sealed_bar_dice_stake(stake: int, state: Dictionary, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> int:
+	# The sealed host funds the caller's exact intent before requesting a result.
+	# Bar Dice therefore rejects values that are not an authored ladder chip or
+	# that disagree with the staged surface selection; it never rounds a funded
+	# wager to a different table amount during settlement.
+	if stake <= 0:
+		return 0
+	var ladder := _int_array(state.get("stake_ladder", []))
+	if ladder.is_empty() or not ladder.has(stake):
+		return 0
+	var economic_profile: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}
+	var stake_floor := maxi(1, int(economic_profile.get("stake_floor", int(ladder[0]))))
+	var stake_ceiling := maxi(stake_floor, int(economic_profile.get("stake_ceiling", int(ladder[ladder.size() - 1]))))
+	if run_state != null:
+		stake_ceiling = run_state.wager_stake_ceiling(stake_ceiling)
+	if stake < stake_floor or stake > stake_ceiling:
+		return 0
+	if ui_state.has("selected_stake_index"):
+		var selected := clampi(int(ui_state.get("selected_stake_index", 0)), 0, ladder.size() - 1)
+		if int(ladder[selected]) != stake:
+			return 0
+	return stake
 
 
 func _nearest_chip_index(ladder: Array, stake: int) -> int:
