@@ -66,6 +66,12 @@ func sealed_action_authority_script() -> Script:
 	return null
 
 
+# Module-owned vocabulary for the optional sealed authority provider. The live
+# host consumes generic field names and never infers game identity from methods.
+func sealed_action_authority_contract() -> Dictionary:
+	return {}
+
+
 # Creates the entry message shown when a player enters the game.
 func enter(_run_state: RunState, environment: Dictionary) -> Dictionary:
 	return {

@@ -10,6 +10,7 @@ const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
 const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
+const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -79,6 +80,26 @@ const SHOE_READ_ITEM_EFFECT_KEYS := [
 	"baccarat_edge_sort_heat_delta",
 	"skill_cheat_drunk_memory_offset",
 ]
+
+
+func sealed_action_authority_script() -> Script:
+	return ActionAuthorityScript
+
+
+func sealed_action_authority_contract() -> Dictionary:
+	return {
+		"resolve_proposal_method": &"_table_game_resolve_proposal",
+		"wager_cost_proposal_method": &"_table_game_wager_cost_proposal",
+		"host_auto_tick_method": &"_table_game_host_needs_auto_tick",
+		"surface_intent_key": "",
+		"surface_intent_index_key": "",
+		"retry_surface_actions": ["table_game_retry_pending", "baccarat_retry_pending"],
+		"cancel_surface_actions": ["table_game_cancel_pending", "baccarat_cancel_pending"],
+		"proposal_requires_apply_key": "table_game_proposal_requires_apply",
+		"authoritative_result_marker": "table_game_authoritative",
+		"place_bet_action": "",
+		"host_pointer_intent": true,
+	}
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:

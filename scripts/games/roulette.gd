@@ -7,6 +7,7 @@ extends GameModule
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
+const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
@@ -100,6 +101,26 @@ const RED_NUMBERS := ["1", "3", "5", "7", "9", "12", "14", "16", "18", "19", "21
 const BLACK_NUMBERS := ["2", "4", "6", "8", "10", "11", "13", "15", "17", "20", "22", "24", "26", "28", "29", "31", "33", "35"]
 
 var bet_targets_cache: Dictionary = {}
+
+
+func sealed_action_authority_script() -> Script:
+	return ActionAuthorityScript
+
+
+func sealed_action_authority_contract() -> Dictionary:
+	return {
+		"resolve_proposal_method": &"_table_game_resolve_proposal",
+		"wager_cost_proposal_method": &"_table_game_wager_cost_proposal",
+		"host_auto_tick_method": &"_table_game_host_needs_auto_tick",
+		"surface_intent_key": "",
+		"surface_intent_index_key": "",
+		"retry_surface_actions": ["table_game_retry_pending", "roulette_retry_pending"],
+		"cancel_surface_actions": ["table_game_cancel_pending", "roulette_cancel_pending"],
+		"proposal_requires_apply_key": "table_game_proposal_requires_apply",
+		"authoritative_result_marker": "table_game_authoritative",
+		"place_bet_action": "",
+		"host_pointer_intent": true,
+	}
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:

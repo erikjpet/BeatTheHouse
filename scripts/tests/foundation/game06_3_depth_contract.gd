@@ -353,6 +353,16 @@ func _check_authoritative_host_matrix() -> void:
 
 func _check_authoritative_game(game_id: String, game, action_id: String, stake: int, session: Dictionary) -> void:
 	_setup_game_definition(game, game_id)
+	var authority_contract: Dictionary = game.sealed_action_authority_contract()
+	if game.sealed_action_authority_script() == null \
+			or str(authority_contract.get("resolve_proposal_method", "")) != "_table_game_resolve_proposal" \
+			or str(authority_contract.get("wager_cost_proposal_method", "")) != "_table_game_wager_cost_proposal" \
+			or str(authority_contract.get("host_auto_tick_method", "")) != "_table_game_host_needs_auto_tick" \
+			or str(authority_contract.get("proposal_requires_apply_key", "")) != "table_game_proposal_requires_apply" \
+			or str(authority_contract.get("authoritative_result_marker", "")) != "table_game_authoritative" \
+			or not bool(authority_contract.get("host_pointer_intent", false)):
+		failures.append("%s did not declare the closed generic sealed-authority provider contract." % game_id.capitalize())
+		return
 	var run = RunStateScript.new()
 	run.start_new("GAME06-3-HOST-%s" % game_id.to_upper())
 	run.bankroll = 1000
@@ -414,9 +424,10 @@ func _check_authoritative_game(game_id: String, game, action_id: String, stake: 
 	var last_result: Dictionary = settled_table.get("last_result", {}) if typeof(settled_table.get("last_result", {})) == TYPE_DICTIONARY else {}
 	var resolved_at_msec := int(last_result.get("resolved_at_msec", 0))
 	var predicate_host = _host(game, run, stake)
-	if not game.has_method("_table_game_host_needs_auto_tick") \
-			or bool(predicate_host.call("_blackjack_host_needs_auto_tick", resolved_at_msec + 1)) \
-			or not bool(predicate_host.call("_blackjack_host_needs_auto_tick", resolved_at_msec + 100000)):
+	if not bool(predicate_host.call("_current_game_uses_action_authority")) \
+			or not game.has_method("_table_game_host_needs_auto_tick") \
+			or bool(predicate_host.call("_sealed_action_host_needs_auto_tick", resolved_at_msec + 1)) \
+			or not bool(predicate_host.call("_sealed_action_host_needs_auto_tick", resolved_at_msec + 100000)):
 		failures.append("%s sealed-host auto predicate did not remain quiet during ceremony and become due afterward." % game_id.capitalize())
 	predicate_host.free()
 
@@ -456,12 +467,12 @@ func _check_pending_retry_cancel(game_id: String, game, action_id: String, stake
 	var host = _host(game, run, stake)
 	var money_before := run.grand_casino_total_money()
 	var rng_before := run.rng_state
-	var prepared: Dictionary = host.call("_blackjack_host_prepare_delivery", action_id, stake, {})
+	var prepared: Dictionary = host.call("_sealed_action_host_prepare_delivery", action_id, stake, {})
 	var delivery: Dictionary = prepared.get("delivery", {})
-	var retry: Dictionary = host.call("_blackjack_host_surface_intent", "table_game_retry_pending", 0, false, run.simulation_time_msec())
-	if delivery.is_empty() or not bool(retry.get("handled", false)) or RuntimeScript.canonical_json(retry.get("_blackjack_host_delivery", {})) != RuntimeScript.canonical_json(delivery):
+	var retry: Dictionary = host.call("_sealed_action_host_surface_intent", "table_game_retry_pending", 0, false, run.simulation_time_msec())
+	if delivery.is_empty() or not bool(retry.get("handled", false)) or RuntimeScript.canonical_json(retry.get("_sealed_action_host_delivery", {})) != RuntimeScript.canonical_json(delivery):
 		failures.append("%s pending retry did not preserve the exact sealed delivery." % game_id.capitalize())
-	var cancelled: Dictionary = host.call("_blackjack_host_surface_intent", "table_game_cancel_pending", 0, false, run.simulation_time_msec())
+	var cancelled: Dictionary = host.call("_sealed_action_host_surface_intent", "table_game_cancel_pending", 0, false, run.simulation_time_msec())
 	if not bool(cancelled.get("handled", false)):
 		failures.append("%s pending cancellation was not accepted by the authentic host." % game_id.capitalize())
 	var ledger := _host_ledger(game, run)
@@ -472,7 +483,7 @@ func _check_pending_retry_cancel(game_id: String, game, action_id: String, stake
 
 func _host_resolve(game, run, action_id: String, stake: int, delivery: Dictionary = {}) -> Dictionary:
 	var host = _host(game, run, stake)
-	var result: Dictionary = host.call("_blackjack_host_resolve_intent", action_id, stake, delivery)
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, stake, delivery)
 	host.free()
 	return result
 
@@ -491,9 +502,9 @@ func _host(game, run, stake: int):
 func _seed_host_session(game, run, session: Dictionary) -> void:
 	var table: Dictionary = game.call("_table_state", run, run.current_environment)
 	var binding := "%s:%s:%s" % [game.get_id(), str(run.current_environment.get("id", "unknown")), str(run.current_environment.get("archetype_id", "unknown"))]
-	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {}), binding, run.blackjack_authority_checkpoint_fingerprint())
+	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {}), binding, run.action_authority_checkpoint_fingerprint())
 	if ledger.is_empty():
-		ledger = BlackjackActionAuthorityScript.default_ledger(binding, run.blackjack_authority_checkpoint_fingerprint())
+		ledger = BlackjackActionAuthorityScript.default_ledger(binding, run.action_authority_checkpoint_fingerprint())
 	table[BlackjackActionAuthorityScript.LEDGER_KEY] = BlackjackActionAuthorityScript.stage_session(ledger, session)
 	game.call("_update_environment_table", run.current_environment, table)
 
@@ -501,7 +512,7 @@ func _seed_host_session(game, run, session: Dictionary) -> void:
 func _host_ledger(game, run) -> Dictionary:
 	var table: Dictionary = game.call("_table_state_preview", run, run.current_environment)
 	var binding := "%s:%s:%s" % [game.get_id(), str(run.current_environment.get("id", "unknown")), str(run.current_environment.get("archetype_id", "unknown"))]
-	return BlackjackActionAuthorityScript.validate_persisted_ledger(table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {}), binding, run.blackjack_authority_checkpoint_fingerprint())
+	return BlackjackActionAuthorityScript.validate_persisted_ledger(table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {}), binding, run.action_authority_checkpoint_fingerprint())
 
 
 func _setup_game_definition(game, game_id: String) -> void:
