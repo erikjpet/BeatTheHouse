@@ -2309,6 +2309,16 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 	if not run_state.delivery_has_active_run() or bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
 		push_error("Crew-favor conversation did not hand off to the real-map delivery state.")
 		return false
+	var pickup_object_id := "delivery:pickup:%s" % run_state.current_world_node_id()
+	var pickup_visible := false
+	for object_value in app.call("_interactable_object_view_list"):
+		if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")) == pickup_object_id:
+			pickup_visible = true
+			break
+	if not pickup_visible or not bool(app.call("activate_interactable_object", pickup_object_id)) \
+			or not bool(run_state.delivery_snapshot().get("carrying_contraband", false)):
+		push_error("Crew-favor pickup did not stage as a physical in-room interaction.")
+		return false
 	if not bool(app.call("open_world_map")):
 		push_error("Active delivery could not open the existing world map.")
 		return false

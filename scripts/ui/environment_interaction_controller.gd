@@ -803,7 +803,7 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 	if host.run_state == null:
 		return []
 	var result: Array = []
-	var physical_interactions: Array = host.run_state.delivery_physical_interactions()
+	var physical_interactions: Array = host.run_state.delivery_physical_interactions() if host.run_state.has_method("delivery_physical_interactions") else []
 	for physical_index in range(physical_interactions.size()):
 		var interaction: Dictionary = physical_interactions[physical_index]
 		var verb := str(interaction.get("verb", ""))
