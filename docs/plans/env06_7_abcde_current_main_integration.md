@@ -3,9 +3,9 @@
 Status: **WIP UNREVIEWED / WARDEN GATE PENDING**
 
 This candidate starts at exact current main
-`d47feee3b7dde54a7cde4ec979a05f3f9209e175` and semantically replays the
-frozen ordered Package A-E candidate
-`241ac555bebe2ae7ee928d5f84a382d7056d1599`.
+`b091bc43330dd1df472c868b3246032c47570e9b` and semantically replays, in its
+original A-through-E commit order, the frozen integrated candidate
+`6d6bfd6d003b4699fff59934e26e1f6fe5f55ceb`.
 
 The package order remains:
 
@@ -15,10 +15,13 @@ The package order remains:
 4. `env06_7_punchline_clubs`
 5. `env06_7_queen_public`
 
-The Game 2 landing changes 21 paths relative to the prior integration base.
-None intersects the 328-path A-E payload, so its `run_state`, Foundation,
-Blackjack, tutorial, and presentation bytes remain exactly those of current
-main.
+The Game 2 post-land recovery changes 13 paths relative to the prior A-E
+integration base. None intersects the 329-path frozen A-E payload, so all 13
+Game 2 recovery paths remain byte-identical to `b091bc43`.
+
+Static replay verification also proves that every frozen A-E payload path is
+byte-identical to `6d6bfd6d` except this integration note, whose base and
+evidence statements are intentionally refreshed for the new parent.
 
 ## Package C serialized-gate remediation
 
@@ -34,7 +37,8 @@ weakened.
 
 ## Pending gate
 
-The combined candidate is frozen only after static catalog/order, unique-ID,
-evidence-hash, Game 2 byte-preservation, JSON, and diff checks pass. Godot
+The combined candidate passed static project validation, catalog/order,
+55-identity and 55-signature uniqueness, committed evidence-hash, Game 2
+byte-preservation, frozen-payload parity, JSON, and diff checks. Godot
 author/contract and applicable integrated verification belong to the Warden's
 serialized slot.
