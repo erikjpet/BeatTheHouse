@@ -7,6 +7,15 @@ const OperationRegistryScript := preload("res://scripts/core/scenario_operation_
 
 const LOCAL_ACTOR_SCENARIO_ID := "bar_fight_night"
 const PROVEN_TARGET_SCENARIO_ID := "corner_store_delivery_day"
+const LOCAL_ROUTE_SCENARIOS := {
+	"back_alley_street_craps": "alley_service_counter",
+	"back_alley_cruiser_parked": "alley_service_counter",
+	"back_alley_fence_night": "alley_service_counter",
+	"back_alley_nothing_moving": "alley_service_counter",
+	"pawn_shop_estate_lot_day": "pawn_service_counter",
+	"pawn_shop_serial_check_day": "pawn_service_counter",
+	"pawn_shop_sals_mood": "pawn_service_counter",
+}
 
 
 func _initialize() -> void:
@@ -14,9 +23,10 @@ func _initialize() -> void:
 	var library := ContentLibraryScript.new()
 	library.load(false)
 	_check_scenario_local_actor_authority(library, failures)
+	_check_scenario_local_route_authority(library, failures)
 	_check_unproven_zone_rejection(library, failures)
 	if failures.is_empty():
-		print("ENV06_7_PRODUCTION_AUTHORITY_CONTRACT_OK local_actor=1 hostile_actor=2 hostile_zone=2")
+		print("ENV06_7_PRODUCTION_AUTHORITY_CONTRACT_OK local_actor=1 hostile_actor=2 local_route=7 hostile_route=7 hostile_zone=2")
 		quit(0)
 		return
 	for failure_value in failures:
@@ -81,6 +91,42 @@ static func _check_unproven_zone_rejection(library: Variant, failures: Array) ->
 			failures.append("Unproven production zone %s was not rejected." % zone_id)
 
 
+static func _check_scenario_local_route_authority(library: Variant, failures: Array) -> void:
+	for scenario_id_value in LOCAL_ROUTE_SCENARIOS.keys():
+		var scenario_id := str(scenario_id_value)
+		var expected_route := str(LOCAL_ROUTE_SCENARIOS.get(scenario_id, ""))
+		var definition: Dictionary = library.scenario(scenario_id)
+		var operation := _first_actor_spawn(definition)
+		var actor := _dict(operation.get("actor", {}))
+		if str(actor.get("route_id", "")) != expected_route:
+			failures.append("Production scenario %s does not bind its local actor to exact canonical route %s." % [scenario_id, expected_route])
+			continue
+		var catalog: Dictionary = library.scenario_target_catalog(definition)
+		var catalog_errors := _array(catalog.get("errors", []))
+		var inventory := _dict(catalog.get("guaranteed", {}))
+		inventory["event_choices"] = _dict(catalog.get("event_choices", {}))
+		if not catalog_errors.is_empty() or not _array(inventory.get("anchors", [])).has("base::anchor:%s" % expected_route):
+			failures.append("Production scenario %s lacks sealed anchor proof for local route %s: %s" % [scenario_id, expected_route, JSON.stringify(catalog_errors)])
+			continue
+		var references := {
+			"archetype_ids": {str(definition.get("archetype_id", "")): true},
+			"actor_ids": {},
+			"archetype": library.environment_archetype(str(definition.get("archetype_id", ""))),
+			"scenario_semantic_inventory": _dict(catalog.get("inventory", {})),
+		}
+		var positive_errors := ScenarioEngineScript.validate_sequence_definition(definition, references, inventory)
+		if not positive_errors.is_empty():
+			failures.append("Canonical local route %s/%s did not resolve from production authority: %s" % [scenario_id, expected_route, JSON.stringify(positive_errors)])
+			continue
+		var hostile := definition.duplicate(true)
+		if not _mutate_first_actor_route(hostile, "%s_unproven_route" % scenario_id):
+			failures.append("Production scenario %s has no local actor route fixture." % scenario_id)
+			continue
+		var hostile_errors := ScenarioEngineScript.validate_sequence_definition(hostile, references, inventory)
+		if not _contains(hostile_errors, "unresolved route") or not _contains(hostile_errors, "unknown sealed route/anchor alias"):
+			failures.append("Hostile local route alias for %s was not rejected by sealed production authority: %s" % [scenario_id, JSON.stringify(hostile_errors)])
+
+
 static func _actor_authority_projection(definition: Dictionary) -> Dictionary:
 	var source_sequence := _dict(definition.get("sequence", {}))
 	var source_phases := _array(_dict(source_sequence.get("phase_graph", {})).get("phases", []))
@@ -107,6 +153,35 @@ static func _actor_authority_projection(definition: Dictionary) -> Dictionary:
 				},
 			}
 	return {}
+
+
+static func _first_actor_spawn(definition: Dictionary) -> Dictionary:
+	for phase_value in _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", [])):
+		for operation_value in _array(_dict(phase_value).get("actor_ops", [])):
+			var operation := _dict(operation_value)
+			if str(operation.get("family", "")) == "actor_ops" and str(operation.get("op", "")) == "spawn":
+				return operation
+	return {}
+
+
+static func _mutate_first_actor_route(definition: Dictionary, route_id: String) -> bool:
+	var phases: Array = _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", []))
+	for phase_index in range(phases.size()):
+		var phase := _dict(phases[phase_index])
+		var operations := _array(phase.get("actor_ops", []))
+		for operation_index in range(operations.size()):
+			var operation := _dict(operations[operation_index])
+			if str(operation.get("family", "")) != "actor_ops" or str(operation.get("op", "")) != "spawn":
+				continue
+			var actor := _dict(operation.get("actor", {}))
+			actor["route_id"] = route_id
+			operation["actor"] = actor
+			operations[operation_index] = operation
+			phase["actor_ops"] = operations
+			phases[phase_index] = phase
+			definition["sequence"]["phase_graph"]["phases"] = phases
+			return true
+	return false
 
 
 static func _mutate_first_actor_spawn(definition: Dictionary, mode: String) -> bool:
