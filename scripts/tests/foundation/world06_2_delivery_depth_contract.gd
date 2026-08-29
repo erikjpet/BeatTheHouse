@@ -311,6 +311,12 @@ func _assert_physical(state: Dictionary, status: String, node_id: String, failur
 	var physical := _physical(state)
 	if str(physical.get("cargo_state", "")) != status or str(physical.get("cargo_node_id", "")) != node_id:
 		failures.append("%s did not preserve physical cargo status/location." % stage)
+	var cargo := DeliveryRunModelScript.cargo(state)
+	var cargo_keys := cargo.keys()
+	cargo_keys.sort()
+	if cargo_keys != ["cargo_id", "instance_id", "label", "node_id", "status"] or str(cargo.get("status", "")) != status or str(cargo.get("node_id", "")) != node_id \
+			or str(cargo.get("instance_id", "")).is_empty() or str(cargo.get("cargo_id", "")) != "sealed_case" or str(cargo.get("label", "")) != "Sealed case":
+		failures.append("%s cargo projection was not exact, closed, and location-bound." % stage)
 
 
 func _assert_terminal(state: Dictionary, reason: String, failures: Array) -> void:
