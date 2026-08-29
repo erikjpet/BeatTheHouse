@@ -4,6 +4,7 @@ extends RefCounted
 const CONFIG_PATH := "res://data/crew/numbers.json"
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const SCHEMA_VERSION := 1
+const DEPTH_SCHEMA_VERSION := 1
 const PLAY_TYPES := ["straight", "box"]
 const FIX_STATES := ["locked", "ready", "bribe_running", "camouflage", "payday", "completed", "aborted"]
 
@@ -21,6 +22,8 @@ var leak_successes: int = 0
 var pending_leaks: Array = []
 var active_leak: Dictionary = {}
 var collection_state: Dictionary = {}
+var draw_occasions: Dictionary = {}
+var bookmaker_aftermath: Dictionary = {}
 var config: Dictionary = {}
 
 
@@ -50,6 +53,8 @@ func reset(p_seed_value: int, source_config: Dictionary = {}) -> void:
 	pending_leaks = []
 	active_leak = {}
 	collection_state = {}
+	draw_occasions = {}
+	bookmaker_aftermath = {}
 	config = source_config.duplicate(true) if not source_config.is_empty() else tuning().duplicate(true)
 
 
@@ -68,6 +73,8 @@ func snapshot() -> Dictionary:
 		"pending_leaks": pending_leaks.duplicate(true),
 		"active_leak": active_leak.duplicate(true),
 		"collection_state": collection_state.duplicate(true),
+		"draw_occasions": draw_occasions.duplicate(true),
+		"bookmaker_aftermath": bookmaker_aftermath.duplicate(true),
 	}
 
 
@@ -89,6 +96,13 @@ func restore(source: Dictionary, p_seed_value: int, source_config: Dictionary = 
 	pending_leaks = _dictionary_array(source.get("pending_leaks", []))
 	active_leak = _dictionary(source.get("active_leak", {})).duplicate(true)
 	collection_state = _dictionary(source.get("collection_state", {})).duplicate(true)
+	# No trusted host command/transaction journal exists on this base. Reject all
+	# model-minted or imported receipt chains, including coherently rehashed ones.
+	if not _dictionary(source.get("action_receipts", {})).is_empty() or int(source.get("action_sequence", 0)) != 0:
+		reset(p_seed_value, source_config)
+		return false
+	draw_occasions = _dictionary(source.get("draw_occasions", {})).duplicate(true)
+	bookmaker_aftermath = _dictionary(source.get("bookmaker_aftermath", {})).duplicate(true)
 	return true
 
 
@@ -107,6 +121,7 @@ func advance_to(target_action: int) -> Array:
 			draw["resolved_action"] = boundary
 			draw["posted_action"] = boundary
 			draws_by_day[str(day)] = draw
+			_resolve_draw_occasion(day, boundary)
 			events.append({"type": "numbers_post", "day": day, "number": str(draw.get("number", "000")), "action": boundary})
 		if boundary == settlement_action(day):
 			events.append_array(_settle_day(day))
@@ -127,6 +142,7 @@ func status() -> Dictionary:
 		"yesterday_number": yesterday_number(day),
 		"open_slip_count": open_slip_count(),
 		"venue_status": venue_statuses(day, action_index),
+		"bookmakers": bookmaker_states_public(day, action_index),
 	}
 
 
@@ -138,6 +154,133 @@ func internal_status() -> Dictionary:
 	result["leak"] = active_leak.duplicate(true)
 	result["collection"] = collection_state.duplicate(true)
 	return result
+
+
+# Closed player-safe projections for the world adapter. Clock and disposition
+# are derived here; callers cannot author a second book state.
+func bookmaker_state(venue_id: String, day: int = -1, at_action: int = -1) -> Dictionary:
+	var venue := venue_definition(venue_id)
+	if venue.is_empty():
+		return {}
+	var target_action := action_index if at_action < 0 else maxi(0, at_action)
+	var target_day := day_at(target_action) if day < 0 else maxi(0, day)
+	var close := close_action(venue_id, target_day)
+	var open := target_action < close
+	var open_here := 0
+	for slip_value in slips:
+		var slip := _dictionary(slip_value)
+		if int(slip.get("day", -1)) == target_day and str(slip.get("venue_id", "")) == venue_id and str(slip.get("status", "")) == "open":
+			open_here += 1
+	var memory := _dictionary(bookmaker_aftermath.get(venue_id, {}))
+	var disposition := "closed"
+	if open:
+		disposition = "closing" if close - target_action <= 2 else ("busy" if bool(memory.get("busy", false)) or open_here > 0 else "open")
+	var demeanor := "suspicious" if bool(memory.get("refused", false)) else ("wary" if not memory.is_empty() else "friendly")
+	return {
+		"schema_version": DEPTH_SCHEMA_VERSION,
+		"venue_id": venue_id,
+		"place_id": "%s::numbers_book" % venue_id,
+		"bookmaker_id": "numbers_bookmaker_%s" % venue_id,
+		"disposition": disposition,
+		"service_state": disposition,
+		"demeanor": demeanor,
+		"open": open,
+		"close_action": close,
+		"actions_until_close": maxi(0, close - target_action),
+		"open_slip_count": open_here,
+		"aftermath": _public_bookmaker_aftermath(memory),
+		"memory": _public_bookmaker_aftermath(memory),
+	}
+
+
+func bookmaker_states_public(day: int = -1, at_action: int = -1) -> Array:
+	var result: Array = []
+	for venue in _dictionary_array(config.get("venues", [])):
+		result.append(bookmaker_state(str(venue.get("id", "")), day, at_action))
+	return result
+
+
+func slip_public_state(slip_id: String) -> Dictionary:
+	var slip := _slip_by_id(slip_id)
+	if slip.is_empty():
+		return {}
+	var physical := _physical_slip_state(slip)
+	return {
+		"schema_version": DEPTH_SCHEMA_VERSION,
+		"id": str(slip.get("id", "")),
+		"day": int(slip.get("day", 0)),
+		"venue_id": str(slip.get("venue_id", "")),
+		"digits": str(slip.get("digits", "")),
+		"stake": int(slip.get("stake", 0)),
+		"play_type": str(slip.get("play_type", "")),
+		"status": str(slip.get("status", "")),
+		"won": bool(slip.get("won", false)),
+		"payout": int(slip.get("payout", 0)),
+		"item_id": "numbers_slips",
+		"instance_id": str(physical.get("instance_id", str(slip.get("id", "")))),
+		"node_id": str(physical.get("node_id", "")),
+		"place_id": str(physical.get("place_id", "")),
+		"holder_id": str(physical.get("holder_id", "")),
+		"physical_state": str(physical.get("state", "carried")),
+	}
+
+
+func draw_occasion_status(day: int = -1) -> Dictionary:
+	var target_day := day_at(action_index) if day < 0 else maxi(0, day)
+	var saved := _dictionary(draw_occasions.get(str(target_day), {}))
+	if saved.is_empty():
+		return {"schema_version": DEPTH_SCHEMA_VERSION, "day": target_day, "status": "unregistered", "presence": "absent", "post_action": post_action(target_day)}
+	var result := saved.duplicate(true)
+	result.erase("receipt_key")
+	if action_index >= post_action(target_day):
+		result["number"] = str(_dictionary(draws_by_day.get(str(target_day), {})).get("number", ""))
+	return result
+
+
+func public_aftermath(venue_id: String = "") -> Variant:
+	if not venue_id.strip_edges().is_empty():
+		return _public_bookmaker_aftermath(_dictionary(bookmaker_aftermath.get(venue_id.strip_edges(), {})))
+	var result: Dictionary = {}
+	for key_value in bookmaker_aftermath.keys():
+		result[str(key_value)] = _public_bookmaker_aftermath(_dictionary(bookmaker_aftermath.get(key_value, {})))
+	return result
+
+
+# This base has no genuinely host-rooted command or transaction record that the
+# model can verify. Depth actions are therefore explicit proposals only. They
+# never mutate Numbers authority and never mint a second receipt authority.
+func apply_action(receipt_key: String, action: String, context: Dictionary) -> Dictionary:
+	var clean_action := action.strip_edges().to_lower()
+	if clean_action in ["draw_present", "draw_absent"] and action_index >= post_action(maxi(0, int(context.get("day", day_at(action_index))))):
+		return {"ok": false, "proposed": false, "reason": "attendance_closed"}
+	return {
+		"ok": false,
+		"proposed": true,
+		"reason": "host_authority_unavailable",
+		"proposal": {"proposal_id": receipt_key.strip_edges(), "action": clean_action, "context": context.duplicate(true), "authoritative": false, "requires": ["host_presence", "host_proximity", "host_command_or_transaction"]},
+	}
+
+
+func begin_action_proposal(sequence_kind: String, context: Dictionary = {}) -> Dictionary:
+	var verbs: Array = []
+	match sequence_kind.strip_edges().to_lower():
+		"place_slip": verbs = ["approach_bookmaker", "choose_number", "choose_money", "write_slip", "hand_slip"]
+		"collect_payday": verbs = ["approach_bookmaker", "present_winning_slip", "witness_verification", "receive_payday"]
+		"solo_past_post": verbs = ["learn_posted_handle", "travel_to_open_book", "choose_number", "choose_money", "write_slip", "hand_slip", "leave_unseen"]
+		_: return {}
+	return {"schema_version": DEPTH_SCHEMA_VERSION, "kind": sequence_kind.strip_edges().to_lower(), "step_index": 0, "verbs": verbs, "context": context.duplicate(true), "status": "proposed", "authoritative": false, "requires": ["host_presence", "host_proximity", "host_command_or_transaction"]}
+
+
+func advance_action_proposal(proposal_value: Variant, verb: String, evidence_claim: Dictionary = {}) -> Dictionary:
+	if typeof(proposal_value) != TYPE_DICTIONARY: return {}
+	var proposal: Dictionary = (proposal_value as Dictionary).duplicate(true)
+	var verbs: Array = proposal.get("verbs", []) if typeof(proposal.get("verbs", [])) == TYPE_ARRAY else []
+	var index := int(proposal.get("step_index", 0))
+	if str(proposal.get("status", "")) != "proposed" or index < 0 or index >= verbs.size() or str(verbs[index]) != verb.strip_edges(): return proposal
+	proposal["step_index"] = index + 1
+	proposal["last_evidence_claim"] = evidence_claim.duplicate(true)
+	proposal["status"] = "ready_for_host_commit" if index + 1 == verbs.size() else "proposed"
+	return proposal
 
 
 func buy_slip(venue_id: String, digits_value: Variant, stake: int, play_type: String, known_number: String = "") -> Dictionary:
@@ -192,6 +335,7 @@ func buy_slip(venue_id: String, digits_value: Variant, stake: int, play_type: St
 		"past_post": is_past_post,
 		"detection_percent": detection_percent,
 		"detected": detected,
+		"physical_state": _new_physical_slip_state(slip_id, venue_id, "player", "carried", "visible"),
 	}
 	slips.append(slip)
 	return {"ok": true, "message": "%s takes the slip." % str(venue.get("label", venue_id)), "slip": slip.duplicate(true)}
@@ -207,6 +351,7 @@ func confiscate_open_slips(reason: String = "sweep") -> Dictionary:
 		slip["status"] = "confiscated"
 		slip["confiscated_action"] = action_index
 		slip["confiscated_reason"] = reason
+		slip["physical_state"] = _new_physical_slip_state(str(slip.get("id", "")), str(slip.get("venue_id", "")), "police", "confiscated", "hidden")
 		slips[index] = slip
 		ids.append(str(slip.get("id", "")))
 		stake_total += maxi(0, int(slip.get("stake", 0)))
@@ -387,6 +532,7 @@ func fix_allocate(allocations_value: Variant) -> Dictionary:
 			"detection_percent": 0,
 			"detected": false,
 			"crew_fix": true,
+			"physical_state": _new_physical_slip_state(slip_id, venue_id, "player", "carried", "hidden"),
 		})
 		slip_ids.append(slip_id)
 	fix_state["status"] = "payday"
@@ -438,6 +584,21 @@ func collection_next_node(visited_stop_ids: Array) -> String:
 		if not visited_stop_ids.has(str(stop.get("id", ""))):
 			return str(stop.get("node_id", ""))
 	return ""
+
+
+func _apply_depth_action(action: String, context: Dictionary) -> Dictionary:
+	# Retained as a private compatibility symbol for callers compiled against the
+	# rejected candidate. It is permanently fail-closed and cannot mutate state.
+	return {"ok": false, "proposed": true, "reason": "host_authority_unavailable", "action": action, "context": context.duplicate(true)}
+
+
+func _resolve_draw_occasion(day: int, boundary: int) -> void:
+	var occasion := _dictionary(draw_occasions.get(str(day), {})).duplicate(true)
+	if occasion.is_empty():
+		occasion = {"schema_version": DEPTH_SCHEMA_VERSION, "day": day, "presence": "absent", "attendance": "absent", "venue_id": "", "post_action": boundary}
+	occasion["status"] = "witnessed" if str(occasion.get("presence", "absent")) == "present" else "missed"
+	occasion["resolved_action"] = boundary
+	draw_occasions[str(day)] = occasion
 
 
 func venue_definition(venue_id: String) -> Dictionary:
@@ -541,6 +702,7 @@ func _settle_day(day: int) -> Array:
 		slip["payout"] = payout
 		slip["settled_action"] = settlement_action(day)
 		slips[index] = slip
+		_record_settlement_aftermath(slip)
 		paid_from_pool += payout
 		var event := {"type": "numbers_settlement", "day": day, "slip": slip.duplicate(true), "payout": payout}
 		if bool(slip.get("past_post", false)) and bool(slip.get("detected", false)):
@@ -639,6 +801,72 @@ func _slip_payout(slip: Dictionary) -> int:
 func _refresh_knowledge() -> void:
 	var required := maxi(1, int(_dictionary(config.get("past_posting", {})).get("required_distinct_staggered_close_rumors", 2)))
 	knowledge["assembled"] = bool(knowledge.get("silas_tip", false)) and _string_array(knowledge.get("staggered_close_rumor_ids", [])).size() >= required
+
+
+func _slip_index(slip_id: String) -> int:
+	for index in range(slips.size()):
+		if str(_dictionary(slips[index]).get("id", "")) == slip_id.strip_edges(): return index
+	return -1
+
+
+func _slip_by_id(slip_id: String) -> Dictionary:
+	var index := _slip_index(slip_id)
+	return _dictionary(slips[index]).duplicate(true) if index >= 0 else {}
+
+
+func _physical_slip_state(slip: Dictionary) -> Dictionary:
+	var saved := _dictionary(slip.get("physical_state", {}))
+	if not saved.is_empty(): return saved.duplicate(true)
+	var status := str(slip.get("status", "open"))
+	return _new_physical_slip_state(str(slip.get("id", "")), str(slip.get("venue_id", "")), "player", "carried" if status in ["open", "settled"] else status, "visible")
+
+
+func _new_physical_slip_state(slip_id: String, node_id: String, holder_id: String, possession: String, visibility: String) -> Dictionary:
+	return {
+		"schema_version": DEPTH_SCHEMA_VERSION,
+		"item_id": "numbers_slips",
+		"instance_id": slip_id,
+		"node_id": node_id,
+		"place_id": "player" if holder_id == "player" else "%s::numbers_book" % node_id,
+		"holder_id": holder_id,
+		"possession": possession,
+		"state": possession,
+		"visibility": visibility,
+		"last_action": "issued",
+		"last_action_index": action_index,
+	}
+
+
+func _record_settlement_aftermath(slip: Dictionary) -> void:
+	var venue_id := str(slip.get("venue_id", ""))
+	if venue_id.is_empty(): return
+	var memory := _dictionary(bookmaker_aftermath.get(venue_id, {})).duplicate(true)
+	if bool(slip.get("detected", false)):
+		memory["suspicious"] = true
+		memory["past_post_memory"] = true
+		memory["last_public_event"] = "refusal"
+	elif bool(slip.get("won", false)):
+		memory["friendly"] = true
+		memory["last_public_event"] = "winner"
+	memory["last_day"] = int(slip.get("day", 0))
+	bookmaker_aftermath[venue_id] = memory
+
+
+func _record_collection_aftermath(slip: Dictionary) -> void:
+	var venue_id := str(slip.get("venue_id", ""))
+	var memory := _dictionary(bookmaker_aftermath.get(venue_id, {})).duplicate(true)
+	memory["friendly"] = true
+	memory["collection_count"] = int(memory.get("collection_count", 0)) + 1
+	memory["last_public_event"] = "large_win" if int(slip.get("payout", 0)) >= _slip_payout({"stake": maxi(1, int(_dictionary(config.get("slips", {})).get("stake_max", 20))), "play_type": str(slip.get("play_type", ""))}) else "collected_win"
+	memory["last_day"] = int(slip.get("day", 0))
+	bookmaker_aftermath[venue_id] = memory
+
+
+static func _public_bookmaker_aftermath(memory: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for key in ["busy", "refused", "visit_count", "friendly", "wary", "suspicious", "past_post_memory", "collection_count", "last_public_event", "last_day"]:
+		if memory.has(key): result[key] = memory.get(key)
+	return result
 
 
 func _normalize_knowledge(value: Variant) -> Dictionary:

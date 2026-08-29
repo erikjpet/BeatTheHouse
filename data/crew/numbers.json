@@ -21,12 +21,33 @@
       "honest_ev_contract": "Both products return less than stake in expectation. Straight gross return is 0.50 per dollar; the best-case distinct-digit box gross return is 0.42 per dollar. Repeated-digit boxes are worse."
     },
     "venues": [
-      {"id": "small_underground_casino", "label": "The Punchline", "close_offset_from_post_actions": -3, "post_source": true, "base_strictness": 2},
-      {"id": "bar", "label": "Bar", "close_offset_from_post_actions": -2, "post_source": false, "base_strictness": 1},
-      {"id": "motel", "label": "Motel", "close_offset_from_post_actions": -1, "post_source": false, "base_strictness": 1},
-      {"id": "gas_station_casino", "label": "Gas Station Casino", "close_offset_from_post_actions": 2, "post_source": false, "base_strictness": 1},
-      {"id": "corner_store", "label": "Corner Store", "close_offset_from_post_actions": 4, "post_source": false, "base_strictness": 1}
+      {"id": "small_underground_casino", "label": "The Punchline", "close_offset_from_post_actions": -3, "post_source": true, "base_strictness": 2, "place": {"id": "small_underground_casino::numbers_book", "kind": "wire_desk", "public_label": "The wire desk"}, "bookmaker": {"actor_id": "numbers_bookmaker_small_underground_casino", "public_label": "Punchline bookmaker", "authored_states": ["open", "busy", "closing", "closed", "friendly", "wary", "suspicious"]}, "public_actions": ["place_slip", "show_slip", "hide_slip", "hand_slip", "collect_win", "watch_draw"], "aftermath_descriptors": ["big_win", "past_post_seen", "refused", "visit_count"]},
+      {"id": "bar", "label": "Bar", "close_offset_from_post_actions": -2, "post_source": false, "base_strictness": 1, "place": {"id": "bar::numbers_book", "kind": "back_booth", "public_label": "The back booth"}, "bookmaker": {"actor_id": "numbers_bookmaker_bar", "public_label": "Bar bookmaker", "authored_states": ["open", "busy", "closing", "closed", "friendly", "wary", "suspicious"]}, "public_actions": ["place_slip", "show_slip", "hide_slip", "hand_slip", "collect_win"], "aftermath_descriptors": ["big_win", "past_post_seen", "refused", "visit_count"]},
+      {"id": "motel", "label": "Motel", "close_offset_from_post_actions": -1, "post_source": false, "base_strictness": 1, "place": {"id": "motel::numbers_book", "kind": "lobby_side_desk", "public_label": "The lobby side desk"}, "bookmaker": {"actor_id": "numbers_bookmaker_motel", "public_label": "Motel bookmaker", "authored_states": ["open", "busy", "closing", "closed", "friendly", "wary", "suspicious"]}, "public_actions": ["place_slip", "show_slip", "hide_slip", "hand_slip", "collect_win"], "aftermath_descriptors": ["big_win", "past_post_seen", "refused", "visit_count"]},
+      {"id": "gas_station_casino", "label": "Gas Station Casino", "close_offset_from_post_actions": 2, "post_source": false, "base_strictness": 1, "place": {"id": "gas_station_casino::numbers_book", "kind": "cashier_side_counter", "public_label": "The side counter"}, "bookmaker": {"actor_id": "numbers_bookmaker_gas_station_casino", "public_label": "Gas station bookmaker", "authored_states": ["open", "busy", "closing", "closed", "friendly", "wary", "suspicious"]}, "public_actions": ["place_slip", "show_slip", "hide_slip", "hand_slip", "collect_win"], "aftermath_descriptors": ["big_win", "past_post_seen", "refused", "visit_count"]},
+      {"id": "corner_store", "label": "Corner Store", "close_offset_from_post_actions": 4, "post_source": false, "base_strictness": 1, "place": {"id": "corner_store::numbers_book", "kind": "back_counter", "public_label": "The back counter"}, "bookmaker": {"actor_id": "numbers_bookmaker_corner_store", "public_label": "Corner-store bookmaker", "authored_states": ["open", "busy", "closing", "closed", "friendly", "wary", "suspicious"]}, "public_actions": ["place_slip", "show_slip", "hide_slip", "hand_slip", "collect_win"], "aftermath_descriptors": ["big_win", "past_post_seen", "refused", "visit_count"]}
     ],
+    "world_semantics": {
+      "contract": "numbers_world_semantics/1",
+      "book_state_vocabulary": ["open", "busy", "closing", "closed"],
+      "bookmaker_demeanor_vocabulary": ["friendly", "wary", "suspicious"],
+      "public_action_vocabulary": ["place_slip", "show_slip", "hide_slip", "hand_slip", "collect_win", "watch_draw"],
+      "aftermath_vocabulary": ["big_win", "past_post_seen", "refused", "visit_count"],
+      "slip_transaction_beats": ["choose_number", "cross_money", "write_slip", "hand_slip"],
+      "draw_occasion": {
+        "place_id": "small_underground_casino::numbers_book",
+        "bookmaker_id": "numbers_bookmaker_small_underground_casino",
+        "present_beats": ["number_arrives", "bookmaker_calls", "room_reacts", "winners_step_forward", "losers_fold_slips"],
+        "absent_beats": ["number_posts", "book_states_update", "settlement_waits"],
+        "public_actions": ["watch_draw", "show_slip", "collect_win"]
+      },
+      "fix_sequence": {
+        "bribe_beats": ["approach_contact", "hand_offer", "wait_for_read", "receive_answer"],
+        "camouflage_beats": ["choose_book", "cross_money", "write_slip", "hand_slip", "confirm_spread"],
+        "payday_beats": ["return_to_book", "verify_handle", "count_cut", "remember_aftermath"],
+        "failure_beats": ["offer_refused", "spread_too_thin", "book_closed", "deadline_missed"]
+      }
+    },
     "runner": {
       "member_id": "crew_lucky",
       "minimum_rank": "associate",
