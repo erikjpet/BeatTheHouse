@@ -346,6 +346,7 @@ var crew_grievance_sequence: int = 0
 var crew_job_sequence: int = 0
 var _crew_job_host_capability: RefCounted
 var _crew_recruitment_host_capability: RefCounted
+var _world1_host_capability: RefCounted
 var active_delivery_run: Dictionary = {}
 var crew_pattern_memory: Dictionary = {}
 var scenario_host_transaction_ledger: Dictionary = {}
@@ -488,6 +489,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	crew_job_sequence = 0
 	_crew_job_host_capability = RefCounted.new()
 	_crew_recruitment_host_capability = RefCounted.new()
+	_world1_host_capability = RefCounted.new()
 	active_delivery_run = {}
 	crew_pattern_memory = CrewPokerModelScript.default_observations()
 	scenario_host_transaction_ledger = {}
@@ -8437,11 +8439,35 @@ func crew_action_index() -> int:
 
 
 func crew_play_actions(game_id: String, environment: Dictionary = current_environment) -> Array:
-	return CrewPlayModelScript.available_actions(self, environment, game_id)
+	if JSON.stringify(environment) != JSON.stringify(current_environment) or str(current_environment.get("active_game_id", "")) != game_id:
+		return []
+	return CrewPlayModelScript.available_actions(self, current_environment, game_id)
 
 
 func crew_play_activate(play_id: String, game_id: String, environment: Dictionary = current_environment) -> Dictionary:
-	return CrewPlayModelScript.activate(self, environment, game_id, play_id)
+	if not crew_play_host_authorizes(_world1_host_capability, environment, game_id):
+		return GameModule.build_action_result({"ok": false, "type": "game_action", "source_id": "crew_plays", "game_id": game_id, "action_id": "crew_play:%s" % play_id, "action_kind": "unknown", "message": "That crew play is not bound to the live table."})
+	var rollback := _capture_environment_turn_snapshot()
+	var before_state := CrewPlayModelScript.normalize_state(crew_play_state)
+	var before_bankroll := bankroll
+	var before_chips := grand_casino_chips
+	var result := CrewPlayModelScript.activate(self, current_environment, game_id, play_id, _world1_host_capability)
+	var after_state := CrewPlayModelScript.normalize_state(crew_play_state)
+	var valid := bool(result.get("ok", false)) \
+		and str(result.get("source_id", "")) == "crew_plays" and str(result.get("game_id", "")) == game_id \
+		and int(after_state.get("sequence", -1)) == int(before_state.get("sequence", 0)) + 1 \
+		and bankroll == before_bankroll + int(result.get("bankroll_delta", 0)) \
+		and grand_casino_chips == before_chips + int(result.get("chips_delta", 0))
+	if not valid:
+		_apply_environment_turn_snapshot(rollback, true)
+		return GameModule.build_action_result({"ok": false, "type": "game_action", "source_id": "crew_plays", "game_id": game_id, "action_id": "crew_play:%s" % play_id, "action_kind": "unknown", "message": "The table host rejected an incomplete play transaction."})
+	return result
+
+
+func crew_play_host_authorizes(host_capability: RefCounted, environment: Dictionary, game_id: String, require_active_game: bool = true) -> bool:
+	if host_capability == null or host_capability != _world1_host_capability or JSON.stringify(environment) != JSON.stringify(current_environment):
+		return false
+	return not require_active_game or not game_id.is_empty() and str(current_environment.get("active_game_id", "")) == game_id
 
 
 func crew_play_active(play_id: String, environment: Dictionary = current_environment) -> bool:
@@ -12892,7 +12918,7 @@ func _advance_global_boundary_finish(safe_amount: int) -> void:
 	_advance_debt_clocks(safe_amount)
 	_advance_crew_jobs()
 	if safe_amount > 0:
-		CrewPlayModelScript.advance_boundary(self, current_environment)
+		CrewPlayModelScript.advance_boundary(self, current_environment, _world1_host_capability)
 		_crew_heist_boundary_sync()
 	CharacterChainModelScript.advance(self, safe_amount)
 
@@ -15104,8 +15130,9 @@ func _crew_state_for_save(deep_copy: bool, opaque_hidden: bool = false) -> Dicti
 		result["encounters"] = recruitment_encounters.duplicate(deep_copy)
 	var normalized_plays := CrewPlayModelScript.normalize_state(crew_play_state)
 	if not (normalized_plays.get("uses", {}) as Dictionary).is_empty() \
-		or not (normalized_plays.get("active", []) as Array).is_empty() \
-		or not (normalized_plays.get("member_cooldowns", {}) as Dictionary).is_empty():
+			or not (normalized_plays.get("active", []) as Array).is_empty() \
+			or not (normalized_plays.get("member_cooldowns", {}) as Dictionary).is_empty() \
+			or not (normalized_plays.get("tombstones", []) as Array).is_empty():
 		result["plays"] = normalized_plays.duplicate(deep_copy)
 	var normalized_heist := CrewHeistModelScript.normalize_state(crew_heist_state)
 	if not normalized_heist.is_empty():
@@ -15130,6 +15157,8 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 		_crew_job_host_capability = RefCounted.new()
 	if _crew_recruitment_host_capability == null:
 		_crew_recruitment_host_capability = RefCounted.new()
+	if _world1_host_capability == null:
+		_world1_host_capability = RefCounted.new()
 	crew_play_state = CrewPlayModelScript.normalize_state(saved.get("plays", {}))
 	crew_heist_state = CrewHeistModelScript.normalize_state(saved.get("crew_heist", {}))
 	var saved_marks: Dictionary = saved.get("m", {}) if typeof(saved.get("m", {})) == TYPE_DICTIONARY else {}
