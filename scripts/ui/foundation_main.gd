@@ -1515,19 +1515,7 @@ func _blackjack_host_proposal_valid(proposal: Dictionary, proposal_input: Dictio
 		(proposal_input.get("rng_snapshot", {}) as Dictionary).duplicate(true),
 		(proposal_input.get("ui_state", {}) as Dictionary).duplicate(true)
 	)
-	var canonical_json := GameRitualRuntimeScript.canonical_json(canonical)
-	var proposal_json := GameRitualRuntimeScript.canonical_json(proposal)
-	if canonical_json != proposal_json:
-		var differing_fields: Array = []
-		for key in expected_keys:
-			if GameRitualRuntimeScript.canonical_json(canonical.get(key)) != GameRitualRuntimeScript.canonical_json(proposal.get(key)):
-				differing_fields.append({
-					"field": key,
-					"canonical": GameRitualRuntimeScript.canonical_fingerprint(canonical.get(key)),
-					"proposal": GameRitualRuntimeScript.canonical_fingerprint(proposal.get(key)),
-				})
-		push_error("Blackjack canonical proposal replay mismatch: %s" % str(differing_fields))
-	return canonical_json == proposal_json
+	return GameRitualRuntimeScript.canonical_json(canonical) == GameRitualRuntimeScript.canonical_json(proposal)
 
 
 func _blackjack_host_proposal_fingerprints(proposal: Dictionary) -> Dictionary:

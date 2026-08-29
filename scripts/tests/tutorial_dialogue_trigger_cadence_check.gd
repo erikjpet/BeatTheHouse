@@ -3,6 +3,24 @@ extends "res://tools/tutorial_guided_run_capture.gd"
 const TEST_META_PATH := "user://tutorial_dialogue_cadence_meta.json"
 const TEST_PROFILE_PATH := "user://tutorial_dialogue_cadence_profile.json"
 const TEST_SAVE_SLOT := "tutorial_dialogue_cadence_check"
+const BLACKJACK_FIXTURE_CHALLENGE := {
+	"mode": "custom",
+	"id": "tutorial_first_card",
+	"seed_text": "TUTORIAL-BLACKJACK-FIXTURE",
+	"daily_id": "",
+	"tutorial": true,
+	"exclude_profile_stats": true,
+	"hidden_seed": false,
+	"modifiers": {
+		"tutorial_run": true,
+		"tutorial_main_floor_only": true,
+		"tutorial_shop_item_pool_strict": true,
+		"environment_layer_overrides": {"small_underground_casino": "casino"},
+		"home_archetype_id": "apartment",
+		"starting_bankroll": 80,
+	},
+}
+const BLACKJACK_FIXTURE_BASELINE_SHA256 := "ac06c95526b41c4c63d99cd7953dea2f22775d39ab94fe4236b0feff6b79066a"
 
 
 func _init() -> void:
@@ -49,7 +67,7 @@ func _run_dialogue_trigger_cadence_check() -> void:
 		return
 	if not await _pull_tab_peek_reminder_is_explicit(run_state):
 		return
-	if not _blackjack_count_hand_is_mandatory(run_state):
+	if not _blackjack_count_hand_is_mandatory():
 		return
 
 	# Recovery may consume room actions performed on an eligibility boundary, but
@@ -351,9 +369,9 @@ func _pull_tab_peek_reminder_is_explicit(run_state: RunState) -> bool:
 	return true
 
 
-func _blackjack_count_fixture_baseline(live_run: RunState) -> Dictionary:
+func _blackjack_count_fixture_baseline() -> Dictionary:
 	var run_state := RunState.new()
-	run_state.start_new("TUTORIAL-BLACKJACK-FIXTURE", live_run.challenge_config.duplicate(true))
+	run_state.start_new("TUTORIAL-BLACKJACK-FIXTURE", BLACKJACK_FIXTURE_CHALLENGE.duplicate(true))
 	run_state.set_environment({
 		"id": "tutorial_count_fixture",
 		"archetype_id": "small_underground_casino",
@@ -364,6 +382,13 @@ func _blackjack_count_fixture_baseline(live_run: RunState) -> Dictionary:
 	var library: ContentLibrary = app.get("library")
 	game.setup(library.game("blackjack"), library)
 	run_state.bankroll = maxi(run_state.bankroll, 200)
+	run_state.inventory = []
+	run_state.portable_ticket_piles = {}
+	run_state.narrative_flags = {
+		"tutorial_actions_performed": {},
+		"tutorial_blackjack_peek_reprieve_used": true,
+		"tutorial_lessons_completed": ["tutorial_blackjack_deal", "tutorial_blackjack_peek"],
+	}
 	game.surface_state(run_state, run_state.current_environment, {})
 	var game_states: Dictionary = run_state.current_environment.get("game_states", {})
 	var table: Dictionary = game_states.get("blackjack", {})
@@ -373,16 +398,22 @@ func _blackjack_count_fixture_baseline(live_run: RunState) -> Dictionary:
 	table.erase("tutorial_count_perfect")
 	game_states["blackjack"] = table
 	run_state.current_environment["game_states"] = game_states
-	run_state.narrative_flags["tutorial_blackjack_peek_reprieve_used"] = true
 
 	# Normalize once, then preserve one immutable byte source for every observer.
+	# This fixture may not inherit the live tutorial, profile, inventory, tips, or
+	# progression: all authority inputs above are declared locally.
 	var normalized := RunState.new()
 	normalized.from_dict(JSON.parse_string(JSON.stringify(run_state.to_dict())))
 	var bytes := JSON.stringify(normalized.to_dict())
+	var fingerprint := bytes.sha256_text()
 	return {
 		"bytes": bytes,
-		"fingerprint": bytes.sha256_text(),
+		"fingerprint": fingerprint,
 		"heat": normalized.suspicion_level(),
+		"valid": fingerprint == BLACKJACK_FIXTURE_BASELINE_SHA256
+			and normalized.suspicion_level() == 0
+			and normalized.is_tutorial_run()
+			and bool(normalized.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false)),
 	}
 
 
@@ -410,7 +441,7 @@ func _blackjack_isolated_repeated_peek_reprieve_is_terminal(baseline: Dictionary
 	# and a later safe Count continuation. This exact clone proves the reprieve
 	# and its visible barred terminal aftermath, then intentionally stops.
 	var fixture := _restore_blackjack_count_fixture(baseline)
-	if not _blackjack_fixture_matches_baseline(fixture, baseline):
+	if not bool(baseline.get("valid", false)) or not _blackjack_fixture_matches_baseline(fixture, baseline):
 		_fail("The isolated Peek fixture did not start from the canonical pre-Deal bytes/heat: %s." % str(fixture))
 		return false
 	var run_state: RunState = fixture.get("run_state")
@@ -419,8 +450,13 @@ func _blackjack_isolated_repeated_peek_reprieve_is_terminal(baseline: Dictionary
 	BlackjackAuthorityTestDriverScript.pin_tutorial_peek_reprieve_rng(run_state)
 	var deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
 	var deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, deal, 4, run_state, run_state.current_environment)
-	var deal_state: Dictionary = deal_result.get("ui_state", deal.get("ui_state", {}))
-	var caught := BlackjackAuthorityTestDriverScript.resolve(game, "peek_hole_card", 0, run_state, run_state.current_environment, run_state.create_rng("tutorial_reprieve_caught"), deal_state)
+	if not bool(deal_result.get("ok", false)) \
+			or not bool(deal_result.get("blackjack_host_committed", false)) \
+			or str(deal_result.get("action_id", "")) != "blackjack_place_bet":
+		_fail("The isolated repeated-Peek fixture did not commit its sealed Deal: %s." % str(deal_result))
+		return false
+	var peek := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_peek", 4, run_state, run_state.current_environment)
+	var caught := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, peek, 4, run_state, run_state.current_environment)
 	var protected_state: Dictionary = caught.get("blackjack_surface_ui_state", {})
 	var table: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})
 	if not bool(caught.get("dealer_caught_cheat", false)) \
@@ -448,11 +484,11 @@ func _blackjack_isolated_repeated_peek_reprieve_is_terminal(baseline: Dictionary
 	return true
 
 
-func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
+func _blackjack_count_hand_is_mandatory() -> bool:
 	# Keep this mechanics proof isolated from the UI cadence run: settling hands
 	# can legitimately advance that run's objectives and would pollute later visual
 	# fixtures even though the blackjack contract itself passed.
-	var baseline := _blackjack_count_fixture_baseline(live_run)
+	var baseline := _blackjack_count_fixture_baseline()
 	if not _blackjack_isolated_repeated_peek_reprieve_is_terminal(baseline):
 		return false
 	var fixture := _restore_blackjack_count_fixture(baseline)
@@ -533,7 +569,7 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 		return false
 
 	var legacy_run := RunState.new()
-	legacy_run.start_new("TUTORIAL-COUNT-LEGACY", live_run.challenge_config)
+	legacy_run.start_new("TUTORIAL-COUNT-LEGACY", BLACKJACK_FIXTURE_CHALLENGE.duplicate(true))
 	legacy_run.set_environment({
 		"id": "tutorial_count_legacy_fixture",
 		"archetype_id": "small_underground_casino",
