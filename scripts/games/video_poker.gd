@@ -34,6 +34,8 @@ extends GameModule
 
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const VideoPokerRendererScript := preload("res://scripts/games/video_poker_renderer.gd")
+const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
+const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 
 const HAND_SIZE := 5
 const STATE_SCHEMA := "video_poker_machine_state"
@@ -303,6 +305,26 @@ var machine_renderer := VideoPokerRendererScript.new()
 var _strategy_hold_cache: Dictionary = {}
 var _strategy_hold_cache_order: Array[String] = []
 var _ritual_host_run_state: RunState = null
+
+
+func sealed_action_authority_script() -> Script:
+	return ActionAuthorityScript
+
+
+func sealed_action_authority_contract() -> Dictionary:
+	return {
+		"resolve_proposal_method": &"_machine_game_resolve_proposal",
+		"wager_cost_proposal_method": &"_machine_game_wager_cost_proposal",
+		"host_auto_tick_method": &"_machine_game_host_needs_auto_tick",
+		"surface_intent_key": "",
+		"surface_intent_index_key": "",
+		"retry_surface_actions": ["video_poker_retry_pending", "video_poker_draw"],
+		"cancel_surface_actions": ["video_poker_cancel_pending"],
+		"proposal_requires_apply_key": "machine_game_proposal_requires_apply",
+		"authoritative_result_marker": "sealed_action_authoritative",
+		"place_bet_action": "",
+		"host_pointer_intent": false,
+	}
 
 
 func video_poker_ritual_contract() -> Dictionary:
@@ -925,6 +947,48 @@ func resolve(action_id: String, stake: int, run_state: RunState, environment: Di
 	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
 
 
+func _machine_game_resolve_proposal(action_id: String, stake: int, run_snapshot: Dictionary, rng_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var proposal_input := {
+		"action_id": action_id,
+		"stake": stake,
+		"run_snapshot": run_snapshot,
+		"rng_snapshot": rng_snapshot,
+		"ui_state": ui_state,
+	}
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var proposal_rng := RngStream.new()
+	proposal_rng.restore(rng_snapshot.duplicate(true))
+	var proposal_ui := ui_state.duplicate(true)
+	proposal_ui["_sealed_action_defer_apply"] = true
+	var result := resolve_with_context(action_id, stake, candidate, candidate.current_environment, proposal_rng, proposal_ui)
+	if bool(result.get("ok", false)):
+		result["machine_game_proposal_requires_apply"] = true
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
+		"result": result.duplicate(true),
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": proposal_rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
+	return proposal
+
+
+func _machine_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var cost := wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+	return {
+		"cost": maxi(0, cost),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
+
+
+func _machine_game_host_needs_auto_tick(_surface_time_msec: int, _run_state: RunState, _environment: Dictionary) -> bool:
+	return false
+
+
 # Resolves one draw (optionally with the holdout) or one double-up gamble.
 func resolve_with_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	if action_id == "double_up":
@@ -1242,7 +1306,8 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 			result["security_message"] = security_message
 		result["skill_story_context"] = _copy_dict(story_entry.get("skill_story_context", {}))
 		GameModule.normalize_skill_cheat_contract(result, result)
-	GameModule.apply_result(run_state, result, rng)
+	if not bool(ui.get("_sealed_action_defer_apply", false)):
+		GameModule.apply_result(run_state, result, rng)
 	return result
 
 
@@ -1311,7 +1376,8 @@ func _resolve_double_up(run_state: RunState, environment: Dictionary, rng: RngSt
 	result["video_poker_double_pick_index"] = pick_index
 	result["video_poker_double_pick_rank"] = pick_rank
 	result["video_poker_double_dealer_rank"] = dealer_rank
-	GameModule.apply_result(run_state, result, rng)
+	if not bool(ui.get("_sealed_action_defer_apply", false)):
+		GameModule.apply_result(run_state, result, rng)
 	return result
 
 
@@ -1360,6 +1426,18 @@ func _machine_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 		# prior multi-hand result on every click and surface read.
 		return state.duplicate(false)
 	return _normalize_state(state)
+
+
+func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+	return _machine_state(run_state, environment)
+
+
+func _table_state_preview(run_state: RunState, environment: Dictionary) -> Dictionary:
+	return _machine_state(run_state, environment)
+
+
+func _update_environment_table(environment: Dictionary, state: Dictionary) -> void:
+	_update_environment_state(environment, state)
 
 
 func _state_is_current(state: Dictionary) -> bool:

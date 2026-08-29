@@ -11,6 +11,8 @@ const ResolverScript := preload("res://scripts/games/slots/slot_resolver.gd")
 const PresentationScript := preload("res://scripts/games/slots/slot_presentation.gd")
 const RendererScript := preload("res://scripts/games/slots/slot_renderer.gd")
 const PinballFeatureScript := preload("res://scripts/games/slots/pinball/pinball_feature.gd")
+const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
+const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const SELECT_BET_PREFIX := "select_bet_option:"
 const SLOT_BONUS_WATCHDOG_ACTION := "slot_bonus_watchdog"
 const SLOT_BONUS_WATCHDOG_GRACE_MSEC := 2200
@@ -36,6 +38,26 @@ var renderer
 var catalog
 var definition_cache
 var _ritual_host_run_state: RunState = null
+
+
+func sealed_action_authority_script() -> Script:
+	return ActionAuthorityScript
+
+
+func sealed_action_authority_contract() -> Dictionary:
+	return {
+		"resolve_proposal_method": &"_machine_game_resolve_proposal",
+		"wager_cost_proposal_method": &"_machine_game_wager_cost_proposal",
+		"host_auto_tick_method": &"_machine_game_host_needs_auto_tick",
+		"surface_intent_key": "",
+		"surface_intent_index_key": "",
+		"retry_surface_actions": ["slot_retry_pending", "slot_spin", "spin"],
+		"cancel_surface_actions": ["slot_cancel_pending"],
+		"proposal_requires_apply_key": "machine_game_proposal_requires_apply",
+		"authoritative_result_marker": "sealed_action_authoritative",
+		"place_bet_action": "",
+		"host_pointer_intent": true,
+	}
 
 
 func slot_machine_ritual_contract() -> Dictionary:
@@ -385,19 +407,46 @@ func _slot_handpay_result_id(machine: Dictionary) -> String:
 	return "slot_result_%d_%s" % [spin_count, outcome_id]
 
 
-func _slot_handpay_acknowledgement(run_state: RunState, environment: Dictionary, caller_claims: Dictionary = {}) -> Dictionary:
+func _slot_handpay_acknowledgement(run_state: RunState, environment: Dictionary, caller_claims: Dictionary = {}, sealed_host_proposal: bool = false) -> Dictionary:
 	# Caller claims never establish authority. Entry binds the exact live RunState
 	# object supplied by the host; a copied/recomputed/signed-looking dictionary is
 	# intentionally irrelevant.
-	if run_state == null or _ritual_host_run_state == null or not is_same(run_state, _ritual_host_run_state):
+	if run_state == null or (not sealed_host_proposal and (_ritual_host_run_state == null or not is_same(run_state, _ritual_host_run_state))):
 		return {"ok": false, "error_code": "unsealed_authority", "caller_claims_ignored": not caller_claims.is_empty()}
 	var machine := _read_machine(environment)
 	var result_id := _slot_handpay_result_id(machine)
 	if result_id.is_empty() or not str(machine.get("slot_celebration_tier", "none")) in ["jackpot", "grand"]:
 		return {"ok": false, "error_code": "precondition_failed", "caller_claims_ignored": not caller_claims.is_empty()}
+	if str(machine.get("ritual_acknowledged_result_id", "")) == result_id:
+		return {"ok": false, "error_code": "already_acknowledged", "result_id": result_id, "caller_claims_ignored": not caller_claims.is_empty()}
 	machine["ritual_acknowledged_result_id"] = result_id
 	_write_machine(environment, machine, false)
 	return {"ok": true, "result_id": result_id, "caller_claims_ignored": not caller_claims.is_empty()}
+
+
+func _slot_sealed_handpay_acknowledgement_result(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var acknowledgement := _slot_handpay_acknowledgement(run_state, environment, {}, true)
+	if not bool(acknowledgement.get("ok", false)):
+		return _empty_slot_result("slot_handpay_acknowledge", environment, "The attendant acknowledgement is unavailable or already receipted.")
+	var result_id := str(acknowledgement.get("result_id", ""))
+	var deltas := GameModule.empty_result_deltas()
+	deltas["messages"] = ["The attendant acknowledges jackpot %s." % result_id]
+	return GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": get_id(),
+		"game_id": get_id(),
+		"action_id": "slot_handpay_acknowledge",
+		"action_kind": "legal",
+		"stake": 0,
+		"deltas": deltas,
+		"won": false,
+		"environment_id": str(environment.get("id", "")),
+		"environment_archetype_id": str(environment.get("archetype_id", "")),
+		"slot_handpay_acknowledgement": true,
+		"slot_handpay_result_id": result_id,
+		"message": str((deltas.get("messages", []) as Array)[0]),
+	})
 
 
 func _saved_checkpoint_presentation_view(machine: Dictionary) -> Dictionary:
@@ -458,6 +507,50 @@ func debug_surface_asset_cache_snapshot() -> Dictionary:
 
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
+
+
+func _machine_game_resolve_proposal(action_id: String, stake: int, run_snapshot: Dictionary, rng_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var proposal_input := {
+		"action_id": action_id,
+		"stake": stake,
+		"run_snapshot": run_snapshot,
+		"rng_snapshot": rng_snapshot,
+		"ui_state": ui_state,
+	}
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var proposal_rng := RngStream.new()
+	proposal_rng.restore(rng_snapshot.duplicate(true))
+	var result: Dictionary
+	if action_id == "slot_handpay_acknowledge":
+		result = _slot_sealed_handpay_acknowledgement_result(candidate, candidate.current_environment)
+	else:
+		result = resolve_with_context(action_id, stake, candidate, candidate.current_environment, proposal_rng, ui_state.duplicate(true))
+		if bool(result.get("ok", false)) and bool(result.get("host_apply_result", false)):
+			result["machine_game_proposal_requires_apply"] = true
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
+		"result": result.duplicate(true),
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": proposal_rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
+	return proposal
+
+
+func _machine_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var cost := wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+	return {
+		"cost": maxi(0, cost),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
+
+
+func _machine_game_host_needs_auto_tick(surface_time_msec: int, run_state: RunState, environment: Dictionary) -> bool:
+	return surface_needs_auto_tick({"surface_time_msec": surface_time_msec, "drunk_scaled_surface_time_msec": surface_time_msec}, run_state, environment)
 
 
 func resolve_with_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, _ui_state: Dictionary = {}) -> Dictionary:
@@ -551,7 +644,7 @@ func _apply_tutorial_first_night_match(resolved: Dictionary, machine: Dictionary
 
 func wager_cost_for_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> int:
 	var normalized_action := _normalize_action(action_id)
-	if normalized_action.begins_with("slot_bonus_") or normalized_action == "slot_bet" or normalized_action == "slot_auto_toggle":
+	if normalized_action.begins_with("slot_bonus_") or normalized_action in ["slot_bet", "slot_auto_toggle", "slot_handpay_acknowledge"]:
 		return 0
 	# Wager queries are read-only and run immediately before resolution. Reuse the
 	# canonical stored machine instead of cloning its nested reel/bonus state.
@@ -634,8 +727,15 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 		"slot_credit_buy_in", "slot_credit_cash_out":
 			return GameModule.surface_command({"handled": true, "message": "This cabinet has no authoritative machine-credit conversion boundary; cash remains unchanged."})
 		"slot_handpay_acknowledge":
-			var acknowledgement := _slot_handpay_acknowledgement(run_state, environment)
-			return GameModule.surface_command({"handled": true, "environment_changed": bool(acknowledgement.get("ok", false)), "message": "Attendant acknowledgement recorded." if bool(acknowledgement.get("ok", false)) else "The attendant cannot acknowledge this result from an unsealed or inactive host session."})
+			return GameModule.surface_command({
+				"handled": true,
+				"action_id": "slot_handpay_acknowledge",
+				"action_kind": "legal",
+				"direct_resolve": true,
+				"skip_stake_validation": true,
+				"set_stake": 0,
+				"message": "Calling the attendant to acknowledge the sealed jackpot result.",
+			})
 		"spin", "slot_spin":
 			return GameModule.surface_command({
 				"handled": true,
@@ -1421,6 +1521,18 @@ func _query_machine(run_state: RunState, environment: Dictionary, rng_salt: Stri
 	if not machine.is_empty() and int(machine.get("schema_version", 0)) == StateScript.SCHEMA_VERSION:
 		return machine
 	return _ensure_machine_state(run_state, environment, run_state.create_rng(rng_salt) if run_state != null else null)
+
+
+func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+	return _ensure_machine_state(run_state, environment, run_state.create_rng("slot_authority_state") if run_state != null else null)
+
+
+func _table_state_preview(_run_state: RunState, environment: Dictionary) -> Dictionary:
+	return _peek_machine(environment)
+
+
+func _update_environment_table(environment: Dictionary, machine: Dictionary) -> void:
+	_write_owned_machine(environment, machine, false)
 
 
 func _empty_slot_result(action_id: String, environment: Dictionary, text: String) -> Dictionary:
