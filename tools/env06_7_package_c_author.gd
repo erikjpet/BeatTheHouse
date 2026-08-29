@@ -35,7 +35,7 @@ const DECISIONS := {
 
 const SPATIAL_BINDINGS := {
 	"bar_wake":{"task_anchor":"wake_task","anchors":["wake_memorial_tables","wake_host"],"phase_actor_anchors":{"work_1":{"wake_regular":"wake_regular_work_1"}}},
-	"bar_fight_night":{"anchors":["fight_toppled_chair","fight_right_brawler"]},
+	"bar_fight_night":{"task_anchor":"fight_task","anchors":["fight_toppled_chair","fight_right_brawler"],"actor_anchors":{"right_brawler":"fight_right_brawler_arrival"},"object_anchors":{"door_buffer":"fight_door_buffer"}},
 	"bar_payday_rush":{"anchors":["payday_order_rail","payday_runner"]},
 	"bar_lock_in":{"anchors":["lockin_shutters","lockin_regular"]},
 	"bar_darts_league_night":{"anchors":["darts_oche","darts_scorer"]},
@@ -89,13 +89,15 @@ func _entry(c: Dictionary) -> Dictionary:
 	for object_index in range(c.objects.size()):
 		var o: Array = c.objects[object_index]
 		var object_id := "%s_%s" % [prefix, o[0]]
-		scene_ops.append(_scene_spawn(prefix, "arrival", object_id, str(o[1]), str(o[2]), str(o[3]), str(o[4]), 52 + object_index * 8, 46 + object_index * 6))
+		var object_anchor := str(_dict(spatial.get("object_anchors", {})).get(str(o[0]), ""))
+		scene_ops.append(_scene_spawn(prefix, "arrival", object_id, str(o[1]), str(o[2]), str(o[3]), str(o[4]), 52 + object_index * 8, 46 + object_index * 6, object_anchor))
 		cleanup.append(_remove("scene_ops", prefix, object_id))
 	var actor_ops: Array = []
 	for actor_index in range(c.actors.size()):
 		var a: Array = c.actors[actor_index]
 		var actor_id := "%s_%s" % [prefix, a[0]]
-		actor_ops.append(_actor_spawn(prefix, "arrival", actor_id, str(a[1]), str(a[2]), str(a[3]), str(a[4])))
+		var actor_anchor := str(_dict(spatial.get("actor_anchors", {})).get(str(a[0]), ""))
+		actor_ops.append(_actor_spawn(prefix, "arrival", actor_id, str(a[1]), str(a[2]), str(a[3]), str(a[4]), actor_anchor))
 		cleanup.append(_despawn(prefix, actor_id))
 	var exit_id := "%s_safe_exit" % prefix
 	scene_ops.append(_scene_spawn(prefix, "arrival", exit_id, "Marked clean exit", "exit", "exit_lane", "marked_lane", 56, 56))
@@ -199,8 +201,10 @@ func _branch(prefix:String,id:String,condition:Dictionary,next_phase:String,outc
 	return result
 
 
-func _scene_spawn(prefix:String,boundary:String,id:String,label:String,role:String,zone:String,state:String,w:int,h:int)->Dictionary:
-	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":{"label":label,"role":role,"zone_id":zone,"bounds":{"w":w,"h":h},"visible":true,"enabled":true,"state":state,"appearance":state}}
+func _scene_spawn(prefix:String,boundary:String,id:String,label:String,role:String,zone:String,state:String,w:int,h:int,anchor_id:String="")->Dictionary:
+	var object := {"label":label,"role":role,"zone_id":zone,"bounds":{"w":w,"h":h},"visible":true,"enabled":true,"state":state,"appearance":state}
+	if not anchor_id.is_empty(): object["anchor_id"] = anchor_id
+	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":object}
 
 
 func _task_scene_spawn(prefix:String,boundary:String,id:String,verb:String,spatial:Dictionary)->Dictionary:
@@ -217,8 +221,10 @@ func _scene_remove(prefix:String,boundary:String,id:String)->Dictionary:
 	return {"family":"scene_ops","op":"remove","receipt_id":"%s_%s_remove_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id}
 
 
-func _actor_spawn(prefix:String,boundary:String,id:String,label:String,actor_id:String,zone:String,behavior:String)->Dictionary:
-	return {"family":"actor_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"actor":{"label":label,"actor_id":actor_id,"zone_id":zone,"behavior":behavior,"pose":"arrival"}}
+func _actor_spawn(prefix:String,boundary:String,id:String,label:String,actor_id:String,zone:String,behavior:String,anchor_id:String="")->Dictionary:
+	var actor := {"label":label,"actor_id":actor_id,"zone_id":zone,"behavior":behavior,"pose":"arrival"}
+	if not anchor_id.is_empty(): actor["anchor_id"] = anchor_id
+	return {"family":"actor_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"actor":actor}
 
 
 func _interaction_add(prefix:String,boundary:String,id:String,label:String,prompt:String,actions:Array,safe_exit:bool)->Dictionary:
@@ -322,6 +328,12 @@ func _declared_anchor_ids(spatial: Dictionary) -> Array:
 	for anchor_value in _array(spatial.get("anchors", [])): result.append("base::anchor:%s" % str(anchor_value))
 	var task_anchor := str(spatial.get("task_anchor", ""))
 	if not task_anchor.is_empty(): result.append("base::anchor:%s" % task_anchor)
+	for anchor_value in _dict(spatial.get("object_anchors", {})).values():
+		var identity := "base::anchor:%s" % str(anchor_value)
+		if not result.has(identity): result.append(identity)
+	for anchor_value in _dict(spatial.get("actor_anchors", {})).values():
+		var identity := "base::anchor:%s" % str(anchor_value)
+		if not result.has(identity): result.append(identity)
 	for phase_value in _dict(spatial.get("phase_actor_anchors", {})).values():
 		for anchor_value in _dict(phase_value).values():
 			var identity := "base::anchor:%s" % str(anchor_value)

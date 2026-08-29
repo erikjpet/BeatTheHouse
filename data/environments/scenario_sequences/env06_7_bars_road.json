@@ -1589,7 +1589,10 @@
           "actors": [],
           "anchors": [
             "base::anchor:fight_toppled_chair",
-            "base::anchor:fight_right_brawler"
+            "base::anchor:fight_right_brawler",
+            "base::anchor:fight_task",
+            "base::anchor:fight_door_buffer",
+            "base::anchor:fight_right_brawler_arrival"
           ],
           "games": [],
           "interactions": [],
@@ -1701,6 +1704,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_right_brawler",
+                    "anchor_id": "fight_right_brawler_arrival",
                     "behavior": "fight",
                     "label": "Right-side brawler",
                     "pose": "arrival",
@@ -1900,6 +1904,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "fight_door_buffer",
                     "appearance": "narrow",
                     "bounds": {
                       "h": 58.0,
@@ -1940,7 +1945,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "fight_toppled_chair",
+                    "anchor_id": "fight_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2134,7 +2139,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "fight_toppled_chair",
+                    "anchor_id": "fight_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2378,7 +2383,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "fight_toppled_chair",
+                    "anchor_id": "fight_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2572,7 +2577,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "fight_toppled_chair",
+                    "anchor_id": "fight_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2762,7 +2767,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "fight_toppled_chair",
+                    "anchor_id": "fight_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -2953,7 +2958,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "fight_toppled_chair",
+                    "anchor_id": "fight_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -3126,7 +3131,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "dcd539e42ae16ae5a675aabaa39e6ecfb28af7117982f31687e7030c17e688ab"
+        "sequence_signature": "bde0d4fcca7bfa559e35e0571733b9827d7ab748ccf2ddac0c81ed7938717cef"
       }
     },
     {
