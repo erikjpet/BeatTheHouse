@@ -378,6 +378,14 @@ static func note_arrival(state_value: Variant, node_id: String) -> Dictionary:
 	var state := normalize_state(state_value)
 	if state.is_empty() or str(state.get("status", "")) != "active":
 		return state
+	var depth := _copy_dict(state.get("depth_state", {}))
+	if str(depth.get("origin", "")) == "current":
+		return state
+	return _note_arrival_state(state, node_id)
+
+
+static func _note_arrival_state(state_value: Dictionary, node_id: String) -> Dictionary:
+	var state := state_value.duplicate(true)
 	var clean_node_id := node_id.strip_edges()
 	if clean_node_id.is_empty():
 		return state
@@ -406,6 +414,8 @@ static func complete_handoff(state_value: Variant, node_id: String) -> Dictionar
 	var position := _copy_dict(depth.get("position", {}))
 	if str(cargo.get("status", "")) != CARGO_CARRIED or str(cargo.get("node_id", "")) != clean_node_id \
 			or str(position.get("node_id", "")) != clean_node_id:
+		return state
+	if str(depth.get("origin", "")) == "current" and not _depth_has_command(depth, "move"):
 		return state
 	var targets: Array = state.get("targets", [])
 	var target_index := _pending_target_index(state, clean_node_id)
@@ -470,7 +480,7 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 			if node_id.is_empty() or destination_node_id.is_empty() or node_id != str(position.get("node_id", "")) or node_id == destination_node_id:
 				return state
 			state = _record_physical_position(state, destination_node_id, action)
-			state = note_arrival(state, destination_node_id)
+			state = _note_arrival_state(state, destination_node_id)
 		"wait":
 			if node_id.is_empty() or node_id != str(position.get("node_id", "")):
 				return state
@@ -722,6 +732,13 @@ static func _depth_receipt_replay(state: Dictionary, receipt_key: String, envelo
 			continue
 		return int(receipt.get("sequence", 0)) if str(receipt.get("command_record_fingerprint", "")) == expected_fingerprint else -2
 	return -1
+
+
+static func _depth_has_command(depth: Dictionary, command_id: String) -> bool:
+	for receipt_value in _copy_array(depth.get("command_receipts", [])):
+		if str(_copy_dict(receipt_value).get("command_id", "")) == command_id:
+			return true
+	return false
 
 
 static func _append_depth_receipt(state_value: Dictionary, receipt_key: String, command_id: String, envelope: Dictionary) -> Dictionary:

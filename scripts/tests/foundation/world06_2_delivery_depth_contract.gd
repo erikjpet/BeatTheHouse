@@ -53,6 +53,7 @@ func _check_physical_route(failures: Array) -> void:
 	_assert_exact(_act(state, "pickup", "pickup:missing_target", {"node_id": "bar"}), state, failures, "pickup without a mandatory target")
 	state = _act(state, "pickup", "pickup:ok", {"node_id": "bar", "target_id": "delivery_pickup"})
 	_assert_physical(state, "carried", "bar", failures, "pickup")
+	_assert_exact(DeliveryRunModelScript.note_arrival(state, "pawn_shop"), state, failures, "caller-issued arrival without a host move")
 	var moved := _act(state, "move", "move:first", {"node_id": "bar", "destination_node_id": "pawn_shop"})
 	_assert_physical(moved, "carried", "pawn_shop", failures, "first real-map move")
 	_assert_exact(_act(moved, "handoff", "handoff:wrong", {"node_id": "pawn_shop", "target_id": "second"}), moved, failures, "out-of-order handoff")
