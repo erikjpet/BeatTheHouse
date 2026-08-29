@@ -71,6 +71,7 @@ func _run() -> void:
 	var module_script: Script = load(str(definition.get("module_path", "")))
 	var game: GameModule = module_script.new()
 	game.setup(definition, library)
+	_check_generic_null_authority_provider()
 	_check_contract(game)
 	_check_declared_projection_ids(game)
 	_check_phase_projection(game)
@@ -96,6 +97,26 @@ func _run() -> void:
 		push_error(str(failure))
 	print("game06_2_depth_contract: FAIL (%d)" % failures.size())
 	quit(1)
+
+
+func _check_generic_null_authority_provider() -> void:
+	var generic := GameModule.new()
+	generic.setup({"id": "game06_2_generic_null_authority"})
+	_check(generic.sealed_action_authority_script() == null, "Generic GameModule unexpectedly acquired a sealed action authority provider.")
+	var host: Control = FoundationMainScript.new()
+	host.set("current_game", generic)
+	host.set("game_module_cache", {generic.get_id(): generic})
+	_check(not bool(host.call("_current_game_uses_action_authority")), "Foundation host treated a generic null-provider GameModule as authority-enabled.")
+	host.free()
+	var source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	var resolve_start := source.find("func _resolve_game_action(")
+	var resolve_end := source.find("\nfunc ", resolve_start + 1)
+	var resolve_source := source.substr(resolve_start, resolve_end - resolve_start) if resolve_start >= 0 and resolve_end > resolve_start else ""
+	_check(
+		resolve_source.contains("resolved_action_authority_script != null and result.has(resolved_action_authority_script.HOST_REPLAY_KEY)")
+			and resolve_source.contains("resolved_action_authority_script == null or not bool(result.get(resolved_action_authority_script.HOST_COMMITTED_KEY, false))"),
+		"Generic result consumption no longer guards sealed replay/commit keys behind a non-null authority provider."
+	)
 
 
 func _check_proposal_replay_ignores_wall_time(game: GameModule) -> void:

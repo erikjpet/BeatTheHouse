@@ -10143,19 +10143,21 @@ func _add_current_game_panel(environment: Dictionary) -> void:
 func _resolve_game_action(action_id: String, skip_stake_validation: bool = false, preserve_surface_ui_state: bool = false, wager_confirmed: bool = false, resolved_surface_ui_state: Dictionary = {}, input_route_guarded: bool = false, stake_override: int = 0, authority_delivery: Dictionary = {}) -> void:
 	if action_id.is_empty() or current_game == null:
 		return
+	var current_action_uses_authority := _current_game_uses_action_authority()
+	var resolved_action_authority_script: Script = ActionAuthorityScript if current_action_uses_authority else null
 	if _deferred_embedded_refresh_blocks_current_surface_input():
 		deferred_embedded_refresh_blocked_surface_input_count += 1
 		return
 	if not wager_confirmed and not input_route_guarded and _guard_player_input_route():
 		return
-	if _current_game_uses_action_authority() and not authority_delivery.is_empty():
+	if current_action_uses_authority and not authority_delivery.is_empty():
 		if str(authority_delivery.get("action_id", "")) != action_id:
 			_show_message("Blackjack replay failed closed because its action did not match the sealed delivery.")
 			_refresh()
 			return
 		var early_replay := _sealed_action_host_cached_replay(authority_delivery)
 		if not early_replay.is_empty():
-			if early_replay.has(ActionAuthorityScript.HOST_REPLAY_KEY) and _sealed_action_host_present_cached_replay(early_replay):
+			if early_replay.has(resolved_action_authority_script.HOST_REPLAY_KEY) and _sealed_action_host_present_cached_replay(early_replay):
 				return
 			_show_message(str(early_replay.get("message", "Blackjack replay failed closed.")))
 			_refresh()
@@ -10211,7 +10213,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if debug_coin_pusher_host:
 		debug_host_timing["host_pre_module"] = Time.get_ticks_usec() - debug_host_stage_started_usec
 		debug_host_stage_started_usec = Time.get_ticks_usec()
-	if _current_game_uses_action_authority():
+	if current_action_uses_authority:
 		result = _sealed_action_host_resolve_intent(action_id, stake, authority_delivery)
 	else:
 		var wager_funding := run_state.fund_grand_casino_wager(current_game.get_id(), wager_cost, run_state.current_environment)
@@ -10227,9 +10229,9 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if debug_coin_pusher_host:
 		debug_host_timing["host_module_resolve"] = Time.get_ticks_usec() - debug_host_stage_started_usec
 		debug_host_stage_started_usec = Time.get_ticks_usec()
-	if result.has(ActionAuthorityScript.HOST_REPLAY_KEY):
+	if resolved_action_authority_script != null and result.has(resolved_action_authority_script.HOST_REPLAY_KEY):
 		if not _sealed_action_host_present_cached_replay(result):
-			result = _sealed_action_host_rejection("invalid_cache", "Blackjack replay did not match the canonical committed response.", str(result.get(ActionAuthorityScript.HOST_REQUEST_KEY, "")))
+			result = _sealed_action_host_rejection("invalid_cache", "Blackjack replay did not match the canonical committed response.", str(result.get(resolved_action_authority_script.HOST_REQUEST_KEY, "")))
 		else:
 			return
 	if bool(result.get("ok", false)):
@@ -10256,7 +10258,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if debug_coin_pusher_host:
 		debug_host_timing["host_result_preapply"] = Time.get_ticks_usec() - debug_host_stage_started_usec
 		debug_host_stage_started_usec = Time.get_ticks_usec()
-	if bool(result.get("ok", false)) and not bool(result.get(ActionAuthorityScript.HOST_COMMITTED_KEY, false)):
+	if bool(result.get("ok", false)) and (resolved_action_authority_script == null or not bool(result.get(resolved_action_authority_script.HOST_COMMITTED_KEY, false))):
 		if not runtime_tick_in_progress:
 			if not _advance_environment_turns_checked(1):
 				run_state.from_dict(boundary_rollback_run)
