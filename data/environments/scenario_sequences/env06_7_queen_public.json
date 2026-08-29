@@ -779,6 +779,17 @@
                 },
                 {
                   "condition": {
+                    "command_id": "fail_delta_queen_wedding_charter",
+                    "type": "command"
+                  },
+                  "id": "delta_queen_wedding_charter_work_1_fail",
+                  "next_phase": "terminal_failure",
+                  "objective_outcomes": {
+                    "main_task": "failure"
+                  }
+                },
+                {
+                  "condition": {
                     "command_id": "refuse_delta_queen_wedding_charter",
                     "type": "command"
                   },
@@ -865,6 +876,12 @@
                         },
                         "label": "Recover Ring Case",
                         "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_delta_queen_wedding_charter",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
                       }
                     ],
                     "disabled_reason": "",
@@ -876,9 +893,10 @@
                     },
                     "input_actions": [
                       "ui_left",
-                      "ui_accept"
+                      "ui_accept",
+                      "ui_right"
                     ],
-                    "label": "Return Rings To Best Man",
+                    "label": "Route 1",
                     "min_target_size": 44.0,
                     "non_color_state": "route_0_ready",
                     "owner_namespace": "scenario",
@@ -915,7 +933,7 @@
                     "input_actions": [
                       "ui_up"
                     ],
-                    "label": "Exploit Loose Wedding Tables",
+                    "label": "Route 2",
                     "min_target_size": 44.0,
                     "non_color_state": "route_1_ready",
                     "owner_namespace": "scenario",
@@ -952,7 +970,7 @@
                     "input_actions": [
                       "ui_right"
                     ],
-                    "label": "Delay Wedding Charter",
+                    "label": "Route 3",
                     "min_target_size": 44.0,
                     "non_color_state": "route_2_ready",
                     "owner_namespace": "scenario",
@@ -1006,7 +1024,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Return Rings To Best Man",
+                    "label": "Route 1",
                     "role": "decision_route",
                     "state": "route_0_ready",
                     "visible": true,
@@ -1027,7 +1045,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Exploit Loose Wedding Tables",
+                    "label": "Route 2",
                     "role": "decision_route",
                     "state": "route_1_ready",
                     "visible": true,
@@ -1048,7 +1066,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Delay Wedding Charter",
+                    "label": "Route 3",
                     "role": "decision_route",
                     "state": "route_2_ready",
                     "visible": true,
@@ -1626,7 +1644,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4b38a4ce79c6911ef7ae18ab822b64473362eb588a86fd3934f75fd9bacef24e"
+        "sequence_signature": "d4292c955d54d17b622ab40db1c5e6205b7484d256e880b70639771de467139b"
       }
     },
     {
@@ -2695,7 +2713,7 @@
                       "ui_left",
                       "ui_accept"
                     ],
-                    "label": "Earn Whale Service Access",
+                    "label": "Route 1",
                     "min_target_size": 44.0,
                     "non_color_state": "route_0_ready",
                     "owner_namespace": "scenario",
@@ -2732,7 +2750,7 @@
                     "input_actions": [
                       "ui_up"
                     ],
-                    "label": "Shadow Whale Entourage",
+                    "label": "Route 2",
                     "min_target_size": 44.0,
                     "non_color_state": "route_1_ready",
                     "owner_namespace": "scenario",
@@ -2769,7 +2787,7 @@
                     "input_actions": [
                       "ui_right"
                     ],
-                    "label": "Trigger Whale Security Lock",
+                    "label": "Route 3",
                     "min_target_size": 44.0,
                     "non_color_state": "route_2_ready",
                     "owner_namespace": "scenario",
@@ -2815,7 +2833,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Earn Whale Service Access",
+                    "label": "Route 1",
                     "role": "decision_route",
                     "state": "route_0_ready",
                     "visible": true,
@@ -2836,7 +2854,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Shadow Whale Entourage",
+                    "label": "Route 2",
                     "role": "decision_route",
                     "state": "route_1_ready",
                     "visible": true,
@@ -2857,7 +2875,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Trigger Whale Security Lock",
+                    "label": "Route 3",
                     "role": "decision_route",
                     "state": "route_2_ready",
                     "visible": true,
@@ -3244,7 +3262,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e6d6de3216741be0ae3402899d7478fe044cb809987f6d86672221636b3403e7"
+        "sequence_signature": "5260baa77b8849b67d29b0ec9b9ed26c2c5aaa36c522124b81d30d324d0d824e"
       }
     },
     {
@@ -4122,7 +4140,7 @@
                       "ui_left",
                       "ui_accept"
                     ],
-                    "label": "Assist Fog Reroute",
+                    "label": "Route 1",
                     "min_target_size": 44.0,
                     "non_color_state": "route_0_ready",
                     "owner_namespace": "scenario",
@@ -4159,7 +4177,7 @@
                     "input_actions": [
                       "ui_up"
                     ],
-                    "label": "Wait Out Fog Safely",
+                    "label": "Route 2",
                     "min_target_size": 44.0,
                     "non_color_state": "route_1_ready",
                     "owner_namespace": "scenario",
@@ -4196,7 +4214,7 @@
                     "input_actions": [
                       "ui_right"
                     ],
-                    "label": "Exploit Trapped Fog Crowd",
+                    "label": "Route 3",
                     "min_target_size": 44.0,
                     "non_color_state": "route_2_ready",
                     "owner_namespace": "scenario",
@@ -4242,7 +4260,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Assist Fog Reroute",
+                    "label": "Route 1",
                     "role": "decision_route",
                     "state": "route_0_ready",
                     "visible": true,
@@ -4263,7 +4281,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Wait Out Fog Safely",
+                    "label": "Route 2",
                     "role": "decision_route",
                     "state": "route_1_ready",
                     "visible": true,
@@ -4284,7 +4302,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Exploit Trapped Fog Crowd",
+                    "label": "Route 3",
                     "role": "decision_route",
                     "state": "route_2_ready",
                     "visible": true,
@@ -4862,7 +4880,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "7b872b7650b488d6f4888e21a7f1bff7d0a59436cc40e25bdff8d5e82400e790"
+        "sequence_signature": "16805922fe12812eae4d3b7aff535d486676d6ff951617dcb6ac8bfac5996cc4"
       }
     },
     {
@@ -6175,7 +6193,7 @@
                       "ui_left",
                       "ui_accept"
                     ],
-                    "label": "Repair Engine For Departure",
+                    "label": "Route 1",
                     "min_target_size": 44.0,
                     "non_color_state": "route_0_ready",
                     "owner_namespace": "scenario",
@@ -6212,7 +6230,7 @@
                     "input_actions": [
                       "ui_up"
                     ],
-                    "label": "Ration Limited Engine Power",
+                    "label": "Route 2",
                     "min_target_size": 44.0,
                     "non_color_state": "route_1_ready",
                     "owner_namespace": "scenario",
@@ -6249,7 +6267,7 @@
                     "input_actions": [
                       "ui_right"
                     ],
-                    "label": "Stage Engine Evacuation",
+                    "label": "Route 3",
                     "min_target_size": 44.0,
                     "non_color_state": "route_2_ready",
                     "owner_namespace": "scenario",
@@ -6295,7 +6313,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Repair Engine For Departure",
+                    "label": "Route 1",
                     "role": "decision_route",
                     "state": "route_0_ready",
                     "visible": true,
@@ -6316,7 +6334,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Ration Limited Engine Power",
+                    "label": "Route 2",
                     "role": "decision_route",
                     "state": "route_1_ready",
                     "visible": true,
@@ -6337,7 +6355,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Stage Engine Evacuation",
+                    "label": "Route 3",
                     "role": "decision_route",
                     "state": "route_2_ready",
                     "visible": true,
@@ -6719,7 +6737,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a61d8ef1870e20035c988980520dbf5188bd0ff69876f9052e62287a6a39615a"
+        "sequence_signature": "6c5c4a5c9c6dba070c02c9d2cc52279595aa77ec01482f8fc58abd0a6c09ad80"
       }
     },
     {
@@ -8037,7 +8055,7 @@
                       "ui_left",
                       "ui_accept"
                     ],
-                    "label": "Qualify For Captains Final",
+                    "label": "Route 1",
                     "min_target_size": 44.0,
                     "non_color_state": "route_0_ready",
                     "owner_namespace": "scenario",
@@ -8074,7 +8092,7 @@
                     "input_actions": [
                       "ui_up"
                     ],
-                    "label": "Observe Captains Final",
+                    "label": "Route 2",
                     "min_target_size": 44.0,
                     "non_color_state": "route_1_ready",
                     "owner_namespace": "scenario",
@@ -8111,7 +8129,7 @@
                     "input_actions": [
                       "ui_right"
                     ],
-                    "label": "Dispute Captains Bracket",
+                    "label": "Route 3",
                     "min_target_size": 44.0,
                     "non_color_state": "route_2_ready",
                     "owner_namespace": "scenario",
@@ -8157,7 +8175,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Qualify For Captains Final",
+                    "label": "Route 1",
                     "role": "decision_route",
                     "state": "route_0_ready",
                     "visible": true,
@@ -8178,7 +8196,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Observe Captains Final",
+                    "label": "Route 2",
                     "role": "decision_route",
                     "state": "route_1_ready",
                     "visible": true,
@@ -8199,7 +8217,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Dispute Captains Bracket",
+                    "label": "Route 3",
                     "role": "decision_route",
                     "state": "route_2_ready",
                     "visible": true,
@@ -8581,7 +8599,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c48ffecf4b76312dd785d076b06230269bf394518f7fb7c47161b2fab50f3604"
+        "sequence_signature": "5670763feb31eb47525676f6e50de8c24feb23310264a08606eb4ee28af3a848"
       }
     },
     {
@@ -9263,7 +9281,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Stalled gala stage lift",
+                    "label": "Lift",
                     "role": "workstation",
                     "state": "stalled",
                     "visible": true,
@@ -9667,7 +9685,7 @@
                       "ui_left",
                       "ui_accept"
                     ],
-                    "label": "Assume Gala Cover Identity",
+                    "label": "Route 1",
                     "min_target_size": 44.0,
                     "non_color_state": "route_0_ready",
                     "owner_namespace": "scenario",
@@ -9704,7 +9722,7 @@
                     "input_actions": [
                       "ui_up"
                     ],
-                    "label": "Reopen Public Gala Floor",
+                    "label": "Route 2",
                     "min_target_size": 44.0,
                     "non_color_state": "route_1_ready",
                     "owner_namespace": "scenario",
@@ -9741,7 +9759,7 @@
                     "input_actions": [
                       "ui_right"
                     ],
-                    "label": "Fail Gala Credentials",
+                    "label": "Route 3",
                     "min_target_size": 44.0,
                     "non_color_state": "route_2_ready",
                     "owner_namespace": "scenario",
@@ -9803,7 +9821,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Assume Gala Cover Identity",
+                    "label": "Route 1",
                     "role": "decision_route",
                     "state": "route_0_ready",
                     "visible": true,
@@ -9824,7 +9842,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Reopen Public Gala Floor",
+                    "label": "Route 2",
                     "role": "decision_route",
                     "state": "route_1_ready",
                     "visible": true,
@@ -9845,7 +9863,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Fail Gala Credentials",
+                    "label": "Route 3",
                     "role": "decision_route",
                     "state": "route_2_ready",
                     "visible": true,
@@ -10232,7 +10250,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "63f7a353406b8a9aeb89494dea41f60e5d7b207e787251ccc394312e8876e2a0"
+        "sequence_signature": "2944d8d3154809c6ed84c5206104304ab7663ace0cc442d0046b9ca2374c81b2"
       }
     },
     {
@@ -10916,7 +10934,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Contested table block",
+                    "label": "Block",
                     "role": "barrier",
                     "state": "crowded",
                     "visible": true,
@@ -11320,7 +11338,7 @@
                       "ui_left",
                       "ui_accept"
                     ],
-                    "label": "Blend With Badge Crowd",
+                    "label": "Route 1",
                     "min_target_size": 44.0,
                     "non_color_state": "route_0_ready",
                     "owner_namespace": "scenario",
@@ -11357,7 +11375,7 @@
                     "input_actions": [
                       "ui_up"
                     ],
-                    "label": "Split Convention Schedule",
+                    "label": "Route 2",
                     "min_target_size": 44.0,
                     "non_color_state": "route_1_ready",
                     "owner_namespace": "scenario",
@@ -11394,7 +11412,7 @@
                     "input_actions": [
                       "ui_right"
                     ],
-                    "label": "Trigger Convention Standoff",
+                    "label": "Route 3",
                     "min_target_size": 44.0,
                     "non_color_state": "route_2_ready",
                     "owner_namespace": "scenario",
@@ -11456,7 +11474,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Blend With Badge Crowd",
+                    "label": "Route 1",
                     "role": "decision_route",
                     "state": "route_0_ready",
                     "visible": true,
@@ -11477,7 +11495,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Split Convention Schedule",
+                    "label": "Route 2",
                     "role": "decision_route",
                     "state": "route_1_ready",
                     "visible": true,
@@ -11498,7 +11516,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Trigger Convention Standoff",
+                    "label": "Route 3",
                     "role": "decision_route",
                     "state": "route_2_ready",
                     "visible": true,
@@ -11885,7 +11903,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "6c0498c5cbafb907a372178b932e51b0189da2407c6e89cbc86118c70326eb68"
+        "sequence_signature": "94b21620c36ab37b0ddbe88040d893cbb4e6a38dc9080aef722b6e0943501dcb"
       }
     },
     {
@@ -12811,7 +12829,7 @@
                       "ui_left",
                       "ui_accept"
                     ],
-                    "label": "Comply With Audit Route",
+                    "label": "Route 1",
                     "min_target_size": 44.0,
                     "non_color_state": "route_0_ready",
                     "owner_namespace": "scenario",
@@ -12848,7 +12866,7 @@
                     "input_actions": [
                       "ui_up"
                     ],
-                    "label": "Redirect Public Audit",
+                    "label": "Route 2",
                     "min_target_size": 44.0,
                     "non_color_state": "route_1_ready",
                     "owner_namespace": "scenario",
@@ -12885,7 +12903,7 @@
                     "input_actions": [
                       "ui_right"
                     ],
-                    "label": "Close Audited Games",
+                    "label": "Route 3",
                     "min_target_size": 44.0,
                     "non_color_state": "route_2_ready",
                     "owner_namespace": "scenario",
@@ -12947,7 +12965,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Comply With Audit Route",
+                    "label": "Route 1",
                     "role": "decision_route",
                     "state": "route_0_ready",
                     "visible": true,
@@ -12968,7 +12986,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Redirect Public Audit",
+                    "label": "Route 2",
                     "role": "decision_route",
                     "state": "route_1_ready",
                     "visible": true,
@@ -12989,7 +13007,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Close Audited Games",
+                    "label": "Route 3",
                     "role": "decision_route",
                     "state": "route_2_ready",
                     "visible": true,
@@ -13567,7 +13585,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "42a43c64fadc8e4b65119ff396028cfc24a78c953948644b814f43325db9ae17"
+        "sequence_signature": "983f4acbc448c259bfbac2f45d0f8ea7fed89d23d00a3216c82a87f310ae22bf"
       }
     }
   ]

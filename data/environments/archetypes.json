@@ -3516,7 +3516,7 @@
     "semantic_anchors": {
       "grand_aftermath_scene": {"position": [300, 70], "zone_id": "background"},
       "grand_aftermath_actor": {"position": [430, 70], "zone_id": "background"},
-      "grand_decision_left": {"position": [394, 70], "zone_id": "background"},
+      "grand_decision_left": {"position": [414, 70], "zone_id": "background"},
       "grand_decision_middle": {"position": [520, 70], "zone_id": "background"},
       "grand_decision_middle_right": {"position": [646, 70], "zone_id": "background"},
       "grand_decision_right": {"position": [772, 70], "zone_id": "background"},

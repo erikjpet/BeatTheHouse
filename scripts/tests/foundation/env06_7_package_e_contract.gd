@@ -8,6 +8,7 @@ const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const SemanticInventory := preload("res://scripts/core/environment_semantic_inventory.gd")
+const BaseSemanticRecords := preload("res://scripts/core/environment_base_semantic_records.gd")
 
 const PACKAGE_PATH := "res://data/environments/scenario_sequences/env06_7_queen_public.json"
 const EXPECTED_IDS := [
@@ -95,13 +96,33 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 		var environment_class: Variant = EnvironmentInstanceScript
 		var environment: Variant = environment_class.from_archetype(archetype, 1, rng, _library, {}, definition)
 		var environment_data: Dictionary = environment.call("to_dict")
-		var sealed := SemanticInventory.for_instance(environment_data, _library, [], [])
+		if archetype_id == "grand_casino":
+			environment_data["world_node_id"] = archetype_id
+			environment_data["world_map_travel"] = true
+		environment_data["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment_data)
+		var authoritative := BaseSemanticRecords.authoritative_interactable_records(environment_data, _library)
+		if not bool(authoritative.get("ok", false)):
+			failures.append("%s production base semantics failed: %s" % [sid, JSON.stringify(authoritative.get("errors", []))])
+			return {}
+		var stamped := BaseSemanticRecords.stamp_interactable_records(_array(authoritative.get("records", [])), environment_data, _library)
+		if not bool(stamped.get("ok", false)):
+			failures.append("%s production base semantic stamping failed: %s" % [sid, JSON.stringify(stamped.get("errors", []))])
+			return {}
+		var produced := BaseSemanticRecords.from_interactable_records(_array(stamped.get("records", [])))
+		if not bool(produced.get("ok", false)):
+			failures.append("%s production base semantic conversion failed: %s" % [sid, JSON.stringify(produced.get("errors", []))])
+			return {}
+		var base_interactions := _array(produced.get("interactions", []))
+		var base_actors := _array(produced.get("actors", []))
+		environment_data["scenario_base_interactions"] = base_interactions
+		environment_data["scenario_base_actors"] = base_actors
+		var sealed := SemanticInventory.for_instance(environment_data, _library, base_interactions, base_actors)
 		var inventory_errors := SemanticInventory.validate_instance_binding(sealed, environment_data)
 		var exact := SemanticInventory.exact_collections(sealed)
 		if not inventory_errors.is_empty() or exact.is_empty():
 			failures.append("%s production environment composition did not seal: %s" % [sid,JSON.stringify(inventory_errors)])
 			return {}
-		composition = {"exact":exact,"schema_version":int(sealed.get("schema_version",0)),"digest":str(sealed.get("digest","")),"environment_id":str(environment_data.get("id",""))}
+		composition = {"exact":exact,"schema_version":int(sealed.get("schema_version",0)),"digest":str(sealed.get("digest","")),"environment_id":str(environment_data.get("id","")),"base_interactions":base_interactions}
 		_composition_cache[archetype_id] = composition
 	var exact := _dict(composition.get("exact", {}))
 	var bounded: Dictionary = {}
@@ -112,7 +133,7 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 			if not _array(exact.get(collection, [])).has(identity): failures.append("%s declared %s is absent from its production-composed environment." % [sid,identity])
 			else: bounded[collection].append(identity)
 	bounded["event_choices"] = _dict(exact.get("event_choices",{}))
-	return {"target_inventory":bounded,"inventory_schema_version":int(composition.get("schema_version",0)),"inventory_digest":str(composition.get("digest","")),"inventory_errors":[],"base_interactions":[],"event_choices":_dict(exact.get("event_choices",{})),"environment_id":str(composition.get("environment_id","")),"production_inventory_digest":str(composition.get("digest",""))}
+	return {"target_inventory":bounded,"inventory_schema_version":int(composition.get("schema_version",0)),"inventory_digest":str(composition.get("digest","")),"inventory_errors":[],"base_interactions":_array(composition.get("base_interactions", [])),"event_choices":_dict(exact.get("event_choices",{})),"environment_id":str(composition.get("environment_id","")),"production_inventory_digest":str(composition.get("digest",""))}
 
 func _check_frozen_identity(definition: Dictionary, entry: Dictionary, failures: Array) -> void:
 	var sid := str(definition.get("id", ""))
@@ -176,7 +197,14 @@ func _check_terminal_route(definition: Dictionary, phase_id: String, kind: Strin
 	if not _round_trip(state, definition): failures.append("%s %s %s pre-save drifted." % [sid,phase_id,kind])
 	var result: Dictionary
 	if kind == "interrupted": result = _fact_route(state, definition, "travel_departed", {"source_id":sid,"target_id":"world_map","travel_kind":"ordinary"}, "%s:%s:depart" % [sid,phase_id])
-	else: result = _apply(state, definition, ("fail_" if kind == "failure" else "refuse_") + sid, "%s:%s:%s" % [sid,phase_id,kind])
+	else:
+		var command_id := ("fail_" if kind == "failure" else "refuse_") + sid
+		if kind == "failure" and _command_target(state, command_id).is_empty():
+			command_id = _terminal_branch_command(definition, phase_id, "terminal_failure")
+			if command_id.is_empty():
+				failures.append("%s has no authentic terminal failure command at %s." % [sid, phase_id])
+				return
+		result = _apply(state, definition, command_id, "%s:%s:%s" % [sid,phase_id,kind])
 	var terminal := _dict(result.get("state", {}))
 	if not bool(result.get("ok", false)) or str(terminal.get("status", "")) != "aftermath": failures.append("%s %s at %s failed: %s" % [sid,kind,phase_id,JSON.stringify(result.get("errors",[]))])
 	if not _round_trip(terminal, definition): failures.append("%s %s %s post-save drifted." % [sid,phase_id,kind])
@@ -381,16 +409,30 @@ func _branch_target(definition: Dictionary, phase_id: String, command_id: String
 			if str(condition.get("command_id", "")) == command_id: return str(branch.get("next_phase", ""))
 	return ""
 
+func _terminal_branch_command(definition: Dictionary, phase_id: String, terminal_phase: String) -> String:
+	for phase_value in _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", [])):
+		var phase := _dict(phase_value)
+		if str(phase.get("id", "")) != phase_id: continue
+		for branch_value in _array(phase.get("branches", [])):
+			var branch := _dict(branch_value)
+			if str(branch.get("next_phase", "")) != terminal_phase: continue
+			var command_id := str(_dict(branch.get("condition", {})).get("command_id", ""))
+			if not command_id.is_empty(): return command_id
+	return ""
+
 func _round_trip(state: Dictionary, definition: Dictionary) -> bool:
 	if state.is_empty(): return false
 	var restored := Runtime.normalize_state(JSON.parse_string(JSON.stringify(state)), definition, _host_semantics())
 	return str(restored.get("phase_id","")) == str(state.get("phase_id","")) \
 		and str(restored.get("status","")) == str(state.get("status","")) \
-		and JSON.stringify(_dict(restored.get("semantic_state",{}))) == JSON.stringify(_dict(state.get("semantic_state",{}))) \
-		and JSON.stringify(_dict(restored.get("local_state",{}))) == JSON.stringify(_dict(state.get("local_state",{}))) \
+		and _wire_canonical(restored.get("semantic_state",{})) == _wire_canonical(state.get("semantic_state",{})) \
+		and _wire_canonical(restored.get("local_state",{})) == _wire_canonical(state.get("local_state",{})) \
 		and _array(restored.get("command_receipts",[])) == _array(state.get("command_receipts",[])) \
 		and _array(restored.get("fact_receipts",[])) == _array(state.get("fact_receipts",[])) \
 		and JSON.stringify(Runtime.public_projection(restored, definition)) == JSON.stringify(Runtime.public_projection(state, definition))
+
+func _wire_canonical(value: Variant) -> String:
+	return JSON.stringify(Runtime._canonical_variant(JSON.parse_string(JSON.stringify(value))))
 
 func _producer(fact_type: String) -> String:
 	for producer_value in Runtime.FACT_TYPES_BY_PRODUCER.keys():
