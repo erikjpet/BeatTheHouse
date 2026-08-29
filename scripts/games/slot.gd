@@ -62,7 +62,8 @@ func sealed_action_authority_contract() -> Dictionary:
 
 func slot_machine_ritual_contract() -> Dictionary:
 	# Slot-owned declaration only: resolver authority and RNG remain in the
-	# shipped machine state/resolver. No shared executable ritual is imported.
+	# shipped machine state/resolver. Shared runtime use is limited to canonical
+	# sealed-proposal fingerprints; it does not execute Slot phases or math.
 	var action_ids := ["slot_handpay_acknowledge", "slot_bet", "spin", "nudge", "slot_auto_toggle", "launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt"]
 	var declarations: Array = []
 	for action_id in action_ids:
@@ -445,6 +446,7 @@ func _slot_sealed_handpay_acknowledgement_result(run_state: RunState, environmen
 		"environment_archetype_id": str(environment.get("archetype_id", "")),
 		"slot_handpay_acknowledgement": true,
 		"slot_handpay_result_id": result_id,
+		ActionAuthorityScript.SKIP_ENVIRONMENT_TURN_KEY: true,
 		"message": str((deltas.get("messages", []) as Array)[0]),
 	})
 

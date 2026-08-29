@@ -228,8 +228,10 @@ already-receipted payout, award, dialogue, audio, and room-reaction effects.
 
 The executable declarations at `slot_machine_ritual_contract()` and
 `video_poker_ritual_contract()` are built directly on accepted vocabulary head
-`a2760d81`. They import no shared executable ritual runtime and preserve the
-existing resolver, RNG, paytable, detection, and rendering authorities. The
+`a2760d81`. Shared runtime use is limited to canonical sealed-proposal
+fingerprints; phase execution and all machine math remain module-owned. The
+implementations preserve the existing resolver, RNG, paytable, detection, and
+rendering authorities. The
 focused `game06_4_machine_ritual_contract.gd` fixture binds closed top-level and
 phase shapes, action registration, side-effect-free pointer rejection, input
 equivalence, material energy tiers, sealed-host handler authority, persistence,
@@ -243,14 +245,14 @@ evidence remain Integrator-owned gates. This WIP is not an acceptance verdict.
 The Slot surface now prepares a bounded ritual projection only during ordinary
 surface rebuilds. Its realtime patch remains the existing scalar presentation
 patch and does not copy the projection or machine. The projection consumes the
-authoritative selected credit bet, bankroll, animation id, bonus state, payout,
+authoritative selected bankroll bet, cash balance, animation id, bonus state, payout,
 celebration tier, and suspicion to drive visible cabinet, tower-light,
 validator, attendant, neighbour, energy, and staged-result states. A cabinet
 handle drag reaches the same shipped `slot_spin` command as the button; an
 incomplete pull returns without an action or debit.
 
 Video Poker prepares the corresponding projection from its existing machine,
-UI hand, flip, result, paytable, credit, denomination, and pit-watch state. The
+UI hand, flip, result, paytable units, bankroll, denomination, and pit-watch state. The
 authored renderer consumes it for tower/validator/actor state and explicit
 replacement/paytable-read staging. Existing per-card exact hold targets and the
 DEAL/DRAW deck remain the tactile authority, so held and drawn indices remain

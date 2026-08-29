@@ -1677,6 +1677,8 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal changed its delivery authority.", request_key)
 	var proposed_rng := RngStream.new()
 	proposed_rng.restore((proposal.get("rng_snapshot", {}) as Dictionary).duplicate(true))
+	var skip_environment_turn := bool(result.get(ActionAuthorityScript.SKIP_ENVIRONMENT_TURN_KEY, false))
+	result.erase(ActionAuthorityScript.SKIP_ENVIRONMENT_TURN_KEY)
 	var proposal_requires_apply_key := str(provider_contract.get("proposal_requires_apply_key", ""))
 	var requires_apply := not proposal_requires_apply_key.is_empty() and bool(result.get(proposal_requires_apply_key, false))
 	if not proposal_requires_apply_key.is_empty():
@@ -1721,7 +1723,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack authority disappeared after result apply.", request_key)
 	proposed_ledger["checkpoint_fingerprint"] = proposed_candidate.action_authority_checkpoint_fingerprint()
 	_sealed_action_host_store_ledger(proposed_candidate, proposed_ledger)
-	if not bool(result.get("defer_bankroll_zero_failure", false)):
+	if not bool(result.get("defer_bankroll_zero_failure", false)) and not skip_environment_turn:
 		var turn_result := _sealed_action_host_advance_environment_turn(proposed_candidate)
 		if not bool(turn_result.get("ok", false)):
 			return _sealed_action_host_rejection(str(turn_result.get("error_code", "environment_turn_failed")), "Blackjack transaction could not cross the environment boundary.", request_key)
