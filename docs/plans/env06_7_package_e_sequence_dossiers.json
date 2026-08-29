@@ -48,7 +48,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "f33e4709e6e4cb1ac13625caaca70daa08dd1370be4203c3d1482e155a3e38e3",
+      "sequence_signature": "579151e4c939fce813ff294b0d3068a481c1a1fb3badcc452a02b08fed74036c",
       "capture_ids": [
         "delta_queen_wedding_charter_arrival",
         "delta_queen_wedding_charter_partial",
@@ -107,7 +107,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "3477df94b1edf73477e576a84caf751faf922fabc6a758381cb358e000f73a47",
+      "sequence_signature": "7d1c106d01a4b63b935ba5d268e0ec57a3d91bab4739942e103f056e59d8c362",
       "capture_ids": [
         "delta_queen_whale_aboard_arrival",
         "delta_queen_whale_aboard_partial",
@@ -166,7 +166,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "d33dc4a4e2a899685edbc9ea10219256df1104083c397f9ec41de398c5fe13cb",
+      "sequence_signature": "6b0de3c69eca6ecbda497a81c4c4e7090e8771cde8e5dc6f4f9ebc383cc0be79",
       "capture_ids": [
         "delta_queen_fog_delay_arrival",
         "delta_queen_fog_delay_partial",
@@ -228,7 +228,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "9f71233d4976fa66aef2c746229e1be302c8e0aeacc1f9bd8cdcb5e0db7f5200",
+      "sequence_signature": "f13c42905a91103ab6f3315115f30df5b8816966fc505cd951a6b07a74c4cb90",
       "capture_ids": [
         "delta_queen_engine_trouble_arrival",
         "delta_queen_engine_trouble_partial",
@@ -289,7 +289,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "61cd2e73de185215e930406b585e408e93289d8974b6069560466d5744c54c2e",
+      "sequence_signature": "f02070c35dcb2bf258049ffac1b8c9a3d4c035c04e99f6ff2410f9dd42a128df",
       "capture_ids": [
         "delta_queen_captains_invitational_arrival",
         "delta_queen_captains_invitational_partial",
@@ -348,7 +348,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "4e06aa39e968fc9b47dc363c198f58629287b3cc1e717b31bb4e1763a09e7901",
+      "sequence_signature": "1ac881ca27673c9f0629cecf3deb1e319fd277f4cb2053141777c617b08a4d2e",
       "capture_ids": [
         "grand_casino_gala_night_arrival",
         "grand_casino_gala_night_partial",
@@ -407,7 +407,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "a2883536a6596838e0f11dd5fd488afbcbae0d08b82037a3e57f739a05f23289",
+      "sequence_signature": "ff93a104f361e8fdd2693fa4167cb625413f7b64e4216e34d1cfc3492e58dae9",
       "capture_ids": [
         "grand_casino_convention_crowd_arrival",
         "grand_casino_convention_crowd_partial",
@@ -467,7 +467,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "36fd248daf26186ed4bd6eef706159c9d1c88bfa790398f81748d836f849f3bf",
+      "sequence_signature": "3b5a13e7b93284fe80e77dba1174b21cddd7eb297238e6fa7ddb992784f2fe76",
       "capture_ids": [
         "grand_casino_audit_night_arrival",
         "grand_casino_audit_night_partial",
@@ -742,6 +742,33 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Invitational Role",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "set_state",
                   "owner_namespace": "scenario",
                   "state": "spectator_behavior_resolved"
@@ -916,6 +943,33 @@
                 }
               },
               {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Rotate Eliminated Table",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_position",
@@ -1064,7 +1118,34 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Seat Finalists",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               }
@@ -1201,9 +1282,36 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Score Opening Bracket",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
                   "zone_id": "left"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 }
               },
               {
@@ -1278,7 +1386,7 @@
                     "behavior": "work",
                     "label": "Captain scorer",
                     "pose": "arrival",
-                    "zone_id": "right"
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -1474,6 +1582,26 @@
                     "state": "opening",
                     "visible": true,
                     "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Verify Entry Card",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -1985,6 +2113,41 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -2012,10 +2175,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "61cd2e73de185215e930406b585e408e93289d8974b6069560466d5744c54c2e",
-      "calculated_signature": "61cd2e73de185215e930406b585e408e93289d8974b6069560466d5744c54c2e",
+      "authored_signature": "f02070c35dcb2bf258049ffac1b8c9a3d4c035c04e99f6ff2410f9dd42a128df",
+      "calculated_signature": "f02070c35dcb2bf258049ffac1b8c9a3d4c035c04e99f6ff2410f9dd42a128df",
       "nearest_id": "delta_queen_engine_trouble",
-      "nearest_similarity": 0.661392405063291
+      "nearest_similarity": 0.66254752851711
     },
     {
       "id": "delta_queen_engine_trouble",
@@ -2275,6 +2438,33 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Engine Response",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "background"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "set_state",
                   "owner_namespace": "scenario",
                   "state": "bench_move_resolved"
@@ -2449,6 +2639,33 @@
                 }
               },
               {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Fetch Impeller Key",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "background"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_position",
@@ -2597,7 +2814,34 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Restart Engine",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "background"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               }
@@ -2734,9 +2978,36 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Diagnose Pressure",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "background"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
                   "zone_id": "left"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 }
               },
               {
@@ -2811,7 +3082,7 @@
                     "behavior": "guard",
                     "label": "Gangway guard",
                     "pose": "arrival",
-                    "zone_id": "right"
+                    "zone_id": "service_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -2825,7 +3096,7 @@
                     "behavior": "work",
                     "label": "Engine mate",
                     "pose": "arrival",
-                    "zone_id": "left"
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -2986,7 +3257,7 @@
                     "role": "route_marker",
                     "state": "locked",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3006,7 +3277,7 @@
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "background"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3027,6 +3298,26 @@
                     "state": "sealed",
                     "visible": true,
                     "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Seal Engine Lane",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "background"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -3545,6 +3836,41 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -3572,10 +3898,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "9f71233d4976fa66aef2c746229e1be302c8e0aeacc1f9bd8cdcb5e0db7f5200",
-      "calculated_signature": "9f71233d4976fa66aef2c746229e1be302c8e0aeacc1f9bd8cdcb5e0db7f5200",
+      "authored_signature": "f13c42905a91103ab6f3315115f30df5b8816966fc505cd951a6b07a74c4cb90",
+      "calculated_signature": "f13c42905a91103ab6f3315115f30df5b8816966fc505cd951a6b07a74c4cb90",
       "nearest_id": "delta_queen_captains_invitational",
-      "nearest_similarity": 0.661392405063291
+      "nearest_similarity": 0.66254752851711
     },
     {
       "id": "delta_queen_fog_delay",
@@ -3826,9 +4152,36 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Organize Waiting Crowd",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
                   "zone_id": "left"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 }
               },
               {
@@ -4008,6 +4361,33 @@
                 }
               },
               {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Mark Stake Drift",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_position",
@@ -4151,6 +4531,33 @@
                     "state_label": "Work 3 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Dock Plan",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -4381,7 +4788,7 @@
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "background"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -4421,7 +4828,27 @@
                     "role": "barrier",
                     "state": "sealed",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Read Fog Signal",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -4909,6 +5336,34 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -4936,10 +5391,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "d33dc4a4e2a899685edbc9ea10219256df1104083c397f9ec41de398c5fe13cb",
-      "calculated_signature": "d33dc4a4e2a899685edbc9ea10219256df1104083c397f9ec41de398c5fe13cb",
+      "authored_signature": "6b0de3c69eca6ecbda497a81c4c4e7090e8771cde8e5dc6f4f9ebc383cc0be79",
+      "calculated_signature": "6b0de3c69eca6ecbda497a81c4c4e7090e8771cde8e5dc6f4f9ebc383cc0be79",
       "nearest_id": "delta_queen_wedding_charter",
-      "nearest_similarity": 0.697191697191697
+      "nearest_similarity": 0.694013303769401
     },
     {
       "id": "delta_queen_wedding_charter",
@@ -5190,9 +5645,36 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Recover Ring Case",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
                   "zone_id": "left"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 }
               },
               {
@@ -5372,6 +5854,33 @@
                 }
               },
               {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Steady Best Man",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_position",
@@ -5521,6 +6030,33 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Deliver Rings",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "set_state",
                   "owner_namespace": "scenario",
                   "state": "guest_route_resolved"
@@ -5590,7 +6126,7 @@
                     "behavior": "watch",
                     "label": "Losing best man",
                     "pose": "arrival",
-                    "zone_id": "right"
+                    "zone_id": "background"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -5604,7 +6140,7 @@
                     "behavior": "work",
                     "label": "Deck coordinator",
                     "pose": "arrival",
-                    "zone_id": "background"
+                    "zone_id": "service_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -5725,7 +6261,7 @@
                     "role": "game_station",
                     "state": "losing",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -5766,6 +6302,26 @@
                     "state": "split",
                     "visible": true,
                     "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Secure Ceremony Lane",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6273,6 +6829,34 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -6300,10 +6884,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "f33e4709e6e4cb1ac13625caaca70daa08dd1370be4203c3d1482e155a3e38e3",
-      "calculated_signature": "f33e4709e6e4cb1ac13625caaca70daa08dd1370be4203c3d1482e155a3e38e3",
+      "authored_signature": "579151e4c939fce813ff294b0d3068a481c1a1fb3badcc452a02b08fed74036c",
+      "calculated_signature": "579151e4c939fce813ff294b0d3068a481c1a1fb3badcc452a02b08fed74036c",
       "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.697191697191697
+      "nearest_similarity": 0.694013303769401
     },
     {
       "id": "delta_queen_whale_aboard",
@@ -6563,6 +7147,33 @@
                 }
               },
               {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Read Stake Shift",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_position",
@@ -6739,6 +7350,33 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Whale Access",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "set_state",
                   "owner_namespace": "scenario",
                   "state": "staff_behavior_resolved"
@@ -6877,9 +7515,36 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Carry Whale Service",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
                   "zone_id": "left"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 }
               },
               {
@@ -6954,7 +7619,7 @@
                     "behavior": "work",
                     "label": "Entourage runner",
                     "pose": "arrival",
-                    "zone_id": "left"
+                    "zone_id": "background"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -6968,7 +7633,7 @@
                     "behavior": "guard",
                     "label": "Whale host",
                     "pose": "arrival",
-                    "zone_id": "center"
+                    "zone_id": "service_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -7109,7 +7774,7 @@
                     "role": "scoreboard",
                     "state": "raised",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -7150,6 +7815,26 @@
                     "state": "restricted",
                     "visible": true,
                     "zone_id": "left"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Map Entourage Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -7637,6 +8322,34 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -7664,10 +8377,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "3477df94b1edf73477e576a84caf751faf922fabc6a758381cb358e000f73a47",
-      "calculated_signature": "3477df94b1edf73477e576a84caf751faf922fabc6a758381cb358e000f73a47",
+      "authored_signature": "7d1c106d01a4b63b935ba5d268e0ec57a3d91bab4739942e103f056e59d8c362",
+      "calculated_signature": "7d1c106d01a4b63b935ba5d268e0ec57a3d91bab4739942e103f056e59d8c362",
       "nearest_id": "grand_casino_convention_crowd",
-      "nearest_similarity": 0.716049382716049
+      "nearest_similarity": 0.720720720720721
     },
     {
       "id": "grand_casino_audit_night",
@@ -7918,9 +8631,36 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Present Pit Ledger",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
                   "zone_id": "left"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 }
               },
               {
@@ -8100,6 +8840,33 @@
                 }
               },
               {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Mark Closed Games",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_position",
@@ -8243,6 +9010,33 @@
                     "state_label": "Work 3 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Audit Response",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -8534,6 +9328,26 @@
                     "state": "requested",
                     "visible": true,
                     "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Acknowledge Audit Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -9028,6 +9842,34 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -9055,10 +9897,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "36fd248daf26186ed4bd6eef706159c9d1c88bfa790398f81748d836f849f3bf",
-      "calculated_signature": "36fd248daf26186ed4bd6eef706159c9d1c88bfa790398f81748d836f849f3bf",
+      "authored_signature": "3b5a13e7b93284fe80e77dba1174b21cddd7eb297238e6fa7ddb992784f2fe76",
+      "calculated_signature": "3b5a13e7b93284fe80e77dba1174b21cddd7eb297238e6fa7ddb992784f2fe76",
       "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.680622009569378
+      "nearest_similarity": 0.682660850599782
     },
     {
       "id": "grand_casino_convention_crowd",
@@ -9318,6 +10160,33 @@
                 }
               },
               {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Move Machine Markers",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_position",
@@ -9494,6 +10363,33 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Convention Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "set_state",
                   "owner_namespace": "scenario",
                   "state": "delegation_behavior_resolved"
@@ -9632,9 +10528,36 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Sort Delegation Badges",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
                   "zone_id": "left"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 }
               },
               {
@@ -9905,6 +10828,26 @@
                     "state": "split",
                     "visible": true,
                     "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Read Booking Board",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -10392,6 +11335,34 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -10419,10 +11390,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "a2883536a6596838e0f11dd5fd488afbcbae0d08b82037a3e57f739a05f23289",
-      "calculated_signature": "a2883536a6596838e0f11dd5fd488afbcbae0d08b82037a3e57f739a05f23289",
-      "nearest_id": "delta_queen_whale_aboard",
-      "nearest_similarity": 0.716049382716049
+      "authored_signature": "ff93a104f361e8fdd2693fa4167cb625413f7b64e4216e34d1cfc3492e58dae9",
+      "calculated_signature": "ff93a104f361e8fdd2693fa4167cb625413f7b64e4216e34d1cfc3492e58dae9",
+      "nearest_id": "grand_casino_gala_night",
+      "nearest_similarity": 0.728506787330317
     },
     {
       "id": "grand_casino_gala_night",
@@ -10682,6 +11653,33 @@
                 }
               },
               {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reset Stage Lift",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_position",
@@ -10858,6 +11856,33 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Gala Identity",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "set_state",
                   "owner_namespace": "scenario",
                   "state": "lift_appearance_resolved"
@@ -10996,9 +12021,36 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Verify Charity Badge",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
                   "zone_id": "left"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 }
               },
               {
@@ -11269,6 +12321,26 @@
                     "state": "stalled",
                     "visible": true,
                     "zone_id": "right"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Claim Coat Token",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -11756,6 +12828,34 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -11783,17 +12883,17 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "4e06aa39e968fc9b47dc363c198f58629287b3cc1e717b31bb4e1763a09e7901",
-      "calculated_signature": "4e06aa39e968fc9b47dc363c198f58629287b3cc1e717b31bb4e1763a09e7901",
+      "authored_signature": "1ac881ca27673c9f0629cecf3deb1e319fd277f4cb2053141777c617b08a4d2e",
+      "calculated_signature": "1ac881ca27673c9f0629cecf3deb1e319fd277f4cb2053141777c617b08a4d2e",
       "nearest_id": "grand_casino_convention_crowd",
-      "nearest_similarity": 0.713933415536375
+      "nearest_similarity": 0.728506787330317
     }
   ],
   "pairwise_similarity": [
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.368227731864096,
+      "similarity": 0.3785594639866,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11805,7 +12905,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.370817843866171,
+      "similarity": 0.376371308016878,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11817,7 +12917,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.36070110701107,
+      "similarity": 0.367141659681475,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11829,7 +12929,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.661392405063291,
+      "similarity": 0.66254752851711,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -11841,7 +12941,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.349775784753363,
+      "similarity": 0.359247135842881,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11853,7 +12953,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.352087114337568,
+      "similarity": 0.356966199505359,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11865,7 +12965,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.347197106690778,
+      "similarity": 0.352506162695152,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11877,7 +12977,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.365740740740741,
+      "similarity": 0.376371308016878,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11889,7 +12989,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.342342342342342,
+      "similarity": 0.352506162695152,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11901,7 +13001,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.680622009569378,
+      "similarity": 0.682660850599782,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -11913,7 +13013,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.494623655913979,
+      "similarity": 0.502458210422812,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11925,7 +13025,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.485042735042735,
+      "similarity": 0.493646138807429,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11937,7 +13037,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.3544536271809,
+      "similarity": 0.36371237458194,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11949,7 +13049,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.350861287398005,
+      "similarity": 0.360330578512397,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11961,7 +13061,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.697191697191697,
+      "similarity": 0.694013303769401,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -11973,7 +13073,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_whale_aboard",
-      "similarity": 0.485042735042735,
+      "similarity": 0.486381322957198,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -11985,7 +13085,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.664691943127962,
+      "similarity": 0.66991341991342,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -11997,7 +13097,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.483457844183565,
+      "similarity": 0.47918683446273,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12009,7 +13109,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.480298189563365,
+      "similarity": 0.47918683446273,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12021,7 +13121,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.370817843866171,
+      "similarity": 0.374052232518955,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12033,7 +13133,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.352087114337568,
+      "similarity": 0.356966199505359,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12045,7 +13145,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.489817792068596,
+      "similarity": 0.495107632093933,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12057,7 +13157,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.469665271966527,
+      "similarity": 0.46952380952381,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12069,10 +13169,10 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.716049382716049,
+      "similarity": 0.720720720720721,
       "equal_normalized_hash": false,
-      "status": "warning",
-      "blocking": false,
+      "status": "blocking_review",
+      "blocking": true,
       "masked_visual_evidence": {
 
       },
@@ -12081,7 +13181,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.697191697191697,
+      "similarity": 0.705357142857143,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -12093,7 +13193,7 @@
     {
       "left_id": "grand_casino_convention_crowd",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.471204188481675,
+      "similarity": 0.472328244274809,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12105,7 +13205,7 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.466597077244259,
+      "similarity": 0.468125594671741,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12117,10 +13217,10 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.713933415536375,
+      "similarity": 0.728506787330317,
       "equal_normalized_hash": false,
-      "status": "warning",
-      "blocking": false,
+      "status": "blocking_review",
+      "blocking": true,
       "masked_visual_evidence": {
 
       },
@@ -12136,13 +13236,13 @@
     "scenario grand_casino_gala_night is invalid: [\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario grand_casino_convention_crowd is invalid: [\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.697 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_wedding_charter vs grand_casino_audit_night: 0.665 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_whale_aboard vs grand_casino_gala_night: 0.697 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_whale_aboard vs grand_casino_convention_crowd: 0.716 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_fog_delay vs grand_casino_audit_night: 0.681 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_engine_trouble vs delta_queen_captains_invitational: 0.661 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario grand_casino_gala_night vs grand_casino_convention_crowd: 0.714 (warning). Missing receipt-bound masked visual evidence."
+    "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.694 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_wedding_charter vs grand_casino_audit_night: 0.670 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_whale_aboard vs grand_casino_gala_night: 0.705 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_whale_aboard vs grand_casino_convention_crowd: 0.721 (blocking_review).",
+    "scenario delta_queen_fog_delay vs grand_casino_audit_night: 0.683 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_engine_trouble vs delta_queen_captains_invitational: 0.663 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario grand_casino_gala_night vs grand_casino_convention_crowd: 0.729 (blocking_review)."
   ],
   "pair_count": 28
 }

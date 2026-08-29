@@ -270,12 +270,14 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 		var presentation_id := str(record.get("presentation_object_id", record.get("object_id", "")))
 		var dynamic_record := BaseSemanticRecordsScript.is_dynamic_interaction_record(record)
 		var dynamic_errors: Array = []
+		var casino_room_errors := _casino_room_interaction_errors(record, environment, library)
 		if dynamic_record:
 			dynamic_errors.append_array(BaseSemanticRecordsScript.validate_dynamic_interaction_record(record, environment, library))
 			var resolved_dynamic := OperationRegistryScript.resolve_interactions([record], [])
 			if not bool(resolved_dynamic.get("ok", false)): dynamic_errors.append_array(_array(resolved_dynamic.get("errors", [])))
 		if not _valid_identity(identity): errors.append("base interaction inventory contains an invalid identity.")
 		elif interaction_identities.has(identity) or interaction_presentations.has(presentation_id): errors.append("base interaction inventory contains duplicate/colliding identity or presentation id %s." % presentation_id)
+		elif not casino_room_errors.is_empty(): errors.append_array(casino_room_errors)
 		elif dynamic_record and not dynamic_errors.is_empty(): errors.append_array(dynamic_errors)
 		elif not layout_rects.has(presentation_id) and not dynamic_record: errors.append("base interaction %s has no exact final layout geometry or authorized dynamic producer." % presentation_id)
 		elif layout_rects.has(presentation_id) and not _same_normalized_rect(record.get("normalized_hit_rect", {}), layout_rects.get(presentation_id)):
@@ -335,7 +337,12 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 			_add(exact, "routes", identity)
 			_set_provenance(provenance, "routes", identity, "environment_instance", "layer_transitions", target_layer)
 	for room_id in _ids(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", [])):
-		if library != null and (not library.has_method("environment_archetype") or _dict(library.call("environment_archetype", room_id)).is_empty()): errors.append("environment instance references an unknown room route %s." % room_id)
+		var presentation_id := "travel:%s" % room_id
+		var rendered_identity := "base::%s" % presentation_id
+		if not _authored_casino_room_target(environment, library, room_id): errors.append("environment instance room route %s is not authorized by its selected archetype/layer." % room_id)
+		elif library != null and (not library.has_method("environment_archetype") or _dict(library.call("environment_archetype", room_id)).is_empty()): errors.append("environment instance references an unknown room route %s." % room_id)
+		elif not layout_rects.has(presentation_id): errors.append("environment instance room route %s has no exact travel layout geometry." % room_id)
+		elif not interaction_identities.has(rendered_identity): errors.append("environment instance room route %s has no exact rendered travel interaction." % room_id)
 		else:
 			var identity := "base::room:%s" % room_id
 			_add(exact, "routes", identity)
@@ -1086,6 +1093,44 @@ static func _recognized_fixture(environment: Dictionary, presentation_id: String
 		"casino_fixture": return _record_has_id(_dict(environment.get("local_narrative_flags", {})).get("casino_fixtures", []), source_id)
 		"travel": return source_id == "leave" and not _ids(_array(environment.get("travel_hooks", [])) + _array(environment.get("next_archetypes", []))).is_empty()
 	return false
+
+
+static func _casino_room_interaction_errors(record: Dictionary, environment: Dictionary, library: Variant) -> Array:
+	var presentation_id := str(record.get("presentation_object_id", record.get("object_id", "")))
+	var source_id := str(record.get("source_id", "")).strip_edges()
+	var presentation_source := presentation_id.trim_prefix("travel:") if presentation_id.begins_with("travel:") else ""
+	var exact_targets := _ids(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", []))
+	var candidate := str(record.get("source_field", "")) == "local_narrative_flags.casino_room_targets" or exact_targets.has(source_id) or exact_targets.has(presentation_source) or _authored_casino_room_target(environment, library, presentation_source)
+	if not candidate: return []
+	var errors: Array = []
+	if source_id.is_empty(): source_id = presentation_source
+	if presentation_id != "travel:%s" % source_id:
+		errors.append("casino room interaction presentation/source identity is mismatched.")
+	if str(record.get("owner_namespace", "")) != "base" or str(record.get("stable_object_id", "")) != presentation_id:
+		errors.append("casino room interaction does not retain its rendered base travel identity.")
+	if str(record.get("source_kind", "")) != "environment_instance_ui" or str(record.get("source_field", "")) != "local_narrative_flags.casino_room_targets" or str(record.get("source_record_id", "")) != source_id:
+		errors.append("casino room interaction has forged or incomplete producer provenance.")
+	if not exact_targets.has(source_id):
+		errors.append("casino room interaction lacks exact installed room-target authority.")
+	if not _authored_casino_room_target(environment, library, source_id):
+		errors.append("casino room interaction lacks selected archetype/layer authority.")
+	if not _dict(_dict(environment.get("layout", {})).get("object_rects", {})).has(presentation_id):
+		errors.append("casino room interaction lacks exact travel layout geometry.")
+	return errors
+
+
+static func _authored_casino_room_target(environment: Dictionary, library: Variant, room_id: String) -> bool:
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	if room_id.is_empty() or archetype_id.is_empty() or library == null or not library.has_method("environment_archetype"): return false
+	var archetype := _dict(library.call("environment_archetype", archetype_id))
+	if archetype.is_empty(): return false
+	var selected := archetype
+	var layer_id := str(environment.get("current_layer_id", "")).strip_edges()
+	var layers := _dict(archetype.get("layers", {}))
+	if not layer_id.is_empty() and not layers.is_empty():
+		if not layers.has(layer_id): return false
+		selected = _effective_layer(archetype, _dict(layers.get(layer_id, {})), layer_id)
+	return _ids(_dict(selected.get("local_narrative_flags", {})).get("casino_room_targets", [])).has(room_id)
 
 
 static func _record_has_id(value: Variant, source_id: String) -> bool:

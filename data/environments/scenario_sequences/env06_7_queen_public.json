@@ -267,6 +267,13 @@
               "stable_object_id": "delta_queen_wedding_charter_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_scene_ops_remove_delta_queen_wedding_charter_task_0",
+              "stable_object_id": "delta_queen_wedding_charter_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -323,6 +330,13 @@
               "stable_object_id": "delta_queen_wedding_charter_work_1_choice_2"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_scene_ops_remove_delta_queen_wedding_charter_task_1",
+              "stable_object_id": "delta_queen_wedding_charter_task_1"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -330,11 +344,25 @@
               "stable_object_id": "delta_queen_wedding_charter_task_1"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_scene_ops_remove_delta_queen_wedding_charter_task_2",
+              "stable_object_id": "delta_queen_wedding_charter_task_2"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "delta_queen_wedding_charter_cleanup_interaction_ops_remove_delta_queen_wedding_charter_task_2",
               "stable_object_id": "delta_queen_wedding_charter_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_wedding_charter_cleanup_scene_ops_remove_delta_queen_wedding_charter_task_3",
+              "stable_object_id": "delta_queen_wedding_charter_task_3"
             },
             {
               "family": "interaction_ops",
@@ -447,7 +475,7 @@
                     "behavior": "watch",
                     "label": "Losing best man",
                     "pose": "arrival",
-                    "zone_id": "right"
+                    "zone_id": "background"
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -461,7 +489,7 @@
                     "behavior": "work",
                     "label": "Deck coordinator",
                     "pose": "arrival",
-                    "zone_id": "background"
+                    "zone_id": "service_lane"
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -674,7 +702,7 @@
                     "role": "game_station",
                     "state": "losing",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -700,6 +728,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_arrival_spawn_delta_queen_wedding_charter_safe_exit",
                   "stable_object_id": "delta_queen_wedding_charter_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Secure Ceremony Lane",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_arrival_spawn_delta_queen_wedding_charter_task_0",
+                  "stable_object_id": "delta_queen_wedding_charter_task_0"
                 }
               ],
               "transition_ops": [
@@ -1019,6 +1067,33 @@
                 },
                 {
                   "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_1_remove_delta_queen_wedding_charter_task_0",
+                  "stable_object_id": "delta_queen_wedding_charter_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Recover Ring Case",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_1_spawn_delta_queen_wedding_charter_task_1",
+                  "stable_object_id": "delta_queen_wedding_charter_task_1"
+                },
+                {
+                  "family": "scene_ops",
                   "object": {
                     "appearance": "route_0_ready",
                     "bounds": {
@@ -1245,6 +1320,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_ring_state_appearance",
                   "stable_object_id": "delta_queen_wedding_charter_ring_case"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_2_remove_delta_queen_wedding_charter_task_1",
+                  "stable_object_id": "delta_queen_wedding_charter_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Steady Best Man",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_2_spawn_delta_queen_wedding_charter_task_2",
+                  "stable_object_id": "delta_queen_wedding_charter_task_2"
                 }
               ],
               "transition_ops": [
@@ -1417,6 +1519,33 @@
                   "receipt_id": "delta_queen_wedding_charter_guest_route_state",
                   "stable_object_id": "delta_queen_wedding_charter_best_man_table",
                   "state": "guest_route_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_3_remove_delta_queen_wedding_charter_task_2",
+                  "stable_object_id": "delta_queen_wedding_charter_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Deliver Rings",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_3_spawn_delta_queen_wedding_charter_task_3",
+                  "stable_object_id": "delta_queen_wedding_charter_task_3"
                 }
               ],
               "transition_ops": [
@@ -1572,7 +1701,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f33e4709e6e4cb1ac13625caaca70daa08dd1370be4203c3d1482e155a3e38e3"
+        "sequence_signature": "579151e4c939fce813ff294b0d3068a481c1a1fb3badcc452a02b08fed74036c"
       }
     },
     {
@@ -1838,6 +1967,13 @@
               "stable_object_id": "delta_queen_whale_aboard_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_scene_ops_remove_delta_queen_whale_aboard_task_0",
+              "stable_object_id": "delta_queen_whale_aboard_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -1850,6 +1986,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "delta_queen_whale_aboard_cleanup_interaction_ops_remove_delta_queen_whale_aboard_task_0",
               "stable_object_id": "delta_queen_whale_aboard_task_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_scene_ops_remove_delta_queen_whale_aboard_task_1",
+              "stable_object_id": "delta_queen_whale_aboard_task_1"
             },
             {
               "family": "interaction_ops",
@@ -1901,11 +2044,25 @@
               "stable_object_id": "delta_queen_whale_aboard_work_2_choice_2"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_scene_ops_remove_delta_queen_whale_aboard_task_2",
+              "stable_object_id": "delta_queen_whale_aboard_task_2"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "delta_queen_whale_aboard_cleanup_interaction_ops_remove_delta_queen_whale_aboard_task_2",
               "stable_object_id": "delta_queen_whale_aboard_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_whale_aboard_cleanup_scene_ops_remove_delta_queen_whale_aboard_task_3",
+              "stable_object_id": "delta_queen_whale_aboard_task_3"
             },
             {
               "family": "interaction_ops",
@@ -2018,7 +2175,7 @@
                     "behavior": "guard",
                     "label": "Whale host",
                     "pose": "arrival",
-                    "zone_id": "center"
+                    "zone_id": "service_lane"
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -2032,7 +2189,7 @@
                     "behavior": "work",
                     "label": "Entourage runner",
                     "pose": "arrival",
-                    "zone_id": "left"
+                    "zone_id": "background"
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -2225,7 +2382,7 @@
                     "role": "scoreboard",
                     "state": "raised",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -2271,6 +2428,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_arrival_spawn_delta_queen_whale_aboard_safe_exit",
                   "stable_object_id": "delta_queen_whale_aboard_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Map Entourage Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_arrival_spawn_delta_queen_whale_aboard_task_0",
+                  "stable_object_id": "delta_queen_whale_aboard_task_0"
                 }
               ],
               "transition_ops": [
@@ -2443,6 +2620,33 @@
                   "receipt_id": "delta_queen_whale_aboard_entourage_move_move",
                   "stable_object_id": "delta_queen_whale_aboard_premium_table",
                   "zone_id": "left"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_1_remove_delta_queen_whale_aboard_task_0",
+                  "stable_object_id": "delta_queen_whale_aboard_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Carry Whale Service",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_1_spawn_delta_queen_whale_aboard_task_1",
+                  "stable_object_id": "delta_queen_whale_aboard_task_1"
                 }
               ],
               "transition_ops": [
@@ -2759,6 +2963,33 @@
                 },
                 {
                   "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_2_remove_delta_queen_whale_aboard_task_1",
+                  "stable_object_id": "delta_queen_whale_aboard_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Read Stake Shift",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_2_spawn_delta_queen_whale_aboard_task_2",
+                  "stable_object_id": "delta_queen_whale_aboard_task_2"
+                },
+                {
+                  "family": "scene_ops",
                   "object": {
                     "appearance": "route_0_ready",
                     "bounds": {
@@ -2988,6 +3219,33 @@
                   "receipt_id": "delta_queen_whale_aboard_staff_behavior_state",
                   "stable_object_id": "delta_queen_whale_aboard_service_lane",
                   "state": "staff_behavior_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_3_remove_delta_queen_whale_aboard_task_2",
+                  "stable_object_id": "delta_queen_whale_aboard_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Whale Access",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "foreground"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_3_spawn_delta_queen_whale_aboard_task_3",
+                  "stable_object_id": "delta_queen_whale_aboard_task_3"
                 }
               ],
               "transition_ops": [
@@ -3143,7 +3401,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3477df94b1edf73477e576a84caf751faf922fabc6a758381cb358e000f73a47"
+        "sequence_signature": "7d1c106d01a4b63b935ba5d268e0ec57a3d91bab4739942e103f056e59d8c362"
       }
     },
     {
@@ -3409,6 +3667,13 @@
               "stable_object_id": "delta_queen_fog_delay_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_fog_delay_cleanup_scene_ops_remove_delta_queen_fog_delay_task_0",
+              "stable_object_id": "delta_queen_fog_delay_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -3465,6 +3730,13 @@
               "stable_object_id": "delta_queen_fog_delay_work_1_choice_2"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_fog_delay_cleanup_scene_ops_remove_delta_queen_fog_delay_task_1",
+              "stable_object_id": "delta_queen_fog_delay_task_1"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -3472,11 +3744,25 @@
               "stable_object_id": "delta_queen_fog_delay_task_1"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_fog_delay_cleanup_scene_ops_remove_delta_queen_fog_delay_task_2",
+              "stable_object_id": "delta_queen_fog_delay_task_2"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "delta_queen_fog_delay_cleanup_interaction_ops_remove_delta_queen_fog_delay_task_2",
               "stable_object_id": "delta_queen_fog_delay_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_fog_delay_cleanup_scene_ops_remove_delta_queen_fog_delay_task_3",
+              "stable_object_id": "delta_queen_fog_delay_task_3"
             },
             {
               "family": "interaction_ops",
@@ -3796,7 +4082,7 @@
                     "role": "barrier",
                     "state": "sealed",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -3836,12 +4122,32 @@
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "background"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_arrival_spawn_delta_queen_fog_delay_safe_exit",
                   "stable_object_id": "delta_queen_fog_delay_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Read Fog Signal",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_arrival_spawn_delta_queen_fog_delay_task_0",
+                  "stable_object_id": "delta_queen_fog_delay_task_0"
                 }
               ],
               "transition_ops": [
@@ -4161,6 +4467,33 @@
                 },
                 {
                   "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_1_remove_delta_queen_fog_delay_task_0",
+                  "stable_object_id": "delta_queen_fog_delay_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Organize Waiting Crowd",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_1_spawn_delta_queen_fog_delay_task_1",
+                  "stable_object_id": "delta_queen_fog_delay_task_1"
+                },
+                {
+                  "family": "scene_ops",
                   "object": {
                     "appearance": "route_0_ready",
                     "bounds": {
@@ -4387,6 +4720,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_crowd_position_appearance",
                   "stable_object_id": "delta_queen_fog_delay_gangway_shutter"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_2_remove_delta_queen_fog_delay_task_1",
+                  "stable_object_id": "delta_queen_fog_delay_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Mark Stake Drift",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_2_spawn_delta_queen_fog_delay_task_2",
+                  "stable_object_id": "delta_queen_fog_delay_task_2"
                 }
               ],
               "transition_ops": [
@@ -4559,6 +4919,33 @@
                   "receipt_id": "delta_queen_fog_delay_stake_state_state",
                   "stable_object_id": "delta_queen_fog_delay_drift_board",
                   "state": "stake_state_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_3_remove_delta_queen_fog_delay_task_2",
+                  "stable_object_id": "delta_queen_fog_delay_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Dock Plan",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_3_spawn_delta_queen_fog_delay_task_3",
+                  "stable_object_id": "delta_queen_fog_delay_task_3"
                 }
               ],
               "transition_ops": [
@@ -4714,7 +5101,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d33dc4a4e2a899685edbc9ea10219256df1104083c397f9ec41de398c5fe13cb"
+        "sequence_signature": "6b0de3c69eca6ecbda497a81c4c4e7090e8771cde8e5dc6f4f9ebc383cc0be79"
       }
     },
     {
@@ -4995,6 +5382,13 @@
               "stable_object_id": "delta_queen_engine_trouble_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_scene_ops_remove_delta_queen_engine_trouble_task_0",
+              "stable_object_id": "delta_queen_engine_trouble_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -5009,11 +5403,25 @@
               "stable_object_id": "delta_queen_engine_trouble_task_0"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_scene_ops_remove_delta_queen_engine_trouble_task_1",
+              "stable_object_id": "delta_queen_engine_trouble_task_1"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_task_1",
               "stable_object_id": "delta_queen_engine_trouble_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_scene_ops_remove_delta_queen_engine_trouble_task_2",
+              "stable_object_id": "delta_queen_engine_trouble_task_2"
             },
             {
               "family": "interaction_ops",
@@ -5065,11 +5473,25 @@
               "stable_object_id": "delta_queen_engine_trouble_work_3_choice_2"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_scene_ops_remove_delta_queen_engine_trouble_task_3",
+              "stable_object_id": "delta_queen_engine_trouble_task_3"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "delta_queen_engine_trouble_cleanup_interaction_ops_remove_delta_queen_engine_trouble_task_3",
               "stable_object_id": "delta_queen_engine_trouble_task_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_engine_trouble_cleanup_scene_ops_remove_delta_queen_engine_trouble_task_4",
+              "stable_object_id": "delta_queen_engine_trouble_task_4"
             },
             {
               "family": "interaction_ops",
@@ -5188,7 +5610,7 @@
                     "behavior": "work",
                     "label": "Engine mate",
                     "pose": "arrival",
-                    "zone_id": "left"
+                    "zone_id": "foreground"
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -5202,7 +5624,7 @@
                     "behavior": "guard",
                     "label": "Gangway guard",
                     "pose": "arrival",
-                    "zone_id": "right"
+                    "zone_id": "service_lane"
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -5435,7 +5857,7 @@
                     "role": "route_marker",
                     "state": "locked",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -5455,12 +5877,32 @@
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "background"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_arrival_spawn_delta_queen_engine_trouble_safe_exit",
                   "stable_object_id": "delta_queen_engine_trouble_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Seal Engine Lane",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "background"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_arrival_spawn_delta_queen_engine_trouble_task_0",
+                  "stable_object_id": "delta_queen_engine_trouble_task_0"
                 }
               ],
               "transition_ops": [
@@ -5633,6 +6075,33 @@
                   "receipt_id": "delta_queen_engine_trouble_bulkhead_state_move",
                   "stable_object_id": "delta_queen_engine_trouble_engine_bulkhead",
                   "zone_id": "left"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_1_remove_delta_queen_engine_trouble_task_0",
+                  "stable_object_id": "delta_queen_engine_trouble_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Diagnose Pressure",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "background"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_1_spawn_delta_queen_engine_trouble_task_1",
+                  "stable_object_id": "delta_queen_engine_trouble_task_1"
                 }
               ],
               "transition_ops": [
@@ -5802,6 +6271,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_gauge_appearance_appearance",
                   "stable_object_id": "delta_queen_engine_trouble_pressure_gauge"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_2_remove_delta_queen_engine_trouble_task_1",
+                  "stable_object_id": "delta_queen_engine_trouble_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Fetch Impeller Key",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "background"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_2_spawn_delta_queen_engine_trouble_task_2",
+                  "stable_object_id": "delta_queen_engine_trouble_task_2"
                 }
               ],
               "transition_ops": [
@@ -6121,6 +6617,33 @@
                 },
                 {
                   "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_3_remove_delta_queen_engine_trouble_task_2",
+                  "stable_object_id": "delta_queen_engine_trouble_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Engine Response",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "background"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_3_spawn_delta_queen_engine_trouble_task_3",
+                  "stable_object_id": "delta_queen_engine_trouble_task_3"
+                },
+                {
+                  "family": "scene_ops",
                   "object": {
                     "appearance": "route_0_ready",
                     "bounds": {
@@ -6347,6 +6870,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_bulkhead_state_hide",
                   "stable_object_id": "delta_queen_engine_trouble_locked_gangway"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_4_remove_delta_queen_engine_trouble_task_3",
+                  "stable_object_id": "delta_queen_engine_trouble_task_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Restart Engine",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "background"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_4_spawn_delta_queen_engine_trouble_task_4",
+                  "stable_object_id": "delta_queen_engine_trouble_task_4"
                 }
               ],
               "transition_ops": [
@@ -6501,7 +7051,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9f71233d4976fa66aef2c746229e1be302c8e0aeacc1f9bd8cdcb5e0db7f5200"
+        "sequence_signature": "f13c42905a91103ab6f3315115f30df5b8816966fc505cd951a6b07a74c4cb90"
       }
     },
     {
@@ -6775,6 +7325,13 @@
               "stable_object_id": "delta_queen_captains_invitational_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_scene_ops_remove_delta_queen_captains_invitational_task_0",
+              "stable_object_id": "delta_queen_captains_invitational_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -6789,11 +7346,25 @@
               "stable_object_id": "delta_queen_captains_invitational_task_0"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_scene_ops_remove_delta_queen_captains_invitational_task_1",
+              "stable_object_id": "delta_queen_captains_invitational_task_1"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_task_1",
               "stable_object_id": "delta_queen_captains_invitational_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_scene_ops_remove_delta_queen_captains_invitational_task_2",
+              "stable_object_id": "delta_queen_captains_invitational_task_2"
             },
             {
               "family": "interaction_ops",
@@ -6845,11 +7416,25 @@
               "stable_object_id": "delta_queen_captains_invitational_work_3_choice_2"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_scene_ops_remove_delta_queen_captains_invitational_task_3",
+              "stable_object_id": "delta_queen_captains_invitational_task_3"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "delta_queen_captains_invitational_cleanup_interaction_ops_remove_delta_queen_captains_invitational_task_3",
               "stable_object_id": "delta_queen_captains_invitational_task_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "delta_queen_captains_invitational_cleanup_scene_ops_remove_delta_queen_captains_invitational_task_4",
+              "stable_object_id": "delta_queen_captains_invitational_task_4"
             },
             {
               "family": "interaction_ops",
@@ -6968,7 +7553,7 @@
                     "behavior": "work",
                     "label": "Captain scorer",
                     "pose": "arrival",
-                    "zone_id": "right"
+                    "zone_id": "foreground"
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -7221,6 +7806,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_arrival_spawn_delta_queen_captains_invitational_safe_exit",
                   "stable_object_id": "delta_queen_captains_invitational_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Verify Entry Card",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_arrival_spawn_delta_queen_captains_invitational_task_0",
+                  "stable_object_id": "delta_queen_captains_invitational_task_0"
                 }
               ],
               "transition_ops": [
@@ -7393,6 +7998,33 @@
                   "receipt_id": "delta_queen_captains_invitational_card_state_move",
                   "stable_object_id": "delta_queen_captains_invitational_entry_cards",
                   "zone_id": "left"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_1_remove_delta_queen_captains_invitational_task_0",
+                  "stable_object_id": "delta_queen_captains_invitational_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Score Opening Bracket",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_1_spawn_delta_queen_captains_invitational_task_1",
+                  "stable_object_id": "delta_queen_captains_invitational_task_1"
                 }
               ],
               "transition_ops": [
@@ -7562,6 +8194,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_bracket_move_appearance",
                   "stable_object_id": "delta_queen_captains_invitational_bracket_tables"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_2_remove_delta_queen_captains_invitational_task_1",
+                  "stable_object_id": "delta_queen_captains_invitational_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Rotate Eliminated Table",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_2_spawn_delta_queen_captains_invitational_task_2",
+                  "stable_object_id": "delta_queen_captains_invitational_task_2"
                 }
               ],
               "transition_ops": [
@@ -7881,6 +8540,33 @@
                 },
                 {
                   "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_3_remove_delta_queen_captains_invitational_task_2",
+                  "stable_object_id": "delta_queen_captains_invitational_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Invitational Role",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_3_spawn_delta_queen_captains_invitational_task_3",
+                  "stable_object_id": "delta_queen_captains_invitational_task_3"
+                },
+                {
+                  "family": "scene_ops",
                   "object": {
                     "appearance": "route_0_ready",
                     "bounds": {
@@ -8107,6 +8793,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_card_state_hide",
                   "stable_object_id": "delta_queen_captains_invitational_entry_cards"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_4_remove_delta_queen_captains_invitational_task_3",
+                  "stable_object_id": "delta_queen_captains_invitational_task_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Seat Finalists",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_4_spawn_delta_queen_captains_invitational_task_4",
+                  "stable_object_id": "delta_queen_captains_invitational_task_4"
                 }
               ],
               "transition_ops": [
@@ -8261,7 +8974,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "61cd2e73de185215e930406b585e408e93289d8974b6069560466d5744c54c2e"
+        "sequence_signature": "f02070c35dcb2bf258049ffac1b8c9a3d4c035c04e99f6ff2410f9dd42a128df"
       }
     },
     {
@@ -8527,6 +9240,13 @@
               "stable_object_id": "grand_casino_gala_night_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_task_0",
+              "stable_object_id": "grand_casino_gala_night_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -8539,6 +9259,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_task_0",
               "stable_object_id": "grand_casino_gala_night_task_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_task_1",
+              "stable_object_id": "grand_casino_gala_night_task_1"
             },
             {
               "family": "interaction_ops",
@@ -8590,11 +9317,25 @@
               "stable_object_id": "grand_casino_gala_night_work_2_choice_2"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_task_2",
+              "stable_object_id": "grand_casino_gala_night_task_2"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_task_2",
               "stable_object_id": "grand_casino_gala_night_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_task_3",
+              "stable_object_id": "grand_casino_gala_night_task_3"
             },
             {
               "family": "interaction_ops",
@@ -8960,6 +9701,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_arrival_spawn_grand_casino_gala_night_safe_exit",
                   "stable_object_id": "grand_casino_gala_night_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Claim Coat Token",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_arrival_spawn_grand_casino_gala_night_task_0",
+                  "stable_object_id": "grand_casino_gala_night_task_0"
                 }
               ],
               "transition_ops": [
@@ -9132,6 +9893,33 @@
                   "receipt_id": "grand_casino_gala_night_token_move_move",
                   "stable_object_id": "grand_casino_gala_night_coat_check",
                   "zone_id": "left"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_1_remove_grand_casino_gala_night_task_0",
+                  "stable_object_id": "grand_casino_gala_night_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Verify Charity Badge",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_1_spawn_grand_casino_gala_night_task_1",
+                  "stable_object_id": "grand_casino_gala_night_task_1"
                 }
               ],
               "transition_ops": [
@@ -9448,6 +10236,33 @@
                 },
                 {
                   "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_2_remove_grand_casino_gala_night_task_1",
+                  "stable_object_id": "grand_casino_gala_night_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reset Stage Lift",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_2_spawn_grand_casino_gala_night_task_2",
+                  "stable_object_id": "grand_casino_gala_night_task_2"
+                },
+                {
+                  "family": "scene_ops",
                   "object": {
                     "appearance": "route_0_ready",
                     "bounds": {
@@ -9677,6 +10492,33 @@
                   "receipt_id": "grand_casino_gala_night_lift_appearance_state",
                   "stable_object_id": "grand_casino_gala_night_stage_lift",
                   "state": "lift_appearance_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_3_remove_grand_casino_gala_night_task_2",
+                  "stable_object_id": "grand_casino_gala_night_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Gala Identity",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_3_spawn_grand_casino_gala_night_task_3",
+                  "stable_object_id": "grand_casino_gala_night_task_3"
                 }
               ],
               "transition_ops": [
@@ -9832,7 +10674,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4e06aa39e968fc9b47dc363c198f58629287b3cc1e717b31bb4e1763a09e7901"
+        "sequence_signature": "1ac881ca27673c9f0629cecf3deb1e319fd277f4cb2053141777c617b08a4d2e"
       }
     },
     {
@@ -10098,6 +10940,13 @@
               "stable_object_id": "grand_casino_convention_crowd_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_scene_ops_remove_grand_casino_convention_crowd_task_0",
+              "stable_object_id": "grand_casino_convention_crowd_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -10110,6 +10959,13 @@
               "owner_namespace": "scenario",
               "receipt_id": "grand_casino_convention_crowd_cleanup_interaction_ops_remove_grand_casino_convention_crowd_task_0",
               "stable_object_id": "grand_casino_convention_crowd_task_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_scene_ops_remove_grand_casino_convention_crowd_task_1",
+              "stable_object_id": "grand_casino_convention_crowd_task_1"
             },
             {
               "family": "interaction_ops",
@@ -10161,11 +11017,25 @@
               "stable_object_id": "grand_casino_convention_crowd_work_2_choice_2"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_scene_ops_remove_grand_casino_convention_crowd_task_2",
+              "stable_object_id": "grand_casino_convention_crowd_task_2"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "grand_casino_convention_crowd_cleanup_interaction_ops_remove_grand_casino_convention_crowd_task_2",
               "stable_object_id": "grand_casino_convention_crowd_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_convention_crowd_cleanup_scene_ops_remove_grand_casino_convention_crowd_task_3",
+              "stable_object_id": "grand_casino_convention_crowd_task_3"
             },
             {
               "family": "interaction_ops",
@@ -10531,6 +11401,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_arrival_spawn_grand_casino_convention_crowd_safe_exit",
                   "stable_object_id": "grand_casino_convention_crowd_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Read Booking Board",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_arrival_spawn_grand_casino_convention_crowd_task_0",
+                  "stable_object_id": "grand_casino_convention_crowd_task_0"
                 }
               ],
               "transition_ops": [
@@ -10703,6 +11593,33 @@
                   "receipt_id": "grand_casino_convention_crowd_board_state_move",
                   "stable_object_id": "grand_casino_convention_crowd_booking_board",
                   "zone_id": "left"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_1_remove_grand_casino_convention_crowd_task_0",
+                  "stable_object_id": "grand_casino_convention_crowd_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Sort Delegation Badges",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_1_spawn_grand_casino_convention_crowd_task_1",
+                  "stable_object_id": "grand_casino_convention_crowd_task_1"
                 }
               ],
               "transition_ops": [
@@ -11019,6 +11936,33 @@
                 },
                 {
                   "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_2_remove_grand_casino_convention_crowd_task_1",
+                  "stable_object_id": "grand_casino_convention_crowd_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Move Machine Markers",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_2_spawn_grand_casino_convention_crowd_task_2",
+                  "stable_object_id": "grand_casino_convention_crowd_task_2"
+                },
+                {
+                  "family": "scene_ops",
                   "object": {
                     "appearance": "route_0_ready",
                     "bounds": {
@@ -11248,6 +12192,33 @@
                   "receipt_id": "grand_casino_convention_crowd_delegation_behavior_state",
                   "stable_object_id": "grand_casino_convention_crowd_table_block",
                   "state": "delegation_behavior_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_3_remove_grand_casino_convention_crowd_task_2",
+                  "stable_object_id": "grand_casino_convention_crowd_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Convention Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_3_spawn_grand_casino_convention_crowd_task_3",
+                  "stable_object_id": "grand_casino_convention_crowd_task_3"
                 }
               ],
               "transition_ops": [
@@ -11403,7 +12374,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a2883536a6596838e0f11dd5fd488afbcbae0d08b82037a3e57f739a05f23289"
+        "sequence_signature": "ff93a104f361e8fdd2693fa4167cb625413f7b64e4216e34d1cfc3492e58dae9"
       }
     },
     {
@@ -11676,6 +12647,13 @@
               "stable_object_id": "grand_casino_audit_night_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_audit_night_cleanup_scene_ops_remove_grand_casino_audit_night_task_0",
+              "stable_object_id": "grand_casino_audit_night_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -11732,6 +12710,13 @@
               "stable_object_id": "grand_casino_audit_night_work_1_choice_2"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_audit_night_cleanup_scene_ops_remove_grand_casino_audit_night_task_1",
+              "stable_object_id": "grand_casino_audit_night_task_1"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -11739,11 +12724,25 @@
               "stable_object_id": "grand_casino_audit_night_task_1"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_audit_night_cleanup_scene_ops_remove_grand_casino_audit_night_task_2",
+              "stable_object_id": "grand_casino_audit_night_task_2"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "grand_casino_audit_night_cleanup_interaction_ops_remove_grand_casino_audit_night_task_2",
               "stable_object_id": "grand_casino_audit_night_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_audit_night_cleanup_scene_ops_remove_grand_casino_audit_night_task_3",
+              "stable_object_id": "grand_casino_audit_night_task_3"
             },
             {
               "family": "interaction_ops",
@@ -12129,6 +13128,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_arrival_spawn_grand_casino_audit_night_safe_exit",
                   "stable_object_id": "grand_casino_audit_night_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Acknowledge Audit Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_arrival_spawn_grand_casino_audit_night_task_0",
+                  "stable_object_id": "grand_casino_audit_night_task_0"
                 }
               ],
               "transition_ops": [
@@ -12448,6 +13467,33 @@
                 },
                 {
                   "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_1_remove_grand_casino_audit_night_task_0",
+                  "stable_object_id": "grand_casino_audit_night_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Present Pit Ledger",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_1_spawn_grand_casino_audit_night_task_1",
+                  "stable_object_id": "grand_casino_audit_night_task_1"
+                },
+                {
+                  "family": "scene_ops",
                   "object": {
                     "appearance": "route_0_ready",
                     "bounds": {
@@ -12674,6 +13720,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_ledger_move_appearance",
                   "stable_object_id": "grand_casino_audit_night_pit_ledger"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_2_remove_grand_casino_audit_night_task_1",
+                  "stable_object_id": "grand_casino_audit_night_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Mark Closed Games",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_2_spawn_grand_casino_audit_night_task_2",
+                  "stable_object_id": "grand_casino_audit_night_task_2"
                 }
               ],
               "transition_ops": [
@@ -12846,6 +13919,33 @@
                   "receipt_id": "grand_casino_audit_night_barrier_appearance_state",
                   "stable_object_id": "grand_casino_audit_night_audit_barrier",
                   "state": "barrier_appearance_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_3_remove_grand_casino_audit_night_task_2",
+                  "stable_object_id": "grand_casino_audit_night_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Audit Response",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_3_spawn_grand_casino_audit_night_task_3",
+                  "stable_object_id": "grand_casino_audit_night_task_3"
                 }
               ],
               "transition_ops": [
@@ -13001,7 +14101,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "36fd248daf26186ed4bd6eef706159c9d1c88bfa790398f81748d836f849f3bf"
+        "sequence_signature": "3b5a13e7b93284fe80e77dba1174b21cddd7eb297238e6fa7ddb992784f2fe76"
       }
     }
   ]

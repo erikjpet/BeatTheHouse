@@ -5,6 +5,8 @@ const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const RolloutManifestScript := preload("res://scripts/core/scenario_sequence_rollout_manifest.gd")
+const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const RunStateScript := preload("res://scripts/core/run_state.gd")
 
 const LOCAL_ACTOR_SCENARIO_ID := "bar_fight_night"
 const PROVEN_TARGET_SCENARIO_ID := "corner_store_delivery_day"
@@ -20,18 +22,36 @@ const PRESERVED_ROUTE_WORK_MOVES := {
 }
 
 
+class ProductionInstallProbe:
+	extends RunGenerator
+
+	var last_result: Dictionary = {}
+
+	func _install_environment(run_state: RunState, environment_data: Dictionary) -> Dictionary:
+		var installed := run_state.set_environment(environment_data)
+		var finalized := run_state.scenario_finalize_installed_environment(library) if bool(installed.get("ok", false)) else installed
+		last_result = {
+			"archetype_id": str(environment_data.get("archetype_id", "")),
+			"scenario_id": str(environment_data.get("scenario_id", "")),
+			"ok": bool(finalized.get("ok", false)),
+			"errors": (finalized.get("errors", []) as Array).duplicate(true) if typeof(finalized.get("errors", [])) == TYPE_ARRAY else [],
+		}
+		return finalized
+
+
 func _initialize() -> void:
 	var failures: Array = []
 	var library := ContentLibraryScript.new()
 	library.load(false)
 	_check_scenario_local_actor_authority(library, failures)
 	_check_manifest_exit_authority(library, failures)
+	_check_manifest_installed_finalization(library, failures)
 	_check_route_free_work_moves(library, failures)
 	_check_preserved_route_work_moves(library, failures)
 	_check_fence_night_route_free_authority(library, failures)
 	_check_unproven_zone_rejection(library, failures)
 	if failures.is_empty():
-		print("ENV06_7_PRODUCTION_AUTHORITY_CONTRACT_OK local_actor=1 hostile_actor=2 exit_authority=55 exit_cleanup=55 route_free_work_move=3 preserved_route_work_move=3 fence_route_free=1 fence_exit=1 hostile_zone=2")
+		print("ENV06_7_PRODUCTION_AUTHORITY_CONTRACT_OK local_actor=1 hostile_actor=2 exit_authority=55 exit_cleanup=55 installed_finalization=55 route_free_work_move=3 preserved_route_work_move=3 fence_route_free=1 fence_exit=1 hostile_zone=2")
 		quit(0)
 		return
 	for failure_value in failures:
@@ -147,6 +167,31 @@ static func _check_manifest_exit_authority(library: Variant, failures: Array) ->
 				interaction_removed = interaction_removed or str(operation.get("family", "")) == "interaction_ops"
 			if not scene_removed or not interaction_removed:
 				failures.append("Production scenario %s lacks symmetric exit cleanup for %s." % [scenario_id, exit_id])
+
+
+static func _check_manifest_installed_finalization(library: Variant, failures: Array) -> void:
+	for scenario_id_value in RolloutManifestScript.expected_ids():
+		var scenario_id := str(scenario_id_value)
+		var definition: Dictionary = library.scenario(scenario_id)
+		var archetype_id := str(definition.get("archetype_id", ""))
+		if archetype_id.is_empty():
+			failures.append("Production install fixture %s lacks an archetype." % scenario_id)
+			continue
+		var seed := "ENV06-7-INSTALL-CONTRACT-%s" % scenario_id
+		var run_state := RunStateScript.new()
+		run_state.start_new(seed, RunStateScript.custom_challenge("install_%s" % scenario_id, seed, {
+			"home_archetype_id": archetype_id,
+			"scenario_pins": {archetype_id: scenario_id},
+			"scenario_pins_apply_mutations": true,
+		}))
+		run_state.begin_act(1)
+		var generator := ProductionInstallProbe.new(library)
+		generator.next_environment(run_state)
+		var result := generator.last_result
+		if str(result.get("scenario_id", "")) != scenario_id \
+				or str(result.get("archetype_id", "")) != archetype_id \
+				or not bool(result.get("ok", false)):
+			failures.append("Production installed finalizer rejected %s: %s" % [scenario_id, JSON.stringify(_array(result.get("errors", [])))])
 
 
 static func _check_route_free_work_moves(library: Variant, failures: Array) -> void:

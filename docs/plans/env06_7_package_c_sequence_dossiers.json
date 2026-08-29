@@ -44,15 +44,13 @@
         "base::anchor:wake_memorial_tables",
         "base::anchor:wake_host"
       ],
-      "sealed_routes": [
-        "base::world:motel"
-      ],
+      "sealed_routes": [],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "30e422b2338cdca51e314fe49b4b0a030f9c140fd0917dfa3d366da3d9d80689",
+      "sequence_signature": "3261709e7f265e1fb46fb36d95af1a7e15c223fff224edf5abfd477bb96c5c08",
       "capture_ids": [
         "bar_wake_arrival",
         "bar_wake_partial",
@@ -114,15 +112,13 @@
         "base::anchor:fight_toppled_chair",
         "base::anchor:fight_right_brawler"
       ],
-      "sealed_routes": [
-        "base::world:kitty_cat_lounge"
-      ],
+      "sealed_routes": [],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "912a89ffd99c84f732b0e95b1c874bb69879695c8815cf98a0b0c9d0078f33eb",
+      "sequence_signature": "f2a8abdd30323cb41e25a62e52539ffb671bda2ad9918a723ec6cdd069de3f43",
       "capture_ids": [
         "bar_fight_night_arrival",
         "bar_fight_night_partial",
@@ -178,15 +174,13 @@
         "base::anchor:payday_order_rail",
         "base::anchor:payday_runner"
       ],
-      "sealed_routes": [
-        "base::world:corner_store"
-      ],
+      "sealed_routes": [],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "53957a30a6cce9ad5b87b0433991f92a6087f048766d0a27e466ca4b9c024a39",
+      "sequence_signature": "fc6bd94263e27194b1edf376de6382121af7269410f71cfcb5011306e16759e0",
       "capture_ids": [
         "bar_payday_rush_arrival",
         "bar_payday_rush_partial",
@@ -246,15 +240,13 @@
         "base::anchor:lockin_shutters",
         "base::anchor:lockin_regular"
       ],
-      "sealed_routes": [
-        "base::world:delta_queen"
-      ],
+      "sealed_routes": [],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "68afdf57f5a3e7ad336204f9e2cf3118ef59b9dd835a977fe01c03f5326ddb2c",
+      "sequence_signature": "681aa3b8ec97c97c7296152ddec30f70bf44caba32aded6bc66e9b6413fd6d4b",
       "capture_ids": [
         "bar_lock_in_arrival",
         "bar_lock_in_partial",
@@ -316,15 +308,13 @@
         "base::anchor:darts_oche",
         "base::anchor:darts_scorer"
       ],
-      "sealed_routes": [
-        "base::world:corner_store"
-      ],
+      "sealed_routes": [],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "189746ee3fddf4584caf398522d6ef72e20a60e48ffe73d12327341bd5882879",
+      "sequence_signature": "3cb8111441e32cb49259154dc00e119c2fc63a89cc54b9f985ee9b2d6d4a5865",
       "capture_ids": [
         "bar_darts_league_night_arrival",
         "bar_darts_league_night_partial",
@@ -384,15 +374,13 @@
         "base::anchor:live_band_speakers",
         "base::anchor:live_band_runner"
       ],
-      "sealed_routes": [
-        "base::world:kitty_cat_lounge"
-      ],
+      "sealed_routes": [],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "5007bd516bc56fae1ede69ef82923a733f4c4bbd578ca4ee641bf8db1f863495",
+      "sequence_signature": "ab283b1cdb5029dfd1cc8c4e2aefb6027de68733794a8c0cd248b6cf5ef701f4",
       "capture_ids": [
         "bar_live_band_arrival",
         "bar_live_band_partial",
@@ -445,15 +433,13 @@
       "spatial_anchors": [
         "base::anchor:dead_tuesday_bartender"
       ],
-      "sealed_routes": [
-        "base::world:motel"
-      ],
+      "sealed_routes": [],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "692eab7cbf64a13b1788078f88bc3746ea18136b8b49ad1ab16011530fac2b37",
+      "sequence_signature": "9e3d044d78017838cd89e380c4439ccbed5d4020d3a33460cabe2852a26e54a6",
       "capture_ids": [
         "bar_dead_tuesday_arrival",
         "bar_dead_tuesday_partial",
@@ -515,15 +501,13 @@
         "base::anchor:guest_legend_table",
         "base::anchor:guest_legend_stage_manager"
       ],
-      "sealed_routes": [
-        "base::world:bar"
-      ],
+      "sealed_routes": [],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "2ff190b3aa64c4fc78c0636ba549d1e145ce90450a610e1b7a9ee81a42f85d1b",
+      "sequence_signature": "705de2dbed6c08a852cdd18d23383cb083527f8ca54c9dbcdee39091d9ae490f",
       "capture_ids": [
         "jazz_club_guest_legend_arrival",
         "jazz_club_guest_legend_partial",
@@ -581,15 +565,13 @@
         "base::anchor:rent_party_donation",
         "base::anchor:rent_party_creditor"
       ],
-      "sealed_routes": [
-        "base::world:motel"
-      ],
+      "sealed_routes": [],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "53474a07f956aa6f0a8c01a26588c3ba771677df18cebfa1a0df5f69d771637b",
+      "sequence_signature": "83c13b3ef2c47b9b41f81dab9561fb055b875f8ef551427ee19b9ae5d852b658",
       "capture_ids": [
         "jazz_club_rent_party_arrival",
         "jazz_club_rent_party_partial",
@@ -645,15 +627,13 @@
         "base::anchor:recording_microphone",
         "base::anchor:recording_audience"
       ],
-      "sealed_routes": [
-        "base::world:corner_store"
-      ],
+      "sealed_routes": [],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "c9dd18503c959449c62aac81780e5d8faa00e17f42236d630509b0ab22eb10c6",
+      "sequence_signature": "db969f5c13bad86dbd20f8a7f7ece9e369e5fd069764f6a8416d3b3a317f4ff7",
       "capture_ids": [
         "jazz_club_recording_night_arrival",
         "jazz_club_recording_night_partial",
@@ -711,15 +691,13 @@
         "base::anchor:union_picket",
         "base::anchor:union_manager"
       ],
-      "sealed_routes": [
-        "base::world:bar"
-      ],
+      "sealed_routes": [],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "047486e27e7483d754c918485d5f6cbb1b0f8513bdbd9035fe36c8a5e4982773",
+      "sequence_signature": "e1c332918ccf2f4add84da00705bdf6c86edbb20699b83511b727aa8a2d19392",
       "capture_ids": [
         "jazz_club_union_trouble_arrival",
         "jazz_club_union_trouble_partial",
@@ -843,6 +821,33 @@
                     "state_label": "Work 3 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "darts_oche",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Score Second Round",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -1020,6 +1025,33 @@
                 }
               },
               {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "darts_oche",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Score Opening Round",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_pose",
@@ -1175,6 +1207,33 @@
                   "op": "add",
                   "owner_namespace": "scenario"
                 }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "darts_oche",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Rotate Second Lane",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
               }
             ],
             "branches": [
@@ -1317,7 +1376,34 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "anchor_id": "darts_oche",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Inspect Disputed Dart",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               }
@@ -1459,6 +1545,33 @@
                     "state_label": "Work 5 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "darts_oche",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Post Final Bracket",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -1652,6 +1765,26 @@
                     "state_label": "Arrival station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "darts_oche",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Mark Throw Line",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               },
@@ -2222,6 +2355,48 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -2234,7 +2409,7 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 1,
+          "routes": 0,
           "anchors": 2,
           "zones": 7
         },
@@ -2249,10 +2424,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "189746ee3fddf4584caf398522d6ef72e20a60e48ffe73d12327341bd5882879",
-      "calculated_signature": "189746ee3fddf4584caf398522d6ef72e20a60e48ffe73d12327341bd5882879",
+      "authored_signature": "3cb8111441e32cb49259154dc00e119c2fc63a89cc54b9f985ee9b2d6d4a5865",
+      "calculated_signature": "3cb8111441e32cb49259154dc00e119c2fc63a89cc54b9f985ee9b2d6d4a5865",
       "nearest_id": "bar_fight_night",
-      "nearest_similarity": 0.554878048780488
+      "nearest_similarity": 0.554959785522788
     },
     {
       "id": "bar_dead_tuesday",
@@ -2340,6 +2515,33 @@
                     "state_label": "Work 1 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "dead_tuesday_bartender",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Close Other Zones",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -2553,6 +2755,26 @@
                     "state_label": "Arrival station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "dead_tuesday_bartender",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Company Zone",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               },
@@ -3054,6 +3276,20 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -3066,7 +3302,7 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 1,
+          "routes": 0,
           "anchors": 1,
           "zones": 7
         },
@@ -3081,10 +3317,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "692eab7cbf64a13b1788078f88bc3746ea18136b8b49ad1ab16011530fac2b37",
-      "calculated_signature": "692eab7cbf64a13b1788078f88bc3746ea18136b8b49ad1ab16011530fac2b37",
+      "authored_signature": "9e3d044d78017838cd89e380c4439ccbed5d4020d3a33460cabe2852a26e54a6",
+      "calculated_signature": "9e3d044d78017838cd89e380c4439ccbed5d4020d3a33460cabe2852a26e54a6",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.315866084425036
+      "nearest_similarity": 0.335135135135135
     },
     {
       "id": "bar_fight_night",
@@ -3203,6 +3439,33 @@
                     "state_label": "Work 2 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "fight_toppled_chair",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Separate Sides",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               }
@@ -3372,6 +3635,33 @@
                 }
               },
               {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "fight_toppled_chair",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Warn Brawlers",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_pose",
@@ -3520,7 +3810,34 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "anchor_id": "fight_toppled_chair",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Escort Hothead",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               }
@@ -3660,6 +3977,33 @@
                     "state_label": "Work 3 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "fight_toppled_chair",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Clear Broken Glass",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -3809,6 +4153,33 @@
                     "state_label": "Work 5 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "fight_toppled_chair",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reset Chairs",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -4002,6 +4373,26 @@
                     "state_label": "Arrival station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "fight_toppled_chair",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Brace Exit",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               },
@@ -4572,6 +4963,48 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -4584,7 +5017,7 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 1,
+          "routes": 0,
           "anchors": 2,
           "zones": 7
         },
@@ -4599,10 +5032,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "912a89ffd99c84f732b0e95b1c874bb69879695c8815cf98a0b0c9d0078f33eb",
-      "calculated_signature": "912a89ffd99c84f732b0e95b1c874bb69879695c8815cf98a0b0c9d0078f33eb",
+      "authored_signature": "f2a8abdd30323cb41e25a62e52539ffb671bda2ad9918a723ec6cdd069de3f43",
+      "calculated_signature": "f2a8abdd30323cb41e25a62e52539ffb671bda2ad9918a723ec6cdd069de3f43",
       "nearest_id": "bar_darts_league_night",
-      "nearest_similarity": 0.554878048780488
+      "nearest_similarity": 0.554959785522788
     },
     {
       "id": "bar_live_band",
@@ -4721,6 +5154,33 @@
                     "state_label": "Work 2 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "live_band_speakers",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Balance Speaker Stack",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               }
@@ -4890,6 +5350,33 @@
                 }
               },
               {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "live_band_speakers",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Patch Soundcheck",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_pose",
@@ -5038,7 +5525,34 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "anchor_id": "live_band_speakers",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reroute Crowd",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               }
@@ -5178,6 +5692,33 @@
                     "state_label": "Work 3 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "live_band_speakers",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Mark Service Crossing",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -5371,6 +5912,26 @@
                     "state_label": "Arrival station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "live_band_speakers",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Trace Dead Cable",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               },
@@ -5917,6 +6478,41 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -5929,7 +6525,7 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 1,
+          "routes": 0,
           "anchors": 2,
           "zones": 7
         },
@@ -5944,10 +6540,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "5007bd516bc56fae1ede69ef82923a733f4c4bbd578ca4ee641bf8db1f863495",
-      "calculated_signature": "5007bd516bc56fae1ede69ef82923a733f4c4bbd578ca4ee641bf8db1f863495",
+      "authored_signature": "ab283b1cdb5029dfd1cc8c4e2aefb6027de68733794a8c0cd248b6cf5ef701f4",
+      "calculated_signature": "ab283b1cdb5029dfd1cc8c4e2aefb6027de68733794a8c0cd248b6cf5ef701f4",
       "nearest_id": "bar_lock_in",
-      "nearest_similarity": 0.675340768277571
+      "nearest_similarity": 0.688053097345133
     },
     {
       "id": "bar_lock_in",
@@ -6066,6 +6662,33 @@
                     "state_label": "Work 2 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "lockin_shutters",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Earn Host Token",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               }
@@ -6235,6 +6858,33 @@
                 }
               },
               {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "lockin_shutters",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Inspect Cellar Hatch",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_pose",
@@ -6383,7 +7033,34 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "anchor_id": "lockin_shutters",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Signal Reopening",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               }
@@ -6523,6 +7200,33 @@
                     "state_label": "Work 3 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "lockin_shutters",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Complete Private Task",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -6716,6 +7420,26 @@
                     "state_label": "Arrival station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "lockin_shutters",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Check Shutter Latch",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               },
@@ -7262,6 +7986,41 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -7274,7 +8033,7 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 1,
+          "routes": 0,
           "anchors": 2,
           "zones": 7
         },
@@ -7289,10 +8048,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "68afdf57f5a3e7ad336204f9e2cf3118ef59b9dd835a977fe01c03f5326ddb2c",
-      "calculated_signature": "68afdf57f5a3e7ad336204f9e2cf3118ef59b9dd835a977fe01c03f5326ddb2c",
+      "authored_signature": "681aa3b8ec97c97c7296152ddec30f70bf44caba32aded6bc66e9b6413fd6d4b",
+      "calculated_signature": "681aa3b8ec97c97c7296152ddec30f70bf44caba32aded6bc66e9b6413fd6d4b",
       "nearest_id": "bar_live_band",
-      "nearest_similarity": 0.675340768277571
+      "nearest_similarity": 0.688053097345133
     },
     {
       "id": "bar_payday_rush",
@@ -7400,6 +8159,33 @@
                     "state_label": "Work 1 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "payday_order_rail",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Deliver Table Round",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -7586,6 +8372,33 @@
                   "op": "add",
                   "owner_namespace": "scenario"
                 }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "payday_order_rail",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Settle Open Tab",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
               }
             ],
             "branches": [
@@ -7769,6 +8582,26 @@
                     "state_label": "Arrival station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "payday_order_rail",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Lift First Tray",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               },
@@ -8267,6 +9100,27 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -8279,7 +9133,7 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 1,
+          "routes": 0,
           "anchors": 2,
           "zones": 7
         },
@@ -8294,10 +9148,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "53957a30a6cce9ad5b87b0433991f92a6087f048766d0a27e466ca4b9c024a39",
-      "calculated_signature": "53957a30a6cce9ad5b87b0433991f92a6087f048766d0a27e466ca4b9c024a39",
+      "authored_signature": "fc6bd94263e27194b1edf376de6382121af7269410f71cfcb5011306e16759e0",
+      "calculated_signature": "fc6bd94263e27194b1edf376de6382121af7269410f71cfcb5011306e16759e0",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.612012987012987
+      "nearest_similarity": 0.62704309063893
     },
     {
       "id": "bar_wake",
@@ -8405,6 +9259,33 @@
                     "state_label": "Work 1 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "wake_memorial_tables",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Carry To Regular",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -8591,6 +9472,33 @@
                   "op": "add",
                   "owner_namespace": "scenario"
                 }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "wake_memorial_tables",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Offer Before Toast",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
               }
             ],
             "branches": [
@@ -8774,6 +9682,26 @@
                     "state_label": "Arrival station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "wake_memorial_tables",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Receive Remembrance",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               },
@@ -9245,6 +10173,27 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -9257,7 +10206,7 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 1,
+          "routes": 0,
           "anchors": 2,
           "zones": 7
         },
@@ -9272,10 +10221,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "30e422b2338cdca51e314fe49b4b0a030f9c140fd0917dfa3d366da3d9d80689",
-      "calculated_signature": "30e422b2338cdca51e314fe49b4b0a030f9c140fd0917dfa3d366da3d9d80689",
+      "authored_signature": "3261709e7f265e1fb46fb36d95af1a7e15c223fff224edf5abfd477bb96c5c08",
+      "calculated_signature": "3261709e7f265e1fb46fb36d95af1a7e15c223fff224edf5abfd477bb96c5c08",
       "nearest_id": "jazz_club_recording_night",
-      "nearest_similarity": 0.666107382550336
+      "nearest_similarity": 0.67687595712098
     },
     {
       "id": "jazz_club_guest_legend",
@@ -9384,6 +10333,33 @@
                     "state_label": "Work 3 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "guest_legend_table",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Prepare Missing Cue",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -9570,6 +10546,33 @@
                   "op": "add",
                   "owner_namespace": "scenario"
                 }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "guest_legend_table",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Inspect Missing Piece",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
               }
             ],
             "branches": [
@@ -9706,6 +10709,33 @@
                     "state_label": "Work 1 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "guest_legend_table",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Open Backstage Lane",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -9858,7 +10888,34 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "object": {
+                    "anchor_id": "guest_legend_table",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reorder Set Cards",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               }
@@ -10000,6 +11057,33 @@
                     "state_label": "Work 5 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "guest_legend_table",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Time Guest Reveal",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -10193,6 +11277,26 @@
                     "state_label": "Arrival station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "guest_legend_table",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Find Instrument Case",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               },
@@ -10763,6 +11867,48 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -10775,7 +11921,7 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 1,
+          "routes": 0,
           "anchors": 2,
           "zones": 7
         },
@@ -10790,10 +11936,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "2ff190b3aa64c4fc78c0636ba549d1e145ce90450a610e1b7a9ee81a42f85d1b",
-      "calculated_signature": "2ff190b3aa64c4fc78c0636ba549d1e145ce90450a610e1b7a9ee81a42f85d1b",
+      "authored_signature": "705de2dbed6c08a852cdd18d23383cb083527f8ca54c9dbcdee39091d9ae490f",
+      "calculated_signature": "705de2dbed6c08a852cdd18d23383cb083527f8ca54c9dbcdee39091d9ae490f",
       "nearest_id": "bar_darts_league_night",
-      "nearest_similarity": 0.540785498489426
+      "nearest_similarity": 0.539823008849557
     },
     {
       "id": "jazz_club_recording_night",
@@ -10901,6 +12047,33 @@
                     "state_label": "Work 1 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "recording_microphone",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reset Microphone Tree",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -11087,6 +12260,33 @@
                   "op": "add",
                   "owner_namespace": "scenario"
                 }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "recording_microphone",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Mark Clean Take",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
               }
             ],
             "branches": [
@@ -11270,6 +12470,26 @@
                     "state_label": "Arrival station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "recording_microphone",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Enter Silence Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               },
@@ -11768,6 +12988,27 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -11780,7 +13021,7 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 1,
+          "routes": 0,
           "anchors": 2,
           "zones": 7
         },
@@ -11795,10 +13036,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "c9dd18503c959449c62aac81780e5d8faa00e17f42236d630509b0ab22eb10c6",
-      "calculated_signature": "c9dd18503c959449c62aac81780e5d8faa00e17f42236d630509b0ab22eb10c6",
+      "authored_signature": "db969f5c13bad86dbd20f8a7f7ece9e369e5fd069764f6a8416d3b3a317f4ff7",
+      "calculated_signature": "db969f5c13bad86dbd20f8a7f7ece9e369e5fd069764f6a8416d3b3a317f4ff7",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.666107382550336
+      "nearest_similarity": 0.67687595712098
     },
     {
       "id": "jazz_club_rent_party",
@@ -11917,6 +13158,33 @@
                     "state_label": "Work 2 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "rent_party_donation",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Count Rent Marker",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               }
@@ -12086,6 +13354,33 @@
                 }
               },
               {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "rent_party_donation",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Run Record Sale",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_pose",
@@ -12229,6 +13524,33 @@
                     "state_label": "Work 3 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "rent_party_donation",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Answer Creditor",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -12422,6 +13744,26 @@
                     "state_label": "Arrival station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "rent_party_donation",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Open Donation Station",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               },
@@ -12944,6 +14286,34 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -12956,7 +14326,7 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 1,
+          "routes": 0,
           "anchors": 2,
           "zones": 7
         },
@@ -12971,10 +14341,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "53474a07f956aa6f0a8c01a26588c3ba771677df18cebfa1a0df5f69d771637b",
-      "calculated_signature": "53474a07f956aa6f0a8c01a26588c3ba771677df18cebfa1a0df5f69d771637b",
+      "authored_signature": "83c13b3ef2c47b9b41f81dab9561fb055b875f8ef551427ee19b9ae5d852b658",
+      "calculated_signature": "83c13b3ef2c47b9b41f81dab9561fb055b875f8ef551427ee19b9ae5d852b658",
       "nearest_id": "bar_lock_in",
-      "nearest_similarity": 0.468134414831981
+      "nearest_similarity": 0.474611398963731
     },
     {
       "id": "jazz_club_union_trouble",
@@ -13082,6 +14452,33 @@
                     "state_label": "Work 1 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "union_picket",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Carry Neutral Stand",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -13268,6 +14665,33 @@
                   "op": "add",
                   "owner_namespace": "scenario"
                 }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "union_picket",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Assemble Agreed Stage",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
               }
             ],
             "branches": [
@@ -13405,6 +14829,33 @@
                     "state_label": "Work 3 station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "union_picket",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Open Entry Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -13598,6 +15049,26 @@
                     "state_label": "Arrival station"
                   },
                   "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "union_picket",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Read Both Lines",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               },
@@ -14120,6 +15591,34 @@
               "op": "remove",
               "owner_namespace": "scenario"
             }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
+          },
+          {
+            "family": "scene_ops",
+            "effect": {
+              "op": "remove",
+              "owner_namespace": "scenario"
+            }
           }
         ],
         "fact_types": [
@@ -14132,7 +15631,7 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 1,
+          "routes": 0,
           "anchors": 2,
           "zones": 7
         },
@@ -14147,17 +15646,17 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "047486e27e7483d754c918485d5f6cbb1b0f8513bdbd9035fe36c8a5e4982773",
-      "calculated_signature": "047486e27e7483d754c918485d5f6cbb1b0f8513bdbd9035fe36c8a5e4982773",
-      "nearest_id": "jazz_club_rent_party",
-      "nearest_similarity": 0.446756425948592
+      "authored_signature": "e1c332918ccf2f4add84da00705bdf6c86edbb20699b83511b727aa8a2d19392",
+      "calculated_signature": "e1c332918ccf2f4add84da00705bdf6c86edbb20699b83511b727aa8a2d19392",
+      "nearest_id": "bar_wake",
+      "nearest_similarity": 0.447527141133896
     }
   ],
   "pairwise_similarity": [
     {
       "left_id": "bar_darts_league_night",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.196754563894523,
+      "similarity": 0.193840579710145,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14169,7 +15668,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "bar_live_band",
-      "similarity": 0.356873822975518,
+      "similarity": 0.358569051580699,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14181,7 +15680,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.540785498489426,
+      "similarity": 0.539823008849557,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14193,7 +15692,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.235637779941577,
+      "similarity": 0.241289198606272,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14205,7 +15704,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.303846153846154,
+      "similarity": 0.299915038232795,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14217,7 +15716,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.270852858481724,
+      "similarity": 0.269709543568465,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14229,7 +15728,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.191919191919192,
+      "similarity": 0.199272065514104,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14241,7 +15740,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.309116809116809,
+      "similarity": 0.328476821192053,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14253,7 +15752,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.212048192771084,
+      "similarity": 0.204347826086957,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14265,7 +15764,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.260651629072682,
+      "similarity": 0.275028768699655,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14277,7 +15776,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.554878048780488,
+      "similarity": 0.554959785522788,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14289,7 +15788,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.160275319567355,
+      "similarity": 0.151091703056769,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14301,7 +15800,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_live_band",
-      "similarity": 0.477948717948718,
+      "similarity": 0.488605287146764,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14313,7 +15812,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_lock_in",
-      "similarity": 0.494813278008299,
+      "similarity": 0.503683241252302,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14325,7 +15824,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_payday_rush",
-      "similarity": 0.220192307692308,
+      "similarity": 0.208651399491094,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14337,7 +15836,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.504424778761062,
+      "similarity": 0.506493506493506,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14349,7 +15848,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.192669172932331,
+      "similarity": 0.184538653366584,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14361,7 +15860,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.40809968847352,
+      "similarity": 0.412742382271468,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14373,7 +15872,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.260223048327138,
+      "similarity": 0.258223684210526,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14385,7 +15884,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.166844919786096,
+      "similarity": 0.158851674641148,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14397,7 +15896,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.34798877455566,
+      "similarity": 0.347359735973597,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14409,7 +15908,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.235602094240838,
+      "similarity": 0.227188081936685,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14421,7 +15920,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.443052391799544,
+      "similarity": 0.452040816326531,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14433,7 +15932,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.312953367875648,
+      "similarity": 0.309107635694572,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14445,7 +15944,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.371075166508088,
+      "similarity": 0.371116708648195,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14457,7 +15956,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.183297180043384,
+      "similarity": 0.173449612403101,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14469,7 +15968,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "bar_live_band",
-      "similarity": 0.675340768277571,
+      "similarity": 0.688053097345133,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -14481,7 +15980,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.329335793357934,
+      "similarity": 0.330888345558272,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14493,7 +15992,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.21900826446281,
+      "similarity": 0.212511499540018,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14505,7 +16004,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.468134414831981,
+      "similarity": 0.474611398963731,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14517,7 +16016,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.292857142857143,
+      "similarity": 0.291288566243194,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14529,7 +16028,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.265204386839482,
+      "similarity": 0.26779359430605,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14541,7 +16040,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.309116809116809,
+      "similarity": 0.328476821192053,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14553,7 +16052,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_live_band",
-      "similarity": 0.233019853709509,
+      "similarity": 0.224907063197026,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14565,7 +16064,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_lock_in",
-      "similarity": 0.25,
+      "similarity": 0.239887111947319,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14577,7 +16076,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.284412955465587,
+      "similarity": 0.286101083032491,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14589,7 +16088,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.607655502392344,
+      "similarity": 0.62280701754386,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -14601,7 +16100,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.288235294117647,
+      "similarity": 0.277602523659306,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14613,7 +16112,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.39135959339263,
+      "similarity": 0.399769585253456,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14625,7 +16124,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.235467980295567,
+      "similarity": 0.240105540897098,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14637,7 +16136,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.315866084425036,
+      "similarity": 0.335135135135135,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14649,7 +16148,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_fight_night",
-      "similarity": 0.192015209125475,
+      "similarity": 0.182885906040268,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14661,7 +16160,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_live_band",
-      "similarity": 0.23541887592789,
+      "similarity": 0.225776105362183,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14673,7 +16172,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_lock_in",
-      "similarity": 0.218619246861925,
+      "similarity": 0.210966542750929,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14685,7 +16184,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_payday_rush",
-      "similarity": 0.612012987012987,
+      "similarity": 0.62704309063893,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -14697,7 +16196,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.322784810126582,
+      "similarity": 0.318989710009355,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14709,7 +16208,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.666107382550336,
+      "similarity": 0.67687595712098,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -14721,7 +16220,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.251448435689455,
+      "similarity": 0.244813278008299,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14733,7 +16232,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.443850267379679,
+      "similarity": 0.447527141133896,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14745,7 +16244,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.321875,
+      "similarity": 0.319444444444444,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14757,7 +16256,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.262569832402235,
+      "similarity": 0.262376237623762,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14769,7 +16268,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.392197125256674,
+      "similarity": 0.399817017383349,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14781,7 +16280,7 @@
     {
       "left_id": "jazz_club_recording_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.438896189224704,
+      "similarity": 0.442992874109264,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14793,7 +16292,7 @@
     {
       "left_id": "jazz_club_rent_party",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.252860411899314,
+      "similarity": 0.246153846153846,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14805,7 +16304,7 @@
     {
       "left_id": "jazz_club_rent_party",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.446756425948592,
+      "similarity": 0.444201312910284,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14816,21 +16315,21 @@
     }
   ],
   "assembly_evidence_needed": [
-    "scenario bar_wake is invalid: [\"scenario bar_wake sequence declared_targets.routes identity base::world:motel has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.anchors identity base::anchor:wake_memorial_tables has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.anchors identity base::anchor:wake_host has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario bar_fight_night is invalid: [\"scenario bar_fight_night sequence declared_targets.routes identity base::world:kitty_cat_lounge has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.anchors identity base::anchor:fight_toppled_chair has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.anchors identity base::anchor:fight_right_brawler has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario bar_payday_rush is invalid: [\"scenario bar_payday_rush sequence declared_targets.routes identity base::world:corner_store has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.anchors identity base::anchor:payday_order_rail has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.anchors identity base::anchor:payday_runner has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario bar_lock_in is invalid: [\"scenario bar_lock_in sequence declared_targets.routes identity base::world:delta_queen has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.anchors identity base::anchor:lockin_shutters has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.anchors identity base::anchor:lockin_regular has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario bar_darts_league_night is invalid: [\"scenario bar_darts_league_night sequence declared_targets.routes identity base::world:corner_store has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.anchors identity base::anchor:darts_oche has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.anchors identity base::anchor:darts_scorer has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario bar_live_band is invalid: [\"scenario bar_live_band sequence declared_targets.routes identity base::world:kitty_cat_lounge has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.anchors identity base::anchor:live_band_speakers has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.anchors identity base::anchor:live_band_runner has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario bar_dead_tuesday is invalid: [\"scenario bar_dead_tuesday sequence declared_targets.routes identity base::world:motel has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.anchors identity base::anchor:dead_tuesday_bartender has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario jazz_club_guest_legend is invalid: [\"scenario jazz_club_guest_legend sequence declared_targets.routes identity base::world:bar has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.anchors identity base::anchor:guest_legend_table has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.anchors identity base::anchor:guest_legend_stage_manager has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario jazz_club_rent_party is invalid: [\"scenario jazz_club_rent_party sequence declared_targets.routes identity base::world:motel has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.anchors identity base::anchor:rent_party_donation has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.anchors identity base::anchor:rent_party_creditor has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario jazz_club_recording_night is invalid: [\"scenario jazz_club_recording_night sequence declared_targets.routes identity base::world:corner_store has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.anchors identity base::anchor:recording_microphone has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.anchors identity base::anchor:recording_audience has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario jazz_club_union_trouble is invalid: [\"scenario jazz_club_union_trouble sequence declared_targets.routes identity base::world:bar has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.anchors identity base::anchor:union_picket has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.anchors identity base::anchor:union_manager has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario bar_wake vs bar_payday_rush: 0.612 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_wake vs jazz_club_recording_night: 0.666 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_payday_rush vs jazz_club_recording_night: 0.608 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_lock_in vs bar_live_band: 0.675 (warning). Missing receipt-bound masked visual evidence."
+    "scenario bar_wake is invalid: [\"scenario bar_wake sequence declared_targets.anchors identity base::anchor:wake_memorial_tables has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.anchors identity base::anchor:wake_host has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_fight_night is invalid: [\"scenario bar_fight_night sequence declared_targets.anchors identity base::anchor:fight_toppled_chair has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.anchors identity base::anchor:fight_right_brawler has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_payday_rush is invalid: [\"scenario bar_payday_rush sequence declared_targets.anchors identity base::anchor:payday_order_rail has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.anchors identity base::anchor:payday_runner has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_lock_in is invalid: [\"scenario bar_lock_in sequence declared_targets.anchors identity base::anchor:lockin_shutters has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.anchors identity base::anchor:lockin_regular has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_darts_league_night is invalid: [\"scenario bar_darts_league_night sequence declared_targets.anchors identity base::anchor:darts_oche has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.anchors identity base::anchor:darts_scorer has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_live_band is invalid: [\"scenario bar_live_band sequence declared_targets.anchors identity base::anchor:live_band_speakers has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.anchors identity base::anchor:live_band_runner has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_dead_tuesday is invalid: [\"scenario bar_dead_tuesday sequence declared_targets.anchors identity base::anchor:dead_tuesday_bartender has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario jazz_club_guest_legend is invalid: [\"scenario jazz_club_guest_legend sequence declared_targets.anchors identity base::anchor:guest_legend_table has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.anchors identity base::anchor:guest_legend_stage_manager has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario jazz_club_rent_party is invalid: [\"scenario jazz_club_rent_party sequence declared_targets.anchors identity base::anchor:rent_party_donation has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.anchors identity base::anchor:rent_party_creditor has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario jazz_club_recording_night is invalid: [\"scenario jazz_club_recording_night sequence declared_targets.anchors identity base::anchor:recording_microphone has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.anchors identity base::anchor:recording_audience has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario jazz_club_union_trouble is invalid: [\"scenario jazz_club_union_trouble sequence declared_targets.anchors identity base::anchor:union_picket has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.anchors identity base::anchor:union_manager has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_wake vs bar_payday_rush: 0.627 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_wake vs jazz_club_recording_night: 0.677 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_payday_rush vs jazz_club_recording_night: 0.623 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_lock_in vs bar_live_band: 0.688 (warning). Missing receipt-bound masked visual evidence."
   ],
   "pair_count": 55
 }

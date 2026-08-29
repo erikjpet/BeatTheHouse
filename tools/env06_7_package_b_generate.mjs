@@ -183,6 +183,7 @@ const specs = [
 
 const inputs = ["ui_accept", "ui_right", "ui_down", "ui_left", "ui_cancel", "ui_up"];
 const commonZones = ["background", "center", "exit_lane", "foreground", "left", "right", "service_lane"];
+const stationAnchors = {motel: "room_walkway", gas_station_casino: "cashier_counter", beach: "shoreline"};
 
 function sceneOp(op, receipt, id, value = "") {
   const row = {family: "scene_ops", op, receipt_id: receipt, owner_namespace: "scenario", stable_object_id: id};
@@ -207,7 +208,7 @@ function action(id, label, index, handler = "publish_feedback", handlerInputs = 
 
 function interactionOp(receipt, id, label, actions, safeExit = false) {
   return {family: "interaction_ops", op: "add", receipt_id: receipt, owner_namespace: "scenario", stable_object_id: id,
-    interaction: {owner_namespace: "scenario", stable_object_id: id, label, state_label: "Available", prompt: `Use ${label.toLowerCase()} or leave by the marked route.`, enabled: true,
+    interaction: {owner_namespace: "scenario", stable_object_id: id, presentation_object_id: `scenario::${id}`, label, state_label: "Available", prompt: `Use ${label.toLowerCase()} or leave by the marked route.`, enabled: true,
       available_actions: actions, input_actions: [...new Set(actions.map(a => a.input_action))], non_color_state: "available", focus_order: safeExit ? 0 : 2,
       hit_bounds: {w: 56, h: 56}, min_target_size: 44, safe_exit: safeExit, alternate_exit: false}};
 }
@@ -224,6 +225,11 @@ function spawnExitScene(spec) {
     object: {label: "Marked safe exit", role: "exit", zone_id: "exit_lane", bounds: {w: 56, h: 56}, visible: true, enabled: true, state: "clear", appearance: "marked_lane"}};
 }
 
+function spawnStationScene(spec, id, label, boundary) {
+  return {family: "scene_ops", op: "spawn", receipt_id: `${spec.id}_${boundary}_spawn_${id}`, owner_namespace: "scenario", stable_object_id: id,
+    object: {label, role: "task_station", anchor_id: stationAnchors[spec.archetype], bounds: {w: 64, h: 56}, visible: true, enabled: true, state: "ready", appearance: "task_ready"}};
+}
+
 function spawnActor(spec, row, index) {
   const [id, label, actorId, behavior, zone] = row;
   return {family: "actor_ops", op: "spawn", receipt_id: `arrival_${spec.id}_${id}`, owner_namespace: "scenario", stable_object_id: `${spec.id}_${id}`,
@@ -238,7 +244,7 @@ function buildScenario(spec, scenarioIndex) {
   phases.push({
     id: "arrival", label: "Arrival tableau", arrival_feedback: spec.arrival, exit_prompt: spec.exit,
     entry_conditions: [{type: "always"}], objective_ids: [objectiveId], advance_after_actions: 0,
-    scene_ops: [...spec.props.map((row, i) => spawnScene(spec, row, i)), spawnExitScene(spec)],
+    scene_ops: [...spec.props.map((row, i) => spawnScene(spec, row, i)), spawnExitScene(spec), spawnStationScene(spec, `${spec.id}_station_0`, spec.beats[0][1], "arrival")],
     interaction_ops: [
       interactionOp(`arrival_${spec.id}_exit`, exitId, "Marked safe exit", [action(`${spec.id}_leave_safe`, "Leave by the safe route", 5)], true),
       interactionOp(`arrival_${spec.id}_${firstVerb}`, `${spec.id}_station_0`, spec.beats[0][1], [action(firstVerb, spec.beats[0][1], 0, "complete_objective_step", {objective_id: objectiveId, step_id: firstVerb})])
@@ -262,10 +268,13 @@ function buildScenario(spec, scenarioIndex) {
     else interactionOps.push(interactionOp(`${spec.id}_add_advance_station`, `${spec.id}_advance_station`, "Open the aftermath station", [
       action(`${spec.id}_open_decision`, "Open the aftermath station", 3)
     ]));
+    const stationSceneOps = [sceneOperation, sceneOp("remove", `${spec.id}_beat_${i + 1}_remove_${previousStation}`, previousStation)];
+    if (nextBeat) stationSceneOps.push(spawnStationScene(spec, nextStation, nextBeat[1], `beat_${i + 1}`));
+    else stationSceneOps.push(spawnStationScene(spec, `${spec.id}_advance_station`, "Open the aftermath station", `beat_${i + 1}`));
     phases.push({
       id: `beat_${i + 1}`, label: beat[1], arrival_feedback: beat[2], exit_prompt: spec.exit,
       entry_conditions: [], objective_ids: [objectiveId], advance_after_actions: 0,
-      scene_ops: [sceneOperation], interaction_ops: interactionOps, actor_ops: [actorOperation],
+      scene_ops: stationSceneOps, interaction_ops: interactionOps, actor_ops: [actorOperation],
       transition_ops: [{family: "transition_ops", op: i % 2 ? "feedback" : "scene_change", receipt_id: `${spec.id}_beat_${i + 1}_feedback`, owner_namespace: "scenario", stable_object_id: `${spec.id}_beat_${i + 1}_transition`, channel: "scenario", message: beat[2], ...(i % 2 ? {} : {change_id: `${spec.id}_change_${i + 1}`})}],
       branches: [{id: `${spec.id}_advance_${i + 1}`, condition: {type: "command", command_id: nextBeat ? nextBeat[0] : `${spec.id}_open_decision`}, next_phase: next}]
     });
@@ -273,7 +282,11 @@ function buildScenario(spec, scenarioIndex) {
   phases.push({
     id: "decision", label: "Branch aftermath", arrival_feedback: `The ${spec.pressure.replaceAll("_", " ")} now demands a physical resolution.`, exit_prompt: spec.exit, terminal: true,
     entry_conditions: [], objective_ids: [objectiveId], advance_after_actions: 0,
-    scene_ops: [sceneOp("set_state", `${spec.id}_decision_ready`, `${spec.id}_${spec.props[(scenarioIndex + 1) % spec.props.length][0]}`, "decision_ready")],
+    scene_ops: [
+      sceneOp("set_state", `${spec.id}_decision_ready`, `${spec.id}_${spec.props[(scenarioIndex + 1) % spec.props.length][0]}`, "decision_ready"),
+      sceneOp("remove", `${spec.id}_decision_remove_advance_visual`, `${spec.id}_advance_station`),
+      spawnStationScene(spec, `${spec.id}_decision_station`, "Resolve the physical aftermath", "decision")
+    ],
     interaction_ops: [
       {family: "interaction_ops", op: "remove", receipt_id: `${spec.id}_remove_advance_station`, owner_namespace: "scenario", stable_object_id: `${spec.id}_advance_station`},
       interactionOp(`${spec.id}_add_decision`, `${spec.id}_decision_station`, "Resolve the physical aftermath", [
@@ -296,6 +309,9 @@ function buildScenario(spec, scenarioIndex) {
   const cleanup = [];
   for (const row of spec.props) cleanup.push(sceneOp("remove", `cleanup_${spec.id}_${row[0]}`, `${spec.id}_${row[0]}`));
   for (const row of spec.actors) cleanup.push({family: "actor_ops", op: "despawn", receipt_id: `cleanup_${spec.id}_${row[0]}`, owner_namespace: "scenario", stable_object_id: `${spec.id}_${row[0]}`});
+  for (let i = 0; i < spec.beats.length; i++) cleanup.push(sceneOp("remove", `cleanup_${spec.id}_station_${i}`, `${spec.id}_station_${i}`));
+  cleanup.push(sceneOp("remove", `cleanup_${spec.id}_advance_station`, `${spec.id}_advance_station`));
+  cleanup.push(sceneOp("remove", `cleanup_${spec.id}_decision_station`, `${spec.id}_decision_station`));
   cleanup.push(sceneOp("remove", `cleanup_${spec.id}_exit_visual`, exitId));
   cleanup.push({family: "interaction_ops", op: "remove", receipt_id: `cleanup_${spec.id}_exit`, owner_namespace: "scenario", stable_object_id: exitId});
   cleanup.push({family: "interaction_ops", op: "remove", receipt_id: `cleanup_${spec.id}_decision_station`, owner_namespace: "scenario", stable_object_id: `${spec.id}_decision_station`});
@@ -336,7 +352,7 @@ function buildScenario(spec, scenarioIndex) {
       mechanic_tags: [spec.archetype, spec.pressure, spec.connection, `beats_${spec.beats.length}`, `props_${spec.props.length}`, `actors_${spec.actors.length}`],
       sequence_signature: "UNSIGNED",
       owner_exceptions: [],
-      declared_targets: {scene_objects: [], interactions: [], actors: [], services: [], games: [], routes: [], anchors: [], zones: commonZones.map(zone => `base::zone:${zone}`)},
+      declared_targets: {scene_objects: [], interactions: [], actors: [], services: [], games: [], routes: [], anchors: [`base::anchor:${stationAnchors[spec.archetype]}`], zones: commonZones.map(zone => `base::zone:${zone}`)},
       fact_subscriptions: [{fact_type: spec.fact, handler: "set_local", inputs: {key: "world_boundary_seen", value: true}}],
       completion_contract: {arrival_readable: true, semantic_changes: true, scenario_interaction: true, action_boundaries: true, choice_or_failure: true, material_outcomes: true, revisit_coverage: true, world_connection: true, primary_verb: true, feedback_and_exit: true}
     },

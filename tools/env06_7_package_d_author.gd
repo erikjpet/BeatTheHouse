@@ -24,15 +24,15 @@ const SPATIAL_BINDINGS := {
 	"punchline_open_mic_night":{"layer":"club","anchors":["punchline_open_mic_signup","punchline_open_mic_waiting_comic"],"route":"base::layer:casino"},
 	"punchline_headliner_night":{"layer":"back_room","anchors":["punchline_headliner_credential_rope","punchline_headliner_door_guard"],"route":"base::layer:casino"},
 	"punchline_bringer_show":{"layer":"club","anchors":["punchline_bringer_crowd_ropes","punchline_bringer_crowd_captain"],"route":"base::layer:casino"},
-	"punchline_high_stakes_night":{"layer":"casino","anchors":["punchline_high_stakes_protected_table","punchline_high_stakes_floor_runner"],"route":"base::layer:back_room"},
-	"punchline_greased_week":{"layer":"casino","anchors":["punchline_greased_inspection_seals","punchline_greased_payoff_runner"],"route":"base::layer:club"},
+	"punchline_high_stakes_night":{"layer":"casino","anchors":["punchline_high_stakes_protected_table","punchline_high_stakes_floor_runner"],"route":"base::layer:casino"},
+	"punchline_greased_week":{"layer":"casino","anchors":["punchline_greased_inspection_seals","punchline_greased_payoff_runner"],"route":"base::layer:casino"},
 	"punchline_debt_court":{"layer":"club","anchors":["punchline_debt_hearing_chairs","punchline_debt_room_witness"],"route":"base::layer:casino"},
-	"punchline_new_muscle":{"layer":"casino","anchors":["punchline_new_muscle_inspection_tray","punchline_new_muscle_checkpoint_rover"],"route":"base::layer:back_room"},
+	"punchline_new_muscle":{"layer":"casino","anchors":["punchline_new_muscle_inspection_tray","punchline_new_muscle_checkpoint_rover"],"route":"base::layer:casino"},
 	"punchline_raid_jitters":{"layer":"club","anchors":["punchline_raid_hide_cart","punchline_raid_reopen_steward"],"route":"base::layer:casino"},
 	"kitty_cat_lounge_amateur_night":{"layer":"flat","anchors":["kitty_amateur_signup","kitty_amateur_judge"],"route":"base::world:bar"},
-	"kitty_cat_lounge_buyout":{"layer":"flat","anchors":["kitty_buyout_ropes","kitty_buyout_steward"],"route":"base::world:gas_station_casino"},
-	"kitty_cat_lounge_slow_night":{"layer":"flat","anchors":["kitty_slow_closed_section","kitty_slow_booth_regular"],"route":"base::world:delta_queen"},
-	"kitty_cat_lounge_bachelorette_storm":{"layer":"flat","anchors":["kitty_storm_prop_trunk","kitty_storm_floor_host"],"route":"base::world:grand_casino"},
+	"kitty_cat_lounge_buyout":{"layer":"flat","anchors":["kitty_buyout_ropes","kitty_buyout_steward"],"route":"base::world:bar"},
+	"kitty_cat_lounge_slow_night":{"layer":"flat","anchors":["kitty_slow_closed_section","kitty_slow_booth_regular"],"route":"base::world:gas_station_casino"},
+	"kitty_cat_lounge_bachelorette_storm":{"layer":"flat","anchors":["kitty_storm_prop_trunk","kitty_storm_floor_host"],"route":"base::world:gas_station_casino"},
 }
 
 
@@ -89,9 +89,14 @@ func _entry(c: Dictionary) -> Dictionary:
 		actor_ops.append(_actor_spawn(prefix, "arrival", actor_id, str(a[1]), str(a[2]), str(a[3]), str(a[4])))
 		cleanup.append(_despawn(prefix, actor_id))
 	var exit_id := "%s_safe_exit" % prefix
-	scene_ops.append(_scene_spawn(prefix, "arrival", exit_id, "Marked clean exit", "exit", "exit_lane", "marked_lane", 56, 56))
+	var exit_scene := _scene_spawn(prefix, "arrival", exit_id, "Marked clean exit", "exit", "exit_lane", "marked_lane", 56, 56)
+	var exit_anchor := _exit_anchor(spatial)
+	if not exit_anchor.is_empty(): exit_scene["object"]["anchor_id"] = exit_anchor
+	scene_ops.append(exit_scene)
 	cleanup.append(_remove("scene_ops", prefix, exit_id))
 	var first_task_id := "%s_task_0" % prefix
+	scene_ops.append(_task_scene_spawn(prefix, "arrival", first_task_id, str(c.verbs[0]), spatial))
+	cleanup.append(_remove("scene_ops", prefix, first_task_id))
 	var arrival_interactions := [
 		_interaction_add(prefix, "arrival", exit_id, "%s clean exit" % prefix.replace("_"," ").capitalize(), "Leave or refuse the %s task without crossing its active work zone." % prefix.replace("_"," "), [_action("ignore_%s" % prefix, "Ignore the sequence", "ui_down"), _action("refuse_%s" % prefix, "Refuse the task", "ui_cancel")], true),
 		_interaction_add(prefix, "arrival", first_task_id, str(c.verbs[0]).replace("_", " ").capitalize(), "Begin the first physical task or commit to this scenario's named strategy.", [_step_action(str(c.verbs[0]), prefix, str(c.verbs[0])), _action("fail_%s" % prefix, "Let the pressure win", "ui_right")] + _decision_actions(c, "arrival", prefix), false),
@@ -113,10 +118,13 @@ func _entry(c: Dictionary) -> Dictionary:
 		var gate_id := "%s_gate_%d" % [prefix, index - 1]
 		var operations := _beat_operations(c, index - 1, spatial)
 		var phase_id := "work_%d" % index
+		operations.scene.append(_scene_remove(prefix, phase_id, previous_task_id))
+		operations.scene.append(_task_scene_spawn(prefix, phase_id, task_id, str(c.verbs[index]), spatial))
 		var interactions := [_gate(prefix,phase_id,gate_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this distinct room operation or take its identity-specific branch.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave cleanly","ui_cancel")] + _decision_actions(c, phase_id, prefix),false)]
 		# Remove gate overlays before their underlying task interactions so cleanup
 		# cannot restore an already-removed target and leak it across revisit.
 		cleanup.push_front(_remove("interaction_ops",prefix,gate_id))
+		cleanup.append(_remove("scene_ops",prefix,task_id))
 		cleanup.append(_remove("interaction_ops",prefix,task_id))
 		objective_steps.append({"id":str(c.verbs[index]),"label":str(c.verbs[index]).replace("_"," ").capitalize(),"kind":"command","command_id":str(c.verbs[index])})
 		var next_phase := "terminal_success" if index == c.verbs.size() - 1 else "work_%d" % (index + 1)
@@ -219,6 +227,18 @@ func _scene_spawn(prefix:String,boundary:String,id:String,label:String,role:Stri
 	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":{"label":label,"role":role,"zone_id":zone,"bounds":{"w":w,"h":h},"visible":true,"enabled":true,"state":state,"appearance":state}}
 
 
+func _task_scene_spawn(prefix:String,boundary:String,id:String,verb:String,spatial:Dictionary)->Dictionary:
+	var anchors := _array(spatial.get("anchors", []))
+	var object := {"label":verb.replace("_", " ").capitalize(),"role":"task_station","bounds":{"w":64,"h":56},"visible":true,"enabled":true,"state":"ready","appearance":"task_ready"}
+	if not anchors.is_empty(): object["anchor_id"] = str(anchors[0])
+	else: object["zone_id"] = "service_lane"
+	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":object}
+
+
+func _scene_remove(prefix:String,boundary:String,id:String)->Dictionary:
+	return {"family":"scene_ops","op":"remove","receipt_id":"%s_%s_remove_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id}
+
+
 func _actor_spawn(prefix:String,boundary:String,id:String,label:String,actor_id:String,zone:String,behavior:String)->Dictionary:
 	var bounded_behavior := behavior if ["idle", "watch", "patrol", "guard", "flee", "fight", "work", "depart"].has(behavior) else "watch"
 	return {"family":"actor_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"actor":{"label":label,"actor_id":actor_id,"zone_id":zone,"behavior":bounded_behavior,"pose":"arrival"}}
@@ -314,7 +334,13 @@ func _base_zones() -> Array:
 func _declared_anchor_ids(spatial: Dictionary) -> Array:
 	var result: Array = []
 	for anchor_value in _array(spatial.get("anchors", [])): result.append("base::anchor:%s" % str(anchor_value))
+	var exit_anchor := _exit_anchor(spatial)
+	if not exit_anchor.is_empty() and not result.has("base::anchor:%s" % exit_anchor): result.append("base::anchor:%s" % exit_anchor)
 	return result
+
+
+func _exit_anchor(spatial: Dictionary) -> String:
+	return "punchline_headliner_door_guard" if str(spatial.get("layer", "")) != "flat" else ""
 
 
 func _target_inventory(spatial: Dictionary) -> Dictionary:

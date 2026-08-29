@@ -34,17 +34,17 @@ const DECISIONS := {
 }
 
 const SPATIAL_BINDINGS := {
-	"bar_wake":{"anchors":["wake_memorial_tables","wake_host"],"route":"base::world:motel"},
-	"bar_fight_night":{"anchors":["fight_toppled_chair","fight_right_brawler"],"route":"base::world:kitty_cat_lounge"},
-	"bar_payday_rush":{"anchors":["payday_order_rail","payday_runner"],"route":"base::world:corner_store"},
-	"bar_lock_in":{"anchors":["lockin_shutters","lockin_regular"],"route":"base::world:delta_queen"},
-	"bar_darts_league_night":{"anchors":["darts_oche","darts_scorer"],"route":"base::world:corner_store"},
-	"bar_live_band":{"anchors":["live_band_speakers","live_band_runner"],"route":"base::world:kitty_cat_lounge"},
-	"bar_dead_tuesday":{"anchors":["dead_tuesday_bartender"],"route":"base::world:motel"},
-	"jazz_club_guest_legend":{"anchors":["guest_legend_table","guest_legend_stage_manager"],"route":"base::world:bar"},
-	"jazz_club_rent_party":{"anchors":["rent_party_donation","rent_party_creditor"],"route":"base::world:motel"},
-	"jazz_club_recording_night":{"anchors":["recording_microphone","recording_audience"],"route":"base::world:corner_store"},
-	"jazz_club_union_trouble":{"anchors":["union_picket","union_manager"],"route":"base::world:bar"},
+	"bar_wake":{"anchors":["wake_memorial_tables","wake_host"]},
+	"bar_fight_night":{"anchors":["fight_toppled_chair","fight_right_brawler"]},
+	"bar_payday_rush":{"anchors":["payday_order_rail","payday_runner"]},
+	"bar_lock_in":{"anchors":["lockin_shutters","lockin_regular"]},
+	"bar_darts_league_night":{"anchors":["darts_oche","darts_scorer"]},
+	"bar_live_band":{"anchors":["live_band_speakers","live_band_runner"]},
+	"bar_dead_tuesday":{"anchors":["dead_tuesday_bartender"]},
+	"jazz_club_guest_legend":{"anchors":["guest_legend_table","guest_legend_stage_manager"]},
+	"jazz_club_rent_party":{"anchors":["rent_party_donation","rent_party_creditor"]},
+	"jazz_club_recording_night":{"anchors":["recording_microphone","recording_audience"]},
+	"jazz_club_union_trouble":{"anchors":["union_picket","union_manager"]},
 }
 
 
@@ -101,6 +101,8 @@ func _entry(c: Dictionary) -> Dictionary:
 	scene_ops.append(_scene_spawn(prefix, "arrival", exit_id, "Marked clean exit", "exit", "exit_lane", "marked_lane", 56, 56))
 	cleanup.append(_remove("scene_ops", prefix, exit_id))
 	var first_task_id := "%s_task_0" % prefix
+	scene_ops.append(_task_scene_spawn(prefix, "arrival", first_task_id, str(c.verbs[0]), spatial))
+	cleanup.append(_remove("scene_ops", prefix, first_task_id))
 	var arrival_interactions := [
 		_interaction_add(prefix, "arrival", exit_id, "%s clean exit" % prefix.replace("_"," ").capitalize(), "Leave or refuse the %s task without crossing its active work zone." % prefix.replace("_"," "), [_action("ignore_%s" % prefix, "Ignore the sequence", "ui_down"), _action("refuse_%s" % prefix, "Refuse the task", "ui_cancel")], true),
 		_interaction_add(prefix, "arrival", first_task_id, str(c.verbs[0]).replace("_", " ").capitalize(), "Begin the first physical task or choose this identity's named route.", [_step_action(str(c.verbs[0]), prefix, str(c.verbs[0])), _action("fail_%s" % prefix, "Let the pressure win", "ui_right")] + _decision_actions(decision, "arrival"), false),
@@ -122,10 +124,13 @@ func _entry(c: Dictionary) -> Dictionary:
 		var gate_id := "%s_gate_%d" % [prefix, index - 1]
 		var operations := _beat_operations(c, index - 1, spatial)
 		var phase_id := "work_%d" % index
+		operations.scene.append(_scene_remove(prefix, phase_id, previous_task_id))
+		operations.scene.append(_task_scene_spawn(prefix, phase_id, task_id, str(c.verbs[index]), spatial))
 		var interactions := [_gate(prefix,phase_id,gate_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this operation or choose its identity-specific route.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave","ui_cancel")] + _decision_actions(decision, phase_id),false)]
 		# Remove gate overlays before their underlying task interactions so cleanup
 		# cannot restore an already-removed target and leak it across revisit.
 		cleanup.push_front(_remove("interaction_ops",prefix,gate_id))
+		cleanup.append(_remove("scene_ops",prefix,task_id))
 		cleanup.append(_remove("interaction_ops",prefix,task_id))
 		objective_steps.append({"id":str(c.verbs[index]),"label":str(c.verbs[index]).replace("_"," ").capitalize(),"kind":"command","command_id":str(c.verbs[index])})
 		var next_phase := "terminal_success" if index == c.verbs.size() - 1 else "work_%d" % (index + 1)
@@ -150,7 +155,7 @@ func _entry(c: Dictionary) -> Dictionary:
 		"expiry":{"boundary":"night_end","after":1,"policy":"cleanup"},
 		"cleanup":{"operations":cleanup},
 		"aftermath":aftermath,
-		"declared_targets":{"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[str(spatial.get("route", ""))],"anchors":_declared_anchor_ids(spatial),"zones":_base_zones()},
+		"declared_targets":{"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":_declared_anchor_ids(spatial),"zones":_base_zones()},
 		"mechanic_tags":c.tags,
 		"sequence_signature":"pending",
 		"owner_exceptions":[],
@@ -200,6 +205,18 @@ func _branch(prefix:String,id:String,condition:Dictionary,next_phase:String,outc
 
 func _scene_spawn(prefix:String,boundary:String,id:String,label:String,role:String,zone:String,state:String,w:int,h:int)->Dictionary:
 	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":{"label":label,"role":role,"zone_id":zone,"bounds":{"w":w,"h":h},"visible":true,"enabled":true,"state":state,"appearance":state}}
+
+
+func _task_scene_spawn(prefix:String,boundary:String,id:String,verb:String,spatial:Dictionary)->Dictionary:
+	var anchors := _array(spatial.get("anchors", []))
+	var object := {"label":verb.replace("_", " ").capitalize(),"role":"task_station","bounds":{"w":64,"h":56},"visible":true,"enabled":true,"state":"ready","appearance":"task_ready"}
+	if not anchors.is_empty(): object["anchor_id"] = str(anchors[0])
+	else: object["zone_id"] = "service_lane"
+	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":object}
+
+
+func _scene_remove(prefix:String,boundary:String,id:String)->Dictionary:
+	return {"family":"scene_ops","op":"remove","receipt_id":"%s_%s_remove_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id}
 
 
 func _actor_spawn(prefix:String,boundary:String,id:String,label:String,actor_id:String,zone:String,behavior:String)->Dictionary:
@@ -303,7 +320,7 @@ func _declared_anchor_ids(spatial: Dictionary) -> Array:
 
 
 func _target_inventory(spatial: Dictionary) -> Dictionary:
-	return {"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[str(spatial.get("route", ""))],"anchors":_declared_anchor_ids(spatial),"zones":_base_zones(),"event_choices":{}}
+	return {"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":_declared_anchor_ids(spatial),"zones":_base_zones(),"event_choices":{}}
 
 func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []

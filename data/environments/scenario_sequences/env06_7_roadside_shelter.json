@@ -132,6 +132,26 @@
                     "state": "clear",
                     "appearance": "marked_lane"
                   }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_conventioneers_arrival_spawn_motel_conventioneers_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_conventioneers_station_0",
+                  "object": {
+                    "label": "Compare claim tags",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -144,6 +164,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_conventioneers_safe_exit",
+                    "presentation_object_id": "scenario::motel_conventioneers_safe_exit",
                     "label": "Marked safe exit",
                     "state_label": "Available",
                     "prompt": "Use marked safe exit or leave by the marked route.",
@@ -183,6 +204,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_conventioneers_station_0",
+                    "presentation_object_id": "scenario::motel_conventioneers_station_0",
                     "label": "Compare claim tags",
                     "state_label": "Available",
                     "prompt": "Use compare claim tags or leave by the marked route.",
@@ -288,6 +310,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_conventioneers_room_board",
                   "state": "cross_checked"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_conventioneers_beat_1_remove_motel_conventioneers_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_conventioneers_station_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_conventioneers_beat_1_spawn_motel_conventioneers_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_conventioneers_station_1",
+                  "object": {
+                    "label": "Route the luggage cart",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -307,6 +356,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_conventioneers_station_1",
+                    "presentation_object_id": "scenario::motel_conventioneers_station_1",
                     "label": "Route the luggage cart",
                     "state_label": "Available",
                     "prompt": "Use route the luggage cart or leave by the marked route.",
@@ -390,6 +440,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_conventioneers_luggage_cart",
                   "zone_id": "right"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_conventioneers_beat_2_remove_motel_conventioneers_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_conventioneers_station_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_conventioneers_beat_2_spawn_motel_conventioneers_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_conventioneers_station_2",
+                  "object": {
+                    "label": "Reassign room keys",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -409,6 +486,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_conventioneers_station_2",
+                    "presentation_object_id": "scenario::motel_conventioneers_station_2",
                     "label": "Reassign room keys",
                     "state_label": "Available",
                     "prompt": "Use reassign room keys or leave by the marked route.",
@@ -491,6 +569,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_conventioneers_blue_cases",
                   "appearance": "sorted_tags"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_conventioneers_beat_3_remove_motel_conventioneers_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_conventioneers_station_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_conventioneers_beat_3_spawn_motel_conventioneers_advance_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_conventioneers_advance_station",
+                  "object": {
+                    "label": "Open the aftermath station",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -510,6 +615,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_conventioneers_advance_station",
+                    "presentation_object_id": "scenario::motel_conventioneers_advance_station",
                     "label": "Open the aftermath station",
                     "state_label": "Available",
                     "prompt": "Use open the aftermath station or leave by the marked route.",
@@ -593,6 +699,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_conventioneers_blue_cases",
                   "state": "decision_ready"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_conventioneers_decision_remove_advance_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_conventioneers_advance_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_conventioneers_decision_spawn_motel_conventioneers_decision_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_conventioneers_decision_station",
+                  "object": {
+                    "label": "Resolve the physical aftermath",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -612,6 +745,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_conventioneers_decision_station",
+                    "presentation_object_id": "scenario::motel_conventioneers_decision_station",
                     "label": "Resolve the physical aftermath",
                     "state_label": "Available",
                     "prompt": "Use resolve the physical aftermath or leave by the marked route.",
@@ -838,6 +972,41 @@
               "receipt_id": "cleanup_motel_conventioneers_coach_party",
               "owner_namespace": "scenario",
               "stable_object_id": "motel_conventioneers_coach_party"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_conventioneers_station_0",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_conventioneers_station_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_conventioneers_station_1",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_conventioneers_station_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_conventioneers_station_2",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_conventioneers_station_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_conventioneers_advance_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_conventioneers_advance_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_conventioneers_decision_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_conventioneers_decision_station"
             },
             {
               "family": "scene_ops",
@@ -1070,7 +1239,7 @@
           "props_4",
           "actors_2"
         ],
-        "sequence_signature": "bbdff65904f388b1330fd28ed6cfa68c0ad11ddeee8dccb155f394ae851c6909",
+        "sequence_signature": "edcf5686eed3d7af555ef330e3346f612c82b3b31aed8cf9e82fd0478cac85b0",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1079,7 +1248,9 @@
           "services": [],
           "games": [],
           "routes": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:room_walkway"
+          ],
           "zones": [
             "base::zone:background",
             "base::zone:center",
@@ -1336,6 +1507,26 @@
                     "state": "clear",
                     "appearance": "marked_lane"
                   }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_stakeout_arrival_spawn_motel_stakeout_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_stakeout_station_0",
+                  "object": {
+                    "label": "Trace both sight cones",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -1348,6 +1539,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_stakeout_safe_exit",
+                    "presentation_object_id": "scenario::motel_stakeout_safe_exit",
                     "label": "Marked safe exit",
                     "state_label": "Available",
                     "prompt": "Use marked safe exit or leave by the marked route.",
@@ -1387,6 +1579,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_stakeout_station_0",
+                    "presentation_object_id": "scenario::motel_stakeout_station_0",
                     "label": "Trace both sight cones",
                     "state_label": "Available",
                     "prompt": "Use trace both sight cones or leave by the marked route.",
@@ -1492,6 +1685,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_stakeout_north_scope",
                   "appearance": "cone_marked"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_stakeout_beat_1_remove_motel_stakeout_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_stakeout_station_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_stakeout_beat_1_spawn_motel_stakeout_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_stakeout_station_1",
+                  "object": {
+                    "label": "Shift the laundry cover",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -1511,6 +1731,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_stakeout_station_1",
+                    "presentation_object_id": "scenario::motel_stakeout_station_1",
                     "label": "Shift the laundry cover",
                     "state_label": "Available",
                     "prompt": "Use shift the laundry cover or leave by the marked route.",
@@ -1594,6 +1815,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_stakeout_laundry_trolley",
                   "zone_id": "center"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_stakeout_beat_2_remove_motel_stakeout_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_stakeout_station_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_stakeout_beat_2_spawn_motel_stakeout_advance_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_stakeout_advance_station",
+                  "object": {
+                    "label": "Open the aftermath station",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -1613,6 +1861,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_stakeout_advance_station",
+                    "presentation_object_id": "scenario::motel_stakeout_advance_station",
                     "label": "Open the aftermath station",
                     "state_label": "Available",
                     "prompt": "Use open the aftermath station or leave by the marked route.",
@@ -1695,6 +1944,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_stakeout_laundry_trolley",
                   "state": "decision_ready"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_stakeout_decision_remove_advance_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_stakeout_advance_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_stakeout_decision_spawn_motel_stakeout_decision_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_stakeout_decision_station",
+                  "object": {
+                    "label": "Resolve the physical aftermath",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -1714,6 +1990,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_stakeout_decision_station",
+                    "presentation_object_id": "scenario::motel_stakeout_decision_station",
                     "label": "Resolve the physical aftermath",
                     "state_label": "Available",
                     "prompt": "Use resolve the physical aftermath or leave by the marked route.",
@@ -1945,6 +2222,34 @@
             {
               "family": "scene_ops",
               "op": "remove",
+              "receipt_id": "cleanup_motel_stakeout_station_0",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_stakeout_station_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_stakeout_station_1",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_stakeout_station_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_stakeout_advance_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_stakeout_advance_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_stakeout_decision_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_stakeout_decision_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
               "receipt_id": "cleanup_motel_stakeout_exit_visual",
               "owner_namespace": "scenario",
               "stable_object_id": "motel_stakeout_safe_exit"
@@ -2137,7 +2442,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "bffe0577bca7d5d87eea7744bc625646a097f6a537a2b1c6f913aaae7431f023",
+        "sequence_signature": "fc84e727b83873808961e6c20758694a39571bef608cc138a8d88350abc924ff",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -2146,7 +2451,9 @@
           "services": [],
           "games": [],
           "routes": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:room_walkway"
+          ],
           "zones": [
             "base::zone:background",
             "base::zone:center",
@@ -2382,6 +2689,26 @@
                     "state": "clear",
                     "appearance": "marked_lane"
                   }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_weekly_rates_arrival_spawn_motel_weekly_rates_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_weekly_rates_station_0",
+                  "object": {
+                    "label": "Inspect the room faults",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -2394,6 +2721,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_weekly_rates_safe_exit",
+                    "presentation_object_id": "scenario::motel_weekly_rates_safe_exit",
                     "label": "Marked safe exit",
                     "state_label": "Available",
                     "prompt": "Use marked safe exit or leave by the marked route.",
@@ -2433,6 +2761,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_weekly_rates_station_0",
+                    "presentation_object_id": "scenario::motel_weekly_rates_station_0",
                     "label": "Inspect the room faults",
                     "state_label": "Available",
                     "prompt": "Use inspect the room faults or leave by the marked route.",
@@ -2524,6 +2853,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_weekly_rates_weekly_lamp",
                   "state": "tested_dead"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_weekly_rates_beat_1_remove_motel_weekly_rates_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_weekly_rates_station_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_weekly_rates_beat_1_spawn_motel_weekly_rates_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_weekly_rates_station_1",
+                  "object": {
+                    "label": "Isolate the sink valve",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -2543,6 +2899,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_weekly_rates_station_1",
+                    "presentation_object_id": "scenario::motel_weekly_rates_station_1",
                     "label": "Isolate the sink valve",
                     "state_label": "Available",
                     "prompt": "Use isolate the sink valve or leave by the marked route.",
@@ -2626,6 +2983,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_weekly_rates_weekly_sink",
                   "appearance": "valve_closed"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_weekly_rates_beat_2_remove_motel_weekly_rates_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_weekly_rates_station_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_weekly_rates_beat_2_spawn_motel_weekly_rates_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_weekly_rates_station_2",
+                  "object": {
+                    "label": "Brace the bed frame",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -2645,6 +3029,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_weekly_rates_station_2",
+                    "presentation_object_id": "scenario::motel_weekly_rates_station_2",
                     "label": "Brace the bed frame",
                     "state_label": "Available",
                     "prompt": "Use brace the bed frame or leave by the marked route.",
@@ -2727,6 +3112,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_weekly_rates_weekly_bed",
                   "state": "braced"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_weekly_rates_beat_3_remove_motel_weekly_rates_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_weekly_rates_station_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_weekly_rates_beat_3_spawn_motel_weekly_rates_station_3",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_weekly_rates_station_3",
+                  "object": {
+                    "label": "Negotiate weekly terms",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -2746,6 +3158,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_weekly_rates_station_3",
+                    "presentation_object_id": "scenario::motel_weekly_rates_station_3",
                     "label": "Negotiate weekly terms",
                     "state_label": "Available",
                     "prompt": "Use negotiate weekly terms or leave by the marked route.",
@@ -2829,6 +3242,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_weekly_rates_lease_clipboard",
                   "appearance": "terms_marked"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_weekly_rates_beat_4_remove_motel_weekly_rates_station_3",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_weekly_rates_station_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_weekly_rates_beat_4_spawn_motel_weekly_rates_advance_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_weekly_rates_advance_station",
+                  "object": {
+                    "label": "Open the aftermath station",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -2848,6 +3288,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_weekly_rates_advance_station",
+                    "presentation_object_id": "scenario::motel_weekly_rates_advance_station",
                     "label": "Open the aftermath station",
                     "state_label": "Available",
                     "prompt": "Use open the aftermath station or leave by the marked route.",
@@ -2930,6 +3371,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_weekly_rates_lease_clipboard",
                   "state": "decision_ready"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_weekly_rates_decision_remove_advance_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_weekly_rates_advance_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_weekly_rates_decision_spawn_motel_weekly_rates_decision_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_weekly_rates_decision_station",
+                  "object": {
+                    "label": "Resolve the physical aftermath",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -2949,6 +3417,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_weekly_rates_decision_station",
+                    "presentation_object_id": "scenario::motel_weekly_rates_decision_station",
                     "label": "Resolve the physical aftermath",
                     "state_label": "Available",
                     "prompt": "Use resolve the physical aftermath or leave by the marked route.",
@@ -3178,6 +3647,48 @@
             {
               "family": "scene_ops",
               "op": "remove",
+              "receipt_id": "cleanup_motel_weekly_rates_station_0",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_weekly_rates_station_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_weekly_rates_station_1",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_weekly_rates_station_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_weekly_rates_station_2",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_weekly_rates_station_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_weekly_rates_station_3",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_weekly_rates_station_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_weekly_rates_advance_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_weekly_rates_advance_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_weekly_rates_decision_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_weekly_rates_decision_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
               "receipt_id": "cleanup_motel_weekly_rates_exit_visual",
               "owner_namespace": "scenario",
               "stable_object_id": "motel_weekly_rates_safe_exit"
@@ -3386,7 +3897,7 @@
           "props_4",
           "actors_1"
         ],
-        "sequence_signature": "1fe965541a2d87d1b08f7ba273db0ab06a4f6f03e3e21b94612f7a9c5ed3d8ef",
+        "sequence_signature": "77c71b7f578dcae43685891194ff0d708480d9bef04925be0aadba8760c8d974",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -3395,7 +3906,9 @@
           "services": [],
           "games": [],
           "routes": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:room_walkway"
+          ],
           "zones": [
             "base::zone:background",
             "base::zone:center",
@@ -3653,6 +4166,26 @@
                     "state": "clear",
                     "appearance": "marked_lane"
                   }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_wedding_overflow_arrival_spawn_motel_wedding_overflow_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_wedding_overflow_station_0",
+                  "object": {
+                    "label": "Read the room-key trail",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -3665,6 +4198,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_wedding_overflow_safe_exit",
+                    "presentation_object_id": "scenario::motel_wedding_overflow_safe_exit",
                     "label": "Marked safe exit",
                     "state_label": "Available",
                     "prompt": "Use marked safe exit or leave by the marked route.",
@@ -3704,6 +4238,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_wedding_overflow_station_0",
+                    "presentation_object_id": "scenario::motel_wedding_overflow_station_0",
                     "label": "Read the room-key trail",
                     "state_label": "Available",
                     "prompt": "Use read the room-key trail or leave by the marked route.",
@@ -3823,6 +4358,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_wedding_overflow_room_key_tray",
                   "state": "three_clues"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_wedding_overflow_beat_1_remove_motel_wedding_overflow_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_wedding_overflow_station_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_wedding_overflow_beat_1_spawn_motel_wedding_overflow_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_wedding_overflow_station_1",
+                  "object": {
+                    "label": "Clear the garment rack",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -3842,6 +4404,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_wedding_overflow_station_1",
+                    "presentation_object_id": "scenario::motel_wedding_overflow_station_1",
                     "label": "Clear the garment rack",
                     "state_label": "Available",
                     "prompt": "Use clear the garment rack or leave by the marked route.",
@@ -3925,6 +4488,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_wedding_overflow_garment_rack",
                   "zone_id": "right"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_wedding_overflow_beat_2_remove_motel_wedding_overflow_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_wedding_overflow_station_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_wedding_overflow_beat_2_spawn_motel_wedding_overflow_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_wedding_overflow_station_2",
+                  "object": {
+                    "label": "Recover the bouquet case",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -3944,6 +4534,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_wedding_overflow_station_2",
+                    "presentation_object_id": "scenario::motel_wedding_overflow_station_2",
                     "label": "Recover the bouquet case",
                     "state_label": "Available",
                     "prompt": "Use recover the bouquet case or leave by the marked route.",
@@ -4026,6 +4617,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_wedding_overflow_bouquet_case",
                   "zone_id": "center"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_wedding_overflow_beat_3_remove_motel_wedding_overflow_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_wedding_overflow_station_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_wedding_overflow_beat_3_spawn_motel_wedding_overflow_advance_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_wedding_overflow_advance_station",
+                  "object": {
+                    "label": "Open the aftermath station",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -4045,6 +4663,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_wedding_overflow_advance_station",
+                    "presentation_object_id": "scenario::motel_wedding_overflow_advance_station",
                     "label": "Open the aftermath station",
                     "state_label": "Available",
                     "prompt": "Use open the aftermath station or leave by the marked route.",
@@ -4128,6 +4747,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_wedding_overflow_ribbon_stair",
                   "state": "decision_ready"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "motel_wedding_overflow_decision_remove_advance_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_wedding_overflow_advance_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "motel_wedding_overflow_decision_spawn_motel_wedding_overflow_decision_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "motel_wedding_overflow_decision_station",
+                  "object": {
+                    "label": "Resolve the physical aftermath",
+                    "role": "task_station",
+                    "anchor_id": "room_walkway",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -4147,6 +4793,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "motel_wedding_overflow_decision_station",
+                    "presentation_object_id": "scenario::motel_wedding_overflow_decision_station",
                     "label": "Resolve the physical aftermath",
                     "state_label": "Available",
                     "prompt": "Use resolve the physical aftermath or leave by the marked route.",
@@ -4391,6 +5038,41 @@
             {
               "family": "scene_ops",
               "op": "remove",
+              "receipt_id": "cleanup_motel_wedding_overflow_station_0",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_wedding_overflow_station_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_wedding_overflow_station_1",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_wedding_overflow_station_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_wedding_overflow_station_2",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_wedding_overflow_station_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_wedding_overflow_advance_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_wedding_overflow_advance_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_motel_wedding_overflow_decision_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "motel_wedding_overflow_decision_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
               "receipt_id": "cleanup_motel_wedding_overflow_exit_visual",
               "owner_namespace": "scenario",
               "stable_object_id": "motel_wedding_overflow_safe_exit"
@@ -4603,7 +5285,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "a01fbb11d074623d60a6e18f8edd8bd22b6242ede8c6b30616dbab581d42bf73",
+        "sequence_signature": "45983cac5c38999fab057613a256681465317425bceb403a38ed3b98f0346dbc",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -4612,7 +5294,9 @@
           "services": [],
           "games": [],
           "routes": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:room_walkway"
+          ],
           "zones": [
             "base::zone:background",
             "base::zone:center",
@@ -4871,6 +5555,26 @@
                     "state": "clear",
                     "appearance": "marked_lane"
                   }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_trucker_convoy_arrival_spawn_gas_station_trucker_convoy_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_trucker_convoy_station_0",
+                  "object": {
+                    "label": "Read departure order",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -4883,6 +5587,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_trucker_convoy_safe_exit",
+                    "presentation_object_id": "scenario::gas_station_trucker_convoy_safe_exit",
                     "label": "Marked safe exit",
                     "state_label": "Available",
                     "prompt": "Use marked safe exit or leave by the marked route.",
@@ -4922,6 +5627,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_trucker_convoy_station_0",
+                    "presentation_object_id": "scenario::gas_station_trucker_convoy_station_0",
                     "label": "Read departure order",
                     "state_label": "Available",
                     "prompt": "Use read departure order or leave by the marked route.",
@@ -5041,6 +5747,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_trucker_convoy_departure_board",
                   "appearance": "wave_order"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_trucker_convoy_beat_1_remove_gas_station_trucker_convoy_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_trucker_convoy_station_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_trucker_convoy_beat_1_spawn_gas_station_trucker_convoy_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_trucker_convoy_station_1",
+                  "object": {
+                    "label": "Clear the freight lane",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -5060,6 +5793,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_trucker_convoy_station_1",
+                    "presentation_object_id": "scenario::gas_station_trucker_convoy_station_1",
                     "label": "Clear the freight lane",
                     "state_label": "Available",
                     "prompt": "Use clear the freight lane or leave by the marked route.",
@@ -5143,6 +5877,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_trucker_convoy_freight_pallet",
                   "zone_id": "background"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_trucker_convoy_beat_2_remove_gas_station_trucker_convoy_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_trucker_convoy_station_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_trucker_convoy_beat_2_spawn_gas_station_trucker_convoy_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_trucker_convoy_station_2",
+                  "object": {
+                    "label": "Release a convoy wave",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -5162,6 +5923,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_trucker_convoy_station_2",
+                    "presentation_object_id": "scenario::gas_station_trucker_convoy_station_2",
                     "label": "Release a convoy wave",
                     "state_label": "Available",
                     "prompt": "Use release a convoy wave or leave by the marked route.",
@@ -5244,6 +6006,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_trucker_convoy_lead_rig",
                   "zone_id": "exit_lane"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_trucker_convoy_beat_3_remove_gas_station_trucker_convoy_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_trucker_convoy_station_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_trucker_convoy_beat_3_spawn_gas_station_trucker_convoy_advance_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_trucker_convoy_advance_station",
+                  "object": {
+                    "label": "Open the aftermath station",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -5263,6 +6052,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_trucker_convoy_advance_station",
+                    "presentation_object_id": "scenario::gas_station_trucker_convoy_advance_station",
                     "label": "Open the aftermath station",
                     "state_label": "Available",
                     "prompt": "Use open the aftermath station or leave by the marked route.",
@@ -5346,6 +6136,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_trucker_convoy_lead_rig",
                   "state": "decision_ready"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_trucker_convoy_decision_remove_advance_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_trucker_convoy_advance_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_trucker_convoy_decision_spawn_gas_station_trucker_convoy_decision_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_trucker_convoy_decision_station",
+                  "object": {
+                    "label": "Resolve the physical aftermath",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -5365,6 +6182,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_trucker_convoy_decision_station",
+                    "presentation_object_id": "scenario::gas_station_trucker_convoy_decision_station",
                     "label": "Resolve the physical aftermath",
                     "state_label": "Available",
                     "prompt": "Use resolve the physical aftermath or leave by the marked route.",
@@ -5609,6 +6427,41 @@
             {
               "family": "scene_ops",
               "op": "remove",
+              "receipt_id": "cleanup_gas_station_trucker_convoy_station_0",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_trucker_convoy_station_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_trucker_convoy_station_1",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_trucker_convoy_station_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_trucker_convoy_station_2",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_trucker_convoy_station_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_trucker_convoy_advance_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_trucker_convoy_advance_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_trucker_convoy_decision_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_trucker_convoy_decision_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
               "receipt_id": "cleanup_gas_station_trucker_convoy_exit_visual",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_trucker_convoy_safe_exit"
@@ -5817,7 +6670,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "9d0581f81aa9a582ab896e1cf3455c63e045f3681b5f1a8a965b68736c993a8d",
+        "sequence_signature": "65d7b7d8ae8e17f959854117670a6eb2cf04c89e53a7257e176664e361c3418c",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -5826,7 +6679,9 @@
           "services": [],
           "games": [],
           "routes": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:cashier_counter"
+          ],
           "zones": [
             "base::zone:background",
             "base::zone:center",
@@ -6065,6 +6920,26 @@
                     "state": "clear",
                     "appearance": "marked_lane"
                   }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_tour_bus_stop_arrival_spawn_gas_station_tour_bus_stop_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_tour_bus_stop_station_0",
+                  "object": {
+                    "label": "Count boarding groups",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -6077,6 +6952,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_tour_bus_stop_safe_exit",
+                    "presentation_object_id": "scenario::gas_station_tour_bus_stop_safe_exit",
                     "label": "Marked safe exit",
                     "state_label": "Available",
                     "prompt": "Use marked safe exit or leave by the marked route.",
@@ -6116,6 +6992,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_tour_bus_stop_station_0",
+                    "presentation_object_id": "scenario::gas_station_tour_bus_stop_station_0",
                     "label": "Count boarding groups",
                     "state_label": "Available",
                     "prompt": "Use count boarding groups or leave by the marked route.",
@@ -6235,6 +7112,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_tour_bus_stop_boarding_counter",
                   "state": "count_started"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_tour_bus_stop_beat_1_remove_gas_station_tour_bus_stop_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_tour_bus_stop_station_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_tour_bus_stop_beat_1_spawn_gas_station_tour_bus_stop_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_tour_bus_stop_station_1",
+                  "object": {
+                    "label": "Trace the lost ticket",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -6254,6 +7158,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_tour_bus_stop_station_1",
+                    "presentation_object_id": "scenario::gas_station_tour_bus_stop_station_1",
                     "label": "Trace the lost ticket",
                     "state_label": "Available",
                     "prompt": "Use trace the lost ticket or leave by the marked route.",
@@ -6337,6 +7242,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_tour_bus_stop_ticket_basket",
                   "appearance": "stub_matched"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_tour_bus_stop_beat_2_remove_gas_station_tour_bus_stop_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_tour_bus_stop_station_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_tour_bus_stop_beat_2_spawn_gas_station_tour_bus_stop_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_tour_bus_stop_station_2",
+                  "object": {
+                    "label": "Close the boarding count",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -6356,6 +7288,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_tour_bus_stop_station_2",
+                    "presentation_object_id": "scenario::gas_station_tour_bus_stop_station_2",
                     "label": "Close the boarding count",
                     "state_label": "Available",
                     "prompt": "Use close the boarding count or leave by the marked route.",
@@ -6438,6 +7371,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_tour_bus_stop_tour_bus_door",
                   "state": "final_call"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_tour_bus_stop_beat_3_remove_gas_station_tour_bus_stop_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_tour_bus_stop_station_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_tour_bus_stop_beat_3_spawn_gas_station_tour_bus_stop_advance_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_tour_bus_stop_advance_station",
+                  "object": {
+                    "label": "Open the aftermath station",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -6457,6 +7417,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_tour_bus_stop_advance_station",
+                    "presentation_object_id": "scenario::gas_station_tour_bus_stop_advance_station",
                     "label": "Open the aftermath station",
                     "state_label": "Available",
                     "prompt": "Use open the aftermath station or leave by the marked route.",
@@ -6540,6 +7501,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_tour_bus_stop_boarding_counter",
                   "state": "decision_ready"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_tour_bus_stop_decision_remove_advance_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_tour_bus_stop_advance_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_tour_bus_stop_decision_spawn_gas_station_tour_bus_stop_decision_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_tour_bus_stop_decision_station",
+                  "object": {
+                    "label": "Resolve the physical aftermath",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -6559,6 +7547,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_tour_bus_stop_decision_station",
+                    "presentation_object_id": "scenario::gas_station_tour_bus_stop_decision_station",
                     "label": "Resolve the physical aftermath",
                     "state_label": "Available",
                     "prompt": "Use resolve the physical aftermath or leave by the marked route.",
@@ -6796,6 +7785,41 @@
             {
               "family": "scene_ops",
               "op": "remove",
+              "receipt_id": "cleanup_gas_station_tour_bus_stop_station_0",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_tour_bus_stop_station_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_tour_bus_stop_station_1",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_tour_bus_stop_station_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_tour_bus_stop_station_2",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_tour_bus_stop_station_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_tour_bus_stop_advance_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_tour_bus_stop_advance_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_tour_bus_stop_decision_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_tour_bus_stop_decision_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
               "receipt_id": "cleanup_gas_station_tour_bus_stop_exit_visual",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_tour_bus_stop_safe_exit"
@@ -6988,7 +8012,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "e4947723e5e56793811719453fd6419c5e9384d49e990747d4f06d56f14b8dbf",
+        "sequence_signature": "aefd28dbf43446be5fb19d53fdcde98b057c6b3e00a7af01d754fda1e583c345",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -6997,7 +8021,9 @@
           "services": [],
           "games": [],
           "routes": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:cashier_counter"
+          ],
           "zones": [
             "base::zone:background",
             "base::zone:center",
@@ -7255,6 +8281,26 @@
                     "state": "clear",
                     "appearance": "marked_lane"
                   }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_graveyard_shift_arrival_spawn_gas_station_graveyard_shift_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_graveyard_shift_station_0",
+                  "object": {
+                    "label": "Take the docked flashlight",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -7267,6 +8313,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_graveyard_shift_safe_exit",
+                    "presentation_object_id": "scenario::gas_station_graveyard_shift_safe_exit",
                     "label": "Marked safe exit",
                     "state_label": "Available",
                     "prompt": "Use marked safe exit or leave by the marked route.",
@@ -7306,6 +8353,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_graveyard_shift_station_0",
+                    "presentation_object_id": "scenario::gas_station_graveyard_shift_station_0",
                     "label": "Take the docked flashlight",
                     "state_label": "Available",
                     "prompt": "Use take the docked flashlight or leave by the marked route.",
@@ -7397,6 +8445,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_graveyard_shift_flashlight_dock",
                   "appearance": "empty_dock"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_graveyard_shift_beat_1_remove_gas_station_graveyard_shift_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_graveyard_shift_station_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_graveyard_shift_beat_1_spawn_gas_station_graveyard_shift_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_graveyard_shift_station_1",
+                  "object": {
+                    "label": "Check the cooler lock",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -7416,6 +8491,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_graveyard_shift_station_1",
+                    "presentation_object_id": "scenario::gas_station_graveyard_shift_station_1",
                     "label": "Check the cooler lock",
                     "state_label": "Available",
                     "prompt": "Use check the cooler lock or leave by the marked route.",
@@ -7499,6 +8575,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_graveyard_shift_cooler_gate",
                   "state": "checked"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_graveyard_shift_beat_2_remove_gas_station_graveyard_shift_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_graveyard_shift_station_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_graveyard_shift_beat_2_spawn_gas_station_graveyard_shift_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_graveyard_shift_station_2",
+                  "object": {
+                    "label": "Cycle the machine shutter",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -7518,6 +8621,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_graveyard_shift_station_2",
+                    "presentation_object_id": "scenario::gas_station_graveyard_shift_station_2",
                     "label": "Cycle the machine shutter",
                     "state_label": "Available",
                     "prompt": "Use cycle the machine shutter or leave by the marked route.",
@@ -7600,6 +8704,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_graveyard_shift_machine_gate",
                   "state": "open"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_graveyard_shift_beat_3_remove_gas_station_graveyard_shift_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_graveyard_shift_station_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_graveyard_shift_beat_3_spawn_gas_station_graveyard_shift_station_3",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_graveyard_shift_station_3",
+                  "object": {
+                    "label": "Review the camera gap",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -7619,6 +8750,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_graveyard_shift_station_3",
+                    "presentation_object_id": "scenario::gas_station_graveyard_shift_station_3",
                     "label": "Review the camera gap",
                     "state_label": "Available",
                     "prompt": "Use review the camera gap or leave by the marked route.",
@@ -7702,6 +8834,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_graveyard_shift_camera_monitor",
                   "appearance": "gap_marked"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_graveyard_shift_beat_4_remove_gas_station_graveyard_shift_station_3",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_graveyard_shift_station_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_graveyard_shift_beat_4_spawn_gas_station_graveyard_shift_advance_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_graveyard_shift_advance_station",
+                  "object": {
+                    "label": "Open the aftermath station",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -7721,6 +8880,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_graveyard_shift_advance_station",
+                    "presentation_object_id": "scenario::gas_station_graveyard_shift_advance_station",
                     "label": "Open the aftermath station",
                     "state_label": "Available",
                     "prompt": "Use open the aftermath station or leave by the marked route.",
@@ -7803,6 +8963,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_graveyard_shift_flashlight_dock",
                   "state": "decision_ready"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_graveyard_shift_decision_remove_advance_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_graveyard_shift_advance_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_graveyard_shift_decision_spawn_gas_station_graveyard_shift_decision_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_graveyard_shift_decision_station",
+                  "object": {
+                    "label": "Resolve the physical aftermath",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -7822,6 +9009,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_graveyard_shift_decision_station",
+                    "presentation_object_id": "scenario::gas_station_graveyard_shift_decision_station",
                     "label": "Resolve the physical aftermath",
                     "state_label": "Available",
                     "prompt": "Use resolve the physical aftermath or leave by the marked route.",
@@ -8058,6 +9246,48 @@
             {
               "family": "scene_ops",
               "op": "remove",
+              "receipt_id": "cleanup_gas_station_graveyard_shift_station_0",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_graveyard_shift_station_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_graveyard_shift_station_1",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_graveyard_shift_station_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_graveyard_shift_station_2",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_graveyard_shift_station_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_graveyard_shift_station_3",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_graveyard_shift_station_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_graveyard_shift_advance_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_graveyard_shift_advance_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_graveyard_shift_decision_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_graveyard_shift_decision_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
               "receipt_id": "cleanup_gas_station_graveyard_shift_exit_visual",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_graveyard_shift_safe_exit"
@@ -8286,7 +9516,7 @@
           "props_5",
           "actors_1"
         ],
-        "sequence_signature": "68ccb663ff6d23ffeafb6b991b63c0b0679968dbbb69cec9c1ade81021cb8a16",
+        "sequence_signature": "ce1fbff06d2bad1be1c06e5fa06cc3cf51c5ca170ea1d7cb38f6962fa2e548ad",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -8295,7 +9525,9 @@
           "services": [],
           "games": [],
           "routes": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:cashier_counter"
+          ],
           "zones": [
             "base::zone:background",
             "base::zone:center",
@@ -8534,6 +9766,26 @@
                     "state": "clear",
                     "appearance": "marked_lane"
                   }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_road_crew_payday_arrival_spawn_gas_station_road_crew_payday_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_road_crew_payday_station_0",
+                  "object": {
+                    "label": "Audit the pooled stake",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -8546,6 +9798,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_road_crew_payday_safe_exit",
+                    "presentation_object_id": "scenario::gas_station_road_crew_payday_safe_exit",
                     "label": "Marked safe exit",
                     "state_label": "Available",
                     "prompt": "Use marked safe exit or leave by the marked route.",
@@ -8585,6 +9838,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_road_crew_payday_station_0",
+                    "presentation_object_id": "scenario::gas_station_road_crew_payday_station_0",
                     "label": "Audit the pooled stake",
                     "state_label": "Available",
                     "prompt": "Use audit the pooled stake or leave by the marked route.",
@@ -8704,6 +9958,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_road_crew_payday_stake_envelope",
                   "state": "audited"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_road_crew_payday_beat_1_remove_gas_station_road_crew_payday_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_road_crew_payday_station_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_road_crew_payday_beat_1_spawn_gas_station_road_crew_payday_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_road_crew_payday_station_1",
+                  "object": {
+                    "label": "Stage repair parts",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -8723,6 +10004,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_road_crew_payday_station_1",
+                    "presentation_object_id": "scenario::gas_station_road_crew_payday_station_1",
                     "label": "Stage repair parts",
                     "state_label": "Available",
                     "prompt": "Use stage repair parts or leave by the marked route.",
@@ -8806,6 +10088,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_road_crew_payday_repair_crate",
                   "zone_id": "left"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_road_crew_payday_beat_2_remove_gas_station_road_crew_payday_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_road_crew_payday_station_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_road_crew_payday_beat_2_spawn_gas_station_road_crew_payday_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_road_crew_payday_station_2",
+                  "object": {
+                    "label": "Reconcile the work order",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -8825,6 +10134,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_road_crew_payday_station_2",
+                    "presentation_object_id": "scenario::gas_station_road_crew_payday_station_2",
                     "label": "Reconcile the work order",
                     "state_label": "Available",
                     "prompt": "Use reconcile the work order or leave by the marked route.",
@@ -8907,6 +10217,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_road_crew_payday_work_order_board",
                   "appearance": "reconciled"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_road_crew_payday_beat_3_remove_gas_station_road_crew_payday_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_road_crew_payday_station_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_road_crew_payday_beat_3_spawn_gas_station_road_crew_payday_advance_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_road_crew_payday_advance_station",
+                  "object": {
+                    "label": "Open the aftermath station",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -8926,6 +10263,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_road_crew_payday_advance_station",
+                    "presentation_object_id": "scenario::gas_station_road_crew_payday_advance_station",
                     "label": "Open the aftermath station",
                     "state_label": "Available",
                     "prompt": "Use open the aftermath station or leave by the marked route.",
@@ -9009,6 +10347,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_road_crew_payday_work_order_board",
                   "state": "decision_ready"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_road_crew_payday_decision_remove_advance_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_road_crew_payday_advance_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_road_crew_payday_decision_spawn_gas_station_road_crew_payday_decision_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_road_crew_payday_decision_station",
+                  "object": {
+                    "label": "Resolve the physical aftermath",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -9028,6 +10393,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_road_crew_payday_decision_station",
+                    "presentation_object_id": "scenario::gas_station_road_crew_payday_decision_station",
                     "label": "Resolve the physical aftermath",
                     "state_label": "Available",
                     "prompt": "Use resolve the physical aftermath or leave by the marked route.",
@@ -9265,6 +10631,41 @@
             {
               "family": "scene_ops",
               "op": "remove",
+              "receipt_id": "cleanup_gas_station_road_crew_payday_station_0",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_road_crew_payday_station_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_road_crew_payday_station_1",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_road_crew_payday_station_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_road_crew_payday_station_2",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_road_crew_payday_station_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_road_crew_payday_advance_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_road_crew_payday_advance_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_road_crew_payday_decision_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_road_crew_payday_decision_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
               "receipt_id": "cleanup_gas_station_road_crew_payday_exit_visual",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_road_crew_payday_safe_exit"
@@ -9457,7 +10858,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "434c0a26cf41fc1531680761d02a87d8c3ae472bc8ba77f22d02018b4c334154",
+        "sequence_signature": "2b3e845f767909ceeaa2797e9030117f0367f0bef8291c6f4ceb2ff53ad442f3",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -9466,7 +10867,9 @@
           "services": [],
           "games": [],
           "routes": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:cashier_counter"
+          ],
           "zones": [
             "base::zone:background",
             "base::zone:center",
@@ -9724,6 +11127,26 @@
                     "state": "clear",
                     "appearance": "marked_lane"
                   }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_storm_shelter_arrival_spawn_gas_station_storm_shelter_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_storm_shelter_station_0",
+                  "object": {
+                    "label": "Close rain shutters",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -9736,6 +11159,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_storm_shelter_safe_exit",
+                    "presentation_object_id": "scenario::gas_station_storm_shelter_safe_exit",
                     "label": "Marked safe exit",
                     "state_label": "Available",
                     "prompt": "Use marked safe exit or leave by the marked route.",
@@ -9775,6 +11199,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_storm_shelter_station_0",
+                    "presentation_object_id": "scenario::gas_station_storm_shelter_station_0",
                     "label": "Close rain shutters",
                     "state_label": "Available",
                     "prompt": "Use close rain shutters or leave by the marked route.",
@@ -9894,6 +11319,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_storm_shelter_rain_shutters",
                   "state": "latched"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_storm_shelter_beat_1_remove_gas_station_storm_shelter_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_storm_shelter_station_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_storm_shelter_beat_1_spawn_gas_station_storm_shelter_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_storm_shelter_station_1",
+                  "object": {
+                    "label": "Roll the generator safe",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -9913,6 +11365,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_storm_shelter_station_1",
+                    "presentation_object_id": "scenario::gas_station_storm_shelter_station_1",
                     "label": "Roll the generator safe",
                     "state_label": "Available",
                     "prompt": "Use roll the generator safe or leave by the marked route.",
@@ -9996,6 +11449,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_storm_shelter_generator_cart",
                   "zone_id": "service_lane"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_storm_shelter_beat_2_remove_gas_station_storm_shelter_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_storm_shelter_station_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_storm_shelter_beat_2_spawn_gas_station_storm_shelter_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_storm_shelter_station_2",
+                  "object": {
+                    "label": "Inventory storm supplies",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -10015,6 +11495,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_storm_shelter_station_2",
+                    "presentation_object_id": "scenario::gas_station_storm_shelter_station_2",
                     "label": "Inventory storm supplies",
                     "state_label": "Available",
                     "prompt": "Use inventory storm supplies or leave by the marked route.",
@@ -10097,6 +11578,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_storm_shelter_supply_shelves",
                   "appearance": "counted"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_storm_shelter_beat_3_remove_gas_station_storm_shelter_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_storm_shelter_station_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_storm_shelter_beat_3_spawn_gas_station_storm_shelter_station_3",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_storm_shelter_station_3",
+                  "object": {
+                    "label": "Allocate safe space",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -10116,6 +11624,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_storm_shelter_station_3",
+                    "presentation_object_id": "scenario::gas_station_storm_shelter_station_3",
                     "label": "Allocate safe space",
                     "state_label": "Available",
                     "prompt": "Use allocate safe space or leave by the marked route.",
@@ -10199,6 +11708,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_storm_shelter_safe_zone_tape",
                   "state": "allocated"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_storm_shelter_beat_4_remove_gas_station_storm_shelter_station_3",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_storm_shelter_station_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_storm_shelter_beat_4_spawn_gas_station_storm_shelter_advance_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_storm_shelter_advance_station",
+                  "object": {
+                    "label": "Open the aftermath station",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -10218,6 +11754,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_storm_shelter_advance_station",
+                    "presentation_object_id": "scenario::gas_station_storm_shelter_advance_station",
                     "label": "Open the aftermath station",
                     "state_label": "Available",
                     "prompt": "Use open the aftermath station or leave by the marked route.",
@@ -10300,6 +11837,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_storm_shelter_power_panel",
                   "state": "decision_ready"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "gas_station_storm_shelter_decision_remove_advance_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_storm_shelter_advance_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "gas_station_storm_shelter_decision_spawn_gas_station_storm_shelter_decision_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "gas_station_storm_shelter_decision_station",
+                  "object": {
+                    "label": "Resolve the physical aftermath",
+                    "role": "task_station",
+                    "anchor_id": "cashier_counter",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -10319,6 +11883,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "gas_station_storm_shelter_decision_station",
+                    "presentation_object_id": "scenario::gas_station_storm_shelter_decision_station",
                     "label": "Resolve the physical aftermath",
                     "state_label": "Available",
                     "prompt": "Use resolve the physical aftermath or leave by the marked route.",
@@ -10569,6 +12134,48 @@
             {
               "family": "scene_ops",
               "op": "remove",
+              "receipt_id": "cleanup_gas_station_storm_shelter_station_0",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_storm_shelter_station_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_storm_shelter_station_1",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_storm_shelter_station_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_storm_shelter_station_2",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_storm_shelter_station_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_storm_shelter_station_3",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_storm_shelter_station_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_storm_shelter_advance_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_storm_shelter_advance_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_gas_station_storm_shelter_decision_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "gas_station_storm_shelter_decision_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
               "receipt_id": "cleanup_gas_station_storm_shelter_exit_visual",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_storm_shelter_safe_exit"
@@ -10777,7 +12384,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "48a7e69d760aea365ef451228e8f43ede14638bc83a467664ebd49a10e86baf1",
+        "sequence_signature": "3700139134030c1ba6c1b13c8d895ae2518c76b7984a3d2066c775784195c085",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -10786,7 +12393,9 @@
           "services": [],
           "games": [],
           "routes": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:cashier_counter"
+          ],
           "zones": [
             "base::zone:background",
             "base::zone:center",
@@ -11047,6 +12656,26 @@
                     "state": "clear",
                     "appearance": "marked_lane"
                   }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_bonfire_night_arrival_spawn_beach_bonfire_night_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_bonfire_night_station_0",
+                  "object": {
+                    "label": "Read tide and wind",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -11059,6 +12688,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_bonfire_night_safe_exit",
+                    "presentation_object_id": "scenario::beach_bonfire_night_safe_exit",
                     "label": "Marked safe exit",
                     "state_label": "Available",
                     "prompt": "Use marked safe exit or leave by the marked route.",
@@ -11098,6 +12728,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_bonfire_night_station_0",
+                    "presentation_object_id": "scenario::beach_bonfire_night_station_0",
                     "label": "Read tide and wind",
                     "state_label": "Available",
                     "prompt": "Use read tide and wind or leave by the marked route.",
@@ -11203,6 +12834,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_bonfire_night_tide_marker",
                   "appearance": "wind_read"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_bonfire_night_beat_1_remove_beach_bonfire_night_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_bonfire_night_station_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_bonfire_night_beat_1_spawn_beach_bonfire_night_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_bonfire_night_station_1",
+                  "object": {
+                    "label": "Stack bonfire fuel",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -11222,6 +12880,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_bonfire_night_station_1",
+                    "presentation_object_id": "scenario::beach_bonfire_night_station_1",
                     "label": "Stack bonfire fuel",
                     "state_label": "Available",
                     "prompt": "Use stack bonfire fuel or leave by the marked route.",
@@ -11305,6 +12964,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_bonfire_night_driftwood_bundle",
                   "zone_id": "center"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_bonfire_night_beat_2_remove_beach_bonfire_night_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_bonfire_night_station_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_bonfire_night_beat_2_spawn_beach_bonfire_night_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_bonfire_night_station_2",
+                  "object": {
+                    "label": "Reposition beach seats",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -11324,6 +13010,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_bonfire_night_station_2",
+                    "presentation_object_id": "scenario::beach_bonfire_night_station_2",
                     "label": "Reposition beach seats",
                     "state_label": "Available",
                     "prompt": "Use reposition beach seats or leave by the marked route.",
@@ -11406,6 +13093,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_bonfire_night_beach_seats",
                   "zone_id": "background"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_bonfire_night_beat_3_remove_beach_bonfire_night_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_bonfire_night_station_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_bonfire_night_beat_3_spawn_beach_bonfire_night_advance_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_bonfire_night_advance_station",
+                  "object": {
+                    "label": "Open the aftermath station",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -11425,6 +13139,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_bonfire_night_advance_station",
+                    "presentation_object_id": "scenario::beach_bonfire_night_advance_station",
                     "label": "Open the aftermath station",
                     "state_label": "Available",
                     "prompt": "Use open the aftermath station or leave by the marked route.",
@@ -11508,6 +13223,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_bonfire_night_driftwood_bundle",
                   "state": "decision_ready"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_bonfire_night_decision_remove_advance_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_bonfire_night_advance_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_bonfire_night_decision_spawn_beach_bonfire_night_decision_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_bonfire_night_decision_station",
+                  "object": {
+                    "label": "Resolve the physical aftermath",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -11527,6 +13269,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_bonfire_night_decision_station",
+                    "presentation_object_id": "scenario::beach_bonfire_night_decision_station",
                     "label": "Resolve the physical aftermath",
                     "state_label": "Available",
                     "prompt": "Use resolve the physical aftermath or leave by the marked route.",
@@ -11764,6 +13507,41 @@
             {
               "family": "scene_ops",
               "op": "remove",
+              "receipt_id": "cleanup_beach_bonfire_night_station_0",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_bonfire_night_station_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_bonfire_night_station_1",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_bonfire_night_station_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_bonfire_night_station_2",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_bonfire_night_station_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_bonfire_night_advance_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_bonfire_night_advance_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_bonfire_night_decision_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_bonfire_night_decision_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
               "receipt_id": "cleanup_beach_bonfire_night_exit_visual",
               "owner_namespace": "scenario",
               "stable_object_id": "beach_bonfire_night_safe_exit"
@@ -11976,7 +13754,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "2ca047de318d27a68573d5b4630a5ac6e374509ba55c6cb39945d9666cb6662d",
+        "sequence_signature": "33b44736c2750c2855b4bf76a514ffe7aabb145b7e76936ce0362884f4eebb08",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -11985,7 +13763,9 @@
           "services": [],
           "games": [],
           "routes": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:shoreline"
+          ],
           "zones": [
             "base::zone:background",
             "base::zone:center",
@@ -12243,6 +14023,26 @@
                     "state": "clear",
                     "appearance": "marked_lane"
                   }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_storm_coming_arrival_spawn_beach_storm_coming_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_storm_coming_station_0",
+                  "object": {
+                    "label": "Raise the warning flag",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -12255,6 +14055,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_storm_coming_safe_exit",
+                    "presentation_object_id": "scenario::beach_storm_coming_safe_exit",
                     "label": "Marked safe exit",
                     "state_label": "Available",
                     "prompt": "Use marked safe exit or leave by the marked route.",
@@ -12294,6 +14095,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_storm_coming_station_0",
+                    "presentation_object_id": "scenario::beach_storm_coming_station_0",
                     "label": "Raise the warning flag",
                     "state_label": "Available",
                     "prompt": "Use raise the warning flag or leave by the marked route.",
@@ -12413,6 +14215,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_storm_coming_warning_flag",
                   "state": "raised"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_storm_coming_beat_1_remove_beach_storm_coming_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_storm_coming_station_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_storm_coming_beat_1_spawn_beach_storm_coming_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_storm_coming_station_1",
+                  "object": {
+                    "label": "Lash rental props",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -12432,6 +14261,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_storm_coming_station_1",
+                    "presentation_object_id": "scenario::beach_storm_coming_station_1",
                     "label": "Lash rental props",
                     "state_label": "Available",
                     "prompt": "Use lash rental props or leave by the marked route.",
@@ -12515,6 +14345,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_storm_coming_rental_props",
                   "zone_id": "foreground"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_storm_coming_beat_2_remove_beach_storm_coming_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_storm_coming_station_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_storm_coming_beat_2_spawn_beach_storm_coming_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_storm_coming_station_2",
+                  "object": {
+                    "label": "Stage the rescue skiff",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -12534,6 +14391,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_storm_coming_station_2",
+                    "presentation_object_id": "scenario::beach_storm_coming_station_2",
                     "label": "Stage the rescue skiff",
                     "state_label": "Available",
                     "prompt": "Use stage the rescue skiff or leave by the marked route.",
@@ -12616,6 +14474,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_storm_coming_rescue_skiff",
                   "zone_id": "center"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_storm_coming_beat_3_remove_beach_storm_coming_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_storm_coming_station_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_storm_coming_beat_3_spawn_beach_storm_coming_station_3",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_storm_coming_station_3",
+                  "object": {
+                    "label": "Evacuate shoreline",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -12635,6 +14520,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_storm_coming_station_3",
+                    "presentation_object_id": "scenario::beach_storm_coming_station_3",
                     "label": "Evacuate shoreline",
                     "state_label": "Available",
                     "prompt": "Use evacuate shoreline or leave by the marked route.",
@@ -12718,6 +14604,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_storm_coming_evacuation_line",
                   "appearance": "active_inland"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_storm_coming_beat_4_remove_beach_storm_coming_station_3",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_storm_coming_station_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_storm_coming_beat_4_spawn_beach_storm_coming_advance_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_storm_coming_advance_station",
+                  "object": {
+                    "label": "Open the aftermath station",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -12737,6 +14650,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_storm_coming_advance_station",
+                    "presentation_object_id": "scenario::beach_storm_coming_advance_station",
                     "label": "Open the aftermath station",
                     "state_label": "Available",
                     "prompt": "Use open the aftermath station or leave by the marked route.",
@@ -12819,6 +14733,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_storm_coming_rental_props",
                   "state": "decision_ready"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_storm_coming_decision_remove_advance_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_storm_coming_advance_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_storm_coming_decision_spawn_beach_storm_coming_decision_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_storm_coming_decision_station",
+                  "object": {
+                    "label": "Resolve the physical aftermath",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -12838,6 +14779,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_storm_coming_decision_station",
+                    "presentation_object_id": "scenario::beach_storm_coming_decision_station",
                     "label": "Resolve the physical aftermath",
                     "state_label": "Available",
                     "prompt": "Use resolve the physical aftermath or leave by the marked route.",
@@ -13088,6 +15030,48 @@
             {
               "family": "scene_ops",
               "op": "remove",
+              "receipt_id": "cleanup_beach_storm_coming_station_0",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_storm_coming_station_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_storm_coming_station_1",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_storm_coming_station_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_storm_coming_station_2",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_storm_coming_station_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_storm_coming_station_3",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_storm_coming_station_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_storm_coming_advance_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_storm_coming_advance_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_storm_coming_decision_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_storm_coming_decision_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
               "receipt_id": "cleanup_beach_storm_coming_exit_visual",
               "owner_namespace": "scenario",
               "stable_object_id": "beach_storm_coming_safe_exit"
@@ -13296,7 +15280,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "883a290b21385029e917993fc8df3337ef510c3b14f44b6f97fd88e87a6e242b",
+        "sequence_signature": "806ba7f33482647636f50a8e9fed8c5ecad786d6ae7849aa68a5676bc505519a",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -13305,7 +15289,9 @@
           "services": [],
           "games": [],
           "routes": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:shoreline"
+          ],
           "zones": [
             "base::zone:background",
             "base::zone:center",
@@ -13586,6 +15572,26 @@
                     "state": "clear",
                     "appearance": "marked_lane"
                   }
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_festival_weekend_arrival_spawn_beach_festival_weekend_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_station_0",
+                  "object": {
+                    "label": "Read the moving schedule",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -13598,6 +15604,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_festival_weekend_safe_exit",
+                    "presentation_object_id": "scenario::beach_festival_weekend_safe_exit",
                     "label": "Marked safe exit",
                     "state_label": "Available",
                     "prompt": "Use marked safe exit or leave by the marked route.",
@@ -13637,6 +15644,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_festival_weekend_station_0",
+                    "presentation_object_id": "scenario::beach_festival_weekend_station_0",
                     "label": "Read the moving schedule",
                     "state_label": "Available",
                     "prompt": "Use read the moving schedule or leave by the marked route.",
@@ -13770,6 +15778,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_festival_weekend_schedule_board",
                   "appearance": "route_noted"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_festival_weekend_beat_1_remove_beach_festival_weekend_station_0",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_station_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_festival_weekend_beat_1_spawn_beach_festival_weekend_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_station_1",
+                  "object": {
+                    "label": "Move the crowd rope",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -13789,6 +15824,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_festival_weekend_station_1",
+                    "presentation_object_id": "scenario::beach_festival_weekend_station_1",
                     "label": "Move the crowd rope",
                     "state_label": "Available",
                     "prompt": "Use move the crowd rope or leave by the marked route.",
@@ -13872,6 +15908,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_festival_weekend_crowd_rope",
                   "zone_id": "right"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_festival_weekend_beat_2_remove_beach_festival_weekend_station_1",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_station_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_festival_weekend_beat_2_spawn_beach_festival_weekend_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_station_2",
+                  "object": {
+                    "label": "Trace the attraction route",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -13891,6 +15954,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_festival_weekend_station_2",
+                    "presentation_object_id": "scenario::beach_festival_weekend_station_2",
                     "label": "Trace the attraction route",
                     "state_label": "Available",
                     "prompt": "Use trace the attraction route or leave by the marked route.",
@@ -13973,6 +16037,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_festival_weekend_craft_stall",
                   "state": "clue_found"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_festival_weekend_beat_3_remove_beach_festival_weekend_station_2",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_station_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_festival_weekend_beat_3_spawn_beach_festival_weekend_station_3",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_station_3",
+                  "object": {
+                    "label": "Reset stage cables",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -13992,6 +16083,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_festival_weekend_station_3",
+                    "presentation_object_id": "scenario::beach_festival_weekend_station_3",
                     "label": "Reset stage cables",
                     "state_label": "Available",
                     "prompt": "Use reset stage cables or leave by the marked route.",
@@ -14075,6 +16167,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_festival_weekend_festival_stage",
                   "state": "cables_safe"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_festival_weekend_beat_4_remove_beach_festival_weekend_station_3",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_station_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_festival_weekend_beat_4_spawn_beach_festival_weekend_station_4",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_station_4",
+                  "object": {
+                    "label": "Reunite at the marker",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -14094,6 +16213,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_festival_weekend_station_4",
+                    "presentation_object_id": "scenario::beach_festival_weekend_station_4",
                     "label": "Reunite at the marker",
                     "state_label": "Available",
                     "prompt": "Use reunite at the marker or leave by the marked route.",
@@ -14176,6 +16296,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_festival_weekend_lost_child_marker",
                   "zone_id": "center"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_festival_weekend_beat_5_remove_beach_festival_weekend_station_4",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_station_4"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_festival_weekend_beat_5_spawn_beach_festival_weekend_advance_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_advance_station",
+                  "object": {
+                    "label": "Open the aftermath station",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -14195,6 +16342,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_festival_weekend_advance_station",
+                    "presentation_object_id": "scenario::beach_festival_weekend_advance_station",
                     "label": "Open the aftermath station",
                     "state_label": "Available",
                     "prompt": "Use open the aftermath station or leave by the marked route.",
@@ -14278,6 +16426,33 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "beach_festival_weekend_food_stall",
                   "state": "decision_ready"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "beach_festival_weekend_decision_remove_advance_visual",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_advance_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "spawn",
+                  "receipt_id": "beach_festival_weekend_decision_spawn_beach_festival_weekend_decision_station",
+                  "owner_namespace": "scenario",
+                  "stable_object_id": "beach_festival_weekend_decision_station",
+                  "object": {
+                    "label": "Resolve the physical aftermath",
+                    "role": "task_station",
+                    "anchor_id": "shoreline",
+                    "bounds": {
+                      "w": 64.0,
+                      "h": 56.0
+                    },
+                    "visible": true,
+                    "enabled": true,
+                    "state": "ready",
+                    "appearance": "task_ready"
+                  }
                 }
               ],
               "interaction_ops": [
@@ -14297,6 +16472,7 @@
                   "interaction": {
                     "owner_namespace": "scenario",
                     "stable_object_id": "beach_festival_weekend_decision_station",
+                    "presentation_object_id": "scenario::beach_festival_weekend_decision_station",
                     "label": "Resolve the physical aftermath",
                     "state_label": "Available",
                     "prompt": "Use resolve the physical aftermath or leave by the marked route.",
@@ -14567,6 +16743,55 @@
             {
               "family": "scene_ops",
               "op": "remove",
+              "receipt_id": "cleanup_beach_festival_weekend_station_0",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_festival_weekend_station_0"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_festival_weekend_station_1",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_festival_weekend_station_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_festival_weekend_station_2",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_festival_weekend_station_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_festival_weekend_station_3",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_festival_weekend_station_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_festival_weekend_station_4",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_festival_weekend_station_4"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_festival_weekend_advance_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_festival_weekend_advance_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "receipt_id": "cleanup_beach_festival_weekend_decision_station",
+              "owner_namespace": "scenario",
+              "stable_object_id": "beach_festival_weekend_decision_station"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
               "receipt_id": "cleanup_beach_festival_weekend_exit_visual",
               "owner_namespace": "scenario",
               "stable_object_id": "beach_festival_weekend_safe_exit"
@@ -14759,7 +16984,7 @@
           "props_6",
           "actors_4"
         ],
-        "sequence_signature": "a0786c84fdc12acbc819b198000556768f011876eda7a689b7f128b9f065814c",
+        "sequence_signature": "a22a7c962d165e4cc2d2137334af3dd9e0951cc6ec39ddf74f6dce260ca3f01e",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -14768,7 +16993,9 @@
           "services": [],
           "games": [],
           "routes": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:shoreline"
+          ],
           "zones": [
             "base::zone:background",
             "base::zone:center",

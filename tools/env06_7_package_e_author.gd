@@ -27,6 +27,14 @@ const DECISIONS := {
 	"grand_casino_audit_night":{"at":"work_1","options":[["comply_with_audit_route","work_2"],["redirect_public_audit","terminal_success"],["close_audited_games","terminal_failure"]]},
 }
 
+const SPATIAL_OVERRIDES := {
+	"delta_queen_wedding_charter":{"task_zone":"foreground","zones":{"best_man_table":"foreground","best_man":"background","deck_coordinator":"service_lane"}},
+	"delta_queen_whale_aboard":{"task_zone":"foreground","zones":{"stake_placards":"foreground","entourage_runner":"background","whale_host":"service_lane"}},
+	"delta_queen_fog_delay":{"task_zone":"service_lane","zones":{"gangway_shutter":"foreground","safe_exit":"background"}},
+	"delta_queen_engine_trouble":{"task_zone":"background","zones":{"locked_gangway":"foreground","safe_exit":"background","deck_guard":"service_lane","engine_mate":"foreground"}},
+	"delta_queen_captains_invitational":{"task_zone":"service_lane","zones":{"captain_scorer":"foreground"}},
+}
+
 
 func _initialize() -> void:
 	var entries: Array = []
@@ -68,18 +76,20 @@ func _entry(c: Dictionary) -> Dictionary:
 	for object_index in range(c.objects.size()):
 		var o: Array = c.objects[object_index]
 		var object_id := "%s_%s" % [prefix, o[0]]
-		scene_ops.append(_scene_spawn(prefix, "arrival", object_id, str(o[1]), str(o[2]), str(o[3]), str(o[4]), 52 + object_index * 8, 46 + object_index * 6))
+		scene_ops.append(_scene_spawn(prefix, "arrival", object_id, str(o[1]), str(o[2]), _spatial_zone(prefix, str(o[0]), str(o[3])), str(o[4]), 52 + object_index * 8, 46 + object_index * 6))
 		cleanup.append(_remove("scene_ops", prefix, object_id))
 	var actor_ops: Array = []
 	for actor_index in range(c.actors.size()):
 		var a: Array = c.actors[actor_index]
 		var actor_id := "%s_%s" % [prefix, a[0]]
-		actor_ops.append(_actor_spawn(prefix, "arrival", actor_id, str(a[1]), str(a[2]), str(a[3]), str(a[4])))
+		actor_ops.append(_actor_spawn(prefix, "arrival", actor_id, str(a[1]), str(a[2]), _spatial_zone(prefix, str(a[0]), str(a[3])), str(a[4])))
 		cleanup.append(_despawn(prefix, actor_id))
 	var exit_id := "%s_safe_exit" % prefix
-	scene_ops.append(_scene_spawn(prefix, "arrival", exit_id, "Marked clean exit", "exit", "exit_lane", "marked_lane", 56, 56))
+	scene_ops.append(_scene_spawn(prefix, "arrival", exit_id, "Marked clean exit", "exit", _spatial_zone(prefix, "safe_exit", "exit_lane"), "marked_lane", 56, 56))
 	cleanup.append(_remove("scene_ops", prefix, exit_id))
 	var first_task_id := "%s_task_0" % prefix
+	scene_ops.append(_task_scene_spawn(prefix, "arrival", first_task_id, str(c.verbs[0])))
+	cleanup.append(_remove("scene_ops", prefix, first_task_id))
 	var arrival_interactions := [
 		_interaction_add(prefix, "arrival", exit_id, "%s clean exit" % prefix.replace("_"," ").capitalize(), "Leave or refuse the %s task without crossing its active work zone." % prefix.replace("_"," "), [_action("ignore_%s" % prefix, "Ignore the sequence", "ui_down"), _action("refuse_%s" % prefix, "Refuse the task", "ui_cancel")], true),
 		_interaction_add(prefix, "arrival", first_task_id, str(c.verbs[0]).replace("_", " ").capitalize(), "Begin the first physical task; named routes use their own marked stations.", [_step_action(str(c.verbs[0]), prefix, str(c.verbs[0])), _action("fail_%s" % prefix, "Let the pressure win", "ui_right")], false),
@@ -105,6 +115,8 @@ func _entry(c: Dictionary) -> Dictionary:
 		var gate_id := "%s_gate_%d" % [prefix, index - 1]
 		var operations := _beat_operations(c, index - 1)
 		var phase_id := "work_%d" % index
+		operations.scene.append(_scene_remove(prefix, phase_id, previous_task_id))
+		operations.scene.append(_task_scene_spawn(prefix, phase_id, task_id, str(c.verbs[index])))
 		var interactions := [_gate(prefix,phase_id,gate_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this operation; named routes use their own marked stations.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave","ui_cancel")],false)]
 		var phase_choices := _decision_semantics(prefix, phase_id, decision)
 		operations.scene.append_array(phase_choices.scene)
@@ -113,6 +125,7 @@ func _entry(c: Dictionary) -> Dictionary:
 		# Remove gate overlays before their underlying task interactions so cleanup
 		# cannot restore an already-removed target and leak it across revisit.
 		cleanup.push_front(_remove("interaction_ops",prefix,gate_id))
+		cleanup.append(_remove("scene_ops",prefix,task_id))
 		cleanup.append(_remove("interaction_ops",prefix,task_id))
 		objective_steps.append({"id":str(c.verbs[index]),"label":str(c.verbs[index]).replace("_"," ").capitalize(),"kind":"command","command_id":str(c.verbs[index])})
 		var next_phase := "terminal_success" if index == c.verbs.size() - 1 else "work_%d" % (index + 1)
@@ -196,6 +209,20 @@ func _branch(prefix:String,id:String,condition:Dictionary,next_phase:String,outc
 
 func _scene_spawn(prefix:String,boundary:String,id:String,label:String,role:String,zone:String,state:String,w:int,h:int)->Dictionary:
 	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":{"label":label,"role":role,"zone_id":zone,"bounds":{"w":w,"h":h},"visible":true,"enabled":true,"state":state,"appearance":state}}
+
+
+func _task_scene_spawn(prefix:String,boundary:String,id:String,verb:String)->Dictionary:
+	var spatial := _dict(SPATIAL_OVERRIDES.get(prefix, {}))
+	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":{"label":verb.replace("_", " ").capitalize(),"role":"task_station","zone_id":str(spatial.get("task_zone", "service_lane")),"bounds":{"w":64,"h":56},"visible":true,"enabled":true,"state":"ready","appearance":"task_ready"}}
+
+
+func _scene_remove(prefix:String,boundary:String,id:String)->Dictionary:
+	return {"family":"scene_ops","op":"remove","receipt_id":"%s_%s_remove_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id}
+
+
+func _spatial_zone(prefix:String,identity:String,fallback:String)->String:
+	var spatial := _dict(SPATIAL_OVERRIDES.get(prefix, {}))
+	return str(_dict(spatial.get("zones", {})).get(identity, fallback))
 
 
 func _actor_spawn(prefix:String,boundary:String,id:String,label:String,actor_id:String,zone:String,behavior:String)->Dictionary:

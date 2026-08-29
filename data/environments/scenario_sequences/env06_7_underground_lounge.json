@@ -265,6 +265,13 @@
               "stable_object_id": "punchline_open_mic_night_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_open_mic_night_cleanup_remove_punchline_open_mic_night_task_0",
+              "stable_object_id": "punchline_open_mic_night_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -279,7 +286,7 @@
               "stable_object_id": "punchline_open_mic_night_task_0"
             },
             {
-              "family": "interaction_ops",
+              "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "punchline_open_mic_night_cleanup_remove_punchline_open_mic_night_task_1",
@@ -289,8 +296,29 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "punchline_open_mic_night_cleanup_remove_punchline_open_mic_night_task_1",
+              "stable_object_id": "punchline_open_mic_night_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "punchline_open_mic_night_cleanup_remove_punchline_open_mic_night_task_2",
               "stable_object_id": "punchline_open_mic_night_task_2"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_open_mic_night_cleanup_remove_punchline_open_mic_night_task_2",
+              "stable_object_id": "punchline_open_mic_night_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_open_mic_night_cleanup_remove_punchline_open_mic_night_task_3",
+              "stable_object_id": "punchline_open_mic_night_task_3"
             },
             {
               "family": "interaction_ops",
@@ -317,7 +345,8 @@
           "actors": [],
           "anchors": [
             "base::anchor:punchline_open_mic_signup",
-            "base::anchor:punchline_open_mic_waiting_comic"
+            "base::anchor:punchline_open_mic_waiting_comic",
+            "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
           "interactions": [],
@@ -697,6 +726,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "punchline_headliner_door_guard",
                     "appearance": "marked_lane",
                     "bounds": {
                       "h": 56.0,
@@ -713,6 +743,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_open_mic_night_arrival_spawn_punchline_open_mic_night_safe_exit",
                   "stable_object_id": "punchline_open_mic_night_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_open_mic_signup",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Pin Signup Slot",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_open_mic_night_arrival_spawn_punchline_open_mic_night_task_0",
+                  "stable_object_id": "punchline_open_mic_night_task_0"
                 }
               ],
               "transition_ops": [
@@ -885,6 +935,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_open_mic_night_signup_reorder_move",
                   "stable_object_id": "punchline_open_mic_night_signup_lectern"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_open_mic_night_work_1_remove_punchline_open_mic_night_task_0",
+                  "stable_object_id": "punchline_open_mic_night_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_open_mic_signup",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Carry Stage Steps",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_open_mic_night_work_1_spawn_punchline_open_mic_night_task_1",
+                  "stable_object_id": "punchline_open_mic_night_task_1"
                 }
               ],
               "transition_ops": [
@@ -1054,6 +1131,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_open_mic_night_steps_move_appearance",
                   "stable_object_id": "punchline_open_mic_night_stage_steps"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_open_mic_night_work_2_remove_punchline_open_mic_night_task_1",
+                  "stable_object_id": "punchline_open_mic_night_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_open_mic_signup",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reseat Late Audience",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_open_mic_night_work_2_spawn_punchline_open_mic_night_task_2",
+                  "stable_object_id": "punchline_open_mic_night_task_2"
                 }
               ],
               "transition_ops": [
@@ -1226,6 +1330,33 @@
                   "receipt_id": "punchline_open_mic_night_audience_rotate_state",
                   "stable_object_id": "punchline_open_mic_night_chair_bank",
                   "state": "audience_rotate_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_open_mic_night_work_3_remove_punchline_open_mic_night_task_2",
+                  "stable_object_id": "punchline_open_mic_night_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_open_mic_signup",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Release Final Act",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_open_mic_night_work_3_spawn_punchline_open_mic_night_task_3",
+                  "stable_object_id": "punchline_open_mic_night_task_3"
                 }
               ],
               "transition_ops": [
@@ -1381,7 +1512,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "51ad3eae8a656e8a9755851d7bb113e2da7217c4c8f5d6b3ceb7579122b9ae4d"
+        "sequence_signature": "24158d956a1f5c4bc7e56796345bc828046c4da950e9cb4eb3dc16586617ccb8"
       }
     },
     {
@@ -1654,6 +1785,13 @@
               "stable_object_id": "punchline_headliner_night_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_headliner_night_cleanup_remove_punchline_headliner_night_task_0",
+              "stable_object_id": "punchline_headliner_night_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -1668,7 +1806,7 @@
               "stable_object_id": "punchline_headliner_night_task_0"
             },
             {
-              "family": "interaction_ops",
+              "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "punchline_headliner_night_cleanup_remove_punchline_headliner_night_task_1",
@@ -1678,6 +1816,13 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "punchline_headliner_night_cleanup_remove_punchline_headliner_night_task_1",
+              "stable_object_id": "punchline_headliner_night_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "punchline_headliner_night_cleanup_remove_punchline_headliner_night_task_2",
               "stable_object_id": "punchline_headliner_night_task_2"
             },
@@ -1685,8 +1830,29 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "punchline_headliner_night_cleanup_remove_punchline_headliner_night_task_2",
+              "stable_object_id": "punchline_headliner_night_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "punchline_headliner_night_cleanup_remove_punchline_headliner_night_task_3",
               "stable_object_id": "punchline_headliner_night_task_3"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_headliner_night_cleanup_remove_punchline_headliner_night_task_3",
+              "stable_object_id": "punchline_headliner_night_task_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_headliner_night_cleanup_remove_punchline_headliner_night_task_4",
+              "stable_object_id": "punchline_headliner_night_task_4"
             },
             {
               "family": "interaction_ops",
@@ -2046,6 +2212,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "punchline_headliner_door_guard",
                     "appearance": "marked_lane",
                     "bounds": {
                       "h": 56.0,
@@ -2062,6 +2229,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_headliner_night_arrival_spawn_punchline_headliner_night_safe_exit",
                   "stable_object_id": "punchline_headliner_night_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_headliner_credential_rope",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Verify L 1 Credential",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_headliner_night_arrival_spawn_punchline_headliner_night_task_0",
+                  "stable_object_id": "punchline_headliner_night_task_0"
                 }
               ],
               "transition_ops": [
@@ -2287,6 +2474,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_headliner_night_credential_turn_move",
                   "stable_object_id": "punchline_headliner_night_credential_rope"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_headliner_night_work_1_remove_punchline_headliner_night_task_0",
+                  "stable_object_id": "punchline_headliner_night_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_headliner_credential_rope",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Carry L 2 Runner Case",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_headliner_night_work_1_spawn_punchline_headliner_night_task_1",
+                  "stable_object_id": "punchline_headliner_night_task_1"
                 }
               ],
               "transition_ops": [
@@ -2456,6 +2670,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_headliner_night_case_transfer_appearance",
                   "stable_object_id": "punchline_headliner_night_runner_case"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_headliner_night_work_2_remove_punchline_headliner_night_task_1",
+                  "stable_object_id": "punchline_headliner_night_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_headliner_credential_rope",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Signal L 3 Door",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_headliner_night_work_2_spawn_punchline_headliner_night_task_2",
+                  "stable_object_id": "punchline_headliner_night_task_2"
                 }
               ],
               "transition_ops": [
@@ -2628,6 +2869,33 @@
                   "receipt_id": "punchline_headliner_night_door_release_state",
                   "stable_object_id": "punchline_headliner_night_service_door",
                   "state": "door_release_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_headliner_night_work_3_remove_punchline_headliner_night_task_2",
+                  "stable_object_id": "punchline_headliner_night_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_headliner_credential_rope",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Escort Headliner Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_headliner_night_work_3_spawn_punchline_headliner_night_task_3",
+                  "stable_object_id": "punchline_headliner_night_task_3"
                 }
               ],
               "transition_ops": [
@@ -2797,6 +3065,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_headliner_night_headliner_move_hide",
                   "stable_object_id": "punchline_headliner_night_credential_rope"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_headliner_night_work_4_remove_punchline_headliner_night_task_3",
+                  "stable_object_id": "punchline_headliner_night_task_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_headliner_credential_rope",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reset Service Rope",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_headliner_night_work_4_spawn_punchline_headliner_night_task_4",
+                  "stable_object_id": "punchline_headliner_night_task_4"
                 }
               ],
               "transition_ops": [
@@ -2951,7 +3246,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "24ddea3e5b468e8fc26a90d04ac4f82684e261d364a078ceb9f87d53eea5d4d7"
+        "sequence_signature": "1ba175dbe1f066a0d906077e6a91b0bb4bfba0c3f0788f7f9af6065372b54536"
       }
     },
     {
@@ -3216,6 +3511,13 @@
               "stable_object_id": "punchline_bringer_show_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_bringer_show_cleanup_remove_punchline_bringer_show_task_0",
+              "stable_object_id": "punchline_bringer_show_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -3230,7 +3532,7 @@
               "stable_object_id": "punchline_bringer_show_task_0"
             },
             {
-              "family": "interaction_ops",
+              "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "punchline_bringer_show_cleanup_remove_punchline_bringer_show_task_1",
@@ -3240,8 +3542,29 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "punchline_bringer_show_cleanup_remove_punchline_bringer_show_task_1",
+              "stable_object_id": "punchline_bringer_show_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "punchline_bringer_show_cleanup_remove_punchline_bringer_show_task_2",
               "stable_object_id": "punchline_bringer_show_task_2"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_bringer_show_cleanup_remove_punchline_bringer_show_task_2",
+              "stable_object_id": "punchline_bringer_show_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_bringer_show_cleanup_remove_punchline_bringer_show_task_3",
+              "stable_object_id": "punchline_bringer_show_task_3"
             },
             {
               "family": "interaction_ops",
@@ -3268,7 +3591,8 @@
           "actors": [],
           "anchors": [
             "base::anchor:punchline_bringer_crowd_ropes",
-            "base::anchor:punchline_bringer_crowd_captain"
+            "base::anchor:punchline_bringer_crowd_captain",
+            "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
           "interactions": [],
@@ -3595,6 +3919,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "punchline_headliner_door_guard",
                     "appearance": "marked_lane",
                     "bounds": {
                       "h": 56.0,
@@ -3611,6 +3936,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_bringer_show_arrival_spawn_punchline_bringer_show_safe_exit",
                   "stable_object_id": "punchline_bringer_show_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_bringer_crowd_ropes",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Open First Crowd Rope",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_bringer_show_arrival_spawn_punchline_bringer_show_task_0",
+                  "stable_object_id": "punchline_bringer_show_task_0"
                 }
               ],
               "transition_ops": [
@@ -3836,6 +4181,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_bringer_show_rope_open_move",
                   "stable_object_id": "punchline_bringer_show_crowd_ropes"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_bringer_show_work_1_remove_punchline_bringer_show_task_0",
+                  "stable_object_id": "punchline_bringer_show_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_bringer_crowd_ropes",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Usher Supporters To Block",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_bringer_show_work_1_spawn_punchline_bringer_show_task_1",
+                  "stable_object_id": "punchline_bringer_show_task_1"
                 }
               ],
               "transition_ops": [
@@ -4005,6 +4377,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_bringer_show_crowd_move_appearance",
                   "stable_object_id": "punchline_bringer_show_seat_blocks"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_bringer_show_work_2_remove_punchline_bringer_show_task_1",
+                  "stable_object_id": "punchline_bringer_show_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_bringer_crowd_ropes",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Count Minimum Seats",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_bringer_show_work_2_spawn_punchline_bringer_show_task_2",
+                  "stable_object_id": "punchline_bringer_show_task_2"
                 }
               ],
               "transition_ops": [
@@ -4177,6 +4576,33 @@
                   "receipt_id": "punchline_bringer_show_seat_count_state",
                   "stable_object_id": "punchline_bringer_show_unlit_stage",
                   "state": "seat_count_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_bringer_show_work_3_remove_punchline_bringer_show_task_2",
+                  "stable_object_id": "punchline_bringer_show_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_bringer_crowd_ropes",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Close Hostile Pitch",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_bringer_show_work_3_spawn_punchline_bringer_show_task_3",
+                  "stable_object_id": "punchline_bringer_show_task_3"
                 }
               ],
               "transition_ops": [
@@ -4332,7 +4758,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "90c63407c98d2314a443448e69ec5f98feafe989e232237865b54728029832f2"
+        "sequence_signature": "6e5c6acd6e40fb8d6aac173df42be987ca8feb5f75e1dd3f018c7a7237a26f66"
       }
     },
     {
@@ -4597,6 +5023,13 @@
               "stable_object_id": "punchline_high_stakes_night_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_high_stakes_night_cleanup_remove_punchline_high_stakes_night_task_0",
+              "stable_object_id": "punchline_high_stakes_night_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -4611,7 +5044,7 @@
               "stable_object_id": "punchline_high_stakes_night_task_0"
             },
             {
-              "family": "interaction_ops",
+              "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "punchline_high_stakes_night_cleanup_remove_punchline_high_stakes_night_task_1",
@@ -4621,8 +5054,29 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "punchline_high_stakes_night_cleanup_remove_punchline_high_stakes_night_task_1",
+              "stable_object_id": "punchline_high_stakes_night_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "punchline_high_stakes_night_cleanup_remove_punchline_high_stakes_night_task_2",
               "stable_object_id": "punchline_high_stakes_night_task_2"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_high_stakes_night_cleanup_remove_punchline_high_stakes_night_task_2",
+              "stable_object_id": "punchline_high_stakes_night_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_high_stakes_night_cleanup_remove_punchline_high_stakes_night_task_3",
+              "stable_object_id": "punchline_high_stakes_night_task_3"
             },
             {
               "family": "interaction_ops",
@@ -4649,12 +5103,13 @@
           "actors": [],
           "anchors": [
             "base::anchor:punchline_high_stakes_protected_table",
-            "base::anchor:punchline_high_stakes_floor_runner"
+            "base::anchor:punchline_high_stakes_floor_runner",
+            "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
           "interactions": [],
           "routes": [
-            "base::layer:back_room"
+            "base::layer:casino"
           ],
           "scene_objects": [],
           "services": [],
@@ -4982,6 +5437,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "punchline_headliner_door_guard",
                     "appearance": "marked_lane",
                     "bounds": {
                       "h": 56.0,
@@ -4998,6 +5454,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_high_stakes_night_arrival_spawn_punchline_high_stakes_night_safe_exit",
                   "stable_object_id": "punchline_high_stakes_night_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_high_stakes_protected_table",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Clear Ordinary Chairs",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_high_stakes_night_arrival_spawn_punchline_high_stakes_night_task_0",
+                  "stable_object_id": "punchline_high_stakes_night_task_0"
                 }
               ],
               "transition_ops": [
@@ -5174,6 +5650,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_high_stakes_night_chair_stack_move",
                   "stable_object_id": "punchline_high_stakes_night_protected_table"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_high_stakes_night_work_1_remove_punchline_high_stakes_night_task_0",
+                  "stable_object_id": "punchline_high_stakes_night_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_high_stakes_protected_table",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Mark Guard Sightline",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_high_stakes_night_work_1_spawn_punchline_high_stakes_night_task_1",
+                  "stable_object_id": "punchline_high_stakes_night_task_1"
                 }
               ],
               "transition_ops": [
@@ -5400,6 +5903,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_high_stakes_night_guard_turn_appearance",
                   "stable_object_id": "punchline_high_stakes_night_observer_rail"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_high_stakes_night_work_2_remove_punchline_high_stakes_night_task_1",
+                  "stable_object_id": "punchline_high_stakes_night_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_high_stakes_protected_table",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Open Observer Rail",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_high_stakes_night_work_2_spawn_punchline_high_stakes_night_task_2",
+                  "stable_object_id": "punchline_high_stakes_night_task_2"
                 }
               ],
               "transition_ops": [
@@ -5576,6 +6106,33 @@
                   "receipt_id": "punchline_high_stakes_night_rail_open_state",
                   "stable_object_id": "punchline_high_stakes_night_chair_stack",
                   "state": "rail_open_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_high_stakes_night_work_3_remove_punchline_high_stakes_night_task_2",
+                  "stable_object_id": "punchline_high_stakes_night_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_high_stakes_protected_table",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Restore Public Game Lane",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_high_stakes_night_work_3_spawn_punchline_high_stakes_night_task_3",
+                  "stable_object_id": "punchline_high_stakes_night_task_3"
                 }
               ],
               "transition_ops": [
@@ -5731,7 +6288,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "472d382acb0a703212bd229a8f6c86e0fb9e832f335efe149ff1ab5d87de5ea5"
+        "sequence_signature": "37d8639401871c234d33699db0133e19895874f1df6bc623fa07e5af5e4513fb"
       }
     },
     {
@@ -6004,6 +6561,13 @@
               "stable_object_id": "punchline_greased_week_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_greased_week_cleanup_remove_punchline_greased_week_task_0",
+              "stable_object_id": "punchline_greased_week_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -6018,7 +6582,7 @@
               "stable_object_id": "punchline_greased_week_task_0"
             },
             {
-              "family": "interaction_ops",
+              "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "punchline_greased_week_cleanup_remove_punchline_greased_week_task_1",
@@ -6028,6 +6592,13 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "punchline_greased_week_cleanup_remove_punchline_greased_week_task_1",
+              "stable_object_id": "punchline_greased_week_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "punchline_greased_week_cleanup_remove_punchline_greased_week_task_2",
               "stable_object_id": "punchline_greased_week_task_2"
             },
@@ -6035,8 +6606,29 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "punchline_greased_week_cleanup_remove_punchline_greased_week_task_2",
+              "stable_object_id": "punchline_greased_week_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "punchline_greased_week_cleanup_remove_punchline_greased_week_task_3",
               "stable_object_id": "punchline_greased_week_task_3"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_greased_week_cleanup_remove_punchline_greased_week_task_3",
+              "stable_object_id": "punchline_greased_week_task_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_greased_week_cleanup_remove_punchline_greased_week_task_4",
+              "stable_object_id": "punchline_greased_week_task_4"
             },
             {
               "family": "interaction_ops",
@@ -6063,12 +6655,13 @@
           "actors": [],
           "anchors": [
             "base::anchor:punchline_greased_inspection_seals",
-            "base::anchor:punchline_greased_payoff_runner"
+            "base::anchor:punchline_greased_payoff_runner",
+            "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
           "interactions": [],
           "routes": [
-            "base::layer:club"
+            "base::layer:casino"
           ],
           "scene_objects": [],
           "services": [],
@@ -6396,6 +6989,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "punchline_headliner_door_guard",
                     "appearance": "marked_lane",
                     "bounds": {
                       "h": 56.0,
@@ -6412,6 +7006,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_greased_week_arrival_spawn_punchline_greased_week_safe_exit",
                   "stable_object_id": "punchline_greased_week_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_greased_inspection_seals",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Read L 1 Inspection Seal",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_greased_week_arrival_spawn_punchline_greased_week_task_0",
+                  "stable_object_id": "punchline_greased_week_task_0"
                 }
               ],
               "transition_ops": [
@@ -6637,6 +7251,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_greased_week_seal_read_move",
                   "stable_object_id": "punchline_greased_week_inspection_seals"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_greased_week_work_1_remove_punchline_greased_week_task_0",
+                  "stable_object_id": "punchline_greased_week_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_greased_inspection_seals",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Carry Ledger To L 2",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_greased_week_work_1_spawn_punchline_greased_week_task_1",
+                  "stable_object_id": "punchline_greased_week_task_1"
                 }
               ],
               "transition_ops": [
@@ -6806,6 +7447,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_greased_week_ledger_move_appearance",
                   "stable_object_id": "punchline_greased_week_payoff_ledger"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_greased_week_work_2_remove_punchline_greased_week_task_1",
+                  "stable_object_id": "punchline_greased_week_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_greased_inspection_seals",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Shadow Inspector To L 3",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_greased_week_work_2_spawn_punchline_greased_week_task_2",
+                  "stable_object_id": "punchline_greased_week_task_2"
                 }
               ],
               "transition_ops": [
@@ -6978,6 +7646,33 @@
                   "receipt_id": "punchline_greased_week_inspector_route_state",
                   "stable_object_id": "punchline_greased_week_service_barrier",
                   "state": "inspector_route_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_greased_week_work_3_remove_punchline_greased_week_task_2",
+                  "stable_object_id": "punchline_greased_week_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_greased_inspection_seals",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Unseal Declared Service",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_greased_week_work_3_spawn_punchline_greased_week_task_3",
+                  "stable_object_id": "punchline_greased_week_task_3"
                 }
               ],
               "transition_ops": [
@@ -7147,6 +7842,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_greased_week_service_unseal_hide",
                   "stable_object_id": "punchline_greased_week_inspection_seals"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_greased_week_work_4_remove_punchline_greased_week_task_3",
+                  "stable_object_id": "punchline_greased_week_task_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_greased_inspection_seals",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Post Route Record",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_greased_week_work_4_spawn_punchline_greased_week_task_4",
+                  "stable_object_id": "punchline_greased_week_task_4"
                 }
               ],
               "transition_ops": [
@@ -7301,7 +8023,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "bf8efd67c89661143846ed61236ee37340eb2c9934aac44341dd58635b3ffd64"
+        "sequence_signature": "bad8e3c66d5a4487ef6ac0a2045cef7d036b355f9873554f88ae7bc2fc0ee13a"
       }
     },
     {
@@ -7566,6 +8288,13 @@
               "stable_object_id": "punchline_debt_court_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_debt_court_cleanup_remove_punchline_debt_court_task_0",
+              "stable_object_id": "punchline_debt_court_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -7580,7 +8309,7 @@
               "stable_object_id": "punchline_debt_court_task_0"
             },
             {
-              "family": "interaction_ops",
+              "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "punchline_debt_court_cleanup_remove_punchline_debt_court_task_1",
@@ -7590,8 +8319,29 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "punchline_debt_court_cleanup_remove_punchline_debt_court_task_1",
+              "stable_object_id": "punchline_debt_court_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "punchline_debt_court_cleanup_remove_punchline_debt_court_task_2",
               "stable_object_id": "punchline_debt_court_task_2"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_debt_court_cleanup_remove_punchline_debt_court_task_2",
+              "stable_object_id": "punchline_debt_court_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_debt_court_cleanup_remove_punchline_debt_court_task_3",
+              "stable_object_id": "punchline_debt_court_task_3"
             },
             {
               "family": "interaction_ops",
@@ -7618,7 +8368,8 @@
           "actors": [],
           "anchors": [
             "base::anchor:punchline_debt_hearing_chairs",
-            "base::anchor:punchline_debt_room_witness"
+            "base::anchor:punchline_debt_room_witness",
+            "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
           "interactions": [],
@@ -7951,6 +8702,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "punchline_headliner_door_guard",
                     "appearance": "marked_lane",
                     "bounds": {
                       "h": 56.0,
@@ -7967,6 +8719,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_debt_court_arrival_spawn_punchline_debt_court_safe_exit",
                   "stable_object_id": "punchline_debt_court_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_debt_hearing_chairs",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Form Hearing Aisle",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_debt_court_arrival_spawn_punchline_debt_court_task_0",
+                  "stable_object_id": "punchline_debt_court_task_0"
                 }
               ],
               "transition_ops": [
@@ -8143,6 +8915,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_debt_court_aisle_form_move",
                   "stable_object_id": "punchline_debt_court_hearing_chairs"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_debt_court_work_1_remove_punchline_debt_court_task_0",
+                  "stable_object_id": "punchline_debt_court_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_debt_hearing_chairs",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Place Public Evidence",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_debt_court_work_1_spawn_punchline_debt_court_task_1",
+                  "stable_object_id": "punchline_debt_court_task_1"
                 }
               ],
               "transition_ops": [
@@ -8369,6 +9168,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_debt_court_evidence_place_appearance",
                   "stable_object_id": "punchline_debt_court_evidence_stand"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_debt_court_work_2_remove_punchline_debt_court_task_1",
+                  "stable_object_id": "punchline_debt_court_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_debt_hearing_chairs",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Call Room Witness",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_debt_court_work_2_spawn_punchline_debt_court_task_2",
+                  "stable_object_id": "punchline_debt_court_task_2"
                 }
               ],
               "transition_ops": [
@@ -8545,6 +9371,33 @@
                   "receipt_id": "punchline_debt_court_witness_move_state",
                   "stable_object_id": "punchline_debt_court_paused_table_rope",
                   "state": "witness_move_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_debt_court_work_3_remove_punchline_debt_court_task_2",
+                  "stable_object_id": "punchline_debt_court_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_debt_hearing_chairs",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Clear Chairs For Work",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_debt_court_work_3_spawn_punchline_debt_court_task_3",
+                  "stable_object_id": "punchline_debt_court_task_3"
                 }
               ],
               "transition_ops": [
@@ -8700,7 +9553,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0b8b99c3abdb4ae91b43e38a09a5f0b7dfaa3b97f3a9601a0a98290ec64fcd0b"
+        "sequence_signature": "3b064f846d54b504057a6b9f646b02a21e0ef916ed3342b1e369964217bf4294"
       }
     },
     {
@@ -8973,6 +9826,13 @@
               "stable_object_id": "punchline_new_muscle_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_new_muscle_cleanup_remove_punchline_new_muscle_task_0",
+              "stable_object_id": "punchline_new_muscle_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -8987,7 +9847,7 @@
               "stable_object_id": "punchline_new_muscle_task_0"
             },
             {
-              "family": "interaction_ops",
+              "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "punchline_new_muscle_cleanup_remove_punchline_new_muscle_task_1",
@@ -8997,6 +9857,13 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "punchline_new_muscle_cleanup_remove_punchline_new_muscle_task_1",
+              "stable_object_id": "punchline_new_muscle_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "punchline_new_muscle_cleanup_remove_punchline_new_muscle_task_2",
               "stable_object_id": "punchline_new_muscle_task_2"
             },
@@ -9004,8 +9871,29 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "punchline_new_muscle_cleanup_remove_punchline_new_muscle_task_2",
+              "stable_object_id": "punchline_new_muscle_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "punchline_new_muscle_cleanup_remove_punchline_new_muscle_task_3",
               "stable_object_id": "punchline_new_muscle_task_3"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_new_muscle_cleanup_remove_punchline_new_muscle_task_3",
+              "stable_object_id": "punchline_new_muscle_task_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_new_muscle_cleanup_remove_punchline_new_muscle_task_4",
+              "stable_object_id": "punchline_new_muscle_task_4"
             },
             {
               "family": "interaction_ops",
@@ -9032,12 +9920,13 @@
           "actors": [],
           "anchors": [
             "base::anchor:punchline_new_muscle_inspection_tray",
-            "base::anchor:punchline_new_muscle_checkpoint_rover"
+            "base::anchor:punchline_new_muscle_checkpoint_rover",
+            "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
           "interactions": [],
           "routes": [
-            "base::layer:back_room"
+            "base::layer:casino"
           ],
           "scene_objects": [],
           "services": [],
@@ -9418,6 +10307,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "punchline_headliner_door_guard",
                     "appearance": "marked_lane",
                     "bounds": {
                       "h": 56.0,
@@ -9434,6 +10324,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_new_muscle_arrival_spawn_punchline_new_muscle_safe_exit",
                   "stable_object_id": "punchline_new_muscle_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Present Item At L 1 Tray",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_new_muscle_arrival_spawn_punchline_new_muscle_task_0",
+                  "stable_object_id": "punchline_new_muscle_task_0"
                 }
               ],
               "transition_ops": [
@@ -9606,6 +10516,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_new_muscle_tray_check_move",
                   "stable_object_id": "punchline_new_muscle_inspection_tray"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_new_muscle_work_1_remove_punchline_new_muscle_task_0",
+                  "stable_object_id": "punchline_new_muscle_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Test L 2 Guard Gap",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_new_muscle_work_1_spawn_punchline_new_muscle_task_1",
+                  "stable_object_id": "punchline_new_muscle_task_1"
                 }
               ],
               "transition_ops": [
@@ -9775,6 +10712,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_new_muscle_guard_gap_appearance",
                   "stable_object_id": "punchline_new_muscle_guard_posts"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_new_muscle_work_2_remove_punchline_new_muscle_task_1",
+                  "stable_object_id": "punchline_new_muscle_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Mark L 3 Bypass Lane",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_new_muscle_work_2_spawn_punchline_new_muscle_task_2",
+                  "stable_object_id": "punchline_new_muscle_task_2"
                 }
               ],
               "transition_ops": [
@@ -9947,6 +10911,33 @@
                   "receipt_id": "punchline_new_muscle_bypass_mark_state",
                   "stable_object_id": "punchline_new_muscle_bypass_lane",
                   "state": "bypass_mark_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_new_muscle_work_3_remove_punchline_new_muscle_task_2",
+                  "stable_object_id": "punchline_new_muscle_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reassign Checkpoint Posts",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_new_muscle_work_3_spawn_punchline_new_muscle_task_3",
+                  "stable_object_id": "punchline_new_muscle_task_3"
                 }
               ],
               "transition_ops": [
@@ -10116,6 +11107,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_new_muscle_post_rotate_hide",
                   "stable_object_id": "punchline_new_muscle_inspection_tray"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_new_muscle_work_4_remove_punchline_new_muscle_task_3",
+                  "stable_object_id": "punchline_new_muscle_task_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Open Clean Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_new_muscle_work_4_spawn_punchline_new_muscle_task_4",
+                  "stable_object_id": "punchline_new_muscle_task_4"
                 }
               ],
               "transition_ops": [
@@ -10270,7 +11288,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "05889cbd9d008e17e8350dfe153d830df90734dfdc5010a7f9884c2245aa0d5b"
+        "sequence_signature": "458b8404cad3da2e2f86d3b5e26214f9b8af925f4868a7a32ce0c87d11319223"
       }
     },
     {
@@ -10543,6 +11561,13 @@
               "stable_object_id": "punchline_raid_jitters_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_raid_jitters_cleanup_remove_punchline_raid_jitters_task_0",
+              "stable_object_id": "punchline_raid_jitters_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -10557,7 +11582,7 @@
               "stable_object_id": "punchline_raid_jitters_task_0"
             },
             {
-              "family": "interaction_ops",
+              "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "punchline_raid_jitters_cleanup_remove_punchline_raid_jitters_task_1",
@@ -10567,6 +11592,13 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "punchline_raid_jitters_cleanup_remove_punchline_raid_jitters_task_1",
+              "stable_object_id": "punchline_raid_jitters_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "punchline_raid_jitters_cleanup_remove_punchline_raid_jitters_task_2",
               "stable_object_id": "punchline_raid_jitters_task_2"
             },
@@ -10574,8 +11606,29 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "punchline_raid_jitters_cleanup_remove_punchline_raid_jitters_task_2",
+              "stable_object_id": "punchline_raid_jitters_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "punchline_raid_jitters_cleanup_remove_punchline_raid_jitters_task_3",
               "stable_object_id": "punchline_raid_jitters_task_3"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_raid_jitters_cleanup_remove_punchline_raid_jitters_task_3",
+              "stable_object_id": "punchline_raid_jitters_task_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "punchline_raid_jitters_cleanup_remove_punchline_raid_jitters_task_4",
+              "stable_object_id": "punchline_raid_jitters_task_4"
             },
             {
               "family": "interaction_ops",
@@ -10602,7 +11655,8 @@
           "actors": [],
           "anchors": [
             "base::anchor:punchline_raid_hide_cart",
-            "base::anchor:punchline_raid_reopen_steward"
+            "base::anchor:punchline_raid_reopen_steward",
+            "base::anchor:punchline_headliner_door_guard"
           ],
           "games": [],
           "interactions": [],
@@ -10935,6 +11989,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "punchline_headliner_door_guard",
                     "appearance": "marked_lane",
                     "bounds": {
                       "h": 56.0,
@@ -10951,6 +12006,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_raid_jitters_arrival_spawn_punchline_raid_jitters_safe_exit",
                   "stable_object_id": "punchline_raid_jitters_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_raid_hide_cart",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Wheel L 1 Hide Cart",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_raid_jitters_arrival_spawn_punchline_raid_jitters_task_0",
+                  "stable_object_id": "punchline_raid_jitters_task_0"
                 }
               ],
               "transition_ops": [
@@ -11123,6 +12198,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_raid_jitters_cart_move_move",
                   "stable_object_id": "punchline_raid_jitters_hide_cart"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_raid_jitters_work_1_remove_punchline_raid_jitters_task_0",
+                  "stable_object_id": "punchline_raid_jitters_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_raid_hide_cart",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Clear L 2 Service Lane",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_raid_jitters_work_1_spawn_punchline_raid_jitters_task_1",
+                  "stable_object_id": "punchline_raid_jitters_task_1"
                 }
               ],
               "transition_ops": [
@@ -11292,6 +12394,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_raid_jitters_lane_clear_appearance",
                   "stable_object_id": "punchline_raid_jitters_clear_bins"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_raid_jitters_work_2_remove_punchline_raid_jitters_task_1",
+                  "stable_object_id": "punchline_raid_jitters_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_raid_hide_cart",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Seal L 3 Room Screen",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_raid_jitters_work_2_spawn_punchline_raid_jitters_task_2",
+                  "stable_object_id": "punchline_raid_jitters_task_2"
                 }
               ],
               "transition_ops": [
@@ -11517,6 +12646,33 @@
                   "receipt_id": "punchline_raid_jitters_screen_seal_state",
                   "stable_object_id": "punchline_raid_jitters_room_screen",
                   "state": "screen_seal_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_raid_jitters_work_3_remove_punchline_raid_jitters_task_2",
+                  "stable_object_id": "punchline_raid_jitters_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_raid_hide_cart",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Answer Outer Knock",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_raid_jitters_work_3_spawn_punchline_raid_jitters_task_3",
+                  "stable_object_id": "punchline_raid_jitters_task_3"
                 }
               ],
               "transition_ops": [
@@ -11686,6 +12842,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_raid_jitters_lookout_turn_hide",
                   "stable_object_id": "punchline_raid_jitters_hide_cart"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_raid_jitters_work_4_remove_punchline_raid_jitters_task_3",
+                  "stable_object_id": "punchline_raid_jitters_task_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "punchline_raid_hide_cart",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reopen Safe Floor",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "punchline_raid_jitters_work_4_spawn_punchline_raid_jitters_task_4",
+                  "stable_object_id": "punchline_raid_jitters_task_4"
                 }
               ],
               "transition_ops": [
@@ -11840,7 +13023,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "715e5eb4a0fd37cb069b0d8f48f57f36c7429371f8309ff30ff0908087c8f7ca"
+        "sequence_signature": "ddc2f6459afd38cf95881822737e70f7628b16446545b441cb59b6cb505c0373"
       }
     },
     {
@@ -12113,6 +13296,13 @@
               "stable_object_id": "kitty_cat_lounge_amateur_night_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_amateur_night_cleanup_remove_kitty_cat_lounge_amateur_night_task_0",
+              "stable_object_id": "kitty_cat_lounge_amateur_night_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -12127,7 +13317,7 @@
               "stable_object_id": "kitty_cat_lounge_amateur_night_task_0"
             },
             {
-              "family": "interaction_ops",
+              "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_amateur_night_cleanup_remove_kitty_cat_lounge_amateur_night_task_1",
@@ -12137,6 +13327,13 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_amateur_night_cleanup_remove_kitty_cat_lounge_amateur_night_task_1",
+              "stable_object_id": "kitty_cat_lounge_amateur_night_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_amateur_night_cleanup_remove_kitty_cat_lounge_amateur_night_task_2",
               "stable_object_id": "kitty_cat_lounge_amateur_night_task_2"
             },
@@ -12144,8 +13341,29 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_amateur_night_cleanup_remove_kitty_cat_lounge_amateur_night_task_2",
+              "stable_object_id": "kitty_cat_lounge_amateur_night_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_amateur_night_cleanup_remove_kitty_cat_lounge_amateur_night_task_3",
               "stable_object_id": "kitty_cat_lounge_amateur_night_task_3"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_amateur_night_cleanup_remove_kitty_cat_lounge_amateur_night_task_3",
+              "stable_object_id": "kitty_cat_lounge_amateur_night_task_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_amateur_night_cleanup_remove_kitty_cat_lounge_amateur_night_task_4",
+              "stable_object_id": "kitty_cat_lounge_amateur_night_task_4"
             },
             {
               "family": "interaction_ops",
@@ -12521,6 +13739,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_amateur_night_arrival_spawn_kitty_cat_lounge_amateur_night_safe_exit",
                   "stable_object_id": "kitty_cat_lounge_amateur_night_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_amateur_signup",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Register Amateur Act",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_amateur_night_arrival_spawn_kitty_cat_lounge_amateur_night_task_0",
+                  "stable_object_id": "kitty_cat_lounge_amateur_night_task_0"
                 }
               ],
               "transition_ops": [
@@ -12693,6 +13931,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_amateur_night_signup_cycle_move",
                   "stable_object_id": "kitty_cat_lounge_amateur_night_amateur_signup"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_amateur_night_work_1_remove_kitty_cat_lounge_amateur_night_task_0",
+                  "stable_object_id": "kitty_cat_lounge_amateur_night_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_amateur_signup",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Carry Costume To Dressing",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_amateur_night_work_1_spawn_kitty_cat_lounge_amateur_night_task_1",
+                  "stable_object_id": "kitty_cat_lounge_amateur_night_task_1"
                 }
               ],
               "transition_ops": [
@@ -12915,6 +14180,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_amateur_night_costume_move_appearance",
                   "stable_object_id": "kitty_cat_lounge_amateur_night_dressing_rack"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_amateur_night_work_2_remove_kitty_cat_lounge_amateur_night_task_1",
+                  "stable_object_id": "kitty_cat_lounge_amateur_night_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_amateur_signup",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Set Stage Mark",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_amateur_night_work_2_spawn_kitty_cat_lounge_amateur_night_task_2",
+                  "stable_object_id": "kitty_cat_lounge_amateur_night_task_2"
                 }
               ],
               "transition_ops": [
@@ -13087,6 +14379,33 @@
                   "receipt_id": "kitty_cat_lounge_amateur_night_stage_mark_state",
                   "stable_object_id": "kitty_cat_lounge_amateur_night_judging_desk",
                   "state": "stage_mark_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_amateur_night_work_3_remove_kitty_cat_lounge_amateur_night_task_2",
+                  "stable_object_id": "kitty_cat_lounge_amateur_night_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_amateur_signup",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Deliver Judges Card",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_amateur_night_work_3_spawn_kitty_cat_lounge_amateur_night_task_3",
+                  "stable_object_id": "kitty_cat_lounge_amateur_night_task_3"
                 }
               ],
               "transition_ops": [
@@ -13256,6 +14575,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_amateur_night_judge_card_hide",
                   "stable_object_id": "kitty_cat_lounge_amateur_night_amateur_signup"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_amateur_night_work_4_remove_kitty_cat_lounge_amateur_night_task_3",
+                  "stable_object_id": "kitty_cat_lounge_amateur_night_task_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_amateur_signup",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Rotate Final Lineup",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_amateur_night_work_4_spawn_kitty_cat_lounge_amateur_night_task_4",
+                  "stable_object_id": "kitty_cat_lounge_amateur_night_task_4"
                 }
               ],
               "transition_ops": [
@@ -13410,7 +14756,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "648144bd4bfaa4c7804577ca23ec9a31acc651c2ef74111e40d297965ff2b3fe"
+        "sequence_signature": "01c26d20ab9a0b6d1a5a9845cd6b32d820bd1da18a431559670ef932ce15addc"
       }
     },
     {
@@ -13683,6 +15029,13 @@
               "stable_object_id": "kitty_cat_lounge_buyout_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_buyout_cleanup_remove_kitty_cat_lounge_buyout_task_0",
+              "stable_object_id": "kitty_cat_lounge_buyout_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -13697,7 +15050,7 @@
               "stable_object_id": "kitty_cat_lounge_buyout_task_0"
             },
             {
-              "family": "interaction_ops",
+              "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_buyout_cleanup_remove_kitty_cat_lounge_buyout_task_1",
@@ -13707,6 +15060,13 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_buyout_cleanup_remove_kitty_cat_lounge_buyout_task_1",
+              "stable_object_id": "kitty_cat_lounge_buyout_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_buyout_cleanup_remove_kitty_cat_lounge_buyout_task_2",
               "stable_object_id": "kitty_cat_lounge_buyout_task_2"
             },
@@ -13714,8 +15074,29 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_buyout_cleanup_remove_kitty_cat_lounge_buyout_task_2",
+              "stable_object_id": "kitty_cat_lounge_buyout_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_buyout_cleanup_remove_kitty_cat_lounge_buyout_task_3",
               "stable_object_id": "kitty_cat_lounge_buyout_task_3"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_buyout_cleanup_remove_kitty_cat_lounge_buyout_task_3",
+              "stable_object_id": "kitty_cat_lounge_buyout_task_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_buyout_cleanup_remove_kitty_cat_lounge_buyout_task_4",
+              "stable_object_id": "kitty_cat_lounge_buyout_task_4"
             },
             {
               "family": "interaction_ops",
@@ -13747,7 +15128,7 @@
           "games": [],
           "interactions": [],
           "routes": [
-            "base::world:gas_station_casino"
+            "base::world:bar"
           ],
           "scene_objects": [],
           "services": [],
@@ -14091,6 +15472,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_buyout_arrival_spawn_kitty_cat_lounge_buyout_safe_exit",
                   "stable_object_id": "kitty_cat_lounge_buyout_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_buyout_ropes",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Verify First Guest",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_buyout_arrival_spawn_kitty_cat_lounge_buyout_task_0",
+                  "stable_object_id": "kitty_cat_lounge_buyout_task_0"
                 }
               ],
               "transition_ops": [
@@ -14316,6 +15717,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_buyout_guest_verify_move",
                   "stable_object_id": "kitty_cat_lounge_buyout_buyout_ropes"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_buyout_work_1_remove_kitty_cat_lounge_buyout_task_0",
+                  "stable_object_id": "kitty_cat_lounge_buyout_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_buyout_ropes",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Advance Buyout Rope",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_buyout_work_1_spawn_kitty_cat_lounge_buyout_task_1",
+                  "stable_object_id": "kitty_cat_lounge_buyout_task_1"
                 }
               ],
               "transition_ops": [
@@ -14485,6 +15913,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_buyout_rope_advance_appearance",
                   "stable_object_id": "kitty_cat_lounge_buyout_guest_desk"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_buyout_work_2_remove_kitty_cat_lounge_buyout_task_1",
+                  "stable_object_id": "kitty_cat_lounge_buyout_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_buyout_ropes",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Carry Request Cart",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_buyout_work_2_spawn_kitty_cat_lounge_buyout_task_2",
+                  "stable_object_id": "kitty_cat_lounge_buyout_task_2"
                 }
               ],
               "transition_ops": [
@@ -14657,6 +16112,33 @@
                   "receipt_id": "kitty_cat_lounge_buyout_cart_move_state",
                   "stable_object_id": "kitty_cat_lounge_buyout_request_cart",
                   "state": "cart_move_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_buyout_work_3_remove_kitty_cat_lounge_buyout_task_2",
+                  "stable_object_id": "kitty_cat_lounge_buyout_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_buyout_ropes",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Mark Public Half Floor",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_buyout_work_3_spawn_kitty_cat_lounge_buyout_task_3",
+                  "stable_object_id": "kitty_cat_lounge_buyout_task_3"
                 }
               ],
               "transition_ops": [
@@ -14826,6 +16308,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_buyout_floor_split_hide",
                   "stable_object_id": "kitty_cat_lounge_buyout_buyout_ropes"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_buyout_work_4_remove_kitty_cat_lounge_buyout_task_3",
+                  "stable_object_id": "kitty_cat_lounge_buyout_task_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_buyout_ropes",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reset Entry Desk",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_buyout_work_4_spawn_kitty_cat_lounge_buyout_task_4",
+                  "stable_object_id": "kitty_cat_lounge_buyout_task_4"
                 }
               ],
               "transition_ops": [
@@ -14980,7 +16489,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "7505ef4823710abad521a504b85bda369ee4f4c8a7fd6cd357d787fb6b9c284b"
+        "sequence_signature": "1f9d12e6888e88d85c9e6ff21ee5d5725132f8a836bbf9f3681fcfaa26be6073"
       }
     },
     {
@@ -15245,6 +16754,13 @@
               "stable_object_id": "kitty_cat_lounge_slow_night_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_slow_night_cleanup_remove_kitty_cat_lounge_slow_night_task_0",
+              "stable_object_id": "kitty_cat_lounge_slow_night_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -15259,7 +16775,7 @@
               "stable_object_id": "kitty_cat_lounge_slow_night_task_0"
             },
             {
-              "family": "interaction_ops",
+              "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_slow_night_cleanup_remove_kitty_cat_lounge_slow_night_task_1",
@@ -15269,8 +16785,29 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_slow_night_cleanup_remove_kitty_cat_lounge_slow_night_task_1",
+              "stable_object_id": "kitty_cat_lounge_slow_night_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_slow_night_cleanup_remove_kitty_cat_lounge_slow_night_task_2",
               "stable_object_id": "kitty_cat_lounge_slow_night_task_2"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_slow_night_cleanup_remove_kitty_cat_lounge_slow_night_task_2",
+              "stable_object_id": "kitty_cat_lounge_slow_night_task_2"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_slow_night_cleanup_remove_kitty_cat_lounge_slow_night_task_3",
+              "stable_object_id": "kitty_cat_lounge_slow_night_task_3"
             },
             {
               "family": "interaction_ops",
@@ -15302,7 +16839,7 @@
           "games": [],
           "interactions": [],
           "routes": [
-            "base::world:delta_queen"
+            "base::world:gas_station_casino"
           ],
           "scene_objects": [],
           "services": [],
@@ -15693,6 +17230,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_slow_night_arrival_spawn_kitty_cat_lounge_slow_night_safe_exit",
                   "stable_object_id": "kitty_cat_lounge_slow_night_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_slow_closed_section",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Zone To Reactivate",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_slow_night_arrival_spawn_kitty_cat_lounge_slow_night_task_0",
+                  "stable_object_id": "kitty_cat_lounge_slow_night_task_0"
                 }
               ],
               "transition_ops": [
@@ -15865,6 +17422,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_slow_night_zone_choice_move",
                   "stable_object_id": "kitty_cat_lounge_slow_night_closed_section_ropes"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_slow_night_work_1_remove_kitty_cat_lounge_slow_night_task_0",
+                  "stable_object_id": "kitty_cat_lounge_slow_night_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_slow_closed_section",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Coil Closed Section Rope",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_slow_night_work_1_spawn_kitty_cat_lounge_slow_night_task_1",
+                  "stable_object_id": "kitty_cat_lounge_slow_night_task_1"
                 }
               ],
               "transition_ops": [
@@ -16034,6 +17618,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_slow_night_rope_coil_appearance",
                   "stable_object_id": "kitty_cat_lounge_slow_night_mini_stage"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_slow_night_work_2_remove_kitty_cat_lounge_slow_night_task_1",
+                  "stable_object_id": "kitty_cat_lounge_slow_night_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_slow_closed_section",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Power Selected Station",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_slow_night_work_2_spawn_kitty_cat_lounge_slow_night_task_2",
+                  "stable_object_id": "kitty_cat_lounge_slow_night_task_2"
                 }
               ],
               "transition_ops": [
@@ -16206,6 +17817,33 @@
                   "receipt_id": "kitty_cat_lounge_slow_night_station_power_state",
                   "stable_object_id": "kitty_cat_lounge_slow_night_maintenance_panel",
                   "state": "station_power_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_slow_night_work_3_remove_kitty_cat_lounge_slow_night_task_2",
+                  "stable_object_id": "kitty_cat_lounge_slow_night_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_slow_closed_section",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Move Remaining Staff",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_slow_night_work_3_spawn_kitty_cat_lounge_slow_night_task_3",
+                  "stable_object_id": "kitty_cat_lounge_slow_night_task_3"
                 }
               ],
               "transition_ops": [
@@ -16361,7 +17999,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "164777f04ca76792c320ead5e88e5d41643f6a2b140ec07275ec977534ea46a9"
+        "sequence_signature": "7f5dc84d08c10feb56c8226c80684c1c6e4b6109d97de2fbe28697eead64f22a"
       }
     },
     {
@@ -16642,6 +18280,13 @@
               "stable_object_id": "kitty_cat_lounge_bachelorette_storm_safe_exit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_bachelorette_storm_cleanup_remove_kitty_cat_lounge_bachelorette_storm_task_0",
+              "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_0"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -16656,7 +18301,7 @@
               "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_0"
             },
             {
-              "family": "interaction_ops",
+              "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_bachelorette_storm_cleanup_remove_kitty_cat_lounge_bachelorette_storm_task_1",
@@ -16666,11 +18311,25 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_bachelorette_storm_cleanup_remove_kitty_cat_lounge_bachelorette_storm_task_1",
+              "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_1"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_bachelorette_storm_cleanup_remove_kitty_cat_lounge_bachelorette_storm_task_2",
               "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_2"
             },
             {
               "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_bachelorette_storm_cleanup_remove_kitty_cat_lounge_bachelorette_storm_task_2",
+              "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_2"
+            },
+            {
+              "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_bachelorette_storm_cleanup_remove_kitty_cat_lounge_bachelorette_storm_task_3",
@@ -16680,8 +18339,29 @@
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_bachelorette_storm_cleanup_remove_kitty_cat_lounge_bachelorette_storm_task_3",
+              "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_3"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
               "receipt_id": "kitty_cat_lounge_bachelorette_storm_cleanup_remove_kitty_cat_lounge_bachelorette_storm_task_4",
               "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_4"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_bachelorette_storm_cleanup_remove_kitty_cat_lounge_bachelorette_storm_task_4",
+              "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_4"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "kitty_cat_lounge_bachelorette_storm_cleanup_remove_kitty_cat_lounge_bachelorette_storm_task_5",
+              "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_5"
             },
             {
               "family": "interaction_ops",
@@ -16713,7 +18393,7 @@
           "games": [],
           "interactions": [],
           "routes": [
-            "base::world:grand_casino"
+            "base::world:gas_station_casino"
           ],
           "scene_objects": [],
           "services": [],
@@ -17063,6 +18743,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_arrival_spawn_kitty_cat_lounge_bachelorette_storm_safe_exit",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_safe_exit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_storm_prop_trunk",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Separate Party Groups",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_arrival_spawn_kitty_cat_lounge_bachelorette_storm_task_0",
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_0"
                 }
               ],
               "transition_ops": [
@@ -17235,6 +18935,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_groups_split_move",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_party_prop_trunk"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_1_remove_kitty_cat_lounge_bachelorette_storm_task_0",
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_storm_prop_trunk",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Roll Prop Trunk Off Lane",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_1_spawn_kitty_cat_lounge_bachelorette_storm_task_1",
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_1"
                 }
               ],
               "transition_ops": [
@@ -17404,6 +19131,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_trunk_move_appearance",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_missing_guest_marker"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_2_remove_kitty_cat_lounge_bachelorette_storm_task_1",
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_storm_prop_trunk",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Trace Missing Guest Marker",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_2_spawn_kitty_cat_lounge_bachelorette_storm_task_2",
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_2"
                 }
               ],
               "transition_ops": [
@@ -17629,6 +19383,33 @@
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_marker_trace_state",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_bar_route_rope",
                   "state": "marker_trace_resolved"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_3_remove_kitty_cat_lounge_bachelorette_storm_task_2",
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_storm_prop_trunk",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Return Stage Prop",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_3_spawn_kitty_cat_lounge_bachelorette_storm_task_3",
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_3"
                 }
               ],
               "transition_ops": [
@@ -17798,6 +19579,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_prop_return_hide",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_party_prop_trunk"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_4_remove_kitty_cat_lounge_bachelorette_storm_task_3",
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_storm_prop_trunk",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Restore Bar Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_4_spawn_kitty_cat_lounge_bachelorette_storm_task_4",
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_4"
                 }
               ],
               "transition_ops": [
@@ -17967,6 +19775,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_route_restore_disable",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_missing_guest_marker"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_5_remove_kitty_cat_lounge_bachelorette_storm_task_4",
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_4"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "anchor_id": "kitty_storm_prop_trunk",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Seat Orderly Finale",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_5_spawn_kitty_cat_lounge_bachelorette_storm_task_5",
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_5"
                 }
               ],
               "transition_ops": [
@@ -18124,7 +19959,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "226b1efa96a2a7be815135fa524dae20e8ea5776b1e1afbaa1952fe2cbab5ece"
+        "sequence_signature": "0b47e2544f390648b12b454ecada7b8ebc9ad2a14b8886992b7cff332849c3a2"
       }
     }
   ],
