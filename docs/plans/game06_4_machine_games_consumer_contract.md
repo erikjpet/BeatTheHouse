@@ -1,6 +1,12 @@
 # game06_4 machine-games consumer contract
 
-Status: UNREVIEWED contract-only consumer candidate
+Status: WIP — owner-selected W0 + H0 recovery candidate
+
+Authority decision: Slot and Video Poker use the existing sealed host
+direct-bankroll boundary. No machine-credit ledger, buy-in, cash-out, or
+conversion schema exists. Video Poker has no hand-pay flow. Slot retains its
+existing jackpot/grand attendant acknowledgement as a replay-safe,
+settlement-neutral sealed-host action.
 
 Frozen vocabulary base: `a2760d81` (`game_ritual/1`)
 
@@ -18,7 +24,7 @@ poker paytables, detection math, or environment ownership.
 | `scripts/games/slot.gd` | `resolve_with_context`, `wager_cost_for_context`, `minimum_wager_return_for_context` | These remain the sole wager and outcome authority. A ritual handler adapts their accepted result; it never recomputes reels or payout. |
 | `scripts/games/slot.gd` | `checkpoint_surface_ui_state`, `_settle_completed_presentation` | Mid-spin and feature presentation checkpoints remain durable without replaying coin-out, bonus awards, or audio. |
 | `scripts/games/slot.gd` | `surface_needs_auto_tick`, `surface_auto_action_command`, environment runtime methods | Autoplay, bonus progression, and watchdog activity remain boundary-driven. No ritual callback is added per frame. |
-| `scripts/games/slots/slot_machine_state.gd` | selected bet, credits, coin-in/out, active bonus, animation identity | Canonical machine state is authoritative. Ritual state stores references and receipts, never a second reel grid or bonus journal. |
+| `scripts/games/slots/slot_machine_state.gd` | selected mathematical bet units, coin-in/out counters, active bonus, animation identity | Canonical machine state is authoritative. Ritual state stores references and receipts, never a second reel grid or bonus journal. |
 | `scripts/games/slots/slot_resolver.gd` and family resolvers | spin, nudge, bonus result | Seed/RTP authority is unchanged and consumes RNG exactly once through the existing resolver. |
 | `scripts/games/slots/slot_presentation.gd`, `slot_renderer.gd` | cabinet/reel/feature presentation | These consume the prepared ritual projection. Draw paths may read but never duplicate authoritative state. |
 
@@ -30,7 +36,7 @@ poker paytables, detection math, or environment ownership.
 | `scripts/games/video_poker_renderer.gd` | `_draw_authored_cabinet`, `_draw_paytable`, `_draw_hands`, `_draw_controls` | The shipped authored cabinet remains the visual base. Ritual objects add semantic state; they do not replace cabinet geometry. |
 | `scripts/games/video_poker_renderer.gd` | per-card `video_poker_hold` exact hits | Each card region binds to one semantic hold action. Keyboard/controller focus paths target the identical card index. |
 | `scripts/games/video_poker_renderer.gd` | draw sequence and `drawn_indices` | Replacement staging follows the authoritative result order and never redraws held positions as changed. |
-| paytable/result evaluation in `video_poker.gd` | hand label, multiplier, credits | Result facts copy the existing evaluated line and credit delta; projection never evaluates a hand. |
+| paytable/result evaluation in `video_poker.gd` | hand label, multiplier, paytable units | Result facts copy the existing evaluated line, paytable payout, and bankroll delta; projection never evaluates a hand. |
 
 ### Coin Pusher V3 reference classification
 
@@ -42,7 +48,8 @@ is accidental to this consumer and must not enter the shared ritual.
 
 ## 2. Shared invariants for both consumers
 
-- Cash and credits are different units. Conversion is explicit and receipted.
+- Player funds are host bankroll/cash. Paytable "credits" remain mathematical
+  payout units only and are never presented as a stored machine balance.
 - Only existing rules/resolver code may debit, credit, pay, or consume RNG.
 - A rejected pointer gesture creates no debit, result, fact, accepted receipt,
   phase change, or durable animation identity.
@@ -62,29 +69,27 @@ Ritual id: `slot.machine_session`
 
 Phases:
 
-1. `credits` — buy-in/cash-out, denomination and bet selection, spin permitted.
-2. `commitment` — exact selected credit wager is confirmed and locked.
+1. `bankroll` — denomination and direct-bankroll bet selection; spin permitted.
+2. `commitment` — exact selected cash wager is confirmed and locked.
 3. `activation` — handle/button press accepted; authoritative resolver runs once.
 4. `outcome_staging` — authored reel stops expose the already-fixed result.
 5. `feature` — existing bonus family progression, if any, remains resolver-owned.
 6. `payout_or_handpay` — coin-out is readable; threshold lockup summons attendant.
-7. `credits` — acknowledgement completes settlement without paying again.
+7. `bankroll` — acknowledgement completes without paying again.
 
 Terminal interruption uses the existing environment/session exit boundary and
-must preserve active bonus and committed credits.
+must preserve active bonus and the committed bankroll result.
 
 ### Slot commitment and actions
 
-`pending_items` contains exactly one `wager.spin` credit item. `working_items`
+`pending_items` contains exactly one direct-bankroll `wager.spin` item. `working_items`
 contains the confirmed wager until its result receipt exists. `item_resolutions`
 copies the existing coin-in, coin-out, free-spin use, and feature award fields.
 
 | Action | Existing authority | Availability |
 | --- | --- | --- |
-| `credit.buy_in` | existing cash/credit conversion boundary | `credits`, funds available, machine not locked |
-| `credit.cash_out` | existing cash/credit conversion boundary | `credits`, no committed wager or active feature |
-| `commit.correct` | selected bet/denomination state | `credits` only |
-| `commit.confirm` | selected bet and wager-cost functions | `credits`; moves exact credits at risk |
+| `commit.correct` | selected bet/denomination state | `bankroll` only |
+| `commit.confirm` | selected bet and wager-cost functions | `bankroll`; seals exact cash at risk |
 | `play.activate` | `resolve_with_context("spin", …)` | `commitment` only |
 | `play.nudge` | existing nudge offer and detection path | only when the shipped offer says ready |
 | `feature.advance` | existing bonus action resolver | `feature`, exact declared next action |
@@ -113,7 +118,7 @@ visible; music alone cannot satisfy it.
 
 ### Slot facts
 
-- `machine.credits_changed`
+- `machine.bankroll_changed`
 - `machine.commitment_accepted`
 - `machine.activation_started`
 - `machine.result_completed`
@@ -133,24 +138,24 @@ Ritual id: `video_poker.machine_session`
 
 Phases:
 
-1. `credits` — conversion, denomination and credit wager selection.
+1. `bankroll` — denomination and direct-bankroll wager selection.
 2. `commitment` — exact wager confirmed.
 3. `initial_deal` — five authoritative cards staged in dealt order.
 4. `hold_selection` — independent card holds may be toggled.
 5. `draw` — one accepted draw replaces only unheld indices.
 6. `result_read` — exact existing paytable row and credit result highlighted.
 7. `double_up` — only when the shipped result offers it; existing authority.
-8. `payout_or_handpay` — readable settlement/lockup.
-9. `credits` — acknowledgement, with no repeated award.
+8. `payout` — readable direct-bankroll settlement.
+9. `bankroll` — repeat play, with no repeated award.
 
 ### Video Poker actions
 
-`commit.correct` changes credits/bet and denomination only before deal.
+`commit.correct` changes the bankroll wager and denomination only before deal.
 `commit.confirm` locks the exact wager. `play.deal` calls the existing deal
 authority once. `card.hold` targets `card.0` through `card.4` during
 `hold_selection`; it changes only the hold set. `play.draw` calls existing draw
 authority once. `double_up.choose` remains bound to existing double-up inputs.
-`resolution.acknowledge` returns to credits without evaluating or paying again.
+Video Poker declares no hand-pay or acknowledgement action under H0.
 
 The renderer's five current exact card hit regions become declared semantic
 regions. Pointer, keyboard and controller paths all submit the same `card.hold`
@@ -159,7 +164,8 @@ initial/dealt/drawn distinction and paytable-line highlight.
 
 ### Video Poker actors and objects
 
-Actors match Slot: attendant, bounded neighbours, optional security observer.
+Actors match Slot for bounded neighbours and security observation; the attendant
+has security/service presentation only and no Video Poker hand-pay behavior.
 Objects are `cabinet.body`, `cabinet.glass`, `cabinet.belly_art`,
 `cabinet.button_deck`, `cabinet.credit_meter`, `cabinet.denomination`,
 `cabinet.tower_light`, `cabinet.money_path`, `cabinet.playfield`,
@@ -171,20 +177,19 @@ shared code.
 
 ### Video Poker facts
 
-- `machine.credits_changed`
+- `machine.bankroll_changed`
 - `machine.commitment_accepted`
 - `video_poker.initial_deal_completed`
 - `video_poker.holds_changed`
 - `video_poker.draw_completed`
 - `video_poker.result_completed`
-- `machine.handpay_required`
 - `machine.cheat_attempted`
 - `machine.cheat_resolved`
 - `machine.session_ended`
 
 ## 5. Persistence and replay
 
-Both games serialize ritual id/version, legal phase, exact pending/working credit
+Both games serialize ritual id/version, legal phase, exact pending/working bankroll
 items, authoritative machine/result references, actor/object semantic states,
 energy tier, handler state, and command/result/fact/operation receipts. They do
 not serialize prepared cabinet geometry, renderer caches, hover, pointer travel,
@@ -195,7 +200,8 @@ Restore cases required before implementation acceptance:
 - Slot: committed pre-spin, mid-spin staging, feature entry, every active bonus
   family boundary, lockup, hand-pay, and settled result before acknowledgement.
 - Video Poker: committed pre-deal, initial-deal completion, each hold-set shape,
-  pre-draw, post-draw result, double-up, lockup, hand-pay, and settlement.
+  pre-draw, post-draw result, double-up, security lockup, and settlement. No
+  hand-pay phase exists.
 
 Every restore rebuilds projection from validated authority and suppresses
 already-receipted payout, award, dialogue, audio, and room-reaction effects.
@@ -205,18 +211,20 @@ already-receipted payout, award, dialogue, audio, and room-reaction effects.
 1. Existing RTP/paytable and generator tests pass byte-for-byte for every slot
    family and video-poker cabinet.
 2. Ten seeded native/Web traces match authoritative result, receipt order,
-   feature sequence, replaced-card indices, and final credits.
+   feature sequence, replaced-card indices, and final bankroll.
 3. Reject double-spin, double-pay, hold-after-draw, overlapping held repeat,
    incomplete gesture, inaccessible target, and action-out-of-phase without
-   credit or state mutation.
-4. Conservation covers buy-in, spin/deal, free play, feature award, double-up,
-   cash-out, lockup, hand-pay, and mid-feature exit.
+   bankroll or state mutation.
+4. Conservation covers direct-bankroll spin/deal, free play, feature award,
+   double-up, security lockup, Slot jackpot acknowledgement/replay, and
+   mid-feature exit.
 5. Per-frame probes show no new deep copy/allocation path in Slot realtime patch
    or Video Poker draw. Idle liveness must be nonzero and within budget.
 6. Every energy tier proves an actor/object/interactable change and correct
    downshift when heat or win energy falls.
 7. Visual captures cover all prompt states, accessibility modes, cabinet
-   variants, denominations, and both hand-pay/lockup paths.
+   variants, denominations, Slot jackpot acknowledgement, security lockup, and
+   the absence of Video Poker hand-pay presentation.
 
 The executable declarations at `slot_machine_ritual_contract()` and
 `video_poker_ritual_contract()` are built directly on accepted vocabulary head
@@ -253,20 +261,18 @@ Both projections reconstruct from the existing saved machine and surface UI
 state. They add no second ledger, future-result field, RNG use, wall-clock
 authority, paytable branch, detection rule, or per-frame deep copy.
 
-## 8. First-review representability correction
+## 8. Owner-selected authority closure
 
-The rejected candidate mislabeled the shipped cash bankroll as machine credits
-and inferred Video Poker hand-pay from a locally invented `1000`-credit
-threshold. Both claims are removed. The owned Slot and Video Poker state has no
-authoritative cash-to-machine-credit ledger or conversion boundary, and Video
-Poker has no authoritative hand-pay/lockup boundary. The consumer now fails
-those actions closed and projects the exact gap; it does not construct a second
-ledger or threshold. Slot acknowledgement is available only for an existing
-jackpot/grand presentation and only to the exact `RunState` host object bound at
-entry. Caller strings, nested dictionaries, signed-looking claims, substituted
-objects, and recomputed values cannot establish that identity.
+The owner selected W0 + H0 and explicitly retained Slot's existing
+jackpot/attendant acknowledgement. The prior false machine-credit and Video
+Poker hand-pay claims are removed from the prompt, executable declarations,
+projection, renderer labels, tests, and downstream release/audio contracts.
 
-This is a material dependency gap against the row prompt: real buy-in/cash-out
-and Video Poker hand-pay remain unrepresentable without an accepted authority
-boundary. It must be resolved by the owner/Integrator or by a separately owned
-runtime contract; this row cannot silently invent one.
+Foundation's sealed action host owns direct-bankroll proposal validation,
+funding preview, exact receipt binding, apply, commit, and replay for Slot and
+Video Poker. Slot acknowledgement crosses the same sealed proposal/receipt
+boundary, changes only the acknowledged result id, is cached for exact replay,
+and cannot release or duplicate payout. Caller strings, nested dictionaries,
+signed-looking claims, substituted objects, and recomputed values do not
+establish authority. No machine-credit schema, conversion path, Video Poker
+hand-pay policy, odds, paytable, or RTP change is introduced.

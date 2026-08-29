@@ -57,8 +57,10 @@ Author profiles for the surfaces the depth programs changed, at minimum:
 - **Table games:** chip placement and correction, shoe and cut card, the deal,
   card squeeze, wheel and ball, dolly placement, clearing, paying, dealer
   procedure, shift change.
-- **Machine games:** handle and button, credit in and out, reel stops, feature
-  entry, hand-pay, tower light, attract.
+- **Machine games:** handle and button, direct-bankroll wager acceptance and
+  settlement, reel stops, feature entry, Slot jackpot acknowledgement, tower
+  light, attract. Do not author machine-credit in/out or Video Poker hand-pay
+  events under the selected W0 + H0 authority contract.
 - **Counter games:** rack, ticket handed over, the scratch itself, the peel,
   redemption, refusal.
 - **Bar dice:** cup shake, slam, lift, reveal, cash on the bar.

@@ -34,9 +34,12 @@ wrong agent for this row.
 4. Review unlabeled per-game contact sheets. Each game must be identifiable from
    room, actor and object state without titles, signage or reward text.
 5. Re-verify math on the exact tree: every RTP band, paytable, probability
-   matrix and EV harness at its documented figure, and money and credit
-   conservation across splits, doubles, insurance, commissions, multi-bets,
-   buy-ins, cash-outs, hand-pays, partial tickets and interrupted street games.
+   matrix and EV harness at its documented figure, and money conservation across
+   splits, doubles, insurance, commissions, multi-bets, partial tickets and
+   interrupted street games. For Slot and Video Poker, apply the selected W0 +
+   H0 contract: direct-bankroll settlement only, no machine-credit/buy-in/cash-out
+   schema, no Video Poker hand-pay, and replay-safe settlement-neutral Slot
+   jackpot acknowledgement.
    Any figure outside its documented band blocks closure.
 6. Re-verify every integration consumer: Players Card routes, tutorial lessons
    in `data/tutorial/lessons.json`, count challenge and heat backoffs, crew

@@ -398,8 +398,8 @@ func _draw_controls(surface, state: Dictionary, palette: Dictionary) -> void:
 	var meters := Rect2(704, y, 212, 40)
 	surface.draw_rect(meters, Color("#02050b"))
 	surface.draw_rect(meters, trim.darkened(0.25), false, 2)
-	surface.surface_label("CRED %d    WIN %d" % [int(state.get("credits", 0)), int(state.get("win_credits", 0))], Vector2(meters.position.x + 8, meters.position.y + 15), 9, C_YELLOW)
-	surface.surface_label("BET %d (%d COIN/HAND)" % [wager, coins], Vector2(meters.position.x + 8, meters.position.y + 31), 9, C_CYAN)
+	surface.surface_label("CASH $%d    WIN $%d" % [int(state.get("bankroll", 0)), int(state.get("win_credits", 0))], Vector2(meters.position.x + 8, meters.position.y + 15), 9, C_YELLOW)
+	surface.surface_label("BET $%d (%d COIN/HAND)" % [wager, coins], Vector2(meters.position.x + 8, meters.position.y + 31), 9, C_CYAN)
 
 
 func _button(surface, rect: Rect2, label: String, action: String, index: int, accent: Color, enabled: bool) -> void:

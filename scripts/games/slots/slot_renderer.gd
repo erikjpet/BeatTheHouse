@@ -2526,7 +2526,7 @@ func _draw_buffalo_silhouette(surface, center: Vector2, scale: float, color: Col
 func _draw_status_panel(surface, state: Dictionary, skin: Dictionary, accent: Color, light: Color, trim: Color) -> void:
 	var left := _rect_from_dict(skin.get("tease_panel", {}))
 	var right := _rect_from_dict(skin.get("feature_panel", {}))
-	_draw_panel(surface, left, "CREDITS", accent)
+	_draw_panel(surface, left, "BANKROLL", accent)
 	surface.surface_label("$" + str(int(state.get("bankroll", 0))), left.position + Vector2(14, 52), 18, light)
 	surface.surface_label("HEAT " + str(int(state.get("suspicion_level", 0))), left.position + Vector2(14, 80), 13, accent)
 	surface.surface_label("BET $" + str(int(state.get("slot_selected_bet", 10))), left.position + Vector2(14, 106), 13, trim)

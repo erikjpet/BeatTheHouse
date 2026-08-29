@@ -63,16 +63,16 @@ func sealed_action_authority_contract() -> Dictionary:
 func slot_machine_ritual_contract() -> Dictionary:
 	# Slot-owned declaration only: resolver authority and RNG remain in the
 	# shipped machine state/resolver. No shared executable ritual is imported.
-	var action_ids := ["slot_credit_buy_in", "slot_credit_cash_out", "slot_handpay_acknowledge", "slot_bet", "spin", "nudge", "slot_auto_toggle", "launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt"]
+	var action_ids := ["slot_handpay_acknowledge", "slot_bet", "spin", "nudge", "slot_auto_toggle", "launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt"]
 	var declarations: Array = []
 	for action_id in action_ids:
 		declarations.append({"action_id": action_id, "handler_id": "slot_machine_authority", "parameters": {}})
 	return {
 		"contract": SLOT_RITUAL_CONTRACT,
 		"ritual_id": SLOT_RITUAL_ID,
-		"initial_phase": "credits",
+		"initial_phase": "bankroll",
 		"ritual_phases": [
-			_slot_ritual_phase("credits", ["slot_credit_buy_in", "slot_credit_cash_out", "slot_bet", "spin", "slot_auto_toggle"], "commitment"),
+			_slot_ritual_phase("bankroll", ["slot_bet", "spin", "slot_auto_toggle"], "commitment"),
 			_slot_ritual_phase("commitment", ["spin"], "activation"),
 			_slot_ritual_phase("activation", [], "outcome_staging"),
 			{"id": "outcome_staging", "entry_conditions": [], "permitted_actions": ["nudge"], "entry_operations": [], "transitions": [
@@ -80,7 +80,7 @@ func slot_machine_ritual_contract() -> Dictionary:
 				{"id": "outcome_to_payout", "condition": {"kind": "public_state_equals", "key": "feature_active", "value": false}, "next_phase": "payout_or_handpay", "operations": []},
 			], "terminal": false},
 			_slot_ritual_phase("feature", ["launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt"], "payout_or_handpay"),
-			_slot_ritual_phase("payout_or_handpay", ["slot_handpay_acknowledge"], "credits"),
+			_slot_ritual_phase("payout_or_handpay", ["slot_handpay_acknowledge"], "bankroll"),
 		],
 		"action_declarations": declarations,
 		"staged_commitment": {
@@ -111,16 +111,16 @@ func slot_machine_ritual_contract() -> Dictionary:
 			{"id": "lockup", "actor_operations": [{"target": "attendant_primary", "behavior": "handpay"}], "object_operations": [{"target": "cabinet_tower_light", "state": "handpay"}], "interaction_operations": [{"target": "button_deck", "state": "locked"}], "audio_cues": []},
 		]},
 		"game_facts": [
-			{"fact_type": "machine.commitment_accepted", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"credits": "int"}},
+			{"fact_type": "machine.commitment_accepted", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"bankroll_at_risk": "int"}},
 			{"fact_type": "machine.result_completed", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"coin_out": "int", "result_class": "string"}},
-			{"fact_type": "machine.handpay_required", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"credits": "int"}},
+			{"fact_type": "machine.handpay_required", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"jackpot_result_id": "string"}},
 		],
 		"ritual_persistence": {
-			"authoritative_serialized": ["machine_state", "selected_bet", "credits", "active_bonus", "result_receipts"],
+			"authoritative_serialized": ["machine_state", "selected_bet", "host_bankroll", "active_bonus", "result_receipts"],
 			"derived_projection": ["actors", "scene_objects", "energy", "hit_regions"],
 			"transient_presentation": ["pointer_path", "reel_interpolation", "pulse", "hover"],
 			"one_shot_receipted": ["coin_out_audio", "feature_entry", "room_reaction", "handpay_call"],
-			"save_boundaries": ["credits", "commitment", "activation", "outcome_staging", "feature", "payout_or_handpay"],
+			"save_boundaries": ["bankroll", "commitment", "activation", "outcome_staging", "feature", "payout_or_handpay"],
 			"restore_policy": "restore_legal_phase_without_replay",
 		},
 		"handler_registry": [{
@@ -138,7 +138,7 @@ func _slot_ritual_phase(phase_id: String, permitted_actions: Array, next_phase: 
 
 
 func _slot_ritual_pointer(pointer_id: String, verb: String, action_id: String, region: String) -> Dictionary:
-	return {"id": pointer_id, "verb": verb, "source_region": region, "target_regions": [region], "bounds": {"space": "design", "min_distance": 0, "max_distance": 220}, "phases": ["credits", "commitment"], "accepted_action": action_id, "rejection": "restore_focus", "rejection_effects": [], "equivalents": {"keyboard": {"action_id": action_id, "target_selection": "focus"}, "controller": {"action_id": action_id, "target_selection": "focus"}, "reduced_motion": {"action_id": action_id, "target_selection": "focus", "staging": "short"}}}
+	return {"id": pointer_id, "verb": verb, "source_region": region, "target_regions": [region], "bounds": {"space": "design", "min_distance": 0, "max_distance": 220}, "phases": ["bankroll", "commitment"], "accepted_action": action_id, "rejection": "restore_focus", "rejection_effects": [], "equivalents": {"keyboard": {"action_id": action_id, "target_selection": "focus"}, "controller": {"action_id": action_id, "target_selection": "focus"}, "reduced_motion": {"action_id": action_id, "target_selection": "focus", "staging": "short"}}}
 
 
 func _slot_ritual_object(object_id: String, anchor: String, appearances: Array, functions: Array) -> Dictionary:
@@ -353,7 +353,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 func _slot_live_ritual_projection(machine: Dictionary, surface: Dictionary, run_state: RunState) -> Dictionary:
 	var animation_id := str(machine.get("slot_animation_id", ""))
 	var feature_active := StateScript.active_bonus_incomplete(machine)
-	var phase_id := "credits"
+	var phase_id := "bankroll"
 	if feature_active:
 		phase_id = "feature"
 	elif not animation_id.is_empty():
@@ -385,8 +385,8 @@ func _slot_live_ritual_projection(machine: Dictionary, surface: Dictionary, run_
 		"energy_tier": energy_tier,
 		"cash_balance": int(surface.get("bankroll", 0)),
 		"machine_credit_ledger_available": false,
-		"currency_representability_gap": "No authoritative machine-credit ledger or conversion boundary exists in the owned Slot state; cash play remains the shipped authority.",
-		"denomination_label": "%d CREDIT" % selected_bet,
+		"currency_representability_gap": "W0 direct-bankroll play is authoritative; no machine-credit ledger or conversion boundary exists.",
+		"denomination_label": "$%d BET" % selected_bet,
 		"tower_state": tower_state,
 		"validator_state": "locked" if handpay or not animation_id.is_empty() else "ready",
 		"button_state": "locked" if handpay or feature_active else "pressed" if not animation_id.is_empty() else "ready",
@@ -724,8 +724,6 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			"message": "Bonus input.",
 		})
 	match surface_action:
-		"slot_credit_buy_in", "slot_credit_cash_out":
-			return GameModule.surface_command({"handled": true, "message": "This cabinet has no authoritative machine-credit conversion boundary; cash remains unchanged."})
 		"slot_handpay_acknowledge":
 			return GameModule.surface_command({
 				"handled": true,

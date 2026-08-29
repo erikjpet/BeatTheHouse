@@ -328,9 +328,9 @@ func sealed_action_authority_contract() -> Dictionary:
 
 
 func video_poker_ritual_contract() -> Dictionary:
-	# Consumer declaration only. Cards, evaluation, paytable, credits, detection,
+	# Consumer declaration only. Cards, evaluation, paytable units, detection,
 	# and RNG stay exclusively in this game's existing authority.
-	var action_ids := ["video_poker_credit_buy_in", "video_poker_credit_cash_out", "video_poker_handpay_acknowledge", "video_poker_bet_down", "video_poker_bet_one", "video_poker_bet_max", "video_poker_denom", "video_poker_deal", "video_poker_hold", "video_poker_draw", "video_poker_mark", "video_poker_palm", "video_poker_double", "video_poker_double_pick", "video_poker_collect"]
+	var action_ids := ["video_poker_bet_down", "video_poker_bet_one", "video_poker_bet_max", "video_poker_denom", "video_poker_deal", "video_poker_hold", "video_poker_draw", "video_poker_mark", "video_poker_palm", "video_poker_double", "video_poker_double_pick", "video_poker_collect"]
 	var declarations: Array = []
 	for action_id in action_ids:
 		var parameters := {"index": "int"} if action_id in ["video_poker_hold", "video_poker_palm", "video_poker_double_pick"] else {}
@@ -338,19 +338,19 @@ func video_poker_ritual_contract() -> Dictionary:
 	return {
 		"contract": VIDEO_POKER_RITUAL_CONTRACT,
 		"ritual_id": VIDEO_POKER_RITUAL_ID,
-		"initial_phase": "credits",
+		"initial_phase": "bankroll",
 		"ritual_phases": [
-			_video_poker_ritual_phase("credits", ["video_poker_credit_buy_in", "video_poker_credit_cash_out", "video_poker_bet_down", "video_poker_bet_one", "video_poker_bet_max", "video_poker_denom", "video_poker_deal"], "commitment"),
+			_video_poker_ritual_phase("bankroll", ["video_poker_bet_down", "video_poker_bet_one", "video_poker_bet_max", "video_poker_denom", "video_poker_deal"], "commitment"),
 			_video_poker_ritual_phase("commitment", ["video_poker_deal"], "initial_deal"),
 			_video_poker_ritual_phase("initial_deal", [], "hold_selection"),
 			_video_poker_ritual_phase("hold_selection", ["video_poker_hold", "video_poker_mark", "video_poker_palm", "video_poker_draw"], "draw"),
 			_video_poker_ritual_phase("draw", ["video_poker_draw"], "result_read"),
 			{"id": "result_read", "entry_conditions": [], "permitted_actions": ["video_poker_double", "video_poker_collect"], "entry_operations": [], "transitions": [
 				{"id": "result_to_double", "condition": {"kind": "public_state_equals", "key": "double_up_offered", "value": true}, "next_phase": "double_up", "operations": []},
-				{"id": "result_to_payout", "condition": {"kind": "public_state_equals", "key": "double_up_offered", "value": false}, "next_phase": "payout_or_handpay", "operations": []},
+				{"id": "result_to_payout", "condition": {"kind": "public_state_equals", "key": "double_up_offered", "value": false}, "next_phase": "payout", "operations": []},
 			], "terminal": false},
-			_video_poker_ritual_phase("double_up", ["video_poker_double_pick"], "payout_or_handpay"),
-			_video_poker_ritual_phase("payout_or_handpay", ["video_poker_collect", "video_poker_handpay_acknowledge"], "credits"),
+			_video_poker_ritual_phase("double_up", ["video_poker_double_pick"], "payout"),
+			_video_poker_ritual_phase("payout", ["video_poker_collect"], "bankroll"),
 		],
 		"action_declarations": declarations,
 		"staged_commitment": {
@@ -364,7 +364,7 @@ func video_poker_ritual_contract() -> Dictionary:
 			_video_poker_pointer("video_poker_draw_press", "hold", "video_poker_draw", "button_deck"),
 		],
 		"actors": [
-			{"id": "attendant_primary", "role": "attendant", "anchor": "attendant_station", "poses": ["absent", "approaching", "servicing"], "behavior_states": ["idle", "handpay", "security"], "initial_pose": "absent", "initial_behavior": "idle", "fact_reactions": []},
+			{"id": "attendant_primary", "role": "attendant", "anchor": "attendant_station", "poses": ["absent", "approaching", "servicing"], "behavior_states": ["idle", "security"], "initial_pose": "absent", "initial_behavior": "idle", "fact_reactions": []},
 			{"id": "neighbour_seats", "role": "neighbours", "anchor": "seat_rail", "poses": ["seated", "turning"], "behavior_states": ["idle", "playing", "reacting"], "initial_pose": "seated", "initial_behavior": "idle", "fact_reactions": []},
 		],
 		"scene_objects": [
@@ -372,27 +372,27 @@ func video_poker_ritual_contract() -> Dictionary:
 			_video_poker_ritual_object("cabinet_playfield", "playfield", ["deal", "holds", "draw", "result"], ["read_only"]),
 			_video_poker_ritual_object("cabinet_paytable", "paytable", ["idle", "highlighted"], ["read_only"]),
 			_video_poker_ritual_object("cabinet_credit_meter", "credit_meter", ["ready", "committed", "paying"], ["read_only"]),
-			_video_poker_ritual_object("cabinet_tower_light", "tower_light", ["off", "handpay", "security"], ["passive"]),
+			_video_poker_ritual_object("cabinet_tower_light", "tower_light", ["off", "service", "security"], ["passive"]),
 			_video_poker_ritual_object("cabinet_money_path", "money_path", ["idle", "accepting", "paying"], ["enabled", "locked"]),
 			_video_poker_ritual_object("card_0_to_4", "card_regions", ["dealt", "held", "replaced", "final"], ["selectable", "locked"]),
 		],
 		"energy": {"initial_tier": "quiet", "tiers": [
 			{"id": "quiet", "actor_operations": [{"target": "neighbour_seats", "behavior": "idle"}], "object_operations": [{"target": "cabinet_body", "state": "idle"}], "interaction_operations": [], "audio_cues": []},
 			{"id": "engaged", "actor_operations": [{"target": "neighbour_seats", "behavior": "playing"}], "object_operations": [{"target": "cabinet_playfield", "state": "holds"}], "interaction_operations": [], "audio_cues": []},
-			{"id": "big_win", "actor_operations": [{"target": "neighbour_seats", "behavior": "reacting"}], "object_operations": [{"target": "cabinet_tower_light", "state": "handpay"}], "interaction_operations": [], "audio_cues": []},
-			{"id": "lockup", "actor_operations": [{"target": "attendant_primary", "behavior": "handpay"}], "object_operations": [{"target": "cabinet_tower_light", "state": "handpay"}], "interaction_operations": [{"target": "button_deck", "state": "locked"}], "audio_cues": []},
+			{"id": "big_win", "actor_operations": [{"target": "neighbour_seats", "behavior": "reacting"}], "object_operations": [{"target": "cabinet_tower_light", "state": "service"}], "interaction_operations": [], "audio_cues": []},
+			{"id": "lockup", "actor_operations": [{"target": "attendant_primary", "behavior": "security"}], "object_operations": [{"target": "cabinet_tower_light", "state": "security"}], "interaction_operations": [{"target": "button_deck", "state": "locked"}], "audio_cues": []},
 		]},
 		"game_facts": [
 			{"fact_type": "video_poker.initial_deal_completed", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"card_count": "int"}},
 			{"fact_type": "video_poker.holds_changed", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"held_indices": "int_array"}},
-			{"fact_type": "video_poker.result_completed", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"pay_label": "string", "credits": "int", "drawn_indices": "int_array"}},
+			{"fact_type": "video_poker.result_completed", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"pay_label": "string", "bankroll_payout": "int", "drawn_indices": "int_array"}},
 		],
 		"ritual_persistence": {
 			"authoritative_serialized": ["machine_state", "wager", "holds", "result", "result_receipts"],
 			"derived_projection": ["actors", "scene_objects", "energy", "hit_regions", "paytable_highlight"],
 			"transient_presentation": ["pointer_path", "card_flip", "draw_cascade", "hover"],
-			"one_shot_receipted": ["deal_audio", "draw_audio", "win_audio", "room_reaction", "handpay_call"],
-			"save_boundaries": ["credits", "commitment", "initial_deal", "hold_selection", "draw", "result_read", "double_up", "payout_or_handpay"],
+			"one_shot_receipted": ["deal_audio", "draw_audio", "win_audio", "room_reaction"],
+			"save_boundaries": ["bankroll", "commitment", "initial_deal", "hold_selection", "draw", "result_read", "double_up", "payout"],
 			"restore_policy": "restore_legal_phase_without_replay",
 		},
 		"handler_registry": [{
@@ -410,7 +410,7 @@ func _video_poker_ritual_phase(phase_id: String, permitted_actions: Array, next_
 
 
 func _video_poker_pointer(pointer_id: String, verb: String, action_id: String, region: String) -> Dictionary:
-	return {"id": pointer_id, "verb": verb, "source_region": region, "target_regions": [region], "bounds": {"space": "design", "min_distance": 0, "max_distance": 220}, "phases": ["credits", "hold_selection", "draw"], "accepted_action": action_id, "rejection": "restore_focus", "rejection_effects": [], "equivalents": {"keyboard": {"action_id": action_id, "target_selection": "focus"}, "controller": {"action_id": action_id, "target_selection": "focus"}, "reduced_motion": {"action_id": action_id, "target_selection": "focus", "staging": "short"}}}
+	return {"id": pointer_id, "verb": verb, "source_region": region, "target_regions": [region], "bounds": {"space": "design", "min_distance": 0, "max_distance": 220}, "phases": ["bankroll", "hold_selection", "draw"], "accepted_action": action_id, "rejection": "restore_focus", "rejection_effects": [], "equivalents": {"keyboard": {"action_id": action_id, "target_selection": "focus"}, "controller": {"action_id": action_id, "target_selection": "focus"}, "reduced_motion": {"action_id": action_id, "target_selection": "focus", "staging": "short"}}}
 
 
 func _video_poker_ritual_object(object_id: String, anchor: String, appearances: Array, functions: Array) -> Dictionary:
@@ -555,7 +555,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var outcome_headline := ""
 	if phase == "settled":
 		if win_credits > 0:
-			outcome_headline = "WIN: %s • PAID %d CREDITS" % [pay_label.to_upper(), win_credits]
+			outcome_headline = "WIN: %s • PAID $%d" % [pay_label.to_upper(), win_credits]
 		else:
 			outcome_headline = "NO PAY • SET YOUR BET AND PRESS DEAL"
 	elif phase == "double_result":
@@ -619,7 +619,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"multi_hand_mode": "%d Play" % hand_count,
 		"bet_credits": total_bet,
 		"win_credits": win_credits,
-		"credits": maxi(0, run_state.wager_capacity_for_game(get_id(), environment)),
+		"bankroll": maxi(0, run_state.wager_capacity_for_game(get_id(), environment)),
 		"progressive_meter": int(state.get("progressive_meter", PROGRESSIVE_BASE)),
 		"holdout_tell": str(state.get("holdout_tell", "")),
 		"hand": hand,
@@ -702,7 +702,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 
 
 func _video_poker_live_ritual_projection(phase: String, spec: Dictionary, flip: Dictionary, pit_boss: Dictionary, hand_active: bool, last_result: Dictionary) -> Dictionary:
-	var ritual_phase := "credits"
+	var ritual_phase := "bankroll"
 	if phase == "hold":
 		ritual_phase = "initial_deal" if not str(flip.get("id", "")).is_empty() else "hold_selection"
 	elif phase == "settled":
@@ -710,42 +710,41 @@ func _video_poker_live_ritual_projection(phase: String, spec: Dictionary, flip: 
 	elif phase == "double_up":
 		ritual_phase = "double_up"
 	elif phase == "double_result":
-		ritual_phase = "payout_or_handpay"
+		ritual_phase = "payout"
 	var watched := bool(pit_boss.get("active", false)) and bool(pit_boss.get("watched", false))
 	var win_credits := int(spec.get("win_credits", 0))
 	# Video Poker currently has no authoritative hand-pay/lockup boundary. Never
 	# infer one from a locally invented payout threshold.
-	var handpay := bool(last_result.get("handpay_required", false))
-	var energy_tier := "lockup" if handpay or watched else "big_win" if win_credits >= maxi(20, int(spec.get("bet_credits", 0)) * 10) else "engaged" if hand_active else "quiet"
+	var energy_tier := "lockup" if watched else "big_win" if win_credits >= maxi(20, int(spec.get("bet_credits", 0)) * 10) else "engaged" if hand_active else "quiet"
 	var actor_states := {
-		"attendant_primary": {"visible": handpay or watched, "behavior": "handpay" if handpay else "security"},
+		"attendant_primary": {"visible": watched, "behavior": "security" if watched else "idle"},
 		"neighbour_seats": {"visible": true, "behavior": "reacting" if energy_tier in ["big_win", "lockup"] else "playing", "authority": "none"},
 	}
 	var object_states := {
-		"cabinet_body": {"visual_state": "lockup" if handpay else "play" if hand_active else "idle"},
+		"cabinet_body": {"visual_state": "lockup" if watched else "play" if hand_active else "idle"},
 		"cabinet_playfield": {"visual_state": "draw" if phase == "hold" and not str(flip.get("id", "")).is_empty() else "holds" if phase == "hold" else "result" if phase == "settled" else "deal"},
 		"cabinet_paytable": {"visual_state": "highlighted" if phase == "settled" else "idle"},
-		"cabinet_credit_meter": {"visual_state": "ready", "cash_balance": int(spec.get("credits", 0)), "machine_credit_ledger": "unavailable"},
-		"cabinet_tower_light": {"visual_state": "handpay" if handpay else "security" if watched else "off"},
+		"cabinet_credit_meter": {"visual_state": "ready", "cash_balance": int(spec.get("bankroll", 0)), "machine_credit_ledger": "unavailable"},
+		"cabinet_tower_light": {"visual_state": "security" if watched else "service" if energy_tier == "big_win" else "off"},
 		"cabinet_money_path": {"visual_state": "idle", "functional_state": "locked"},
 		"card_0_to_4": {"visual_state": "replaced" if phase == "settled" else "held" if phase == "hold" else "dealt", "functional_state": "selectable" if phase == "hold" else "locked"},
 	}
 	return {
 		"phase_id": ritual_phase,
-		"cabinet_state": "lockup" if handpay else "play" if hand_active else "idle",
+		"cabinet_state": "lockup" if watched else "play" if hand_active else "idle",
 		"energy_tier": energy_tier,
-		"cash_balance": int(spec.get("credits", 0)),
+		"cash_balance": int(spec.get("bankroll", 0)),
 		"machine_credit_ledger_available": false,
-		"currency_representability_gap": "No authoritative machine-credit ledger or hand-pay boundary exists in the owned Video Poker state; cash play remains the shipped authority.",
+		"currency_representability_gap": "W0 direct-bankroll play is authoritative; no machine-credit ledger or Video Poker hand-pay boundary exists.",
 		"denomination_label": str(spec.get("coin_label", "1c")),
-		"tower_state": "handpay" if handpay else "security" if watched else "service" if energy_tier == "big_win" else "off",
-		"validator_state": "locked" if hand_active or handpay else "ready",
-		"button_state": "locked" if handpay else "draw" if phase == "hold" else "deal",
+		"tower_state": "security" if watched else "service" if energy_tier == "big_win" else "off",
+		"validator_state": "locked" if hand_active else "ready",
+		"button_state": "draw" if phase == "hold" else "deal",
 		"result_stage": "card_replacements" if phase == "hold" and not str(flip.get("id", "")).is_empty() else "paytable_read" if phase == "settled" else "idle",
 		"held_indices": spec.get("holds", []),
 		"drawn_indices": spec.get("drawn_indices", []),
 		"paytable_line": str(last_result.get("pay_label", "")),
-		"acknowledgement_available": handpay and _ritual_host_run_state != null,
+		"acknowledgement_available": false,
 		"actors": actor_states,
 		"scene_objects": object_states,
 	}
@@ -810,10 +809,6 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 	next["denomination_index"] = _next_playable_denomination_index(state, _denomination_index(next, state) - 1, run_state, environment)
 	next["bet_level"] = _affordable_bet_level(state, next, run_state, environment)
 	match surface_action:
-		"video_poker_credit_buy_in", "video_poker_credit_cash_out":
-			return GameModule.surface_command({"handled": true, "ui_state": next, "preserve_surface_ui_state": true, "message": "This cabinet has no authoritative machine-credit conversion boundary; cash remains unchanged."})
-		"video_poker_handpay_acknowledge":
-			return GameModule.surface_command({"handled": true, "ui_state": next, "preserve_surface_ui_state": true, "message": "Video Poker exposes no authoritative hand-pay boundary to acknowledge."})
 		"video_poker_bet_down":
 			next["bet_level"] = maxi(0, _bet_level(next) - 1)
 			var down_coins := _coin_count_for_level(_bet_level(next))
@@ -1021,7 +1016,7 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	var hand_count := _hand_count(state)
 	var is_max_bet := bet_level >= MAX_BET_LEVEL
 	if bet_credits <= 0 or bet_credits > affordable:
-		return _empty_result(action_id, 0, environment, "You do not have enough credits to deal.")
+		return _empty_result(action_id, 0, environment, "You do not have enough bankroll to deal.")
 
 	# The deal is the deterministic opening. One-hand play draws from the original
 	# remaining deck; multi-hand play follows real Triple Play rules: every result
@@ -3094,7 +3089,7 @@ func _outcome_message(blurb: String, pay_row: Dictionary, coin_pay: int, bankrol
 			lead = "%s LATE: the %s did not land cleanly; you draw %s." % [str(cabinet.get("cheat_name", "Holdout")).to_upper(), card_text, blurb]
 	var pay_text := "No pay"
 	if coin_pay > 0:
-		pay_text = "Pays %d credits" % coin_pay if int(pay_row.get("mult", 0)) >= 1 else "No pay"
+		pay_text = "Pays $%d" % coin_pay if int(pay_row.get("mult", 0)) >= 1 else "No pay"
 	if bankroll_delta == 0 and coin_pay > 0:
 		pay_text = "Pushes (bet returned)"
 	var message := "%s %s. Bankroll %+d." % [lead, pay_text, bankroll_delta]
