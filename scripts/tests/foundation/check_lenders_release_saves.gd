@@ -3261,7 +3261,7 @@ func _blackjack_authority_resolve_for_test(game: GameModule, action_id: String, 
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run_state)
 	host.set("selected_stake", stake)
-	return host.call("_blackjack_host_resolve_intent", action_id, stake)
+	return host.call("_sealed_action_host_resolve_intent", action_id, stake)
 
 
 func _check_grand_casino_memory_entry_lines(main_environment: Dictionary, outside_environment: Dictionary, failures: Array) -> void:

@@ -560,7 +560,7 @@ func _blackjack_count_hand_is_mandatory() -> bool:
 
 	var count_toggle := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count_toggle", 4, run_state, run_state.current_environment)
 	var count_deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
-	if str(count_deal.get("action_id", "")).is_empty() or not count_deal.has("_blackjack_host_delivery"):
+	if str(count_deal.get("action_id", "")).is_empty() or not count_deal.has("_sealed_action_host_delivery"):
 		_fail("The required Count deal did not issue a sealed action: toggle_action=%s toggle_message=%s deal_handled=%s deal_message=%s." % [str(count_toggle.get("action_id", "")), str(count_toggle.get("message", "")), str(count_deal.get("handled", false)), str(count_deal.get("message", ""))])
 		return false
 	var count_deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, count_deal, 4, run_state, run_state.current_environment)

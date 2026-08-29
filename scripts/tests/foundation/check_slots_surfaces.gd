@@ -3299,11 +3299,26 @@ func _check_generic_game_module_contract(game: GameModule, failures: Array) -> v
 
 	var legal_actions: Array = action_presentation.get("legal_actions", [])
 	if not legal_actions.is_empty() and typeof(legal_actions[0]) == TYPE_DICTIONARY:
+		var action_id := str((legal_actions[0] as Dictionary).get("id", ""))
 		var before := _run_state_result_snapshot(run_state)
-		var result := game.resolve_with_context(str((legal_actions[0] as Dictionary).get("id", "")), 1, run_state, environment, run_state.create_rng("%s_generic_resolve" % game_id), {})
+		var before_serialized := JSON.stringify(run_state.to_save_snapshot())
+		var resolve_rng := run_state.create_rng("%s_generic_resolve" % game_id)
+		var result := game.resolve_with_context(action_id, 1, run_state, environment, resolve_rng, {})
 		if bool(result.get("ok", false)):
 			_check_action_result_shape(result, str(result.get("action_kind", "legal")), failures)
-			_check_action_result_application_contract(before, run_state, result, "%s generic result" % game_id, failures)
+			if game_id == "blackjack":
+				GameModule.apply_result(run_state, result, resolve_rng)
+				if JSON.stringify(run_state.to_save_snapshot()) != before_serialized:
+					failures.append("Blackjack receipt-free compatibility result mutated RunState through direct apply.")
+				var authoritative_before := _run_state_result_snapshot(run_state)
+				var authoritative := SlotsBlackjackAuthorityDriver.resolve(game, action_id, 1, run_state, environment, run_state.create_rng("blackjack_generic_host"), {})
+				if not bool(authoritative.get("ok", false)) or not bool(authoritative.get("blackjack_host_committed", false)):
+					failures.append("Blackjack generic contract did not resolve through the authentic sealed host.")
+				else:
+					_check_action_result_shape(authoritative, str(authoritative.get("action_kind", "legal")), failures)
+					_check_action_result_applied(authoritative_before, run_state, authoritative, "blackjack generic result", failures)
+			else:
+				_check_action_result_application_contract(before, run_state, result, "%s generic result" % game_id, failures)
 
 	run_state.set_environment(environment)
 	var restored: RunState = RunStateScript.new()

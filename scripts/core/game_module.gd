@@ -60,6 +60,12 @@ func is_full_simulation() -> bool:
 	return gameplay_model() == GAMEPLAY_MODEL_FULL_SIMULATION
 
 
+# Optional closed authority provider for modules whose live actions require a
+# Foundation-owned sealed transaction host. Generic modules return no provider.
+func sealed_action_authority_script() -> Script:
+	return null
+
+
 # Creates the entry message shown when a player enters the game.
 func enter(_run_state: RunState, environment: Dictionary) -> Dictionary:
 	return {
