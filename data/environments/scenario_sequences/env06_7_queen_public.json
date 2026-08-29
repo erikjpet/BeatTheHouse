@@ -30,8 +30,7 @@
           "return_rings_to_best_man",
           "exploit_loose_wedding_tables",
           "delay_wedding_charter",
-          "refuse_delta_queen_wedding_charter",
-          "ignore_delta_queen_wedding_charter"
+          "refuse_delta_queen_wedding_charter"
         ],
         "references": {
           "objects": [
@@ -534,12 +533,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_delta_queen_wedding_charter",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_delta_queen_wedding_charter",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -554,7 +547,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Delta Queen Wedding Charter clean exit",
@@ -774,17 +766,6 @@
                     "type": "fact"
                   },
                   "id": "delta_queen_wedding_charter_work_1_pressure",
-                  "next_phase": "terminal_failure",
-                  "objective_outcomes": {
-                    "main_task": "failure"
-                  }
-                },
-                {
-                  "condition": {
-                    "command_id": "fail_delta_queen_wedding_charter",
-                    "type": "command"
-                  },
-                  "id": "delta_queen_wedding_charter_work_1_fail",
                   "next_phase": "terminal_failure",
                   "objective_outcomes": {
                     "main_task": "failure"
@@ -1636,7 +1617,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c435e2a25253534afb8ccebd5be36005ec1f7b91b103980b56d917f0cd4e8fd2"
+        "sequence_signature": "b86e7fc2f2a4e1e349b6c5d9044ca65bc2238076854dd09acfe4452a91c34b59"
       }
     },
     {
@@ -1665,8 +1646,7 @@
           "earn_whale_service_access",
           "shadow_whale_entourage",
           "trigger_whale_security_lock",
-          "refuse_delta_queen_whale_aboard",
-          "ignore_delta_queen_whale_aboard"
+          "refuse_delta_queen_whale_aboard"
         ],
         "references": {
           "objects": [
@@ -2169,12 +2149,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_delta_queen_whale_aboard",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_delta_queen_whale_aboard",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -2189,7 +2163,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Delta Queen Whale Aboard clean exit",
@@ -2600,17 +2573,6 @@
                     "type": "fact"
                   },
                   "id": "delta_queen_whale_aboard_work_2_pressure",
-                  "next_phase": "terminal_failure",
-                  "objective_outcomes": {
-                    "main_task": "failure"
-                  }
-                },
-                {
-                  "condition": {
-                    "command_id": "fail_delta_queen_whale_aboard",
-                    "type": "command"
-                  },
-                  "id": "delta_queen_whale_aboard_work_2_fail",
                   "next_phase": "terminal_failure",
                   "objective_outcomes": {
                     "main_task": "failure"
@@ -3263,7 +3225,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "fa34f794908f40a1fef8ebf14381dfdf757d046fa649a84f0752fc9ec4fbba8f"
+        "sequence_signature": "b413099431aa0e0455546b58e2fe7baef9ce612c6ab303b69373c76a4b1efa93"
       }
     },
     {
@@ -3292,8 +3254,7 @@
           "assist_fog_reroute",
           "wait_out_fog_safely",
           "exploit_trapped_fog_crowd",
-          "refuse_delta_queen_fog_delay",
-          "ignore_delta_queen_fog_delay"
+          "refuse_delta_queen_fog_delay"
         ],
         "references": {
           "objects": [
@@ -3796,12 +3757,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_delta_queen_fog_delay",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_delta_queen_fog_delay",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -3816,7 +3771,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Delta Queen Fog Delay clean exit",
@@ -4036,17 +3990,6 @@
                     "type": "fact"
                   },
                   "id": "delta_queen_fog_delay_work_1_pressure",
-                  "next_phase": "terminal_failure",
-                  "objective_outcomes": {
-                    "main_task": "failure"
-                  }
-                },
-                {
-                  "condition": {
-                    "command_id": "fail_delta_queen_fog_delay",
-                    "type": "command"
-                  },
-                  "id": "delta_queen_fog_delay_work_1_fail",
                   "next_phase": "terminal_failure",
                   "objective_outcomes": {
                     "main_task": "failure"
@@ -4890,7 +4833,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b1a5061355134677d715a3bccab77907d9990416cca620774fe1c709fab21f33"
+        "sequence_signature": "1e1f20afd74ca5a2d8c2a35f15f846e83376e6e27c8b7cffe96dc13c56e35698"
       }
     },
     {
@@ -4920,8 +4863,7 @@
           "repair_engine_for_departure",
           "ration_limited_engine_power",
           "stage_engine_evacuation",
-          "refuse_delta_queen_engine_trouble",
-          "ignore_delta_queen_engine_trouble"
+          "refuse_delta_queen_engine_trouble"
         ],
         "references": {
           "objects": [
@@ -5452,12 +5394,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_delta_queen_engine_trouble",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_delta_queen_engine_trouble",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -5472,7 +5408,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Delta Queen Engine Trouble clean exit",
@@ -6097,17 +6032,6 @@
                     "type": "fact"
                   },
                   "id": "delta_queen_engine_trouble_work_3_pressure",
-                  "next_phase": "terminal_failure",
-                  "objective_outcomes": {
-                    "main_task": "failure"
-                  }
-                },
-                {
-                  "condition": {
-                    "command_id": "fail_delta_queen_engine_trouble",
-                    "type": "command"
-                  },
-                  "id": "delta_queen_engine_trouble_work_3_fail",
                   "next_phase": "terminal_failure",
                   "objective_outcomes": {
                     "main_task": "failure"
@@ -6755,7 +6679,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "8f7481f5b977043c3f9b805e78c2dbb0a48729763eb3f54af9147838e08a9bd1"
+        "sequence_signature": "6cc9317ef87eef3e3825fd3a3e48947bfc4a21dde0f50d7ceab3b85a14823cf7"
       }
     },
     {
@@ -6785,8 +6709,7 @@
           "qualify_for_captains_final",
           "observe_captains_final",
           "dispute_captains_bracket",
-          "refuse_delta_queen_captains_invitational",
-          "ignore_delta_queen_captains_invitational"
+          "refuse_delta_queen_captains_invitational"
         ],
         "references": {
           "objects": [
@@ -7311,12 +7234,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_delta_queen_captains_invitational",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_delta_queen_captains_invitational",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -7331,7 +7248,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Delta Queen Captains Invitational clean exit",
@@ -7968,17 +7884,6 @@
                     "type": "fact"
                   },
                   "id": "delta_queen_captains_invitational_work_3_pressure",
-                  "next_phase": "terminal_failure",
-                  "objective_outcomes": {
-                    "main_task": "failure"
-                  }
-                },
-                {
-                  "condition": {
-                    "command_id": "fail_delta_queen_captains_invitational",
-                    "type": "command"
-                  },
-                  "id": "delta_queen_captains_invitational_work_3_fail",
                   "next_phase": "terminal_failure",
                   "objective_outcomes": {
                     "main_task": "failure"
@@ -8626,7 +8531,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d0cb12e9f6a7576e821e4ddf96af655968376fd26539ea78c3529e581c77de2d"
+        "sequence_signature": "1f00a3133c5d02370eaaae4758e209d2441655b64da28730004c26b4f043854e"
       }
     },
     {
@@ -8655,8 +8560,7 @@
           "assume_gala_cover_identity",
           "reopen_public_gala_floor",
           "fail_gala_credentials",
-          "refuse_grand_casino_gala_night",
-          "ignore_grand_casino_gala_night"
+          "refuse_grand_casino_gala_night"
         ],
         "references": {
           "objects": [
@@ -9169,12 +9073,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_grand_casino_gala_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_grand_casino_gala_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -9189,7 +9087,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Grand Casino Gala Night clean exit",
@@ -9608,17 +9505,6 @@
                     "type": "fact"
                   },
                   "id": "grand_casino_gala_night_work_2_pressure",
-                  "next_phase": "terminal_failure",
-                  "objective_outcomes": {
-                    "main_task": "failure"
-                  }
-                },
-                {
-                  "condition": {
-                    "command_id": "fail_grand_casino_gala_night",
-                    "type": "command"
-                  },
-                  "id": "grand_casino_gala_night_work_2_fail",
                   "next_phase": "terminal_failure",
                   "objective_outcomes": {
                     "main_task": "failure"
@@ -10287,7 +10173,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d37e32a6eacd74adb359b5fac9de6b073da64325f2baf5243ba6e64fe96ab05a"
+        "sequence_signature": "bea7aa87c6397293fed1b67f7cb584618e9e52d801cec89b407adc15e3826b5c"
       }
     },
     {
@@ -10316,8 +10202,7 @@
           "blend_with_badge_crowd",
           "split_convention_schedule",
           "trigger_convention_standoff",
-          "refuse_grand_casino_convention_crowd",
-          "ignore_grand_casino_convention_crowd"
+          "refuse_grand_casino_convention_crowd"
         ],
         "references": {
           "objects": [
@@ -10831,12 +10716,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_grand_casino_convention_crowd",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_grand_casino_convention_crowd",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -10851,7 +10730,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Grand Casino Convention Crowd clean exit",
@@ -11270,17 +11148,6 @@
                     "type": "fact"
                   },
                   "id": "grand_casino_convention_crowd_work_2_pressure",
-                  "next_phase": "terminal_failure",
-                  "objective_outcomes": {
-                    "main_task": "failure"
-                  }
-                },
-                {
-                  "condition": {
-                    "command_id": "fail_grand_casino_convention_crowd",
-                    "type": "command"
-                  },
-                  "id": "grand_casino_convention_crowd_work_2_fail",
                   "next_phase": "terminal_failure",
                   "objective_outcomes": {
                     "main_task": "failure"
@@ -11949,7 +11816,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5d5d545829f9a32609ad0e3f05647e8250417b93f1f7a6f8aac7c34e138c2877"
+        "sequence_signature": "5cce0aaf0b79ee511bd201acf6cb74523e3314e22fff4465631f059e5a35a6bb"
       }
     },
     {
@@ -11978,8 +11845,7 @@
           "comply_with_audit_route",
           "redirect_public_audit",
           "close_audited_games",
-          "refuse_grand_casino_audit_night",
-          "ignore_grand_casino_audit_night"
+          "refuse_grand_casino_audit_night"
         ],
         "references": {
           "objects": [
@@ -12501,12 +12367,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_grand_casino_audit_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_grand_casino_audit_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -12521,7 +12381,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Grand Casino Audit Night clean exit",
@@ -12769,17 +12628,6 @@
                     "type": "fact"
                   },
                   "id": "grand_casino_audit_night_work_1_pressure",
-                  "next_phase": "terminal_failure",
-                  "objective_outcomes": {
-                    "main_task": "failure"
-                  }
-                },
-                {
-                  "condition": {
-                    "command_id": "fail_grand_casino_audit_night",
-                    "type": "command"
-                  },
-                  "id": "grand_casino_audit_night_work_1_fail",
                   "next_phase": "terminal_failure",
                   "objective_outcomes": {
                     "main_task": "failure"
@@ -13639,7 +13487,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "58927d5add3713ba2f8ec338200ccbef63ccf39dda5bf64ff2837b3423fe0542"
+        "sequence_signature": "3ff753b8fcc626ed6f071d0a475ee0b6fc789925a9fb3b2c7c6e0f996d63daf0"
       }
     }
   ]

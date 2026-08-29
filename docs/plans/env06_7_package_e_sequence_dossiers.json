@@ -48,7 +48,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "c435e2a25253534afb8ccebd5be36005ec1f7b91b103980b56d917f0cd4e8fd2",
+      "sequence_signature": "b86e7fc2f2a4e1e349b6c5d9044ca65bc2238076854dd09acfe4452a91c34b59",
       "capture_ids": [
         "delta_queen_wedding_charter_arrival",
         "delta_queen_wedding_charter_partial",
@@ -107,7 +107,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "fa34f794908f40a1fef8ebf14381dfdf757d046fa649a84f0752fc9ec4fbba8f",
+      "sequence_signature": "b413099431aa0e0455546b58e2fe7baef9ce612c6ab303b69373c76a4b1efa93",
       "capture_ids": [
         "delta_queen_whale_aboard_arrival",
         "delta_queen_whale_aboard_partial",
@@ -166,7 +166,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "b1a5061355134677d715a3bccab77907d9990416cca620774fe1c709fab21f33",
+      "sequence_signature": "1e1f20afd74ca5a2d8c2a35f15f846e83376e6e27c8b7cffe96dc13c56e35698",
       "capture_ids": [
         "delta_queen_fog_delay_arrival",
         "delta_queen_fog_delay_partial",
@@ -228,7 +228,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "8f7481f5b977043c3f9b805e78c2dbb0a48729763eb3f54af9147838e08a9bd1",
+      "sequence_signature": "6cc9317ef87eef3e3825fd3a3e48947bfc4a21dde0f50d7ceab3b85a14823cf7",
       "capture_ids": [
         "delta_queen_engine_trouble_arrival",
         "delta_queen_engine_trouble_partial",
@@ -289,7 +289,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "d0cb12e9f6a7576e821e4ddf96af655968376fd26539ea78c3529e581c77de2d",
+      "sequence_signature": "1f00a3133c5d02370eaaae4758e209d2441655b64da28730004c26b4f043854e",
       "capture_ids": [
         "delta_queen_captains_invitational_arrival",
         "delta_queen_captains_invitational_partial",
@@ -348,7 +348,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "d37e32a6eacd74adb359b5fac9de6b073da64325f2baf5243ba6e64fe96ab05a",
+      "sequence_signature": "bea7aa87c6397293fed1b67f7cb584618e9e52d801cec89b407adc15e3826b5c",
       "capture_ids": [
         "grand_casino_gala_night_arrival",
         "grand_casino_gala_night_partial",
@@ -407,7 +407,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "5d5d545829f9a32609ad0e3f05647e8250417b93f1f7a6f8aac7c34e138c2877",
+      "sequence_signature": "5cce0aaf0b79ee511bd201acf6cb74523e3314e22fff4465631f059e5a35a6bb",
       "capture_ids": [
         "grand_casino_convention_crowd_arrival",
         "grand_casino_convention_crowd_partial",
@@ -467,7 +467,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "58927d5add3713ba2f8ec338200ccbef63ccf39dda5bf64ff2837b3423fe0542",
+      "sequence_signature": "3ff753b8fcc626ed6f071d0a475ee0b6fc789925a9fb3b2c7c6e0f996d63daf0",
       "capture_ids": [
         "grand_casino_audit_night_arrival",
         "grand_casino_audit_night_partial",
@@ -728,15 +728,6 @@
                 "edge": "phase",
                 "objective_outcomes": [
                   "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
                 ]
               },
               {
@@ -1453,12 +1444,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_delta_queen_captains_invitational",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_delta_queen_captains_invitational",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -1473,7 +1458,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Delta Queen Captains Invitational clean exit",
@@ -1771,7 +1755,7 @@
             "depth": 2
           },
           {
-            "phase_edges": 8,
+            "phase_edges": 7,
             "outcome_edges": 0,
             "terminal": false,
             "depth": 3
@@ -2114,10 +2098,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "d0cb12e9f6a7576e821e4ddf96af655968376fd26539ea78c3529e581c77de2d",
-      "calculated_signature": "d0cb12e9f6a7576e821e4ddf96af655968376fd26539ea78c3529e581c77de2d",
+      "authored_signature": "1f00a3133c5d02370eaaae4758e209d2441655b64da28730004c26b4f043854e",
+      "calculated_signature": "1f00a3133c5d02370eaaae4758e209d2441655b64da28730004c26b4f043854e",
       "nearest_id": "delta_queen_engine_trouble",
-      "nearest_similarity": 0.57074569789675
+      "nearest_similarity": 0.568948891031823
     },
     {
       "id": "delta_queen_engine_trouble",
@@ -2359,15 +2343,6 @@
                 "condition": {
                   "type": "fact",
                   "fact_type": "world_boundary"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
                 },
                 "edge": "phase",
                 "objective_outcomes": [
@@ -3056,12 +3031,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_delta_queen_engine_trouble",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_delta_queen_engine_trouble",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -3076,7 +3045,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Delta Queen Engine Trouble clean exit",
@@ -3394,7 +3362,7 @@
             "depth": 2
           },
           {
-            "phase_edges": 8,
+            "phase_edges": 7,
             "outcome_edges": 0,
             "terminal": false,
             "depth": 3
@@ -3744,10 +3712,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "8f7481f5b977043c3f9b805e78c2dbb0a48729763eb3f54af9147838e08a9bd1",
-      "calculated_signature": "8f7481f5b977043c3f9b805e78c2dbb0a48729763eb3f54af9147838e08a9bd1",
+      "authored_signature": "6cc9317ef87eef3e3825fd3a3e48947bfc4a21dde0f50d7ceab3b85a14823cf7",
+      "calculated_signature": "6cc9317ef87eef3e3825fd3a3e48947bfc4a21dde0f50d7ceab3b85a14823cf7",
       "nearest_id": "delta_queen_captains_invitational",
-      "nearest_similarity": 0.57074569789675
+      "nearest_similarity": 0.568948891031823
     },
     {
       "id": "delta_queen_fog_delay",
@@ -3992,15 +3960,6 @@
                 "edge": "phase",
                 "objective_outcomes": [
                   "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
                 ]
               },
               {
@@ -4519,12 +4478,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_delta_queen_fog_delay",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_delta_queen_fog_delay",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -4539,7 +4492,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Delta Queen Fog Delay clean exit",
@@ -4807,7 +4759,7 @@
             "depth": 0
           },
           {
-            "phase_edges": 8,
+            "phase_edges": 7,
             "outcome_edges": 0,
             "terminal": false,
             "depth": 1
@@ -5156,323 +5108,16 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "b1a5061355134677d715a3bccab77907d9990416cca620774fe1c709fab21f33",
-      "calculated_signature": "b1a5061355134677d715a3bccab77907d9990416cca620774fe1c709fab21f33",
-      "nearest_id": "delta_queen_wedding_charter",
-      "nearest_similarity": 0.622298065984073
+      "authored_signature": "1e1f20afd74ca5a2d8c2a35f15f846e83376e6e27c8b7cffe96dc13c56e35698",
+      "calculated_signature": "1e1f20afd74ca5a2d8c2a35f15f846e83376e6e27c8b7cffe96dc13c56e35698",
+      "nearest_id": "delta_queen_whale_aboard",
+      "nearest_similarity": 0.508583690987124
     },
     {
       "id": "delta_queen_wedding_charter",
       "signature": {
         "phase_count": 8,
         "phases": [
-          {
-            "ops": [
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "anchor_id": "delta_wedding_ring_phase",
-                  "op": "move",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "anchor_id": "delta_wedding_rope",
-                  "op": "move",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The rope move beat moves props and actors for recover ring case.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "id": "delay_wedding_charter",
-                        "input_action": "ui_right",
-                        "label": "Delay Wedding Charter",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 12.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_right"
-                    ],
-                    "label": "Delay Wedding Charter",
-                    "min_target_size": 44.0,
-                    "non_color_state": "route_2_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Delta Queen Wedding Charter: Use this marked spatial route; the other two stations remain independently focusable.",
-                    "safe_exit": false,
-                    "state_label": "Work 1 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "id": "exploit_loose_wedding_tables",
-                        "input_action": "ui_up",
-                        "label": "Exploit Loose Wedding Tables",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 11.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_up"
-                    ],
-                    "label": "Exploit Loose Wedding Tables",
-                    "min_target_size": 44.0,
-                    "non_color_state": "route_1_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Delta Queen Wedding Charter: Use this marked spatial route; the other two stations remain independently focusable.",
-                    "safe_exit": false,
-                    "state_label": "Work 1 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "id": "return_rings_to_best_man",
-                        "input_action": "ui_left",
-                        "label": "Return Rings To Best Man",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "recover_ring_case",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "recover_ring_case"
-                        },
-                        "label": "Recover Ring Case",
-                        "non_color_state": "work"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 10.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_left",
-                      "ui_accept"
-                    ],
-                    "label": "Return Rings To Best Man",
-                    "min_target_size": 44.0,
-                    "non_color_state": "route_0_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Delta Queen Wedding Charter: Use this marked spatial route; the other two stations remain independently focusable.",
-                    "safe_exit": false,
-                    "state_label": "Work 1 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "anchor_id": "delta_wedding_choice_left",
-                    "appearance": "route_0_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Return Rings To Best Man",
-                    "role": "decision_route",
-                    "state": "route_0_ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "anchor_id": "delta_wedding_choice_middle",
-                    "appearance": "route_1_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Exploit Loose Wedding Tables",
-                    "role": "decision_route",
-                    "state": "route_1_ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "anchor_id": "delta_wedding_choice_right",
-                    "appearance": "route_2_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Delay Wedding Charter",
-                    "role": "decision_route",
-                    "state": "route_2_ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_pose",
-                  "owner_namespace": "scenario",
-                  "pose": "rope_move"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_arrived"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
           {
             "ops": [
               {
@@ -5846,6 +5491,304 @@
           {
             "ops": [
               {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "delta_wedding_ring_phase",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "delta_wedding_rope",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The rope move beat moves props and actors for recover ring case.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "delay_wedding_charter",
+                        "input_action": "ui_right",
+                        "label": "Delay Wedding Charter",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 12.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_right"
+                    ],
+                    "label": "Delay Wedding Charter",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_2_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Delta Queen Wedding Charter: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "exploit_loose_wedding_tables",
+                        "input_action": "ui_up",
+                        "label": "Exploit Loose Wedding Tables",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 11.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_up"
+                    ],
+                    "label": "Exploit Loose Wedding Tables",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_1_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Delta Queen Wedding Charter: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "id": "return_rings_to_best_man",
+                        "input_action": "ui_left",
+                        "label": "Return Rings To Best Man",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "recover_ring_case",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "recover_ring_case"
+                        },
+                        "label": "Recover Ring Case",
+                        "non_color_state": "work"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 10.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_left",
+                      "ui_accept"
+                    ],
+                    "label": "Return Rings To Best Man",
+                    "min_target_size": 44.0,
+                    "non_color_state": "route_0_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Delta Queen Wedding Charter: Use this marked spatial route; the other two stations remain independently focusable.",
+                    "safe_exit": false,
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "delta_wedding_choice_left",
+                    "appearance": "route_0_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Return Rings To Best Man",
+                    "role": "decision_route",
+                    "state": "route_0_ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "delta_wedding_choice_middle",
+                    "appearance": "route_1_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Exploit Loose Wedding Tables",
+                    "role": "decision_route",
+                    "state": "route_1_ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "delta_wedding_choice_right",
+                    "appearance": "route_2_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Delay Wedding Charter",
+                    "role": "decision_route",
+                    "state": "route_2_ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "rope_move"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_arrived"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
                 "family": "actor_ops",
                 "effect": {
                   "actor": {
@@ -5939,12 +5882,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_delta_queen_wedding_charter",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_delta_queen_wedding_charter",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -5959,7 +5896,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Delta Queen Wedding Charter clean exit",
@@ -6227,7 +6163,7 @@
             "depth": 0
           },
           {
-            "phase_edges": 8,
+            "phase_edges": 7,
             "outcome_edges": 0,
             "terminal": false,
             "depth": 1
@@ -6576,10 +6512,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "c435e2a25253534afb8ccebd5be36005ec1f7b91b103980b56d917f0cd4e8fd2",
-      "calculated_signature": "c435e2a25253534afb8ccebd5be36005ec1f7b91b103980b56d917f0cd4e8fd2",
-      "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.622298065984073
+      "authored_signature": "b86e7fc2f2a4e1e349b6c5d9044ca65bc2238076854dd09acfe4452a91c34b59",
+      "calculated_signature": "b86e7fc2f2a4e1e349b6c5d9044ca65bc2238076854dd09acfe4452a91c34b59",
+      "nearest_id": "delta_queen_whale_aboard",
+      "nearest_similarity": 0.456611570247934
     },
     {
       "id": "delta_queen_whale_aboard",
@@ -6827,15 +6763,6 @@
                 "edge": "phase",
                 "objective_outcomes": [
                   "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
                 ]
               },
               {
@@ -7351,12 +7278,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_delta_queen_whale_aboard",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_delta_queen_whale_aboard",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -7371,7 +7292,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Delta Queen Whale Aboard clean exit",
@@ -7663,7 +7583,7 @@
             "depth": 1
           },
           {
-            "phase_edges": 8,
+            "phase_edges": 7,
             "outcome_edges": 0,
             "terminal": false,
             "depth": 2
@@ -7988,10 +7908,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "fa34f794908f40a1fef8ebf14381dfdf757d046fa649a84f0752fc9ec4fbba8f",
-      "calculated_signature": "fa34f794908f40a1fef8ebf14381dfdf757d046fa649a84f0752fc9ec4fbba8f",
-      "nearest_id": "delta_queen_wedding_charter",
-      "nearest_similarity": 0.536637931034483
+      "authored_signature": "b413099431aa0e0455546b58e2fe7baef9ce612c6ab303b69373c76a4b1efa93",
+      "calculated_signature": "b413099431aa0e0455546b58e2fe7baef9ce612c6ab303b69373c76a4b1efa93",
+      "nearest_id": "grand_casino_convention_crowd",
+      "nearest_similarity": 0.516577540106952
     },
     {
       "id": "grand_casino_audit_night",
@@ -8260,15 +8180,6 @@
                 "edge": "phase",
                 "objective_outcomes": [
                   "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
                 ]
               },
               {
@@ -8787,12 +8698,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_grand_casino_audit_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_grand_casino_audit_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -8807,7 +8712,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Grand Casino Audit Night clean exit",
@@ -9095,7 +8999,7 @@
             "depth": 0
           },
           {
-            "phase_edges": 8,
+            "phase_edges": 7,
             "outcome_edges": 0,
             "terminal": false,
             "depth": 1
@@ -9451,10 +9355,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "58927d5add3713ba2f8ec338200ccbef63ccf39dda5bf64ff2837b3423fe0542",
-      "calculated_signature": "58927d5add3713ba2f8ec338200ccbef63ccf39dda5bf64ff2837b3423fe0542",
-      "nearest_id": "delta_queen_wedding_charter",
-      "nearest_similarity": 0.527865404837014
+      "authored_signature": "3ff753b8fcc626ed6f071d0a475ee0b6fc789925a9fb3b2c7c6e0f996d63daf0",
+      "calculated_signature": "3ff753b8fcc626ed6f071d0a475ee0b6fc789925a9fb3b2c7c6e0f996d63daf0",
+      "nearest_id": "delta_queen_fog_delay",
+      "nearest_similarity": 0.500523560209424
     },
     {
       "id": "grand_casino_convention_crowd",
@@ -9726,15 +9630,6 @@
                 "edge": "phase",
                 "objective_outcomes": [
                   "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
                 ]
               },
               {
@@ -10250,12 +10145,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_grand_casino_convention_crowd",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_grand_casino_convention_crowd",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -10270,7 +10159,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Grand Casino Convention Crowd clean exit",
@@ -10562,7 +10450,7 @@
             "depth": 1
           },
           {
-            "phase_edges": 8,
+            "phase_edges": 7,
             "outcome_edges": 0,
             "terminal": false,
             "depth": 2
@@ -10887,10 +10775,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "5d5d545829f9a32609ad0e3f05647e8250417b93f1f7a6f8aac7c34e138c2877",
-      "calculated_signature": "5d5d545829f9a32609ad0e3f05647e8250417b93f1f7a6f8aac7c34e138c2877",
+      "authored_signature": "5cce0aaf0b79ee511bd201acf6cb74523e3314e22fff4465631f059e5a35a6bb",
+      "calculated_signature": "5cce0aaf0b79ee511bd201acf6cb74523e3314e22fff4465631f059e5a35a6bb",
       "nearest_id": "grand_casino_gala_night",
-      "nearest_similarity": 0.57516339869281
+      "nearest_similarity": 0.573157315731573
     },
     {
       "id": "grand_casino_gala_night",
@@ -11162,15 +11050,6 @@
                 "edge": "phase",
                 "objective_outcomes": [
                   "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
                 ]
               },
               {
@@ -11686,12 +11565,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_grand_casino_gala_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_grand_casino_gala_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -11706,7 +11579,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Grand Casino Gala Night clean exit",
@@ -11998,7 +11870,7 @@
             "depth": 1
           },
           {
-            "phase_edges": 8,
+            "phase_edges": 7,
             "outcome_edges": 0,
             "terminal": false,
             "depth": 2
@@ -12323,17 +12195,17 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "d37e32a6eacd74adb359b5fac9de6b073da64325f2baf5243ba6e64fe96ab05a",
-      "calculated_signature": "d37e32a6eacd74adb359b5fac9de6b073da64325f2baf5243ba6e64fe96ab05a",
+      "authored_signature": "bea7aa87c6397293fed1b67f7cb584618e9e52d801cec89b407adc15e3826b5c",
+      "calculated_signature": "bea7aa87c6397293fed1b67f7cb584618e9e52d801cec89b407adc15e3826b5c",
       "nearest_id": "grand_casino_convention_crowd",
-      "nearest_similarity": 0.57516339869281
+      "nearest_similarity": 0.573157315731573
     }
   ],
   "pairwise_similarity": [
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.272430668841762,
+      "similarity": 0.272877164056059,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12345,7 +12217,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.257119609438568,
+      "similarity": 0.257401315789474,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12357,7 +12229,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.233040702314445,
+      "similarity": 0.233064516129032,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12369,7 +12241,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.57074569789675,
+      "similarity": 0.568948891031823,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12381,7 +12253,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.301335559265442,
+      "similarity": 0.30210970464135,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12393,7 +12265,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.247172859450727,
+      "similarity": 0.24734693877551,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12405,7 +12277,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.219589257503949,
+      "similarity": 0.219473264166002,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12417,7 +12289,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.350660792951542,
+      "similarity": 0.35204991087344,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12429,7 +12301,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.385171790235081,
+      "similarity": 0.387008234217749,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12441,7 +12313,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.503112033195021,
+      "similarity": 0.500523560209424,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12453,7 +12325,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.410029498525074,
+      "similarity": 0.406746031746032,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12465,7 +12337,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.384169884169884,
+      "similarity": 0.380720545277507,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12477,7 +12349,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.305862361937128,
+      "similarity": 0.226612903225806,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12489,7 +12361,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.336814621409922,
+      "similarity": 0.221864951768489,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12501,9 +12373,9 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.622298065984073,
+      "similarity": 0.390532544378698,
       "equal_normalized_hash": false,
-      "status": "warning",
+      "status": "pass",
       "blocking": false,
       "masked_visual_evidence": {
 
@@ -12513,7 +12385,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_whale_aboard",
-      "similarity": 0.536637931034483,
+      "similarity": 0.456611570247934,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12525,7 +12397,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.527865404837014,
+      "similarity": 0.345505617977528,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12537,7 +12409,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.409803921568627,
+      "similarity": 0.410714285714286,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12549,7 +12421,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.380038387715931,
+      "similarity": 0.409316154608523,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12561,7 +12433,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.305792163543441,
+      "similarity": 0.306632213608958,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12573,7 +12445,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.304940374787053,
+      "similarity": 0.305770887166236,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12585,7 +12457,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.51115834218916,
+      "similarity": 0.508583690987124,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12597,7 +12469,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.426181102362205,
+      "similarity": 0.423038728897716,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12609,7 +12481,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.519067796610169,
+      "similarity": 0.516577540106952,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12621,7 +12493,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.422619047619048,
+      "similarity": 0.419419419419419,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12633,7 +12505,7 @@
     {
       "left_id": "grand_casino_convention_crowd",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.469818913480885,
+      "similarity": 0.467005076142132,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12645,7 +12517,7 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.43516699410609,
+      "similarity": 0.43211100099108,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12657,7 +12529,7 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.57516339869281,
+      "similarity": 0.573157315731573,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12675,8 +12547,7 @@
     "scenario delta_queen_captains_invitational is invalid: [\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_aftermath_actor has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_aftermath_scene has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_bottom_left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_captain_scorer_phase has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_captains_entry has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_decision_left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_decision_middle has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_decision_right has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_noninteractive_right has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_phase_left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_scenario_safe_exit has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_scenario_spare has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_scenario_task has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.anchors identity base::anchor:delta_secondary_top has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario grand_casino_gala_night is invalid: [\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_actor has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_scene has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_decision_left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_decision_middle has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_decision_middle_right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_520 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_650_low has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_work_actor_right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_work_object_left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_work_object_middle has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario grand_casino_convention_crowd is invalid: [\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_aftermath_actor has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_aftermath_scene has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_badge_delegations has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_machine_banks has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_table_block has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_decision_left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_decision_middle has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_decision_middle_right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_work_actor_right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_work_object_left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_work_object_middle has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_actor has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_scene has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_audit_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_audit_pit_ledger has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_middle_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_50_actor has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_520 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_650 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800_low has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_work_actor_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_work_object_left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.622 (warning). Missing receipt-bound masked visual evidence."
+    "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_actor has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_scene has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_audit_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_audit_pit_ledger has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_middle_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_50_actor has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_520 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_650 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800_low has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_work_actor_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_work_object_left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]"
   ],
   "pair_count": 28
 }

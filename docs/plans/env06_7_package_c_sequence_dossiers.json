@@ -50,7 +50,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "186a7088aa7a4822b058fc7a23c872b073fa7725aab9e9c862e008159fb6a815",
+      "sequence_signature": "06906598de4a0089396af7935d56ba043ed7d89f8b3a619a1b1d5d3aeb858fa7",
       "capture_ids": [
         "bar_wake_arrival",
         "bar_wake_partial",
@@ -118,7 +118,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "b207b1a928f0e63cffe3af09266b7f2b8e6a151dc68cde99328d1ac3644108e9",
+      "sequence_signature": "dcd539e42ae16ae5a675aabaa39e6ecfb28af7117982f31687e7030c17e688ab",
       "capture_ids": [
         "bar_fight_night_arrival",
         "bar_fight_night_partial",
@@ -180,7 +180,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "17d1e305983f07cda5587770f2a054ce90cdfad2e5fd609c5da99392b53cc4cd",
+      "sequence_signature": "fccd253aa83d4d7a1a1fc790f7e48c52333a7ca5f5955407798594844f5cc26b",
       "capture_ids": [
         "bar_payday_rush_arrival",
         "bar_payday_rush_partial",
@@ -246,7 +246,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "c05000a266ae1b0c23edb0a089d43328c846bac25231f1b30f92ea402565b422",
+      "sequence_signature": "6711a32cc5738413458d20f2ec6625d8b7fcd07b5418c74ff6465ce62c4b038c",
       "capture_ids": [
         "bar_lock_in_arrival",
         "bar_lock_in_partial",
@@ -314,7 +314,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "eced41a73856d13c4949cf8d181141579c6cac6fbd5465447a1683c1d79bd6b6",
+      "sequence_signature": "02d81de53190f7e106f99c6bb97e1d370fa5f1af97cf2822bb7ec70a14a620a2",
       "capture_ids": [
         "bar_darts_league_night_arrival",
         "bar_darts_league_night_partial",
@@ -380,7 +380,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "67cb48cca0fbafc554fba7182132a5ccc3819fab2589b9b2dc67364f2f65368b",
+      "sequence_signature": "8f6e951b34cde922dd7ad2577f904888090b21ceb65994ee8220652b1be86699",
       "capture_ids": [
         "bar_live_band_arrival",
         "bar_live_band_partial",
@@ -439,7 +439,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "3293ab1230d358af489152fd268bcd8b031e36a02d64e4bf78032d60a56a222e",
+      "sequence_signature": "806f7d465a2716161c53360555e0959bf49cb7023bb3ff342a909be841bdb146",
       "capture_ids": [
         "bar_dead_tuesday_arrival",
         "bar_dead_tuesday_partial",
@@ -507,7 +507,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "128a94cc74f16a29d358a9c15a86020b45de25caef453813a033167960d07ea8",
+      "sequence_signature": "1c0745090b51fc24ec21580595db1865666fb6dee2b532faeba957c5736a5d88",
       "capture_ids": [
         "jazz_club_guest_legend_arrival",
         "jazz_club_guest_legend_partial",
@@ -571,7 +571,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "25c11b73dfe31ebec8660348662e95367608f41ea878baa80497ba7c6addfd80",
+      "sequence_signature": "412f206234f2de99b4ffd6161b5194838d2a028dfad953907f0ea81c6f87c86e",
       "capture_ids": [
         "jazz_club_rent_party_arrival",
         "jazz_club_rent_party_partial",
@@ -633,7 +633,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "ce92432c66891a29de161199a4ad14d83edad7af1f47507aabe4de7e99f6f3ab",
+      "sequence_signature": "cbc94ba3ce5d017782dc7efecfb6484fff8c852f7a7f066ffdf2325264ae90fe",
       "capture_ids": [
         "jazz_club_recording_night_arrival",
         "jazz_club_recording_night_partial",
@@ -697,7 +697,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "55645b8d0203d5fdf9e04e623b54095befc81edab6f5d1c00ec7f29f9ef2ef3d",
+      "sequence_signature": "eb634d4310cdfe4bdc1e94d19cf5cfe049dd1630829c8d355e38109edcb30cec",
       "capture_ids": [
         "jazz_club_union_trouble_arrival",
         "jazz_club_union_trouble_partial",
@@ -1280,174 +1280,6 @@
           {
             "ops": [
               {
-                "family": "actor_ops",
-                "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The oche move beat moves props and actors for inspect disputed dart.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "inspect_disputed_dart",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "inspect_disputed_dart"
-                        },
-                        "label": "Inspect Disputed Dart",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_bar_darts_league_night",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_bar_darts_league_night",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Inspect Disputed Dart",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_4_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Bar Darts League Night: Complete this operation or choose its identity-specific route.",
-                    "safe_exit": false,
-                    "state_label": "Work 4 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "anchor_id": "darts_oche",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Inspect Disputed Dart",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "hide",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "game_result"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
                 "family": "transition_ops",
                 "effect": {
                   "channel": "room",
@@ -1620,6 +1452,173 @@
           {
             "ops": [
               {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The oche move beat moves props and actors for inspect disputed dart.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "inspect_disputed_dart",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "inspect_disputed_dart"
+                        },
+                        "label": "Inspect Disputed Dart",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_bar_darts_league_night",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_darts_league_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Inspect Disputed Dart",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_4_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Bar Darts League Night: Complete this operation or choose its identity-specific route.",
+                    "safe_exit": false,
+                    "state_label": "Work 4 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "darts_oche",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Inspect Disputed Dart",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "game_result"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
                 "family": "actor_ops",
                 "effect": {
                   "actor": {
@@ -1713,12 +1712,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_darts_league_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_darts_league_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -1733,7 +1726,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Darts League Night clean exit",
@@ -2369,10 +2361,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "eced41a73856d13c4949cf8d181141579c6cac6fbd5465447a1683c1d79bd6b6",
-      "calculated_signature": "eced41a73856d13c4949cf8d181141579c6cac6fbd5465447a1683c1d79bd6b6",
+      "authored_signature": "02d81de53190f7e106f99c6bb97e1d370fa5f1af97cf2822bb7ec70a14a620a2",
+      "calculated_signature": "02d81de53190f7e106f99c6bb97e1d370fa5f1af97cf2822bb7ec70a14a620a2",
       "nearest_id": "bar_fight_night",
-      "nearest_similarity": 0.553488372093023
+      "nearest_similarity": 0.559736594543744
     },
     {
       "id": "bar_dead_tuesday",
@@ -2664,12 +2656,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_dead_tuesday",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_dead_tuesday",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -2684,7 +2670,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Dead Tuesday clean exit",
@@ -3251,10 +3236,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "3293ab1230d358af489152fd268bcd8b031e36a02d64e4bf78032d60a56a222e",
-      "calculated_signature": "3293ab1230d358af489152fd268bcd8b031e36a02d64e4bf78032d60a56a222e",
+      "authored_signature": "806f7d465a2716161c53360555e0959bf49cb7023bb3ff342a909be841bdb146",
+      "calculated_signature": "806f7d465a2716161c53360555e0959bf49cb7023bb3ff342a909be841bdb146",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.335635359116022
+      "nearest_similarity": 0.340336134453782
     },
     {
       "id": "bar_fight_night",
@@ -3593,174 +3578,6 @@
                   "op": "set_pose",
                   "owner_namespace": "scenario",
                   "pose": "chair_move"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "heat_changed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The chair move beat moves props and actors for escort hothead.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "escort_hothead",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "escort_hothead"
-                        },
-                        "label": "Escort Hothead",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_bar_fight_night",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_bar_fight_night",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Escort Hothead",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_4_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Bar Fight Night: Complete this operation or choose its identity-specific route.",
-                    "safe_exit": false,
-                    "state_label": "Work 4 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "anchor_id": "fight_toppled_chair",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Escort Hothead",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "hide",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
                 }
               }
             ],
@@ -4162,6 +3979,173 @@
           {
             "ops": [
               {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The chair move beat moves props and actors for escort hothead.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "escort_hothead",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "escort_hothead"
+                        },
+                        "label": "Escort Hothead",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_bar_fight_night",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_fight_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Escort Hothead",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_4_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Bar Fight Night: Complete this operation or choose its identity-specific route.",
+                    "safe_exit": false,
+                    "state_label": "Work 4 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "fight_toppled_chair",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Escort Hothead",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "heat_changed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
                 "family": "actor_ops",
                 "effect": {
                   "actor": {
@@ -4255,12 +4239,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_fight_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_fight_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -4275,7 +4253,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Fight Night clean exit",
@@ -4911,10 +4888,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "b207b1a928f0e63cffe3af09266b7f2b8e6a151dc68cde99328d1ac3644108e9",
-      "calculated_signature": "b207b1a928f0e63cffe3af09266b7f2b8e6a151dc68cde99328d1ac3644108e9",
+      "authored_signature": "dcd539e42ae16ae5a675aabaa39e6ecfb28af7117982f31687e7030c17e688ab",
+      "calculated_signature": "dcd539e42ae16ae5a675aabaa39e6ecfb28af7117982f31687e7030c17e688ab",
       "nearest_id": "bar_darts_league_night",
-      "nearest_similarity": 0.553488372093023
+      "nearest_similarity": 0.559736594543744
     },
     {
       "id": "bar_live_band",
@@ -5314,174 +5291,6 @@
               {
                 "family": "actor_ops",
                 "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The cable appearance beat moves props and actors for reroute crowd.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "reroute_crowd",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "reroute_crowd"
-                        },
-                        "label": "Reroute Crowd",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_bar_live_band",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_bar_live_band",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Reroute Crowd",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_4_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Bar Live Band: Complete this operation or choose its identity-specific route.",
-                    "safe_exit": false,
-                    "state_label": "Work 4 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "anchor_id": "live_band_speakers",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Reroute Crowd",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "hide",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "town_transition"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
-                "family": "actor_ops",
-                "effect": {
                   "behavior": "watch",
                   "op": "set_behavior",
                   "owner_namespace": "scenario"
@@ -5650,6 +5459,173 @@
           {
             "ops": [
               {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The cable appearance beat moves props and actors for reroute crowd.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "reroute_crowd",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "reroute_crowd"
+                        },
+                        "label": "Reroute Crowd",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_bar_live_band",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_live_band",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Reroute Crowd",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_4_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Bar Live Band: Complete this operation or choose its identity-specific route.",
+                    "safe_exit": false,
+                    "state_label": "Work 4 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "live_band_speakers",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reroute Crowd",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "town_transition"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
                 "family": "actor_ops",
                 "effect": {
                   "actor": {
@@ -5668,7 +5644,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_floor_runner",
-                    "behavior": "patrol",
+                    "behavior": "watch",
                     "label": "Floor runner",
                     "pose": "arrival",
                     "zone_id": "left"
@@ -5743,12 +5719,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_live_band",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_live_band",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -5763,7 +5733,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Live Band clean exit",
@@ -6375,10 +6344,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "67cb48cca0fbafc554fba7182132a5ccc3819fab2589b9b2dc67364f2f65368b",
-      "calculated_signature": "67cb48cca0fbafc554fba7182132a5ccc3819fab2589b9b2dc67364f2f65368b",
+      "authored_signature": "8f6e951b34cde922dd7ad2577f904888090b21ceb65994ee8220652b1be86699",
+      "calculated_signature": "8f6e951b34cde922dd7ad2577f904888090b21ceb65994ee8220652b1be86699",
       "nearest_id": "bar_lock_in",
-      "nearest_similarity": 0.685779816513762
+      "nearest_similarity": 0.6875
     },
     {
       "id": "bar_lock_in",
@@ -6778,174 +6747,6 @@
               {
                 "family": "actor_ops",
                 "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The hatch move beat moves props and actors for signal reopening.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "signal_reopening",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "signal_reopening"
-                        },
-                        "label": "Signal Reopening",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_bar_lock_in",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_bar_lock_in",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Signal Reopening",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_4_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Bar Lock In: Complete this operation or choose its identity-specific route.",
-                    "safe_exit": false,
-                    "state_label": "Work 4 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "anchor_id": "lockin_shutters",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Signal Reopening",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "hide",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "sweep_changed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
-                "family": "actor_ops",
-                "effect": {
                   "behavior": "watch",
                   "op": "set_behavior",
                   "owner_namespace": "scenario"
@@ -7114,6 +6915,173 @@
           {
             "ops": [
               {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The hatch move beat moves props and actors for signal reopening.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "signal_reopening",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "signal_reopening"
+                        },
+                        "label": "Signal Reopening",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_bar_lock_in",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_lock_in",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Signal Reopening",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_4_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Bar Lock In: Complete this operation or choose its identity-specific route.",
+                    "safe_exit": false,
+                    "state_label": "Work 4 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "lockin_shutters",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Signal Reopening",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "sweep_changed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
                 "family": "actor_ops",
                 "effect": {
                   "actor": {
@@ -7207,12 +7175,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_lock_in",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_lock_in",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -7227,7 +7189,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Lock In clean exit",
@@ -7839,10 +7800,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "c05000a266ae1b0c23edb0a089d43328c846bac25231f1b30f92ea402565b422",
-      "calculated_signature": "c05000a266ae1b0c23edb0a089d43328c846bac25231f1b30f92ea402565b422",
+      "authored_signature": "6711a32cc5738413458d20f2ec6625d8b7fcd07b5418c74ff6465ce62c4b038c",
+      "calculated_signature": "6711a32cc5738413458d20f2ec6625d8b7fcd07b5418c74ff6465ce62c4b038c",
       "nearest_id": "bar_live_band",
-      "nearest_similarity": 0.685779816513762
+      "nearest_similarity": 0.6875
     },
     {
       "id": "bar_payday_rush",
@@ -8333,12 +8294,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_payday_rush",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_payday_rush",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -8353,7 +8308,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Payday Rush clean exit",
@@ -8917,10 +8871,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "17d1e305983f07cda5587770f2a054ce90cdfad2e5fd609c5da99392b53cc4cd",
-      "calculated_signature": "17d1e305983f07cda5587770f2a054ce90cdfad2e5fd609c5da99392b53cc4cd",
+      "authored_signature": "fccd253aa83d4d7a1a1fc790f7e48c52333a7ca5f5955407798594844f5cc26b",
+      "calculated_signature": "fccd253aa83d4d7a1a1fc790f7e48c52333a7ca5f5955407798594844f5cc26b",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.624048706240487
+      "nearest_similarity": 0.623655913978495
     },
     {
       "id": "bar_wake",
@@ -9411,12 +9365,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_wake",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_wake",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -9431,7 +9379,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Wake clean exit",
@@ -9968,10 +9915,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "186a7088aa7a4822b058fc7a23c872b073fa7725aab9e9c862e008159fb6a815",
-      "calculated_signature": "186a7088aa7a4822b058fc7a23c872b073fa7725aab9e9c862e008159fb6a815",
+      "authored_signature": "06906598de4a0089396af7935d56ba043ed7d89f8b3a619a1b1d5d3aeb858fa7",
+      "calculated_signature": "06906598de4a0089396af7935d56ba043ed7d89f8b3a619a1b1d5d3aeb858fa7",
       "nearest_id": "jazz_club_recording_night",
-      "nearest_similarity": 0.675039246467818
+      "nearest_similarity": 0.675118858954041
     },
     {
       "id": "jazz_club_guest_legend",
@@ -10539,174 +10486,6 @@
           {
             "ops": [
               {
-                "family": "actor_ops",
-                "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The stage state beat moves props and actors for reorder set cards.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "reorder_set_cards",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "reorder_set_cards"
-                        },
-                        "label": "Reorder Set Cards",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_jazz_club_guest_legend",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_jazz_club_guest_legend",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Reorder Set Cards",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_4_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Jazz Club Guest Legend: Complete this operation or choose its identity-specific route.",
-                    "safe_exit": false,
-                    "state_label": "Work 4 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "anchor_id": "guest_legend_table",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Reorder Set Cards",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "hide",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_arrived"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
                 "family": "transition_ops",
                 "effect": {
                   "channel": "room",
@@ -10879,6 +10658,173 @@
           {
             "ops": [
               {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The stage state beat moves props and actors for reorder set cards.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "reorder_set_cards",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "reorder_set_cards"
+                        },
+                        "label": "Reorder Set Cards",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_jazz_club_guest_legend",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_guest_legend",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Reorder Set Cards",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_4_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Jazz Club Guest Legend: Complete this operation or choose its identity-specific route.",
+                    "safe_exit": false,
+                    "state_label": "Work 4 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "guest_legend_table",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reorder Set Cards",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_arrived"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
                 "family": "actor_ops",
                 "effect": {
                   "actor": {
@@ -10972,12 +10918,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_jazz_club_guest_legend",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_jazz_club_guest_legend",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -10992,7 +10932,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Jazz Club Guest Legend clean exit",
@@ -11628,10 +11567,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "128a94cc74f16a29d358a9c15a86020b45de25caef453813a033167960d07ea8",
-      "calculated_signature": "128a94cc74f16a29d358a9c15a86020b45de25caef453813a033167960d07ea8",
+      "authored_signature": "1c0745090b51fc24ec21580595db1865666fb6dee2b532faeba957c5736a5d88",
+      "calculated_signature": "1c0745090b51fc24ec21580595db1865666fb6dee2b532faeba957c5736a5d88",
       "nearest_id": "bar_darts_league_night",
-      "nearest_similarity": 0.537753222836096
+      "nearest_similarity": 0.53660797034291
     },
     {
       "id": "jazz_club_recording_night",
@@ -12122,12 +12061,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_jazz_club_recording_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_jazz_club_recording_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -12142,7 +12075,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Jazz Club Recording Night clean exit",
@@ -12706,10 +12638,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "ce92432c66891a29de161199a4ad14d83edad7af1f47507aabe4de7e99f6f3ab",
-      "calculated_signature": "ce92432c66891a29de161199a4ad14d83edad7af1f47507aabe4de7e99f6f3ab",
+      "authored_signature": "cbc94ba3ce5d017782dc7efecfb6484fff8c852f7a7f066ffdf2325264ae90fe",
+      "calculated_signature": "cbc94ba3ce5d017782dc7efecfb6484fff8c852f7a7f066ffdf2325264ae90fe",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.675039246467818
+      "nearest_similarity": 0.675118858954041
     },
     {
       "id": "jazz_club_rent_party",
@@ -13370,12 +13302,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_jazz_club_rent_party",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_jazz_club_rent_party",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -13390,7 +13316,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Jazz Club Rent Party clean exit",
@@ -13978,10 +13903,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "25c11b73dfe31ebec8660348662e95367608f41ea878baa80497ba7c6addfd80",
-      "calculated_signature": "25c11b73dfe31ebec8660348662e95367608f41ea878baa80497ba7c6addfd80",
-      "nearest_id": "jazz_club_union_trouble",
-      "nearest_similarity": 0.442437923250564
+      "authored_signature": "412f206234f2de99b4ffd6161b5194838d2a028dfad953907f0ea81c6f87c86e",
+      "calculated_signature": "412f206234f2de99b4ffd6161b5194838d2a028dfad953907f0ea81c6f87c86e",
+      "nearest_id": "bar_lock_in",
+      "nearest_similarity": 0.453091684434968
     },
     {
       "id": "jazz_club_union_trouble",
@@ -14642,12 +14567,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_jazz_club_union_trouble",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_jazz_club_union_trouble",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -14662,7 +14581,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Jazz Club Union Trouble clean exit",
@@ -15250,17 +15168,17 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "55645b8d0203d5fdf9e04e623b54095befc81edab6f5d1c00ec7f29f9ef2ef3d",
-      "calculated_signature": "55645b8d0203d5fdf9e04e623b54095befc81edab6f5d1c00ec7f29f9ef2ef3d",
+      "authored_signature": "eb634d4310cdfe4bdc1e94d19cf5cfe049dd1630829c8d355e38109edcb30cec",
+      "calculated_signature": "eb634d4310cdfe4bdc1e94d19cf5cfe049dd1630829c8d355e38109edcb30cec",
       "nearest_id": "jazz_club_rent_party",
-      "nearest_similarity": 0.442437923250564
+      "nearest_similarity": 0.440909090909091
     }
   ],
   "pairwise_similarity": [
     {
       "left_id": "bar_darts_league_night",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.174953959484346,
+      "similarity": 0.180037313432836,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15272,7 +15190,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "bar_live_band",
-      "similarity": 0.333899745114698,
+      "similarity": 0.292946058091286,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15284,7 +15202,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.537753222836096,
+      "similarity": 0.53660797034291,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15296,7 +15214,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.242999096657633,
+      "similarity": 0.248856358645929,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15308,7 +15226,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.277296360485269,
+      "similarity": 0.281085814360771,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15320,7 +15238,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.247038917089679,
+      "similarity": 0.25042735042735,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15332,7 +15250,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.202639019792648,
+      "similarity": 0.208213944603629,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15344,7 +15262,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.328822733423545,
+      "similarity": 0.333333333333333,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15356,7 +15274,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.181619256017505,
+      "similarity": 0.183628318584071,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15368,7 +15286,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.27810650887574,
+      "similarity": 0.281437125748503,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15380,7 +15298,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.553488372093023,
+      "similarity": 0.559736594543744,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15392,7 +15310,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.134222222222222,
+      "similarity": 0.138613861386139,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15404,7 +15322,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_live_band",
-      "similarity": 0.45910780669145,
+      "similarity": 0.404869251577998,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15416,7 +15334,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_lock_in",
-      "similarity": 0.474178403755869,
+      "similarity": 0.418943533697632,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15428,7 +15346,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_payday_rush",
-      "similarity": 0.190311418685121,
+      "similarity": 0.197368421052632,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15440,7 +15358,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.497757847533632,
+      "similarity": 0.510018214936248,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15452,7 +15370,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.166101694915254,
+      "similarity": 0.172680412371134,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15464,7 +15382,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.385338345864662,
+      "similarity": 0.398661567877629,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15476,7 +15394,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.235540653813915,
+      "similarity": 0.245106382978723,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15488,7 +15406,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.140640155189137,
+      "similarity": 0.145526057030482,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15500,7 +15418,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.318219983207389,
+      "similarity": 0.2833607907743,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15512,7 +15430,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.20491029272899,
+      "similarity": 0.212847555129434,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15524,7 +15442,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.417956656346749,
+      "similarity": 0.430220356768101,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15536,7 +15454,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.281716417910448,
+      "similarity": 0.290719696969697,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15548,7 +15466,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.346483704974271,
+      "similarity": 0.304857621440536,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15560,7 +15478,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.155206286836935,
+      "similarity": 0.160358565737052,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15572,7 +15490,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "bar_live_band",
-      "similarity": 0.685779816513762,
+      "similarity": 0.6875,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -15584,7 +15502,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.301824212271973,
+      "similarity": 0.267697314890155,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15596,7 +15514,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.190298507462687,
+      "similarity": 0.197916666666667,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15608,7 +15526,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.440251572327044,
+      "similarity": 0.453091684434968,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15620,7 +15538,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.264029438822447,
+      "similarity": 0.272642390289449,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15632,7 +15550,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.270544783010157,
+      "similarity": 0.27689429373246,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15644,7 +15562,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.328822733423545,
+      "similarity": 0.333333333333333,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15656,7 +15574,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_live_band",
-      "similarity": 0.202639019792648,
+      "similarity": 0.210526315789474,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15668,7 +15586,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_lock_in",
-      "similarity": 0.217557251908397,
+      "similarity": 0.22577519379845,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15680,7 +15598,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.265869365225391,
+      "similarity": 0.272134203168686,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15692,7 +15610,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.619760479041916,
+      "similarity": 0.619335347432024,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -15704,7 +15622,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.252653927813163,
+      "similarity": 0.255364806866953,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15716,7 +15634,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.367323290845886,
+      "similarity": 0.371629542790152,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15728,7 +15646,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.241788321167883,
+      "similarity": 0.247689463955638,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15740,7 +15658,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.335635359116022,
+      "similarity": 0.340336134453782,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15752,7 +15670,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_fight_night",
-      "similarity": 0.164242942686056,
+      "similarity": 0.170858629661752,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15764,7 +15682,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_live_band",
-      "similarity": 0.20324427480916,
+      "similarity": 0.211240310077519,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15776,7 +15694,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_lock_in",
-      "similarity": 0.188501413760603,
+      "similarity": 0.196172248803828,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15788,7 +15706,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_payday_rush",
-      "similarity": 0.624048706240487,
+      "similarity": 0.623655913978495,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -15800,7 +15718,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.298664122137405,
+      "similarity": 0.305609284332689,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15812,7 +15730,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.675039246467818,
+      "similarity": 0.675118858954041,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -15824,7 +15742,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.219895287958115,
+      "similarity": 0.222222222222222,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15836,7 +15754,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.413834951456311,
+      "similarity": 0.418918918918919,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15848,7 +15766,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.299338999055713,
+      "similarity": 0.30622009569378,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15860,7 +15778,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.239697224558452,
+      "similarity": 0.242990654205607,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15872,7 +15790,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.37243947858473,
+      "similarity": 0.37758945386064,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15884,7 +15802,7 @@
     {
       "left_id": "jazz_club_recording_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.409796893667861,
+      "similarity": 0.414752116082225,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15896,7 +15814,7 @@
     {
       "left_id": "jazz_club_rent_party",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.221532091097308,
+      "similarity": 0.223849372384937,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15908,7 +15826,7 @@
     {
       "left_id": "jazz_club_rent_party",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.442437923250564,
+      "similarity": 0.440909090909091,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15932,8 +15850,8 @@
     "scenario jazz_club_union_trouble is invalid: [\"scenario jazz_club_union_trouble sequence declared_targets.anchors identity base::anchor:union_picket has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.anchors identity base::anchor:union_manager has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario bar_wake vs bar_payday_rush: 0.624 (warning). Missing receipt-bound masked visual evidence.",
     "scenario bar_wake vs jazz_club_recording_night: 0.675 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_payday_rush vs jazz_club_recording_night: 0.620 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_lock_in vs bar_live_band: 0.686 (warning). Missing receipt-bound masked visual evidence."
+    "scenario bar_payday_rush vs jazz_club_recording_night: 0.619 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_lock_in vs bar_live_band: 0.688 (warning). Missing receipt-bound masked visual evidence."
   ],
   "pair_count": 55
 }

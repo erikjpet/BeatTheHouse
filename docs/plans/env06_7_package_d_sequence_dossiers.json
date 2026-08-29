@@ -5,8 +5,8 @@
     "scenario punchline_headliner_night vs kitty_cat_lounge_buyout: 0.710 (warning). Missing receipt-bound masked visual evidence.",
     "scenario punchline_high_stakes_night vs punchline_debt_court: 0.647 (warning). Missing receipt-bound masked visual evidence.",
     "scenario punchline_greased_week vs kitty_cat_lounge_buyout: 0.658 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_debt_court vs kitty_cat_lounge_slow_night: 0.601 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_new_muscle vs kitty_cat_lounge_amateur_night: 0.625 (warning). Missing receipt-bound masked visual evidence."
+    "scenario punchline_debt_court vs kitty_cat_lounge_slow_night: 0.600 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_new_muscle vs kitty_cat_lounge_amateur_night: 0.627 (warning). Missing receipt-bound masked visual evidence."
   ],
   "base_head": "a4c57bf681dd74d3a4ae24b1bda6dae410c8cb70",
   "dossiers": [
@@ -57,10 +57,8 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sealed_routes": [
-        "base::layer:casino"
-      ],
-      "sequence_signature": "4bbc0a7743d9c62610c49831b31542d707d189feaf3fbf05451cb385c5ccf3de",
+      "sealed_routes": [],
+      "sequence_signature": "404b50592c1be8483b4adb323d83aba5f7f213491e689ecfbda2f40cf5fb38aa",
       "spatial_anchors": [
         "base::anchor:punchline_open_mic_signup",
         "base::anchor:punchline_open_mic_waiting_comic",
@@ -127,10 +125,8 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sealed_routes": [
-        "base::layer:casino"
-      ],
-      "sequence_signature": "a02c897d8f0546342a58dbd054c2a2d66cb7b2ecf8a3661a6aa087cb812f5bda",
+      "sealed_routes": [],
+      "sequence_signature": "b6694fda6a47aa97e0c4ddef4aa6122f580e1af7c4fb7da1d2d8312dae61eedc",
       "spatial_anchors": [
         "base::anchor:punchline_headliner_credential_rope",
         "base::anchor:punchline_headliner_door_guard"
@@ -194,10 +190,8 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sealed_routes": [
-        "base::layer:casino"
-      ],
-      "sequence_signature": "d35057e3198a60c9d789518d27e879455ff4a820bb6e4becf02c25ab8bc15efa",
+      "sealed_routes": [],
+      "sequence_signature": "f530c423e565f2c1d4b3c5368692f37a4b2a53a3b33d27fe219abd9e91041775",
       "spatial_anchors": [
         "base::anchor:punchline_bringer_crowd_ropes",
         "base::anchor:punchline_bringer_crowd_captain",
@@ -262,10 +256,8 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sealed_routes": [
-        "base::layer:casino"
-      ],
-      "sequence_signature": "b5393262be223bc1c627736cd472e7474d148ade52d84833f9492df2a9e3cf7b",
+      "sealed_routes": [],
+      "sequence_signature": "6cf8e8edb7b68146f219ccde0a65c787ebfba0303677ea45da897b82f4d9df78",
       "spatial_anchors": [
         "base::anchor:punchline_high_stakes_protected_table",
         "base::anchor:punchline_high_stakes_floor_runner",
@@ -332,10 +324,8 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sealed_routes": [
-        "base::layer:casino"
-      ],
-      "sequence_signature": "50dcf3d12848a592d9bcf082ac17853a8ce40b81d293bd58a431c5a430d84306",
+      "sealed_routes": [],
+      "sequence_signature": "cd0add3ebff0725b856342265670f2c9b61b01a8faa803f48508a7cb60116b9a",
       "spatial_anchors": [
         "base::anchor:punchline_greased_inspection_seals",
         "base::anchor:punchline_greased_payoff_runner",
@@ -400,10 +390,8 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sealed_routes": [
-        "base::layer:casino"
-      ],
-      "sequence_signature": "7b677c0841e8890dd469b25201701f0da4936fb88ef51c4801bab05cd083afb8",
+      "sealed_routes": [],
+      "sequence_signature": "6261a37b9d18bf7c178f034e092d0fcb452b167d8a1fe7728e3853273cb99de0",
       "spatial_anchors": [
         "base::anchor:punchline_debt_hearing_chairs",
         "base::anchor:punchline_debt_room_witness",
@@ -470,10 +458,8 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sealed_routes": [
-        "base::layer:casino"
-      ],
-      "sequence_signature": "3f782f7519f598da8c46060dc7d00b0af2f7700cd8cc9a7ac75280aa2625b1f2",
+      "sealed_routes": [],
+      "sequence_signature": "4929180917ed12a8f075286e48ae70de9a8a606ae0027d89c4c8143defa232d6",
       "spatial_anchors": [
         "base::anchor:punchline_new_muscle_inspection_tray",
         "base::anchor:punchline_new_muscle_checkpoint_rover",
@@ -540,10 +526,8 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sealed_routes": [
-        "base::layer:casino"
-      ],
-      "sequence_signature": "484c2bfd3ec38163b8818bb81087eadba2202bb5bfa449c2dd37e17ca5ecd83d",
+      "sealed_routes": [],
+      "sequence_signature": "d5eb2532fe79cffcf5db870a8df75c15fcfad6963d96c34b656cf76b23185e20",
       "spatial_anchors": [
         "base::anchor:punchline_raid_hide_cart",
         "base::anchor:punchline_raid_reopen_steward",
@@ -610,10 +594,8 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sealed_routes": [
-        "base::world:bar"
-      ],
-      "sequence_signature": "d0013c662930b69e2fe02f0f8166fcd8e53ecd8974bb91bebef2f8765e9d45a6",
+      "sealed_routes": [],
+      "sequence_signature": "63457594e9c55ff62adc8060642d3b3c1c741ce2a349f6703a7e8092a87d2eea",
       "spatial_anchors": [
         "base::anchor:kitty_amateur_signup",
         "base::anchor:kitty_amateur_judge"
@@ -679,10 +661,8 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sealed_routes": [
-        "base::world:bar"
-      ],
-      "sequence_signature": "b1a5dea98cc8afdca8fe66a3b1d01da262ba92cee75e74d64aa0ddb064f0f346",
+      "sealed_routes": [],
+      "sequence_signature": "e7d5b66308d642c1520f26fce67b800fed23d84294b7905fc97f14fd7357a527",
       "spatial_anchors": [
         "base::anchor:kitty_buyout_ropes",
         "base::anchor:kitty_buyout_steward"
@@ -746,10 +726,8 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sealed_routes": [
-        "base::world:gas_station_casino"
-      ],
-      "sequence_signature": "ced71cf753cec5b1d2b578b3321d38562ecfdda81750eba2c85cdc78d8710216",
+      "sealed_routes": [],
+      "sequence_signature": "75dbb80a6dc37143045e8f66caaf21179595a752cd055b6e5b0e2ff5701f1d5e",
       "spatial_anchors": [
         "base::anchor:kitty_slow_closed_section",
         "base::anchor:kitty_slow_booth_regular"
@@ -817,10 +795,8 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sealed_routes": [
-        "base::world:gas_station_casino"
-      ],
-      "sequence_signature": "cd1ed2102b91ba816cbbcfda802de49a9544434934714427c2f35dbf05b8dace",
+      "sealed_routes": [],
+      "sequence_signature": "18822281b32eeaf995597c85c820a5b5b7855bb30806c6cdf1db5f196b844551",
       "spatial_anchors": [
         "base::anchor:kitty_storm_prop_trunk",
         "base::anchor:kitty_storm_floor_host"
@@ -850,7 +826,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.314907872696817,
+      "similarity": 0.280197206244864,
       "status": "pass"
     },
     {
@@ -862,7 +838,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.509240246406571,
+      "similarity": 0.50775594622544,
       "status": "pass"
     },
     {
@@ -874,7 +850,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.363095238095238,
+      "similarity": 0.373991935483871,
       "status": "pass"
     },
     {
@@ -886,7 +862,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.405550581915846,
+      "similarity": 0.366666666666667,
       "status": "pass"
     },
     {
@@ -898,7 +874,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.265193370165746,
+      "similarity": 0.273831775700935,
       "status": "pass"
     },
     {
@@ -910,7 +886,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.235540653813915,
+      "similarity": 0.238780694326842,
       "status": "pass"
     },
     {
@@ -922,7 +898,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.264949402023919,
+      "similarity": 0.273576097105509,
       "status": "pass"
     },
     {
@@ -934,7 +910,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.350732600732601,
+      "similarity": 0.355555555555556,
       "status": "pass"
     },
     {
@@ -946,7 +922,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.413155190133607,
+      "similarity": 0.425287356321839,
       "status": "pass"
     },
     {
@@ -958,7 +934,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.441939120631342,
+      "similarity": 0.440408626560726,
       "status": "pass"
     },
     {
@@ -970,7 +946,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
-      "similarity": 0.476355247981546,
+      "similarity": 0.475029036004646,
       "status": "pass"
     },
     {
@@ -982,7 +958,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_greased_week",
-      "similarity": 0.440837696335079,
+      "similarity": 0.453674121405751,
       "status": "pass"
     },
     {
@@ -994,7 +970,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.452894438138479,
+      "similarity": 0.451428571428571,
       "status": "pass"
     },
     {
@@ -1006,7 +982,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.268202764976959,
+      "similarity": 0.27689429373246,
       "status": "pass"
     },
     {
@@ -1018,7 +994,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.292018779342723,
+      "similarity": 0.293838862559242,
       "status": "pass"
     },
     {
@@ -1030,7 +1006,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.413155190133607,
+      "similarity": 0.425287356321839,
       "status": "pass"
     },
     {
@@ -1042,7 +1018,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.23534338358459,
+      "similarity": 0.238578680203046,
       "status": "pass"
     },
     {
@@ -1054,7 +1030,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.295947219604147,
+      "similarity": 0.305263157894737,
       "status": "pass"
     },
     {
@@ -1066,7 +1042,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.600750938673342,
+      "similarity": 0.600252206809584,
       "status": "warning"
     },
     {
@@ -1078,7 +1054,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.36779324055666,
+      "similarity": 0.378787878787879,
       "status": "pass"
     },
     {
@@ -1090,7 +1066,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.276437847866419,
+      "similarity": 0.278089887640449,
       "status": "pass"
     },
     {
@@ -1102,7 +1078,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.46953046953047,
+      "similarity": 0.469284994964753,
       "status": "pass"
     },
     {
@@ -1114,7 +1090,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.417870036101083,
+      "similarity": 0.37842617152962,
       "status": "pass"
     },
     {
@@ -1126,7 +1102,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.658399098083427,
+      "similarity": 0.657954545454545,
       "status": "warning"
     },
     {
@@ -1138,7 +1114,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.273148148148148,
+      "similarity": 0.281954887218045,
       "status": "pass"
     },
     {
@@ -1150,7 +1126,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
-      "similarity": 0.277623026926648,
+      "similarity": 0.286522148916117,
       "status": "pass"
     },
     {
@@ -1162,7 +1138,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.482376636455186,
+      "similarity": 0.480730223123732,
       "status": "pass"
     },
     {
@@ -1174,7 +1150,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.485368314833502,
+      "similarity": 0.492842535787321,
       "status": "pass"
     },
     {
@@ -1186,7 +1162,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.504089979550102,
+      "similarity": 0.502574665293512,
       "status": "pass"
     },
     {
@@ -1198,7 +1174,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.405187835420394,
+      "similarity": 0.366345311130587,
       "status": "pass"
     },
     {
@@ -1210,7 +1186,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.71046511627907,
+      "similarity": 0.710433763188746,
       "status": "warning"
     },
     {
@@ -1222,7 +1198,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.264949402023919,
+      "similarity": 0.273576097105509,
       "status": "pass"
     },
     {
@@ -1234,7 +1210,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_bringer_show",
-      "similarity": 0.412731006160164,
+      "similarity": 0.424843423799582,
       "status": "pass"
     },
     {
@@ -1246,7 +1222,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
-      "similarity": 0.295668549905838,
+      "similarity": 0.304971319311663,
       "status": "pass"
     },
     {
@@ -1258,7 +1234,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_greased_week",
-      "similarity": 0.690011481056257,
+      "similarity": 0.689814814814815,
       "status": "warning"
     },
     {
@@ -1270,7 +1246,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.265869365225391,
+      "similarity": 0.274509803921569,
       "status": "pass"
     },
     {
@@ -1282,7 +1258,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.472,
+      "similarity": 0.470292044310171,
       "status": "pass"
     },
     {
@@ -1294,7 +1270,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.470529470529471,
+      "similarity": 0.47623862487361,
       "status": "pass"
     },
     {
@@ -1306,7 +1282,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.414609053497942,
+      "similarity": 0.426778242677824,
       "status": "pass"
     },
     {
@@ -1318,7 +1294,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.261762189905903,
+      "similarity": 0.265341400172861,
       "status": "pass"
     },
     {
@@ -1330,7 +1306,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.266114180478821,
+      "similarity": 0.274766355140187,
       "status": "pass"
     },
     {
@@ -1342,7 +1318,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.586848635235732,
+      "similarity": 0.58625,
       "status": "pass"
     },
     {
@@ -1354,7 +1330,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
-      "similarity": 0.647361647361647,
+      "similarity": 0.647211413748379,
       "status": "warning"
     },
     {
@@ -1366,7 +1342,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_greased_week",
-      "similarity": 0.278810408921933,
+      "similarity": 0.287735849056604,
       "status": "pass"
     },
     {
@@ -1378,7 +1354,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.404081632653061,
+      "similarity": 0.41597510373444,
       "status": "pass"
     },
     {
@@ -1390,7 +1366,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.309229305423406,
+      "similarity": 0.311239193083574,
       "status": "pass"
     },
     {
@@ -1402,7 +1378,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.625414364640884,
+      "similarity": 0.626532887402453,
       "status": "warning"
     },
     {
@@ -1414,7 +1390,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.323504633529907,
+      "similarity": 0.288429752066116,
       "status": "pass"
     },
     {
@@ -1426,7 +1402,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.459325396825397,
+      "similarity": 0.457542457542458,
       "status": "pass"
     },
     {
@@ -1438,7 +1414,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.384692849949648,
+      "similarity": 0.39611054247697,
       "status": "pass"
     },
     {
@@ -1450,7 +1426,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.51440329218107,
+      "similarity": 0.522419186652763,
       "status": "pass"
     },
     {
@@ -1462,7 +1438,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.283846872082166,
+      "similarity": 0.292890995260664,
       "status": "pass"
     },
     {
@@ -1474,7 +1450,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.353211009174312,
+      "similarity": 0.358070500927644,
       "status": "pass"
     },
     {
@@ -1486,7 +1462,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.375,
+      "similarity": 0.386178861788618,
       "status": "pass"
     },
     {
@@ -1498,7 +1474,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.463386727688787,
+      "similarity": 0.461981566820277,
       "status": "pass"
     },
     {
@@ -1510,7 +1486,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_bringer_show",
-      "similarity": 0.602002503128911,
+      "similarity": 0.601513240857503,
       "status": "warning"
     },
     {
@@ -1522,7 +1498,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
-      "similarity": 0.428571428571429,
+      "similarity": 0.426966292134831,
       "status": "pass"
     },
     {
@@ -1534,7 +1510,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_greased_week",
-      "similarity": 0.387096774193548,
+      "similarity": 0.398565573770492,
       "status": "pass"
     },
     {
@@ -1546,7 +1522,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_headliner_night",
-      "similarity": 0.374625374625375,
+      "similarity": 0.385786802030457,
       "status": "pass"
     },
     {
@@ -1558,7 +1534,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.48491879350348,
+      "similarity": 0.483644859813084,
       "status": "pass"
     },
     {
@@ -1570,7 +1546,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.29688972667295,
+      "similarity": 0.30622009569378,
       "status": "pass"
     },
     {
@@ -1582,7 +1558,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.292018779342723,
+      "similarity": 0.293838862559242,
       "status": "pass"
     },
     {
@@ -1594,7 +1570,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.496439471007121,
+      "similarity": 0.502574665293512,
       "status": "pass"
     },
     {
@@ -1606,7 +1582,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.356649395509499,
+      "similarity": 0.308984047019311,
       "status": "pass"
     },
     {
@@ -1618,7 +1594,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.472472472472472,
+      "similarity": 0.478216818642351,
       "status": "pass"
     },
     {
@@ -1630,7 +1606,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.274328081556997,
+      "similarity": 0.275958840037418,
       "status": "pass"
     }
   ],
@@ -1638,11 +1614,11 @@
   "schema_version": 1,
   "uniqueness_rows": [
     {
-      "authored_signature": "d0013c662930b69e2fe02f0f8166fcd8e53ecd8974bb91bebef2f8765e9d45a6",
-      "calculated_signature": "d0013c662930b69e2fe02f0f8166fcd8e53ecd8974bb91bebef2f8765e9d45a6",
+      "authored_signature": "63457594e9c55ff62adc8060642d3b3c1c741ce2a349f6703a7e8092a87d2eea",
+      "calculated_signature": "63457594e9c55ff62adc8060642d3b3c1c741ce2a349f6703a7e8092a87d2eea",
       "id": "kitty_cat_lounge_amateur_night",
       "nearest_id": "punchline_new_muscle",
-      "nearest_similarity": 0.625414364640884,
+      "nearest_similarity": 0.626532887402453,
       "signature": {
         "aftermath": [
           {
@@ -1893,7 +1869,7 @@
           "anchors": 2,
           "games": 0,
           "interactions": 0,
-          "routes": 1,
+          "routes": 0,
           "scene_objects": 0,
           "services": 0,
           "zones": 6
@@ -2379,174 +2355,6 @@
             "ops": [
               {
                 "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                },
-                "family": "actor_ops"
-              },
-              {
-                "effect": {
-                  "channel": "room",
-                  "message": "The judge card beat moves props and actors for rotate final lineup.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                },
-                "family": "transition_ops"
-              },
-              {
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "rotate_final_lineup",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "rotate_final_lineup"
-                        },
-                        "label": "Rotate Final Lineup",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_kitty_cat_lounge_amateur_night",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_kitty_cat_lounge_amateur_night",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave cleanly",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Rotate Final Lineup",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_4_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Kitty Cat Lounge Amateur Night: Complete this distinct room operation or take its identity-specific branch.",
-                    "safe_exit": false,
-                    "state_label": "Work 4 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
-                  "object": {
-                    "anchor_id": "kitty_amateur_signup",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Rotate Final Lineup",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "op": "hide",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              }
-            ],
-            "terminal": false
-          },
-          {
-            "advance_after_actions": 0,
-            "branches": [
-              {
-                "condition": {
-                  "fact_type": "town_transition",
-                  "type": "fact"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "fact_type": "travel_departed",
-                  "type": "fact"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "ops": [
-              {
-                "effect": {
                   "behavior": "watch",
                   "op": "set_behavior",
                   "owner_namespace": "scenario"
@@ -2656,6 +2464,173 @@
                   "op": "set_state",
                   "owner_namespace": "scenario",
                   "state": "stage_mark_resolved"
+                },
+                "family": "scene_ops"
+              }
+            ],
+            "terminal": false
+          },
+          {
+            "advance_after_actions": 0,
+            "branches": [
+              {
+                "condition": {
+                  "fact_type": "town_transition",
+                  "type": "fact"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "fact_type": "travel_departed",
+                  "type": "fact"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "ops": [
+              {
+                "effect": {
+                  "channel": "room",
+                  "message": "The judge card beat moves props and actors for rotate final lineup.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                },
+                "family": "transition_ops"
+              },
+              {
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "rotate_final_lineup",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "rotate_final_lineup"
+                        },
+                        "label": "Rotate Final Lineup",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_kitty_cat_lounge_amateur_night",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_amateur_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Rotate Final Lineup",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_4_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Kitty Cat Lounge Amateur Night: Complete this distinct room operation or take its identity-specific branch.",
+                    "safe_exit": false,
+                    "state_label": "Work 4 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "object": {
+                    "anchor_id": "kitty_amateur_signup",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Rotate Final Lineup",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "actor_ops"
+              },
+              {
+                "effect": {
+                  "op": "hide",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
               }
@@ -2798,12 +2773,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_kitty_cat_lounge_amateur_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_kitty_cat_lounge_amateur_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -2818,7 +2787,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Kitty Cat Lounge Amateur Night clean exit",
@@ -3102,11 +3070,11 @@
       }
     },
     {
-      "authored_signature": "cd1ed2102b91ba816cbbcfda802de49a9544434934714427c2f35dbf05b8dace",
-      "calculated_signature": "cd1ed2102b91ba816cbbcfda802de49a9544434934714427c2f35dbf05b8dace",
+      "authored_signature": "18822281b32eeaf995597c85c820a5b5b7855bb30806c6cdf1db5f196b844551",
+      "calculated_signature": "18822281b32eeaf995597c85c820a5b5b7855bb30806c6cdf1db5f196b844551",
       "id": "kitty_cat_lounge_bachelorette_storm",
       "nearest_id": "punchline_greased_week",
-      "nearest_similarity": 0.417870036101083,
+      "nearest_similarity": 0.37842617152962,
       "signature": {
         "aftermath": [
           {
@@ -3371,7 +3339,7 @@
           "anchors": 2,
           "games": 0,
           "interactions": 0,
-          "routes": 1,
+          "routes": 0,
           "scene_objects": 0,
           "services": 0,
           "zones": 6
@@ -4031,174 +3999,6 @@
             "ops": [
               {
                 "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                },
-                "family": "actor_ops"
-              },
-              {
-                "effect": {
-                  "channel": "room",
-                  "message": "The prop return beat moves props and actors for restore bar route.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                },
-                "family": "transition_ops"
-              },
-              {
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "restore_bar_route",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "restore_bar_route"
-                        },
-                        "label": "Restore Bar Route",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_kitty_cat_lounge_bachelorette_storm",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_kitty_cat_lounge_bachelorette_storm",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave cleanly",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Restore Bar Route",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_4_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Complete this distinct room operation or take its identity-specific branch.",
-                    "safe_exit": false,
-                    "state_label": "Work 4 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
-                  "object": {
-                    "anchor_id": "kitty_storm_prop_trunk",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Restore Bar Route",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "op": "hide",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              }
-            ],
-            "terminal": false
-          },
-          {
-            "advance_after_actions": 0,
-            "branches": [
-              {
-                "condition": {
-                  "fact_type": "heat_band_changed",
-                  "type": "fact"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "fact_type": "travel_departed",
-                  "type": "fact"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "ops": [
-              {
-                "effect": {
                   "channel": "room",
                   "duration_boundaries": 1.0,
                   "message": "The route restore beat moves props and actors for seat orderly finale.",
@@ -4312,6 +4112,173 @@
                   "pose": "finished"
                 },
                 "family": "actor_ops"
+              }
+            ],
+            "terminal": false
+          },
+          {
+            "advance_after_actions": 0,
+            "branches": [
+              {
+                "condition": {
+                  "fact_type": "heat_band_changed",
+                  "type": "fact"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "fact_type": "travel_departed",
+                  "type": "fact"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "ops": [
+              {
+                "effect": {
+                  "channel": "room",
+                  "message": "The prop return beat moves props and actors for restore bar route.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                },
+                "family": "transition_ops"
+              },
+              {
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "restore_bar_route",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "restore_bar_route"
+                        },
+                        "label": "Restore Bar Route",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_kitty_cat_lounge_bachelorette_storm",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_bachelorette_storm",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Restore Bar Route",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_4_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Kitty Cat Lounge Bachelorette Storm: Complete this distinct room operation or take its identity-specific branch.",
+                    "safe_exit": false,
+                    "state_label": "Work 4 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "object": {
+                    "anchor_id": "kitty_storm_prop_trunk",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Restore Bar Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "actor_ops"
+              },
+              {
+                "effect": {
+                  "op": "hide",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
               }
             ],
             "terminal": false
@@ -4452,12 +4419,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_kitty_cat_lounge_bachelorette_storm",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_kitty_cat_lounge_bachelorette_storm",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -4472,7 +4433,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Kitty Cat Lounge Bachelorette Storm clean exit",
@@ -4762,11 +4722,11 @@
       }
     },
     {
-      "authored_signature": "b1a5dea98cc8afdca8fe66a3b1d01da262ba92cee75e74d64aa0ddb064f0f346",
-      "calculated_signature": "b1a5dea98cc8afdca8fe66a3b1d01da262ba92cee75e74d64aa0ddb064f0f346",
+      "authored_signature": "e7d5b66308d642c1520f26fce67b800fed23d84294b7905fc97f14fd7357a527",
+      "calculated_signature": "e7d5b66308d642c1520f26fce67b800fed23d84294b7905fc97f14fd7357a527",
       "id": "kitty_cat_lounge_buyout",
       "nearest_id": "punchline_headliner_night",
-      "nearest_similarity": 0.71046511627907,
+      "nearest_similarity": 0.710433763188746,
       "signature": {
         "aftermath": [
           {
@@ -5017,7 +4977,7 @@
           "anchors": 2,
           "games": 0,
           "interactions": 0,
-          "routes": 1,
+          "routes": 0,
           "scene_objects": 0,
           "services": 0,
           "zones": 6
@@ -5503,174 +5463,6 @@
             "ops": [
               {
                 "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                },
-                "family": "actor_ops"
-              },
-              {
-                "effect": {
-                  "channel": "room",
-                  "message": "The floor split beat moves props and actors for reset entry desk.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                },
-                "family": "transition_ops"
-              },
-              {
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "reset_entry_desk",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "reset_entry_desk"
-                        },
-                        "label": "Reset Entry Desk",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_kitty_cat_lounge_buyout",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_kitty_cat_lounge_buyout",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave cleanly",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Reset Entry Desk",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_4_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Kitty Cat Lounge Buyout: Complete this distinct room operation or take its identity-specific branch.",
-                    "safe_exit": false,
-                    "state_label": "Work 4 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
-                  "object": {
-                    "anchor_id": "kitty_buyout_ropes",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Reset Entry Desk",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "op": "hide",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              }
-            ],
-            "terminal": false
-          },
-          {
-            "advance_after_actions": 0,
-            "branches": [
-              {
-                "condition": {
-                  "fact_type": "service_result",
-                  "type": "fact"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "fact_type": "travel_departed",
-                  "type": "fact"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "ops": [
-              {
-                "effect": {
                   "behavior": "watch",
                   "op": "set_behavior",
                   "owner_namespace": "scenario"
@@ -5780,6 +5572,173 @@
                   "op": "set_state",
                   "owner_namespace": "scenario",
                   "state": "cart_move_resolved"
+                },
+                "family": "scene_ops"
+              }
+            ],
+            "terminal": false
+          },
+          {
+            "advance_after_actions": 0,
+            "branches": [
+              {
+                "condition": {
+                  "fact_type": "service_result",
+                  "type": "fact"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "fact_type": "travel_departed",
+                  "type": "fact"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "ops": [
+              {
+                "effect": {
+                  "channel": "room",
+                  "message": "The floor split beat moves props and actors for reset entry desk.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                },
+                "family": "transition_ops"
+              },
+              {
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "reset_entry_desk",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "reset_entry_desk"
+                        },
+                        "label": "Reset Entry Desk",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_kitty_cat_lounge_buyout",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_kitty_cat_lounge_buyout",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Reset Entry Desk",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_4_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Kitty Cat Lounge Buyout: Complete this distinct room operation or take its identity-specific branch.",
+                    "safe_exit": false,
+                    "state_label": "Work 4 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "object": {
+                    "anchor_id": "kitty_buyout_ropes",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reset Entry Desk",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "actor_ops"
+              },
+              {
+                "effect": {
+                  "op": "hide",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
               }
@@ -5922,12 +5881,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_kitty_cat_lounge_buyout",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_kitty_cat_lounge_buyout",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -5942,7 +5895,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Kitty Cat Lounge Buyout clean exit",
@@ -6226,11 +6178,11 @@
       }
     },
     {
-      "authored_signature": "ced71cf753cec5b1d2b578b3321d38562ecfdda81750eba2c85cdc78d8710216",
-      "calculated_signature": "ced71cf753cec5b1d2b578b3321d38562ecfdda81750eba2c85cdc78d8710216",
+      "authored_signature": "75dbb80a6dc37143045e8f66caaf21179595a752cd055b6e5b0e2ff5701f1d5e",
+      "calculated_signature": "75dbb80a6dc37143045e8f66caaf21179595a752cd055b6e5b0e2ff5701f1d5e",
       "id": "kitty_cat_lounge_slow_night",
       "nearest_id": "punchline_debt_court",
-      "nearest_similarity": 0.600750938673342,
+      "nearest_similarity": 0.600252206809584,
       "signature": {
         "aftermath": [
           {
@@ -6467,7 +6419,7 @@
           "anchors": 2,
           "games": 0,
           "interactions": 0,
-          "routes": 1,
+          "routes": 0,
           "scene_objects": 0,
           "services": 0,
           "zones": 6
@@ -7200,12 +7152,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_kitty_cat_lounge_slow_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_kitty_cat_lounge_slow_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -7220,7 +7166,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Kitty Cat Lounge Slow Night clean exit",
@@ -7498,11 +7443,11 @@
       }
     },
     {
-      "authored_signature": "d35057e3198a60c9d789518d27e879455ff4a820bb6e4becf02c25ab8bc15efa",
-      "calculated_signature": "d35057e3198a60c9d789518d27e879455ff4a820bb6e4becf02c25ab8bc15efa",
+      "authored_signature": "f530c423e565f2c1d4b3c5368692f37a4b2a53a3b33d27fe219abd9e91041775",
+      "calculated_signature": "f530c423e565f2c1d4b3c5368692f37a4b2a53a3b33d27fe219abd9e91041775",
       "id": "punchline_bringer_show",
       "nearest_id": "punchline_open_mic_night",
-      "nearest_similarity": 0.602002503128911,
+      "nearest_similarity": 0.601513240857503,
       "signature": {
         "aftermath": [
           {
@@ -7739,7 +7684,7 @@
           "anchors": 3,
           "games": 0,
           "interactions": 0,
-          "routes": 1,
+          "routes": 0,
           "scene_objects": 0,
           "services": 0,
           "zones": 6
@@ -8472,12 +8417,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_bringer_show",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_bringer_show",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -8492,7 +8431,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline Bringer Show clean exit",
@@ -8771,11 +8709,11 @@
       }
     },
     {
-      "authored_signature": "7b677c0841e8890dd469b25201701f0da4936fb88ef51c4801bab05cd083afb8",
-      "calculated_signature": "7b677c0841e8890dd469b25201701f0da4936fb88ef51c4801bab05cd083afb8",
+      "authored_signature": "6261a37b9d18bf7c178f034e092d0fcb452b167d8a1fe7728e3853273cb99de0",
+      "calculated_signature": "6261a37b9d18bf7c178f034e092d0fcb452b167d8a1fe7728e3853273cb99de0",
       "id": "punchline_debt_court",
       "nearest_id": "punchline_high_stakes_night",
-      "nearest_similarity": 0.647361647361647,
+      "nearest_similarity": 0.647211413748379,
       "signature": {
         "aftermath": [
           {
@@ -9012,7 +8950,7 @@
           "anchors": 3,
           "games": 0,
           "interactions": 0,
-          "routes": 1,
+          "routes": 0,
           "scene_objects": 0,
           "services": 0,
           "zones": 6
@@ -9745,12 +9683,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_debt_court",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_debt_court",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -9765,7 +9697,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline Debt Court clean exit",
@@ -10044,11 +9975,11 @@
       }
     },
     {
-      "authored_signature": "50dcf3d12848a592d9bcf082ac17853a8ce40b81d293bd58a431c5a430d84306",
-      "calculated_signature": "50dcf3d12848a592d9bcf082ac17853a8ce40b81d293bd58a431c5a430d84306",
+      "authored_signature": "cd0add3ebff0725b856342265670f2c9b61b01a8faa803f48508a7cb60116b9a",
+      "calculated_signature": "cd0add3ebff0725b856342265670f2c9b61b01a8faa803f48508a7cb60116b9a",
       "id": "punchline_greased_week",
       "nearest_id": "punchline_headliner_night",
-      "nearest_similarity": 0.690011481056257,
+      "nearest_similarity": 0.689814814814815,
       "signature": {
         "aftermath": [
           {
@@ -10299,7 +10230,7 @@
           "anchors": 3,
           "games": 0,
           "interactions": 0,
-          "routes": 1,
+          "routes": 0,
           "scene_objects": 0,
           "services": 0,
           "zones": 6
@@ -10785,174 +10716,6 @@
             "ops": [
               {
                 "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                },
-                "family": "actor_ops"
-              },
-              {
-                "effect": {
-                  "channel": "room",
-                  "message": "The service unseal beat moves props and actors for post route record.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                },
-                "family": "transition_ops"
-              },
-              {
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "post_route_record",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "post_route_record"
-                        },
-                        "label": "Post Route Record",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_punchline_greased_week",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_punchline_greased_week",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave cleanly",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Post Route Record",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_4_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Punchline Greased Week: Complete this distinct room operation or take its identity-specific branch.",
-                    "safe_exit": false,
-                    "state_label": "Work 4 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
-                  "object": {
-                    "anchor_id": "punchline_greased_inspection_seals",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Post Route Record",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "op": "hide",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              }
-            ],
-            "terminal": false
-          },
-          {
-            "advance_after_actions": 0,
-            "branches": [
-              {
-                "condition": {
-                  "fact_type": "heat_changed",
-                  "type": "fact"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "fact_type": "travel_departed",
-                  "type": "fact"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "ops": [
-              {
-                "effect": {
                   "behavior": "watch",
                   "op": "set_behavior",
                   "owner_namespace": "scenario"
@@ -11073,6 +10836,173 @@
             "branches": [
               {
                 "condition": {
+                  "fact_type": "heat_changed",
+                  "type": "fact"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "fact_type": "travel_departed",
+                  "type": "fact"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "ops": [
+              {
+                "effect": {
+                  "channel": "room",
+                  "message": "The service unseal beat moves props and actors for post route record.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                },
+                "family": "transition_ops"
+              },
+              {
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "post_route_record",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "post_route_record"
+                        },
+                        "label": "Post Route Record",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_punchline_greased_week",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_greased_week",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Post Route Record",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_4_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Punchline Greased Week: Complete this distinct room operation or take its identity-specific branch.",
+                    "safe_exit": false,
+                    "state_label": "Work 4 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "object": {
+                    "anchor_id": "punchline_greased_inspection_seals",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Post Route Record",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "actor_ops"
+              },
+              {
+                "effect": {
+                  "op": "hide",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              }
+            ],
+            "terminal": false
+          },
+          {
+            "advance_after_actions": 0,
+            "branches": [
+              {
+                "condition": {
                   "fact_type": "travel_departed",
                   "type": "fact"
                 },
@@ -11115,7 +11045,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_inspector",
-                    "behavior": "patrol",
+                    "behavior": "watch",
                     "label": "Moving inspector",
                     "pose": "arrival",
                     "zone_id": "left"
@@ -11204,12 +11134,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_greased_week",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_greased_week",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -11224,7 +11148,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline Greased Week clean exit",
@@ -11509,11 +11432,11 @@
       }
     },
     {
-      "authored_signature": "a02c897d8f0546342a58dbd054c2a2d66cb7b2ecf8a3661a6aa087cb812f5bda",
-      "calculated_signature": "a02c897d8f0546342a58dbd054c2a2d66cb7b2ecf8a3661a6aa087cb812f5bda",
+      "authored_signature": "b6694fda6a47aa97e0c4ddef4aa6122f580e1af7c4fb7da1d2d8312dae61eedc",
+      "calculated_signature": "b6694fda6a47aa97e0c4ddef4aa6122f580e1af7c4fb7da1d2d8312dae61eedc",
       "id": "punchline_headliner_night",
       "nearest_id": "kitty_cat_lounge_buyout",
-      "nearest_similarity": 0.71046511627907,
+      "nearest_similarity": 0.710433763188746,
       "signature": {
         "aftermath": [
           {
@@ -11764,7 +11687,7 @@
           "anchors": 2,
           "games": 0,
           "interactions": 0,
-          "routes": 1,
+          "routes": 0,
           "scene_objects": 0,
           "services": 0,
           "zones": 6
@@ -12250,174 +12173,6 @@
             "ops": [
               {
                 "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                },
-                "family": "actor_ops"
-              },
-              {
-                "effect": {
-                  "channel": "room",
-                  "message": "The headliner move beat moves props and actors for reset service rope.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                },
-                "family": "transition_ops"
-              },
-              {
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "reset_service_rope",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "reset_service_rope"
-                        },
-                        "label": "Reset Service Rope",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_punchline_headliner_night",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_punchline_headliner_night",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave cleanly",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Reset Service Rope",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_4_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Punchline Headliner Night: Complete this distinct room operation or take its identity-specific branch.",
-                    "safe_exit": false,
-                    "state_label": "Work 4 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
-                  "object": {
-                    "anchor_id": "punchline_headliner_credential_rope",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Reset Service Rope",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "op": "hide",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              }
-            ],
-            "terminal": false
-          },
-          {
-            "advance_after_actions": 0,
-            "branches": [
-              {
-                "condition": {
-                  "fact_type": "service_result",
-                  "type": "fact"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "fact_type": "travel_departed",
-                  "type": "fact"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "ops": [
-              {
-                "effect": {
                   "behavior": "watch",
                   "op": "set_behavior",
                   "owner_namespace": "scenario"
@@ -12527,6 +12282,173 @@
                   "op": "set_state",
                   "owner_namespace": "scenario",
                   "state": "door_release_resolved"
+                },
+                "family": "scene_ops"
+              }
+            ],
+            "terminal": false
+          },
+          {
+            "advance_after_actions": 0,
+            "branches": [
+              {
+                "condition": {
+                  "fact_type": "service_result",
+                  "type": "fact"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "fact_type": "travel_departed",
+                  "type": "fact"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "ops": [
+              {
+                "effect": {
+                  "channel": "room",
+                  "message": "The headliner move beat moves props and actors for reset service rope.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                },
+                "family": "transition_ops"
+              },
+              {
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "reset_service_rope",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "reset_service_rope"
+                        },
+                        "label": "Reset Service Rope",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_punchline_headliner_night",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_headliner_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Reset Service Rope",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_4_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Punchline Headliner Night: Complete this distinct room operation or take its identity-specific branch.",
+                    "safe_exit": false,
+                    "state_label": "Work 4 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "object": {
+                    "anchor_id": "punchline_headliner_credential_rope",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reset Service Rope",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "actor_ops"
+              },
+              {
+                "effect": {
+                  "op": "hide",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
               }
@@ -12669,12 +12591,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_headliner_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_headliner_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -12689,7 +12605,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline Headliner Night clean exit",
@@ -12974,11 +12889,11 @@
       }
     },
     {
-      "authored_signature": "b5393262be223bc1c627736cd472e7474d148ade52d84833f9492df2a9e3cf7b",
-      "calculated_signature": "b5393262be223bc1c627736cd472e7474d148ade52d84833f9492df2a9e3cf7b",
+      "authored_signature": "6cf8e8edb7b68146f219ccde0a65c787ebfba0303677ea45da897b82f4d9df78",
+      "calculated_signature": "6cf8e8edb7b68146f219ccde0a65c787ebfba0303677ea45da897b82f4d9df78",
       "id": "punchline_high_stakes_night",
       "nearest_id": "punchline_debt_court",
-      "nearest_similarity": 0.647361647361647,
+      "nearest_similarity": 0.647211413748379,
       "signature": {
         "aftermath": [
           {
@@ -13215,7 +13130,7 @@
           "anchors": 3,
           "games": 0,
           "interactions": 0,
-          "routes": 1,
+          "routes": 0,
           "scene_objects": 0,
           "services": 0,
           "zones": 6
@@ -13948,12 +13863,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_high_stakes_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_high_stakes_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -13968,7 +13877,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline High Stakes Night clean exit",
@@ -14247,11 +14155,11 @@
       }
     },
     {
-      "authored_signature": "3f782f7519f598da8c46060dc7d00b0af2f7700cd8cc9a7ac75280aa2625b1f2",
-      "calculated_signature": "3f782f7519f598da8c46060dc7d00b0af2f7700cd8cc9a7ac75280aa2625b1f2",
+      "authored_signature": "4929180917ed12a8f075286e48ae70de9a8a606ae0027d89c4c8143defa232d6",
+      "calculated_signature": "4929180917ed12a8f075286e48ae70de9a8a606ae0027d89c4c8143defa232d6",
       "id": "punchline_new_muscle",
       "nearest_id": "kitty_cat_lounge_amateur_night",
-      "nearest_similarity": 0.625414364640884,
+      "nearest_similarity": 0.626532887402453,
       "signature": {
         "aftermath": [
           {
@@ -14502,7 +14410,7 @@
           "anchors": 3,
           "games": 0,
           "interactions": 0,
-          "routes": 1,
+          "routes": 0,
           "scene_objects": 0,
           "services": 0,
           "zones": 6
@@ -14941,174 +14849,6 @@
             "ops": [
               {
                 "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                },
-                "family": "actor_ops"
-              },
-              {
-                "effect": {
-                  "channel": "room",
-                  "message": "The post rotate beat moves props and actors for open clean route.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                },
-                "family": "transition_ops"
-              },
-              {
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "open_clean_route",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "open_clean_route"
-                        },
-                        "label": "Open Clean Route",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_punchline_new_muscle",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_punchline_new_muscle",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave cleanly",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Open Clean Route",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_4_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Punchline New Muscle: Complete this distinct room operation or take its identity-specific branch.",
-                    "safe_exit": false,
-                    "state_label": "Work 4 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
-                  "object": {
-                    "anchor_id": "punchline_new_muscle_inspection_tray",
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Open Clean Route",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "op": "hide",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              }
-            ],
-            "terminal": false
-          },
-          {
-            "advance_after_actions": 0,
-            "branches": [
-              {
-                "condition": {
-                  "fact_type": "crew_changed",
-                  "type": "fact"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "fact_type": "travel_departed",
-                  "type": "fact"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "ops": [
-              {
-                "effect": {
                   "behavior": "watch",
                   "op": "set_behavior",
                   "owner_namespace": "scenario"
@@ -15229,6 +14969,173 @@
             "branches": [
               {
                 "condition": {
+                  "fact_type": "crew_changed",
+                  "type": "fact"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "fact_type": "travel_departed",
+                  "type": "fact"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "ops": [
+              {
+                "effect": {
+                  "channel": "room",
+                  "message": "The post rotate beat moves props and actors for open clean route.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                },
+                "family": "transition_ops"
+              },
+              {
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "open_clean_route",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "open_clean_route"
+                        },
+                        "label": "Open Clean Route",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_punchline_new_muscle",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_punchline_new_muscle",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave cleanly",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Open Clean Route",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_4_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Punchline New Muscle: Complete this distinct room operation or take its identity-specific branch.",
+                    "safe_exit": false,
+                    "state_label": "Work 4 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "object": {
+                    "anchor_id": "punchline_new_muscle_inspection_tray",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Open Clean Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "actor_ops"
+              },
+              {
+                "effect": {
+                  "op": "hide",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              }
+            ],
+            "terminal": false
+          },
+          {
+            "advance_after_actions": 0,
+            "branches": [
+              {
+                "condition": {
                   "fact_type": "travel_departed",
                   "type": "fact"
                 },
@@ -15298,7 +15205,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_checkpoint_rover",
-                    "behavior": "patrol",
+                    "behavior": "watch",
                     "label": "Checkpoint rover",
                     "pose": "arrival",
                     "zone_id": "left"
@@ -15407,12 +15314,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_new_muscle",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_new_muscle",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -15427,7 +15328,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline New Muscle clean exit",
@@ -15712,11 +15612,11 @@
       }
     },
     {
-      "authored_signature": "4bbc0a7743d9c62610c49831b31542d707d189feaf3fbf05451cb385c5ccf3de",
-      "calculated_signature": "4bbc0a7743d9c62610c49831b31542d707d189feaf3fbf05451cb385c5ccf3de",
+      "authored_signature": "404b50592c1be8483b4adb323d83aba5f7f213491e689ecfbda2f40cf5fb38aa",
+      "calculated_signature": "404b50592c1be8483b4adb323d83aba5f7f213491e689ecfbda2f40cf5fb38aa",
       "id": "punchline_open_mic_night",
       "nearest_id": "punchline_bringer_show",
-      "nearest_similarity": 0.602002503128911,
+      "nearest_similarity": 0.601513240857503,
       "signature": {
         "aftermath": [
           {
@@ -15953,7 +15853,7 @@
           "anchors": 3,
           "games": 0,
           "interactions": 0,
-          "routes": 1,
+          "routes": 0,
           "scene_objects": 0,
           "services": 0,
           "zones": 6
@@ -16686,12 +16586,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_open_mic_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_open_mic_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -16706,7 +16600,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline Open Mic Night clean exit",
@@ -16985,11 +16878,11 @@
       }
     },
     {
-      "authored_signature": "484c2bfd3ec38163b8818bb81087eadba2202bb5bfa449c2dd37e17ca5ecd83d",
-      "calculated_signature": "484c2bfd3ec38163b8818bb81087eadba2202bb5bfa449c2dd37e17ca5ecd83d",
+      "authored_signature": "d5eb2532fe79cffcf5db870a8df75c15fcfad6963d96c34b656cf76b23185e20",
+      "calculated_signature": "d5eb2532fe79cffcf5db870a8df75c15fcfad6963d96c34b656cf76b23185e20",
       "id": "punchline_raid_jitters",
       "nearest_id": "punchline_new_muscle",
-      "nearest_similarity": 0.51440329218107,
+      "nearest_similarity": 0.522419186652763,
       "signature": {
         "aftermath": [
           {
@@ -17240,7 +17133,7 @@
           "anchors": 3,
           "games": 0,
           "interactions": 0,
-          "routes": 1,
+          "routes": 0,
           "scene_objects": 0,
           "services": 0,
           "zones": 6
@@ -17896,14 +17789,6 @@
             "ops": [
               {
                 "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                },
-                "family": "actor_ops"
-              },
-              {
-                "effect": {
                   "channel": "room",
                   "message": "The lookout turn beat moves props and actors for reopen safe floor.",
                   "op": "feedback",
@@ -17984,6 +17869,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "actor_ops"
               },
               {
                 "effect": {
@@ -18145,12 +18037,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_raid_jitters",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_raid_jitters",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -18165,7 +18051,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline Raid Jitters clean exit",

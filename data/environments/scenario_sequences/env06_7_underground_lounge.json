@@ -29,8 +29,7 @@
           "manage_open_mic_bill",
           "support_waiting_comic",
           "sabotage_open_mic",
-          "refuse_punchline_open_mic_night",
-          "ignore_punchline_open_mic_night"
+          "refuse_punchline_open_mic_night"
         ],
         "references": {
           "objects": [
@@ -329,9 +328,7 @@
           ],
           "games": [],
           "interactions": [],
-          "routes": [
-            "base::layer:casino"
-          ],
+          "routes": [],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -529,12 +526,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_open_mic_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_open_mic_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -549,7 +540,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline Open Mic Night clean exit",
@@ -1476,7 +1466,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4bbc0a7743d9c62610c49831b31542d707d189feaf3fbf05451cb385c5ccf3de"
+        "sequence_signature": "404b50592c1be8483b4adb323d83aba5f7f213491e689ecfbda2f40cf5fb38aa"
       }
     },
     {
@@ -1506,8 +1496,7 @@
           "honor_headliner_route",
           "escort_headliner_direct",
           "divert_headliner_runner",
-          "refuse_punchline_headliner_night",
-          "ignore_punchline_headliner_night"
+          "refuse_punchline_headliner_night"
         ],
         "references": {
           "objects": [
@@ -1819,9 +1808,7 @@
           ],
           "games": [],
           "interactions": [],
-          "routes": [
-            "base::layer:casino"
-          ],
+          "routes": [],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -1992,12 +1979,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_headliner_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_headliner_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -2012,7 +1993,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline Headliner Night clean exit",
@@ -2835,11 +2815,10 @@
             {
               "actor_ops": [
                 {
-                  "behavior": "depart",
                   "family": "actor_ops",
-                  "op": "set_behavior",
+                  "op": "despawn",
                   "owner_namespace": "scenario",
-                  "receipt_id": "punchline_headliner_night_headliner_move_depart",
+                  "receipt_id": "punchline_headliner_night_headliner_move_despawn",
                   "stable_object_id": "punchline_headliner_night_door_guard"
                 }
               ],
@@ -3162,7 +3141,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a02c897d8f0546342a58dbd054c2a2d66cb7b2ecf8a3661a6aa087cb812f5bda"
+        "sequence_signature": "b6694fda6a47aa97e0c4ddef4aa6122f580e1af7c4fb7da1d2d8312dae61eedc"
       }
     },
     {
@@ -3191,8 +3170,7 @@
           "seat_bringer_supporters",
           "defend_bringer_minimum",
           "accept_hostile_pitch",
-          "refuse_punchline_bringer_show",
-          "ignore_punchline_bringer_show"
+          "refuse_punchline_bringer_show"
         ],
         "references": {
           "objects": [
@@ -3491,9 +3469,7 @@
           ],
           "games": [],
           "interactions": [],
-          "routes": [
-            "base::layer:casino"
-          ],
+          "routes": [],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -3658,12 +3634,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_bringer_show",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_bringer_show",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -3678,7 +3648,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline Bringer Show clean exit",
@@ -4638,7 +4607,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d35057e3198a60c9d789518d27e879455ff4a820bb6e4becf02c25ab8bc15efa"
+        "sequence_signature": "f530c423e565f2c1d4b3c5368692f37a4b2a53a3b33d27fe219abd9e91041775"
       }
     },
     {
@@ -4667,8 +4636,7 @@
           "serve_protected_table",
           "open_public_observer_rail",
           "seal_public_game_lane",
-          "refuse_punchline_high_stakes_night",
-          "ignore_punchline_high_stakes_night"
+          "refuse_punchline_high_stakes_night"
         ],
         "references": {
           "objects": [
@@ -4967,9 +4935,7 @@
           ],
           "games": [],
           "interactions": [],
-          "routes": [
-            "base::layer:casino"
-          ],
+          "routes": [],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -5140,12 +5106,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_high_stakes_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_high_stakes_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -5160,7 +5120,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline High Stakes Night clean exit",
@@ -6132,7 +6091,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b5393262be223bc1c627736cd472e7474d148ade52d84833f9492df2a9e3cf7b"
+        "sequence_signature": "6cf8e8edb7b68146f219ccde0a65c787ebfba0303677ea45da897b82f4d9df78"
       }
     },
     {
@@ -6162,8 +6121,7 @@
           "expose_payoff_chain",
           "maintain_payoff_route",
           "redirect_inspector_route",
-          "refuse_punchline_greased_week",
-          "ignore_punchline_greased_week"
+          "refuse_punchline_greased_week"
         ],
         "references": {
           "objects": [
@@ -6476,9 +6434,7 @@
           ],
           "games": [],
           "interactions": [],
-          "routes": [
-            "base::layer:casino"
-          ],
+          "routes": [],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -6565,7 +6521,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_inspector",
-                    "behavior": "patrol",
+                    "behavior": "watch",
                     "label": "Moving inspector",
                     "pose": "arrival",
                     "zone_id": "left"
@@ -6649,12 +6605,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_greased_week",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_greased_week",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -6669,7 +6619,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline Greased Week clean exit",
@@ -7492,11 +7441,10 @@
             {
               "actor_ops": [
                 {
-                  "behavior": "depart",
                   "family": "actor_ops",
-                  "op": "set_behavior",
+                  "op": "despawn",
                   "owner_namespace": "scenario",
-                  "receipt_id": "punchline_greased_week_service_unseal_depart",
+                  "receipt_id": "punchline_greased_week_service_unseal_despawn",
                   "stable_object_id": "punchline_greased_week_payoff_runner"
                 }
               ],
@@ -7819,7 +7767,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "50dcf3d12848a592d9bcf082ac17853a8ce40b81d293bd58a431c5a430d84306"
+        "sequence_signature": "cd0add3ebff0725b856342265670f2c9b61b01a8faa803f48508a7cb60116b9a"
       }
     },
     {
@@ -7848,8 +7796,7 @@
           "uphold_debt_ruling",
           "contest_debt_ruling",
           "adjourn_debt_court",
-          "refuse_punchline_debt_court",
-          "ignore_punchline_debt_court"
+          "refuse_punchline_debt_court"
         ],
         "references": {
           "objects": [
@@ -8148,9 +8095,7 @@
           ],
           "games": [],
           "interactions": [],
-          "routes": [
-            "base::layer:casino"
-          ],
+          "routes": [],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -8321,12 +8266,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_debt_court",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_debt_court",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -8341,7 +8280,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline Debt Court clean exit",
@@ -9313,7 +9251,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "7b677c0841e8890dd469b25201701f0da4936fb88ef51c4801bab05cd083afb8"
+        "sequence_signature": "6261a37b9d18bf7c178f034e092d0fcb452b167d8a1fe7728e3853273cb99de0"
       }
     },
     {
@@ -9343,8 +9281,7 @@
           "train_new_guard_posts",
           "test_guard_loyalty",
           "entrench_checkpoint_posts",
-          "refuse_punchline_new_muscle",
-          "ignore_punchline_new_muscle"
+          "refuse_punchline_new_muscle"
         ],
         "references": {
           "objects": [
@@ -9657,9 +9594,7 @@
           ],
           "games": [],
           "interactions": [],
-          "routes": [
-            "base::layer:casino"
-          ],
+          "routes": [],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -9760,7 +9695,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_checkpoint_rover",
-                    "behavior": "patrol",
+                    "behavior": "watch",
                     "label": "Checkpoint rover",
                     "pose": "arrival",
                     "zone_id": "left"
@@ -9863,12 +9798,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_new_muscle",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_new_muscle",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -9883,7 +9812,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline New Muscle clean exit",
@@ -10673,11 +10601,10 @@
             {
               "actor_ops": [
                 {
-                  "behavior": "depart",
                   "family": "actor_ops",
-                  "op": "set_behavior",
+                  "op": "despawn",
                   "owner_namespace": "scenario",
-                  "receipt_id": "punchline_new_muscle_post_rotate_depart",
+                  "receipt_id": "punchline_new_muscle_post_rotate_despawn",
                   "stable_object_id": "punchline_new_muscle_checkpoint_rover"
                 }
               ],
@@ -11000,7 +10927,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3f782f7519f598da8c46060dc7d00b0af2f7700cd8cc9a7ac75280aa2625b1f2"
+        "sequence_signature": "4929180917ed12a8f075286e48ae70de9a8a606ae0027d89c4c8143defa232d6"
       }
     },
     {
@@ -11030,8 +10957,7 @@
           "hide_raid_evidence",
           "abort_raid_night",
           "reopen_after_false_alarm",
-          "refuse_punchline_raid_jitters",
-          "ignore_punchline_raid_jitters"
+          "refuse_punchline_raid_jitters"
         ],
         "references": {
           "objects": [
@@ -11344,9 +11270,7 @@
           ],
           "games": [],
           "interactions": [],
-          "routes": [
-            "base::layer:casino"
-          ],
+          "routes": [],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -11517,12 +11441,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_punchline_raid_jitters",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_punchline_raid_jitters",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -11537,7 +11455,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Punchline Raid Jitters clean exit",
@@ -12360,11 +12277,10 @@
             {
               "actor_ops": [
                 {
-                  "behavior": "depart",
                   "family": "actor_ops",
-                  "op": "set_behavior",
+                  "op": "despawn",
                   "owner_namespace": "scenario",
-                  "receipt_id": "punchline_raid_jitters_lookout_turn_depart",
+                  "receipt_id": "punchline_raid_jitters_lookout_turn_despawn",
                   "stable_object_id": "punchline_raid_jitters_reopen_steward"
                 }
               ],
@@ -12687,7 +12603,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "484c2bfd3ec38163b8818bb81087eadba2202bb5bfa449c2dd37e17ca5ecd83d"
+        "sequence_signature": "d5eb2532fe79cffcf5db870a8df75c15fcfad6963d96c34b656cf76b23185e20"
       }
     },
     {
@@ -12717,8 +12633,7 @@
           "judge_amateur_bracket",
           "reseed_amateur_lineup",
           "stall_amateur_bracket",
-          "refuse_kitty_cat_lounge_amateur_night",
-          "ignore_kitty_cat_lounge_amateur_night"
+          "refuse_kitty_cat_lounge_amateur_night"
         ],
         "references": {
           "objects": [
@@ -13030,9 +12945,7 @@
           ],
           "games": [],
           "interactions": [],
-          "routes": [
-            "base::world:bar"
-          ],
+          "routes": [],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -13203,12 +13116,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_kitty_cat_lounge_amateur_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_kitty_cat_lounge_amateur_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -13223,7 +13130,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Kitty Cat Lounge Amateur Night clean exit",
@@ -14045,11 +13951,10 @@
             {
               "actor_ops": [
                 {
-                  "behavior": "depart",
                   "family": "actor_ops",
-                  "op": "set_behavior",
+                  "op": "despawn",
                   "owner_namespace": "scenario",
-                  "receipt_id": "kitty_cat_lounge_amateur_night_judge_card_depart",
+                  "receipt_id": "kitty_cat_lounge_amateur_night_judge_card_despawn",
                   "stable_object_id": "kitty_cat_lounge_amateur_night_amateur_judge"
                 }
               ],
@@ -14372,7 +14277,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d0013c662930b69e2fe02f0f8166fcd8e53ecd8974bb91bebef2f8765e9d45a6"
+        "sequence_signature": "63457594e9c55ff62adc8060642d3b3c1c741ce2a349f6703a7e8092a87d2eea"
       }
     },
     {
@@ -14402,8 +14307,7 @@
           "split_buyout_floor",
           "claim_full_buyout",
           "preserve_public_half",
-          "refuse_kitty_cat_lounge_buyout",
-          "ignore_kitty_cat_lounge_buyout"
+          "refuse_kitty_cat_lounge_buyout"
         ],
         "references": {
           "objects": [
@@ -14715,9 +14619,7 @@
           ],
           "games": [],
           "interactions": [],
-          "routes": [
-            "base::world:bar"
-          ],
+          "routes": [],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -14888,12 +14790,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_kitty_cat_lounge_buyout",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_kitty_cat_lounge_buyout",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -14908,7 +14804,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Kitty Cat Lounge Buyout clean exit",
@@ -15730,11 +15625,10 @@
             {
               "actor_ops": [
                 {
-                  "behavior": "depart",
                   "family": "actor_ops",
-                  "op": "set_behavior",
+                  "op": "despawn",
                   "owner_namespace": "scenario",
-                  "receipt_id": "kitty_cat_lounge_buyout_floor_split_depart",
+                  "receipt_id": "kitty_cat_lounge_buyout_floor_split_despawn",
                   "stable_object_id": "kitty_cat_lounge_buyout_public_floor_steward"
                 }
               ],
@@ -16057,7 +15951,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b1a5dea98cc8afdca8fe66a3b1d01da262ba92cee75e74d64aa0ddb064f0f346"
+        "sequence_signature": "e7d5b66308d642c1520f26fce67b800fed23d84294b7905fc97f14fd7357a527"
       }
     },
     {
@@ -16086,8 +15980,7 @@
           "reactivate_mini_stage",
           "maintain_conversation_booth",
           "close_wrong_lounge_zone",
-          "refuse_kitty_cat_lounge_slow_night",
-          "ignore_kitty_cat_lounge_slow_night"
+          "refuse_kitty_cat_lounge_slow_night"
         ],
         "references": {
           "objects": [
@@ -16385,9 +16278,7 @@
           ],
           "games": [],
           "interactions": [],
-          "routes": [
-            "base::world:gas_station_casino"
-          ],
+          "routes": [],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -16585,12 +16476,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_kitty_cat_lounge_slow_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_kitty_cat_lounge_slow_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -16605,7 +16490,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Kitty Cat Lounge Slow Night clean exit",
@@ -17531,7 +17415,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ced71cf753cec5b1d2b578b3321d38562ecfdda81750eba2c85cdc78d8710216"
+        "sequence_signature": "75dbb80a6dc37143045e8f66caaf21179595a752cd055b6e5b0e2ff5701f1d5e"
       }
     },
     {
@@ -17562,8 +17446,7 @@
           "rescue_missing_guest",
           "commandeer_lounge_stage",
           "evacuate_party_groups",
-          "refuse_kitty_cat_lounge_bachelorette_storm",
-          "ignore_kitty_cat_lounge_bachelorette_storm"
+          "refuse_kitty_cat_lounge_bachelorette_storm"
         ],
         "references": {
           "objects": [
@@ -17889,9 +17772,7 @@
           ],
           "games": [],
           "interactions": [],
-          "routes": [
-            "base::world:gas_station_casino"
-          ],
+          "routes": [],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -18068,12 +17949,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_kitty_cat_lounge_bachelorette_storm",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_kitty_cat_lounge_bachelorette_storm",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -18088,7 +17963,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Kitty Cat Lounge Bachelorette Storm clean exit",
@@ -18910,11 +18784,10 @@
             {
               "actor_ops": [
                 {
-                  "behavior": "depart",
                   "family": "actor_ops",
-                  "op": "set_behavior",
+                  "op": "despawn",
                   "owner_namespace": "scenario",
-                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_prop_return_depart",
+                  "receipt_id": "kitty_cat_lounge_bachelorette_storm_prop_return_despawn",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_floor_recovery_host"
                 }
               ],
@@ -19431,7 +19304,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "cd1ed2102b91ba816cbbcfda802de49a9544434934714427c2f35dbf05b8dace"
+        "sequence_signature": "18822281b32eeaf995597c85c820a5b5b7855bb30806c6cdf1db5f196b844551"
       }
     }
   ],

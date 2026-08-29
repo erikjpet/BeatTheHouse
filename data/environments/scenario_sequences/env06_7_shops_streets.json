@@ -1106,7 +1106,6 @@
                   "actor_id": "ada_corner_merchant",
                   "anchor_id": "delivery_clerk_work",
                   "behavior": "work",
-                  "route_id": "delivery_clerk",
                   "pose": "relieved"
                 }
               }
@@ -1243,7 +1242,6 @@
                   "actor_id": "ada_corner_merchant",
                   "anchor_id": "delivery_clerk_work",
                   "behavior": "watch",
-                  "route_id": "delivery_clerk",
                   "pose": "watching_return"
                 }
               }
@@ -1338,7 +1336,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "ae80c61659bbfe202b095595de7fc44392f47b9fee9526e83231e4ab7b96cb8a",
+        "sequence_signature": "3788e6d07e63c6c9838538b1cb5626892daef372560a3589e4204edd301f0b77",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1348,9 +1346,6 @@
           "actors": [],
           "services": [],
           "games": [],
-          "routes": [
-            "base::world:bar"
-          ],
           "anchors": [
             "base::anchor:delivery_clerk",
             "base::anchor:delivery_clerk_work",
@@ -2136,6 +2131,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "corner_store_lotto_fever_leave_safely_arrival",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -2231,10 +2234,15 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "handler": "set_local",
                         "id": "leave_safely",
                         "input_action": "ui_focus_next",
+                        "inputs": {
+                          "key": "path",
+                          "value": "refused"
+                        },
                         "label": "Leave safely",
-                        "non_color_state": "exit"
+                        "non_color_state": "leave_safely"
                       }
                     ],
                     "disabled_reason": "",
@@ -2375,6 +2383,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "corner_store_lotto_fever_leave_safely_work",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -2395,6 +2411,13 @@
               "exit_prompt": "The marked exit remains clear during the second step.",
               "id": "work",
               "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_lotto_fever_work_remove_queue_rail",
+                  "stable_object_id": "queue_rail"
+                },
                 {
                   "family": "interaction_ops",
                   "interaction": {
@@ -2572,7 +2595,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "276dd9f6eb157f5c6b9f2a6756b7ce89427450bd9744710b3a1b6e21775e9879"
+        "sequence_signature": "59612ad82f564a3416502c2075c5700d9682dc772b7b0944654ad77397cb3355"
       }
     },
     {
@@ -3116,6 +3139,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "corner_store_aftermath_leave_safely_arrival",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -3211,10 +3242,15 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "handler": "set_local",
                         "id": "leave_safely",
                         "input_action": "ui_focus_next",
+                        "inputs": {
+                          "key": "path",
+                          "value": "refused"
+                        },
                         "label": "Leave safely",
-                        "non_color_state": "exit"
+                        "non_color_state": "leave_safely"
                       }
                     ],
                     "disabled_reason": "",
@@ -3355,6 +3391,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "corner_store_aftermath_leave_safely_work",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -3375,6 +3419,13 @@
               "exit_prompt": "The marked exit remains clear during the second step.",
               "id": "work",
               "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_aftermath_work_remove_boarded_glass",
+                  "stable_object_id": "boarded_glass"
+                },
                 {
                   "family": "interaction_ops",
                   "interaction": {
@@ -3552,7 +3603,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0b785a89646840a05382cab405044c7089888aa187b8208a89539276d3ed7420"
+        "sequence_signature": "2e0ef69c6428a619fbfb30ac305af147df6423ba7f14b7ae12719ff78f658d7b"
       }
     },
     {
@@ -4098,6 +4149,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "corner_store_dead_shift_leave_safely_arrival",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -4193,10 +4252,15 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "handler": "set_local",
                         "id": "leave_safely",
                         "input_action": "ui_focus_next",
+                        "inputs": {
+                          "key": "path",
+                          "value": "refused"
+                        },
                         "label": "Leave safely",
-                        "non_color_state": "exit"
+                        "non_color_state": "leave_safely"
                       }
                     ],
                     "disabled_reason": "",
@@ -4337,6 +4401,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "corner_store_dead_shift_leave_safely_work",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -4357,6 +4429,13 @@
               "exit_prompt": "The marked exit remains clear during the second step.",
               "id": "work",
               "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_dead_shift_work_remove_breaker_panel",
+                  "stable_object_id": "breaker_panel"
+                },
                 {
                   "family": "interaction_ops",
                   "interaction": {
@@ -4534,7 +4613,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e34d9bc2dbde9aa9ed330cd42ab7889106f5307bdf3959fa69361f68ed5ffb65"
+        "sequence_signature": "65a5eb878b07cbb5a236310b643d7aa4ad9d19adcc76e53cf0ec10b7cac58ffa"
       }
     },
     {
@@ -5082,6 +5161,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "corner_store_inventory_night_leave_safely_arrival",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -5177,10 +5264,15 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "handler": "set_local",
                         "id": "leave_safely",
                         "input_action": "ui_focus_next",
+                        "inputs": {
+                          "key": "path",
+                          "value": "refused"
+                        },
                         "label": "Leave safely",
-                        "non_color_state": "exit"
+                        "non_color_state": "leave_safely"
                       }
                     ],
                     "disabled_reason": "",
@@ -5322,6 +5414,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "corner_store_inventory_night_leave_safely_work",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -5342,6 +5442,13 @@
               "exit_prompt": "The marked exit remains clear during the second step.",
               "id": "work",
               "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_inventory_night_work_remove_count_cage",
+                  "stable_object_id": "count_cage"
+                },
                 {
                   "family": "interaction_ops",
                   "interaction": {
@@ -5519,7 +5626,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a4ada3bddfb56673a1551faff8c86006df734bb2fde70506a2c10acb2c581389"
+        "sequence_signature": "79b259e3ea590f1c16ea735dd650c0813004472cf90bf0988874d81376f2dcd6"
       }
     },
     {
@@ -6067,6 +6174,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "back_alley_street_craps_leave_safely_arrival",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -6162,10 +6277,15 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "handler": "set_local",
                         "id": "leave_safely",
                         "input_action": "ui_focus_next",
+                        "inputs": {
+                          "key": "path",
+                          "value": "refused"
+                        },
                         "label": "Leave safely",
-                        "non_color_state": "exit"
+                        "non_color_state": "leave_safely"
                       }
                     ],
                     "disabled_reason": "",
@@ -6306,6 +6426,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "back_alley_street_craps_leave_safely_work",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -6326,6 +6454,13 @@
               "exit_prompt": "The marked exit remains clear during the second step.",
               "id": "work",
               "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_street_craps_work_remove_chalk_ring",
+                  "stable_object_id": "chalk_ring"
+                },
                 {
                   "family": "interaction_ops",
                   "interaction": {
@@ -6503,7 +6638,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d563055bd9c4c94ca9386b6a92fe624777fc0aa9370a7ee2f7c55126eefd9111"
+        "sequence_signature": "db4adda68f836cdc80b8e4ce6d65a9d91834b6abf29e11ebda730b4351839390"
       }
     },
     {
@@ -7047,6 +7182,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "back_alley_cruiser_parked_leave_safely_arrival",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -7142,10 +7285,15 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "handler": "set_local",
                         "id": "leave_safely",
                         "input_action": "ui_focus_next",
+                        "inputs": {
+                          "key": "path",
+                          "value": "refused"
+                        },
                         "label": "Leave safely",
-                        "non_color_state": "exit"
+                        "non_color_state": "leave_safely"
                       }
                     ],
                     "disabled_reason": "",
@@ -7286,6 +7434,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "back_alley_cruiser_parked_leave_safely_work",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -7306,6 +7462,13 @@
               "exit_prompt": "The marked exit remains clear during the second step.",
               "id": "work",
               "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_cruiser_parked_work_remove_cruiser_beam",
+                  "stable_object_id": "cruiser_beam"
+                },
                 {
                   "family": "interaction_ops",
                   "interaction": {
@@ -7483,7 +7646,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "25606cdd46fa10edbf6f22fbf6c5e937fd3674e85f4c976c835d1419a84a1e39"
+        "sequence_signature": "caacdb4639ceb65a8ea6a38cb372941ff3bf6dc2bf067bc0dd637d53274e866b"
       }
     },
     {
@@ -8029,6 +8192,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "back_alley_fence_night_leave_safely_arrival",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -8124,10 +8295,15 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "handler": "set_local",
                         "id": "leave_safely",
                         "input_action": "ui_focus_next",
+                        "inputs": {
+                          "key": "path",
+                          "value": "refused"
+                        },
                         "label": "Leave safely",
-                        "non_color_state": "exit"
+                        "non_color_state": "leave_safely"
                       }
                     ],
                     "disabled_reason": "",
@@ -8268,6 +8444,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "back_alley_fence_night_leave_safely_work",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -8288,6 +8472,13 @@
               "exit_prompt": "The marked exit remains clear during the second step.",
               "id": "work",
               "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_fence_night_work_remove_goods_lot",
+                  "stable_object_id": "goods_lot"
+                },
                 {
                   "family": "interaction_ops",
                   "interaction": {
@@ -8465,7 +8656,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "09d8057d012adfc4f0f61f37d231304ce47590de270a51f182cdcf8db2384708"
+        "sequence_signature": "374a7da2cbfbc275396d78d32308649184024d878ef465df1b76fdb9bbc2525c"
       }
     },
     {
@@ -9009,6 +9200,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "back_alley_nothing_moving_leave_safely_arrival",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -9104,10 +9303,15 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "handler": "set_local",
                         "id": "leave_safely",
                         "input_action": "ui_focus_next",
+                        "inputs": {
+                          "key": "path",
+                          "value": "refused"
+                        },
                         "label": "Leave safely",
-                        "non_color_state": "exit"
+                        "non_color_state": "leave_safely"
                       }
                     ],
                     "disabled_reason": "",
@@ -9248,6 +9452,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "back_alley_nothing_moving_leave_safely_work",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -9268,6 +9480,13 @@
               "exit_prompt": "The marked exit remains clear during the second step.",
               "id": "work",
               "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_nothing_moving_work_remove_three_traces",
+                  "stable_object_id": "three_traces"
+                },
                 {
                   "family": "interaction_ops",
                   "interaction": {
@@ -9445,7 +9664,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1eab2f98bdab7665357df9e484a95d3376a3058460d0c673b94317a4f3a8673c"
+        "sequence_signature": "2ac5b5189b381e24e45f98d42b7b28e8ec82ca430486a6e7b51a6b49c615c730"
       }
     },
     {
@@ -9953,7 +10172,6 @@
                     "behavior": "work",
                     "label": "Estate Appraiser",
                     "pose": "observing",
-                    "route_id": "pawn_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -9988,6 +10206,14 @@
                     "type": "command"
                   },
                   "id": "pawn_shop_estate_lot_day_refuse",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "pawn_shop_estate_lot_day_leave_safely_arrival",
                   "next_phase": "resolution"
                 },
                 {
@@ -10087,10 +10313,15 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "handler": "set_local",
                         "id": "leave_safely",
                         "input_action": "ui_focus_next",
+                        "inputs": {
+                          "key": "path",
+                          "value": "refused"
+                        },
                         "label": "Leave safely",
-                        "non_color_state": "exit"
+                        "non_color_state": "leave_safely"
                       }
                     ],
                     "disabled_reason": "",
@@ -10231,6 +10462,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "pawn_shop_estate_lot_day_leave_safely_work",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -10251,6 +10490,13 @@
               "exit_prompt": "The marked exit remains clear during the second step.",
               "id": "work",
               "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_estate_lot_day_work_remove_estate_cart",
+                  "stable_object_id": "estate_cart"
+                },
                 {
                   "family": "interaction_ops",
                   "interaction": {
@@ -10428,7 +10674,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f7ba40062e2ced18600d253d6476ba3eeee298b747d0754f4408ff69bda48c32"
+        "sequence_signature": "6465016cab1086ed347713e9709ea47d28f920100e36fd09529fe4f463760318"
       }
     },
     {
@@ -10934,7 +11180,6 @@
                     "behavior": "work",
                     "label": "Records Clerk",
                     "pose": "observing",
-                    "route_id": "pawn_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -10969,6 +11214,14 @@
                     "type": "command"
                   },
                   "id": "pawn_shop_serial_check_day_refuse",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "pawn_shop_serial_check_day_leave_safely_arrival",
                   "next_phase": "resolution"
                 },
                 {
@@ -11068,10 +11321,15 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "handler": "set_local",
                         "id": "leave_safely",
                         "input_action": "ui_focus_next",
+                        "inputs": {
+                          "key": "path",
+                          "value": "refused"
+                        },
                         "label": "Leave safely",
-                        "non_color_state": "exit"
+                        "non_color_state": "leave_safely"
                       }
                     ],
                     "disabled_reason": "",
@@ -11212,6 +11470,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "pawn_shop_serial_check_day_leave_safely_work",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -11232,6 +11498,13 @@
               "exit_prompt": "The marked exit remains clear during the second step.",
               "id": "work",
               "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_serial_check_day_work_remove_serial_station",
+                  "stable_object_id": "serial_station"
+                },
                 {
                   "family": "interaction_ops",
                   "interaction": {
@@ -11409,7 +11682,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a06c06b523c99f0f77dc671980d32371f6245813227bd7a666e65177a56ec001"
+        "sequence_signature": "33558c840f2d802c5493c920882b02e0877ec5da3b2a47ce16a281196eeb95f6"
       }
     },
     {
@@ -11917,7 +12190,6 @@
                     "behavior": "work",
                     "label": "Sal Shopkeeper",
                     "pose": "observing",
-                    "route_id": "pawn_service_counter",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -11952,6 +12224,14 @@
                     "type": "command"
                   },
                   "id": "pawn_shop_sals_mood_refuse",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "pawn_shop_sals_mood_leave_safely_arrival",
                   "next_phase": "resolution"
                 },
                 {
@@ -12051,10 +12331,15 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
+                        "handler": "set_local",
                         "id": "leave_safely",
                         "input_action": "ui_focus_next",
+                        "inputs": {
+                          "key": "path",
+                          "value": "refused"
+                        },
                         "label": "Leave safely",
-                        "non_color_state": "exit"
+                        "non_color_state": "leave_safely"
                       }
                     ],
                     "disabled_reason": "",
@@ -12195,6 +12480,14 @@
                 },
                 {
                   "condition": {
+                    "command_id": "leave_safely",
+                    "type": "command"
+                  },
+                  "id": "pawn_shop_sals_mood_leave_safely_work",
+                  "next_phase": "resolution"
+                },
+                {
+                  "condition": {
                     "fact_type": "travel_departed",
                     "type": "fact"
                   },
@@ -12215,6 +12508,13 @@
               "exit_prompt": "The marked exit remains clear during the second step.",
               "id": "work",
               "interaction_ops": [
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_sals_mood_work_remove_unfinished_jobs",
+                  "stable_object_id": "unfinished_jobs"
+                },
                 {
                   "family": "interaction_ops",
                   "interaction": {
@@ -12392,7 +12692,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5e221d440296ac912b79df26494c83e84bcb89f71343751810b1c64900ff60bd"
+        "sequence_signature": "39f1828d7d04f35aeabc8d61ef31adb38f8e0d0cbf1e3888bb229415ae2deb94"
       }
     }
   ]

@@ -126,8 +126,6 @@ func _entry(c: Dictionary) -> Dictionary:
 func _phase_arrival(c: Dictionary) -> Dictionary:
 	var sid := str(c.id)
 	var actor := {"label":_label(c.actor),"actor_id":c.actor,"zone_id":"background","behavior":"work","pose":"observing"}
-	var actor_route := str(c.get("actor_route", "")).strip_edges()
-	if not actor_route.is_empty(): actor["route_id"] = actor_route
 	var object_a := _spawn(sid+"_arrival_a",c.object_a,_label(c.object_a),"primary_task",str(c.get("object_a_zone", "left")),"arrival")
 	var object_a_anchor := str(c.get("object_a_anchor", "")).strip_edges()
 	if not object_a_anchor.is_empty(): object_a["object"]["anchor_id"] = object_a_anchor
@@ -141,16 +139,16 @@ func _phase_arrival(c: Dictionary) -> Dictionary:
 		"interaction_ops":[_interaction(sid+"_arrival_task",c.object_a,c.task,[ _action(c.verb_a,"Begin: "+_label(c.verb_a),"ui_accept","path","none"), _action("ignore_sequence","Ignore the scene","ui_down","path","ignored"), _action("refuse_sequence","Refuse the task","ui_cancel","path","refused")],false),_exit(c)],
 		"actor_ops":[{"family":"actor_ops","op":"spawn","receipt_id":sid+"_arrival_actor","owner_namespace":"scenario","stable_object_id":c.actor,"actor":actor}],
 		"transition_ops":[_transition(sid+"_arrival_stage","stage",str(c.arrival))],
-		"branches":[{"id":sid+"_begin","condition":{"type":"command","command_id":c.verb_a},"next_phase":"work"},{"id":sid+"_ignore","condition":{"type":"command","command_id":"ignore_sequence"},"next_phase":"resolution"},{"id":sid+"_refuse","condition":{"type":"command","command_id":"refuse_sequence"},"next_phase":"resolution"},{"id":sid+"_depart","condition":{"type":"fact","fact_type":"travel_departed"},"next_phase":"resolution"},{"id":sid+"_public_arrival","condition":{"type":"local_equals","key":"path","value":"public"},"next_phase":"resolution"}]}
+		"branches":[{"id":sid+"_begin","condition":{"type":"command","command_id":c.verb_a},"next_phase":"work"},{"id":sid+"_ignore","condition":{"type":"command","command_id":"ignore_sequence"},"next_phase":"resolution"},{"id":sid+"_refuse","condition":{"type":"command","command_id":"refuse_sequence"},"next_phase":"resolution"},{"id":sid+"_leave_safely_arrival","condition":{"type":"command","command_id":"leave_safely"},"next_phase":"resolution"},{"id":sid+"_depart","condition":{"type":"fact","fact_type":"travel_departed"},"next_phase":"resolution"},{"id":sid+"_public_arrival","condition":{"type":"local_equals","key":"path","value":"public"},"next_phase":"resolution"}]}
 
 func _phase_work(c: Dictionary) -> Dictionary:
 	var sid := str(c.id)
 	return {"id":"work","label":str(c.task),"arrival_feedback":"The first physical step exposes the second station and changes the actor's route.","exit_prompt":"The marked exit remains clear during the second step.","entry_conditions":[],"objective_ids":["complete_%s" % c.object_a],"advance_after_actions":0,
 		"scene_ops":[{"family":"scene_ops","op":"move","receipt_id":sid+"_work_move","owner_namespace":"scenario","stable_object_id":c.object_a,"zone_id":"center"},{"family":"scene_ops","op":"set_appearance","receipt_id":sid+"_work_reveal","owner_namespace":"scenario","stable_object_id":c.object_b,"appearance":"active_station"}],
-		"interaction_ops":[_interaction(sid+"_work_task",c.object_b,c.task,[_action(c.verb_b,_label(c.verb_b),"ui_accept","path","success"),_action(c.fail,_label(c.fail),"ui_right","path","failure")],false)],
+		"interaction_ops":[_remove("interaction_ops",sid+"_work_remove_"+str(c.object_a),c.object_a),_interaction(sid+"_work_task",c.object_b,c.task,[_action(c.verb_b,_label(c.verb_b),"ui_accept","path","success"),_action(c.fail,_label(c.fail),"ui_right","path","failure")],false)],
 		"actor_ops":[{"family":"actor_ops","op":"set_position","receipt_id":sid+"_work_actor","owner_namespace":"scenario","stable_object_id":c.actor,"zone_id":"service_lane"}],
 		"transition_ops":[_transition(sid+"_work_change","scene_change","The scene physically shifts into its decisive second step.")],
-		"branches":[{"id":sid+"_success","condition":{"type":"command","command_id":c.verb_b},"next_phase":"resolution"},{"id":sid+"_failure","condition":{"type":"command","command_id":c.fail},"next_phase":"resolution"},{"id":sid+"_work_depart","condition":{"type":"fact","fact_type":"travel_departed"},"next_phase":"resolution"},{"id":sid+"_public_work","condition":{"type":"local_equals","key":"path","value":"public"},"next_phase":"resolution"}]}
+		"branches":[{"id":sid+"_success","condition":{"type":"command","command_id":c.verb_b},"next_phase":"resolution"},{"id":sid+"_failure","condition":{"type":"command","command_id":c.fail},"next_phase":"resolution"},{"id":sid+"_leave_safely_work","condition":{"type":"command","command_id":"leave_safely"},"next_phase":"resolution"},{"id":sid+"_work_depart","condition":{"type":"fact","fact_type":"travel_departed"},"next_phase":"resolution"},{"id":sid+"_public_work","condition":{"type":"local_equals","key":"path","value":"public"},"next_phase":"resolution"}]}
 
 func _phase_resolution(c: Dictionary) -> Dictionary:
 	var sid := str(c.id)
@@ -216,9 +214,23 @@ func _repair_delivery_day(entry: Dictionary) -> Dictionary:
 			route_ops[0] = route_op
 		row["route_ops"] = route_ops
 		aftermath[outcome] = row
+	for outcome_value in aftermath.keys():
+		var outcome := str(outcome_value)
+		var row := aftermath.get(outcome, {}) as Dictionary
+		var actor_ops := row.get("actor_ops", []) as Array
+		for operation_index in range(actor_ops.size()):
+			var operation := actor_ops[operation_index] as Dictionary
+			if str(operation.get("stable_object_id", "")) != "delivery_clerk":
+				continue
+			var actor := operation.get("actor", {}) as Dictionary
+			actor.erase("route_id")
+			operation["actor"] = actor
+			actor_ops[operation_index] = operation
+		row["actor_ops"] = actor_ops
+		aftermath[outcome] = row
 	sequence["aftermath"] = aftermath
 	var targets := sequence.get("declared_targets", {}) as Dictionary
-	targets["routes"] = ["base::world:bar"]
+	targets.erase("routes")
 	sequence["declared_targets"] = targets
 	repaired["sequence"] = sequence
 	return repaired
@@ -233,7 +245,7 @@ func _interaction(receipt: String, stable_id: String, label: String, actions: Ar
 	return {"family":"interaction_ops","op":"add","receipt_id":receipt,"owner_namespace":"scenario","stable_object_id":stable_id,"interaction":{"owner_namespace":"scenario","stable_object_id":stable_id,"label":label,"state_label":"Available","prompt":"Choose a physical action at this station.","enabled":true,"disabled_reason":"","available_actions":actions,"input_actions":inputs,"non_color_state":"ready","focus_order":1,"hit_bounds":{"w":64,"h":56},"min_target_size":44,"safe_exit":safe,"alternate_exit":false}}
 
 func _exit(c: Dictionary) -> Dictionary:
-	return _interaction(str(c.id)+"_exit_add",str(c.id)+"_exit","Marked clear exit",[{"id":"leave_safely","label":"Leave safely","input_action":"ui_focus_next","non_color_state":"exit"}],true)
+	return _interaction(str(c.id)+"_exit_add",str(c.id)+"_exit","Marked clear exit",[_action("leave_safely","Leave safely","ui_focus_next","path","refused")],true)
 
 func _action(id: String, label: String, input: String, key: String, value: String) -> Dictionary:
 	return {"id":id,"label":label,"input_action":input,"non_color_state":id,"handler":"set_local","inputs":{"key":key,"value":value}}

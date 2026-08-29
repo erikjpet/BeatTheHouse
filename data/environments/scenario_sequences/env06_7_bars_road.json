@@ -29,8 +29,7 @@
           "share_wake_toast",
           "withhold_wake_toast",
           "decline_wake_toast",
-          "refuse_bar_wake",
-          "ignore_bar_wake"
+          "refuse_bar_wake"
         ],
         "references": {
           "objects": [
@@ -467,12 +466,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_wake",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_wake",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -487,7 +480,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Wake clean exit",
@@ -1234,7 +1226,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "186a7088aa7a4822b058fc7a23c872b073fa7725aab9e9c862e008159fb6a815"
+        "sequence_signature": "06906598de4a0089396af7935d56ba043ed7d89f8b3a619a1b1d5d3aeb858fa7"
       }
     },
     {
@@ -1265,8 +1257,7 @@
           "mediate_fight_lines",
           "choose_fight_side",
           "call_bar_security",
-          "refuse_bar_fight_night",
-          "ignore_bar_fight_night"
+          "refuse_bar_fight_night"
         ],
         "references": {
           "objects": [
@@ -1770,12 +1761,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_fight_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_fight_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -1790,7 +1775,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Fight Night clean exit",
@@ -2612,11 +2596,10 @@
             {
               "actor_ops": [
                 {
-                  "behavior": "depart",
                   "family": "actor_ops",
-                  "op": "set_behavior",
+                  "op": "despawn",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_fight_night_chair_move_depart",
+                  "receipt_id": "bar_fight_night_chair_move_despawn",
                   "stable_object_id": "bar_fight_night_right_brawler"
                 }
               ],
@@ -3133,7 +3116,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b207b1a928f0e63cffe3af09266b7f2b8e6a151dc68cde99328d1ac3644108e9"
+        "sequence_signature": "dcd539e42ae16ae5a675aabaa39e6ecfb28af7117982f31687e7030c17e688ab"
       }
     },
     {
@@ -3161,8 +3144,7 @@
           "carry_payday_service",
           "settle_payday_tabs",
           "defer_payday_tabs",
-          "refuse_bar_payday_rush",
-          "ignore_bar_payday_rush"
+          "refuse_bar_payday_rush"
         ],
         "references": {
           "objects": [
@@ -3606,12 +3588,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_payday_rush",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_payday_rush",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -3626,7 +3602,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Payday Rush clean exit",
@@ -4393,7 +4368,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "17d1e305983f07cda5587770f2a054ce90cdfad2e5fd609c5da99392b53cc4cd"
+        "sequence_signature": "fccd253aa83d4d7a1a1fc790f7e48c52333a7ca5f5955407798594844f5cc26b"
       }
     },
     {
@@ -4423,8 +4398,7 @@
           "accept_lockin_inclusion",
           "take_quiet_cellar_exit",
           "trigger_lockin_reopening",
-          "refuse_bar_lock_in",
-          "ignore_bar_lock_in"
+          "refuse_bar_lock_in"
         ],
         "references": {
           "objects": [
@@ -4908,12 +4882,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_lock_in",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_lock_in",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -4928,7 +4896,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Lock In clean exit",
@@ -5750,11 +5717,10 @@
             {
               "actor_ops": [
                 {
-                  "behavior": "depart",
                   "family": "actor_ops",
-                  "op": "set_behavior",
+                  "op": "despawn",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_lock_in_hatch_move_depart",
+                  "receipt_id": "bar_lock_in_hatch_move_despawn",
                   "stable_object_id": "bar_lock_in_afterhours_regular"
                 }
               ],
@@ -6077,7 +6043,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c05000a266ae1b0c23edb0a089d43328c846bac25231f1b30f92ea402565b422"
+        "sequence_signature": "6711a32cc5738413458d20f2ec6625d8b7fcd07b5418c74ff6465ce62c4b038c"
       }
     },
     {
@@ -6108,8 +6074,7 @@
           "uphold_disputed_dart",
           "overturn_disputed_dart",
           "forfeit_darts_match",
-          "refuse_bar_darts_league_night",
-          "ignore_bar_darts_league_night"
+          "refuse_bar_darts_league_night"
         ],
         "references": {
           "objects": [
@@ -6613,12 +6578,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_darts_league_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_darts_league_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -6633,7 +6592,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Darts League Night clean exit",
@@ -7455,11 +7413,10 @@
             {
               "actor_ops": [
                 {
-                  "behavior": "depart",
                   "family": "actor_ops",
-                  "op": "set_behavior",
+                  "op": "despawn",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_darts_league_night_oche_move_depart",
+                  "receipt_id": "bar_darts_league_night_oche_move_despawn",
                   "stable_object_id": "bar_darts_league_night_darts_scorer"
                 }
               ],
@@ -7976,7 +7933,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "eced41a73856d13c4949cf8d181141579c6cac6fbd5465447a1683c1d79bd6b6"
+        "sequence_signature": "02d81de53190f7e106f99c6bb97e1d370fa5f1af97cf2822bb7ec70a14a620a2"
       }
     },
     {
@@ -8006,8 +7963,7 @@
           "complete_live_set",
           "fail_live_set",
           "preserve_service_only",
-          "refuse_bar_live_band",
-          "ignore_bar_live_band"
+          "refuse_bar_live_band"
         ],
         "references": {
           "objects": [
@@ -8421,7 +8377,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_floor_runner",
-                    "behavior": "patrol",
+                    "behavior": "watch",
                     "label": "Floor runner",
                     "pose": "arrival",
                     "zone_id": "left"
@@ -8491,12 +8447,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_live_band",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_live_band",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -8511,7 +8461,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Live Band clean exit",
@@ -9333,11 +9282,10 @@
             {
               "actor_ops": [
                 {
-                  "behavior": "depart",
                   "family": "actor_ops",
-                  "op": "set_behavior",
+                  "op": "despawn",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_live_band_cable_appearance_depart",
+                  "receipt_id": "bar_live_band_cable_appearance_despawn",
                   "stable_object_id": "bar_live_band_floor_runner"
                 }
               ],
@@ -9660,7 +9608,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "67cb48cca0fbafc554fba7182132a5ccc3819fab2589b9b2dc67364f2f65368b"
+        "sequence_signature": "8f6e951b34cde922dd7ad2577f904888090b21ceb65994ee8220652b1be86699"
       }
     },
     {
@@ -9687,8 +9635,7 @@
           "keep_bartender_company",
           "keep_lone_patron_company",
           "take_closed_booth_task",
-          "refuse_bar_dead_tuesday",
-          "ignore_bar_dead_tuesday"
+          "refuse_bar_dead_tuesday"
         ],
         "references": {
           "objects": [
@@ -10144,12 +10091,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_bar_dead_tuesday",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_bar_dead_tuesday",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -10164,7 +10105,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Bar Dead Tuesday clean exit",
@@ -10704,7 +10644,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3293ab1230d358af489152fd268bcd8b031e36a02d64e4bf78032d60a56a222e"
+        "sequence_signature": "806f7d465a2716161c53360555e0959bf49cb7023bb3ff342a909be841bdb146"
       }
     },
     {
@@ -10735,8 +10675,7 @@
           "reveal_guest_legend",
           "miss_legend_cue",
           "withhold_guest_reveal",
-          "refuse_jazz_club_guest_legend",
-          "ignore_jazz_club_guest_legend"
+          "refuse_jazz_club_guest_legend"
         ],
         "references": {
           "objects": [
@@ -11240,12 +11179,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_jazz_club_guest_legend",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_jazz_club_guest_legend",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -11260,7 +11193,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Jazz Club Guest Legend clean exit",
@@ -12082,11 +12014,10 @@
             {
               "actor_ops": [
                 {
-                  "behavior": "depart",
                   "family": "actor_ops",
-                  "op": "set_behavior",
+                  "op": "despawn",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_guest_legend_stage_state_depart",
+                  "receipt_id": "jazz_club_guest_legend_stage_state_despawn",
                   "stable_object_id": "jazz_club_guest_legend_stage_manager"
                 }
               ],
@@ -12603,7 +12534,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "128a94cc74f16a29d358a9c15a86020b45de25caef453813a033167960d07ea8"
+        "sequence_signature": "1c0745090b51fc24ec21580595db1865666fb6dee2b532faeba957c5736a5d88"
       }
     },
     {
@@ -12632,8 +12563,7 @@
           "mediate_rent_creditor",
           "yield_club_to_creditor",
           "challenge_creditor_terms",
-          "refuse_jazz_club_rent_party",
-          "ignore_jazz_club_rent_party"
+          "refuse_jazz_club_rent_party"
         ],
         "references": {
           "objects": [
@@ -13097,12 +13027,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_jazz_club_rent_party",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_jazz_club_rent_party",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -13117,7 +13041,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Jazz Club Rent Party clean exit",
@@ -14076,7 +13999,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "25c11b73dfe31ebec8660348662e95367608f41ea878baa80497ba7c6addfd80"
+        "sequence_signature": "412f206234f2de99b4ffd6161b5194838d2a028dfad953907f0ea81c6f87c86e"
       }
     },
     {
@@ -14104,8 +14027,7 @@
           "save_recording_take",
           "ruin_recording_session",
           "relocate_recording_audience",
-          "refuse_jazz_club_recording_night",
-          "ignore_jazz_club_recording_night"
+          "refuse_jazz_club_recording_night"
         ],
         "references": {
           "objects": [
@@ -14549,12 +14471,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_jazz_club_recording_night",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_jazz_club_recording_night",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -14569,7 +14485,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Jazz Club Recording Night clean exit",
@@ -15336,7 +15251,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ce92432c66891a29de161199a4ad14d83edad7af1f47507aabe4de7e99f6f3ab"
+        "sequence_signature": "cbc94ba3ce5d017782dc7efecfb6484fff8c852f7a7f066ffdf2325264ae90fe"
       }
     },
     {
@@ -15365,8 +15280,7 @@
           "mediate_union_entry",
           "cross_union_line",
           "cross_management_line",
-          "refuse_jazz_club_union_trouble",
-          "ignore_jazz_club_union_trouble"
+          "refuse_jazz_club_union_trouble"
         ],
         "references": {
           "objects": [
@@ -15830,12 +15744,6 @@
                     "alternate_exit": false,
                     "available_actions": [
                       {
-                        "id": "ignore_jazz_club_union_trouble",
-                        "input_action": "ui_down",
-                        "label": "Ignore the sequence",
-                        "non_color_state": "ready"
-                      },
-                      {
                         "id": "refuse_jazz_club_union_trouble",
                         "input_action": "ui_cancel",
                         "label": "Refuse the task",
@@ -15850,7 +15758,6 @@
                       "w": 64.0
                     },
                     "input_actions": [
-                      "ui_down",
                       "ui_cancel"
                     ],
                     "label": "Jazz Club Union Trouble clean exit",
@@ -16809,7 +16716,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "55645b8d0203d5fdf9e04e623b54095befc81edab6f5d1c00ec7f29f9ef2ef3d"
+        "sequence_signature": "eb634d4310cdfe4bdc1e94d19cf5cfe049dd1630829c8d355e38109edcb30cec"
       }
     }
   ]
