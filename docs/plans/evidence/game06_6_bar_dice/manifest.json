@@ -1,0 +1,237 @@
+{
+  "schema": "game06_6_bar_dice_raster_v1",
+  "capture_count": 15,
+  "captures": [
+    {
+      "capture_id": "quiet_bar",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/quiet_bar.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "983a58c69c4cfd961db4d19b8d26c43d72a9c38443728aa3f79f9492e93ec836",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "crowded_bar",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/crowded_bar.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "196a4d072023f35e9fc54e140a1627dbb43455ae73422a9028591d013cf08628",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "wager_agreed",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/wager_agreed.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "222168c620a42fcc75f6faa5f98f3c9894b9b5a0065cabc8cadde444f62307e8",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "cover_refused",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/cover_refused.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "cdbe592fd03425538b48c37b22de8982c02af9f8150e4377812a5121649ec8ea",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "phase_shake",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/phase_shake.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "3a350dba9448c34584b658261a9ba1758991c38d8596623e2a5089f583292b42",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "phase_throw",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/phase_throw.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "97ed5784089e20656c4661fc5bf73c75f1bb39f04e637903ae6c4be68b537f12",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "phase_reveal",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/phase_reveal.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "852ae76b1bfef36641e8b053a22a53f15ee17bca8b20674e158e3a2fd551b5e3",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "phase_call",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/phase_call.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "1cea951f9309ebbc774eaa65b1823e3f8d506a36779df86ee0e033e2442898dd",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "outcome_win",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/outcome_win.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "5dabac646ee428d2a75deb7a187e5b8ec81c97dedb71e3d1d5a85da435e1ff8d",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "outcome_bad_beat",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/outcome_bad_beat.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "ff819a0a5cd3c9e86572dc4d9e63b65f9568dada29c242a6e63246b02c246b19",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "interruption",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/interruption.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "27c12fa3708129463a01a90f6f5eedf41e20b760a7e60d4ec4d63da2f4191e7f",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "settle_return",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/settle_return.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "9bd8d107d1e0730c33fcd01c5a6bce2ebb0d82113a832d2e0146bef138a4b6ec",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "reduced_motion",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/reduced_motion.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "250fec62131cae0a5389bafe55732d2212e111a419bfb29045a4bee81bd1ef33",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "small_screen",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/small_screen.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "90875ff43968d75dc797049e5474c436f499ee0d1869ee6c1703894a45b7279c",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    },
+    {
+      "capture_id": "colorblind_labels",
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/colorblind_labels.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "13cd6923d9936bce4200e2d569e33ff34ae376866d84730fe8d057aa701ac350",
+      "minimum_control_size": [
+        160,
+        64
+      ],
+      "focus_visible": true,
+      "phase_label_visible": true,
+      "cash_labels_visible": true,
+      "non_color_labels": true
+    }
+  ],
+  "contact_sheet": {
+    "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/game06_6_bar_dice_contact_sheet.png",
+    "width": 960,
+    "height": 900,
+    "sha256": "cf9953c5a7cc01200dda89510c9430e181a8da9b513e2a1c3a5c42dc215f9125"
+  }
+}

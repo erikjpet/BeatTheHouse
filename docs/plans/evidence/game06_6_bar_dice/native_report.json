@@ -1,0 +1,932 @@
+{
+  "schema": "game06_6_bar_dice_platform_v1",
+  "ok": true,
+  "platform": "native",
+  "semantic": [
+    {
+      "capture_id": "quiet_bar",
+      "phase_id": "agree_wager",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 0,
+        "returned_stake": 0,
+        "at_risk_total": 0,
+        "payout": 0,
+        "net_change": 0,
+        "rake": 0
+      },
+      "cover_state": "pending",
+      "cup_state": "rest",
+      "dice_state": "hidden",
+      "outcome": "",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "offering",
+        "pose": "seated",
+        "tell": {
+          "id": "cover_posture",
+          "source_fact": "cover_status",
+          "value": "pending",
+          "reliability": "literal_public_state"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "quiet",
+        "pose": "distant"
+      },
+      "energy_tier": "quiet",
+      "available_controls": [
+        "commit.place",
+        "commit.correct",
+        "commit.remove",
+        "commit.undo",
+        "commit.clear",
+        "commit.repeat",
+        "commit.rebet",
+        "commit.confirm"
+      ],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "crowded_bar",
+      "phase_id": "agree_wager",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 0,
+        "returned_stake": 0,
+        "at_risk_total": 0,
+        "payout": 0,
+        "net_change": 0,
+        "rake": 0
+      },
+      "cover_state": "pending",
+      "cup_state": "rest",
+      "dice_state": "hidden",
+      "outcome": "",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "offering",
+        "pose": "seated",
+        "tell": {
+          "id": "cover_posture",
+          "source_fact": "cover_status",
+          "value": "pending",
+          "reliability": "literal_public_state"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "tense",
+        "pose": "crowding"
+      },
+      "energy_tier": "tense",
+      "available_controls": [
+        "commit.place",
+        "commit.correct",
+        "commit.remove",
+        "commit.undo",
+        "commit.clear",
+        "commit.repeat",
+        "commit.rebet",
+        "commit.confirm"
+      ],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "wager_agreed",
+      "phase_id": "cover",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 10,
+        "returned_stake": 0,
+        "at_risk_total": 10,
+        "payout": 0,
+        "net_change": 0,
+        "rake": 0
+      },
+      "cover_state": "accepted",
+      "cup_state": "rest",
+      "dice_state": "hidden",
+      "outcome": "",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "covering",
+        "pose": "seated",
+        "tell": {
+          "id": "cover_posture",
+          "source_fact": "cover_status",
+          "value": "accepted",
+          "reliability": "literal_public_state"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "watching",
+        "pose": "watching"
+      },
+      "energy_tier": "watching",
+      "available_controls": [
+        "bar_dice.ack_cover"
+      ],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "cover_refused",
+      "phase_id": "settle",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 0,
+        "returned_stake": 10,
+        "at_risk_total": 0,
+        "payout": 0,
+        "net_change": 0,
+        "rake": 0
+      },
+      "cover_state": "refused",
+      "cup_state": "returned",
+      "dice_state": "hidden",
+      "outcome": "refused",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "refused",
+        "pose": "standing",
+        "tell": {
+          "id": "called_result",
+          "source_fact": "outcome",
+          "value": "refused",
+          "reliability": "literal_public_state"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "quiet",
+        "pose": "distant"
+      },
+      "energy_tier": "quiet",
+      "available_controls": [],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "phase_shake",
+      "phase_id": "shake",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 10,
+        "returned_stake": 0,
+        "at_risk_total": 10,
+        "payout": 0,
+        "net_change": 0,
+        "rake": 0
+      },
+      "cover_state": "accepted",
+      "cup_state": "shakeable",
+      "dice_state": "hidden",
+      "outcome": "",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "watching",
+        "pose": "seated",
+        "tell": {
+          "id": "round_posture",
+          "source_fact": "rounds_played",
+          "value": 1,
+          "reliability": "cosmetic_only"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "quiet",
+        "pose": "distant"
+      },
+      "energy_tier": "quiet",
+      "available_controls": [
+        "bar_dice.shake"
+      ],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "phase_throw",
+      "phase_id": "throw",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 10,
+        "returned_stake": 0,
+        "at_risk_total": 10,
+        "payout": 0,
+        "net_change": 0,
+        "rake": 0
+      },
+      "cover_state": "accepted",
+      "cup_state": "throwable",
+      "dice_state": "hidden",
+      "outcome": "",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "watching",
+        "pose": "seated",
+        "tell": {
+          "id": "round_posture",
+          "source_fact": "rounds_played",
+          "value": 1,
+          "reliability": "cosmetic_only"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "quiet",
+        "pose": "distant"
+      },
+      "energy_tier": "quiet",
+      "available_controls": [
+        "bar_dice.throw"
+      ],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "phase_reveal",
+      "phase_id": "reveal",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 10,
+        "returned_stake": 0,
+        "at_risk_total": 10,
+        "payout": 0,
+        "net_change": 0,
+        "rake": 0
+      },
+      "cover_state": "accepted",
+      "cup_state": "revealable",
+      "dice_state": "revealed",
+      "outcome": "",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "watching",
+        "pose": "leaning",
+        "tell": {
+          "id": "round_posture",
+          "source_fact": "rounds_played",
+          "value": 1,
+          "reliability": "cosmetic_only"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "quiet",
+        "pose": "distant"
+      },
+      "energy_tier": "quiet",
+      "available_controls": [
+        "bar_dice.reveal"
+      ],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "phase_call",
+      "phase_id": "call",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 10,
+        "returned_stake": 0,
+        "at_risk_total": 10,
+        "payout": 0,
+        "net_change": 0,
+        "rake": 0
+      },
+      "cover_state": "accepted",
+      "cup_state": "lifted",
+      "dice_state": "revealed",
+      "outcome": "win",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "calling",
+        "pose": "leaning",
+        "tell": {
+          "id": "called_result",
+          "source_fact": "outcome",
+          "value": "win",
+          "reliability": "literal_public_state"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "quiet",
+        "pose": "distant"
+      },
+      "energy_tier": "quiet",
+      "available_controls": [
+        "bar_dice.ack_call"
+      ],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "outcome_win",
+      "phase_id": "settle",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 10,
+        "returned_stake": 0,
+        "at_risk_total": 10,
+        "payout": 18,
+        "net_change": 8,
+        "rake": 2
+      },
+      "cover_state": "accepted",
+      "cup_state": "returned",
+      "dice_state": "revealed",
+      "outcome": "win",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "lost",
+        "pose": "standing",
+        "tell": {
+          "id": "called_result",
+          "source_fact": "outcome",
+          "value": "win",
+          "reliability": "literal_public_state"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "quiet",
+        "pose": "distant"
+      },
+      "energy_tier": "quiet",
+      "available_controls": [],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "outcome_bad_beat",
+      "phase_id": "settle",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 10,
+        "returned_stake": 0,
+        "at_risk_total": 10,
+        "payout": 0,
+        "net_change": -10,
+        "rake": 2
+      },
+      "cover_state": "accepted",
+      "cup_state": "returned",
+      "dice_state": "revealed",
+      "outcome": "lose",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "won",
+        "pose": "standing",
+        "tell": {
+          "id": "called_result",
+          "source_fact": "outcome",
+          "value": "lose",
+          "reliability": "literal_public_state"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "tense",
+        "pose": "crowding"
+      },
+      "energy_tier": "tense",
+      "available_controls": [],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "interruption",
+      "phase_id": "settle",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 10,
+        "returned_stake": 10,
+        "at_risk_total": 0,
+        "payout": 0,
+        "net_change": 0,
+        "rake": 0
+      },
+      "cover_state": "accepted",
+      "cup_state": "returned",
+      "dice_state": "hidden",
+      "outcome": "interrupted",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "walking",
+        "pose": "departing",
+        "tell": {
+          "id": "called_result",
+          "source_fact": "outcome",
+          "value": "interrupted",
+          "reliability": "literal_public_state"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "breaking",
+        "pose": "leaving"
+      },
+      "energy_tier": "breaking",
+      "available_controls": [],
+      "interruption": {
+        "active": true,
+        "reason": "sweep_adjacent",
+        "returned_stake": 10,
+        "aftermath_receipt": "aftermath:probe"
+      },
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "settle_return",
+      "phase_id": "settle",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 20,
+        "covered_total": 12,
+        "returned_stake": 8,
+        "at_risk_total": 12,
+        "payout": 0,
+        "net_change": 0,
+        "rake": 0
+      },
+      "cover_state": "partial",
+      "cup_state": "returned",
+      "dice_state": "revealed",
+      "outcome": "carry",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "backing_off",
+        "pose": "standing",
+        "tell": {
+          "id": "called_result",
+          "source_fact": "outcome",
+          "value": "carry",
+          "reliability": "literal_public_state"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "quiet",
+        "pose": "distant"
+      },
+      "energy_tier": "quiet",
+      "available_controls": [],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "reduced_motion",
+      "phase_id": "shake",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 10,
+        "returned_stake": 0,
+        "at_risk_total": 10,
+        "payout": 0,
+        "net_change": 0,
+        "rake": 0
+      },
+      "cover_state": "accepted",
+      "cup_state": "shakeable",
+      "dice_state": "hidden",
+      "outcome": "",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "watching",
+        "pose": "seated",
+        "tell": {
+          "id": "round_posture",
+          "source_fact": "rounds_played",
+          "value": 1,
+          "reliability": "cosmetic_only"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "watching",
+        "pose": "watching"
+      },
+      "energy_tier": "watching",
+      "available_controls": [
+        "bar_dice.shake"
+      ],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": true,
+      "small_screen": false,
+      "colorblind": false
+    },
+    {
+      "capture_id": "small_screen",
+      "phase_id": "shake",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 10,
+        "returned_stake": 0,
+        "at_risk_total": 10,
+        "payout": 0,
+        "net_change": 0,
+        "rake": 0
+      },
+      "cover_state": "accepted",
+      "cup_state": "shakeable",
+      "dice_state": "hidden",
+      "outcome": "",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "watching",
+        "pose": "seated",
+        "tell": {
+          "id": "round_posture",
+          "source_fact": "rounds_played",
+          "value": 1,
+          "reliability": "cosmetic_only"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "watching",
+        "pose": "watching"
+      },
+      "energy_tier": "watching",
+      "available_controls": [
+        "bar_dice.shake"
+      ],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": false,
+      "small_screen": true,
+      "colorblind": false
+    },
+    {
+      "capture_id": "colorblind_labels",
+      "phase_id": "shake",
+      "money": {
+        "available_cash": 100,
+        "opponent_available_cash": 80,
+        "proposed_total": 10,
+        "covered_total": 10,
+        "returned_stake": 0,
+        "at_risk_total": 10,
+        "payout": 0,
+        "net_change": 0,
+        "rake": 0
+      },
+      "cover_state": "accepted",
+      "cup_state": "shakeable",
+      "dice_state": "hidden",
+      "outcome": "",
+      "opponent_actor": {
+        "id": "actor.opponent",
+        "behavior_state": "watching",
+        "pose": "seated",
+        "tell": {
+          "id": "round_posture",
+          "source_fact": "rounds_played",
+          "value": 1,
+          "reliability": "cosmetic_only"
+        }
+      },
+      "onlookers_actor": {
+        "id": "actor.onlookers",
+        "behavior_state": "watching",
+        "pose": "watching"
+      },
+      "energy_tier": "watching",
+      "available_controls": [
+        "bar_dice.shake"
+      ],
+      "interruption": {
+        "active": false
+      },
+      "reduced_motion": false,
+      "small_screen": false,
+      "colorblind": true
+    }
+  ],
+  "semantic_sha256": "4e24b5f7230e6169cec55ce0e812fe76639dfff64ce3f49165d7644fc115019c",
+  "serialization_iterations": 500,
+  "serialization_ms": 192.208,
+  "idle_frames": 30,
+  "max_idle_frame_ms": 7.41,
+  "evidence": {
+    "schema": "game06_6_bar_dice_raster_v1",
+    "capture_count": 15,
+    "captures": [
+      {
+        "capture_id": "quiet_bar",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/quiet_bar.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "983a58c69c4cfd961db4d19b8d26c43d72a9c38443728aa3f79f9492e93ec836",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "crowded_bar",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/crowded_bar.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "196a4d072023f35e9fc54e140a1627dbb43455ae73422a9028591d013cf08628",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "wager_agreed",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/wager_agreed.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "222168c620a42fcc75f6faa5f98f3c9894b9b5a0065cabc8cadde444f62307e8",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "cover_refused",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/cover_refused.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "cdbe592fd03425538b48c37b22de8982c02af9f8150e4377812a5121649ec8ea",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "phase_shake",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/phase_shake.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "3a350dba9448c34584b658261a9ba1758991c38d8596623e2a5089f583292b42",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "phase_throw",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/phase_throw.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "97ed5784089e20656c4661fc5bf73c75f1bb39f04e637903ae6c4be68b537f12",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "phase_reveal",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/phase_reveal.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "852ae76b1bfef36641e8b053a22a53f15ee17bca8b20674e158e3a2fd551b5e3",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "phase_call",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/phase_call.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "1cea951f9309ebbc774eaa65b1823e3f8d506a36779df86ee0e033e2442898dd",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "outcome_win",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/outcome_win.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "5dabac646ee428d2a75deb7a187e5b8ec81c97dedb71e3d1d5a85da435e1ff8d",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "outcome_bad_beat",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/outcome_bad_beat.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "ff819a0a5cd3c9e86572dc4d9e63b65f9568dada29c242a6e63246b02c246b19",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "interruption",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/interruption.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "27c12fa3708129463a01a90f6f5eedf41e20b760a7e60d4ec4d63da2f4191e7f",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "settle_return",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/settle_return.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "9bd8d107d1e0730c33fcd01c5a6bce2ebb0d82113a832d2e0146bef138a4b6ec",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "reduced_motion",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/reduced_motion.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "250fec62131cae0a5389bafe55732d2212e111a419bfb29045a4bee81bd1ef33",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "small_screen",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/small_screen.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "90875ff43968d75dc797049e5474c436f499ee0d1869ee6c1703894a45b7279c",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      },
+      {
+        "capture_id": "colorblind_labels",
+        "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/colorblind_labels.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "13cd6923d9936bce4200e2d569e33ff34ae376866d84730fe8d057aa701ac350",
+        "minimum_control_size": [
+          160,
+          64
+        ],
+        "focus_visible": true,
+        "phase_label_visible": true,
+        "cash_labels_visible": true,
+        "non_color_labels": true
+      }
+    ],
+    "contact_sheet": {
+      "path": "C:/bth-game06_6-contract-only/docs/plans/evidence/game06_6_bar_dice/game06_6_bar_dice_contact_sheet.png",
+      "width": 960,
+      "height": 900,
+      "sha256": "cf9953c5a7cc01200dda89510c9430e181a8da9b513e2a1c3a5c42dc215f9125"
+    }
+  },
+  "failures": []
+}
