@@ -312,6 +312,17 @@ static func _signature_similarity_from_tokens(left_tokens: Dictionary, right_tok
 
 
 static func catalog_uniqueness_report(definitions: Array, expected_count: int, operation_registry: Variant = null, masked_visual_explanations: Dictionary = {}, target_inventories: Dictionary = {}) -> Dictionary:
+	return _catalog_uniqueness_report(definitions, expected_count, operation_registry, masked_visual_explanations, target_inventories, false)
+
+
+# Internal half of ScenarioEngine's same-call validation batch. The public
+# catalog audit always validates definitions itself; only ScenarioEngine calls
+# this after issuing and rechecking one-shot content-bound receipts.
+static func _catalog_uniqueness_report_after_same_call_validation(definitions: Array, expected_count: int, operation_registry: Variant, masked_visual_explanations: Dictionary, target_inventories: Dictionary) -> Dictionary:
+	return _catalog_uniqueness_report(definitions, expected_count, operation_registry, masked_visual_explanations, target_inventories, true)
+
+
+static func _catalog_uniqueness_report(definitions: Array, expected_count: int, operation_registry: Variant, masked_visual_explanations: Dictionary, target_inventories: Dictionary, definitions_validated_in_same_call: bool) -> Dictionary:
 	var failures: Array = []
 	var warnings: Array = []
 	var rows: Array = []
@@ -331,9 +342,10 @@ static func catalog_uniqueness_report(definitions: Array, expected_count: int, o
 		ids[scenario_id] = true
 		if not is_sequence(definition):
 			failures.append("scenario %s is missing its required sequence." % scenario_id)
-		var validation := validate_definition(definition, operation_registry, _dict(target_inventories.get(scenario_id, {})))
-		if not validation.is_empty():
-			failures.append("scenario %s is invalid: %s" % [scenario_id, JSON.stringify(validation)])
+		if not definitions_validated_in_same_call:
+			var validation := validate_definition(definition, operation_registry, _dict(target_inventories.get(scenario_id, {})))
+			if not validation.is_empty():
+				failures.append("scenario %s is invalid: %s" % [scenario_id, JSON.stringify(validation)])
 		var authored := sequence(definition)
 		var phases := _array(_dict(authored.get("phase_graph", {})).get("phases", []))
 		var branch_count := 0

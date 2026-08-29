@@ -1,6 +1,9 @@
 extends SceneTree
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
+const Catalog := preload("res://scripts/core/scenario_sequence_catalog.gd")
+const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const Registry := preload("res://scripts/core/scenario_operation_registry.gd")
 const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
 
 const PRODUCTION_AUTHORITY_SHA256 := "d97b3dd830bc58b9b4d72b06a55bb9e1d67fdb1fc3299d473d7a4e11f4a4ce2c"
@@ -19,6 +22,50 @@ func _init() -> void:
 		failures.append("Optimized production authority JSON differs from the exact a091 legacy baseline.")
 	if (authority.get("pairs", []) as Array).size() != 1485 or (authority.get("failures", []) as Array).size() != 80 or not (authority.get("warnings", []) as Array).is_empty():
 		failures.append("Optimized production authority shape/findings differ from the exact a091 legacy baseline.")
+	var audit_inputs := _production_audit_inputs(library)
+	var definitions: Array = audit_inputs.get("definitions", [])
+	var target_inventories: Dictionary = audit_inputs.get("target_inventories", {})
+	var masked_visual_explanations: Dictionary = audit_inputs.get("masked_visual_explanations", {})
+	var full_started_usec := Time.get_ticks_usec()
+	var full_report := Schema.catalog_uniqueness_report(definitions, definitions.size(), Registry, masked_visual_explanations, target_inventories)
+	var full_elapsed_ms := float(Time.get_ticks_usec() - full_started_usec) / 1000.0
+	if JSON.stringify(full_report) != authority_json:
+		failures.append("Same-call receipt audit differs from the unchanged full-validation audit.")
+	if definitions.size() != 55:
+		failures.append("Production receipt proof must bind all 55 sequence definitions.")
+	elif not definitions.is_empty():
+		var registry_context_fingerprint := ScenarioEngineScript._sequence_validation_registry_context_fingerprint()
+		var receipts: Array = []
+		for definition_value in definitions:
+			var production_definition: Dictionary = definition_value
+			var production_id := str(production_definition.get("id", ""))
+			receipts.append(ScenarioEngineScript._sequence_validation_receipt(production_definition, target_inventories.get(production_id, {}), registry_context_fingerprint))
+		if not ScenarioEngineScript._sequence_validation_receipts_match(definitions, 55, target_inventories, receipts, registry_context_fingerprint):
+			failures.append("Fresh exact 55-definition receipt set was not accepted.")
+		var first_definition: Dictionary = definitions[0]
+		var first_id := str(first_definition.get("id", ""))
+		var hostile_definitions := definitions.duplicate(true)
+		var hostile_definition: Dictionary = hostile_definitions[0]
+		hostile_definition["display_name"] = "%s hostile stale receipt" % str(hostile_definition.get("display_name", ""))
+		hostile_definitions[0] = hostile_definition
+		if ScenarioEngineScript._sequence_validation_receipts_match(hostile_definitions, 55, target_inventories, receipts, registry_context_fingerprint):
+			failures.append("A stale same-id definition receipt bypassed full validation fallback.")
+		var hostile_target_inventories := target_inventories.duplicate(true)
+		var hostile_target: Dictionary = hostile_target_inventories.get(first_id, {}).duplicate(true)
+		hostile_target["hostile_unvalidated_target"] = true
+		hostile_target_inventories[first_id] = hostile_target
+		if ScenarioEngineScript._sequence_validation_receipts_match(definitions, 55, hostile_target_inventories, receipts, registry_context_fingerprint):
+			failures.append("A stale target-inventory receipt bypassed full validation fallback.")
+		var missing_receipts := receipts.duplicate(true)
+		missing_receipts.pop_back()
+		if ScenarioEngineScript._sequence_validation_receipts_match(definitions, 55, target_inventories, missing_receipts, registry_context_fingerprint):
+			failures.append("A missing validation receipt bypassed full validation fallback.")
+		var forged_receipts := receipts.duplicate(true)
+		var forged_receipt: Dictionary = forged_receipts[0]
+		forged_receipt["receipt_fingerprint"] = "0".repeat(64)
+		forged_receipts[0] = forged_receipt
+		if ScenarioEngineScript._sequence_validation_receipts_match(definitions, 55, target_inventories, forged_receipts, registry_context_fingerprint):
+			failures.append("A forged validation receipt bypassed full validation fallback.")
 	var threshold_band: Dictionary = Schema.uniqueness_band(0.820)
 	var equal_band: Dictionary = Schema.uniqueness_band(0.0, true)
 	if str(threshold_band.get("status", "")) != "fail" or str(threshold_band.get("severity", "")) != "P1" or not bool(threshold_band.get("blocking", false)):
@@ -52,12 +99,44 @@ func _init() -> void:
 	if JSON.stringify(old_report) != JSON.stringify(new_report):
 		failures.append("Precomputed signature pair report differs from the legacy per-pair report: old=%s new=%s" % [JSON.stringify(old_report), JSON.stringify(new_report)])
 	if failures.is_empty():
-		print("SCENARIO_UNIQUENESS_PAIR_PRECOMPUTE PASS production_pairs=1485 production_failures=80 representative_pairs=6 elapsed_ms=%.1f" % elapsed_ms)
+		print("SCENARIO_UNIQUENESS_PAIR_PRECOMPUTE PASS production_pairs=1485 production_failures=80 representative_pairs=6 receipt_load_ms=%.1f full_audit_ms=%.1f" % [elapsed_ms, full_elapsed_ms])
 		quit(0)
 		return
 	for failure in failures:
 		push_error(failure)
 	quit(1)
+
+
+func _production_audit_inputs(library: Variant) -> Dictionary:
+	var definitions: Array = []
+	var target_inventories: Dictionary = {}
+	var masked_visual_explanations: Dictionary = {}
+	for archetype_key_value in library.environment_scenarios.keys():
+		var pool_value: Variant = library.environment_scenarios.get(archetype_key_value)
+		if typeof(pool_value) != TYPE_ARRAY:
+			continue
+		for scenario_value in pool_value as Array:
+			if typeof(scenario_value) != TYPE_DICTIONARY:
+				continue
+			var definition: Dictionary = Catalog.apply_overlay(scenario_value as Dictionary, library.scenario_sequence_catalog)
+			if not definition.has("sequence"):
+				continue
+			definitions.append(definition.duplicate(true))
+			var scenario_id := str(definition.get("id", ""))
+			var target_catalog: Dictionary = library.scenario_target_catalog(definition)
+			if not target_catalog.is_empty() and (target_catalog.get("errors", []) as Array).is_empty():
+				var target_inventory: Dictionary = (target_catalog.get("guaranteed", {}) as Dictionary).duplicate(true)
+				target_inventory["event_choices"] = target_catalog.get("event_choices", {}) as Dictionary
+				target_inventories[scenario_id] = target_inventory
+			var authored: Dictionary = definition.get("sequence_authoring", {})
+			var authored_explanations: Dictionary = authored.get("masked_visual_explanations", {})
+			for pair_key_value in authored_explanations.keys():
+				masked_visual_explanations[str(pair_key_value)] = (authored_explanations.get(pair_key_value, {}) as Dictionary).duplicate(true)
+	return {
+		"definitions": definitions,
+		"target_inventories": target_inventories,
+		"masked_visual_explanations": masked_visual_explanations,
+	}
 
 
 func _legacy_similarity(left: Dictionary, right: Dictionary) -> float:
