@@ -21,6 +21,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Crew recruitment content: %s" % str(failure))
 	_check_event_presentation_contract(library, failures)
 	_check_placement_matrix(library, failures)
+	_check_host_rooted_aftermath(library, failures)
 	_check_production_reachability(library, failures)
 	_check_rook_paths(library, failures)
 	_check_rook_signposts(library, failures)
@@ -29,6 +30,44 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_contact_surfaces(library, failures)
 	_check_crew_ignoring_regression(library, failures)
 	_check_presence_determinism(failures)
+
+
+static func _check_host_rooted_aftermath(library: ContentLibrary, failures: Array) -> void:
+	var switch_fixture := _generated_path(library, "crew_switch", "primary")
+	var switch_run: RunState = switch_fixture.get("run_state", null)
+	if switch_run == null or not bool(switch_fixture.get("entered", false)):
+		failures.append("Host-rooted recruitment fixture could not enter Switch's primary placement.")
+	else:
+		var switch_event := EventModuleScript.new()
+		switch_event.setup(library.event("recruitment_switch"), library)
+		var refused := switch_event.resolve(switch_run, switch_run.current_environment, "leave_switch_waiting")
+		var refused_state := switch_run.crew_recruitment_public_state("crew_switch")
+		if not bool(_dict(refused.get("crew_recruitment_result", {})).get("ok", false)) or str(refused_state.get("meeting_state", "")) != "refused" or str(refused_state.get("actor_state", "")) != "guarded":
+			failures.append("Resolved Switch refusal did not commit distinct durable aftermath.")
+		var accepted := switch_event.resolve(switch_run, switch_run.current_environment, "work_with_switch")
+		var accepted_state := switch_run.crew_recruitment_public_state("crew_switch")
+		if not bool(_dict(accepted.get("crew_recruitment_result", {})).get("ok", false)) or str(accepted_state.get("meeting_state", "")) != "accepted" or switch_run.crew_rank("crew_switch") != "associate":
+			failures.append("Resolved Switch acceptance did not commit through the host-rooted event boundary.")
+		var trust_after := switch_run.crew_trust("crew_switch")
+		var replay := switch_event.resolve(switch_run, switch_run.current_environment, "work_with_switch")
+		if bool(replay.get("ok", false)) or switch_run.crew_trust("crew_switch") != trust_after:
+			failures.append("Resolved recruitment acceptance replayed its trust consequence.")
+		var restored := RunStateScript.new()
+		restored.from_dict(switch_run.to_dict())
+		var restored_state := restored.crew_recruitment_public_state("crew_switch")
+		if str(restored_state.get("meeting_state", "")) != "accepted" or str(restored_state.get("first_outcome", "")) != "refused" or restored.crew_trust("crew_switch") != trust_after:
+			failures.append("Recruitment refusal-to-acceptance history or consequence failed save/load.")
+	var bishop_fixture := _generated_path(library, "crew_bishop", "primary")
+	var bishop_run: RunState = bishop_fixture.get("run_state", null)
+	if bishop_run == null or not bool(bishop_fixture.get("entered", false)):
+		failures.append("Host-rooted recruitment fixture could not enter Bishop's primary placement.")
+	else:
+		var bishop_event := EventModuleScript.new()
+		bishop_event.setup(library.event("recruitment_bishop"), library)
+		var deferred := bishop_event.resolve(bishop_run, bishop_run.current_environment, "wait_for_bishop")
+		var deferred_state := bishop_run.crew_recruitment_public_state("crew_bishop")
+		if not bool(_dict(deferred.get("crew_recruitment_result", {})).get("ok", false)) or str(deferred_state.get("meeting_state", "")) != "deferred" or str(deferred_state.get("actor_state", "")) != "waiting":
+			failures.append("Resolved Bishop deferral did not commit distinct durable aftermath.")
 
 
 static func _check_event_presentation_contract(library: ContentLibrary, failures: Array) -> void:
