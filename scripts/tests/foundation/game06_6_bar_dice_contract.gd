@@ -1,6 +1,11 @@
 extends SceneTree
 
 const RitualProjectionScript := preload("res://scripts/core/bar_dice_ritual_projection.gd")
+const BarDiceGameScript := preload("res://scripts/games/bar_dice.gd")
+const RunStateScript := preload("res://scripts/core/run_state.gd")
+const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
+const GameModuleScript := preload("res://scripts/core/game_module.gd")
+const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const CONTRACT_PATH := "res://data/games/bar_dice_game_ritual_v1.json"
 const EXPECTED_PHASES := ["agree_wager", "cover", "shake", "throw", "reveal", "call", "settle"]
 const FORBIDDEN_PRIVATE_FIELDS := ["future_dice", "next_rng", "timing_target", "private_throw", "hidden_sweep", "wall_clock_result"]
@@ -19,6 +24,7 @@ func _initialize() -> void:
 	_check_cover_and_money_projection(failures)
 	_check_interruption(failures)
 	_check_ten_seed_noninterference(failures)
+	_check_product_authority_and_phase_binding(failures)
 	_check_liveness_performance(failures)
 	_finish(failures)
 
@@ -158,6 +164,52 @@ func _check_ten_seed_noninterference(failures: Array) -> void:
 			failures.append("Opponent tell lacks a public source at seed %d." % seed)
 		var web_round_trip: Variant = JSON.parse_string(JSON.stringify(projection_a))
 		if _fingerprint(projection_a) != _fingerprint(web_round_trip): failures.append("Canonical parity drifted at seed %d." % seed)
+
+
+func _check_product_authority_and_phase_binding(failures: Array) -> void:
+	var game = BarDiceGameScript.new()
+	game.definition = {"id":"bar_dice","family":"dice","legal_actions":[],"cheat_actions":[]}
+	var contract: Dictionary = game.sealed_action_authority_contract()
+	if game.sealed_action_authority_script() == null \
+			or str(contract.get("resolve_proposal_method", "")) != "_bar_dice_resolve_proposal" \
+			or str(contract.get("wager_cost_proposal_method", "")) != "_bar_dice_wager_cost_proposal" \
+			or str(contract.get("authoritative_result_marker", "")) != "sealed_action_authoritative":
+		failures.append("Shipped Bar Dice is not bound to the accepted sealed host contract.")
+		return
+	var run: RunState = RunStateScript.new()
+	run.start_new("GAME06_6_PRODUCT_AUTHORITY")
+	run.bankroll = 100
+	run.current_environment = {"id":"bar_dice_contract_room","archetype_id":"street_register","economic_profile":{"stake_floor":1,"stake_ceiling":20},"game_states":{}}
+	var environment: Dictionary = run.current_environment
+	var ui: Dictionary = {}
+	var command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, ui, run, environment)
+	ui = _dict(command.get("ui_state", {}))
+	if str(ui.get("bar_dice_ritual_phase", "")) != "cover" or bool(command.get("resolve", false)): failures.append("Product wager agreement skipped or resolved through cover.")
+	command = game.surface_action_command("bar_dice_ack_cover", 0, false, ui, run, environment); ui = _dict(command.get("ui_state", {}))
+	if str(ui.get("bar_dice_ritual_phase", "")) != "shake" or not bool(ui.get("rolled", false)): failures.append("Product cover acknowledgement did not open the bounded shake.")
+	command = game.surface_action_command("bar_dice_resolve", 0, false, ui, run, environment); ui = _dict(command.get("ui_state", {}))
+	if str(ui.get("bar_dice_ritual_phase", "")) != "throw" or bool(command.get("resolve", false)): failures.append("Product shake resolved instead of staging the throw.")
+	command = game.surface_action_command("bar_dice_throw", 0, false, ui, run, environment); ui = _dict(command.get("ui_state", {}))
+	if str(ui.get("bar_dice_ritual_phase", "")) != "reveal" or bool(command.get("resolve", false)): failures.append("Product throw rerolled or settled before reveal.")
+	command = game.surface_action_command("bar_dice_reveal", 0, false, ui, run, environment); ui = _dict(command.get("ui_state", {}))
+	if str(ui.get("bar_dice_ritual_phase", "")) != "call" or bool(command.get("resolve", false)): failures.append("Product reveal settled before the call.")
+	command = game.surface_action_command("bar_dice_ack_call", 0, false, ui, run, environment)
+	if not bool(command.get("resolve", false)) or str(command.get("action_id", "")) != "roll": failures.append("Product call did not nominate exactly one sealed settlement intent.")
+	var snapshot_before := RuntimeScript.canonical_json(run.to_save_snapshot())
+	var rng := RngStreamScript.new(); rng.configure(606)
+	var rng_before := RuntimeScript.canonical_json(rng.snapshot())
+	var compatibility: Dictionary = game.resolve_with_context("roll", 5, run, environment, rng, ui)
+	if not bool(compatibility.get("bar_dice_compatibility_simulation", false)) or not bool(compatibility.get("sealed_action_authoritative", false)):
+		failures.append("Legacy Bar Dice resolve did not fail closed as a receipt-required simulation.")
+	if RuntimeScript.canonical_json(run.to_save_snapshot()) != snapshot_before or RuntimeScript.canonical_json(rng.snapshot()) != rng_before:
+		failures.append("Legacy Bar Dice resolve mutated live run or RNG outside Foundation.")
+	GameModuleScript.apply_result(run, compatibility, rng)
+	if RuntimeScript.canonical_json(run.to_save_snapshot()) != snapshot_before:
+		failures.append("Receipt-free Bar Dice compatibility result applied to canonical state.")
+	var proposal: Dictionary = game.call("_bar_dice_resolve_proposal", "roll", 5, run.to_save_snapshot(), rng.snapshot(), ui)
+	var result := _dict(proposal.get("result", {}))
+	if not bool(proposal.get("ok", false)) or not bool(result.get("bar_dice_proposal_requires_apply", false)) or str(proposal.get("output_fingerprint", "")).is_empty():
+		failures.append("Pure Bar Dice proposal did not produce a host-verifiable apply boundary.")
 
 
 func _check_liveness_performance(failures: Array) -> void:

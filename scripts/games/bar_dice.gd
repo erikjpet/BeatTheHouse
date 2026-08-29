@@ -6,6 +6,9 @@ extends GameModule
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
+const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
+const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
+const RitualProjectionScript := preload("res://scripts/core/bar_dice_ritual_projection.gd")
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -52,6 +55,10 @@ const RULES_PANEL_RECT := Rect2(556, 218, 300, 58)
 const PAYTABLE_PANEL_RECT := Rect2(556, 282, 190, 50)
 const ROUND_TIMER_RECT := Rect2(752, 282, 116, 50)
 const RULES_PANEL_LINE_LIMIT := 47
+const BAR_DICE_RITUAL_PHASES := ["agree_wager", "cover", "shake", "throw", "reveal", "call", "settle"]
+const BAR_DICE_PROPOSAL_REQUIRES_APPLY_KEY := "bar_dice_proposal_requires_apply"
+const BAR_DICE_SURFACE_INTENT_KEY := "bar_dice_surface_intent"
+const BAR_DICE_SURFACE_INTENT_INDEX_KEY := "bar_dice_surface_intent_index"
 
 const PLAYER_DICE_ORIGIN := Vector2(262, 214)
 const DIE_SIZE := Vector2(38, 38)
@@ -155,6 +162,29 @@ const MEMORABLE_REGULAR := {
 }
 
 
+func sealed_action_authority_script() -> Script:
+	# Bar Dice consumes the already-landed sealed action host. The authority
+	# engine is deliberately shared with Blackjack; this module only supplies
+	# pure proposal methods and its own table-state adapter.
+	return ActionAuthorityScript
+
+
+func sealed_action_authority_contract() -> Dictionary:
+	return {
+		"resolve_proposal_method": &"_bar_dice_resolve_proposal",
+		"wager_cost_proposal_method": &"_bar_dice_wager_cost_proposal",
+		"host_auto_tick_method": &"",
+		"surface_intent_key": BAR_DICE_SURFACE_INTENT_KEY,
+		"surface_intent_index_key": BAR_DICE_SURFACE_INTENT_INDEX_KEY,
+		"retry_surface_actions": [],
+		"cancel_surface_actions": [],
+		"proposal_requires_apply_key": BAR_DICE_PROPOSAL_REQUIRES_APPLY_KEY,
+		"authoritative_result_marker": "sealed_action_authoritative",
+		"place_bet_action": "",
+		"host_pointer_intent": false,
+	}
+
+
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var result: Dictionary = super.enter(run_state, environment)
 	var state := _dice_state_preview(run_state, environment)
@@ -205,10 +235,34 @@ func environment_state_generated(run_state: RunState, environment: Dictionary, g
 
 
 func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
+	# Live funding is owned by Foundation's sealed transaction host. Returning a
+	# caller-computed cost here would let the legacy path charge before the exact
+	# action/session boundary has been authenticated.
+	return 0
+
+
+func _bar_dice_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var input := {
+		"action_id": action_id,
+		"stake": stake,
+		"run_snapshot": run_snapshot,
+		"ui_state": ui_state,
+	}
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var cost := 0
 	if action_id == "press":
-		return maxi(0, stake)
-	var state := _dice_state_preview(run_state, environment)
-	return _active_stake_from_context(stake, state, ui_state, run_state, environment)
+		var table := _dice_state_preview(candidate, candidate.current_environment)
+		var offer := _copy_dict(_copy_dict(table.get("last_result", {})).get("press_offer", {}))
+		if bool(offer.get("available", false)):
+			cost = mini(maxi(1, int(offer.get("risk", stake))), maxi(0, candidate.wager_balance_for_game(get_id(), candidate.current_environment)))
+	elif action_id in ["roll", "loaded_toss", "palmed_swap"]:
+		var table := _dice_state_preview(candidate, candidate.current_environment)
+		cost = _active_stake_from_context(stake, table, ui_state, candidate, candidate.current_environment)
+	return {
+		"cost": maxi(0, cost),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint(input),
+	}
 
 
 func wager_activity_incomplete(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> bool:
@@ -291,12 +345,27 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		palm_armed,
 		palmed_swap
 	)
+	var ritual_phase := str(ui.get("bar_dice_ritual_phase", "agree_wager"))
+	action_buttons = _bar_dice_ritual_action_buttons(ritual_phase, action_buttons)
+	var ritual_authority := _bar_dice_ritual_authority(run_state, environment, state, ui, active_stake, last_result)
+	var ritual_state := {
+		"schema_version": RitualProjectionScript.STATE_VERSION,
+		"ritual_id": RitualProjectionScript.RITUAL_ID,
+		"phase_id": ritual_phase,
+		"phase_entry_receipts": ["product:%s" % ritual_phase],
+		"transition_receipts": {},
+		"one_shot_receipts": {},
+		"authority_ref": ritual_authority,
+		"authoritative_result_ref": str(ritual_authority.get("authoritative_result_ref", "")),
+		"settlement_receipt": str(ritual_authority.get("settlement_receipt", "")),
+	}
+	var ritual_projection := RitualProjectionScript.public_projection(ritual_state, ritual_authority)
 	var opponent_rows := _surface_opponent_rows(state, last_result, phase)
 
 	return GameModule.surface_spec({
 		"surface_renderer": "dice_table",
-		"surface_life": "bar_dice_table",
-		"surface_cast": "dealer_table",
+		"surface_life": "street_bar_dice",
+		"surface_cast": "opponent_bar",
 		"surface_controls_native": true,
 		"surface_stake_controls_required": false,
 		"surface_embeds_outcomes": true,
@@ -304,6 +373,15 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_animates_idle": true,
 		"surface_realtime_state_refresh": surface_motion_active,
 		"phase": phase,
+		"bar_dice_ritual_phase": ritual_phase,
+		"bar_dice_ritual_projection": ritual_projection,
+		"ritual_actors": [ritual_projection.get("opponent_actor", {}), ritual_projection.get("onlookers_actor", {})],
+		"ritual_scene_objects": _bar_dice_ritual_scene_objects(ritual_projection),
+		"cover_status": str(ritual_authority.get("cover_status", "pending")),
+		"covered_total": int(ritual_authority.get("covered_total", 0)),
+		"returned_stake": int(ritual_authority.get("returned_stake", 0)),
+		"at_risk_total": int(ritual_authority.get("at_risk_total", 0)),
+		"opponent_available_cash": int(ritual_authority.get("opponent_available_cash", 0)),
 		"table_key": str(state.get("table_key", "")),
 		"ruleset_family": "ship_captain_crew",
 		"ruleset_label": str(state.get("ruleset_label", "Ship, Captain, Crew")),
@@ -450,10 +528,15 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 func surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var state := _dice_state_preview(run_state, environment)
 	var next := _normalized_ui_state(run_state, environment, ui_state, state)
+	var ritual_phase := str(next.get("bar_dice_ritual_phase", "agree_wager"))
 	match surface_action:
 		"bar_dice_rail_bet":
+			if ritual_phase not in ["agree_wager", "settle"]:
+				return _message_command(next, "The rail waits until this cup is settled.")
 			return _patron_bet_command(index, next, state, run_state, environment)
 		"bar_dice_stake":
+			if ritual_phase not in ["agree_wager", "settle"]:
+				return _message_command(next, "The covered cash does not move mid-cup.")
 			if bool(next.get("rolled", false)):
 				return _message_command(next, "Settle this cup before changing your ante.")
 			var ladder := _int_array(state.get("stake_ladder", []))
@@ -469,28 +552,36 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				})
 			return _message_command(next, "That chip is off the bar.")
 		"bar_dice_roll":
-			if bool(next.get("rolled", false)):
+			if ritual_phase not in ["agree_wager", "settle"] or bool(next.get("rolled", false)):
 				return _message_command(next, "The cup is already open.")
-			next["rolled"] = true
-			next["shake_number"] = 1
-			next["dice"] = _generate_opening(run_state, state)
-			next["reroll"] = []
+			next["bar_dice_ritual_phase"] = "cover"
+			next["bar_dice_pending_action_id"] = "roll"
+			next["rolled"] = false
 			next["loaded_armed"] = false
 			next["palm_armed"] = false
 			next.erase("controlled_roll")
 			next.erase("palmed_swap_challenge")
 			next.erase("loaded_value")
-			next["last_rerolled"] = _all_die_indices()
-			_set_tumble(next, "open", _all_die_indices())
 			return GameModule.surface_command({
 				"handled": true,
 				"ui_state": next,
 				"selected_index": index,
 				"preserve_surface_ui_state": true,
-				"message": "First shake down. Teal dice lock 6, then 5, then 4. Click amber dice to mark rerolls, then SHAKE or SETTLE.",
+				"message": "You put the cash down. The opponent covers it across the bar.",
 			})
+		"bar_dice_ack_cover":
+			if ritual_phase != "cover":
+				return _message_command(next, "There is no fresh cover to take.")
+			next["bar_dice_ritual_phase"] = "shake"
+			next["rolled"] = true
+			next["shake_number"] = 1
+			next["dice"] = _generate_opening(run_state, state)
+			next["reroll"] = []
+			next["last_rerolled"] = _all_die_indices()
+			_set_tumble(next, "open", _all_die_indices())
+			return GameModule.surface_command({"handled":true,"ui_state":next,"selected_index":index,"preserve_surface_ui_state":true,"message":"Cover taken. Shake the cup; 6, then 5, then 4 lock."})
 		"bar_dice_shake":
-			if not bool(next.get("rolled", false)):
+			if ritual_phase != "shake" or not bool(next.get("rolled", false)):
 				return _message_command(next, "Ante first, then roll the cup.")
 			if _remaining_shakes(next) <= 0:
 				return _message_command(next, "Three shakes are spent. Settle the cargo.")
@@ -515,7 +606,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				"message": shake_message,
 			})
 		"bar_dice_select":
-			if not bool(next.get("rolled", false)):
+			if ritual_phase != "shake" or not bool(next.get("rolled", false)):
 				return _message_command(next, "Roll the cup before marking cargo dice.")
 			var dice := _int_dice(next.get("dice", []))
 			var locks := _ship_lock_indices(dice)
@@ -543,21 +634,40 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				"message": select_message,
 			})
 		"bar_dice_resolve":
+			if ritual_phase in ["agree_wager", "settle"]:
+				next["bar_dice_ritual_phase"] = "cover"
+				next["bar_dice_pending_action_id"] = "roll"
+				return GameModule.surface_command({"handled":true,"ui_state":next,"selected_index":index,"preserve_surface_ui_state":true,"message":"Cash down. The other hand covers it."})
+			if ritual_phase != "shake":
+				return _message_command(next, "Finish the cup in front of you.")
 			if bool(next.get("loaded_armed", false)) and not _normalized_controlled_roll(next.get("controlled_roll", {})).is_empty():
-				return _action_command("loaded_toss", "cheat", confirm_requested, next, index, _resolve_prompt(next, "loaded_toss"))
-			next["loaded_armed"] = false
-			next["palm_armed"] = false
-			next.erase("controlled_roll")
-			next.erase("palmed_swap_challenge")
-			next.erase("loaded_value")
-			return _action_command("roll", "legal", confirm_requested, next, index, _resolve_prompt(next, "roll"))
+				next["bar_dice_pending_action_id"] = "loaded_toss"
+			elif bool(next.get("palm_armed", false)) and not _normalized_palmed_swap_challenge(next.get("palmed_swap_challenge", {})).is_empty():
+				next["bar_dice_pending_action_id"] = "palmed_swap"
+			else:
+				next["bar_dice_pending_action_id"] = "roll"
+			next["bar_dice_ritual_phase"] = "throw"
+			return GameModule.surface_command({"handled":true,"ui_state":next,"selected_index":index,"preserve_surface_ui_state":true,"message":"The hand is set. Slam the cup."})
+		"bar_dice_throw":
+			if ritual_phase != "throw":
+				return _message_command(next, "The cup is not ready to throw.")
+			next["bar_dice_ritual_phase"] = "reveal"
+			return GameModule.surface_command({"handled":true,"ui_state":next,"selected_index":index,"preserve_surface_ui_state":true,"message":"Cup down. Lift it; nothing under it changes now."})
+		"bar_dice_reveal":
+			if ritual_phase != "reveal":
+				return _message_command(next, "There is nothing new to reveal.")
+			next["bar_dice_ritual_phase"] = "call"
+			return GameModule.surface_command({"handled":true,"ui_state":next,"selected_index":index,"preserve_surface_ui_state":true,"message":"Dice up. The bar waits for the call."})
+		"bar_dice_ack_call":
+			if ritual_phase != "call":
+				return _message_command(next, "No result is waiting on a call.")
+			var pending_action := str(next.get("bar_dice_pending_action_id", "roll"))
+			var settle_command := _action_command(pending_action, "cheat" if pending_action != "roll" else "legal", true, next, index, "Call made. Settle the covered cash hand to hand.")
+			settle_command["set_stake"] = _active_stake_from_context(0, state, next, run_state, environment)
+			return settle_command
 		"bar_dice_load":
-			if not bool(next.get("rolled", false)):
-				next["rolled"] = true
-				next["shake_number"] = 1
-				next["dice"] = _generate_opening(run_state, state)
-				next["last_rerolled"] = _all_die_indices()
-				_set_tumble(next, "open", _all_die_indices())
+			if ritual_phase != "shake" or not bool(next.get("rolled", false)):
+				return _message_command(next, "Take the cover before reaching for a loaded die.")
 			next["loaded_armed"] = true
 			next["palm_armed"] = false
 			next.erase("palmed_swap_challenge")
@@ -565,7 +675,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			next["controlled_roll"] = _start_controlled_roll(next, run_state, state)
 			return _action_command("loaded_toss", "cheat", false, next, index, _resolve_prompt(next, "loaded_toss"))
 		"bar_dice_release":
-			if not bool(next.get("rolled", false)):
+			if ritual_phase != "shake" or not bool(next.get("rolled", false)):
 				return _message_command(next, "Roll the cup before timing a loaded toss.")
 			var controlled: Dictionary = _normalized_controlled_roll(next.get("controlled_roll", {}))
 			if controlled.is_empty():
@@ -578,14 +688,12 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			next["loaded_value"] = int(controlled.get("desired_face", _loaded_value_for_ruleset(_int_dice(next.get("dice", [])), "ship_captain_crew")))
 			next["controlled_roll"] = controlled
 			next.erase("controlled_roll_input_msec")
-			return _action_command("loaded_toss", "cheat", confirm_requested, next, index, _resolve_prompt(next, "loaded_toss"))
+			next["bar_dice_pending_action_id"] = "loaded_toss"
+			next["bar_dice_ritual_phase"] = "throw"
+			return GameModule.surface_command({"handled":true,"ui_state":next,"selected_index":index,"preserve_surface_ui_state":true,"message":"Controlled grip locked. Slam the cup."})
 		"bar_dice_palm":
-			if not bool(next.get("rolled", false)):
-				next["rolled"] = true
-				next["shake_number"] = 1
-				next["dice"] = _generate_opening(run_state, state)
-				next["last_rerolled"] = _all_die_indices()
-				_set_tumble(next, "open", _all_die_indices())
+			if ritual_phase != "shake" or not bool(next.get("rolled", false)):
+				return _message_command(next, "Take the cover before palming a die.")
 			next["loaded_armed"] = false
 			next["palm_armed"] = true
 			next["selected_action_id"] = PALMED_SWAP_ACTION_ID
@@ -609,26 +717,67 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			palm_challenge["input_msec"] = GameModule.deterministic_time_msec(run_state, next)
 			palm_challenge = _grade_palmed_swap_challenge(palm_challenge)
 			next["palmed_swap_challenge"] = palm_challenge
-			return GameModule.surface_command({
-				"handled": true,
-				"ui_state": next,
-				"action_id": PALMED_SWAP_ACTION_ID,
-				"action_kind": "cheat",
-				"resolve": true,
-				"preserve_surface_ui_state": false,
-				"selected_index": index,
-				"message": _resolve_prompt(next, PALMED_SWAP_ACTION_ID),
-			})
+			next["bar_dice_pending_action_id"] = PALMED_SWAP_ACTION_ID
+			next["bar_dice_ritual_phase"] = "throw"
+			return GameModule.surface_command({"handled":true,"ui_state":next,"selected_index":index,"preserve_surface_ui_state":true,"message":"Palmed swap locked. Slam the cup."})
 		"bar_dice_press":
 			return _action_command("press", "legal", confirm_requested, next, index, "Press the last clean win. Click again to risk it.")
 	return {"handled": false}
 
 
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
-	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
+	return _bar_dice_compatibility_simulation(action_id, stake, run_state, rng, {})
 
 
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	return _bar_dice_compatibility_simulation(action_id, stake, run_state, rng, ui_state)
+
+
+func _bar_dice_compatibility_simulation(action_id: String, stake: int, run_state: RunState, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+	# Legacy probes may inspect a deterministic proposal, but only Foundation can
+	# publish it. Detached simulation plus the receipt-required marker makes a
+	# caller's later GameModule.apply_result() attempt fail closed.
+	if run_state == null or rng == null:
+		return _empty_result(action_id, stake, {}, "Bar Dice simulation requires serialized run and RNG inputs.")
+	var candidate := RunState.new()
+	candidate.from_dict(run_state.to_save_snapshot())
+	var simulation_rng := RngStream.new()
+	simulation_rng.restore(rng.snapshot())
+	var result := _resolve_bar_dice_proposal_core(action_id, stake, candidate, candidate.current_environment, simulation_rng, ui_state.duplicate(true))
+	result.erase(BAR_DICE_PROPOSAL_REQUIRES_APPLY_KEY)
+	result["sealed_action_authoritative"] = true
+	result["bar_dice_compatibility_simulation"] = true
+	return result
+
+
+func _bar_dice_resolve_proposal(action_id: String, stake: int, run_snapshot: Dictionary, rng_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var proposal_input := {
+		"action_id": action_id,
+		"stake": stake,
+		"run_snapshot": run_snapshot,
+		"rng_snapshot": rng_snapshot,
+		"ui_state": ui_state,
+	}
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var proposal_rng := RngStream.new()
+	proposal_rng.restore(rng_snapshot.duplicate(true))
+	var resolution_ui_state := ui_state.duplicate(true)
+	if not resolution_ui_state.has("surface_time_msec"):
+		resolution_ui_state["surface_time_msec"] = GameModule.deterministic_time_msec(candidate, {})
+	var result := _resolve_bar_dice_proposal_core(action_id, stake, candidate, candidate.current_environment, proposal_rng, resolution_ui_state)
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
+		"result": result.duplicate(true),
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": proposal_rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
+	return proposal
+
+
+func _resolve_bar_dice_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	if action_id == "press":
 		return _resolve_press(stake, run_state, environment, rng)
 	if action_id != "roll" and action_id != "loaded_toss" and action_id != "palmed_swap":
@@ -911,7 +1060,16 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		if not security_message.is_empty():
 			result["security_message"] = security_message
 		GameModule.normalize_skill_cheat_contract(result, result)
-	GameModule.apply_result(run_state, result, rng)
+	result[BAR_DICE_PROPOSAL_REQUIRES_APPLY_KEY] = true
+	var settled_ui := ui_state.duplicate(true)
+	settled_ui["bar_dice_ritual_phase"] = "settle"
+	settled_ui["rolled"] = false
+	settled_ui["reroll"] = []
+	settled_ui["last_rerolled"] = []
+	settled_ui.erase("bar_dice_pending_action_id")
+	settled_ui.erase("controlled_roll")
+	settled_ui.erase("palmed_swap_challenge")
+	result["ui_state"] = settled_ui
 	return result
 
 
@@ -1170,7 +1328,7 @@ func _resolve_press(stake: int, run_state: RunState, environment: Dictionary, rn
 	result["bar_dice_press"] = true
 	result["bar_dice_press_won"] = press_won
 	result["bar_dice_press_risk"] = risk
-	GameModule.apply_result(run_state, result, rng)
+	result[BAR_DICE_PROPOSAL_REQUIRES_APPLY_KEY] = true
 	return result
 
 
@@ -1230,6 +1388,21 @@ func _dice_state_preview(run_state: RunState, environment: Dictionary) -> Dictio
 	var state: Dictionary = (stored as Dictionary).duplicate(true) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_state(run_state, environment)
 	_apply_grand_casino_bartender_assignment(state, run_state, environment, true)
 	return state if _state_is_current(state) else _normalize_state(state)
+
+
+# Foundation's accepted sealed host addresses a game-owned table through this
+# small public adapter. Bar Dice keeps its existing state schema and storage;
+# no second ledger, receipt path, or settlement engine is introduced.
+func _table_state(run_state: RunState, environment: Dictionary, observational: bool = false) -> Dictionary:
+	return _dice_state_preview(run_state, environment) if observational else _dice_state(run_state, environment)
+
+
+func _table_state_preview(run_state: RunState, environment: Dictionary) -> Dictionary:
+	return _dice_state_preview(run_state, environment)
+
+
+func _update_environment_table(environment: Dictionary, table: Dictionary) -> void:
+	_update_environment_state(environment, table)
 
 
 func _apply_grand_casino_bartender_assignment(state: Dictionary, run_state: RunState, environment: Dictionary, observational: bool = false) -> void:
@@ -1339,6 +1512,14 @@ func _normalized_ui_state(run_state: RunState, _environment: Dictionary, ui_stat
 		next.erase("palmed_swap_challenge")
 	elif bool(next.get("palm_armed", false)):
 		next["palmed_swap_challenge"] = palmed_swap
+	var ritual_phase := str(next.get("bar_dice_ritual_phase", ""))
+	if not BAR_DICE_RITUAL_PHASES.has(ritual_phase):
+		ritual_phase = "shake" if bool(next.get("rolled", false)) else "settle" if not _copy_dict(state.get("last_result", {})).is_empty() else "agree_wager"
+	next["bar_dice_ritual_phase"] = ritual_phase
+	var pending_action := str(next.get("bar_dice_pending_action_id", "roll"))
+	if pending_action not in ["roll", "loaded_toss", "palmed_swap"]:
+		pending_action = "roll"
+	next["bar_dice_pending_action_id"] = pending_action
 	return next
 
 
@@ -2470,6 +2651,73 @@ func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Arra
 	return buttons
 
 
+func _bar_dice_ritual_action_buttons(ritual_phase: String, ordinary_buttons: Array) -> Array:
+	match ritual_phase:
+		"cover":
+			return [{"action":"bar_dice_ack_cover","index":0,"label":"TAKE THE COVER","detail":"Cash stays on the bar","accent":"amber","enabled":true}]
+		"throw":
+			return [{"action":"bar_dice_throw","index":0,"label":"SLAM THE CUP","detail":"Commit this shown hand","accent":"pink","enabled":true}]
+		"reveal":
+			return [{"action":"bar_dice_reveal","index":0,"label":"LIFT THE CUP","detail":"No dice reroll here","accent":"teal","enabled":true}]
+		"call":
+			return [{"action":"bar_dice_ack_call","index":0,"label":"CALL IT","detail":"Settle the exact covered wager","accent":"yellow","enabled":true}]
+	return ordinary_buttons
+
+
+func _bar_dice_ritual_authority(run_state: RunState, environment: Dictionary, state: Dictionary, ui_state: Dictionary, active_stake: int, last_result: Dictionary) -> Dictionary:
+	var ritual_phase := str(ui_state.get("bar_dice_ritual_phase", "agree_wager"))
+	var covered := active_stake if ritual_phase not in ["agree_wager", "settle"] else 0
+	var patrons := _normalize_patrons(state.get("patrons", []))
+	var opponent_cash := 0
+	if not patrons.is_empty():
+		opponent_cash = maxi(0, int((patrons[0] as Dictionary).get("chip_stack", 0)))
+	var result_ref := ""
+	if ritual_phase == "settle" and not last_result.is_empty():
+		result_ref = "bar_dice:%s:%d:%s" % [
+			str(state.get("table_key", "table")),
+			int(state.get("rounds_played", 0)),
+			RuntimeScript.canonical_fingerprint({
+				"dice": last_result.get("player_dice", []),
+				"outcome": last_result.get("outcome", ""),
+				"delta": last_result.get("bankroll_delta", 0),
+			}),
+		]
+	return {
+		"round_id": "%s:%d" % [str(state.get("table_key", "table")), int(state.get("rounds_played", 0)) + (0 if ritual_phase == "settle" else 1)],
+		"result_serial": int(state.get("rounds_played", 0)),
+		"available_cash": maxi(0, run_state.wager_balance_for_game(get_id(), environment)) if run_state != null else 0,
+		"opponent_available_cash": opponent_cash,
+		"proposed_total": active_stake,
+		"covered_total": covered,
+		"returned_stake": 0,
+		"at_risk_total": covered,
+		"cover_status": "pending" if ritual_phase == "agree_wager" else "accepted",
+		"authoritative_result_ref": result_ref,
+		"outcome": str(last_result.get("outcome", "")) if ritual_phase == "settle" else "",
+		"payout": maxi(0, int(last_result.get("gross_payout", 0))) if ritual_phase == "settle" else 0,
+		"net_change": int(last_result.get("bankroll_delta", 0)) if ritual_phase == "settle" else 0,
+		"rake": maxi(0, int(last_result.get("rake", 0))) if ritual_phase == "settle" else 0,
+		"carryover_pot": maxi(0, int(state.get("carryover_pot", 0))),
+		"rounds_played": int(state.get("rounds_played", 0)),
+		"attention": clampi((run_state.suspicion_level() if run_state != null else 0) + _patron_count(state) * 8, 0, 100),
+		"interrupted": false,
+		"interruption_reason": "",
+		"aftermath_receipt": "",
+		"settlement_receipt": result_ref,
+	}
+
+
+func _bar_dice_ritual_scene_objects(projection: Dictionary) -> Array:
+	var phase := str(projection.get("phase_id", "agree_wager"))
+	var money := _copy_dict(projection.get("money", {}))
+	return [
+		{"id":"bar_dice.bar","state":str(projection.get("energy_tier", "quiet")),"functional_state":"open","bounds":Rect2(140,250,1000,360),"z_order":20},
+		{"id":"bar_dice.cup","state":str(projection.get("cup_state", "rest")),"functional_state":str(projection.get("cup_state", "rest")),"bounds":Rect2(500,280,160,190),"z_order":35},
+		{"id":"bar_dice.dice","state":str(projection.get("dice_state", "hidden")),"functional_state":"authoritative" if phase in ["reveal","call","settle"] else "locked","bounds":Rect2(470,350,340,130),"z_order":30},
+		{"id":"bar_dice.cash","state":str(projection.get("cover_state", "pending")),"functional_state":"locked" if int(money.get("at_risk_total",0)) > 0 else "enabled","bounds":Rect2(270,430,280,140),"z_order":32},
+	]
+
+
 func _surface_opponent_rows(state: Dictionary, last_result: Dictionary, phase: String) -> Array:
 	var rows: Array = []
 	if phase == "settled" and not last_result.is_empty():
@@ -2714,6 +2962,9 @@ func _set_tumble(ui_state: Dictionary, prefix: String, indices: Array = []) -> v
 
 func _draw_bar_room(surface, state: Dictionary) -> void:
 	TableVisualsScript.draw_room(surface, state, "BAR DICE", "%s / %s" % [str(state.get("bar_name", "bar top")), str(state.get("edge_label", "Bar Rake"))])
+	var ritual_phase := str(state.get("bar_dice_ritual_phase", "agree_wager")).replace("_", " ").to_upper()
+	surface.surface_label("%s  ·  OPP $%d" % [ritual_phase, int(state.get("opponent_available_cash", 0))], Vector2(520, 34), 10, C_SOFT)
+	surface.surface_label("COVER $%d  ·  AT RISK $%d  ·  RETURNED $%d" % [int(state.get("covered_total", 0)), int(state.get("at_risk_total", 0)), int(state.get("returned_stake", 0))], Vector2(520, 52), 9, C_AMBER)
 
 
 func _draw_bar_top(surface, _state: Dictionary) -> void:
