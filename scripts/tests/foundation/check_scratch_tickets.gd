@@ -151,6 +151,11 @@ func _check_scratch_roster(game: GameModule, failures: Array) -> void:
 
 
 func _check_crossword_option_c_hold(game: GameModule, failures: Array) -> void:
+	var active_discovered: Array = game.call("_active_discovered_ticket_types", ["crossword_corner", "golden_vault", "two_fer", "golden_vault", "future_ticket"])
+	if active_discovered != ["two_fer", "golden_vault"]:
+		failures.append("Option C active discovery helper did not return the exact canonical active subset.")
+	if not bool(game.call("_ticket_type_is_held", "crossword_corner")) or bool(game.call("_ticket_type_is_held", "two_fer")):
+		failures.append("Option C held-ticket helper did not distinguish Crossword from the six active families.")
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("SCRATCH-OPTION-C-HOLD")
 	run_state.bankroll = 500000
@@ -174,6 +179,31 @@ func _check_crossword_option_c_hold(game: GameModule, failures: Array) -> void:
 	var issued: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", "crossword_corner"), _scratch_rng("option-c-issued"), 0, "option-c-issued")
 	machine["stock"] = stock
 	machine["active_ticket"] = issued
+	# A current-version historical save can still predate the availability field.
+	# Normalization must stamp the held row without changing its saved quantity or
+	# any already-issued lifecycle collection.
+	var legacy_machine := machine.duplicate(true)
+	var legacy_stock := _dict_array(legacy_machine.get("stock", []))
+	var legacy_held: Dictionary = legacy_stock[crossword_index]
+	legacy_held["remaining"] = 3
+	legacy_held.erase("release_availability")
+	legacy_stock[crossword_index] = legacy_held
+	legacy_machine["stock"] = legacy_stock
+	var lifecycle_before := JSON.stringify({"active_ticket":legacy_machine.get("active_ticket", {}),"pending_queue":legacy_machine.get("pending_queue", []),"winner_pile":legacy_machine.get("winner_pile", []),"loser_pile":legacy_machine.get("loser_pile", [])})
+	game.call("_normalize_machine_state", legacy_machine, run_state)
+	legacy_stock = _dict_array(legacy_machine.get("stock", []))
+	legacy_held = legacy_stock[crossword_index]
+	if int(legacy_held.get("remaining", -1)) != 3 or str(legacy_held.get("release_availability", "")) != "held":
+		failures.append("Option C historical normalization did not preserve and stamp held Crossword stock.")
+	if JSON.stringify({"active_ticket":legacy_machine.get("active_ticket", {}),"pending_queue":legacy_machine.get("pending_queue", []),"winner_pile":legacy_machine.get("winner_pile", []),"loser_pile":legacy_machine.get("loser_pile", [])}) != lifecycle_before:
+		failures.append("Option C historical normalization changed an issued Crossword lifecycle.")
+	var held_before_clear := JSON.stringify(legacy_held)
+	var active_before_clear := int(game.call("_stock_total", legacy_machine))
+	var cleared_active := int(game.call("_clear_machine_stock", legacy_machine))
+	legacy_stock = _dict_array(legacy_machine.get("stock", []))
+	if cleared_active != active_before_clear or JSON.stringify(legacy_stock[crossword_index]) != held_before_clear or int(game.call("_stock_total", legacy_machine)) != 0:
+		failures.append("Option C scalper clear changed held Crossword bytes/value or miscounted active supply.")
+	machine = legacy_machine
 	machine["scalper_present"] = false
 	machine["scalper_visit_token"] = game.call("_scratch_visit_token", run_state, environment)
 	environment["game_states"] = {"scratch_tickets": machine}
@@ -1109,8 +1139,13 @@ func _check_scratch_scalper(game: GameModule, failures: Array) -> void:
 		(slot_value as Dictionary)["remaining"] = 1
 	machine["stock"] = stock
 	var cleared := int(game.call("_clear_machine_stock", machine))
-	if cleared != stock.size() or int(game.call("_stock_total", machine)) != 0:
-		failures.append("Scratch scalper did not leave every machine slot out of stock.")
+	var cleared_stock := _dict_array(machine.get("stock", []))
+	var held_after_clear := -1
+	for slot_value in cleared_stock:
+		if str((slot_value as Dictionary).get("type_id", "")) == "crossword_corner":
+			held_after_clear = int((slot_value as Dictionary).get("remaining", -1))
+	if cleared != ACTIVE_SCRATCH_IDS.size() or int(game.call("_stock_total", machine)) != 0 or held_after_clear != 1:
+		failures.append("Scratch scalper did not clear exactly the six active rows while preserving held Crossword quantity.")
 	machine["scalper_visit_token"] = game.call("_scratch_visit_token", run_state, environment)
 	machine["scalper_present"] = true
 	machine["scalper_knows_schedule"] = true

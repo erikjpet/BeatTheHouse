@@ -2176,6 +2176,11 @@ func _clear_machine_stock(machine: Dictionary) -> int:
 	var cleared := 0
 	for index in range(stock.size()):
 		var slot: Dictionary = stock[index]
+		if _ticket_type_is_held(str(slot.get("type_id", ""))):
+			# Historical unsold Crossword quantity is preserved as held evidence.
+			# A scalper can clear only active supply; holding is not confiscation,
+			# refund, conversion, or issuance.
+			continue
 		cleared += maxi(0, int(slot.get("remaining", 0)))
 		slot["remaining"] = 0
 		stock[index] = slot
@@ -2277,6 +2282,8 @@ func _normalize_machine_state(machine: Dictionary, run_state: RunState = null) -
 		var default_capacity := clampi(int(count_range[1]) if count_range.size() > 1 else 5, 1, 5)
 		slot["capacity"] = maxi(1, int(slot.get("capacity", default_capacity)))
 		slot["remaining"] = clampi(int(slot.get("remaining", 0)), 0, int(slot.get("capacity", default_capacity)))
+		if _ticket_type_is_held(str(slot.get("type_id", ""))):
+			slot["release_availability"] = "held"
 		stock[index] = slot
 	machine["stock"] = stock
 	var phase_fallback := posmod(RunState.text_to_seed(str(machine.get("stock_stream_key", "scratch-restock"))), RESTOCK_INTERVAL_MINUTES)
@@ -2307,6 +2314,12 @@ func _machine_state_is_current(machine: Dictionary) -> bool:
 		return false
 	for field in ["stock", "pending_queue", "winner_pile", "loser_pile"]:
 		if typeof(machine.get(field, null)) != TYPE_ARRAY:
+			return false
+	for slot_value in machine.get("stock", []) as Array:
+		if typeof(slot_value) != TYPE_DICTIONARY:
+			return false
+		var slot := slot_value as Dictionary
+		if _ticket_type_is_held(str(slot.get("type_id", ""))) and str(slot.get("release_availability", "")) != "held":
 			return false
 	if typeof(machine.get("active_ticket", null)) != TYPE_DICTIONARY:
 		return false
@@ -2494,6 +2507,23 @@ func _ticket_types() -> Array:
 	if library != null:
 		return _dictionary_array(library.scratch_ticket_types)
 	return []
+
+
+func _ticket_type_is_held(type_id: String) -> bool:
+	return type_id == HELD_TICKET_TYPE_ID
+
+
+func _active_discovered_ticket_types(discovered_type_ids: Array) -> Array:
+	var discovered_set: Dictionary = {}
+	for type_id_value in discovered_type_ids:
+		var type_id := str(type_id_value)
+		if ACTIVE_TICKET_TYPE_IDS.has(type_id):
+			discovered_set[type_id] = true
+	var active: Array = []
+	for type_id in ACTIVE_TICKET_TYPE_IDS:
+		if discovered_set.has(type_id):
+			active.append(type_id)
+	return active
 
 
 func _ticket_type(type_id: String) -> Dictionary:
