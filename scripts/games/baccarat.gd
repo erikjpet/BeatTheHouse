@@ -449,7 +449,6 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_chip_rack(surface, surface_state)
 	_draw_action_console(surface, surface_state)
 	_draw_crew_play_status(surface, surface_state)
-	_draw_baccarat_ritual_status(surface, surface_state)
 	surface.surface_end_design_space()
 	return true
 
@@ -3348,25 +3347,6 @@ func _draw_squeezed_card(surface, card_value: Variant, pos: Vector2, progress_va
 		var rank := str(card.get("rank", "?"))
 		var suit := str(card.get("suit", "?")).left(1).to_upper()
 		surface.surface_label_centered_plain("%s%s" % [rank, suit], Rect2(pos + Vector2(2, 2), Vector2(CARD_SIZE.x - 4, minf(18.0, peel_height - 2.0))), 9, C_DARK)
-
-
-func _draw_baccarat_ritual_status(surface, state: Dictionary) -> void:
-	var phase := str(state.get("ritual_phase", "betting"))
-	var energy := _draw_dict_view(state.get("ritual_energy", {}))
-	var actors := _draw_array_view(state.get("ritual_actors", []))
-	var objects := _draw_array_view(state.get("ritual_scene_objects", []))
-	var dealer_behavior := "idle"
-	if not actors.is_empty():
-		dealer_behavior = str((actors[0] as Dictionary).get("behavior", "idle"))
-	var shoe_state := "rest"
-	for value in objects:
-		var object: Dictionary = value
-		if str(object.get("id", "")) == "baccarat.shoe":
-			shoe_state = str(object.get("visual_state", "rest"))
-	var rect := Rect2(300, 8, 376, 24)
-	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.76))
-	surface.draw_rect(rect, C_AMBER if phase == "squeeze_reveal" else C_CYAN, false, 2)
-	surface.surface_label_centered("%s | %s | SHOE %s | %s" % [phase.replace("_", " ").to_upper(), dealer_behavior.replace("_", " ").to_upper(), shoe_state.to_upper(), str(energy.get("tier", "quiet")).to_upper()], rect.grow(-3), 7, C_WHITE)
 
 
 func _draw_total_badge(surface, rect: Rect2, label: String, total: int, accent: Color) -> void:

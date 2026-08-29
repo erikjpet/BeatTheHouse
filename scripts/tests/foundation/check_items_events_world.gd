@@ -2,197 +2,8 @@ extends "res://scripts/tests/foundation/check_table_games.gd"
 
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const DeliveryWorldMapTestScript := preload("res://scripts/core/world_map.gd")
 
-func _check_surface_command_non_mutating(game: GameModule, action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary, label: String, failures: Array) -> Dictionary:
-	var before := JSON.stringify(run_state.to_dict())
-	var command: Dictionary = game.surface_action_command(action, index, confirm_requested, ui_state, run_state, environment)
-	if not bool(command.get("handled", false)):
-		failures.append("Surface command was not handled: %s." % label)
-	if JSON.stringify(run_state.to_dict()) != before:
-		failures.append("Surface command mutated RunState before resolution: %s." % label)
-	return command
-
-
-func _surface_blocks_action_while(surface_state: Dictionary, action_id: String, animation_channel: String) -> bool:
-	for block_value in surface_state.get("surface_action_blocks", []):
-		if typeof(block_value) != TYPE_DICTIONARY:
-			continue
-		var block: Dictionary = block_value
-		if str(block.get("while_animation", "")) != animation_channel:
-			continue
-		if str(block.get("action", "")) == action_id:
-			return true
-		for blocked_action in block.get("actions", []):
-			if str(blocked_action) == action_id:
-				return true
-	return false
-
-
-func _surface_blocks_action(surface_state: Dictionary, action_id: String) -> bool:
-	for block_value in surface_state.get("surface_action_blocks", []):
-		if typeof(block_value) != TYPE_DICTIONARY:
-			continue
-		var block: Dictionary = block_value
-		if str(block.get("action", "")) == action_id:
-			return true
-		for blocked_action in block.get("actions", []):
-			if str(blocked_action) == action_id:
-				return true
-	return false
-
-
-# Captures the RunState domains ActionResult is allowed to update.
-func _run_state_result_snapshot(run_state: RunState) -> Dictionary:
-	return {
-		"bankroll": run_state.bankroll,
-		"suspicion": run_state.suspicion_level(),
-		"suspicion_location_id": run_state.current_suspicion_location_id(),
-		"suspicion_levels": (run_state.suspicion.get("local_levels", {}) as Dictionary).duplicate(true),
-		"drunk_level": run_state.drunk_level,
-		"pending_drunk_absorption": run_state.pending_drunk_absorption_amount(),
-		"alcoholic_level": run_state.alcoholic_level,
-		"baseline_luck": run_state.baseline_luck,
-		"debt_count": run_state.debt.size(),
-		"story_count": run_state.story_log.size(),
-		"rng_state": run_state.rng_state,
-	}
-
-
-# Checks the shared ActionResult/result-delta shape.
-func _check_action_result_shape(result: Dictionary, expected_kind: String, failures: Array, context: String = "") -> void:
-	var context_suffix := " (%s)" % context if not context.strip_edges().is_empty() else ""
-	if not bool(result.get("ok", false)):
-		failures.append("GameModule returned an unsuccessful result for %s action%s." % [expected_kind, context_suffix])
-	if str(result.get("type", "")) != "game_action":
-		failures.append("ActionResult should identify game_action results%s." % context_suffix)
-	if str(result.get("action_kind", "")) != expected_kind:
-		failures.append("ActionResult action kind mismatch%s: expected %s." % [context_suffix, expected_kind])
-	var deltas: Dictionary = result.get("deltas", {})
-	var required_delta_keys := [
-		"bankroll_delta",
-		"suspicion_delta",
-		"alcohol_intake",
-		"drunk_delta",
-		"alcoholic_delta",
-		"baseline_luck_delta",
-		"debt_changes",
-		"inventory_add",
-		"inventory_remove",
-		"flags_set",
-		"travel_hooks_add",
-		"travel_changes",
-		"story_log",
-		"messages",
-		"ended",
-		"item_hooks",
-		"event_hooks",
-		"demo_finale",
-	]
-	for key in required_delta_keys:
-		if not deltas.has(key):
-			failures.append("ActionResult deltas missing key: %s." % key)
-	if int(result.get("bankroll_delta", 0)) != int(deltas.get("bankroll_delta", 0)):
-		failures.append("ActionResult top-level bankroll_delta does not match deltas.")
-	if int(result.get("suspicion_delta", 0)) != int(deltas.get("suspicion_delta", 0)):
-		failures.append("ActionResult top-level suspicion_delta does not match deltas.")
-	if bool(result.get("ended", false)) != bool(deltas.get("ended", false)):
-		failures.append("ActionResult top-level ended does not match deltas.")
-	if str(result.get("state", "")) == "":
-		failures.append("ActionResult should include continue/ended state.")
-	if str(result.get("message", "")).is_empty():
-		failures.append("ActionResult should include a player-facing message.")
-	if result.get("messages", []).is_empty() or deltas.get("messages", []).is_empty():
-		failures.append("ActionResult should include messages in the shared delta shape.")
-	for ui_key in ["host", "button_metadata", "overlay_state", "focus", "hover", "ui_state"]:
-		if result.has(ui_key) or deltas.has(ui_key):
-			failures.append("ActionResult leaked UI state key: %s." % ui_key)
-
-
-# Checks both legacy self-applied results and pure host-applied module results.
-func _check_action_result_application_contract(before: Dictionary, run_state: RunState, result: Dictionary, label: String, failures: Array) -> void:
-	if not bool(result.get("ok", false)):
-		return
-	if not bool(result.get("host_apply_result", false)):
-		_check_action_result_applied(before, run_state, result, label, failures)
-		return
-	if run_state.bankroll != int(before.get("bankroll", 0)):
-		failures.append("RunState bankroll changed before host apply for %s." % label)
-	var result_environment_id := str(result.get("environment_id", ""))
-	if not result_environment_id.is_empty():
-		var location_id := run_state.suspicion_location_id_for_environment_id(result_environment_id)
-		var before_levels: Dictionary = before.get("suspicion_levels", {})
-		var expected_suspicion := int(before_levels.get(location_id, 0))
-		if run_state.suspicion_level_for_environment_id(result_environment_id) != expected_suspicion:
-			failures.append("RunState suspicion changed before host apply for %s." % label)
-	elif run_state.suspicion_level() != int(before.get("suspicion", 0)):
-		failures.append("RunState suspicion changed before host apply for %s." % label)
-	if run_state.story_log.size() != int(before.get("story_count", 0)):
-		failures.append("RunState story log changed before host apply for %s." % label)
-	var apply_rng := run_state.create_rng("%s_host_apply" % label.replace(" ", "_"))
-	apply_rng.randi_range(1, 2147483646)
-	GameModule.apply_result(run_state, result, apply_rng)
-	_check_action_result_applied(before, run_state, result, "%s host apply" % label, failures)
-
-
-# Checks that ActionResult changes were applied through RunState domains.
-func _check_action_result_applied(before: Dictionary, run_state: RunState, result: Dictionary, label: String, failures: Array) -> void:
-	if not bool(result.get("ok", false)):
-		return
-	var deltas: Dictionary = result.get("deltas", {})
-	var expected_bankroll := int(before.get("bankroll", 0)) + int(deltas.get("bankroll_delta", 0))
-	if run_state.bankroll != expected_bankroll:
-		failures.append("RunState bankroll did not match %s delta." % label)
-	var result_environment_id := str(result.get("environment_id", ""))
-	var before_suspicion := int(before.get("suspicion", 0))
-	var actual_suspicion := run_state.suspicion_level()
-	if not result_environment_id.is_empty():
-		var location_id := run_state.suspicion_location_id_for_environment_id(result_environment_id)
-		var before_levels: Dictionary = before.get("suspicion_levels", {})
-		before_suspicion = int(before_levels.get(location_id, before_suspicion if location_id == str(before.get("suspicion_location_id", "")) else 0))
-		actual_suspicion = run_state.suspicion_level_for_environment_id(result_environment_id)
-	var expected_suspicion := clampi(before_suspicion + int(deltas.get("suspicion_delta", 0)), 0, 100)
-	if actual_suspicion != expected_suspicion:
-		failures.append("RunState suspicion did not match %s delta." % label)
-	var intake := maxi(0, int(deltas.get("alcohol_intake", 0)))
-	var before_drunk := int(before.get("drunk_level", 0))
-	var before_pending := int(before.get("pending_drunk_absorption", 0))
-	var pending_capacity := maxi(0, RunState.ALCOHOL_MAX - before_drunk - before_pending)
-	var accepted_intake := mini(intake, pending_capacity)
-	var immediate_intake := mini(accepted_intake, RunState.DRUNK_ABSORPTION_INITIAL_POINTS)
-	var expected_pending := before_pending + accepted_intake - immediate_intake
-	var immediate_pending_delta := 0
-	var pending_delta := int(deltas.get("pending_drunk_absorption_delta", 0))
-	if pending_delta < 0:
-		expected_pending = maxi(0, expected_pending + pending_delta)
-	elif pending_delta > 0:
-		var pending_delta_capacity := maxi(0, RunState.ALCOHOL_MAX - before_drunk - immediate_intake - expected_pending)
-		var accepted_pending_delta := mini(pending_delta, pending_delta_capacity)
-		immediate_pending_delta = mini(accepted_pending_delta, RunState.DRUNK_ABSORPTION_INITIAL_POINTS)
-		expected_pending += maxi(0, accepted_pending_delta - immediate_pending_delta)
-	var drunk_delta := int(deltas.get("drunk_delta", 0))
-	var effective_drunk_delta := 0 if drunk_delta < 0 and expected_pending > 0 else drunk_delta
-	var expected_drunk := clampi(before_drunk + immediate_intake + immediate_pending_delta + effective_drunk_delta, 0, RunState.ALCOHOL_MAX)
-	if run_state.drunk_level != expected_drunk:
-		failures.append("RunState drunk level did not match %s delta." % label)
-	if run_state.pending_drunk_absorption_amount() != expected_pending:
-		failures.append("RunState pending drunk absorption did not match %s alcohol intake." % label)
-	var expected_alcoholic := clampi(int(before.get("alcoholic_level", 0)) + int(deltas.get("alcohol_intake", 0)) + int(deltas.get("alcoholic_delta", 0)), 0, RunState.ALCOHOL_MAX)
-	if run_state.alcoholic_level != expected_alcoholic:
-		failures.append("RunState alcoholic level did not match %s delta." % label)
-	var expected_baseline_luck := clampi(int(before.get("baseline_luck", 0)) + int(deltas.get("baseline_luck_delta", 0)), RunState.BASELINE_LUCK_MIN, RunState.BASELINE_LUCK_MAX)
-	if run_state.baseline_luck != expected_baseline_luck:
-		failures.append("RunState baseline luck did not match %s delta." % label)
-	var story_delta: Array = deltas.get("story_log", [])
-	if run_state.story_log.size() != int(before.get("story_count", 0)) + story_delta.size():
-		failures.append("RunState story log did not match %s delta." % label)
-	var debt_delta: Array = deltas.get("debt_changes", [])
-	if run_state.debt.size() != int(before.get("debt_count", 0)) + debt_delta.size():
-		failures.append("RunState debt did not match %s delta." % label)
-	if run_state.rng_state == int(before.get("rng_state", 0)):
-		failures.append("RunState RNG state did not advance after %s." % label)
-
-
-# Checks the one selected FT-06 starter game without touching demo UI modules.
 func _check_selected_starter_game_port(library: ContentLibrary, failures: Array) -> void:
 	var definition := library.game("pull_tabs")
 	if definition.is_empty():
@@ -330,30 +141,6 @@ func _check_pull_tab_result_details(result: Dictionary, failures: Array) -> void
 	for ui_key in ["windows", "revealed", "ticket_stack", "stack_label", "host"]:
 		if result.has(ui_key):
 			failures.append("Pull Tabs result leaked demo UI state key: %s." % ui_key)
-
-
-func _pull_tab_test_ticket_result(ticket_id: String, payout: int) -> Dictionary:
-	return {
-		"pull_tab_ticket": {
-			"id": "test:ticket:%s" % ticket_id,
-			"display_name": "Test Pull Tab",
-			"form": "TEST",
-			"serial": "001-00001",
-			"ticket_number": "#%s" % ticket_id,
-			"rows": [["CHERRY", "CHERRY", "CHERRY"], ["LEMON", "BAR", "7"], ["BELL", "BAR", "CHERRY"]],
-			"payout": payout,
-			"price": 1,
-		},
-	}
-
-
-func _pull_tab_sleeve_entry_payout(deal: Dictionary, sleeve_entry: int) -> int:
-	if sleeve_entry < 0:
-		return 0
-	var prizes: Array = deal.get("prizes", [])
-	if sleeve_entry >= prizes.size():
-		return 0
-	return maxi(0, int((prizes[sleeve_entry] as Dictionary).get("payout", 0)))
 
 
 func _set_pull_tab_loser_count(environment: Dictionary, loser_count: int) -> void:
@@ -1744,7 +1531,7 @@ func _check_save_service_foundation_round_trip(library: ContentLibrary, failures
 	var start_environment: EnvironmentInstance = generator.next_environment(run_state)
 	var environment_target := _first_target_with_game(library, _unique_strings(start_environment.next_archetypes, start_environment.travel_hooks), "")
 	var environment: EnvironmentInstance = generator.next_environment(run_state, environment_target)
-	_resolve_first_save_test_action(library, run_state, environment, failures)
+	call("_resolve_first_save_test_action", library, run_state, environment, failures)
 	if not library.items.is_empty():
 		run_state.add_item(str((library.items[0] as Dictionary).get("id", "")))
 	run_state.add_debt({
@@ -1775,12 +1562,12 @@ func _check_save_service_foundation_round_trip(library: ContentLibrary, failures
 	if not save_service.has_run(slot_id):
 		failures.append("SaveService did not report saved foundation slot.")
 		return
-	_check_save_payload_file(save_path, failures)
+	call("_check_save_payload_file", save_path, failures)
 	var loaded = save_service.load_run(slot_id)
 	if loaded == null:
 		failures.append("SaveService foundation round trip load returned null.")
 		return
-	_check_run_state_save_round_trip(expected, loaded.to_dict(), failures)
+	call("_check_run_state_save_round_trip", expected, loaded.to_dict(), failures)
 	_check_save_service_atomic_recovery(failures)
 
 
@@ -3113,18 +2900,6 @@ func _world_map_travel_charge_result(target_id: String, cost: int) -> Dictionary
 	})
 
 
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
 func _remove_user_store_file(path: String) -> void:
 	var absolute_path := ProjectSettings.globalize_path(path)
 	if FileAccess.file_exists(absolute_path):
@@ -4131,31 +3906,6 @@ func _check_jazz_club_layout(environment_data: Dictionary, failures: Array) -> v
 				failures.append("Jazz Club objects overlap on the map: %s and %s." % [key, other_key])
 
 
-func _layout_rect_from_dict(value: Variant) -> Rect2:
-	if typeof(value) != TYPE_DICTIONARY:
-		return Rect2()
-	var data: Dictionary = value
-	return Rect2(
-		Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))),
-		Vector2(float(data.get("w", 0.0)), float(data.get("h", 0.0)))
-	)
-
-
-func _layout_rect_center_board(rect: Rect2) -> Vector2:
-	return Vector2(
-		(rect.position.x + rect.size.x * 0.5) * float(ArtContractsScript.ENVIRONMENT_BOARD_SIZE.x),
-		(rect.position.y + rect.size.y * 0.5) * float(ArtContractsScript.ENVIRONMENT_BOARD_SIZE.y)
-	)
-
-
-func _layout_rects_overlap_with_gap(first: Rect2, second: Rect2) -> bool:
-	var gap := Vector2(8.0 / float(ArtContractsScript.ENVIRONMENT_BOARD_SIZE.x), 8.0 / float(ArtContractsScript.ENVIRONMENT_BOARD_SIZE.y))
-	var padded_first := Rect2(first.position - gap, first.size + gap * 2.0)
-	var padded_second := Rect2(second.position - gap, second.size + gap * 2.0)
-	return padded_first.intersects(padded_second)
-
-
-# Checks lender borrowing, repayment, defaults, special debt kinds, and save/load.
 func _check_lender_debt_foundation(library: ContentLibrary, failures: Array) -> void:
 	for lender_id in ["street_lender", "motel_friend", "the_crew", "brother_in_law", "sals_pawn_counter"]:
 		var lender := library.lender(lender_id)
@@ -4209,7 +3959,7 @@ func _check_lender_debt_foundation(library: ContentLibrary, failures: Array) -> 
 	_check_cash_lender_lifecycle(library, "motel_friend", "motel_friend_note", false, failures)
 	_check_crew_lender_lifecycle(library, failures)
 	_check_crew_trust_core(library, failures)
-	_check_delivery_framework(library, failures)
+	call("_check_delivery_framework", library, failures)
 	_check_family_lender_lifecycle(library, failures)
 	_check_pawn_lender_lifecycle(library, failures)
 	_check_pawn_shop_run_environment(library, failures)
@@ -4860,3 +4610,54 @@ func _fixture_lender_result(run_state: RunState, lender: Dictionary, lender_id: 
 
 
 # Checks behavior-first suspicion cues, downstream risky-action pressure, event eligibility, and save/load.
+
+
+# Shared test-chain helpers owned here so this inheritance layer compiles.
+
+func _delivery_complete_all_targets(run_state: RunState) -> bool:
+	var target_ids: Array = []
+	for target_value in run_state.delivery_snapshot().get("targets", []):
+		if typeof(target_value) == TYPE_DICTIONARY:
+			target_ids.append(str((target_value as Dictionary).get("node_id", "")))
+	for node_id_value in target_ids:
+		var node_id := str(node_id_value)
+		var arrival := _delivery_enter_node(run_state, node_id)
+		if not bool(arrival.get("handoff_ready", false)) or run_state.delivery_arrival_interaction().is_empty():
+			return false
+		if not bool(run_state.delivery_complete_handoff(node_id).get("ok", false)):
+			return false
+	return not run_state.delivery_has_active_run()
+
+func _save_service_expected_snapshot(run_state: RunState) -> Dictionary:
+	var parsed: Variant = JSON.parse_string(JSON.stringify(run_state.to_dict()))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return run_state.to_dict()
+	var normalized: RunState = RunStateScript.new()
+	normalized.from_dict(parsed as Dictionary)
+	return normalized.to_dict()
+
+func _unique_strings(first: Array, second: Array) -> Array:
+	var result: Array = []
+	for source in [first, second]:
+		for id in _string_array_from_variant(source):
+			if not result.has(id):
+				result.append(id)
+	return result
+
+
+# Resolves one foundation game action before saving, if generated content allows it.
+
+
+# Shared test-chain helpers owned here so this inheritance layer compiles.
+
+func _delivery_enter_node(run_state: RunState, node_id: String) -> Dictionary:
+	var node := DeliveryWorldMapTestScript.node_metadata_by_id(run_state.world_map, node_id)
+	run_state.world_map = DeliveryWorldMapTestScript.enter_node(run_state.world_map, node_id, {})
+	run_state.current_environment = {
+		"id": node_id,
+		"archetype_id": str(node.get("archetype_id", node_id)),
+		"world_node_id": node_id,
+		"turns": 0,
+		"security_profile": {},
+	}
+	return run_state.delivery_resolve_travel_arrival({"target_node_id": node_id}, {})

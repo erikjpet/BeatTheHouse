@@ -441,11 +441,13 @@ func _slot_handpay_acknowledgement_proposal(environment: Dictionary) -> Dictiona
 		"won": false,
 		"environment_id": str(environment.get("id", "")),
 		"environment_archetype_id": str(environment.get("archetype_id", "")),
-		"slot_handpay_acknowledgement": true,
-		"slot_handpay_result_id": result_id,
-		ActionAuthorityScript.SKIP_ENVIRONMENT_TURN_KEY: true,
 		"message": str((deltas.get("messages", []) as Array)[0]),
 	})
+	# build_action_result closes the shared envelope, so append only the sealed
+	# Slot acknowledgement receipt fields after that normalization boundary.
+	result["slot_handpay_acknowledgement"] = true
+	result["slot_handpay_result_id"] = result_id
+	result[ActionAuthorityScript.SKIP_ENVIRONMENT_TURN_KEY] = true
 	return {"ok": true, "machine": machine, "result": result}
 
 

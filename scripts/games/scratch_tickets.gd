@@ -275,7 +275,7 @@ func _ticket_foil_style_id(ticket: Dictionary) -> String:
 
 
 func surface_action_command(surface_action: String, index: int, _confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	var machine := _ensure_machine_state(run_state, environment, true)
+	var machine := _ensure_machine_state(run_state, environment, false)
 	match surface_action:
 		"scratch_compact_machine", "scratch_compact_ticket":
 			var tab_state := ui_state.duplicate(false)
@@ -644,7 +644,7 @@ func measure_rtp(type_id: String, samples: int = 20000, seed_text: String = "SCR
 
 
 func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
-	var machine := _ensure_machine_state(run_state, environment, true)
+	var machine := _ensure_machine_state(run_state, environment, false)
 	var stock := _dictionary_array(machine.get("stock", []))
 	var stock_index := int(ui_state.get("scratch_stock_index", 0))
 	var quantity := maxi(1, int(ui_state.get("scratch_buy_quantity", 1)))

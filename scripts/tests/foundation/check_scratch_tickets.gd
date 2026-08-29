@@ -1410,6 +1410,7 @@ func _check_scratch_portable_state(game: GameModule, failures: Array) -> void:
 	run_state.bankroll = 500
 	var environment := _scratch_environment("scratch_portable")
 	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("portable-stock"))
+	_ensure_stock_for_quantity(machine, 1)
 	environment["game_states"] = {"scratch_tickets": machine}
 	run_state.current_environment = environment
 	var buy_index := _first_stocked_scratch_index(machine)
