@@ -739,10 +739,17 @@ func _tutorial_meta_home_handoff_is_forced(run_state: RunState) -> bool:
 	run_state.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
 	run_state.narrative_flags["grand_casino_players_card_awarded_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
 	run_state.narrative_flags["grand_casino_players_card_ready_to_claim"] = false
+	var finish_event_id := "dialogue:tutorial_linda_bronze_finish"
+	# Earlier Linda guardrail observers may leave this same natural event ID at a
+	# deliberately interrupted node. Own a fresh resume boundary here instead of
+	# letting start_dialogue treat the stale same-ID entry as the requested goal.
+	run_state.complete_talk_event_resolution(finish_event_id)
+	if not run_state.pending_talk_event(finish_event_id).is_empty():
+		_fail("Tutorial Home handoff fixture could not clear its stale Linda event.")
+		return false
 	if not bool(app.call("_resume_tutorial_linda_bronze_finish")):
 		_fail("Linda's final Players Card handoff could not start for the Home transition fixture.")
 		return false
-	var finish_event_id := "dialogue:tutorial_linda_bronze_finish"
 	var finish_entry := run_state.pending_talk_event(finish_event_id)
 	var next_entry := run_state.next_pending_talk_event()
 	if str(finish_entry.get("dialogue_id", "")) != "tutorial_linda_bronze_finish" \

@@ -1935,7 +1935,15 @@ func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Di
 	candidate.from_dict(run_snapshot.duplicate(true))
 	var rng := RngStream.new()
 	rng.restore(rng_snapshot.duplicate(true))
-	var result := _resolve_blackjack_proposal_core(action_id, stake, candidate, candidate.current_environment, rng, ui_state.duplicate(true))
+	# Proposal replay may never consult wall time. A normal rendered surface owns
+	# this clock explicitly; headless, restored, and direct host settlements can
+	# legitimately omit it. Bind that missing transient value to the sealed
+	# candidate's simulation clock, which is already covered by run_snapshot and
+	# therefore produces the same proposal on fail-closed replay.
+	var resolution_ui_state := ui_state.duplicate(true)
+	if not resolution_ui_state.has("surface_time_msec"):
+		resolution_ui_state["surface_time_msec"] = GameModule.deterministic_time_msec(candidate, {})
+	var result := _resolve_blackjack_proposal_core(action_id, stake, candidate, candidate.current_environment, rng, resolution_ui_state)
 	var proposal := {
 		"ok": bool(result.get("ok", false)),
 		"input_fingerprint": input_fingerprint,

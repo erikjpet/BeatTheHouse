@@ -81,6 +81,7 @@ func _run() -> void:
 	_check_energy_and_restore_projection(game)
 	_check_ten_seed_projection_isolation(game)
 	_check_first_entry_surface_delivery(game)
+	_check_proposal_replay_ignores_wall_time(game)
 	_check_host_authority_and_replay(game)
 	_check_hostile_delivery_and_restore(game)
 	_check_failure_atomic_rng_retry(game)
@@ -95,6 +96,40 @@ func _run() -> void:
 		push_error(str(failure))
 	print("game06_2_depth_contract: FAIL (%d)" % failures.size())
 	quit(1)
+
+
+func _check_proposal_replay_ignores_wall_time(game: GameModule) -> void:
+	var fixture := _fixture(game, "GAME06-2-PROPOSAL-CLOCK", 91)
+	var run: RunState = fixture.get("run")
+	var session := {
+		"selected_stake": 5,
+		"locked_stake": 5,
+		"player_hands": [{"cards": [{"rank": 10, "suit": 0, "deck": 0}, {"rank": 8, "suit": 1, "deck": 0}], "stood": true, "wager_multiplier": 1}],
+		"dealer_cards": [{"rank": 9, "suit": 2, "deck": 0}, {"rank": 7, "suit": 3, "deck": 0}],
+		"patron_hands": [],
+		"cheats_used": {"peek_hole_card": true},
+		"peek_had_window": true,
+		"dealer_hole_visible": true,
+		"cards_consumed": 4,
+	}
+	var run_snapshot := run.to_save_snapshot()
+	var rng_snapshot := run.create_rng("proposal_clock").snapshot()
+	var first: Dictionary = game.call("_blackjack_resolve_proposal", "play_basic", 5, run_snapshot, rng_snapshot, session)
+	OS.delay_msec(8)
+	var delayed: Dictionary = game.call("_blackjack_resolve_proposal", "play_basic", 5, run_snapshot, rng_snapshot, session)
+	_check(
+		RitualRuntimeScript.canonical_json(first) == RitualRuntimeScript.canonical_json(delayed),
+		"Identical sealed Blackjack settlement inputs changed after wall-clock delay."
+	)
+	var source := FileAccess.get_file_as_string("res://scripts/games/blackjack.gd")
+	var proposal_start := source.find("func _blackjack_resolve_proposal(")
+	var proposal_end := source.find("\nfunc _resolve_blackjack_proposal_core(", proposal_start)
+	var proposal_source := source.substr(proposal_start, proposal_end - proposal_start) if proposal_start >= 0 and proposal_end > proposal_start else ""
+	_check(
+		proposal_source.contains('resolution_ui_state["surface_time_msec"] = GameModule.deterministic_time_msec(candidate, {})')
+			and not proposal_source.contains("Time.get_ticks_msec"),
+		"Authoritative Blackjack proposal settlement no longer proves a sealed deterministic clock before core resolution."
+	)
 
 
 func _check_first_entry_surface_delivery(game: GameModule) -> void:
