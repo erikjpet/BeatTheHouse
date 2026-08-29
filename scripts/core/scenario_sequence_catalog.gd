@@ -18,6 +18,7 @@ const AUTHORING_KEYS := [
 ]
 const PACKAGE_ORDER := [
 	"env06_7_shops_streets",
+	"env06_7_roadside_shelter",
 	"env06_7_bars_road",
 	"env06_7_punchline_clubs",
 	"env06_7_queen_public",
