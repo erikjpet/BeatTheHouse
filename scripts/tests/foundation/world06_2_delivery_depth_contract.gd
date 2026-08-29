@@ -10,6 +10,13 @@ func _initialize() -> void:
 	_check_location_actions(failures)
 	_check_hold_and_pursuit(failures)
 	_check_receipts_and_host_boundary(failures)
+	_check_generic_host_surface(failures)
+	_check_handoff_authority_matrix(failures)
+	_check_host_context_matrix(failures)
+	_check_receipt_mutation_matrix(failures)
+	_check_terminal_matrix(failures)
+	_check_determinism_and_revisit(failures)
+	_check_receipt_bound(failures)
 	if failures.is_empty():
 		print("world06_2 delivery depth contract passed")
 		quit(0)
@@ -133,6 +140,136 @@ func _check_receipts_and_host_boundary(failures: Array) -> void:
 	hostile_depth["command_receipts"] = hostile_receipts
 	hostile["depth_state"] = hostile_depth
 	_assert_empty(DeliveryRunModelScript.normalize_state(hostile), failures, "tampered physical receipt")
+
+
+func _check_generic_host_surface(failures: Array) -> void:
+	for verb_value in DeliveryRunModelScript.HOST_VERBS:
+		var source := _package_state("SURFACE_%s" % str(verb_value))
+		var before := JSON.stringify(source)
+		var result := DeliveryRunModelScript.apply_host_action(source, str(verb_value), "surface:%s" % str(verb_value), _context({"node_id": "wrong_node"}))
+		if typeof(result) != TYPE_DICTIONARY:
+			failures.append("Host action %s did not return dictionary state." % str(verb_value))
+		if JSON.stringify(source) != before:
+			failures.append("Host action %s mutated its input state." % str(verb_value))
+
+
+func _check_handoff_authority_matrix(failures: Array) -> void:
+	var carried := _act(_package_state("HANDOFF_MATRIX"), "pickup", "matrix:pickup", {"node_id": "bar", "target_id": "delivery_pickup"})
+	_assert_exact(_act(carried, "handoff", "matrix:early", {"node_id": "pawn_shop", "target_id": "first"}), carried, failures, "handoff before host arrival")
+	_assert_exact(_act(carried, "handoff", "matrix:remote", {"node_id": "motel", "target_id": "second"}), carried, failures, "remote handoff")
+	var stashed := _act(carried, "stash", "matrix:stash", {"node_id": "bar", "place_id": "bar::locker"})
+	var stashed_arrival := _act(stashed, "move", "matrix:stash:move", {"node_id": "bar", "destination_node_id": "pawn_shop"})
+	_assert_exact(_act(stashed_arrival, "handoff", "matrix:stashed", {"node_id": "pawn_shop", "target_id": "first"}), stashed_arrival, failures, "handoff of remotely stashed cargo")
+	var found := _act(stashed, "found", "matrix:found", {"node_id": "bar", "place_id": "bar::locker", "target_id": "sweep"})
+	_assert_exact(_act(found, "handoff", "matrix:found:handoff", {"node_id": "pawn_shop", "target_id": "first"}), found, failures, "handoff of found cargo")
+	var ditched := _act(carried, "ditch", "matrix:ditch", {"node_id": "bar", "place_id": "bar::drain"})
+	_assert_exact(_act(ditched, "handoff", "matrix:ditch:handoff", {"node_id": "pawn_shop", "target_id": "first"}), ditched, failures, "handoff of ditched cargo")
+
+
+func _check_host_context_matrix(failures: Array) -> void:
+	var state := _act(_package_state("HOST_CONTEXT"), "pickup", "host:pickup", {"node_id": "bar", "target_id": "delivery_pickup"})
+	var missing := _context({"node_id": "bar", "destination_node_id": "pawn_shop"})
+	missing.erase("target_id")
+	_assert_exact(DeliveryRunModelScript.apply_host_action(state, "move", "host:missing", missing), state, failures, "host context missing an exact field")
+	var extra := _context({"node_id": "bar", "destination_node_id": "pawn_shop"})
+	extra["authority"] = true
+	_assert_exact(DeliveryRunModelScript.apply_host_action(state, "move", "host:extra", extra), state, failures, "host context with caller authority")
+	_assert_exact(_act(state, "move", "host:same", {"node_id": "bar", "destination_node_id": "bar"}), state, failures, "zero-length move")
+	_assert_exact(_act(state, "wait", "host:remote_wait", {"node_id": "motel"}), state, failures, "remote wait")
+	_assert_exact(_act(state, "duck", "host:no_cover", {"node_id": "bar"}), state, failures, "duck without host cover")
+	var whitespace := _context({"node_id": " bar ", "place_id": "bar::locker"})
+	_assert_exact(DeliveryRunModelScript.apply_host_action(state, "stash", "host:whitespace", whitespace), state, failures, "noncanonical host text")
+
+
+func _check_receipt_mutation_matrix(failures: Array) -> void:
+	var state := _act(_package_state("RECEIPT_MATRIX"), "pickup", "receipt:pickup", {"node_id": "bar", "target_id": "delivery_pickup"})
+	state = _act(state, "wait", "receipt:wait", {"node_id": "bar", "action_index": 1})
+	for mutation in ["extra", "key", "command", "sequence", "envelope", "previous", "receipt", "malformed"]:
+		var hostile := state.duplicate(true)
+		var depth := _dict(hostile.get("depth_state", {}))
+		var receipts := _array(depth.get("command_receipts", []))
+		var receipt := _dict(receipts[1])
+		match mutation:
+			"extra": receipt["unexpected"] = true
+			"key": receipt["receipt_key"] = "receipt:forged"
+			"command": receipt["command_id"] = "stash"
+			"sequence": receipt["sequence"] = 99
+			"envelope": receipt["command_record_fingerprint"] = "0".repeat(64)
+			"previous": receipt["previous_receipt_fingerprint"] = "1".repeat(64)
+			"receipt": receipt["receipt_fingerprint"] = "2".repeat(64)
+			"malformed": receipt["receipt_fingerprint"] = "not_hex"
+		receipts[1] = receipt
+		depth["command_receipts"] = receipts
+		hostile["depth_state"] = depth
+		_assert_empty(DeliveryRunModelScript.normalize_state(hostile), failures, "receipt mutation %s" % mutation)
+
+
+func _check_terminal_matrix(failures: Array) -> void:
+	var abandoned := _act(_package_state("ABANDON"), "abandon", "terminal:abandon", {"reason": "abandoned"})
+	_assert_terminal(abandoned, "abandoned", failures)
+	var expiring := _package_state("EXPIRE")
+	expiring["deadline_remaining"] = 1
+	expiring = DeliveryRunModelScript.advance_boundaries(expiring, 1, "bar", 0, 1)
+	_assert_terminal(expiring, "deadline", failures)
+	var hold := DeliveryRunModelScript.begin({"run_id": "interrupt", "mode": "hold", "start_node_id": "cage", "targets": [{"id": "window", "node_id": "cage"}], "deadline_actions": 5}, 0)
+	hold = _act(hold, "interruption", "terminal:interrupt", {"node_id": "cage", "reason": "room_scenario"})
+	_assert_terminal(hold, "room_scenario", failures)
+	if str(_dict(_dict(hold.get("depth_state", {})).get("hold_aftermath", {})).get("outcome", "")) != "room_scenario":
+		failures.append("Hold interruption did not persist its distinct aftermath.")
+	var caught := DeliveryRunModelScript.begin({
+		"run_id": "caught", "mode": "getaway", "start_node_id": "casino", "targets": [{"id": "exit", "node_id": "motel"}],
+		"deadline_actions": 8, "pursuit_pressure": 4, "pursuit_per_boundary": 2, "pursuit_limit": 5,
+	}, 0)
+	caught = _act(caught, "wait", "terminal:caught", {"node_id": "casino", "action_index": 1})
+	_assert_terminal(caught, "caught", failures)
+
+
+func _check_determinism_and_revisit(failures: Array) -> void:
+	var twin_a := _package_state("DETERMINISTIC")
+	var twin_b := _package_state("DETERMINISTIC")
+	for step in [
+		["pickup", "d:1", {"node_id": "bar", "target_id": "delivery_pickup"}],
+		["move", "d:2", {"node_id": "bar", "destination_node_id": "pawn_shop"}],
+		["stash", "d:3", {"node_id": "pawn_shop", "place_id": "pawn_shop::locker"}],
+	]:
+		twin_a = _act(twin_a, str(step[0]), str(step[1]), _dict(step[2]))
+		twin_b = _act(twin_b, str(step[0]), str(step[1]), _dict(step[2]))
+	if JSON.stringify(twin_a) != JSON.stringify(twin_b):
+		failures.append("Identical physical command sequences were not byte-deterministic.")
+	var saved := DeliveryRunModelScript.normalize_state(twin_a)
+	if JSON.stringify(saved) != JSON.stringify(twin_a):
+		failures.append("Save normalization changed the deterministic physical command chain.")
+	_assert_exact(_act(saved, "retrieve", "d:away", {"node_id": "bar", "place_id": "pawn_shop::locker"}), saved, failures, "retrieve before revisiting stash")
+	var revisited := _act(saved, "wait", "d:revisit_position", {"node_id": "pawn_shop", "action_index": 3})
+	var retrieved := _act(revisited, "retrieve", "d:retrieve", {"node_id": "pawn_shop", "place_id": "pawn_shop::locker"})
+	_assert_physical(retrieved, "carried", "pawn_shop", failures, "deterministic revisit retrieval")
+	for seed_index in range(10):
+		var seed_a := _package_state("SEED_%d" % seed_index)
+		var seed_b := _package_state("SEED_%d" % seed_index)
+		for step in [
+			["pickup", "seed:%d:pickup" % seed_index, {"node_id": "bar", "target_id": "delivery_pickup"}],
+			["wait", "seed:%d:wait" % seed_index, {"node_id": "bar", "action_index": 1}],
+			["stash", "seed:%d:stash" % seed_index, {"node_id": "bar", "place_id": "bar::locker"}],
+		]:
+			seed_a = _act(seed_a, str(step[0]), str(step[1]), _dict(step[2]))
+			seed_b = _act(seed_b, str(step[0]), str(step[1]), _dict(step[2]))
+		if JSON.stringify(seed_a) != JSON.stringify(seed_b):
+			failures.append("Physical route determinism diverged at seed index %d." % seed_index)
+
+
+func _check_receipt_bound(failures: Array) -> void:
+	var state := DeliveryRunModelScript.begin({
+		"run_id": "bounded", "mode": "package", "start_node_id": "bar", "targets": [{"id": "target", "node_id": "motel"}],
+		"deadline_actions": 100,
+	}, 0)
+	state = _act(state, "pickup", "bound:pickup", {"node_id": "bar", "target_id": "delivery_pickup"})
+	for index in range(63):
+		state = _act(state, "wait", "bound:wait:%d" % index, {"node_id": "bar", "action_index": index + 1})
+	var exact := state.duplicate(true)
+	state = _act(state, "stash", "bound:overflow", {"node_id": "bar", "place_id": "bar::locker"})
+	_assert_exact(state, exact, failures, "command beyond the bounded receipt journal")
+	if _array(_dict(state.get("depth_state", {})).get("command_receipts", [])).size() != DeliveryRunModelScript.MAX_DEPTH_COMMAND_RECEIPTS:
+		failures.append("Physical receipt journal did not stop at its published bound.")
 
 
 func _package_state(suffix: String) -> Dictionary:
