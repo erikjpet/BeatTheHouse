@@ -7481,7 +7481,7 @@
           "games": [],
           "interactions": [],
           "routes": [
-            "base::layer:casino"
+            "base::layer:club"
           ],
           "scene_objects": [],
           "services": [],
@@ -10411,7 +10411,7 @@
           "games": [],
           "interactions": [],
           "routes": [
-            "base::layer:casino"
+            "base::layer:club"
           ],
           "scene_objects": [],
           "services": [],
