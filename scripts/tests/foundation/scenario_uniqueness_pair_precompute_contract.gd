@@ -2,7 +2,7 @@ extends SceneTree
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const Catalog := preload("res://scripts/core/scenario_sequence_catalog.gd")
-const Engine := preload("res://scripts/core/scenario_engine.gd")
+const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const Registry := preload("res://scripts/core/scenario_operation_registry.gd")
 const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
 
@@ -34,13 +34,13 @@ func _init() -> void:
 	if definitions.size() != 55:
 		failures.append("Production receipt proof must bind all 55 sequence definitions.")
 	elif not definitions.is_empty():
-		var registry_context_fingerprint := Engine._sequence_validation_registry_context_fingerprint()
+		var registry_context_fingerprint := ScenarioEngineScript._sequence_validation_registry_context_fingerprint()
 		var receipts: Array = []
 		for definition_value in definitions:
 			var production_definition: Dictionary = definition_value
 			var production_id := str(production_definition.get("id", ""))
-			receipts.append(Engine._sequence_validation_receipt(production_definition, target_inventories.get(production_id, {}), registry_context_fingerprint))
-		if not Engine._sequence_validation_receipts_match(definitions, 55, target_inventories, receipts, registry_context_fingerprint):
+			receipts.append(ScenarioEngineScript._sequence_validation_receipt(production_definition, target_inventories.get(production_id, {}), registry_context_fingerprint))
+		if not ScenarioEngineScript._sequence_validation_receipts_match(definitions, 55, target_inventories, receipts, registry_context_fingerprint):
 			failures.append("Fresh exact 55-definition receipt set was not accepted.")
 		var first_definition: Dictionary = definitions[0]
 		var first_id := str(first_definition.get("id", ""))
@@ -48,23 +48,23 @@ func _init() -> void:
 		var hostile_definition: Dictionary = hostile_definitions[0]
 		hostile_definition["display_name"] = "%s hostile stale receipt" % str(hostile_definition.get("display_name", ""))
 		hostile_definitions[0] = hostile_definition
-		if Engine._sequence_validation_receipts_match(hostile_definitions, 55, target_inventories, receipts, registry_context_fingerprint):
+		if ScenarioEngineScript._sequence_validation_receipts_match(hostile_definitions, 55, target_inventories, receipts, registry_context_fingerprint):
 			failures.append("A stale same-id definition receipt bypassed full validation fallback.")
 		var hostile_target_inventories := target_inventories.duplicate(true)
 		var hostile_target: Dictionary = hostile_target_inventories.get(first_id, {}).duplicate(true)
 		hostile_target["hostile_unvalidated_target"] = true
 		hostile_target_inventories[first_id] = hostile_target
-		if Engine._sequence_validation_receipts_match(definitions, 55, hostile_target_inventories, receipts, registry_context_fingerprint):
+		if ScenarioEngineScript._sequence_validation_receipts_match(definitions, 55, hostile_target_inventories, receipts, registry_context_fingerprint):
 			failures.append("A stale target-inventory receipt bypassed full validation fallback.")
 		var missing_receipts := receipts.duplicate(true)
 		missing_receipts.pop_back()
-		if Engine._sequence_validation_receipts_match(definitions, 55, target_inventories, missing_receipts, registry_context_fingerprint):
+		if ScenarioEngineScript._sequence_validation_receipts_match(definitions, 55, target_inventories, missing_receipts, registry_context_fingerprint):
 			failures.append("A missing validation receipt bypassed full validation fallback.")
 		var forged_receipts := receipts.duplicate(true)
 		var forged_receipt: Dictionary = forged_receipts[0]
 		forged_receipt["receipt_fingerprint"] = "0".repeat(64)
 		forged_receipts[0] = forged_receipt
-		if Engine._sequence_validation_receipts_match(definitions, 55, target_inventories, forged_receipts, registry_context_fingerprint):
+		if ScenarioEngineScript._sequence_validation_receipts_match(definitions, 55, target_inventories, forged_receipts, registry_context_fingerprint):
 			failures.append("A forged validation receipt bypassed full validation fallback.")
 	var threshold_band: Dictionary = Schema.uniqueness_band(0.820)
 	var equal_band: Dictionary = Schema.uniqueness_band(0.0, true)
