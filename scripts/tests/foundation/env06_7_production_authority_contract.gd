@@ -68,6 +68,18 @@ class ProductionInstallProbe:
 		return finalized
 
 
+class SuppressedSeedRunState:
+	extends RunState
+
+	var seeded_definition: Dictionary = {}
+
+	func has_world_map() -> bool:
+		return true
+
+	func seeded_scenario_definition_for_node(_node_id: String) -> Dictionary:
+		return seeded_definition.duplicate(true)
+
+
 func _initialize() -> void:
 	var failures: Array = []
 	var library := ContentLibraryScript.new()
@@ -100,13 +112,19 @@ static func _check_trusted_production_definition_attachment(library: Variant, fa
 		"scenario_id": scenario_id,
 		"archetype_id": archetype_id,
 		"world_node_id": archetype_id,
-		"scenario_sequence_definition": {"id": "hostile_preloaded_definition", "archetype_id": "bar"},
+		"scenario_sequence_definition": {"id": scenario_id, "archetype_id": archetype_id, "sequence_suppressed": true},
 	}
 	var trusted := generator._trusted_scenario_install_data(run_state, spoofed)
 	var trusted_environment := _dict(trusted.get("environment", {}))
 	var trusted_definition := _dict(trusted_environment.get("scenario_sequence_definition", {}))
 	if not bool(trusted.get("ok", false)) or str(trusted_definition.get("id", "")) != scenario_id or str(trusted_definition.get("archetype_id", "")) != archetype_id or not SequenceSchemaScript.is_sequence(trusted_definition):
-		failures.append("Production installer trusted a caller-preloaded scenario definition instead of the exact selected catalog definition.")
+		failures.append("Production installer trusted caller-preloaded suppression instead of the exact selected catalog definition.")
+	var suppressed_state := SuppressedSeedRunState.new()
+	suppressed_state.seeded_definition = ScenarioEngineScript.suppress_sequence_definition(definition)
+	var suppressed := generator._trusted_scenario_install_data(suppressed_state, spoofed)
+	var suppressed_definition := _dict(_dict(suppressed.get("environment", {})).get("scenario_sequence_definition", {}))
+	if not bool(suppressed.get("ok", false)) or not bool(suppressed_definition.get("sequence_suppressed", false)) or SequenceSchemaScript.is_sequence(suppressed_definition):
+		failures.append("Production installer rejected or reactivated an exact trusted destination-seeded suppression definition.")
 	var unknown := spoofed.duplicate(true)
 	unknown["scenario_id"] = "hostile_unknown_scenario"
 	if bool(generator._trusted_scenario_install_data(run_state, unknown).get("ok", true)):

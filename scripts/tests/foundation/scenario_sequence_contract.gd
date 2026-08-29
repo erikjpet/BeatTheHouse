@@ -923,7 +923,7 @@ static func _check_semantic_inventory(library: ContentLibrary, failures: Array) 
 	var tampered := exact.duplicate(true)
 	tampered["environment_id"] = "forged"
 	if EnvironmentSemanticInventoryScript.validate(tampered).is_empty() or not EnvironmentSemanticInventoryScript.exact_collections(tampered).is_empty(): failures.append("Tampered semantic inventory digest was accepted.")
-	var duplicate_exact := EnvironmentSemanticInventoryScript.for_instance(exact_environment, library, [exact_records[0], exact_records[0]])
+	var duplicate_exact := EnvironmentSemanticInventoryScript.for_instance(exact_environment, library, [exact_records[0], exact_records[0], exact_records[2]])
 	var duplicate_exact_errors := _array(duplicate_exact.get("errors", []))
 	if duplicate_exact_errors != ["base interaction inventory contains duplicate/colliding identity or presentation id game:slot."]:
 		failures.append("Duplicate exact base interaction identity did not retain its exact structured collision diagnostic: %s" % JSON.stringify(duplicate_exact_errors))

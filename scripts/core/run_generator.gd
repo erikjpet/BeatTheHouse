@@ -57,9 +57,10 @@ func _trusted_scenario_install_data(run_state: RunState, environment_data: Dicti
 		if seeded.is_empty() or str(seeded.get("id", "")).strip_edges() != scenario_id or str(seeded.get("archetype_id", "")).strip_edges() != archetype_id:
 			return {"ok": false, "environment": {}, "errors": ["Selected scenario %s does not match the destination node's seeded definition." % scenario_id]}
 		definition = seeded
-	if ScenarioSequenceSchemaScript.is_sequence(catalog_definition) and not ScenarioSequenceSchemaScript.is_sequence(definition):
+	var trusted_suppression := bool(definition.get("sequence_suppressed", false))
+	if ScenarioSequenceSchemaScript.is_sequence(catalog_definition) and not ScenarioSequenceSchemaScript.is_sequence(definition) and not trusted_suppression:
 		return {"ok": false, "environment": {}, "errors": ["Selected scenario %s lost its valid destination sequence definition." % scenario_id]}
-	if ScenarioSequenceSchemaScript.is_sequence(definition):
+	if ScenarioSequenceSchemaScript.is_sequence(definition) or trusted_suppression:
 		install_data["scenario_sequence_definition"] = definition.duplicate(true)
 	return {"ok": true, "environment": install_data, "errors": []}
 

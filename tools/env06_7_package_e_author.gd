@@ -12,7 +12,7 @@ const CONFIGS := [
 	{"id":"delta_queen_engine_trouble","archetype":"delta_queen","arrival":"A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.","verbs":["seal_engine_lane","diagnose_pressure","fetch_impeller_key","choose_engine_response","restart_engine"],"beats":["bulkhead_state","gauge_appearance","bench_move"],"fact":"world_boundary","tags":["travel_locked","power_decay","rising_tension"],"objects":[["engine_bulkhead","Hot engine bulkhead","barrier","center","sealed"],["pressure_gauge","Falling pressure gauge","instrument","left","critical"],["evacuation_benches","Evacuation benches","safety","right","empty"],["locked_gangway","Locked mid-river gangway","route_marker","exit_lane","locked"]],"actors":[["engine_mate","Engine mate","actor_engine_mate","left","work"],["deck_guard","Gangway guard","actor_deck_guard","right","guard"]],"outcomes":["travel_resumed","limited_power","evacuation_staged","engine_abandoned"]},
 	{"id":"delta_queen_captains_invitational","archetype":"delta_queen","arrival":"Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.","verbs":["verify_entry_card","score_opening_bracket","rotate_eliminated_table","choose_invitational_role","seat_finalists"],"beats":["card_state","bracket_move","spectator_behavior"],"fact":"game_result","tags":["captain_invitational","qualification","disputed_bracket"],"objects":[["entry_cards","Invitational entry cards","credential","left","checking"],["bracket_tables","Captain bracket tables","game_station","center","opening"],["scorer_rail","Scorer rail","scoreboard","right","active"]],"actors":[["captain_scorer","Captain scorer","actor_captain_scorer","right","work"],["eliminated_players","Eliminated players","actor_eliminated_players","background","watch"]],"outcomes":["qualified_final","observed_final","disputed_final","tournament_interrupted"]},
 	{"id":"grand_casino_gala_night","archetype":"grand_casino","arrival":"Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.","verbs":["claim_coat_token","verify_charity_badge","reset_stage_lift","choose_gala_identity"],"beats":["token_move","badge_state","lift_appearance"],"fact":"service_result","tags":["gala_cover","charity_crowd","boss_gate_sacred"],"objects":[["coat_check","Gala coat check","service","left","busy"],["charity_badges","Charity credential desk","credential","center","checking"],["stage_lift","Stalled gala stage lift","workstation","right","stalled"]],"actors":[["gala_host","Gala host","actor_gala_host","center","guard"],["stage_hand","Gala stage hand","actor_stage_hand","right","work"]],"outcomes":["cover_identity_accepted","public_floor_reopened","credential_failed","gala_interrupted"]},
-	{"id":"grand_casino_convention_crowd","archetype":"grand_casino","arrival":"Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.","verbs":["read_booking_board","sort_delegation_badges","move_machine_markers","choose_convention_route"],"beats":["board_state","badge_move","delegation_behavior"],"fact":"game_result","tags":["badge_camouflage","comp_reduction","reservation_rotation"],"objects":[["booking_board","Convention booking board","ledger","left","conflicted"],["machine_banks","Reserved machine banks","game_station","center","split"],["table_block","Contested table block","barrier","right","crowded"]],"actors":[["convention_coordinator","Convention coordinator","actor_convention_coordinator","left","work"],["badge_delegations","Badge delegations","actor_badge_delegations","center","patrol"]],"outcomes":["camouflage_route","split_schedule","floor_standoff","convention_departed"]},
+	{"id":"grand_casino_convention_crowd","archetype":"grand_casino","arrival":"Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.","verbs":["read_booking_board","sort_delegation_badges","move_machine_markers","choose_convention_route"],"beats":["board_state","badge_move","delegation_behavior"],"fact":"game_result","tags":["badge_camouflage","comp_reduction","reservation_rotation"],"objects":[["booking_board","Convention booking board","ledger","left","conflicted"],["machine_banks","Reserved machine banks","game_station","center","split"],["table_block","Contested table block","barrier","right","crowded"]],"actors":[["convention_coordinator","Convention coordinator","actor_convention_coordinator","left","work"],["badge_delegations","Badge delegations","actor_badge_delegations","center","watch"]],"outcomes":["camouflage_route","split_schedule","floor_standoff","convention_departed"]},
 	{"id":"grand_casino_audit_night","archetype":"grand_casino","arrival":"Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.","verbs":["acknowledge_audit_route","present_pit_ledger","mark_closed_games","choose_audit_response"],"beats":["seal_state","ledger_move","barrier_appearance"],"fact":"heat_band_changed","tags":["strict_cage","nervous_floor","heist_plan_a_anchor"],"objects":[["cage_seal","Audit cage seal","evidence","left","intact"],["pit_ledger","Pit audit ledger","ledger","center","requested"],["audit_barrier","Audit zone barrier","barrier","right","moving"],["open_exit_marker","Public exit marker","route_marker","exit_lane","open"]],"actors":[["lead_auditor","Lead auditor","actor_lead_auditor","center","work"],["pit_manager","Pit manager","actor_pit_manager","right","guard"]],"outcomes":["compliant_floor","redirected_audit","closed_games","audit_interrupted"]},
 ]
 
@@ -33,6 +33,9 @@ const SPATIAL_OVERRIDES := {
 	"delta_queen_fog_delay":{"task_zone":"service_lane","zones":{"gangway_shutter":"foreground","safe_exit":"background"}},
 	"delta_queen_engine_trouble":{"task_zone":"background","zones":{"locked_gangway":"foreground","safe_exit":"background","deck_guard":"service_lane","engine_mate":"foreground"}},
 	"delta_queen_captains_invitational":{"task_zone":"service_lane","zones":{"captain_scorer":"foreground"}},
+	"grand_casino_gala_night":{"task_anchor":"grand_scenario_top_800","zones":{"coat_check":"foreground"},"anchors":{"charity_badges":"grand_scenario_top_520","gala_host":"grand_scenario_top_400","safe_exit":"grand_scenario_safe_exit","stage_hand":"grand_scenario_bottom_830","stage_lift":"grand_scenario_top_650_low"}},
+	"grand_casino_convention_crowd":{"task_anchor":"grand_scenario_top_800","zones":{},"anchors":{"badge_delegations":"grand_convention_badge_delegations","booking_board":"grand_scenario_bottom_830","convention_coordinator":"grand_scenario_top_400","machine_banks":"grand_convention_machine_banks","safe_exit":"grand_scenario_safe_exit","table_block":"grand_convention_table_block"}},
+	"grand_casino_audit_night":{"task_anchor":"grand_scenario_top_520","zones":{"pit_ledger":"foreground"},"anchors":{"audit_barrier":"grand_scenario_top_800_low","cage_seal":"grand_scenario_top_650","lead_auditor":"grand_scenario_top_400","open_exit_marker":"grand_scenario_bottom_830","pit_manager":"grand_scenario_top_50_actor","safe_exit":"grand_scenario_safe_exit"}},
 }
 
 
@@ -112,19 +115,15 @@ func _entry(c: Dictionary) -> Dictionary:
 	for index in range(1, c.verbs.size()):
 		var task_id := "%s_task_%d" % [prefix, index]
 		var previous_task_id := "%s_task_%d" % [prefix, index - 1]
-		var gate_id := "%s_gate_%d" % [prefix, index - 1]
 		var operations := _beat_operations(c, index - 1)
 		var phase_id := "work_%d" % index
 		operations.scene.append(_scene_remove(prefix, phase_id, previous_task_id))
 		operations.scene.append(_task_scene_spawn(prefix, phase_id, task_id, str(c.verbs[index])))
-		var interactions := [_gate(prefix,phase_id,gate_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this operation; named routes use their own marked stations.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave","ui_cancel")],false)]
+		var interactions := [_interaction_remove(prefix,phase_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this operation; named routes use their own marked stations.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave","ui_cancel")],false)]
 		var phase_choices := _decision_semantics(prefix, phase_id, decision)
 		operations.scene.append_array(phase_choices.scene)
 		interactions.append_array(phase_choices.interactions)
 		cleanup.append_array(phase_choices.cleanup)
-		# Remove gate overlays before their underlying task interactions so cleanup
-		# cannot restore an already-removed target and leak it across revisit.
-		cleanup.push_front(_remove("interaction_ops",prefix,gate_id))
 		cleanup.append(_remove("scene_ops",prefix,task_id))
 		cleanup.append(_remove("interaction_ops",prefix,task_id))
 		objective_steps.append({"id":str(c.verbs[index]),"label":str(c.verbs[index]).replace("_"," ").capitalize(),"kind":"command","command_id":str(c.verbs[index])})
@@ -154,7 +153,7 @@ func _entry(c: Dictionary) -> Dictionary:
 		"expiry":{"boundary":"night_end","after":1,"policy":"cleanup"},
 		"cleanup":{"operations":cleanup},
 		"aftermath":aftermath,
-		"declared_targets":{"scene_objects":declared_room_controls.duplicate(),"interactions":declared_room_controls.duplicate(),"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":_target_inventory().zones},
+		"declared_targets":{"scene_objects":declared_room_controls.duplicate(),"interactions":declared_room_controls.duplicate(),"actors":[],"services":[],"games":[],"routes":[],"anchors":_declared_anchors(prefix),"zones":_target_inventory().zones},
 		"mechanic_tags":c.tags,
 		"sequence_signature":"pending",
 		"owner_exceptions":[],
@@ -212,12 +211,23 @@ func _branch(prefix:String,id:String,condition:Dictionary,next_phase:String,outc
 
 
 func _scene_spawn(prefix:String,boundary:String,id:String,label:String,role:String,zone:String,state:String,w:int,h:int)->Dictionary:
-	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":{"label":label,"role":role,"zone_id":zone,"bounds":{"w":w,"h":h},"visible":true,"enabled":true,"state":state,"appearance":state}}
+	var object := {"label":label,"role":role,"zone_id":zone,"bounds":{"w":w,"h":h},"visible":true,"enabled":true,"state":state,"appearance":state}
+	var identity := id.trim_prefix("%s_" % prefix)
+	var anchor_id := str(_dict(_dict(SPATIAL_OVERRIDES.get(prefix, {})).get("anchors", {})).get(identity, ""))
+	if not anchor_id.is_empty():
+		object.erase("zone_id")
+		object["anchor_id"] = anchor_id
+	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":object}
 
 
 func _task_scene_spawn(prefix:String,boundary:String,id:String,verb:String)->Dictionary:
 	var spatial := _dict(SPATIAL_OVERRIDES.get(prefix, {}))
-	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":{"label":verb.replace("_", " ").capitalize(),"role":"task_station","zone_id":str(spatial.get("task_zone", "service_lane")),"bounds":{"w":64,"h":56},"visible":true,"enabled":true,"state":"ready","appearance":"task_ready"}}
+	var object := {"label":verb.replace("_", " ").capitalize(),"role":"task_station","zone_id":str(spatial.get("task_zone", "service_lane")),"bounds":{"w":64,"h":56},"visible":true,"enabled":true,"state":"ready","appearance":"task_ready"}
+	var anchor_id := str(spatial.get("task_anchor", ""))
+	if not anchor_id.is_empty():
+		object.erase("zone_id")
+		object["anchor_id"] = anchor_id
+	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":object}
 
 
 func _scene_remove(prefix:String,boundary:String,id:String)->Dictionary:
@@ -230,7 +240,13 @@ func _spatial_zone(prefix:String,identity:String,fallback:String)->String:
 
 
 func _actor_spawn(prefix:String,boundary:String,id:String,label:String,actor_id:String,zone:String,behavior:String)->Dictionary:
-	return {"family":"actor_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"actor":{"label":label,"actor_id":actor_id,"zone_id":zone,"behavior":behavior,"pose":"arrival"}}
+	var actor := {"label":label,"actor_id":actor_id,"zone_id":zone,"behavior":behavior,"pose":"arrival"}
+	var identity := id.trim_prefix("%s_" % prefix)
+	var anchor_id := str(_dict(_dict(SPATIAL_OVERRIDES.get(prefix, {})).get("anchors", {})).get(identity, ""))
+	if not anchor_id.is_empty():
+		actor.erase("zone_id")
+		actor["anchor_id"] = anchor_id
+	return {"family":"actor_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"actor":actor}
 
 
 func _interaction_add(prefix:String,boundary:String,id:String,label:String,prompt:String,actions:Array,safe_exit:bool)->Dictionary:
@@ -248,8 +264,8 @@ func _step_action(id:String,prefix:String,step:String)->Dictionary:
 	return {"id":id,"label":id.replace("_"," ").capitalize(),"input_action":"ui_accept","non_color_state":"work","handler":"complete_objective_step","inputs":{"objective_id":"main_task","step_id":step}}
 
 
-func _gate(prefix:String,boundary:String,id:String,target:String)->Dictionary:
-	return {"family":"interaction_ops","op":"gate","receipt_id":"%s_%s_gate_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"mode":"gate","target_owner_namespace":"scenario","target_stable_object_id":target,"enabled":false,"disabled_reason":"%s has advanced beyond %s to its next physical station." % [prefix.replace("_"," ").capitalize(),target.replace("_"," ")]}
+func _interaction_remove(prefix:String,boundary:String,id:String)->Dictionary:
+	return {"family":"interaction_ops","op":"remove","receipt_id":"%s_%s_remove_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id}
 
 
 func _remove(family:String,prefix:String,id:String)->Dictionary:
@@ -277,21 +293,33 @@ func _beat_operations(c:Dictionary,index:int)->Dictionary:
 	var actor: Array = []
 	match index % 5:
 		0:
-			scene.append({"family":"scene_ops","op":"move","receipt_id":"%s_%s_move" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"zone_id":str(["left","center","right","background","foreground","service_lane","exit_lane"][index % 7])})
+			var move := {"family":"scene_ops","op":"move","receipt_id":"%s_%s_move" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id}
+			_apply_spatial_position(move, prefix, str(c.objects[index % c.objects.size()][0]), str(["left","center","right","background","foreground","service_lane","exit_lane"][index % 7]))
+			scene.append(move)
 			actor.append({"family":"actor_ops","op":"set_pose","receipt_id":"%s_%s_pose" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"pose":beat})
 		1:
 			scene.append({"family":"scene_ops","op":"set_appearance","receipt_id":"%s_%s_appearance" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"appearance":"%s_changed" % beat})
-			actor.append({"family":"actor_ops","op":"set_position","receipt_id":"%s_%s_position" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"zone_id":str(["left","center","right","background","foreground","service_lane","exit_lane"][index % 7])})
+			var position := {"family":"actor_ops","op":"set_position","receipt_id":"%s_%s_position" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id}
+			_apply_spatial_position(position, prefix, str(c.actors[index % c.actors.size()][0]), str(["left","center","right","background","foreground","service_lane","exit_lane"][index % 7]))
+			actor.append(position)
 		2:
 			scene.append({"family":"scene_ops","op":"set_state","receipt_id":"%s_%s_state" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"state":"%s_resolved" % beat})
 			actor.append({"family":"actor_ops","op":"set_behavior","receipt_id":"%s_%s_behavior" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"behavior":"watch"})
 		3:
 			scene.append({"family":"scene_ops","op":"hide","receipt_id":"%s_%s_hide" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id})
-			actor.append({"family":"actor_ops","op":"set_behavior","receipt_id":"%s_%s_depart" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"behavior":"depart"})
+			actor.append({"family":"actor_ops","op":"despawn","receipt_id":"%s_%s_depart" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id})
 		_:
 			scene.append({"family":"scene_ops","op":"disable","receipt_id":"%s_%s_disable" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"disabled_reason":"This station closes after its task."})
 			actor.append({"family":"actor_ops","op":"set_pose","receipt_id":"%s_%s_final_pose" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"pose":"finished"})
 	return {"scene":scene,"actor":actor}
+
+func _apply_spatial_position(operation: Dictionary, prefix: String, identity: String, fallback_zone: String) -> void:
+	var spatial := _dict(SPATIAL_OVERRIDES.get(prefix, {}))
+	var anchor_id := str(_dict(spatial.get("anchors", {})).get(identity, ""))
+	if not anchor_id.is_empty():
+		operation["anchor_id"] = anchor_id
+	else:
+		operation["zone_id"] = str(_dict(spatial.get("zones", {})).get(identity, fallback_zone))
 
 
 func _aftermath(c:Dictionary)->Dictionary:
@@ -322,7 +350,19 @@ func _dossier(c:Dictionary,entry:Dictionary)->Dictionary:
 func _target_inventory() -> Dictionary:
 	var zones := ["base::zone:left","base::zone:right","base::zone:center","base::zone:background","base::zone:service_lane","base::zone:foreground","base::zone:exit_lane"]
 	var room_controls := ["base::travel:grand_casino_high_limit", "base::travel:grand_casino_back_room", "base::travel:grand_casino_cage"]
-	return {"scene_objects":room_controls.duplicate(),"interactions":room_controls.duplicate(),"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":zones,"event_choices":{}}
+	var anchors := ["grand_scenario_safe_exit", "grand_scenario_top_50_actor", "grand_convention_badge_delegations", "grand_scenario_top_400", "grand_scenario_top_520", "grand_convention_machine_banks", "grand_scenario_top_650", "grand_scenario_top_650_low", "grand_scenario_top_800", "grand_scenario_top_800_low", "grand_scenario_bottom_830", "grand_convention_table_block"].map(func(anchor_id): return "base::anchor:%s" % anchor_id)
+	return {"scene_objects":room_controls.duplicate(),"interactions":room_controls.duplicate(),"actors":[],"services":[],"games":[],"routes":[],"anchors":anchors,"zones":zones,"event_choices":{}}
+
+func _declared_anchors(prefix: String) -> Array:
+	var spatial := _dict(SPATIAL_OVERRIDES.get(prefix, {}))
+	var result: Array = []
+	for anchor_value in _dict(spatial.get("anchors", {})).values():
+		var identity := "base::anchor:%s" % str(anchor_value)
+		if not result.has(identity): result.append(identity)
+	var task_anchor := str(spatial.get("task_anchor", ""))
+	if not task_anchor.is_empty() and not result.has("base::anchor:%s" % task_anchor): result.append("base::anchor:%s" % task_anchor)
+	result.sort()
+	return result
 
 func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []

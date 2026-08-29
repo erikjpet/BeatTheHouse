@@ -48,7 +48,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "579151e4c939fce813ff294b0d3068a481c1a1fb3badcc452a02b08fed74036c",
+      "sequence_signature": "ecf0ad357a24d8d2c7bfbc83a763e855ea7a715bbf3259509cc21e5027638da0",
       "capture_ids": [
         "delta_queen_wedding_charter_arrival",
         "delta_queen_wedding_charter_partial",
@@ -107,7 +107,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "7d1c106d01a4b63b935ba5d268e0ec57a3d91bab4739942e103f056e59d8c362",
+      "sequence_signature": "538ba52b461eb23a712c35b882b63621a15e7c85500938503344aafddba6cdd7",
       "capture_ids": [
         "delta_queen_whale_aboard_arrival",
         "delta_queen_whale_aboard_partial",
@@ -166,7 +166,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "6b0de3c69eca6ecbda497a81c4c4e7090e8771cde8e5dc6f4f9ebc383cc0be79",
+      "sequence_signature": "ef269ea676904379080596b502b8de181630ffe31ab716f63af379d3f17ad9cb",
       "capture_ids": [
         "delta_queen_fog_delay_arrival",
         "delta_queen_fog_delay_partial",
@@ -228,7 +228,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "f13c42905a91103ab6f3315115f30df5b8816966fc505cd951a6b07a74c4cb90",
+      "sequence_signature": "f0c9891788d70212d29e4366dea28e8bd816317b3b21012ef03492a1cf1919d8",
       "capture_ids": [
         "delta_queen_engine_trouble_arrival",
         "delta_queen_engine_trouble_partial",
@@ -289,7 +289,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "f02070c35dcb2bf258049ffac1b8c9a3d4c035c04e99f6ff2410f9dd42a128df",
+      "sequence_signature": "f331d395c8471447a774c2df5845f656adb545412c8adfd94b3a2cce13902078",
       "capture_ids": [
         "delta_queen_captains_invitational_arrival",
         "delta_queen_captains_invitational_partial",
@@ -348,7 +348,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "8a8806e551f4ab02d3dbb5cfea0e9c6eeab9d86dd7652f6669bf5dbe5060318d",
+      "sequence_signature": "1bac9fd9e092ffa9dd501af4b213de2b6c66aba8ff420169edd0c3a3b239dd13",
       "capture_ids": [
         "grand_casino_gala_night_arrival",
         "grand_casino_gala_night_partial",
@@ -407,7 +407,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "92e36c458559acd65367d810d39a11590391fe8cc338b00619c6ea49f9ee57b7",
+      "sequence_signature": "20e41f4519b0b5e4cead44704fa869594e6d3972fdc7ce5a9149178d08259c01",
       "capture_ids": [
         "grand_casino_convention_crowd_arrival",
         "grand_casino_convention_crowd_partial",
@@ -467,7 +467,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "99aa904e75394c96b8da06f054f3dcd714902aea0539e6906d7cee121cac8e2c",
+      "sequence_signature": "b5aa58241c46c1305cb6654018c5d9dca99d90576cc10799425a949c19f62890",
       "capture_ids": [
         "grand_casino_audit_night_arrival",
         "grand_casino_audit_night_partial",
@@ -507,17 +507,6 @@
                   "message": "The spectator behavior beat moves props and actors for choose invitational role.",
                   "op": "scene_change",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Delta Queen Captains Invitational has advanced beyond delta queen captains invitational task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -760,6 +749,13 @@
                 }
               },
               {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "op": "remove",
@@ -880,17 +876,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Delta Queen Captains Invitational has advanced beyond delta queen captains invitational task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -959,6 +944,13 @@
                     "zone_id": "service_lane"
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -1034,195 +1026,12 @@
           {
             "ops": [
               {
-                "family": "actor_ops",
-                "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The card state beat moves props and actors for seat finalists.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Delta Queen Captains Invitational has advanced beyond delta queen captains invitational task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "seat_finalists",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "seat_finalists"
-                        },
-                        "label": "Seat Finalists",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_delta_queen_captains_invitational",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_delta_queen_captains_invitational",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Seat Finalists",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_4_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Delta Queen Captains Invitational: Complete this operation; named routes use their own marked stations.",
-                    "safe_exit": false,
-                    "state_label": "Work 4 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Seat Finalists",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "hide",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "game_result"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
                 "family": "transition_ops",
                 "effect": {
                   "channel": "room",
                   "message": "The card state beat moves props and actors for score opening bracket.",
                   "op": "feedback",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Delta Queen Captains Invitational has advanced beyond delta queen captains invitational task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -1308,6 +1117,13 @@
                 }
               },
               {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "op": "remove",
@@ -1320,6 +1136,173 @@
                   "op": "set_pose",
                   "owner_namespace": "scenario",
                   "pose": "card_state"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "game_result"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The card state beat moves props and actors for seat finalists.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "seat_finalists",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "seat_finalists"
+                        },
+                        "label": "Seat Finalists",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_delta_queen_captains_invitational",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_delta_queen_captains_invitational",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Seat Finalists",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_4_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Delta Queen Captains Invitational: Complete this operation; named routes use their own marked stations.",
+                    "safe_exit": false,
+                    "state_label": "Work 4 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Seat Finalists",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "service_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 }
               }
             ],
@@ -2038,34 +2021,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -2175,10 +2130,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "f02070c35dcb2bf258049ffac1b8c9a3d4c035c04e99f6ff2410f9dd42a128df",
-      "calculated_signature": "f02070c35dcb2bf258049ffac1b8c9a3d4c035c04e99f6ff2410f9dd42a128df",
+      "authored_signature": "f331d395c8471447a774c2df5845f656adb545412c8adfd94b3a2cce13902078",
+      "calculated_signature": "f331d395c8471447a774c2df5845f656adb545412c8adfd94b3a2cce13902078",
       "nearest_id": "delta_queen_engine_trouble",
-      "nearest_similarity": 0.66254752851711
+      "nearest_similarity": 0.657843137254902
     },
     {
       "id": "delta_queen_engine_trouble",
@@ -2203,17 +2158,6 @@
                   "message": "The bench move beat moves props and actors for choose engine response.",
                   "op": "scene_change",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Delta Queen Engine Trouble has advanced beyond delta queen engine trouble task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -2456,6 +2400,13 @@
                 }
               },
               {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "op": "remove",
@@ -2576,17 +2527,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Delta Queen Engine Trouble has advanced beyond delta queen engine trouble task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -2659,6 +2599,13 @@
                 }
               },
               {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "op": "remove",
@@ -2670,179 +2617,7 @@
                 "effect": {
                   "op": "set_position",
                   "owner_namespace": "scenario",
-                  "zone_id": "center"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "world_boundary"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "behavior": "depart",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The bulkhead state beat moves props and actors for restart engine.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Delta Queen Engine Trouble has advanced beyond delta queen engine trouble task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "restart_engine",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "restart_engine"
-                        },
-                        "label": "Restart Engine",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_delta_queen_engine_trouble",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_delta_queen_engine_trouble",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Restart Engine",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_4_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Delta Queen Engine Trouble: Complete this operation; named routes use their own marked stations.",
-                    "safe_exit": false,
-                    "state_label": "Work 4 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Restart Engine",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "background"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "hide",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
+                  "zone_id": "service_lane"
                 }
               }
             ],
@@ -2908,17 +2683,6 @@
                   "message": "The bulkhead state beat moves props and actors for diagnose pressure.",
                   "op": "feedback",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Delta Queen Engine Trouble has advanced beyond delta queen engine trouble task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -3004,6 +2768,13 @@
                 }
               },
               {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "op": "remove",
@@ -3016,6 +2787,173 @@
                   "op": "set_pose",
                   "owner_namespace": "scenario",
                   "pose": "bulkhead_state"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "world_boundary"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The bulkhead state beat moves props and actors for restart engine.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "restart_engine",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "restart_engine"
+                        },
+                        "label": "Restart Engine",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_delta_queen_engine_trouble",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_delta_queen_engine_trouble",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Restart Engine",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_4_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Delta Queen Engine Trouble: Complete this operation; named routes use their own marked stations.",
+                    "safe_exit": false,
+                    "state_label": "Work 4 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Restart Engine",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true,
+                    "zone_id": "background"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "despawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 }
               }
             ],
@@ -3754,34 +3692,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -3898,10 +3808,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "f13c42905a91103ab6f3315115f30df5b8816966fc505cd951a6b07a74c4cb90",
-      "calculated_signature": "f13c42905a91103ab6f3315115f30df5b8816966fc505cd951a6b07a74c4cb90",
+      "authored_signature": "f0c9891788d70212d29e4366dea28e8bd816317b3b21012ef03492a1cf1919d8",
+      "calculated_signature": "f0c9891788d70212d29e4366dea28e8bd816317b3b21012ef03492a1cf1919d8",
       "nearest_id": "delta_queen_captains_invitational",
-      "nearest_similarity": 0.66254752851711
+      "nearest_similarity": 0.657843137254902
     },
     {
       "id": "delta_queen_fog_delay",
@@ -3917,17 +3827,6 @@
                   "message": "The signal appearance beat moves props and actors for organize waiting crowd.",
                   "op": "feedback",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Delta Queen Fog Delay has advanced beyond delta queen fog delay task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -4178,6 +4077,13 @@
                 }
               },
               {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "op": "remove",
@@ -4298,17 +4204,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Delta Queen Fog Delay has advanced beyond delta queen fog delay task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -4377,6 +4272,13 @@
                     "zone_id": "service_lane"
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -4472,17 +4374,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Delta Queen Fog Delay has advanced beyond delta queen fog delay task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -4551,6 +4442,13 @@
                     "zone_id": "service_lane"
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -5268,27 +5166,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -5391,10 +5268,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "6b0de3c69eca6ecbda497a81c4c4e7090e8771cde8e5dc6f4f9ebc383cc0be79",
-      "calculated_signature": "6b0de3c69eca6ecbda497a81c4c4e7090e8771cde8e5dc6f4f9ebc383cc0be79",
+      "authored_signature": "ef269ea676904379080596b502b8de181630ffe31ab716f63af379d3f17ad9cb",
+      "calculated_signature": "ef269ea676904379080596b502b8de181630ffe31ab716f63af379d3f17ad9cb",
       "nearest_id": "delta_queen_wedding_charter",
-      "nearest_similarity": 0.694013303769401
+      "nearest_similarity": 0.690557451649602
     },
     {
       "id": "delta_queen_wedding_charter",
@@ -5410,17 +5287,6 @@
                   "message": "The rope move beat moves props and actors for recover ring case.",
                   "op": "feedback",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Delta Queen Wedding Charter has advanced beyond delta queen wedding charter task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -5671,6 +5537,13 @@
                 }
               },
               {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "op": "remove",
@@ -5791,17 +5664,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Delta Queen Wedding Charter has advanced beyond delta queen wedding charter task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -5874,6 +5736,13 @@
                 }
               },
               {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "op": "remove",
@@ -5885,7 +5754,7 @@
                 "effect": {
                   "op": "set_position",
                   "owner_namespace": "scenario",
-                  "zone_id": "center"
+                  "zone_id": "service_lane"
                 }
               }
             ],
@@ -5965,17 +5834,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Delta Queen Wedding Charter has advanced beyond delta queen wedding charter task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -6044,6 +5902,13 @@
                     "zone_id": "foreground"
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -6761,27 +6626,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -6884,10 +6728,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "579151e4c939fce813ff294b0d3068a481c1a1fb3badcc452a02b08fed74036c",
-      "calculated_signature": "579151e4c939fce813ff294b0d3068a481c1a1fb3badcc452a02b08fed74036c",
+      "authored_signature": "ecf0ad357a24d8d2c7bfbc83a763e855ea7a715bbf3259509cc21e5027638da0",
+      "calculated_signature": "ecf0ad357a24d8d2c7bfbc83a763e855ea7a715bbf3259509cc21e5027638da0",
       "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.694013303769401
+      "nearest_similarity": 0.690557451649602
     },
     {
       "id": "delta_queen_whale_aboard",
@@ -6914,17 +6758,6 @@
                   "owner_namespace": "scenario",
                   "reduced_motion_message": "Delta Queen Whale Aboard reaches the same semantic state without motion.",
                   "stage_id": "delta_queen_whale_aboard_work_2_stage"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Delta Queen Whale Aboard has advanced beyond delta queen whale aboard task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -7167,6 +7000,13 @@
                 }
               },
               {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "op": "remove",
@@ -7178,7 +7018,7 @@
                 "effect": {
                   "op": "set_position",
                   "owner_namespace": "scenario",
-                  "zone_id": "center"
+                  "zone_id": "background"
                 }
               }
             ],
@@ -7285,17 +7125,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Delta Queen Whale Aboard has advanced beyond delta queen whale aboard task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -7364,6 +7193,13 @@
                     "zone_id": "foreground"
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -7450,17 +7286,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Delta Queen Whale Aboard has advanced beyond delta queen whale aboard task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -7538,6 +7363,13 @@
                   "op": "move",
                   "owner_namespace": "scenario",
                   "zone_id": "left"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 }
               },
               {
@@ -8254,27 +8086,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -8377,10 +8188,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "7d1c106d01a4b63b935ba5d268e0ec57a3d91bab4739942e103f056e59d8c362",
-      "calculated_signature": "7d1c106d01a4b63b935ba5d268e0ec57a3d91bab4739942e103f056e59d8c362",
-      "nearest_id": "grand_casino_convention_crowd",
-      "nearest_similarity": 0.71685393258427
+      "authored_signature": "538ba52b461eb23a712c35b882b63621a15e7c85500938503344aafddba6cdd7",
+      "calculated_signature": "538ba52b461eb23a712c35b882b63621a15e7c85500938503344aafddba6cdd7",
+      "nearest_id": "grand_casino_gala_night",
+      "nearest_similarity": 0.585912486659552
     },
     {
       "id": "grand_casino_audit_night",
@@ -8390,23 +8201,20 @@
           {
             "ops": [
               {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "grand_scenario_top_650",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "transition_ops",
                 "effect": {
                   "channel": "room",
                   "message": "The seal state beat moves props and actors for present pit ledger.",
                   "op": "feedback",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Grand Casino Audit Night has advanced beyond grand casino audit night task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -8572,6 +8380,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_scenario_top_520",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Present Pit Ledger",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "route_0_ready",
                     "bounds": {
                       "h": 56.0,
@@ -8629,31 +8457,10 @@
                 }
               },
               {
-                "family": "scene_ops",
+                "family": "interaction_ops",
                 "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Present Pit Ledger",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
-                  },
-                  "op": "spawn",
+                  "op": "remove",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "left"
                 }
               },
               {
@@ -8755,6 +8562,14 @@
           {
             "ops": [
               {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "grand_scenario_top_50_actor",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "appearance": "ledger_move_changed",
@@ -8772,17 +8587,6 @@
                   "owner_namespace": "scenario",
                   "reduced_motion_message": "Grand Casino Audit Night reaches the same semantic state without motion.",
                   "stage_id": "grand_casino_audit_night_work_2_stage"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Grand Casino Audit Night has advanced beyond grand casino audit night task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -8843,6 +8647,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_scenario_top_520",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -8852,10 +8657,16 @@
                     "label": "Mark Closed Games",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -8864,14 +8675,6 @@
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "center"
                 }
               }
             ],
@@ -8951,17 +8754,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Grand Casino Audit Night has advanced beyond grand casino audit night task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -9017,6 +8809,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_scenario_top_520",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -9026,10 +8819,16 @@
                     "label": "Choose Audit Response",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -9109,10 +8908,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_lead_auditor",
+                    "anchor_id": "grand_scenario_top_400",
                     "behavior": "work",
                     "label": "Lead auditor",
-                    "pose": "arrival",
-                    "zone_id": "center"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -9123,10 +8922,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_pit_manager",
+                    "anchor_id": "grand_scenario_top_50_actor",
                     "behavior": "guard",
                     "label": "Pit manager",
-                    "pose": "arrival",
-                    "zone_id": "right"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -9237,66 +9036,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "appearance": "intact",
-                    "bounds": {
-                      "h": 46.0,
-                      "w": 52.0
-                    },
-                    "enabled": true,
-                    "label": "Audit cage seal",
-                    "role": "evidence",
-                    "state": "intact",
-                    "visible": true,
-                    "zone_id": "left"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "marked_lane",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 56.0
-                    },
-                    "enabled": true,
-                    "label": "Marked clean exit",
-                    "role": "exit",
-                    "state": "marked_lane",
-                    "visible": true,
-                    "zone_id": "exit_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "moving",
-                    "bounds": {
-                      "h": 58.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Audit zone barrier",
-                    "role": "barrier",
-                    "state": "moving",
-                    "visible": true,
-                    "zone_id": "right"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
+                    "anchor_id": "grand_scenario_bottom_830",
                     "appearance": "open",
                     "bounds": {
                       "h": 64.0,
@@ -9306,8 +9046,87 @@
                     "label": "Public exit marker",
                     "role": "route_marker",
                     "state": "open",
-                    "visible": true,
-                    "zone_id": "exit_lane"
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_scenario_safe_exit",
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_scenario_top_520",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Acknowledge Audit Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_scenario_top_650",
+                    "appearance": "intact",
+                    "bounds": {
+                      "h": 46.0,
+                      "w": 52.0
+                    },
+                    "enabled": true,
+                    "label": "Audit cage seal",
+                    "role": "evidence",
+                    "state": "intact",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_scenario_top_800_low",
+                    "appearance": "moving",
+                    "bounds": {
+                      "h": 58.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Audit zone barrier",
+                    "role": "barrier",
+                    "state": "moving",
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -9327,27 +9146,7 @@
                     "role": "ledger",
                     "state": "requested",
                     "visible": true,
-                    "zone_id": "center"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Acknowledge Audit Route",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -9767,27 +9566,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -9883,7 +9661,7 @@
           "services": 0,
           "games": 0,
           "routes": 0,
-          "anchors": 0,
+          "anchors": 7,
           "zones": 7
         },
         "reentry": {
@@ -9897,10 +9675,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "99aa904e75394c96b8da06f054f3dcd714902aea0539e6906d7cee121cac8e2c",
-      "calculated_signature": "99aa904e75394c96b8da06f054f3dcd714902aea0539e6906d7cee121cac8e2c",
+      "authored_signature": "b5aa58241c46c1305cb6654018c5d9dca99d90576cc10799425a949c19f62890",
+      "calculated_signature": "b5aa58241c46c1305cb6654018c5d9dca99d90576cc10799425a949c19f62890",
       "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.678998911860718
+      "nearest_similarity": 0.492047713717694
     },
     {
       "id": "grand_casino_convention_crowd",
@@ -9909,6 +9687,14 @@
         "phases": [
           {
             "ops": [
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "grand_convention_badge_delegations",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "scene_ops",
                 "effect": {
@@ -9927,17 +9713,6 @@
                   "owner_namespace": "scenario",
                   "reduced_motion_message": "Grand Casino Convention Crowd reaches the same semantic state without motion.",
                   "stage_id": "grand_casino_convention_crowd_work_2_stage"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Grand Casino Convention Crowd has advanced beyond grand casino convention crowd task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -10103,6 +9878,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_scenario_top_800",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Move Machine Markers",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "route_0_ready",
                     "bounds": {
                       "h": 56.0,
@@ -10160,22 +9955,9 @@
                 }
               },
               {
-                "family": "scene_ops",
+                "family": "interaction_ops",
                 "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Move Machine Markers",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
-                  },
-                  "op": "spawn",
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -10184,14 +9966,6 @@
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "center"
                 }
               }
             ],
@@ -10278,179 +10052,13 @@
           {
             "ops": [
               {
-                "family": "actor_ops",
-                "effect": {
-                  "behavior": "watch",
-                  "op": "set_behavior",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "change_id": "grand_casino_convention_crowd_work_3_change",
-                  "channel": "room",
-                  "message": "The delegation behavior beat moves props and actors for choose convention route.",
-                  "op": "scene_change",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Grand Casino Convention Crowd has advanced beyond grand casino convention crowd task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "choose_convention_route",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "choose_convention_route"
-                        },
-                        "label": "Choose Convention Route",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_grand_casino_convention_crowd",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_grand_casino_convention_crowd",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Choose Convention Route",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_3_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Grand Casino Convention Crowd: Complete this operation; named routes use their own marked stations.",
-                    "safe_exit": false,
-                    "state_label": "Work 3 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
                 "family": "scene_ops",
                 "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Choose Convention Route",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
-                  },
-                  "op": "spawn",
+                  "anchor_id": "grand_scenario_bottom_830",
+                  "op": "move",
                   "owner_namespace": "scenario"
                 }
               },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "remove",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "set_state",
-                  "owner_namespace": "scenario",
-                  "state": "delegation_behavior_resolved"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "game_result"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
               {
                 "family": "transition_ops",
                 "effect": {
@@ -10458,17 +10066,6 @@
                   "message": "The board state beat moves props and actors for sort delegation badges.",
                   "op": "feedback",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Grand Casino Convention Crowd has advanced beyond grand casino convention crowd task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -10529,6 +10126,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_scenario_top_800",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -10538,19 +10136,17 @@
                     "label": "Sort Delegation Badges",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
                 }
               },
               {
-                "family": "scene_ops",
+                "family": "interaction_ops",
                 "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "left"
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 }
               },
               {
@@ -10627,12 +10223,182 @@
               {
                 "family": "actor_ops",
                 "effect": {
+                  "behavior": "watch",
+                  "op": "set_behavior",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "transition_ops",
+                "effect": {
+                  "change_id": "grand_casino_convention_crowd_work_3_change",
+                  "channel": "room",
+                  "message": "The delegation behavior beat moves props and actors for choose convention route.",
+                  "op": "scene_change",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "choose_convention_route",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "choose_convention_route"
+                        },
+                        "label": "Choose Convention Route",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_grand_casino_convention_crowd",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_grand_casino_convention_crowd",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Choose Convention Route",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_3_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Grand Casino Convention Crowd: Complete this operation; named routes use their own marked stations.",
+                    "safe_exit": false,
+                    "state_label": "Work 3 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_scenario_top_800",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Choose Convention Route",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "set_state",
+                  "owner_namespace": "scenario",
+                  "state": "delegation_behavior_resolved"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "game_result"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
+                "family": "actor_ops",
+                "effect": {
                   "actor": {
                     "actor_id": "actor_badge_delegations",
-                    "behavior": "patrol",
+                    "anchor_id": "grand_convention_badge_delegations",
+                    "behavior": "watch",
                     "label": "Badge delegations",
-                    "pose": "arrival",
-                    "zone_id": "center"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -10643,10 +10409,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_convention_coordinator",
+                    "anchor_id": "grand_scenario_top_400",
                     "behavior": "work",
                     "label": "Convention coordinator",
-                    "pose": "arrival",
-                    "zone_id": "left"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -10757,66 +10523,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
-                    "appearance": "conflicted",
-                    "bounds": {
-                      "h": 46.0,
-                      "w": 52.0
-                    },
-                    "enabled": true,
-                    "label": "Convention booking board",
-                    "role": "ledger",
-                    "state": "conflicted",
-                    "visible": true,
-                    "zone_id": "left"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "crowded",
-                    "bounds": {
-                      "h": 58.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Contested table block",
-                    "role": "barrier",
-                    "state": "crowded",
-                    "visible": true,
-                    "zone_id": "right"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "marked_lane",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 56.0
-                    },
-                    "enabled": true,
-                    "label": "Marked clean exit",
-                    "role": "exit",
-                    "state": "marked_lane",
-                    "visible": true,
-                    "zone_id": "exit_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
+                    "anchor_id": "grand_convention_machine_banks",
                     "appearance": "split",
                     "bounds": {
                       "h": 52.0,
@@ -10826,8 +10533,7 @@
                     "label": "Reserved machine banks",
                     "role": "game_station",
                     "state": "split",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -10837,6 +10543,67 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_convention_table_block",
+                    "appearance": "crowded",
+                    "bounds": {
+                      "h": 58.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Contested table block",
+                    "role": "barrier",
+                    "state": "crowded",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_scenario_bottom_830",
+                    "appearance": "conflicted",
+                    "bounds": {
+                      "h": 46.0,
+                      "w": 52.0
+                    },
+                    "enabled": true,
+                    "label": "Convention booking board",
+                    "role": "ledger",
+                    "state": "conflicted",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_scenario_safe_exit",
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_scenario_top_800",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -10846,8 +10613,7 @@
                     "label": "Read Booking Board",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -11267,27 +11033,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -11376,7 +11121,7 @@
           "services": 0,
           "games": 0,
           "routes": 0,
-          "anchors": 0,
+          "anchors": 7,
           "zones": 7
         },
         "reentry": {
@@ -11390,10 +11135,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "92e36c458559acd65367d810d39a11590391fe8cc338b00619c6ea49f9ee57b7",
-      "calculated_signature": "92e36c458559acd65367d810d39a11590391fe8cc338b00619c6ea49f9ee57b7",
+      "authored_signature": "20e41f4519b0b5e4cead44704fa869594e6d3972fdc7ce5a9149178d08259c01",
+      "calculated_signature": "20e41f4519b0b5e4cead44704fa869594e6d3972fdc7ce5a9149178d08259c01",
       "nearest_id": "grand_casino_gala_night",
-      "nearest_similarity": 0.728506787330317
+      "nearest_similarity": 0.59956942949408
     },
     {
       "id": "grand_casino_gala_night",
@@ -11402,6 +11147,14 @@
         "phases": [
           {
             "ops": [
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "grand_scenario_bottom_830",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "scene_ops",
                 "effect": {
@@ -11420,17 +11173,6 @@
                   "owner_namespace": "scenario",
                   "reduced_motion_message": "Grand Casino Gala Night reaches the same semantic state without motion.",
                   "stage_id": "grand_casino_gala_night_work_2_stage"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Grand Casino Gala Night has advanced beyond grand casino gala night task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -11596,6 +11338,26 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_scenario_top_800",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Reset Stage Lift",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "route_0_ready",
                     "bounds": {
                       "h": 56.0,
@@ -11653,22 +11415,9 @@
                 }
               },
               {
-                "family": "scene_ops",
+                "family": "interaction_ops",
                 "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Reset Stage Lift",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
-                  },
-                  "op": "spawn",
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -11677,14 +11426,6 @@
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "center"
                 }
               }
             ],
@@ -11791,17 +11532,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Grand Casino Gala Night has advanced beyond grand casino gala night task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -11857,6 +11587,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_scenario_top_800",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -11866,10 +11597,16 @@
                     "label": "Choose Gala Identity",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -11956,17 +11693,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Grand Casino Gala Night has advanced beyond grand casino gala night task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -12022,6 +11748,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_scenario_top_800",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -12031,8 +11758,7 @@
                     "label": "Verify Charity Badge",
                     "role": "task_station",
                     "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -12043,7 +11769,14 @@
                 "effect": {
                   "op": "move",
                   "owner_namespace": "scenario",
-                  "zone_id": "left"
+                  "zone_id": "foreground"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
                 }
               },
               {
@@ -12122,10 +11855,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_gala_host",
+                    "anchor_id": "grand_scenario_top_400",
                     "behavior": "guard",
                     "label": "Gala host",
-                    "pose": "arrival",
-                    "zone_id": "center"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -12136,10 +11869,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_stage_hand",
+                    "anchor_id": "grand_scenario_bottom_830",
                     "behavior": "work",
                     "label": "Gala stage hand",
-                    "pose": "arrival",
-                    "zone_id": "right"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -12250,6 +11983,86 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_scenario_safe_exit",
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 56.0
+                    },
+                    "enabled": true,
+                    "label": "Marked clean exit",
+                    "role": "exit",
+                    "state": "marked_lane",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_scenario_top_520",
+                    "appearance": "checking",
+                    "bounds": {
+                      "h": 52.0,
+                      "w": 60.0
+                    },
+                    "enabled": true,
+                    "label": "Charity credential desk",
+                    "role": "credential",
+                    "state": "checking",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_scenario_top_650_low",
+                    "appearance": "stalled",
+                    "bounds": {
+                      "h": 58.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Stalled gala stage lift",
+                    "role": "workstation",
+                    "state": "stalled",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_scenario_top_800",
+                    "appearance": "task_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "enabled": true,
+                    "label": "Claim Coat Token",
+                    "role": "task_station",
+                    "state": "ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "appearance": "busy",
                     "bounds": {
                       "h": 46.0,
@@ -12260,87 +12073,7 @@
                     "role": "service",
                     "state": "busy",
                     "visible": true,
-                    "zone_id": "left"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "checking",
-                    "bounds": {
-                      "h": 52.0,
-                      "w": 60.0
-                    },
-                    "enabled": true,
-                    "label": "Charity credential desk",
-                    "role": "credential",
-                    "state": "checking",
-                    "visible": true,
-                    "zone_id": "center"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "marked_lane",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 56.0
-                    },
-                    "enabled": true,
-                    "label": "Marked clean exit",
-                    "role": "exit",
-                    "state": "marked_lane",
-                    "visible": true,
-                    "zone_id": "exit_lane"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "stalled",
-                    "bounds": {
-                      "h": 58.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Stalled gala stage lift",
-                    "role": "workstation",
-                    "state": "stalled",
-                    "visible": true,
-                    "zone_id": "right"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "task_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "enabled": true,
-                    "label": "Claim Coat Token",
-                    "role": "task_station",
-                    "state": "ready",
-                    "visible": true,
-                    "zone_id": "service_lane"
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -12760,27 +12493,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -12869,7 +12581,7 @@
           "services": 0,
           "games": 0,
           "routes": 0,
-          "anchors": 0,
+          "anchors": 6,
           "zones": 7
         },
         "reentry": {
@@ -12883,17 +12595,17 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "8a8806e551f4ab02d3dbb5cfea0e9c6eeab9d86dd7652f6669bf5dbe5060318d",
-      "calculated_signature": "8a8806e551f4ab02d3dbb5cfea0e9c6eeab9d86dd7652f6669bf5dbe5060318d",
+      "authored_signature": "1bac9fd9e092ffa9dd501af4b213de2b6c66aba8ff420169edd0c3a3b239dd13",
+      "calculated_signature": "1bac9fd9e092ffa9dd501af4b213de2b6c66aba8ff420169edd0c3a3b239dd13",
       "nearest_id": "grand_casino_convention_crowd",
-      "nearest_similarity": 0.728506787330317
+      "nearest_similarity": 0.59956942949408
     }
   ],
   "pairwise_similarity": [
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.376254180602007,
+      "similarity": 0.314662273476112,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12905,7 +12617,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.374052232518955,
+      "similarity": 0.31312292358804,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12917,7 +12629,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.364853556485356,
+      "similarity": 0.352437981180496,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12929,7 +12641,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.66254752851711,
+      "similarity": 0.657843137254902,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -12941,7 +12653,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.35702614379085,
+      "similarity": 0.303398058252427,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12953,7 +12665,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.354732510288066,
+      "similarity": 0.301794453507341,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12965,7 +12677,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.350287120590648,
+      "similarity": 0.349112426035503,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12977,7 +12689,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.376371308016878,
+      "similarity": 0.334177215189873,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12989,7 +12701,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.352506162695152,
+      "similarity": 0.311421528348398,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13001,9 +12713,9 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.678998911860718,
+      "similarity": 0.492047713717694,
       "equal_normalized_hash": false,
-      "status": "warning",
+      "status": "pass",
       "blocking": false,
       "masked_visual_evidence": {
 
@@ -13013,7 +12725,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.499509322865554,
+      "similarity": 0.517875383043922,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13025,7 +12737,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.490731707317073,
+      "similarity": 0.448343079922027,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13037,7 +12749,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.36371237458194,
+      "similarity": 0.32190635451505,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13049,7 +12761,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.360330578512397,
+      "similarity": 0.320099255583127,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13061,7 +12773,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.694013303769401,
+      "similarity": 0.690557451649602,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -13073,7 +12785,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_whale_aboard",
-      "similarity": 0.486381322957198,
+      "similarity": 0.491967871485944,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13085,9 +12797,9 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.666306695464363,
+      "similarity": 0.489087301587302,
       "equal_normalized_hash": false,
-      "status": "warning",
+      "status": "pass",
       "blocking": false,
       "masked_visual_evidence": {
 
@@ -13097,7 +12809,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.476328502415459,
+      "similarity": 0.524102564102564,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13109,7 +12821,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.476328502415459,
+      "similarity": 0.45829244357213,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13121,7 +12833,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.374052232518955,
+      "similarity": 0.428184281842818,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13133,7 +12845,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.356966199505359,
+      "similarity": 0.40864960282436,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13145,7 +12857,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.495107632093933,
+      "similarity": 0.501010101010101,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13157,7 +12869,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.466730038022814,
+      "similarity": 0.451644100580271,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13169,9 +12881,9 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.71685393258427,
+      "similarity": 0.504048582995951,
       "equal_normalized_hash": false,
-      "status": "warning",
+      "status": "pass",
       "blocking": false,
       "masked_visual_evidence": {
 
@@ -13181,9 +12893,9 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.701559020044543,
+      "similarity": 0.585912486659552,
       "equal_normalized_hash": false,
-      "status": "warning",
+      "status": "pass",
       "blocking": false,
       "masked_visual_evidence": {
 
@@ -13193,7 +12905,7 @@
     {
       "left_id": "grand_casino_convention_crowd",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.472328244274809,
+      "similarity": 0.468688845401174,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13205,7 +12917,7 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.468125594671741,
+      "similarity": 0.408067542213884,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13217,10 +12929,10 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.728506787330317,
+      "similarity": 0.59956942949408,
       "equal_normalized_hash": false,
-      "status": "blocking_review",
-      "blocking": true,
+      "status": "pass",
+      "blocking": false,
       "masked_visual_evidence": {
 
       },
@@ -13233,16 +12945,11 @@
     "scenario delta_queen_fog_delay is invalid: [\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario delta_queen_engine_trouble is invalid: [\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario delta_queen_captains_invitational is invalid: [\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario grand_casino_gala_night is invalid: [\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario grand_casino_convention_crowd is invalid: [\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.694 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_wedding_charter vs grand_casino_audit_night: 0.666 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_whale_aboard vs grand_casino_gala_night: 0.702 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_whale_aboard vs grand_casino_convention_crowd: 0.717 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_fog_delay vs grand_casino_audit_night: 0.679 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_engine_trouble vs delta_queen_captains_invitational: 0.663 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario grand_casino_gala_night vs grand_casino_convention_crowd: 0.729 (blocking_review)."
+    "scenario grand_casino_gala_night is invalid: [\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_520 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_650_low has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario grand_casino_convention_crowd is invalid: [\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_badge_delegations has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_machine_banks has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_table_block has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_50_actor has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_520 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_650 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800_low has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.691 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_engine_trouble vs delta_queen_captains_invitational: 0.658 (warning). Missing receipt-bound masked visual evidence."
   ],
   "pair_count": 28
 }
