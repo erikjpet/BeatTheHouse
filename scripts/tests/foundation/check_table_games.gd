@@ -6445,6 +6445,12 @@ func _check_bar_dice_contract(library: ContentLibrary, failures: Array) -> void:
 	_check_bar_dice_save_load(game, failures)
 
 
+func _bar_dice_open_shake_ui(game: GameModule, run_state: RunState, environment: Dictionary, initial_ui: Dictionary = {}) -> Dictionary:
+	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, initial_ui, run_state, environment)
+	var cover_command: Dictionary = game.surface_action_command("bar_dice_ack_cover", 0, false, roll_command.get("ui_state", {}), run_state, environment)
+	return cover_command.get("ui_state", {})
+
+
 # Guards against the surface stranding in the keep/reroll phase after a round
 # resolves: the resolving command must release UI-local state so the host clears
 # `rolled` and the next surface_state shows the settled house reveal and result.
@@ -6455,16 +6461,12 @@ func _check_bar_dice_result_visible(game: GameModule, failures: Array) -> void:
 	var environment := _surface_contract_environment()
 	environment["game_states"] = {"bar_dice": game.generate_environment_state(run_state, environment, run_state.create_rng("bar_dice_visible_state"))}
 	run_state.current_environment = environment.duplicate(true)
-	var roll_cmd := game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, run_state.current_environment)
-	var rolled_ui: Dictionary = roll_cmd.get("ui_state", {})
-	# A confirmed resolve must resolve and must NOT preserve UI-local state, or the
-	# host keeps `rolled` set and the surface never leaves the select phase.
+	var rolled_ui := _bar_dice_open_shake_ui(game, run_state, run_state.current_environment)
+	# SETTLE stages a throw; only the later public call may nominate settlement.
 	var confirm_cmd := game.surface_action_command("bar_dice_resolve", 0, true, rolled_ui, run_state, run_state.current_environment)
-	if not bool(confirm_cmd.get("resolve", false)):
-		failures.append("Bar Dice confirmed resolve did not request resolution.")
-	if bool(confirm_cmd.get("preserve_surface_ui_state", false)):
-		failures.append("Bar Dice resolving command preserved UI-local state, stranding the surface in the select phase.")
-	var result := game.resolve_with_context("roll", 8, run_state, run_state.current_environment, run_state.create_rng("bar_dice_visible_resolve"), confirm_cmd.get("ui_state", rolled_ui))
+	if bool(confirm_cmd.get("resolve", false)) or str((confirm_cmd.get("ui_state", {}) as Dictionary).get("bar_dice_ritual_phase", "")) != "throw":
+		failures.append("Bar Dice SETTLE did not stage the bounded throw without resolving early.")
+	var result := _bar_dice_play_round(game, run_state, run_state.create_rng("bar_dice_visible_resolve"), "roll", 10)
 	if not bool(result.get("ok", false)):
 		failures.append("Bar Dice resolve did not complete a round.")
 	# Emulate the host clearing UI-local state after a non-preserving resolve.
@@ -6686,8 +6688,9 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 	var stake_click := _check_surface_command_non_mutating(game, "bar_dice_stake", 0, false, {}, run_state, environment, "bar dice stake", failures)
 	if int((stake_click.get("ui_state", {}) as Dictionary).get("selected_stake_index", -1)) != 0:
 		failures.append("Bar Dice chip selection did not update UI-local stake state.")
-	var roll_click := _check_surface_command_non_mutating(game, "bar_dice_roll", 0, false, {}, run_state, environment, "bar dice roll", failures)
-	var rolled_state: Dictionary = roll_click.get("ui_state", {})
+	var roll_click := _check_surface_command_non_mutating(game, "bar_dice_roll", 0, false, {}, run_state, environment, "bar dice wager agreement", failures)
+	var cover_click := _check_surface_command_non_mutating(game, "bar_dice_ack_cover", 0, false, roll_click.get("ui_state", {}), run_state, environment, "bar dice cover acknowledgement", failures)
+	var rolled_state: Dictionary = cover_click.get("ui_state", {})
 	if not bool(rolled_state.get("rolled", false)) or (rolled_state.get("dice", []) as Array).size() != 5:
 		failures.append("Bar Dice roll did not open a five-die keep/reroll phase as UI-local state.")
 	var select_surface := game.surface_state(run_state, environment, rolled_state)
@@ -6740,8 +6743,11 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 				failures.append("Bar Dice shake moved a kept die that was not marked for reroll.")
 				break
 	var resolve_click := game.surface_action_command("bar_dice_resolve", 0, false, rolled_state, run_state, environment)
-	if str(resolve_click.get("action_id", "")) != "roll" or str(resolve_click.get("action_kind", "")) != "legal":
-		failures.append("Bar Dice resolve did not map to the legal roll action.")
+	var throw_click := game.surface_action_command("bar_dice_throw", 0, false, resolve_click.get("ui_state", {}), run_state, environment)
+	var reveal_click := game.surface_action_command("bar_dice_reveal", 0, false, throw_click.get("ui_state", {}), run_state, environment)
+	var call_click := game.surface_action_command("bar_dice_ack_call", 0, false, reveal_click.get("ui_state", {}), run_state, environment)
+	if str(call_click.get("action_id", "")) != "roll" or str(call_click.get("action_kind", "")) != "legal" or not bool(call_click.get("resolve", false)):
+		failures.append("Bar Dice call did not map the legal ritual to one roll settlement.")
 	var load_click := _check_surface_command_non_mutating(game, "bar_dice_load", 0, false, rolled_state, run_state, environment, "bar dice load", failures)
 	if str(load_click.get("action_id", "")) != "loaded_toss" or str(load_click.get("action_kind", "")) != "cheat":
 		failures.append("Bar Dice loaded toss did not map to the risky cheat action.")
@@ -6765,7 +6771,9 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 	var released_roll: Dictionary = release_state.get("controlled_roll", {}) if typeof(release_state.get("controlled_roll", {})) == TYPE_DICTIONARY else {}
 	if str(released_roll.get("skill_grade", "")) != "perfect":
 		failures.append("Bar Dice RELEASE did not grade a perfect controlled-roll input.")
-	var cheat_settle := game.surface_action_command("bar_dice_resolve", 0, true, release_state, run_state, environment)
+	var cheat_throw := game.surface_action_command("bar_dice_throw", 0, false, release_state, run_state, environment)
+	var cheat_reveal := game.surface_action_command("bar_dice_reveal", 0, false, cheat_throw.get("ui_state", {}), run_state, environment)
+	var cheat_settle := game.surface_action_command("bar_dice_ack_call", 0, false, cheat_reveal.get("ui_state", {}), run_state, environment)
 	if str(cheat_settle.get("action_id", "")) != "loaded_toss" or str(cheat_settle.get("action_kind", "")) != "cheat" or not bool(cheat_settle.get("resolve", false)):
 		failures.append("Bar Dice SETTLE did not resolve the armed controlled-roll cheat.")
 	var palm_click := _check_surface_command_non_mutating(game, "bar_dice_palm", 0, false, rolled_state, run_state, environment, "bar dice palm", failures)
@@ -6779,7 +6787,7 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 	palm_ui["surface_time_msec"] = int(palm_challenge.get("target_msec", 0))
 	var palm_lock := game.surface_action_command("bar_dice_palm", 0, false, palm_ui, run_state, environment)
 	var palm_lock_challenge: Dictionary = (palm_lock.get("ui_state", {}) as Dictionary).get("palmed_swap_challenge", {})
-	if not bool(palm_lock.get("resolve", false)) or str(palm_lock_challenge.get("skill_grade", "")) != "perfect":
+	if bool(palm_lock.get("resolve", false)) or str(palm_lock_challenge.get("skill_grade", "")) != "perfect" or str((palm_lock.get("ui_state", {}) as Dictionary).get("bar_dice_ritual_phase", "")) != "throw":
 		failures.append("Bar Dice SWAP NOW input did not resolve a perfect palmed-swap timing lock.")
 	var selected_state := rolled_state.duplicate(true)
 	selected_state["selected_action_id"] = "loaded_toss"
@@ -6817,13 +6825,22 @@ func _bar_dice_resolve_with_reroll(game: GameModule, seed_text: String, reroll: 
 	var environment := _surface_contract_environment()
 	environment["game_states"] = {"bar_dice": game.generate_environment_state(run_state, environment, run_state.create_rng("bar_dice_keep_state"))}
 	run_state.current_environment = environment.duplicate(true)
-	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, run_state.current_environment)
-	var ui: Dictionary = roll_command.get("ui_state", {})
+	var host := _bar_dice_test_host(game, run_state, 10)
+	var stake_ui := _bar_dice_stake_ui(run_state, 10)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_stake", int(stake_ui.get("selected_stake_index", 0)), false)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_roll", 0, false)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_ack_cover", 0, false)
+	for die_index_value in reroll:
+		host.call("_sealed_action_host_surface_intent", "bar_dice_select", int(die_index_value), false)
 	if not reroll.is_empty():
-		ui["reroll"] = reroll
-		var shake_command: Dictionary = game.surface_action_command("bar_dice_shake", 0, false, ui, run_state, run_state.current_environment)
-		ui = shake_command.get("ui_state", ui)
-	return game.resolve_with_context("roll", 10, run_state, run_state.current_environment, run_state.create_rng("bar_dice_keep_resolve"), ui)
+		host.call("_sealed_action_host_surface_intent", "bar_dice_shake", 0, false)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_resolve", 0, false)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_throw", 0, false)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_reveal", 0, false)
+	var call_command: Dictionary = host.call("_sealed_action_host_surface_intent", "bar_dice_ack_call", 0, false)
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", "roll", 10, call_command.get("_sealed_action_host_delivery", {}))
+	host.free()
+	return result
 
 
 func _check_bar_dice_patron_turn_determinism(game: GameModule, failures: Array) -> void:
@@ -6896,24 +6913,33 @@ func _check_bar_dice_match_and_bonuses(game: GameModule, failures: Array) -> voi
 	if outcome == "carry" and int(forced_state.get("carryover_pot", 0)) <= 0:
 		failures.append("Bar Dice carry result did not move the table pot into carryover.")
 	_check_bar_dice_carryover_math(game, failures)
-	var press_seed: RunState = RunStateScript.new()
-	press_seed.start_new("BAR-DICE-PRESS-OFFER")
-	press_seed.bankroll = 100000
-	var press_environment := _surface_contract_environment()
-	press_environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, press_seed, press_environment, "ship_captain_crew", "friendly", "pot_rake")}
-	press_seed.current_environment = press_environment.duplicate(true)
 	var found_press := false
-	var rng: RngStream = press_seed.create_rng("bar_dice_press_offer")
 	for _i in range(160):
-		var press_result := _bar_dice_play_round(game, press_seed, rng, "roll")
-		var state: Dictionary = press_seed.current_environment.get("game_states", {}).get("bar_dice", {})
-		var last_result: Dictionary = state.get("last_result", {})
-		if bool((last_result.get("press_offer", {}) as Dictionary).get("available", false)):
+		var press_seed_text := "BAR-DICE-PRESS-OFFER-%d" % _i
+		var probe := _bar_dice_fresh_outcome_run(game, press_seed_text, "friendly")
+		var probe_result := _bar_dice_simulate_round(game, probe, probe.create_rng(), "roll")
+		var probe_state: Dictionary = probe.current_environment.get("game_states", {}).get("bar_dice", {})
+		if bool(((probe_state.get("last_result", {}) as Dictionary).get("press_offer", {}) as Dictionary).get("available", false)):
 			found_press = true
+			var press_seed := _bar_dice_fresh_outcome_run(game, press_seed_text, "friendly")
+			_check_bar_dice_pre_reveal_no_leak(game, press_seed_text, 10, "press-offer", failures)
+			var roll_rng_before := press_seed.rng_state
+			var press_result := _bar_dice_play_round(game, press_seed, press_seed.create_rng(), "roll")
+			_check_bar_dice_authenticated_result(press_result, "press-offer", 10, roll_rng_before, press_seed, failures)
+			var state: Dictionary = press_seed.current_environment.get("game_states", {}).get("bar_dice", {})
+			if not bool((((state.get("last_result", {}) as Dictionary).get("press_offer", {}) as Dictionary).get("available", false))):
+				found_press = false
+				continue
 			var before := _run_state_result_snapshot(press_seed)
-			var resolved_press := game.resolve_with_context("press", int(press_result.get("bar_dice_stake", 1)), press_seed, press_seed.current_environment, rng, {})
+			var press_stake := int(press_result.get("bar_dice_stake", 1))
+			var press_host := _bar_dice_test_host(game, press_seed, press_stake)
+			var resolved_press: Dictionary = press_host.call("_sealed_action_host_resolve_intent", "press", press_stake)
+			press_host.free()
 			call("_check_action_result_shape", resolved_press, "legal", failures)
 			call("_check_action_result_application_contract", before, press_seed, resolved_press, "bar dice press result", failures)
+			var press_delivery: Dictionary = resolved_press.get(BlackjackActionAuthorityScript.HOST_DELIVERY_KEY, {})
+			if not bool(resolved_press.get(BlackjackActionAuthorityScript.HOST_COMMITTED_KEY, false)) or str(press_delivery.get("action_id", "")) != "press":
+				failures.append("Bar Dice press offer did not settle through an authenticated press receipt.")
 			break
 	if not found_press:
 		failures.append("Bar Dice did not produce a press/double-up offer after repeated clean wins.")
@@ -6929,7 +6955,7 @@ func _check_bar_dice_carryover_math(game: GameModule, failures: Array) -> void:
 	var rng: RngStream = carry_run.create_rng("bar_dice_carryover")
 	var carry_result: Dictionary = {}
 	for _attempt in range(260):
-		var result := _bar_dice_play_round(game, carry_run, rng, "roll")
+		var result := _bar_dice_simulate_round(game, carry_run, rng, "roll")
 		if str(result.get("bar_dice_outcome", "")) == "carry":
 			carry_result = result
 			break
@@ -6941,7 +6967,7 @@ func _check_bar_dice_carryover_math(game: GameModule, failures: Array) -> void:
 	var carry_pot := int(carry_result.get("bar_dice_pot", 0))
 	if carryover != carry_pot:
 		failures.append("Bar Dice carryover pot did not equal the tied/no-qualifying round pot.")
-	var next_result := _bar_dice_play_round(game, carry_run, rng, "roll")
+	var next_result := _bar_dice_simulate_round(game, carry_run, rng, "roll")
 	var next_stake := int(next_result.get("bar_dice_stake", 0))
 	var next_game_states: Dictionary = carry_run.current_environment.get("game_states", {})
 	var next_table: Dictionary = next_game_states.get("bar_dice", {})
@@ -6970,21 +6996,24 @@ func _check_bar_dice_stake_lifecycle(game: GameModule, failures: Array) -> void:
 		var found_result: Dictionary = {}
 		var found_before_bankroll := 0
 		var found_after_bankroll := 0
-		var run_state: RunState = RunStateScript.new()
-		run_state.start_new("BAR-DICE-STAKE-LIFECYCLE-%s" % target_outcome)
-		run_state.bankroll = 100000
-		var environment := _surface_contract_environment()
-		environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, run_state, environment, "ship_captain_crew", "standard", "pot_rake")}
-		run_state.current_environment = environment.duplicate(true)
-		var rng: RngStream = run_state.create_rng("bar_dice_stake_lifecycle_%s" % target_outcome)
+		var run_state: RunState = null
 		for _attempt in range(360):
+			var seed_text := "BAR-DICE-STAKE-LIFECYCLE-%s-%d" % [target_outcome, _attempt]
+			var probe := _bar_dice_fresh_outcome_run(game, seed_text)
+			var probe_result := _bar_dice_simulate_round(game, probe, probe.create_rng(), "roll", target_stake)
+			if str(probe_result.get("bar_dice_outcome", "")) != target_outcome:
+				continue
+			run_state = _bar_dice_fresh_outcome_run(game, seed_text)
+			_check_bar_dice_pre_reveal_no_leak(game, seed_text, target_stake, target_outcome, failures)
 			var before_bankroll := run_state.bankroll
-			var result := _bar_dice_play_round(game, run_state, rng, "roll", target_stake)
+			var rng_before := run_state.rng_state
+			var result := _bar_dice_play_round(game, run_state, run_state.create_rng(), "roll", target_stake)
 			if str(result.get("bar_dice_outcome", "")) != target_outcome:
 				continue
 			found_result = result
 			found_before_bankroll = before_bankroll
 			found_after_bankroll = run_state.bankroll
+			_check_bar_dice_authenticated_result(result, target_outcome, target_stake, rng_before, run_state, failures)
 			break
 		if found_result.is_empty():
 			failures.append("Bar Dice stake lifecycle fixture could not find a %s result." % target_outcome)
@@ -7014,6 +7043,41 @@ func _check_bar_dice_stake_lifecycle(game: GameModule, failures: Array) -> void:
 				failures.append("Bar Dice carry lifecycle did not store the full pot as carryover.")
 
 
+func _bar_dice_fresh_outcome_run(game: GameModule, seed_text: String, tier: String = "standard") -> RunState:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(seed_text)
+	run_state.bankroll = 100000
+	var environment := _surface_contract_environment()
+	environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, run_state, environment, "ship_captain_crew", tier, "pot_rake")}
+	run_state.current_environment = environment.duplicate(true)
+	return run_state
+
+
+func _check_bar_dice_authenticated_result(result: Dictionary, outcome: String, stake: int, rng_before: int, run_state: RunState, failures: Array) -> void:
+	var delivery: Dictionary = result.get(BlackjackActionAuthorityScript.HOST_DELIVERY_KEY, {})
+	var receipt: Dictionary = result.get(BlackjackActionAuthorityScript.HOST_APPLY_RECEIPT_KEY, {})
+	if not bool(result.get(BlackjackActionAuthorityScript.HOST_COMMITTED_KEY, false)) \
+			or str(delivery.get("action_id", "")) != "roll" or int(delivery.get("stake", -1)) != stake \
+			or int(receipt.get("stake", -1)) != stake \
+			or str(result.get(BlackjackActionAuthorityScript.HOST_CONTENT_FINGERPRINT_KEY, "")).is_empty():
+		failures.append("Bar Dice %s lifecycle lacked exact authenticated proposal/delivery/receipt identity." % outcome)
+	if run_state.rng_state == rng_before:
+		failures.append("Bar Dice %s authenticated lifecycle did not advance canonical RNG." % outcome)
+
+
+func _check_bar_dice_pre_reveal_no_leak(game: GameModule, seed_text: String, stake: int, outcome: String, failures: Array) -> void:
+	var probe := _bar_dice_fresh_outcome_run(game, seed_text)
+	var stake_ui := _bar_dice_stake_ui(probe, stake)
+	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, stake_ui, probe, probe.current_environment)
+	var cover_command: Dictionary = game.surface_action_command("bar_dice_ack_cover", 0, false, roll_command.get("ui_state", {}), probe, probe.current_environment)
+	var settle_command: Dictionary = game.surface_action_command("bar_dice_resolve", 0, false, cover_command.get("ui_state", {}), probe, probe.current_environment)
+	var pre_reveal := game.surface_state(probe, probe.current_environment, settle_command.get("ui_state", {}))
+	if bool(pre_reveal.get("house_revealed", false)) \
+			or not str(pre_reveal.get("result_message", "")).strip_edges().is_empty() \
+			or not (pre_reveal.get("house", []) as Array).is_empty():
+		failures.append("Bar Dice %s selected lifecycle leaked the result before reveal/call." % outcome)
+
+
 func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("BAR-DICE-CHEAT")
@@ -7022,9 +7086,7 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	environment["game_states"] = {"bar_dice": game.generate_environment_state(run_state, environment, run_state.create_rng("bar_dice_cheat_state"))}
 	run_state.current_environment = environment.duplicate(true)
 	var before := _run_state_result_snapshot(run_state)
-	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, run_state.current_environment)
-	var ui: Dictionary = _bar_dice_controlled_roll_timed_ui(game, run_state, roll_command.get("ui_state", {}), 0)
-	var loaded_result := game.resolve_with_context("loaded_toss", 10, run_state, run_state.current_environment, run_state.create_rng("bar_dice_cheat_resolve"), ui)
+	var loaded_result := _bar_dice_play_round(game, run_state, run_state.create_rng("bar_dice_cheat_resolve"), "loaded_toss")
 	call("_check_action_result_shape", loaded_result, "cheat", failures)
 	if int(loaded_result.get("suspicion_delta", 0)) <= 0:
 		failures.append("Bar Dice loaded toss did not raise suspicion heat.")
@@ -7043,10 +7105,16 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	var direct_environment := _surface_contract_environment()
 	direct_environment["game_states"] = {"bar_dice": game.generate_environment_state(direct_state, direct_environment, direct_state.create_rng("bar_dice_direct_state"))}
 	direct_state.current_environment = direct_environment.duplicate(true)
+	var direct_snapshot_before := JSON.stringify(direct_state.to_save_snapshot())
+	var direct_rng := direct_state.create_rng("bar_dice_direct_resolve")
+	var direct_rng_before := JSON.stringify(direct_rng.snapshot())
 	var direct_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, direct_state, direct_state.current_environment)
-	var direct_result := game.resolve_with_context("loaded_toss", 10, direct_state, direct_state.current_environment, direct_state.create_rng("bar_dice_direct_resolve"), direct_roll.get("ui_state", {}))
+	var direct_result := game.resolve_with_context("loaded_toss", 10, direct_state, direct_state.current_environment, direct_rng, direct_roll.get("ui_state", {}))
 	if bool(direct_result.get("bar_dice_controlled_roll_applied", false)) or str(direct_result.get("skill_grade", "")) != "miss":
 		failures.append("Bar Dice loaded_toss without RELEASE granted an ungraded controlled-roll payoff.")
+	GameModule.apply_result(direct_state, direct_result, direct_rng)
+	if JSON.stringify(direct_state.to_save_snapshot()) != direct_snapshot_before or JSON.stringify(direct_rng.snapshot()) != direct_rng_before:
+		failures.append("Bar Dice out-of-phase direct loaded_toss changed run or RNG state.")
 	var deterministic_a: RunState = RunStateScript.new()
 	deterministic_a.start_new("BAR-DICE-CONTROL-DETERMINISTIC")
 	deterministic_a.bankroll = 100000
@@ -7059,10 +7127,8 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	var deterministic_env_b := _surface_contract_environment()
 	deterministic_env_b["game_states"] = {"bar_dice": game.generate_environment_state(deterministic_b, deterministic_env_b, deterministic_b.create_rng("bar_dice_det_state"))}
 	deterministic_b.current_environment = deterministic_env_b.duplicate(true)
-	var det_roll_a := game.surface_action_command("bar_dice_roll", 0, false, {"surface_time_msec": 20000}, deterministic_a, deterministic_a.current_environment)
-	var det_roll_b := game.surface_action_command("bar_dice_roll", 0, false, {"surface_time_msec": 20000}, deterministic_b, deterministic_b.current_environment)
-	var det_ui_a: Dictionary = _bar_dice_controlled_roll_timed_ui(game, deterministic_a, det_roll_a.get("ui_state", {"surface_time_msec": 20000}), 0)
-	var det_ui_b: Dictionary = _bar_dice_controlled_roll_timed_ui(game, deterministic_b, det_roll_b.get("ui_state", {"surface_time_msec": 20000}), 0)
+	var det_ui_a: Dictionary = _bar_dice_controlled_roll_timed_ui(game, deterministic_a, _bar_dice_open_shake_ui(game, deterministic_a, deterministic_a.current_environment, {"surface_time_msec": 20000}), 0)
+	var det_ui_b: Dictionary = _bar_dice_controlled_roll_timed_ui(game, deterministic_b, _bar_dice_open_shake_ui(game, deterministic_b, deterministic_b.current_environment, {"surface_time_msec": 20000}), 0)
 	if JSON.stringify(det_ui_a.get("controlled_roll", {})) != JSON.stringify(det_ui_b.get("controlled_roll", {})):
 		failures.append("Bar Dice controlled-roll challenge did not start deterministically from seeded input.")
 	var round_trip_state: Dictionary = JSON.parse_string(JSON.stringify(det_ui_a))
@@ -7075,9 +7141,7 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	var palm_environment := _surface_contract_environment()
 	palm_environment["game_states"] = {"bar_dice": game.generate_environment_state(palm_state, palm_environment, palm_state.create_rng("bar_dice_palm_state"))}
 	palm_state.current_environment = palm_environment.duplicate(true)
-	var palm_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, palm_state, palm_state.current_environment)
-	var palm_ui: Dictionary = _bar_dice_palmed_swap_timed_ui(game, palm_state, palm_roll.get("ui_state", {}), 0)
-	var palm_result := game.resolve_with_context("palmed_swap", 10, palm_state, palm_state.current_environment, palm_state.create_rng("bar_dice_palm_resolve"), palm_ui)
+	var palm_result := _bar_dice_play_round(game, palm_state, palm_state.create_rng("bar_dice_palm_resolve"), "palmed_swap")
 	call("_check_action_result_shape", palm_result, "cheat", failures)
 	if not bool(palm_result.get("bar_dice_palmed", false)) or not bool(palm_result.get("bar_dice_palmed_swap_applied", false)) or str(palm_result.get("skill_grade", "")) != "perfect" or int(palm_result.get("suspicion_delta", 0)) <= 0:
 		failures.append("Bar Dice palmed swap did not grade perfect input, improve a die, and add suspicion heat.")
@@ -7087,10 +7151,16 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	var direct_palm_environment := _surface_contract_environment()
 	direct_palm_environment["game_states"] = {"bar_dice": game.generate_environment_state(direct_palm_state, direct_palm_environment, direct_palm_state.create_rng("bar_dice_palm_direct_state"))}
 	direct_palm_state.current_environment = direct_palm_environment.duplicate(true)
+	var direct_palm_snapshot_before := JSON.stringify(direct_palm_state.to_save_snapshot())
+	var direct_palm_rng := direct_palm_state.create_rng("bar_dice_palm_direct_resolve")
+	var direct_palm_rng_before := JSON.stringify(direct_palm_rng.snapshot())
 	var direct_palm_roll := game.surface_action_command("bar_dice_roll", 0, false, {}, direct_palm_state, direct_palm_state.current_environment)
-	var direct_palm_result := game.resolve_with_context("palmed_swap", 10, direct_palm_state, direct_palm_state.current_environment, direct_palm_state.create_rng("bar_dice_palm_direct_resolve"), direct_palm_roll.get("ui_state", {}))
+	var direct_palm_result := game.resolve_with_context("palmed_swap", 10, direct_palm_state, direct_palm_state.current_environment, direct_palm_rng, direct_palm_roll.get("ui_state", {}))
 	if str(direct_palm_result.get("skill_grade", "")) != "miss" or bool(direct_palm_result.get("bar_dice_palmed_swap_applied", true)) or str(direct_palm_result.get("message", "")).to_lower().find("no die") < 0:
 		failures.append("Bar Dice direct palmed_swap resolve granted an ungraded die change or lacked readable failure feedback.")
+	GameModule.apply_result(direct_palm_state, direct_palm_result, direct_palm_rng)
+	if JSON.stringify(direct_palm_state.to_save_snapshot()) != direct_palm_snapshot_before or JSON.stringify(direct_palm_rng.snapshot()) != direct_palm_rng_before:
+		failures.append("Bar Dice out-of-phase direct palmed_swap changed run or RNG state.")
 	var palm_deterministic_a := _bar_dice_palmed_swap_fixture(game, "BAR-DICE-PALM-DETERMINISTIC")
 	var palm_deterministic_b := _bar_dice_palmed_swap_fixture(game, "BAR-DICE-PALM-DETERMINISTIC")
 	if JSON.stringify(palm_deterministic_a.get("challenge", {})) != JSON.stringify(palm_deterministic_b.get("challenge", {})):
@@ -7117,7 +7187,8 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	var palm_blown_challenge: Dictionary = palm_blown_ui.get("palmed_swap_challenge", {})
 	palm_blown_ui["surface_time_msec"] = int(palm_blown_challenge.get("target_msec", 0)) + int(palm_blown_challenge.get("meter_period_msec", 1500)) / 2
 	var palm_blown_lock := game.surface_action_command("bar_dice_palm", 0, false, palm_blown_ui, palm_blown_run, palm_blown_run.current_environment)
-	var palm_blown_result := game.resolve_with_context("palmed_swap", 10, palm_blown_run, palm_blown_run.current_environment, palm_blown_run.create_rng("bar_dice_palm_blown_resolve"), palm_blown_lock.get("ui_state", palm_blown_ui))
+	var palm_blown_margin := int(palm_blown_challenge.get("meter_period_msec", 1500)) / 2
+	var palm_blown_result := _bar_dice_play_round(game, palm_blown_run, palm_blown_run.create_rng("bar_dice_palm_blown_resolve"), "palmed_swap", 10, palm_blown_margin)
 	if str(palm_blown_result.get("skill_grade", "")) != "blown" or bool(palm_blown_result.get("bar_dice_palmed_swap_applied", true)) or str(palm_blown_result.get("message", "")).to_lower().find("no die") < 0:
 		failures.append("Bar Dice blown palmed swap did not leave dice unchanged with distinct failure feedback.")
 	var honest_wins := _bar_dice_win_rate(game, "roll", "BAR-DICE-HONEST")
@@ -7141,7 +7212,7 @@ func _bar_dice_win_rate(game: GameModule, action_id: String, seed_text: String) 
 	var wins := 0
 	for _round in range(rounds):
 		run_state.suspicion = {"level": 0, "cues": [], "local_levels": {}}
-		var result := _bar_dice_play_round(game, run_state, rng, action_id)
+		var result := _bar_dice_simulate_round(game, run_state, rng, action_id)
 		if str(result.get("bar_dice_outcome", "")) == "win":
 			wins += 1
 	return float(wins) / float(rounds)
@@ -7156,9 +7227,7 @@ func _check_bar_dice_item_luck_alcohol(game: GameModule, failures: Array) -> voi
 	sober_environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, sober, sober_environment, "ship_captain_crew", "standard", "pot_rake")}
 	sober.current_environment = sober_environment.duplicate(true)
 	_xgame_apply_watched_spatial_state(sober, "bar_dice", true)
-	var sober_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, sober, sober.current_environment)
-	var sober_ui: Dictionary = _bar_dice_controlled_roll_timed_ui(game, sober, sober_roll.get("ui_state", {}), 0)
-	var sober_result := game.resolve_with_context("loaded_toss", 10, sober, sober.current_environment, sober.create_rng("bar_dice_sober"), sober_ui)
+	var sober_result := _bar_dice_play_round(game, sober, sober.create_rng("bar_dice_sober"), "loaded_toss")
 	var drunk: RunState = RunStateScript.new()
 	drunk.start_new("BAR-DICE-ALCOHOL-SOBER")
 	drunk.bankroll = 100000
@@ -7168,9 +7237,7 @@ func _check_bar_dice_item_luck_alcohol(game: GameModule, failures: Array) -> voi
 	drunk_environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, drunk, drunk_environment, "ship_captain_crew", "standard", "pot_rake")}
 	drunk.current_environment = drunk_environment.duplicate(true)
 	_xgame_apply_watched_spatial_state(drunk, "bar_dice", true)
-	var drunk_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, drunk, drunk.current_environment)
-	var drunk_ui: Dictionary = _bar_dice_controlled_roll_timed_ui(game, drunk, drunk_roll.get("ui_state", {}), 0)
-	var drunk_result := game.resolve_with_context("loaded_toss", 10, drunk, drunk.current_environment, drunk.create_rng("bar_dice_sober"), drunk_ui)
+	var drunk_result := _bar_dice_play_round(game, drunk, drunk.create_rng("bar_dice_sober"), "loaded_toss")
 	if int(drunk_result.get("suspicion_delta", 0)) <= int(sober_result.get("suspicion_delta", 0)):
 		failures.append("Bar Dice cheat heat did not respond to alcohol pressure.")
 	var low_snitch: RunState = RunStateScript.new()
@@ -7181,9 +7248,7 @@ func _check_bar_dice_item_luck_alcohol(game: GameModule, failures: Array) -> voi
 	low_state["patrons"] = [{"id": "quiet_rail", "name": "Quiet Rail", "watching": false, "snitch_risk": 0, "rapport": 60}]
 	low_environment["game_states"] = {"bar_dice": low_state}
 	low_snitch.current_environment = low_environment.duplicate(true)
-	var low_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, low_snitch, low_snitch.current_environment)
-	var low_ui: Dictionary = _bar_dice_controlled_roll_timed_ui(game, low_snitch, low_roll.get("ui_state", {}), 999)
-	var low_result := game.resolve_with_context("loaded_toss", 10, low_snitch, low_snitch.current_environment, low_snitch.create_rng("bar_dice_snitch_low"), low_ui)
+	var low_result := _bar_dice_play_round(game, low_snitch, low_snitch.create_rng("bar_dice_snitch_low"), "loaded_toss", 10, 999)
 	var high_snitch: RunState = RunStateScript.new()
 	high_snitch.start_new("BAR-DICE-SNITCH-HIGH")
 	high_snitch.bankroll = 100000
@@ -7196,9 +7261,7 @@ func _check_bar_dice_item_luck_alcohol(game: GameModule, failures: Array) -> voi
 	]
 	high_environment["game_states"] = {"bar_dice": high_state}
 	high_snitch.current_environment = high_environment.duplicate(true)
-	var high_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, high_snitch, high_snitch.current_environment)
-	var high_ui: Dictionary = _bar_dice_controlled_roll_timed_ui(game, high_snitch, high_roll.get("ui_state", {}), 999)
-	var high_result := game.resolve_with_context("loaded_toss", 10, high_snitch, high_snitch.current_environment, high_snitch.create_rng("bar_dice_snitch_high"), high_ui)
+	var high_result := _bar_dice_play_round(game, high_snitch, high_snitch.create_rng("bar_dice_snitch_high"), "loaded_toss", 10, 999)
 	if int(high_result.get("suspicion_delta", 0)) <= int(low_result.get("suspicion_delta", 0)) or int(high_result.get("bar_dice_patron_snitch_heat_bonus", 0)) <= int(low_result.get("bar_dice_patron_snitch_heat_bonus", 0)):
 		failures.append("Bar Dice patron snitch pressure did not raise controlled-roll heat.")
 	var luck_low := _bar_dice_win_rate_with_luck(game, "BAR-DICE-LUCK-LOW", 0)
@@ -7222,7 +7285,7 @@ func _bar_dice_win_rate_with_luck(game: GameModule, seed_text: String, luck: int
 	var rounds := 1200
 	var wins := 0
 	for _round in range(rounds):
-		var result := _bar_dice_play_round(game, run_state, rng, "roll")
+		var result := _bar_dice_simulate_round(game, run_state, rng, "roll")
 		if str(result.get("bar_dice_outcome", "")) == "win":
 			wins += 1
 	return float(wins) / float(rounds)
@@ -7246,10 +7309,9 @@ func _check_bar_dice_edge_for(game: GameModule, ruleset: String, tier: String, f
 	var staked := 0
 	var net := 0
 	for _round in range(rounds):
-		var before := run_state.bankroll
-		var result := _bar_dice_play_round(game, run_state, rng, "roll")
+		var result := _bar_dice_simulate_round(game, run_state, rng, "roll")
 		staked += int(result.get("bar_dice_stake", 0)) + int(result.get("bar_dice_side_bet", 0))
-		net += run_state.bankroll - before
+		net += int(result.get("bankroll_delta", 0))
 	var edge := -float(net) / float(staked)
 	print("BAR_DICE %s/%s house edge over %d rounds = %.4f" % [ruleset, tier, rounds, edge])
 	var min_edge := -0.02
@@ -7287,17 +7349,23 @@ func _check_bar_dice_save_load_mid_round(game: GameModule, failures: Array) -> v
 	var environment := _surface_contract_environment()
 	environment["game_states"] = {"bar_dice": game.generate_environment_state(run_state, environment, run_state.create_rng("bar_dice_mid_round_state"))}
 	run_state.current_environment = environment.duplicate(true)
-	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, run_state.current_environment)
-	var ui: Dictionary = roll_command.get("ui_state", {})
+	var host := _bar_dice_test_host(game, run_state, 10)
+	var stake_ui := _bar_dice_stake_ui(run_state, 10)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_stake", int(stake_ui.get("selected_stake_index", 0)), false)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_roll", 0, false, 27000)
+	var cover_command: Dictionary = host.call("_sealed_action_host_surface_intent", "bar_dice_ack_cover", 0, false, 27000)
+	var ui: Dictionary = cover_command.get("ui_state", {})
 	var surface := game.surface_state(run_state, run_state.current_environment, ui)
 	var suggested: Array = surface.get("suggested_reroll", [])
 	if not suggested.is_empty():
-		ui["reroll"] = [int(suggested[0])]
-	ui["surface_time_msec"] = 27000
+		var select_command: Dictionary = host.call("_sealed_action_host_surface_intent", "bar_dice_select", int(suggested[0]), false, 27000)
+		ui = select_command.get("ui_state", ui)
+	host.free()
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(run_state.to_dict())
-	var parsed_ui: Variant = JSON.parse_string(JSON.stringify(ui))
-	var restored_ui: Dictionary = parsed_ui if typeof(parsed_ui) == TYPE_DICTIONARY else {}
+	var restored_table: Dictionary = game.call("_table_state_preview", restored, restored.current_environment)
+	var restored_ledger: Dictionary = restored_table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {})
+	var restored_ui: Dictionary = (restored_ledger.get("session", {}) as Dictionary).duplicate(true)
 	var restored_surface := game.surface_state(restored, restored.current_environment, restored_ui)
 	if str(restored_surface.get("phase", "")) != "select":
 		failures.append("Bar Dice save/load mid-round did not restore the select phase.")
@@ -7305,9 +7373,23 @@ func _check_bar_dice_save_load_mid_round(game: GameModule, failures: Array) -> v
 		failures.append("Bar Dice save/load mid-round did not preserve visible player dice.")
 	if JSON.stringify(restored_surface.get("reroll", [])) != JSON.stringify(ui.get("reroll", [])):
 		failures.append("Bar Dice save/load mid-round did not preserve reroll marks.")
-	var result := game.resolve_with_context("roll", 10, restored, restored.current_environment, restored.create_rng("bar_dice_mid_round_resolve"), restored_ui)
+	var restored_host := _bar_dice_test_host(game, restored, 10)
+	restored_host.call("_sealed_action_host_surface_intent", "bar_dice_resolve", 0, false)
+	restored_host.call("_sealed_action_host_surface_intent", "bar_dice_throw", 0, false)
+	restored_host.call("_sealed_action_host_surface_intent", "bar_dice_reveal", 0, false)
+	var call_command: Dictionary = restored_host.call("_sealed_action_host_surface_intent", "bar_dice_ack_call", 0, false)
+	var result: Dictionary = restored_host.call("_sealed_action_host_resolve_intent", "roll", 10, call_command.get("_sealed_action_host_delivery", {}))
+	restored_host.free()
 	if not bool(result.get("ok", false)) or (result.get("bar_dice_player_dice", []) as Array).size() != 5:
 		failures.append("Bar Dice restored mid-round state could not resolve a valid table round.")
+	else:
+		var final_dice: Array = result.get("bar_dice_player_dice", [])
+		var marked: Array = restored_ui.get("reroll", [])
+		var saved_dice: Array = restored_ui.get("dice", [])
+		for die_index in range(saved_dice.size()):
+			if not marked.has(die_index) and int(final_dice[die_index]) != int(saved_dice[die_index]):
+				failures.append("Bar Dice restored mid-round settlement changed a saved kept die.")
+				break
 
 
 func _bar_dice_palmed_swap_fixture(game: GameModule, seed_text: String, drunk_level: int = 0, item_id: String = "") -> Dictionary:
@@ -7320,8 +7402,8 @@ func _bar_dice_palmed_swap_fixture(game: GameModule, seed_text: String, drunk_le
 	var environment := _surface_contract_environment()
 	environment["game_states"] = {"bar_dice": game.generate_environment_state(run_state, environment, run_state.create_rng("bar_dice_palmed_fixture_state"))}
 	run_state.current_environment = environment.duplicate(true)
-	var roll_command := game.surface_action_command("bar_dice_roll", 0, false, {"surface_time_msec": 22000}, run_state, run_state.current_environment)
-	var palm_command := game.surface_action_command("bar_dice_palm", 0, false, roll_command.get("ui_state", {}), run_state, run_state.current_environment)
+	var shake_ui := _bar_dice_open_shake_ui(game, run_state, run_state.current_environment, {"surface_time_msec": 22000})
+	var palm_command := game.surface_action_command("bar_dice_palm", 0, false, shake_ui, run_state, run_state.current_environment)
 	var palm_ui: Dictionary = palm_command.get("ui_state", {})
 	return {"run_state": run_state, "environment": environment, "command": palm_command, "challenge": palm_ui.get("palmed_swap_challenge", {})}
 

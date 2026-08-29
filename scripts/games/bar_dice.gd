@@ -364,8 +364,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 
 	return GameModule.surface_spec({
 		"surface_renderer": "dice_table",
-		"surface_life": "street_bar_dice",
-		"surface_cast": "opponent_bar",
+		"surface_life": "bar_dice_table",
+		"surface_cast": "dealer_table",
 		"surface_controls_native": true,
 		"surface_stake_controls_required": false,
 		"surface_embeds_outcomes": true,
