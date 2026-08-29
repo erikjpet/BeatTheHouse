@@ -58,7 +58,7 @@ func _load_and_validate_dependencies(failures: Array) -> bool:
 	_projection = _load_script_dependency(RITUAL_PROJECTION_PATH, "GrandCasinoDuelRitualProjection", ["initial_state", "apply_transition", "normalize_state", "record_one_shot", "public_projection", "public_duel_fingerprint", "sealed_product_projection", "verify_product_projection"], failures)
 	if _rng_stream_script == null or _duel_model == null or _projection == null:
 		return false
-	var projection_constants := _projection.get_script_constant_map()
+	var projection_constants: Dictionary = _projection.get_script_constant_map()
 	if not projection_constants.has("RITUAL_ID") or str(projection_constants.get("RITUAL_ID", "")).is_empty():
 		failures.append("GrandCasinoDuelRitualProjection is missing its nonempty RITUAL_ID constant.")
 		return false
