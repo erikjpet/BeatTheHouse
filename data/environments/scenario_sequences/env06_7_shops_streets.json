@@ -10056,7 +10056,9 @@
         },
         "declared_targets": {
           "actors": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:pawn_service_counter"
+          ],
           "games": [],
           "interactions": [],
           "routes": [],
@@ -10174,10 +10176,11 @@
                 {
                   "actor": {
                     "actor_id": "estate_appraiser",
+                    "anchor_id": "pawn_service_counter",
                     "behavior": "work",
                     "label": "Estate Appraiser",
                     "pose": "observing",
-                    "zone_id": "background"
+                    "zone_id": "service_lane"
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -10679,7 +10682,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "6465016cab1086ed347713e9709ea47d28f920100e36fd09529fe4f463760318"
+        "sequence_signature": "922be97eabf428363b27134f883b946821f9667dc75fd52a7cf3210f08320984"
       }
     },
     {
@@ -11066,7 +11069,9 @@
         },
         "declared_targets": {
           "actors": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:pawn_service_counter"
+          ],
           "games": [],
           "interactions": [],
           "routes": [],
@@ -11182,10 +11187,11 @@
                 {
                   "actor": {
                     "actor_id": "records_clerk",
+                    "anchor_id": "pawn_service_counter",
                     "behavior": "work",
                     "label": "Records Clerk",
                     "pose": "observing",
-                    "zone_id": "background"
+                    "zone_id": "service_lane"
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -11687,7 +11693,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "33558c840f2d802c5493c920882b02e0877ec5da3b2a47ce16a281196eeb95f6"
+        "sequence_signature": "5ce4b041859d394a1a9150e61f33b48009812af4d49509aa4ff47cb701097ab7"
       }
     },
     {
@@ -12074,7 +12080,9 @@
         },
         "declared_targets": {
           "actors": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:pawn_service_counter"
+          ],
           "games": [],
           "interactions": [],
           "routes": [],
@@ -12192,10 +12200,11 @@
                 {
                   "actor": {
                     "actor_id": "sal_shopkeeper",
+                    "anchor_id": "pawn_service_counter",
                     "behavior": "work",
                     "label": "Sal Shopkeeper",
                     "pose": "observing",
-                    "zone_id": "background"
+                    "zone_id": "service_lane"
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -12697,7 +12706,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "39f1828d7d04f35aeabc8d61ef31adb38f8e0d0cbf1e3888bb229415ae2deb94"
+        "sequence_signature": "6067f9b660123b65d53cd0b0bb3f8f37c745ac169705c49f82d586a7cb181857"
       }
     }
   ]

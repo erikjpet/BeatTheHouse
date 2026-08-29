@@ -16,7 +16,7 @@ const ROUTE_FREE_WORK_MOVES := {
 	"back_alley_cruiser_parked": "patrol_officer",
 	"back_alley_nothing_moving": "returning_regular",
 }
-const PRESERVED_ROUTE_WORK_MOVES := {
+const PRESERVED_COUNTER_WORK_MOVES := {
 	"pawn_shop_estate_lot_day": "estate_appraiser",
 	"pawn_shop_serial_check_day": "records_clerk",
 	"pawn_shop_sals_mood": "sal_shopkeeper",
@@ -292,13 +292,16 @@ static func _check_route_free_work_moves(library: Variant, failures: Array) -> v
 
 
 static func _check_preserved_route_work_moves(library: Variant, failures: Array) -> void:
-	for scenario_id_value in PRESERVED_ROUTE_WORK_MOVES.keys():
+	for scenario_id_value in PRESERVED_COUNTER_WORK_MOVES.keys():
 		var scenario_id := str(scenario_id_value)
-		var actor_id := str(PRESERVED_ROUTE_WORK_MOVES.get(scenario_id, ""))
+		var actor_id := str(PRESERVED_COUNTER_WORK_MOVES.get(scenario_id, ""))
 		var definition: Dictionary = library.scenario(scenario_id)
 		var arrival_actor := _dict(_first_actor_spawn(definition).get("actor", {}))
-		if str(arrival_actor.get("actor_id", "")) != actor_id or str(arrival_actor.get("route_id", "")) != "pawn_service_counter":
-			failures.append("Production scenario %s did not preserve %s on pawn_service_counter at arrival." % [scenario_id, actor_id])
+		if str(arrival_actor.get("actor_id", "")) != actor_id \
+				or str(arrival_actor.get("anchor_id", "")) != "pawn_service_counter" \
+				or str(arrival_actor.get("zone_id", "")) != "service_lane" \
+				or arrival_actor.has("route_id"):
+			failures.append("Production scenario %s did not preserve %s on the route-free pawn_service_counter anchor at arrival." % [scenario_id, actor_id])
 		var work_move := false
 		for phase_value in _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", [])):
 			for operation_value in _array(_dict(phase_value).get("actor_ops", [])):
