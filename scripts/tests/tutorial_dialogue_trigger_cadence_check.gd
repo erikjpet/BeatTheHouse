@@ -724,6 +724,14 @@ func _count_deal_moves_outline_to_live_bubbles(run_state: RunState) -> bool:
 
 
 func _tutorial_meta_home_handoff_is_forced(run_state: RunState) -> bool:
+	# The preceding Count observer intentionally ends on the live Blackjack
+	# surface. Cross the production screen boundary before replacing the room;
+	# staging an environment alone does not own current_screen/current_game.
+	app.call("back_to_environment")
+	await _settle(5)
+	if str(app.get("current_screen")) != "ENVIRONMENT" or app.get("current_game") != null:
+		_fail("Tutorial Home handoff fixture could not return from Blackjack to the room surface.")
+		return false
 	_clear_guide_state()
 	if not _stage_environment("grand_casino_cage"):
 		_fail("Tutorial Home handoff fixture could not stage Linda's Cage.")
