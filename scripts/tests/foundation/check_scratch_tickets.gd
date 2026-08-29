@@ -4,6 +4,7 @@ const ScratchSfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ScratchRngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const ScratchRegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")
 const SCRATCH_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
+const ACTIVE_SCRATCH_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const SCRATCH_PRICES := [2, 5, 10, 15, 20, 50, 100]
 const SCRATCH_MECHANICS := ["match_two_of_three", "key_number_match", "tic_tac_toe", "crossword", "bingo", "beat_dealer_poker", "multi_game_vault"]
 const SCRATCH_SECTION_COUNTS := [1, 2, 2, 2, 5, 3, 4]
@@ -13,6 +14,7 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_measured_region_data(failures)
 	_check_scratch_gas_station_generation(failures)
 	_check_scratch_roster(game, failures)
+	_check_crossword_option_c_hold(game, failures)
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("SCRATCH-TICKET-CONTRACT")
 	run_state.bankroll = 500000
@@ -140,6 +142,54 @@ func _check_scratch_roster(game: GameModule, failures: Array) -> void:
 		for retired_id in ["cash_cow", "high_voltage", "gold_rush_doubler", "bonus_box", "word_hunt", "second_chance", "devils_cut", "fools_gold", "midnight_rare"]:
 			if str(definition.get("id", "")) == retired_id:
 				failures.append("Retired scratch type %s remains in the active roster." % retired_id)
+
+
+func _check_crossword_option_c_hold(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SCRATCH-OPTION-C-HOLD")
+	run_state.bankroll = 500000
+	var environment := _scratch_environment("scratch_option_c_hold")
+	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("option-c-stock"))
+	var stock := _dict_array(machine.get("stock", []))
+	var crossword_index := -1
+	for index in range(stock.size()):
+		if str((stock[index] as Dictionary).get("type_id", "")) == "crossword_corner":
+			crossword_index = index
+			break
+	if crossword_index < 0:
+		failures.append("Option C deleted the preserved Crossword stock record.")
+		return
+	var held_slot: Dictionary = stock[crossword_index]
+	if int(held_slot.get("remaining", -1)) != 0 or str(held_slot.get("release_availability", "")) != "held":
+		failures.append("Option C generated new Crossword stock instead of an explicit held row.")
+	# Simulate a historical save containing unsold raw stock plus an issued ticket.
+	held_slot["remaining"] = 3
+	stock[crossword_index] = held_slot
+	var issued: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", "crossword_corner"), _scratch_rng("option-c-issued"), 0, "option-c-issued")
+	machine["stock"] = stock
+	machine["active_ticket"] = issued
+	machine["scalper_present"] = false
+	machine["scalper_visit_token"] = game.call("_scratch_visit_token", run_state, environment)
+	environment["game_states"] = {"scratch_tickets": machine}
+	run_state.current_environment = environment
+	var surface: Dictionary = game.surface_state(run_state, environment, {})
+	var visible_stock := _dict_array(surface.get("scratch_stock", []))
+	var visible_ids: Array = []
+	for slot_value in visible_stock:
+		visible_ids.append(str((slot_value as Dictionary).get("type_id", "")))
+	if visible_ids != ACTIVE_SCRATCH_IDS or visible_ids.has("crossword_corner"):
+		failures.append("Option C active purchase surface did not expose exactly the six aligned ticket families.")
+	if str((surface.get("scratch_ticket", {}) as Dictionary).get("type_id", "")) != "crossword_corner":
+		failures.append("Option C hid an already-issued Crossword ticket from play.")
+	var before := JSON.stringify(run_state.to_save_snapshot())
+	var stale_command: Dictionary = game.surface_action_command("scratch_buy", crossword_index, false, {}, run_state, environment)
+	var direct_result: Dictionary = game.resolve_with_context("buy_scratch_ticket", 15, run_state, environment, _scratch_rng("option-c-hostile-buy"), {"scratch_stock_index": crossword_index, "scratch_buy_quantity": 1})
+	if not str(stale_command.get("action_id", "")).is_empty() or bool(direct_result.get("ok", true)):
+		failures.append("Option C stale/direct path created a new Crossword purchase.")
+	if int(game.wager_cost_for_context("buy_scratch_ticket", 15, run_state, environment, {"scratch_stock_index": crossword_index, "scratch_buy_quantity": 1})) != 0:
+		failures.append("Option C held Crossword purchase exposed a chargeable wager.")
+	if JSON.stringify(run_state.to_save_snapshot()) != before:
+		failures.append("Option C rejected Crossword purchase mutated money, RNG, stock, or issued-ticket state.")
 
 
 func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, environment: Dictionary, failures: Array) -> void:
@@ -918,10 +968,11 @@ func _check_scratch_stock(game: GameModule, failures: Array) -> void:
 	}, _scratch_rng("practice-stock-root"))
 	var practice_stock := _dict_array(practice.get("stock", []))
 	if practice_stock.size() != SCRATCH_IDS.size():
-		failures.append("Scratch practice stock did not include every ticket type.")
+		failures.append("Scratch practice stock did not preserve every ticket definition row.")
 	for slot_value in practice_stock:
 		var practice_slot: Dictionary = slot_value
-		if int(practice_slot.get("remaining", 0)) != 100 or int(practice_slot.get("capacity", 0)) != 100:
+		var expected_remaining := 0 if str(practice_slot.get("type_id", "")) == "crossword_corner" else 100
+		if int(practice_slot.get("remaining", -1)) != expected_remaining or int(practice_slot.get("capacity", 0)) != 100:
 			failures.append("Scratch practice stock did not provide 100 copies of %s." % str(practice_slot.get("type_id", "")))
 	var out_of_stock_rows := 0
 	var total_rows := 0
@@ -1111,12 +1162,13 @@ func _check_scratch_practice_inventory(game: GameModule, failures: Array) -> voi
 		var remaining := int(slot.get("remaining", -1))
 		var capacity := int(slot.get("capacity", -1))
 		stock_total += maxi(0, remaining)
-		exact_rows = exact_rows and remaining == 100 and capacity == 100
+		var expected_remaining := 0 if str(slot.get("type_id", "")) == "crossword_corner" else 100
+		exact_rows = exact_rows and remaining == expected_remaining and capacity == 100
 	for type_id in SCRATCH_IDS:
 		exact_rows = exact_rows and stocked_type_ids.has(type_id)
 	var expected_visit_token := str(game.call("_scratch_visit_token", practice_run, practice_environment))
-	if not exact_rows or stock_total != 700:
-		failures.append("Scratch non-tutorial practice refresh did not preserve all seven locked 100/100 stock rows (rows=%d total=%d)." % [stock.size(), stock_total])
+	if not exact_rows or stock_total != 600:
+		failures.append("Scratch non-tutorial practice refresh did not preserve six active 100/100 rows plus the held Crossword row (rows=%d total=%d)." % [stock.size(), stock_total])
 	if bool(machine.get("scalper_present", false)) or bool(machine.get("scalper_knows_schedule", false)):
 		failures.append("Scratch scalper survived the non-tutorial practice refresh and could clear locked inventory.")
 	if expected_visit_token.is_empty() or str(machine.get("scalper_visit_token", "")) != expected_visit_token:
