@@ -287,7 +287,7 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 		rng.configure(abs(archetype_id.hash()) + 1)
 		# Invoke through Script.call so headless --script parsing does not depend on
 		# the global-class cache resolving this external static member first.
-		var environment: Variant = EnvironmentInstanceScript.call("from_archetype", archetype, 1, rng, _library, {}, definition)
+		var environment: Variant = EnvironmentInstanceScript.from_archetype(archetype, 1, rng, _library, {}, definition)
 		var environment_data: Dictionary = environment.call("to_dict")
 		var sealed: Dictionary = SemanticInventory.for_instance(environment_data, _library, [], [])
 		var inventory_errors: Array = SemanticInventory.validate_instance_binding(sealed, environment_data)

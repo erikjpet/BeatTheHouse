@@ -41,22 +41,25 @@ func _initialize() -> void:
 	var dossiers: Array = []
 	var failures: Array = []
 	var signatures: Dictionary = {}
+	var target_inventories: Dictionary = {}
 	for config in CONFIGS:
 		var spatial := _dict(SPATIAL_BINDINGS.get(config.id, {}))
+		var target_inventory := _target_inventory(spatial)
+		target_inventories[str(config.id)] = target_inventory
 		# Hash the exact JSON numeric/string representation that production loads,
 		# not the richer in-memory GDScript integer representation.
-		var entry: Dictionary = JSON.parse_string(JSON.stringify(_entry(config)))
+		var entry: Dictionary = JSON.parse_string(JSON.stringify(_canonical_json_variant(_entry(config))))
 		var definition := {"id": config.id, "archetype_id": config.archetype, "sequence": entry.sequence}
 		entry["sequence"]["sequence_signature"] = Schema.calculated_signature_hash(definition)
 		definition["sequence"] = entry["sequence"]
-		var errors := Schema.validate_definition(definition, null, _target_inventory(spatial))
+		var errors := Schema.validate_definition(definition, null, target_inventory)
 		if not errors.is_empty(): failures.append({"id":config.id,"errors":errors})
 		var signature := str(entry["sequence"]["sequence_signature"])
 		if signatures.has(signature): failures.append({"duplicate_signature":[signatures[signature],config.id]})
 		signatures[signature] = config.id
 		entries.append(entry)
 		dossiers.append(_dossier(config, entry))
-	var report := Schema.catalog_uniqueness_report(_definitions(entries), entries.size())
+	var report := Schema.catalog_uniqueness_report(_definitions(entries), entries.size(), null, {}, target_inventories)
 	if not failures.is_empty():
 		printerr(JSON.stringify(failures, "  "))
 		quit(1)
@@ -322,8 +325,24 @@ func _dossier(c:Dictionary,entry:Dictionary)->Dictionary:
 
 func _write_json(path:String,value:Variant)->void:
 	var file := FileAccess.open(path,FileAccess.WRITE)
-	file.store_string(JSON.stringify(value,"  ",false)+"\n")
+	file.store_string(JSON.stringify(_canonical_json_variant(value),"  ",false)+"\n")
 	file.close()
+
+
+func _canonical_json_variant(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		var result: Dictionary = {}
+		var keys := (value as Dictionary).keys()
+		keys.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+		for key_value in keys:
+			result[str(key_value)] = _canonical_json_variant((value as Dictionary).get(key_value))
+		return result
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for item_value in value as Array:
+			result.append(_canonical_json_variant(item_value))
+		return result
+	return value
 
 
 func _array(value: Variant) -> Array:
