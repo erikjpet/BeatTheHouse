@@ -31,6 +31,7 @@ const SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST := {
 	"slot": ["slot_handpay_acknowledge"],
 }
 '@
+    $hostSecurityAllowlist = $hostSecurityAllowlist.Replace("`r`n", "`n")
     $matchCount = [regex]::Matches($normalized, [regex]::Escape($hostSecurityAllowlist)).Count
     $scanText = $normalized
     if ($matchCount -eq 1) {
