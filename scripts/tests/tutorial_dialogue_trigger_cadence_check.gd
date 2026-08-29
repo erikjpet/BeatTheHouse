@@ -727,43 +727,55 @@ func _tutorial_meta_home_handoff_is_forced(run_state: RunState) -> bool:
 	# The preceding Count observer intentionally ends on the live Blackjack
 	# surface. Cross the production screen boundary before replacing the room;
 	# staging an environment alone does not own current_screen/current_game.
+	var expected_run_identity := GameRitualRuntime.canonical_fingerprint({
+		"seed_text": run_state.seed_text,
+		"challenge_config": run_state.challenge_config,
+	})
 	app.call("back_to_environment")
 	await _settle(5)
-	if str(app.get("current_screen")) != "ENVIRONMENT" or app.get("current_game") != null:
+	var live_run: RunState = app.get("run_state")
+	var live_run_identity := GameRitualRuntime.canonical_fingerprint({
+		"seed_text": live_run.seed_text if live_run != null else "",
+		"challenge_config": live_run.challenge_config if live_run != null else {},
+	})
+	if live_run == null \
+			or live_run_identity != expected_run_identity \
+			or str(app.get("current_screen")) != "ENVIRONMENT" \
+			or app.get("current_game") != null:
 		_fail("Tutorial Home handoff fixture could not return from Blackjack to the room surface.")
 		return false
 	_clear_guide_state()
 	if not _stage_environment("grand_casino_cage"):
 		_fail("Tutorial Home handoff fixture could not stage Linda's Cage.")
 		return false
-	run_state.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
-	run_state.narrative_flags["grand_casino_players_card_awarded_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
-	run_state.narrative_flags["grand_casino_players_card_ready_to_claim"] = false
+	live_run.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
+	live_run.narrative_flags["grand_casino_players_card_awarded_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
+	live_run.narrative_flags["grand_casino_players_card_ready_to_claim"] = false
 	var finish_event_id := "dialogue:tutorial_linda_bronze_finish"
 	# Earlier Linda guardrail observers may leave this same natural event ID at a
 	# deliberately interrupted node. Own a fresh resume boundary here instead of
 	# letting start_dialogue treat the stale same-ID entry as the requested goal.
-	run_state.complete_talk_event_resolution(finish_event_id)
-	if not run_state.pending_talk_event(finish_event_id).is_empty():
+	live_run.complete_talk_event_resolution(finish_event_id)
+	if not live_run.pending_talk_event(finish_event_id).is_empty():
 		_fail("Tutorial Home handoff fixture could not clear its stale Linda event.")
 		return false
 	if not bool(app.call("_resume_tutorial_linda_bronze_finish")):
 		_fail("Linda's final Players Card handoff could not start for the Home transition fixture.")
 		return false
-	var finish_entry := run_state.pending_talk_event(finish_event_id)
-	var next_entry := run_state.next_pending_talk_event()
+	var finish_entry := live_run.pending_talk_event(finish_event_id)
+	var next_entry := live_run.next_pending_talk_event()
 	if str(finish_entry.get("dialogue_id", "")) != "tutorial_linda_bronze_finish" \
 			or str(finish_entry.get("current_node", "")) != "goal" \
 			or str(next_entry.get("event_id", "")) != finish_event_id:
 		_fail("Linda's exact final Players Card handoff was not the intended next goal: exact=%s next=%s." % [str(finish_entry), str(next_entry)])
 		return false
 	app.call("_on_talk_dock_choice_requested", finish_event_id, "review_persistence")
-	finish_entry = run_state.pending_talk_event(finish_event_id)
+	finish_entry = live_run.pending_talk_event(finish_event_id)
 	if str(finish_entry.get("current_node", "")) != "persistence":
 		_fail("Linda's Players Card handoff did not advance to persistence: %s." % str(finish_entry))
 		return false
 	app.call("_on_talk_dock_choice_requested", finish_event_id, "review_next_goal")
-	finish_entry = run_state.pending_talk_event(finish_event_id)
+	finish_entry = live_run.pending_talk_event(finish_event_id)
 	if str(finish_entry.get("current_node", "")) != "next_goal":
 		_fail("Linda's Players Card handoff did not advance to the final goal: %s." % str(finish_entry))
 		return false
