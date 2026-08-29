@@ -50,12 +50,14 @@ const STATUS_HUD_RECT := Rect2(306, 8, 460, 34)
 const WIN_PILE_RECT := Rect2(318, 184, 82, 54)
 const LOSS_PILE_RECT := Rect2(318, 292, 82, 54)
 const BIG_WIN_THRESHOLD := 100
-const COLLECTION_TOTAL := 7
+const COLLECTION_TOTAL := 6
 const DEFAULT_BRUSH_RADIUS := 15.0
 const DEFAULT_PASS_REMOVAL := 0.66
 const DEFAULT_SWEEP_THRESHOLD := 0.80
 const DEFAULT_MASK_COLUMNS := MaskScript.MASK_COLUMNS
 const DEFAULT_MASK_ROWS := MaskScript.MASK_ROWS
+const HELD_TICKET_TYPE_ID := "crossword_corner"
+const ACTIVE_TICKET_TYPE_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const DISCARD_ARM_DISTANCE := 120.0
 const DISCARD_DROP_DISTANCE := 190.0
 const MACHINE_STATE_VERSION := 4
@@ -99,7 +101,7 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var result := super.enter(run_state, environment)
 	result["message"] = "The scratcher vending machine hums beside the clerk. Stock releases in small unposted batches; pick a live slot, then drag across the latex."
-	result["scratch_stock_count"] = _dictionary_array(machine.get("stock", [])).size()
+	result["scratch_stock_count"] = _stock_view(machine).size()
 	result["scratch_stock_available"] = _stock_total(machine)
 	result["scratch_scalper_present"] = bool(machine.get("scalper_present", false))
 	return result
@@ -130,7 +132,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var stock := _stock_view(machine)
 	var queue := _dictionary_array(machine.get("pending_queue", []))
 	var crumbs := _dictionary_array(ui_state.get("scratch_crumbs", []))
-	var discovered := _string_array(run_state.narrative_flags.get("scratch_ticket_types_discovered", [])) if run_state != null else []
+	var discovered := _active_discovered_ticket_types(_string_array(run_state.narrative_flags.get("scratch_ticket_types_discovered", [])) if run_state != null else [])
 	var collection_complete := discovered.size() >= COLLECTION_TOTAL
 	var last_dispense_id := str(machine.get("last_dispense_id", ""))
 	var last_file_id := str(machine.get("last_file_id", ""))
@@ -211,6 +213,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_collection_total": COLLECTION_TOTAL,
 		"scratch_collection_complete": collection_complete,
 		"scratch_collection_status": "FULL SET FOUND" if collection_complete else "%d/%d PRINTS FOUND" % [discovered.size(), COLLECTION_TOTAL],
+		"scratch_held_ticket_type": HELD_TICKET_TYPE_ID,
 		"scratch_xray_peeks": _dictionary_array(active_ticket.get("xray_peeks", [])) if result_ready else [],
 		"scratch_fortune": str(active_ticket.get("fortune_tier", "")) if result_ready else "",
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
@@ -285,6 +288,8 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			if stock_index < 0 or stock_index >= stock.size():
 				return GameModule.surface_command({"message": "That vending slot is empty."})
 			var slot: Dictionary = stock[stock_index]
+			if _ticket_type_is_held(str(slot.get("type_id", ""))):
+				return GameModule.surface_command({"message": "Crossword Corner is held from new sale. Previously issued tickets remain valid."})
 			var price := maxi(1, int(slot.get("price", 1)))
 			if int(slot.get("remaining", 0)) < quantity:
 				return GameModule.surface_command({"message": "%s is sold out." % str(slot.get("display_name", "That ticket"))})
@@ -496,6 +501,8 @@ func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, 
 	var quantity := maxi(1, int(ui_state.get("scratch_buy_quantity", 1)))
 	if index < 0 or index >= stock.size():
 		return maxi(0, stake)
+	if _ticket_type_is_held(str((stock[index] as Dictionary).get("type_id", ""))):
+		return 0
 	return maxi(1, int((stock[index] as Dictionary).get("price", stake))) * quantity
 
 
@@ -644,6 +651,8 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 	if stock_index < 0 or stock_index >= stock.size():
 		return _scratch_empty_result(BUY_ACTION, environment, "That vending slot is empty.")
 	var slot: Dictionary = stock[stock_index]
+	if _ticket_type_is_held(str(slot.get("type_id", ""))):
+		return _scratch_empty_result(BUY_ACTION, environment, "Crossword Corner is held from new sale. Previously issued tickets remain valid.")
 	var price := maxi(1, int(slot.get("price", 1)))
 	if int(slot.get("remaining", 0)) < quantity:
 		return _scratch_empty_result(BUY_ACTION, environment, "%s is sold out." % str(slot.get("display_name", "That ticket")))
@@ -946,6 +955,8 @@ func _scratch_counter_ritual(machine: Dictionary, active_ticket: Dictionary, run
 	var rack_rows: Array = []
 	for row_value in stock_rows:
 		var row: Dictionary = row_value
+		if _ticket_type_is_held(str(row.get("type_id", ""))):
+			continue
 		rack_rows.append({
 			"type_id": str(row.get("type_id", "")),
 			"remaining": maxi(0, int(row.get("remaining", 0))),
@@ -991,7 +1002,10 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		var count_range := _int_array(ticket_type.get("stock_count", [0, 5]))
 		var maximum := PRACTICE_STOCK_COUNT if practice_session else clampi(int(count_range[1]) if count_range.size() > 1 else 5, 1, 5)
 		var stock_roll := machine_rng.randi_range(0, 19)
-		var remaining := PRACTICE_STOCK_COUNT if practice_session else (0 if stock_roll < 15 else mini(maximum, stock_roll - 14))
+		# Consume the same per-family roll as the seven-ticket intake so holding
+		# Crossword cannot perturb deterministic stock for the six active families.
+		var held := _ticket_type_is_held(str(ticket_type.get("id", "")))
+		var remaining := 0 if held else (PRACTICE_STOCK_COUNT if practice_session else (0 if stock_roll < 15 else mini(maximum, stock_roll - 14)))
 		stock.append({
 			"type_id": str(ticket_type.get("id", "")),
 			"display_name": str(ticket_type.get("display_name", "Ticket")),
@@ -1001,6 +1015,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 			"stock_weight": maxi(1, int(ticket_type.get("stock_weight", 1))),
 			"size_id": str(ticket_type.get("size_id", "medium_square")),
 			"palette": _copy_dict(_copy_dict(ticket_type.get("face", {})).get("palette", {})),
+			"release_availability": "held" if held else "active",
 		})
 	var initially_empty := _stock_total_from_rows(stock) <= 0
 	var initial_scalper_present := initially_empty and run_state != null and not run_state.is_tutorial_run()
@@ -2017,8 +2032,14 @@ func _fortune_tier(ticket: Dictionary) -> String:
 
 func _stock_view(machine: Dictionary) -> Array:
 	var result: Array = []
-	for value in _dictionary_array(machine.get("stock", [])):
-		result.append((value as Dictionary).duplicate(true))
+	var stock := _dictionary_array(machine.get("stock", []))
+	for index in range(stock.size()):
+		var value: Dictionary = stock[index]
+		if _ticket_type_is_held(str(value.get("type_id", ""))):
+			continue
+		var view := value.duplicate(true)
+		view["source_stock_index"] = index
+		result.append(view)
 	return result
 
 
@@ -2093,7 +2114,8 @@ func _add_restock_tickets(machine: Dictionary, count: int, rng: RngStream) -> in
 		var total_weight := 0
 		for index in range(stock.size()):
 			var slot: Dictionary = stock[index]
-			if int(slot.get("remaining", 0)) >= int(slot.get("capacity", 5)):
+			var held := _ticket_type_is_held(str(slot.get("type_id", "")))
+			if not held and int(slot.get("remaining", 0)) >= int(slot.get("capacity", 5)):
 				continue
 			eligible_indexes.append(index)
 			total_weight += maxi(1, int(slot.get("stock_weight", 1)))
@@ -2107,6 +2129,10 @@ func _add_restock_tickets(machine: Dictionary, count: int, rng: RngStream) -> in
 				chosen_index = index
 				break
 		var chosen: Dictionary = stock[chosen_index]
+		if _ticket_type_is_held(str(chosen.get("type_id", ""))):
+			# Preserve the historical stock weight as a no-supply draw. Redistributing
+			# it would silently change the other six families' stock probabilities.
+			continue
 		chosen["remaining"] = int(chosen.get("remaining", 0)) + 1
 		stock[chosen_index] = chosen
 		added += 1
@@ -2164,7 +2190,10 @@ func _stock_total(machine: Dictionary) -> int:
 func _stock_total_from_rows(stock: Array) -> int:
 	var total := 0
 	for slot_value in stock:
-		total += maxi(0, int((slot_value as Dictionary).get("remaining", 0)))
+		var slot: Dictionary = slot_value
+		if str(slot.get("type_id", "")) == HELD_TICKET_TYPE_ID:
+			continue
+		total += maxi(0, int(slot.get("remaining", 0)))
 	return total
 
 
