@@ -396,14 +396,14 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [
-        "base::layer:club"
+        "base::layer:casino"
       ],
       "sequence_signature": "63f88e92663f18978802aacc6909051ba7a3c7cdd5bfdb14908877d9218a1bc2",
       "spatial_anchors": [
         "base::anchor:punchline_debt_hearing_chairs",
         "base::anchor:punchline_debt_room_witness"
       ],
-      "spatial_layer": "back_room",
+      "spatial_layer": "club",
       "terminal_outcomes": [
         "room_returns_ordered",
         "ruling_contested",
@@ -534,14 +534,14 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [
-        "base::layer:club"
+        "base::layer:casino"
       ],
       "sequence_signature": "f2dfdbd780dd3904fa0916adfd3209d1d24b3edc1387085533d33591ff2c41cb",
       "spatial_anchors": [
         "base::anchor:punchline_raid_hide_cart",
         "base::anchor:punchline_raid_reopen_steward"
       ],
-      "spatial_layer": "back_room",
+      "spatial_layer": "club",
       "terminal_outcomes": [
         "altered_floor_reopened",
         "night_aborted",
