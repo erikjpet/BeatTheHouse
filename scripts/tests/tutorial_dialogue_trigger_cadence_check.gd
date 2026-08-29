@@ -21,6 +21,7 @@ const BLACKJACK_FIXTURE_CHALLENGE := {
 	},
 }
 const BLACKJACK_FIXTURE_BASELINE_SHA256 := "ac06c95526b41c4c63d99cd7953dea2f22775d39ab94fe4236b0feff6b79066a"
+const BLACKJACK_GAMES_SOURCE_SHA256 := "552bb6acdfdfb2a73e52d9f8cdaf383ebc0bbdd01a7a0e9319e65faad2541b04"
 
 
 func _init() -> void:
@@ -387,7 +388,9 @@ func _blackjack_count_fixture_baseline() -> Dictionary:
 		"game_states": {},
 	})
 	var game: GameModule = BlackjackGame.new()
-	var library: ContentLibrary = app.get("library")
+	var library := _blackjack_fixture_library()
+	if library == null:
+		return {"bytes": "", "fingerprint": "", "heat": -1, "valid": false}
 	game.setup(library.game("blackjack"), library)
 	run_state.bankroll = maxi(run_state.bankroll, 200)
 	run_state.inventory = []
@@ -429,14 +432,40 @@ func _restore_blackjack_count_fixture(baseline: Dictionary) -> Dictionary:
 	var run_state := RunState.new()
 	run_state.from_dict(JSON.parse_string(str(baseline.get("bytes", "{}"))))
 	var game: GameModule = BlackjackGame.new()
-	var library: ContentLibrary = app.get("library")
+	var library := _blackjack_fixture_library()
+	if library == null:
+		return {"run_state": run_state, "game": null, "library": null, "fingerprint": "", "heat": -1}
 	game.setup(library.game("blackjack"), library)
 	return {
 		"run_state": run_state,
 		"game": game,
+		"library": library,
 		"fingerprint": JSON.stringify(run_state.to_dict()).sha256_text(),
 		"heat": run_state.suspicion_level(),
 	}
+
+
+func _blackjack_fixture_library() -> ContentLibrary:
+	var source_text := FileAccess.get_file_as_string(ContentLibrary.GAMES_PATH)
+	if source_text.sha256_text() != BLACKJACK_GAMES_SOURCE_SHA256:
+		return null
+	var source_value: Variant = JSON.parse_string(source_text)
+	if typeof(source_value) != TYPE_ARRAY:
+		return null
+	var source_definition: Dictionary = {}
+	for definition_value in source_value as Array:
+		if typeof(definition_value) == TYPE_DICTIONARY and str((definition_value as Dictionary).get("id", "")) == "blackjack":
+			source_definition = (definition_value as Dictionary).duplicate(true)
+			break
+	if source_definition.is_empty():
+		return null
+	var library := ContentLibrary.new()
+	library.load(false)
+	var loaded_definition := library.game("blackjack")
+	if not library.validation_errors.is_empty() \
+			or GameRitualRuntime.canonical_fingerprint(loaded_definition) != GameRitualRuntime.canonical_fingerprint(source_definition):
+		return null
+	return library
 
 
 func _blackjack_fixture_matches_baseline(fixture: Dictionary, baseline: Dictionary) -> bool:
@@ -505,7 +534,7 @@ func _blackjack_count_hand_is_mandatory() -> bool:
 		return false
 	var run_state: RunState = fixture.get("run_state")
 	var game: GameModule = fixture.get("game")
-	var library: ContentLibrary = app.get("library")
+	var library: ContentLibrary = fixture.get("library")
 	# Pin once before the independent safe hand's first authority boundary. This
 	# continuation does not repeat the risky Peek owned by the isolated observer.
 	BlackjackAuthorityTestDriverScript.pin_tutorial_safe_peek_flow_rng(run_state)
