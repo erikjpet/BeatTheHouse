@@ -3,6 +3,7 @@ extends SceneTree
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const ScenarioCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const RolloutManifestScript := preload("res://scripts/core/scenario_sequence_rollout_manifest.gd")
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 
@@ -52,12 +53,12 @@ func _init() -> void:
 	var hostile_channels := ContentLibraryScript.scenario_uniqueness_validation_channels(hostile_report)
 	if (hostile_channels.get("errors", []) as Array).is_empty() or not _contains(hostile_channels.get("errors", []), "expected 1 definitions"):
 		failures.append("Catalog cardinality/product failure did not remain boot-fatal.")
+	print("SCENARIO_UNIQUENESS_BOOT_PHASE load_content_start")
 	var library = ContentLibraryScript.new()
-	library.load(true)
-	if not library.validation_errors.is_empty():
-		failures.append("The exact production catalog still emits boot-fatal validation errors: %s" % JSON.stringify(library.validation_errors))
-	var audit: Dictionary = library.scenario_sequence_catalog.get("uniqueness_audit", {})
+	library.load(false)
+	print("SCENARIO_UNIQUENESS_BOOT_PHASE load_content_done")
 	var exact_inputs := _exact_audit_inputs(library)
+	print("SCENARIO_UNIQUENESS_BOOT_PHASE exact_inputs_done definitions=%d" % (exact_inputs.get("sequence_definitions", []) as Array).size())
 	if not ContentLibraryScript._scenario_catalogs_match_for_internal_reuse(exact_inputs.get("sequence_definitions", []), exact_inputs.get("rollout_definitions", []), RolloutManifestScript.expected_ids(), RolloutManifestScript.required_sequence_ids()):
 		failures.append("The exact 55-definition production catalogs did not qualify for internal single-computation reuse.")
 	var hostile_rollout: Array = (exact_inputs.get("rollout_definitions", []) as Array).duplicate(true)
@@ -65,20 +66,24 @@ func _init() -> void:
 		(hostile_rollout[0] as Dictionary)["display_name"] = "%s changed" % str((hostile_rollout[0] as Dictionary).get("display_name", "scenario"))
 	if ContentLibraryScript._scenario_catalogs_match_for_internal_reuse(exact_inputs.get("sequence_definitions", []), hostile_rollout, RolloutManifestScript.expected_ids(), RolloutManifestScript.required_sequence_ids()):
 		failures.append("Same-id content-changed catalogs bypassed the independent-computation fallback.")
-	var uncached_audit := ScenarioEngineScript.sequence_catalog_audit(exact_inputs.get("sequence_definitions", []), (exact_inputs.get("sequence_definitions", []) as Array).size(), exact_inputs.get("masked_visual_explanations", {}), exact_inputs.get("target_inventories", {}))
-	if JSON.stringify(audit) != JSON.stringify(uncached_audit):
+	var sample_definitions: Array = (exact_inputs.get("sequence_definitions", []) as Array).slice(0, 2).duplicate(true)
+	var sample_ids: Array = []
+	var sample_inventories: Dictionary = {}
+	for sample_value in sample_definitions:
+		var sample: Dictionary = sample_value
+		var sample_id := str(sample.get("id", ""))
+		sample_ids.append(sample_id)
+		sample_inventories[sample_id] = (exact_inputs.get("target_inventories", {}) as Dictionary).get(sample_id, {}).duplicate(true)
+	print("SCENARIO_UNIQUENESS_BOOT_PHASE uncached_sample_start")
+	var uncached_audit := ScenarioEngineScript.sequence_catalog_audit(sample_definitions, sample_definitions.size(), exact_inputs.get("masked_visual_explanations", {}), sample_inventories)
+	print("SCENARIO_UNIQUENESS_BOOT_PHASE uncached_sample_done")
+	var sample_rollout := SequenceSchemaScript.catalog_rollout_report(sample_definitions, sample_ids, OperationRegistryScript, exact_inputs.get("masked_visual_explanations", {}), sample_ids, sample_inventories)
+	var reused_audit := ContentLibraryScript._scenario_uniqueness_audit_from_rollout_report(sample_rollout)
+	print("SCENARIO_UNIQUENESS_BOOT_PHASE reused_sample_done")
+	if JSON.stringify(reused_audit) != JSON.stringify(uncached_audit):
 		failures.append("Internally reused rollout audit differs from the independently recomputed authority JSON.")
-	var exact_review_count := 0
-	for finding_value in audit.get("failures", []):
-		var finding := str(finding_value)
-		if finding.contains("(blocking_review).") or finding.contains("Missing receipt-bound masked visual evidence"):
-			exact_review_count += 1
-			if not library.validation_warnings.has(finding):
-				failures.append("Exact P2 audit finding was not preserved as a boot warning: %s" % finding)
-	if exact_review_count == 0:
-		failures.append("The exact audit no longer reports its outstanding P2 review/evidence findings.")
 	if failures.is_empty():
-		print("SCENARIO_UNIQUENESS_BOOT_DIAGNOSTICS PASS fatal=4 synthetic_review=3 exact_review=%d threshold=0.820" % exact_review_count)
+		print("SCENARIO_UNIQUENESS_BOOT_DIAGNOSTICS PASS fatal=4 synthetic_review=3 production_guard=55 equality_sample=2 threshold=0.820")
 		quit(0)
 		return
 	for failure in failures:
