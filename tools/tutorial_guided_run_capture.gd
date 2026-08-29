@@ -9,11 +9,14 @@ const MainScene := preload("res://scenes/main.tscn")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 
 var app: Control
 var out_dir := "res://.tmp/tutorial_rework/captures"
 var capture_size := Vector2i(1280, 720)
 var layout_failure_count := 0
+var blackjack_fixture_baseline: Dictionary = {}
+var blackjack_count_fixture_baseline: Dictionary = {}
 
 
 func _init() -> void:
@@ -145,14 +148,15 @@ func _run() -> void:
 	_clear_guide_state()
 	await _settle(8)
 	await _save_shot("07b_path_b_predeal_patrons_and_dealer")
-	var raised_state := _stage_blackjack_raised_bet_surface()
+	_stage_blackjack_raised_bet_surface()
 	_stage_guide_lesson("tutorial_blackjack_raise")
 	await _settle(8)
 	await _save_shot("08_path_b_raised_bet_chips")
-	_stage_blackjack_lookaway_surface(raised_state)
+	_stage_blackjack_lookaway_surface()
 	_stage_guide_lesson("tutorial_blackjack_peek")
 	await _settle(8)
 	await _save_shot("09_path_b_real_lookaway_peek")
+	_finish_blackjack_risky_peek_fixture()
 	_stage_blackjack_count_surface()
 	_stage_guide_lesson("tutorial_blackjack_count_all")
 	await _settle(8)
@@ -161,6 +165,7 @@ func _run() -> void:
 	_stage_guide_lesson("tutorial_heat_warning")
 	await _settle(8)
 	await _save_shot("11_path_b_count_miss_heat_warning")
+	run_state = app.get("run_state")
 
 	app.call("back_to_environment")
 	_clear_guide_state()
@@ -341,37 +346,180 @@ func _play_and_redeem_pull_tab() -> int:
 
 func _stage_blackjack_raised_bet_surface() -> Dictionary:
 	var game: GameModule = app.get("current_game")
-	var run_state: RunState = app.get("run_state")
-	if game == null or run_state == null:
+	var live_run: RunState = app.get("run_state")
+	if game == null or live_run == null:
 		return {}
-	var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
-	var state: Dictionary = deal.get("ui_state", {})
+	blackjack_fixture_baseline = _blackjack_capture_fixture_baseline(game, live_run, false)
+	blackjack_count_fixture_baseline = _blackjack_capture_fixture_baseline(game, live_run, true)
+	var fixture := _restore_blackjack_capture_fixture(blackjack_fixture_baseline)
+	var run_state: RunState = fixture.get("run_state")
+	if run_state == null \
+			or not _blackjack_capture_fixture_matches_baseline(fixture, blackjack_fixture_baseline) \
+			or bool(run_state.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false)):
+		push_error("Tutorial capture Peek fixture did not start from canonical pre-Deal bytes and Heat: %s" % str(fixture))
+		return {}
+	BlackjackAuthorityTestDriverScript.pin_tutorial_safe_peek_flow_rng(run_state)
+	var deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
+	if str(deal.get("action_id", "")).is_empty() or not deal.has("_blackjack_host_delivery"):
+		push_error("Tutorial capture Peek Deal did not issue a sealed Blackjack action: %s" % str(deal))
+		return {}
+	var deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, deal, 4, run_state, run_state.current_environment)
+	var state: Dictionary = deal_result.get("ui_state", deal.get("ui_state", {}))
+	if not bool(deal_result.get("ok", false)) or state.is_empty():
+		push_error("Tutorial capture Peek Deal did not reach the canonical ledger: %s" % str(deal_result))
+		return {}
 	app.set("game_surface_ui_state", state)
 	app.call("_refresh")
 	return state
 
 
-func _stage_blackjack_lookaway_surface(hand_state: Dictionary) -> void:
+func _stage_blackjack_lookaway_surface() -> void:
 	var game: GameModule = app.get("current_game")
 	var run_state: RunState = app.get("run_state")
 	if game == null or run_state == null:
 		return
-	var distraction := game.surface_action_command("blackjack_distraction", 0, false, hand_state, run_state, run_state.current_environment)
-	var distracted_state: Dictionary = distraction.get("ui_state", {})
-	var peek := game.surface_action_command("blackjack_peek", 0, true, distracted_state, run_state, run_state.current_environment)
-	app.set("game_surface_ui_state", peek.get("ui_state", {}))
+	var distraction := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_distraction", 4, run_state, run_state.current_environment)
+	var peek := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_peek", 4, run_state, run_state.current_environment, 0, true)
+	var peek_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, peek, 0, run_state, run_state.current_environment)
+	var lookaway_state: Dictionary = peek_result.get("blackjack_surface_ui_state", {})
+	var table: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})
+	if not bool(distraction.get("handled", false)) \
+			or not peek.has("_blackjack_host_delivery") \
+			or not bool(peek_result.get("ok", false)) \
+			or bool(peek_result.get("dealer_caught_cheat", false)) \
+			or bool(peek_result.get("blackjack_tutorial_peek_reprieve", false)) \
+			or bool(table.get("barred", false)) \
+			or lookaway_state.is_empty():
+		push_error("Tutorial capture real lookaway observer did not preserve its authentic uncaught Peek: %s" % str(peek_result))
+	app.set("game_surface_ui_state", lookaway_state)
 	app.call("_refresh")
+
+
+func _finish_blackjack_risky_peek_fixture() -> void:
+	var game: GameModule = app.get("current_game")
+	if game == null or blackjack_fixture_baseline.is_empty():
+		push_error("Tutorial capture could not finish the isolated risky Peek fixture.")
+		return
+	var fixture := _restore_blackjack_capture_fixture(blackjack_fixture_baseline)
+	var run_state: RunState = fixture.get("run_state")
+	if run_state == null \
+			or not _blackjack_capture_fixture_matches_baseline(fixture, blackjack_fixture_baseline) \
+			or bool(run_state.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false)):
+		push_error("Tutorial capture isolated caught-Peek proof did not restart from canonical pre-Deal bytes and Heat: %s" % str(fixture))
+		return
+	BlackjackAuthorityTestDriverScript.pin_tutorial_peek_reprieve_rng(run_state)
+	var deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
+	var deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, deal, 4, run_state, run_state.current_environment)
+	var deal_state: Dictionary = deal_result.get("ui_state", deal.get("ui_state", {}))
+	var caught := BlackjackAuthorityTestDriverScript.resolve(game, "peek_hole_card", 0, run_state, run_state.current_environment, run_state.create_rng("capture_reprieve_caught"), deal_state)
+	var protected_state: Dictionary = caught.get("blackjack_surface_ui_state", {})
+	var pre_settle_table: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})
+	if not bool(deal_result.get("ok", false)) \
+			or not bool(caught.get("dealer_caught_cheat", false)) \
+			or not bool(caught.get("blackjack_tutorial_peek_reprieve", false)) \
+			or bool(caught.get("blackjack_table_barred", true)) \
+			or bool(pre_settle_table.get("barred", true)) \
+			or not bool(run_state.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false)) \
+			or protected_state.is_empty():
+		push_error("Tutorial capture isolated authority observer did not produce its authentic caught reprieve: %s" % str(caught))
+		return
+	var settlement := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("capture_reprieve_terminal"), protected_state)
+	var table: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})
+	var barred_surface := game.surface_state(run_state, run_state.current_environment, {})
+	if not bool(settlement.get("ok", false)) \
+			or bool(settlement.get("dealer_caught_cheat", false)) \
+			or int(table.get("hands_played", 0)) != 2 \
+			or not bool(table.get("barred", false)) \
+			or not bool(barred_surface.get("table_barred", false)) \
+			or str(barred_surface.get("phase", "")) != "barred" \
+			or bool(barred_surface.get("can_deal", true)):
+		push_error("Tutorial capture isolated Peek reprieve did not reach its authentic barred terminal aftermath: settlement=%s table=%s surface=%s" % [str(settlement), str(table), str(barred_surface)])
 
 
 func _stage_blackjack_count_surface() -> void:
 	var game: GameModule = app.get("current_game")
-	var run_state: RunState = app.get("run_state")
-	if game == null or run_state == null:
+	if game == null or blackjack_count_fixture_baseline.is_empty():
 		return
-	var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
-	var count := game.surface_action_command("blackjack_count", 0, false, deal.get("ui_state", {}), run_state, run_state.current_environment)
-	app.set("game_surface_ui_state", count.get("ui_state", {}))
+	var fixture := _restore_blackjack_capture_fixture(blackjack_count_fixture_baseline)
+	var run_state: RunState = fixture.get("run_state")
+	if run_state == null \
+			or not _blackjack_capture_fixture_matches_baseline(fixture, blackjack_count_fixture_baseline) \
+			or not bool(run_state.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false)):
+		push_error("Tutorial capture Count continuation did not restart from canonical pre-Deal bytes and Heat: %s" % str(fixture))
+		return
+	BlackjackAuthorityTestDriverScript.pin_tutorial_safe_peek_flow_rng(run_state)
+	var safe_deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
+	var safe_deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, safe_deal, 4, run_state, run_state.current_environment)
+	var safe_state: Dictionary = safe_deal_result.get("ui_state", safe_deal.get("ui_state", {}))
+	var safe_settlement := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("capture_count_safe_settle"), safe_state)
+	var table: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})
+	var cleanup := BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, 4, run_state, run_state.current_environment)
+	if not bool(safe_deal_result.get("ok", false)) \
+			or not bool(safe_settlement.get("ok", false)) \
+			or bool(safe_settlement.get("dealer_caught_cheat", false)) \
+			or bool(table.get("barred", false)) \
+			or not bool(cleanup.get("ok", false)) \
+			or not bool(cleanup.get("terminal_cleared", false)):
+		push_error("Tutorial capture independent safe continuation could not settle cleanly: deal=%s settlement=%s table=%s cleanup=%s" % [str(safe_deal_result), str(safe_settlement), str(table), str(cleanup)])
+		return
+	var count_toggle := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count_toggle", 4, run_state, run_state.current_environment)
+	var count_deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
+	if str(count_deal.get("action_id", "")).is_empty() or not count_deal.has("_blackjack_host_delivery"):
+		push_error("Tutorial capture Count Deal did not issue a sealed Blackjack action: toggle=%s deal=%s" % [str(count_toggle), str(count_deal)])
+		return
+	var count_deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, count_deal, 4, run_state, run_state.current_environment)
+	var count_state: Dictionary = count_deal_result.get("ui_state", count_deal.get("ui_state", {}))
+	var challenge: Dictionary = count_state.get("count_challenge", {}) if typeof(count_state.get("count_challenge", {})) == TYPE_DICTIONARY else {}
+	if not bool(count_deal_result.get("ok", false)) or (challenge.get("icons", []) as Array).is_empty():
+		push_error("Tutorial capture required third hand did not create authentic Count bubbles: %s" % str(count_deal_result))
+		return
+	app.set("game_surface_ui_state", count_state)
 	app.call("_refresh")
+
+
+func _blackjack_capture_fixture_baseline(game: GameModule, live_run: RunState, peek_reprieve_used: bool) -> Dictionary:
+	var run_state := RunState.new()
+	run_state.from_dict(JSON.parse_string(JSON.stringify(live_run.to_dict())))
+	run_state.bankroll = maxi(run_state.bankroll, 200)
+	game.surface_state(run_state, run_state.current_environment, {})
+	var game_states: Dictionary = run_state.current_environment.get("game_states", {})
+	var table: Dictionary = game_states.get("blackjack", {})
+	table["hands_played"] = 1
+	table["last_result"] = {"summary": "First tutorial hand settled."}
+	table.erase("tutorial_count_completed")
+	table.erase("tutorial_count_perfect")
+	game_states["blackjack"] = table
+	run_state.current_environment["game_states"] = game_states
+	if peek_reprieve_used:
+		run_state.narrative_flags["tutorial_blackjack_peek_reprieve_used"] = true
+	else:
+		run_state.narrative_flags.erase("tutorial_blackjack_peek_reprieve_used")
+	var normalized := RunState.new()
+	normalized.from_dict(JSON.parse_string(JSON.stringify(run_state.to_dict())))
+	var bytes := JSON.stringify(normalized.to_dict())
+	return {
+		"bytes": bytes,
+		"fingerprint": bytes.sha256_text(),
+		"heat": normalized.suspicion_level(),
+		"peek_reprieve_used": peek_reprieve_used,
+	}
+
+
+func _restore_blackjack_capture_fixture(baseline: Dictionary) -> Dictionary:
+	var run_state := RunState.new()
+	run_state.from_dict(JSON.parse_string(str(baseline.get("bytes", "{}"))))
+	app.set("run_state", run_state)
+	app.set("game_surface_ui_state", {})
+	return {
+		"run_state": run_state,
+		"fingerprint": JSON.stringify(run_state.to_dict()).sha256_text(),
+		"heat": run_state.suspicion_level(),
+	}
+
+
+func _blackjack_capture_fixture_matches_baseline(fixture: Dictionary, baseline: Dictionary) -> bool:
+	return str(fixture.get("fingerprint", "")) == str(baseline.get("fingerprint", "")) \
+		and int(fixture.get("heat", -1)) == int(baseline.get("heat", -2))
 
 
 func _stage_blackjack_count_miss_surface() -> void:
@@ -391,8 +539,7 @@ func _stage_blackjack_count_miss_surface() -> void:
 		icons[icon_index] = icon
 	challenge["icons"] = icons
 	ui_state["count_challenge"] = challenge
-	var result := game.resolve_with_context("count_cards", 0, run_state, run_state.current_environment, run_state.create_rng("capture_count_miss"), ui_state)
-	GameModuleScript.apply_result(run_state, result, run_state.create_rng("capture_count_miss_apply"))
+	var result := BlackjackAuthorityTestDriverScript.resolve(game, "count_cards", 0, run_state, run_state.current_environment, run_state.create_rng("capture_count_miss"), ui_state)
 	var final_state: Dictionary = result.get("blackjack_surface_ui_state", ui_state) if typeof(result.get("blackjack_surface_ui_state", ui_state)) == TYPE_DICTIONARY else ui_state
 	app.set("game_surface_ui_state", final_state)
 	app.set("last_game_result", result)

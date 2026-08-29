@@ -3,6 +3,25 @@ extends "res://tools/tutorial_guided_run_capture.gd"
 const TEST_META_PATH := "user://tutorial_dialogue_cadence_meta.json"
 const TEST_PROFILE_PATH := "user://tutorial_dialogue_cadence_profile.json"
 const TEST_SAVE_SLOT := "tutorial_dialogue_cadence_check"
+const BLACKJACK_FIXTURE_CHALLENGE := {
+	"mode": "custom",
+	"id": "tutorial_first_card",
+	"seed_text": "TUTORIAL-BLACKJACK-FIXTURE",
+	"daily_id": "",
+	"tutorial": true,
+	"exclude_profile_stats": true,
+	"hidden_seed": false,
+	"modifiers": {
+		"tutorial_run": true,
+		"tutorial_main_floor_only": true,
+		"tutorial_shop_item_pool_strict": true,
+		"environment_layer_overrides": {"small_underground_casino": "casino"},
+		"home_archetype_id": "apartment",
+		"starting_bankroll": 80,
+	},
+}
+const BLACKJACK_FIXTURE_BASELINE_SHA256 := "ac06c95526b41c4c63d99cd7953dea2f22775d39ab94fe4236b0feff6b79066a"
+const BLACKJACK_GAMES_SOURCE_SHA256 := "552bb6acdfdfb2a73e52d9f8cdaf383ebc0bbdd01a7a0e9319e65faad2541b04"
 
 
 func _init() -> void:
@@ -20,6 +39,14 @@ func _run_dialogue_trigger_cadence_check() -> void:
 	app.set("continuous_environment_clock_enabled", false)
 	root.add_child(app)
 	await _settle(8)
+	# A prior aborted cadence run must not become input to the next one. This is
+	# the fixture's dedicated slot; player/user save slots are never touched.
+	var initial_save_service: SaveService = app.get("save_service")
+	if initial_save_service == null \
+			or initial_save_service.clear_run(TEST_SAVE_SLOT) != OK \
+			or initial_save_service.has_run(TEST_SAVE_SLOT):
+		_fail("Tutorial dialogue cadence check could not prepare its isolated save slot.")
+		return
 	app.call("start_tutorial_run")
 	await _settle(10)
 	var run_state: RunState = app.get("run_state")
@@ -49,7 +76,7 @@ func _run_dialogue_trigger_cadence_check() -> void:
 		return
 	if not await _pull_tab_peek_reminder_is_explicit(run_state):
 		return
-	if not _blackjack_count_hand_is_mandatory(run_state):
+	if not _blackjack_count_hand_is_mandatory():
 		return
 
 	# Recovery may consume room actions performed on an eligibility boundary, but
@@ -351,12 +378,9 @@ func _pull_tab_peek_reminder_is_explicit(run_state: RunState) -> bool:
 	return true
 
 
-func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
-	# Keep this mechanics proof isolated from the UI cadence run: settling hands
-	# can legitimately advance that run's objectives and would pollute later visual
-	# fixtures even though the blackjack contract itself passed.
+func _blackjack_count_fixture_baseline() -> Dictionary:
 	var run_state := RunState.new()
-	run_state.start_new("TUTORIAL-COUNT-MANDATORY", live_run.challenge_config)
+	run_state.start_new("TUTORIAL-BLACKJACK-FIXTURE", BLACKJACK_FIXTURE_CHALLENGE.duplicate(true))
 	run_state.set_environment({
 		"id": "tutorial_count_fixture",
 		"archetype_id": "small_underground_casino",
@@ -364,9 +388,18 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 		"game_states": {},
 	})
 	var game: GameModule = BlackjackGame.new()
-	var library: ContentLibrary = app.get("library")
+	var library := _blackjack_fixture_library()
+	if library == null:
+		return {"bytes": "", "fingerprint": "", "heat": -1, "valid": false}
 	game.setup(library.game("blackjack"), library)
 	run_state.bankroll = maxi(run_state.bankroll, 200)
+	run_state.inventory = []
+	run_state.portable_ticket_piles = {}
+	run_state.narrative_flags = {
+		"tutorial_actions_performed": {},
+		"tutorial_blackjack_peek_reprieve_used": true,
+		"tutorial_lessons_completed": ["tutorial_blackjack_deal", "tutorial_blackjack_peek"],
+	}
 	game.surface_state(run_state, run_state.current_environment, {})
 	var game_states: Dictionary = run_state.current_environment.get("game_states", {})
 	var table: Dictionary = game_states.get("blackjack", {})
@@ -377,53 +410,176 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 	game_states["blackjack"] = table
 	run_state.current_environment["game_states"] = game_states
 
-	# Reproduce the old bypass after the one-time warning was already consumed.
-	# The practice hand must still remain playable and Count must remain incomplete.
-	run_state.narrative_flags["tutorial_blackjack_peek_reprieve_used"] = true
-	var peek_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
-	var peek_state: Dictionary = peek_deal.get("ui_state", {})
-	var caught := game.resolve_with_context("peek_hole_card", 0, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_caught"), peek_state)
+	# Normalize once, then preserve one immutable byte source for every observer.
+	# This fixture may not inherit the live tutorial, profile, inventory, tips, or
+	# progression: all authority inputs above are declared locally.
+	var normalized := RunState.new()
+	normalized.from_dict(JSON.parse_string(JSON.stringify(run_state.to_dict())))
+	var bytes := JSON.stringify(normalized.to_dict())
+	var fingerprint := bytes.sha256_text()
+	return {
+		"bytes": bytes,
+		"fingerprint": fingerprint,
+		"heat": normalized.suspicion_level(),
+		"valid": fingerprint == BLACKJACK_FIXTURE_BASELINE_SHA256
+			and normalized.suspicion_level() == 0
+			and normalized.is_tutorial_run()
+			and bool(normalized.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false)),
+	}
+
+
+func _restore_blackjack_count_fixture(baseline: Dictionary) -> Dictionary:
+	var run_state := RunState.new()
+	run_state.from_dict(JSON.parse_string(str(baseline.get("bytes", "{}"))))
+	var game: GameModule = BlackjackGame.new()
+	var library := _blackjack_fixture_library()
+	if library == null:
+		return {"run_state": run_state, "game": null, "library": null, "fingerprint": "", "heat": -1}
+	game.setup(library.game("blackjack"), library)
+	return {
+		"run_state": run_state,
+		"game": game,
+		"library": library,
+		"fingerprint": JSON.stringify(run_state.to_dict()).sha256_text(),
+		"heat": run_state.suspicion_level(),
+	}
+
+
+func _blackjack_fixture_library() -> ContentLibrary:
+	var source_text := FileAccess.get_file_as_string(ContentLibrary.GAMES_PATH)
+	if source_text.sha256_text() != BLACKJACK_GAMES_SOURCE_SHA256:
+		return null
+	var source_value: Variant = JSON.parse_string(source_text)
+	if typeof(source_value) != TYPE_ARRAY:
+		return null
+	var source_definition: Dictionary = {}
+	for definition_value in source_value as Array:
+		if typeof(definition_value) == TYPE_DICTIONARY and str((definition_value as Dictionary).get("id", "")) == "blackjack":
+			source_definition = (definition_value as Dictionary).duplicate(true)
+			break
+	if source_definition.is_empty():
+		return null
+	var library := ContentLibrary.new()
+	library.load(false)
+	var loaded_definition := library.game("blackjack")
+	if not library.validation_errors.is_empty() \
+			or GameRitualRuntime.canonical_fingerprint(loaded_definition) != GameRitualRuntime.canonical_fingerprint(source_definition):
+		return null
+	return library
+
+
+func _blackjack_fixture_matches_baseline(fixture: Dictionary, baseline: Dictionary) -> bool:
+	return str(fixture.get("fingerprint", "")) == str(baseline.get("fingerprint", "")) \
+		and int(fixture.get("heat", -1)) == int(baseline.get("heat", -2))
+
+
+func _blackjack_isolated_repeated_peek_reprieve_is_terminal(baseline: Dictionary) -> bool:
+	# No one pre-Deal RNG state proves both the authentic caught-Peek reprieve
+	# and a later safe Count continuation. This exact clone proves the reprieve
+	# and its visible barred terminal aftermath, then intentionally stops.
+	var fixture := _restore_blackjack_count_fixture(baseline)
+	if not bool(baseline.get("valid", false)) or not _blackjack_fixture_matches_baseline(fixture, baseline):
+		_fail("The isolated Peek fixture did not start from the canonical pre-Deal bytes/heat: %s." % str(fixture))
+		return false
+	var run_state: RunState = fixture.get("run_state")
+	var game: GameModule = fixture.get("game")
+
+	BlackjackAuthorityTestDriverScript.pin_tutorial_peek_reprieve_rng(run_state)
+	var deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
+	var deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, deal, 4, run_state, run_state.current_environment)
+	if not bool(deal_result.get("ok", false)) \
+			or not bool(deal_result.get("blackjack_host_committed", false)) \
+			or str(deal_result.get("action_id", "")) != "blackjack_place_bet":
+		_fail("The isolated repeated-Peek fixture did not commit its sealed Deal: %s." % str(deal_result))
+		return false
+	var peek := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_peek", 4, run_state, run_state.current_environment)
+	var caught := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, peek, 4, run_state, run_state.current_environment)
 	var protected_state: Dictionary = caught.get("blackjack_surface_ui_state", {})
-	table = run_state.current_environment.get("game_states", {}).get("blackjack", {})
-	if not bool(caught.get("blackjack_tutorial_peek_reprieve", false)) \
+	var table: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})
+	if not bool(caught.get("dealer_caught_cheat", false)) \
+			or not bool(caught.get("blackjack_tutorial_peek_reprieve", false)) \
 			or bool(caught.get("blackjack_table_barred", true)) \
 			or bool(table.get("barred", true)) \
 			or protected_state.is_empty() \
 			or not TutorialFlow.apply_caught_transition(run_state, caught).is_empty():
-		_fail("A repeated/resumed tutorial Peek still barred blackjack or bypassed Count: %s." % str(caught))
+		_fail("The isolated repeated Peek did not produce its authentic protected caught result: %s." % str(caught))
 		return false
-	var peek_settlement := game.resolve_with_context("play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_peek_finish"), protected_state)
+
+	var settlement := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_reprieve_terminal"), protected_state)
+	table = run_state.current_environment.get("game_states", {}).get("blackjack", {})
+	var barred_surface := game.surface_state(run_state, run_state.current_environment, {})
+	if not bool(settlement.get("ok", false)) \
+			or bool(settlement.get("dealer_caught_cheat", false)) \
+			or int(table.get("hands_played", 0)) != 2 \
+			or not bool(table.get("barred", false)) \
+			or not bool(barred_surface.get("table_barred", false)) \
+			or str(barred_surface.get("phase", "")) != "barred" \
+			or bool(barred_surface.get("can_deal", true)) \
+			or str(barred_surface.get("barred_reason", "")).is_empty():
+		_fail("The isolated Peek reprieve did not expose its authentic barred terminal aftermath: rng=%d settlement=%s table=%s surface=%s." % [BlackjackAuthorityTestDriverScript.TUTORIAL_PEEK_REPRIEVE_INITIAL_RNG_STATE, str(settlement), str(table), str(barred_surface)])
+		return false
+	return true
+
+
+func _blackjack_count_hand_is_mandatory() -> bool:
+	# Keep this mechanics proof isolated from the UI cadence run: settling hands
+	# can legitimately advance that run's objectives and would pollute later visual
+	# fixtures even though the blackjack contract itself passed.
+	var baseline := _blackjack_count_fixture_baseline()
+	if not _blackjack_isolated_repeated_peek_reprieve_is_terminal(baseline):
+		return false
+	var fixture := _restore_blackjack_count_fixture(baseline)
+	if not _blackjack_fixture_matches_baseline(fixture, baseline):
+		_fail("The Count continuation did not restart from the canonical pre-Deal bytes/heat after the isolated reprieve: %s." % str(fixture))
+		return false
+	var run_state: RunState = fixture.get("run_state")
+	var game: GameModule = fixture.get("game")
+	var library: ContentLibrary = fixture.get("library")
+	# Pin once before the independent safe hand's first authority boundary. This
+	# continuation does not repeat the risky Peek owned by the isolated observer.
+	BlackjackAuthorityTestDriverScript.pin_tutorial_safe_peek_flow_rng(run_state)
+	var safe_deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
+	var safe_deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, safe_deal, 4, run_state, run_state.current_environment)
+	var safe_state: Dictionary = safe_deal_result.get("ui_state", safe_deal.get("ui_state", {}))
+	var peek_settlement := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_peek_finish"), safe_state)
 	if not bool(peek_settlement.get("ok", false)):
-		_fail("The protected Peek hand could not be settled before counting: %s." % str(peek_settlement))
+		_fail("The independent safe tutorial hand could not be settled before counting: %s." % str(peek_settlement))
+		return false
+	var table: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})
+	if bool(peek_settlement.get("dealer_caught_cheat", false)) or bool(table.get("barred", false)):
+		_fail("The fixed independent safe settlement was caught or barred: rng=%d result=%s table_barred=%s." % [BlackjackAuthorityTestDriverScript.TUTORIAL_SAFE_PEEK_FLOW_INITIAL_RNG_STATE, str(peek_settlement), str(table.get("barred", false))])
+		return false
+	var peek_cleanup := BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, 4, run_state, run_state.current_environment)
+	if not bool(peek_cleanup.get("ok", false)) or not bool(peek_cleanup.get("terminal_cleared", false)):
+		_fail("The protected Peek hand did not cross its real presentation cleanup boundary: %s." % str(peek_cleanup))
 		return false
 	table = run_state.current_environment.get("game_states", {}).get("blackjack", {})
 	if int(table.get("hands_played", 0)) != 2 or bool(table.get("tutorial_count_completed", false)):
 		_fail("Settling the Peek hand did not arrive at an incomplete third-hand Count boundary: %s." % str(table))
 		return false
 
-	var count_toggle := game.surface_action_command("blackjack_count_toggle", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
-	var count_deal := game.surface_action_command("blackjack_deal", 0, false, count_toggle.get("ui_state", {}), run_state, run_state.current_environment)
-	var count_state: Dictionary = count_deal.get("ui_state", {})
+	var count_toggle := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count_toggle", 4, run_state, run_state.current_environment)
+	var count_deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
+	if str(count_deal.get("action_id", "")).is_empty() or not count_deal.has("_blackjack_host_delivery"):
+		_fail("The required Count deal did not issue a sealed action: toggle_action=%s toggle_message=%s deal_handled=%s deal_message=%s." % [str(count_toggle.get("action_id", "")), str(count_toggle.get("message", "")), str(count_deal.get("handled", false)), str(count_deal.get("message", ""))])
+		return false
+	var count_deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, count_deal, 4, run_state, run_state.current_environment)
+	var count_state: Dictionary = count_deal_result.get("ui_state", count_deal.get("ui_state", {})) if typeof(count_deal_result.get("ui_state", count_deal.get("ui_state", {}))) == TYPE_DICTIONARY else count_deal.get("ui_state", {})
 	var challenge: Dictionary = count_state.get("count_challenge", {})
 	var icons: Array = challenge.get("icons", [])
 	if icons.is_empty():
-		_fail("The required third blackjack hand did not create the counting bubbles.")
+		_fail("The required third blackjack hand did not create the counting bubbles: %s." % str(count_deal_result))
 		return false
-	count_state["surface_time_msec"] = 0
-	for icon_value in icons:
-		var icon: Dictionary = icon_value
-		icon["spawn_msec"] = 0
-		icon["duration_msec"] = 60000
-	challenge["icons"] = icons
-	count_state["count_challenge"] = challenge
 	for icon_index in range(icons.size()):
-		count_state = game.surface_action_command("blackjack_count_icon", icon_index, false, count_state, run_state, run_state.current_environment).get("ui_state", count_state)
+		var icon: Dictionary = icons[icon_index]
+		var action_msec := int(icon.get("spawn_msec", 0)) + 10
+		count_state = BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_count_icon", 4, run_state, run_state.current_environment, icon_index, false, action_msec).get("ui_state", count_state)
 	var pre_settle_coach := game.coach_state(run_state, run_state.current_environment, count_state)
 	if not bool(pre_settle_coach.get("count_all_selected", false)) \
 			or bool(pre_settle_coach.get("tutorial_count_completed", false)):
 		_fail("Selecting the count bubbles either failed or falsely completed the lesson before hand settlement: %s." % str(pre_settle_coach))
 		return false
-	var count_settlement := game.resolve_with_context("play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_settle"), count_state)
+	var count_settlement := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_settle"), count_state)
 	if not bool(count_settlement.get("ok", false)):
 		_fail("The counting hand could not settle through normal blackjack logic: %s." % str(count_settlement))
 		return false
@@ -450,7 +606,7 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 		return false
 
 	var legacy_run := RunState.new()
-	legacy_run.start_new("TUTORIAL-COUNT-LEGACY", live_run.challenge_config)
+	legacy_run.start_new("TUTORIAL-COUNT-LEGACY", BLACKJACK_FIXTURE_CHALLENGE.duplicate(true))
 	legacy_run.set_environment({
 		"id": "tutorial_count_legacy_fixture",
 		"archetype_id": "small_underground_casino",
@@ -568,20 +724,62 @@ func _count_deal_moves_outline_to_live_bubbles(run_state: RunState) -> bool:
 
 
 func _tutorial_meta_home_handoff_is_forced(run_state: RunState) -> bool:
+	# The preceding Count observer intentionally ends on the live Blackjack
+	# surface. Cross the production screen boundary before replacing the room;
+	# staging an environment alone does not own current_screen/current_game.
+	var expected_run_identity := GameRitualRuntime.canonical_fingerprint({
+		"seed_text": run_state.seed_text,
+		"challenge_config": run_state.challenge_config,
+	})
+	app.call("back_to_environment")
+	await _settle(5)
+	var live_run: RunState = app.get("run_state")
+	var live_run_identity := GameRitualRuntime.canonical_fingerprint({
+		"seed_text": live_run.seed_text if live_run != null else "",
+		"challenge_config": live_run.challenge_config if live_run != null else {},
+	})
+	if live_run == null \
+			or live_run_identity != expected_run_identity \
+			or str(app.get("current_screen")) != "ENVIRONMENT" \
+			or app.get("current_game") != null:
+		_fail("Tutorial Home handoff fixture could not return from Blackjack to the room surface.")
+		return false
 	_clear_guide_state()
 	if not _stage_environment("grand_casino_cage"):
 		_fail("Tutorial Home handoff fixture could not stage Linda's Cage.")
 		return false
-	run_state.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
-	run_state.narrative_flags["grand_casino_players_card_awarded_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
-	run_state.narrative_flags["grand_casino_players_card_ready_to_claim"] = false
+	live_run.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
+	live_run.narrative_flags["grand_casino_players_card_awarded_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
+	live_run.narrative_flags["grand_casino_players_card_ready_to_claim"] = false
+	var finish_event_id := "dialogue:tutorial_linda_bronze_finish"
+	# Earlier Linda guardrail observers may leave this same natural event ID at a
+	# deliberately interrupted node. Own a fresh resume boundary here instead of
+	# letting start_dialogue treat the stale same-ID entry as the requested goal.
+	live_run.complete_talk_event_resolution(finish_event_id)
+	if not live_run.pending_talk_event(finish_event_id).is_empty():
+		_fail("Tutorial Home handoff fixture could not clear its stale Linda event.")
+		return false
 	if not bool(app.call("_resume_tutorial_linda_bronze_finish")):
 		_fail("Linda's final Players Card handoff could not start for the Home transition fixture.")
 		return false
-	var finish_entry := run_state.next_pending_talk_event()
-	app.call("_on_talk_dock_choice_requested", str(finish_entry.get("event_id", "")), "review_persistence")
-	app.call("_on_talk_dock_choice_requested", str(finish_entry.get("event_id", "")), "review_next_goal")
-	app.call("_on_talk_dock_choice_requested", str(finish_entry.get("event_id", "")), "finish_tutorial")
+	var finish_entry := live_run.pending_talk_event(finish_event_id)
+	var next_entry := live_run.next_pending_talk_event()
+	if str(finish_entry.get("dialogue_id", "")) != "tutorial_linda_bronze_finish" \
+			or str(finish_entry.get("current_node", "")) != "goal" \
+			or str(next_entry.get("event_id", "")) != finish_event_id:
+		_fail("Linda's exact final Players Card handoff was not the intended next goal: exact=%s next=%s." % [str(finish_entry), str(next_entry)])
+		return false
+	app.call("_on_talk_dock_choice_requested", finish_event_id, "review_persistence")
+	finish_entry = live_run.pending_talk_event(finish_event_id)
+	if str(finish_entry.get("current_node", "")) != "persistence":
+		_fail("Linda's Players Card handoff did not advance to persistence: %s." % str(finish_entry))
+		return false
+	app.call("_on_talk_dock_choice_requested", finish_event_id, "review_next_goal")
+	finish_entry = live_run.pending_talk_event(finish_event_id)
+	if str(finish_entry.get("current_node", "")) != "next_goal":
+		_fail("Linda's Players Card handoff did not advance to the final goal: %s." % str(finish_entry))
+		return false
+	app.call("_on_talk_dock_choice_requested", finish_event_id, "finish_tutorial")
 	await _settle(14)
 	var home_run: RunState = app.get("run_state")
 	var coach_snapshot: Dictionary = app.get("coach_overlay").call("current_snapshot")

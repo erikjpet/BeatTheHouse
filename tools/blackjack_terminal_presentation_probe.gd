@@ -2,6 +2,7 @@ extends SceneTree
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 
 var failures: Array = []
 
@@ -52,7 +53,7 @@ func _run() -> void:
 	}
 	var deal_command := game.surface_action_command("blackjack_deal", 0, false, ui_state, run_state, environment)
 	var deal_ui: Dictionary = deal_command.get("ui_state", {})
-	var place_result := game.resolve_with_context("blackjack_place_bet", 5, run_state, environment, run_state.create_rng("place"), deal_ui)
+	var place_result := BlackjackAuthorityTestDriverScript.resolve(game, "blackjack_place_bet", 5, run_state, environment, run_state.create_rng("place"), deal_ui)
 	deal_ui = place_result.get("ui_state", {})
 	_check(not deal_ui.is_empty(), "Opening deal did not preserve its live UI state.")
 	_check(_dealer_blackjack(deal_ui), "Forced fixture did not produce dealer blackjack.")
