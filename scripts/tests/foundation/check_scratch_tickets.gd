@@ -30,6 +30,12 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	var surface := game.surface_state(run_state, environment, {})
 	if str(surface.get("surface_renderer", "")) != "scratch_tickets" or not bool(surface.get("surface_controls_native", false)):
 		failures.append("Scratch Tickets did not route to its native surface.")
+	var counter_ritual: Dictionary = surface.get("counter_ritual", {}) if typeof(surface.get("counter_ritual", {})) == TYPE_DICTIONARY else {}
+	var counter_attention: Dictionary = counter_ritual.get("attention", {}) if typeof(counter_ritual.get("attention", {})) == TYPE_DICTIONARY else {}
+	if str(surface.get("surface_cast", "")) != "clerk_and_machine" or (counter_ritual.get("actors", []) as Array).is_empty() or (counter_ritual.get("objects", []) as Array).size() < 3:
+		failures.append("Scratch Tickets did not project the clerk, rack, counter, and losing-ticket pile as material ritual state.")
+	if bool(counter_attention.get("reveals_hidden_outcomes", true)) or int(counter_attention.get("suspicion", -1)) != run_state.suspicion_level():
+		failures.append("Scratch clerk attention leaked ticket contents or diverged from existing suspicion authority.")
 	if not bool(surface.get("surface_animates_idle", false)) or bool(surface.get("surface_realtime_state_refresh", true)):
 		failures.append("Scratch Tickets idle liveness/zero-copy flags are incorrect.")
 	var cash_hooks := game.environment_interactable_objects(run_state, environment)
@@ -206,6 +212,11 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 		failures.append("Scratch ticket purchase exposed its hidden outcome to the win/loss music system.")
 	if str(purchase.get("surface_audio_cue", "")) != "ticket_dispenser" or str((purchase.get("surface_audio_context", {}) as Dictionary).get("action", "")) != "scratch_buy":
 		failures.append("Scratch ticket purchase did not emit the successful dispense cue.")
+	var purchase_surface: Dictionary = game.surface_state(run_state, environment, buy_command.get("ui_state", {}))
+	var purchase_ritual: Dictionary = purchase_surface.get("counter_ritual", {}) if typeof(purchase_surface.get("counter_ritual", {})) == TYPE_DICTIONARY else {}
+	var purchase_transaction: Dictionary = purchase_ritual.get("transaction", {}) if typeof(purchase_ritual.get("transaction", {})) == TYPE_DICTIONARY else {}
+	if str(purchase_transaction.get("kind", "")) != "purchase" or int(purchase_transaction.get("price", 0)) != int(purchase.get("stake", 0)):
+		failures.append("Scratch purchase did not persist its exact counter handover transaction.")
 	var result_ticket: Dictionary = purchase.get("scratch_ticket", {}) if typeof(purchase.get("scratch_ticket", {})) == TYPE_DICTIONARY else {}
 	if result_ticket.has("latex_mask") or result_ticket.has("scratch_regions"):
 		failures.append("Scratch ticket purchase duplicated its live foil mask into the action result.")

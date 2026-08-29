@@ -1,6 +1,23 @@
 Status: TODO
 Board row: `game06_5` in `docs/todo/README_0_6_board.md`
 
+## Executing amendment: Crossword Option C
+
+The program root selected Option C with the historical-save policy
+`game06_5-option-c-no-new-supply-existing-issued-valid`:
+
+- the six aligned non-Crossword families remain the active 0.6 offering;
+- Crossword art, topology, mechanics, odds, payouts and RTP remain unchanged;
+- no new ordinary or practice Crossword stock may be generated, restocked or
+  purchased, including through a direct ID, stale UI index or restored raw row;
+- an unsold Crossword row already serialized in machine stock is preserved as
+  held data, hidden from the purchase surface and never converted or refunded;
+- every already-issued/owned Crossword ticket remains visible and retains exact
+  scratch, file, save/revisit and winner-redemption behavior.
+
+This amendment resolves Phase 5. It does not authorize art, probability,
+prize, stock-weight, topology or refund work.
+
 # Agent Prompt — 0.6 game06_5: Counter Games Depth (Scratch Tickets, Pull Tabs)
 
 Copy everything below this line into the agent.

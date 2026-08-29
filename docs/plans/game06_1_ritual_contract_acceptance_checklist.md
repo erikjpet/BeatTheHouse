@@ -51,6 +51,11 @@ from an implementation rather than specified, or weakened to match a schedule.
   direct-bankroll host, declare no machine-credit conversion schema, Video
   Poker declares no hand-pay flow, and Slot acknowledgement is receipted,
   replay-safe, and settlement-neutral.
+- [ ] Counter-game consumers explicitly select their release availability.
+  Under game06_5 Option C, the six aligned Scratch families remain active;
+  Crossword creates no new stock or purchase, historical unsold rows remain
+  held, and every already-issued Crossword remains playable and redeemable
+  without refund, art, topology, odds, payout, stock-weight, or RTP changes.
 - [ ] Place, correct, undo, remove-one, clear, repeat, re-bet, and confirm are
   distinct staged-commitment concepts; the contract does not require a game to
   support an action its rules forbid.

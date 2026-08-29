@@ -5771,6 +5771,12 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var surface := game.surface_state(run_state, environment, {})
 	if str(surface.get("surface_renderer", "")) != "pull_tab_machine":
 		failures.append("Pull Tabs surface did not route to the pull-tab machine renderer.")
+	var counter_ritual: Dictionary = surface.get("counter_ritual", {}) if typeof(surface.get("counter_ritual", {})) == TYPE_DICTIONARY else {}
+	var counter_attention: Dictionary = counter_ritual.get("attention", {}) if typeof(counter_ritual.get("attention", {})) == TYPE_DICTIONARY else {}
+	if str(surface.get("surface_cast", "")) != "clerk_and_machine" or (counter_ritual.get("actors", []) as Array).is_empty() or (counter_ritual.get("objects", []) as Array).size() < 3:
+		failures.append("Pull Tabs did not project the clerk, deal rack, counter, and losing-ticket pile as material ritual state.")
+	if bool(counter_attention.get("reveals_hidden_outcomes", true)) or int(counter_attention.get("suspicion", -1)) != run_state.suspicion_level():
+		failures.append("Pull Tabs clerk attention leaked ticket contents or diverged from existing suspicion authority.")
 	_check_idle_animation_liveness_contract(surface, "Pull Tabs cabinet surface", failures)
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Pull Tabs surface did not expose native surface controls.")
@@ -5842,6 +5848,10 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs surface did not leave the dispensed ticket in the machine tray.")
 	if int(tray_surface.get("pull_tab_stack_count", 0)) != 0:
 		failures.append("Pull Tabs buy moved a ticket directly into the play pile instead of the tray.")
+	var purchase_ritual: Dictionary = tray_surface.get("counter_ritual", {}) if typeof(tray_surface.get("counter_ritual", {})) == TYPE_DICTIONARY else {}
+	var purchase_transaction: Dictionary = purchase_ritual.get("transaction", {}) if typeof(purchase_ritual.get("transaction", {})) == TYPE_DICTIONARY else {}
+	if str(purchase_ritual.get("phase", "")) != "handover" or str(purchase_transaction.get("kind", "")) != "purchase" or int(purchase_transaction.get("price", 0)) != int(result.get("stake", 0)):
+		failures.append("Pull Tabs purchase did not persist its exact clerk handover transaction.")
 	if not bool(tray_surface.get("surface_animates_idle", false)):
 		failures.append("Pull Tabs tray surface lost cabinet idle animation liveness after a ticket purchase.")
 	var dispense_events: Array = tray_surface.get("pull_tab_dispense_events", []) as Array

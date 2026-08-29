@@ -142,10 +142,16 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	# unused by the renderer and rebuilt both piles a second time on every click.
 	var winner_pile_views := _ticket_pile_view_list(machine, "winner_pile")
 	var loser_pile_views := _ticket_pile_view_list(machine, "loser_pile")
+	var counter_ritual := _pull_tab_counter_ritual(machine, run_state, environment)
 	return GameModule.surface_spec({
 		"surface_renderer": "pull_tab_machine",
 		"surface_life": "ticket_dispenser",
-		"surface_cast": "machine",
+		"surface_cast": "clerk_and_machine",
+		"counter_ritual": counter_ritual,
+		"counter_phase": str(counter_ritual.get("phase", "selection")),
+		"counter_actors": counter_ritual.get("actors", []),
+		"counter_objects": counter_ritual.get("objects", []),
+		"counter_attention": counter_ritual.get("attention", {}),
 		"surface_controls_native": true,
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
@@ -867,6 +873,16 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	machine["tickets_sold"] = int(machine.get("tickets_sold", 0)) + 1
 	machine["last_ticket_id"] = str(ticket.get("id", ""))
 	machine["last_deal_id"] = str(deal.get("id", ""))
+	machine["last_counter_transaction"] = {
+		"kind": "purchase",
+		"phase": "handover",
+		"ticket_count": 1,
+		"tendered": price,
+		"price": price,
+		"change": 0,
+		"ticket_id": str(ticket.get("id", "")),
+		"completed": true,
+	}
 	_queue_dispense_events(machine, [ticket], [deal_index], _pull_tab_presentation_time_msec(ui_state, run_state))
 	_write_machine_state(environment, machine, run_state)
 
@@ -997,6 +1013,16 @@ func _resolve_ticket_set_purchase(run_state: RunState, environment: Dictionary, 
 	machine["tickets_sold"] = int(machine.get("tickets_sold", 0)) + tickets.size()
 	machine["last_ticket_id"] = str((tickets[tickets.size() - 1] as Dictionary).get("id", ""))
 	machine["last_deal_id"] = str((ticket_deals[ticket_deals.size() - 1] as Dictionary).get("id", ""))
+	machine["last_counter_transaction"] = {
+		"kind": "purchase",
+		"phase": "handover",
+		"ticket_count": tickets.size(),
+		"tendered": total_price,
+		"price": total_price,
+		"change": 0,
+		"ticket_id": str((tickets[0] as Dictionary).get("id", "")),
+		"completed": true,
+	}
 	_queue_dispense_events(machine, tickets, deal_indices, _pull_tab_presentation_time_msec(ui_state, run_state))
 	_write_machine_state(environment, machine, run_state)
 
@@ -1214,6 +1240,14 @@ func _resolve_winner_redemption(run_state: RunState, environment: Dictionary, rn
 	machine["redeemed_pile"] = _redeemed_ticket_history(machine, winner_pile)
 	machine["last_redeemed_payout"] = payout
 	machine["last_redeemed_count"] = winner_pile.size()
+	machine["last_counter_transaction"] = {
+		"kind": "redemption",
+		"phase": "payout",
+		"ticket_count": winner_pile.size(),
+		"payout": payout,
+		"scrutiny": "extended" if suspicion_delta > 0 or payout >= CASHOUT_HIGH_VALUE_TICKET_THRESHOLD else "standard",
+		"completed": true,
+	}
 	_write_machine_state(environment, machine, run_state)
 	var story_entry := {
 		"type": "pull_tab_redeem",
@@ -2988,6 +3022,67 @@ func _redeemer_label(environment: Dictionary) -> String:
 	if scene_type == "bar" or str(environment.get("archetype_id", "")) == "bar":
 		return "Bartender"
 	return "Lottery Clerk"
+
+
+func _pull_tab_remaining_count(machine: Dictionary) -> int:
+	var total := 0
+	for deal_value in _deal_array(machine.get("deals", [])):
+		total += maxi(0, int((deal_value as Dictionary).get("remaining", 0)))
+	return total
+
+
+func _pull_tab_counter_ritual(machine: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var winners := _ticket_array(machine.get("winner_pile", []))
+	var losers := _ticket_array(machine.get("loser_pile", []))
+	var play_stack := _ticket_array(machine.get("ticket_stack", []))
+	var tray := _ticket_array(machine.get("tray_stack", []))
+	var suspicion := run_state.suspicion_level() if run_state != null else 0
+	var transaction := _pt_copy_dict(machine.get("last_counter_transaction", {}))
+	var phase := "selection"
+	if not winners.is_empty():
+		phase = "redemption_ready"
+	elif not play_stack.is_empty():
+		phase = "play"
+	elif not tray.is_empty() or str(transaction.get("phase", "")) == "handover":
+		phase = "handover"
+	var clerk_state := "idle"
+	if suspicion >= 70:
+		clerk_state = "refusing"
+	elif suspicion >= 45:
+		clerk_state = "suspicious"
+	elif suspicion >= 20:
+		clerk_state = "watching"
+	elif phase == "redemption_ready":
+		clerk_state = "paying_out"
+	elif phase == "handover":
+		clerk_state = "serving"
+	elif _pull_tab_remaining_count(machine) <= 0:
+		clerk_state = "bored"
+	var deal_rows: Array = []
+	for deal_value in _deal_array(machine.get("deals", [])):
+		var deal: Dictionary = deal_value
+		deal_rows.append({
+			"deal_id": str(deal.get("id", "")),
+			"remaining": maxi(0, int(deal.get("remaining", 0))),
+			"material_energy": "lit" if int(deal.get("remaining", 0)) > 0 else "spent",
+		})
+	return {
+		"version": 1,
+		"phase": phase,
+		"actors": [{
+			"id": "pull_tab_clerk",
+			"label": _redeemer_label(environment),
+			"state": clerk_state,
+			"material_energy": "alert" if clerk_state in ["watching", "suspicious", "refusing"] else "working" if clerk_state in ["serving", "paying_out"] else "ambient",
+		}],
+		"objects": [
+			{"id": "deal_rack", "state": "stocked" if _pull_tab_remaining_count(machine) > 0 else "empty", "stock": deal_rows, "material_energy": "interactive" if _pull_tab_remaining_count(machine) > 0 else "spent"},
+			{"id": "counter", "state": phase, "material_energy": "active" if phase in ["handover", "redemption_ready"] else "ambient"},
+			{"id": "losing_tab_pile", "count": losers.size() + maxi(0, int(machine.get("loser_archive_count", 0))), "visible": true, "material_energy": "spent"},
+		],
+		"transaction": transaction,
+		"attention": {"tier": clerk_state, "suspicion": suspicion, "reveals_hidden_outcomes": false},
+	}
 
 
 func _redeemed_ticket_history(machine: Dictionary, redeemed: Array) -> Array:
