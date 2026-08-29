@@ -17,6 +17,7 @@ const MODE_GETAWAY := "getaway"
 const MODES := [MODE_PACKAGE, MODE_MULTI_STOP, MODE_HOLD, MODE_GETAWAY]
 const DEPTH_STATE_SCHEMA_VERSION := 1
 const MAX_DEPTH_COMMAND_RECEIPTS := 64
+const MAX_DEPTH_TEXT := 192
 const CARGO_PICKUP_PENDING := "pickup_pending"
 const CARGO_CARRIED := "carried"
 const CARGO_STASHED := "stashed"
@@ -416,7 +417,7 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 	var action := verb.strip_edges()
 	var clean_receipt := receipt_key.strip_edges()
 	var host_context := _normalize_host_context(host_context_value)
-	if action not in HOST_VERBS or clean_receipt.is_empty() or clean_receipt != receipt_key or host_context.is_empty():
+	if action not in HOST_VERBS or clean_receipt.is_empty() or clean_receipt.length() > MAX_DEPTH_TEXT or clean_receipt != receipt_key or host_context.is_empty():
 		return state
 	var envelope := {"command_id": action, "host_context": host_context}
 	var replay := _depth_receipt_replay(state, clean_receipt, envelope)
@@ -677,7 +678,7 @@ static func _normalize_host_context(value: Variant) -> Dictionary:
 		return {}
 	var result := {"schema_version": 1, "action_index": int(source.get("action_index", 0)), "attention": int(source.get("attention", 0))}
 	for key in ["cover_id", "destination_node_id", "node_id", "place_id", "reason", "signal_id", "target_id"]:
-		if typeof(source.get(key)) != TYPE_STRING or str(source.get(key, "")) != str(source.get(key, "")).strip_edges():
+		if typeof(source.get(key)) != TYPE_STRING or str(source.get(key, "")).length() > MAX_DEPTH_TEXT or str(source.get(key, "")) != str(source.get(key, "")).strip_edges():
 			return {}
 		result[key] = str(source.get(key, ""))
 	return result
@@ -867,7 +868,7 @@ static func _normalize_depth_receipts(value: Variant) -> Array:
 				or typeof(receipt.get("sequence")) != TYPE_INT or int(receipt.get("sequence", 0)) != index + 1:
 			return []
 		for key in ["command_id", "receipt_key"]:
-			if typeof(receipt.get(key)) != TYPE_STRING or str(receipt.get(key, "")).is_empty() or str(receipt.get(key, "")) != str(receipt.get(key, "")).strip_edges():
+			if typeof(receipt.get(key)) != TYPE_STRING or str(receipt.get(key, "")).is_empty() or str(receipt.get(key, "")).length() > MAX_DEPTH_TEXT or str(receipt.get(key, "")) != str(receipt.get(key, "")).strip_edges():
 				return []
 		if seen.has(str(receipt.get("receipt_key", ""))) or not _valid_sha256(str(receipt.get("command_record_fingerprint", ""))) \
 				or str(receipt.get("previous_receipt_fingerprint", "")) != previous_fingerprint or not _valid_sha256(str(receipt.get("receipt_fingerprint", ""))):
