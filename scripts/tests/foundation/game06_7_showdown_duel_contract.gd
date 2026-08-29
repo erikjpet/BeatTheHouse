@@ -29,6 +29,7 @@ func _initialize() -> void:
 	_check_ten_seed_determinism(failures)
 	_check_phase_machine(failures)
 	_check_projection_privacy(failures)
+	_check_product_surface_adapter(failures)
 	_check_liveness_performance(failures)
 	_finish(failures)
 
@@ -172,6 +173,46 @@ func _check_projection_privacy(failures: Array) -> void:
 	if str(crew_projection.get("selected_ending", "")) != "crew_heist_final" or str(_dict(crew_projection.get("room_state", {})).get("exit_state", "")) != "crew": failures.append("Crew ending collapsed into the duel ending.")
 	var web_round_trip: Variant = JSON.parse_string(JSON.stringify(projection_a))
 	if _fingerprint(projection_a) != _fingerprint(web_round_trip): failures.append("Native/Web canonical projection parity drifted.")
+
+
+func _check_product_surface_adapter(failures: Array) -> void:
+	var duel := _duel_state(112, 88, 2, 5)
+	duel["attempt"] = 3
+	duel["hands"] = [{"hand_index":0,"transfer":12,"player_stack":112,"rourke_stack":88,"private_roll":99}]
+	duel["blackjack_session"] = {"dealer_cards":[{"rank":14}],"private_shoe_cursor":17}
+	duel["edge_schedule"] = [{}, {}, {"id":"deck_stack","active":true,"called":false,"private_roll":99}]
+	var fingerprint: String = _projection.public_duel_fingerprint(duel)
+	var authority := {
+		"duel_id":"grand_casino_showdown",
+		"route_id":"pit_boss_showdown",
+		"attempt":3,
+		"result_serial":1,
+		"authoritative_result_ref":"duel:3:hand:1:active",
+		"duel_content_fingerprint":fingerprint,
+		"current_edge":{"id":"deck_stack","active":true,"called":false,"private_roll":99},
+		"turn_member_id":"crew_ace",
+	}
+	var commitment: Dictionary = _projection.sealed_product_projection(duel, "player_turn", authority)
+	if commitment.is_empty() or not _projection.verify_product_projection(commitment, duel, "player_turn", authority): failures.append("Authentic live duel projection did not mount on the product surface.")
+	if str(commitment.get("phase_id", "")) != "commitment": failures.append("Live Blackjack decision phase did not map to duel commitment staging.")
+	if not _array(commitment.get("public_crew_actors", [])).is_empty(): failures.append("Product adapter accepted crew presence without the sealed World6 seam.")
+	for forbidden in ["turn_member_id","private_roll","private_shoe_cursor","edge_schedule","blackjack_session"]:
+		if _contains_key(commitment, forbidden): failures.append("Product adapter leaked %s." % forbidden)
+	var reveal: Dictionary = _projection.sealed_product_projection(duel, "settlement", authority)
+	if str(reveal.get("phase_id", "")) != "reveal": failures.append("Settled Blackjack hand did not map to duel reveal staging.")
+	var tampered := reveal.duplicate(true)
+	var tampered_actor := _dict(tampered.get("rourke_actor", {})); tampered_actor["behavior_state"] = "respect"; tampered["rourke_actor"] = tampered_actor
+	if _projection.verify_product_projection(tampered, duel, "settlement", authority): failures.append("Tampered product projection passed its closed seal.")
+	var forged_authority := authority.duplicate(true); forged_authority["duel_content_fingerprint"] = "forged"
+	if not _projection.sealed_product_projection(duel, "player_turn", forged_authority).is_empty(): failures.append("Forged duel authority mounted on the product surface.")
+	var private_variant := duel.duplicate(true)
+	private_variant["blackjack_session"] = {"dealer_cards":[{"rank":2}],"private_shoe_cursor":999}
+	private_variant["edge_schedule"] = [{}, {}, {"id":"deck_stack","active":true,"called":false,"private_roll":1}]
+	if _projection.public_duel_fingerprint(private_variant) != fingerprint: failures.append("Private Blackjack authority changed the public duel fingerprint.")
+	var complete := duel.duplicate(true); complete["status"] = "complete"; complete["outcome"] = "shown_the_door"
+	var complete_authority := authority.duplicate(true); complete_authority["duel_content_fingerprint"] = _projection.public_duel_fingerprint(complete); complete_authority["authoritative_result_ref"] = "duel:3:complete"
+	var terminal: Dictionary = _projection.sealed_product_projection(complete, "wagering", complete_authority)
+	if str(terminal.get("phase_id", "")) != "outcome_staging" or str(terminal.get("selected_ending", "")) != "shown_the_door": failures.append("Terminal duel authority did not produce its distinct outcome staging.")
 
 
 func _check_liveness_performance(failures: Array) -> void:
