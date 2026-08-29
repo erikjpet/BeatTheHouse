@@ -348,6 +348,7 @@ func _check_delivery_sweep_and_map_intel(failures: Array) -> void:
 	sweep.configured = true
 	sweep.disabled = false
 	sweep.start_action = int(sweep_run.town_state.action_index)
+	sweep.action_index = sweep.start_action
 	sweep.end_action = sweep.start_action + 4
 	sweep.segments = [{"node_id": sweep_run.current_world_node_id(), "start_action": sweep.start_action, "end_action": sweep.end_action, "dwell_actions": 4}]
 	sweep.segment_index = 0

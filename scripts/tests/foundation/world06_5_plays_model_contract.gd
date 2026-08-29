@@ -128,6 +128,10 @@ func _check_chip_dump_and_detection(failures: Array) -> void:
 
 func _check_save_revisit_and_hidden_safety(failures: Array) -> void:
 	var run: Variant = _run("WORLD65-SAVE", "blackjack")
+	var before_hostile := JSON.stringify(run.to_dict())
+	var hostile := PlayModel.activate(run, run.current_environment, "blackjack", "table_flood", RefCounted.new())
+	if bool(hostile.get("ok", true)) or JSON.stringify(run.to_dict()) != before_hostile:
+		failures.append("Caller-authored play capability mutated the live table.")
 	run.crew_play_activate("table_flood", "blackjack", run.current_environment)
 	var before_status := PlayModel.active_status(run.crew_play_state, run.crew_action_index(), run.current_environment, "blackjack")
 	var before_proposal := PlayModel.table_presence_proposal(run, run.current_environment, "blackjack", "spotter")
@@ -137,6 +141,22 @@ func _check_save_revisit_and_hidden_safety(failures: Array) -> void:
 	var after_proposal := PlayModel.table_presence_proposal(restored, restored.current_environment, "blackjack", "spotter")
 	if JSON.stringify(before_status) != JSON.stringify(after_status) or JSON.stringify(before_proposal) != JSON.stringify(after_proposal):
 		failures.append("Mid-window save/revisit changed active or proposal state.")
+	var current_state := PlayModel.restore_state(run.crew_play_state)
+	var legacy_state: Dictionary = run.crew_play_state.duplicate(true)
+	legacy_state["schema_version"] = PlayModel.LEGACY_STATE_SCHEMA_VERSION
+	if JSON.stringify(PlayModel.restore_state(legacy_state)) != JSON.stringify(current_state):
+		failures.append("Exact legacy coordinated-play state did not migrate to the current schema.")
+	var hostile_state: Dictionary = run.crew_play_state.duplicate(true)
+	hostile_state["caller_authority"] = true
+	if JSON.stringify(PlayModel.restore_state(hostile_state)) != JSON.stringify(PlayModel.default_state()):
+		failures.append("Coordinated-play restore accepted an unknown authority key.")
+	var oversized: Dictionary = run.crew_play_state.duplicate(true)
+	var tombstones: Array = []
+	for index in range(PlayModel.TOMBSTONE_LIMIT + 1):
+		tombstones.append({"play_id": "spotter", "member_ids": ["crew_switch"], "environment_key": "grand_casino_fixture", "game_id": "blackjack", "sequence": index, "ended_action": index, "reason": "window_ended"})
+	oversized["tombstones"] = tombstones
+	if JSON.stringify(PlayModel.restore_state(oversized)) != JSON.stringify(PlayModel.default_state()):
+		failures.append("Coordinated-play restore accepted an oversized tombstone set.")
 	var hidden_run: Variant = _run("WORLD65-HIDDEN", "blackjack")
 	var public_text := JSON.stringify(PlayModel.table_presence_proposal(hidden_run, hidden_run.current_environment, "blackjack", "spotter")).to_lower()
 	for forbidden in ["rng_state", "seed_value", "traitor", "betrayal", "heist_hidden", "free_heist_use", "selection_weight", "grievance_weight"]:

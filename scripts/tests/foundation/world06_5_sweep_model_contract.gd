@@ -135,6 +135,17 @@ func _check_save_revisit_and_wake(failures: Array) -> void:
 	var restored_proposal := PoliceSweepModelScript.normalize_encounter_proposal(JSON.parse_string(JSON.stringify(proposal)))
 	if JSON.stringify(restored_proposal) != JSON.stringify(proposal): failures.append("Sweep encounter proposal did not survive exact save/load normalization.")
 	var snapshot := model.snapshot()
+	var legacy_snapshot: Dictionary = snapshot.duplicate(true)
+	legacy_snapshot["schema_version"] = PoliceSweepModelScript.LEGACY_SCHEMA_VERSION
+	legacy_snapshot.erase("encounter_tombstones")
+	var legacy_restored := PoliceSweepModelScript.new()
+	legacy_restored.bind_host_capability(RefCounted.new())
+	if not legacy_restored.restore(legacy_snapshot, 4021, _sweep_config()): failures.append("Exact legacy Sweep snapshot did not restore.")
+	var hostile_snapshot: Dictionary = snapshot.duplicate(true)
+	hostile_snapshot["caller_authority"] = true
+	var hostile_restored := PoliceSweepModelScript.new()
+	hostile_restored.bind_host_capability(RefCounted.new())
+	if hostile_restored.restore(hostile_snapshot, 4021, _sweep_config()): failures.append("Sweep restore accepted an unknown authority key.")
 	var restored := PoliceSweepModelScript.new()
 	var restored_capability := RefCounted.new()
 	restored.bind_host_capability(restored_capability)

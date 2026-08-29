@@ -153,6 +153,7 @@ func intel_status(host_capability: Variant = null, intel_enabled: bool = false) 
 		return {"available": false, "observed": false, "live": false}
 	return {
 		"available": true,
+		"active": true,
 		"observed": true,
 		"live": true,
 		"current_node_id": str(current.get("current_node_id", "")),
@@ -750,7 +751,7 @@ static func _intel_projection_valid(value: Variant) -> bool:
 	if not bool(intel.get("available", false)):
 		return _exact_keys(intel, ["authority_gap", "available"]) and str(intel.get("authority_gap", "")) == INTEL_AUTHORITY_GAP \
 			or _exact_keys(intel, ["available", "live", "observed"]) and not bool(intel.get("live", true))
-	var live_status := _exact_keys(intel, ["available", "current_node_id", "heading_node_id", "live", "moves_in_actions", "observed"]) \
+	var live_status := _exact_keys(intel, ["active", "available", "current_node_id", "heading_node_id", "live", "moves_in_actions", "observed"]) \
 		and bool(intel.get("observed", false)) and not str(intel.get("current_node_id", "")).is_empty() and int(intel.get("moves_in_actions", -1)) >= 0
 	var reported_marker := _exact_keys(intel, ["available", "heading_node_id", "live", "node_id", "observed", "sighted_action", "source", "stale_actions"]) \
 		and bool(intel.get("observed", false)) and not str(intel.get("node_id", "")).is_empty() and int(intel.get("sighted_action", -1)) >= 0 \

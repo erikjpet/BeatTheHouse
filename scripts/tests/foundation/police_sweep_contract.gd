@@ -231,6 +231,16 @@ static func _check_punchline_and_escape(failures: Array) -> void:
 	if lock_actions <= 0 or lock_actions > 3:
 		failures.append("Police Sweep travel lock outlasted the patrol's deterministic departure.")
 		return
+	var lock_after_first := escape_run.current_travel_lock_remaining()
+	var cash_after_first := escape_run.bankroll
+	if not escape_run.resolve_current_police_sweep_encounter().is_empty() or escape_run.current_travel_lock_remaining() != lock_after_first or escape_run.bankroll != cash_after_first:
+		failures.append("Police Sweep replayed an already-resolved hosted encounter.")
+		return
+	var replay_restored := RunStateScript.new()
+	replay_restored.from_dict(escape_run.to_dict())
+	if not replay_restored.resolve_current_police_sweep_encounter().is_empty() or replay_restored.current_travel_lock_remaining() != lock_after_first or replay_restored.bankroll != cash_after_first:
+		failures.append("Police Sweep replayed its encounter cost after save/load.")
+		return
 	var wait_status := escape_run.sweep_wait_action_status()
 	if not bool(wait_status.get("visible", false)) or str(wait_status.get("label", "")) != "Wait out the sweep":
 		failures.append("Police Sweep lock did not expose the production wait/continue action.")
@@ -301,6 +311,7 @@ static func _arm_and_resolve(run_state, node_id: String, departure_actions: int)
 	sweep.disabled = false
 	sweep.configured = true
 	sweep.start_action = int(run_state.town_state.action_index)
+	sweep.action_index = sweep.start_action
 	sweep.end_action = sweep.start_action + maxi(1, departure_actions)
 	sweep.segments = [{"node_id": node_id, "start_action": sweep.start_action, "end_action": sweep.end_action, "dwell_actions": maxi(1, departure_actions)}]
 	sweep.segment_index = 0
