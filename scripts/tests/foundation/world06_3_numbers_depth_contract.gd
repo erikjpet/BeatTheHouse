@@ -1,6 +1,7 @@
 extends SceneTree
 
 const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
+const RunStateScript := preload("res://scripts/core/run_state.gd")
 
 
 func _initialize() -> void:
@@ -8,10 +9,12 @@ func _initialize() -> void:
 	_check_player_safe_projection(failures)
 	_check_actions_are_non_authoritative(failures)
 	_check_attendance_boundary(failures)
+	_check_host_rooted_attendance(failures)
 	_check_proposed_sequences(failures)
 	_check_untrusted_restore_fails_closed(failures)
+	_check_versioned_migration_and_causal_restore(failures)
 	if failures.is_empty():
-		print("world06_3 numbers depth contract passed authority=proposal_only")
+		print("world06_3 numbers depth contract passed authority=host_rooted migration=closed")
 		quit(0)
 		return
 	for failure in failures: push_error(str(failure))
@@ -74,6 +77,20 @@ func _check_attendance_boundary(failures: Array) -> void:
 		failures.append("Post-boundary absence was overwritable or mutated by late attendance.")
 
 
+func _check_host_rooted_attendance(failures: Array) -> void:
+	var model = _model(850)
+	var before := JSON.stringify(model.snapshot())
+	if model.host_mark_draw_presence(RefCounted.new(), model.post_action(0), "small_underground_casino", {"node_id":"small_underground_casino","environment_visit_id":"visit_fake","night_instance_id":"night_1","context_instance_id":"context_fake"}) or JSON.stringify(model.snapshot()) != before:
+		failures.append("Caller-created object identity authenticated draw attendance.")
+	var run_state = RunStateScript.new()
+	run_state.start_new("WORLD3-HOST-PRESENCE")
+	run_state.current_environment = {"id":"small_underground_casino","archetype_id":"small_underground_casino","world_node_id":"small_underground_casino","turns":0}
+	run_state.advance_environment_turns(run_state.numbers_state.post_action(0))
+	var occasion: Dictionary = run_state.numbers_state.draw_occasion_status(0)
+	if str(occasion.get("attendance", "")) != "present" or str(occasion.get("status", "")) != "witnessed" or occasion.has("cause_sequence"):
+		failures.append("RunState-owned presence did not cross the posting boundary as a player-safe witnessed occasion.")
+
+
 func _check_proposed_sequences(failures: Array) -> void:
 	var model = _model(901)
 	var expected := {
@@ -111,6 +128,60 @@ func _check_untrusted_restore_fails_closed(failures: Array) -> void:
 	malformed["action_sequence"] = 1
 	if _model(1001).restore(malformed, 1001):
 		failures.append("Malformed untrusted receipt did not fail closed.")
+
+
+func _check_versioned_migration_and_causal_restore(failures: Array) -> void:
+	var source = _model(1101)
+	var purchase: Dictionary = source.buy_slip("bar", "123", 5, "straight")
+	var current: Dictionary = source.snapshot()
+	var legacy := current.duplicate(true)
+	for key in ["depth_schema_version", "depth_causes", "draw_occasions", "bookmaker_aftermath"]:
+		legacy.erase(key)
+	var legacy_slips: Array = (legacy.get("slips", []) as Array).duplicate(true)
+	for index in range(legacy_slips.size()):
+		var row: Dictionary = (legacy_slips[index] as Dictionary).duplicate(true)
+		row.erase("physical_state")
+		legacy_slips[index] = row
+	legacy["slips"] = legacy_slips
+	var migrated = _model(1101)
+	if not migrated.restore(legacy, 1101) or int(migrated.snapshot().get("depth_schema_version", 0)) != NumbersModelScript.DEPTH_SCHEMA_VERSION or (migrated.snapshot().get("depth_causes", []) as Array).is_empty():
+		failures.append("Exact pre-depth legacy save did not migrate to deterministic causal defaults.")
+	var stripped := current.duplicate(true)
+	stripped.erase("depth_schema_version")
+	stripped.erase("depth_causes")
+	var target = _model(1102)
+	var target_before := JSON.stringify(target.snapshot())
+	if target.restore(stripped, 1101) or JSON.stringify(target.snapshot()) != target_before:
+		failures.append("Stripped current depth record downgraded or mutated the restore target.")
+	var settled = _model(1201)
+	settled.buy_slip("bar", "456", 4, "straight")
+	settled.advance_to(settled.settlement_action(0))
+	var valid: Dictionary = settled.snapshot()
+	if not _model(1201).restore(valid, 1201):
+		failures.append("Complete current causal Numbers save did not restore.")
+	var impossible := valid.duplicate(true)
+	var impossible_slips: Array = (impossible.get("slips", []) as Array).duplicate(true)
+	var impossible_slip: Dictionary = (impossible_slips[0] as Dictionary).duplicate(true)
+	var physical: Dictionary = (impossible_slip.get("physical_state", {}) as Dictionary).duplicate(true)
+	physical["holder_id"] = "caller"
+	impossible_slip["physical_state"] = physical
+	impossible_slips[0] = impossible_slip
+	impossible["slips"] = impossible_slips
+	if _model(1201).restore(impossible, 1201):
+		failures.append("Impossible caller-authored physical holder relation restored.")
+	var mismatched := valid.duplicate(true)
+	var causes: Array = (mismatched.get("depth_causes", []) as Array).duplicate(true)
+	for index in range(causes.size()):
+		var cause: Dictionary = (causes[index] as Dictionary).duplicate(true)
+		if str(cause.get("kind", "")) == "slip_settled":
+			var context: Dictionary = (cause.get("context", {}) as Dictionary).duplicate(true)
+			context["payout"] = int(context.get("payout", 0)) + 1
+			cause["context"] = context
+			causes[index] = cause
+			break
+	mismatched["depth_causes"] = causes
+	if _model(1201).restore(mismatched, 1201):
+		failures.append("Cross-causal settlement mismatch restored.")
 
 
 func _model(seed_value: int):

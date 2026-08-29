@@ -351,6 +351,7 @@ var crew_contraband_stash: Array = []
 var crew_play_state: Dictionary = {}
 var crew_heist_state: Dictionary = {}
 var numbers_state: NumbersModel
+var _numbers_host_capability: RefCounted
 var heat_history: Array = []
 var town_state: TownState
 var simulation_msec: int = 0
@@ -488,7 +489,8 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	crew_contraband_stash = []
 	crew_play_state = CrewPlayModelScript.default_state()
 	crew_heist_state = CrewHeistModelScript.empty_state()
-	numbers_state = NumbersModelScript.new()
+	_numbers_host_capability = RefCounted.new()
+	numbers_state = _new_numbers_model()
 	numbers_state.reset(seed_value)
 	heat_history = []
 	town_state = TownStateScript.new()
@@ -10053,6 +10055,16 @@ func _delivery_event_consumer_payload(consequences: Dictionary) -> Dictionary:
 	}
 
 
+# Creates the sole live Numbers owner binding. The object identity never enters
+# a proposal, snapshot, serialized key, or caller-supplied context.
+func _new_numbers_model() -> NumbersModel:
+	if _numbers_host_capability == null:
+		_numbers_host_capability = RefCounted.new()
+	var model: NumbersModel = NumbersModelScript.new()
+	model.bind_host_capability(_numbers_host_capability)
+	return model
+
+
 # Returns the player-safe Numbers projection used by venue surfaces.
 func numbers_status() -> Dictionary:
 	if numbers_state == null:
@@ -12697,7 +12709,7 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 	var numbers_record := _copy_dict(snapshot.get("numbers_state_object", {}))
 	if bool(numbers_record.get("present", false)):
 		if numbers_state == null or not preserve_live_aliases:
-			numbers_state = NumbersModelScript.new()
+			numbers_state = _new_numbers_model()
 		numbers_state.restore(_copy_dict(numbers_record.get("state", {})), seed_value, _copy_dict(numbers_record.get("config", {})))
 	else:
 		numbers_state = null
@@ -12745,6 +12757,14 @@ func _advance_global_boundary_start(safe_amount: int) -> void:
 	simulation_msec = maxi(0, simulation_msec + safe_amount * SIMULATION_ACTION_MSEC)
 	event_cadence_advance_actions(safe_amount)
 	if numbers_state != null:
+		if current_world_node_id() == "small_underground_casino":
+			_ensure_scenario_host_public_context()
+			numbers_state.host_mark_draw_presence(
+				_numbers_host_capability,
+				_crew_action_index(),
+				current_world_node_id(),
+				_scenario_host_public_context(),
+			)
 		_apply_numbers_events(numbers_state.advance_to(_crew_action_index()))
 	var alcohol_decay := safe_amount * DRUNK_TURN_DECAY
 	if alcohol_decay > 0:
@@ -14434,7 +14454,8 @@ func from_dict(data: Dictionary) -> void:
 		DeliveryRunModelScript.normalize_state(data.get("active_delivery_run", {})),
 		current_world_node_id()
 	)
-	numbers_state = NumbersModelScript.new()
+	_numbers_host_capability = RefCounted.new()
+	numbers_state = _new_numbers_model()
 	var saved_numbers_value: Variant = data.get("numbers_state", {})
 	if typeof(saved_numbers_value) == TYPE_DICTIONARY and not (saved_numbers_value as Dictionary).is_empty():
 		numbers_state.restore(saved_numbers_value as Dictionary, seed_value)
