@@ -1216,11 +1216,20 @@ func _blackjack_host_detached() -> RunState:
 	return candidate
 
 
+func _blackjack_host_normalized_candidate(candidate: RunState) -> RunState:
+	if candidate == null:
+		return null
+	var normalized := RunState.new()
+	normalized.from_dict(candidate.to_save_snapshot())
+	return normalized
+
+
 func _blackjack_host_publish(candidate: RunState) -> bool:
 	if candidate == null or run_state == null:
 		return false
-	var normalized := RunState.new()
-	normalized.from_dict(candidate.to_save_snapshot())
+	var normalized := _blackjack_host_normalized_candidate(candidate)
+	if normalized == null:
+		return false
 	var snapshot := normalized.to_save_snapshot()
 	var verifier := RunState.new()
 	verifier.from_dict(snapshot)
@@ -1311,6 +1320,9 @@ func _blackjack_host_surface_intent(surface_action: String, index: int, confirm_
 			# non-ledger defaults. The delivery must fingerprint that exact stable
 			# candidate, which is the one published below.
 			_blackjack_host_store_ledger(candidate, ledger)
+			candidate = _blackjack_host_normalized_candidate(candidate)
+			if candidate == null:
+				return _blackjack_host_rejection("internal_fail_closed", "Blackjack staged action could not be normalized before sealing.")
 			ledger = _blackjack_host_ledger(candidate, true)
 			var action_id := str(command.get("action_id", ""))
 			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
@@ -1350,6 +1362,9 @@ func _blackjack_host_auto_intent(surface_time_msec: int) -> Dictionary:
 		ledger = BlackjackActionAuthorityScript.stage_session(ledger, next_session)
 		if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)):
 			_blackjack_host_store_ledger(candidate, ledger)
+			candidate = _blackjack_host_normalized_candidate(candidate)
+			if candidate == null:
+				return _blackjack_host_rejection("internal_fail_closed", "Blackjack staged auto action could not be normalized before sealing.")
 			ledger = _blackjack_host_ledger(candidate, true)
 			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
 			var issued := BlackjackActionAuthorityScript.issue_delivery(ledger, str(command.get("action_id", "")), _blackjack_host_trusted_context(candidate, delivery_stake), delivery_stake, recovery_session)
