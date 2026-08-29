@@ -2787,13 +2787,30 @@ func scenario_enqueue_fact(fact_type: String, producer: String, payload: Diction
 	var stable_fact_id := fact_id.strip_edges()
 	if stable_fact_id.is_empty():
 		stable_fact_id = "%s:%s:%d" % [producer, fact_type, serial]
+	var boundary_serial := maxi(int(state.get("boundary_serial", 0)), _crew_action_index())
+	if not fact_id.strip_edges().is_empty():
+		var prior_envelope: Dictionary = {}
+		for queued_value in _copy_array(state.get("fact_queue", [])):
+			var queued := _copy_dict(queued_value)
+			if str(queued.get("fact_id", "")) == stable_fact_id:
+				prior_envelope = queued
+				break
+		if prior_envelope.is_empty():
+			for record_value in _copy_array(state.get("fact_receipt_records", [])):
+				var record := _copy_dict(record_value)
+				if str(record.get("receipt_key", "")) == stable_fact_id:
+					prior_envelope = _copy_dict(record.get("envelope", {}))
+					break
+		if not prior_envelope.is_empty():
+			serial = int(prior_envelope.get("producer_serial", serial))
+			boundary_serial = int(prior_envelope.get("boundary_serial", boundary_serial))
 	var typed_fact := ScenarioSequenceRuntimeScript.fact(
 		fact_type,
 		producer,
 		target_node,
 		stable_fact_id,
 		serial,
-		maxi(int(state.get("boundary_serial", 0)), _crew_action_index()),
+		boundary_serial,
 		payload
 	)
 	var environment_before := current_environment.duplicate(true)

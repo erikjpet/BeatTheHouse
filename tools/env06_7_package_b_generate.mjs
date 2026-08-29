@@ -67,11 +67,11 @@ const specs = [
     arrival: "Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
     exit: "The pedestrian stripe stays clear between the forecourt and road.",
     props: [["lead_rig", "Lead rig marker", "vehicle", "left"], ["relay_rig", "Relay rig marker", "vehicle", "center"], ["tail_rig", "Tail rig marker", "vehicle", "right"], ["freight_pallet", "Freight pallet", "stock", "foreground"], ["departure_board", "Convoy departure board", "workstation", "background"]],
-    actors: [["lead_driver", "Lead driver", "gas_lead_driver", "work", "left"], ["relay_driver", "Relay driver", "gas_relay_driver", "idle", "center"], ["machine_driver", "Machine-side driver", "gas_machine_driver", "idle", "right"]],
+    actors: [["lead_driver", "Lead driver", "gas_lead_driver", "work", "left"], ["relay_driver", "Relay driver", "gas_relay_driver", "idle", "center"], ["machine_driver", "Machine driver", "gas_machine_driver", "idle", "right"]],
     beats: [
       ["read_departure_board", "Read departure order", "Compare the board with the rigs physically blocking each wave.", "set_appearance", "departure_board", "wave_order", "set_pose", "lead_driver", "calling_wave"],
-      ["clear_freight_lane", "Clear the freight lane", "Shift the pallet to free one rig without closing the pedestrian stripe.", "move", "freight_pallet", "background", "set_position", "relay_driver", "foreground"],
-      ["release_convoy_wave", "Release a convoy wave", "Signal the correct driver group and free its machine seats.", "move", "lead_rig", "exit_lane", "set_behavior", "lead_driver", "depart"]
+      ["clear_freight_lane", "Clear the freight lane", "Shift the pallet to free one rig and send the machine-side driver back to the convoy.", "move", "freight_pallet", "background", "despawn", "machine_driver", ""],
+      ["release_convoy_wave", "Release a convoy wave", "Signal the correct driver group and mark its lead rig released.", "set_state", "lead_rig", "released", "set_behavior", "lead_driver", "depart"]
     ],
     outcomes: [["convoy_coordinated", "Convoy coordinated", "Rigs depart in order and traveler seats reopen beside a clear forecourt.", "set_state", "departure_board", "departed_orderly"], ["machine_claim_won", "Machine claim won", "One rig remains loading while its driver's machine seat opens.", "set_appearance", "relay_rig", "loading_hold"], ["convoy_gridlocked", "Convoy gridlocked", "The tail rig rotates across two pumps and the freight lane closes.", "set_state", "tail_rig", "cross_pumps"], ["convoy_refused", "Convoy refused", "Drivers keep their original stations and the marked stripe remains the only route.", "set_appearance", "departure_board", "no_coordinator"], ["convoy_interrupted", "Convoy interrupted", "One released rig is gone and remaining wave numbers stay posted.", "set_state", "lead_rig", "departed_partial"]],
     fact: "travel_departed", connection: "traveler_departure_link", expiry: ["town_action", 1, "cleanup"]
@@ -110,10 +110,10 @@ const specs = [
     arrival: "A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations.",
     exit: "A cone-marked walkway remains clear beside the work stations.",
     props: [["work_order_board", "Road work-order board", "workstation", "background"], ["stake_envelope", "Pooled-stake envelope", "evidence", "center"], ["barricade_stack", "Road barricade stack", "obstacle", "left"], ["repair_crate", "Repair parts crate", "stock", "right"]],
-    actors: [["crew_foreman", "Road crew foreman", "gas_crew_foreman", "work", "left"], ["stake_keeper", "Crew stake keeper", "gas_stake_keeper", "watch", "center"], ["machine_player", "Crew machine player", "gas_machine_player", "idle", "right"]],
+    actors: [["crew_foreman", "Road foreman", "gas_crew_foreman", "work", "left"], ["stake_keeper", "Stake keeper", "gas_stake_keeper", "watch", "center"], ["machine_player", "Crew player", "gas_machine_player", "idle", "right"]],
     beats: [
       ["audit_pooled_stake", "Audit the pooled stake", "Match envelope marks to the crew names and occupied machine station.", "set_state", "stake_envelope", "audited", "set_pose", "stake_keeper", "checking_marks"],
-      ["stage_repair_parts", "Stage repair parts", "Move the correct crate beside the barricades before settling the work order.", "move", "repair_crate", "left", "set_position", "crew_foreman", "center"],
+      ["stage_repair_parts", "Stage repair parts", "Move the correct crate beside the barricades before settling the work order.", "move", "repair_crate", "left", "set_pose", "crew_foreman", "staging_parts"],
       ["reconcile_work_order", "Reconcile the work order", "Mark whether pooled play funded parts or delayed the crew.", "set_appearance", "work_order_board", "reconciled", "set_behavior", "machine_player", "depart"]
     ],
     outcomes: [["route_repaired", "Route repaired", "The crew takes the staged parts and removes the barricades from one road lane.", "set_state", "barricade_stack", "loaded_out"], ["floor_occupied", "Floor occupied", "The stake envelope stays open and crew members rotate through machines.", "set_appearance", "stake_envelope", "active_pool"], ["crew_departed_early", "Crew departed early", "The work order is crossed out and unstaged barricades remain.", "set_state", "work_order_board", "departed_early"], ["stake_dispute_refused", "Stake dispute refused", "The foreman closes the envelope and keeps the walkway open.", "set_appearance", "stake_envelope", "sealed_dispute"], ["payday_interrupted", "Payday interrupted", "Audited marks remain on the envelope without settling any game authority.", "set_state", "stake_envelope", "audit_paused"]],
@@ -123,12 +123,12 @@ const specs = [
     id: "gas_station_storm_shelter", archetype: "gas_station_casino", pressure: "progressive_weather_closure",
     arrival: "Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones.",
     exit: "The rear emergency door remains clear behind the shelter tape.",
-    props: [["rain_shutters", "Rain shutters", "door", "background"], ["generator_cart", "Generator cart", "utility", "left"], ["supply_shelves", "Storm supply shelves", "stock", "right"], ["safe_zone_tape", "Safe-zone floor tape", "route", "center"], ["power_panel", "Shelter power panel", "workstation", "service_lane"]],
-    actors: [["shelter_clerk", "Shelter clerk", "gas_shelter_clerk", "work", "service_lane"], ["family_group", "Sheltering family", "gas_shelter_family", "idle", "right"], ["driver_group", "Sheltering drivers", "gas_shelter_drivers", "idle", "left"]],
+    props: [["rain_shutters", "Rain shutters", "door", "background"], ["generator_cart", "Generator", "utility", "left"], ["supply_shelves", "Storm supply shelves", "stock", "right"], ["safe_zone_tape", "Safe-zone floor tape", "route", "center"], ["power_panel", "Shelter power panel", "workstation", "service_lane"]],
+    actors: [["family_group", "Sheltering family", "gas_shelter_family", "idle", "right"], ["driver_group", "Sheltering drivers", "gas_shelter_drivers", "idle", "left"]],
     beats: [
-      ["close_rain_shutters", "Close rain shutters", "Latch the exterior shutters before wind reaches the supply lane.", "set_state", "rain_shutters", "latched", "set_position", "driver_group", "center"],
-      ["roll_generator_safe", "Roll the generator safe", "Move the generator cart onto the dry service pad.", "move", "generator_cart", "service_lane", "set_pose", "shelter_clerk", "checking_power"],
-      ["inventory_storm_supplies", "Inventory storm supplies", "Count water and blankets before allocating the taped zones.", "set_appearance", "supply_shelves", "counted", "set_position", "family_group", "center"],
+      ["close_rain_shutters", "Close rain shutters", "Latch the exterior shutters before wind reaches the supply lane.", "set_state", "rain_shutters", "latched", "set_pose", "driver_group", "sheltering"],
+      ["roll_generator_safe", "Secure the generator", "Secure the generator cart on its dry pad while the drivers check power.", "set_state", "generator_cart", "dry_pad", "set_pose", "driver_group", "checking_power"],
+      ["inventory_storm_supplies", "Inventory storm supplies", "Count water and blankets before allocating the taped zones.", "set_appearance", "supply_shelves", "counted", "set_pose", "family_group", "receiving_supplies"],
       ["allocate_safe_space", "Allocate safe space", "Place drivers and family on opposite sides of the powered lane.", "set_state", "safe_zone_tape", "allocated", "set_behavior", "driver_group", "idle"]
     ],
     outcomes: [["station_reopened", "Station reopened", "Shutters lift, generator returns left, and ordinary service lanes reopen.", "set_appearance", "rain_shutters", "open_after_storm"], ["shelter_blackout", "Shelter blackout", "The dead panel moves everyone inside the taped center zone.", "set_state", "power_panel", "blackout"], ["shelter_crowded", "Shelter remains crowded", "Supplies stay rationed and both groups occupy separate marked zones.", "set_state", "safe_zone_tape", "crowded_split"], ["shelter_refused", "Shelter duty refused", "The clerk closes exterior shutters but makes no unsafe allocation.", "set_appearance", "power_panel", "clerk_only"], ["shelter_interrupted", "Shelter duty interrupted", "Latched shutters and counted stock preserve safe partial progress.", "set_state", "supply_shelves", "partial_count"]],
@@ -142,8 +142,8 @@ const specs = [
     actors: [["fire_tender", "Fire tender", "beach_fire_tender", "work", "center"], ["night_swimmers", "Night swimmers", "beach_night_swimmers", "idle", "right"]],
     beats: [
       ["read_tide_wind", "Read tide and wind", "Compare the tide marker with the windbreak before placing fuel.", "set_appearance", "tide_marker", "wind_read", "set_pose", "fire_tender", "testing_wind"],
-      ["stack_bonfire_fuel", "Stack bonfire fuel", "Carry dry driftwood into the ring above the wet line.", "move", "driftwood_bundle", "center", "set_position", "fire_tender", "left"],
-      ["reposition_beach_seats", "Reposition beach seats", "Arc the seats around the lee side without closing the dune stair.", "move", "beach_seats", "background", "set_position", "night_swimmers", "center"]
+      ["stack_bonfire_fuel", "Stack bonfire fuel", "Stack the dry driftwood beside the ring above the wet line.", "set_state", "driftwood_bundle", "stacked_dry", "set_pose", "fire_tender", "stacking_fuel"],
+      ["reposition_beach_seats", "Reposition beach seats", "Arc the seats around the lee side without closing the dune stair.", "set_appearance", "beach_seats", "lee_arc", "set_behavior", "night_swimmers", "idle"]
     ],
     outcomes: [["communal_fire", "Communal fire", "Seats circle a bright ring and swimmers return above the tide line.", "set_state", "bonfire_ring", "communal_lit"], ["hidden_fire", "Hidden fire", "The low fire burns behind the windbreak with a narrow seated arc.", "set_appearance", "windbreak", "concealing_fire"], ["fire_extinguished", "Fire extinguished", "Wet stones and stacked seats leave the shoreline route open.", "set_state", "bonfire_ring", "extinguished"], ["bonfire_refused", "Bonfire refused", "Fuel remains bundled while the dune stair stays clear.", "set_appearance", "driftwood_bundle", "untouched"], ["bonfire_interrupted", "Bonfire interrupted", "A half-built ring sits above a visibly updated tide marker.", "set_state", "tide_marker", "partial_build"]],
     fact: "world_boundary", connection: "weather_tide_boundary", expiry: ["night_end", 1, "cleanup"]
@@ -153,11 +153,11 @@ const specs = [
     arrival: "A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
     exit: "The inland boardwalk remains open beyond the staging line.",
     props: [["warning_flag", "Storm warning flag", "signal", "background"], ["rental_props", "Loose beach rentals", "stock", "right"], ["rescue_skiff", "Rescue skiff", "vehicle", "left"], ["evacuation_line", "Inland staging line", "route", "center"], ["closed_stall", "Closing rental stall", "workstation", "foreground"]],
-    actors: [["lifeguard", "Lifeguard", "beach_lifeguard", "guard", "center"], ["stall_keeper", "Rental stall keeper", "beach_stall_keeper", "work", "foreground"], ["late_swimmer", "Late swimmer", "beach_late_swimmer", "idle", "right"]],
+    actors: [["lifeguard", "Lifeguard", "beach_lifeguard", "guard", "center"], ["late_swimmer", "Late swimmer", "beach_late_swimmer", "idle", "right"]],
     beats: [
       ["raise_warning_flag", "Raise the warning flag", "Hoist the visible warning before securing shoreline props.", "set_state", "warning_flag", "raised", "set_pose", "lifeguard", "signaling"],
-      ["lash_rental_props", "Lash rental props", "Bundle loose rentals onto the stall's inland side.", "move", "rental_props", "foreground", "set_position", "stall_keeper", "right"],
-      ["stage_rescue_skiff", "Stage the rescue skiff", "Pull the skiff to the evacuation line for the late swimmer.", "move", "rescue_skiff", "center", "set_behavior", "lifeguard", "work"],
+      ["lash_rental_props", "Lash rental props", "Bundle loose rentals onto the stall's inland side.", "set_state", "rental_props", "lashed_inland", "set_pose", "lifeguard", "securing_rentals"],
+      ["stage_rescue_skiff", "Stage the rescue skiff", "Secure the skiff beside the evacuation line for the late swimmer.", "set_state", "rescue_skiff", "staged_inland", "set_behavior", "lifeguard", "work"],
       ["evacuate_shoreline", "Evacuate shoreline", "Move the final actor inland before the warning phase closes.", "set_appearance", "evacuation_line", "active_inland", "set_behavior", "late_swimmer", "depart"]
     ],
     outcomes: [["shoreline_protected", "Shoreline protected", "Lashed rentals and the staged skiff survive behind the inland line.", "set_state", "closed_stall", "secured"], ["shoreline_damaged", "Shoreline damaged", "Unsecured stall pieces scatter below the intact boardwalk exit.", "set_appearance", "rental_props", "storm_scattered"], ["shoreline_abandoned", "Shoreline abandoned", "Actors leave early and the rescue skiff remains below the warning flag.", "set_state", "rescue_skiff", "abandoned"], ["storm_task_refused", "Storm task refused", "The lifeguard clears people while loose props remain marked.", "set_appearance", "warning_flag", "people_only_warning"], ["evacuation_interrupted", "Evacuation interrupted", "Secured rentals remain inland while the skiff marks incomplete evacuation.", "set_state", "evacuation_line", "partial_evacuation"]],
@@ -168,13 +168,13 @@ const specs = [
     arrival: "Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones.",
     exit: "The boardwalk ramp remains outside the crowd-control rope.",
     props: [["food_stall", "Food stall", "service", "left"], ["craft_stall", "Craft stall", "service", "right"], ["festival_stage", "Festival cable stage", "workstation", "background"], ["schedule_board", "Festival schedule board", "clue", "center"], ["lost_child_marker", "Lost-child meeting marker", "signal", "foreground"], ["crowd_rope", "Moving crowd rope", "route", "service_lane"]],
-    actors: [["stage_manager", "Stage manager", "beach_stage_manager", "work", "background"], ["lost_child", "Lost child", "beach_lost_child", "idle", "foreground"], ["stall_vendor", "Stall vendor", "beach_stall_vendor", "work", "left"], ["crowd_marshal", "Crowd marshal", "beach_crowd_marshal", "guard", "center"]],
+    actors: [["lost_child", "Lost child", "beach_lost_child", "idle", "foreground"], ["stall_vendor", "Stall vendor", "beach_stall_vendor", "work", "left"]],
     beats: [
-      ["read_festival_schedule", "Read the moving schedule", "Compare stage changes with the child's last seen stall.", "set_appearance", "schedule_board", "route_noted", "set_pose", "stage_manager", "checking_schedule"],
-      ["move_crowd_rope", "Move the crowd rope", "Open a lane from the marker to the next attraction.", "move", "crowd_rope", "right", "set_position", "crowd_marshal", "service_lane"],
-      ["trace_attraction_route", "Trace the attraction route", "Follow physical stall clues as the crowd changes zones.", "set_state", "craft_stall", "clue_found", "set_position", "lost_child", "right"],
-      ["reset_stage_cables", "Reset stage cables", "Clear the route while the schedule gap is active.", "set_state", "festival_stage", "cables_safe", "set_behavior", "stage_manager", "work"],
-      ["reunite_at_meeting_marker", "Reunite at the marker", "Return the child through the reopened lane before the final set.", "move", "lost_child_marker", "center", "set_behavior", "lost_child", "depart"]
+      ["read_festival_schedule", "Read the moving schedule", "Compare stage changes with the child's last seen stall.", "set_appearance", "schedule_board", "route_noted", "set_pose", "stall_vendor", "checking_schedule"],
+      ["move_crowd_rope", "Move the crowd rope", "Open a lane from the marker to the next attraction.", "set_state", "crowd_rope", "lane_open", "set_pose", "stall_vendor", "directing_lane"],
+      ["trace_attraction_route", "Trace the attraction route", "Follow physical stall clues as the crowd changes zones.", "set_state", "craft_stall", "clue_found", "set_pose", "lost_child", "following_route"],
+      ["reset_stage_cables", "Reset stage cables", "Clear the route while the schedule gap is active.", "set_state", "festival_stage", "cables_safe", "set_behavior", "stall_vendor", "work"],
+      ["reunite_at_meeting_marker", "Reunite at the marker", "Return the child through the reopened lane before the final set.", "set_state", "lost_child_marker", "reunion_ready", "set_behavior", "lost_child", "depart"]
     ],
     outcomes: [["lineup_changed", "Lineup changed", "The recovered schedule moves one act while the stage and crowd lane stay open.", "set_state", "schedule_board", "revised_lineup"], ["stall_closed", "Stall closed", "The clue-bearing craft stall shutters and its crowd relocates left.", "set_appearance", "craft_stall", "closed_after_search"], ["after_hours_beach", "After-hours beach", "Stalls pack down around a cable-safe empty stage.", "set_state", "festival_stage", "after_hours"], ["festival_task_refused", "Festival task refused", "The meeting marker stays staffed while attractions continue their route.", "set_appearance", "lost_child_marker", "marshal_staffed"], ["festival_interrupted", "Festival task interrupted", "A moved rope and marked schedule preserve the partial search route.", "set_state", "crowd_rope", "partial_route"]],
     fact: "travel_arrived", connection: "traveler_festival_schedule", expiry: ["visit_end", 1, "cleanup"]
@@ -184,6 +184,20 @@ const specs = [
 const inputs = ["ui_accept", "ui_right", "ui_down", "ui_left", "ui_cancel", "ui_up"];
 const commonZones = ["background", "center", "exit_lane", "foreground", "left", "right", "service_lane"];
 const stationAnchors = {motel: "room_walkway", gas_station_casino: "cashier_counter", beach: "shoreline"};
+const spatialBindings = {
+  motel_conventioneers: {phase_objects: {luggage_cart: "package_b_motel_top_mid"}},
+  motel_stakeout: {actors: {south_observer: "package_b_motel_top_left"}, phase_objects: {laundry_trolley: "package_b_motel_top_mid"}},
+  motel_weekly_rates: {exit: "package_b_motel_safe_exit"},
+  motel_wedding_overflow: {station: "package_b_motel_station", objects: {garment_rack: "package_b_motel_top_mid"}, actors: {wedding_runner: "package_b_motel_top_left"}, phase_objects: {bouquet_case: "package_b_motel_top_left"}},
+  gas_station_trucker_convoy: {objects: {tail_rig: "package_b_gas_top_left"}, actors: {machine_driver: "package_b_gas_top_mid", relay_driver: "package_b_gas_top_right"}},
+  gas_station_tour_bus_stop: {objects: {tour_bus_door: "package_b_gas_top_left"}, actors: {bus_driver: "package_b_gas_top_mid", stranded_passenger: "package_b_gas_top_right"}},
+  gas_station_graveyard_shift: {actors: {night_clerk: "package_b_gas_top_mid"}},
+  gas_station_road_crew_payday: {station: "package_b_gas_low_left", objects: {barricade_stack: "package_b_gas_top_mid"}, actors: {machine_player: "package_b_gas_top_left", stake_keeper: "package_b_gas_top_right"}},
+  gas_station_storm_shelter: {objects: {supply_shelves: "package_b_gas_top_left"}, actors: {family_group: "package_b_gas_top_mid"}},
+  beach_bonfire_night: {exit: "package_b_beach_safe_exit_low_left", actors: {night_swimmers: "package_b_beach_top_left"}},
+  beach_storm_coming: {exit: "package_b_beach_safe_exit_low_left", objects: {rental_props: "package_b_beach_top_left"}, actors: {late_swimmer: "package_b_beach_top_mid"}},
+  beach_festival_weekend: {exit: "package_b_beach_safe_exit_low_left", objects: {craft_stall: "package_b_beach_top_left"}, actors: {lost_child: "package_b_beach_top_mid"}},
+};
 
 function sceneOp(op, receipt, id, value = "") {
   const row = {family: "scene_ops", op, receipt_id: receipt, owner_namespace: "scenario", stable_object_id: id};
@@ -213,70 +227,82 @@ function interactionOp(receipt, id, label, actions, safeExit = false) {
       hit_bounds: {w: 56, h: 56}, min_target_size: 44, safe_exit: safeExit, alternate_exit: false}};
 }
 
-function spawnScene(spec, row, index) {
+function spawnScene(spec, row, index, binding) {
   const [id, label, role, zone] = row;
-  return {family: "scene_ops", op: "spawn", receipt_id: `arrival_${spec.id}_${id}`, owner_namespace: "scenario", stable_object_id: `${spec.id}_${id}`,
+  const result = {family: "scene_ops", op: "spawn", receipt_id: `arrival_${spec.id}_${id}`, owner_namespace: "scenario", stable_object_id: `${spec.id}_${id}`,
     object: {label, role, zone_id: zone, bounds: {w: 48 + (index % 3) * 12, h: 44 + (index % 2) * 12}, visible: true, enabled: true, state: "arrival", appearance: `${id}_arrival`}};
+  if (binding.objects?.[id]) result.object.anchor_id = binding.objects[id];
+  return result;
 }
 
-function spawnExitScene(spec) {
+function spawnExitScene(spec, binding) {
   const exitId = `${spec.id}_safe_exit`;
-  return {family: "scene_ops", op: "spawn", receipt_id: `arrival_${spec.id}_exit_visual`, owner_namespace: "scenario", stable_object_id: exitId,
+  const result = {family: "scene_ops", op: "spawn", receipt_id: `arrival_${spec.id}_exit_visual`, owner_namespace: "scenario", stable_object_id: exitId,
     object: {label: "Marked safe exit", role: "exit", zone_id: "exit_lane", bounds: {w: 56, h: 56}, visible: true, enabled: true, state: "clear", appearance: "marked_lane"}};
+  if (binding.exit) result.object.anchor_id = binding.exit;
+  return result;
 }
 
-function spawnStationScene(spec, id, label, boundary) {
+function spawnStationScene(spec, id, label, boundary, binding) {
   return {family: "scene_ops", op: "spawn", receipt_id: `${spec.id}_${boundary}_spawn_${id}`, owner_namespace: "scenario", stable_object_id: id,
-    object: {label, role: "task_station", anchor_id: stationAnchors[spec.archetype], bounds: {w: 64, h: 56}, visible: true, enabled: true, state: "ready", appearance: "task_ready"}};
+    object: {label, role: "task_station", anchor_id: binding.station ?? stationAnchors[spec.archetype], bounds: {w: 64, h: 56}, visible: true, enabled: true, state: "ready", appearance: "task_ready"}};
 }
 
-function spawnActor(spec, row, index) {
+function spawnActor(spec, row, index, binding) {
   const [id, label, actorId, behavior, zone] = row;
-  return {family: "actor_ops", op: "spawn", receipt_id: `arrival_${spec.id}_${id}`, owner_namespace: "scenario", stable_object_id: `${spec.id}_${id}`,
+  const result = {family: "actor_ops", op: "spawn", receipt_id: `arrival_${spec.id}_${id}`, owner_namespace: "scenario", stable_object_id: `${spec.id}_${id}`,
     actor: {label, actor_id: actorId, zone_id: zone, behavior, pose: index % 2 ? "waiting" : "working"}};
+  if (binding.actors?.[id]) result.actor.anchor_id = binding.actors[id];
+  return result;
 }
 
 function buildScenario(spec, scenarioIndex) {
   const objectiveId = `${spec.id}_work`;
   const exitId = `${spec.id}_safe_exit`;
+  const stationId = `${spec.id}_station`;
+  const binding = spatialBindings[spec.id] ?? {};
   const phases = [];
   const firstVerb = spec.beats[0][0];
   phases.push({
     id: "arrival", label: "Arrival tableau", arrival_feedback: spec.arrival, exit_prompt: spec.exit,
     entry_conditions: [{type: "always"}], objective_ids: [objectiveId], advance_after_actions: 0,
-    scene_ops: [...spec.props.map((row, i) => spawnScene(spec, row, i)), spawnExitScene(spec), spawnStationScene(spec, `${spec.id}_station_0`, spec.beats[0][1], "arrival")],
+    scene_ops: [...spec.props.map((row, i) => spawnScene(spec, row, i, binding)), spawnExitScene(spec, binding), spawnStationScene(spec, stationId, spec.beats[0][1], "arrival", binding)],
     interaction_ops: [
-      interactionOp(`arrival_${spec.id}_exit`, exitId, "Marked safe exit", [action(`${spec.id}_leave_safe`, "Leave by the safe route", 5)], true),
-      interactionOp(`arrival_${spec.id}_${firstVerb}`, `${spec.id}_station_0`, spec.beats[0][1], [action(firstVerb, spec.beats[0][1], 0, "complete_objective_step", {objective_id: objectiveId, step_id: firstVerb})])
+      interactionOp(`arrival_${spec.id}_exit`, exitId, "Marked safe exit", [action(`${spec.id}_leave_safe`, "Leave by the safe route", 5, "set_local", {key: "safe_exit_requested", value: true})], true),
+      interactionOp(`arrival_${spec.id}_${firstVerb}`, stationId, spec.beats[0][1], [action(firstVerb, spec.beats[0][1], 0, "complete_objective_step", {objective_id: objectiveId, step_id: firstVerb})])
     ],
-    actor_ops: spec.actors.map((row, i) => spawnActor(spec, row, i)),
+    actor_ops: spec.actors.map((row, i) => spawnActor(spec, row, i, binding)),
     transition_ops: [{family: "transition_ops", op: "stage", receipt_id: `arrival_${spec.id}_stage`, owner_namespace: "scenario", stable_object_id: `${spec.id}_arrival_stage`, channel: "scenario", message: spec.arrival, stage_id: `${spec.id}_arrival`, duration_boundaries: 1 + (scenarioIndex % 3), reduced_motion_message: "Arrival objects and the marked exit appear without motion."}],
-    branches: [{id: `${spec.id}_begin`, condition: {type: "command", command_id: firstVerb}, next_phase: "beat_1"}]
+    branches: [
+      {id: `${spec.id}_begin`, condition: {type: "command", command_id: firstVerb}, next_phase: "beat_1"},
+      {id: `${spec.id}_safe_arrival`, condition: {type: "command", command_id: `${spec.id}_leave_safe`}, next_phase: "safe_exit"}
+    ]
   });
   for (let i = 0; i < spec.beats.length; i++) {
     const beat = spec.beats[i];
     const next = i + 1 < spec.beats.length ? `beat_${i + 2}` : "decision";
-    const previousStation = `${spec.id}_station_${i}`;
-    const nextStation = `${spec.id}_station_${i + 1}`;
     const nextBeat = spec.beats[i + 1];
     const sceneId = `${spec.id}_${beat[4]}`;
     const actorId = `${spec.id}_${beat[7]}`;
     const sceneOperation = sceneOp(beat[3], `${spec.id}_beat_${i + 1}_${beat[3]}`, sceneId, beat[5]);
     const actorOperation = actorOp(beat[6], `${spec.id}_beat_${i + 1}_${beat[6]}`, actorId, beat[8]);
-    const interactionOps = [{family: "interaction_ops", op: "remove", receipt_id: `${spec.id}_remove_station_${i}`, owner_namespace: "scenario", stable_object_id: previousStation}];
-    if (nextBeat) interactionOps.push(interactionOp(`${spec.id}_add_station_${i + 1}`, nextStation, nextBeat[1], [action(nextBeat[0], nextBeat[1], i + 1, "complete_objective_step", {objective_id: objectiveId, step_id: nextBeat[0]})]));
-    else interactionOps.push(interactionOp(`${spec.id}_add_advance_station`, `${spec.id}_advance_station`, "Open the aftermath station", [
+    if (binding.phase_objects?.[beat[4]]) sceneOperation.anchor_id = binding.phase_objects[beat[4]];
+    if (binding.phase_actors?.[beat[7]]) actorOperation.anchor_id = binding.phase_actors[beat[7]];
+    const interactionOps = [{family: "interaction_ops", op: "remove", receipt_id: `${spec.id}_remove_station_${i}`, owner_namespace: "scenario", stable_object_id: stationId}];
+    if (nextBeat) interactionOps.push(interactionOp(`${spec.id}_add_station_${i + 1}`, stationId, nextBeat[1], [action(nextBeat[0], nextBeat[1], i + 1, "complete_objective_step", {objective_id: objectiveId, step_id: nextBeat[0]})]));
+    else interactionOps.push(interactionOp(`${spec.id}_add_advance_station`, stationId, "Open the aftermath station", [
       action(`${spec.id}_open_decision`, "Open the aftermath station", 3)
     ]));
-    const stationSceneOps = [sceneOperation, sceneOp("remove", `${spec.id}_beat_${i + 1}_remove_${previousStation}`, previousStation)];
-    if (nextBeat) stationSceneOps.push(spawnStationScene(spec, nextStation, nextBeat[1], `beat_${i + 1}`));
-    else stationSceneOps.push(spawnStationScene(spec, `${spec.id}_advance_station`, "Open the aftermath station", `beat_${i + 1}`));
+    const stationSceneOps = [sceneOperation, sceneOp("set_state", `${spec.id}_beat_${i + 1}_station_state`, stationId, nextBeat ? `beat_${i + 1}_ready` : "decision_available")];
     phases.push({
       id: `beat_${i + 1}`, label: beat[1], arrival_feedback: beat[2], exit_prompt: spec.exit,
       entry_conditions: [], objective_ids: [objectiveId], advance_after_actions: 0,
       scene_ops: stationSceneOps, interaction_ops: interactionOps, actor_ops: [actorOperation],
       transition_ops: [{family: "transition_ops", op: i % 2 ? "feedback" : "scene_change", receipt_id: `${spec.id}_beat_${i + 1}_feedback`, owner_namespace: "scenario", stable_object_id: `${spec.id}_beat_${i + 1}_transition`, channel: "scenario", message: beat[2], ...(i % 2 ? {} : {change_id: `${spec.id}_change_${i + 1}`})}],
-      branches: [{id: `${spec.id}_advance_${i + 1}`, condition: {type: "command", command_id: nextBeat ? nextBeat[0] : `${spec.id}_open_decision`}, next_phase: next}]
+      branches: [
+        {id: `${spec.id}_advance_${i + 1}`, condition: {type: "command", command_id: nextBeat ? nextBeat[0] : `${spec.id}_open_decision`}, next_phase: next},
+        {id: `${spec.id}_safe_beat_${i + 1}`, condition: {type: "command", command_id: `${spec.id}_leave_safe`}, next_phase: "safe_exit"}
+      ]
     });
   }
   phases.push({
@@ -284,12 +310,11 @@ function buildScenario(spec, scenarioIndex) {
     entry_conditions: [], objective_ids: [objectiveId], advance_after_actions: 0,
     scene_ops: [
       sceneOp("set_state", `${spec.id}_decision_ready`, `${spec.id}_${spec.props[(scenarioIndex + 1) % spec.props.length][0]}`, "decision_ready"),
-      sceneOp("remove", `${spec.id}_decision_remove_advance_visual`, `${spec.id}_advance_station`),
-      spawnStationScene(spec, `${spec.id}_decision_station`, "Resolve the physical aftermath", "decision")
+      sceneOp("set_state", `${spec.id}_decision_station_ready`, stationId, "decision_ready")
     ],
     interaction_ops: [
-      {family: "interaction_ops", op: "remove", receipt_id: `${spec.id}_remove_advance_station`, owner_namespace: "scenario", stable_object_id: `${spec.id}_advance_station`},
-      interactionOp(`${spec.id}_add_decision`, `${spec.id}_decision_station`, "Resolve the physical aftermath", [
+      {family: "interaction_ops", op: "remove", receipt_id: `${spec.id}_remove_advance_station`, owner_namespace: "scenario", stable_object_id: stationId},
+      interactionOp(`${spec.id}_add_decision`, stationId, "Resolve the physical aftermath", [
         action(`${spec.id}_resolve_a`, spec.outcomes[0][1], 0, "resolve_objective", {objective_id: objectiveId, outcome: "success"}),
         action(`${spec.id}_resolve_b`, spec.outcomes[1][1], 1, "resolve_objective", {objective_id: objectiveId, outcome: "success"}),
         action(`${spec.id}_fail`, spec.outcomes[2][1], 2, "resolve_objective", {objective_id: objectiveId, outcome: "failure"}),
@@ -302,19 +327,25 @@ function buildScenario(spec, scenarioIndex) {
       {id: `${spec.id}_outcome_b`, condition: {type: "command", command_id: `${spec.id}_resolve_b`}, outcome: spec.outcomes[1][0], objective_outcomes: {[objectiveId]: "success"}},
       {id: `${spec.id}_outcome_fail`, condition: {type: "command", command_id: `${spec.id}_fail`}, outcome: spec.outcomes[2][0], objective_outcomes: {[objectiveId]: "failure"}},
       {id: `${spec.id}_outcome_refuse`, condition: {type: "command", command_id: `${spec.id}_refuse`}, outcome: spec.outcomes[3][0], objective_outcomes: {[objectiveId]: "cancel"}},
-      {id: `${spec.id}_outcome_interrupt`, condition: {type: "fact", fact_type: spec.fact}, outcome: spec.outcomes[4][0], objective_outcomes: {[objectiveId]: "ignore"}}
+      {id: `${spec.id}_outcome_interrupt`, condition: {type: "fact", fact_type: spec.fact}, outcome: spec.outcomes[4][0], objective_outcomes: {[objectiveId]: "ignore"}},
+      {id: `${spec.id}_outcome_safe`, condition: {type: "command", command_id: `${spec.id}_leave_safe`}, outcome: spec.outcomes[3][0], objective_outcomes: {[objectiveId]: "cancel"}}
     ]
+  });
+  phases.push({
+    id: "safe_exit", label: "Safe route departure", arrival_feedback: "The marked route closes the active work without leaving temporary room obligations.", exit_prompt: spec.exit, terminal: true,
+    entry_conditions: [{type: "local_equals", key: "safe_exit_requested", value: true}], objective_ids: [], advance_after_actions: 0,
+    scene_ops: [], interaction_ops: [], actor_ops: [],
+    transition_ops: [{family: "transition_ops", op: "feedback", receipt_id: `${spec.id}_safe_exit_feedback`, owner_namespace: "scenario", stable_object_id: `${spec.id}_safe_exit_transition`, channel: "scenario", message: "The safe route records the refusal and restores the room."}],
+    branches: [{id: `${spec.id}_safe_exit_outcome`, condition: {type: "local_equals", key: "safe_exit_requested", value: true}, outcome: spec.outcomes[3][0], objective_outcomes: {[objectiveId]: "cancel"}}]
   });
 
   const cleanup = [];
   for (const row of spec.props) cleanup.push(sceneOp("remove", `cleanup_${spec.id}_${row[0]}`, `${spec.id}_${row[0]}`));
   for (const row of spec.actors) cleanup.push({family: "actor_ops", op: "despawn", receipt_id: `cleanup_${spec.id}_${row[0]}`, owner_namespace: "scenario", stable_object_id: `${spec.id}_${row[0]}`});
-  for (let i = 0; i < spec.beats.length; i++) cleanup.push(sceneOp("remove", `cleanup_${spec.id}_station_${i}`, `${spec.id}_station_${i}`));
-  cleanup.push(sceneOp("remove", `cleanup_${spec.id}_advance_station`, `${spec.id}_advance_station`));
-  cleanup.push(sceneOp("remove", `cleanup_${spec.id}_scene_decision_station`, `${spec.id}_decision_station`));
+  cleanup.push(sceneOp("remove", `cleanup_${spec.id}_station`, stationId));
   cleanup.push(sceneOp("remove", `cleanup_${spec.id}_exit_visual`, exitId));
   cleanup.push({family: "interaction_ops", op: "remove", receipt_id: `cleanup_${spec.id}_exit`, owner_namespace: "scenario", stable_object_id: exitId});
-  cleanup.push({family: "interaction_ops", op: "remove", receipt_id: `cleanup_${spec.id}_interaction_decision_station`, owner_namespace: "scenario", stable_object_id: `${spec.id}_decision_station`});
+  cleanup.push({family: "interaction_ops", op: "remove", receipt_id: `cleanup_${spec.id}_interaction_station`, owner_namespace: "scenario", stable_object_id: stationId});
 
   const aftermath = {};
   spec.outcomes.forEach((outcome, i) => {
@@ -337,12 +368,12 @@ function buildScenario(spec, scenarioIndex) {
   });
 
   const objectiveSteps = spec.beats.map(beat => ({id: beat[0], label: beat[1], kind: "command", command_id: beat[0]}));
-  const captureIds = ["arrival", ...spec.beats.map((_, i) => `phase_${i + 1}`), ...spec.outcomes.map(o => `aftermath_${o[0]}`), "partial_revisit", "terminal_revisit", "reduced_motion", "small_screen", "obstruction_overlay", "hit_target_overlay"].map(x => `${spec.id}_${x}`);
+  const captureIds = ["arrival", ...spec.beats.map((_, i) => `phase_${i + 1}`), "decision", "safe_exit", ...spec.outcomes.map(o => `aftermath_${o[0]}`), "partial_revisit", "terminal_revisit", "reduced_motion", "small_screen", "obstruction_overlay", "hit_target_overlay"].map(x => `${spec.id}_${x}`);
   return {
     scenario_id: spec.id,
     sequence: {
       schema_version: 2,
-      local_state_schema: {world_boundary_seen: {type: "bool", default: false, visibility: "public"}},
+      local_state_schema: {world_boundary_seen: {type: "bool", default: false, visibility: "public"}, safe_exit_requested: {type: "bool", default: false, visibility: "private"}},
       phase_graph: {initial_phase: "arrival", phases},
       objectives: [{id: objectiveId, label: `Complete ${spec.id.replaceAll("_", " ")}`, progress_label: spec.pressure.replaceAll("_", " "), steps: objectiveSteps, outcomes: ["success", "failure", "ignore", "cancel"]}],
       reentry_policy: {partial: "resume", terminal: "aftermath", expired: "expired"},
@@ -352,7 +383,7 @@ function buildScenario(spec, scenarioIndex) {
       mechanic_tags: [spec.archetype, spec.pressure, spec.connection, `beats_${spec.beats.length}`, `props_${spec.props.length}`, `actors_${spec.actors.length}`],
       sequence_signature: "UNSIGNED",
       owner_exceptions: [],
-      declared_targets: {scene_objects: [], interactions: [], actors: [], services: [], games: [], routes: [], anchors: [`base::anchor:${stationAnchors[spec.archetype]}`], zones: commonZones.map(zone => `base::zone:${zone}`)},
+      declared_targets: {scene_objects: [], interactions: [], actors: [], services: [], games: [], routes: [], anchors: bindingAnchors(spec, binding), zones: commonZones.map(zone => `base::zone:${zone}`)},
       fact_subscriptions: [{fact_type: spec.fact, handler: "set_local", inputs: {key: "world_boundary_seen", value: true}}],
       completion_contract: {arrival_readable: true, semantic_changes: true, scenario_interaction: true, action_boundaries: true, choice_or_failure: true, material_outcomes: true, revisit_coverage: true, world_connection: true, primary_verb: true, feedback_and_exit: true}
     },
@@ -366,6 +397,15 @@ function buildScenario(spec, scenarioIndex) {
       masked_visual_explanations: {}
     }
   };
+}
+
+function bindingAnchors(spec, binding) {
+  const result = new Set([binding.station ?? stationAnchors[spec.archetype]]);
+  if (binding.exit) result.add(binding.exit);
+  for (const collection of [binding.objects, binding.actors, binding.phase_objects, binding.phase_actors]) {
+    for (const anchor of Object.values(collection ?? {})) result.add(anchor);
+  }
+  return [...result].map(anchor => `base::anchor:${anchor}`);
 }
 
 const scenarios = specs.map(buildScenario);

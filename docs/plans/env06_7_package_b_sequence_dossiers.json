@@ -15,28 +15,32 @@
           "id": "arrival",
           "terminal": false,
           "branches": [
-            "beat_1"
+            "beat_1",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_1",
           "terminal": false,
           "branches": [
-            "beat_2"
+            "beat_2",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_2",
           "terminal": false,
           "branches": [
-            "beat_3"
+            "beat_3",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_3",
           "terminal": false,
           "branches": [
-            "decision"
+            "decision",
+            "safe_exit"
           ]
         },
         {
@@ -47,7 +51,15 @@
             "service_wing_open",
             "crowd_jammed",
             "mixup_refused",
-            "mixup_interrupted"
+            "mixup_interrupted",
+            "mixup_refused"
+          ]
+        },
+        {
+          "id": "safe_exit",
+          "terminal": true,
+          "branches": [
+            "mixup_refused"
           ]
         }
       ],
@@ -113,6 +125,8 @@
         "motel_conventioneers_phase_1",
         "motel_conventioneers_phase_2",
         "motel_conventioneers_phase_3",
+        "motel_conventioneers_decision",
+        "motel_conventioneers_safe_exit",
         "motel_conventioneers_aftermath_rooms_balanced",
         "motel_conventioneers_aftermath_service_wing_open",
         "motel_conventioneers_aftermath_crowd_jammed",
@@ -134,8 +148,8 @@
           "mixup_refused",
           "mixup_interrupted"
         ],
-        "phase_count": 5,
-        "branch_count": 9,
+        "phase_count": 6,
+        "branch_count": 15,
         "save_every_phase": true,
         "save_every_branch": true,
         "duplicate_receipt_atomic": true,
@@ -156,21 +170,24 @@
           "id": "arrival",
           "terminal": false,
           "branches": [
-            "beat_1"
+            "beat_1",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_1",
           "terminal": false,
           "branches": [
-            "beat_2"
+            "beat_2",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_2",
           "terminal": false,
           "branches": [
-            "decision"
+            "decision",
+            "safe_exit"
           ]
         },
         {
@@ -181,7 +198,15 @@
             "observers_misdirected",
             "observer_waitout_failed",
             "stakeout_refused",
-            "stakeout_interrupted"
+            "stakeout_interrupted",
+            "stakeout_refused"
+          ]
+        },
+        {
+          "id": "safe_exit",
+          "terminal": true,
+          "branches": [
+            "stakeout_refused"
           ]
         }
       ],
@@ -246,6 +271,8 @@
         "motel_stakeout_arrival",
         "motel_stakeout_phase_1",
         "motel_stakeout_phase_2",
+        "motel_stakeout_decision",
+        "motel_stakeout_safe_exit",
         "motel_stakeout_aftermath_occupant_warned",
         "motel_stakeout_aftermath_observers_misdirected",
         "motel_stakeout_aftermath_observer_waitout_failed",
@@ -267,8 +294,8 @@
           "stakeout_refused",
           "stakeout_interrupted"
         ],
-        "phase_count": 4,
-        "branch_count": 8,
+        "phase_count": 5,
+        "branch_count": 13,
         "save_every_phase": true,
         "save_every_branch": true,
         "duplicate_receipt_atomic": true,
@@ -289,35 +316,40 @@
           "id": "arrival",
           "terminal": false,
           "branches": [
-            "beat_1"
+            "beat_1",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_1",
           "terminal": false,
           "branches": [
-            "beat_2"
+            "beat_2",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_2",
           "terminal": false,
           "branches": [
-            "beat_3"
+            "beat_3",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_3",
           "terminal": false,
           "branches": [
-            "beat_4"
+            "beat_4",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_4",
           "terminal": false,
           "branches": [
-            "decision"
+            "decision",
+            "safe_exit"
           ]
         },
         {
@@ -328,7 +360,15 @@
             "room_accepted",
             "negotiation_failed",
             "inspection_refused",
-            "repair_interrupted"
+            "repair_interrupted",
+            "inspection_refused"
+          ]
+        },
+        {
+          "id": "safe_exit",
+          "terminal": true,
+          "branches": [
+            "inspection_refused"
           ]
         }
       ],
@@ -395,6 +435,8 @@
         "motel_weekly_rates_phase_2",
         "motel_weekly_rates_phase_3",
         "motel_weekly_rates_phase_4",
+        "motel_weekly_rates_decision",
+        "motel_weekly_rates_safe_exit",
         "motel_weekly_rates_aftermath_room_repaired",
         "motel_weekly_rates_aftermath_room_accepted",
         "motel_weekly_rates_aftermath_negotiation_failed",
@@ -416,8 +458,8 @@
           "inspection_refused",
           "repair_interrupted"
         ],
-        "phase_count": 6,
-        "branch_count": 10,
+        "phase_count": 7,
+        "branch_count": 17,
         "save_every_phase": true,
         "save_every_branch": true,
         "duplicate_receipt_atomic": true,
@@ -438,28 +480,32 @@
           "id": "arrival",
           "terminal": false,
           "branches": [
-            "beat_1"
+            "beat_1",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_1",
           "terminal": false,
           "branches": [
-            "beat_2"
+            "beat_2",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_2",
           "terminal": false,
           "branches": [
-            "beat_3"
+            "beat_3",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_3",
           "terminal": false,
           "branches": [
-            "decision"
+            "decision",
+            "safe_exit"
           ]
         },
         {
@@ -470,7 +516,15 @@
             "corridor_argument",
             "corridor_locked",
             "wedding_refused",
-            "wedding_interrupted"
+            "wedding_interrupted",
+            "wedding_refused"
+          ]
+        },
+        {
+          "id": "safe_exit",
+          "terminal": true,
+          "branches": [
+            "wedding_refused"
           ]
         }
       ],
@@ -538,6 +592,8 @@
         "motel_wedding_overflow_phase_1",
         "motel_wedding_overflow_phase_2",
         "motel_wedding_overflow_phase_3",
+        "motel_wedding_overflow_decision",
+        "motel_wedding_overflow_safe_exit",
         "motel_wedding_overflow_aftermath_reception_reunited",
         "motel_wedding_overflow_aftermath_corridor_argument",
         "motel_wedding_overflow_aftermath_corridor_locked",
@@ -559,8 +615,8 @@
           "wedding_refused",
           "wedding_interrupted"
         ],
-        "phase_count": 5,
-        "branch_count": 9,
+        "phase_count": 6,
+        "branch_count": 15,
         "save_every_phase": true,
         "save_every_branch": true,
         "duplicate_receipt_atomic": true,
@@ -581,28 +637,32 @@
           "id": "arrival",
           "terminal": false,
           "branches": [
-            "beat_1"
+            "beat_1",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_1",
           "terminal": false,
           "branches": [
-            "beat_2"
+            "beat_2",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_2",
           "terminal": false,
           "branches": [
-            "beat_3"
+            "beat_3",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_3",
           "terminal": false,
           "branches": [
-            "decision"
+            "decision",
+            "safe_exit"
           ]
         },
         {
@@ -613,7 +673,15 @@
             "machine_claim_won",
             "convoy_gridlocked",
             "convoy_refused",
-            "convoy_interrupted"
+            "convoy_interrupted",
+            "convoy_refused"
+          ]
+        },
+        {
+          "id": "safe_exit",
+          "terminal": true,
+          "branches": [
+            "convoy_refused"
           ]
         }
       ],
@@ -681,6 +749,8 @@
         "gas_station_trucker_convoy_phase_1",
         "gas_station_trucker_convoy_phase_2",
         "gas_station_trucker_convoy_phase_3",
+        "gas_station_trucker_convoy_decision",
+        "gas_station_trucker_convoy_safe_exit",
         "gas_station_trucker_convoy_aftermath_convoy_coordinated",
         "gas_station_trucker_convoy_aftermath_machine_claim_won",
         "gas_station_trucker_convoy_aftermath_convoy_gridlocked",
@@ -702,8 +772,8 @@
           "convoy_refused",
           "convoy_interrupted"
         ],
-        "phase_count": 5,
-        "branch_count": 9,
+        "phase_count": 6,
+        "branch_count": 15,
         "save_every_phase": true,
         "save_every_branch": true,
         "duplicate_receipt_atomic": true,
@@ -724,28 +794,32 @@
           "id": "arrival",
           "terminal": false,
           "branches": [
-            "beat_1"
+            "beat_1",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_1",
           "terminal": false,
           "branches": [
-            "beat_2"
+            "beat_2",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_2",
           "terminal": false,
           "branches": [
-            "beat_3"
+            "beat_3",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_3",
           "terminal": false,
           "branches": [
-            "decision"
+            "decision",
+            "safe_exit"
           ]
         },
         {
@@ -756,7 +830,15 @@
             "passenger_stranded",
             "bus_delayed",
             "count_refused",
-            "count_interrupted"
+            "count_interrupted",
+            "count_refused"
+          ]
+        },
+        {
+          "id": "safe_exit",
+          "terminal": true,
+          "branches": [
+            "count_refused"
           ]
         }
       ],
@@ -823,6 +905,8 @@
         "gas_station_tour_bus_stop_phase_1",
         "gas_station_tour_bus_stop_phase_2",
         "gas_station_tour_bus_stop_phase_3",
+        "gas_station_tour_bus_stop_decision",
+        "gas_station_tour_bus_stop_safe_exit",
         "gas_station_tour_bus_stop_aftermath_bus_boarded",
         "gas_station_tour_bus_stop_aftermath_passenger_stranded",
         "gas_station_tour_bus_stop_aftermath_bus_delayed",
@@ -844,8 +928,8 @@
           "count_refused",
           "count_interrupted"
         ],
-        "phase_count": 5,
-        "branch_count": 9,
+        "phase_count": 6,
+        "branch_count": 15,
         "save_every_phase": true,
         "save_every_branch": true,
         "duplicate_receipt_atomic": true,
@@ -866,35 +950,40 @@
           "id": "arrival",
           "terminal": false,
           "branches": [
-            "beat_1"
+            "beat_1",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_1",
           "terminal": false,
           "branches": [
-            "beat_2"
+            "beat_2",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_2",
           "terminal": false,
           "branches": [
-            "beat_3"
+            "beat_3",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_3",
           "terminal": false,
           "branches": [
-            "beat_4"
+            "beat_4",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_4",
           "terminal": false,
           "branches": [
-            "decision"
+            "decision",
+            "safe_exit"
           ]
         },
         {
@@ -905,7 +994,15 @@
             "camera_bypass",
             "lock_cycle_failed",
             "night_check_refused",
-            "night_check_interrupted"
+            "night_check_interrupted",
+            "night_check_refused"
+          ]
+        },
+        {
+          "id": "safe_exit",
+          "terminal": true,
+          "branches": [
+            "night_check_refused"
           ]
         }
       ],
@@ -973,6 +1070,8 @@
         "gas_station_graveyard_shift_phase_2",
         "gas_station_graveyard_shift_phase_3",
         "gas_station_graveyard_shift_phase_4",
+        "gas_station_graveyard_shift_decision",
+        "gas_station_graveyard_shift_safe_exit",
         "gas_station_graveyard_shift_aftermath_night_check_complete",
         "gas_station_graveyard_shift_aftermath_camera_bypass",
         "gas_station_graveyard_shift_aftermath_lock_cycle_failed",
@@ -994,8 +1093,8 @@
           "night_check_refused",
           "night_check_interrupted"
         ],
-        "phase_count": 6,
-        "branch_count": 10,
+        "phase_count": 7,
+        "branch_count": 17,
         "save_every_phase": true,
         "save_every_branch": true,
         "duplicate_receipt_atomic": true,
@@ -1016,28 +1115,32 @@
           "id": "arrival",
           "terminal": false,
           "branches": [
-            "beat_1"
+            "beat_1",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_1",
           "terminal": false,
           "branches": [
-            "beat_2"
+            "beat_2",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_2",
           "terminal": false,
           "branches": [
-            "beat_3"
+            "beat_3",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_3",
           "terminal": false,
           "branches": [
-            "decision"
+            "decision",
+            "safe_exit"
           ]
         },
         {
@@ -1048,7 +1151,15 @@
             "floor_occupied",
             "crew_departed_early",
             "stake_dispute_refused",
-            "payday_interrupted"
+            "payday_interrupted",
+            "stake_dispute_refused"
+          ]
+        },
+        {
+          "id": "safe_exit",
+          "terminal": true,
+          "branches": [
+            "stake_dispute_refused"
           ]
         }
       ],
@@ -1115,6 +1226,8 @@
         "gas_station_road_crew_payday_phase_1",
         "gas_station_road_crew_payday_phase_2",
         "gas_station_road_crew_payday_phase_3",
+        "gas_station_road_crew_payday_decision",
+        "gas_station_road_crew_payday_safe_exit",
         "gas_station_road_crew_payday_aftermath_route_repaired",
         "gas_station_road_crew_payday_aftermath_floor_occupied",
         "gas_station_road_crew_payday_aftermath_crew_departed_early",
@@ -1136,8 +1249,8 @@
           "stake_dispute_refused",
           "payday_interrupted"
         ],
-        "phase_count": 5,
-        "branch_count": 9,
+        "phase_count": 6,
+        "branch_count": 15,
         "save_every_phase": true,
         "save_every_branch": true,
         "duplicate_receipt_atomic": true,
@@ -1158,35 +1271,40 @@
           "id": "arrival",
           "terminal": false,
           "branches": [
-            "beat_1"
+            "beat_1",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_1",
           "terminal": false,
           "branches": [
-            "beat_2"
+            "beat_2",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_2",
           "terminal": false,
           "branches": [
-            "beat_3"
+            "beat_3",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_3",
           "terminal": false,
           "branches": [
-            "beat_4"
+            "beat_4",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_4",
           "terminal": false,
           "branches": [
-            "decision"
+            "decision",
+            "safe_exit"
           ]
         },
         {
@@ -1197,7 +1315,15 @@
             "shelter_blackout",
             "shelter_crowded",
             "shelter_refused",
-            "shelter_interrupted"
+            "shelter_interrupted",
+            "shelter_refused"
+          ]
+        },
+        {
+          "id": "safe_exit",
+          "terminal": true,
+          "branches": [
+            "shelter_refused"
           ]
         }
       ],
@@ -1216,7 +1342,6 @@
         "gas_station_storm_shelter_power_panel"
       ],
       "semantic_actors": [
-        "gas_station_storm_shelter_shelter_clerk",
         "gas_station_storm_shelter_family_group",
         "gas_station_storm_shelter_driver_group"
       ],
@@ -1251,7 +1376,7 @@
         "pressure": "progressive_weather_closure",
         "beat_count": 4,
         "prop_count": 5,
-        "actor_count": 3,
+        "actor_count": 2,
         "fact": "town_transition",
         "aftermath": [
           "set_appearance:rain_shutters:open_after_storm",
@@ -1267,6 +1392,8 @@
         "gas_station_storm_shelter_phase_2",
         "gas_station_storm_shelter_phase_3",
         "gas_station_storm_shelter_phase_4",
+        "gas_station_storm_shelter_decision",
+        "gas_station_storm_shelter_safe_exit",
         "gas_station_storm_shelter_aftermath_station_reopened",
         "gas_station_storm_shelter_aftermath_shelter_blackout",
         "gas_station_storm_shelter_aftermath_shelter_crowded",
@@ -1288,8 +1415,8 @@
           "shelter_refused",
           "shelter_interrupted"
         ],
-        "phase_count": 6,
-        "branch_count": 10,
+        "phase_count": 7,
+        "branch_count": 17,
         "save_every_phase": true,
         "save_every_branch": true,
         "duplicate_receipt_atomic": true,
@@ -1310,28 +1437,32 @@
           "id": "arrival",
           "terminal": false,
           "branches": [
-            "beat_1"
+            "beat_1",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_1",
           "terminal": false,
           "branches": [
-            "beat_2"
+            "beat_2",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_2",
           "terminal": false,
           "branches": [
-            "beat_3"
+            "beat_3",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_3",
           "terminal": false,
           "branches": [
-            "decision"
+            "decision",
+            "safe_exit"
           ]
         },
         {
@@ -1342,7 +1473,15 @@
             "hidden_fire",
             "fire_extinguished",
             "bonfire_refused",
-            "bonfire_interrupted"
+            "bonfire_interrupted",
+            "bonfire_refused"
+          ]
+        },
+        {
+          "id": "safe_exit",
+          "terminal": true,
+          "branches": [
+            "bonfire_refused"
           ]
         }
       ],
@@ -1409,6 +1548,8 @@
         "beach_bonfire_night_phase_1",
         "beach_bonfire_night_phase_2",
         "beach_bonfire_night_phase_3",
+        "beach_bonfire_night_decision",
+        "beach_bonfire_night_safe_exit",
         "beach_bonfire_night_aftermath_communal_fire",
         "beach_bonfire_night_aftermath_hidden_fire",
         "beach_bonfire_night_aftermath_fire_extinguished",
@@ -1430,8 +1571,8 @@
           "bonfire_refused",
           "bonfire_interrupted"
         ],
-        "phase_count": 5,
-        "branch_count": 9,
+        "phase_count": 6,
+        "branch_count": 15,
         "save_every_phase": true,
         "save_every_branch": true,
         "duplicate_receipt_atomic": true,
@@ -1452,35 +1593,40 @@
           "id": "arrival",
           "terminal": false,
           "branches": [
-            "beat_1"
+            "beat_1",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_1",
           "terminal": false,
           "branches": [
-            "beat_2"
+            "beat_2",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_2",
           "terminal": false,
           "branches": [
-            "beat_3"
+            "beat_3",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_3",
           "terminal": false,
           "branches": [
-            "beat_4"
+            "beat_4",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_4",
           "terminal": false,
           "branches": [
-            "decision"
+            "decision",
+            "safe_exit"
           ]
         },
         {
@@ -1491,7 +1637,15 @@
             "shoreline_damaged",
             "shoreline_abandoned",
             "storm_task_refused",
-            "evacuation_interrupted"
+            "evacuation_interrupted",
+            "storm_task_refused"
+          ]
+        },
+        {
+          "id": "safe_exit",
+          "terminal": true,
+          "branches": [
+            "storm_task_refused"
           ]
         }
       ],
@@ -1511,7 +1665,6 @@
       ],
       "semantic_actors": [
         "beach_storm_coming_lifeguard",
-        "beach_storm_coming_stall_keeper",
         "beach_storm_coming_late_swimmer"
       ],
       "player_verbs": [
@@ -1545,7 +1698,7 @@
         "pressure": "evacuation_warning_phases",
         "beat_count": 4,
         "prop_count": 5,
-        "actor_count": 3,
+        "actor_count": 2,
         "fact": "town_transition",
         "aftermath": [
           "set_state:closed_stall:secured",
@@ -1561,6 +1714,8 @@
         "beach_storm_coming_phase_2",
         "beach_storm_coming_phase_3",
         "beach_storm_coming_phase_4",
+        "beach_storm_coming_decision",
+        "beach_storm_coming_safe_exit",
         "beach_storm_coming_aftermath_shoreline_protected",
         "beach_storm_coming_aftermath_shoreline_damaged",
         "beach_storm_coming_aftermath_shoreline_abandoned",
@@ -1582,8 +1737,8 @@
           "storm_task_refused",
           "evacuation_interrupted"
         ],
-        "phase_count": 6,
-        "branch_count": 10,
+        "phase_count": 7,
+        "branch_count": 17,
         "save_every_phase": true,
         "save_every_branch": true,
         "duplicate_receipt_atomic": true,
@@ -1604,42 +1759,48 @@
           "id": "arrival",
           "terminal": false,
           "branches": [
-            "beat_1"
+            "beat_1",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_1",
           "terminal": false,
           "branches": [
-            "beat_2"
+            "beat_2",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_2",
           "terminal": false,
           "branches": [
-            "beat_3"
+            "beat_3",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_3",
           "terminal": false,
           "branches": [
-            "beat_4"
+            "beat_4",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_4",
           "terminal": false,
           "branches": [
-            "beat_5"
+            "beat_5",
+            "safe_exit"
           ]
         },
         {
           "id": "beat_5",
           "terminal": false,
           "branches": [
-            "decision"
+            "decision",
+            "safe_exit"
           ]
         },
         {
@@ -1650,7 +1811,15 @@
             "stall_closed",
             "after_hours_beach",
             "festival_task_refused",
-            "festival_interrupted"
+            "festival_interrupted",
+            "festival_task_refused"
+          ]
+        },
+        {
+          "id": "safe_exit",
+          "terminal": true,
+          "branches": [
+            "festival_task_refused"
           ]
         }
       ],
@@ -1670,10 +1839,8 @@
         "beach_festival_weekend_crowd_rope"
       ],
       "semantic_actors": [
-        "beach_festival_weekend_stage_manager",
         "beach_festival_weekend_lost_child",
-        "beach_festival_weekend_stall_vendor",
-        "beach_festival_weekend_crowd_marshal"
+        "beach_festival_weekend_stall_vendor"
       ],
       "player_verbs": [
         "read_festival_schedule",
@@ -1707,7 +1874,7 @@
         "pressure": "moving_show_schedule",
         "beat_count": 5,
         "prop_count": 6,
-        "actor_count": 4,
+        "actor_count": 2,
         "fact": "travel_arrived",
         "aftermath": [
           "set_state:schedule_board:revised_lineup",
@@ -1724,6 +1891,8 @@
         "beach_festival_weekend_phase_3",
         "beach_festival_weekend_phase_4",
         "beach_festival_weekend_phase_5",
+        "beach_festival_weekend_decision",
+        "beach_festival_weekend_safe_exit",
         "beach_festival_weekend_aftermath_lineup_changed",
         "beach_festival_weekend_aftermath_stall_closed",
         "beach_festival_weekend_aftermath_after_hours_beach",
@@ -1745,8 +1914,8 @@
           "festival_task_refused",
           "festival_interrupted"
         ],
-        "phase_count": 7,
-        "branch_count": 11,
+        "phase_count": 8,
+        "branch_count": 19,
         "save_every_phase": true,
         "save_every_branch": true,
         "duplicate_receipt_atomic": true,
