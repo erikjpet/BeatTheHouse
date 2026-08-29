@@ -351,10 +351,69 @@ func _pull_tab_peek_reminder_is_explicit(run_state: RunState) -> bool:
 	return true
 
 
+func _blackjack_isolated_repeated_peek_reprieve_is_terminal(live_run: RunState) -> bool:
+	# No one pre-Deal RNG state proves both the authentic caught-Peek reprieve
+	# and a later safe Count continuation. This exact clone proves the reprieve
+	# and its visible barred terminal aftermath, then intentionally stops.
+	var run_state := RunState.new()
+	run_state.start_new("TUTORIAL-PEEK-REPRIEVE", live_run.challenge_config)
+	run_state.set_environment({
+		"id": "tutorial_count_fixture",
+		"archetype_id": "small_underground_casino",
+		"kind": "casino",
+		"game_states": {},
+	})
+	var game: GameModule = BlackjackGame.new()
+	var library: ContentLibrary = app.get("library")
+	game.setup(library.game("blackjack"), library)
+	run_state.bankroll = maxi(run_state.bankroll, 200)
+	game.surface_state(run_state, run_state.current_environment, {})
+	var game_states: Dictionary = run_state.current_environment.get("game_states", {})
+	var table: Dictionary = game_states.get("blackjack", {})
+	table["hands_played"] = 1
+	table["last_result"] = {"summary": "First tutorial hand settled."}
+	table.erase("tutorial_count_completed")
+	table.erase("tutorial_count_perfect")
+	game_states["blackjack"] = table
+	run_state.current_environment["game_states"] = game_states
+	run_state.narrative_flags["tutorial_blackjack_peek_reprieve_used"] = true
+
+	BlackjackAuthorityTestDriverScript.pin_tutorial_peek_reprieve_rng(run_state)
+	var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
+	var caught := BlackjackAuthorityTestDriverScript.resolve(game, "peek_hole_card", 0, run_state, run_state.current_environment, run_state.create_rng("tutorial_reprieve_caught"), deal.get("ui_state", {}))
+	var protected_state: Dictionary = caught.get("blackjack_surface_ui_state", {})
+	table = run_state.current_environment.get("game_states", {}).get("blackjack", {})
+	if not bool(caught.get("dealer_caught_cheat", false)) \
+			or not bool(caught.get("blackjack_tutorial_peek_reprieve", false)) \
+			or bool(caught.get("blackjack_table_barred", true)) \
+			or bool(table.get("barred", true)) \
+			or protected_state.is_empty() \
+			or not TutorialFlow.apply_caught_transition(run_state, caught).is_empty():
+		_fail("The isolated repeated Peek did not produce its authentic protected caught result: %s." % str(caught))
+		return false
+
+	var settlement := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_reprieve_terminal"), protected_state)
+	table = run_state.current_environment.get("game_states", {}).get("blackjack", {})
+	var barred_surface := game.surface_state(run_state, run_state.current_environment, {})
+	if not bool(settlement.get("ok", false)) \
+			or bool(settlement.get("dealer_caught_cheat", false)) \
+			or int(table.get("hands_played", 0)) != 2 \
+			or not bool(table.get("barred", false)) \
+			or not bool(barred_surface.get("table_barred", false)) \
+			or str(barred_surface.get("phase", "")) != "barred" \
+			or bool(barred_surface.get("can_deal", true)) \
+			or str(barred_surface.get("barred_reason", "")).is_empty():
+		_fail("The isolated Peek reprieve did not expose its authentic barred terminal aftermath: rng=%d settlement=%s table=%s surface=%s." % [BlackjackAuthorityTestDriverScript.TUTORIAL_PEEK_REPRIEVE_INITIAL_RNG_STATE, str(settlement), str(table), str(barred_surface)])
+		return false
+	return true
+
+
 func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 	# Keep this mechanics proof isolated from the UI cadence run: settling hands
 	# can legitimately advance that run's objectives and would pollute later visual
 	# fixtures even though the blackjack contract itself passed.
+	if not _blackjack_isolated_repeated_peek_reprieve_is_terminal(live_run):
+		return false
 	var run_state := RunState.new()
 	run_state.start_new("TUTORIAL-COUNT-MANDATORY", live_run.challenge_config)
 	run_state.set_environment({
@@ -382,7 +441,7 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 	run_state.narrative_flags["tutorial_blackjack_peek_reprieve_used"] = true
 	# Pin the complete protected-hand fixture before its first authority boundary;
 	# changing account/RNG state after Deal would invalidate the sealed checkpoint.
-	BlackjackAuthorityTestDriverScript.pin_protected_peek_settlement_rng(run_state)
+	BlackjackAuthorityTestDriverScript.pin_tutorial_safe_peek_flow_rng(run_state)
 	var peek_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
 	var peek_state: Dictionary = peek_deal.get("ui_state", {})
 	var caught := BlackjackAuthorityTestDriverScript.resolve(game, "peek_hole_card", 0, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_caught"), peek_state)
@@ -401,7 +460,7 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 		return false
 	table = run_state.current_environment.get("game_states", {}).get("blackjack", {})
 	if bool(peek_settlement.get("dealer_caught_cheat", false)) or bool(table.get("barred", false)):
-		_fail("The fixed protected Peek settlement was caught or barred: rng=%d result=%s table_barred=%s." % [BlackjackAuthorityTestDriverScript.PROTECTED_PEEK_SETTLEMENT_RNG_STATE, str(peek_settlement), str(table.get("barred", false))])
+		_fail("The fixed protected Peek settlement was caught or barred: rng=%d result=%s table_barred=%s." % [BlackjackAuthorityTestDriverScript.TUTORIAL_SAFE_PEEK_FLOW_INITIAL_RNG_STATE, str(peek_settlement), str(table.get("barred", false))])
 		return false
 	var peek_cleanup := BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, 4, run_state, run_state.current_environment)
 	if not bool(peek_cleanup.get("ok", false)) or not bool(peek_cleanup.get("terminal_cleared", false)):

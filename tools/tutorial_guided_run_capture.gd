@@ -345,7 +345,7 @@ func _stage_blackjack_raised_bet_surface() -> Dictionary:
 	var run_state: RunState = app.get("run_state")
 	if game == null or run_state == null:
 		return {}
-	BlackjackAuthorityTestDriverScript.pin_protected_peek_settlement_rng(run_state)
+	BlackjackAuthorityTestDriverScript.pin_tutorial_safe_peek_flow_rng(run_state)
 	var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
 	var state: Dictionary = deal.get("ui_state", {})
 	app.set("game_surface_ui_state", state)

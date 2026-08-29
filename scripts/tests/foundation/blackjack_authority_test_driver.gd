@@ -7,7 +7,8 @@ extends RefCounted
 
 const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
-const PROTECTED_PEEK_SETTLEMENT_RNG_STATE := 21
+const TUTORIAL_PEEK_REPRIEVE_INITIAL_RNG_STATE := 1
+const TUTORIAL_SAFE_PEEK_FLOW_INITIAL_RNG_STATE := 3
 
 
 static func resolve(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, _rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
@@ -25,11 +26,18 @@ static func resolve(game: GameModule, action_id: String, stake: int, run_state: 
 	return result
 
 
-static func pin_protected_peek_settlement_rng(run_state: RunState) -> void:
+static func pin_tutorial_peek_reprieve_rng(run_state: RunState) -> void:
 	if run_state == null:
 		return
-	run_state.rng_seed = PROTECTED_PEEK_SETTLEMENT_RNG_STATE
-	run_state.rng_state = PROTECTED_PEEK_SETTLEMENT_RNG_STATE
+	run_state.rng_seed = TUTORIAL_PEEK_REPRIEVE_INITIAL_RNG_STATE
+	run_state.rng_state = TUTORIAL_PEEK_REPRIEVE_INITIAL_RNG_STATE
+
+
+static func pin_tutorial_safe_peek_flow_rng(run_state: RunState) -> void:
+	if run_state == null:
+		return
+	run_state.rng_seed = TUTORIAL_SAFE_PEEK_FLOW_INITIAL_RNG_STATE
+	run_state.rng_state = TUTORIAL_SAFE_PEEK_FLOW_INITIAL_RNG_STATE
 
 
 static func surface_intent(game: GameModule, surface_action: String, stake: int, run_state: RunState, environment: Dictionary, index: int = 0, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:

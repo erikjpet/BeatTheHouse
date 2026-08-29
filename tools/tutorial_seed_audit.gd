@@ -391,7 +391,7 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 	game.enter(run_state, run_state.current_environment)
 	var clean := _deal_and_stand(game, run_state, 2, "tutorial_clean")
 	_check(bool(clean.get("settled", false)), "Tutorial blackjack normal hand did not settle.", route_failures)
-	BlackjackAuthorityTestDriverScript.pin_protected_peek_settlement_rng(run_state)
+	BlackjackAuthorityTestDriverScript.pin_tutorial_safe_peek_flow_rng(run_state)
 	var deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 4, run_state, run_state.current_environment)
 	var deal_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, deal, 4, run_state, run_state.current_environment)
 	var hand_state: Dictionary = deal.get("ui_state", {})
