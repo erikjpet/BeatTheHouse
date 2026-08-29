@@ -5,8 +5,9 @@ extends RefCounted
 # Crew API (hidden, within-run state): crew_trust(member) reads trust;
 # crew_rank(member) derives rank; crew_add_trust(member, amount, reason) mutates it;
 # crew_standing() derives shared gates; grievance_add(entry) writes The Turn ledger;
-# crew_grievances(member) is the private crew06_9 reader; job_offer(def),
-# job_accept(id), job_activate(id), and job_resolve(id, outcome) own job lifecycle.
+# crew_grievances(member) is the private crew06_9 reader. Crew job lifecycle is
+# host-only: player surfaces request work through crew_job_accept_definition(),
+# while only this RunState's non-serialized capability can advance or settle it.
 
 signal heat_changed(applied_amount: int, level: int, cue_id: String, context: Dictionary)
 
@@ -343,11 +344,14 @@ var crew_grievance_ledger: Array = []
 var crew_jobs: Dictionary = {}
 var crew_grievance_sequence: int = 0
 var crew_job_sequence: int = 0
+var _crew_job_host_capability: RefCounted
+var _crew_recruitment_host_capability: RefCounted
 var active_delivery_run: Dictionary = {}
 var crew_pattern_memory: Dictionary = {}
 var scenario_host_transaction_ledger: Dictionary = {}
 var crew_match_marks: Dictionary = {}
 var crew_contraband_stash: Array = []
+var crew_recruitment_encounters: Dictionary = {}
 var crew_play_state: Dictionary = {}
 var crew_heist_state: Dictionary = {}
 var numbers_state: NumbersModel
@@ -407,7 +411,7 @@ const TURN_TRANSACTION_COLLECTION_FIELDS := [
 	"crew_trust_by_member", "crew_grievance_ledger", "crew_jobs",
 	"active_delivery_run", "crew_pattern_memory",
 	"scenario_host_transaction_ledger", "crew_match_marks",
-	"crew_contraband_stash", "crew_play_state", "crew_heist_state",
+	"crew_contraband_stash", "crew_recruitment_encounters", "crew_play_state", "crew_heist_state",
 	"heat_history", "grand_casino_atm_interest_notifications",
 	"closing_time_state", "home_state", "_item_effects_by_id",
 	"_item_definitions_by_id", "_item_effect_total_cache",
@@ -482,11 +486,14 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	crew_jobs = {}
 	crew_grievance_sequence = 0
 	crew_job_sequence = 0
+	_crew_job_host_capability = RefCounted.new()
+	_crew_recruitment_host_capability = RefCounted.new()
 	active_delivery_run = {}
 	crew_pattern_memory = CrewPokerModelScript.default_observations()
 	scenario_host_transaction_ledger = {}
 	crew_match_marks = {}
 	crew_contraband_stash = []
+	crew_recruitment_encounters = CrewRecruitmentModelScript.new_encounter_state()
 	crew_play_state = CrewPlayModelScript.default_state()
 	crew_heist_state = CrewHeistModelScript.empty_state()
 	_numbers_host_capability = RefCounted.new()
@@ -8180,9 +8187,12 @@ func crew_add_trust(member_id: String, amount: int, _reason: String = "") -> int
 	return crew_trust(member_id)
 
 
-# Promotes one met contact to Associate through the authored intro encounter.
-# Trust remains the single canonical met/rank field owned by crew06_1.
-func crew_recruit_member(member_id: String) -> Dictionary:
+# Legacy lifecycle names remain fail-closed for compatibility with callers that
+# only inspect their result. Production recruitment commits through the exact
+# resolved EventModule result in crew_record_recruitment_event_result().
+func crew_recruit_member(member_id: String, host_capability: RefCounted = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_recruitment_host_capability:
+		return {"ok": false, "member_id": member_id}
 	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or member_id == "crew_rook":
 		return {"ok": false, "member_id": member_id}
 	var target := CrewStateModelScript.rank_threshold("associate")
@@ -8191,13 +8201,103 @@ func crew_recruit_member(member_id: String) -> Dictionary:
 	return {"ok": crew_rank(member_id) == "associate" or CrewStateModelScript.RANK_IDS.find(crew_rank(member_id)) > CrewStateModelScript.RANK_IDS.find("associate"), "member_id": member_id, "rank": crew_rank(member_id)}
 
 
-func crew_meet_member(member_id: String) -> Dictionary:
+func crew_meet_member(member_id: String, host_capability: RefCounted = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_recruitment_host_capability:
+		return {"ok": false, "member_id": member_id}
 	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or member_id == "crew_rook":
 		return {"ok": false, "member_id": member_id}
 	var target := CrewStateModelScript.rank_threshold("marker")
 	if crew_trust(member_id) < target:
 		crew_add_trust(member_id, target - crew_trust(member_id), "recruitment_contact")
 	return {"ok": CrewStateModelScript.RANK_IDS.find(crew_rank(member_id)) >= CrewStateModelScript.RANK_IDS.find("marker"), "member_id": member_id, "rank": crew_rank(member_id)}
+
+
+# Commits only a choice already resolved by the production event host. The
+# event id must still be mounted at the exact live placement; caller-authored
+# member, path, outcome, trust, or aftermath fields are never accepted.
+func crew_record_recruitment_event_result(result: Dictionary) -> Dictionary:
+	if not bool(result.get("ok", false)) or str(result.get("type", "")) != "event":
+		return {"ok": false, "reason": "not_resolved_event"}
+	var event_id := str(result.get("event_id", result.get("source_id", ""))).strip_edges()
+	var choice_id := str(result.get("choice_id", result.get("action_id", ""))).strip_edges()
+	if event_id.is_empty() or choice_id.is_empty() or not _copy_array(current_environment.get("event_ids", [])).has(event_id) \
+			or _copy_array(current_environment.get("resolved_event_ids", [])).has(event_id):
+		return {"ok": false, "reason": "event_not_live"}
+	var member_id := ""
+	var definition: Dictionary = {}
+	for candidate_id in CrewStateModelScript.MEMBER_IDS:
+		var candidate := CrewRecruitmentModelScript.member_definition(str(candidate_id))
+		if str(candidate.get("event_id", "")) == event_id:
+			member_id = str(candidate_id)
+			definition = candidate
+			break
+	if member_id.is_empty() or member_id == "crew_rook":
+		return {"ok": false, "reason": "not_first_meeting"}
+	var path_kind := CrewRecruitmentModelScript.placement_kind(self, current_environment, definition)
+	if path_kind.is_empty():
+		return {"ok": false, "reason": "placement_changed"}
+	var outcome := "refused" if choice_id.begins_with("leave_") else "deferred"
+	var hooks := _copy_array(_copy_dict(result.get("deltas", {})).get("event_hooks", []))
+	var recruit_hook := false
+	var meet_hook := false
+	for hook_value in hooks:
+		var hook := _copy_dict(hook_value)
+		if str(hook.get("member_id", "")) != member_id:
+			continue
+		recruit_hook = recruit_hook or str(hook.get("type", "")) == "crew_recruit"
+		meet_hook = meet_hook or str(hook.get("type", "")) == "crew_meet"
+	if recruit_hook:
+		outcome = "accepted"
+	elif not meet_hook and not choice_id.begins_with("leave_"):
+		return {"ok": false, "reason": "choice_has_no_recruitment_outcome"}
+	var proposal := CrewRecruitmentModelScript.first_meeting_proposal(self, current_environment, member_id, path_kind, outcome)
+	if str(proposal.get("reason", "")) != "adapter_host_root_unavailable" or str(proposal.get("event_id", "")) != event_id:
+		return {"ok": false, "reason": "proposal_mismatch"}
+	var state := CrewRecruitmentModelScript.normalize_encounter_state(crew_recruitment_encounters)
+	if state.is_empty():
+		state = CrewRecruitmentModelScript.new_encounter_state()
+	var meetings := _copy_dict(state.get("meetings", {}))
+	var previous := _copy_dict(meetings.get(member_id, {}))
+	if str(previous.get("outcome", "")) == "accepted":
+		return {"ok": true, "replayed": true, "public_state": CrewRecruitmentModelScript.encounter_public_state(state, member_id)}
+	var action_index := _crew_action_index()
+	var fact := {"path_kind": path_kind, "outcome": outcome, "action_index": action_index}
+	var history := _copy_array(previous.get("history", []))
+	if history.is_empty() or history.back() != fact:
+		history.append(fact)
+	meetings[member_id] = {
+		"member_id": member_id,
+		"first_path_kind": str(previous.get("first_path_kind", path_kind)),
+		"first_outcome": str(previous.get("first_outcome", outcome)),
+		"path_kind": path_kind,
+		"outcome": outcome,
+		"action_index": action_index,
+		"aftermath_id": "%s_%s" % [member_id, outcome],
+		"history": history,
+	}
+	state["meetings"] = meetings
+	crew_recruitment_encounters = state
+	if outcome == "accepted":
+		crew_recruit_member(member_id, _crew_recruitment_host_capability)
+	elif outcome == "deferred":
+		crew_meet_member(member_id, _crew_recruitment_host_capability)
+	return {"ok": true, "replayed": false, "public_state": CrewRecruitmentModelScript.encounter_public_state(state, member_id)}
+
+
+func crew_recruitment_public_state(member_id: String) -> Dictionary:
+	var result := CrewRecruitmentModelScript.encounter_public_state(crew_recruitment_encounters, member_id)
+	if str(result.get("meeting_state", "")) != "accepted":
+		return result
+	var job_out := false
+	for job_value in crew_jobs.values():
+		var job := _copy_dict(job_value)
+		if str(job.get("member_id", "")) == member_id and str(job.get("status", "")) in ["offered", "accepted", "active"]:
+			job_out = true
+			break
+	var standing := crew_rank(member_id)
+	result["standing"] = standing
+	result["contact_state"] = "aggrieved" if not crew_grievances(member_id).is_empty() else ("job_out" if job_out else ("trusted" if standing in ["made", "inner_circle"] else "familiar"))
+	return result
 
 
 func crew_rank_perks(member_id: String) -> Array:
@@ -9606,8 +9706,11 @@ func crew_record_poker_session(member_ids: Array, session_swing: int) -> Diction
 	return applied
 
 
-# Offers a data-shaped job and returns the immutable instance snapshot.
-func job_offer(job_definition: Dictionary) -> Dictionary:
+# Host-only lifecycle seam. The capability is an in-memory object identity owned
+# by this RunState; it is never serialized, projected, or accepted from content.
+func job_offer(job_definition: Dictionary, host_capability: RefCounted = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_job_host_capability:
+		return {}
 	var definition := CrewStateModelScript.normalize_job_definition(job_definition)
 	if definition.is_empty():
 		return {}
@@ -9626,7 +9729,9 @@ func job_offer(job_definition: Dictionary) -> Dictionary:
 
 
 # Accepts one offered job without consuming an action boundary.
-func job_accept(job_id: String) -> Dictionary:
+func job_accept(job_id: String, host_capability: RefCounted = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_job_host_capability:
+		return {}
 	var job := _crew_job(job_id)
 	if str(job.get("status", "")) != "offered":
 		return {}
@@ -9638,7 +9743,9 @@ func job_accept(job_id: String) -> Dictionary:
 
 
 # Activates one accepted job; later gameplay slices own their active surface.
-func job_activate(job_id: String) -> Dictionary:
+func job_activate(job_id: String, host_capability: RefCounted = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_job_host_capability:
+		return {}
 	var job := _crew_job(job_id)
 	if str(job.get("status", "")) != "accepted":
 		return {}
@@ -9650,7 +9757,9 @@ func job_activate(job_id: String) -> Dictionary:
 
 
 # Resolves one accepted/active job and applies configured success or failure effects.
-func job_resolve(job_id: String, outcome: String) -> Dictionary:
+func job_resolve(job_id: String, outcome: String, host_capability: RefCounted = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_job_host_capability:
+		return {}
 	var job := _crew_job(job_id)
 	if job.is_empty() or not CrewStateModelScript.JOB_OUTCOMES.has(outcome):
 		return {}
@@ -9771,9 +9880,9 @@ func crew_job_accept_definition(definition_id: String) -> Dictionary:
 		return {"ok": false, "message": "That crew member is not in the room."}
 	if CrewStateModelScript.RANK_IDS.find(crew_rank(member_id)) < CrewStateModelScript.RANK_IDS.find(min_rank):
 		return {"ok": false, "message": "That work is above your standing."}
-	var offered := job_offer(definition)
+	var offered := job_offer(definition, _crew_job_host_capability)
 	var job_id := str(offered.get("id", ""))
-	if job_id.is_empty() or job_accept(job_id).is_empty() or job_activate(job_id).is_empty():
+	if job_id.is_empty() or job_accept(job_id, _crew_job_host_capability).is_empty() or job_activate(job_id, _crew_job_host_capability).is_empty():
 		return {"ok": false, "message": "The note will not come off the wall."}
 	var payload := _copy_dict(definition.get("payload", {}))
 	var kind := str(definition.get("kind", ""))
@@ -9785,7 +9894,7 @@ func crew_job_accept_definition(definition_id: String) -> Dictionary:
 		spec["consumer_payload"] = {"success": {"cash": 0, "heat": 0}, "failure": {"cash": 0, "heat": 0}}
 		var started := delivery_begin_multi_stop(spec) if kind == "numbers_route" else delivery_begin_hold(spec) if kind == "lookout_hold" else delivery_begin_package(spec)
 		if not bool(started.get("ok", false)):
-			job_resolve(job_id, "failed")
+			job_resolve(job_id, "failed", _crew_job_host_capability)
 			return started
 		if kind == "collection":
 			active_delivery_run["run_id"] = "crew_collection:%s" % job_id
@@ -9799,7 +9908,7 @@ func crew_job_accept_definition(definition_id: String) -> Dictionary:
 		crew_jobs[job_id] = job
 		change_bankroll(stake, true)
 		return {"ok": true, "job_id": job_id, "kind": kind, "crew_stake": stake, "message": "Crew money is in your pocket. Play the named game."}
-	job_resolve(job_id, "failed")
+	job_resolve(job_id, "failed", _crew_job_host_capability)
 	return {"ok": false, "message": "That job kind has no live surface."}
 
 
@@ -9821,7 +9930,7 @@ func crew_record_game_result(result: Dictionary, deltas: Dictionary) -> Dictiona
 		job["payload"] = payload
 		crew_jobs[job_id] = job
 		if int(payload.get("session_net", 0)) >= int(payload.get("profit_target", 1)):
-			return job_resolve(job_id, "success")
+			return job_resolve(job_id, "success", _crew_job_host_capability)
 		if int(payload.get("session_net", 0)) <= -int(payload.get("crew_stake", 1)):
 			payload["loss_choice_pending"] = true
 			job["payload"] = payload
@@ -9964,7 +10073,7 @@ func crew_resolve_stake_horse_loss(choice_id: String) -> Dictionary:
 	var payload := _copy_dict(pending.get("payload", {}))
 	if choice_id == "repay":
 		change_bankroll(-mini(bankroll, maxi(1, int(payload.get("crew_stake", 1)))), true)
-	var resolved := job_resolve(job_id, "failed")
+	var resolved := job_resolve(job_id, "failed", _crew_job_host_capability)
 	if choice_id == "shrug":
 		grievance_add({"member_id": str(pending.get("member_id", "")), "kind": "stake_horse_loss_shrugged", "weight": 1, "source_ref": job_id})
 	return {"ok": not resolved.is_empty(), "choice": choice_id, "job": resolved}
@@ -9991,7 +10100,7 @@ func crew_resolve_collection(choice_id: String) -> Dictionary:
 		change_bankroll(cash, true)
 	if heat > 0:
 		add_suspicion("crew_collection_press", heat, "behavior", false, {}, true)
-	var resolved := job_resolve(str(pending.get("id", "")), "success")
+	var resolved := job_resolve(str(pending.get("id", "")), "success", _crew_job_host_capability)
 	return {"ok": not resolved.is_empty(), "choice": choice_id, "cash": cash, "heat": heat, "job": resolved}
 
 
@@ -10016,12 +10125,12 @@ func _crew_add_room_event(event_id: String) -> void:
 # Starts or declines the Crew favor without changing ordinary travel. The
 # shipped event rewards are applied only after the real in-venue handoff.
 func resolve_crew_favor_delivery_job(choice_id: String, authored_consequences: Dictionary = {}) -> Dictionary:
-	var offered := job_offer(CrewStateModelScript.job_definition("crew_favor_delivery"))
+	var offered := job_offer(CrewStateModelScript.job_definition("crew_favor_delivery"), _crew_job_host_capability)
 	var job_id := str(offered.get("id", ""))
-	if job_id.is_empty() or job_accept(job_id).is_empty() or job_activate(job_id).is_empty():
+	if job_id.is_empty() or job_accept(job_id, _crew_job_host_capability).is_empty() or job_activate(job_id, _crew_job_host_capability).is_empty():
 		return {}
 	if choice_id != "run_package":
-		return job_resolve(job_id, "failed")
+		return job_resolve(job_id, "failed", _crew_job_host_capability)
 	var started := delivery_begin_package({
 		"run_id": "crew_favor_delivery",
 		"job_id": job_id,
@@ -10034,7 +10143,7 @@ func resolve_crew_favor_delivery_job(choice_id: String, authored_consequences: D
 		"consumer_payload": _delivery_event_consumer_payload(authored_consequences),
 	})
 	if not bool(started.get("ok", false)):
-		job_resolve(job_id, "failed")
+		job_resolve(job_id, "failed", _crew_job_host_capability)
 	return started
 
 
@@ -10219,9 +10328,9 @@ func numbers_begin_collection_route() -> Dictionary:
 		"expiry_in_actions": remaining,
 		"rewards": {"cash": 0, "trust": int(tuning.get("trust_on_time", 5))},
 		"failure": {"trust": int(tuning.get("trust_late", -6)), "grievance_kind": "", "grievance_weight": 1},
-	})
+	}, _crew_job_host_capability)
 	var job_id := str(offered.get("id", ""))
-	if job_id.is_empty() or job_accept(job_id).is_empty() or job_activate(job_id).is_empty():
+	if job_id.is_empty() or job_accept(job_id, _crew_job_host_capability).is_empty() or job_activate(job_id, _crew_job_host_capability).is_empty():
 		return {"ok": false, "message": "Lucky keeps the bag."}
 	var delivery_targets := stops.duplicate(true)
 	delivery_targets.append({"id": "numbers_return", "node_id": "small_underground_casino", "label": "The Punchline"})
@@ -10242,7 +10351,7 @@ func numbers_begin_collection_route() -> Dictionary:
 		},
 	})
 	if not bool(started.get("ok", false)):
-		job_resolve(job_id, "failed")
+		job_resolve(job_id, "failed", _crew_job_host_capability)
 		return started
 	numbers_state.begin_collection(stops, bag_value, job_id)
 	started["job_id"] = job_id
@@ -10932,7 +11041,7 @@ func _apply_delivery_resolution(expected_receipt: Dictionary = {}, materialize_a
 	for flag_value in _copy_dict(effects.get("flags", {})).keys():
 		narrative_flags[str(flag_value)] = _copy_dict(effects.get("flags", {})).get(flag_value)
 	if not job_id.is_empty():
-		var job_result := job_resolve(job_id, "success" if succeeded else "failed")
+		var job_result := job_resolve(job_id, "success" if succeeded else "failed", _crew_job_host_capability)
 		var payment_note := str(job_result.get("payment_note", "")).strip_edges()
 		if not payment_note.is_empty():
 			active_delivery_run["receipt"] = {
@@ -10953,7 +11062,7 @@ func _apply_delivery_resolution(expected_receipt: Dictionary = {}, materialize_a
 				crew_jobs[collection_job_id] = collection_job
 				_crew_add_room_event("crew_collection_press")
 			else:
-				job_resolve(collection_job_id, "failed")
+				job_resolve(collection_job_id, "failed", _crew_job_host_capability)
 	if numbers_state != null:
 		if run_id.begins_with("numbers_collection:"):
 			numbers_state.resolve_collection(succeeded, reason, resolution)
@@ -12828,7 +12937,7 @@ func _advance_crew_jobs() -> void:
 			job["status"] = "active"
 			job["active_action"] = action_index
 			crew_jobs[str(job_id)] = job
-		job_resolve(str(job_id), "abandoned")
+		job_resolve(str(job_id), "abandoned", _crew_job_host_capability)
 
 
 func start_heat_cooldown(actions: int, per_action: int = 1) -> void:
@@ -14989,6 +15098,10 @@ func _crew_state_for_save(deep_copy: bool, opaque_hidden: bool = false) -> Dicti
 	if not crew_contraband_stash.is_empty():
 		result["recruitment_schema_version"] = CrewRecruitmentModelScript.SCHEMA_VERSION
 		result["stash"] = crew_contraband_stash.duplicate(deep_copy)
+	var recruitment_encounters := CrewRecruitmentModelScript.normalize_encounter_state(crew_recruitment_encounters)
+	if not recruitment_encounters.is_empty() and (not _copy_dict(recruitment_encounters.get("meetings", {})).is_empty() or not _copy_dict(recruitment_encounters.get("contacts", {})).is_empty()):
+		result["recruitment_schema_version"] = CrewRecruitmentModelScript.SCHEMA_VERSION
+		result["encounters"] = recruitment_encounters.duplicate(deep_copy)
 	var normalized_plays := CrewPlayModelScript.normalize_state(crew_play_state)
 	if not (normalized_plays.get("uses", {}) as Dictionary).is_empty() \
 		or not (normalized_plays.get("active", []) as Array).is_empty() \
@@ -15010,6 +15123,13 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 	crew_pattern_memory = CrewPokerModelScript.unpack_observations(saved.get("p", {}))
 	crew_match_marks = {}
 	crew_contraband_stash = _normalize_inventory_entries(saved.get("stash", []))
+	crew_recruitment_encounters = CrewRecruitmentModelScript.normalize_encounter_state(saved.get("encounters", CrewRecruitmentModelScript.new_encounter_state()))
+	if crew_recruitment_encounters.is_empty():
+		crew_recruitment_encounters = CrewRecruitmentModelScript.new_encounter_state()
+	if _crew_job_host_capability == null:
+		_crew_job_host_capability = RefCounted.new()
+	if _crew_recruitment_host_capability == null:
+		_crew_recruitment_host_capability = RefCounted.new()
 	crew_play_state = CrewPlayModelScript.normalize_state(saved.get("plays", {}))
 	crew_heist_state = CrewHeistModelScript.normalize_state(saved.get("crew_heist", {}))
 	var saved_marks: Dictionary = saved.get("m", {}) if typeof(saved.get("m", {})) == TYPE_DICTIONARY else {}

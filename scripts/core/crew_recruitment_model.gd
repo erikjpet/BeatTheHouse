@@ -73,12 +73,13 @@ static func normalize_encounter_state(value: Variant) -> Dictionary:
 	if exact_keys != ["contacts", "meetings", "schema_version"] or typeof(source.get("schema_version")) != TYPE_INT \
 			or int(source.get("schema_version", 0)) != ENCOUNTER_STATE_SCHEMA_VERSION:
 		return {}
-	# No host-rooted adapter outcome is available on this base. Persisted meeting
-	# or contact claims therefore cannot be authenticated and fail closed, even
-	# when a forged claim is internally coherent.
-	if not _dict(source.get("meetings", {})).is_empty() or not _dict(source.get("contacts", {})).is_empty():
+	var meetings := _normalize_meeting_rows(source.get("meetings", {}))
+	var contacts := _normalize_contact_rows(source.get("contacts", {}), meetings)
+	if meetings.is_empty() and not _dict(source.get("meetings", {})).is_empty():
 		return {}
-	return new_encounter_state()
+	if contacts.is_empty() and not _dict(source.get("contacts", {})).is_empty():
+		return {}
+	return {"schema_version": ENCOUNTER_STATE_SCHEMA_VERSION, "meetings": meetings, "contacts": contacts}
 
 
 static func meeting_path_public(member_id: String, path_kind: String) -> Dictionary:
@@ -451,7 +452,12 @@ static func presence_for_environment(run_state: RunState, environment: Dictionar
 			continue
 		var lines := _dict(definition.get("presence_lines", {}))
 		var line := str(lines.get(rank, lines.get("marker", ""))).strip_edges()
-		result.append({"member_id": member_id, "rank": rank, "line": line})
+		var entry := {"member_id": member_id, "rank": rank, "line": line}
+		var aftermath := run_state.crew_recruitment_public_state(member_id)
+		if not aftermath.is_empty() and str(aftermath.get("meeting_state", "unmet")) != "unmet":
+			entry["actor_state"] = str(aftermath.get("actor_state", ""))
+			entry["aftermath_id"] = str(aftermath.get("aftermath_id", ""))
+		result.append(entry)
 	return result
 
 
@@ -475,12 +481,17 @@ static func _back_room_residency(run_state: RunState, segment: int) -> Array:
 		var member_id := str(member_value)
 		var rank := run_state.crew_rank(member_id)
 		var lines := _dict(member_definition(member_id).get("presence_lines", {}))
-		result.append({
+		var entry := {
 			"member_id": member_id,
 			"rank": rank,
 			"line": str(lines.get(rank, lines.get("marker", ""))).strip_edges(),
 			"resident": true,
-		})
+		}
+		var aftermath := run_state.crew_recruitment_public_state(member_id)
+		if not aftermath.is_empty() and str(aftermath.get("meeting_state", "unmet")) != "unmet":
+			entry["actor_state"] = str(aftermath.get("actor_state", ""))
+			entry["aftermath_id"] = str(aftermath.get("aftermath_id", ""))
+		result.append(entry)
 	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("member_id", "")) < str(b.get("member_id", "")))
 	return result
 

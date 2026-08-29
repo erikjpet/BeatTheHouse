@@ -10,10 +10,10 @@ func _initialize() -> void:
 	_check_seeded_primary_and_fallback_proposals(failures)
 	_check_non_authoritative_outcomes_cannot_mutate(failures)
 	_check_contact_uses_trusted_run_state(failures)
-	_check_forged_state_and_substitution(failures)
+	_check_durable_state_and_substitution(failures)
 	_check_hidden_boundary(failures)
 	if failures.is_empty():
-		print("world06_4 recruitment model contract passed proposal_only=true authority_gap=adapter_host_root_unavailable")
+		print("world06_4 recruitment model contract passed proposals=non_authoritative durable_state=canonical")
 		quit(0)
 		return
 	for failure in failures: push_error(str(failure))
@@ -74,7 +74,7 @@ func _check_non_authoritative_outcomes_cannot_mutate(failures: Array) -> void:
 
 func _check_contact_uses_trusted_run_state(failures: Array) -> void:
 	var run_state: Variant = _marked_run("WORLD64-CONTACT", ["gas_station_casino"])
-	run_state.crew_recruit_member("crew_switch")
+	_recruit_for_fixture(run_state, "crew_switch")
 	run_state.current_environment = _environment("gas_station_casino")
 	run_state.current_environment["crew_presence"] = [{"member_id": "crew_switch", "rank": run_state.crew_rank("crew_switch"), "line": "fixture"}]
 	var available := Recruitment.contact_proposal(run_state, run_state.current_environment, "crew_switch")
@@ -83,10 +83,10 @@ func _check_contact_uses_trusted_run_state(failures: Array) -> void:
 	var aggrieved := Recruitment.contact_proposal(run_state, run_state.current_environment, "crew_switch")
 	_assert_contact(aggrieved, "associate", "aggrieved", failures)
 	var clean_job: Variant = _marked_run("WORLD64-JOB", ["gas_station_casino"])
-	clean_job.crew_recruit_member("crew_switch")
+	_recruit_for_fixture(clean_job, "crew_switch")
 	clean_job.current_environment = _environment("gas_station_casino")
 	clean_job.current_environment["crew_presence"] = [{"member_id": "crew_switch", "rank": clean_job.crew_rank("crew_switch"), "line": "fixture"}]
-	clean_job.job_offer(_job_definition("crew_switch"))
+	clean_job.crew_jobs["fixture_job:0001"] = {"id": "fixture_job:0001", "definition_id": "fixture_job", "member_id": "crew_switch", "kind": "package_run", "status": "active", "outcome": "", "offered_action": 0, "expires_at_action": 10, "expiry_in_actions": 10, "rewards": {"cash": 0, "trust": 1}, "failure": {"trust": -1, "grievance_kind": "job_abandoned", "grievance_weight": 1}}
 	var job_out := Recruitment.contact_proposal(clean_job, clean_job.current_environment, "crew_switch")
 	_assert_contact(job_out, "associate", "job_out", failures)
 	var substituted: Dictionary = clean_job.current_environment.duplicate(true); substituted["world_node_id"] = "bar"
@@ -98,19 +98,23 @@ func _check_contact_uses_trusted_run_state(failures: Array) -> void:
 		if public_text.contains(hidden): failures.append("Contact proposal exposed hidden ledger field %s." % hidden)
 
 
-func _check_forged_state_and_substitution(failures: Array) -> void:
+func _check_durable_state_and_substitution(failures: Array) -> void:
 	var coherent := Recruitment.new_encounter_state()
 	coherent["meetings"] = {"crew_switch": {
 		"member_id": "crew_switch", "first_path_kind": "primary", "first_outcome": "accepted", "path_kind": "primary",
 		"outcome": "accepted", "action_index": 7, "aftermath_id": "crew_switch_accepted",
 		"history": [{"path_kind": "primary", "outcome": "accepted", "action_index": 7}],
 	}}
-	if not Recruitment.normalize_encounter_state(coherent).is_empty():
-		failures.append("A coherent but unrooted meeting chain restored instead of failing closed.")
+	if Recruitment.normalize_encounter_state(coherent).is_empty():
+		failures.append("Canonical host-produced meeting aftermath did not restore.")
 	var contact_chain := coherent.duplicate(true)
 	contact_chain["contacts"] = {"crew_switch": {"member_id": "crew_switch", "standing": "associate", "contact_state": "familiar", "action_index": 8}}
-	if not Recruitment.normalize_encounter_state(contact_chain).is_empty():
-		failures.append("A coherent substituted standing/contact chain restored without trusted ledger authority.")
+	if Recruitment.normalize_encounter_state(contact_chain).is_empty():
+		failures.append("Canonical accepted-contact aftermath did not restore.")
+	var substituted := coherent.duplicate(true)
+	substituted["meetings"]["crew_switch"]["aftermath_id"] = "crew_switch_forged"
+	if not Recruitment.normalize_encounter_state(substituted).is_empty():
+		failures.append("Substituted recruitment aftermath id did not fail closed.")
 	var empty := Recruitment.new_encounter_state()
 	if JSON.stringify(Recruitment.normalize_encounter_state(empty)) != JSON.stringify(empty):
 		failures.append("Empty fail-closed encounter state did not round-trip deterministically.")
@@ -160,6 +164,11 @@ func _environment(node_id: String, scenario_id: String = "") -> Dictionary:
 
 func _job_definition(member_id: String) -> Dictionary:
 	return {"id": "fixture_job", "label": "Fixture", "member_id": member_id, "kind": "package_run", "min_rank": "associate", "payload": {"target_count": 1, "cargo_id": "fixture", "cargo_label": "fixture", "cargo_heat_per_travel": 0}, "expiry_in_actions": 10, "rewards": {"cash": 0, "trust": 1}, "failure": {"trust": -1, "grievance_kind": "job_abandoned", "grievance_weight": 1}}
+
+
+func _recruit_for_fixture(run_state: Variant, member_id: String) -> void:
+	var target := 30
+	run_state.crew_add_trust(member_id, maxi(0, target - run_state.crew_trust(member_id)), "fixture")
 
 
 static func _dict(value: Variant) -> Dictionary:

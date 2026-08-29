@@ -4424,29 +4424,10 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	}
 	job_run.crew_add_trust("crew_mags", 10, "fixture")
 	var offered := job_run.job_offer(expiry_definition)
-	var expiry_job_id := str(offered.get("id", ""))
-	job_run.advance_environment_turns(2)
-	if str((job_run.crew_jobs.get(expiry_job_id, {}) as Dictionary).get("status", "")) == "resolved":
-		failures.append("Crew job expired before its exact action boundary.")
-	job_run.advance_environment_turns(1)
-	var expired: Dictionary = job_run.crew_jobs.get(expiry_job_id, {}) if typeof(job_run.crew_jobs.get(expiry_job_id, {})) == TYPE_DICTIONARY else {}
-	if str(expired.get("status", "")) != "resolved" or str(expired.get("outcome", "")) != "abandoned":
-		failures.append("Crew job did not resolve abandoned at exactly N action boundaries.")
-	if job_run.crew_trust("crew_mags") != 6 or job_run.crew_grievances("crew_mags").size() != 1:
-		failures.append("Abandoned Crew job did not apply its configured trust and grievance effects.")
-
-	var success_definition := expiry_definition.duplicate(true)
-	success_definition["id"] = "success_proof"
-	success_definition["member_id"] = "crew_lucky"
-	success_definition["rewards"] = {"cash": 17, "trust": 11}
-	var cash_before := job_run.bankroll
-	var success_offer := job_run.job_offer(success_definition)
-	var success_job_id := str(success_offer.get("id", ""))
-	if job_run.job_accept(success_job_id).is_empty() or job_run.job_activate(success_job_id).is_empty():
-		failures.append("Crew job did not traverse offered to accepted to active.")
-	var success := job_run.job_resolve(success_job_id, "success")
-	if str(success.get("outcome", "")) != "success" or job_run.bankroll != cash_before + 17 or job_run.crew_trust("crew_lucky") != 11:
-		failures.append("Successful Crew job did not pay configured cash and trust.")
+	if not offered.is_empty() or not job_run.crew_jobs.is_empty() or job_run.crew_job_sequence != 0:
+		failures.append("Caller-authored Crew job definition crossed the host-only lifecycle boundary.")
+	if not job_run.job_accept("forged").is_empty() or not job_run.job_activate("forged").is_empty() or not job_run.job_resolve("forged", "success").is_empty():
+		failures.append("Caller-authored Crew lifecycle transition crossed the host-only boundary.")
 
 	var event_run: RunState = RunStateScript.new()
 	event_run.start_new("CREW-FAVOR-EVENT-REGRESSION")

@@ -366,6 +366,11 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 		result["errors"] = advance_errors.duplicate(true)
 		return
 	GameModule.apply_result(run_state, result)
+	# Recruitment aftermath is committed from this exact resolved event result,
+	# before resolve_event removes the live placement. The host derives member,
+	# path and outcome; consequence payloads never write Crew state directly.
+	if get_id().begins_with("recruitment_") and get_id() not in ["recruitment_rook_signpost", "recruitment_rook_leads"]:
+		result["crew_recruitment_result"] = run_state.crew_record_recruitment_event_result(result)
 	for hook in deltas.get("event_hooks", []):
 		if typeof(hook) != TYPE_DICTIONARY:
 			continue
@@ -377,10 +382,8 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				_apply_trigger_event_hook(run_state, result, hook_data)
 			"hear_rumor":
 				pass
-			"crew_recruit":
-				run_state.crew_recruit_member(str(hook_data.get("member_id", "")))
-			"crew_meet":
-				run_state.crew_meet_member(str(hook_data.get("member_id", "")))
+			"crew_recruit", "crew_meet":
+				pass
 			"crew_rook_lead_closed":
 				run_state.crew_close_rook_leads_event()
 			"resolve_lender_favor":

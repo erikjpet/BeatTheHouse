@@ -103,8 +103,9 @@ static func _check_emissions(failures: Array) -> void:
 
 	var payment := _run("TURN-PAYMENT")
 	_prepare(payment, "crew_switch", [CrewTurnModelScript.SIGNAL_PAYMENT])
-	var job := payment.job_offer({"id": "fixture_job", "member_id": "crew_switch", "kind": "package_run", "min_rank": "associate", "expiry_in_actions": 8, "rewards": {"cash": 40, "trust": 1}, "failure": {"trust": -1, "grievance_kind": "job_abandoned", "grievance_weight": 1}})
-	payment.job_accept(str(job.get("id", "")))
+	var job_id := "fixture_job:0001"
+	var job := {"id": job_id, "definition_id": "fixture_job", "label": "Fixture job", "member_id": "crew_switch", "kind": "package_run", "min_rank": "associate", "status": "active", "outcome": "", "payload": {}, "expiry_in_actions": 8, "offered_action": 0, "accepted_action": 0, "active_action": 0, "expires_at_action": 8, "rewards": {"cash": 40, "trust": 1}, "failure": {"trust": -1, "grievance_kind": "job_abandoned", "grievance_weight": 1}}
+	payment.crew_jobs[job_id] = job
 	payment.active_delivery_run = DeliveryRunModelScript.begin({"run_id": "fixture_route", "job_id": str(job.get("id", "")), "start_node_id": "bar", "targets": [{"node_id": "motel"}], "deadline_actions": 4}, 0)
 	payment.active_delivery_run = DeliveryRunModelScript.apply_host_action(payment.active_delivery_run, "pickup", "turn:payment:pickup", {
 		"schema_version": 1, "node_id": "bar", "destination_node_id": "", "target_id": "delivery_pickup", "place_id": "",

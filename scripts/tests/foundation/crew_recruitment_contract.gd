@@ -195,7 +195,7 @@ static func _check_bishop_grand_casino_presence(library: ContentLibrary, failure
 	var selected_seed := ""
 	for seed_index in range(128):
 		var candidate := _marked_run("CREW-BISHOP-CAGE-PRESENCE-%03d" % seed_index)
-		candidate.crew_recruit_member("crew_bishop")
+		_recruit_for_fixture(candidate, "crew_bishop")
 		_set_fixture_world(candidate, [RunState.GRAND_CASINO_ARCHETYPE_ID])
 		var cage_probe := {
 			"id": "bishop_cage_seed_probe",
@@ -214,7 +214,7 @@ static func _check_bishop_grand_casino_presence(library: ContentLibrary, failure
 		failures.append("No deterministic Bishop itinerary seed selected the Grand Casino cage window.")
 		return
 	var run_state := _marked_run(selected_seed)
-	run_state.crew_recruit_member("crew_bishop")
+	_recruit_for_fixture(run_state, "crew_bishop")
 	_set_fixture_world(run_state, [RunState.GRAND_CASINO_ARCHETYPE_ID])
 	run_state.narrative_flags["grand_casino_high_limit_access"] = true
 	var generator := RunGeneratorScript.new(library)
@@ -279,7 +279,7 @@ static func _check_rook_signposts(library: ContentLibrary, failures: Array) -> v
 			break
 	if not leads_placed:
 		failures.append("Rook's seeded presence did not expose his contextual meetable-member leads.")
-	run_state.crew_recruit_member("crew_switch")
+	_recruit_for_fixture(run_state, "crew_switch")
 	if not CrewRecruitmentModelScript.rook_signpost_choices(run_state).is_empty():
 		failures.append("Rook kept signposting a member after their intro was complete.")
 	var presence_run := _marked_run("CREW-ROOK-SIGNPOSTS")
@@ -312,7 +312,7 @@ static func _check_perks_and_save(failures: Array) -> void:
 		failures.append("Rook's L3 escort leaked below Made.")
 	if run_state.crew_capability_active("sweep_intel") or bool(run_state.crew_switch_intel_status().get("available", false)):
 		failures.append("Switch intel leaked below Associate.")
-	run_state.crew_recruit_member("crew_switch")
+	_recruit_for_fixture(run_state, "crew_switch")
 	if not run_state.crew_capability_active("sweep_intel") or not bool(run_state.crew_switch_intel_status().get("available", false)):
 		failures.append("Switch Associate did not activate sweep intel and remote reveal.")
 	_set_fixture_world(run_state, ["bar", "gas_station_casino", "back_alley", "motel"])
@@ -338,7 +338,7 @@ static func _check_perks_and_save(failures: Array) -> void:
 	run_state.inventory.append("marked_cards")
 	if bool(run_state.crew_knuckles_stash_status().get("available", false)):
 		failures.append("Knuckles stash leaked below Associate.")
-	run_state.crew_recruit_member("crew_knuckles")
+	_recruit_for_fixture(run_state, "crew_knuckles")
 	var stashed := run_state.crew_knuckles_stash_item("marked_cards")
 	if not bool(stashed.get("ok", false)) or run_state.inventory.has("marked_cards") or run_state._carried_contraband_ids().has("marked_cards"):
 		failures.append("Knuckles stash did not remove contraband from sweep-visible inventory.")
@@ -373,7 +373,7 @@ static func _check_contact_surfaces(library: ContentLibrary, failures: Array) ->
 			failures.append("Crew contact event is missing for %s." % member_id)
 		var below := _marked_run("CREW-CONTACT-BELOW-%s" % member_id)
 		if member_id != "crew_rook":
-			below.crew_meet_member(member_id)
+			_meet_for_fixture(below, member_id)
 		if not CrewRecruitmentModelScript.contact_choices(below, {}, member_id, library).is_empty():
 			failures.append("Crew contact actions leaked below Associate for %s." % member_id)
 
@@ -391,7 +391,7 @@ static func _check_contact_surfaces(library: ContentLibrary, failures: Array) ->
 			failures.append("Rook's contextual contact did not offer the existing Crew job through the real event pipeline.")
 
 	var switch_run := _marked_run("CREW-CONTACT-SWITCH")
-	switch_run.crew_recruit_member("crew_switch")
+	_recruit_for_fixture(switch_run, "crew_switch")
 	var switch_nodes := ["bar", "gas_station_casino", "back_alley", "motel", "corner_store"]
 	_set_fixture_world(switch_run, switch_nodes)
 	for node_id in switch_nodes:
@@ -425,7 +425,7 @@ static func _check_contact_surfaces(library: ContentLibrary, failures: Array) ->
 				failures.append("Switch's contact did not enforce its data-capped per-visit reveal allowance.")
 
 	var knuckles_run := _marked_run("CREW-CONTACT-KNUCKLES")
-	knuckles_run.crew_recruit_member("crew_knuckles")
+	_recruit_for_fixture(knuckles_run, "crew_knuckles")
 	knuckles_run.inventory = [{"id": "marked_cards", "copy": "first"}, {"id": "marked_cards", "copy": "second"}]
 	var knuckles_environment := _presence_environment(knuckles_run, "crew_knuckles")
 	if not _contact_is_embedded(knuckles_environment, "crew_knuckles"):
@@ -449,7 +449,7 @@ static func _check_contact_surfaces(library: ContentLibrary, failures: Array) ->
 				failures.append("Knuckles' contact did not expose retrieval through the same normal interaction surface.")
 
 	var lucky_run := _marked_run("CREW-CONTACT-LUCKY")
-	lucky_run.crew_recruit_member("crew_lucky")
+	_recruit_for_fixture(lucky_run, "crew_lucky")
 	_set_fixture_world(lucky_run, ["small_underground_casino", "bar", "motel", "gas_station_casino", "corner_store"])
 	var lucky_presence_probe := _presence_environment(lucky_run, "crew_lucky", false)
 	var lucky_location := str(lucky_presence_probe.get("world_node_id", ""))
@@ -804,6 +804,16 @@ static func _check_ignored_numeric_normalizer(failures: Array) -> void:
 		or typeof(valid_checkpoint.get("current_environment_bytes")) != TYPE_INT \
 		or typeof(valid_checkpoint.get("world_environments_bytes")) != TYPE_INT:
 		failures.append("Crew-ignoring golden numeric normalization did not restore exact integral JSON fixture types.")
+
+
+static func _recruit_for_fixture(run_state: RunState, member_id: String) -> void:
+	var target := CrewStateModelScript.rank_threshold("associate")
+	run_state.crew_add_trust(member_id, maxi(0, target - run_state.crew_trust(member_id)), "fixture")
+
+
+static func _meet_for_fixture(run_state: RunState, member_id: String) -> void:
+	var target := CrewStateModelScript.rank_threshold("marker")
+	run_state.crew_add_trust(member_id, maxi(0, target - run_state.crew_trust(member_id)), "fixture")
 
 
 static func _dict(value: Variant) -> Dictionary:
