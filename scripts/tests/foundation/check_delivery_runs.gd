@@ -342,6 +342,7 @@ func _check_delivery_no_soft_lock_worst_cases(failures: Array) -> void:
 func _check_delivery_sweep_and_map_intel(failures: Array) -> void:
 	var sweep_run := _delivery_test_run("DELIVERY-SWEEP")
 	sweep_run.delivery_begin_package({"run_id": "sweep", "deadline_actions": 9, "cargo_id": "proof_case", "consumer_payload": {"failure": {"heat": 0}}})
+	_delivery_pickup_if_needed(sweep_run)
 	sweep_run.add_suspicion("fixture", 50, "test", false)
 	var swept := sweep_run.resolve_police_sweep_encounter_for_test({"node_id": sweep_run.current_world_node_id(), "segment_index": 0, "encounter_seed": 44})
 	if str(swept.get("outcome", "")) != "confiscation" or not str(swept.get("confiscated_item_id", "")).begins_with("delivery:") \

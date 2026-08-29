@@ -3,6 +3,7 @@ extends RefCounted
 
 const SCHEMA_VERSION := 3
 const LEGACY_SCHEMA_VERSION := 2
+const EARLIEST_LEGACY_SCHEMA_VERSION := 1
 const CLOSED_CHECKPOINT_SCHEMA_VERSION := 1
 const CLOSED_CHECKPOINT_FIELDS := [
 	"schema_version", "delivery_instance_id", "job_id", "owner_token", "public_instance_token",
@@ -87,9 +88,9 @@ static func normalize_state(value: Variant) -> Dictionary:
 		return {}
 	var source: Dictionary = value
 	var source_schema := int(source.get("schema_version", 0))
-	if source_schema not in [LEGACY_SCHEMA_VERSION, SCHEMA_VERSION]:
+	if source_schema not in [EARLIEST_LEGACY_SCHEMA_VERSION, LEGACY_SCHEMA_VERSION, SCHEMA_VERSION]:
 		return {}
-	if source_schema == LEGACY_SCHEMA_VERSION and source.has("depth_state"):
+	if source_schema in [EARLIEST_LEGACY_SCHEMA_VERSION, LEGACY_SCHEMA_VERSION] and source.has("depth_state"):
 		return {}
 	var mode := str(source.get("mode", MODE_PACKAGE)).strip_edges().to_lower()
 	if not MODES.has(mode):
@@ -104,7 +105,7 @@ static func normalize_state(value: Variant) -> Dictionary:
 	var resolution := _copy_dict(source.get("resolution", {}))
 	if status == "resolved" and resolution.is_empty():
 		resolution = _resolution("failed", "invalid_state", source, false)
-	var depth_state := _normalize_depth_state(source.get("depth_state", {})) if source_schema == SCHEMA_VERSION else _legacy_depth_state(source, mode)
+	var depth_state := _normalize_depth_state(source.get("depth_state", {})) if source_schema == SCHEMA_VERSION else _legacy_depth_state(source, mode, source_schema)
 	if depth_state.is_empty():
 		return {}
 	var result := {
@@ -307,7 +308,7 @@ static func bind_legacy_position(state_value: Variant, host_node_id: String) -> 
 		return state
 	var depth := _copy_dict(state.get("depth_state", {}))
 	var position := _copy_dict(depth.get("position", {}))
-	if str(depth.get("origin", "")) != "legacy_v2" or not str(position.get("node_id", "")).is_empty():
+	if not str(depth.get("origin", "")).begins_with("legacy_v") or not str(position.get("node_id", "")).is_empty():
 		return state
 	depth["position"] = _physical_position(clean_node, "", "legacy_restore")
 	var cargo := _copy_dict(depth.get("cargo", {}))
@@ -455,12 +456,19 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 			state = _record_physical_position(state, node_id, action)
 			if str(state.get("mode", "")) == MODE_HOLD:
 				state = _advance_hold_choice(state, node_id, attention, action_index, "")
+			else:
+				state = advance_boundaries(state, 1, node_id, attention, action_index)
 		"duck":
 			if node_id.is_empty() or node_id != str(position.get("node_id", "")) or cover_id.is_empty():
 				return state
 			state = _record_physical_position(state, node_id, action)
 			if str(state.get("mode", "")) == MODE_GETAWAY:
 				state["pursuit_pressure"] = maxi(0, int(state.get("pursuit_pressure", 0)) - int(state.get("pursuit_per_boundary", 0)))
+			state = advance_boundaries(state, 1, node_id, attention, action_index)
+			if str(state.get("status", "")) == "resolved" and str(state.get("mode", "")) == MODE_GETAWAY:
+				depth = _copy_dict(state.get("depth_state", {}))
+				depth["pursuit_aftermath"] = {"outcome": str(_copy_dict(state.get("resolution", {})).get("reason", "failed")), "node_id": node_id, "action_index": action_index}
+				state["depth_state"] = depth
 		"stash":
 			if str(cargo.get("status", "")) != CARGO_CARRIED or node_id.is_empty() or place_id.is_empty() \
 					or node_id != str(position.get("node_id", "")) or node_id != str(cargo.get("node_id", "")):
@@ -691,12 +699,16 @@ static func _append_depth_receipt(state_value: Dictionary, receipt_key: String, 
 	var receipts := _copy_array(depth.get("command_receipts", []))
 	if receipts.size() >= MAX_DEPTH_COMMAND_RECEIPTS:
 		return state_value
-	receipts.append({
+	var previous_fingerprint := "0".repeat(64) if receipts.is_empty() else str(_copy_dict(receipts[receipts.size() - 1]).get("receipt_fingerprint", ""))
+	var receipt := {
 		"receipt_key": receipt_key,
 		"command_id": command_id,
 		"command_record_fingerprint": _fingerprint(envelope),
+		"previous_receipt_fingerprint": previous_fingerprint,
 		"sequence": receipts.size() + 1,
-	})
+	}
+	receipt["receipt_fingerprint"] = _fingerprint(receipt)
+	receipts.append(receipt)
 	depth["command_receipts"] = receipts
 	depth["command_sequence"] = receipts.size()
 	state["depth_state"] = depth
@@ -721,7 +733,7 @@ static func _initial_depth_state(mode: String, spec: Dictionary) -> Dictionary:
 	}
 
 
-static func _legacy_depth_state(source: Dictionary, mode: String) -> Dictionary:
+static func _legacy_depth_state(source: Dictionary, mode: String, source_schema: int) -> Dictionary:
 	var node_id := str(source.get("handoff_pending_node_id", "")).strip_edges()
 	var cargo_status := CARGO_NONE if mode in [MODE_HOLD, MODE_GETAWAY] else CARGO_CARRIED
 	if bool(source.get("confiscated", false)):
@@ -737,7 +749,7 @@ static func _legacy_depth_state(source: Dictionary, mode: String) -> Dictionary:
 	var place_kind := "none" if cargo_status == CARGO_NONE else "legacy_v2"
 	return {
 		"schema_version": DEPTH_STATE_SCHEMA_VERSION,
-		"origin": "legacy_v2",
+		"origin": "legacy_v%d" % source_schema,
 		"cargo": _physical_cargo(cargo_status, node_id, place_kind, ""),
 		"position": _physical_position(node_id, "", "legacy_restore"),
 		"command_receipts": [],
@@ -758,7 +770,7 @@ static func _normalize_depth_state(value: Variant) -> Dictionary:
 	exact.sort()
 	if keys != exact or typeof(source.get("schema_version")) != TYPE_INT or int(source.get("schema_version", 0)) != DEPTH_STATE_SCHEMA_VERSION:
 		return {}
-	if str(source.get("origin", "")) not in ["current", "legacy_v2"]:
+	if str(source.get("origin", "")) not in ["current", "legacy_v1", "legacy_v2"]:
 		return {}
 	var cargo := _normalize_physical_cargo(source.get("cargo", {}))
 	var position := _normalize_physical_position(source.get("position", {}))
@@ -842,6 +854,8 @@ static func _normalize_depth_receipts(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	var result: Array = []
+	var seen := {}
+	var previous_fingerprint := "0".repeat(64)
 	for index in range((value as Array).size()):
 		var receipt_value: Variant = (value as Array)[index]
 		if typeof(receipt_value) != TYPE_DICTIONARY:
@@ -849,14 +863,27 @@ static func _normalize_depth_receipts(value: Variant) -> Array:
 		var receipt: Dictionary = receipt_value
 		var keys := receipt.keys()
 		keys.sort()
-		if keys != ["command_id", "command_record_fingerprint", "receipt_key", "sequence"] \
+		if keys != ["command_id", "command_record_fingerprint", "previous_receipt_fingerprint", "receipt_fingerprint", "receipt_key", "sequence"] \
 				or typeof(receipt.get("sequence")) != TYPE_INT or int(receipt.get("sequence", 0)) != index + 1:
 			return []
-		for key in ["command_id", "command_record_fingerprint", "receipt_key"]:
+		for key in ["command_id", "receipt_key"]:
 			if typeof(receipt.get(key)) != TYPE_STRING or str(receipt.get(key, "")).is_empty() or str(receipt.get(key, "")) != str(receipt.get(key, "")).strip_edges():
 				return []
+		if seen.has(str(receipt.get("receipt_key", ""))) or not _valid_sha256(str(receipt.get("command_record_fingerprint", ""))) \
+				or str(receipt.get("previous_receipt_fingerprint", "")) != previous_fingerprint or not _valid_sha256(str(receipt.get("receipt_fingerprint", ""))):
+			return []
+		var body := receipt.duplicate(true)
+		body.erase("receipt_fingerprint")
+		if str(receipt.get("receipt_fingerprint", "")) != _fingerprint(body):
+			return []
+		seen[str(receipt.get("receipt_key", ""))] = true
+		previous_fingerprint = str(receipt.get("receipt_fingerprint", ""))
 		result.append(receipt.duplicate(true))
 	return result
+
+
+static func _valid_sha256(value: String) -> bool:
+	return value.length() == 64 and value == value.to_lower() and value.is_valid_hex_number()
 
 
 static func _available_physical_verbs(state: Dictionary) -> Array:

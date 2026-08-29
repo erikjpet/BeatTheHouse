@@ -36,6 +36,10 @@ func _check_schema_migration(failures: Array) -> void:
 	if int(migrated.get("schema_version", 0)) != 3 or str(_physical(migrated).get("cargo_state", "")) != "carried" \
 			or str(_dict(migrated.get("depth_state", {})).get("origin", "")) != "legacy_v2":
 		failures.append("Exact schema-2 migration did not preserve legacy carried-cargo semantics.")
+	legacy["schema_version"] = 1
+	var migrated_v1 := DeliveryRunModelScript.normalize_state(legacy)
+	if int(migrated_v1.get("schema_version", 0)) != 3 or str(_dict(migrated_v1.get("depth_state", {})).get("origin", "")) != "legacy_v1":
+		failures.append("Exact schema-1 migration did not preserve the original delivery save path.")
 	var round_trip := DeliveryRunModelScript.normalize_state(current)
 	if JSON.stringify(round_trip) != JSON.stringify(current):
 		failures.append("Current physical state did not normalize byte-identically.")
@@ -99,8 +103,8 @@ func _check_hold_and_pursuit(failures: Array) -> void:
 		"pursuit_pressure": 6, "pursuit_per_boundary": 2, "pursuit_limit": 12,
 	}, 0)
 	var ducked := _act(chase, "duck", "chase:duck", {"node_id": "casino", "cover_id": "casino::alley"})
-	if int(ducked.get("pursuit_pressure", 0)) != 4:
-		failures.append("Shared duck verb did not use the landed pursuit-pressure relief.")
+	if int(ducked.get("pursuit_pressure", 0)) != 6:
+		failures.append("Shared duck verb did not cancel exactly one landed pursuit increment.")
 	var escaped := _act(ducked, "move", "chase:move", {"node_id": "casino", "destination_node_id": "motel"})
 	_assert_terminal(escaped, "escaped", failures)
 

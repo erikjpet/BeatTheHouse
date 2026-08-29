@@ -270,6 +270,7 @@ func _hidden_observer_fixture(library: ContentLibrary, alternate_private_case: b
 	if token.is_empty() or target_node_id.is_empty():
 		failures.append("Differential observer fixture could not schedule its public sequence.")
 		return {}
+	_pickup_delivery(run_state, "observer")
 	RunGeneratorScript.new(library).next_environment(run_state, target_node_id, true)
 	var arrival := run_state.delivery_resolve_travel_arrival({}, {})
 	var finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
@@ -317,6 +318,7 @@ func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: 
 	if target_node_id.is_empty():
 		failures.append("Production delivery did not expose a public target for the proof conversion.")
 		return
+	_pickup_delivery(run_state, "target_handoff")
 	RunGeneratorScript.new(library).next_environment(run_state, target_node_id, true)
 	if run_state.current_world_node_id() != target_node_id:
 		failures.append("Production world generation did not install the exact public Crew favor target.")
@@ -477,6 +479,7 @@ func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures:
 	if token.is_empty() or target_node_id.is_empty():
 		failures.append("P1 injection fixture could not schedule a public delivery owner.")
 		return {}
+	_pickup_delivery(run_state, "checkpoint")
 	RunGeneratorScript.new(library).next_environment(run_state, target_node_id, true)
 	var arrival := run_state.delivery_resolve_travel_arrival({}, {})
 	var finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
@@ -817,6 +820,12 @@ func _choice(choices: Array, choice_id: String) -> Dictionary:
 		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == choice_id:
 			return (choice_value as Dictionary).duplicate(true)
 	return {}
+
+
+func _pickup_delivery(run_state: RunState, stage: String) -> void:
+	var physical := _dict(run_state.delivery_snapshot().get("physical", {}))
+	if str(physical.get("cargo_state", "")) == "pickup_pending":
+		run_state.delivery_apply_physical_action("pickup", "world06_1:%s:pickup" % stage)
 
 
 static func _dict(value: Variant) -> Dictionary:

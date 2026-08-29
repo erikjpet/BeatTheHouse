@@ -10467,11 +10467,11 @@ func delivery_physical_interactions() -> Array:
 		var verb := str(verb_value)
 		if verb == "move" or verb == "handoff":
 			continue
-		var label := {
+		var label := str({
 			"pickup": "Take the package", "wait": "Hold your sightline", "duck": "Duck into cover",
 			"stash": "Stash the package", "retrieve": "Retrieve the package", "ditch": "Ditch the package",
 			"signal": "Send the signal", "break_hold": "Break the hold",
-		}.get(verb, verb.replace("_", " ").capitalize())
+		}.get(verb, verb.replace("_", " ").capitalize()))
 		result.append({
 			"object_id": "delivery:%s:%s" % [verb, node_id],
 			"node_id": node_id,
@@ -10538,15 +10538,17 @@ func _delivery_host_context(node_id: String, destination_node_id: String, target
 
 
 func _delivery_physical_action_message(verb: String) -> String:
-	return {
+	return str({
 		"pickup": "The package has weight now.", "wait": "You hold the sightline.", "duck": "The street loses you for a beat.",
 		"stash": "The package stays here until you return.", "retrieve": "The package is back under your coat.",
 		"ditch": "The package is gone.", "signal": "The signal crosses the street.", "break_hold": "You leave the sightline early.",
-	}.get(verb, "The route changes here.")
+	}.get(verb, "The route changes here."))
 
 
 func delivery_arrival_interaction() -> Dictionary:
 	if not delivery_has_active_run():
+		return {}
+	if not bool(delivery_snapshot().get("carrying_contraband", false)):
 		return {}
 	var node_id := current_world_node_id()
 	if node_id.is_empty() or node_id != str(active_delivery_run.get("handoff_pending_node_id", "")):
@@ -10605,11 +10607,24 @@ func delivery_use_getaway_assist(assist_id: String) -> Dictionary:
 	return {"ok": true, "snapshot": delivery_snapshot(), "message": "One favor burns. The pressure drops."}
 
 
-func delivery_abandon(reason: String = "abandoned") -> Dictionary:
+func delivery_abandon(_reason: String = "abandoned") -> Dictionary:
 	if not delivery_has_active_run():
 		return {"ok": false, "message": "No delivery is active."}
-	active_delivery_run = DeliveryRunModelScript.abandon(active_delivery_run, reason)
-	_apply_delivery_resolution()
+	var rollback_run := to_dict()
+	var receipt_key := "abandon:%s:%d" % [str(active_delivery_run.get("run_id", "delivery")), maxi(0, _crew_action_index())]
+	var before := JSON.stringify(active_delivery_run)
+	active_delivery_run = DeliveryRunModelScript.apply_host_action(
+		active_delivery_run,
+		"abandon",
+		receipt_key,
+		_delivery_host_context(current_world_node_id(), "", "", "", "", "", "abandoned")
+	)
+	if JSON.stringify(active_delivery_run) == before:
+		return {"ok": false, "message": "The route could not be closed safely."}
+	var applied := _apply_delivery_resolution()
+	if not bool(applied.get("ok", false)):
+		from_dict(rollback_run)
+		return {"ok": false, "message": "The route could not be closed safely.", "errors": _copy_array(applied.get("errors", []))}
 	return {"ok": true, "resolved": true, "snapshot": delivery_snapshot(), "message": "The route closes without you."}
 
 
@@ -10669,6 +10684,8 @@ func delivery_resolve_travel_arrival(route: Dictionary = {}, route_risk: Diction
 func delivery_map_layer() -> Dictionary:
 	if not delivery_has_active_run():
 		return {}
+	var delivery_view := delivery_snapshot()
+	var physical := _copy_dict(delivery_view.get("physical", {}))
 	var public_sweep := sweep_status()
 	var edge_reads: Array = []
 	for edge_value in _copy_array(world_map.get("edges", [])):
@@ -10713,12 +10730,15 @@ func delivery_map_layer() -> Dictionary:
 	return {
 		"active": true,
 		"mode": str(active_delivery_run.get("mode", "package")),
-		"targets": _copy_array(delivery_snapshot().get("targets", [])),
+		"targets": _copy_array(delivery_view.get("targets", [])),
 		"deadline_remaining": int(active_delivery_run.get("deadline_remaining", 0)),
 		"cargo": {
 			"id": str(active_delivery_run.get("cargo_id", "")),
 			"label": str(active_delivery_run.get("cargo_label", "Crew package")),
-			"contraband": true,
+			"contraband": bool(delivery_view.get("carrying_contraband", false)),
+			"status": str(physical.get("cargo_state", "none")),
+			"node_id": str(physical.get("cargo_node_id", "")),
+			"place_id": str(physical.get("cargo_place_id", "")),
 		},
 		"edge_reads": edge_reads,
 	}
@@ -10831,7 +10851,7 @@ func _delivery_scenario_law_pressure(node_ids: Array) -> int:
 
 
 func _delivery_arrival_security_heat() -> int:
-	if not delivery_has_active_run():
+	if not delivery_has_active_run() or not bool(delivery_snapshot().get("carrying_contraband", false)):
 		return 0
 	var heat := maxi(0, int(active_delivery_run.get("cargo_heat_per_travel", 2)))
 	var security := _copy_dict(current_environment.get("security_profile", {}))
@@ -13077,7 +13097,7 @@ func _carried_contraband_ids() -> Array:
 		var risk_flags := _string_array(_copy_array(definition.get("risk_flags", [])))
 		if str(definition.get("class", "")).strip_edges().to_lower() == "contraband" or risk_flags.has("contraband"):
 			result.append(item_id)
-	if delivery_has_active_run():
+	if delivery_has_active_run() and bool(delivery_snapshot().get("carrying_contraband", false)):
 		result.append("delivery:%s" % str(active_delivery_run.get("cargo_id", "cargo")))
 	return result
 
@@ -14198,17 +14218,9 @@ func world_sequence_checkpoint_delivery_outcome(token: String, node_id: String =
 	if not bool(preview.get("ok", false)): return preview
 	var target_id := node_id.strip_edges()
 	if target_id.is_empty(): target_id = current_world_node_id()
-	if target_id != current_world_node_id(): return {"ok": false, "errors": ["delivery owner is not at the terminal handoff"]}
 	if not delivery_has_active_run(): return {"ok": false, "errors": ["delivery owner is not active at the terminal handoff"]}
-	var target := _delivery_pending_target_at(target_id)
-	if target.is_empty(): return {"ok": false, "errors": ["delivery owner has no exact pending target at the terminal handoff"]}
 	var before := JSON.stringify(delivery_snapshot())
-	active_delivery_run = DeliveryRunModelScript.apply_host_action(
-		active_delivery_run,
-		"handoff",
-		str(_copy_dict(preview.get("receipt", {})).get("receipt_id", "")),
-		_delivery_host_context(target_id, "", str(target.get("id", "")), "", "", "", "world_sequence_handoff")
-	)
+	active_delivery_run = DeliveryRunModelScript.complete_handoff(active_delivery_run, target_id)
 	if JSON.stringify(delivery_snapshot()) == before or str(active_delivery_run.get("status", "")) != "resolved":
 		return {"ok": false, "errors": ["delivery owner rejected the terminal handoff"]}
 	var applied := _apply_delivery_resolution(_copy_dict(preview.get("receipt", {})), false)
