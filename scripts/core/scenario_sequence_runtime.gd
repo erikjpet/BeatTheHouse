@@ -1798,10 +1798,11 @@ static func _trigger_receipt(trigger: Dictionary) -> String:
 
 
 static func _event_resolution_was_requested(state: Dictionary, event_id: String, resolution_id: String) -> bool:
-	for value in _bounded_records(state.get("event_request_history", []), MAX_RECEIPTS):
-		var request := _dict(value)
-		if str(request.get("event_id", "")) == event_id and str(request.get("resolution_id", "")) == resolution_id:
-			return true
+	for request_collection in ["event_request_history", "event_request_queue"]:
+		for value in _bounded_records(state.get(request_collection, []), MAX_RECEIPTS):
+			var request := _dict(value)
+			if str(request.get("event_id", "")) == event_id and str(request.get("resolution_id", "")) == resolution_id:
+				return true
 	return false
 
 

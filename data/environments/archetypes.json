@@ -212,6 +212,48 @@
         ],
         "zone_id": "foreground"
       },
+      "package_a_lotto_queue": {
+        "position": [
+          450,
+          270
+        ],
+        "zone_id": "center"
+      },
+      "package_a_dead_breaker": {
+        "position": [
+          700,
+          100
+        ],
+        "zone_id": "foreground"
+      },
+      "package_a_delivery_crate": {
+        "position": [
+          400,
+          280
+        ],
+        "zone_id": "center"
+      },
+      "package_a_dead_shift_exit": {
+        "position": [
+          300,
+          400
+        ],
+        "zone_id": "foreground"
+      },
+      "package_a_inventory_clerk_arrival": {
+        "position": [
+          300,
+          200
+        ],
+        "zone_id": "center"
+      },
+      "package_a_inventory_clerk_work": {
+        "position": [
+          700,
+          100
+        ],
+        "zone_id": "background"
+      },
       "shopkeeper_0": {
         "position": [
           470,

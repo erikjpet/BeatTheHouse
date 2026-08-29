@@ -1919,7 +1919,9 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	var inventory_errors := EnvironmentSemanticInventoryScript.validate(sealed)
 	if not inventory_errors.is_empty(): return _scenario_semantic_finalization_failure(inventory_errors, refresh_attempt)
 	if not bool(definition.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)):
-		var definition_errors := ScenarioSequenceSchemaScript.validate_definition(definition, ScenarioOperationRegistryScript, EnvironmentSemanticInventoryScript.exact_collections(sealed))
+		var validation_inventory := EnvironmentSemanticInventoryScript.exact_collections(sealed)
+		validation_inventory["event_choices"] = EnvironmentSemanticInventoryScript.event_choice_index(_copy_array(current_environment.get("event_ids", [])), library)
+		var definition_errors := ScenarioSequenceSchemaScript.validate_definition(definition, ScenarioOperationRegistryScript, validation_inventory)
 		if not definition_errors.is_empty(): return _scenario_semantic_finalization_failure(definition_errors, refresh_attempt)
 		definition[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
 	var definition_id := str(definition.get("id", definition.get("scenario_id", ""))).strip_edges()
@@ -2544,6 +2546,26 @@ func scenario_sequence_command(command_id: String, idempotency_key: String, payl
 		var stored_descriptor_fingerprint := str(replay_record.get("causal_action_descriptor_fingerprint", ""))
 		if stored_descriptor.is_empty() or stored_descriptor_fingerprint != ScenarioSequenceRuntimeScript.content_fingerprint(stored_descriptor):
 			return {"ok": false, "errors": ["scenario command replay action origin, handler, inputs, or cost changed"]}
+		var cached_result := _copy_dict(_copy_dict(sequence_state.get("command_results", {})).get(idempotency_key, {}))
+		if not ScenarioSequenceRuntimeScript._valid_cached_command_result(cached_result, idempotency_key, authored_command):
+			return {"ok": false, "errors": ["scenario command replay result is missing, malformed, or conflicts with its exact command"]}
+		# An authenticated exact replay is a read. In particular, do not enter
+		# ensure_sequence_state(), whose trusted causal rebuild deliberately omits
+		# one-shot presentation effects and would consume a still-pending transition.
+		cached_result["replayed"] = true
+		cached_result["state"] = sequence_state.duplicate(true)
+		cached_result["cost"] = 0
+		cached_result["bankroll_delta"] = 0
+		cached_result["bankroll_after"] = bankroll
+		cached_result["result_receipt"] = {
+			"receipt_id": str(cached_result.get("receipt_id", "")),
+			"command_id": command_id,
+			"scenario_id": str(definition.get("id", "")),
+			"node_id": current_world_node_id(),
+			"cost": 0,
+			"replayed": true,
+		}
+		return cached_result
 	var candidate_environment := current_environment.duplicate(true)
 	# This map is an internal presentation-to-state boundary: FoundationMain
 	# derives it synchronously from the current composed interaction model. The
@@ -2817,9 +2839,15 @@ func scenario_publish_event_result(result: Dictionary) -> void:
 	var resolution_id := str(result.get("resolution_id", "")).strip_edges()
 	if resolution_id.is_empty():
 		resolution_id = _scenario_pending_resolution_for_event(event_id)
+	var choice_id := str(result.get("choice_id", result.get("action_id", ""))).strip_edges()
+	# event_bridge resolution ids are catalog-proven event choice ids. Hosts that
+	# report the authenticated pending resolution need not redundantly echo it as
+	# action_id/choice_id.
+	if choice_id.is_empty() and not resolution_id.is_empty():
+		choice_id = resolution_id
 	scenario_enqueue_fact("event_result", "event", {
 		"event_id": event_id,
-		"choice_id": str(result.get("choice_id", result.get("action_id", ""))),
+		"choice_id": choice_id,
 		"resolution_id": resolution_id,
 		"resolved": resolved,
 		"ok": bool(result.get("ok", false)),
