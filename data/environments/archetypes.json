@@ -1043,7 +1043,9 @@
       "payday_order_rail": {"position": [624, 130], "zone_id": "service_lane"},
       "payday_runner": {"position": [322, 202], "zone_id": "center"},
       "wake_host": {"position": [486, 92], "zone_id": "background"},
-      "wake_memorial_tables": {"position": [136, 202], "zone_id": "left"}
+      "wake_memorial_tables": {"position": [136, 202], "zone_id": "left"},
+	  "wake_regular_work_1": {"position": [500, 380], "zone_id": "foreground"},
+	  "wake_task": {"position": [60, 70], "zone_id": "background"}
     },
     "security_profile": {
       "strictness": "loose",

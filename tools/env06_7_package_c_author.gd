@@ -34,7 +34,7 @@ const DECISIONS := {
 }
 
 const SPATIAL_BINDINGS := {
-	"bar_wake":{"anchors":["wake_memorial_tables","wake_host"]},
+	"bar_wake":{"task_anchor":"wake_task","anchors":["wake_memorial_tables","wake_host"],"phase_actor_anchors":{"work_1":{"wake_regular":"wake_regular_work_1"}}},
 	"bar_fight_night":{"anchors":["fight_toppled_chair","fight_right_brawler"]},
 	"bar_payday_rush":{"anchors":["payday_order_rail","payday_runner"]},
 	"bar_lock_in":{"anchors":["lockin_shutters","lockin_regular"]},
@@ -206,7 +206,9 @@ func _scene_spawn(prefix:String,boundary:String,id:String,label:String,role:Stri
 func _task_scene_spawn(prefix:String,boundary:String,id:String,verb:String,spatial:Dictionary)->Dictionary:
 	var anchors := _array(spatial.get("anchors", []))
 	var object := {"label":verb.replace("_", " ").capitalize(),"role":"task_station","bounds":{"w":64,"h":56},"visible":true,"enabled":true,"state":"ready","appearance":"task_ready"}
-	if not anchors.is_empty(): object["anchor_id"] = str(anchors[0])
+	var task_anchor := str(spatial.get("task_anchor", ""))
+	if not task_anchor.is_empty(): object["anchor_id"] = task_anchor
+	elif not anchors.is_empty(): object["anchor_id"] = str(anchors[0])
 	else: object["zone_id"] = "service_lane"
 	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":object}
 
@@ -277,6 +279,12 @@ func _beat_operations(c:Dictionary,index:int,spatial:Dictionary)->Dictionary:
 		_:
 			scene.append({"family":"scene_ops","op":"disable","receipt_id":"%s_%s_disable" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"disabled_reason":"This station closes after its task."})
 			actor.append({"family":"actor_ops","op":"set_pose","receipt_id":"%s_%s_final_pose" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"pose":"finished"})
+	var phase_id := "work_%d" % (index + 1)
+	var phase_actor_anchors := _dict(_dict(spatial.get("phase_actor_anchors", {})).get(phase_id, {}))
+	var actor_suffix := str(c.actors[index % c.actors.size()][0])
+	var phase_actor_anchor := str(phase_actor_anchors.get(actor_suffix, ""))
+	if not phase_actor_anchor.is_empty():
+		actor.append({"family":"actor_ops","op":"set_position","receipt_id":"%s_%s_position_%s" % [prefix,phase_id,actor_suffix],"owner_namespace":"scenario","stable_object_id":actor_id,"anchor_id":phase_actor_anchor})
 	return {"scene":scene,"actor":actor}
 
 
@@ -312,6 +320,12 @@ func _base_zones() -> Array:
 func _declared_anchor_ids(spatial: Dictionary) -> Array:
 	var result: Array = []
 	for anchor_value in _array(spatial.get("anchors", [])): result.append("base::anchor:%s" % str(anchor_value))
+	var task_anchor := str(spatial.get("task_anchor", ""))
+	if not task_anchor.is_empty(): result.append("base::anchor:%s" % task_anchor)
+	for phase_value in _dict(spatial.get("phase_actor_anchors", {})).values():
+		for anchor_value in _dict(phase_value).values():
+			var identity := "base::anchor:%s" % str(anchor_value)
+			if not result.has(identity): result.append(identity)
 	return result
 
 

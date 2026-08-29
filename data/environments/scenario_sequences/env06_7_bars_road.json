@@ -302,7 +302,9 @@
           "actors": [],
           "anchors": [
             "base::anchor:wake_memorial_tables",
-            "base::anchor:wake_host"
+            "base::anchor:wake_host",
+            "base::anchor:wake_task",
+            "base::anchor:wake_regular_work_1"
           ],
           "games": [],
           "interactions": [],
@@ -615,7 +617,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "wake_memorial_tables",
+                    "anchor_id": "wake_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -656,6 +658,14 @@
                   "owner_namespace": "scenario",
                   "pose": "tray_move",
                   "receipt_id": "bar_wake_tray_move_pose",
+                  "stable_object_id": "bar_wake_wake_regular"
+                },
+                {
+                  "anchor_id": "wake_regular_work_1",
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "bar_wake_work_1_position_wake_regular",
                   "stable_object_id": "bar_wake_wake_regular"
                 }
               ],
@@ -862,7 +872,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "wake_memorial_tables",
+                    "anchor_id": "wake_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -1053,7 +1063,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "wake_memorial_tables",
+                    "anchor_id": "wake_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -1226,7 +1236,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "06906598de4a0089396af7935d56ba043ed7d89f8b3a619a1b1d5d3aeb858fa7"
+        "sequence_signature": "6eacc49f80cd8fb085d39218dc877372b11cec90e2c5a5c12943f2977013bace"
       }
     },
     {
