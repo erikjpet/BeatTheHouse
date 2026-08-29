@@ -3438,16 +3438,25 @@ func _validate_scenario_definitions() -> void:
 		var target_inventory := _as_dict(target_catalog.get("guaranteed", {})).duplicate(true)
 		target_inventory["event_choices"] = _as_dict(target_catalog.get("event_choices", {}))
 		target_inventories[scenario_id] = target_inventory
-	if not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty():
-		var uniqueness_audit := ScenarioEngineScript.sequence_catalog_audit(sequence_definitions, sequence_definitions.size(), masked_visual_explanations, target_inventories)
+	var rollout_ids := ScenarioSequenceRolloutManifestScript.expected_ids()
+	var required_sequence_ids := ScenarioSequenceRolloutManifestScript.required_sequence_ids()
+	if ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT != 55 or rollout_ids.size() != ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT:
+		validation_errors.append("scenario sequence rollout manifest must contain exactly 55 catalog ids.")
+	var uniqueness_audit: Dictionary = {}
+	var rollout_report: Dictionary = {}
+	var reuse_rollout_audit := not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty() and _scenario_catalogs_match_for_internal_reuse(sequence_definitions, rollout_definitions, rollout_ids, required_sequence_ids)
+	if reuse_rollout_audit:
+		rollout_report = ScenarioSequenceSchemaScript.catalog_rollout_report(rollout_definitions, rollout_ids, ScenarioOperationRegistryScript, masked_visual_explanations, required_sequence_ids, target_inventories)
+		uniqueness_audit = _scenario_uniqueness_audit_from_rollout_report(rollout_report)
+	else:
+		if not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty():
+			uniqueness_audit = ScenarioEngineScript.sequence_catalog_audit(sequence_definitions, sequence_definitions.size(), masked_visual_explanations, target_inventories)
+		rollout_report = ScenarioSequenceSchemaScript.catalog_rollout_report(rollout_definitions, rollout_ids, ScenarioOperationRegistryScript, masked_visual_explanations, required_sequence_ids, target_inventories)
+	if not uniqueness_audit.is_empty():
 		scenario_sequence_catalog["uniqueness_audit"] = uniqueness_audit
 		var authority_channels := scenario_uniqueness_validation_channels(uniqueness_audit)
 		validation_errors.append_array(_copy_array(authority_channels.get("errors", [])))
 		validation_warnings.append_array(_copy_array(authority_channels.get("warnings", [])))
-	var rollout_ids := ScenarioSequenceRolloutManifestScript.expected_ids()
-	if ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT != 55 or rollout_ids.size() != ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT:
-		validation_errors.append("scenario sequence rollout manifest must contain exactly 55 catalog ids.")
-	var rollout_report := ScenarioSequenceSchemaScript.catalog_rollout_report(rollout_definitions, rollout_ids, ScenarioOperationRegistryScript, masked_visual_explanations, ScenarioSequenceRolloutManifestScript.required_sequence_ids(), target_inventories)
 	var validation_channels := scenario_uniqueness_validation_channels(rollout_report)
 	for rollout_error_value in _copy_array(validation_channels.get("errors", [])):
 		if not validation_errors.has(rollout_error_value):
@@ -3475,6 +3484,67 @@ static func scenario_uniqueness_validation_channels(report: Dictionary) -> Dicti
 	var warnings: Array = review_findings.duplicate(true)
 	warnings.append_array(_static_array(report.get("warnings", [])))
 	return {"errors": errors, "warnings": warnings}
+
+
+static func _scenario_catalogs_match_for_internal_reuse(sequence_definitions: Array, rollout_definitions: Array, expected_ids: Array, required_ids: Array) -> bool:
+	if sequence_definitions.size() != 55 or rollout_definitions.size() != 55 or expected_ids.size() != 55 or required_ids.size() != 55:
+		return false
+	var expected := _sorted_static_strings(expected_ids)
+	var required := _sorted_static_strings(required_ids)
+	if expected != required:
+		return false
+	var sequence_by_id := _scenario_definition_content_by_id(sequence_definitions)
+	var rollout_by_id := _scenario_definition_content_by_id(rollout_definitions)
+	if sequence_by_id.size() != 55 or rollout_by_id.size() != 55:
+		return false
+	if _sorted_static_strings(sequence_by_id.keys()) != expected or _sorted_static_strings(rollout_by_id.keys()) != expected:
+		return false
+	for scenario_id in expected:
+		var sequence_definition: Dictionary = sequence_by_id.get(scenario_id, {})
+		var rollout_definition: Dictionary = rollout_by_id.get(scenario_id, {})
+		if not ScenarioSequenceSchemaScript.is_sequence(sequence_definition) or not ScenarioSequenceSchemaScript.is_sequence(rollout_definition):
+			return false
+		if JSON.stringify(sequence_definition) != JSON.stringify(rollout_definition):
+			return false
+	return true
+
+
+static func _scenario_definition_content_by_id(definitions: Array) -> Dictionary:
+	var by_id: Dictionary = {}
+	for definition_value in definitions:
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			return {}
+		var definition := definition_value as Dictionary
+		var scenario_id := str(definition.get("id", "")).strip_edges()
+		if scenario_id.is_empty() or by_id.has(scenario_id):
+			return {}
+		by_id[scenario_id] = definition
+	return by_id
+
+
+static func _scenario_uniqueness_audit_from_rollout_report(report: Dictionary) -> Dictionary:
+	# Preserve the exact key order and JSON shape returned by
+	# ScenarioSequenceSchema.catalog_uniqueness_report.
+	return {
+		"ok": bool(report.get("ok", false)),
+		"expected_count": int(report.get("expected_count", 0)),
+		"actual_count": int(report.get("actual_count", 0)),
+		"expected_comparison_count": int(report.get("expected_comparison_count", 0)),
+		"comparison_count": int(report.get("comparison_count", 0)),
+		"rows": _static_array(report.get("rows", [])),
+		"pairs": _static_array(report.get("pairs", [])),
+		"dossiers": _static_array(report.get("dossiers", [])),
+		"failures": _static_array(report.get("failures", [])),
+		"warnings": _static_array(report.get("warnings", [])),
+	}
+
+
+static func _sorted_static_strings(values: Array) -> Array:
+	var result: Array = []
+	for value in values:
+		result.append(str(value))
+	result.sort()
+	return result
 
 
 static func _static_array(value: Variant) -> Array:
