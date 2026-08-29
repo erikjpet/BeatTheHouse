@@ -50,7 +50,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "3261709e7f265e1fb46fb36d95af1a7e15c223fff224edf5abfd477bb96c5c08",
+      "sequence_signature": "186a7088aa7a4822b058fc7a23c872b073fa7725aab9e9c862e008159fb6a815",
       "capture_ids": [
         "bar_wake_arrival",
         "bar_wake_partial",
@@ -118,7 +118,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "f2a8abdd30323cb41e25a62e52539ffb671bda2ad9918a723ec6cdd069de3f43",
+      "sequence_signature": "b207b1a928f0e63cffe3af09266b7f2b8e6a151dc68cde99328d1ac3644108e9",
       "capture_ids": [
         "bar_fight_night_arrival",
         "bar_fight_night_partial",
@@ -180,7 +180,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "fc6bd94263e27194b1edf376de6382121af7269410f71cfcb5011306e16759e0",
+      "sequence_signature": "17d1e305983f07cda5587770f2a054ce90cdfad2e5fd609c5da99392b53cc4cd",
       "capture_ids": [
         "bar_payday_rush_arrival",
         "bar_payday_rush_partial",
@@ -246,7 +246,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "681aa3b8ec97c97c7296152ddec30f70bf44caba32aded6bc66e9b6413fd6d4b",
+      "sequence_signature": "c05000a266ae1b0c23edb0a089d43328c846bac25231f1b30f92ea402565b422",
       "capture_ids": [
         "bar_lock_in_arrival",
         "bar_lock_in_partial",
@@ -314,7 +314,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "3cb8111441e32cb49259154dc00e119c2fc63a89cc54b9f985ee9b2d6d4a5865",
+      "sequence_signature": "eced41a73856d13c4949cf8d181141579c6cac6fbd5465447a1683c1d79bd6b6",
       "capture_ids": [
         "bar_darts_league_night_arrival",
         "bar_darts_league_night_partial",
@@ -380,7 +380,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "ab283b1cdb5029dfd1cc8c4e2aefb6027de68733794a8c0cd248b6cf5ef701f4",
+      "sequence_signature": "67cb48cca0fbafc554fba7182132a5ccc3819fab2589b9b2dc67364f2f65368b",
       "capture_ids": [
         "bar_live_band_arrival",
         "bar_live_band_partial",
@@ -439,7 +439,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "9e3d044d78017838cd89e380c4439ccbed5d4020d3a33460cabe2852a26e54a6",
+      "sequence_signature": "3293ab1230d358af489152fd268bcd8b031e36a02d64e4bf78032d60a56a222e",
       "capture_ids": [
         "bar_dead_tuesday_arrival",
         "bar_dead_tuesday_partial",
@@ -507,7 +507,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "705de2dbed6c08a852cdd18d23383cb083527f8ca54c9dbcdee39091d9ae490f",
+      "sequence_signature": "128a94cc74f16a29d358a9c15a86020b45de25caef453813a033167960d07ea8",
       "capture_ids": [
         "jazz_club_guest_legend_arrival",
         "jazz_club_guest_legend_partial",
@@ -571,7 +571,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "83c13b3ef2c47b9b41f81dab9561fb055b875f8ef551427ee19b9ae5d852b658",
+      "sequence_signature": "25c11b73dfe31ebec8660348662e95367608f41ea878baa80497ba7c6addfd80",
       "capture_ids": [
         "jazz_club_rent_party_arrival",
         "jazz_club_rent_party_partial",
@@ -633,7 +633,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "db969f5c13bad86dbd20f8a7f7ece9e369e5fd069764f6a8416d3b3a317f4ff7",
+      "sequence_signature": "ce92432c66891a29de161199a4ad14d83edad7af1f47507aabe4de7e99f6f3ab",
       "capture_ids": [
         "jazz_club_recording_night_arrival",
         "jazz_club_recording_night_partial",
@@ -697,7 +697,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "e1c332918ccf2f4add84da00705bdf6c86edbb20699b83511b727aa8a2d19392",
+      "sequence_signature": "55645b8d0203d5fdf9e04e623b54095befc81edab6f5d1c00ec7f29f9ef2ef3d",
       "capture_ids": [
         "jazz_club_union_trouble_arrival",
         "jazz_club_union_trouble_partial",
@@ -737,17 +737,6 @@
                   "message": "The crowd position beat moves props and actors for score second round.",
                   "op": "scene_change",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Bar Darts League Night has advanced beyond bar darts league night task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -841,6 +830,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -962,17 +958,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Darts League Night has advanced beyond bar darts league night task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -1041,6 +1026,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -1146,17 +1138,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Darts League Night has advanced beyond bar darts league night task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -1225,6 +1206,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -1311,17 +1299,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Darts League Night has advanced beyond bar darts league night task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -1401,6 +1378,13 @@
                 }
               },
               {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "op": "remove",
@@ -1473,17 +1457,6 @@
                   "owner_namespace": "scenario",
                   "reduced_motion_message": "Bar Darts League Night reaches the same semantic state without motion.",
                   "stage_id": "bar_darts_league_night_work_5_stage"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Bar Darts League Night has advanced beyond bar darts league night task 4 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -1565,6 +1538,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -2294,41 +2274,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -2424,10 +2369,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "3cb8111441e32cb49259154dc00e119c2fc63a89cc54b9f985ee9b2d6d4a5865",
-      "calculated_signature": "3cb8111441e32cb49259154dc00e119c2fc63a89cc54b9f985ee9b2d6d4a5865",
+      "authored_signature": "eced41a73856d13c4949cf8d181141579c6cac6fbd5465447a1683c1d79bd6b6",
+      "calculated_signature": "eced41a73856d13c4949cf8d181141579c6cac6fbd5465447a1683c1d79bd6b6",
       "nearest_id": "bar_fight_night",
-      "nearest_similarity": 0.554959785522788
+      "nearest_similarity": 0.553488372093023
     },
     {
       "id": "bar_dead_tuesday",
@@ -2451,17 +2396,6 @@
                   "message": "The zone state beat moves props and actors for close other zones.",
                   "op": "feedback",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Bar Dead Tuesday has advanced beyond bar dead tuesday task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -2535,6 +2469,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -3243,13 +3184,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -3317,10 +3251,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "9e3d044d78017838cd89e380c4439ccbed5d4020d3a33460cabe2852a26e54a6",
-      "calculated_signature": "9e3d044d78017838cd89e380c4439ccbed5d4020d3a33460cabe2852a26e54a6",
+      "authored_signature": "3293ab1230d358af489152fd268bcd8b031e36a02d64e4bf78032d60a56a222e",
+      "calculated_signature": "3293ab1230d358af489152fd268bcd8b031e36a02d64e4bf78032d60a56a222e",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.335135135135135
+      "nearest_similarity": 0.335635359116022
     },
     {
       "id": "bar_fight_night",
@@ -3355,17 +3289,6 @@
                   "owner_namespace": "scenario",
                   "reduced_motion_message": "Bar Fight Night reaches the same semantic state without motion.",
                   "stage_id": "bar_fight_night_work_2_stage"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Bar Fight Night has advanced beyond bar fight night task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -3459,6 +3382,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -3572,17 +3502,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Fight Night has advanced beyond bar fight night task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -3651,6 +3570,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -3745,17 +3671,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Fight Night has advanced beyond bar fight night task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -3831,6 +3746,13 @@
                 "family": "scene_ops",
                 "effect": {
                   "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -3918,17 +3840,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Fight Night has advanced beyond bar fight night task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -3997,6 +3908,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -4084,17 +4002,6 @@
                 }
               },
               {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Bar Fight Night has advanced beyond bar fight night task 4 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
                 "family": "scene_ops",
                 "effect": {
                   "disabled_reason": "This station closes after its task.",
@@ -4173,6 +4080,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -4902,41 +4816,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -5032,10 +4911,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "f2a8abdd30323cb41e25a62e52539ffb671bda2ad9918a723ec6cdd069de3f43",
-      "calculated_signature": "f2a8abdd30323cb41e25a62e52539ffb671bda2ad9918a723ec6cdd069de3f43",
+      "authored_signature": "b207b1a928f0e63cffe3af09266b7f2b8e6a151dc68cde99328d1ac3644108e9",
+      "calculated_signature": "b207b1a928f0e63cffe3af09266b7f2b8e6a151dc68cde99328d1ac3644108e9",
       "nearest_id": "bar_darts_league_night",
-      "nearest_similarity": 0.554959785522788
+      "nearest_similarity": 0.553488372093023
     },
     {
       "id": "bar_live_band",
@@ -5070,17 +4949,6 @@
                   "owner_namespace": "scenario",
                   "reduced_motion_message": "Bar Live Band reaches the same semantic state without motion.",
                   "stage_id": "bar_live_band_work_2_stage"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Bar Live Band has advanced beyond bar live band task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -5174,6 +5042,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -5287,17 +5162,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Live Band has advanced beyond bar live band task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -5366,6 +5230,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -5460,17 +5331,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Live Band has advanced beyond bar live band task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -5546,6 +5406,13 @@
                 "family": "scene_ops",
                 "effect": {
                   "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -5633,17 +5500,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Live Band has advanced beyond bar live band task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -5712,6 +5568,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -6424,34 +6287,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -6540,10 +6375,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "ab283b1cdb5029dfd1cc8c4e2aefb6027de68733794a8c0cd248b6cf5ef701f4",
-      "calculated_signature": "ab283b1cdb5029dfd1cc8c4e2aefb6027de68733794a8c0cd248b6cf5ef701f4",
+      "authored_signature": "67cb48cca0fbafc554fba7182132a5ccc3819fab2589b9b2dc67364f2f65368b",
+      "calculated_signature": "67cb48cca0fbafc554fba7182132a5ccc3819fab2589b9b2dc67364f2f65368b",
       "nearest_id": "bar_lock_in",
-      "nearest_similarity": 0.688053097345133
+      "nearest_similarity": 0.685779816513762
     },
     {
       "id": "bar_lock_in",
@@ -6578,17 +6413,6 @@
                   "owner_namespace": "scenario",
                   "reduced_motion_message": "Bar Lock In reaches the same semantic state without motion.",
                   "stage_id": "bar_lock_in_work_2_stage"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Bar Lock In has advanced beyond bar lock in task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -6682,6 +6506,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -6795,17 +6626,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Lock In has advanced beyond bar lock in task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -6874,6 +6694,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -6968,17 +6795,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Lock In has advanced beyond bar lock in task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -7054,6 +6870,13 @@
                 "family": "scene_ops",
                 "effect": {
                   "op": "hide",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -7141,17 +6964,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Lock In has advanced beyond bar lock in task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -7220,6 +7032,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -7932,34 +7751,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -8048,10 +7839,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "681aa3b8ec97c97c7296152ddec30f70bf44caba32aded6bc66e9b6413fd6d4b",
-      "calculated_signature": "681aa3b8ec97c97c7296152ddec30f70bf44caba32aded6bc66e9b6413fd6d4b",
+      "authored_signature": "c05000a266ae1b0c23edb0a089d43328c846bac25231f1b30f92ea402565b422",
+      "calculated_signature": "c05000a266ae1b0c23edb0a089d43328c846bac25231f1b30f92ea402565b422",
       "nearest_id": "bar_live_band",
-      "nearest_similarity": 0.688053097345133
+      "nearest_similarity": 0.685779816513762
     },
     {
       "id": "bar_payday_rush",
@@ -8075,17 +7866,6 @@
                   "message": "The tray move beat moves props and actors for deliver table round.",
                   "op": "feedback",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Bar Payday Rush has advanced beyond bar payday rush task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -8179,6 +7959,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -8311,17 +8098,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Payday Rush has advanced beyond bar payday rush task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -8390,6 +8166,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -9060,20 +8843,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -9148,10 +8917,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "fc6bd94263e27194b1edf376de6382121af7269410f71cfcb5011306e16759e0",
-      "calculated_signature": "fc6bd94263e27194b1edf376de6382121af7269410f71cfcb5011306e16759e0",
+      "authored_signature": "17d1e305983f07cda5587770f2a054ce90cdfad2e5fd609c5da99392b53cc4cd",
+      "calculated_signature": "17d1e305983f07cda5587770f2a054ce90cdfad2e5fd609c5da99392b53cc4cd",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.62704309063893
+      "nearest_similarity": 0.624048706240487
     },
     {
       "id": "bar_wake",
@@ -9175,17 +8944,6 @@
                   "message": "The tray move beat moves props and actors for carry to regular.",
                   "op": "feedback",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Bar Wake has advanced beyond bar wake task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -9279,6 +9037,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -9411,17 +9176,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Bar Wake has advanced beyond bar wake task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -9490,6 +9244,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -10140,20 +9901,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -10221,10 +9968,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "3261709e7f265e1fb46fb36d95af1a7e15c223fff224edf5abfd477bb96c5c08",
-      "calculated_signature": "3261709e7f265e1fb46fb36d95af1a7e15c223fff224edf5abfd477bb96c5c08",
+      "authored_signature": "186a7088aa7a4822b058fc7a23c872b073fa7725aab9e9c862e008159fb6a815",
+      "calculated_signature": "186a7088aa7a4822b058fc7a23c872b073fa7725aab9e9c862e008159fb6a815",
       "nearest_id": "jazz_club_recording_night",
-      "nearest_similarity": 0.67687595712098
+      "nearest_similarity": 0.675039246467818
     },
     {
       "id": "jazz_club_guest_legend",
@@ -10249,17 +9996,6 @@
                   "message": "The case move beat moves props and actors for prepare missing cue.",
                   "op": "scene_change",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Jazz Club Guest Legend has advanced beyond jazz club guest legend task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -10353,6 +10089,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -10485,17 +10228,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Jazz Club Guest Legend has advanced beyond jazz club guest legend task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -10564,6 +10296,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -10650,17 +10389,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Jazz Club Guest Legend has advanced beyond jazz club guest legend task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -10729,6 +10457,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -10823,17 +10558,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Jazz Club Guest Legend has advanced beyond jazz club guest legend task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -10913,6 +10637,13 @@
                 }
               },
               {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "op": "remove",
@@ -10985,17 +10716,6 @@
                   "owner_namespace": "scenario",
                   "reduced_motion_message": "Jazz Club Guest Legend reaches the same semantic state without motion.",
                   "stage_id": "jazz_club_guest_legend_work_5_stage"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Jazz Club Guest Legend has advanced beyond jazz club guest legend task 4 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -11077,6 +10797,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -11806,41 +11533,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -11936,10 +11628,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "705de2dbed6c08a852cdd18d23383cb083527f8ca54c9dbcdee39091d9ae490f",
-      "calculated_signature": "705de2dbed6c08a852cdd18d23383cb083527f8ca54c9dbcdee39091d9ae490f",
+      "authored_signature": "128a94cc74f16a29d358a9c15a86020b45de25caef453813a033167960d07ea8",
+      "calculated_signature": "128a94cc74f16a29d358a9c15a86020b45de25caef453813a033167960d07ea8",
       "nearest_id": "bar_darts_league_night",
-      "nearest_similarity": 0.539823008849557
+      "nearest_similarity": 0.537753222836096
     },
     {
       "id": "jazz_club_recording_night",
@@ -11963,17 +11655,6 @@
                   "message": "The microphone move beat moves props and actors for reset microphone tree.",
                   "op": "feedback",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Jazz Club Recording Night has advanced beyond jazz club recording night task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -12067,6 +11748,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -12199,17 +11887,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Jazz Club Recording Night has advanced beyond jazz club recording night task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -12278,6 +11955,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -12948,20 +12632,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -13036,10 +12706,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "db969f5c13bad86dbd20f8a7f7ece9e369e5fd069764f6a8416d3b3a317f4ff7",
-      "calculated_signature": "db969f5c13bad86dbd20f8a7f7ece9e369e5fd069764f6a8416d3b3a317f4ff7",
+      "authored_signature": "ce92432c66891a29de161199a4ad14d83edad7af1f47507aabe4de7e99f6f3ab",
+      "calculated_signature": "ce92432c66891a29de161199a4ad14d83edad7af1f47507aabe4de7e99f6f3ab",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.67687595712098
+      "nearest_similarity": 0.675039246467818
     },
     {
       "id": "jazz_club_rent_party",
@@ -13074,17 +12744,6 @@
                   "owner_namespace": "scenario",
                   "reduced_motion_message": "Jazz Club Rent Party reaches the same semantic state without motion.",
                   "stage_id": "jazz_club_rent_party_work_2_stage"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Jazz Club Rent Party has advanced beyond jazz club rent party task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -13178,6 +12837,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -13291,17 +12957,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Jazz Club Rent Party has advanced beyond jazz club rent party task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -13370,6 +13025,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -13465,17 +13127,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Jazz Club Rent Party has advanced beyond jazz club rent party task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -13544,6 +13195,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -14239,27 +13897,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -14341,10 +13978,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "83c13b3ef2c47b9b41f81dab9561fb055b875f8ef551427ee19b9ae5d852b658",
-      "calculated_signature": "83c13b3ef2c47b9b41f81dab9561fb055b875f8ef551427ee19b9ae5d852b658",
-      "nearest_id": "bar_lock_in",
-      "nearest_similarity": 0.474611398963731
+      "authored_signature": "25c11b73dfe31ebec8660348662e95367608f41ea878baa80497ba7c6addfd80",
+      "calculated_signature": "25c11b73dfe31ebec8660348662e95367608f41ea878baa80497ba7c6addfd80",
+      "nearest_id": "jazz_club_union_trouble",
+      "nearest_similarity": 0.442437923250564
     },
     {
       "id": "jazz_club_union_trouble",
@@ -14368,17 +14005,6 @@
                   "message": "The stand move beat moves props and actors for carry neutral stand.",
                   "op": "feedback",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Jazz Club Union Trouble has advanced beyond jazz club union trouble task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
                 }
               },
               {
@@ -14472,6 +14098,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -14604,17 +14237,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Jazz Club Union Trouble has advanced beyond jazz club union trouble task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -14683,6 +14305,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -14770,17 +14399,6 @@
               {
                 "family": "interaction_ops",
                 "effect": {
-                  "disabled_reason": "Jazz Club Union Trouble has advanced beyond jazz club union trouble task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -14849,6 +14467,13 @@
                     "visible": true
                   },
                   "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
                   "owner_namespace": "scenario"
                 }
               },
@@ -15544,27 +15169,6 @@
             }
           },
           {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
-            "family": "interaction_ops",
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            }
-          },
-          {
             "family": "scene_ops",
             "effect": {
               "op": "remove",
@@ -15646,17 +15250,17 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "e1c332918ccf2f4add84da00705bdf6c86edbb20699b83511b727aa8a2d19392",
-      "calculated_signature": "e1c332918ccf2f4add84da00705bdf6c86edbb20699b83511b727aa8a2d19392",
-      "nearest_id": "bar_wake",
-      "nearest_similarity": 0.447527141133896
+      "authored_signature": "55645b8d0203d5fdf9e04e623b54095befc81edab6f5d1c00ec7f29f9ef2ef3d",
+      "calculated_signature": "55645b8d0203d5fdf9e04e623b54095befc81edab6f5d1c00ec7f29f9ef2ef3d",
+      "nearest_id": "jazz_club_rent_party",
+      "nearest_similarity": 0.442437923250564
     }
   ],
   "pairwise_similarity": [
     {
       "left_id": "bar_darts_league_night",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.193840579710145,
+      "similarity": 0.174953959484346,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15668,7 +15272,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "bar_live_band",
-      "similarity": 0.358569051580699,
+      "similarity": 0.333899745114698,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15680,7 +15284,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.539823008849557,
+      "similarity": 0.537753222836096,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15692,7 +15296,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.241289198606272,
+      "similarity": 0.242999096657633,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15704,7 +15308,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.299915038232795,
+      "similarity": 0.277296360485269,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15716,7 +15320,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.269709543568465,
+      "similarity": 0.247038917089679,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15728,7 +15332,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.199272065514104,
+      "similarity": 0.202639019792648,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15740,7 +15344,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.328476821192053,
+      "similarity": 0.328822733423545,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15752,7 +15356,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.204347826086957,
+      "similarity": 0.181619256017505,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15764,7 +15368,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.275028768699655,
+      "similarity": 0.27810650887574,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15776,7 +15380,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.554959785522788,
+      "similarity": 0.553488372093023,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15788,7 +15392,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.151091703056769,
+      "similarity": 0.134222222222222,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15800,7 +15404,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_live_band",
-      "similarity": 0.488605287146764,
+      "similarity": 0.45910780669145,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15812,7 +15416,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_lock_in",
-      "similarity": 0.503683241252302,
+      "similarity": 0.474178403755869,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15824,7 +15428,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_payday_rush",
-      "similarity": 0.208651399491094,
+      "similarity": 0.190311418685121,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15836,7 +15440,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.506493506493506,
+      "similarity": 0.497757847533632,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15848,7 +15452,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.184538653366584,
+      "similarity": 0.166101694915254,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15860,7 +15464,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.412742382271468,
+      "similarity": 0.385338345864662,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15872,7 +15476,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.258223684210526,
+      "similarity": 0.235540653813915,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15884,7 +15488,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.158851674641148,
+      "similarity": 0.140640155189137,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15896,7 +15500,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.347359735973597,
+      "similarity": 0.318219983207389,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15908,7 +15512,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.227188081936685,
+      "similarity": 0.20491029272899,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15920,7 +15524,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.452040816326531,
+      "similarity": 0.417956656346749,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15932,7 +15536,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.309107635694572,
+      "similarity": 0.281716417910448,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15944,7 +15548,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.371116708648195,
+      "similarity": 0.346483704974271,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15956,7 +15560,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.173449612403101,
+      "similarity": 0.155206286836935,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15968,7 +15572,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "bar_live_band",
-      "similarity": 0.688053097345133,
+      "similarity": 0.685779816513762,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -15980,7 +15584,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.330888345558272,
+      "similarity": 0.301824212271973,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15992,7 +15596,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.212511499540018,
+      "similarity": 0.190298507462687,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16004,7 +15608,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.474611398963731,
+      "similarity": 0.440251572327044,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16016,7 +15620,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.291288566243194,
+      "similarity": 0.264029438822447,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16028,7 +15632,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.26779359430605,
+      "similarity": 0.270544783010157,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16040,7 +15644,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.328476821192053,
+      "similarity": 0.328822733423545,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16052,7 +15656,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_live_band",
-      "similarity": 0.224907063197026,
+      "similarity": 0.202639019792648,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16064,7 +15668,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_lock_in",
-      "similarity": 0.239887111947319,
+      "similarity": 0.217557251908397,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16076,7 +15680,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.286101083032491,
+      "similarity": 0.265869365225391,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16088,7 +15692,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.62280701754386,
+      "similarity": 0.619760479041916,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -16100,7 +15704,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.277602523659306,
+      "similarity": 0.252653927813163,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16112,7 +15716,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.399769585253456,
+      "similarity": 0.367323290845886,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16124,7 +15728,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.240105540897098,
+      "similarity": 0.241788321167883,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16136,7 +15740,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.335135135135135,
+      "similarity": 0.335635359116022,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16148,7 +15752,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_fight_night",
-      "similarity": 0.182885906040268,
+      "similarity": 0.164242942686056,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16160,7 +15764,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_live_band",
-      "similarity": 0.225776105362183,
+      "similarity": 0.20324427480916,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16172,7 +15776,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_lock_in",
-      "similarity": 0.210966542750929,
+      "similarity": 0.188501413760603,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16184,7 +15788,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_payday_rush",
-      "similarity": 0.62704309063893,
+      "similarity": 0.624048706240487,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -16196,7 +15800,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.318989710009355,
+      "similarity": 0.298664122137405,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16208,7 +15812,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.67687595712098,
+      "similarity": 0.675039246467818,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -16220,7 +15824,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.244813278008299,
+      "similarity": 0.219895287958115,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16232,7 +15836,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.447527141133896,
+      "similarity": 0.413834951456311,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16244,7 +15848,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.319444444444444,
+      "similarity": 0.299338999055713,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16256,7 +15860,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.262376237623762,
+      "similarity": 0.239697224558452,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16268,7 +15872,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.399817017383349,
+      "similarity": 0.37243947858473,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16280,7 +15884,7 @@
     {
       "left_id": "jazz_club_recording_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.442992874109264,
+      "similarity": 0.409796893667861,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16292,7 +15896,7 @@
     {
       "left_id": "jazz_club_rent_party",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.246153846153846,
+      "similarity": 0.221532091097308,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16304,7 +15908,7 @@
     {
       "left_id": "jazz_club_rent_party",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.444201312910284,
+      "similarity": 0.442437923250564,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -16326,10 +15930,10 @@
     "scenario jazz_club_rent_party is invalid: [\"scenario jazz_club_rent_party sequence declared_targets.anchors identity base::anchor:rent_party_donation has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.anchors identity base::anchor:rent_party_creditor has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario jazz_club_recording_night is invalid: [\"scenario jazz_club_recording_night sequence declared_targets.anchors identity base::anchor:recording_microphone has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.anchors identity base::anchor:recording_audience has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario jazz_club_union_trouble is invalid: [\"scenario jazz_club_union_trouble sequence declared_targets.anchors identity base::anchor:union_picket has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.anchors identity base::anchor:union_manager has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario bar_wake vs bar_payday_rush: 0.627 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_wake vs jazz_club_recording_night: 0.677 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_payday_rush vs jazz_club_recording_night: 0.623 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_lock_in vs bar_live_band: 0.688 (warning). Missing receipt-bound masked visual evidence."
+    "scenario bar_wake vs bar_payday_rush: 0.624 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_wake vs jazz_club_recording_night: 0.675 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_payday_rush vs jazz_club_recording_night: 0.620 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_lock_in vs bar_live_band: 0.686 (warning). Missing receipt-bound masked visual evidence."
   ],
   "pair_count": 55
 }

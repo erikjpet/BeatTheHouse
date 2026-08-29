@@ -202,31 +202,17 @@
         "cleanup": {
           "operations": [
             {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_wake_cleanup_remove_bar_wake_gate_1",
-              "stable_object_id": "bar_wake_gate_1"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_wake_cleanup_remove_bar_wake_gate_0",
-              "stable_object_id": "bar_wake_gate_0"
-            },
-            {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_wake_cleanup_remove_bar_wake_memorial_tables",
+              "receipt_id": "bar_wake_cleanup_scene_ops_remove_bar_wake_memorial_tables",
               "stable_object_id": "bar_wake_memorial_tables"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_wake_cleanup_remove_bar_wake_remembrance_tray",
+              "receipt_id": "bar_wake_cleanup_scene_ops_remove_bar_wake_remembrance_tray",
               "stable_object_id": "bar_wake_remembrance_tray"
             },
             {
@@ -247,56 +233,56 @@
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_wake_cleanup_remove_bar_wake_safe_exit",
+              "receipt_id": "bar_wake_cleanup_scene_ops_remove_bar_wake_safe_exit",
               "stable_object_id": "bar_wake_safe_exit"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_wake_cleanup_remove_bar_wake_task_0",
+              "receipt_id": "bar_wake_cleanup_scene_ops_remove_bar_wake_task_0",
               "stable_object_id": "bar_wake_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_wake_cleanup_remove_bar_wake_safe_exit",
+              "receipt_id": "bar_wake_cleanup_interaction_ops_remove_bar_wake_safe_exit",
               "stable_object_id": "bar_wake_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_wake_cleanup_remove_bar_wake_task_0",
+              "receipt_id": "bar_wake_cleanup_interaction_ops_remove_bar_wake_task_0",
               "stable_object_id": "bar_wake_task_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_wake_cleanup_remove_bar_wake_task_1",
+              "receipt_id": "bar_wake_cleanup_scene_ops_remove_bar_wake_task_1",
               "stable_object_id": "bar_wake_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_wake_cleanup_remove_bar_wake_task_1",
+              "receipt_id": "bar_wake_cleanup_interaction_ops_remove_bar_wake_task_1",
               "stable_object_id": "bar_wake_task_1"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_wake_cleanup_remove_bar_wake_task_2",
+              "receipt_id": "bar_wake_cleanup_scene_ops_remove_bar_wake_task_2",
               "stable_object_id": "bar_wake_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_wake_cleanup_remove_bar_wake_task_2",
+              "receipt_id": "bar_wake_cleanup_interaction_ops_remove_bar_wake_task_2",
               "stable_object_id": "bar_wake_task_2"
             }
           ]
@@ -778,16 +764,11 @@
               "id": "work_1",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Wake has advanced beyond bar wake task 0 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_wake_work_1_gate_bar_wake_gate_0",
-                  "stable_object_id": "bar_wake_gate_0",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_wake_task_0"
+                  "receipt_id": "bar_wake_work_1_interaction_remove_bar_wake_task_0",
+                  "stable_object_id": "bar_wake_task_0"
                 },
                 {
                   "family": "interaction_ops",
@@ -994,16 +975,11 @@
               "id": "work_2",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Wake has advanced beyond bar wake task 1 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_wake_work_2_gate_bar_wake_gate_1",
-                  "stable_object_id": "bar_wake_gate_1",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_wake_task_1"
+                  "receipt_id": "bar_wake_work_2_interaction_remove_bar_wake_task_1",
+                  "stable_object_id": "bar_wake_task_1"
                 },
                 {
                   "family": "interaction_ops",
@@ -1258,7 +1234,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3261709e7f265e1fb46fb36d95af1a7e15c223fff224edf5abfd477bb96c5c08"
+        "sequence_signature": "186a7088aa7a4822b058fc7a23c872b073fa7725aab9e9c862e008159fb6a815"
       }
     },
     {
@@ -1462,59 +1438,24 @@
         "cleanup": {
           "operations": [
             {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_gate_4",
-              "stable_object_id": "bar_fight_night_gate_4"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_gate_3",
-              "stable_object_id": "bar_fight_night_gate_3"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_gate_2",
-              "stable_object_id": "bar_fight_night_gate_2"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_gate_1",
-              "stable_object_id": "bar_fight_night_gate_1"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_gate_0",
-              "stable_object_id": "bar_fight_night_gate_0"
-            },
-            {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_toppled_chair",
+              "receipt_id": "bar_fight_night_cleanup_scene_ops_remove_bar_fight_night_toppled_chair",
               "stable_object_id": "bar_fight_night_toppled_chair"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_split_table",
+              "receipt_id": "bar_fight_night_cleanup_scene_ops_remove_bar_fight_night_split_table",
               "stable_object_id": "bar_fight_night_split_table"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_door_buffer",
+              "receipt_id": "bar_fight_night_cleanup_scene_ops_remove_bar_fight_night_door_buffer",
               "stable_object_id": "bar_fight_night_door_buffer"
             },
             {
@@ -1535,98 +1476,98 @@
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_safe_exit",
+              "receipt_id": "bar_fight_night_cleanup_scene_ops_remove_bar_fight_night_safe_exit",
               "stable_object_id": "bar_fight_night_safe_exit"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_task_0",
+              "receipt_id": "bar_fight_night_cleanup_scene_ops_remove_bar_fight_night_task_0",
               "stable_object_id": "bar_fight_night_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_safe_exit",
+              "receipt_id": "bar_fight_night_cleanup_interaction_ops_remove_bar_fight_night_safe_exit",
               "stable_object_id": "bar_fight_night_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_task_0",
+              "receipt_id": "bar_fight_night_cleanup_interaction_ops_remove_bar_fight_night_task_0",
               "stable_object_id": "bar_fight_night_task_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_task_1",
+              "receipt_id": "bar_fight_night_cleanup_scene_ops_remove_bar_fight_night_task_1",
               "stable_object_id": "bar_fight_night_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_task_1",
+              "receipt_id": "bar_fight_night_cleanup_interaction_ops_remove_bar_fight_night_task_1",
               "stable_object_id": "bar_fight_night_task_1"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_task_2",
+              "receipt_id": "bar_fight_night_cleanup_scene_ops_remove_bar_fight_night_task_2",
               "stable_object_id": "bar_fight_night_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_task_2",
+              "receipt_id": "bar_fight_night_cleanup_interaction_ops_remove_bar_fight_night_task_2",
               "stable_object_id": "bar_fight_night_task_2"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_task_3",
+              "receipt_id": "bar_fight_night_cleanup_scene_ops_remove_bar_fight_night_task_3",
               "stable_object_id": "bar_fight_night_task_3"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_task_3",
+              "receipt_id": "bar_fight_night_cleanup_interaction_ops_remove_bar_fight_night_task_3",
               "stable_object_id": "bar_fight_night_task_3"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_task_4",
+              "receipt_id": "bar_fight_night_cleanup_scene_ops_remove_bar_fight_night_task_4",
               "stable_object_id": "bar_fight_night_task_4"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_task_4",
+              "receipt_id": "bar_fight_night_cleanup_interaction_ops_remove_bar_fight_night_task_4",
               "stable_object_id": "bar_fight_night_task_4"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_task_5",
+              "receipt_id": "bar_fight_night_cleanup_scene_ops_remove_bar_fight_night_task_5",
               "stable_object_id": "bar_fight_night_task_5"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_fight_night_cleanup_remove_bar_fight_night_task_5",
+              "receipt_id": "bar_fight_night_cleanup_interaction_ops_remove_bar_fight_night_task_5",
               "stable_object_id": "bar_fight_night_task_5"
             }
           ]
@@ -2113,16 +2054,11 @@
               "id": "work_1",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Fight Night has advanced beyond bar fight night task 0 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_fight_night_work_1_gate_bar_fight_night_gate_0",
-                  "stable_object_id": "bar_fight_night_gate_0",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_fight_night_task_0"
+                  "receipt_id": "bar_fight_night_work_1_interaction_remove_bar_fight_night_task_0",
+                  "stable_object_id": "bar_fight_night_task_0"
                 },
                 {
                   "family": "interaction_ops",
@@ -2342,16 +2278,11 @@
               "id": "work_2",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Fight Night has advanced beyond bar fight night task 1 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_fight_night_work_2_gate_bar_fight_night_gate_1",
-                  "stable_object_id": "bar_fight_night_gate_1",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_fight_night_task_1"
+                  "receipt_id": "bar_fight_night_work_2_interaction_remove_bar_fight_night_task_1",
+                  "stable_object_id": "bar_fight_night_task_1"
                 },
                 {
                   "family": "interaction_ops",
@@ -2561,16 +2492,11 @@
               "id": "work_3",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Fight Night has advanced beyond bar fight night task 2 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_fight_night_work_3_gate_bar_fight_night_gate_2",
-                  "stable_object_id": "bar_fight_night_gate_2",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_fight_night_task_2"
+                  "receipt_id": "bar_fight_night_work_3_interaction_remove_bar_fight_night_task_2",
+                  "stable_object_id": "bar_fight_night_task_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -2758,16 +2684,11 @@
               "id": "work_4",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Fight Night has advanced beyond bar fight night task 3 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_fight_night_work_4_gate_bar_fight_night_gate_3",
-                  "stable_object_id": "bar_fight_night_gate_3",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_fight_night_task_3"
+                  "receipt_id": "bar_fight_night_work_4_interaction_remove_bar_fight_night_task_3",
+                  "stable_object_id": "bar_fight_night_task_3"
                 },
                 {
                   "family": "interaction_ops",
@@ -2953,16 +2874,11 @@
               "id": "work_5",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Fight Night has advanced beyond bar fight night task 4 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_fight_night_work_5_gate_bar_fight_night_gate_4",
-                  "stable_object_id": "bar_fight_night_gate_4",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_fight_night_task_4"
+                  "receipt_id": "bar_fight_night_work_5_interaction_remove_bar_fight_night_task_4",
+                  "stable_object_id": "bar_fight_night_task_4"
                 },
                 {
                   "family": "interaction_ops",
@@ -3217,7 +3133,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f2a8abdd30323cb41e25a62e52539ffb671bda2ad9918a723ec6cdd069de3f43"
+        "sequence_signature": "b207b1a928f0e63cffe3af09266b7f2b8e6a151dc68cde99328d1ac3644108e9"
       }
     },
     {
@@ -3418,38 +3334,24 @@
         "cleanup": {
           "operations": [
             {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_gate_1",
-              "stable_object_id": "bar_payday_rush_gate_1"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_gate_0",
-              "stable_object_id": "bar_payday_rush_gate_0"
-            },
-            {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_order_rail",
+              "receipt_id": "bar_payday_rush_cleanup_scene_ops_remove_bar_payday_rush_order_rail",
               "stable_object_id": "bar_payday_rush_order_rail"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_carrying_tray",
+              "receipt_id": "bar_payday_rush_cleanup_scene_ops_remove_bar_payday_rush_carrying_tray",
               "stable_object_id": "bar_payday_rush_carrying_tray"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_tab_envelopes",
+              "receipt_id": "bar_payday_rush_cleanup_scene_ops_remove_bar_payday_rush_tab_envelopes",
               "stable_object_id": "bar_payday_rush_tab_envelopes"
             },
             {
@@ -3470,56 +3372,56 @@
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_safe_exit",
+              "receipt_id": "bar_payday_rush_cleanup_scene_ops_remove_bar_payday_rush_safe_exit",
               "stable_object_id": "bar_payday_rush_safe_exit"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_task_0",
+              "receipt_id": "bar_payday_rush_cleanup_scene_ops_remove_bar_payday_rush_task_0",
               "stable_object_id": "bar_payday_rush_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_safe_exit",
+              "receipt_id": "bar_payday_rush_cleanup_interaction_ops_remove_bar_payday_rush_safe_exit",
               "stable_object_id": "bar_payday_rush_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_task_0",
+              "receipt_id": "bar_payday_rush_cleanup_interaction_ops_remove_bar_payday_rush_task_0",
               "stable_object_id": "bar_payday_rush_task_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_task_1",
+              "receipt_id": "bar_payday_rush_cleanup_scene_ops_remove_bar_payday_rush_task_1",
               "stable_object_id": "bar_payday_rush_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_task_1",
+              "receipt_id": "bar_payday_rush_cleanup_interaction_ops_remove_bar_payday_rush_task_1",
               "stable_object_id": "bar_payday_rush_task_1"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_task_2",
+              "receipt_id": "bar_payday_rush_cleanup_scene_ops_remove_bar_payday_rush_task_2",
               "stable_object_id": "bar_payday_rush_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_payday_rush_cleanup_remove_bar_payday_rush_task_2",
+              "receipt_id": "bar_payday_rush_cleanup_interaction_ops_remove_bar_payday_rush_task_2",
               "stable_object_id": "bar_payday_rush_task_2"
             }
           ]
@@ -4021,16 +3923,11 @@
               "id": "work_1",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Payday Rush has advanced beyond bar payday rush task 0 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_payday_rush_work_1_gate_bar_payday_rush_gate_0",
-                  "stable_object_id": "bar_payday_rush_gate_0",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_payday_rush_task_0"
+                  "receipt_id": "bar_payday_rush_work_1_interaction_remove_bar_payday_rush_task_0",
+                  "stable_object_id": "bar_payday_rush_task_0"
                 },
                 {
                   "family": "interaction_ops",
@@ -4237,16 +4134,11 @@
               "id": "work_2",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Payday Rush has advanced beyond bar payday rush task 1 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_payday_rush_work_2_gate_bar_payday_rush_gate_1",
-                  "stable_object_id": "bar_payday_rush_gate_1",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_payday_rush_task_1"
+                  "receipt_id": "bar_payday_rush_work_2_interaction_remove_bar_payday_rush_task_1",
+                  "stable_object_id": "bar_payday_rush_task_1"
                 },
                 {
                   "family": "interaction_ops",
@@ -4501,7 +4393,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "fc6bd94263e27194b1edf376de6382121af7269410f71cfcb5011306e16759e0"
+        "sequence_signature": "17d1e305983f07cda5587770f2a054ce90cdfad2e5fd609c5da99392b53cc4cd"
       }
     },
     {
@@ -4704,52 +4596,24 @@
         "cleanup": {
           "operations": [
             {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_gate_3",
-              "stable_object_id": "bar_lock_in_gate_3"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_gate_2",
-              "stable_object_id": "bar_lock_in_gate_2"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_gate_1",
-              "stable_object_id": "bar_lock_in_gate_1"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_gate_0",
-              "stable_object_id": "bar_lock_in_gate_0"
-            },
-            {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_locked_shutters",
+              "receipt_id": "bar_lock_in_cleanup_scene_ops_remove_bar_lock_in_locked_shutters",
               "stable_object_id": "bar_lock_in_locked_shutters"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_cellar_hatch",
+              "receipt_id": "bar_lock_in_cleanup_scene_ops_remove_bar_lock_in_cellar_hatch",
               "stable_object_id": "bar_lock_in_cellar_hatch"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_private_bench",
+              "receipt_id": "bar_lock_in_cleanup_scene_ops_remove_bar_lock_in_private_bench",
               "stable_object_id": "bar_lock_in_private_bench"
             },
             {
@@ -4770,84 +4634,84 @@
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_safe_exit",
+              "receipt_id": "bar_lock_in_cleanup_scene_ops_remove_bar_lock_in_safe_exit",
               "stable_object_id": "bar_lock_in_safe_exit"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_task_0",
+              "receipt_id": "bar_lock_in_cleanup_scene_ops_remove_bar_lock_in_task_0",
               "stable_object_id": "bar_lock_in_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_safe_exit",
+              "receipt_id": "bar_lock_in_cleanup_interaction_ops_remove_bar_lock_in_safe_exit",
               "stable_object_id": "bar_lock_in_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_task_0",
+              "receipt_id": "bar_lock_in_cleanup_interaction_ops_remove_bar_lock_in_task_0",
               "stable_object_id": "bar_lock_in_task_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_task_1",
+              "receipt_id": "bar_lock_in_cleanup_scene_ops_remove_bar_lock_in_task_1",
               "stable_object_id": "bar_lock_in_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_task_1",
+              "receipt_id": "bar_lock_in_cleanup_interaction_ops_remove_bar_lock_in_task_1",
               "stable_object_id": "bar_lock_in_task_1"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_task_2",
+              "receipt_id": "bar_lock_in_cleanup_scene_ops_remove_bar_lock_in_task_2",
               "stable_object_id": "bar_lock_in_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_task_2",
+              "receipt_id": "bar_lock_in_cleanup_interaction_ops_remove_bar_lock_in_task_2",
               "stable_object_id": "bar_lock_in_task_2"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_task_3",
+              "receipt_id": "bar_lock_in_cleanup_scene_ops_remove_bar_lock_in_task_3",
               "stable_object_id": "bar_lock_in_task_3"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_task_3",
+              "receipt_id": "bar_lock_in_cleanup_interaction_ops_remove_bar_lock_in_task_3",
               "stable_object_id": "bar_lock_in_task_3"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_task_4",
+              "receipt_id": "bar_lock_in_cleanup_scene_ops_remove_bar_lock_in_task_4",
               "stable_object_id": "bar_lock_in_task_4"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_lock_in_cleanup_remove_bar_lock_in_task_4",
+              "receipt_id": "bar_lock_in_cleanup_interaction_ops_remove_bar_lock_in_task_4",
               "stable_object_id": "bar_lock_in_task_4"
             }
           ]
@@ -5328,16 +5192,11 @@
               "id": "work_1",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Lock In has advanced beyond bar lock in task 0 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_lock_in_work_1_gate_bar_lock_in_gate_0",
-                  "stable_object_id": "bar_lock_in_gate_0",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_lock_in_task_0"
+                  "receipt_id": "bar_lock_in_work_1_interaction_remove_bar_lock_in_task_0",
+                  "stable_object_id": "bar_lock_in_task_0"
                 },
                 {
                   "family": "interaction_ops",
@@ -5557,16 +5416,11 @@
               "id": "work_2",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Lock In has advanced beyond bar lock in task 1 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_lock_in_work_2_gate_bar_lock_in_gate_1",
-                  "stable_object_id": "bar_lock_in_gate_1",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_lock_in_task_1"
+                  "receipt_id": "bar_lock_in_work_2_interaction_remove_bar_lock_in_task_1",
+                  "stable_object_id": "bar_lock_in_task_1"
                 },
                 {
                   "family": "interaction_ops",
@@ -5776,16 +5630,11 @@
               "id": "work_3",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Lock In has advanced beyond bar lock in task 2 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_lock_in_work_3_gate_bar_lock_in_gate_2",
-                  "stable_object_id": "bar_lock_in_gate_2",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_lock_in_task_2"
+                  "receipt_id": "bar_lock_in_work_3_interaction_remove_bar_lock_in_task_2",
+                  "stable_object_id": "bar_lock_in_task_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -5973,16 +5822,11 @@
               "id": "work_4",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Lock In has advanced beyond bar lock in task 3 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_lock_in_work_4_gate_bar_lock_in_gate_3",
-                  "stable_object_id": "bar_lock_in_gate_3",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_lock_in_task_3"
+                  "receipt_id": "bar_lock_in_work_4_interaction_remove_bar_lock_in_task_3",
+                  "stable_object_id": "bar_lock_in_task_3"
                 },
                 {
                   "family": "interaction_ops",
@@ -6233,7 +6077,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "681aa3b8ec97c97c7296152ddec30f70bf44caba32aded6bc66e9b6413fd6d4b"
+        "sequence_signature": "c05000a266ae1b0c23edb0a089d43328c846bac25231f1b30f92ea402565b422"
       }
     },
     {
@@ -6437,59 +6281,24 @@
         "cleanup": {
           "operations": [
             {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_gate_4",
-              "stable_object_id": "bar_darts_league_night_gate_4"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_gate_3",
-              "stable_object_id": "bar_darts_league_night_gate_3"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_gate_2",
-              "stable_object_id": "bar_darts_league_night_gate_2"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_gate_1",
-              "stable_object_id": "bar_darts_league_night_gate_1"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_gate_0",
-              "stable_object_id": "bar_darts_league_night_gate_0"
-            },
-            {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_darts_oche",
+              "receipt_id": "bar_darts_league_night_cleanup_scene_ops_remove_bar_darts_league_night_darts_oche",
               "stable_object_id": "bar_darts_league_night_darts_oche"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_bracket_easel",
+              "receipt_id": "bar_darts_league_night_cleanup_scene_ops_remove_bar_darts_league_night_bracket_easel",
               "stable_object_id": "bar_darts_league_night_bracket_easel"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_disputed_dart",
+              "receipt_id": "bar_darts_league_night_cleanup_scene_ops_remove_bar_darts_league_night_disputed_dart",
               "stable_object_id": "bar_darts_league_night_disputed_dart"
             },
             {
@@ -6510,98 +6319,98 @@
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_safe_exit",
+              "receipt_id": "bar_darts_league_night_cleanup_scene_ops_remove_bar_darts_league_night_safe_exit",
               "stable_object_id": "bar_darts_league_night_safe_exit"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_task_0",
+              "receipt_id": "bar_darts_league_night_cleanup_scene_ops_remove_bar_darts_league_night_task_0",
               "stable_object_id": "bar_darts_league_night_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_safe_exit",
+              "receipt_id": "bar_darts_league_night_cleanup_interaction_ops_remove_bar_darts_league_night_safe_exit",
               "stable_object_id": "bar_darts_league_night_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_task_0",
+              "receipt_id": "bar_darts_league_night_cleanup_interaction_ops_remove_bar_darts_league_night_task_0",
               "stable_object_id": "bar_darts_league_night_task_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_task_1",
+              "receipt_id": "bar_darts_league_night_cleanup_scene_ops_remove_bar_darts_league_night_task_1",
               "stable_object_id": "bar_darts_league_night_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_task_1",
+              "receipt_id": "bar_darts_league_night_cleanup_interaction_ops_remove_bar_darts_league_night_task_1",
               "stable_object_id": "bar_darts_league_night_task_1"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_task_2",
+              "receipt_id": "bar_darts_league_night_cleanup_scene_ops_remove_bar_darts_league_night_task_2",
               "stable_object_id": "bar_darts_league_night_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_task_2",
+              "receipt_id": "bar_darts_league_night_cleanup_interaction_ops_remove_bar_darts_league_night_task_2",
               "stable_object_id": "bar_darts_league_night_task_2"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_task_3",
+              "receipt_id": "bar_darts_league_night_cleanup_scene_ops_remove_bar_darts_league_night_task_3",
               "stable_object_id": "bar_darts_league_night_task_3"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_task_3",
+              "receipt_id": "bar_darts_league_night_cleanup_interaction_ops_remove_bar_darts_league_night_task_3",
               "stable_object_id": "bar_darts_league_night_task_3"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_task_4",
+              "receipt_id": "bar_darts_league_night_cleanup_scene_ops_remove_bar_darts_league_night_task_4",
               "stable_object_id": "bar_darts_league_night_task_4"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_task_4",
+              "receipt_id": "bar_darts_league_night_cleanup_interaction_ops_remove_bar_darts_league_night_task_4",
               "stable_object_id": "bar_darts_league_night_task_4"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_task_5",
+              "receipt_id": "bar_darts_league_night_cleanup_scene_ops_remove_bar_darts_league_night_task_5",
               "stable_object_id": "bar_darts_league_night_task_5"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_darts_league_night_cleanup_remove_bar_darts_league_night_task_5",
+              "receipt_id": "bar_darts_league_night_cleanup_interaction_ops_remove_bar_darts_league_night_task_5",
               "stable_object_id": "bar_darts_league_night_task_5"
             }
           ]
@@ -7088,16 +6897,11 @@
               "id": "work_1",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Darts League Night has advanced beyond bar darts league night task 0 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_darts_league_night_work_1_gate_bar_darts_league_night_gate_0",
-                  "stable_object_id": "bar_darts_league_night_gate_0",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_darts_league_night_task_0"
+                  "receipt_id": "bar_darts_league_night_work_1_interaction_remove_bar_darts_league_night_task_0",
+                  "stable_object_id": "bar_darts_league_night_task_0"
                 },
                 {
                   "family": "interaction_ops",
@@ -7284,16 +7088,11 @@
               "id": "work_2",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Darts League Night has advanced beyond bar darts league night task 1 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_darts_league_night_work_2_gate_bar_darts_league_night_gate_1",
-                  "stable_object_id": "bar_darts_league_night_gate_1",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_darts_league_night_task_1"
+                  "receipt_id": "bar_darts_league_night_work_2_interaction_remove_bar_darts_league_night_task_1",
+                  "stable_object_id": "bar_darts_league_night_task_1"
                 },
                 {
                   "family": "interaction_ops",
@@ -7516,16 +7315,11 @@
               "id": "work_3",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Darts League Night has advanced beyond bar darts league night task 2 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_darts_league_night_work_3_gate_bar_darts_league_night_gate_2",
-                  "stable_object_id": "bar_darts_league_night_gate_2",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_darts_league_night_task_2"
+                  "receipt_id": "bar_darts_league_night_work_3_interaction_remove_bar_darts_league_night_task_2",
+                  "stable_object_id": "bar_darts_league_night_task_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -7733,16 +7527,11 @@
               "id": "work_4",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Darts League Night has advanced beyond bar darts league night task 3 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_darts_league_night_work_4_gate_bar_darts_league_night_gate_3",
-                  "stable_object_id": "bar_darts_league_night_gate_3",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_darts_league_night_task_3"
+                  "receipt_id": "bar_darts_league_night_work_4_interaction_remove_bar_darts_league_night_task_3",
+                  "stable_object_id": "bar_darts_league_night_task_3"
                 },
                 {
                   "family": "interaction_ops",
@@ -7928,16 +7717,11 @@
               "id": "work_5",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Darts League Night has advanced beyond bar darts league night task 4 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_darts_league_night_work_5_gate_bar_darts_league_night_gate_4",
-                  "stable_object_id": "bar_darts_league_night_gate_4",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_darts_league_night_task_4"
+                  "receipt_id": "bar_darts_league_night_work_5_interaction_remove_bar_darts_league_night_task_4",
+                  "stable_object_id": "bar_darts_league_night_task_4"
                 },
                 {
                   "family": "interaction_ops",
@@ -8192,7 +7976,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3cb8111441e32cb49259154dc00e119c2fc63a89cc54b9f985ee9b2d6d4a5865"
+        "sequence_signature": "eced41a73856d13c4949cf8d181141579c6cac6fbd5465447a1683c1d79bd6b6"
       }
     },
     {
@@ -8395,52 +8179,24 @@
         "cleanup": {
           "operations": [
             {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_gate_3",
-              "stable_object_id": "bar_live_band_gate_3"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_gate_2",
-              "stable_object_id": "bar_live_band_gate_2"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_gate_1",
-              "stable_object_id": "bar_live_band_gate_1"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_gate_0",
-              "stable_object_id": "bar_live_band_gate_0"
-            },
-            {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_speaker_stack",
+              "receipt_id": "bar_live_band_cleanup_scene_ops_remove_bar_live_band_speaker_stack",
               "stable_object_id": "bar_live_band_speaker_stack"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_cable_crossing",
+              "receipt_id": "bar_live_band_cleanup_scene_ops_remove_bar_live_band_cable_crossing",
               "stable_object_id": "bar_live_band_cable_crossing"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_band_stage",
+              "receipt_id": "bar_live_band_cleanup_scene_ops_remove_bar_live_band_band_stage",
               "stable_object_id": "bar_live_band_band_stage"
             },
             {
@@ -8461,84 +8217,84 @@
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_safe_exit",
+              "receipt_id": "bar_live_band_cleanup_scene_ops_remove_bar_live_band_safe_exit",
               "stable_object_id": "bar_live_band_safe_exit"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_task_0",
+              "receipt_id": "bar_live_band_cleanup_scene_ops_remove_bar_live_band_task_0",
               "stable_object_id": "bar_live_band_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_safe_exit",
+              "receipt_id": "bar_live_band_cleanup_interaction_ops_remove_bar_live_band_safe_exit",
               "stable_object_id": "bar_live_band_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_task_0",
+              "receipt_id": "bar_live_band_cleanup_interaction_ops_remove_bar_live_band_task_0",
               "stable_object_id": "bar_live_band_task_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_task_1",
+              "receipt_id": "bar_live_band_cleanup_scene_ops_remove_bar_live_band_task_1",
               "stable_object_id": "bar_live_band_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_task_1",
+              "receipt_id": "bar_live_band_cleanup_interaction_ops_remove_bar_live_band_task_1",
               "stable_object_id": "bar_live_band_task_1"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_task_2",
+              "receipt_id": "bar_live_band_cleanup_scene_ops_remove_bar_live_band_task_2",
               "stable_object_id": "bar_live_band_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_task_2",
+              "receipt_id": "bar_live_band_cleanup_interaction_ops_remove_bar_live_band_task_2",
               "stable_object_id": "bar_live_band_task_2"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_task_3",
+              "receipt_id": "bar_live_band_cleanup_scene_ops_remove_bar_live_band_task_3",
               "stable_object_id": "bar_live_band_task_3"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_task_3",
+              "receipt_id": "bar_live_band_cleanup_interaction_ops_remove_bar_live_band_task_3",
               "stable_object_id": "bar_live_band_task_3"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_task_4",
+              "receipt_id": "bar_live_band_cleanup_scene_ops_remove_bar_live_band_task_4",
               "stable_object_id": "bar_live_band_task_4"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_live_band_cleanup_remove_bar_live_band_task_4",
+              "receipt_id": "bar_live_band_cleanup_interaction_ops_remove_bar_live_band_task_4",
               "stable_object_id": "bar_live_band_task_4"
             }
           ]
@@ -9019,16 +8775,11 @@
               "id": "work_1",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Live Band has advanced beyond bar live band task 0 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_live_band_work_1_gate_bar_live_band_gate_0",
-                  "stable_object_id": "bar_live_band_gate_0",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_live_band_task_0"
+                  "receipt_id": "bar_live_band_work_1_interaction_remove_bar_live_band_task_0",
+                  "stable_object_id": "bar_live_band_task_0"
                 },
                 {
                   "family": "interaction_ops",
@@ -9248,16 +8999,11 @@
               "id": "work_2",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Live Band has advanced beyond bar live band task 1 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_live_band_work_2_gate_bar_live_band_gate_1",
-                  "stable_object_id": "bar_live_band_gate_1",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_live_band_task_1"
+                  "receipt_id": "bar_live_band_work_2_interaction_remove_bar_live_band_task_1",
+                  "stable_object_id": "bar_live_band_task_1"
                 },
                 {
                   "family": "interaction_ops",
@@ -9467,16 +9213,11 @@
               "id": "work_3",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Live Band has advanced beyond bar live band task 2 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_live_band_work_3_gate_bar_live_band_gate_2",
-                  "stable_object_id": "bar_live_band_gate_2",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_live_band_task_2"
+                  "receipt_id": "bar_live_band_work_3_interaction_remove_bar_live_band_task_2",
+                  "stable_object_id": "bar_live_band_task_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -9664,16 +9405,11 @@
               "id": "work_4",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Live Band has advanced beyond bar live band task 3 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_live_band_work_4_gate_bar_live_band_gate_3",
-                  "stable_object_id": "bar_live_band_gate_3",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_live_band_task_3"
+                  "receipt_id": "bar_live_band_work_4_interaction_remove_bar_live_band_task_3",
+                  "stable_object_id": "bar_live_band_task_3"
                 },
                 {
                   "family": "interaction_ops",
@@ -9924,7 +9660,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ab283b1cdb5029dfd1cc8c4e2aefb6027de68733794a8c0cd248b6cf5ef701f4"
+        "sequence_signature": "67cb48cca0fbafc554fba7182132a5ccc3819fab2589b9b2dc67364f2f65368b"
       }
     },
     {
@@ -10124,31 +9860,24 @@
         "cleanup": {
           "operations": [
             {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "bar_dead_tuesday_cleanup_remove_bar_dead_tuesday_gate_0",
-              "stable_object_id": "bar_dead_tuesday_gate_0"
-            },
-            {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_dead_tuesday_cleanup_remove_bar_dead_tuesday_bartender_zone",
+              "receipt_id": "bar_dead_tuesday_cleanup_scene_ops_remove_bar_dead_tuesday_bartender_zone",
               "stable_object_id": "bar_dead_tuesday_bartender_zone"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_dead_tuesday_cleanup_remove_bar_dead_tuesday_patron_zone",
+              "receipt_id": "bar_dead_tuesday_cleanup_scene_ops_remove_bar_dead_tuesday_patron_zone",
               "stable_object_id": "bar_dead_tuesday_patron_zone"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_dead_tuesday_cleanup_remove_bar_dead_tuesday_booth_zone",
+              "receipt_id": "bar_dead_tuesday_cleanup_scene_ops_remove_bar_dead_tuesday_booth_zone",
               "stable_object_id": "bar_dead_tuesday_booth_zone"
             },
             {
@@ -10169,42 +9898,42 @@
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_dead_tuesday_cleanup_remove_bar_dead_tuesday_safe_exit",
+              "receipt_id": "bar_dead_tuesday_cleanup_scene_ops_remove_bar_dead_tuesday_safe_exit",
               "stable_object_id": "bar_dead_tuesday_safe_exit"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_dead_tuesday_cleanup_remove_bar_dead_tuesday_task_0",
+              "receipt_id": "bar_dead_tuesday_cleanup_scene_ops_remove_bar_dead_tuesday_task_0",
               "stable_object_id": "bar_dead_tuesday_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_dead_tuesday_cleanup_remove_bar_dead_tuesday_safe_exit",
+              "receipt_id": "bar_dead_tuesday_cleanup_interaction_ops_remove_bar_dead_tuesday_safe_exit",
               "stable_object_id": "bar_dead_tuesday_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_dead_tuesday_cleanup_remove_bar_dead_tuesday_task_0",
+              "receipt_id": "bar_dead_tuesday_cleanup_interaction_ops_remove_bar_dead_tuesday_task_0",
               "stable_object_id": "bar_dead_tuesday_task_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_dead_tuesday_cleanup_remove_bar_dead_tuesday_task_1",
+              "receipt_id": "bar_dead_tuesday_cleanup_scene_ops_remove_bar_dead_tuesday_task_1",
               "stable_object_id": "bar_dead_tuesday_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "bar_dead_tuesday_cleanup_remove_bar_dead_tuesday_task_1",
+              "receipt_id": "bar_dead_tuesday_cleanup_interaction_ops_remove_bar_dead_tuesday_task_1",
               "stable_object_id": "bar_dead_tuesday_task_1"
             }
           ]
@@ -10719,16 +10448,11 @@
               "id": "work_1",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Bar Dead Tuesday has advanced beyond bar dead tuesday task 0 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "bar_dead_tuesday_work_1_gate_bar_dead_tuesday_gate_0",
-                  "stable_object_id": "bar_dead_tuesday_gate_0",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "bar_dead_tuesday_task_0"
+                  "receipt_id": "bar_dead_tuesday_work_1_interaction_remove_bar_dead_tuesday_task_0",
+                  "stable_object_id": "bar_dead_tuesday_task_0"
                 },
                 {
                   "family": "interaction_ops",
@@ -10980,7 +10704,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9e3d044d78017838cd89e380c4439ccbed5d4020d3a33460cabe2852a26e54a6"
+        "sequence_signature": "3293ab1230d358af489152fd268bcd8b031e36a02d64e4bf78032d60a56a222e"
       }
     },
     {
@@ -11184,59 +10908,24 @@
         "cleanup": {
           "operations": [
             {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_gate_4",
-              "stable_object_id": "jazz_club_guest_legend_gate_4"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_gate_3",
-              "stable_object_id": "jazz_club_guest_legend_gate_3"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_gate_2",
-              "stable_object_id": "jazz_club_guest_legend_gate_2"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_gate_1",
-              "stable_object_id": "jazz_club_guest_legend_gate_1"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_gate_0",
-              "stable_object_id": "jazz_club_guest_legend_gate_0"
-            },
-            {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_guest_table",
+              "receipt_id": "jazz_club_guest_legend_cleanup_scene_ops_remove_jazz_club_guest_legend_guest_table",
               "stable_object_id": "jazz_club_guest_legend_guest_table"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_instrument_case",
+              "receipt_id": "jazz_club_guest_legend_cleanup_scene_ops_remove_jazz_club_guest_legend_instrument_case",
               "stable_object_id": "jazz_club_guest_legend_instrument_case"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_cue_stand",
+              "receipt_id": "jazz_club_guest_legend_cleanup_scene_ops_remove_jazz_club_guest_legend_cue_stand",
               "stable_object_id": "jazz_club_guest_legend_cue_stand"
             },
             {
@@ -11257,98 +10946,98 @@
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_safe_exit",
+              "receipt_id": "jazz_club_guest_legend_cleanup_scene_ops_remove_jazz_club_guest_legend_safe_exit",
               "stable_object_id": "jazz_club_guest_legend_safe_exit"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_task_0",
+              "receipt_id": "jazz_club_guest_legend_cleanup_scene_ops_remove_jazz_club_guest_legend_task_0",
               "stable_object_id": "jazz_club_guest_legend_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_safe_exit",
+              "receipt_id": "jazz_club_guest_legend_cleanup_interaction_ops_remove_jazz_club_guest_legend_safe_exit",
               "stable_object_id": "jazz_club_guest_legend_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_task_0",
+              "receipt_id": "jazz_club_guest_legend_cleanup_interaction_ops_remove_jazz_club_guest_legend_task_0",
               "stable_object_id": "jazz_club_guest_legend_task_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_task_1",
+              "receipt_id": "jazz_club_guest_legend_cleanup_scene_ops_remove_jazz_club_guest_legend_task_1",
               "stable_object_id": "jazz_club_guest_legend_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_task_1",
+              "receipt_id": "jazz_club_guest_legend_cleanup_interaction_ops_remove_jazz_club_guest_legend_task_1",
               "stable_object_id": "jazz_club_guest_legend_task_1"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_task_2",
+              "receipt_id": "jazz_club_guest_legend_cleanup_scene_ops_remove_jazz_club_guest_legend_task_2",
               "stable_object_id": "jazz_club_guest_legend_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_task_2",
+              "receipt_id": "jazz_club_guest_legend_cleanup_interaction_ops_remove_jazz_club_guest_legend_task_2",
               "stable_object_id": "jazz_club_guest_legend_task_2"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_task_3",
+              "receipt_id": "jazz_club_guest_legend_cleanup_scene_ops_remove_jazz_club_guest_legend_task_3",
               "stable_object_id": "jazz_club_guest_legend_task_3"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_task_3",
+              "receipt_id": "jazz_club_guest_legend_cleanup_interaction_ops_remove_jazz_club_guest_legend_task_3",
               "stable_object_id": "jazz_club_guest_legend_task_3"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_task_4",
+              "receipt_id": "jazz_club_guest_legend_cleanup_scene_ops_remove_jazz_club_guest_legend_task_4",
               "stable_object_id": "jazz_club_guest_legend_task_4"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_task_4",
+              "receipt_id": "jazz_club_guest_legend_cleanup_interaction_ops_remove_jazz_club_guest_legend_task_4",
               "stable_object_id": "jazz_club_guest_legend_task_4"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_task_5",
+              "receipt_id": "jazz_club_guest_legend_cleanup_scene_ops_remove_jazz_club_guest_legend_task_5",
               "stable_object_id": "jazz_club_guest_legend_task_5"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_guest_legend_cleanup_remove_jazz_club_guest_legend_task_5",
+              "receipt_id": "jazz_club_guest_legend_cleanup_interaction_ops_remove_jazz_club_guest_legend_task_5",
               "stable_object_id": "jazz_club_guest_legend_task_5"
             }
           ]
@@ -11835,16 +11524,11 @@
               "id": "work_1",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Jazz Club Guest Legend has advanced beyond jazz club guest legend task 0 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_guest_legend_work_1_gate_jazz_club_guest_legend_gate_0",
-                  "stable_object_id": "jazz_club_guest_legend_gate_0",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "jazz_club_guest_legend_task_0"
+                  "receipt_id": "jazz_club_guest_legend_work_1_interaction_remove_jazz_club_guest_legend_task_0",
+                  "stable_object_id": "jazz_club_guest_legend_task_0"
                 },
                 {
                   "family": "interaction_ops",
@@ -12031,16 +11715,11 @@
               "id": "work_2",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Jazz Club Guest Legend has advanced beyond jazz club guest legend task 1 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_guest_legend_work_2_gate_jazz_club_guest_legend_gate_1",
-                  "stable_object_id": "jazz_club_guest_legend_gate_1",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "jazz_club_guest_legend_task_1"
+                  "receipt_id": "jazz_club_guest_legend_work_2_interaction_remove_jazz_club_guest_legend_task_1",
+                  "stable_object_id": "jazz_club_guest_legend_task_1"
                 },
                 {
                   "family": "interaction_ops",
@@ -12263,16 +11942,11 @@
               "id": "work_3",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Jazz Club Guest Legend has advanced beyond jazz club guest legend task 2 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_guest_legend_work_3_gate_jazz_club_guest_legend_gate_2",
-                  "stable_object_id": "jazz_club_guest_legend_gate_2",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "jazz_club_guest_legend_task_2"
+                  "receipt_id": "jazz_club_guest_legend_work_3_interaction_remove_jazz_club_guest_legend_task_2",
+                  "stable_object_id": "jazz_club_guest_legend_task_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -12480,16 +12154,11 @@
               "id": "work_4",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Jazz Club Guest Legend has advanced beyond jazz club guest legend task 3 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_guest_legend_work_4_gate_jazz_club_guest_legend_gate_3",
-                  "stable_object_id": "jazz_club_guest_legend_gate_3",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "jazz_club_guest_legend_task_3"
+                  "receipt_id": "jazz_club_guest_legend_work_4_interaction_remove_jazz_club_guest_legend_task_3",
+                  "stable_object_id": "jazz_club_guest_legend_task_3"
                 },
                 {
                   "family": "interaction_ops",
@@ -12675,16 +12344,11 @@
               "id": "work_5",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Jazz Club Guest Legend has advanced beyond jazz club guest legend task 4 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_guest_legend_work_5_gate_jazz_club_guest_legend_gate_4",
-                  "stable_object_id": "jazz_club_guest_legend_gate_4",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "jazz_club_guest_legend_task_4"
+                  "receipt_id": "jazz_club_guest_legend_work_5_interaction_remove_jazz_club_guest_legend_task_4",
+                  "stable_object_id": "jazz_club_guest_legend_task_4"
                 },
                 {
                   "family": "interaction_ops",
@@ -12939,7 +12603,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "705de2dbed6c08a852cdd18d23383cb083527f8ca54c9dbcdee39091d9ae490f"
+        "sequence_signature": "128a94cc74f16a29d358a9c15a86020b45de25caef453813a033167960d07ea8"
       }
     },
     {
@@ -13141,45 +12805,24 @@
         "cleanup": {
           "operations": [
             {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_gate_2",
-              "stable_object_id": "jazz_club_rent_party_gate_2"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_gate_1",
-              "stable_object_id": "jazz_club_rent_party_gate_1"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_gate_0",
-              "stable_object_id": "jazz_club_rent_party_gate_0"
-            },
-            {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_donation_station",
+              "receipt_id": "jazz_club_rent_party_cleanup_scene_ops_remove_jazz_club_rent_party_donation_station",
               "stable_object_id": "jazz_club_rent_party_donation_station"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_record_crate",
+              "receipt_id": "jazz_club_rent_party_cleanup_scene_ops_remove_jazz_club_rent_party_record_crate",
               "stable_object_id": "jazz_club_rent_party_record_crate"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_rent_marker",
+              "receipt_id": "jazz_club_rent_party_cleanup_scene_ops_remove_jazz_club_rent_party_rent_marker",
               "stable_object_id": "jazz_club_rent_party_rent_marker"
             },
             {
@@ -13200,70 +12843,70 @@
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_safe_exit",
+              "receipt_id": "jazz_club_rent_party_cleanup_scene_ops_remove_jazz_club_rent_party_safe_exit",
               "stable_object_id": "jazz_club_rent_party_safe_exit"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_task_0",
+              "receipt_id": "jazz_club_rent_party_cleanup_scene_ops_remove_jazz_club_rent_party_task_0",
               "stable_object_id": "jazz_club_rent_party_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_safe_exit",
+              "receipt_id": "jazz_club_rent_party_cleanup_interaction_ops_remove_jazz_club_rent_party_safe_exit",
               "stable_object_id": "jazz_club_rent_party_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_task_0",
+              "receipt_id": "jazz_club_rent_party_cleanup_interaction_ops_remove_jazz_club_rent_party_task_0",
               "stable_object_id": "jazz_club_rent_party_task_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_task_1",
+              "receipt_id": "jazz_club_rent_party_cleanup_scene_ops_remove_jazz_club_rent_party_task_1",
               "stable_object_id": "jazz_club_rent_party_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_task_1",
+              "receipt_id": "jazz_club_rent_party_cleanup_interaction_ops_remove_jazz_club_rent_party_task_1",
               "stable_object_id": "jazz_club_rent_party_task_1"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_task_2",
+              "receipt_id": "jazz_club_rent_party_cleanup_scene_ops_remove_jazz_club_rent_party_task_2",
               "stable_object_id": "jazz_club_rent_party_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_task_2",
+              "receipt_id": "jazz_club_rent_party_cleanup_interaction_ops_remove_jazz_club_rent_party_task_2",
               "stable_object_id": "jazz_club_rent_party_task_2"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_task_3",
+              "receipt_id": "jazz_club_rent_party_cleanup_scene_ops_remove_jazz_club_rent_party_task_3",
               "stable_object_id": "jazz_club_rent_party_task_3"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_rent_party_cleanup_remove_jazz_club_rent_party_task_3",
+              "receipt_id": "jazz_club_rent_party_cleanup_interaction_ops_remove_jazz_club_rent_party_task_3",
               "stable_object_id": "jazz_club_rent_party_task_3"
             }
           ]
@@ -13738,16 +13381,11 @@
               "id": "work_1",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Jazz Club Rent Party has advanced beyond jazz club rent party task 0 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_rent_party_work_1_gate_jazz_club_rent_party_gate_0",
-                  "stable_object_id": "jazz_club_rent_party_gate_0",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "jazz_club_rent_party_task_0"
+                  "receipt_id": "jazz_club_rent_party_work_1_interaction_remove_jazz_club_rent_party_task_0",
+                  "stable_object_id": "jazz_club_rent_party_task_0"
                 },
                 {
                   "family": "interaction_ops",
@@ -13967,16 +13605,11 @@
               "id": "work_2",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Jazz Club Rent Party has advanced beyond jazz club rent party task 1 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_rent_party_work_2_gate_jazz_club_rent_party_gate_1",
-                  "stable_object_id": "jazz_club_rent_party_gate_1",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "jazz_club_rent_party_task_1"
+                  "receipt_id": "jazz_club_rent_party_work_2_interaction_remove_jazz_club_rent_party_task_1",
+                  "stable_object_id": "jazz_club_rent_party_task_1"
                 },
                 {
                   "family": "interaction_ops",
@@ -14186,16 +13819,11 @@
               "id": "work_3",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Jazz Club Rent Party has advanced beyond jazz club rent party task 2 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_rent_party_work_3_gate_jazz_club_rent_party_gate_2",
-                  "stable_object_id": "jazz_club_rent_party_gate_2",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "jazz_club_rent_party_task_2"
+                  "receipt_id": "jazz_club_rent_party_work_3_interaction_remove_jazz_club_rent_party_task_2",
+                  "stable_object_id": "jazz_club_rent_party_task_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -14448,7 +14076,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "83c13b3ef2c47b9b41f81dab9561fb055b875f8ef551427ee19b9ae5d852b658"
+        "sequence_signature": "25c11b73dfe31ebec8660348662e95367608f41ea878baa80497ba7c6addfd80"
       }
     },
     {
@@ -14649,38 +14277,24 @@
         "cleanup": {
           "operations": [
             {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_gate_1",
-              "stable_object_id": "jazz_club_recording_night_gate_1"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_gate_0",
-              "stable_object_id": "jazz_club_recording_night_gate_0"
-            },
-            {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_microphone_tree",
+              "receipt_id": "jazz_club_recording_night_cleanup_scene_ops_remove_jazz_club_recording_night_microphone_tree",
               "stable_object_id": "jazz_club_recording_night_microphone_tree"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_silence_tape",
+              "receipt_id": "jazz_club_recording_night_cleanup_scene_ops_remove_jazz_club_recording_night_silence_tape",
               "stable_object_id": "jazz_club_recording_night_silence_tape"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_recording_desk",
+              "receipt_id": "jazz_club_recording_night_cleanup_scene_ops_remove_jazz_club_recording_night_recording_desk",
               "stable_object_id": "jazz_club_recording_night_recording_desk"
             },
             {
@@ -14701,56 +14315,56 @@
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_safe_exit",
+              "receipt_id": "jazz_club_recording_night_cleanup_scene_ops_remove_jazz_club_recording_night_safe_exit",
               "stable_object_id": "jazz_club_recording_night_safe_exit"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_task_0",
+              "receipt_id": "jazz_club_recording_night_cleanup_scene_ops_remove_jazz_club_recording_night_task_0",
               "stable_object_id": "jazz_club_recording_night_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_safe_exit",
+              "receipt_id": "jazz_club_recording_night_cleanup_interaction_ops_remove_jazz_club_recording_night_safe_exit",
               "stable_object_id": "jazz_club_recording_night_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_task_0",
+              "receipt_id": "jazz_club_recording_night_cleanup_interaction_ops_remove_jazz_club_recording_night_task_0",
               "stable_object_id": "jazz_club_recording_night_task_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_task_1",
+              "receipt_id": "jazz_club_recording_night_cleanup_scene_ops_remove_jazz_club_recording_night_task_1",
               "stable_object_id": "jazz_club_recording_night_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_task_1",
+              "receipt_id": "jazz_club_recording_night_cleanup_interaction_ops_remove_jazz_club_recording_night_task_1",
               "stable_object_id": "jazz_club_recording_night_task_1"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_task_2",
+              "receipt_id": "jazz_club_recording_night_cleanup_scene_ops_remove_jazz_club_recording_night_task_2",
               "stable_object_id": "jazz_club_recording_night_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_recording_night_cleanup_remove_jazz_club_recording_night_task_2",
+              "receipt_id": "jazz_club_recording_night_cleanup_interaction_ops_remove_jazz_club_recording_night_task_2",
               "stable_object_id": "jazz_club_recording_night_task_2"
             }
           ]
@@ -15252,16 +14866,11 @@
               "id": "work_1",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Jazz Club Recording Night has advanced beyond jazz club recording night task 0 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_recording_night_work_1_gate_jazz_club_recording_night_gate_0",
-                  "stable_object_id": "jazz_club_recording_night_gate_0",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "jazz_club_recording_night_task_0"
+                  "receipt_id": "jazz_club_recording_night_work_1_interaction_remove_jazz_club_recording_night_task_0",
+                  "stable_object_id": "jazz_club_recording_night_task_0"
                 },
                 {
                   "family": "interaction_ops",
@@ -15468,16 +15077,11 @@
               "id": "work_2",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Jazz Club Recording Night has advanced beyond jazz club recording night task 1 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_recording_night_work_2_gate_jazz_club_recording_night_gate_1",
-                  "stable_object_id": "jazz_club_recording_night_gate_1",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "jazz_club_recording_night_task_1"
+                  "receipt_id": "jazz_club_recording_night_work_2_interaction_remove_jazz_club_recording_night_task_1",
+                  "stable_object_id": "jazz_club_recording_night_task_1"
                 },
                 {
                   "family": "interaction_ops",
@@ -15732,7 +15336,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "db969f5c13bad86dbd20f8a7f7ece9e369e5fd069764f6a8416d3b3a317f4ff7"
+        "sequence_signature": "ce92432c66891a29de161199a4ad14d83edad7af1f47507aabe4de7e99f6f3ab"
       }
     },
     {
@@ -15934,45 +15538,24 @@
         "cleanup": {
           "operations": [
             {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_gate_2",
-              "stable_object_id": "jazz_club_union_trouble_gate_2"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_gate_1",
-              "stable_object_id": "jazz_club_union_trouble_gate_1"
-            },
-            {
-              "family": "interaction_ops",
-              "op": "remove",
-              "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_gate_0",
-              "stable_object_id": "jazz_club_union_trouble_gate_0"
-            },
-            {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_picket_line",
+              "receipt_id": "jazz_club_union_trouble_cleanup_scene_ops_remove_jazz_club_union_trouble_picket_line",
               "stable_object_id": "jazz_club_union_trouble_picket_line"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_management_rope",
+              "receipt_id": "jazz_club_union_trouble_cleanup_scene_ops_remove_jazz_club_union_trouble_management_rope",
               "stable_object_id": "jazz_club_union_trouble_management_rope"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_unbuilt_stage",
+              "receipt_id": "jazz_club_union_trouble_cleanup_scene_ops_remove_jazz_club_union_trouble_unbuilt_stage",
               "stable_object_id": "jazz_club_union_trouble_unbuilt_stage"
             },
             {
@@ -15993,70 +15576,70 @@
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_safe_exit",
+              "receipt_id": "jazz_club_union_trouble_cleanup_scene_ops_remove_jazz_club_union_trouble_safe_exit",
               "stable_object_id": "jazz_club_union_trouble_safe_exit"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_task_0",
+              "receipt_id": "jazz_club_union_trouble_cleanup_scene_ops_remove_jazz_club_union_trouble_task_0",
               "stable_object_id": "jazz_club_union_trouble_task_0"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_safe_exit",
+              "receipt_id": "jazz_club_union_trouble_cleanup_interaction_ops_remove_jazz_club_union_trouble_safe_exit",
               "stable_object_id": "jazz_club_union_trouble_safe_exit"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_task_0",
+              "receipt_id": "jazz_club_union_trouble_cleanup_interaction_ops_remove_jazz_club_union_trouble_task_0",
               "stable_object_id": "jazz_club_union_trouble_task_0"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_task_1",
+              "receipt_id": "jazz_club_union_trouble_cleanup_scene_ops_remove_jazz_club_union_trouble_task_1",
               "stable_object_id": "jazz_club_union_trouble_task_1"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_task_1",
+              "receipt_id": "jazz_club_union_trouble_cleanup_interaction_ops_remove_jazz_club_union_trouble_task_1",
               "stable_object_id": "jazz_club_union_trouble_task_1"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_task_2",
+              "receipt_id": "jazz_club_union_trouble_cleanup_scene_ops_remove_jazz_club_union_trouble_task_2",
               "stable_object_id": "jazz_club_union_trouble_task_2"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_task_2",
+              "receipt_id": "jazz_club_union_trouble_cleanup_interaction_ops_remove_jazz_club_union_trouble_task_2",
               "stable_object_id": "jazz_club_union_trouble_task_2"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_task_3",
+              "receipt_id": "jazz_club_union_trouble_cleanup_scene_ops_remove_jazz_club_union_trouble_task_3",
               "stable_object_id": "jazz_club_union_trouble_task_3"
             },
             {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
-              "receipt_id": "jazz_club_union_trouble_cleanup_remove_jazz_club_union_trouble_task_3",
+              "receipt_id": "jazz_club_union_trouble_cleanup_interaction_ops_remove_jazz_club_union_trouble_task_3",
               "stable_object_id": "jazz_club_union_trouble_task_3"
             }
           ]
@@ -16564,16 +16147,11 @@
               "id": "work_1",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Jazz Club Union Trouble has advanced beyond jazz club union trouble task 0 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_union_trouble_work_1_gate_jazz_club_union_trouble_gate_0",
-                  "stable_object_id": "jazz_club_union_trouble_gate_0",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "jazz_club_union_trouble_task_0"
+                  "receipt_id": "jazz_club_union_trouble_work_1_interaction_remove_jazz_club_union_trouble_task_0",
+                  "stable_object_id": "jazz_club_union_trouble_task_0"
                 },
                 {
                   "family": "interaction_ops",
@@ -16780,16 +16358,11 @@
               "id": "work_2",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Jazz Club Union Trouble has advanced beyond jazz club union trouble task 1 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_union_trouble_work_2_gate_jazz_club_union_trouble_gate_1",
-                  "stable_object_id": "jazz_club_union_trouble_gate_1",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "jazz_club_union_trouble_task_1"
+                  "receipt_id": "jazz_club_union_trouble_work_2_interaction_remove_jazz_club_union_trouble_task_1",
+                  "stable_object_id": "jazz_club_union_trouble_task_1"
                 },
                 {
                   "family": "interaction_ops",
@@ -16979,16 +16552,11 @@
               "id": "work_3",
               "interaction_ops": [
                 {
-                  "disabled_reason": "Jazz Club Union Trouble has advanced beyond jazz club union trouble task 2 to its next physical station.",
-                  "enabled": false,
                   "family": "interaction_ops",
-                  "mode": "gate",
-                  "op": "gate",
+                  "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "jazz_club_union_trouble_work_3_gate_jazz_club_union_trouble_gate_2",
-                  "stable_object_id": "jazz_club_union_trouble_gate_2",
-                  "target_owner_namespace": "scenario",
-                  "target_stable_object_id": "jazz_club_union_trouble_task_2"
+                  "receipt_id": "jazz_club_union_trouble_work_3_interaction_remove_jazz_club_union_trouble_task_2",
+                  "stable_object_id": "jazz_club_union_trouble_task_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -17241,7 +16809,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e1c332918ccf2f4add84da00705bdf6c86edbb20699b83511b727aa8a2d19392"
+        "sequence_signature": "55645b8d0203d5fdf9e04e623b54095befc81edab6f5d1c00ec7f29f9ef2ef3d"
       }
     }
   ]

@@ -48,7 +48,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "ecf0ad357a24d8d2c7bfbc83a763e855ea7a715bbf3259509cc21e5027638da0",
+      "sequence_signature": "9fb89b0424fa0dab5258e5dd05f947f1f06e3c81d6682b2d2a210f4b1a7b3c06",
       "capture_ids": [
         "delta_queen_wedding_charter_arrival",
         "delta_queen_wedding_charter_partial",
@@ -107,7 +107,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "538ba52b461eb23a712c35b882b63621a15e7c85500938503344aafddba6cdd7",
+      "sequence_signature": "53a7c59364a74795088b525420cc844e48c01e178fa20afffced0ec89cb848a9",
       "capture_ids": [
         "delta_queen_whale_aboard_arrival",
         "delta_queen_whale_aboard_partial",
@@ -166,7 +166,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "ef269ea676904379080596b502b8de181630ffe31ab716f63af379d3f17ad9cb",
+      "sequence_signature": "1668f91a5078d352a46356796dbfaa57a1ae0a45861b6e3574fc2803ef88ca05",
       "capture_ids": [
         "delta_queen_fog_delay_arrival",
         "delta_queen_fog_delay_partial",
@@ -228,7 +228,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "f0c9891788d70212d29e4366dea28e8bd816317b3b21012ef03492a1cf1919d8",
+      "sequence_signature": "2ee6140e8e5beb441b5859ff25d9689235ac6701e2bf1be0b47c1435a6cd4376",
       "capture_ids": [
         "delta_queen_engine_trouble_arrival",
         "delta_queen_engine_trouble_partial",
@@ -289,7 +289,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "f331d395c8471447a774c2df5845f656adb545412c8adfd94b3a2cce13902078",
+      "sequence_signature": "554cac8b89b9d17bf8cda6cc3290fd0b7b672f8f1ee759b80b73d1ab6438200f",
       "capture_ids": [
         "delta_queen_captains_invitational_arrival",
         "delta_queen_captains_invitational_partial",
@@ -348,7 +348,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "1bac9fd9e092ffa9dd501af4b213de2b6c66aba8ff420169edd0c3a3b239dd13",
+      "sequence_signature": "641c3d91235e1dcd1ccdab2de7fafe64c6fae5e89df563251c7586e283aadc04",
       "capture_ids": [
         "grand_casino_gala_night_arrival",
         "grand_casino_gala_night_partial",
@@ -407,7 +407,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "20e41f4519b0b5e4cead44704fa869594e6d3972fdc7ce5a9149178d08259c01",
+      "sequence_signature": "f5ac2f8ec35a4c46376e8db50a3b42ff16d4df5dd22b629e7504454e292e8277",
       "capture_ids": [
         "grand_casino_convention_crowd_arrival",
         "grand_casino_convention_crowd_partial",
@@ -467,7 +467,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "b5aa58241c46c1305cb6654018c5d9dca99d90576cc10799425a949c19f62890",
+      "sequence_signature": "c95a88178e78be1abb6e54aca53ae1801efb0b708ad6aa11ecea3feee5801ab3",
       "capture_ids": [
         "grand_casino_audit_night_arrival",
         "grand_casino_audit_night_partial",
@@ -1293,6 +1293,48 @@
               },
               {
                 "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -2130,10 +2172,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "f331d395c8471447a774c2df5845f656adb545412c8adfd94b3a2cce13902078",
-      "calculated_signature": "f331d395c8471447a774c2df5845f656adb545412c8adfd94b3a2cce13902078",
+      "authored_signature": "554cac8b89b9d17bf8cda6cc3290fd0b7b672f8f1ee759b80b73d1ab6438200f",
+      "calculated_signature": "554cac8b89b9d17bf8cda6cc3290fd0b7b672f8f1ee759b80b73d1ab6438200f",
       "nearest_id": "delta_queen_engine_trouble",
-      "nearest_similarity": 0.657843137254902
+      "nearest_similarity": 0.663776493256262
     },
     {
       "id": "delta_queen_engine_trouble",
@@ -2944,6 +2986,48 @@
               },
               {
                 "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -3808,10 +3892,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "f0c9891788d70212d29e4366dea28e8bd816317b3b21012ef03492a1cf1919d8",
-      "calculated_signature": "f0c9891788d70212d29e4366dea28e8bd816317b3b21012ef03492a1cf1919d8",
+      "authored_signature": "2ee6140e8e5beb441b5859ff25d9689235ac6701e2bf1be0b47c1435a6cd4376",
+      "calculated_signature": "2ee6140e8e5beb441b5859ff25d9689235ac6701e2bf1be0b47c1435a6cd4376",
       "nearest_id": "delta_queen_captains_invitational",
-      "nearest_similarity": 0.657843137254902
+      "nearest_similarity": 0.663776493256262
     },
     {
       "id": "delta_queen_fog_delay",
@@ -4277,6 +4361,48 @@
               },
               {
                 "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -5268,10 +5394,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "ef269ea676904379080596b502b8de181630ffe31ab716f63af379d3f17ad9cb",
-      "calculated_signature": "ef269ea676904379080596b502b8de181630ffe31ab716f63af379d3f17ad9cb",
+      "authored_signature": "1668f91a5078d352a46356796dbfaa57a1ae0a45861b6e3574fc2803ef88ca05",
+      "calculated_signature": "1668f91a5078d352a46356796dbfaa57a1ae0a45861b6e3574fc2803ef88ca05",
       "nearest_id": "delta_queen_wedding_charter",
-      "nearest_similarity": 0.690557451649602
+      "nearest_similarity": 0.696767001114827
     },
     {
       "id": "delta_queen_wedding_charter",
@@ -5737,6 +5863,48 @@
               },
               {
                 "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -6728,10 +6896,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "ecf0ad357a24d8d2c7bfbc83a763e855ea7a715bbf3259509cc21e5027638da0",
-      "calculated_signature": "ecf0ad357a24d8d2c7bfbc83a763e855ea7a715bbf3259509cc21e5027638da0",
+      "authored_signature": "9fb89b0424fa0dab5258e5dd05f947f1f06e3c81d6682b2d2a210f4b1a7b3c06",
+      "calculated_signature": "9fb89b0424fa0dab5258e5dd05f947f1f06e3c81d6682b2d2a210f4b1a7b3c06",
       "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.690557451649602
+      "nearest_similarity": 0.696767001114827
     },
     {
       "id": "delta_queen_whale_aboard",
@@ -7198,6 +7366,48 @@
               },
               {
                 "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -8188,10 +8398,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "538ba52b461eb23a712c35b882b63621a15e7c85500938503344aafddba6cdd7",
-      "calculated_signature": "538ba52b461eb23a712c35b882b63621a15e7c85500938503344aafddba6cdd7",
-      "nearest_id": "grand_casino_gala_night",
-      "nearest_similarity": 0.585912486659552
+      "authored_signature": "53a7c59364a74795088b525420cc844e48c01e178fa20afffced0ec89cb848a9",
+      "calculated_signature": "53a7c59364a74795088b525420cc844e48c01e178fa20afffced0ec89cb848a9",
+      "nearest_id": "delta_queen_fog_delay",
+      "nearest_similarity": 0.509920634920635
     },
     {
       "id": "grand_casino_audit_night",
@@ -8203,7 +8413,31 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "anchor_id": "grand_audit_cage",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "anchor_id": "grand_scenario_top_650",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "grand_work_actor_right",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "grand_work_object_left",
                   "op": "move",
                   "owner_namespace": "scenario"
                 }
@@ -8380,6 +8614,66 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_decision_left",
+                    "appearance": "route_0_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Comply With Audit Route",
+                    "role": "decision_route",
+                    "state": "route_0_ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_decision_middle_right",
+                    "appearance": "route_1_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Redirect Public Audit",
+                    "role": "decision_route",
+                    "state": "route_1_ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_decision_right",
+                    "appearance": "route_2_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Close Audited Games",
+                    "role": "decision_route",
+                    "state": "route_2_ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "anchor_id": "grand_scenario_top_520",
                     "appearance": "task_ready",
                     "bounds": {
@@ -8391,66 +8685,6 @@
                     "role": "task_station",
                     "state": "ready",
                     "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "route_0_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Comply With Audit Route",
-                    "role": "decision_route",
-                    "state": "route_0_ready",
-                    "visible": true,
-                    "zone_id": "left"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "route_1_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Redirect Public Audit",
-                    "role": "decision_route",
-                    "state": "route_1_ready",
-                    "visible": true,
-                    "zone_id": "center"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "route_2_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Close Audited Games",
-                    "role": "decision_route",
-                    "state": "route_2_ready",
-                    "visible": true,
-                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -8665,6 +8899,48 @@
               },
               {
                 "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -9378,10 +9654,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_closed_games",
+                    "anchor_id": "grand_aftermath_actor",
                     "behavior": "watch",
                     "label": "Closed Games remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "left"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -9395,6 +9671,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_aftermath_scene",
                     "appearance": "compliant_floor",
                     "bounds": {
                       "h": 48.0,
@@ -9404,8 +9681,7 @@
                     "label": "Compliant Floor room marker",
                     "role": "arrangement",
                     "state": "compliant_floor",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -9418,10 +9694,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_compliant_floor",
+                    "anchor_id": "grand_aftermath_actor",
                     "behavior": "work",
                     "label": "Compliant Floor remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "center"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -9435,6 +9711,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_aftermath_scene",
                     "appearance": "redirected_audit",
                     "bounds": {
                       "h": 54.0,
@@ -9444,8 +9721,7 @@
                     "label": "Redirected Audit room marker",
                     "role": "debris",
                     "state": "redirected_audit",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -9458,10 +9734,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_redirected_audit",
+                    "anchor_id": "grand_aftermath_actor",
                     "behavior": "guard",
                     "label": "Redirected Audit remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "right"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -9475,6 +9751,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_aftermath_scene",
                     "appearance": "audit_interrupted",
                     "bounds": {
                       "h": 66.0,
@@ -9484,8 +9761,7 @@
                     "label": "Audit Interrupted room marker",
                     "role": "route_marker",
                     "state": "audit_interrupted",
-                    "visible": true,
-                    "zone_id": "exit_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -9661,7 +9937,7 @@
           "services": 0,
           "games": 0,
           "routes": 0,
-          "anchors": 7,
+          "anchors": 15,
           "zones": 7
         },
         "reentry": {
@@ -9675,10 +9951,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "b5aa58241c46c1305cb6654018c5d9dca99d90576cc10799425a949c19f62890",
-      "calculated_signature": "b5aa58241c46c1305cb6654018c5d9dca99d90576cc10799425a949c19f62890",
-      "nearest_id": "delta_queen_fog_delay",
-      "nearest_similarity": 0.492047713717694
+      "authored_signature": "c95a88178e78be1abb6e54aca53ae1801efb0b708ad6aa11ecea3feee5801ab3",
+      "calculated_signature": "c95a88178e78be1abb6e54aca53ae1801efb0b708ad6aa11ecea3feee5801ab3",
+      "nearest_id": "grand_casino_convention_crowd",
+      "nearest_similarity": 0.448051948051948
     },
     {
       "id": "grand_casino_convention_crowd",
@@ -9692,6 +9968,30 @@
                 "effect": {
                   "anchor_id": "grand_convention_badge_delegations",
                   "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "grand_work_actor_right",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "grand_work_object_left",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "grand_work_object_middle",
+                  "op": "move",
                   "owner_namespace": "scenario"
                 }
               },
@@ -9878,6 +10178,66 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_decision_left",
+                    "appearance": "route_0_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Blend With Badge Crowd",
+                    "role": "decision_route",
+                    "state": "route_0_ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_decision_middle",
+                    "appearance": "route_1_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Split Convention Schedule",
+                    "role": "decision_route",
+                    "state": "route_1_ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_decision_middle_right",
+                    "appearance": "route_2_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Trigger Convention Standoff",
+                    "role": "decision_route",
+                    "state": "route_2_ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "anchor_id": "grand_scenario_top_800",
                     "appearance": "task_ready",
                     "bounds": {
@@ -9889,66 +10249,6 @@
                     "role": "task_station",
                     "state": "ready",
                     "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "route_0_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Blend With Badge Crowd",
-                    "role": "decision_route",
-                    "state": "route_0_ready",
-                    "visible": true,
-                    "zone_id": "left"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "route_1_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Split Convention Schedule",
-                    "role": "decision_route",
-                    "state": "route_1_ready",
-                    "visible": true,
-                    "zone_id": "center"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "route_2_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Trigger Convention Standoff",
-                    "role": "decision_route",
-                    "state": "route_2_ready",
-                    "visible": true,
-                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -10314,6 +10614,48 @@
               },
               {
                 "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -10844,6 +11186,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_aftermath_scene",
                     "appearance": "camouflage_route",
                     "bounds": {
                       "h": 48.0,
@@ -10853,8 +11196,7 @@
                     "label": "Camouflage Route room marker",
                     "role": "arrangement",
                     "state": "camouflage_route",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -10867,10 +11209,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_camouflage_route",
+                    "anchor_id": "grand_aftermath_actor",
                     "behavior": "work",
                     "label": "Camouflage Route remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "center"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -10885,10 +11227,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_floor_standoff",
+                    "anchor_id": "grand_aftermath_actor",
                     "behavior": "watch",
                     "label": "Floor Standoff remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "left"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -10902,6 +11244,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_aftermath_scene",
                     "appearance": "split_schedule",
                     "bounds": {
                       "h": 54.0,
@@ -10911,8 +11254,7 @@
                     "label": "Split Schedule room marker",
                     "role": "debris",
                     "state": "split_schedule",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -10925,10 +11267,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_split_schedule",
+                    "anchor_id": "grand_aftermath_actor",
                     "behavior": "guard",
                     "label": "Split Schedule remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "right"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -10942,6 +11284,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_aftermath_scene",
                     "appearance": "convention_departed",
                     "bounds": {
                       "h": 66.0,
@@ -10951,8 +11294,7 @@
                     "label": "Convention Departed room marker",
                     "role": "route_marker",
                     "state": "convention_departed",
-                    "visible": true,
-                    "zone_id": "exit_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -11121,7 +11463,7 @@
           "services": 0,
           "games": 0,
           "routes": 0,
-          "anchors": 7,
+          "anchors": 15,
           "zones": 7
         },
         "reentry": {
@@ -11135,10 +11477,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "20e41f4519b0b5e4cead44704fa869594e6d3972fdc7ce5a9149178d08259c01",
-      "calculated_signature": "20e41f4519b0b5e4cead44704fa869594e6d3972fdc7ce5a9149178d08259c01",
+      "authored_signature": "f5ac2f8ec35a4c46376e8db50a3b42ff16d4df5dd22b629e7504454e292e8277",
+      "calculated_signature": "f5ac2f8ec35a4c46376e8db50a3b42ff16d4df5dd22b629e7504454e292e8277",
       "nearest_id": "grand_casino_gala_night",
-      "nearest_similarity": 0.59956942949408
+      "nearest_similarity": 0.579162410623085
     },
     {
       "id": "grand_casino_gala_night",
@@ -11152,6 +11494,30 @@
                 "effect": {
                   "anchor_id": "grand_scenario_bottom_830",
                   "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "grand_work_actor_right",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "grand_work_object_left",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "grand_work_object_middle",
+                  "op": "move",
                   "owner_namespace": "scenario"
                 }
               },
@@ -11338,6 +11704,66 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_decision_left",
+                    "appearance": "route_0_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Assume Gala Cover Identity",
+                    "role": "decision_route",
+                    "state": "route_0_ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_decision_middle",
+                    "appearance": "route_1_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Reopen Public Gala Floor",
+                    "role": "decision_route",
+                    "state": "route_1_ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
+                    "anchor_id": "grand_decision_middle_right",
+                    "appearance": "route_2_ready",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Fail Gala Credentials",
+                    "role": "decision_route",
+                    "state": "route_2_ready",
+                    "visible": true
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "object": {
                     "anchor_id": "grand_scenario_top_800",
                     "appearance": "task_ready",
                     "bounds": {
@@ -11349,66 +11775,6 @@
                     "role": "task_station",
                     "state": "ready",
                     "visible": true
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "route_0_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Assume Gala Cover Identity",
-                    "role": "decision_route",
-                    "state": "route_0_ready",
-                    "visible": true,
-                    "zone_id": "left"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "route_1_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Reopen Public Gala Floor",
-                    "role": "decision_route",
-                    "state": "route_1_ready",
-                    "visible": true,
-                    "zone_id": "center"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "object": {
-                    "appearance": "route_2_ready",
-                    "bounds": {
-                      "h": 56.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Fail Gala Credentials",
-                    "role": "decision_route",
-                    "state": "route_2_ready",
-                    "visible": true,
-                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -11605,6 +11971,48 @@
               },
               {
                 "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
                 "effect": {
                   "op": "remove",
                   "owner_namespace": "scenario"
@@ -12304,6 +12712,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_aftermath_scene",
                     "appearance": "cover_identity_accepted",
                     "bounds": {
                       "h": 48.0,
@@ -12313,8 +12722,7 @@
                     "label": "Cover Identity Accepted room marker",
                     "role": "arrangement",
                     "state": "cover_identity_accepted",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -12327,10 +12735,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_cover_identity_accepted",
+                    "anchor_id": "grand_aftermath_actor",
                     "behavior": "work",
                     "label": "Cover Identity Accepted remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "center"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -12345,10 +12753,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_credential_failed",
+                    "anchor_id": "grand_aftermath_actor",
                     "behavior": "watch",
                     "label": "Credential Failed remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "left"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -12362,6 +12770,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_aftermath_scene",
                     "appearance": "public_floor_reopened",
                     "bounds": {
                       "h": 54.0,
@@ -12371,8 +12780,7 @@
                     "label": "Public Floor Reopened room marker",
                     "role": "debris",
                     "state": "public_floor_reopened",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -12385,10 +12793,10 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_public_floor_reopened",
+                    "anchor_id": "grand_aftermath_actor",
                     "behavior": "guard",
                     "label": "Public Floor Reopened remaining actor",
-                    "pose": "arrival",
-                    "zone_id": "right"
+                    "pose": "arrival"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -12402,6 +12810,7 @@
                 "family": "scene_ops",
                 "effect": {
                   "object": {
+                    "anchor_id": "grand_aftermath_scene",
                     "appearance": "gala_interrupted",
                     "bounds": {
                       "h": 66.0,
@@ -12411,8 +12820,7 @@
                     "label": "Gala Interrupted room marker",
                     "role": "route_marker",
                     "state": "gala_interrupted",
-                    "visible": true,
-                    "zone_id": "exit_lane"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"
@@ -12581,7 +12989,7 @@
           "services": 0,
           "games": 0,
           "routes": 0,
-          "anchors": 6,
+          "anchors": 14,
           "zones": 7
         },
         "reentry": {
@@ -12595,17 +13003,17 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "1bac9fd9e092ffa9dd501af4b213de2b6c66aba8ff420169edd0c3a3b239dd13",
-      "calculated_signature": "1bac9fd9e092ffa9dd501af4b213de2b6c66aba8ff420169edd0c3a3b239dd13",
+      "authored_signature": "641c3d91235e1dcd1ccdab2de7fafe64c6fae5e89df563251c7586e283aadc04",
+      "calculated_signature": "641c3d91235e1dcd1ccdab2de7fafe64c6fae5e89df563251c7586e283aadc04",
       "nearest_id": "grand_casino_convention_crowd",
-      "nearest_similarity": 0.59956942949408
+      "nearest_similarity": 0.579162410623085
     }
   ],
   "pairwise_similarity": [
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.314662273476112,
+      "similarity": 0.23330832708177,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12617,7 +13025,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.31312292358804,
+      "similarity": 0.253076923076923,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12629,7 +13037,7 @@
     {
       "left_id": "delta_queen_captains_invitational",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.352437981180496,
+      "similarity": 0.287747035573123,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12641,7 +13049,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.657843137254902,
+      "similarity": 0.663776493256262,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -12653,7 +13061,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.303398058252427,
+      "similarity": 0.224354243542435,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12665,7 +13073,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.301794453507341,
+      "similarity": 0.239819004524887,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12677,7 +13085,7 @@
     {
       "left_id": "delta_queen_engine_trouble",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.349112426035503,
+      "similarity": 0.277389277389277,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12689,7 +13097,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.334177215189873,
+      "similarity": 0.323240589198036,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12701,7 +13109,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.311421528348398,
+      "similarity": 0.302474062250599,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12713,7 +13121,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.492047713717694,
+      "similarity": 0.408181818181818,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12725,7 +13133,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.517875383043922,
+      "similarity": 0.433644859813084,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12737,7 +13145,7 @@
     {
       "left_id": "delta_queen_fog_delay",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.448343079922027,
+      "similarity": 0.402193784277879,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12749,7 +13157,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.32190635451505,
+      "similarity": 0.3125,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12761,7 +13169,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.320099255583127,
+      "similarity": 0.309791332263242,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12773,7 +13181,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.690557451649602,
+      "similarity": 0.696767001114827,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -12785,7 +13193,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "delta_queen_whale_aboard",
-      "similarity": 0.491967871485944,
+      "similarity": 0.500986193293886,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12797,7 +13205,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.489087301587302,
+      "similarity": 0.40562613430127,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12809,7 +13217,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.524102564102564,
+      "similarity": 0.433644859813084,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12821,7 +13229,7 @@
     {
       "left_id": "delta_queen_wedding_charter",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.45829244357213,
+      "similarity": 0.406049495875344,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12833,7 +13241,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_captains_invitational",
-      "similarity": 0.428184281842818,
+      "similarity": 0.417177914110429,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12845,7 +13253,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_engine_trouble",
-      "similarity": 0.40864960282436,
+      "similarity": 0.398457583547558,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12857,7 +13265,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "delta_queen_fog_delay",
-      "similarity": 0.501010101010101,
+      "similarity": 0.509920634920635,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12869,7 +13277,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.451644100580271,
+      "similarity": 0.359964881474978,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12881,7 +13289,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.504048582995951,
+      "similarity": 0.39963503649635,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12893,7 +13301,7 @@
     {
       "left_id": "delta_queen_whale_aboard",
       "right_id": "grand_casino_gala_night",
-      "similarity": 0.585912486659552,
+      "similarity": 0.490767735665695,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12905,7 +13313,7 @@
     {
       "left_id": "grand_casino_convention_crowd",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.468688845401174,
+      "similarity": 0.448051948051948,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12917,7 +13325,7 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_audit_night",
-      "similarity": 0.408067542213884,
+      "similarity": 0.41780199818347,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12929,7 +13337,7 @@
     {
       "left_id": "grand_casino_gala_night",
       "right_id": "grand_casino_convention_crowd",
-      "similarity": 0.59956942949408,
+      "similarity": 0.579162410623085,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -12945,11 +13353,11 @@
     "scenario delta_queen_fog_delay is invalid: [\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_fog_delay sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario delta_queen_engine_trouble is invalid: [\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_engine_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario delta_queen_captains_invitational is invalid: [\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario delta_queen_captains_invitational sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario grand_casino_gala_night is invalid: [\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_520 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_650_low has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario grand_casino_convention_crowd is invalid: [\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_badge_delegations has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_machine_banks has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_table_block has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_50_actor has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_520 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_650 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800_low has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.691 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario delta_queen_engine_trouble vs delta_queen_captains_invitational: 0.658 (warning). Missing receipt-bound masked visual evidence."
+    "scenario grand_casino_gala_night is invalid: [\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_actor has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_scene has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_decision_left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_decision_middle has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_decision_middle_right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_520 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_650_low has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800 has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_work_actor_right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_work_object_left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.anchors identity base::anchor:grand_work_object_middle has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_gala_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario grand_casino_convention_crowd is invalid: [\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_aftermath_actor has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_aftermath_scene has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_badge_delegations has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_machine_banks has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_convention_table_block has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_decision_left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_decision_middle has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_decision_middle_right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800 has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_work_actor_right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_work_object_left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.anchors identity base::anchor:grand_work_object_middle has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_convention_crowd sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario grand_casino_audit_night is invalid: [\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.scene_objects identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_high_limit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_back_room has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.interactions identity base::travel:grand_casino_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_actor has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_aftermath_scene has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_audit_cage has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_middle_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_decision_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_bottom_830 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_safe_exit has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_400 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_50_actor has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_520 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_650 has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_scenario_top_800_low has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_work_actor_right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.anchors identity base::anchor:grand_work_object_left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario grand_casino_audit_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario delta_queen_wedding_charter vs delta_queen_fog_delay: 0.697 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario delta_queen_engine_trouble vs delta_queen_captains_invitational: 0.664 (warning). Missing receipt-bound masked visual evidence."
   ],
   "pair_count": 28
 }

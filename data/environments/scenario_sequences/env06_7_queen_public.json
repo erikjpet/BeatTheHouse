@@ -855,7 +855,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_wedding_charter_work_1_remove_delta_queen_wedding_charter_task_0",
+                  "receipt_id": "delta_queen_wedding_charter_work_1_interaction_remove_delta_queen_wedding_charter_task_0",
                   "stable_object_id": "delta_queen_wedding_charter_task_0"
                 },
                 {
@@ -1217,8 +1217,29 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_wedding_charter_work_2_remove_delta_queen_wedding_charter_task_1",
+                  "receipt_id": "delta_queen_wedding_charter_work_2_interaction_remove_delta_queen_wedding_charter_task_1",
                   "stable_object_id": "delta_queen_wedding_charter_task_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_2_interaction_remove_delta_queen_wedding_charter_work_1_choice_0",
+                  "stable_object_id": "delta_queen_wedding_charter_work_1_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_2_interaction_remove_delta_queen_wedding_charter_work_1_choice_1",
+                  "stable_object_id": "delta_queen_wedding_charter_work_1_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_2_interaction_remove_delta_queen_wedding_charter_work_1_choice_2",
+                  "stable_object_id": "delta_queen_wedding_charter_work_1_choice_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -1316,6 +1337,27 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_work_2_spawn_delta_queen_wedding_charter_task_2",
                   "stable_object_id": "delta_queen_wedding_charter_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_2_remove_delta_queen_wedding_charter_work_1_choice_0",
+                  "stable_object_id": "delta_queen_wedding_charter_work_1_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_2_remove_delta_queen_wedding_charter_work_1_choice_1",
+                  "stable_object_id": "delta_queen_wedding_charter_work_1_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_wedding_charter_work_2_remove_delta_queen_wedding_charter_work_1_choice_2",
+                  "stable_object_id": "delta_queen_wedding_charter_work_1_choice_2"
                 }
               ],
               "transition_ops": [
@@ -1411,7 +1453,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_wedding_charter_work_3_remove_delta_queen_wedding_charter_task_2",
+                  "receipt_id": "delta_queen_wedding_charter_work_3_interaction_remove_delta_queen_wedding_charter_task_2",
                   "stable_object_id": "delta_queen_wedding_charter_task_2"
                 },
                 {
@@ -1665,7 +1707,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ecf0ad357a24d8d2c7bfbc83a763e855ea7a715bbf3259509cc21e5027638da0"
+        "sequence_signature": "9fb89b0424fa0dab5258e5dd05f947f1f06e3c81d6682b2d2a210f4b1a7b3c06"
       }
     },
     {
@@ -2486,7 +2528,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_whale_aboard_work_1_remove_delta_queen_whale_aboard_task_0",
+                  "receipt_id": "delta_queen_whale_aboard_work_1_interaction_remove_delta_queen_whale_aboard_task_0",
                   "stable_object_id": "delta_queen_whale_aboard_task_0"
                 },
                 {
@@ -2710,7 +2752,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_whale_aboard_work_2_remove_delta_queen_whale_aboard_task_1",
+                  "receipt_id": "delta_queen_whale_aboard_work_2_interaction_remove_delta_queen_whale_aboard_task_1",
                   "stable_object_id": "delta_queen_whale_aboard_task_1"
                 },
                 {
@@ -3075,8 +3117,29 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_whale_aboard_work_3_remove_delta_queen_whale_aboard_task_2",
+                  "receipt_id": "delta_queen_whale_aboard_work_3_interaction_remove_delta_queen_whale_aboard_task_2",
                   "stable_object_id": "delta_queen_whale_aboard_task_2"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_3_interaction_remove_delta_queen_whale_aboard_work_2_choice_0",
+                  "stable_object_id": "delta_queen_whale_aboard_work_2_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_3_interaction_remove_delta_queen_whale_aboard_work_2_choice_1",
+                  "stable_object_id": "delta_queen_whale_aboard_work_2_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_3_interaction_remove_delta_queen_whale_aboard_work_2_choice_2",
+                  "stable_object_id": "delta_queen_whale_aboard_work_2_choice_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -3174,6 +3237,27 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_work_3_spawn_delta_queen_whale_aboard_task_3",
                   "stable_object_id": "delta_queen_whale_aboard_task_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_3_remove_delta_queen_whale_aboard_work_2_choice_0",
+                  "stable_object_id": "delta_queen_whale_aboard_work_2_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_3_remove_delta_queen_whale_aboard_work_2_choice_1",
+                  "stable_object_id": "delta_queen_whale_aboard_work_2_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_whale_aboard_work_3_remove_delta_queen_whale_aboard_work_2_choice_2",
+                  "stable_object_id": "delta_queen_whale_aboard_work_2_choice_2"
                 }
               ],
               "transition_ops": [
@@ -3329,7 +3413,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "538ba52b461eb23a712c35b882b63621a15e7c85500938503344aafddba6cdd7"
+        "sequence_signature": "53a7c59364a74795088b525420cc844e48c01e178fa20afffced0ec89cb848a9"
       }
     },
     {
@@ -4183,7 +4267,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_fog_delay_work_1_remove_delta_queen_fog_delay_task_0",
+                  "receipt_id": "delta_queen_fog_delay_work_1_interaction_remove_delta_queen_fog_delay_task_0",
                   "stable_object_id": "delta_queen_fog_delay_task_0"
                 },
                 {
@@ -4545,8 +4629,29 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_fog_delay_work_2_remove_delta_queen_fog_delay_task_1",
+                  "receipt_id": "delta_queen_fog_delay_work_2_interaction_remove_delta_queen_fog_delay_task_1",
                   "stable_object_id": "delta_queen_fog_delay_task_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_2_interaction_remove_delta_queen_fog_delay_work_1_choice_0",
+                  "stable_object_id": "delta_queen_fog_delay_work_1_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_2_interaction_remove_delta_queen_fog_delay_work_1_choice_1",
+                  "stable_object_id": "delta_queen_fog_delay_work_1_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_2_interaction_remove_delta_queen_fog_delay_work_1_choice_2",
+                  "stable_object_id": "delta_queen_fog_delay_work_1_choice_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -4644,6 +4749,27 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_work_2_spawn_delta_queen_fog_delay_task_2",
                   "stable_object_id": "delta_queen_fog_delay_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_2_remove_delta_queen_fog_delay_work_1_choice_0",
+                  "stable_object_id": "delta_queen_fog_delay_work_1_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_2_remove_delta_queen_fog_delay_work_1_choice_1",
+                  "stable_object_id": "delta_queen_fog_delay_work_1_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_fog_delay_work_2_remove_delta_queen_fog_delay_work_1_choice_2",
+                  "stable_object_id": "delta_queen_fog_delay_work_1_choice_2"
                 }
               ],
               "transition_ops": [
@@ -4739,7 +4865,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_fog_delay_work_3_remove_delta_queen_fog_delay_task_2",
+                  "receipt_id": "delta_queen_fog_delay_work_3_interaction_remove_delta_queen_fog_delay_task_2",
                   "stable_object_id": "delta_queen_fog_delay_task_2"
                 },
                 {
@@ -4993,7 +5119,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ef269ea676904379080596b502b8de181630ffe31ab716f63af379d3f17ad9cb"
+        "sequence_signature": "1668f91a5078d352a46356796dbfaa57a1ae0a45861b6e3574fc2803ef88ca05"
       }
     },
     {
@@ -5862,7 +5988,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_engine_trouble_work_1_remove_delta_queen_engine_trouble_task_0",
+                  "receipt_id": "delta_queen_engine_trouble_work_1_interaction_remove_delta_queen_engine_trouble_task_0",
                   "stable_object_id": "delta_queen_engine_trouble_task_0"
                 },
                 {
@@ -6053,7 +6179,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_engine_trouble_work_2_remove_delta_queen_engine_trouble_task_1",
+                  "receipt_id": "delta_queen_engine_trouble_work_2_interaction_remove_delta_queen_engine_trouble_task_1",
                   "stable_object_id": "delta_queen_engine_trouble_task_1"
                 },
                 {
@@ -6280,7 +6406,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_engine_trouble_work_3_remove_delta_queen_engine_trouble_task_2",
+                  "receipt_id": "delta_queen_engine_trouble_work_3_interaction_remove_delta_queen_engine_trouble_task_2",
                   "stable_object_id": "delta_queen_engine_trouble_task_2"
                 },
                 {
@@ -6642,8 +6768,29 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_engine_trouble_work_4_remove_delta_queen_engine_trouble_task_3",
+                  "receipt_id": "delta_queen_engine_trouble_work_4_interaction_remove_delta_queen_engine_trouble_task_3",
                   "stable_object_id": "delta_queen_engine_trouble_task_3"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_4_interaction_remove_delta_queen_engine_trouble_work_3_choice_0",
+                  "stable_object_id": "delta_queen_engine_trouble_work_3_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_4_interaction_remove_delta_queen_engine_trouble_work_3_choice_1",
+                  "stable_object_id": "delta_queen_engine_trouble_work_3_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_4_interaction_remove_delta_queen_engine_trouble_work_3_choice_2",
+                  "stable_object_id": "delta_queen_engine_trouble_work_3_choice_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -6740,6 +6887,27 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_work_4_spawn_delta_queen_engine_trouble_task_4",
                   "stable_object_id": "delta_queen_engine_trouble_task_4"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_4_remove_delta_queen_engine_trouble_work_3_choice_0",
+                  "stable_object_id": "delta_queen_engine_trouble_work_3_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_4_remove_delta_queen_engine_trouble_work_3_choice_1",
+                  "stable_object_id": "delta_queen_engine_trouble_work_3_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_engine_trouble_work_4_remove_delta_queen_engine_trouble_work_3_choice_2",
+                  "stable_object_id": "delta_queen_engine_trouble_work_3_choice_2"
                 }
               ],
               "transition_ops": [
@@ -6894,7 +7062,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f0c9891788d70212d29e4366dea28e8bd816317b3b21012ef03492a1cf1919d8"
+        "sequence_signature": "2ee6140e8e5beb441b5859ff25d9689235ac6701e2bf1be0b47c1435a6cd4376"
       }
     },
     {
@@ -7736,7 +7904,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_captains_invitational_work_1_remove_delta_queen_captains_invitational_task_0",
+                  "receipt_id": "delta_queen_captains_invitational_work_1_interaction_remove_delta_queen_captains_invitational_task_0",
                   "stable_object_id": "delta_queen_captains_invitational_task_0"
                 },
                 {
@@ -7927,7 +8095,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_captains_invitational_work_2_remove_delta_queen_captains_invitational_task_1",
+                  "receipt_id": "delta_queen_captains_invitational_work_2_interaction_remove_delta_queen_captains_invitational_task_1",
                   "stable_object_id": "delta_queen_captains_invitational_task_1"
                 },
                 {
@@ -8154,7 +8322,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_captains_invitational_work_3_remove_delta_queen_captains_invitational_task_2",
+                  "receipt_id": "delta_queen_captains_invitational_work_3_interaction_remove_delta_queen_captains_invitational_task_2",
                   "stable_object_id": "delta_queen_captains_invitational_task_2"
                 },
                 {
@@ -8516,8 +8684,29 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "delta_queen_captains_invitational_work_4_remove_delta_queen_captains_invitational_task_3",
+                  "receipt_id": "delta_queen_captains_invitational_work_4_interaction_remove_delta_queen_captains_invitational_task_3",
                   "stable_object_id": "delta_queen_captains_invitational_task_3"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_4_interaction_remove_delta_queen_captains_invitational_work_3_choice_0",
+                  "stable_object_id": "delta_queen_captains_invitational_work_3_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_4_interaction_remove_delta_queen_captains_invitational_work_3_choice_1",
+                  "stable_object_id": "delta_queen_captains_invitational_work_3_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_4_interaction_remove_delta_queen_captains_invitational_work_3_choice_2",
+                  "stable_object_id": "delta_queen_captains_invitational_work_3_choice_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -8614,6 +8803,27 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_work_4_spawn_delta_queen_captains_invitational_task_4",
                   "stable_object_id": "delta_queen_captains_invitational_task_4"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_4_remove_delta_queen_captains_invitational_work_3_choice_0",
+                  "stable_object_id": "delta_queen_captains_invitational_work_3_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_4_remove_delta_queen_captains_invitational_work_3_choice_1",
+                  "stable_object_id": "delta_queen_captains_invitational_work_3_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "delta_queen_captains_invitational_work_4_remove_delta_queen_captains_invitational_work_3_choice_2",
+                  "stable_object_id": "delta_queen_captains_invitational_work_3_choice_2"
                 }
               ],
               "transition_ops": [
@@ -8768,7 +8978,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f331d395c8471447a774c2df5845f656adb545412c8adfd94b3a2cce13902078"
+        "sequence_signature": "554cac8b89b9d17bf8cda6cc3290fd0b7b672f8f1ee759b80b73d1ab6438200f"
       }
     },
     {
@@ -8842,10 +9052,10 @@
               {
                 "actor": {
                   "actor_id": "actor_cover_identity_accepted",
+                  "anchor_id": "grand_aftermath_actor",
                   "behavior": "work",
                   "label": "Cover Identity Accepted remaining actor",
-                  "pose": "arrival",
-                  "zone_id": "center"
+                  "pose": "arrival"
                 },
                 "family": "actor_ops",
                 "op": "spawn",
@@ -8860,6 +9070,7 @@
               {
                 "family": "scene_ops",
                 "object": {
+                  "anchor_id": "grand_aftermath_scene",
                   "appearance": "cover_identity_accepted",
                   "bounds": {
                     "h": 48.0,
@@ -8869,8 +9080,7 @@
                   "label": "Cover Identity Accepted room marker",
                   "role": "arrangement",
                   "state": "cover_identity_accepted",
-                  "visible": true,
-                  "zone_id": "center"
+                  "visible": true
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -8884,10 +9094,10 @@
               {
                 "actor": {
                   "actor_id": "actor_credential_failed",
+                  "anchor_id": "grand_aftermath_actor",
                   "behavior": "watch",
                   "label": "Credential Failed remaining actor",
-                  "pose": "arrival",
-                  "zone_id": "left"
+                  "pose": "arrival"
                 },
                 "family": "actor_ops",
                 "op": "spawn",
@@ -8906,6 +9116,7 @@
               {
                 "family": "scene_ops",
                 "object": {
+                  "anchor_id": "grand_aftermath_scene",
                   "appearance": "gala_interrupted",
                   "bounds": {
                     "h": 66.0,
@@ -8915,8 +9126,7 @@
                   "label": "Gala Interrupted room marker",
                   "role": "route_marker",
                   "state": "gala_interrupted",
-                  "visible": true,
-                  "zone_id": "exit_lane"
+                  "visible": true
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -8930,10 +9140,10 @@
               {
                 "actor": {
                   "actor_id": "actor_public_floor_reopened",
+                  "anchor_id": "grand_aftermath_actor",
                   "behavior": "guard",
                   "label": "Public Floor Reopened remaining actor",
-                  "pose": "arrival",
-                  "zone_id": "right"
+                  "pose": "arrival"
                 },
                 "family": "actor_ops",
                 "op": "spawn",
@@ -8948,6 +9158,7 @@
               {
                 "family": "scene_ops",
                 "object": {
+                  "anchor_id": "grand_aftermath_scene",
                   "appearance": "public_floor_reopened",
                   "bounds": {
                     "h": 54.0,
@@ -8957,8 +9168,7 @@
                   "label": "Public Floor Reopened room marker",
                   "role": "debris",
                   "state": "public_floor_reopened",
-                  "visible": true,
-                  "zone_id": "right"
+                  "visible": true
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -9134,12 +9344,20 @@
         "declared_targets": {
           "actors": [],
           "anchors": [
+            "base::anchor:grand_aftermath_actor",
+            "base::anchor:grand_aftermath_scene",
+            "base::anchor:grand_decision_left",
+            "base::anchor:grand_decision_middle",
+            "base::anchor:grand_decision_middle_right",
             "base::anchor:grand_scenario_bottom_830",
             "base::anchor:grand_scenario_safe_exit",
             "base::anchor:grand_scenario_top_400",
             "base::anchor:grand_scenario_top_520",
             "base::anchor:grand_scenario_top_650_low",
-            "base::anchor:grand_scenario_top_800"
+            "base::anchor:grand_scenario_top_800",
+            "base::anchor:grand_work_actor_right",
+            "base::anchor:grand_work_object_left",
+            "base::anchor:grand_work_object_middle"
           ],
           "games": [],
           "interactions": [
@@ -9604,7 +9822,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "grand_casino_gala_night_work_1_remove_grand_casino_gala_night_task_0",
+                  "receipt_id": "grand_casino_gala_night_work_1_interaction_remove_grand_casino_gala_night_task_0",
                   "stable_object_id": "grand_casino_gala_night_task_0"
                 },
                 {
@@ -9726,6 +9944,14 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_badge_state_position",
                   "stable_object_id": "grand_casino_gala_night_stage_hand"
+                },
+                {
+                  "anchor_id": "grand_work_actor_right",
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_2_relocate_gala_host",
+                  "stable_object_id": "grand_casino_gala_night_gala_host"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -9828,7 +10054,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "grand_casino_gala_night_work_2_remove_grand_casino_gala_night_task_1",
+                  "receipt_id": "grand_casino_gala_night_work_2_interaction_remove_grand_casino_gala_night_task_1",
                   "stable_object_id": "grand_casino_gala_night_task_1"
                 },
                 {
@@ -10013,6 +10239,22 @@
                   "stable_object_id": "grand_casino_gala_night_charity_badges"
                 },
                 {
+                  "anchor_id": "grand_work_object_middle",
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_2_relocate_charity_badges",
+                  "stable_object_id": "grand_casino_gala_night_charity_badges"
+                },
+                {
+                  "anchor_id": "grand_work_object_left",
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_2_relocate_stage_lift",
+                  "stable_object_id": "grand_casino_gala_night_stage_lift"
+                },
+                {
                   "family": "scene_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
@@ -10042,6 +10284,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "grand_decision_left",
                     "appearance": "route_0_ready",
                     "bounds": {
                       "h": 56.0,
@@ -10051,8 +10294,7 @@
                     "label": "Assume Gala Cover Identity",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true,
-                    "zone_id": "left"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -10062,6 +10304,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "grand_decision_middle",
                     "appearance": "route_1_ready",
                     "bounds": {
                       "h": 56.0,
@@ -10071,8 +10314,7 @@
                     "label": "Reopen Public Gala Floor",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -10082,6 +10324,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "grand_decision_middle_right",
                     "appearance": "route_2_ready",
                     "bounds": {
                       "h": 56.0,
@@ -10091,8 +10334,7 @@
                     "label": "Fail Gala Credentials",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -10193,8 +10435,29 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "grand_casino_gala_night_work_3_remove_grand_casino_gala_night_task_2",
+                  "receipt_id": "grand_casino_gala_night_work_3_interaction_remove_grand_casino_gala_night_task_2",
                   "stable_object_id": "grand_casino_gala_night_task_2"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_3_interaction_remove_grand_casino_gala_night_work_2_choice_0",
+                  "stable_object_id": "grand_casino_gala_night_work_2_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_3_interaction_remove_grand_casino_gala_night_work_2_choice_1",
+                  "stable_object_id": "grand_casino_gala_night_work_2_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_3_interaction_remove_grand_casino_gala_night_work_2_choice_2",
+                  "stable_object_id": "grand_casino_gala_night_work_2_choice_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -10292,6 +10555,27 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_work_3_spawn_grand_casino_gala_night_task_3",
                   "stable_object_id": "grand_casino_gala_night_task_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_3_remove_grand_casino_gala_night_work_2_choice_0",
+                  "stable_object_id": "grand_casino_gala_night_work_2_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_3_remove_grand_casino_gala_night_work_2_choice_1",
+                  "stable_object_id": "grand_casino_gala_night_work_2_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_work_3_remove_grand_casino_gala_night_work_2_choice_2",
+                  "stable_object_id": "grand_casino_gala_night_work_2_choice_2"
                 }
               ],
               "transition_ops": [
@@ -10447,7 +10731,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1bac9fd9e092ffa9dd501af4b213de2b6c66aba8ff420169edd0c3a3b239dd13"
+        "sequence_signature": "641c3d91235e1dcd1ccdab2de7fafe64c6fae5e89df563251c7586e283aadc04"
       }
     },
     {
@@ -10521,10 +10805,10 @@
               {
                 "actor": {
                   "actor_id": "actor_camouflage_route",
+                  "anchor_id": "grand_aftermath_actor",
                   "behavior": "work",
                   "label": "Camouflage Route remaining actor",
-                  "pose": "arrival",
-                  "zone_id": "center"
+                  "pose": "arrival"
                 },
                 "family": "actor_ops",
                 "op": "spawn",
@@ -10539,6 +10823,7 @@
               {
                 "family": "scene_ops",
                 "object": {
+                  "anchor_id": "grand_aftermath_scene",
                   "appearance": "camouflage_route",
                   "bounds": {
                     "h": 48.0,
@@ -10548,8 +10833,7 @@
                   "label": "Camouflage Route room marker",
                   "role": "arrangement",
                   "state": "camouflage_route",
-                  "visible": true,
-                  "zone_id": "center"
+                  "visible": true
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -10565,6 +10849,7 @@
               {
                 "family": "scene_ops",
                 "object": {
+                  "anchor_id": "grand_aftermath_scene",
                   "appearance": "convention_departed",
                   "bounds": {
                     "h": 66.0,
@@ -10574,8 +10859,7 @@
                   "label": "Convention Departed room marker",
                   "role": "route_marker",
                   "state": "convention_departed",
-                  "visible": true,
-                  "zone_id": "exit_lane"
+                  "visible": true
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -10589,10 +10873,10 @@
               {
                 "actor": {
                   "actor_id": "actor_floor_standoff",
+                  "anchor_id": "grand_aftermath_actor",
                   "behavior": "watch",
                   "label": "Floor Standoff remaining actor",
-                  "pose": "arrival",
-                  "zone_id": "left"
+                  "pose": "arrival"
                 },
                 "family": "actor_ops",
                 "op": "spawn",
@@ -10609,10 +10893,10 @@
               {
                 "actor": {
                   "actor_id": "actor_split_schedule",
+                  "anchor_id": "grand_aftermath_actor",
                   "behavior": "guard",
                   "label": "Split Schedule remaining actor",
-                  "pose": "arrival",
-                  "zone_id": "right"
+                  "pose": "arrival"
                 },
                 "family": "actor_ops",
                 "op": "spawn",
@@ -10627,6 +10911,7 @@
               {
                 "family": "scene_ops",
                 "object": {
+                  "anchor_id": "grand_aftermath_scene",
                   "appearance": "split_schedule",
                   "bounds": {
                     "h": 54.0,
@@ -10636,8 +10921,7 @@
                   "label": "Split Schedule room marker",
                   "role": "debris",
                   "state": "split_schedule",
-                  "visible": true,
-                  "zone_id": "right"
+                  "visible": true
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -10813,13 +11097,21 @@
         "declared_targets": {
           "actors": [],
           "anchors": [
+            "base::anchor:grand_aftermath_actor",
+            "base::anchor:grand_aftermath_scene",
             "base::anchor:grand_convention_badge_delegations",
             "base::anchor:grand_convention_machine_banks",
             "base::anchor:grand_convention_table_block",
+            "base::anchor:grand_decision_left",
+            "base::anchor:grand_decision_middle",
+            "base::anchor:grand_decision_middle_right",
             "base::anchor:grand_scenario_bottom_830",
             "base::anchor:grand_scenario_safe_exit",
             "base::anchor:grand_scenario_top_400",
-            "base::anchor:grand_scenario_top_800"
+            "base::anchor:grand_scenario_top_800",
+            "base::anchor:grand_work_actor_right",
+            "base::anchor:grand_work_object_left",
+            "base::anchor:grand_work_object_middle"
           ],
           "games": [],
           "interactions": [
@@ -11284,7 +11576,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "grand_casino_convention_crowd_work_1_remove_grand_casino_convention_crowd_task_0",
+                  "receipt_id": "grand_casino_convention_crowd_work_1_interaction_remove_grand_casino_convention_crowd_task_0",
                   "stable_object_id": "grand_casino_convention_crowd_task_0"
                 },
                 {
@@ -11406,6 +11698,14 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_badge_move_position",
                   "stable_object_id": "grand_casino_convention_crowd_badge_delegations"
+                },
+                {
+                  "anchor_id": "grand_work_actor_right",
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_2_relocate_convention_coordinator",
+                  "stable_object_id": "grand_casino_convention_crowd_convention_coordinator"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -11508,7 +11808,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "grand_casino_convention_crowd_work_2_remove_grand_casino_convention_crowd_task_1",
+                  "receipt_id": "grand_casino_convention_crowd_work_2_interaction_remove_grand_casino_convention_crowd_task_1",
                   "stable_object_id": "grand_casino_convention_crowd_task_1"
                 },
                 {
@@ -11693,6 +11993,22 @@
                   "stable_object_id": "grand_casino_convention_crowd_machine_banks"
                 },
                 {
+                  "anchor_id": "grand_work_object_middle",
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_2_relocate_machine_banks",
+                  "stable_object_id": "grand_casino_convention_crowd_machine_banks"
+                },
+                {
+                  "anchor_id": "grand_work_object_left",
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_2_relocate_table_block",
+                  "stable_object_id": "grand_casino_convention_crowd_table_block"
+                },
+                {
                   "family": "scene_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
@@ -11722,6 +12038,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "grand_decision_left",
                     "appearance": "route_0_ready",
                     "bounds": {
                       "h": 56.0,
@@ -11731,8 +12048,7 @@
                     "label": "Blend With Badge Crowd",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true,
-                    "zone_id": "left"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -11742,6 +12058,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "grand_decision_middle",
                     "appearance": "route_1_ready",
                     "bounds": {
                       "h": 56.0,
@@ -11751,8 +12068,7 @@
                     "label": "Split Convention Schedule",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -11762,6 +12078,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "grand_decision_middle_right",
                     "appearance": "route_2_ready",
                     "bounds": {
                       "h": 56.0,
@@ -11771,8 +12088,7 @@
                     "label": "Trigger Convention Standoff",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -11873,8 +12189,29 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "grand_casino_convention_crowd_work_3_remove_grand_casino_convention_crowd_task_2",
+                  "receipt_id": "grand_casino_convention_crowd_work_3_interaction_remove_grand_casino_convention_crowd_task_2",
                   "stable_object_id": "grand_casino_convention_crowd_task_2"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_3_interaction_remove_grand_casino_convention_crowd_work_2_choice_0",
+                  "stable_object_id": "grand_casino_convention_crowd_work_2_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_3_interaction_remove_grand_casino_convention_crowd_work_2_choice_1",
+                  "stable_object_id": "grand_casino_convention_crowd_work_2_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_3_interaction_remove_grand_casino_convention_crowd_work_2_choice_2",
+                  "stable_object_id": "grand_casino_convention_crowd_work_2_choice_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -11972,6 +12309,27 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_work_3_spawn_grand_casino_convention_crowd_task_3",
                   "stable_object_id": "grand_casino_convention_crowd_task_3"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_3_remove_grand_casino_convention_crowd_work_2_choice_0",
+                  "stable_object_id": "grand_casino_convention_crowd_work_2_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_3_remove_grand_casino_convention_crowd_work_2_choice_1",
+                  "stable_object_id": "grand_casino_convention_crowd_work_2_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_convention_crowd_work_3_remove_grand_casino_convention_crowd_work_2_choice_2",
+                  "stable_object_id": "grand_casino_convention_crowd_work_2_choice_2"
                 }
               ],
               "transition_ops": [
@@ -12127,7 +12485,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "20e41f4519b0b5e4cead44704fa869594e6d3972fdc7ce5a9149178d08259c01"
+        "sequence_signature": "f5ac2f8ec35a4c46376e8db50a3b42ff16d4df5dd22b629e7504454e292e8277"
       }
     },
     {
@@ -12203,6 +12561,7 @@
               {
                 "family": "scene_ops",
                 "object": {
+                  "anchor_id": "grand_aftermath_scene",
                   "appearance": "audit_interrupted",
                   "bounds": {
                     "h": 66.0,
@@ -12212,8 +12571,7 @@
                   "label": "Audit Interrupted room marker",
                   "role": "route_marker",
                   "state": "audit_interrupted",
-                  "visible": true,
-                  "zone_id": "exit_lane"
+                  "visible": true
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -12227,10 +12585,10 @@
               {
                 "actor": {
                   "actor_id": "actor_closed_games",
+                  "anchor_id": "grand_aftermath_actor",
                   "behavior": "watch",
                   "label": "Closed Games remaining actor",
-                  "pose": "arrival",
-                  "zone_id": "left"
+                  "pose": "arrival"
                 },
                 "family": "actor_ops",
                 "op": "spawn",
@@ -12247,10 +12605,10 @@
               {
                 "actor": {
                   "actor_id": "actor_compliant_floor",
+                  "anchor_id": "grand_aftermath_actor",
                   "behavior": "work",
                   "label": "Compliant Floor remaining actor",
-                  "pose": "arrival",
-                  "zone_id": "center"
+                  "pose": "arrival"
                 },
                 "family": "actor_ops",
                 "op": "spawn",
@@ -12265,6 +12623,7 @@
               {
                 "family": "scene_ops",
                 "object": {
+                  "anchor_id": "grand_aftermath_scene",
                   "appearance": "compliant_floor",
                   "bounds": {
                     "h": 48.0,
@@ -12274,8 +12633,7 @@
                   "label": "Compliant Floor room marker",
                   "role": "arrangement",
                   "state": "compliant_floor",
-                  "visible": true,
-                  "zone_id": "center"
+                  "visible": true
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -12289,10 +12647,10 @@
               {
                 "actor": {
                   "actor_id": "actor_redirected_audit",
+                  "anchor_id": "grand_aftermath_actor",
                   "behavior": "guard",
                   "label": "Redirected Audit remaining actor",
-                  "pose": "arrival",
-                  "zone_id": "right"
+                  "pose": "arrival"
                 },
                 "family": "actor_ops",
                 "op": "spawn",
@@ -12307,6 +12665,7 @@
               {
                 "family": "scene_ops",
                 "object": {
+                  "anchor_id": "grand_aftermath_scene",
                   "appearance": "redirected_audit",
                   "bounds": {
                     "h": 54.0,
@@ -12316,8 +12675,7 @@
                   "label": "Redirected Audit room marker",
                   "role": "debris",
                   "state": "redirected_audit",
-                  "visible": true,
-                  "zone_id": "right"
+                  "visible": true
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -12500,13 +12858,21 @@
         "declared_targets": {
           "actors": [],
           "anchors": [
+            "base::anchor:grand_aftermath_actor",
+            "base::anchor:grand_aftermath_scene",
+            "base::anchor:grand_audit_cage",
+            "base::anchor:grand_decision_left",
+            "base::anchor:grand_decision_middle_right",
+            "base::anchor:grand_decision_right",
             "base::anchor:grand_scenario_bottom_830",
             "base::anchor:grand_scenario_safe_exit",
             "base::anchor:grand_scenario_top_400",
             "base::anchor:grand_scenario_top_50_actor",
             "base::anchor:grand_scenario_top_520",
             "base::anchor:grand_scenario_top_650",
-            "base::anchor:grand_scenario_top_800_low"
+            "base::anchor:grand_scenario_top_800_low",
+            "base::anchor:grand_work_actor_right",
+            "base::anchor:grand_work_object_left"
           ],
           "games": [],
           "interactions": [
@@ -12922,6 +13288,14 @@
                   "pose": "seal_state",
                   "receipt_id": "grand_casino_audit_night_seal_state_pose",
                   "stable_object_id": "grand_casino_audit_night_lead_auditor"
+                },
+                {
+                  "anchor_id": "grand_work_actor_right",
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_1_relocate_lead_auditor",
+                  "stable_object_id": "grand_casino_audit_night_lead_auditor"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -13024,7 +13398,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "grand_casino_audit_night_work_1_remove_grand_casino_audit_night_task_0",
+                  "receipt_id": "grand_casino_audit_night_work_1_interaction_remove_grand_casino_audit_night_task_0",
                   "stable_object_id": "grand_casino_audit_night_task_0"
                 },
                 {
@@ -13209,6 +13583,22 @@
                   "stable_object_id": "grand_casino_audit_night_cage_seal"
                 },
                 {
+                  "anchor_id": "grand_work_object_left",
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_1_relocate_audit_barrier",
+                  "stable_object_id": "grand_casino_audit_night_audit_barrier"
+                },
+                {
+                  "anchor_id": "grand_audit_cage",
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_1_relocate_cage_seal",
+                  "stable_object_id": "grand_casino_audit_night_cage_seal"
+                },
+                {
                   "family": "scene_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
@@ -13238,6 +13628,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "grand_decision_left",
                     "appearance": "route_0_ready",
                     "bounds": {
                       "h": 56.0,
@@ -13247,8 +13638,7 @@
                     "label": "Comply With Audit Route",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true,
-                    "zone_id": "left"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -13258,6 +13648,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "grand_decision_middle_right",
                     "appearance": "route_1_ready",
                     "bounds": {
                       "h": 56.0,
@@ -13267,8 +13658,7 @@
                     "label": "Redirect Public Audit",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true,
-                    "zone_id": "center"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -13278,6 +13668,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "grand_decision_right",
                     "appearance": "route_2_ready",
                     "bounds": {
                       "h": 56.0,
@@ -13287,8 +13678,7 @@
                     "label": "Close Audited Games",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true,
-                    "zone_id": "right"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -13386,8 +13776,29 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "grand_casino_audit_night_work_2_remove_grand_casino_audit_night_task_1",
+                  "receipt_id": "grand_casino_audit_night_work_2_interaction_remove_grand_casino_audit_night_task_1",
                   "stable_object_id": "grand_casino_audit_night_task_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_2_interaction_remove_grand_casino_audit_night_work_1_choice_0",
+                  "stable_object_id": "grand_casino_audit_night_work_1_choice_0"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_2_interaction_remove_grand_casino_audit_night_work_1_choice_1",
+                  "stable_object_id": "grand_casino_audit_night_work_1_choice_1"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_2_interaction_remove_grand_casino_audit_night_work_1_choice_2",
+                  "stable_object_id": "grand_casino_audit_night_work_1_choice_2"
                 },
                 {
                   "family": "interaction_ops",
@@ -13485,6 +13896,27 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_work_2_spawn_grand_casino_audit_night_task_2",
                   "stable_object_id": "grand_casino_audit_night_task_2"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_2_remove_grand_casino_audit_night_work_1_choice_0",
+                  "stable_object_id": "grand_casino_audit_night_work_1_choice_0"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_2_remove_grand_casino_audit_night_work_1_choice_1",
+                  "stable_object_id": "grand_casino_audit_night_work_1_choice_1"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_audit_night_work_2_remove_grand_casino_audit_night_work_1_choice_2",
+                  "stable_object_id": "grand_casino_audit_night_work_1_choice_2"
                 }
               ],
               "transition_ops": [
@@ -13580,7 +14012,7 @@
                   "family": "interaction_ops",
                   "op": "remove",
                   "owner_namespace": "scenario",
-                  "receipt_id": "grand_casino_audit_night_work_3_remove_grand_casino_audit_night_task_2",
+                  "receipt_id": "grand_casino_audit_night_work_3_interaction_remove_grand_casino_audit_night_task_2",
                   "stable_object_id": "grand_casino_audit_night_task_2"
                 },
                 {
@@ -13834,7 +14266,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b5aa58241c46c1305cb6654018c5d9dca99d90576cc10799425a949c19f62890"
+        "sequence_signature": "c95a88178e78be1abb6e54aca53ae1801efb0b708ad6aa11ecea3feee5801ab3"
       }
     }
   ]

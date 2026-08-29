@@ -1,12 +1,12 @@
 {
   "assembly_evidence_needed": [
-    "scenario punchline_open_mic_night vs punchline_bringer_show: 0.606 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_headliner_night vs punchline_greased_week: 0.692 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_headliner_night vs kitty_cat_lounge_buyout: 0.712 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_high_stakes_night vs punchline_debt_court: 0.650 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_greased_week vs kitty_cat_lounge_buyout: 0.662 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_debt_court vs kitty_cat_lounge_slow_night: 0.605 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_new_muscle vs kitty_cat_lounge_amateur_night: 0.630 (warning). Missing receipt-bound masked visual evidence."
+    "scenario punchline_open_mic_night vs punchline_bringer_show: 0.602 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_headliner_night vs punchline_greased_week: 0.690 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_headliner_night vs kitty_cat_lounge_buyout: 0.710 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_high_stakes_night vs punchline_debt_court: 0.647 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_greased_week vs kitty_cat_lounge_buyout: 0.658 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_debt_court vs kitty_cat_lounge_slow_night: 0.601 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_new_muscle vs kitty_cat_lounge_amateur_night: 0.625 (warning). Missing receipt-bound masked visual evidence."
   ],
   "base_head": "a4c57bf681dd74d3a4ae24b1bda6dae410c8cb70",
   "dossiers": [
@@ -60,7 +60,7 @@
       "sealed_routes": [
         "base::layer:casino"
       ],
-      "sequence_signature": "24158d956a1f5c4bc7e56796345bc828046c4da950e9cb4eb3dc16586617ccb8",
+      "sequence_signature": "4bbc0a7743d9c62610c49831b31542d707d189feaf3fbf05451cb385c5ccf3de",
       "spatial_anchors": [
         "base::anchor:punchline_open_mic_signup",
         "base::anchor:punchline_open_mic_waiting_comic",
@@ -130,7 +130,7 @@
       "sealed_routes": [
         "base::layer:casino"
       ],
-      "sequence_signature": "1ba175dbe1f066a0d906077e6a91b0bb4bfba0c3f0788f7f9af6065372b54536",
+      "sequence_signature": "a02c897d8f0546342a58dbd054c2a2d66cb7b2ecf8a3661a6aa087cb812f5bda",
       "spatial_anchors": [
         "base::anchor:punchline_headliner_credential_rope",
         "base::anchor:punchline_headliner_door_guard"
@@ -197,7 +197,7 @@
       "sealed_routes": [
         "base::layer:casino"
       ],
-      "sequence_signature": "6e5c6acd6e40fb8d6aac173df42be987ca8feb5f75e1dd3f018c7a7237a26f66",
+      "sequence_signature": "d35057e3198a60c9d789518d27e879455ff4a820bb6e4becf02c25ab8bc15efa",
       "spatial_anchors": [
         "base::anchor:punchline_bringer_crowd_ropes",
         "base::anchor:punchline_bringer_crowd_captain",
@@ -265,7 +265,7 @@
       "sealed_routes": [
         "base::layer:casino"
       ],
-      "sequence_signature": "37d8639401871c234d33699db0133e19895874f1df6bc623fa07e5af5e4513fb",
+      "sequence_signature": "b5393262be223bc1c627736cd472e7474d148ade52d84833f9492df2a9e3cf7b",
       "spatial_anchors": [
         "base::anchor:punchline_high_stakes_protected_table",
         "base::anchor:punchline_high_stakes_floor_runner",
@@ -335,7 +335,7 @@
       "sealed_routes": [
         "base::layer:casino"
       ],
-      "sequence_signature": "bad8e3c66d5a4487ef6ac0a2045cef7d036b355f9873554f88ae7bc2fc0ee13a",
+      "sequence_signature": "50dcf3d12848a592d9bcf082ac17853a8ce40b81d293bd58a431c5a430d84306",
       "spatial_anchors": [
         "base::anchor:punchline_greased_inspection_seals",
         "base::anchor:punchline_greased_payoff_runner",
@@ -403,7 +403,7 @@
       "sealed_routes": [
         "base::layer:casino"
       ],
-      "sequence_signature": "3b064f846d54b504057a6b9f646b02a21e0ef916ed3342b1e369964217bf4294",
+      "sequence_signature": "7b677c0841e8890dd469b25201701f0da4936fb88ef51c4801bab05cd083afb8",
       "spatial_anchors": [
         "base::anchor:punchline_debt_hearing_chairs",
         "base::anchor:punchline_debt_room_witness",
@@ -473,7 +473,7 @@
       "sealed_routes": [
         "base::layer:casino"
       ],
-      "sequence_signature": "458b8404cad3da2e2f86d3b5e26214f9b8af925f4868a7a32ce0c87d11319223",
+      "sequence_signature": "3f782f7519f598da8c46060dc7d00b0af2f7700cd8cc9a7ac75280aa2625b1f2",
       "spatial_anchors": [
         "base::anchor:punchline_new_muscle_inspection_tray",
         "base::anchor:punchline_new_muscle_checkpoint_rover",
@@ -543,7 +543,7 @@
       "sealed_routes": [
         "base::layer:casino"
       ],
-      "sequence_signature": "ddc2f6459afd38cf95881822737e70f7628b16446545b441cb59b6cb505c0373",
+      "sequence_signature": "484c2bfd3ec38163b8818bb81087eadba2202bb5bfa449c2dd37e17ca5ecd83d",
       "spatial_anchors": [
         "base::anchor:punchline_raid_hide_cart",
         "base::anchor:punchline_raid_reopen_steward",
@@ -613,7 +613,7 @@
       "sealed_routes": [
         "base::world:bar"
       ],
-      "sequence_signature": "01c26d20ab9a0b6d1a5a9845cd6b32d820bd1da18a431559670ef932ce15addc",
+      "sequence_signature": "d0013c662930b69e2fe02f0f8166fcd8e53ecd8974bb91bebef2f8765e9d45a6",
       "spatial_anchors": [
         "base::anchor:kitty_amateur_signup",
         "base::anchor:kitty_amateur_judge"
@@ -682,7 +682,7 @@
       "sealed_routes": [
         "base::world:bar"
       ],
-      "sequence_signature": "1f9d12e6888e88d85c9e6ff21ee5d5725132f8a836bbf9f3681fcfaa26be6073",
+      "sequence_signature": "b1a5dea98cc8afdca8fe66a3b1d01da262ba92cee75e74d64aa0ddb064f0f346",
       "spatial_anchors": [
         "base::anchor:kitty_buyout_ropes",
         "base::anchor:kitty_buyout_steward"
@@ -749,7 +749,7 @@
       "sealed_routes": [
         "base::world:gas_station_casino"
       ],
-      "sequence_signature": "7f5dc84d08c10feb56c8226c80684c1c6e4b6109d97de2fbe28697eead64f22a",
+      "sequence_signature": "ced71cf753cec5b1d2b578b3321d38562ecfdda81750eba2c85cdc78d8710216",
       "spatial_anchors": [
         "base::anchor:kitty_slow_closed_section",
         "base::anchor:kitty_slow_booth_regular"
@@ -820,7 +820,7 @@
       "sealed_routes": [
         "base::world:gas_station_casino"
       ],
-      "sequence_signature": "0b47e2544f390648b12b454ecada7b8ebc9ad2a14b8886992b7cff332849c3a2",
+      "sequence_signature": "cd1ed2102b91ba816cbbcfda802de49a9544434934714427c2f35dbf05b8dace",
       "spatial_anchors": [
         "base::anchor:kitty_storm_prop_trunk",
         "base::anchor:kitty_storm_floor_host"
@@ -850,7 +850,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.3440329218107,
+      "similarity": 0.314907872696817,
       "status": "pass"
     },
     {
@@ -862,7 +862,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.510891089108911,
+      "similarity": 0.509240246406571,
       "status": "pass"
     },
     {
@@ -874,7 +874,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.397838899803536,
+      "similarity": 0.363095238095238,
       "status": "pass"
     },
     {
@@ -886,7 +886,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.440035273368607,
+      "similarity": 0.405550581915846,
       "status": "pass"
     },
     {
@@ -898,7 +898,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.293636363636364,
+      "similarity": 0.265193370165746,
       "status": "pass"
     },
     {
@@ -910,7 +910,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.259259259259259,
+      "similarity": 0.235540653813915,
       "status": "pass"
     },
     {
@@ -922,7 +922,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.292196007259528,
+      "similarity": 0.264949402023919,
       "status": "pass"
     },
     {
@@ -934,7 +934,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.378037803780378,
+      "similarity": 0.350732600732601,
       "status": "pass"
     },
     {
@@ -946,7 +946,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.447154471544715,
+      "similarity": 0.413155190133607,
       "status": "pass"
     },
     {
@@ -958,7 +958,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.443715846994536,
+      "similarity": 0.441939120631342,
       "status": "pass"
     },
     {
@@ -970,7 +970,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
-      "similarity": 0.477094972067039,
+      "similarity": 0.476355247981546,
       "status": "pass"
     },
     {
@@ -982,7 +982,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_greased_week",
-      "similarity": 0.475155279503106,
+      "similarity": 0.440837696335079,
       "status": "pass"
     },
     {
@@ -994,7 +994,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.454345434543454,
+      "similarity": 0.452894438138479,
       "status": "pass"
     },
     {
@@ -1006,7 +1006,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.295454545454545,
+      "similarity": 0.268202764976959,
       "status": "pass"
     },
     {
@@ -1018,7 +1018,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.319444444444444,
+      "similarity": 0.292018779342723,
       "status": "pass"
     },
     {
@@ -1030,7 +1030,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.447154471544715,
+      "similarity": 0.413155190133607,
       "status": "pass"
     },
     {
@@ -1042,7 +1042,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.258011503697617,
+      "similarity": 0.23534338358459,
       "status": "pass"
     },
     {
@@ -1054,7 +1054,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.323420074349442,
+      "similarity": 0.295947219604147,
       "status": "pass"
     },
     {
@@ -1066,7 +1066,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.605103280680437,
+      "similarity": 0.600750938673342,
       "status": "warning"
     },
     {
@@ -1078,7 +1078,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.40117994100295,
+      "similarity": 0.36779324055666,
       "status": "pass"
     },
     {
@@ -1090,7 +1090,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.303751143641354,
+      "similarity": 0.276437847866419,
       "status": "pass"
     },
     {
@@ -1102,7 +1102,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.4725168756027,
+      "similarity": 0.46953046953047,
       "status": "pass"
     },
     {
@@ -1114,7 +1114,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.452444444444444,
+      "similarity": 0.417870036101083,
       "status": "pass"
     },
     {
@@ -1126,7 +1126,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.661588683351469,
+      "similarity": 0.658399098083427,
       "status": "warning"
     },
     {
@@ -1138,7 +1138,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.30164533820841,
+      "similarity": 0.273148148148148,
       "status": "pass"
     },
     {
@@ -1150,7 +1150,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
-      "similarity": 0.304945054945055,
+      "similarity": 0.277623026926648,
       "status": "pass"
     },
     {
@@ -1162,7 +1162,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.484936831875607,
+      "similarity": 0.482376636455186,
       "status": "pass"
     },
     {
@@ -1174,7 +1174,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.487828627069133,
+      "similarity": 0.485368314833502,
       "status": "pass"
     },
     {
@@ -1186,7 +1186,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.505917159763314,
+      "similarity": 0.504089979550102,
       "status": "pass"
     },
     {
@@ -1198,7 +1198,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.439647577092511,
+      "similarity": 0.405187835420394,
       "status": "pass"
     },
     {
@@ -1210,7 +1210,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.711883408071749,
+      "similarity": 0.71046511627907,
       "status": "warning"
     },
     {
@@ -1222,7 +1222,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.293369663941871,
+      "similarity": 0.264949402023919,
       "status": "pass"
     },
     {
@@ -1234,7 +1234,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_bringer_show",
-      "similarity": 0.446700507614213,
+      "similarity": 0.412731006160164,
       "status": "pass"
     },
     {
@@ -1246,7 +1246,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
-      "similarity": 0.323119777158774,
+      "similarity": 0.295668549905838,
       "status": "pass"
     },
     {
@@ -1258,7 +1258,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_greased_week",
-      "similarity": 0.692137320044297,
+      "similarity": 0.690011481056257,
       "status": "warning"
     },
     {
@@ -1270,7 +1270,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.293103448275862,
+      "similarity": 0.265869365225391,
       "status": "pass"
     },
     {
@@ -1282,7 +1282,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.474903474903475,
+      "similarity": 0.472,
       "status": "pass"
     },
     {
@@ -1294,7 +1294,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.473481195756991,
+      "similarity": 0.470529470529471,
       "status": "pass"
     },
     {
@@ -1306,7 +1306,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.448626653102747,
+      "similarity": 0.414609053497942,
       "status": "pass"
     },
     {
@@ -1318,7 +1318,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.284395973154362,
+      "similarity": 0.261762189905903,
       "status": "pass"
     },
     {
@@ -1330,7 +1330,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.293369663941871,
+      "similarity": 0.266114180478821,
       "status": "pass"
     },
     {
@@ -1342,7 +1342,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.591566265060241,
+      "similarity": 0.586848635235732,
       "status": "pass"
     },
     {
@@ -1354,7 +1354,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
-      "similarity": 0.65043695380774,
+      "similarity": 0.647361647361647,
       "status": "warning"
     },
     {
@@ -1366,7 +1366,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_greased_week",
-      "similarity": 0.306141154903758,
+      "similarity": 0.278810408921933,
       "status": "pass"
     },
     {
@@ -1378,7 +1378,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.437941473259334,
+      "similarity": 0.404081632653061,
       "status": "pass"
     },
     {
@@ -1390,7 +1390,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.336772983114447,
+      "similarity": 0.309229305423406,
       "status": "pass"
     },
     {
@@ -1402,7 +1402,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.629669156883671,
+      "similarity": 0.625414364640884,
       "status": "warning"
     },
     {
@@ -1414,7 +1414,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.353769676884838,
+      "similarity": 0.323504633529907,
       "status": "pass"
     },
     {
@@ -1426,7 +1426,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.46264367816092,
+      "similarity": 0.459325396825397,
       "status": "pass"
     },
     {
@@ -1438,7 +1438,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.419740777666999,
+      "similarity": 0.384692849949648,
       "status": "pass"
     },
     {
@@ -1450,7 +1450,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.515873015873016,
+      "similarity": 0.51440329218107,
       "status": "pass"
     },
     {
@@ -1462,7 +1462,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.312442396313364,
+      "similarity": 0.283846872082166,
       "status": "pass"
     },
     {
@@ -1474,7 +1474,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.381768953068592,
+      "similarity": 0.353211009174312,
       "status": "pass"
     },
     {
@@ -1486,7 +1486,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.40990099009901,
+      "similarity": 0.375,
       "status": "pass"
     },
     {
@@ -1498,7 +1498,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.464523281596452,
+      "similarity": 0.463386727688787,
       "status": "pass"
     },
     {
@@ -1510,7 +1510,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_bringer_show",
-      "similarity": 0.606318347509113,
+      "similarity": 0.602002503128911,
       "status": "warning"
     },
     {
@@ -1522,7 +1522,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
-      "similarity": 0.430735930735931,
+      "similarity": 0.428571428571429,
       "status": "pass"
     },
     {
@@ -1534,7 +1534,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_greased_week",
-      "similarity": 0.422155688622754,
+      "similarity": 0.387096774193548,
       "status": "pass"
     },
     {
@@ -1546,7 +1546,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_headliner_night",
-      "similarity": 0.409495548961424,
+      "similarity": 0.374625374625375,
       "status": "pass"
     },
     {
@@ -1558,7 +1558,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.485393258426966,
+      "similarity": 0.48491879350348,
       "status": "pass"
     },
     {
@@ -1570,7 +1570,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.325581395348837,
+      "similarity": 0.29688972667295,
       "status": "pass"
     },
     {
@@ -1582,7 +1582,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.320667284522706,
+      "similarity": 0.292018779342723,
       "status": "pass"
     },
     {
@@ -1594,7 +1594,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.498527968596663,
+      "similarity": 0.496439471007121,
       "status": "pass"
     },
     {
@@ -1606,7 +1606,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.38123415046492,
+      "similarity": 0.356649395509499,
       "status": "pass"
     },
     {
@@ -1618,7 +1618,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.47536231884058,
+      "similarity": 0.472472472472472,
       "status": "pass"
     },
     {
@@ -1630,7 +1630,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.302836230558097,
+      "similarity": 0.274328081556997,
       "status": "pass"
     }
   ],
@@ -1638,11 +1638,11 @@
   "schema_version": 1,
   "uniqueness_rows": [
     {
-      "authored_signature": "01c26d20ab9a0b6d1a5a9845cd6b32d820bd1da18a431559670ef932ce15addc",
-      "calculated_signature": "01c26d20ab9a0b6d1a5a9845cd6b32d820bd1da18a431559670ef932ce15addc",
+      "authored_signature": "d0013c662930b69e2fe02f0f8166fcd8e53ecd8974bb91bebef2f8765e9d45a6",
+      "calculated_signature": "d0013c662930b69e2fe02f0f8166fcd8e53ecd8974bb91bebef2f8765e9d45a6",
       "id": "kitty_cat_lounge_amateur_night",
       "nearest_id": "punchline_new_muscle",
-      "nearest_similarity": 0.629669156883671,
+      "nearest_similarity": 0.625414364640884,
       "signature": {
         "aftermath": [
           {
@@ -1781,34 +1781,6 @@
               "owner_namespace": "scenario"
             },
             "family": "actor_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
           },
           {
             "effect": {
@@ -2074,17 +2046,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Amateur Night has advanced beyond kitty cat lounge amateur night task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -2182,6 +2143,13 @@
                   "op": "remove",
                   "owner_namespace": "scenario"
                 },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
                 "family": "scene_ops"
               }
             ],
@@ -2259,17 +2227,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Amateur Night has advanced beyond kitty cat lounge amateur night task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -2341,6 +2298,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -2432,17 +2396,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Amateur Night has advanced beyond kitty cat lounge amateur night task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -2527,6 +2480,13 @@
                   "op": "remove",
                   "owner_namespace": "scenario"
                 },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
                 "family": "scene_ops"
               }
             ],
@@ -2605,17 +2565,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Amateur Night has advanced beyond kitty cat lounge amateur night task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -2687,6 +2636,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -3146,11 +3102,11 @@
       }
     },
     {
-      "authored_signature": "0b47e2544f390648b12b454ecada7b8ebc9ad2a14b8886992b7cff332849c3a2",
-      "calculated_signature": "0b47e2544f390648b12b454ecada7b8ebc9ad2a14b8886992b7cff332849c3a2",
+      "authored_signature": "cd1ed2102b91ba816cbbcfda802de49a9544434934714427c2f35dbf05b8dace",
+      "calculated_signature": "cd1ed2102b91ba816cbbcfda802de49a9544434934714427c2f35dbf05b8dace",
       "id": "kitty_cat_lounge_bachelorette_storm",
       "nearest_id": "punchline_greased_week",
-      "nearest_similarity": 0.452444444444444,
+      "nearest_similarity": 0.417870036101083,
       "signature": {
         "aftermath": [
           {
@@ -3289,41 +3245,6 @@
               "owner_namespace": "scenario"
             },
             "family": "actor_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
           },
           {
             "effect": {
@@ -3597,17 +3518,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Bachelorette Storm has advanced beyond kitty cat lounge bachelorette storm task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -3699,6 +3609,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -3801,17 +3718,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Bachelorette Storm has advanced beyond kitty cat lounge bachelorette storm task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -3883,6 +3789,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -3966,17 +3879,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Bachelorette Storm has advanced beyond kitty cat lounge bachelorette storm task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -4048,6 +3950,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -4139,17 +4048,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Bachelorette Storm has advanced beyond kitty cat lounge bachelorette storm task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -4234,6 +4132,13 @@
                   "op": "remove",
                   "owner_namespace": "scenario"
                 },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
                 "family": "scene_ops"
               }
             ],
@@ -4303,17 +4208,6 @@
                   "stage_id": "kitty_cat_lounge_bachelorette_storm_work_5_stage"
                 },
                 "family": "transition_ops"
-              },
-              {
-                "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Bachelorette Storm has advanced beyond kitty cat lounge bachelorette storm task 4 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -4396,6 +4290,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -4861,11 +4762,11 @@
       }
     },
     {
-      "authored_signature": "1f9d12e6888e88d85c9e6ff21ee5d5725132f8a836bbf9f3681fcfaa26be6073",
-      "calculated_signature": "1f9d12e6888e88d85c9e6ff21ee5d5725132f8a836bbf9f3681fcfaa26be6073",
+      "authored_signature": "b1a5dea98cc8afdca8fe66a3b1d01da262ba92cee75e74d64aa0ddb064f0f346",
+      "calculated_signature": "b1a5dea98cc8afdca8fe66a3b1d01da262ba92cee75e74d64aa0ddb064f0f346",
       "id": "kitty_cat_lounge_buyout",
       "nearest_id": "punchline_headliner_night",
-      "nearest_similarity": 0.711883408071749,
+      "nearest_similarity": 0.71046511627907,
       "signature": {
         "aftermath": [
           {
@@ -5004,34 +4905,6 @@
               "owner_namespace": "scenario"
             },
             "family": "actor_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
           },
           {
             "effect": {
@@ -5286,17 +5159,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Buyout has advanced beyond kitty cat lounge buyout task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -5388,6 +5250,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -5490,17 +5359,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Buyout has advanced beyond kitty cat lounge buyout task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -5572,6 +5430,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -5652,17 +5517,6 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "transition_ops"
-              },
-              {
-                "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Buyout has advanced beyond kitty cat lounge buyout task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -5750,6 +5604,13 @@
                   "op": "remove",
                   "owner_namespace": "scenario"
                 },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
                 "family": "scene_ops"
               }
             ],
@@ -5828,17 +5689,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Buyout has advanced beyond kitty cat lounge buyout task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -5910,6 +5760,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -6369,11 +6226,11 @@
       }
     },
     {
-      "authored_signature": "7f5dc84d08c10feb56c8226c80684c1c6e4b6109d97de2fbe28697eead64f22a",
-      "calculated_signature": "7f5dc84d08c10feb56c8226c80684c1c6e4b6109d97de2fbe28697eead64f22a",
+      "authored_signature": "ced71cf753cec5b1d2b578b3321d38562ecfdda81750eba2c85cdc78d8710216",
+      "calculated_signature": "ced71cf753cec5b1d2b578b3321d38562ecfdda81750eba2c85cdc78d8710216",
       "id": "kitty_cat_lounge_slow_night",
       "nearest_id": "punchline_debt_court",
-      "nearest_similarity": 0.605103280680437,
+      "nearest_similarity": 0.600750938673342,
       "signature": {
         "aftermath": [
           {
@@ -6512,27 +6369,6 @@
               "owner_namespace": "scenario"
             },
             "family": "actor_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
           },
           {
             "effect": {
@@ -6753,17 +6589,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Slow Night has advanced beyond kitty cat lounge slow night task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -6835,6 +6660,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -6918,17 +6750,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Slow Night has advanced beyond kitty cat lounge slow night task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -7000,6 +6821,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -7092,17 +6920,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Kitty Cat Lounge Slow Night has advanced beyond kitty cat lounge slow night task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -7174,6 +6991,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -7674,11 +7498,11 @@
       }
     },
     {
-      "authored_signature": "6e5c6acd6e40fb8d6aac173df42be987ca8feb5f75e1dd3f018c7a7237a26f66",
-      "calculated_signature": "6e5c6acd6e40fb8d6aac173df42be987ca8feb5f75e1dd3f018c7a7237a26f66",
+      "authored_signature": "d35057e3198a60c9d789518d27e879455ff4a820bb6e4becf02c25ab8bc15efa",
+      "calculated_signature": "d35057e3198a60c9d789518d27e879455ff4a820bb6e4becf02c25ab8bc15efa",
       "id": "punchline_bringer_show",
       "nearest_id": "punchline_open_mic_night",
-      "nearest_similarity": 0.606318347509113,
+      "nearest_similarity": 0.602002503128911,
       "signature": {
         "aftermath": [
           {
@@ -7817,27 +7641,6 @@
               "owner_namespace": "scenario"
             },
             "family": "actor_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
           },
           {
             "effect": {
@@ -8074,17 +7877,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Bringer Show has advanced beyond punchline bringer show task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -8176,6 +7968,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -8278,17 +8077,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Bringer Show has advanced beyond punchline bringer show task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -8360,6 +8148,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -8444,17 +8239,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Bringer Show has advanced beyond punchline bringer show task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -8526,6 +8310,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -8980,11 +8771,11 @@
       }
     },
     {
-      "authored_signature": "3b064f846d54b504057a6b9f646b02a21e0ef916ed3342b1e369964217bf4294",
-      "calculated_signature": "3b064f846d54b504057a6b9f646b02a21e0ef916ed3342b1e369964217bf4294",
+      "authored_signature": "7b677c0841e8890dd469b25201701f0da4936fb88ef51c4801bab05cd083afb8",
+      "calculated_signature": "7b677c0841e8890dd469b25201701f0da4936fb88ef51c4801bab05cd083afb8",
       "id": "punchline_debt_court",
       "nearest_id": "punchline_high_stakes_night",
-      "nearest_similarity": 0.65043695380774,
+      "nearest_similarity": 0.647361647361647,
       "signature": {
         "aftermath": [
           {
@@ -9123,27 +8914,6 @@
               "owner_namespace": "scenario"
             },
             "family": "actor_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
           },
           {
             "effect": {
@@ -9391,17 +9161,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Debt Court has advanced beyond punchline debt court task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -9499,6 +9258,13 @@
                   "op": "remove",
                   "owner_namespace": "scenario"
                 },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
                 "family": "scene_ops"
               }
             ],
@@ -9576,17 +9342,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Debt Court has advanced beyond punchline debt court task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -9658,6 +9413,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -9750,17 +9512,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Debt Court has advanced beyond punchline debt court task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -9832,6 +9583,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -10286,11 +10044,11 @@
       }
     },
     {
-      "authored_signature": "bad8e3c66d5a4487ef6ac0a2045cef7d036b355f9873554f88ae7bc2fc0ee13a",
-      "calculated_signature": "bad8e3c66d5a4487ef6ac0a2045cef7d036b355f9873554f88ae7bc2fc0ee13a",
+      "authored_signature": "50dcf3d12848a592d9bcf082ac17853a8ce40b81d293bd58a431c5a430d84306",
+      "calculated_signature": "50dcf3d12848a592d9bcf082ac17853a8ce40b81d293bd58a431c5a430d84306",
       "id": "punchline_greased_week",
       "nearest_id": "punchline_headliner_night",
-      "nearest_similarity": 0.692137320044297,
+      "nearest_similarity": 0.690011481056257,
       "signature": {
         "aftermath": [
           {
@@ -10429,34 +10187,6 @@
               "owner_namespace": "scenario"
             },
             "family": "actor_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
           },
           {
             "effect": {
@@ -10711,17 +10441,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Greased Week has advanced beyond punchline greased week task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -10813,6 +10532,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -10915,17 +10641,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Greased Week has advanced beyond punchline greased week task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -10997,6 +10712,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -11077,17 +10799,6 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "transition_ops"
-              },
-              {
-                "effect": {
-                  "disabled_reason": "Punchline Greased Week has advanced beyond punchline greased week task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -11175,6 +10886,13 @@
                   "op": "remove",
                   "owner_namespace": "scenario"
                 },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
                 "family": "scene_ops"
               }
             ],
@@ -11253,17 +10971,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Greased Week has advanced beyond punchline greased week task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -11335,6 +11042,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -11795,11 +11509,11 @@
       }
     },
     {
-      "authored_signature": "1ba175dbe1f066a0d906077e6a91b0bb4bfba0c3f0788f7f9af6065372b54536",
-      "calculated_signature": "1ba175dbe1f066a0d906077e6a91b0bb4bfba0c3f0788f7f9af6065372b54536",
+      "authored_signature": "a02c897d8f0546342a58dbd054c2a2d66cb7b2ecf8a3661a6aa087cb812f5bda",
+      "calculated_signature": "a02c897d8f0546342a58dbd054c2a2d66cb7b2ecf8a3661a6aa087cb812f5bda",
       "id": "punchline_headliner_night",
       "nearest_id": "kitty_cat_lounge_buyout",
-      "nearest_similarity": 0.711883408071749,
+      "nearest_similarity": 0.71046511627907,
       "signature": {
         "aftermath": [
           {
@@ -11938,34 +11652,6 @@
               "owner_namespace": "scenario"
             },
             "family": "actor_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
           },
           {
             "effect": {
@@ -12220,17 +11906,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Headliner Night has advanced beyond punchline headliner night task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -12322,6 +11997,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -12424,17 +12106,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Headliner Night has advanced beyond punchline headliner night task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -12506,6 +12177,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -12586,17 +12264,6 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "transition_ops"
-              },
-              {
-                "effect": {
-                  "disabled_reason": "Punchline Headliner Night has advanced beyond punchline headliner night task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -12684,6 +12351,13 @@
                   "op": "remove",
                   "owner_namespace": "scenario"
                 },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
                 "family": "scene_ops"
               }
             ],
@@ -12762,17 +12436,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Headliner Night has advanced beyond punchline headliner night task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -12844,6 +12507,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -13304,11 +12974,11 @@
       }
     },
     {
-      "authored_signature": "37d8639401871c234d33699db0133e19895874f1df6bc623fa07e5af5e4513fb",
-      "calculated_signature": "37d8639401871c234d33699db0133e19895874f1df6bc623fa07e5af5e4513fb",
+      "authored_signature": "b5393262be223bc1c627736cd472e7474d148ade52d84833f9492df2a9e3cf7b",
+      "calculated_signature": "b5393262be223bc1c627736cd472e7474d148ade52d84833f9492df2a9e3cf7b",
       "id": "punchline_high_stakes_night",
       "nearest_id": "punchline_debt_court",
-      "nearest_similarity": 0.65043695380774,
+      "nearest_similarity": 0.647361647361647,
       "signature": {
         "aftermath": [
           {
@@ -13447,27 +13117,6 @@
               "owner_namespace": "scenario"
             },
             "family": "actor_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
           },
           {
             "effect": {
@@ -13715,17 +13364,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline High Stakes Night has advanced beyond punchline high stakes night task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -13823,6 +13461,13 @@
                   "op": "remove",
                   "owner_namespace": "scenario"
                 },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
                 "family": "scene_ops"
               }
             ],
@@ -13900,17 +13545,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline High Stakes Night has advanced beyond punchline high stakes night task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -13982,6 +13616,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -14074,17 +13715,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline High Stakes Night has advanced beyond punchline high stakes night task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -14156,6 +13786,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -14610,11 +14247,11 @@
       }
     },
     {
-      "authored_signature": "458b8404cad3da2e2f86d3b5e26214f9b8af925f4868a7a32ce0c87d11319223",
-      "calculated_signature": "458b8404cad3da2e2f86d3b5e26214f9b8af925f4868a7a32ce0c87d11319223",
+      "authored_signature": "3f782f7519f598da8c46060dc7d00b0af2f7700cd8cc9a7ac75280aa2625b1f2",
+      "calculated_signature": "3f782f7519f598da8c46060dc7d00b0af2f7700cd8cc9a7ac75280aa2625b1f2",
       "id": "punchline_new_muscle",
       "nearest_id": "kitty_cat_lounge_amateur_night",
-      "nearest_similarity": 0.629669156883671,
+      "nearest_similarity": 0.625414364640884,
       "signature": {
         "aftermath": [
           {
@@ -14753,34 +14390,6 @@
               "owner_namespace": "scenario"
             },
             "family": "actor_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
           },
           {
             "effect": {
@@ -15019,17 +14628,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline New Muscle has advanced beyond punchline new muscle task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -15101,6 +14699,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -15184,17 +14789,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline New Muscle has advanced beyond punchline new muscle task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -15266,6 +14860,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -15357,17 +14958,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline New Muscle has advanced beyond punchline new muscle task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -15452,6 +15042,13 @@
                   "op": "remove",
                   "owner_namespace": "scenario"
                 },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
                 "family": "scene_ops"
               }
             ],
@@ -15530,17 +15127,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline New Muscle has advanced beyond punchline new muscle task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -15612,6 +15198,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -16119,11 +15712,11 @@
       }
     },
     {
-      "authored_signature": "24158d956a1f5c4bc7e56796345bc828046c4da950e9cb4eb3dc16586617ccb8",
-      "calculated_signature": "24158d956a1f5c4bc7e56796345bc828046c4da950e9cb4eb3dc16586617ccb8",
+      "authored_signature": "4bbc0a7743d9c62610c49831b31542d707d189feaf3fbf05451cb385c5ccf3de",
+      "calculated_signature": "4bbc0a7743d9c62610c49831b31542d707d189feaf3fbf05451cb385c5ccf3de",
       "id": "punchline_open_mic_night",
       "nearest_id": "punchline_bringer_show",
-      "nearest_similarity": 0.606318347509113,
+      "nearest_similarity": 0.602002503128911,
       "signature": {
         "aftermath": [
           {
@@ -16262,27 +15855,6 @@
               "owner_namespace": "scenario"
             },
             "family": "actor_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
           },
           {
             "effect": {
@@ -16492,17 +16064,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Open Mic Night has advanced beyond punchline open mic night task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -16574,6 +16135,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -16676,17 +16244,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Open Mic Night has advanced beyond punchline open mic night task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -16758,6 +16315,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -16842,17 +16406,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Open Mic Night has advanced beyond punchline open mic night task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -16924,6 +16477,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -17425,11 +16985,11 @@
       }
     },
     {
-      "authored_signature": "ddc2f6459afd38cf95881822737e70f7628b16446545b441cb59b6cb505c0373",
-      "calculated_signature": "ddc2f6459afd38cf95881822737e70f7628b16446545b441cb59b6cb505c0373",
+      "authored_signature": "484c2bfd3ec38163b8818bb81087eadba2202bb5bfa449c2dd37e17ca5ecd83d",
+      "calculated_signature": "484c2bfd3ec38163b8818bb81087eadba2202bb5bfa449c2dd37e17ca5ecd83d",
       "id": "punchline_raid_jitters",
       "nearest_id": "punchline_new_muscle",
-      "nearest_similarity": 0.515873015873016,
+      "nearest_similarity": 0.51440329218107,
       "signature": {
         "aftermath": [
           {
@@ -17568,34 +17128,6 @@
               "owner_namespace": "scenario"
             },
             "family": "actor_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
-          },
-          {
-            "effect": {
-              "op": "remove",
-              "owner_namespace": "scenario"
-            },
-            "family": "interaction_ops"
           },
           {
             "effect": {
@@ -17851,17 +17383,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Raid Jitters has advanced beyond punchline raid jitters task 2 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -17959,6 +17480,13 @@
                   "op": "remove",
                   "owner_namespace": "scenario"
                 },
+                "family": "interaction_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
                 "family": "scene_ops"
               },
               {
@@ -18044,17 +17572,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Raid Jitters has advanced beyond punchline raid jitters task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -18126,6 +17643,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -18228,17 +17752,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Raid Jitters has advanced beyond punchline raid jitters task 1 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -18310,6 +17823,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {
@@ -18393,17 +17913,6 @@
               },
               {
                 "effect": {
-                  "disabled_reason": "Punchline Raid Jitters has advanced beyond punchline raid jitters task 3 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                },
-                "family": "interaction_ops"
-              },
-              {
-                "effect": {
                   "interaction": {
                     "alternate_exit": false,
                     "available_actions": [
@@ -18482,6 +17991,13 @@
                   "owner_namespace": "scenario"
                 },
                 "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "op": "remove",
+                  "owner_namespace": "scenario"
+                },
+                "family": "interaction_ops"
               },
               {
                 "effect": {

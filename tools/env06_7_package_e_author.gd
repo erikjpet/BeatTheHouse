@@ -33,9 +33,15 @@ const SPATIAL_OVERRIDES := {
 	"delta_queen_fog_delay":{"task_zone":"service_lane","zones":{"gangway_shutter":"foreground","safe_exit":"background"}},
 	"delta_queen_engine_trouble":{"task_zone":"background","zones":{"locked_gangway":"foreground","safe_exit":"background","deck_guard":"service_lane","engine_mate":"foreground"}},
 	"delta_queen_captains_invitational":{"task_zone":"service_lane","zones":{"captain_scorer":"foreground"}},
-	"grand_casino_gala_night":{"task_anchor":"grand_scenario_top_800","zones":{"coat_check":"foreground"},"anchors":{"charity_badges":"grand_scenario_top_520","gala_host":"grand_scenario_top_400","safe_exit":"grand_scenario_safe_exit","stage_hand":"grand_scenario_bottom_830","stage_lift":"grand_scenario_top_650_low"}},
-	"grand_casino_convention_crowd":{"task_anchor":"grand_scenario_top_800","zones":{},"anchors":{"badge_delegations":"grand_convention_badge_delegations","booking_board":"grand_scenario_bottom_830","convention_coordinator":"grand_scenario_top_400","machine_banks":"grand_convention_machine_banks","safe_exit":"grand_scenario_safe_exit","table_block":"grand_convention_table_block"}},
-	"grand_casino_audit_night":{"task_anchor":"grand_scenario_top_520","zones":{"pit_ledger":"foreground"},"anchors":{"audit_barrier":"grand_scenario_top_800_low","cage_seal":"grand_scenario_top_650","lead_auditor":"grand_scenario_top_400","open_exit_marker":"grand_scenario_bottom_830","pit_manager":"grand_scenario_top_50_actor","safe_exit":"grand_scenario_safe_exit"}},
+	"grand_casino_gala_night":{"task_anchor":"grand_scenario_top_800","aftermath_scene_anchor":"grand_aftermath_scene","aftermath_actor_anchor":"grand_aftermath_actor","zones":{"coat_check":"foreground"},"anchors":{"charity_badges":"grand_scenario_top_520","gala_host":"grand_scenario_top_400","safe_exit":"grand_scenario_safe_exit","stage_hand":"grand_scenario_bottom_830","stage_lift":"grand_scenario_top_650_low","work_2_choice_0":"grand_decision_left","work_2_choice_1":"grand_decision_middle","work_2_choice_2":"grand_decision_middle_right"}},
+	"grand_casino_convention_crowd":{"task_anchor":"grand_scenario_top_800","aftermath_scene_anchor":"grand_aftermath_scene","aftermath_actor_anchor":"grand_aftermath_actor","zones":{},"anchors":{"badge_delegations":"grand_convention_badge_delegations","booking_board":"grand_scenario_bottom_830","convention_coordinator":"grand_scenario_top_400","machine_banks":"grand_convention_machine_banks","safe_exit":"grand_scenario_safe_exit","table_block":"grand_convention_table_block","work_2_choice_0":"grand_decision_left","work_2_choice_1":"grand_decision_middle","work_2_choice_2":"grand_decision_middle_right"}},
+	"grand_casino_audit_night":{"task_anchor":"grand_scenario_top_520","aftermath_scene_anchor":"grand_aftermath_scene","aftermath_actor_anchor":"grand_aftermath_actor","zones":{"pit_ledger":"foreground"},"anchors":{"audit_barrier":"grand_scenario_top_800_low","cage_seal":"grand_scenario_top_650","lead_auditor":"grand_scenario_top_400","open_exit_marker":"grand_scenario_bottom_830","pit_manager":"grand_scenario_top_50_actor","safe_exit":"grand_scenario_safe_exit","work_1_choice_0":"grand_decision_left","work_1_choice_1":"grand_decision_middle_right","work_1_choice_2":"grand_decision_right"}},
+}
+
+const PHASE_RELOCATIONS := {
+	"grand_casino_gala_night":{"work_2":{"scene":{"charity_badges":"grand_work_object_middle","stage_lift":"grand_work_object_left"},"actor":{"gala_host":"grand_work_actor_right"}}},
+	"grand_casino_convention_crowd":{"work_2":{"scene":{"machine_banks":"grand_work_object_middle","table_block":"grand_work_object_left"},"actor":{"convention_coordinator":"grand_work_actor_right"}}},
+	"grand_casino_audit_night":{"work_1":{"scene":{"audit_barrier":"grand_work_object_left","cage_seal":"grand_audit_cage"},"actor":{"lead_auditor":"grand_work_actor_right"}}},
 }
 
 
@@ -117,9 +123,19 @@ func _entry(c: Dictionary) -> Dictionary:
 		var previous_task_id := "%s_task_%d" % [prefix, index - 1]
 		var operations := _beat_operations(c, index - 1)
 		var phase_id := "work_%d" % index
+		var relocations := _phase_relocation_operations(prefix, phase_id)
+		operations.scene.append_array(relocations.scene)
+		operations.actor.append_array(relocations.actor)
 		operations.scene.append(_scene_remove(prefix, phase_id, previous_task_id))
 		operations.scene.append(_task_scene_spawn(prefix, phase_id, task_id, str(c.verbs[index])))
-		var interactions := [_interaction_remove(prefix,phase_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this operation; named routes use their own marked stations.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave","ui_cancel")],false)]
+		var interactions := [_interaction_remove(prefix,phase_id,previous_task_id)]
+		var previous_phase_id := "arrival" if index == 1 else "work_%d" % (index - 1)
+		if str(decision.get("at", "")) == previous_phase_id:
+			for choice_index in range(_array(decision.get("options", [])).size()):
+				var previous_choice_id := "%s_%s_choice_%d" % [prefix, previous_phase_id, choice_index]
+				operations.scene.append(_scene_remove(prefix, phase_id, previous_choice_id))
+				interactions.append(_interaction_remove(prefix, phase_id, previous_choice_id))
+		interactions.append(_interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this operation; named routes use their own marked stations.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave","ui_cancel")],false))
 		var phase_choices := _decision_semantics(prefix, phase_id, decision)
 		operations.scene.append_array(phase_choices.scene)
 		interactions.append_array(phase_choices.interactions)
@@ -213,7 +229,8 @@ func _branch(prefix:String,id:String,condition:Dictionary,next_phase:String,outc
 func _scene_spawn(prefix:String,boundary:String,id:String,label:String,role:String,zone:String,state:String,w:int,h:int)->Dictionary:
 	var object := {"label":label,"role":role,"zone_id":zone,"bounds":{"w":w,"h":h},"visible":true,"enabled":true,"state":state,"appearance":state}
 	var identity := id.trim_prefix("%s_" % prefix)
-	var anchor_id := str(_dict(_dict(SPATIAL_OVERRIDES.get(prefix, {})).get("anchors", {})).get(identity, ""))
+	var spatial := _dict(SPATIAL_OVERRIDES.get(prefix, {}))
+	var anchor_id := str(spatial.get("aftermath_scene_anchor", "")) if boundary.begins_with("aftermath_") else str(_dict(spatial.get("anchors", {})).get(identity, ""))
 	if not anchor_id.is_empty():
 		object.erase("zone_id")
 		object["anchor_id"] = anchor_id
@@ -242,7 +259,8 @@ func _spatial_zone(prefix:String,identity:String,fallback:String)->String:
 func _actor_spawn(prefix:String,boundary:String,id:String,label:String,actor_id:String,zone:String,behavior:String)->Dictionary:
 	var actor := {"label":label,"actor_id":actor_id,"zone_id":zone,"behavior":behavior,"pose":"arrival"}
 	var identity := id.trim_prefix("%s_" % prefix)
-	var anchor_id := str(_dict(_dict(SPATIAL_OVERRIDES.get(prefix, {})).get("anchors", {})).get(identity, ""))
+	var spatial := _dict(SPATIAL_OVERRIDES.get(prefix, {}))
+	var anchor_id := str(spatial.get("aftermath_actor_anchor", "")) if boundary.begins_with("aftermath_") else str(_dict(spatial.get("anchors", {})).get(identity, ""))
 	if not anchor_id.is_empty():
 		actor.erase("zone_id")
 		actor["anchor_id"] = anchor_id
@@ -265,7 +283,7 @@ func _step_action(id:String,prefix:String,step:String)->Dictionary:
 
 
 func _interaction_remove(prefix:String,boundary:String,id:String)->Dictionary:
-	return {"family":"interaction_ops","op":"remove","receipt_id":"%s_%s_remove_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id}
+	return {"family":"interaction_ops","op":"remove","receipt_id":"%s_%s_interaction_remove_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id}
 
 
 func _remove(family:String,prefix:String,id:String)->Dictionary:
@@ -322,6 +340,18 @@ func _apply_spatial_position(operation: Dictionary, prefix: String, identity: St
 		operation["zone_id"] = str(_dict(spatial.get("zones", {})).get(identity, fallback_zone))
 
 
+func _phase_relocation_operations(prefix: String, phase_id: String) -> Dictionary:
+	var result := {"scene":[], "actor":[]}
+	var phase := _dict(_dict(PHASE_RELOCATIONS.get(prefix, {})).get(phase_id, {}))
+	for identity_value in _dict(phase.get("scene", {})).keys():
+		var identity := str(identity_value)
+		result.scene.append({"family":"scene_ops","op":"move","receipt_id":"%s_%s_relocate_%s" % [prefix,phase_id,identity],"owner_namespace":"scenario","stable_object_id":"%s_%s" % [prefix,identity],"anchor_id":str(_dict(phase.get("scene", {})).get(identity, ""))})
+	for identity_value in _dict(phase.get("actor", {})).keys():
+		var actor_identity := str(identity_value)
+		result.actor.append({"family":"actor_ops","op":"set_position","receipt_id":"%s_%s_relocate_%s" % [prefix,phase_id,actor_identity],"owner_namespace":"scenario","stable_object_id":"%s_%s" % [prefix,actor_identity],"anchor_id":str(_dict(phase.get("actor", {})).get(actor_identity, ""))})
+	return result
+
+
 func _aftermath(c:Dictionary)->Dictionary:
 	var result := {}
 	var prefix := str(c.id)
@@ -350,7 +380,7 @@ func _dossier(c:Dictionary,entry:Dictionary)->Dictionary:
 func _target_inventory() -> Dictionary:
 	var zones := ["base::zone:left","base::zone:right","base::zone:center","base::zone:background","base::zone:service_lane","base::zone:foreground","base::zone:exit_lane"]
 	var room_controls := ["base::travel:grand_casino_high_limit", "base::travel:grand_casino_back_room", "base::travel:grand_casino_cage"]
-	var anchors := ["grand_scenario_safe_exit", "grand_scenario_top_50_actor", "grand_convention_badge_delegations", "grand_scenario_top_400", "grand_scenario_top_520", "grand_convention_machine_banks", "grand_scenario_top_650", "grand_scenario_top_650_low", "grand_scenario_top_800", "grand_scenario_top_800_low", "grand_scenario_bottom_830", "grand_convention_table_block"].map(func(anchor_id): return "base::anchor:%s" % anchor_id)
+	var anchors := ["grand_aftermath_scene", "grand_aftermath_actor", "grand_decision_left", "grand_decision_middle", "grand_decision_middle_right", "grand_decision_right", "grand_work_object_left", "grand_work_object_middle", "grand_audit_cage", "grand_work_actor_right", "grand_scenario_safe_exit", "grand_scenario_top_50_actor", "grand_convention_badge_delegations", "grand_scenario_top_400", "grand_scenario_top_520", "grand_convention_machine_banks", "grand_scenario_top_650", "grand_scenario_top_650_low", "grand_scenario_top_800", "grand_scenario_top_800_low", "grand_scenario_bottom_830", "grand_convention_table_block"].map(func(anchor_id): return "base::anchor:%s" % anchor_id)
 	return {"scene_objects":room_controls.duplicate(),"interactions":room_controls.duplicate(),"actors":[],"services":[],"games":[],"routes":[],"anchors":anchors,"zones":zones,"event_choices":{}}
 
 func _declared_anchors(prefix: String) -> Array:
@@ -361,6 +391,15 @@ func _declared_anchors(prefix: String) -> Array:
 		if not result.has(identity): result.append(identity)
 	var task_anchor := str(spatial.get("task_anchor", ""))
 	if not task_anchor.is_empty() and not result.has("base::anchor:%s" % task_anchor): result.append("base::anchor:%s" % task_anchor)
+	for aftermath_key in ["aftermath_scene_anchor", "aftermath_actor_anchor"]:
+		var aftermath_anchor := str(spatial.get(aftermath_key, ""))
+		if not aftermath_anchor.is_empty() and not result.has("base::anchor:%s" % aftermath_anchor): result.append("base::anchor:%s" % aftermath_anchor)
+	for phase_value in _dict(PHASE_RELOCATIONS.get(prefix, {})).values():
+		var phase := _dict(phase_value)
+		for family in ["scene", "actor"]:
+			for anchor_value in _dict(phase.get(family, {})).values():
+				var identity := "base::anchor:%s" % str(anchor_value)
+				if not result.has(identity): result.append(identity)
 	result.sort()
 	return result
 

@@ -311,10 +311,10 @@ function buildScenario(spec, scenarioIndex) {
   for (const row of spec.actors) cleanup.push({family: "actor_ops", op: "despawn", receipt_id: `cleanup_${spec.id}_${row[0]}`, owner_namespace: "scenario", stable_object_id: `${spec.id}_${row[0]}`});
   for (let i = 0; i < spec.beats.length; i++) cleanup.push(sceneOp("remove", `cleanup_${spec.id}_station_${i}`, `${spec.id}_station_${i}`));
   cleanup.push(sceneOp("remove", `cleanup_${spec.id}_advance_station`, `${spec.id}_advance_station`));
-  cleanup.push(sceneOp("remove", `cleanup_${spec.id}_decision_station`, `${spec.id}_decision_station`));
+  cleanup.push(sceneOp("remove", `cleanup_${spec.id}_scene_decision_station`, `${spec.id}_decision_station`));
   cleanup.push(sceneOp("remove", `cleanup_${spec.id}_exit_visual`, exitId));
   cleanup.push({family: "interaction_ops", op: "remove", receipt_id: `cleanup_${spec.id}_exit`, owner_namespace: "scenario", stable_object_id: exitId});
-  cleanup.push({family: "interaction_ops", op: "remove", receipt_id: `cleanup_${spec.id}_decision_station`, owner_namespace: "scenario", stable_object_id: `${spec.id}_decision_station`});
+  cleanup.push({family: "interaction_ops", op: "remove", receipt_id: `cleanup_${spec.id}_interaction_decision_station`, owner_namespace: "scenario", stable_object_id: `${spec.id}_decision_station`});
 
   const aftermath = {};
   spec.outcomes.forEach((outcome, i) => {

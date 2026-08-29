@@ -121,15 +121,11 @@ func _entry(c: Dictionary) -> Dictionary:
 	for index in range(1, c.verbs.size()):
 		var task_id := "%s_task_%d" % [prefix, index]
 		var previous_task_id := "%s_task_%d" % [prefix, index - 1]
-		var gate_id := "%s_gate_%d" % [prefix, index - 1]
 		var operations := _beat_operations(c, index - 1, spatial)
 		var phase_id := "work_%d" % index
 		operations.scene.append(_scene_remove(prefix, phase_id, previous_task_id))
 		operations.scene.append(_task_scene_spawn(prefix, phase_id, task_id, str(c.verbs[index]), spatial))
-		var interactions := [_gate(prefix,phase_id,gate_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this operation or choose its identity-specific route.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave","ui_cancel")] + _decision_actions(decision, phase_id),false)]
-		# Remove gate overlays before their underlying task interactions so cleanup
-		# cannot restore an already-removed target and leak it across revisit.
-		cleanup.push_front(_remove("interaction_ops",prefix,gate_id))
+		var interactions := [_interaction_remove(prefix,phase_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this operation or choose its identity-specific route.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave","ui_cancel")] + _decision_actions(decision, phase_id),false)]
 		cleanup.append(_remove("scene_ops",prefix,task_id))
 		cleanup.append(_remove("interaction_ops",prefix,task_id))
 		objective_steps.append({"id":str(c.verbs[index]),"label":str(c.verbs[index]).replace("_"," ").capitalize(),"kind":"command","command_id":str(c.verbs[index])})
@@ -238,12 +234,12 @@ func _step_action(id:String,prefix:String,step:String)->Dictionary:
 	return {"id":id,"label":id.replace("_"," ").capitalize(),"input_action":"ui_accept","non_color_state":"work","handler":"complete_objective_step","inputs":{"objective_id":"main_task","step_id":step}}
 
 
-func _gate(prefix:String,boundary:String,id:String,target:String)->Dictionary:
-	return {"family":"interaction_ops","op":"gate","receipt_id":"%s_%s_gate_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"mode":"gate","target_owner_namespace":"scenario","target_stable_object_id":target,"enabled":false,"disabled_reason":"%s has advanced beyond %s to its next physical station." % [prefix.replace("_"," ").capitalize(),target.replace("_"," ")]}
+func _interaction_remove(prefix:String,boundary:String,id:String)->Dictionary:
+	return {"family":"interaction_ops","op":"remove","receipt_id":"%s_%s_interaction_remove_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id}
 
 
 func _remove(family:String,prefix:String,id:String)->Dictionary:
-	return {"family":family,"op":"remove","receipt_id":"%s_cleanup_remove_%s" % [prefix,id],"owner_namespace":"scenario","stable_object_id":id}
+	return {"family":family,"op":"remove","receipt_id":"%s_cleanup_%s_remove_%s" % [prefix,family,id],"owner_namespace":"scenario","stable_object_id":id}
 
 
 func _despawn(prefix:String,id:String)->Dictionary:

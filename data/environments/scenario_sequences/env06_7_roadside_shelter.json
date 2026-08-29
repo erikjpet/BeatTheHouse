@@ -1,5 +1,5 @@
 {
-  "schema_version": 1.0,
+  "schema_version": 1,
   "package_id": "env06_7_roadside_shelter",
   "handler_pack": "roadside_shelter",
   "renderer_id": "roadside_shelter",
@@ -7,7 +7,7 @@
     {
       "scenario_id": "motel_conventioneers",
       "sequence": {
-        "schema_version": 2.0,
+        "schema_version": 2,
         "local_state_schema": {
           "world_boundary_seen": {
             "type": "bool",
@@ -31,7 +31,7 @@
               "objective_ids": [
                 "motel_conventioneers_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -44,8 +44,8 @@
                     "role": "obstacle",
                     "zone_id": "left",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 44.0
+                      "w": 48,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -64,8 +64,8 @@
                     "role": "stock",
                     "zone_id": "center",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 56.0
+                      "w": 60,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -84,8 +84,8 @@
                     "role": "stock",
                     "zone_id": "right",
                     "bounds": {
-                      "w": 72.0,
-                      "h": 44.0
+                      "w": 72,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -104,8 +104,8 @@
                     "role": "workstation",
                     "zone_id": "background",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 56.0
+                      "w": 48,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -124,8 +124,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -144,8 +144,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -185,12 +185,12 @@
                       "ui_up"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 0.0,
+                    "focus_order": 0,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": true,
                     "alternate_exit": false
                   }
@@ -226,12 +226,12 @@
                       "ui_accept"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -277,7 +277,7 @@
                   "channel": "scenario",
                   "message": "Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear.",
                   "stage_id": "motel_conventioneers_arrival",
-                  "duration_boundaries": 1.0,
+                  "duration_boundaries": 1,
                   "reduced_motion_message": "Arrival objects and the marked exit appear without motion."
                 }
               ],
@@ -301,7 +301,7 @@
               "objective_ids": [
                 "motel_conventioneers_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -329,8 +329,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -378,12 +378,12 @@
                       "ui_right"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -431,7 +431,7 @@
               "objective_ids": [
                 "motel_conventioneers_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -459,8 +459,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -508,12 +508,12 @@
                       "ui_down"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -560,7 +560,7 @@
               "objective_ids": [
                 "motel_conventioneers_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -588,8 +588,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -636,12 +636,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -690,7 +690,7 @@
               "objective_ids": [
                 "motel_conventioneers_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -718,8 +718,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -803,12 +803,12 @@
                       "ui_cancel"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -926,7 +926,7 @@
         },
         "expiry": {
           "boundary": "visit_end",
-          "after": 1.0,
+          "after": 1,
           "policy": "cleanup"
         },
         "cleanup": {
@@ -1004,7 +1004,7 @@
             {
               "family": "scene_ops",
               "op": "remove",
-              "receipt_id": "cleanup_motel_conventioneers_decision_station",
+              "receipt_id": "cleanup_motel_conventioneers_scene_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "motel_conventioneers_decision_station"
             },
@@ -1025,7 +1025,7 @@
             {
               "family": "interaction_ops",
               "op": "remove",
-              "receipt_id": "cleanup_motel_conventioneers_decision_station",
+              "receipt_id": "cleanup_motel_conventioneers_interaction_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "motel_conventioneers_decision_station"
             }
@@ -1047,8 +1047,8 @@
                   "role": "aftermath",
                   "zone_id": "center",
                   "bounds": {
-                    "w": 48.0,
-                    "h": 44.0
+                    "w": 48,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -1089,8 +1089,8 @@
                   "role": "route",
                   "zone_id": "right",
                   "bounds": {
-                    "w": 56.0,
-                    "h": 52.0
+                    "w": 56,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -1109,8 +1109,8 @@
                   "role": "route",
                   "zone_id": "service_lane",
                   "bounds": {
-                    "w": 72.0,
-                    "h": 48.0
+                    "w": 72,
+                    "h": 48
                   },
                   "visible": true,
                   "enabled": true,
@@ -1135,8 +1135,8 @@
                   "role": "service",
                   "zone_id": "left",
                   "bounds": {
-                    "w": 64.0,
-                    "h": 60.0
+                    "w": 64,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": false,
@@ -1177,8 +1177,8 @@
                   "role": "evidence",
                   "zone_id": "background",
                   "bounds": {
-                    "w": 72.0,
-                    "h": 44.0
+                    "w": 72,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -1203,8 +1203,8 @@
                   "role": "shelter",
                   "zone_id": "foreground",
                   "bounds": {
-                    "w": 80.0,
-                    "h": 52.0
+                    "w": 80,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -1239,7 +1239,7 @@
           "props_4",
           "actors_2"
         ],
-        "sequence_signature": "edcf5686eed3d7af555ef330e3346f612c82b3b31aed8cf9e82fd0478cac85b0",
+        "sequence_signature": "UNSIGNED",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1344,8 +1344,8 @@
             "mixup_refused",
             "mixup_interrupted"
           ],
-          "phase_count": 5.0,
-          "branch_count": 9.0,
+          "phase_count": 5,
+          "branch_count": 9,
           "save_every_phase": true,
           "save_every_branch": true,
           "duplicate_receipt_atomic": true,
@@ -1354,15 +1354,13 @@
           "reduced_motion": true,
           "small_screen": true
         },
-        "masked_visual_explanations": {
-
-        }
+        "masked_visual_explanations": {}
       }
     },
     {
       "scenario_id": "motel_stakeout",
       "sequence": {
-        "schema_version": 2.0,
+        "schema_version": 2,
         "local_state_schema": {
           "world_boundary_seen": {
             "type": "bool",
@@ -1386,7 +1384,7 @@
               "objective_ids": [
                 "motel_stakeout_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -1399,8 +1397,8 @@
                     "role": "evidence",
                     "zone_id": "background",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 44.0
+                      "w": 48,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -1419,8 +1417,8 @@
                     "role": "evidence",
                     "zone_id": "right",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 56.0
+                      "w": 60,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -1439,8 +1437,8 @@
                     "role": "obstacle",
                     "zone_id": "left",
                     "bounds": {
-                      "w": 72.0,
-                      "h": 44.0
+                      "w": 72,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -1459,8 +1457,8 @@
                     "role": "door",
                     "zone_id": "center",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 56.0
+                      "w": 48,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -1479,8 +1477,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 44.0
+                      "w": 60,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -1499,8 +1497,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -1519,8 +1517,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -1560,12 +1558,12 @@
                       "ui_up"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 0.0,
+                    "focus_order": 0,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": true,
                     "alternate_exit": false
                   }
@@ -1601,12 +1599,12 @@
                       "ui_accept"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -1652,7 +1650,7 @@
                   "channel": "scenario",
                   "message": "Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover.",
                   "stage_id": "motel_stakeout_arrival",
-                  "duration_boundaries": 2.0,
+                  "duration_boundaries": 2,
                   "reduced_motion_message": "Arrival objects and the marked exit appear without motion."
                 }
               ],
@@ -1676,7 +1674,7 @@
               "objective_ids": [
                 "motel_stakeout_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -1704,8 +1702,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -1753,12 +1751,12 @@
                       "ui_right"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -1806,7 +1804,7 @@
               "objective_ids": [
                 "motel_stakeout_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -1834,8 +1832,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -1882,12 +1880,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -1935,7 +1933,7 @@
               "objective_ids": [
                 "motel_stakeout_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -1963,8 +1961,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -2048,12 +2046,12 @@
                       "ui_cancel"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -2165,7 +2163,7 @@
         },
         "expiry": {
           "boundary": "leave",
-          "after": 1.0,
+          "after": 1,
           "policy": "ignore"
         },
         "cleanup": {
@@ -2243,7 +2241,7 @@
             {
               "family": "scene_ops",
               "op": "remove",
-              "receipt_id": "cleanup_motel_stakeout_decision_station",
+              "receipt_id": "cleanup_motel_stakeout_scene_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "motel_stakeout_decision_station"
             },
@@ -2264,7 +2262,7 @@
             {
               "family": "interaction_ops",
               "op": "remove",
-              "receipt_id": "cleanup_motel_stakeout_decision_station",
+              "receipt_id": "cleanup_motel_stakeout_interaction_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "motel_stakeout_decision_station"
             }
@@ -2286,8 +2284,8 @@
                   "role": "aftermath",
                   "zone_id": "center",
                   "bounds": {
-                    "w": 52.0,
-                    "h": 52.0
+                    "w": 52,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -2328,8 +2326,8 @@
                   "role": "route",
                   "zone_id": "right",
                   "bounds": {
-                    "w": 60.0,
-                    "h": 60.0
+                    "w": 60,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -2354,8 +2352,8 @@
                   "role": "service",
                   "zone_id": "left",
                   "bounds": {
-                    "w": 68.0,
-                    "h": 44.0
+                    "w": 68,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": false,
@@ -2396,8 +2394,8 @@
                   "role": "evidence",
                   "zone_id": "background",
                   "bounds": {
-                    "w": 76.0,
-                    "h": 52.0
+                    "w": 76,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -2422,8 +2420,8 @@
                   "role": "shelter",
                   "zone_id": "foreground",
                   "bounds": {
-                    "w": 84.0,
-                    "h": 60.0
+                    "w": 84,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -2442,7 +2440,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "fc84e727b83873808961e6c20758694a39571bef608cc138a8d88350abc924ff",
+        "sequence_signature": "UNSIGNED",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -2546,8 +2544,8 @@
             "stakeout_refused",
             "stakeout_interrupted"
           ],
-          "phase_count": 4.0,
-          "branch_count": 8.0,
+          "phase_count": 4,
+          "branch_count": 8,
           "save_every_phase": true,
           "save_every_branch": true,
           "duplicate_receipt_atomic": true,
@@ -2556,15 +2554,13 @@
           "reduced_motion": true,
           "small_screen": true
         },
-        "masked_visual_explanations": {
-
-        }
+        "masked_visual_explanations": {}
       }
     },
     {
       "scenario_id": "motel_weekly_rates",
       "sequence": {
-        "schema_version": 2.0,
+        "schema_version": 2,
         "local_state_schema": {
           "world_boundary_seen": {
             "type": "bool",
@@ -2588,7 +2584,7 @@
               "objective_ids": [
                 "motel_weekly_rates_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -2601,8 +2597,8 @@
                     "role": "furniture",
                     "zone_id": "left",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 44.0
+                      "w": 48,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -2621,8 +2617,8 @@
                     "role": "utility",
                     "zone_id": "right",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 56.0
+                      "w": 60,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -2641,8 +2637,8 @@
                     "role": "utility",
                     "zone_id": "background",
                     "bounds": {
-                      "w": 72.0,
-                      "h": 44.0
+                      "w": 72,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -2661,8 +2657,8 @@
                     "role": "workstation",
                     "zone_id": "center",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 56.0
+                      "w": 48,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -2681,8 +2677,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -2701,8 +2697,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -2742,12 +2738,12 @@
                       "ui_up"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 0.0,
+                    "focus_order": 0,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": true,
                     "alternate_exit": false
                   }
@@ -2783,12 +2779,12 @@
                       "ui_accept"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -2820,7 +2816,7 @@
                   "channel": "scenario",
                   "message": "A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable.",
                   "stage_id": "motel_weekly_rates_arrival",
-                  "duration_boundaries": 3.0,
+                  "duration_boundaries": 3,
                   "reduced_motion_message": "Arrival objects and the marked exit appear without motion."
                 }
               ],
@@ -2844,7 +2840,7 @@
               "objective_ids": [
                 "motel_weekly_rates_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -2872,8 +2868,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -2921,12 +2917,12 @@
                       "ui_right"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -2974,7 +2970,7 @@
               "objective_ids": [
                 "motel_weekly_rates_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -3002,8 +2998,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -3051,12 +3047,12 @@
                       "ui_down"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -3103,7 +3099,7 @@
               "objective_ids": [
                 "motel_weekly_rates_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -3131,8 +3127,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -3180,12 +3176,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -3233,7 +3229,7 @@
               "objective_ids": [
                 "motel_weekly_rates_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -3261,8 +3257,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -3309,12 +3305,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -3362,7 +3358,7 @@
               "objective_ids": [
                 "motel_weekly_rates_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -3390,8 +3386,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -3475,12 +3471,12 @@
                       "ui_cancel"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -3604,7 +3600,7 @@
         },
         "expiry": {
           "boundary": "town_action",
-          "after": 2.0,
+          "after": 2,
           "policy": "fail"
         },
         "cleanup": {
@@ -3682,7 +3678,7 @@
             {
               "family": "scene_ops",
               "op": "remove",
-              "receipt_id": "cleanup_motel_weekly_rates_decision_station",
+              "receipt_id": "cleanup_motel_weekly_rates_scene_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "motel_weekly_rates_decision_station"
             },
@@ -3703,7 +3699,7 @@
             {
               "family": "interaction_ops",
               "op": "remove",
-              "receipt_id": "cleanup_motel_weekly_rates_decision_station",
+              "receipt_id": "cleanup_motel_weekly_rates_interaction_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "motel_weekly_rates_decision_station"
             }
@@ -3725,8 +3721,8 @@
                   "role": "aftermath",
                   "zone_id": "center",
                   "bounds": {
-                    "w": 56.0,
-                    "h": 60.0
+                    "w": 56,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -3767,8 +3763,8 @@
                   "role": "route",
                   "zone_id": "right",
                   "bounds": {
-                    "w": 64.0,
-                    "h": 44.0
+                    "w": 64,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -3793,8 +3789,8 @@
                   "role": "service",
                   "zone_id": "left",
                   "bounds": {
-                    "w": 72.0,
-                    "h": 52.0
+                    "w": 72,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": false,
@@ -3835,8 +3831,8 @@
                   "role": "evidence",
                   "zone_id": "background",
                   "bounds": {
-                    "w": 80.0,
-                    "h": 60.0
+                    "w": 80,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -3861,8 +3857,8 @@
                   "role": "shelter",
                   "zone_id": "foreground",
                   "bounds": {
-                    "w": 88.0,
-                    "h": 44.0
+                    "w": 88,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -3897,7 +3893,7 @@
           "props_4",
           "actors_1"
         ],
-        "sequence_signature": "77c71b7f578dcae43685891194ff0d708480d9bef04925be0aadba8760c8d974",
+        "sequence_signature": "UNSIGNED",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -4003,8 +3999,8 @@
             "inspection_refused",
             "repair_interrupted"
           ],
-          "phase_count": 6.0,
-          "branch_count": 10.0,
+          "phase_count": 6,
+          "branch_count": 10,
           "save_every_phase": true,
           "save_every_branch": true,
           "duplicate_receipt_atomic": true,
@@ -4013,15 +4009,13 @@
           "reduced_motion": true,
           "small_screen": true
         },
-        "masked_visual_explanations": {
-
-        }
+        "masked_visual_explanations": {}
       }
     },
     {
       "scenario_id": "motel_wedding_overflow",
       "sequence": {
-        "schema_version": 2.0,
+        "schema_version": 2,
         "local_state_schema": {
           "world_boundary_seen": {
             "type": "bool",
@@ -4045,7 +4039,7 @@
               "objective_ids": [
                 "motel_wedding_overflow_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -4058,8 +4052,8 @@
                     "role": "clue",
                     "zone_id": "left",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 44.0
+                      "w": 48,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -4078,8 +4072,8 @@
                     "role": "obstacle",
                     "zone_id": "center",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 56.0
+                      "w": 60,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -4098,8 +4092,8 @@
                     "role": "workstation",
                     "zone_id": "service_lane",
                     "bounds": {
-                      "w": 72.0,
-                      "h": 44.0
+                      "w": 72,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -4118,8 +4112,8 @@
                     "role": "furniture",
                     "zone_id": "right",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 56.0
+                      "w": 48,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -4138,8 +4132,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 44.0
+                      "w": 60,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -4158,8 +4152,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -4178,8 +4172,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -4219,12 +4213,12 @@
                       "ui_up"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 0.0,
+                    "focus_order": 0,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": true,
                     "alternate_exit": false
                   }
@@ -4260,12 +4254,12 @@
                       "ui_accept"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -4325,7 +4319,7 @@
                   "channel": "scenario",
                   "message": "Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor.",
                   "stage_id": "motel_wedding_overflow_arrival",
-                  "duration_boundaries": 1.0,
+                  "duration_boundaries": 1,
                   "reduced_motion_message": "Arrival objects and the marked exit appear without motion."
                 }
               ],
@@ -4349,7 +4343,7 @@
               "objective_ids": [
                 "motel_wedding_overflow_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -4377,8 +4371,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -4426,12 +4420,12 @@
                       "ui_right"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -4479,7 +4473,7 @@
               "objective_ids": [
                 "motel_wedding_overflow_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -4507,8 +4501,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -4556,12 +4550,12 @@
                       "ui_down"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -4608,7 +4602,7 @@
               "objective_ids": [
                 "motel_wedding_overflow_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -4636,8 +4630,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -4684,12 +4678,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -4738,7 +4732,7 @@
               "objective_ids": [
                 "motel_wedding_overflow_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -4766,8 +4760,8 @@
                     "role": "task_station",
                     "anchor_id": "room_walkway",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -4851,12 +4845,12 @@
                       "ui_cancel"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -4974,7 +4968,7 @@
         },
         "expiry": {
           "boundary": "night_end",
-          "after": 1.0,
+          "after": 1,
           "policy": "cleanup"
         },
         "cleanup": {
@@ -5066,7 +5060,7 @@
             {
               "family": "scene_ops",
               "op": "remove",
-              "receipt_id": "cleanup_motel_wedding_overflow_decision_station",
+              "receipt_id": "cleanup_motel_wedding_overflow_scene_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "motel_wedding_overflow_decision_station"
             },
@@ -5087,7 +5081,7 @@
             {
               "family": "interaction_ops",
               "op": "remove",
-              "receipt_id": "cleanup_motel_wedding_overflow_decision_station",
+              "receipt_id": "cleanup_motel_wedding_overflow_interaction_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "motel_wedding_overflow_decision_station"
             }
@@ -5109,8 +5103,8 @@
                   "role": "aftermath",
                   "zone_id": "center",
                   "bounds": {
-                    "w": 48.0,
-                    "h": 44.0
+                    "w": 48,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -5151,8 +5145,8 @@
                   "role": "route",
                   "zone_id": "right",
                   "bounds": {
-                    "w": 56.0,
-                    "h": 52.0
+                    "w": 56,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -5171,8 +5165,8 @@
                   "role": "route",
                   "zone_id": "service_lane",
                   "bounds": {
-                    "w": 72.0,
-                    "h": 48.0
+                    "w": 72,
+                    "h": 48
                   },
                   "visible": true,
                   "enabled": true,
@@ -5197,8 +5191,8 @@
                   "role": "service",
                   "zone_id": "left",
                   "bounds": {
-                    "w": 64.0,
-                    "h": 60.0
+                    "w": 64,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": false,
@@ -5239,8 +5233,8 @@
                   "role": "evidence",
                   "zone_id": "background",
                   "bounds": {
-                    "w": 72.0,
-                    "h": 44.0
+                    "w": 72,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -5265,8 +5259,8 @@
                   "role": "shelter",
                   "zone_id": "foreground",
                   "bounds": {
-                    "w": 80.0,
-                    "h": 52.0
+                    "w": 80,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -5285,7 +5279,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "45983cac5c38999fab057613a256681465317425bceb403a38ed3b98f0346dbc",
+        "sequence_signature": "UNSIGNED",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -5392,8 +5386,8 @@
             "wedding_refused",
             "wedding_interrupted"
           ],
-          "phase_count": 5.0,
-          "branch_count": 9.0,
+          "phase_count": 5,
+          "branch_count": 9,
           "save_every_phase": true,
           "save_every_branch": true,
           "duplicate_receipt_atomic": true,
@@ -5402,15 +5396,13 @@
           "reduced_motion": true,
           "small_screen": true
         },
-        "masked_visual_explanations": {
-
-        }
+        "masked_visual_explanations": {}
       }
     },
     {
       "scenario_id": "gas_station_trucker_convoy",
       "sequence": {
-        "schema_version": 2.0,
+        "schema_version": 2,
         "local_state_schema": {
           "world_boundary_seen": {
             "type": "bool",
@@ -5434,7 +5426,7 @@
               "objective_ids": [
                 "gas_station_trucker_convoy_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -5447,8 +5439,8 @@
                     "role": "vehicle",
                     "zone_id": "left",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 44.0
+                      "w": 48,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -5467,8 +5459,8 @@
                     "role": "vehicle",
                     "zone_id": "center",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 56.0
+                      "w": 60,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -5487,8 +5479,8 @@
                     "role": "vehicle",
                     "zone_id": "right",
                     "bounds": {
-                      "w": 72.0,
-                      "h": 44.0
+                      "w": 72,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -5507,8 +5499,8 @@
                     "role": "stock",
                     "zone_id": "foreground",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 56.0
+                      "w": 48,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -5527,8 +5519,8 @@
                     "role": "workstation",
                     "zone_id": "background",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 44.0
+                      "w": 60,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -5547,8 +5539,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -5567,8 +5559,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -5608,12 +5600,12 @@
                       "ui_up"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 0.0,
+                    "focus_order": 0,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": true,
                     "alternate_exit": false
                   }
@@ -5649,12 +5641,12 @@
                       "ui_accept"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -5714,7 +5706,7 @@
                   "channel": "scenario",
                   "message": "Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
                   "stage_id": "gas_station_trucker_convoy_arrival",
-                  "duration_boundaries": 2.0,
+                  "duration_boundaries": 2,
                   "reduced_motion_message": "Arrival objects and the marked exit appear without motion."
                 }
               ],
@@ -5738,7 +5730,7 @@
               "objective_ids": [
                 "gas_station_trucker_convoy_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -5766,8 +5758,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -5815,12 +5807,12 @@
                       "ui_right"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -5868,7 +5860,7 @@
               "objective_ids": [
                 "gas_station_trucker_convoy_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -5896,8 +5888,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -5945,12 +5937,12 @@
                       "ui_down"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -5997,7 +5989,7 @@
               "objective_ids": [
                 "gas_station_trucker_convoy_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -6025,8 +6017,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -6073,12 +6065,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -6127,7 +6119,7 @@
               "objective_ids": [
                 "gas_station_trucker_convoy_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -6155,8 +6147,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -6240,12 +6232,12 @@
                       "ui_cancel"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -6363,7 +6355,7 @@
         },
         "expiry": {
           "boundary": "town_action",
-          "after": 1.0,
+          "after": 1,
           "policy": "cleanup"
         },
         "cleanup": {
@@ -6455,7 +6447,7 @@
             {
               "family": "scene_ops",
               "op": "remove",
-              "receipt_id": "cleanup_gas_station_trucker_convoy_decision_station",
+              "receipt_id": "cleanup_gas_station_trucker_convoy_scene_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_trucker_convoy_decision_station"
             },
@@ -6476,7 +6468,7 @@
             {
               "family": "interaction_ops",
               "op": "remove",
-              "receipt_id": "cleanup_gas_station_trucker_convoy_decision_station",
+              "receipt_id": "cleanup_gas_station_trucker_convoy_interaction_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_trucker_convoy_decision_station"
             }
@@ -6498,8 +6490,8 @@
                   "role": "aftermath",
                   "zone_id": "center",
                   "bounds": {
-                    "w": 52.0,
-                    "h": 52.0
+                    "w": 52,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -6540,8 +6532,8 @@
                   "role": "route",
                   "zone_id": "right",
                   "bounds": {
-                    "w": 60.0,
-                    "h": 60.0
+                    "w": 60,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -6566,8 +6558,8 @@
                   "role": "service",
                   "zone_id": "left",
                   "bounds": {
-                    "w": 68.0,
-                    "h": 44.0
+                    "w": 68,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": false,
@@ -6608,8 +6600,8 @@
                   "role": "evidence",
                   "zone_id": "background",
                   "bounds": {
-                    "w": 76.0,
-                    "h": 52.0
+                    "w": 76,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -6634,8 +6626,8 @@
                   "role": "shelter",
                   "zone_id": "foreground",
                   "bounds": {
-                    "w": 84.0,
-                    "h": 60.0
+                    "w": 84,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -6670,7 +6662,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "65d7b7d8ae8e17f959854117670a6eb2cf04c89e53a7257e176664e361c3418c",
+        "sequence_signature": "UNSIGNED",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -6777,8 +6769,8 @@
             "convoy_refused",
             "convoy_interrupted"
           ],
-          "phase_count": 5.0,
-          "branch_count": 9.0,
+          "phase_count": 5,
+          "branch_count": 9,
           "save_every_phase": true,
           "save_every_branch": true,
           "duplicate_receipt_atomic": true,
@@ -6787,15 +6779,13 @@
           "reduced_motion": true,
           "small_screen": true
         },
-        "masked_visual_explanations": {
-
-        }
+        "masked_visual_explanations": {}
       }
     },
     {
       "scenario_id": "gas_station_tour_bus_stop",
       "sequence": {
-        "schema_version": 2.0,
+        "schema_version": 2,
         "local_state_schema": {
           "world_boundary_seen": {
             "type": "bool",
@@ -6819,7 +6809,7 @@
               "objective_ids": [
                 "gas_station_tour_bus_stop_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -6832,8 +6822,8 @@
                     "role": "vehicle",
                     "zone_id": "right",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 44.0
+                      "w": 48,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -6852,8 +6842,8 @@
                     "role": "clue",
                     "zone_id": "center",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 56.0
+                      "w": 60,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -6872,8 +6862,8 @@
                     "role": "workstation",
                     "zone_id": "background",
                     "bounds": {
-                      "w": 72.0,
-                      "h": 44.0
+                      "w": 72,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -6892,8 +6882,8 @@
                     "role": "obstacle",
                     "zone_id": "left",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 56.0
+                      "w": 48,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -6912,8 +6902,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -6932,8 +6922,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -6973,12 +6963,12 @@
                       "ui_up"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 0.0,
+                    "focus_order": 0,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": true,
                     "alternate_exit": false
                   }
@@ -7014,12 +7004,12 @@
                       "ui_accept"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -7079,7 +7069,7 @@
                   "channel": "scenario",
                   "message": "A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations.",
                   "stage_id": "gas_station_tour_bus_stop_arrival",
-                  "duration_boundaries": 3.0,
+                  "duration_boundaries": 3,
                   "reduced_motion_message": "Arrival objects and the marked exit appear without motion."
                 }
               ],
@@ -7103,7 +7093,7 @@
               "objective_ids": [
                 "gas_station_tour_bus_stop_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -7131,8 +7121,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -7180,12 +7170,12 @@
                       "ui_right"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -7233,7 +7223,7 @@
               "objective_ids": [
                 "gas_station_tour_bus_stop_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -7261,8 +7251,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -7310,12 +7300,12 @@
                       "ui_down"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -7362,7 +7352,7 @@
               "objective_ids": [
                 "gas_station_tour_bus_stop_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -7390,8 +7380,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -7438,12 +7428,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -7492,7 +7482,7 @@
               "objective_ids": [
                 "gas_station_tour_bus_stop_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -7520,8 +7510,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -7605,12 +7595,12 @@
                       "ui_cancel"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -7728,7 +7718,7 @@
         },
         "expiry": {
           "boundary": "visit_end",
-          "after": 1.0,
+          "after": 1,
           "policy": "fail"
         },
         "cleanup": {
@@ -7813,7 +7803,7 @@
             {
               "family": "scene_ops",
               "op": "remove",
-              "receipt_id": "cleanup_gas_station_tour_bus_stop_decision_station",
+              "receipt_id": "cleanup_gas_station_tour_bus_stop_scene_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_tour_bus_stop_decision_station"
             },
@@ -7834,7 +7824,7 @@
             {
               "family": "interaction_ops",
               "op": "remove",
-              "receipt_id": "cleanup_gas_station_tour_bus_stop_decision_station",
+              "receipt_id": "cleanup_gas_station_tour_bus_stop_interaction_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_tour_bus_stop_decision_station"
             }
@@ -7856,8 +7846,8 @@
                   "role": "aftermath",
                   "zone_id": "center",
                   "bounds": {
-                    "w": 56.0,
-                    "h": 60.0
+                    "w": 56,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -7898,8 +7888,8 @@
                   "role": "route",
                   "zone_id": "right",
                   "bounds": {
-                    "w": 64.0,
-                    "h": 44.0
+                    "w": 64,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -7924,8 +7914,8 @@
                   "role": "service",
                   "zone_id": "left",
                   "bounds": {
-                    "w": 72.0,
-                    "h": 52.0
+                    "w": 72,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": false,
@@ -7966,8 +7956,8 @@
                   "role": "evidence",
                   "zone_id": "background",
                   "bounds": {
-                    "w": 80.0,
-                    "h": 60.0
+                    "w": 80,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -7992,8 +7982,8 @@
                   "role": "shelter",
                   "zone_id": "foreground",
                   "bounds": {
-                    "w": 88.0,
-                    "h": 44.0
+                    "w": 88,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -8012,7 +8002,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "aefd28dbf43446be5fb19d53fdcde98b057c6b3e00a7af01d754fda1e583c345",
+        "sequence_signature": "UNSIGNED",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -8118,8 +8108,8 @@
             "count_refused",
             "count_interrupted"
           ],
-          "phase_count": 5.0,
-          "branch_count": 9.0,
+          "phase_count": 5,
+          "branch_count": 9,
           "save_every_phase": true,
           "save_every_branch": true,
           "duplicate_receipt_atomic": true,
@@ -8128,15 +8118,13 @@
           "reduced_motion": true,
           "small_screen": true
         },
-        "masked_visual_explanations": {
-
-        }
+        "masked_visual_explanations": {}
       }
     },
     {
       "scenario_id": "gas_station_graveyard_shift",
       "sequence": {
-        "schema_version": 2.0,
+        "schema_version": 2,
         "local_state_schema": {
           "world_boundary_seen": {
             "type": "bool",
@@ -8160,7 +8148,7 @@
               "objective_ids": [
                 "gas_station_graveyard_shift_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -8173,8 +8161,8 @@
                     "role": "security",
                     "zone_id": "background",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 44.0
+                      "w": 48,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -8193,8 +8181,8 @@
                     "role": "workstation",
                     "zone_id": "right",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 56.0
+                      "w": 60,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -8213,8 +8201,8 @@
                     "role": "utility",
                     "zone_id": "center",
                     "bounds": {
-                      "w": 72.0,
-                      "h": 44.0
+                      "w": 72,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -8233,8 +8221,8 @@
                     "role": "door",
                     "zone_id": "left",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 56.0
+                      "w": 48,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -8253,8 +8241,8 @@
                     "role": "door",
                     "zone_id": "foreground",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 44.0
+                      "w": 60,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -8273,8 +8261,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -8293,8 +8281,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -8334,12 +8322,12 @@
                       "ui_up"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 0.0,
+                    "focus_order": 0,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": true,
                     "alternate_exit": false
                   }
@@ -8375,12 +8363,12 @@
                       "ui_accept"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -8412,7 +8400,7 @@
                   "channel": "scenario",
                   "message": "A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route.",
                   "stage_id": "gas_station_graveyard_shift_arrival",
-                  "duration_boundaries": 1.0,
+                  "duration_boundaries": 1,
                   "reduced_motion_message": "Arrival objects and the marked exit appear without motion."
                 }
               ],
@@ -8436,7 +8424,7 @@
               "objective_ids": [
                 "gas_station_graveyard_shift_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -8464,8 +8452,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -8513,12 +8501,12 @@
                       "ui_right"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -8566,7 +8554,7 @@
               "objective_ids": [
                 "gas_station_graveyard_shift_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -8594,8 +8582,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -8643,12 +8631,12 @@
                       "ui_down"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -8695,7 +8683,7 @@
               "objective_ids": [
                 "gas_station_graveyard_shift_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -8723,8 +8711,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -8772,12 +8760,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -8825,7 +8813,7 @@
               "objective_ids": [
                 "gas_station_graveyard_shift_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -8853,8 +8841,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -8901,12 +8889,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -8954,7 +8942,7 @@
               "objective_ids": [
                 "gas_station_graveyard_shift_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -8982,8 +8970,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -9067,12 +9055,12 @@
                       "ui_cancel"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -9196,7 +9184,7 @@
         },
         "expiry": {
           "boundary": "night_end",
-          "after": 1.0,
+          "after": 1,
           "policy": "cleanup"
         },
         "cleanup": {
@@ -9281,7 +9269,7 @@
             {
               "family": "scene_ops",
               "op": "remove",
-              "receipt_id": "cleanup_gas_station_graveyard_shift_decision_station",
+              "receipt_id": "cleanup_gas_station_graveyard_shift_scene_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_graveyard_shift_decision_station"
             },
@@ -9302,7 +9290,7 @@
             {
               "family": "interaction_ops",
               "op": "remove",
-              "receipt_id": "cleanup_gas_station_graveyard_shift_decision_station",
+              "receipt_id": "cleanup_gas_station_graveyard_shift_interaction_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_graveyard_shift_decision_station"
             }
@@ -9324,8 +9312,8 @@
                   "role": "aftermath",
                   "zone_id": "center",
                   "bounds": {
-                    "w": 48.0,
-                    "h": 44.0
+                    "w": 48,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -9366,8 +9354,8 @@
                   "role": "route",
                   "zone_id": "right",
                   "bounds": {
-                    "w": 56.0,
-                    "h": 52.0
+                    "w": 56,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -9386,8 +9374,8 @@
                   "role": "route",
                   "zone_id": "service_lane",
                   "bounds": {
-                    "w": 72.0,
-                    "h": 48.0
+                    "w": 72,
+                    "h": 48
                   },
                   "visible": true,
                   "enabled": true,
@@ -9412,8 +9400,8 @@
                   "role": "service",
                   "zone_id": "left",
                   "bounds": {
-                    "w": 64.0,
-                    "h": 60.0
+                    "w": 64,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": false,
@@ -9454,8 +9442,8 @@
                   "role": "evidence",
                   "zone_id": "background",
                   "bounds": {
-                    "w": 72.0,
-                    "h": 44.0
+                    "w": 72,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -9480,8 +9468,8 @@
                   "role": "shelter",
                   "zone_id": "foreground",
                   "bounds": {
-                    "w": 80.0,
-                    "h": 52.0
+                    "w": 80,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -9516,7 +9504,7 @@
           "props_5",
           "actors_1"
         ],
-        "sequence_signature": "ce1fbff06d2bad1be1c06e5fa06cc3cf51c5ca170ea1d7cb38f6962fa2e548ad",
+        "sequence_signature": "UNSIGNED",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -9623,8 +9611,8 @@
             "night_check_refused",
             "night_check_interrupted"
           ],
-          "phase_count": 6.0,
-          "branch_count": 10.0,
+          "phase_count": 6,
+          "branch_count": 10,
           "save_every_phase": true,
           "save_every_branch": true,
           "duplicate_receipt_atomic": true,
@@ -9633,15 +9621,13 @@
           "reduced_motion": true,
           "small_screen": true
         },
-        "masked_visual_explanations": {
-
-        }
+        "masked_visual_explanations": {}
       }
     },
     {
       "scenario_id": "gas_station_road_crew_payday",
       "sequence": {
-        "schema_version": 2.0,
+        "schema_version": 2,
         "local_state_schema": {
           "world_boundary_seen": {
             "type": "bool",
@@ -9665,7 +9651,7 @@
               "objective_ids": [
                 "gas_station_road_crew_payday_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -9678,8 +9664,8 @@
                     "role": "workstation",
                     "zone_id": "background",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 44.0
+                      "w": 48,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -9698,8 +9684,8 @@
                     "role": "evidence",
                     "zone_id": "center",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 56.0
+                      "w": 60,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -9718,8 +9704,8 @@
                     "role": "obstacle",
                     "zone_id": "left",
                     "bounds": {
-                      "w": 72.0,
-                      "h": 44.0
+                      "w": 72,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -9738,8 +9724,8 @@
                     "role": "stock",
                     "zone_id": "right",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 56.0
+                      "w": 48,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -9758,8 +9744,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -9778,8 +9764,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -9819,12 +9805,12 @@
                       "ui_up"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 0.0,
+                    "focus_order": 0,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": true,
                     "alternate_exit": false
                   }
@@ -9860,12 +9846,12 @@
                       "ui_accept"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -9925,7 +9911,7 @@
                   "channel": "scenario",
                   "message": "A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations.",
                   "stage_id": "gas_station_road_crew_payday_arrival",
-                  "duration_boundaries": 2.0,
+                  "duration_boundaries": 2,
                   "reduced_motion_message": "Arrival objects and the marked exit appear without motion."
                 }
               ],
@@ -9949,7 +9935,7 @@
               "objective_ids": [
                 "gas_station_road_crew_payday_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -9977,8 +9963,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -10026,12 +10012,12 @@
                       "ui_right"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -10079,7 +10065,7 @@
               "objective_ids": [
                 "gas_station_road_crew_payday_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -10107,8 +10093,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -10156,12 +10142,12 @@
                       "ui_down"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -10208,7 +10194,7 @@
               "objective_ids": [
                 "gas_station_road_crew_payday_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -10236,8 +10222,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -10284,12 +10270,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -10338,7 +10324,7 @@
               "objective_ids": [
                 "gas_station_road_crew_payday_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -10366,8 +10352,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -10451,12 +10437,12 @@
                       "ui_cancel"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -10574,7 +10560,7 @@
         },
         "expiry": {
           "boundary": "town_action",
-          "after": 2.0,
+          "after": 2,
           "policy": "ignore"
         },
         "cleanup": {
@@ -10659,7 +10645,7 @@
             {
               "family": "scene_ops",
               "op": "remove",
-              "receipt_id": "cleanup_gas_station_road_crew_payday_decision_station",
+              "receipt_id": "cleanup_gas_station_road_crew_payday_scene_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_road_crew_payday_decision_station"
             },
@@ -10680,7 +10666,7 @@
             {
               "family": "interaction_ops",
               "op": "remove",
-              "receipt_id": "cleanup_gas_station_road_crew_payday_decision_station",
+              "receipt_id": "cleanup_gas_station_road_crew_payday_interaction_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_road_crew_payday_decision_station"
             }
@@ -10702,8 +10688,8 @@
                   "role": "aftermath",
                   "zone_id": "center",
                   "bounds": {
-                    "w": 52.0,
-                    "h": 52.0
+                    "w": 52,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -10744,8 +10730,8 @@
                   "role": "route",
                   "zone_id": "right",
                   "bounds": {
-                    "w": 60.0,
-                    "h": 60.0
+                    "w": 60,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -10770,8 +10756,8 @@
                   "role": "service",
                   "zone_id": "left",
                   "bounds": {
-                    "w": 68.0,
-                    "h": 44.0
+                    "w": 68,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": false,
@@ -10812,8 +10798,8 @@
                   "role": "evidence",
                   "zone_id": "background",
                   "bounds": {
-                    "w": 76.0,
-                    "h": 52.0
+                    "w": 76,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -10838,8 +10824,8 @@
                   "role": "shelter",
                   "zone_id": "foreground",
                   "bounds": {
-                    "w": 84.0,
-                    "h": 60.0
+                    "w": 84,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -10858,7 +10844,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "2b3e845f767909ceeaa2797e9030117f0367f0bef8291c6f4ceb2ff53ad442f3",
+        "sequence_signature": "UNSIGNED",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -10964,8 +10950,8 @@
             "stake_dispute_refused",
             "payday_interrupted"
           ],
-          "phase_count": 5.0,
-          "branch_count": 9.0,
+          "phase_count": 5,
+          "branch_count": 9,
           "save_every_phase": true,
           "save_every_branch": true,
           "duplicate_receipt_atomic": true,
@@ -10974,15 +10960,13 @@
           "reduced_motion": true,
           "small_screen": true
         },
-        "masked_visual_explanations": {
-
-        }
+        "masked_visual_explanations": {}
       }
     },
     {
       "scenario_id": "gas_station_storm_shelter",
       "sequence": {
-        "schema_version": 2.0,
+        "schema_version": 2,
         "local_state_schema": {
           "world_boundary_seen": {
             "type": "bool",
@@ -11006,7 +10990,7 @@
               "objective_ids": [
                 "gas_station_storm_shelter_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -11019,8 +11003,8 @@
                     "role": "door",
                     "zone_id": "background",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 44.0
+                      "w": 48,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -11039,8 +11023,8 @@
                     "role": "utility",
                     "zone_id": "left",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 56.0
+                      "w": 60,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -11059,8 +11043,8 @@
                     "role": "stock",
                     "zone_id": "right",
                     "bounds": {
-                      "w": 72.0,
-                      "h": 44.0
+                      "w": 72,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -11079,8 +11063,8 @@
                     "role": "route",
                     "zone_id": "center",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 56.0
+                      "w": 48,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -11099,8 +11083,8 @@
                     "role": "workstation",
                     "zone_id": "service_lane",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 44.0
+                      "w": 60,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -11119,8 +11103,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -11139,8 +11123,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -11180,12 +11164,12 @@
                       "ui_up"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 0.0,
+                    "focus_order": 0,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": true,
                     "alternate_exit": false
                   }
@@ -11221,12 +11205,12 @@
                       "ui_accept"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -11286,7 +11270,7 @@
                   "channel": "scenario",
                   "message": "Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones.",
                   "stage_id": "gas_station_storm_shelter_arrival",
-                  "duration_boundaries": 3.0,
+                  "duration_boundaries": 3,
                   "reduced_motion_message": "Arrival objects and the marked exit appear without motion."
                 }
               ],
@@ -11310,7 +11294,7 @@
               "objective_ids": [
                 "gas_station_storm_shelter_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -11338,8 +11322,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -11387,12 +11371,12 @@
                       "ui_right"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -11440,7 +11424,7 @@
               "objective_ids": [
                 "gas_station_storm_shelter_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -11468,8 +11452,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -11517,12 +11501,12 @@
                       "ui_down"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -11569,7 +11553,7 @@
               "objective_ids": [
                 "gas_station_storm_shelter_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -11597,8 +11581,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -11646,12 +11630,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -11699,7 +11683,7 @@
               "objective_ids": [
                 "gas_station_storm_shelter_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -11727,8 +11711,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -11775,12 +11759,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -11828,7 +11812,7 @@
               "objective_ids": [
                 "gas_station_storm_shelter_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -11856,8 +11840,8 @@
                     "role": "task_station",
                     "anchor_id": "cashier_counter",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -11941,12 +11925,12 @@
                       "ui_cancel"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -12070,7 +12054,7 @@
         },
         "expiry": {
           "boundary": "town_action",
-          "after": 1.0,
+          "after": 1,
           "policy": "cleanup"
         },
         "cleanup": {
@@ -12169,7 +12153,7 @@
             {
               "family": "scene_ops",
               "op": "remove",
-              "receipt_id": "cleanup_gas_station_storm_shelter_decision_station",
+              "receipt_id": "cleanup_gas_station_storm_shelter_scene_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_storm_shelter_decision_station"
             },
@@ -12190,7 +12174,7 @@
             {
               "family": "interaction_ops",
               "op": "remove",
-              "receipt_id": "cleanup_gas_station_storm_shelter_decision_station",
+              "receipt_id": "cleanup_gas_station_storm_shelter_interaction_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "gas_station_storm_shelter_decision_station"
             }
@@ -12212,8 +12196,8 @@
                   "role": "aftermath",
                   "zone_id": "center",
                   "bounds": {
-                    "w": 56.0,
-                    "h": 60.0
+                    "w": 56,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -12254,8 +12238,8 @@
                   "role": "route",
                   "zone_id": "right",
                   "bounds": {
-                    "w": 64.0,
-                    "h": 44.0
+                    "w": 64,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -12280,8 +12264,8 @@
                   "role": "service",
                   "zone_id": "left",
                   "bounds": {
-                    "w": 72.0,
-                    "h": 52.0
+                    "w": 72,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": false,
@@ -12322,8 +12306,8 @@
                   "role": "evidence",
                   "zone_id": "background",
                   "bounds": {
-                    "w": 80.0,
-                    "h": 60.0
+                    "w": 80,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -12348,8 +12332,8 @@
                   "role": "shelter",
                   "zone_id": "foreground",
                   "bounds": {
-                    "w": 88.0,
-                    "h": 44.0
+                    "w": 88,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -12384,7 +12368,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "3700139134030c1ba6c1b13c8d895ae2518c76b7984a3d2066c775784195c085",
+        "sequence_signature": "UNSIGNED",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -12493,8 +12477,8 @@
             "shelter_refused",
             "shelter_interrupted"
           ],
-          "phase_count": 6.0,
-          "branch_count": 10.0,
+          "phase_count": 6,
+          "branch_count": 10,
           "save_every_phase": true,
           "save_every_branch": true,
           "duplicate_receipt_atomic": true,
@@ -12503,15 +12487,13 @@
           "reduced_motion": true,
           "small_screen": true
         },
-        "masked_visual_explanations": {
-
-        }
+        "masked_visual_explanations": {}
       }
     },
     {
       "scenario_id": "beach_bonfire_night",
       "sequence": {
-        "schema_version": 2.0,
+        "schema_version": 2,
         "local_state_schema": {
           "world_boundary_seen": {
             "type": "bool",
@@ -12535,7 +12517,7 @@
               "objective_ids": [
                 "beach_bonfire_night_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -12548,8 +12530,8 @@
                     "role": "stock",
                     "zone_id": "left",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 44.0
+                      "w": 48,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -12568,8 +12550,8 @@
                     "role": "workstation",
                     "zone_id": "center",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 56.0
+                      "w": 60,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -12588,8 +12570,8 @@
                     "role": "furniture",
                     "zone_id": "right",
                     "bounds": {
-                      "w": 72.0,
-                      "h": 44.0
+                      "w": 72,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -12608,8 +12590,8 @@
                     "role": "route",
                     "zone_id": "foreground",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 56.0
+                      "w": 48,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -12628,8 +12610,8 @@
                     "role": "obstacle",
                     "zone_id": "background",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 44.0
+                      "w": 60,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -12648,8 +12630,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -12668,8 +12650,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -12709,12 +12691,12 @@
                       "ui_up"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 0.0,
+                    "focus_order": 0,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": true,
                     "alternate_exit": false
                   }
@@ -12750,12 +12732,12 @@
                       "ui_accept"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -12801,7 +12783,7 @@
                   "channel": "scenario",
                   "message": "Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit.",
                   "stage_id": "beach_bonfire_night_arrival",
-                  "duration_boundaries": 1.0,
+                  "duration_boundaries": 1,
                   "reduced_motion_message": "Arrival objects and the marked exit appear without motion."
                 }
               ],
@@ -12825,7 +12807,7 @@
               "objective_ids": [
                 "beach_bonfire_night_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -12853,8 +12835,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -12902,12 +12884,12 @@
                       "ui_right"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -12955,7 +12937,7 @@
               "objective_ids": [
                 "beach_bonfire_night_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -12983,8 +12965,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -13032,12 +13014,12 @@
                       "ui_down"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -13084,7 +13066,7 @@
               "objective_ids": [
                 "beach_bonfire_night_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -13112,8 +13094,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -13160,12 +13142,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -13214,7 +13196,7 @@
               "objective_ids": [
                 "beach_bonfire_night_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -13242,8 +13224,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -13327,12 +13309,12 @@
                       "ui_cancel"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -13450,7 +13432,7 @@
         },
         "expiry": {
           "boundary": "night_end",
-          "after": 1.0,
+          "after": 1,
           "policy": "cleanup"
         },
         "cleanup": {
@@ -13535,7 +13517,7 @@
             {
               "family": "scene_ops",
               "op": "remove",
-              "receipt_id": "cleanup_beach_bonfire_night_decision_station",
+              "receipt_id": "cleanup_beach_bonfire_night_scene_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "beach_bonfire_night_decision_station"
             },
@@ -13556,7 +13538,7 @@
             {
               "family": "interaction_ops",
               "op": "remove",
-              "receipt_id": "cleanup_beach_bonfire_night_decision_station",
+              "receipt_id": "cleanup_beach_bonfire_night_interaction_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "beach_bonfire_night_decision_station"
             }
@@ -13578,8 +13560,8 @@
                   "role": "aftermath",
                   "zone_id": "center",
                   "bounds": {
-                    "w": 48.0,
-                    "h": 44.0
+                    "w": 48,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -13620,8 +13602,8 @@
                   "role": "route",
                   "zone_id": "right",
                   "bounds": {
-                    "w": 56.0,
-                    "h": 52.0
+                    "w": 56,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -13640,8 +13622,8 @@
                   "role": "route",
                   "zone_id": "service_lane",
                   "bounds": {
-                    "w": 72.0,
-                    "h": 48.0
+                    "w": 72,
+                    "h": 48
                   },
                   "visible": true,
                   "enabled": true,
@@ -13666,8 +13648,8 @@
                   "role": "service",
                   "zone_id": "left",
                   "bounds": {
-                    "w": 64.0,
-                    "h": 60.0
+                    "w": 64,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": false,
@@ -13708,8 +13690,8 @@
                   "role": "evidence",
                   "zone_id": "background",
                   "bounds": {
-                    "w": 72.0,
-                    "h": 44.0
+                    "w": 72,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -13734,8 +13716,8 @@
                   "role": "shelter",
                   "zone_id": "foreground",
                   "bounds": {
-                    "w": 80.0,
-                    "h": 52.0
+                    "w": 80,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -13754,7 +13736,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "33b44736c2750c2855b4bf76a514ffe7aabb145b7e76936ce0362884f4eebb08",
+        "sequence_signature": "UNSIGNED",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -13860,8 +13842,8 @@
             "bonfire_refused",
             "bonfire_interrupted"
           ],
-          "phase_count": 5.0,
-          "branch_count": 9.0,
+          "phase_count": 5,
+          "branch_count": 9,
           "save_every_phase": true,
           "save_every_branch": true,
           "duplicate_receipt_atomic": true,
@@ -13870,15 +13852,13 @@
           "reduced_motion": true,
           "small_screen": true
         },
-        "masked_visual_explanations": {
-
-        }
+        "masked_visual_explanations": {}
       }
     },
     {
       "scenario_id": "beach_storm_coming",
       "sequence": {
-        "schema_version": 2.0,
+        "schema_version": 2,
         "local_state_schema": {
           "world_boundary_seen": {
             "type": "bool",
@@ -13902,7 +13882,7 @@
               "objective_ids": [
                 "beach_storm_coming_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -13915,8 +13895,8 @@
                     "role": "signal",
                     "zone_id": "background",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 44.0
+                      "w": 48,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -13935,8 +13915,8 @@
                     "role": "stock",
                     "zone_id": "right",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 56.0
+                      "w": 60,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -13955,8 +13935,8 @@
                     "role": "vehicle",
                     "zone_id": "left",
                     "bounds": {
-                      "w": 72.0,
-                      "h": 44.0
+                      "w": 72,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -13975,8 +13955,8 @@
                     "role": "route",
                     "zone_id": "center",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 56.0
+                      "w": 48,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -13995,8 +13975,8 @@
                     "role": "workstation",
                     "zone_id": "foreground",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 44.0
+                      "w": 60,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -14015,8 +13995,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -14035,8 +14015,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -14076,12 +14056,12 @@
                       "ui_up"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 0.0,
+                    "focus_order": 0,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": true,
                     "alternate_exit": false
                   }
@@ -14117,12 +14097,12 @@
                       "ui_accept"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -14182,7 +14162,7 @@
                   "channel": "scenario",
                   "message": "A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
                   "stage_id": "beach_storm_coming_arrival",
-                  "duration_boundaries": 2.0,
+                  "duration_boundaries": 2,
                   "reduced_motion_message": "Arrival objects and the marked exit appear without motion."
                 }
               ],
@@ -14206,7 +14186,7 @@
               "objective_ids": [
                 "beach_storm_coming_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -14234,8 +14214,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -14283,12 +14263,12 @@
                       "ui_right"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -14336,7 +14316,7 @@
               "objective_ids": [
                 "beach_storm_coming_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -14364,8 +14344,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -14413,12 +14393,12 @@
                       "ui_down"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -14465,7 +14445,7 @@
               "objective_ids": [
                 "beach_storm_coming_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -14493,8 +14473,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -14542,12 +14522,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -14595,7 +14575,7 @@
               "objective_ids": [
                 "beach_storm_coming_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -14623,8 +14603,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -14671,12 +14651,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -14724,7 +14704,7 @@
               "objective_ids": [
                 "beach_storm_coming_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -14752,8 +14732,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -14837,12 +14817,12 @@
                       "ui_cancel"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -14966,7 +14946,7 @@
         },
         "expiry": {
           "boundary": "town_action",
-          "after": 1.0,
+          "after": 1,
           "policy": "fail"
         },
         "cleanup": {
@@ -15065,7 +15045,7 @@
             {
               "family": "scene_ops",
               "op": "remove",
-              "receipt_id": "cleanup_beach_storm_coming_decision_station",
+              "receipt_id": "cleanup_beach_storm_coming_scene_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "beach_storm_coming_decision_station"
             },
@@ -15086,7 +15066,7 @@
             {
               "family": "interaction_ops",
               "op": "remove",
-              "receipt_id": "cleanup_beach_storm_coming_decision_station",
+              "receipt_id": "cleanup_beach_storm_coming_interaction_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "beach_storm_coming_decision_station"
             }
@@ -15108,8 +15088,8 @@
                   "role": "aftermath",
                   "zone_id": "center",
                   "bounds": {
-                    "w": 52.0,
-                    "h": 52.0
+                    "w": 52,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -15150,8 +15130,8 @@
                   "role": "route",
                   "zone_id": "right",
                   "bounds": {
-                    "w": 60.0,
-                    "h": 60.0
+                    "w": 60,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -15176,8 +15156,8 @@
                   "role": "service",
                   "zone_id": "left",
                   "bounds": {
-                    "w": 68.0,
-                    "h": 44.0
+                    "w": 68,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": false,
@@ -15218,8 +15198,8 @@
                   "role": "evidence",
                   "zone_id": "background",
                   "bounds": {
-                    "w": 76.0,
-                    "h": 52.0
+                    "w": 76,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": true,
@@ -15244,8 +15224,8 @@
                   "role": "shelter",
                   "zone_id": "foreground",
                   "bounds": {
-                    "w": 84.0,
-                    "h": 60.0
+                    "w": 84,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -15280,7 +15260,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "806ba7f33482647636f50a8e9fed8c5ecad786d6ae7849aa68a5676bc505519a",
+        "sequence_signature": "UNSIGNED",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -15389,8 +15369,8 @@
             "storm_task_refused",
             "evacuation_interrupted"
           ],
-          "phase_count": 6.0,
-          "branch_count": 10.0,
+          "phase_count": 6,
+          "branch_count": 10,
           "save_every_phase": true,
           "save_every_branch": true,
           "duplicate_receipt_atomic": true,
@@ -15399,15 +15379,13 @@
           "reduced_motion": true,
           "small_screen": true
         },
-        "masked_visual_explanations": {
-
-        }
+        "masked_visual_explanations": {}
       }
     },
     {
       "scenario_id": "beach_festival_weekend",
       "sequence": {
-        "schema_version": 2.0,
+        "schema_version": 2,
         "local_state_schema": {
           "world_boundary_seen": {
             "type": "bool",
@@ -15431,7 +15409,7 @@
               "objective_ids": [
                 "beach_festival_weekend_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -15444,8 +15422,8 @@
                     "role": "service",
                     "zone_id": "left",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 44.0
+                      "w": 48,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -15464,8 +15442,8 @@
                     "role": "service",
                     "zone_id": "right",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 56.0
+                      "w": 60,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -15484,8 +15462,8 @@
                     "role": "workstation",
                     "zone_id": "background",
                     "bounds": {
-                      "w": 72.0,
-                      "h": 44.0
+                      "w": 72,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -15504,8 +15482,8 @@
                     "role": "clue",
                     "zone_id": "center",
                     "bounds": {
-                      "w": 48.0,
-                      "h": 56.0
+                      "w": 48,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -15524,8 +15502,8 @@
                     "role": "signal",
                     "zone_id": "foreground",
                     "bounds": {
-                      "w": 60.0,
-                      "h": 44.0
+                      "w": 60,
+                      "h": 44
                     },
                     "visible": true,
                     "enabled": true,
@@ -15544,8 +15522,8 @@
                     "role": "route",
                     "zone_id": "service_lane",
                     "bounds": {
-                      "w": 72.0,
-                      "h": 56.0
+                      "w": 72,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -15564,8 +15542,8 @@
                     "role": "exit",
                     "zone_id": "exit_lane",
                     "bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -15584,8 +15562,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -15625,12 +15603,12 @@
                       "ui_up"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 0.0,
+                    "focus_order": 0,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": true,
                     "alternate_exit": false
                   }
@@ -15666,12 +15644,12 @@
                       "ui_accept"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -15745,7 +15723,7 @@
                   "channel": "scenario",
                   "message": "Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones.",
                   "stage_id": "beach_festival_weekend_arrival",
-                  "duration_boundaries": 3.0,
+                  "duration_boundaries": 3,
                   "reduced_motion_message": "Arrival objects and the marked exit appear without motion."
                 }
               ],
@@ -15769,7 +15747,7 @@
               "objective_ids": [
                 "beach_festival_weekend_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -15797,8 +15775,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -15846,12 +15824,12 @@
                       "ui_right"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -15899,7 +15877,7 @@
               "objective_ids": [
                 "beach_festival_weekend_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -15927,8 +15905,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -15976,12 +15954,12 @@
                       "ui_down"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -16028,7 +16006,7 @@
               "objective_ids": [
                 "beach_festival_weekend_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -16056,8 +16034,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -16105,12 +16083,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -16158,7 +16136,7 @@
               "objective_ids": [
                 "beach_festival_weekend_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -16186,8 +16164,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -16235,12 +16213,12 @@
                       "ui_cancel"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -16287,7 +16265,7 @@
               "objective_ids": [
                 "beach_festival_weekend_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -16315,8 +16293,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -16363,12 +16341,12 @@
                       "ui_left"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -16417,7 +16395,7 @@
               "objective_ids": [
                 "beach_festival_weekend_work"
               ],
-              "advance_after_actions": 0.0,
+              "advance_after_actions": 0,
               "scene_ops": [
                 {
                   "family": "scene_ops",
@@ -16445,8 +16423,8 @@
                     "role": "task_station",
                     "anchor_id": "shoreline",
                     "bounds": {
-                      "w": 64.0,
-                      "h": 56.0
+                      "w": 64,
+                      "h": 56
                     },
                     "visible": true,
                     "enabled": true,
@@ -16530,12 +16508,12 @@
                       "ui_cancel"
                     ],
                     "non_color_state": "available",
-                    "focus_order": 2.0,
+                    "focus_order": 2,
                     "hit_bounds": {
-                      "w": 56.0,
-                      "h": 56.0
+                      "w": 56,
+                      "h": 56
                     },
-                    "min_target_size": 44.0,
+                    "min_target_size": 44,
                     "safe_exit": false,
                     "alternate_exit": false
                   }
@@ -16665,7 +16643,7 @@
         },
         "expiry": {
           "boundary": "visit_end",
-          "after": 1.0,
+          "after": 1,
           "policy": "cleanup"
         },
         "cleanup": {
@@ -16785,7 +16763,7 @@
             {
               "family": "scene_ops",
               "op": "remove",
-              "receipt_id": "cleanup_beach_festival_weekend_decision_station",
+              "receipt_id": "cleanup_beach_festival_weekend_scene_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "beach_festival_weekend_decision_station"
             },
@@ -16806,7 +16784,7 @@
             {
               "family": "interaction_ops",
               "op": "remove",
-              "receipt_id": "cleanup_beach_festival_weekend_decision_station",
+              "receipt_id": "cleanup_beach_festival_weekend_interaction_decision_station",
               "owner_namespace": "scenario",
               "stable_object_id": "beach_festival_weekend_decision_station"
             }
@@ -16828,8 +16806,8 @@
                   "role": "aftermath",
                   "zone_id": "center",
                   "bounds": {
-                    "w": 56.0,
-                    "h": 60.0
+                    "w": 56,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -16870,8 +16848,8 @@
                   "role": "route",
                   "zone_id": "right",
                   "bounds": {
-                    "w": 64.0,
-                    "h": 44.0
+                    "w": 64,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -16896,8 +16874,8 @@
                   "role": "service",
                   "zone_id": "left",
                   "bounds": {
-                    "w": 72.0,
-                    "h": 52.0
+                    "w": 72,
+                    "h": 52
                   },
                   "visible": true,
                   "enabled": false,
@@ -16938,8 +16916,8 @@
                   "role": "evidence",
                   "zone_id": "background",
                   "bounds": {
-                    "w": 80.0,
-                    "h": 60.0
+                    "w": 80,
+                    "h": 60
                   },
                   "visible": true,
                   "enabled": true,
@@ -16964,8 +16942,8 @@
                   "role": "shelter",
                   "zone_id": "foreground",
                   "bounds": {
-                    "w": 88.0,
-                    "h": 44.0
+                    "w": 88,
+                    "h": 44
                   },
                   "visible": true,
                   "enabled": true,
@@ -16984,7 +16962,7 @@
           "props_6",
           "actors_4"
         ],
-        "sequence_signature": "a22a7c962d165e4cc2d2137334af3dd9e0951cc6ec39ddf74f6dce260ca3f01e",
+        "sequence_signature": "UNSIGNED",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -17097,8 +17075,8 @@
             "festival_task_refused",
             "festival_interrupted"
           ],
-          "phase_count": 7.0,
-          "branch_count": 11.0,
+          "phase_count": 7,
+          "branch_count": 11,
           "save_every_phase": true,
           "save_every_branch": true,
           "duplicate_receipt_atomic": true,
@@ -17107,9 +17085,7 @@
           "reduced_motion": true,
           "small_screen": true
         },
-        "masked_visual_explanations": {
-
-        }
+        "masked_visual_explanations": {}
       }
     }
   ]
