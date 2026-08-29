@@ -76,6 +76,10 @@ const TUTORIAL_DRUNK_COFFEE_DIALOGUE_NODE := "drunk_coffee"
 const TUTORIAL_DRUNK_COFFEE_REPEAT_DIALOGUE_NODE := "drunk_coffee_repeat"
 const TUTORIAL_DRUNK_COFFEE_USED_DIALOGUE_NODE := "drunk_coffee_used"
 const TUTORIAL_HOST_DIALOGUE_ID := "tutorial_host_guidance"
+const NORMAL_GRAND_HOST_DIALOGUE_ID := "normal_grand_host_greeting"
+const NORMAL_GRAND_HOST_TALK_EVENT_ID := "dialogue:normal_grand_host_greeting"
+const NORMAL_GRAND_HOST_SOURCE := "grand_casino_entry"
+const NORMAL_GRAND_HOST_SOURCE_OBJECT_ID := "casino_fixture:host_desk"
 const TUTORIAL_LINDA_BUY_CHIPS_REMINDER_NODE := "buy_chips_reminder"
 const TUTORIAL_LINDA_CLAIM_CARD_REMINDER_NODE := "claim_card_reminder"
 const TUTORIAL_LINDA_COLLECT_CARD_REMINDER_NODE := "collect_card_reminder"
@@ -6550,12 +6554,46 @@ func _queue_normal_grand_host_greeting(previous_environment: Dictionary) -> void
 		return
 	if bool(run_state.narrative_flags.get("grand_host_greeting_seen", false)):
 		return
-	run_state.narrative_flags["grand_host_greeting_seen"] = true
-	start_dialogue("normal_grand_host_greeting", {
-		"event_id": "dialogue:normal_grand_host_greeting",
-		"source": "grand_casino_entry",
-		"source_object_id": "casino_fixture:host_desk",
-	})
+	if _enqueue_normal_grand_host_greeting_without_refresh():
+		run_state.narrative_flags["grand_host_greeting_seen"] = true
+
+
+func _enqueue_normal_grand_host_greeting_without_refresh() -> bool:
+	if run_state == null or library == null or run_state.is_terminal():
+		return false
+	var dialogue := library.dialogue(NORMAL_GRAND_HOST_DIALOGUE_ID)
+	if dialogue.is_empty():
+		return false
+	var pending := run_state.pending_talk_event(NORMAL_GRAND_HOST_TALK_EVENT_ID)
+	if not pending.is_empty():
+		var pending_speaker: Dictionary = pending.get("speaker", {}) if typeof(pending.get("speaker", {})) == TYPE_DICTIONARY else {}
+		var pending_context: Dictionary = pending.get("context", {}) if typeof(pending.get("context", {})) == TYPE_DICTIONARY else {}
+		if str(pending.get("dialogue_id", "")) != NORMAL_GRAND_HOST_DIALOGUE_ID \
+				or str(pending.get("source", "")) != "dialogue" \
+				or str(pending_context.get("source", "")) != NORMAL_GRAND_HOST_SOURCE \
+				or str(pending_context.get("source_object_id", "")) != NORMAL_GRAND_HOST_SOURCE_OBJECT_ID \
+				or str(pending_speaker.get("character_id", "")) != "vivienne_grand_host":
+			return false
+		_refresh_talk_dock()
+		_show_message("Conversation is already open.")
+		return true
+	_clear_recent_result_feedback()
+	var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), NORMAL_GRAND_HOST_DIALOGUE_ID, str(speaker.get("voice_line_key", "")))
+	var start_node := str(dialogue.get("start", "")).strip_edges()
+	var context := {
+		"trigger": "dialogue",
+		"type": "dialogue",
+		"dialogue_id": NORMAL_GRAND_HOST_DIALOGUE_ID,
+		"source": NORMAL_GRAND_HOST_SOURCE,
+		"source_object_id": NORMAL_GRAND_HOST_SOURCE_OBJECT_ID,
+		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
+	}
+	if not run_state.enqueue_dialogue(NORMAL_GRAND_HOST_DIALOGUE_ID, NORMAL_GRAND_HOST_TALK_EVENT_ID, speaker, start_node, "dialogue", context):
+		return false
+	_refresh_talk_dock()
+	_show_message("Talking to %s." % str(speaker.get("name", dialogue.get("display_name", "the room"))))
+	return true
 
 
 func _linda_cage_choice_status(choice_id: String) -> Dictionary:
