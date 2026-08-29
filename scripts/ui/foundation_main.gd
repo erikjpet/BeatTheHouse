@@ -163,13 +163,18 @@ const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_
 const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
-const ActionAuthorityScript := BlackjackActionAuthority
 const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 const EnvironmentRuntimeSchedulerScript := preload("res://scripts/core/environment_runtime_scheduler.gd")
+
+var ActionAuthorityScript: Script:
+	get:
+		if current_game == null:
+			return null
+		return current_game.sealed_action_authority_script()
 
 var user_settings: UserSettings
 var profile_inventory: ProfileInventory
@@ -1149,13 +1154,16 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 func _current_game_uses_action_authority() -> bool:
 	if current_game == null:
 		return false
+	var authority_script := ActionAuthorityScript
+	if authority_script == null:
+		return false
 	var game_id := current_game.get_id()
 	var canonical: Variant = game_module_cache.get(game_id, null)
 	return not game_id.is_empty() \
 		and canonical is GameModule \
 		and current_game == canonical \
-		and current_game.has_method(ActionAuthorityScript.RESOLVE_PROPOSAL_METHOD) \
-		and current_game.has_method(ActionAuthorityScript.WAGER_COST_PROPOSAL_METHOD)
+		and current_game.has_method(authority_script.RESOLVE_PROPOSAL_METHOD) \
+		and current_game.has_method(authority_script.WAGER_COST_PROPOSAL_METHOD)
 
 
 func _sealed_action_host_table_binding(environment: Dictionary = {}) -> String:

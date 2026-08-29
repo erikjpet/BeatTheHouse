@@ -10,6 +10,7 @@ const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
 const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
+const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
@@ -121,6 +122,10 @@ var draw_deal_events_cache_id := ""
 var draw_deal_events_cache: Array = []
 var draw_dealer_character_style: Dictionary = {}
 var draw_patron_character_style: Dictionary = {}
+
+
+func sealed_action_authority_script() -> Script:
+	return ActionAuthorityScript
 
 
 func blackjack_ritual_contract() -> Dictionary:
