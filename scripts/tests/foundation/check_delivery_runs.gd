@@ -344,7 +344,16 @@ func _check_delivery_sweep_and_map_intel(failures: Array) -> void:
 	sweep_run.delivery_begin_package({"run_id": "sweep", "deadline_actions": 9, "cargo_id": "proof_case", "consumer_payload": {"failure": {"heat": 0}}})
 	_delivery_pickup_if_needed(sweep_run)
 	sweep_run.add_suspicion("fixture", 50, "test", false)
-	var swept := sweep_run.resolve_police_sweep_encounter_for_test({"node_id": sweep_run.current_world_node_id(), "segment_index": 0, "encounter_seed": 44})
+	var sweep = sweep_run.town_state.police_sweep
+	sweep.configured = true
+	sweep.disabled = false
+	sweep.start_action = int(sweep_run.town_state.action_index)
+	sweep.end_action = sweep.start_action + 4
+	sweep.segments = [{"node_id": sweep_run.current_world_node_id(), "start_action": sweep.start_action, "end_action": sweep.end_action, "dwell_actions": 4}]
+	sweep.segment_index = 0
+	sweep.last_encounter_segment = -1
+	sweep.last_encounter_node_id = ""
+	var swept := sweep_run.resolve_current_police_sweep_encounter()
 	if str(swept.get("outcome", "")) != "confiscation" or not str(swept.get("confiscated_item_id", "")).begins_with("delivery:") \
 		or sweep_run.delivery_has_active_run() or str((sweep_run.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "swept":
 		failures.append("Police Sweep did not confiscate active delivery cargo and fail the run.")
@@ -352,7 +361,7 @@ func _check_delivery_sweep_and_map_intel(failures: Array) -> void:
 	var intel_run := _delivery_test_run("DELIVERY-SWEEP-INTEL")
 	intel_run.delivery_begin_package({"run_id": "intel", "deadline_actions": 9})
 	var hidden_layer := intel_run.delivery_map_layer()
-	if not intel_run.sweep_status().is_empty() or JSON.stringify(hidden_layer).find("reported sweep") >= 0 \
+	if bool(intel_run.sweep_status().get("available", true)) or JSON.stringify(hidden_layer).find("reported sweep") >= 0 \
 		or JSON.stringify(hidden_layer).find("current_node_id") >= 0 or JSON.stringify(hidden_layer).find("heading_node_id") >= 0:
 		failures.append("Courier risk read leaked unearned Police Sweep position or heading.")
 	if (hidden_layer.get("edge_reads", []) as Array).is_empty() or str((hidden_layer.get("cargo", {}) as Dictionary).get("label", "")).is_empty():

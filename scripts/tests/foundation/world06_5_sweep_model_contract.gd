@@ -46,9 +46,10 @@ func _check_costed_rungs(failures: Array) -> void:
 
 func _check_encounter_proposals(failures: Array) -> void:
 	var model := _configured_model(7719)
-	var claim := model.claim_encounter(str(model.status().get("current_node_id", "")))
+	var capability: RefCounted = model.get_meta("test_host_capability")
+	var claim := model.claim_encounter(str(model.status().get("current_node_id", "")), capability)
 	var cargo := {"cargo_id": "delivery:numbers_slips", "cargo_label": "Numbers bag", "contraband": true, "hidden_value": 999}
-	var proposal := model.encounter_proposal(claim, cargo, ["pawn_shop", "bar", "bar"], {})
+	var proposal := model.encounter_proposal(claim, cargo, ["pawn_shop", "bar", "bar"], capability, false)
 	if proposal.is_empty() or PoliceSweepModelScript.normalize_encounter_proposal(proposal).is_empty():
 		failures.append("Sweep did not create an exact model-owned encounter proposal from its claimed track segment.")
 		return
@@ -65,9 +66,9 @@ func _check_encounter_proposals(failures: Array) -> void:
 	if bool(observe.get("authoritative", true)) or bool(observe.get("can_mutate", true)) or str(observe.get("next_phase_proposal", "")) != "route_choice_proposal" or JSON.stringify(proposal) != JSON.stringify(PoliceSweepModelScript.normalize_encounter_proposal(proposal)):
 		failures.append("Sweep observation was not a non-mutating route-choice proposal.")
 	var observer_outputs := [
-		model.encounter_proposal(claim, cargo, ["pawn_shop", "bar", "bar"], true),
-		model.encounter_proposal(claim, cargo, ["pawn_shop", "bar", "bar"], {"sweep_intel": true}),
-		model.encounter_proposal(claim, cargo, ["pawn_shop", "bar", "bar"], {"sweep_intel": {"host_signed": true}, "authority": "substituted"}),
+		model.encounter_proposal(claim, cargo, ["pawn_shop", "bar", "bar"], true, true),
+		model.encounter_proposal(claim, cargo, ["pawn_shop", "bar", "bar"], {"sweep_intel": true}, true),
+		model.encounter_proposal(claim, cargo, ["pawn_shop", "bar", "bar"], {"sweep_intel": {"host_signed": true}, "authority": "substituted"}, true),
 	]
 	for observer_output in observer_outputs:
 		if JSON.stringify(observer_output) != JSON.stringify(proposal): failures.append("Otherwise-identical observer changed proposal bytes from caller-authored capability input.")
@@ -83,6 +84,10 @@ func _check_encounter_proposals(failures: Array) -> void:
 	var marker_text := JSON.stringify(sighting).to_lower()
 	for hidden in ["node_id", "heading", "segment", "action", "stale_actions"]:
 		if marker_text.contains(hidden): failures.append("Personal marker leaked unauthenticated %s intel." % hidden)
+	var authenticated := model.report_intel_at_boundary(capability, true)
+	if not bool(authenticated.get("available", false)) or str(authenticated.get("node_id", "")).is_empty() \
+			or PoliceSweepModelScript.encounter_action_proposal(model.encounter_proposal(claim, cargo, ["bar", "pawn_shop"], capability, true), "use_intel").is_empty():
+		failures.append("Host-authenticated sweep intel was not usable by the public route proposal.")
 	var before_model := JSON.stringify(model.snapshot())
 	for outcome_value in PoliceSweepModelScript.ENCOUNTER_OUTCOMES:
 		var outcome := str(outcome_value)
@@ -124,15 +129,18 @@ func _check_encounter_proposals(failures: Array) -> void:
 
 func _check_save_revisit_and_wake(failures: Array) -> void:
 	var model := _configured_model(4021)
-	var claim := model.claim_encounter(str(model.status().get("current_node_id", "")))
-	var proposal := model.encounter_proposal(claim, {"cargo_id": "delivery:crew_package", "cargo_label": "Crew package", "contraband": false}, ["pawn_shop"], {"sweep_intel": true})
+	var capability: RefCounted = model.get_meta("test_host_capability")
+	var claim := model.claim_encounter(str(model.status().get("current_node_id", "")), capability)
+	var proposal := model.encounter_proposal(claim, {"cargo_id": "delivery:crew_package", "cargo_label": "Crew package", "contraband": false}, ["pawn_shop"], capability, true)
 	var restored_proposal := PoliceSweepModelScript.normalize_encounter_proposal(JSON.parse_string(JSON.stringify(proposal)))
 	if JSON.stringify(restored_proposal) != JSON.stringify(proposal): failures.append("Sweep encounter proposal did not survive exact save/load normalization.")
 	var snapshot := model.snapshot()
 	var restored := PoliceSweepModelScript.new()
+	var restored_capability := RefCounted.new()
+	restored.bind_host_capability(restored_capability)
 	if not restored.restore(snapshot, 4021, _sweep_config()): failures.append("Sweep track did not restore mid-encounter.")
 	restored.configure_world(_map_fixture(), _happening_fixture(), _sweep_config(), int(claim.get("action_index", 0)))
-	var revisited := restored.encounter_proposal(claim, {"cargo_id": "delivery:crew_package", "cargo_label": "Crew package", "contraband": false}, ["pawn_shop"], {"sweep_intel": true})
+	var revisited := restored.encounter_proposal(claim, {"cargo_id": "delivery:crew_package", "cargo_label": "Crew package", "contraband": false}, ["pawn_shop"], restored_capability, true)
 	if JSON.stringify(revisited) != JSON.stringify(proposal): failures.append("Sweep revisit changed or replayed its deterministic encounter proposal.")
 	var departed_node := str((model.segments[0] as Dictionary).get("node_id", ""))
 	var departure_action := int((model.segments[0] as Dictionary).get("end_action", 0))
@@ -152,16 +160,21 @@ func _check_ten_seed_determinism(failures: Array) -> void:
 	for seed_value in range(10):
 		var first := _configured_model(9000 + seed_value)
 		var second := _configured_model(9000 + seed_value)
-		var first_claim := first.claim_encounter(str(first.status().get("current_node_id", "")))
-		var second_claim := second.claim_encounter(str(second.status().get("current_node_id", "")))
-		var first_proposal := first.encounter_proposal(first_claim, {}, ["pawn_shop", "bar"], {"sweep_intel": true})
-		var second_proposal := second.encounter_proposal(second_claim, {}, ["pawn_shop", "bar"], {"sweep_intel": true})
+		var first_capability: RefCounted = first.get_meta("test_host_capability")
+		var second_capability: RefCounted = second.get_meta("test_host_capability")
+		var first_claim := first.claim_encounter(str(first.status().get("current_node_id", "")), first_capability)
+		var second_claim := second.claim_encounter(str(second.status().get("current_node_id", "")), second_capability)
+		var first_proposal := first.encounter_proposal(first_claim, {}, ["pawn_shop", "bar"], first_capability, true)
+		var second_proposal := second.encounter_proposal(second_claim, {}, ["pawn_shop", "bar"], second_capability, true)
 		if JSON.stringify(first.segments) != JSON.stringify(second.segments) or JSON.stringify(first_proposal) != JSON.stringify(second_proposal):
 			failures.append("Sweep encounter proposal was not deterministic at seed %d." % seed_value)
 
 
 func _configured_model(seed_value: int) -> PoliceSweepModel:
 	var model := PoliceSweepModelScript.new()
+	var capability := RefCounted.new()
+	model.bind_host_capability(capability)
+	model.set_meta("test_host_capability", capability)
 	model.reset(seed_value, _sweep_config())
 	model.configure_world(_map_fixture(), _happening_fixture(), _sweep_config(), 0)
 	return model

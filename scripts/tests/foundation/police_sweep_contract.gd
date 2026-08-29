@@ -21,6 +21,10 @@ static func _check_track_and_legibility(failures: Array) -> void:
 	var config := _sweep_config()
 	var first := PoliceSweepModelScript.new()
 	var twin := PoliceSweepModelScript.new()
+	var first_capability := RefCounted.new()
+	var twin_capability := RefCounted.new()
+	first.bind_host_capability(first_capability)
+	twin.bind_host_capability(twin_capability)
 	first.reset(7719, config)
 	twin.reset(7719, config)
 	first.configure_world(map_data, happening, config, 0)
@@ -42,31 +46,33 @@ static func _check_track_and_legibility(failures: Array) -> void:
 			if _fixture_node_tier(source_node, map_data) == 1 and _fixture_node_tier(target_node, map_data) != 2:
 				failures.append("Police Sweep did not prefer a tier-2 neighbor after tier 1 at seed %d." % seed_index)
 				return
-	if not first.intel_status({}).is_empty() or not first.map_marker().is_empty():
+	if bool(first.intel_status({}).get("available", true)) or not first.map_marker().is_empty():
 		failures.append("Police Sweep leaked status or a map marker without a sighting/capability.")
 	var before_poll := JSON.stringify(first.snapshot())
-	var intel := first.intel_status({"sweep_intel": true})
+	var intel := first.intel_status(first_capability, true)
 	if intel.is_empty() or not first.map_marker().is_empty() or JSON.stringify(first.snapshot()) != before_poll:
 		failures.append("Capability-gated Police Sweep status polling was not strictly read-only.")
 		return
-	if not first.report_intel_at_boundary({}).is_empty() or not first.map_marker().is_empty():
+	if bool(first.report_intel_at_boundary({}).get("available", true)) or not first.map_marker().is_empty():
 		failures.append("Police Sweep accepted an intel report boundary without capability.")
 		return
-	var reported_marker := first.report_intel_at_boundary({"sweep_intel": true})
+	var reported_marker := first.report_intel_at_boundary(first_capability, true)
 	if reported_marker.is_empty() or str(reported_marker.get("source", "")) != "crew_intel":
 		failures.append("Capability-gated Police Sweep boundary report did not record a marker.")
 		return
 	var reported_node := str(reported_marker.get("node_id", ""))
 	first.advance_to(3)
-	var stale_marker := first.map_marker()
+	var stale_marker := first.map_marker(first_capability, true)
 	if str(stale_marker.get("node_id", "")) != reported_node or int(stale_marker.get("stale_actions", 0)) != 3 or bool(stale_marker.get("live", true)):
 		failures.append("Police Sweep intel marker tracked live instead of preserving a stale reported node.")
 	var restored := PoliceSweepModelScript.new()
+	var restored_capability := RefCounted.new()
+	restored.bind_host_capability(restored_capability)
 	if not restored.restore(first.snapshot(), 7719, config):
 		failures.append("Police Sweep mid-track snapshot did not restore.")
 		return
 	restored.configure_world(map_data, happening, config, 3)
-	if JSON.stringify(restored.status()) != JSON.stringify(first.status()) or JSON.stringify(restored.map_marker()) != JSON.stringify(first.map_marker()):
+	if JSON.stringify(restored.status()) != JSON.stringify(first.status()) or JSON.stringify(restored.map_marker(restored_capability, true)) != JSON.stringify(first.map_marker(first_capability, true)):
 		failures.append("Police Sweep save/load did not preserve track and marker staleness.")
 	var canvas := WorldMapCanvasScript.new()
 	canvas.size = Vector2(640.0, 360.0)
@@ -220,12 +226,7 @@ static func _check_punchline_and_escape(failures: Array) -> void:
 	}
 	escape_run.suspicion = {"level": 90, "local_levels": {"back_alley": 90}, "cues": []}
 	escape_run.inventory = ["marked_cards"]
-	var result := escape_run.resolve_police_sweep_encounter_for_test({
-		"node_id": "back_alley",
-		"segment_index": 4,
-		"encounter_seed": 991,
-		"sweep_departure_action": int(escape_run.town_state.action_index) + 3,
-	})
+	var result := _arm_and_resolve(escape_run, "back_alley", 3)
 	var lock_actions := int(result.get("travel_lock_actions", 0))
 	if lock_actions <= 0 or lock_actions > 3:
 		failures.append("Police Sweep travel lock outlasted the patrol's deterministic departure.")
@@ -263,13 +264,7 @@ static func _check_foreign_lock_composition(failures: Array) -> void:
 	run_state.suspicion = {"level": 90, "local_levels": {"back_alley": 90}, "cues": []}
 	run_state.bankroll = 1
 	var debt_before := run_state.debt.size()
-	var result := run_state.resolve_police_sweep_encounter_for_test({
-		"node_id": "back_alley",
-		"segment_index": 7,
-		"action_index": int(run_state.town_state.action_index),
-		"encounter_seed": 8817,
-		"sweep_departure_action": int(run_state.town_state.action_index) + 4,
-	})
+	var result := _arm_and_resolve(run_state, "back_alley", 4)
 	if int(run_state.current_environment.get("travel_lock_remaining", 0)) != 3 \
 		or str(run_state.current_environment.get("travel_lock_source", "")) != "engine_trouble" \
 		or int(run_state.current_environment.get("engine_trouble_progress", 0)) != 1:
@@ -298,12 +293,20 @@ static func _encounter_fixture(heat: int, items: Array, debts: Array, node_id: S
 	run_state.inventory = items.duplicate(true)
 	run_state.debt = debts.duplicate(true)
 	run_state.bankroll = bankroll
-	return run_state.resolve_police_sweep_encounter_for_test({
-		"node_id": node_id,
-		"segment_index": 1,
-		"encounter_seed": 4401,
-		"sweep_departure_action": int(run_state.town_state.action_index) + 4,
-	})
+	return _arm_and_resolve(run_state, node_id, 4)
+
+
+static func _arm_and_resolve(run_state, node_id: String, departure_actions: int) -> Dictionary:
+	var sweep = run_state.town_state.police_sweep
+	sweep.disabled = false
+	sweep.configured = true
+	sweep.start_action = int(run_state.town_state.action_index)
+	sweep.end_action = sweep.start_action + maxi(1, departure_actions)
+	sweep.segments = [{"node_id": node_id, "start_action": sweep.start_action, "end_action": sweep.end_action, "dwell_actions": maxi(1, departure_actions)}]
+	sweep.segment_index = 0
+	sweep.last_encounter_segment = -1
+	sweep.last_encounter_node_id = ""
+	return run_state.resolve_current_police_sweep_encounter()
 
 
 static func _town_conditions_fixture() -> Dictionary:

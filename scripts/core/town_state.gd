@@ -23,6 +23,7 @@ var calendar_offset_actions: int = 0
 var happenings: Array = []
 var living_world: TownNetwork
 var police_sweep: PoliceSweepModel
+var _host_capability: RefCounted
 var progressive_meters: Dictionary = {}
 
 var _conditions: Dictionary = {}
@@ -72,6 +73,7 @@ func generate(p_seed_value: int, source_conditions: Dictionary = {}) -> void:
 	living_world.generate(seed_value)
 	police_sweep = PoliceSweepModelScript.new()
 	police_sweep.reset(seed_value, _police_sweep_config())
+	if _host_capability != null: police_sweep.bind_host_capability(_host_capability)
 	_refresh_current_profiles()
 
 
@@ -97,6 +99,7 @@ func restore(source: Dictionary, p_seed_value: int, source_conditions: Dictionar
 		living_world.generate(seed_value)
 		living_world.advance_to(action_index)
 	police_sweep = PoliceSweepModelScript.new()
+	if _host_capability != null: police_sweep.bind_host_capability(_host_capability)
 	var sweep_value: Variant = source.get("police_sweep", {})
 	if source_schema >= 2 and typeof(sweep_value) == TYPE_DICTIONARY and not (sweep_value as Dictionary).is_empty():
 		police_sweep.restore(sweep_value as Dictionary, seed_value, _police_sweep_config())
@@ -199,24 +202,33 @@ func disable_police_sweep_for_legacy_save() -> void:
 	_sync_sweep_rumor_facts()
 
 
-func sweep_status(capabilities: Dictionary = {}) -> Dictionary:
-	return police_sweep.intel_status(capabilities) if police_sweep != null else {}
+func bind_host_capability(capability: RefCounted) -> bool:
+	if capability == null or _host_capability != null:
+		return false
+	_host_capability = capability
+	if police_sweep != null:
+		police_sweep.bind_host_capability(capability)
+	return true
+
+
+func sweep_status(host_capability: Variant = null, intel_enabled: bool = false) -> Dictionary:
+	return police_sweep.intel_status(host_capability, intel_enabled) if police_sweep != null else {}
 
 
 func sweep_internal_status() -> Dictionary:
 	return police_sweep.status() if police_sweep != null else {}
 
 
-func sweep_map_marker(capabilities: Dictionary = {}) -> Dictionary:
-	return police_sweep.map_marker(capabilities) if police_sweep != null else {}
+func sweep_map_marker(host_capability: Variant = null, intel_enabled: bool = false) -> Dictionary:
+	return police_sweep.map_marker(host_capability, intel_enabled) if police_sweep != null else {}
 
 
-func report_sweep_intel_at_boundary(capabilities: Dictionary = {}) -> Dictionary:
-	return police_sweep.report_intel_at_boundary(capabilities) if police_sweep != null else {}
+func report_sweep_intel_at_boundary(host_capability: Variant = null, intel_enabled: bool = false) -> Dictionary:
+	return police_sweep.report_intel_at_boundary(host_capability, intel_enabled) if police_sweep != null else {}
 
 
-func record_sweep_sighting(source: String = "direct") -> Dictionary:
-	return police_sweep.record_personal_sighting(source) if police_sweep != null else {}
+func record_sweep_sighting(source: String = "direct", host_capability: Variant = null) -> Dictionary:
+	return police_sweep.record_personal_sighting(source, host_capability) if police_sweep != null else {}
 
 
 func sweep_is_at(node_id: String) -> bool:
@@ -231,8 +243,8 @@ func sweep_adjacent_sighting_due(node_id: String) -> bool:
 	return police_sweep != null and police_sweep.adjacent_sighting_due(node_id)
 
 
-func claim_sweep_encounter(node_id: String) -> Dictionary:
-	return police_sweep.claim_encounter(node_id) if police_sweep != null else {}
+func claim_sweep_encounter(node_id: String, host_capability: Variant = null) -> Dictionary:
+	return police_sweep.claim_encounter(node_id, host_capability) if police_sweep != null else {}
 
 
 func swept_window(node_id: String) -> Dictionary:

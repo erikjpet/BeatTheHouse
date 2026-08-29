@@ -59,7 +59,7 @@ func _check_exact_game_matrix_and_lifecycle(failures: Array) -> void:
 			var game_id := str(game_value)
 			var run: Variant = _run("WORLD65-MATRIX-%s-%s" % [play_id, game_id], game_id)
 			if play_id == "big_player":
-				PlayModel.activate(run, run.current_environment, "blackjack", "spotter")
+				run.crew_play_activate("spotter", "blackjack", run.current_environment)
 			var before := JSON.stringify(run.to_dict())
 			var proposal := PlayModel.table_presence_proposal(run, run.current_environment, game_id, play_id)
 			if not bool(proposal.get("eligible", false)) or bool(proposal.get("authoritative", true)) or not bool(proposal.get("proposal_only", false)) \
@@ -90,12 +90,12 @@ func _check_exact_game_matrix_and_lifecycle(failures: Array) -> void:
 
 func _check_cap_and_pairing_exception(failures: Array) -> void:
 	var capped: Variant = _run("WORLD65-CAP", "blackjack")
-	PlayModel.activate(capped, capped.current_environment, "blackjack", "table_flood")
+	capped.crew_play_activate("table_flood", "blackjack", capped.current_environment)
 	var denied := PlayModel.table_presence_proposal(capped, capped.current_environment, "blackjack", "spotter")
 	if str(denied.get("reason", "")) != "active_window_cap":
 		failures.append("The exact one-window cap did not reject Spotter beside Table Flood.")
 	var paired: Variant = _run("WORLD65-PAIR", "blackjack")
-	PlayModel.activate(paired, paired.current_environment, "blackjack", "spotter")
+	paired.crew_play_activate("spotter", "blackjack", paired.current_environment)
 	var allowed := PlayModel.table_presence_proposal(paired, paired.current_environment, "blackjack", "big_player")
 	if not bool(allowed.get("eligible", false)):
 		failures.append("The sole spotter:big_player pairing exception was not honored.")
@@ -112,13 +112,13 @@ func _check_chip_dump_and_detection(failures: Array) -> void:
 		if funding != {"model": "A_player_funded", "direction": "cash_to_chips", "cash_debit": 46, "chip_credit": 40, "fee_sink": 6}:
 			failures.append("Chip Dump proposal changed conservation model A.")
 		var before_total: int = first.bankroll + first.grand_casino_chips
-		var result := PlayModel.activate(first, first.current_environment, "baccarat", "chip_dump")
+		var result := first.crew_play_activate("chip_dump", "baccarat", first.current_environment)
 		if not bool(result.get("ok", false)) or first.bankroll + first.grand_casino_chips != before_total - 6 \
 				or int(result.get("bankroll_delta", 0)) != -46 or int(result.get("chips_delta", 0)) != 40:
 			failures.append("Chip Dump failed player-funded conservation for seed %s." % seed)
 		var second: Variant = _run(seed, "baccarat")
 		second.grand_casino_chips = 10
-		var replay := PlayModel.activate(second, second.current_environment, "baccarat", "chip_dump")
+		var replay := second.crew_play_activate("chip_dump", "baccarat", second.current_environment)
 		if bool(result.get("crew_play_detected", false)) != bool(replay.get("crew_play_detected", false)) or first.suspicion_level() != second.suspicion_level():
 			failures.append("Detection projection diverged for repeated seed %s." % seed)
 		observed.append(bool(result.get("crew_play_detected", false)))
@@ -128,7 +128,7 @@ func _check_chip_dump_and_detection(failures: Array) -> void:
 
 func _check_save_revisit_and_hidden_safety(failures: Array) -> void:
 	var run: Variant = _run("WORLD65-SAVE", "blackjack")
-	PlayModel.activate(run, run.current_environment, "blackjack", "table_flood")
+	run.crew_play_activate("table_flood", "blackjack", run.current_environment)
 	var before_status := PlayModel.active_status(run.crew_play_state, run.crew_action_index(), run.current_environment, "blackjack")
 	var before_proposal := PlayModel.table_presence_proposal(run, run.current_environment, "blackjack", "spotter")
 	var restored := RunStateScript.new()
