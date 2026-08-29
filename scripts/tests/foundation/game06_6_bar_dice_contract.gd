@@ -6,6 +6,8 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
+const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
+const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 const CONTRACT_PATH := "res://data/games/bar_dice_game_ritual_v1.json"
 const EXPECTED_PHASES := ["agree_wager", "cover", "shake", "throw", "reveal", "call", "settle"]
 const FORBIDDEN_PRIVATE_FIELDS := ["future_dice", "next_rng", "timing_target", "private_throw", "hidden_sweep", "wall_clock_result"]
@@ -25,6 +27,7 @@ func _initialize() -> void:
 	_check_interruption(failures)
 	_check_ten_seed_noninterference(failures)
 	_check_product_authority_and_phase_binding(failures)
+	_check_sealed_wager_identity(failures)
 	_check_liveness_performance(failures)
 	_finish(failures)
 
@@ -195,10 +198,11 @@ func _check_product_authority_and_phase_binding(failures: Array) -> void:
 	if str(ui.get("bar_dice_ritual_phase", "")) != "call" or bool(command.get("resolve", false)): failures.append("Product reveal settled before the call.")
 	command = game.surface_action_command("bar_dice_ack_call", 0, false, ui, run, environment)
 	if not bool(command.get("resolve", false)) or str(command.get("action_id", "")) != "roll": failures.append("Product call did not nominate exactly one sealed settlement intent.")
+	var authorized_stake := int(command.get("set_stake", 0))
 	var snapshot_before := RuntimeScript.canonical_json(run.to_save_snapshot())
 	var rng := RngStreamScript.new(); rng.configure(606)
 	var rng_before := RuntimeScript.canonical_json(rng.snapshot())
-	var compatibility: Dictionary = game.resolve_with_context("roll", 5, run, environment, rng, ui)
+	var compatibility: Dictionary = game.resolve_with_context("roll", authorized_stake, run, environment, rng, ui)
 	if not bool(compatibility.get("bar_dice_compatibility_simulation", false)) or not bool(compatibility.get("sealed_action_authoritative", false)):
 		failures.append("Legacy Bar Dice resolve did not fail closed as a receipt-required simulation.")
 	if RuntimeScript.canonical_json(run.to_save_snapshot()) != snapshot_before or RuntimeScript.canonical_json(rng.snapshot()) != rng_before:
@@ -206,10 +210,86 @@ func _check_product_authority_and_phase_binding(failures: Array) -> void:
 	GameModuleScript.apply_result(run, compatibility, rng)
 	if RuntimeScript.canonical_json(run.to_save_snapshot()) != snapshot_before:
 		failures.append("Receipt-free Bar Dice compatibility result applied to canonical state.")
-	var proposal: Dictionary = game.call("_bar_dice_resolve_proposal", "roll", 5, run.to_save_snapshot(), rng.snapshot(), ui)
+	var proposal: Dictionary = game.call("_bar_dice_resolve_proposal", "roll", authorized_stake, run.to_save_snapshot(), rng.snapshot(), ui)
 	var result := _dict(proposal.get("result", {}))
 	if not bool(proposal.get("ok", false)) or not bool(result.get("bar_dice_proposal_requires_apply", false)) or str(proposal.get("output_fingerprint", "")).is_empty():
 		failures.append("Pure Bar Dice proposal did not produce a host-verifiable apply boundary.")
+
+
+func _check_sealed_wager_identity(failures: Array) -> void:
+	var game = BarDiceGameScript.new()
+	game.definition = {"id":"bar_dice","family":"dice","legal_actions":[],"cheat_actions":[]}
+	var run: RunState = RunStateScript.new()
+	run.start_new("GAME06_6_SEALED_WAGER_IDENTITY")
+	run.bankroll = 100
+	var environment := {"id":"bar_dice_wager_identity","archetype_id":"street_register","economic_profile":{"stake_floor":1,"stake_ceiling":20},"game_states":{}}
+	var table: Dictionary = game.generate_environment_state(run, environment, run.create_rng("bar_dice_wager_identity_table"))
+	table["stake_ladder"] = [1, 2, 5, 10, 20]
+	table["selected_stake_index"] = 2
+	environment["game_states"] = {"bar_dice":table}
+	run.current_environment = environment
+	var host: Control = FoundationMainScript.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {"bar_dice":game})
+	host.set("run_state", run)
+	host.set("selected_stake", 5)
+	var bankroll_before := run.bankroll
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", "roll", 5)
+	if not bool(result.get("ok", false)) or not bool(result.get(ActionAuthorityScript.HOST_COMMITTED_KEY, false)):
+		failures.append("Sealed Bar Dice host rejected an authored $5 ladder wager.")
+	else:
+		var funding := _dict(result.get(ActionAuthorityScript.HOST_FUNDING_LEASE_KEY, {}))
+		var delivery := _dict(result.get(ActionAuthorityScript.HOST_DELIVERY_KEY, {}))
+		var receipt := _dict(result.get(ActionAuthorityScript.HOST_APPLY_RECEIPT_KEY, {}))
+		var story_log := _array(_dict(result.get("deltas", {})).get("story_log", []))
+		var story_entry := _dict(story_log[0]) if not story_log.is_empty() else {}
+		for wager_value in [
+			int(result.get(ActionAuthorityScript.HOST_WAGER_COST_KEY, -1)),
+			int(funding.get("wager", -1)),
+			int(delivery.get("stake", -1)),
+			int(receipt.get("stake", -1)),
+			int(result.get("stake", -1)),
+			int(story_entry.get("stake_cost", -1)),
+			int(result.get("bar_dice_stake", -1)),
+		]:
+			if wager_value != 5:
+				failures.append("Sealed Bar Dice funding, proposal, settlement, and receipt did not retain one exact $5 wager.")
+				break
+		var bankroll_delta := int(result.get("bankroll_delta", 0))
+		if run.bankroll - bankroll_before != bankroll_delta:
+			failures.append("Sealed Bar Dice settlement delta did not match the committed bankroll change.")
+		if bankroll_delta < 0 and bankroll_delta != -5:
+			failures.append("A losing sealed $5 Bar Dice wager settled against a different stake basis.")
+	host.free()
+
+	var rejected_run: RunState = RunStateScript.new()
+	rejected_run.start_new("GAME06_6_BELOW_MINIMUM_REJECTION")
+	rejected_run.bankroll = 100
+	var rejected_environment := {"id":"bar_dice_below_minimum","archetype_id":"street_register","economic_profile":{"stake_floor":5,"stake_ceiling":20},"game_states":{}}
+	var rejected_table: Dictionary = game.generate_environment_state(rejected_run, rejected_environment, rejected_run.create_rng("bar_dice_below_minimum_table"))
+	rejected_table["stake_ladder"] = [5, 10, 20]
+	rejected_table["selected_stake_index"] = 0
+	rejected_environment["game_states"] = {"bar_dice":rejected_table}
+	rejected_run.current_environment = rejected_environment
+	var rejected_table_before := rejected_table.duplicate(true)
+	var rejected_bankroll_before := rejected_run.bankroll
+	var rejected_chips_before := rejected_run.grand_casino_chips
+	var rejected_rng_before := rejected_run.rng_state
+	var rejected_host: Control = FoundationMainScript.new()
+	rejected_host.set("current_game", game)
+	rejected_host.set("game_module_cache", {"bar_dice":game})
+	rejected_host.set("run_state", rejected_run)
+	rejected_host.set("selected_stake", 1)
+	var rejected: Dictionary = rejected_host.call("_sealed_action_host_resolve_intent", "roll", 1)
+	var rejected_after: Dictionary = game.call("_table_state_preview", rejected_run, rejected_run.current_environment)
+	rejected_after.erase(ActionAuthorityScript.LEDGER_KEY)
+	if bool(rejected.get("ok", true)) or bool(rejected.get(ActionAuthorityScript.HOST_COMMITTED_KEY, true)):
+		failures.append("Sealed Bar Dice host accepted a wager below the authored table minimum.")
+	if rejected_run.bankroll != rejected_bankroll_before or rejected_run.grand_casino_chips != rejected_chips_before or rejected_run.rng_state != rejected_rng_before:
+		failures.append("Below-minimum Bar Dice rejection changed money or RNG state.")
+	if RuntimeScript.canonical_json(rejected_after) != RuntimeScript.canonical_json(rejected_table_before):
+		failures.append("Below-minimum Bar Dice rejection changed product table state.")
+	rejected_host.free()
 
 
 func _check_liveness_performance(failures: Array) -> void:
