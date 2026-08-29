@@ -2,7 +2,6 @@ extends "res://scripts/tests/foundation/check_table_games.gd"
 
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
-const DeliveryWorldMapTestScript := preload("res://scripts/core/world_map.gd")
 
 func _check_selected_starter_game_port(library: ContentLibrary, failures: Array) -> void:
 	var definition := library.game("pull_tabs")
@@ -4612,22 +4611,6 @@ func _fixture_lender_result(run_state: RunState, lender: Dictionary, lender_id: 
 # Checks behavior-first suspicion cues, downstream risky-action pressure, event eligibility, and save/load.
 
 
-# Shared test-chain helpers owned here so this inheritance layer compiles.
-
-func _delivery_complete_all_targets(run_state: RunState) -> bool:
-	var target_ids: Array = []
-	for target_value in run_state.delivery_snapshot().get("targets", []):
-		if typeof(target_value) == TYPE_DICTIONARY:
-			target_ids.append(str((target_value as Dictionary).get("node_id", "")))
-	for node_id_value in target_ids:
-		var node_id := str(node_id_value)
-		var arrival := _delivery_enter_node(run_state, node_id)
-		if not bool(arrival.get("handoff_ready", false)) or run_state.delivery_arrival_interaction().is_empty():
-			return false
-		if not bool(run_state.delivery_complete_handoff(node_id).get("ok", false)):
-			return false
-	return not run_state.delivery_has_active_run()
-
 func _save_service_expected_snapshot(run_state: RunState) -> Dictionary:
 	var parsed: Variant = JSON.parse_string(JSON.stringify(run_state.to_dict()))
 	if typeof(parsed) != TYPE_DICTIONARY:
@@ -4643,21 +4626,3 @@ func _unique_strings(first: Array, second: Array) -> Array:
 			if not result.has(id):
 				result.append(id)
 	return result
-
-
-# Resolves one foundation game action before saving, if generated content allows it.
-
-
-# Shared test-chain helpers owned here so this inheritance layer compiles.
-
-func _delivery_enter_node(run_state: RunState, node_id: String) -> Dictionary:
-	var node := DeliveryWorldMapTestScript.node_metadata_by_id(run_state.world_map, node_id)
-	run_state.world_map = DeliveryWorldMapTestScript.enter_node(run_state.world_map, node_id, {})
-	run_state.current_environment = {
-		"id": node_id,
-		"archetype_id": str(node.get("archetype_id", node_id)),
-		"world_node_id": node_id,
-		"turns": 0,
-		"security_profile": {},
-	}
-	return run_state.delivery_resolve_travel_arrival({"target_node_id": node_id}, {})

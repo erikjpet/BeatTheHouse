@@ -110,9 +110,10 @@ $foundationSources = @(
     (Join-Path $projectRoot "scripts/tests/foundation/check_lenders_release_saves.gd")
 )
 $foundationSourceText = ($foundationSources | ForEach-Object { Get-Content -LiteralPath $_ -Raw }) -join "`n"
-$fixtureSource = Get-Content -LiteralPath (Join-Path $projectRoot "scripts/tests/foundation/check_lenders_release_saves.gd") -Raw
-$fixtureMatch = [regex]::Match($fixtureSource, '(?s)func _fixture_library\(failures: Array\) -> ContentLibrary:(.*?)(?=\r?\n\r?\nfunc )')
+$fixtureMatch = [regex]::Match($foundationSourceText, '(?s)func _fixture_library\(failures: Array\) -> ContentLibrary:(.*?)(?=\r?\n\r?\nfunc )')
 Assert-True ($fixtureMatch.Success -and $fixtureMatch.Value.IndexOf('before_hydration := _foundation_library_fingerprint(library)') -ge 0 -and $fixtureMatch.Value.IndexOf('library._rebuild_indexes()') -gt $fixtureMatch.Value.IndexOf('before_hydration :=') -and $fixtureMatch.Value.IndexOf('library._rebuild_indexes()') -lt $fixtureMatch.Value.LastIndexOf('return library')) "Fixture ContentLibrary is not fully indexed before the immutable baseline captures it."
+$hostileFixtureMatch = [regex]::Match($foundationSourceText.Replace('library._rebuild_indexes()', '# hostile fixture omitted hydration'), '(?s)func _fixture_library\(failures: Array\) -> ContentLibrary:(.*?)(?=\r?\n\r?\nfunc )')
+Assert-True (-not ($hostileFixtureMatch.Success -and $hostileFixtureMatch.Value.IndexOf('library._rebuild_indexes()') -gt $hostileFixtureMatch.Value.IndexOf('before_hydration :=') -and $hostileFixtureMatch.Value.IndexOf('library._rebuild_indexes()') -lt $hostileFixtureMatch.Value.LastIndexOf('return library'))) "Hostile combined-source fixture without hydration was accepted."
 Assert-True ($fixtureMatch.Value.Contains('_foundation_library_fingerprint(library, false)') -and $fixtureMatch.Value.Contains('changed state outside the lazy index cache')) "Fixture hydration regression no longer proves that only the lazy index cache changes."
 Assert-True $runnerSource.Contains('var fixture_library := _fixture_library(failures)') "Foundation runner no longer reports hostile unhydrated-fixture regression failures."
 $literalUserPaths = @([regex]::Matches($foundationSourceText, 'user://[^"\s]+') | ForEach-Object { $_.Value } | Sort-Object -Unique)
