@@ -3439,7 +3439,8 @@
           "actors": [],
           "anchors": [
             "base::anchor:payday_order_rail",
-            "base::anchor:payday_runner"
+            "base::anchor:payday_runner",
+            "base::anchor:payday_task"
           ],
           "games": [],
           "interactions": [],
@@ -3772,7 +3773,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "payday_order_rail",
+                    "anchor_id": "payday_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -4019,7 +4020,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "payday_order_rail",
+                    "anchor_id": "payday_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -4210,7 +4211,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "payday_order_rail",
+                    "anchor_id": "payday_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -4383,7 +4384,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "fccd253aa83d4d7a1a1fc790f7e48c52333a7ca5f5955407798594844f5cc26b"
+        "sequence_signature": "1f1cf25caacc1c731fee52a9ba5b96bf972fb2f63ab93515ea30b1417a80c22b"
       }
     },
     {
