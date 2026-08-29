@@ -1,6 +1,7 @@
 extends SceneTree
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
+const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 
@@ -8,7 +9,27 @@ const SEED := "UI-ALL-IN-RESULT"
 const SCENARIO_ID := "back_alley_fence_night"
 const EXIT_IDENTITY := "scenario::back_alley_fence_night_exit"
 const BUYER_IDENTITY := "scenario::rotating_buyer"
+const HOSTILE_RAW_OBJECT_ID := "hostile_raw_projection_probe"
 const EXPECTED_CHALLENGE_KEY := "standard|standard|UI-ALL-IN-RESULT|home_archetype_id=back_alley;meta_collection_carried_instance_ids=[];meta_collection_containers=[{ \"id\": \"meta_bag_01\", \"item_id\": \"bag\", \"capacity\": 3, \"items\": [], \"item_definitions\": {  }, \"meta_loadout\": true, \"meta_container_instance_id\": 0 }];meta_collection_enabled=true;meta_collection_loadout=[]"
+
+
+class HostileRawProjectionHost:
+	extends FoundationMain
+
+	func _game_hook_interactable_objects(_apply_failure_lock: bool = true) -> Array:
+		return [{
+			"object_id": HOSTILE_RAW_OBJECT_ID,
+			"object_type": "game",
+			"source_id": "hostile_raw_source",
+			"owner_namespace": "",
+			"stable_object_id": "",
+			"label": "Hostile raw projection probe",
+			"enabled": true,
+			"interactive": true,
+			"focus_rect": Rect2(0.91, 0.91, 0.08, 0.08),
+			"normalized_rect": {"x": 0.91, "y": 0.91, "w": 0.08, "h": 0.08},
+			"available_actions": [{"id": "hostile_raw_action", "label": "Hostile raw action"}],
+		}]
 
 
 func _init() -> void:
@@ -59,6 +80,7 @@ func _init() -> void:
 		failures.append("Fence Night lost its authored work-phase buyer move to service_lane.")
 	if not _cleanup_removes_exit_scene_and_interaction(definition):
 		failures.append("Fence Night cleanup does not remove both halves of the sealed exit authority.")
+	_prove_production_projection_boundary(run_state, library, failures)
 
 	if failures.is_empty():
 		print("BACK_ALLEY_FENCE_NIGHT_INSTALL PASS installed=1 normal=1 small_screen=1 exit=1 route_free=1 work_move=1")
@@ -99,6 +121,56 @@ func _valid_rect(value: Variant) -> bool:
 		return false
 	var rect: Dictionary = value
 	return float(rect.get("w", 0.0)) > 0.0 and float(rect.get("h", 0.0)) > 0.0
+
+
+func _prove_production_projection_boundary(run_state: RunState, library: ContentLibrary, failures: Array[String]) -> void:
+	var host := HostileRawProjectionHost.new()
+	host.library = library
+	host.run_state = run_state
+	var records := EnvironmentInteractionControllerScript.interactable_object_view_list(host)
+	var environment := run_state.current_environment
+	var lifecycle_errors: Array = environment.get("scenario_sequence_lifecycle_errors", []) if typeof(environment.get("scenario_sequence_lifecycle_errors", [])) == TYPE_ARRAY else []
+	if not bool(environment.get("scenario_semantic_ready", false)) or _contains_text(lifecycle_errors, "::"):
+		failures.append("Production interaction projection rejected normalized Fence Night identities.")
+	if not _record(records, HOSTILE_RAW_OBJECT_ID).is_empty() or _records_contain_hostile_geometry(records):
+		failures.append("Production interaction projection retained hostile raw caller identity or layout.")
+	var exit_record := _record(records, EXIT_IDENTITY)
+	var authority: Dictionary = environment.get("scenario_layout_authority", {}) if typeof(environment.get("scenario_layout_authority", {})) == TYPE_DICTIONARY else {}
+	var exit_authority: Dictionary = authority.get(EXIT_IDENTITY, {}) if typeof(authority.get(EXIT_IDENTITY, {})) == TYPE_DICTIONARY else {}
+	var digest := str(environment.get("scenario_layout_authority_digest", ""))
+	if exit_record.is_empty() \
+			or str(exit_record.get("scenario_layout_authority_identity", "")) != EXIT_IDENTITY \
+			or str(exit_record.get("scenario_layout_authority_digest", "")) != digest \
+			or JSON.stringify(exit_record.get("normalized_rect", {})) != JSON.stringify(exit_authority.get("normalized_hit_rect", {})) \
+			or JSON.stringify(exit_record.get("small_screen_rect", {})) != JSON.stringify(exit_authority.get("small_screen_rect", {})):
+		failures.append("Production Fence Night projection did not correlate the exit record to sealed authority.")
+	host.free()
+
+
+func _record(records: Array, object_id: String) -> Dictionary:
+	for value in records:
+		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("object_id", "")) == object_id:
+			return value as Dictionary
+	return {}
+
+
+func _contains_text(values: Array, needle: String) -> bool:
+	for value in values:
+		if str(value).contains(needle):
+			return true
+	return false
+
+
+func _records_contain_hostile_geometry(records: Array) -> bool:
+	var hostile_rect := {"x": 0.91, "y": 0.91, "w": 0.08, "h": 0.08}
+	for value in records:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var record := value as Dictionary
+		if JSON.stringify(record.get("normalized_rect", {})) == JSON.stringify(hostile_rect) \
+				or record.get("focus_rect") == Rect2(0.91, 0.91, 0.08, 0.08):
+			return true
+	return false
 
 
 func _work_phase_moves_buyer_to_service_lane(definition: Dictionary) -> bool:
