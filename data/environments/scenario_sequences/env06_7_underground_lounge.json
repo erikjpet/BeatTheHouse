@@ -543,7 +543,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Punchline Open Mic Night clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -703,7 +703,7 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
@@ -1467,7 +1467,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a0ddbb289de58f54e863ec8fa1c0fe88f05752058fa9192720a4747e9a183d1a"
+        "sequence_signature": "011c796ab3e17d5c99e0ceaf24a8045c290c234b5ce0665c31b60e81085d1320"
       }
     },
     {
@@ -2000,7 +2000,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Punchline Headliner Night clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -2140,7 +2140,7 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
@@ -3146,7 +3146,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9745f1afa73cf82187ca3e4d798b14251314d189e99d734ae2f6b1b2434cf179"
+        "sequence_signature": "d0a3ddc4ff7092e25cfc735d476e1daab0ee87173f8b7c0b723285b0d2552377"
       }
     },
     {
@@ -3659,7 +3659,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Punchline Bringer Show clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -3800,7 +3800,7 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
@@ -4617,7 +4617,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "bcb0689f49247b0ae38ae8b0f5a75374035f89d355ccc919a8e5e0d07890b516"
+        "sequence_signature": "6a9d831a470d2e326744d1ee4ec29ea3f7be712e24615c40c14aa554aa25f0e5"
       }
     },
     {
@@ -5134,7 +5134,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Punchline High Stakes Night clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -5274,7 +5274,7 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
@@ -6103,7 +6103,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "093a6d46262e5034081054d16f86bea6ac523a5dffac2a3e7ce70a254fc24660"
+        "sequence_signature": "031a56c740f40c79c5c5000b820a5a6233ea421c4d51ea8717aeef1fea072dff"
       }
     },
     {
@@ -6634,7 +6634,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Punchline Greased Week clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -6774,7 +6774,7 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
@@ -7780,7 +7780,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "59ed751bf59b45a76d1360cf2db95a3d18e969bea70f2b40c84ab199d7addf5e"
+        "sequence_signature": "47d109104421f26a5dc53ea7143cb053becdabe0b4e9ff82b1aa83f4e05f2261"
       }
     },
     {
@@ -8298,7 +8298,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Punchline Debt Court clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -8439,7 +8439,7 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
@@ -9268,7 +9268,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0bc69ad9ecf0dc822ccdb46bd1c7745ab8fef363e45906d0584e841e93644822"
+        "sequence_signature": "855a260ce98e8a240b6ac4a798b992a48b7224eeaccb13962f0afa56ededb63b"
       }
     },
     {
@@ -9835,7 +9835,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Punchline New Muscle clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -9995,7 +9995,7 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
@@ -10948,7 +10948,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5cb369a071a453fd38199fea648834f8e1d49638feef543da16e74bc29794b79"
+        "sequence_signature": "460e9ea707b76a2eb08aedb7be99bfbb74210a7af6796ee11ac6a0df2fd943a2"
       }
     },
     {
@@ -11481,7 +11481,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Punchline Raid Jitters clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -11621,7 +11621,7 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
@@ -12627,7 +12627,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "8932abf25fdd255c6f6df5ad93c90dddbfa114865504ed9f30de5652596975f6"
+        "sequence_signature": "cec9bbf9720add1cbe351aba7e8b53f6cfaf5aafd1867826580c7662ff5140f6"
       }
     },
     {
@@ -13076,7 +13076,7 @@
                     "actor_id": "actor_amateur_judge",
                     "anchor_id": "kitty_amateur_judge_arrival",
                     "behavior": "watch",
-                    "label": "Amateur-night judge",
+                    "label": "Judge",
                     "pose": "arrival",
                     "zone_id": "right"
                   },
@@ -13161,7 +13161,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Kitty Cat Lounge Amateur Night clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -13234,13 +13234,14 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "kitty_amateur_signup",
                     "appearance": "open",
                     "bounds": {
                       "h": 46.0,
                       "w": 52.0
                     },
                     "enabled": true,
-                    "label": "Amateur signup station",
+                    "label": "Signup station",
                     "role": "queue_station",
                     "state": "open",
                     "visible": true,
@@ -13274,13 +13275,14 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "kitty_amateur_judge",
                     "appearance": "blank",
                     "bounds": {
                       "h": 58.0,
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Judging station",
+                    "label": "Judges",
                     "role": "scoreboard",
                     "state": "blank",
                     "visible": true,
@@ -13300,7 +13302,7 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
@@ -14306,7 +14308,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c0b591fc9a1b75f96b3bb265a408847c4a3342fc8aba2014bff359830314f5d7"
+        "sequence_signature": "7b7f7ee072c1b7aa2b9bd5cbc73489c916337c2f229f9b14b6b3c87126a2fa5d"
       }
     },
     {
@@ -14838,7 +14840,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Kitty Cat Lounge Buyout clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -14978,7 +14980,7 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
@@ -15984,7 +15986,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "dc659f1402ecb1bf37e70afa31d5fd5b1829155f106a385ff221da26ccf6b9b4"
+        "sequence_signature": "9075e243e53dce52186df1de6d73161da721f46e867ad62f2186c86632f8b762"
       }
     },
     {
@@ -16308,6 +16310,7 @@
           "anchors": [
             "base::anchor:kitty_slow_closed_section",
             "base::anchor:kitty_slow_booth_regular",
+            "base::anchor:kitty_slow_task",
             "base::anchor:kitty_slow_mini_stage",
             "base::anchor:kitty_slow_maintenance",
             "base::anchor:kitty_slow_host_arrival",
@@ -16398,7 +16401,7 @@
                     "actor_id": "actor_slow_night_host",
                     "anchor_id": "kitty_slow_host_arrival",
                     "behavior": "watch",
-                    "label": "Slow-night host",
+                    "label": "Host",
                     "pose": "arrival",
                     "zone_id": "center"
                   },
@@ -16413,7 +16416,7 @@
                     "actor_id": "actor_booth_regular",
                     "anchor_id": "kitty_slow_regular_arrival",
                     "behavior": "idle",
-                    "label": "Remaining booth regular",
+                    "label": "Regular",
                     "pose": "arrival",
                     "zone_id": "right"
                   },
@@ -16531,7 +16534,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Kitty Cat Lounge Slow Night clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -16624,13 +16627,14 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "kitty_slow_closed_section",
                     "appearance": "consolidated",
                     "bounds": {
                       "h": 46.0,
                       "w": 52.0
                     },
                     "enabled": true,
-                    "label": "Closed section ropes",
+                    "label": "Section ropes",
                     "role": "barrier",
                     "state": "consolidated",
                     "visible": true,
@@ -16651,7 +16655,7 @@
                       "w": 60.0
                     },
                     "enabled": true,
-                    "label": "Dark mini-stage",
+                    "label": "Mini-stage",
                     "role": "performance",
                     "state": "dark",
                     "visible": true,
@@ -16672,7 +16676,7 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Exposed maintenance panel",
+                    "label": "Panel",
                     "role": "workstation",
                     "state": "open",
                     "visible": true,
@@ -16692,7 +16696,7 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
@@ -16706,7 +16710,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_slow_closed_section",
+                    "anchor_id": "kitty_slow_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -16900,7 +16904,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_slow_closed_section",
+                    "anchor_id": "kitty_slow_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -17091,7 +17095,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_slow_closed_section",
+                    "anchor_id": "kitty_slow_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -17285,7 +17289,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "kitty_slow_closed_section",
+                    "anchor_id": "kitty_slow_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -17456,7 +17460,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "eac4b2d0ccb5c072a2436976fe105d2de05317ea5806d2c13ae68220a1a13c71"
+        "sequence_signature": "c8802101f47e45eb55a6a17b86387321de6b558c295b4a1c4763a3395b1c7bd4"
       }
     },
     {
@@ -18013,7 +18017,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Kitty Cat Lounge Bachelorette Storm clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -18086,13 +18090,14 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "kitty_storm_prop_trunk",
                     "appearance": "blocking",
                     "bounds": {
                       "h": 46.0,
                       "w": 52.0
                     },
                     "enabled": true,
-                    "label": "Rolling party prop trunk",
+                    "label": "Prop trunk",
                     "role": "equipment",
                     "state": "blocking",
                     "visible": true,
@@ -18154,7 +18159,7 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
                     "visible": true,
@@ -19354,7 +19359,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "6263e57e725fe80e64f480fe76cd09377abf59c1bbdc7e754697c86407ca3e25"
+        "sequence_signature": "db96fa2ac4270a5aa5ee07ebdb9bc409edd44fbbf6b82b49cdb9fb0a9f5bf91f"
       }
     }
   ],

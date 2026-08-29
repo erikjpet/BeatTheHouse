@@ -11,7 +11,7 @@ const specs = [
     arrival: "Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear.",
     exit: "The exterior stair stays marked and open throughout the room mix-up.",
     props: [["luggage_cart", "Brass luggage cart", "obstacle", "left"], ["blue_cases", "Blue-tag suitcases", "stock", "center"], ["red_cases", "Red-tag suitcases", "stock", "right"], ["room_board", "Room assignment board", "workstation", "background"]],
-    actors: [["desk_clerk", "Desk clerk", "motel_desk_clerk", "work", "service_lane"], ["coach_party", "Coach party", "motel_coach_party", "idle", "left"]],
+    actors: [["desk_clerk", "Desk clerk", "motel_desk_clerk", "work", "service_lane"], ["coach_party", "Coach guests", "motel_coach_party", "idle", "left"]],
     beats: [
       ["compare_claim_tags", "Compare claim tags", "Inspect the cart tags against the room board.", "set_state", "room_board", "cross_checked", "set_pose", "desk_clerk", "checking_ledger"],
       ["roll_cart_to_wing", "Route the luggage cart", "Roll the cart through the unoccupied wing before the guests move.", "move", "luggage_cart", "right", "set_position", "coach_party", "center"],
@@ -53,7 +53,7 @@ const specs = [
     arrival: "Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor.",
     exit: "A ribbon-marked exterior stair remains clear past the last room.",
     props: [["bouquet_case", "Missing bouquet case", "clue", "left"], ["garment_rack", "Wedding garment rack", "obstacle", "center"], ["room_key_tray", "Mixed room-key tray", "workstation", "service_lane"], ["reception_cart", "Reception cart", "furniture", "right"], ["ribbon_stair", "Ribbon-marked stair", "exit", "exit_lane"]],
-    actors: [["wedding_runner", "Wedding runner", "motel_wedding_runner", "work", "left"], ["best_person", "Best person", "motel_best_person", "watch", "right"], ["desk_clerk", "Desk clerk", "motel_desk_clerk", "work", "service_lane"]],
+    actors: [["wedding_runner", "Wedding runner", "motel_wedding_runner", "work", "left"], ["best_person", "Best person", "motel_best_person", "watch", "right"], ["desk_clerk", "Clerk", "motel_desk_clerk", "work", "service_lane"]],
     beats: [
       ["read_room_key_trail", "Read the room-key trail", "Compare the mixed keys with ribbons left at three doors.", "set_state", "room_key_tray", "three_clues", "set_position", "wedding_runner", "center"],
       ["wheel_garments_clear", "Clear the garment rack", "Wheel the rack to open the second-room clue without blocking the stair.", "move", "garment_rack", "right", "set_pose", "best_person", "checking_tags"],
@@ -185,10 +185,10 @@ const inputs = ["ui_accept", "ui_right", "ui_down", "ui_left", "ui_cancel", "ui_
 const commonZones = ["background", "center", "exit_lane", "foreground", "left", "right", "service_lane"];
 const stationAnchors = {motel: "room_walkway", gas_station_casino: "cashier_counter", beach: "shoreline"};
 const spatialBindings = {
-  motel_conventioneers: {phase_objects: {luggage_cart: "package_b_motel_top_mid"}},
-  motel_stakeout: {actors: {south_observer: "package_b_motel_top_left"}, phase_objects: {laundry_trolley: "package_b_motel_top_mid"}},
+  motel_conventioneers: {actors: {coach_party: "package_b_motel_top_right"}, phase_objects: {luggage_cart: "package_b_motel_top_mid"}},
+  motel_stakeout: {station: "package_b_motel_station", actors: {south_observer: "package_b_motel_top_left"}, phase_objects: {laundry_trolley: "package_b_motel_top_mid"}},
   motel_weekly_rates: {exit: "package_b_motel_safe_exit"},
-  motel_wedding_overflow: {station: "package_b_motel_station", objects: {garment_rack: "package_b_motel_top_mid"}, actors: {wedding_runner: "package_b_motel_top_left"}, phase_objects: {bouquet_case: "package_b_motel_top_left"}},
+  motel_wedding_overflow: {station: "package_b_motel_station", objects: {garment_rack: "package_b_motel_top_mid"}, actors: {wedding_runner: "package_b_motel_top_left", desk_clerk: "package_b_motel_service_top_right"}, phase_objects: {bouquet_case: "package_b_motel_top_left"}},
   gas_station_trucker_convoy: {objects: {tail_rig: "package_b_gas_top_left"}, actors: {machine_driver: "package_b_gas_top_mid", relay_driver: "package_b_gas_top_right"}},
   gas_station_tour_bus_stop: {objects: {tour_bus_door: "package_b_gas_top_left"}, actors: {bus_driver: "package_b_gas_top_mid", stranded_passenger: "package_b_gas_top_right"}},
   gas_station_graveyard_shift: {actors: {night_clerk: "package_b_gas_top_mid"}},

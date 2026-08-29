@@ -265,11 +265,12 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_conventioneers_coach_party",
                   "actor": {
-                    "label": "Coach party",
+                    "label": "Coach guests",
                     "actor_id": "motel_coach_party",
                     "zone_id": "left",
                     "behavior": "idle",
-                    "pose": "waiting"
+                    "pose": "waiting",
+                    "anchor_id": "package_b_motel_top_right"
                   }
                 }
               ],
@@ -1229,7 +1230,7 @@
           "props_4",
           "actors_2"
         ],
-        "sequence_signature": "847e8ce4c7f3dbd45e38622572071114baa9f8ed6d9f1478ec6729a5b046994a",
+        "sequence_signature": "cf4a6a9cc49835ec798b1b579e07466035b31e519033c8d09c0f023f558cbee3",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1240,6 +1241,7 @@
           "routes": [],
           "anchors": [
             "base::anchor:room_walkway",
+            "base::anchor:package_b_motel_top_right",
             "base::anchor:package_b_motel_top_mid"
           ],
           "zones": [
@@ -1515,7 +1517,7 @@
                   "object": {
                     "label": "Trace both sight cones",
                     "role": "task_station",
-                    "anchor_id": "room_walkway",
+                    "anchor_id": "package_b_motel_station",
                     "bounds": {
                       "w": 64.0,
                       "h": 56.0
@@ -2444,7 +2446,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "56ec91efaec7afdfcdde79adecdb4b2c1701896711882db2d12d3b9958282af8",
+        "sequence_signature": "af13f3f02e53f308f351bd00dd16aa6af882fd256ee1019c0a18321401e51cc5",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -2454,7 +2456,7 @@
           "games": [],
           "routes": [],
           "anchors": [
-            "base::anchor:room_walkway",
+            "base::anchor:package_b_motel_station",
             "base::anchor:package_b_motel_top_left",
             "base::anchor:package_b_motel_top_mid"
           ],
@@ -4296,11 +4298,12 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "motel_wedding_overflow_desk_clerk",
                   "actor": {
-                    "label": "Desk clerk",
+                    "label": "Clerk",
                     "actor_id": "motel_desk_clerk",
                     "zone_id": "service_lane",
                     "behavior": "work",
-                    "pose": "working"
+                    "pose": "working",
+                    "anchor_id": "package_b_motel_service_top_right"
                   }
                 }
               ],
@@ -5257,7 +5260,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "b404ef33f386c8968d64ada6fe86805a5d797482139b1d7150ee6162000f0766",
+        "sequence_signature": "69b6cf30d7af746e22e12b6bde422a0a041518234fd4dffc64e6ed4ec9627239",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -5269,7 +5272,8 @@
           "anchors": [
             "base::anchor:package_b_motel_station",
             "base::anchor:package_b_motel_top_mid",
-            "base::anchor:package_b_motel_top_left"
+            "base::anchor:package_b_motel_top_left",
+            "base::anchor:package_b_motel_service_top_right"
           ],
           "zones": [
             "base::zone:background",

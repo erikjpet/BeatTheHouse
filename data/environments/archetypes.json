@@ -824,6 +824,8 @@
       "weekly_room": {"position": [150, 260], "zone_id": "left"},
       "package_b_motel_top_left": {"position": [100, 40], "zone_id": "background"},
       "package_b_motel_top_mid": {"position": [260, 40], "zone_id": "background"},
+      "package_b_motel_top_right": {"position": [550, 40], "zone_id": "background"},
+      "package_b_motel_service_top_right": {"position": [550, 40], "zone_id": "service_lane"},
       "package_b_motel_safe_exit": {"position": [180, 40], "zone_id": "background"},
       "package_b_motel_station": {"position": [350, 210], "zone_id": "center"}
     },
@@ -2479,27 +2481,28 @@
       "service_lane": {"bounds": [320, 100, 360, 160]}
     },
     "semantic_anchors": {
-      "kitty_amateur_signup": {"position": [92, 100]},
+      "kitty_amateur_signup": {"position": [370, 80], "zone_id": "background"},
       "kitty_amateur_judge": {"position": [700, 130], "zone_id": "right"},
 	  "kitty_amateur_task": {"position": [450, 330], "zone_id": "center"},
 	  "kitty_amateur_contestant_arrival": {"position": [180, 320], "zone_id": "left"},
-	  "kitty_amateur_judge_arrival": {"position": [700, 130], "zone_id": "right"},
+	  "kitty_amateur_judge_arrival": {"position": [580, 380], "zone_id": "center"},
       "kitty_buyout_ropes": {"position": [520, 260]},
 	  "kitty_buyout_steward": {"position": [350, 70], "zone_id": "background"},
 	  "kitty_buyout_request_cart": {"position": [450, 330], "zone_id": "center"},
 	  "kitty_buyout_steward_arrival": {"position": [350, 70], "zone_id": "background"},
-      "kitty_slow_closed_section": {"position": [330, 250]},
-	  "kitty_slow_booth_regular": {"position": [400, 40], "zone_id": "background"},
-	  "kitty_slow_mini_stage": {"position": [570, 250], "zone_id": "center"},
-	  "kitty_slow_host_arrival": {"position": [400, 160], "zone_id": "center"},
-	  "kitty_slow_maintenance": {"position": [450, 330], "zone_id": "center"},
-	  "kitty_slow_regular_arrival": {"position": [400, 40], "zone_id": "background"},
-      "kitty_storm_prop_trunk": {"position": [500, 176]},
+      "kitty_slow_closed_section": {"position": [220, 180], "zone_id": "left"},
+	  "kitty_slow_booth_regular": {"position": [210, 40], "zone_id": "background"},
+	  "kitty_slow_mini_stage": {"position": [700, 360], "zone_id": "right"},
+	  "kitty_slow_host_arrival": {"position": [700, 40], "zone_id": "background"},
+	  "kitty_slow_maintenance": {"position": [440, 40], "zone_id": "background"},
+	  "kitty_slow_regular_arrival": {"position": [210, 40], "zone_id": "background"},
+	  "kitty_slow_task": {"position": [400, 330], "zone_id": "center"},
+      "kitty_storm_prop_trunk": {"position": [500, 176], "zone_id": "center"},
       "kitty_storm_floor_host": {"position": [100, 400]},
 	  "kitty_storm_party_leader": {"position": [700, 40], "zone_id": "background"},
 	  "kitty_storm_bar_rope": {"position": [740, 320], "zone_id": "right"},
 	  "kitty_storm_host_arrival": {"position": [200, 40], "zone_id": "background"},
-	  "kitty_storm_safe_exit": {"position": [500, 350], "zone_id": "center"},
+      "kitty_storm_safe_exit": {"position": [430, 40], "zone_id": "exit_lane"},
 	  "kitty_storm_task": {"position": [320, 350], "zone_id": "center"}
     },
     "security_profile": {
@@ -2799,7 +2802,7 @@
 		"delta_phase_left": {"position": [65, 380], "zone_id": "foreground"},
 		"delta_captain_scorer_phase": {"position": [250, 380], "zone_id": "foreground"},
 		"delta_engine_benches": {"position": [450, 390], "zone_id": "foreground"},
-		"delta_engine_guard": {"position": [250, 380], "zone_id": "foreground"},
+		"delta_engine_guard": {"position": [620, 80], "zone_id": "background"},
 		"delta_decision_left": {"position": [60, 190], "zone_id": "left"},
 		"delta_decision_middle": {"position": [325, 190], "zone_id": "center"},
 		"delta_decision_right": {"position": [344, 270], "zone_id": "center"},
@@ -2811,7 +2814,7 @@
 		"delta_wedding_best_man": {"position": [170, 380], "zone_id": "foreground"},
 		"delta_wedding_coordinator": {"position": [450, 390], "zone_id": "foreground"},
 		"delta_wedding_ring_phase": {"position": [65, 380], "zone_id": "foreground"},
-		"delta_wedding_safe_exit": {"position": [675, 320], "zone_id": "foreground"},
+		"delta_wedding_safe_exit": {"position": [360, 80], "zone_id": "background"},
 		"delta_wedding_choice_left": {"position": [60, 170], "zone_id": "left"},
 		"delta_wedding_choice_middle": {"position": [320, 190], "zone_id": "center"},
 		"delta_wedding_choice_right": {"position": [344, 270], "zone_id": "center"},
@@ -3456,8 +3459,8 @@
       ],
       "service_spots": [
         [
-          450,
-          292
+          520,
+          340
         ]
       ],
       "casino_fixture_spots": [

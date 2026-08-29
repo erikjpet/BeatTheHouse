@@ -102,7 +102,8 @@
                   "label": "Ceremony Delivered room marker",
                   "role": "arrangement",
                   "state": "ceremony_delivered",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "center"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -148,7 +149,8 @@
                   "label": "Departure Interrupted room marker",
                   "role": "route_marker",
                   "state": "departure_interrupted",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "exit_lane"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -190,7 +192,8 @@
                   "label": "Table Opportunity room marker",
                   "role": "debris",
                   "state": "table_opportunity",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "right"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -549,7 +552,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Delta Queen Wedding Charter clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -632,7 +635,8 @@
                     "label": "Ceremony rope",
                     "role": "barrier",
                     "state": "split",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -672,7 +676,8 @@
                     "label": "Best man table",
                     "role": "game_station",
                     "state": "losing",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -689,10 +694,11 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -1003,7 +1009,8 @@
                     "label": "Return Rings To Best Man",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -1023,7 +1030,8 @@
                     "label": "Exploit Loose Wedding Tables",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -1043,7 +1051,8 @@
                     "label": "Delay Wedding Charter",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -1617,7 +1626,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b86e7fc2f2a4e1e349b6c5d9044ca65bc2238076854dd09acfe4452a91c34b59"
+        "sequence_signature": "4b38a4ce79c6911ef7ae18ab822b64473362eb588a86fd3934f75fd9bacef24e"
       }
     },
     {
@@ -1718,7 +1727,8 @@
                   "label": "Earned Whale Access room marker",
                   "role": "arrangement",
                   "state": "earned_whale_access",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "center"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -1780,7 +1790,8 @@
                   "label": "Shadowed Entourage room marker",
                   "role": "debris",
                   "state": "shadowed_entourage",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "right"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -1806,7 +1817,8 @@
                   "label": "Whale Departed room marker",
                   "role": "route_marker",
                   "state": "whale_departed",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "exit_lane"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -2165,7 +2177,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Delta Queen Whale Aboard clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -2248,7 +2260,8 @@
                     "label": "Whale premium table",
                     "role": "game_station",
                     "state": "reserved",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -2268,7 +2281,8 @@
                     "label": "Shifted stake placards",
                     "role": "scoreboard",
                     "state": "raised",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -2288,7 +2302,8 @@
                     "label": "Whale service lane",
                     "role": "route_marker",
                     "state": "restricted",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -2305,10 +2320,11 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -2802,7 +2818,8 @@
                     "label": "Earn Whale Service Access",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -2822,7 +2839,8 @@
                     "label": "Shadow Whale Entourage",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -2842,7 +2860,8 @@
                     "label": "Trigger Whale Security Lock",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -3225,7 +3244,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b413099431aa0e0455546b58e2fe7baef9ce612c6ab303b69373c76a4b1efa93"
+        "sequence_signature": "e6d6de3216741be0ae3402899d7478fe044cb809987f6d86672221636b3403e7"
       }
     },
     {
@@ -3326,7 +3345,8 @@
                   "label": "Assisted Reroute room marker",
                   "role": "arrangement",
                   "state": "assisted_reroute",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "center"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -3372,7 +3392,8 @@
                   "label": "Fog Departure room marker",
                   "role": "route_marker",
                   "state": "fog_departure",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "exit_lane"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -3414,7 +3435,8 @@
                   "label": "Safe Wait room marker",
                   "role": "debris",
                   "state": "safe_wait",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "right"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -3773,7 +3795,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Delta Queen Fog Delay clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -3856,7 +3878,8 @@
                     "label": "Fog signal lamp",
                     "role": "navigation",
                     "state": "closed",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -3876,7 +3899,8 @@
                     "label": "Closed gangway",
                     "role": "barrier",
                     "state": "sealed",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -3896,7 +3920,8 @@
                     "label": "Rising stake board",
                     "role": "scoreboard",
                     "state": "phase_one",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -3913,10 +3938,11 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -4219,7 +4245,8 @@
                     "label": "Assist Fog Reroute",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -4239,7 +4266,8 @@
                     "label": "Wait Out Fog Safely",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -4259,7 +4287,8 @@
                     "label": "Exploit Trapped Fog Crowd",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -4833,7 +4862,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1e1f20afd74ca5a2d8c2a35f15f846e83376e6e27c8b7cffe96dc13c56e35698"
+        "sequence_signature": "7b872b7650b488d6f4888e21a7f1bff7d0a59436cc40e25bdff8d5e82400e790"
       }
     },
     {
@@ -4919,7 +4948,8 @@
                   "label": "Engine Abandoned room marker",
                   "role": "route_marker",
                   "state": "engine_abandoned",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "exit_lane"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -4981,7 +5011,8 @@
                   "label": "Limited Power room marker",
                   "role": "debris",
                   "state": "limited_power",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "right"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -5023,7 +5054,8 @@
                   "label": "Travel Resumed room marker",
                   "role": "arrangement",
                   "state": "travel_resumed",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "center"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -5326,7 +5358,7 @@
                     "actor_id": "actor_deck_guard",
                     "anchor_id": "delta_engine_guard",
                     "behavior": "guard",
-                    "label": "Gangway guard",
+                    "label": "Guard",
                     "pose": "arrival"
                   },
                   "family": "actor_ops",
@@ -5410,7 +5442,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Delta Queen Engine Trouble clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -5493,7 +5525,8 @@
                     "label": "Hot engine bulkhead",
                     "role": "barrier",
                     "state": "sealed",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -5513,7 +5546,8 @@
                     "label": "Falling pressure gauge",
                     "role": "instrument",
                     "state": "critical",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -5530,10 +5564,11 @@
                       "w": 68.0
                     },
                     "enabled": true,
-                    "label": "Evacuation benches",
+                    "label": "Benches",
                     "role": "safety",
                     "state": "empty",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -5553,7 +5588,8 @@
                     "label": "Locked mid-river gangway",
                     "role": "route_marker",
                     "state": "locked",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -5570,10 +5606,11 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -6261,7 +6298,8 @@
                     "label": "Repair Engine For Departure",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -6281,7 +6319,8 @@
                     "label": "Ration Limited Engine Power",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -6301,7 +6340,8 @@
                     "label": "Stage Engine Evacuation",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -6679,7 +6719,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "6cc9317ef87eef3e3825fd3a3e48947bfc4a21dde0f50d7ceab3b85a14823cf7"
+        "sequence_signature": "a61d8ef1870e20035c988980520dbf5188bd0ff69876f9052e62287a6a39615a"
       }
     },
     {
@@ -6801,7 +6841,8 @@
                   "label": "Observed Final room marker",
                   "role": "debris",
                   "state": "observed_final",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "right"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -6843,7 +6884,8 @@
                   "label": "Qualified Final room marker",
                   "role": "arrangement",
                   "state": "qualified_final",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "center"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -6869,7 +6911,8 @@
                   "label": "Tournament Interrupted room marker",
                   "role": "route_marker",
                   "state": "tournament_interrupted",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "exit_lane"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -7250,7 +7293,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Delta Queen Captains Invitational clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -7333,7 +7376,8 @@
                     "label": "Invitational entry cards",
                     "role": "credential",
                     "state": "checking",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -7353,7 +7397,8 @@
                     "label": "Captain bracket tables",
                     "role": "game_station",
                     "state": "opening",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -7373,7 +7418,8 @@
                     "label": "Scorer rail",
                     "role": "scoreboard",
                     "state": "active",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -7390,10 +7436,11 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -8113,7 +8160,8 @@
                     "label": "Qualify For Captains Final",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -8133,7 +8181,8 @@
                     "label": "Observe Captains Final",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -8153,7 +8202,8 @@
                     "label": "Dispute Captains Bracket",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -8531,7 +8581,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1f00a3133c5d02370eaaae4758e209d2441655b64da28730004c26b4f043854e"
+        "sequence_signature": "c48ffecf4b76312dd785d076b06230269bf394518f7fb7c47161b2fab50f3604"
       }
     },
     {
@@ -8632,7 +8682,8 @@
                   "label": "Cover Identity Accepted room marker",
                   "role": "arrangement",
                   "state": "cover_identity_accepted",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "center"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -8678,7 +8729,8 @@
                   "label": "Gala Interrupted room marker",
                   "role": "route_marker",
                   "state": "gala_interrupted",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "exit_lane"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -8720,7 +8772,8 @@
                   "label": "Public Floor Reopened room marker",
                   "role": "debris",
                   "state": "public_floor_reopened",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "right"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -9089,7 +9142,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Grand Casino Gala Night clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -9192,7 +9245,8 @@
                     "label": "Charity credential desk",
                     "role": "credential",
                     "state": "checking",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -9212,7 +9266,8 @@
                     "label": "Stalled gala stage lift",
                     "role": "workstation",
                     "state": "stalled",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -9229,10 +9284,11 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -9750,7 +9806,8 @@
                     "label": "Assume Gala Cover Identity",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -9770,7 +9827,8 @@
                     "label": "Reopen Public Gala Floor",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -9790,7 +9848,8 @@
                     "label": "Fail Gala Credentials",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -10173,7 +10232,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "bea7aa87c6397293fed1b67f7cb584618e9e52d801cec89b407adc15e3826b5c"
+        "sequence_signature": "63f7a353406b8a9aeb89494dea41f60e5d7b207e787251ccc394312e8876e2a0"
       }
     },
     {
@@ -10274,7 +10333,8 @@
                   "label": "Camouflage Route room marker",
                   "role": "arrangement",
                   "state": "camouflage_route",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "center"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -10300,7 +10360,8 @@
                   "label": "Convention Departed room marker",
                   "role": "route_marker",
                   "state": "convention_departed",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "exit_lane"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -10362,7 +10423,8 @@
                   "label": "Split Schedule room marker",
                   "role": "debris",
                   "state": "split_schedule",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "right"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -10732,7 +10794,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Grand Casino Convention Crowd clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -10815,7 +10877,8 @@
                     "label": "Convention booking board",
                     "role": "ledger",
                     "state": "conflicted",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -10835,7 +10898,8 @@
                     "label": "Reserved machine banks",
                     "role": "game_station",
                     "state": "split",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -10855,7 +10919,8 @@
                     "label": "Contested table block",
                     "role": "barrier",
                     "state": "crowded",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -10872,10 +10937,11 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -11393,7 +11459,8 @@
                     "label": "Blend With Badge Crowd",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -11413,7 +11480,8 @@
                     "label": "Split Convention Schedule",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -11433,7 +11501,8 @@
                     "label": "Trigger Convention Standoff",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -11816,7 +11885,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5cce0aaf0b79ee511bd201acf6cb74523e3314e22fff4465631f059e5a35a6bb"
+        "sequence_signature": "6c0498c5cbafb907a372178b932e51b0189da2407c6e89cbc86118c70326eb68"
       }
     },
     {
@@ -11901,7 +11970,8 @@
                   "label": "Audit Interrupted room marker",
                   "role": "route_marker",
                   "state": "audit_interrupted",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "exit_lane"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -11963,7 +12033,8 @@
                   "label": "Compliant Floor room marker",
                   "role": "arrangement",
                   "state": "compliant_floor",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "center"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -12005,7 +12076,8 @@
                   "label": "Redirected Audit room marker",
                   "role": "debris",
                   "state": "redirected_audit",
-                  "visible": true
+                  "visible": true,
+                  "zone_id": "right"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -12383,7 +12455,7 @@
                     "input_actions": [
                       "ui_cancel"
                     ],
-                    "label": "Grand Casino Audit Night clean exit",
+                    "label": "Clear exit",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -12466,7 +12538,8 @@
                     "label": "Audit cage seal",
                     "role": "evidence",
                     "state": "intact",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -12486,7 +12559,8 @@
                     "label": "Pit audit ledger",
                     "role": "ledger",
                     "state": "requested",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -12506,7 +12580,8 @@
                     "label": "Audit zone barrier",
                     "role": "barrier",
                     "state": "moving",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -12526,7 +12601,8 @@
                     "label": "Public exit marker",
                     "role": "route_marker",
                     "state": "open",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -12543,10 +12619,11 @@
                       "w": 56.0
                     },
                     "enabled": true,
-                    "label": "Marked clean exit",
+                    "label": "Clear exit",
                     "role": "exit",
                     "state": "marked_lane",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "exit_lane"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -12873,7 +12950,8 @@
                     "label": "Comply With Audit Route",
                     "role": "decision_route",
                     "state": "route_0_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -12893,7 +12971,8 @@
                     "label": "Redirect Public Audit",
                     "role": "decision_route",
                     "state": "route_1_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -12913,7 +12992,8 @@
                     "label": "Close Audited Games",
                     "role": "decision_route",
                     "state": "route_2_ready",
-                    "visible": true
+                    "visible": true,
+                    "zone_id": "right"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -13487,7 +13567,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3ff753b8fcc626ed6f071d0a475ee0b6fc789925a9fb3b2c7c6e0f996d63daf0"
+        "sequence_signature": "42a43c64fadc8e4b65119ff396028cfc24a78c953948644b814f43325db9ae17"
       }
     }
   ]
