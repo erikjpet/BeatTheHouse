@@ -733,18 +733,13 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	return _bar_dice_compatibility_simulation(action_id, stake, run_state, rng, ui_state)
 
 
-func _bar_dice_compatibility_simulation(action_id: String, stake: int, run_state: RunState, rng: RngStream, ui_state: Dictionary) -> Dictionary:
-	# Legacy probes may inspect a deterministic proposal, but only Foundation can
-	# publish it. Detached simulation plus the receipt-required marker makes a
-	# caller's later GameModule.apply_result() attempt fail closed.
+func _bar_dice_compatibility_simulation(action_id: String, stake: int, run_state: RunState, rng: RngStream, _ui_state: Dictionary) -> Dictionary:
+	# Legacy callers receive only an observer rejection. Pure simulation remains
+	# available through the sealed proposal method, where Foundation can validate
+	# and bind the exact input before publishing any result.
 	if run_state == null or rng == null:
 		return _empty_result(action_id, stake, {}, "Bar Dice simulation requires serialized run and RNG inputs.")
-	var candidate := RunState.new()
-	candidate.from_dict(run_state.to_save_snapshot())
-	var simulation_rng := RngStream.new()
-	simulation_rng.restore(rng.snapshot())
-	var result := _resolve_bar_dice_proposal_core(action_id, stake, candidate, candidate.current_environment, simulation_rng, ui_state.duplicate(true))
-	result.erase(BAR_DICE_PROPOSAL_REQUIRES_APPLY_KEY)
+	var result := _empty_result(action_id, stake, run_state.current_environment, "Bar Dice settlement requires the authenticated table host.")
 	result["sealed_action_authoritative"] = true
 	result["bar_dice_compatibility_simulation"] = true
 	return result
@@ -1071,7 +1066,7 @@ func _resolve_bar_dice_proposal_core(action_id: String, stake: int, run_state: R
 	settled_ui.erase("bar_dice_pending_action_id")
 	settled_ui.erase("controlled_roll")
 	settled_ui.erase("palmed_swap_challenge")
-	result["ui_state"] = settled_ui
+	result[ActionAuthorityScript.SURFACE_UI_STATE_KEY] = settled_ui
 	return result
 
 

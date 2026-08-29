@@ -4148,6 +4148,7 @@ func _bar_dice_simulate_round(game: GameModule, run_state: RunState, rng: RngStr
 	if bool(proposal.get("ok", false)):
 		run_state.from_dict((proposal.get("run_snapshot", {}) as Dictionary).duplicate(true))
 		rng.restore((proposal.get("rng_snapshot", {}) as Dictionary).duplicate(true))
+		run_state.save_rng(rng)
 	return result
 
 func _bar_dice_test_host(game: GameModule, run_state: RunState, stake: int) -> Control:

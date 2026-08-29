@@ -6771,6 +6771,9 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 	var released_roll: Dictionary = release_state.get("controlled_roll", {}) if typeof(release_state.get("controlled_roll", {})) == TYPE_DICTIONARY else {}
 	if str(released_roll.get("skill_grade", "")) != "perfect":
 		failures.append("Bar Dice RELEASE did not grade a perfect controlled-roll input.")
+	var loaded_pre_reveal := game.surface_state(run_state, environment, release_state)
+	if bool(loaded_pre_reveal.get("house_revealed", false)) or not str(loaded_pre_reveal.get("result_message", "")).strip_edges().is_empty() or not (loaded_pre_reveal.get("house", []) as Array).is_empty():
+		failures.append("Bar Dice loaded toss leaked its result before reveal and call.")
 	var cheat_throw := game.surface_action_command("bar_dice_throw", 0, false, release_state, run_state, environment)
 	var cheat_reveal := game.surface_action_command("bar_dice_reveal", 0, false, cheat_throw.get("ui_state", {}), run_state, environment)
 	var cheat_settle := game.surface_action_command("bar_dice_ack_call", 0, false, cheat_reveal.get("ui_state", {}), run_state, environment)
@@ -6789,6 +6792,9 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 	var palm_lock_challenge: Dictionary = (palm_lock.get("ui_state", {}) as Dictionary).get("palmed_swap_challenge", {})
 	if bool(palm_lock.get("resolve", false)) or str(palm_lock_challenge.get("skill_grade", "")) != "perfect" or str((palm_lock.get("ui_state", {}) as Dictionary).get("bar_dice_ritual_phase", "")) != "throw":
 		failures.append("Bar Dice SWAP NOW input did not resolve a perfect palmed-swap timing lock.")
+	var palm_pre_reveal := game.surface_state(run_state, environment, palm_lock.get("ui_state", {}))
+	if bool(palm_pre_reveal.get("house_revealed", false)) or not str(palm_pre_reveal.get("result_message", "")).strip_edges().is_empty() or not (palm_pre_reveal.get("house", []) as Array).is_empty():
+		failures.append("Bar Dice palmed swap leaked its result before reveal and call.")
 	var selected_state := rolled_state.duplicate(true)
 	selected_state["selected_action_id"] = "loaded_toss"
 	selected_state["selected_action_kind"] = "cheat"
@@ -7108,10 +7114,10 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	var direct_snapshot_before := JSON.stringify(direct_state.to_save_snapshot())
 	var direct_rng := direct_state.create_rng("bar_dice_direct_resolve")
 	var direct_rng_before := JSON.stringify(direct_rng.snapshot())
-	var direct_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, direct_state, direct_state.current_environment)
+	var direct_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, _bar_dice_stake_ui(direct_state, 10), direct_state, direct_state.current_environment)
 	var direct_result := game.resolve_with_context("loaded_toss", 10, direct_state, direct_state.current_environment, direct_rng, direct_roll.get("ui_state", {}))
-	if bool(direct_result.get("bar_dice_controlled_roll_applied", false)) or str(direct_result.get("skill_grade", "")) != "miss":
-		failures.append("Bar Dice loaded_toss without RELEASE granted an ungraded controlled-roll payoff.")
+	if bool(direct_result.get("ok", true)) or not bool(direct_result.get("bar_dice_compatibility_simulation", false)) or not bool(direct_result.get("sealed_action_authoritative", false)) or direct_result.has("skill_grade") or direct_result.has("bar_dice_player_dice") or direct_result.has("bar_dice_house_dice"):
+		failures.append("Bar Dice direct loaded_toss did not remain a receipt-required observer rejection without hidden grading or dice.")
 	GameModule.apply_result(direct_state, direct_result, direct_rng)
 	if JSON.stringify(direct_state.to_save_snapshot()) != direct_snapshot_before or JSON.stringify(direct_rng.snapshot()) != direct_rng_before:
 		failures.append("Bar Dice out-of-phase direct loaded_toss changed run or RNG state.")
@@ -7145,6 +7151,8 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	call("_check_action_result_shape", palm_result, "cheat", failures)
 	if not bool(palm_result.get("bar_dice_palmed", false)) or not bool(palm_result.get("bar_dice_palmed_swap_applied", false)) or str(palm_result.get("skill_grade", "")) != "perfect" or int(palm_result.get("suspicion_delta", 0)) <= 0:
 		failures.append("Bar Dice palmed swap did not grade perfect input, improve a die, and add suspicion heat.")
+	if str(palm_result.get("message", "")).find("Palmed swap") < 0:
+		failures.append("Bar Dice authenticated palmed swap lacked readable graded feedback.")
 	var direct_palm_state: RunState = RunStateScript.new()
 	direct_palm_state.start_new("BAR-DICE-PALM-DIRECT")
 	direct_palm_state.bankroll = 100000
@@ -7154,10 +7162,10 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	var direct_palm_snapshot_before := JSON.stringify(direct_palm_state.to_save_snapshot())
 	var direct_palm_rng := direct_palm_state.create_rng("bar_dice_palm_direct_resolve")
 	var direct_palm_rng_before := JSON.stringify(direct_palm_rng.snapshot())
-	var direct_palm_roll := game.surface_action_command("bar_dice_roll", 0, false, {}, direct_palm_state, direct_palm_state.current_environment)
+	var direct_palm_roll := game.surface_action_command("bar_dice_roll", 0, false, _bar_dice_stake_ui(direct_palm_state, 10), direct_palm_state, direct_palm_state.current_environment)
 	var direct_palm_result := game.resolve_with_context("palmed_swap", 10, direct_palm_state, direct_palm_state.current_environment, direct_palm_rng, direct_palm_roll.get("ui_state", {}))
-	if str(direct_palm_result.get("skill_grade", "")) != "miss" or bool(direct_palm_result.get("bar_dice_palmed_swap_applied", true)) or str(direct_palm_result.get("message", "")).to_lower().find("no die") < 0:
-		failures.append("Bar Dice direct palmed_swap resolve granted an ungraded die change or lacked readable failure feedback.")
+	if bool(direct_palm_result.get("ok", true)) or not bool(direct_palm_result.get("bar_dice_compatibility_simulation", false)) or not bool(direct_palm_result.get("sealed_action_authoritative", false)) or direct_palm_result.has("skill_grade") or direct_palm_result.has("bar_dice_player_dice") or direct_palm_result.has("bar_dice_house_dice"):
+		failures.append("Bar Dice direct palmed_swap did not remain a receipt-required observer rejection without hidden grading or dice.")
 	GameModule.apply_result(direct_palm_state, direct_palm_result, direct_palm_rng)
 	if JSON.stringify(direct_palm_state.to_save_snapshot()) != direct_palm_snapshot_before or JSON.stringify(direct_palm_rng.snapshot()) != direct_palm_rng_before:
 		failures.append("Bar Dice out-of-phase direct palmed_swap changed run or RNG state.")
