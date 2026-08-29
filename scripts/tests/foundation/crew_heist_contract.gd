@@ -18,9 +18,9 @@ static func check(_library: ContentLibrary, failures: Array) -> void:
 	_check_production_paths(_library, failures)
 	_check_plan_a(_library, failures)
 	_check_plan_b(_library, failures)
-	_check_abort_and_save(failures)
+	_check_abort_and_save(_library, failures)
 	_check_seam_regressions(failures)
-	_check_determinism(failures)
+	_check_determinism(_library, failures)
 
 
 static func _check_gating(failures: Array) -> void:
@@ -46,6 +46,15 @@ static func _check_gating(failures: Array) -> void:
 	_set_inner(gala, "crew_velvet")
 	if not bool(_dict(_rows(gala).get("the_whale_game", {})).get("live", false)):
 		failures.append("Plan B did not accept Gala Night as its alternate seeded whale anchor.")
+	var direct := _run("HEIST-DIRECT-REJECT", {"audit_night": true})
+	_set_inner(direct, "crew_bishop")
+	var direct_before := JSON.stringify(direct.to_dict())
+	if bool(direct.crew_heist_lock("the_count").get("ok", false)) or bool(direct.world_sequence_schedule_heist_mount("lock").get("ok", false)) or JSON.stringify(direct.to_dict()) != direct_before:
+		failures.append("A caller without the private heist host capability mutated lock or W1 registration state.")
+	var forged := {"ok": true, "type": "event", "event_id": "crew_planning_table", "choice_id": "lock_the_count", "deltas": {"event_hooks": [{"type": "crew_heist", "action": "lock", "plan_id": "the_count", "signed": true}]}}
+	direct.current_environment["event_ids"] = ["crew_planning_table"]
+	if bool(direct.crew_record_heist_event_result(forged).get("ok", false)) or not direct.crew_heist_state.is_empty():
+		failures.append("A substituted or self-asserted resolved heist hook crossed the exact Event host boundary.")
 
 
 static func _check_production_paths(library: ContentLibrary, failures: Array) -> void:
@@ -117,21 +126,21 @@ static func _check_production_paths(library: ContentLibrary, failures: Array) ->
 static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 	var run := _run("HEIST-A-E2E", {"audit_night": true})
 	_set_inner(run, "crew_bishop")
-	if not bool(run.crew_heist_lock("the_count").get("ok", false)):
+	if not bool(_event_choice(run, library, "crew_planning_table", "lock_the_count").get("ok", false)):
 		failures.append("Plan A could not lock from its truthful live gate.")
 		return
 	if _dict(run.crew_heist_snapshot().get("r", {})) != {"v": 1, "s": "0"}:
 		failures.append("Plan lock did not write the neutral crew06_9 handoff seam.")
 	for _index in range(3):
-		run.crew_heist_record_count_session(12, 8, 12, true, "count_session_%d" % _index)
-	if not bool(run.crew_heist_begin_count_schedule().get("ok", false)):
+		_record_count_session(run, "count_session_%d" % _index)
+	if not bool(_event_choice(run, library, "crew_planning_table", "count_schedule").get("ok", false)):
 		failures.append("Plan A schedule did not start a real delivery hold.")
 	else:
 		_move(run, "grand_casino_cage")
 		run.advance_environment_turns(2)
 	if not bool(_dict(run.crew_heist_snapshot().get("setup", {})).get("schedule", false)):
 		failures.append("Plan A schedule hold did not complete at the real cage node.")
-	if not bool(run.crew_heist_begin_count_swap_cart().get("ok", false)):
+	if not bool(_event_choice(run, library, "crew_planning_table", "count_cart").get("ok", false)):
 		failures.append("Plan A swap cart did not start a real package run.")
 	else:
 		run.delivery_apply_physical_action("pickup", "crew_heist:swap_cart:pickup")
@@ -142,7 +151,7 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Plan A swap cart did not complete through the real-map handoff.")
 	run.narrative_flags["debt_court_settlement"] = true
 	run.crew_trust_by_member["crew_knuckles"] = CrewStateModelScript.rank_threshold("associate")
-	if not bool(run.crew_heist_begin_play().get("ok", false)):
+	if not bool(_event_choice(run, library, "crew_planning_table", "begin_play").get("ok", false)):
 		failures.append("Plan A did not enter the Play after all mandatory setup.")
 		return
 	if not _array(run.current_environment.get("event_ids", [])).has("heist_live_table"):
@@ -154,7 +163,7 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 	mid_window.from_dict(run.to_dict())
 	if JSON.stringify(mid_window.crew_heist_snapshot()) != JSON.stringify(run.crew_heist_snapshot()):
 		failures.append("Plan A save/load changed the live action-boundary window.")
-	if bool(run.crew_heist_decide("distraction", "sit").get("ok", false)):
+	if _choice_ids(live_table.choices(run, run.current_environment)).has("distraction_sit"):
 		failures.append("Plan A allowed its second decision before the first live-table round boundary.")
 	var expected_choices := [["go_hold", "distraction_sit"], ["distraction_sit", "exit_corridor"], ["exit_corridor", "begin_getaway"]]
 	for round_index in range(3):
@@ -170,7 +179,7 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 	var dock := RunStateScript.new()
 	dock.from_dict(run.to_dict())
 	dock.crew_heist_state["play"]["decisions"]["exit"] = "dock"
-	if not bool(dock.crew_heist_begin_getaway().get("ok", false)) or int(dock.delivery_snapshot().get("pursuit_pressure", -1)) != 4 or str(_dict(dock.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "dock":
+	if not bool(_event_choice(dock, library, "heist_live_table", "begin_getaway").get("ok", false)) or int(dock.delivery_snapshot().get("pursuit_pressure", -1)) != 4 or str(_dict(dock.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "dock":
 		failures.append("Plan A fast/loud dock route lost its historical pressure-4 contract.")
 	if not bool(live_table.resolve(run, run.current_environment, "begin_getaway").get("ok", false)) or str(run.delivery_snapshot().get("mode", "")) != "getaway":
 		failures.append("Plan A did not enter the real getaway mode.")
@@ -183,15 +192,17 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Plan A clean route did not produce its deterministic flat payout and Act 1 victory.")
 	var no_guard := _run("HEIST-A-NO-GUARD", {"audit_night": true})
 	_set_inner(no_guard, "crew_bishop")
-	no_guard.crew_heist_lock("the_count")
+	_event_choice(no_guard, library, "crew_planning_table", "lock_the_count")
 	var no_guard_state := no_guard.crew_heist_snapshot()
 	no_guard_state["setup"] = {"identity": true, "schedule": true, "swap_cart": true}
 	no_guard.crew_heist_state = no_guard_state
-	no_guard.crew_heist_begin_play()
+	_event_choice(no_guard, library, "crew_planning_table", "begin_play")
 	_move(no_guard, "grand_casino")
 	no_guard.crew_heist_state["play"]["round"] = 2
 	no_guard.crew_heist_state["play"]["decisions"] = {"go": "hold", "distraction": "sit"}
-	if bool(no_guard.crew_heist_decide("exit", "corridor").get("ok", false)) or not bool(no_guard.crew_heist_decide("exit", "dock").get("ok", false)):
+	var no_guard_live := EventModuleScript.new()
+	no_guard_live.setup(library.event("heist_live_table"), library)
+	if _choice_ids(no_guard_live.choices(no_guard, no_guard.current_environment)).has("exit_corridor") or not bool(no_guard_live.resolve(no_guard, no_guard.current_environment, "exit_dock").get("ok", false)):
 		failures.append("Plan A exit availability did not derive from the optional Debt Court guard setup.")
 	var late := RunStateScript.new()
 	late.from_dict(mid_window.to_dict())
@@ -209,8 +220,10 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 	blown.from_dict(mid_window.to_dict())
 	blown.crew_heist_state["play"]["round"] = 2
 	blown.crew_heist_state["play"]["decisions"] = {"go": "hold", "distraction": "sit", "exit": "corridor"}
-	blown.crew_heist_play_round({"game_id": "blackjack", "bet": 12, "heat_delta": 15})
-	if not bool(blown.crew_heist_begin_getaway().get("ok", false)) or str(_dict(blown.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "dock":
+	var spike := _settled_blackjack_result(12, 0, "grand_casino")
+	spike["heat_delta"] = 15
+	GameModuleScript.apply_result(blown, spike)
+	if not bool(_event_choice(blown, library, "heist_live_table", "begin_getaway").get("ok", false)) or str(_dict(blown.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "dock":
 		failures.append("A Plan A heat spike did not blow the corridor and force the dock.")
 	if CrewHeistModelScript.ladder(65, true) != "out_hot" or CrewHeistModelScript.ladder(90, false) != "out_hot" or CrewHeistModelScript.ladder(50, false) != "somebody_got_pinched":
 		failures.append("Plan A ladder fixtures lost their clean/hot/pinched bands.")
@@ -219,25 +232,23 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 static func _check_plan_b(library: ContentLibrary, failures: Array) -> void:
 	var run := _run("HEIST-B-E2E", {"heist_plan_b_criteria": true})
 	_set_inner(run, "crew_velvet")
-	if not bool(run.crew_heist_lock("the_whale_game").get("ok", false)):
+	if not bool(_event_choice(run, library, "crew_planning_table", "lock_the_whale_game").get("ok", false)):
 		failures.append("Plan B could not lock from its truthful live gate.")
 		return
-	run.crew_heist_record_whale_vouch(-30, true)
-	run.crew_heist_record_whale_vouch(-35, true)
+	_prepare_whale_setup(run)
 	for source in ["practice_rig", "street_craps"]:
 		var source_run := _run("HEIST-B-RIG-%s" % source, {"heist_plan_b_criteria": true})
 		_set_inner(source_run, "crew_velvet")
-		source_run.crew_heist_lock("the_whale_game")
+		_event_choice(source_run, library, "crew_planning_table", "lock_the_whale_game")
 		source_run.add_item("false_bottom_cup")
 		source_run.narrative_flags["craps_setting_trained"] = true
-		if not bool(source_run.crew_heist_record_whale_rig().get("complete", false)):
+		source_run.crew_heist_table_choices()
+		if not bool(_dict(source_run.crew_heist_snapshot().get("setup", {})).get("rig", false)):
 			failures.append("Plan B rig rejected the %s training source." % source)
 	run.add_item("false_bottom_cup")
 	run.narrative_flags["craps_setting_trained"] = true
-	run.crew_heist_record_whale_rig()
-	run.crew_heist_record_whale_name(120, true)
-	run.crew_heist_record_whale_name(0, true)
-	if not bool(run.crew_heist_begin_play().get("ok", false)):
+	run.crew_heist_table_choices()
+	if not bool(_event_choice(run, library, "crew_planning_table", "begin_play").get("ok", false)):
 		failures.append("Plan B did not seed Lucky's drunk and enter the invitational.")
 		return
 	_move(run, "grand_casino_high_limit")
@@ -343,26 +354,40 @@ static func _check_plan_b(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Plan B made/clean and rich/bust ladder fixtures lost deterministic bands.")
 
 
-static func _check_abort_and_save(failures: Array) -> void:
+static func _check_abort_and_save(library: ContentLibrary, failures: Array) -> void:
 	for progress in range(3):
 		var run := _run("HEIST-ABORT-%d" % progress, {"audit_night": true})
 		_set_inner(run, "crew_bishop")
-		run.crew_heist_lock("the_count")
+		_event_choice(run, library, "crew_planning_table", "lock_the_count")
 		for _index in range(progress):
-			run.crew_heist_record_count_session(12, 0, 0, true)
-		var result := run.crew_heist_abort("fixture")
+			_record_count_session(run, "abort_%d_%d" % [progress, _index])
+		var result := _event_choice(run, library, "crew_planning_table", "abort")
 		if not bool(result.get("ok", false)) or bool(result.get("run_ended", true)) or run.run_status != RunState.RUN_STATUS_ACTIVE or run.bankroll <= 0:
 			failures.append("A pre-Play abort ended the run or failed to charge a survivable cost at progress %d." % progress)
-		if bool(run.crew_heist_lock("the_whale_game").get("ok", false)):
+		if bool(_event_choice(run, library, "crew_planning_table", "lock_the_whale_game").get("ok", false)):
 			failures.append("An aborted heist allowed a second heist in the same run.")
 	var saved := _run("HEIST-SAVE", {"audit_night": true})
 	_set_inner(saved, "crew_bishop")
-	saved.crew_heist_lock("the_count")
-	saved.crew_heist_record_count_session(12, 0, 0, true)
+	_event_choice(saved, library, "crew_planning_table", "lock_the_count")
+	_record_count_session(saved, "save")
 	var restored := RunStateScript.new()
 	restored.from_dict(saved.to_dict())
 	if JSON.stringify(restored.crew_heist_snapshot()) != JSON.stringify(saved.crew_heist_snapshot()):
 		failures.append("Mid-heist save/load did not restore the phase state exactly.")
+	var hostile_save := saved.to_dict()
+	hostile_save["crew_state"]["crew_heist"]["unknown_private_claim"] = true
+	var hostile_restored := RunStateScript.new()
+	hostile_restored.from_dict(hostile_save)
+	if not hostile_restored.crew_heist_state.is_empty():
+		failures.append("Heist restore accepted an unknown top-level private claim.")
+	var bounded := CrewHeistModelScript.begin("the_count", 0)
+	for index in range(32): bounded = CrewHeistModelScript.record_tombstone(bounded, index, 1, 1)
+	if _array(bounded.get("q", [])).size() != CrewHeistModelScript.TOMBSTONE_LIMIT:
+		failures.append("Heist receipts did not retain the exact bounded tail.")
+	var oversized := bounded.duplicate(true)
+	oversized["q"].append({"a": 99, "c": 1, "p": 1})
+	if not CrewHeistModelScript.restore_state(oversized).is_empty():
+		failures.append("Heist restore accepted an oversized receipt list.")
 	for phase in CrewHeistModelScript.STATUSES:
 		var phase_run := _run("HEIST-SAVE-%s" % phase, {"audit_night": true})
 		phase_run.crew_heist_state = CrewHeistModelScript.begin("the_count", 4)
@@ -383,19 +408,19 @@ static func _check_abort_and_save(failures: Array) -> void:
 		failures.append("A crew-ignoring action boundary mutated serialized run bytes through the live-table lifecycle.")
 	var identity_shortfall := _run("HEIST-IDENTITY-SHORTFALL", {"audit_night": true})
 	_set_inner(identity_shortfall, "crew_bishop")
-	identity_shortfall.crew_heist_lock("the_count")
+	_event_choice(identity_shortfall, library, "crew_planning_table", "lock_the_count")
 	identity_shortfall.crew_heist_state["setup"] = {"schedule": true, "swap_cart": true}
 	var identity_bankroll := identity_shortfall.bankroll
-	var identity_result := identity_shortfall.crew_heist_begin_play()
+	var identity_result := _event_choice(identity_shortfall, library, "crew_planning_table", "begin_play")
 	var identity_abort := _dict(identity_shortfall.crew_heist_snapshot().get("abort", {}))
 	if not bool(identity_result.get("forced", false)) or str(identity_shortfall.crew_heist_snapshot().get("status", "")) != "aborted" or str(identity_abort.get("reason", "")) != "identity_shortfall" or identity_shortfall.bankroll >= identity_bankroll or identity_shortfall.run_status != RunState.RUN_STATUS_ACTIVE:
 		failures.append("Plan A identity shortfall did not force a costed abort while preserving the active run.")
 	var ordinary_gap := _run("HEIST-ORDINARY-SETUP-GAP", {"audit_night": true})
 	_set_inner(ordinary_gap, "crew_bishop")
-	ordinary_gap.crew_heist_lock("the_count")
+	_event_choice(ordinary_gap, library, "crew_planning_table", "lock_the_count")
 	ordinary_gap.crew_heist_state["setup"] = {"identity": true, "identity_sessions": 3, "identity_session_ids": ["a", "b", "c"], "swap_cart": true}
 	var ordinary_bankroll := ordinary_gap.bankroll
-	var ordinary_result := ordinary_gap.crew_heist_begin_play()
+	var ordinary_result := _event_choice(ordinary_gap, library, "crew_planning_table", "begin_play")
 	if bool(ordinary_result.get("ok", false)) or str(ordinary_gap.crew_heist_snapshot().get("status", "")) != "setup" or ordinary_gap.bankroll != ordinary_bankroll:
 		failures.append("An ordinary missing schedule/cart setup guardrail was incorrectly converted into a forced abort.")
 
@@ -411,15 +436,46 @@ static func _check_seam_regressions(failures: Array) -> void:
 		failures.append("Rourke showdown Act seam bytes changed after the heist extension.")
 
 
-static func _check_determinism(failures: Array) -> void:
+static func _check_determinism(library: ContentLibrary, failures: Array) -> void:
 	var a := _run("HEIST-DETERMINISM", {"audit_night": true})
 	var b := _run("HEIST-DETERMINISM", {"audit_night": true})
 	_set_inner(a, "crew_bishop")
 	_set_inner(b, "crew_bishop")
-	a.crew_heist_lock("the_count")
-	b.crew_heist_lock("the_count")
+	_event_choice(a, library, "crew_planning_table", "lock_the_count")
+	_event_choice(b, library, "crew_planning_table", "lock_the_count")
 	if JSON.stringify(a.crew_heist_snapshot()) != JSON.stringify(b.crew_heist_snapshot()):
 		failures.append("Identical heist seeds and boundaries produced different state.")
+
+
+static func _event_choice(run: RunState, library: ContentLibrary, event_id: String, choice_id: String) -> Dictionary:
+	var event := EventModuleScript.new()
+	event.setup(library.event(event_id), library)
+	return event.resolve(run, run.current_environment, choice_id)
+
+
+static func _record_count_session(run: RunState, session_id: String) -> void:
+	var result := _settled_blackjack_result(12, 0, "grand_casino")
+	result["session_id"] = session_id
+	result["heat_start"] = 8
+	result["heat_peak"] = 12
+	GameModuleScript.apply_result(run, result)
+
+
+static func _prepare_whale_setup(run: RunState) -> void:
+	var original_environment := run.current_environment.duplicate(true)
+	run.bankroll = maxi(run.bankroll, 500)
+	run.narrative_flags["heist_plan_b_whale_vouch"] = true
+	run.set_environment({"id": "delta_queen", "world_node_id": "delta_queen", "archetype_id": "delta_queen", "kind": "casino", "turns": 0, "visit_id": "whale_setup_1", "scenario_hook_flags": {"heist_plan_b_criteria": true, "whale_vouch_anchor": true}, "event_ids": ["scenario_whale_aboard_vouch"], "resolved_event_ids": []})
+	GameModuleScript.apply_result(run, _settled_blackjack_result(30, -30, "delta_queen"))
+	GameModuleScript.apply_result(run, _settled_blackjack_result(35, -35, "delta_queen"))
+	run.add_item("false_bottom_cup")
+	run.narrative_flags["craps_setting_trained"] = true
+	run.record_score_spending(120, "whale_setup")
+	run.advance_environment_turns(1)
+	run.current_environment["visit_id"] = "whale_setup_2"
+	run.advance_environment_turns(1)
+	run.set_environment(original_environment)
+	run.crew_heist_table_choices()
 
 
 static func _settled_blackjack_result(stake: int, bankroll_delta: int, venue_id: String) -> Dictionary:

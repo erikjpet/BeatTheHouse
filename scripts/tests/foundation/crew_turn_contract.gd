@@ -10,6 +10,7 @@ const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const RunSaveCodecScript := preload("res://scripts/core/run_save_codec.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
+const GameModuleScript := preload("res://scripts/core/game_module.gd")
 
 
 static func check(_library: ContentLibrary, failures: Array) -> void:
@@ -68,14 +69,14 @@ static func _check_weighting(failures: Array) -> void:
 static func _check_emissions(failures: Array) -> void:
 	var unlearned := _run("TURN-SKILL-OFF")
 	_prepare(unlearned, "crew_switch", [CrewTurnModelScript.SIGNAL_PATTERN])
-	var off := unlearned.crew_heist_observe_table()
+	var off := _heist_choice(unlearned, "crew_planning_table", "table_talk")
 	if CrewTurnModelScript.witnessed_count(_dict(unlearned.crew_heist_state.get("x", {})), CrewStateModelScript.MEMBER_IDS) != 0 or str(off.get("message", "")).contains("No cards"):
 		failures.append("Unlearned planning pattern became distinguishable.")
 	var learned := _run("TURN-SKILL-ON")
 	_prepare(learned, "crew_switch", [CrewTurnModelScript.SIGNAL_PATTERN])
 	for _index in range(3):
 		learned.crew_record_pattern("crew_switch", "p07")
-	var on := learned.crew_heist_observe_table()
+	var on := _heist_choice(learned, "crew_planning_table", "table_talk")
 	if CrewTurnModelScript.witnessed_count(_dict(learned.crew_heist_state.get("x", {})), CrewStateModelScript.MEMBER_IDS) != 1 or not str(on.get("message", "")).contains("No cards"):
 		failures.append("Learned planning pattern did not become witnessable.")
 
@@ -88,7 +89,7 @@ static func _check_emissions(failures: Array) -> void:
 		{"id": "bar", "label": "Low Tide", "state": "visited", "environment": {"entered_game_clock_minutes": 540, "departed_game_clock_minutes": 600, "crew_presence": [{"member_id": "crew_switch"}]}},
 		{"id": "motel", "label": "Motor Court", "state": "visited", "environment": {}},
 	]}
-	route.crew_heist_observe_table()
+	_heist_choice(route, "crew_planning_table", "table_talk")
 	if CrewTurnModelScript.witnessed_count(_dict(route.crew_heist_state.get("x", {})), CrewStateModelScript.MEMBER_IDS) != 1:
 		failures.append("Contradictable itinerary line did not land through a visited world record.")
 	var no_record := _run("TURN-NO-ROUTE")
@@ -97,7 +98,7 @@ static func _check_emissions(failures: Array) -> void:
 	no_record_hidden["e"] = [CrewTurnModelScript.SIGNAL_PATTERN]
 	no_record.crew_heist_state["x"] = no_record_hidden
 	no_record.world_map = {"nodes": [{"id": "bar", "label": "Low Tide", "state": "revealed", "environment": {"crew_presence": [{"member_id": "crew_switch"}]}}]}
-	no_record.crew_heist_observe_table()
+	_heist_choice(no_record, "crew_planning_table", "table_talk")
 	if CrewTurnModelScript.witnessed_count(_dict(no_record.crew_heist_state.get("x", {})), CrewStateModelScript.MEMBER_IDS) != 0:
 		failures.append("Itinerary line landed without player-checkable evidence.")
 
@@ -126,26 +127,26 @@ static func _check_emissions(failures: Array) -> void:
 static func _check_choices_and_save(failures: Array) -> void:
 	var correct := _run("TURN-RIGHT")
 	_prepare(correct, "crew_switch", [CrewTurnModelScript.SIGNAL_PATTERN, CrewTurnModelScript.SIGNAL_ROUTE], true)
-	var correct_result := correct.crew_heist_confront("crew_switch")
+	var correct_result := _heist_choice(correct, "crew_planning_table", "close_door_switch")
 	if not bool(correct_result.get("ok", false)) or not bool(_dict(correct.crew_heist_state.get("x", {})).get("c", false)) or int(_dict(correct.crew_heist_state.get("play", {})).get("free_play", 0)) != 1:
 		failures.append("Correct two-signal close-out failed to cancel and grant one coordinated use.")
 	var wrong := _run("TURN-WRONG")
 	_prepare(wrong, "crew_switch", [CrewTurnModelScript.SIGNAL_PATTERN, CrewTurnModelScript.SIGNAL_ROUTE], true)
 	wrong.grievance_add({"member_id": "crew_switch", "kind": "job_abandoned", "weight": 1, "source_ref": "fixture_real"})
 	var before := wrong.crew_trust("crew_lucky")
-	var wrong_result := wrong.crew_heist_confront("crew_lucky")
+	var wrong_result := _heist_choice(wrong, "crew_planning_table", "close_door_lucky")
 	var wrong_hidden := _dict(wrong.crew_heist_state.get("x", {}))
 	if not bool(wrong_result.get("ok", false)) or wrong.crew_trust("crew_lucky") >= before or wrong.crew_grievances("crew_lucky").is_empty() or not ["", "crew_switch"].has(str(wrong_hidden.get("m", ""))) or int(wrong_hidden.get("f", 0)) != 1 or (str(wrong_hidden.get("m", "")).is_empty() and (not _array(wrong_hidden.get("e", [])).is_empty() or not _array(wrong_hidden.get("w", [])).is_empty())):
 		failures.append("Wrong close-out missed its personal debt, crew trust cost, re-resolution, or darkened mood.")
 	var hedge := _run("TURN-HEDGE")
 	_prepare(hedge, "crew_switch", [CrewTurnModelScript.SIGNAL_PATTERN], true)
-	var hedge_result := hedge.crew_heist_hedge()
+	var hedge_result := _heist_choice(hedge, "crew_planning_table", "change_seat")
 	if not bool(hedge_result.get("ok", false)) or not bool(_dict(hedge.crew_heist_state.get("x", {})).get("h", false)):
 		failures.append("Exactly-one-signal role change was not available.")
 	var empty_hedge := _run("TURN-HEDGE-CLEAN")
 	_prepare(empty_hedge, "", [CrewTurnModelScript.SIGNAL_PATTERN], true)
 	var empty_trust_before := empty_hedge.crew_trust("crew_rook")
-	if not bool(empty_hedge.crew_heist_hedge().get("ok", false)) or empty_hedge.crew_trust("crew_rook") != empty_trust_before - int(_tuning().get("hedge_trust_cost", 2)):
+	if not bool(_heist_choice(empty_hedge, "crew_planning_table", "change_seat").get("ok", false)) or empty_hedge.crew_trust("crew_rook") != empty_trust_before - int(_tuning().get("hedge_trust_cost", 2)):
 		failures.append("A clean-table hedge did not charge the documented minor crew trust cost.")
 
 	var action_surfaces: Array = [
@@ -155,7 +156,7 @@ static func _check_choices_and_save(failures: Array) -> void:
 	]
 	var observe_probe := _run("TURN-DISCIPLINE-OBSERVE")
 	_prepare(observe_probe, "crew_switch", [CrewTurnModelScript.SIGNAL_PATTERN])
-	action_surfaces.append(observe_probe.crew_heist_observe_table())
+	action_surfaces.append(_heist_choice(observe_probe, "crew_planning_table", "table_talk"))
 	wrong.story_log = []
 	var clean_save_text := JSON.stringify(_run("TURN-CLEAN-SAVE").to_save_snapshot()).to_lower()
 	if clean_save_text.contains("grievance"):
@@ -188,8 +189,8 @@ static func _check_choices_and_save(failures: Array) -> void:
 	_prepare(twin_b, "crew_switch", [CrewTurnModelScript.SIGNAL_PATTERN, CrewTurnModelScript.SIGNAL_ROUTE], true)
 	twin_a.grievance_add({"member_id": "crew_switch", "kind": "job_abandoned", "weight": 1, "source_ref": "fixture_real"})
 	twin_b.grievance_add({"member_id": "crew_switch", "kind": "job_abandoned", "weight": 1, "source_ref": "fixture_real"})
-	var twin_result_a := twin_a.crew_heist_confront("crew_lucky")
-	var twin_result_b := twin_b.crew_heist_confront("crew_lucky")
+	var twin_result_a := _heist_choice(twin_a, "crew_planning_table", "close_door_lucky")
+	var twin_result_b := _heist_choice(twin_b, "crew_planning_table", "close_door_lucky")
 	if JSON.stringify(twin_result_a) != JSON.stringify(twin_result_b) or JSON.stringify(twin_a.crew_heist_state) != JSON.stringify(twin_b.crew_heist_state):
 		failures.append("Identical wrong-name sequences did not reproduce byte-identically.")
 
@@ -207,21 +208,21 @@ static func _check_plan_beats(failures: Array) -> void:
 
 	var whale := _whale_play_run("TURN-BEAT-WHALE", false)
 	var whale_heat := whale.suspicion_level()
-	var whale_result := whale.crew_heist_play_round({"game_id": "blackjack", "honest": true})
+	var whale_result := _settle_whale_blackjack(whale)
 	var whale_snapshot := whale.crew_heist_snapshot()
 	if not bool(whale_result.get("resolved", false)) or str(whale_snapshot.get("outcome", "")) != "closed" or str(_dict(whale_snapshot.get("play", {})).get("scar", "")) != "rig_exposure" or str(_dict(whale_snapshot.get("play", {})).get("interrupted", "")) != "house_points_at_rig" or whale.grand_casino_chips != 0 or whale.suspicion_level() <= whale_heat or whale.run_status != RunStateScript.RUN_STATUS_ENDED:
 		failures.append("Plan B did not expose the rig mechanically during the live Play.")
 
 	var hedged_whale := _whale_play_run("TURN-BEAT-WHALE-HEDGE", true)
 	var hedge_bankroll := hedged_whale.bankroll
-	var hedge_result := hedged_whale.crew_heist_play_round({"game_id": "blackjack", "honest": true})
+	var hedge_result := _settle_whale_blackjack(hedged_whale)
 	var hedge_payout := int(hedge_result.get("payout", 0))
 	if str(hedged_whale.crew_heist_snapshot().get("outcome", "")) != "out_hot" or hedge_payout < 227 or hedge_payout > 357 or hedged_whale.bankroll != hedge_bankroll + hedge_payout:
 		failures.append("A Plan B changed seat did not convert the mid-game break into deterministic Out Hot partial haul.")
 
 	var cancelled := _run("TURN-CANCEL-FINALE")
 	_prepare(cancelled, "crew_switch", [CrewTurnModelScript.SIGNAL_PATTERN, CrewTurnModelScript.SIGNAL_ROUTE], true)
-	cancelled.crew_heist_confront("crew_switch")
+	_heist_choice(cancelled, "crew_planning_table", "close_door_switch")
 	cancelled.crew_heist_state["status"] = CrewHeistModelScript.STATUS_GETAWAY
 	cancelled.crew_heist_state["play"] = {"round": 3, "score": 100, "decisions": {"go": "hold", "distraction": "sit", "exit": "dock"}, "free_play": 1}
 	cancelled._crew_heist_apply_delivery_resolution("heist:%s:getaway" % CrewHeistModelScript.PLAN_COUNT, true, {"status": "success"})
@@ -243,6 +244,32 @@ static func _whale_play_run(seed: String, hedged: bool) -> RunState:
 	run.current_environment = {"id": "fixture_high_limit", "archetype_id": "grand_casino_high_limit"}
 	run.grand_casino_chips = 650
 	return run
+
+
+static func _heist_choice(run: RunState, event_id: String, choice_id: String) -> Dictionary:
+	var event_ids := _array(run.current_environment.get("event_ids", []))
+	if not event_ids.has(event_id): event_ids.append(event_id)
+	run.current_environment["event_ids"] = event_ids
+	run.current_environment["resolved_event_ids"] = []
+	run.current_environment["world_node_id"] = str(run.current_environment.get("world_node_id", "fixture_node"))
+	if str(run.current_environment.get("world_node_id", "")).is_empty(): run.current_environment["world_node_id"] = "fixture_node"
+	run.world_map["current_node_id"] = str(run.current_environment.get("world_node_id", "fixture_node"))
+	var choices := run.crew_heist_table_choices() if event_id == "crew_planning_table" else run.crew_heist_live_table_choices()
+	var hooks: Array = []
+	for choice_value in choices:
+		var choice := _dict(choice_value)
+		if str(choice.get("id", "")) == choice_id:
+			hooks = _array(_dict(choice.get("consequences", {})).get("event_hooks", []))
+			break
+	return run.crew_record_heist_event_result({"ok": true, "type": "event", "event_id": event_id, "choice_id": choice_id, "deltas": {"event_hooks": hooks}})
+
+
+static func _settle_whale_blackjack(run: RunState) -> Dictionary:
+	var result := GameModuleScript.build_action_result({"ok": true, "type": "game_action", "source_id": "blackjack", "game_id": "blackjack", "action_id": "stand", "action_kind": "legal", "stake": 20, "bankroll_delta": 0, "deltas": {"bankroll_delta": 0, "suspicion_delta": 0}, "environment_archetype_id": "grand_casino_high_limit"})
+	result["blackjack_hand_results"] = [{"outcome": "push"}]
+	GameModuleScript.apply_result(run, result)
+	var state := run.crew_heist_snapshot()
+	return {"resolved": str(state.get("status", "")) == CrewHeistModelScript.STATUS_COMPLETED, "payout": int(state.get("payout", 0))}
 
 
 static func _prepare(run: RunState, member_id: String, emitted: Array, witnessed: bool = false, plan_id: String = CrewHeistModelScript.PLAN_COUNT) -> void:
