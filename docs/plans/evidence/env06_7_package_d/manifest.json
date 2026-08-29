@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "package_id": "env06_7_punchline_clubs",
+  "status": "pending_warden_slot",
+  "capture_directory": "docs/plans/evidence/env06_7_package_d",
+  "raster_file_pattern": "{scenario_id}_{state_suffix}.png",
+  "contact_sheet": "env06_7_package_d_contact_sheet.png",
+  "required_state_suffixes": [
+    "arrival",
+    "partial",
+    "success",
+    "failure",
+    "refused",
+    "interrupted",
+    "reduced_motion",
+    "small_screen",
+    "hit_overlay",
+    "obstruction"
+  ],
+  "scenario_ids": [
+    "punchline_open_mic_night",
+    "punchline_headliner_night",
+    "punchline_bringer_show",
+    "punchline_high_stakes_night",
+    "punchline_greased_week",
+    "punchline_debt_court",
+    "punchline_new_muscle",
+    "punchline_raid_jitters",
+    "kitty_cat_lounge_amateur_night",
+    "kitty_cat_lounge_buyout",
+    "kitty_cat_lounge_slow_night",
+    "kitty_cat_lounge_bachelorette_storm"
+  ],
+  "expected_raster_count": 120,
+  "actual_raster_count": 0,
+  "contact_sheet_status": "pending",
+  "source_candidate": "ordered_a_b_c_plus_d_static_wip"
+}
