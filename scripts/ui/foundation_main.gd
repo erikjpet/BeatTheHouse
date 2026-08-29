@@ -1179,7 +1179,7 @@ func _sealed_action_host_ledger(candidate: RunState, create: bool = true, reconc
 	var table: Dictionary = current_game.call("_table_state", candidate, environment) if create else current_game.call("_table_state_preview", candidate, environment)
 	var binding := _sealed_action_host_table_binding(environment)
 	var expected_checkpoint := candidate.action_authority_checkpoint_fingerprint() if reconcile_checkpoint else ""
-	var validated := ActionAuthorityScript.validate_persisted_ledger(table.get(ActionAuthorityScript.LEDGER_KEY, {}), binding, expected_checkpoint)
+	var validated: Dictionary = ActionAuthorityScript.validate_persisted_ledger(table.get(ActionAuthorityScript.LEDGER_KEY, {}), binding, expected_checkpoint)
 	if not validated.is_empty() or not create:
 		return validated
 	return ActionAuthorityScript.default_ledger(binding, candidate.action_authority_checkpoint_fingerprint())
@@ -1300,7 +1300,7 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 				"message": "Retrying the sealed Blackjack action.",
 			})
 		if surface_action == ActionAuthorityScript.CANCEL_SURFACE_ACTION:
-			var cancelled := ActionAuthorityScript.cancel_delivery(ledger, pending)
+			var cancelled: Dictionary = ActionAuthorityScript.cancel_delivery(ledger, pending)
 			if not bool(cancelled.get("ok", false)):
 				return _sealed_action_host_rejection(str(cancelled.get("error_code", "receipt_content_conflict")), "Blackjack cancellation did not match the pending action.", str(pending.get("request_key", "")))
 			var cancelled_ledger: Dictionary = cancelled.get("ledger", ledger)
@@ -1335,7 +1335,7 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 			ledger = _sealed_action_host_ledger(candidate, true)
 			var action_id := str(command.get("action_id", ""))
 			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
-			var issued := ActionAuthorityScript.issue_delivery(ledger, action_id, _sealed_action_host_trusted_context(candidate, delivery_stake), delivery_stake, recovery_session)
+			var issued: Dictionary = ActionAuthorityScript.issue_delivery(ledger, action_id, _sealed_action_host_trusted_context(candidate, delivery_stake), delivery_stake, recovery_session)
 			if not bool(issued.get("ok", false)):
 				return _sealed_action_host_rejection(str(issued.get("error_code", "receipt_content_conflict")), "Blackjack delivery conflicts with the pending action.")
 			ledger = issued.get("ledger", ledger)
@@ -1376,7 +1376,7 @@ func _sealed_action_host_auto_intent(surface_time_msec: int) -> Dictionary:
 				return _sealed_action_host_rejection("internal_fail_closed", "Blackjack staged auto action could not be normalized before sealing.")
 			ledger = _sealed_action_host_ledger(candidate, true)
 			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
-			var issued := ActionAuthorityScript.issue_delivery(ledger, str(command.get("action_id", "")), _sealed_action_host_trusted_context(candidate, delivery_stake), delivery_stake, recovery_session)
+			var issued: Dictionary = ActionAuthorityScript.issue_delivery(ledger, str(command.get("action_id", "")), _sealed_action_host_trusted_context(candidate, delivery_stake), delivery_stake, recovery_session)
 			if not bool(issued.get("ok", false)):
 				return _sealed_action_host_rejection(str(issued.get("error_code", "receipt_content_conflict")), "Blackjack auto delivery conflicts with the pending action.")
 			ledger = issued.get("ledger", ledger)
@@ -1415,7 +1415,7 @@ func _sealed_action_host_replay_request(delivery_claim: Dictionary) -> Dictionar
 		return _sealed_action_host_rejection("unknown_receipt", "Blackjack request receipt is unavailable.", request_key)
 	var candidate := _sealed_action_host_detached()
 	var ledger := _sealed_action_host_ledger(candidate, false)
-	var replay := ActionAuthorityScript.cached_response(ledger, request_key, delivery_claim)
+	var replay: Dictionary = ActionAuthorityScript.cached_response(ledger, request_key, delivery_claim)
 	if replay.is_empty():
 		return _sealed_action_host_rejection("unknown_receipt", "Blackjack request receipt is unavailable.", request_key)
 	if not bool(replay.get("ok", false)) and replay.has("error_code"):
@@ -1433,7 +1433,7 @@ func _sealed_action_host_prepare_delivery(action_id: String, stake: int, deliver
 	if not requested_key.is_empty() and cache.has(requested_key):
 		if str(delivery_claim.get("action_id", "")) != action_id or int(delivery_claim.get("stake", -1)) != stake:
 			return _sealed_action_host_rejection("receipt_content_conflict", "Blackjack request receipt is bound to a different action or stake.", requested_key)
-		var cached_response := ActionAuthorityScript.cached_replay_response(ledger, requested_key, delivery_claim)
+		var cached_response: Dictionary = ActionAuthorityScript.cached_replay_response(ledger, requested_key, delivery_claim)
 		if cached_response.is_empty() or (not bool(cached_response.get("ok", false)) and cached_response.has("error_code")):
 			return _sealed_action_host_rejection("receipt_content_conflict", "Blackjack request receipt is bound to different content.", requested_key)
 		return {"ok": true, "cached_response": cached_response}
@@ -1442,13 +1442,13 @@ func _sealed_action_host_prepare_delivery(action_id: String, stake: int, deliver
 	if not pending.is_empty():
 		if not delivery_claim.is_empty() and GameRitualRuntimeScript.canonical_json(delivery_claim) != GameRitualRuntimeScript.canonical_json(pending):
 			return _sealed_action_host_rejection("stale_boundary", "Blackjack delivery belongs to a different action boundary.", requested_key)
-		var matched := ActionAuthorityScript.delivery_matches(ledger, str(pending.get("request_key", "")), action_id, context, stake)
+		var matched: Dictionary = ActionAuthorityScript.delivery_matches(ledger, str(pending.get("request_key", "")), action_id, context, stake)
 		if not bool(matched.get("ok", false)):
 			return _sealed_action_host_rejection(str(matched.get("error_code", "receipt_content_conflict")), "Blackjack delivery content changed before settlement.", str(pending.get("request_key", "")))
 		return {"ok": true, "delivery": pending.duplicate(true)}
 	if not requested_key.is_empty():
 		return _sealed_action_host_rejection("stale_boundary", "Blackjack delivery is no longer pending.", requested_key)
-	var issued := ActionAuthorityScript.issue_delivery(ledger, action_id, context, stake, ledger.get("session", {}))
+	var issued: Dictionary = ActionAuthorityScript.issue_delivery(ledger, action_id, context, stake, ledger.get("session", {}))
 	if not bool(issued.get("ok", false)):
 		return _sealed_action_host_rejection(str(issued.get("error_code", "receipt_content_conflict")), "Blackjack delivery could not be issued.")
 	ledger = issued.get("ledger", ledger)
@@ -1474,7 +1474,7 @@ func _sealed_action_host_cached_replay(delivery_claim: Dictionary) -> Dictionary
 	var cache: Dictionary = ledger.get("request_cache", {}) if typeof(ledger.get("request_cache", {})) == TYPE_DICTIONARY else {}
 	if ledger.is_empty() or not cache.has(request_key):
 		return {}
-	var replay := ActionAuthorityScript.cached_replay_response(ledger, request_key, delivery_claim)
+	var replay: Dictionary = ActionAuthorityScript.cached_replay_response(ledger, request_key, delivery_claim)
 	if replay.is_empty() or (not bool(replay.get("ok", false)) and replay.has("error_code")):
 		return _sealed_action_host_rejection("receipt_content_conflict", "Blackjack request receipt is bound to different content.", request_key)
 	return replay
@@ -1634,7 +1634,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	result[ActionAuthorityScript.HOST_CONTEXT_FINGERPRINT_KEY] = str(delivery.get("trusted_context_fingerprint", ""))
 	result[ActionAuthorityScript.HOST_CONTENT_FINGERPRINT_KEY] = ActionAuthorityScript.result_fingerprint(result)
 	var binding := _sealed_action_host_table_binding(proposed_candidate.current_environment)
-	var receipt := ActionAuthorityScript.receipt_for(
+	var receipt: Dictionary = ActionAuthorityScript.receipt_for(
 		delivery,
 		binding,
 		result,
