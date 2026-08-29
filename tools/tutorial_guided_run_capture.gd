@@ -345,6 +345,7 @@ func _stage_blackjack_raised_bet_surface() -> Dictionary:
 	var run_state: RunState = app.get("run_state")
 	if game == null or run_state == null:
 		return {}
+	BlackjackAuthorityTestDriverScript.pin_protected_peek_settlement_rng(run_state)
 	var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
 	var state: Dictionary = deal.get("ui_state", {})
 	app.set("game_surface_ui_state", state)
@@ -361,7 +362,6 @@ func _stage_blackjack_lookaway_surface(hand_state: Dictionary) -> void:
 	var distracted_state: Dictionary = distraction.get("ui_state", {})
 	var peek := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_peek", 4, run_state, run_state.current_environment, 0, true)
 	var peek_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, peek, 0, run_state, run_state.current_environment)
-	BlackjackAuthorityTestDriverScript.pin_protected_peek_settlement_rng(run_state)
 	var stand := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_stand", 4, run_state, run_state.current_environment)
 	var stand_result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, stand, 4, run_state, run_state.current_environment) if bool(stand.get("resolve", false)) else {}
 	var stand_table: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})

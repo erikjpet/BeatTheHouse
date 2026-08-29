@@ -80,6 +80,7 @@ func _run() -> void:
 	_check_live_equivalent_bindings(game)
 	_check_energy_and_restore_projection(game)
 	_check_ten_seed_projection_isolation(game)
+	_check_first_entry_surface_delivery(game)
 	_check_host_authority_and_replay(game)
 	_check_hostile_delivery_and_restore(game)
 	_check_failure_atomic_rng_retry(game)
@@ -94,6 +95,34 @@ func _run() -> void:
 		push_error(str(failure))
 	print("game06_2_depth_contract: FAIL (%d)" % failures.size())
 	quit(1)
+
+
+func _check_first_entry_surface_delivery(game: GameModule) -> void:
+	var run: RunState = RunStateScript.new()
+	run.start_new("GAME06-2-FIRST-GRAND-ENTRY")
+	run.change_bankroll(1000)
+	var environment := {
+		"id": "game06_2_first_grand_entry",
+		"display_name": "Grand Casino First Entry",
+		"archetype_id": "grand_casino",
+		"economic_profile": {"stake_floor": 5, "stake_ceiling": 100},
+		"security_profile": {"strictness": "high"},
+		"game_states": {},
+	}
+	run.current_environment = environment
+	var host := _authority_host(game, run, 5)
+	var command: Dictionary = host.call("_blackjack_host_surface_intent", "blackjack_deal", 0, false, 20000)
+	var delivery: Dictionary = command.get("_blackjack_host_delivery", {}) if typeof(command.get("_blackjack_host_delivery", {})) == TYPE_DICTIONARY else {}
+	var sealed_stake := int(delivery.get("stake", -1))
+	var trusted_context: Dictionary = host.call("_blackjack_host_trusted_context", run, sealed_stake)
+	_check(not delivery.is_empty() and str(command.get("action_id", "")) == "blackjack_place_bet", "First Grand entry did not issue a sealed Deal delivery.")
+	_check(str(delivery.get("trusted_context_fingerprint", "")) == RitualRuntimeScript.canonical_fingerprint(trusted_context), "First Grand entry changed canonical table context between Deal sealing and resolution.")
+	var result: Dictionary = host.call("_blackjack_host_resolve_intent", "blackjack_place_bet", sealed_stake, delivery)
+	_check(bool(result.get("ok", false)) and bool(result.get("blackjack_host_committed", false)), "First Grand entry could not consume its exact sealed Deal delivery: %s" % str(result))
+	var committed_snapshot := RitualRuntimeScript.canonical_json(run.to_save_snapshot())
+	var replay: Dictionary = host.call("_blackjack_host_resolve_intent", "blackjack_place_bet", sealed_stake, delivery)
+	_check(bool(replay.get("ok", false)) and replay.has("blackjack_host_replay"), "First Grand entry exact delivery did not replay from the canonical receipt cache.")
+	_check(RitualRuntimeScript.canonical_json(run.to_save_snapshot()) == committed_snapshot, "First Grand entry exact replay charged, dealt, or advanced RNG twice.")
 
 
 func _check_contract(game: GameModule) -> void:

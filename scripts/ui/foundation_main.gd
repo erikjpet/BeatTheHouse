@@ -1261,6 +1261,12 @@ func _blackjack_host_surface_intent(surface_action: String, index: int, confirm_
 		return _blackjack_host_rejection("invalid_intent", "Blackjack action intent is unavailable.")
 	var candidate := _blackjack_host_detached()
 	var ledger := _blackjack_host_ledger(candidate, true)
+	# First entry can materialize and normalize the Blackjack table while the
+	# authority ledger is being created. Persist that deterministic, non-economic
+	# table shape on the detached candidate before sealing a delivery so the
+	# trusted run context is identical when the delivery is consumed.
+	_blackjack_host_store_ledger(candidate, ledger)
+	ledger = _blackjack_host_ledger(candidate, true)
 	var pending: Dictionary = ledger.get("pending_delivery", {})
 	if not pending.is_empty():
 		if surface_action in ["blackjack_retry_pending", "blackjack_deal"]:

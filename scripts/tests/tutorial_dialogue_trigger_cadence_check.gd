@@ -380,6 +380,9 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 	# Reproduce the old bypass after the one-time warning was already consumed.
 	# The practice hand must still remain playable and Count must remain incomplete.
 	run_state.narrative_flags["tutorial_blackjack_peek_reprieve_used"] = true
+	# Pin the complete protected-hand fixture before its first authority boundary;
+	# changing account/RNG state after Deal would invalidate the sealed checkpoint.
+	BlackjackAuthorityTestDriverScript.pin_protected_peek_settlement_rng(run_state)
 	var peek_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
 	var peek_state: Dictionary = peek_deal.get("ui_state", {})
 	var caught := BlackjackAuthorityTestDriverScript.resolve(game, "peek_hole_card", 0, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_caught"), peek_state)
@@ -392,9 +395,6 @@ func _blackjack_count_hand_is_mandatory(live_run: RunState) -> bool:
 			or not TutorialFlow.apply_caught_transition(run_state, caught).is_empty():
 		_fail("A repeated/resumed tutorial Peek still barred blackjack or bypassed Count: %s." % str(caught))
 		return false
-	# The authority host owns its RNG, so pin one discovered fixture state rather
-	# than passing a cosmetic caller stream or retrying until the hand is safe.
-	BlackjackAuthorityTestDriverScript.pin_protected_peek_settlement_rng(run_state)
 	var peek_settlement := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_required_peek_finish"), protected_state)
 	if not bool(peek_settlement.get("ok", false)):
 		_fail("The protected Peek hand could not be settled before counting: %s." % str(peek_settlement))
