@@ -348,6 +348,7 @@ var crew_job_sequence: int = 0
 var _crew_job_host_capability: RefCounted
 var _crew_recruitment_host_capability: RefCounted
 var _world1_host_capability: RefCounted
+var _crew_heist_host_capability: RefCounted
 var active_delivery_run: Dictionary = {}
 var crew_pattern_memory: Dictionary = {}
 var scenario_host_transaction_ledger: Dictionary = {}
@@ -491,6 +492,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	_crew_job_host_capability = RefCounted.new()
 	_crew_recruitment_host_capability = RefCounted.new()
 	_world1_host_capability = RefCounted.new()
+	_crew_heist_host_capability = RefCounted.new()
 	active_delivery_run = {}
 	crew_pattern_memory = CrewPokerModelScript.default_observations()
 	scenario_host_transaction_ledger = {}
@@ -8839,24 +8841,74 @@ func _crew_heist_decision_choices(decision_id: String, values: Array) -> Array:
 	return result
 
 
-func crew_heist_event_action(hook: Dictionary) -> Dictionary:
+func crew_record_heist_event_result(result: Dictionary) -> Dictionary:
+	if not bool(result.get("ok", false)) or str(result.get("type", "")) != "event":
+		return {"ok": false, "reason": "not_resolved_event"}
+	var event_id := str(result.get("event_id", result.get("source_id", ""))).strip_edges()
+	var choice_id := str(result.get("choice_id", result.get("action_id", ""))).strip_edges()
+	if event_id not in ["crew_planning_table", "heist_live_table"] or choice_id.is_empty() \
+			or not _copy_array(current_environment.get("event_ids", [])).has(event_id) \
+			or _copy_array(current_environment.get("resolved_event_ids", [])).has(event_id):
+		return {"ok": false, "reason": "event_not_live"}
+	var live_choices := crew_heist_table_choices() if event_id == "crew_planning_table" else crew_heist_live_table_choices()
+	var expected_hook: Dictionary = {}
+	for choice_value in live_choices:
+		var choice := _copy_dict(choice_value)
+		if str(choice.get("id", "")) != choice_id or bool(choice.get("disabled", false)): continue
+		var candidate_hooks: Array = []
+		for hook_value in _copy_array(_copy_dict(choice.get("consequences", {})).get("event_hooks", [])):
+			var candidate := _copy_dict(hook_value)
+			if str(candidate.get("type", "")) == "crew_heist": candidate_hooks.append(candidate)
+		if candidate_hooks.size() == 1: expected_hook = _copy_dict(candidate_hooks[0])
+		break
+	if expected_hook.is_empty(): return {"ok": false, "reason": "choice_not_live"}
+	var supplied_hooks: Array = []
+	for hook_value in _copy_array(_copy_dict(result.get("deltas", {})).get("event_hooks", [])):
+		var supplied := _copy_dict(hook_value)
+		if str(supplied.get("type", "")) == "crew_heist": supplied_hooks.append(supplied)
+	if supplied_hooks.size() != 1 or JSON.stringify(supplied_hooks[0]) != JSON.stringify(expected_hook):
+		return {"ok": false, "reason": "hook_mismatch"}
+	return crew_heist_event_action(expected_hook, _crew_heist_host_capability)
+
+
+func crew_heist_event_action(hook: Dictionary, host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability:
+		return {"ok": false, "message": "The heist host rejected that action."}
+	var rollback := _environment_turn_snapshot()
+	var action := str(hook.get("action", ""))
+	var result: Dictionary = {}
 	match str(hook.get("action", "")):
-		"lock": return crew_heist_lock(str(hook.get("plan_id", "")))
-		"observe_table": return crew_heist_observe_table()
-		"confront": return crew_heist_confront(str(hook.get("member_id", "")))
-		"hedge": return crew_heist_hedge()
-		"abort": return crew_heist_abort("planning_table")
-		"count_schedule": return crew_heist_begin_count_schedule()
-		"count_cart": return crew_heist_begin_count_swap_cart()
-		"begin_play": return crew_heist_begin_play()
-		"decide": return crew_heist_decide(str(hook.get("decision", "")), str(hook.get("choice", "")))
-		"begin_interview": return crew_heist_begin_interview()
-		"resolve_interview": return crew_heist_resolve_interview(str(hook.get("choice", "")))
-		"begin_getaway": return crew_heist_begin_getaway()
-	return {"ok": false, "message": "That part of the plan is not live."}
+		"lock": result = crew_heist_lock(str(hook.get("plan_id", "")), host_capability)
+		"observe_table": result = crew_heist_observe_table(host_capability)
+		"confront": result = crew_heist_confront(str(hook.get("member_id", "")), host_capability)
+		"hedge": result = crew_heist_hedge(host_capability)
+		"abort": result = crew_heist_abort("planning_table", host_capability)
+		"count_schedule": result = crew_heist_begin_count_schedule(host_capability)
+		"count_cart": result = crew_heist_begin_count_swap_cart(host_capability)
+		"begin_play": result = crew_heist_begin_play(host_capability)
+		"decide": result = crew_heist_decide(str(hook.get("decision", "")), str(hook.get("choice", "")), host_capability)
+		"begin_interview": result = crew_heist_begin_interview(host_capability)
+		"resolve_interview": result = crew_heist_resolve_interview(str(hook.get("choice", "")), host_capability)
+		"begin_getaway": result = crew_heist_begin_getaway(host_capability)
+		_: result = {"ok": false, "message": "That part of the plan is not live."}
+	if not bool(result.get("ok", false)):
+		_apply_environment_turn_snapshot(rollback, false)
+		return result
+	var action_codes := {"lock": 1, "observe_table": 2, "confront": 3, "hedge": 4, "abort": 5, "count_schedule": 6, "count_cart": 7, "begin_play": 8, "decide": 9, "begin_interview": 10, "resolve_interview": 11, "begin_getaway": 12}
+	var phase_codes := {CrewHeistModelScript.STATUS_SETUP: 1, CrewHeistModelScript.STATUS_PLAY: 2, CrewHeistModelScript.STATUS_INTERVIEW: 3, CrewHeistModelScript.STATUS_GETAWAY: 4, CrewHeistModelScript.STATUS_COMPLETED: 5, CrewHeistModelScript.STATUS_ABORTED: 6}
+	var state := CrewHeistModelScript.record_tombstone(crew_heist_state, _crew_action_index(), int(action_codes.get(action, 99)), int(phase_codes.get(str(crew_heist_state.get("status", "")), 9)))
+	if state.is_empty():
+		_apply_environment_turn_snapshot(rollback, false)
+		return {"ok": false, "message": "The heist receipt could not be committed."}
+	if action in ["observe_table", "confront", "hedge"]:
+		var private_codes := {"observe_table": 1, "confront": 2, "hedge": 3}
+		state["x"] = CrewTurnModelScript.record_tombstone(state.get("x", {}), _crew_action_index(), int(private_codes.get(action, 99)), CrewStateModelScript.MEMBER_IDS)
+	crew_heist_state = state
+	return result
 
 
-func crew_heist_lock(plan_id: String) -> Dictionary:
+func crew_heist_lock(plan_id: String, host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	if not crew_heist_state.is_empty():
 		return {"ok": false, "message": "One score is already the run's score."}
 	for row_value in _copy_array(crew_heist_planning_status().get("plans", [])):
@@ -8891,7 +8943,8 @@ func _crew_heist_private_choices() -> Array:
 	return result
 
 
-func crew_heist_observe_table() -> Dictionary:
+func crew_heist_observe_table(host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	if str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
 		return {"ok": false, "message": "The room has moved past talk."}
@@ -8921,7 +8974,8 @@ func crew_heist_observe_table() -> Dictionary:
 	return {"ok": true, "message": "The route gets read without another word."}
 
 
-func crew_heist_confront(member_id: String) -> Dictionary:
+func crew_heist_confront(member_id: String, host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	var hidden := CrewTurnModelScript.normalize_state(state.get("x", {}), CrewStateModelScript.MEMBER_IDS)
 	if str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP or CrewTurnModelScript.witnessed_count(hidden, CrewStateModelScript.MEMBER_IDS) < 2:
@@ -8958,7 +9012,8 @@ func crew_heist_confront(member_id: String) -> Dictionary:
 	return {"ok": true, "message": "%s leaves first. Nobody brightens the lamp for the next name." % member_id.trim_prefix("crew_").capitalize()}
 
 
-func crew_heist_hedge() -> Dictionary:
+func crew_heist_hedge(host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	var hidden := CrewTurnModelScript.normalize_state(state.get("x", {}), CrewStateModelScript.MEMBER_IDS)
 	if str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP or CrewTurnModelScript.witnessed_count(hidden, CrewStateModelScript.MEMBER_IDS) != 1 or bool(hidden.get("h", false)):
@@ -9020,7 +9075,8 @@ static func _crew_clock_label(total_minutes: int) -> String:
 	return "%d:%02d %s" % [hour_12, minute_of_day % 60, "AM" if hour_24 < 12 else "PM"]
 
 
-func crew_heist_abort(reason: String = "retreated") -> Dictionary:
+func crew_heist_abort(reason: String = "retreated", host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	if state.is_empty() or [CrewHeistModelScript.STATUS_PLAY, CrewHeistModelScript.STATUS_GETAWAY, CrewHeistModelScript.STATUS_COMPLETED, CrewHeistModelScript.STATUS_ABORTED].has(str(state.get("status", ""))):
 		return {"ok": false, "message": "That retreat is no longer available."}
@@ -9034,7 +9090,8 @@ func crew_heist_abort(reason: String = "retreated") -> Dictionary:
 	return {"ok": true, "cost": paid, "run_ended": false, "message": "The crew folds the map. Preparation costs $%d; the run stays yours." % paid}
 
 
-func crew_heist_record_count_session(bet: int, heat_start: int, heat_peak: int, settled: bool = true, session_id: String = "") -> Dictionary:
+func crew_heist_record_count_session(bet: int, heat_start: int, heat_peak: int, settled: bool = true, session_id: String = "", host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_COUNT or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
 		return {"ok": false}
@@ -9058,15 +9115,18 @@ func crew_heist_record_count_session(bet: int, heat_start: int, heat_peak: int, 
 	return {"ok": true, "qualified": qualifies, "sessions": count, "complete": bool(setup.get("identity", false)), "message": "Bishop keeps the sessions that look like furniture."}
 
 
-func crew_heist_begin_count_schedule() -> Dictionary:
+func crew_heist_begin_count_schedule(host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	return _crew_heist_begin_setup_delivery("schedule", true)
 
 
-func crew_heist_begin_count_swap_cart() -> Dictionary:
+func crew_heist_begin_count_swap_cart(host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	return _crew_heist_begin_setup_delivery("swap_cart", false)
 
 
-func crew_heist_record_whale_vouch(session_loss: int, entourage_beat: bool = true) -> Dictionary:
+func crew_heist_record_whale_vouch(session_loss: int, entourage_beat: bool = true, host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
 		return {"ok": false}
@@ -9082,7 +9142,8 @@ func crew_heist_record_whale_vouch(session_loss: int, entourage_beat: bool = tru
 	return {"ok": true, "rounds": rounds, "loss": loss, "complete": bool(setup.get("vouch", false))}
 
 
-func crew_heist_record_whale_rig(_component_sourced: bool = false, _training_source: String = "") -> Dictionary:
+func crew_heist_record_whale_rig(_component_sourced: bool = false, _training_source: String = "", host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
 		return {"ok": false}
@@ -9096,7 +9157,8 @@ func crew_heist_record_whale_rig(_component_sourced: bool = false, _training_sou
 	return {"ok": true, "component": sourced, "trained": trained, "complete": bool(setup.get("rig", false))}
 
 
-func crew_heist_record_whale_name(spend: int, seen_beat: bool) -> Dictionary:
+func crew_heist_record_whale_name(spend: int, seen_beat: bool, host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
 		return {"ok": false}
@@ -9151,7 +9213,8 @@ func _crew_heist_boundary_sync() -> void:
 	_crew_heist_sync_whale_setup()
 
 
-func crew_heist_begin_play() -> Dictionary:
+func crew_heist_begin_play(host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	if state.is_empty() or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
 		return {"ok": false, "message": "There is no prepared play."}
@@ -9163,7 +9226,7 @@ func crew_heist_begin_play() -> Dictionary:
 	state["setup"] = setup
 	if str(state.get("plan_id", "")) == CrewHeistModelScript.PLAN_COUNT and not bool(setup.get("identity", false)):
 		crew_heist_state = state
-		var forced_abort := crew_heist_abort("identity_shortfall")
+		var forced_abort := crew_heist_abort("identity_shortfall", host_capability)
 		forced_abort["forced"] = bool(forced_abort.get("ok", false))
 		forced_abort["message"] = "The identity never held. Bishop folds the score and the preparation cost stays spent."
 		return forced_abort
@@ -9183,7 +9246,8 @@ func crew_heist_begin_play() -> Dictionary:
 	return {"ok": true, "message": "The Play begins at the real table."}
 
 
-func crew_heist_decide(decision_id: String, choice: String) -> Dictionary:
+func crew_heist_decide(decision_id: String, choice: String, host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	if str(state.get("status", "")) != CrewHeistModelScript.STATUS_PLAY:
 		return {"ok": false}
@@ -9212,7 +9276,8 @@ func crew_heist_decide(decision_id: String, choice: String) -> Dictionary:
 	return {"ok": true, "decision": decision_id, "choice": choice}
 
 
-func crew_heist_play_round(round_data: Dictionary) -> Dictionary:
+func crew_heist_play_round(round_data: Dictionary, host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	if str(state.get("status", "")) != CrewHeistModelScript.STATUS_PLAY:
 		return {"ok": false}
@@ -9326,7 +9391,8 @@ func _crew_heist_hidden_partial_payout(state: Dictionary) -> int:
 	return int(floor(float(CrewHeistModelScript.payout_for(state, "clean_sweep")) * float(partial_rng.randi_range(low, high)) / 100.0))
 
 
-func crew_heist_begin_interview() -> Dictionary:
+func crew_heist_begin_interview(host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_PLAY:
 		return {"ok": false, "message": "No invitational pot is ready for the cage."}
@@ -9341,7 +9407,8 @@ func crew_heist_begin_interview() -> Dictionary:
 	return {"ok": true, "cracked": cracked, "message": "The cage counts the chips. Rourke lets the borrowed name answer for them."}
 
 
-func crew_heist_resolve_interview(choice: String) -> Dictionary:
+func crew_heist_resolve_interview(choice: String, host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_INTERVIEW:
 		return {"ok": false}
@@ -9356,10 +9423,11 @@ func crew_heist_resolve_interview(choice: String) -> Dictionary:
 		interview["cracked"] = true
 	state["interview"] = interview
 	crew_heist_state = state
-	return crew_heist_begin_getaway()
+	return crew_heist_begin_getaway(host_capability)
 
 
-func crew_heist_begin_getaway() -> Dictionary:
+func crew_heist_begin_getaway(host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
 	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
 	var plan_id := str(state.get("plan_id", ""))
 	var phase := str(state.get("status", ""))
@@ -9985,15 +10053,15 @@ func _crew_heist_record_settled_game(game_id: String, venue_id: String, result: 
 	if phase == CrewHeistModelScript.STATUS_SETUP:
 		if plan_id == CrewHeistModelScript.PLAN_COUNT and venue_id in GRAND_CASINO_ARCHETYPE_IDS:
 			var session_id := str(result.get("session_id", "%s:%s" % [_event_cadence_visit_key(current_environment), game_id]))
-			crew_heist_record_count_session(int(result.get("bet", result.get("wager", result.get("stake", 0)))), int(result.get("heat_start", suspicion_level())), int(result.get("heat_peak", suspicion_level())), bool(result.get("ok", true)), session_id)
+			crew_heist_record_count_session(int(result.get("bet", result.get("wager", result.get("stake", 0)))), int(result.get("heat_start", suspicion_level())), int(result.get("heat_peak", suspicion_level())), bool(result.get("ok", true)), session_id, _crew_heist_host_capability)
 		elif plan_id == CrewHeistModelScript.PLAN_WHALE and bool(narrative_flags.get("heist_plan_b_whale_vouch", false)) and net < 0 and _crew_heist_whale_vouch_table_active(venue_id):
 			_crew_heist_sync_whale_setup()
-			crew_heist_record_whale_vouch(net, true)
+			crew_heist_record_whale_vouch(net, true, _crew_heist_host_capability)
 		return
 	if phase != CrewHeistModelScript.STATUS_PLAY:
 		return
 	if plan_id == CrewHeistModelScript.PLAN_COUNT and venue_id in GRAND_CASINO_ARCHETYPE_IDS:
-		crew_heist_play_round({"game_id": game_id, "bet": int(result.get("bet", result.get("wager", result.get("stake", 0)))), "heat_delta": int(result.get("heat_delta", deltas.get("suspicion_delta", 0)))})
+		crew_heist_play_round({"game_id": game_id, "bet": int(result.get("bet", result.get("wager", result.get("stake", 0)))), "heat_delta": int(result.get("heat_delta", deltas.get("suspicion_delta", 0)))}, _crew_heist_host_capability)
 	elif plan_id == CrewHeistModelScript.PLAN_WHALE and venue_id == str(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_WHALE).get("play", {})).get("venue_archetype", GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)) and game_id in ["craps", "blackjack", "baccarat", "poker", "video_poker"]:
 		var whale_facts := _crew_heist_whale_result_facts(game_id, result)
 		state = CrewHeistModelScript.normalize_state(crew_heist_state)
@@ -10008,7 +10076,7 @@ func _crew_heist_record_settled_game(game_id: String, venue_id: String, result: 
 			crew_heist_state = state
 		var honest := bool(whale_facts.get("honest", true)) and not bool(pending.get("dishonest", false))
 		var made_now := bool(whale_facts.get("made", false)) and not bool(play.get("made", false))
-		crew_heist_play_round({"game_id": game_id, "honest": honest, "made": made_now, "pot_delta": net})
+		crew_heist_play_round({"game_id": game_id, "honest": honest, "made": made_now, "pot_delta": net}, _crew_heist_host_capability)
 
 
 func _crew_heist_whale_vouch_table_active(venue_id: String) -> bool:
@@ -14555,6 +14623,7 @@ func from_dict(data: Dictionary) -> void:
 	rng_state = int(data.get("rng_state", rng_seed))
 	challenge_config = normalize_challenge(seed_text, _copy_dict(data.get("challenge_config", standard_challenge(seed_text))))
 	_world1_host_capability = RefCounted.new()
+	_crew_heist_host_capability = RefCounted.new()
 	town_state = TownStateScript.new()
 	town_state.bind_host_capability(_world1_host_capability)
 	var saved_town_value: Variant = data.get("town_state", {})
@@ -15207,8 +15276,10 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 		_crew_recruitment_host_capability = RefCounted.new()
 	if _world1_host_capability == null:
 		_world1_host_capability = RefCounted.new()
+	if _crew_heist_host_capability == null:
+		_crew_heist_host_capability = RefCounted.new()
 	crew_play_state = CrewPlayModelScript.restore_state(saved.get("plays", {}))
-	crew_heist_state = CrewHeistModelScript.normalize_state(saved.get("crew_heist", {}))
+	crew_heist_state = CrewHeistModelScript.restore_state(saved.get("crew_heist", {}))
 	var saved_marks: Dictionary = saved.get("m", {}) if typeof(saved.get("m", {})) == TYPE_DICTIONARY else {}
 	for member_id in CrewStateModelScript.MEMBER_IDS:
 		# Keep an empty/sparse save projection sparse. Session recording already

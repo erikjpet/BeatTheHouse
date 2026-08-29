@@ -347,7 +347,7 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 			"crew_rook_ride":
 				service_result = run_state.crew_rook_begin_ride()
 			"crew_heist":
-				service_result = run_state.crew_heist_event_action(pre_hook)
+				service_result = run_state.crew_record_heist_event_result(result)
 		if not service_result.is_empty():
 			if not bool(service_result.get("ok", false)):
 				result["ok"] = false
