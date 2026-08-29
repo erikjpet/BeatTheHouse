@@ -302,6 +302,24 @@ static func physical_projection(state_value: Variant) -> Dictionary:
 	}
 
 
+static func cargo(state_value: Variant) -> Dictionary:
+	var state := normalize_state(state_value)
+	var physical := physical_projection(state)
+	if state.is_empty() or physical.is_empty():
+		return {}
+	return {
+		"instance_id": str(physical.get("instance_id", "")),
+		"cargo_id": str(physical.get("cargo_id", "")),
+		"label": str(physical.get("cargo_label", "")),
+		"status": str(physical.get("cargo_state", CARGO_NONE)),
+		"node_id": str(physical.get("cargo_node_id", "")),
+	}
+
+
+static func chase_verbs() -> Array:
+	return ["move", "wait", "duck"]
+
+
 static func bind_legacy_position(state_value: Variant, host_node_id: String) -> Dictionary:
 	var state := normalize_state(state_value)
 	var clean_node := host_node_id.strip_edges()
@@ -444,6 +462,8 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 					or node_id != str(cargo.get("node_id", "")) or node_id != str(position.get("node_id", "")) \
 					or target_id.is_empty() or target_id != str(cargo.get("place_id", "")):
 				return state
+			position["last_verb"] = action
+			depth["position"] = position
 			depth["cargo"] = _physical_cargo(CARGO_CARRIED, node_id, "player", "player")
 			state["depth_state"] = depth
 		"move":
@@ -474,6 +494,8 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 			if str(cargo.get("status", "")) != CARGO_CARRIED or node_id.is_empty() or place_id.is_empty() \
 					or node_id != str(position.get("node_id", "")) or node_id != str(cargo.get("node_id", "")):
 				return state
+			position["last_verb"] = action
+			depth["position"] = position
 			depth["cargo"] = _physical_cargo(CARGO_STASHED, node_id, "stash", place_id)
 			state["depth_state"] = depth
 		"retrieve":
@@ -481,12 +503,16 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 					or node_id != str(position.get("node_id", "")) or node_id != str(cargo.get("node_id", "")) \
 					or place_id != str(cargo.get("place_id", "")):
 				return state
+			position["last_verb"] = action
+			depth["position"] = position
 			depth["cargo"] = _physical_cargo(CARGO_CARRIED, node_id, "player", "player")
 			state["depth_state"] = depth
 		"ditch":
 			if str(cargo.get("status", "")) not in [CARGO_CARRIED, CARGO_STASHED] or node_id.is_empty() \
 					or node_id != str(cargo.get("node_id", "")) or (str(cargo.get("status", "")) == CARGO_STASHED and place_id != str(cargo.get("place_id", ""))):
 				return state
+			position["last_verb"] = action
+			depth["position"] = position
 			depth["cargo"] = _physical_cargo(CARGO_DITCHED, node_id, "street", place_id)
 			state["depth_state"] = depth
 			state = _resolve(state, "failed", "ditched", false)
@@ -500,10 +526,13 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 		"signal":
 			if str(state.get("mode", "")) != MODE_HOLD or signal_id.is_empty():
 				return state
+			state = _record_physical_position(state, node_id, action)
 			state = _advance_hold_choice(state, node_id, attention, action_index, signal_id)
 		"break_hold":
 			if str(state.get("mode", "")) != MODE_HOLD or node_id != str(position.get("node_id", "")):
 				return state
+			state = _record_physical_position(state, node_id, action)
+			depth = _copy_dict(state.get("depth_state", {}))
 			depth["hold_aftermath"] = {"outcome": "broken_early", "node_id": node_id, "action_index": action_index}
 			state["depth_state"] = depth
 			state = _resolve(state, "failed", "hold_broken", false)
@@ -527,6 +556,7 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 			var next_target := _copy_dict(_copy_array(state.get("targets", []))[next_target_index])
 			if target_id.is_empty() or target_id != str(next_target.get("id", "")) or node_id != str(next_target.get("node_id", "")):
 				return state
+			state = _record_physical_position(state, node_id, action)
 			var handed := complete_handoff(state, node_id)
 			if JSON.stringify(handed) == JSON.stringify(state):
 				return state
@@ -905,7 +935,7 @@ static func _available_physical_verbs(state: Dictionary) -> Array:
 	if cargo_status == CARGO_CARRIED:
 		result.append_array(["stash", "ditch"])
 		if not str(state.get("handoff_pending_node_id", "")).is_empty(): result.append("handoff")
-	elif cargo_status == CARGO_STASHED:
+	elif cargo_status == CARGO_STASHED and str(cargo.get("node_id", "")) == str(position.get("node_id", "")):
 		result.append_array(["retrieve", "ditch"])
 	return result
 
