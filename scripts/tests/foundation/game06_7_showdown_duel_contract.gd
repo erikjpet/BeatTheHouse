@@ -1,19 +1,37 @@
 extends SceneTree
 
-const RitualProjectionScript := preload("res://scripts/core/grand_casino_duel_ritual_projection.gd")
-const DuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
-const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
+const RITUAL_PROJECTION_PATH := "res://scripts/core/grand_casino_duel_ritual_projection.gd"
+const DUEL_MODEL_PATH := "res://scripts/core/grand_casino_duel_model.gd"
+const RNG_STREAM_PATH := "res://scripts/core/rng_stream.gd"
 const CONTRACT_PATH := "res://data/games/showdown_duel_game_ritual_v1.json"
 const DESIGN_PATH := "res://data/games/showdown_duel_ritual_v1.json"
 const EVENTS_PATH := "res://data/events/events.json"
 const EXPECTED_PHASES := ["approach", "seating", "response", "commitment", "reveal", "phase_break", "crowd_change", "outcome_staging", "exit"]
+const REQUIRED_COVERAGE := {
+	"dependency_scripts": 3,
+	"dependency_instances": 3,
+	"contract": 1,
+	"ladder_cases": 5,
+	"ladder_terminals": 2,
+	"determinism_seeds": 10,
+	"phase_transitions": 8,
+	"phase_machine": 1,
+	"privacy": 1,
+	"product_adapter": 1,
+	"liveness_iterations": 1000,
+}
 
-var _projection: Variant = RitualProjectionScript
-var _duel_model: Variant = DuelModelScript
+var _projection: Variant
+var _duel_model: Variant
+var _rng_stream_script: Variant
+var _coverage: Dictionary = {}
 
 
 func _initialize() -> void:
 	var failures: Array = []
+	if not _load_and_validate_dependencies(failures):
+		_finish(failures)
+		return
 	var contract_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(CONTRACT_PATH))
 	if typeof(contract_value) != TYPE_DICTIONARY:
 		_finish(["SHOWDOWN-DUEL contract JSON did not parse."])
@@ -32,6 +50,50 @@ func _initialize() -> void:
 	_check_product_surface_adapter(failures)
 	_check_liveness_performance(failures)
 	_finish(failures)
+
+
+func _load_and_validate_dependencies(failures: Array) -> bool:
+	_rng_stream_script = _load_script_dependency(RNG_STREAM_PATH, "RngStream", ["configure"], failures)
+	_duel_model = _load_script_dependency(DUEL_MODEL_PATH, "GrandCasinoDuelModel", ["outcome_for_margin", "apply_hand", "initialize"], failures)
+	_projection = _load_script_dependency(RITUAL_PROJECTION_PATH, "GrandCasinoDuelRitualProjection", ["initial_state", "apply_transition", "normalize_state", "record_one_shot", "public_projection", "public_duel_fingerprint", "sealed_product_projection", "verify_product_projection"], failures)
+	if _rng_stream_script == null or _duel_model == null or _projection == null:
+		return false
+	var projection_constants := _projection.get_script_constant_map()
+	if not projection_constants.has("RITUAL_ID") or str(projection_constants.get("RITUAL_ID", "")).is_empty():
+		failures.append("GrandCasinoDuelRitualProjection is missing its nonempty RITUAL_ID constant.")
+		return false
+	for row in [["RngStream", _rng_stream_script], ["GrandCasinoDuelModel", _duel_model], ["GrandCasinoDuelRitualProjection", _projection]]:
+		var instance: Variant = (row[1] as Script).new()
+		if instance == null:
+			failures.append("%s could not be constructed after loading." % str(row[0]))
+			continue
+		_mark_coverage("dependency_instances")
+	if int(_coverage.get("dependency_instances", 0)) != 3:
+		return false
+	return failures.is_empty()
+
+
+func _load_script_dependency(path: String, label: String, required_methods: Array, failures: Array) -> Script:
+	var failure_count_before := failures.size()
+	var resource: Resource = load(path)
+	if resource == null or not resource is Script:
+		failures.append("%s dependency did not load as a Script: %s" % [label, path])
+		return null
+	var script := resource as Script
+	if not script.can_instantiate():
+		failures.append("%s dependency failed to compile or cannot instantiate: %s" % [label, path])
+		return null
+	var method_names: Dictionary = {}
+	for method_value in script.get_script_method_list():
+		var method := _dict(method_value)
+		method_names[str(method.get("name", ""))] = true
+	for required_method in required_methods:
+		if not method_names.has(str(required_method)):
+			failures.append("%s dependency is missing required method %s." % [label, str(required_method)])
+	if failures.size() != failure_count_before:
+		return null
+	_mark_coverage("dependency_scripts")
+	return script
 
 
 func _check_contract(contract: Dictionary, design: Dictionary, failures: Array) -> void:
@@ -92,6 +154,7 @@ func _check_contract(contract: Dictionary, design: Dictionary, failures: Array) 
 	var privacy := _dict(design.get("privacy", {}))
 	for forbidden in ["turn_member_id", "turn_eligible_members", "turn_roll", "turn_threshold", "hidden_contradiction", "x"]:
 		if not _array(privacy.get("forbidden_fields", [])).has(forbidden): failures.append("Privacy contract lost forbidden field %s." % forbidden)
+	_mark_coverage("contract")
 
 
 func _check_ladder(contract: Dictionary, failures: Array) -> void:
@@ -101,13 +164,27 @@ func _check_ladder(contract: Dictionary, failures: Array) -> void:
 	var cases := [[12,"walk_out_clean"],[11,"shown_the_door"],[-59,"shown_the_door"],[-60,"shown_the_door"],[-61,"taken_out_back"]]
 	for case_value in cases:
 		var row := case_value as Array
-		if _duel_model.outcome_for_margin(int(row[0]), thresholds) != str(row[1]): failures.append("Outcome ladder changed at margin %d." % int(row[0]))
+		var outcome: Variant = _duel_model.call("outcome_for_margin", int(row[0]), thresholds)
+		if typeof(outcome) != TYPE_STRING or str(outcome).is_empty():
+			failures.append("Outcome ladder returned an empty/null result at margin %d." % int(row[0]))
+			continue
+		_mark_coverage("ladder_cases")
+		if str(outcome) != str(row[1]): failures.append("Outcome ladder changed at margin %d." % int(row[0]))
 	var terms := _duel_terms()
+	if terms.is_empty():
+		failures.append("SHOWDOWN-DUEL terms could not be loaded from events data.")
+		return
 	var player_zero := _duel_state(10, 10, 0, 5)
-	var player_result: Dictionary = _duel_model.apply_hand(player_zero, {"transfer":-10}, terms)
+	var player_value: Variant = _duel_model.call("apply_hand", player_zero, {"transfer":-10}, terms)
+	var player_result := _dict(player_value)
+	if player_result.is_empty() or _dict(player_result.get("state", {})).is_empty(): failures.append("Player stack-zero model result was empty/null.")
+	else: _mark_coverage("ladder_terminals")
 	if str(_dict(player_result.get("state", {})).get("outcome", "")) != "taken_out_back": failures.append("Player stack-zero terminal changed.")
 	var rourke_zero := _duel_state(10, 10, 0, 5)
-	var rourke_result: Dictionary = _duel_model.apply_hand(rourke_zero, {"transfer":10}, terms)
+	var rourke_value: Variant = _duel_model.call("apply_hand", rourke_zero, {"transfer":10}, terms)
+	var rourke_result := _dict(rourke_value)
+	if rourke_result.is_empty() or _dict(rourke_result.get("state", {})).is_empty(): failures.append("Rourke stack-zero model result was empty/null.")
+	else: _mark_coverage("ladder_terminals")
 	if str(_dict(rourke_result.get("state", {})).get("outcome", "")) != "walk_out_clean": failures.append("Rourke stack-zero terminal changed.")
 	var rules := _dict(terms.get("rules", {}))
 	for pair in [["hand_limit",5],["base_ante",20],["correct_call_swing",18],["false_call_cost",6],["player_cheat_detection_base",55],["player_cheat_detection_per_aggression",5],["player_cheat_detection_per_cheat_level",5],["player_cheat_caught_penalty",18]]:
@@ -116,15 +193,30 @@ func _check_ladder(contract: Dictionary, failures: Array) -> void:
 
 func _check_ten_seed_determinism(failures: Array) -> void:
 	var terms := _duel_terms()
+	if terms.is_empty():
+		failures.append("Ten-seed determinism has no SHOWDOWN-DUEL terms.")
+		return
 	for seed in range(1, 11):
-		var rng_a: Variant = RngStreamScript.new(); rng_a.configure(seed)
-		var rng_b: Variant = RngStreamScript.new(); rng_b.configure(seed)
-		var state_a: Dictionary = _duel_model.initialize(terms, rng_a)
-		var state_b: Dictionary = _duel_model.initialize(terms, rng_b)
+		var rng_a: Variant = _rng_stream_script.new()
+		var rng_b: Variant = _rng_stream_script.new()
+		if rng_a == null or rng_b == null or not rng_a.has_method("configure") or not rng_b.has_method("configure"):
+			failures.append("RngStream construction/configure failed at seed %d." % seed)
+			continue
+		rng_a.call("configure", seed)
+		rng_b.call("configure", seed)
+		var state_a := _dict(_duel_model.call("initialize", terms, rng_a))
+		var state_b := _dict(_duel_model.call("initialize", terms, rng_b))
+		if state_a.is_empty() or state_b.is_empty():
+			failures.append("Duel model returned an empty/null initialized state at seed %d." % seed)
+			continue
 		if _fingerprint(state_a) != _fingerprint(state_b): failures.append("Duel authority drifted at seed %d." % seed)
-		var ritual_a: Dictionary = _projection.initial_state({"duel_id":"showdown","attempt":seed,"route_id":"pit_boss_showdown","result_serial":0})
-		var ritual_b: Dictionary = _projection.initial_state({"duel_id":"showdown","attempt":seed,"route_id":"pit_boss_showdown","result_serial":0,"turn_roll":seed * 999})
+		var ritual_a := _dict(_projection.call("initial_state", {"duel_id":"showdown","attempt":seed,"route_id":"pit_boss_showdown","result_serial":0}))
+		var ritual_b := _dict(_projection.call("initial_state", {"duel_id":"showdown","attempt":seed,"route_id":"pit_boss_showdown","result_serial":0,"turn_roll":seed * 999}))
+		if ritual_a.is_empty() or ritual_b.is_empty():
+			failures.append("Ritual projection returned an empty/null initial state at seed %d." % seed)
+			continue
 		if _fingerprint(ritual_a) != _fingerprint(ritual_b): failures.append("Hidden input changed ritual authority at seed %d." % seed)
+		_mark_coverage("determinism_seeds")
 
 
 func _check_phase_machine(failures: Array) -> void:
@@ -139,6 +231,8 @@ func _check_phase_machine(failures: Array) -> void:
 		var result: Dictionary = _projection.apply_transition(state, str(step[0]), receipt, {"authoritative_result_ref":str(step[1])})
 		if not bool(result.get("ok", false)): failures.append("Legal phase transition %d failed." % index); return
 		state = _dict(result.get("state", {}))
+		if state.is_empty(): failures.append("Legal phase transition %d returned empty/null state." % index); return
+		_mark_coverage("phase_transitions")
 		var replay: Dictionary = _projection.apply_transition(state, str(step[0]), receipt, {"authoritative_result_ref":str(step[1])})
 		if not bool(replay.get("ok", false)) or not bool(replay.get("replayed", false)) or _fingerprint(replay.get("state", {})) != _fingerprint(state): failures.append("Transition %d did not replay exactly once." % index)
 		var conflict: Dictionary = _projection.apply_transition(state, str(step[0]), receipt, {"authoritative_result_ref":"conflict"})
@@ -151,6 +245,7 @@ func _check_phase_machine(failures: Array) -> void:
 	var one_shot: Dictionary = _projection.record_one_shot(state, "ending_dialogue", "receipt:one_shot:ending")
 	var replay_one_shot: Dictionary = _projection.record_one_shot(_dict(one_shot.get("state", {})), "ending_dialogue", "receipt:one_shot:ending")
 	if not bool(one_shot.get("emit", false)) or bool(replay_one_shot.get("emit", true)) or not bool(replay_one_shot.get("replayed", false)): failures.append("Ending one-shot replayed.")
+	_mark_coverage("phase_machine")
 
 
 func _check_projection_privacy(failures: Array) -> void:
@@ -173,6 +268,8 @@ func _check_projection_privacy(failures: Array) -> void:
 	if str(crew_projection.get("selected_ending", "")) != "crew_heist_final" or str(_dict(crew_projection.get("room_state", {})).get("exit_state", "")) != "crew": failures.append("Crew ending collapsed into the duel ending.")
 	var web_round_trip: Variant = JSON.parse_string(JSON.stringify(projection_a))
 	if _fingerprint(projection_a) != _fingerprint(web_round_trip): failures.append("Native/Web canonical projection parity drifted.")
+	if projection_a.is_empty() or projection_b.is_empty(): failures.append("Privacy projection returned an empty/null public surface.")
+	else: _mark_coverage("privacy")
 
 
 func _check_product_surface_adapter(failures: Array) -> void:
@@ -199,6 +296,7 @@ func _check_product_surface_adapter(failures: Array) -> void:
 	for forbidden in ["turn_member_id","private_roll","private_shoe_cursor","edge_schedule","blackjack_session"]:
 		if _contains_key(commitment, forbidden): failures.append("Product adapter leaked %s." % forbidden)
 	var reveal: Dictionary = _projection.sealed_product_projection(duel, "settlement", authority)
+	if reveal.is_empty(): failures.append("Settled product projection returned empty/null output.")
 	if str(reveal.get("phase_id", "")) != "reveal": failures.append("Settled Blackjack hand did not map to duel reveal staging.")
 	var tampered := reveal.duplicate(true)
 	var tampered_actor := _dict(tampered.get("rourke_actor", {})); tampered_actor["behavior_state"] = "respect"; tampered["rourke_actor"] = tampered_actor
@@ -212,7 +310,9 @@ func _check_product_surface_adapter(failures: Array) -> void:
 	var complete := duel.duplicate(true); complete["status"] = "complete"; complete["outcome"] = "shown_the_door"
 	var complete_authority := authority.duplicate(true); complete_authority["duel_content_fingerprint"] = _projection.public_duel_fingerprint(complete); complete_authority["authoritative_result_ref"] = "duel:3:complete"
 	var terminal: Dictionary = _projection.sealed_product_projection(complete, "wagering", complete_authority)
+	if terminal.is_empty(): failures.append("Terminal product projection returned empty/null output.")
 	if str(terminal.get("phase_id", "")) != "outcome_staging" or str(terminal.get("selected_ending", "")) != "shown_the_door": failures.append("Terminal duel authority did not produce its distinct outcome staging.")
+	if not commitment.is_empty() and not reveal.is_empty() and not terminal.is_empty(): _mark_coverage("product_adapter")
 
 
 func _check_liveness_performance(failures: Array) -> void:
@@ -222,7 +322,12 @@ func _check_liveness_performance(failures: Array) -> void:
 	var digest := ""
 	for index in range(1000):
 		duel["hand_index"] = index % 5
-		digest = _fingerprint(_projection.public_projection(duel, ritual, {"route_id":"pit_boss_showdown"}, []))
+		var projected := _dict(_projection.call("public_projection", duel, ritual, {"route_id":"pit_boss_showdown"}, []))
+		if projected.is_empty():
+			failures.append("Liveness projection returned empty/null output at iteration %d." % index)
+			return
+		digest = _fingerprint(projected)
+		_mark_coverage("liveness_iterations")
 	var elapsed_ms := float(Time.get_ticks_usec() - started) / 1000.0
 	if digest.is_empty() or elapsed_ms <= 0.0 or elapsed_ms > 1000.0: failures.append("Projection liveness/performance failed: %.3f ms." % elapsed_ms)
 
@@ -283,7 +388,17 @@ func _dict(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
 
 
+func _mark_coverage(id: String, amount: int = 1) -> void:
+	_coverage[id] = int(_coverage.get(id, 0)) + amount
+
+
 func _finish(failures: Array) -> void:
+	for id_value in REQUIRED_COVERAGE.keys():
+		var id := str(id_value)
+		var expected := int(REQUIRED_COVERAGE.get(id, 0))
+		var actual := int(_coverage.get(id, 0))
+		if actual != expected:
+			failures.append("Required coverage %s was incomplete: expected=%d actual=%d." % [id, expected, actual])
 	if failures.is_empty():
 		print("GAME06_7_SHOWDOWN_DUEL_CONTRACT_OK phases=9 seeds=10")
 		quit(0)
