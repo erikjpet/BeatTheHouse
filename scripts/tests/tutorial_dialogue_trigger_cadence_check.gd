@@ -742,10 +742,25 @@ func _tutorial_meta_home_handoff_is_forced(run_state: RunState) -> bool:
 	if not bool(app.call("_resume_tutorial_linda_bronze_finish")):
 		_fail("Linda's final Players Card handoff could not start for the Home transition fixture.")
 		return false
-	var finish_entry := run_state.next_pending_talk_event()
-	app.call("_on_talk_dock_choice_requested", str(finish_entry.get("event_id", "")), "review_persistence")
-	app.call("_on_talk_dock_choice_requested", str(finish_entry.get("event_id", "")), "review_next_goal")
-	app.call("_on_talk_dock_choice_requested", str(finish_entry.get("event_id", "")), "finish_tutorial")
+	var finish_event_id := "dialogue:tutorial_linda_bronze_finish"
+	var finish_entry := run_state.pending_talk_event(finish_event_id)
+	var next_entry := run_state.next_pending_talk_event()
+	if str(finish_entry.get("dialogue_id", "")) != "tutorial_linda_bronze_finish" \
+			or str(finish_entry.get("current_node", "")) != "goal" \
+			or str(next_entry.get("event_id", "")) != finish_event_id:
+		_fail("Linda's exact final Players Card handoff was not the intended next goal: exact=%s next=%s." % [str(finish_entry), str(next_entry)])
+		return false
+	app.call("_on_talk_dock_choice_requested", finish_event_id, "review_persistence")
+	finish_entry = run_state.pending_talk_event(finish_event_id)
+	if str(finish_entry.get("current_node", "")) != "persistence":
+		_fail("Linda's Players Card handoff did not advance to persistence: %s." % str(finish_entry))
+		return false
+	app.call("_on_talk_dock_choice_requested", finish_event_id, "review_next_goal")
+	finish_entry = run_state.pending_talk_event(finish_event_id)
+	if str(finish_entry.get("current_node", "")) != "next_goal":
+		_fail("Linda's Players Card handoff did not advance to the final goal: %s." % str(finish_entry))
+		return false
+	app.call("_on_talk_dock_choice_requested", finish_event_id, "finish_tutorial")
 	await _settle(14)
 	var home_run: RunState = app.get("run_state")
 	var coach_snapshot: Dictionary = app.get("coach_overlay").call("current_snapshot")
