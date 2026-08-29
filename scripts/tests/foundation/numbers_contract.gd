@@ -690,6 +690,10 @@ static func _initialize_delivery_world(run_state: RunState) -> void:
 
 
 static func _complete_delivery_targets(run_state: RunState) -> bool:
+	var physical: Dictionary = run_state.delivery_snapshot().get("physical", {})
+	if str(physical.get("cargo_state", "")) == "pickup_pending":
+		if not bool(run_state.delivery_apply_physical_action("pickup", "numbers:pickup:%s" % str(run_state.active_delivery_run.get("run_id", "delivery"))).get("ok", false)):
+			return false
 	var target_ids: Array = []
 	for target_value in run_state.delivery_snapshot().get("targets", []):
 		if typeof(target_value) == TYPE_DICTIONARY:

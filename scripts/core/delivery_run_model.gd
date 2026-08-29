@@ -29,6 +29,7 @@ const CARGO_STATES := [
 	CARGO_DITCHED, CARGO_CONFISCATED, CARGO_FOUND, CARGO_NONE,
 ]
 const STREET_VERBS := ["pickup", "move", "wait", "duck", "stash", "retrieve", "ditch", "signal", "break_hold", "handoff"]
+const HOST_VERBS := STREET_VERBS + ["found", "interruption", "abandon"]
 
 
 static func begin(spec: Dictionary, started_action: int) -> Dictionary:
@@ -291,11 +292,30 @@ static func physical_projection(state_value: Variant) -> Dictionary:
 		"position_node_id": str(position.get("node_id", "")),
 		"previous_node_id": str(position.get("previous_node_id", "")),
 		"last_verb": str(position.get("last_verb", "")),
+		"command_sequence": int(depth.get("command_sequence", 0)),
 		"available_verbs": _available_physical_verbs(state),
 		"hold_signals": _copy_array(depth.get("hold_signals", [])),
 		"hold_aftermath": _copy_dict(depth.get("hold_aftermath", {})),
 		"pursuit_aftermath": _copy_dict(depth.get("pursuit_aftermath", {})),
 	}
+
+
+static func bind_legacy_position(state_value: Variant, host_node_id: String) -> Dictionary:
+	var state := normalize_state(state_value)
+	var clean_node := host_node_id.strip_edges()
+	if state.is_empty() or clean_node.is_empty():
+		return state
+	var depth := _copy_dict(state.get("depth_state", {}))
+	var position := _copy_dict(depth.get("position", {}))
+	if str(depth.get("origin", "")) != "legacy_v2" or not str(position.get("node_id", "")).is_empty():
+		return state
+	depth["position"] = _physical_position(clean_node, "", "legacy_restore")
+	var cargo := _copy_dict(depth.get("cargo", {}))
+	if str(cargo.get("status", "")) == CARGO_CARRIED and str(cargo.get("node_id", "")).is_empty():
+		cargo["node_id"] = clean_node
+		depth["cargo"] = cargo
+	state["depth_state"] = depth
+	return state
 
 
 static func advance_boundaries(state_value: Variant, amount: int, current_node_id: String, attention: int, action_index: int) -> Dictionary:
@@ -338,15 +358,19 @@ static func note_arrival(state_value: Variant, node_id: String) -> Dictionary:
 	var state := normalize_state(state_value)
 	if state.is_empty() or str(state.get("status", "")) != "active":
 		return state
+	var clean_node_id := node_id.strip_edges()
+	if clean_node_id.is_empty():
+		return state
+	state = _record_physical_position(state, clean_node_id, "move")
 	state["arrival_count"] = int(state.get("arrival_count", 0)) + 1
-	var target_index := _pending_target_index(state, node_id)
+	var target_index := _pending_target_index(state, clean_node_id)
 	if target_index < 0:
 		return state
 	if str(state.get("mode", "")) == MODE_GETAWAY:
 		return _resolve(state, "success", "escaped", true)
 	if str(state.get("mode", "")) == MODE_HOLD:
 		return state
-	state["handoff_pending_node_id"] = node_id.strip_edges()
+	state["handoff_pending_node_id"] = clean_node_id
 	return state
 
 
@@ -356,6 +380,12 @@ static func complete_handoff(state_value: Variant, node_id: String) -> Dictionar
 		return state
 	var clean_node_id := node_id.strip_edges()
 	if clean_node_id.is_empty() or clean_node_id != str(state.get("handoff_pending_node_id", "")):
+		return state
+	var depth := _copy_dict(state.get("depth_state", {}))
+	var cargo := _copy_dict(depth.get("cargo", {}))
+	var position := _copy_dict(depth.get("position", {}))
+	if str(cargo.get("status", "")) != CARGO_CARRIED or str(cargo.get("node_id", "")) != clean_node_id \
+			or str(position.get("node_id", "")) != clean_node_id:
 		return state
 	var targets: Array = state.get("targets", [])
 	var target_index := _pending_target_index(state, clean_node_id)
@@ -368,7 +398,131 @@ static func complete_handoff(state_value: Variant, node_id: String) -> Dictionar
 	state["targets"] = targets
 	state["handoff_pending_node_id"] = ""
 	if _all_targets_delivered(state):
+		depth["cargo"] = _physical_cargo(CARGO_DELIVERED, clean_node_id, "handoff", str(target.get("id", "")))
+		state["depth_state"] = depth
 		return _resolve(state, "success", "delivered", true)
+	return state
+
+
+# Internal host seam. RunState derives every field from live map/environment
+# state and passes a closed record only after the physical action has occurred.
+# UI callers can request a verb, but cannot supply location, route, cover,
+# attention, target, or consequence authority.
+static func apply_host_action(state_value: Variant, verb: String, receipt_key: String, host_context_value: Dictionary) -> Dictionary:
+	var state := normalize_state(state_value)
+	if state.is_empty():
+		return {}
+	var action := verb.strip_edges()
+	var clean_receipt := receipt_key.strip_edges()
+	var host_context := _normalize_host_context(host_context_value)
+	if action not in HOST_VERBS or clean_receipt.is_empty() or clean_receipt != receipt_key or host_context.is_empty():
+		return state
+	var envelope := {"command_id": action, "host_context": host_context}
+	var replay := _depth_receipt_replay(state, clean_receipt, envelope)
+	if replay >= 0:
+		return state
+	if replay == -2 or str(state.get("status", "")) != "active":
+		return state
+	if _copy_array(_copy_dict(state.get("depth_state", {})).get("command_receipts", [])).size() >= MAX_DEPTH_COMMAND_RECEIPTS:
+		return state
+	var node_id := str(host_context.get("node_id", ""))
+	var destination_node_id := str(host_context.get("destination_node_id", ""))
+	var target_id := str(host_context.get("target_id", ""))
+	var place_id := str(host_context.get("place_id", ""))
+	var cover_id := str(host_context.get("cover_id", ""))
+	var signal_id := str(host_context.get("signal_id", ""))
+	var action_index := int(host_context.get("action_index", 0))
+	var attention := int(host_context.get("attention", 0))
+	var depth := _copy_dict(state.get("depth_state", {}))
+	var cargo := _copy_dict(depth.get("cargo", {}))
+	var position := _copy_dict(depth.get("position", {}))
+	match action:
+		"pickup":
+			if str(cargo.get("status", "")) != CARGO_PICKUP_PENDING or node_id.is_empty() \
+					or node_id != str(cargo.get("node_id", "")) or node_id != str(position.get("node_id", "")) \
+					or target_id.is_empty() or target_id != str(cargo.get("place_id", "")):
+				return state
+			depth["cargo"] = _physical_cargo(CARGO_CARRIED, node_id, "player", "player")
+			state["depth_state"] = depth
+		"move":
+			if node_id.is_empty() or destination_node_id.is_empty() or node_id != str(position.get("node_id", "")) or node_id == destination_node_id:
+				return state
+			state = _record_physical_position(state, destination_node_id, action)
+			state = note_arrival(state, destination_node_id)
+		"wait":
+			if node_id.is_empty() or node_id != str(position.get("node_id", "")):
+				return state
+			state = _record_physical_position(state, node_id, action)
+			if str(state.get("mode", "")) == MODE_HOLD:
+				state = _advance_hold_choice(state, node_id, attention, action_index, "")
+		"duck":
+			if node_id.is_empty() or node_id != str(position.get("node_id", "")) or cover_id.is_empty():
+				return state
+			state = _record_physical_position(state, node_id, action)
+			if str(state.get("mode", "")) == MODE_GETAWAY:
+				state["pursuit_pressure"] = maxi(0, int(state.get("pursuit_pressure", 0)) - int(state.get("pursuit_per_boundary", 0)))
+		"stash":
+			if str(cargo.get("status", "")) != CARGO_CARRIED or node_id.is_empty() or place_id.is_empty() \
+					or node_id != str(position.get("node_id", "")) or node_id != str(cargo.get("node_id", "")):
+				return state
+			depth["cargo"] = _physical_cargo(CARGO_STASHED, node_id, "stash", place_id)
+			state["depth_state"] = depth
+		"retrieve":
+			if str(cargo.get("status", "")) != CARGO_STASHED or node_id.is_empty() or place_id.is_empty() \
+					or node_id != str(position.get("node_id", "")) or node_id != str(cargo.get("node_id", "")) \
+					or place_id != str(cargo.get("place_id", "")):
+				return state
+			depth["cargo"] = _physical_cargo(CARGO_CARRIED, node_id, "player", "player")
+			state["depth_state"] = depth
+		"ditch":
+			if str(cargo.get("status", "")) not in [CARGO_CARRIED, CARGO_STASHED] or node_id.is_empty() \
+					or node_id != str(cargo.get("node_id", "")) or (str(cargo.get("status", "")) == CARGO_STASHED and place_id != str(cargo.get("place_id", ""))):
+				return state
+			depth["cargo"] = _physical_cargo(CARGO_DITCHED, node_id, "street", place_id)
+			state["depth_state"] = depth
+			state = _resolve(state, "failed", "ditched", false)
+		"found":
+			if str(cargo.get("status", "")) != CARGO_STASHED or node_id.is_empty() or place_id.is_empty() \
+					or node_id != str(cargo.get("node_id", "")) or place_id != str(cargo.get("place_id", "")):
+				return state
+			depth["cargo"] = _physical_cargo(CARGO_FOUND, node_id, "finder", target_id)
+			state["depth_state"] = depth
+			state = _resolve(state, "failed", "cargo_found", false)
+		"signal":
+			if str(state.get("mode", "")) != MODE_HOLD or signal_id.is_empty():
+				return state
+			state = _advance_hold_choice(state, node_id, attention, action_index, signal_id)
+		"break_hold":
+			if str(state.get("mode", "")) != MODE_HOLD or node_id != str(position.get("node_id", "")):
+				return state
+			depth["hold_aftermath"] = {"outcome": "broken_early", "node_id": node_id, "action_index": action_index}
+			state["depth_state"] = depth
+			state = _resolve(state, "failed", "hold_broken", false)
+		"interruption":
+			var interruption_reason := str(host_context.get("reason", "interrupted"))
+			if interruption_reason.is_empty(): interruption_reason = "interrupted"
+			if str(state.get("mode", "")) == MODE_HOLD:
+				depth["hold_aftermath"] = {"outcome": interruption_reason, "node_id": node_id, "action_index": action_index}
+			elif str(state.get("mode", "")) == MODE_GETAWAY:
+				depth["pursuit_aftermath"] = {"outcome": interruption_reason, "node_id": node_id, "action_index": action_index}
+			state["depth_state"] = depth
+			state = _resolve(state, "failed", interruption_reason, false)
+		"abandon":
+			var abandon_reason := str(host_context.get("reason", "abandoned"))
+			if abandon_reason.is_empty(): abandon_reason = "abandoned"
+			state = _resolve(state, "failed", abandon_reason, false)
+		"handoff":
+			var next_target_index := _next_pending_target_index(state)
+			if next_target_index < 0:
+				return state
+			var next_target := _copy_dict(_copy_array(state.get("targets", []))[next_target_index])
+			if target_id.is_empty() or target_id != str(next_target.get("id", "")) or node_id != str(next_target.get("node_id", "")):
+				return state
+			var handed := complete_handoff(state, node_id)
+			if JSON.stringify(handed) == JSON.stringify(state):
+				return state
+			state = handed
+	state = _append_depth_receipt(state, clean_receipt, action, envelope)
 	return state
 
 
@@ -400,6 +554,10 @@ static func confiscate(state_value: Variant, reason: String = "swept") -> Dictio
 	if state.is_empty() or str(state.get("status", "")) != "active":
 		return state
 	state["confiscated"] = true
+	var depth := _copy_dict(state.get("depth_state", {}))
+	var position := _copy_dict(depth.get("position", {}))
+	depth["cargo"] = _physical_cargo(CARGO_CONFISCATED, str(position.get("node_id", "")), "police", "")
+	state["depth_state"] = depth
 	return _resolve(state, "failed", reason.strip_edges() if not reason.strip_edges().is_empty() else "swept", false)
 
 
@@ -447,6 +605,102 @@ static func _all_targets_delivered(state: Dictionary) -> bool:
 		if typeof(target_value) != TYPE_DICTIONARY or str((target_value as Dictionary).get("status", "pending")) != "delivered":
 			return false
 	return true
+
+
+static func _next_pending_target_index(state: Dictionary) -> int:
+	var targets := _copy_array(state.get("targets", []))
+	for index in range(targets.size()):
+		if str(_copy_dict(targets[index]).get("status", "pending")) == "pending":
+			return index
+	return -1
+
+
+static func _record_physical_position(state_value: Dictionary, node_id: String, verb: String) -> Dictionary:
+	var state := state_value.duplicate(true)
+	var depth := _copy_dict(state.get("depth_state", {}))
+	var position := _copy_dict(depth.get("position", {}))
+	var clean_node := node_id.strip_edges()
+	if clean_node.is_empty():
+		return state
+	if clean_node != str(position.get("node_id", "")):
+		position["previous_node_id"] = str(position.get("node_id", ""))
+		position["node_id"] = clean_node
+	position["last_verb"] = verb.strip_edges()
+	depth["position"] = position
+	var cargo := _copy_dict(depth.get("cargo", {}))
+	if str(cargo.get("status", "")) == CARGO_CARRIED:
+		cargo["node_id"] = clean_node
+		depth["cargo"] = cargo
+	state["depth_state"] = depth
+	return state
+
+
+static func _advance_hold_choice(state_value: Dictionary, node_id: String, attention: int, action_index: int, signal_id: String) -> Dictionary:
+	var state := state_value.duplicate(true)
+	var targets := _copy_array(state.get("targets", []))
+	if targets.is_empty() or node_id != str(_copy_dict(targets[0]).get("node_id", "")):
+		return state_value
+	var depth := _copy_dict(state.get("depth_state", {}))
+	if not signal_id.is_empty():
+		var signals := _copy_array(depth.get("hold_signals", []))
+		if signals.size() >= MAX_DEPTH_COMMAND_RECEIPTS:
+			return state_value
+		signals.append({"signal_id": signal_id, "node_id": node_id, "action_index": action_index})
+		depth["hold_signals"] = signals
+		state["depth_state"] = depth
+	state = advance_boundaries(state, 1, node_id, clampi(attention, 0, 100), action_index)
+	if str(state.get("status", "")) == "resolved":
+		depth = _copy_dict(state.get("depth_state", {}))
+		depth["hold_aftermath"] = {"outcome": str(_copy_dict(state.get("resolution", {})).get("reason", "failed")), "node_id": node_id, "action_index": action_index}
+		state["depth_state"] = depth
+	return state
+
+
+static func _normalize_host_context(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = value
+	var keys := source.keys()
+	keys.sort()
+	var exact := ["action_index", "attention", "cover_id", "destination_node_id", "node_id", "place_id", "reason", "schema_version", "signal_id", "target_id"]
+	if keys != exact or typeof(source.get("schema_version")) != TYPE_INT or int(source.get("schema_version", 0)) != 1 \
+			or typeof(source.get("action_index")) != TYPE_INT or int(source.get("action_index", -1)) < 0 \
+			or typeof(source.get("attention")) != TYPE_INT or int(source.get("attention", -1)) not in range(0, 101):
+		return {}
+	var result := {"schema_version": 1, "action_index": int(source.get("action_index", 0)), "attention": int(source.get("attention", 0))}
+	for key in ["cover_id", "destination_node_id", "node_id", "place_id", "reason", "signal_id", "target_id"]:
+		if typeof(source.get(key)) != TYPE_STRING or str(source.get(key, "")) != str(source.get(key, "")).strip_edges():
+			return {}
+		result[key] = str(source.get(key, ""))
+	return result
+
+
+static func _depth_receipt_replay(state: Dictionary, receipt_key: String, envelope: Dictionary) -> int:
+	var expected_fingerprint := _fingerprint(envelope)
+	for receipt_value in _copy_array(_copy_dict(state.get("depth_state", {})).get("command_receipts", [])):
+		var receipt := _copy_dict(receipt_value)
+		if str(receipt.get("receipt_key", "")) != receipt_key:
+			continue
+		return int(receipt.get("sequence", 0)) if str(receipt.get("command_record_fingerprint", "")) == expected_fingerprint else -2
+	return -1
+
+
+static func _append_depth_receipt(state_value: Dictionary, receipt_key: String, command_id: String, envelope: Dictionary) -> Dictionary:
+	var state := state_value.duplicate(true)
+	var depth := _copy_dict(state.get("depth_state", {}))
+	var receipts := _copy_array(depth.get("command_receipts", []))
+	if receipts.size() >= MAX_DEPTH_COMMAND_RECEIPTS:
+		return state_value
+	receipts.append({
+		"receipt_key": receipt_key,
+		"command_id": command_id,
+		"command_record_fingerprint": _fingerprint(envelope),
+		"sequence": receipts.size() + 1,
+	})
+	depth["command_receipts"] = receipts
+	depth["command_sequence"] = receipts.size()
+	state["depth_state"] = depth
+	return state
 
 
 static func _initial_depth_state(mode: String, spec: Dictionary) -> Dictionary:
@@ -609,9 +863,12 @@ static func _available_physical_verbs(state: Dictionary) -> Array:
 	if str(state.get("status", "")) != "active":
 		return []
 	var mode := str(state.get("mode", ""))
-	var cargo_status := str(_copy_dict(_copy_dict(state.get("depth_state", {})).get("cargo", {})).get("status", CARGO_NONE))
+	var depth := _copy_dict(state.get("depth_state", {}))
+	var cargo := _copy_dict(depth.get("cargo", {}))
+	var position := _copy_dict(depth.get("position", {}))
+	var cargo_status := str(cargo.get("status", CARGO_NONE))
 	if cargo_status == CARGO_PICKUP_PENDING:
-		return ["pickup"]
+		return ["pickup"] if str(cargo.get("node_id", "")) == str(position.get("node_id", "")) else ["move"]
 	if mode == MODE_HOLD:
 		return ["wait", "signal", "break_hold"]
 	if mode == MODE_GETAWAY:

@@ -802,14 +802,38 @@ static func crew_presence_interactable_objects(host: Variant, event_options: Arr
 static func delivery_interactable_objects(host: Variant, occupied_objects: Array = []) -> Array:
 	if host.run_state == null:
 		return []
+	var result: Array = []
+	var physical_interactions := host.run_state.delivery_physical_interactions()
+	for physical_index in range(physical_interactions.size()):
+		var interaction: Dictionary = physical_interactions[physical_index]
+		var verb := str(interaction.get("verb", ""))
+		result.append(host._make_interactable_object({
+			"object_id": str(interaction.get("object_id", "delivery:%s" % verb)),
+			"object_type": host.CONTEXT_MODE_DELIVERY,
+			"visual_type": "character" if verb == "pickup" else "prop",
+			"source_id": verb,
+			"label": str(interaction.get("label", verb.replace("_", " ").capitalize())),
+			"short_description": str(interaction.get("message", "The route has a physical choice here.")),
+			"presence": "character" if verb == "pickup" else "fixture",
+			"interactive": true,
+			"enabled": true,
+			"action_summary": str(interaction.get("message", "Act here.")),
+			"status_summary": str(interaction.get("cargo_label", "Crew route")),
+			"visual_key": "character" if verb == "pickup" else "item" if verb in ["stash", "retrieve", "ditch"] else "travel",
+			"prop": "patron_talk" if verb == "pickup" else "crate" if verb in ["stash", "retrieve", "ditch"] else "street_sign",
+			"icon_key": "item" if verb in ["pickup", "stash", "retrieve", "ditch"] else "travel",
+			"available_actions": [{"id": "delivery_physical_action", "label": str(interaction.get("label", "Act"))}],
+			"confirm_action_id": "delivery_physical_action",
+			"focus_rect": host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, physical_index),
+		}))
 	var handoff: Dictionary = host.run_state.delivery_arrival_interaction()
 	if handoff.is_empty():
-		return []
+		return result
 	var node_id := str(handoff.get("node_id", "")).strip_edges()
 	# A mounted owner projection is the sole player-facing handoff at this node.
 	# The old delivery record remains unchanged for legacy/unconverted runs.
 	if not host.run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", node_id).is_empty():
-		return []
+		return result
 	var object_id := "delivery:handoff:%s" % node_id
 	var occupied_rects: Array[Rect2] = []
 	var layout: Dictionary = host._current_environment_layout()
@@ -838,7 +862,7 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 			focus_rect = candidate
 		if is_zero_approx(overlap):
 			break
-	return [host._make_interactable_object({
+	result.append(host._make_interactable_object({
 		"object_id": object_id,
 		"object_type": host.CONTEXT_MODE_DELIVERY,
 		"visual_type": "character",
@@ -857,7 +881,8 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 		"available_actions": [{"id": "complete_delivery_handoff", "label": "Hand Over"}],
 		"confirm_action_id": "complete_delivery_handoff",
 		"focus_rect": focus_rect,
-	})]
+	}))
+	return result
 
 
 static func numbers_interactable_objects(host: Variant) -> Array:

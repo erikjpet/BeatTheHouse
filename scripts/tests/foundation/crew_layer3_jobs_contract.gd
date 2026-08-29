@@ -256,6 +256,9 @@ static func _back_room_environment() -> Dictionary:
 
 
 static func _complete_all_handoffs(run: RunState) -> void:
+	var physical: Dictionary = run.delivery_snapshot().get("physical", {})
+	if str(physical.get("cargo_state", "")) == "pickup_pending":
+		run.delivery_apply_physical_action("pickup", "crew_layer3:pickup:%s" % str(run.active_delivery_run.get("run_id", "delivery")))
 	while run.delivery_has_active_run():
 		var snapshot := run.delivery_snapshot()
 		var pending := ""

@@ -105,7 +105,13 @@ static func _check_emissions(failures: Array) -> void:
 	_prepare(payment, "crew_switch", [CrewTurnModelScript.SIGNAL_PAYMENT])
 	var job := payment.job_offer({"id": "fixture_job", "member_id": "crew_switch", "kind": "package_run", "min_rank": "associate", "expiry_in_actions": 8, "rewards": {"cash": 40, "trust": 1}, "failure": {"trust": -1, "grievance_kind": "job_abandoned", "grievance_weight": 1}})
 	payment.job_accept(str(job.get("id", "")))
-	payment.active_delivery_run = DeliveryRunModelScript.begin({"run_id": "fixture_route", "job_id": str(job.get("id", "")), "targets": [{"node_id": "motel"}], "deadline_actions": 4}, 0)
+	payment.active_delivery_run = DeliveryRunModelScript.begin({"run_id": "fixture_route", "job_id": str(job.get("id", "")), "start_node_id": "motel", "targets": [{"node_id": "motel"}], "deadline_actions": 4}, 0)
+	payment.active_delivery_run = DeliveryRunModelScript.apply_host_action(payment.active_delivery_run, "pickup", "turn:payment:pickup", {
+		"schema_version": 1, "node_id": "motel", "destination_node_id": "", "target_id": "delivery_pickup", "place_id": "",
+		"cover_id": "", "signal_id": "", "reason": "", "attention": 0, "action_index": 0,
+	})
+	payment.current_environment["world_node_id"] = "motel"
+	payment.world_map["current_node_id"] = "motel"
 	payment.active_delivery_run = DeliveryRunModelScript.note_arrival(payment.active_delivery_run, "motel")
 	var paid := payment.delivery_complete_handoff("motel")
 	var receipt := _dict(_dict(paid.get("snapshot", {})).get("receipt", {}))

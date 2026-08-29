@@ -434,6 +434,7 @@ func _delivery_first_target(run_state: RunState) -> String:
 
 
 func _delivery_enter_node(run_state: RunState, node_id: String) -> Dictionary:
+	_delivery_pickup_if_needed(run_state)
 	var node := DeliveryWorldMapTestScript.node_metadata_by_id(run_state.world_map, node_id)
 	run_state.world_map = DeliveryWorldMapTestScript.enter_node(run_state.world_map, node_id, {})
 	run_state.current_environment = {
@@ -447,9 +448,17 @@ func _delivery_enter_node(run_state: RunState, node_id: String) -> Dictionary:
 
 
 func _delivery_generate_and_arrive(run_state: RunState, node_id: String) -> Dictionary:
+	_delivery_pickup_if_needed(run_state)
 	var route := DeliveryWorldMapTestScript.new(null).route_for_target(run_state.world_map, run_state.current_world_node_id(), node_id)
 	RunGeneratorScript.new(delivery_test_library).next_environment(run_state, node_id, true)
 	return run_state.delivery_resolve_travel_arrival(route, run_state.travel_route_risk(route, node_id))
+
+
+func _delivery_pickup_if_needed(run_state: RunState) -> void:
+	var physical_value: Variant = run_state.delivery_snapshot().get("physical", {})
+	var physical: Dictionary = (physical_value as Dictionary).duplicate(true) if typeof(physical_value) == TYPE_DICTIONARY else {}
+	if str(physical.get("cargo_state", "")) == "pickup_pending":
+		run_state.delivery_apply_physical_action("pickup", "foundation:pickup:%s" % str(run_state.active_delivery_run.get("run_id", "delivery")))
 
 
 func _delivery_complete_all_targets(run_state: RunState) -> bool:
