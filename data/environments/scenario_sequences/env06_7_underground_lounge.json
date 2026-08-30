@@ -6,6 +6,8 @@
     {
       "authoring": {
         "arrival_summary": "A signup lectern, movable stage steps, and half-filled chair banks form a live queue from Layer 1 to the microphone.",
+        "crew_poker_turn_engine": "ordered_v1",
+        "crew_poker_night_id": "friendly_teaching",
         "capture_ids": [
           "punchline_open_mic_night_arrival",
           "punchline_open_mic_night_partial",
@@ -4623,6 +4625,8 @@
     {
       "authoring": {
         "arrival_summary": "A protected table displaces ordinary chairs while guard sightlines and an observer rail divide the casino floor.",
+        "crew_poker_turn_engine": "ordered_v1",
+        "crew_poker_night_id": "hustle_test",
         "capture_ids": [
           "punchline_high_stakes_night_arrival",
           "punchline_high_stakes_night_partial",
@@ -6109,6 +6113,8 @@
     {
       "authoring": {
         "arrival_summary": "Inspection seals mark three layer doors while a payoff ledger and moving inspector define a visible route through the club.",
+        "crew_poker_turn_engine": "ordered_v1",
+        "crew_poker_night_id": "after_job",
         "capture_ids": [
           "punchline_greased_week_arrival",
           "punchline_greased_week_partial",
@@ -7786,6 +7792,8 @@
     {
       "authoring": {
         "arrival_summary": "Hearing chairs replace the L3 poker-night room while an evidence stand and witness mark sit outside the paused table boundary.",
+        "crew_poker_turn_engine": "ordered_v1",
+        "crew_poker_night_id": "debt_court",
         "capture_ids": [
           "punchline_debt_court_arrival",
           "punchline_debt_court_partial",
@@ -10954,6 +10962,8 @@
     {
       "authoring": {
         "arrival_summary": "Hide carts, clear bins, and reopen seals wait on different layers while a lookout listens at the outer knock point.",
+        "crew_poker_turn_engine": "ordered_v1",
+        "crew_poker_night_id": "raid_jitters",
         "capture_ids": [
           "punchline_raid_jitters_arrival",
           "punchline_raid_jitters_partial",
