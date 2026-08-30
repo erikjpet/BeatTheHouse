@@ -147,9 +147,12 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.travel_hooks = _copy_array(archetype.get("travel_hooks", []))
 	environment.next_archetypes = _copy_array(archetype.get("next_archetypes", []))
 	environment.object_fixtures = _copy_array(archetype.get("object_fixtures", []))
-	environment.semantic_anchors = _copy_dict(archetype.get("semantic_anchors", {}))
-	environment.semantic_zones = _copy_dict(archetype.get("semantic_zones", {}))
-	environment.semantic_actors = _copy_array(archetype.get("semantic_actors", []))
+	# The expanded semantic catalog belongs to an installed dynamic sequence.
+	# Keep legacy no-sequence room snapshots compact and byte-compatible.
+	if not selected_state.is_empty():
+		environment.semantic_anchors = _copy_dict(archetype.get("semantic_anchors", {}))
+		environment.semantic_zones = _copy_dict(archetype.get("semantic_zones", {}))
+		environment.semantic_actors = _copy_array(archetype.get("semantic_actors", []))
 	var rare_route_rng := rng.fork("rare_next:%s" % environment.id)
 	_append_rare_archetypes(environment.next_archetypes, archetype, rare_route_rng)
 	environment.local_narrative_flags = _copy_dict(archetype.get("local_narrative_flags", {}))

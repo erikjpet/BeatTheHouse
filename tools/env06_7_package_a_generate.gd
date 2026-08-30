@@ -199,17 +199,17 @@ func _repair_delivery_day(entry: Dictionary) -> Dictionary:
 	var sequence := repaired.get("sequence", {}) as Dictionary
 	var aftermath := sequence.get("aftermath", {}) as Dictionary
 	var copy := {
-		"repaired": {
-			"revisit_feedback": "The stocked rack is orderly, Ada is relieved, and the cashier tip remains enabled.",
-		},
-		"broken": {
-			"revisit_feedback": "A torn carton remains after Priya departs, and the cashier tip is disabled while Ada documents the damage.",
-		},
 		"refused": {
-			"revisit_feedback": "A sealed pallet remains under Ada's watch, and the cashier tip is disabled while the return paperwork stays open.",
+			"revisit_feedback": "A sealed pallet remains under Ada's watch; the cashier tip is disabled and the bar route is closed.",
+			"receipt_id": "aftermath_refused_bar_route",
+			"stable_object_id": "world:bar",
+			"disabled_reason": "The return pickup occupies the bar route.",
 		},
 		"interrupted": {
-			"revisit_feedback": "An abandoned manifest remains after Priya departs, while the cashier tip stays enabled for this visit.",
+			"revisit_feedback": "An abandoned manifest remains after Priya departs; the cashier tip stays enabled and the bar route is closed.",
+			"receipt_id": "aftermath_interrupted_bar_route",
+			"stable_object_id": "world:bar",
+			"disabled_reason": "The interrupted unloading closes the bar route for this visit.",
 		},
 	}
 	for outcome_value in copy.keys():
@@ -217,7 +217,14 @@ func _repair_delivery_day(entry: Dictionary) -> Dictionary:
 		var row := aftermath.get(outcome, {}) as Dictionary
 		var wording := copy[outcome] as Dictionary
 		row["revisit_feedback"] = wording.revisit_feedback
-		row.erase("route_ops")
+		var route_ops := row.get("route_ops", []) as Array
+		if not route_ops.is_empty():
+			var route_op := route_ops[0] as Dictionary
+			route_op["receipt_id"] = wording.receipt_id
+			route_op["stable_object_id"] = wording.stable_object_id
+			route_op["disabled_reason"] = wording.disabled_reason
+			route_ops[0] = route_op
+		row["route_ops"] = route_ops
 		aftermath[outcome] = row
 	for outcome_value in aftermath.keys():
 		var outcome := str(outcome_value)
@@ -234,77 +241,10 @@ func _repair_delivery_day(entry: Dictionary) -> Dictionary:
 		row["actor_ops"] = actor_ops
 		aftermath[outcome] = row
 	sequence["aftermath"] = aftermath
-	var phase_graph := sequence.get("phase_graph", {}) as Dictionary
-	var phases := phase_graph.get("phases", []) as Array
-	for phase_index in range(phases.size()):
-		var phase := phases[phase_index] as Dictionary
-		var scene_ops := phase.get("scene_ops", []) as Array
-		for operation_index in range(scene_ops.size()):
-			var operation := scene_ops[operation_index] as Dictionary
-			if str(operation.get("stable_object_id", "")) != "mismarked_crate" or str(operation.get("op", "")) not in ["spawn", "move"]:
-				continue
-			if str(operation.get("op", "")) == "spawn":
-				var object := operation.get("object", {}) as Dictionary
-				object["anchor_id"] = "package_a_delivery_crate"
-				operation["object"] = object
-			else:
-				operation["anchor_id"] = "package_a_delivery_crate"
-			scene_ops[operation_index] = operation
-		phase["scene_ops"] = scene_ops
-		var phase_id := str(phase.get("id", ""))
-		if phase_id in ["awaiting_stock", "resolution"]:
-			var branches := phase.get("branches", []) as Array
-			if phase_id == "resolution":
-				for existing_branch_index in range(branches.size()):
-					var existing_branch := branches[existing_branch_index] as Dictionary
-					if str(existing_branch.get("id", "")) == "resolve_ignored":
-						existing_branch["outcome"] = "broken"
-						existing_branch["objective_outcomes"] = {"sort_delivery": "failure"}
-						branches[existing_branch_index] = existing_branch
-			var rejected_branch := {
-				"id": "stock_rejected" if phase_id == "awaiting_stock" else "resolve_rejected",
-				"condition": {
-					"type": "fact",
-					"fact_type": "event_result",
-					"payload_equals": {
-						"event_id": "scenario_delivery_day_stock",
-						"choice_id": "clear_the_aisle",
-						"resolution_id": "clear_the_aisle",
-						"resolved": true,
-						"ok": false,
-					},
-				},
-			}
-			if phase_id == "awaiting_stock":
-				rejected_branch["next_phase"] = "resolution"
-			else:
-				rejected_branch["outcome"] = "broken"
-				rejected_branch["objective_outcomes"] = {"sort_delivery": "failure"}
-			var replaced := false
-			for branch_index in range(branches.size()):
-				if str((branches[branch_index] as Dictionary).get("id", "")) == str(rejected_branch.id):
-					branches[branch_index] = rejected_branch
-					replaced = true
-			if not replaced: branches.append(rejected_branch)
-			phase["branches"] = branches
-		phases[phase_index] = phase
-	phase_graph["phases"] = phases
-	sequence["phase_graph"] = phase_graph
 	var targets := sequence.get("declared_targets", {}) as Dictionary
-	targets.erase("routes")
-	var anchors := targets.get("anchors", []) as Array
-	if not anchors.has("base::anchor:package_a_delivery_crate"): anchors.append("base::anchor:package_a_delivery_crate")
-	targets["anchors"] = anchors
+	targets["routes"] = ["base::world:bar"]
 	sequence["declared_targets"] = targets
 	repaired["sequence"] = sequence
-	var authoring := repaired.get("authoring", {}) as Dictionary
-	var references := authoring.get("references", {}) as Dictionary
-	var objects: Array = references.get("objects", []) as Array
-	for route_identity in ["base::world:bar", "base::world:gas_station_casino", "base::world:pawn_shop"]:
-		objects.erase(route_identity)
-	references["objects"] = objects
-	authoring["references"] = references
-	repaired["authoring"] = authoring
 	return repaired
 
 func _spawn(receipt: String, stable_id: String, label: String, role: String, zone: String, state: String) -> Dictionary:

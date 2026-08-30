@@ -1762,7 +1762,9 @@ static func _check_public_projection_privacy(failures: Array) -> void:
 	var projection := SequenceRuntimeScript.public_projection(state, definition)
 	var public_semantic := _dict(projection.get("semantic_state", {}))
 	var public_text := JSON.stringify(projection)
-	if not bool(applied.get("ok", false)) or _dict(projection.get("local_state", {})) != {"pressure": 3} or public_semantic.has("transition_queue") or public_semantic.has("operation_receipts") or public_semantic.has("operation_receipt_records") or public_text.contains("transition_feedback_777") or public_text.contains("hidden_stage_receipt") or int(projection.get("pending_transition_count", -1)) != 1:
+	var expected_public_local: Variant = SequenceRuntimeScript._canonical_variant(JSON.parse_string(JSON.stringify({"pressure": 3})))
+	var actual_public_local: Variant = SequenceRuntimeScript._canonical_variant(JSON.parse_string(JSON.stringify(_dict(projection.get("local_state", {})))))
+	if not bool(applied.get("ok", false)) or JSON.stringify(actual_public_local) != JSON.stringify(expected_public_local) or public_semantic.has("transition_queue") or public_semantic.has("operation_receipts") or public_semantic.has("operation_receipt_records") or public_text.contains("transition_feedback_777") or public_text.contains("hidden_stage_receipt") or int(projection.get("pending_transition_count", -1)) != 1:
 		failures.append("Public sequence projection leaked private branch state or operation queue/receipt metadata instead of exposing only opted-in local state and pending counts.")
 	var drained := SequenceRuntimeScript.drain_transitions(state, definition)
 	var delivered := _dict(_array(drained.get("transitions", []))[0]) if not _array(drained.get("transitions", [])).is_empty() else {}
@@ -2960,6 +2962,7 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	var host_semantics := _fixture_host_semantics(definition)
 	var initial := SequenceRuntimeScript.initial_state(definition, "bar_node", "depth_remediation_seed", host_semantics)
 	var public_semantic := _dict(SequenceRuntimeScript.public_projection(initial, definition).get("semantic_state", {}))
+	var public_semantic_text := JSON.stringify(public_semantic)
 	var public_semantic_keys := public_semantic.keys()
 	var expected_public_semantic_keys := OperationRegistryScript.PUBLIC_SEMANTIC_KEYS.duplicate()
 	public_semantic_keys.sort()
@@ -2967,8 +2970,17 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	if public_semantic_keys != expected_public_semantic_keys:
 		failures.append("Public scenario semantic projection exposed runtime authorization or journal internals: %s" % JSON.stringify(public_semantic_keys))
 	var resolved_semantic := OperationRegistryScript.public_semantic_state(_dict(initial.get("semantic_state", {})))
-	if _dict(public_semantic.get("interactions", {})).keys() != _dict(resolved_semantic.get("interactions", {})).keys() or SequenceRuntimeScript.content_fingerprint(public_semantic.get("scene_objects", {})) != SequenceRuntimeScript.content_fingerprint(resolved_semantic.get("scene_objects", {})):
+	var public_scene_wire: Variant = SequenceRuntimeScript._canonical_variant(JSON.parse_string(JSON.stringify(public_semantic.get("scene_objects", {}))))
+	var resolved_scene_wire: Variant = SequenceRuntimeScript._canonical_variant(JSON.parse_string(JSON.stringify(resolved_semantic.get("scene_objects", {}))))
+	if _dict(public_semantic.get("interactions", {})).keys() != _dict(resolved_semantic.get("interactions", {})).keys() or JSON.stringify(public_scene_wire) != JSON.stringify(resolved_scene_wire):
 		failures.append("Closed public scenario semantics did not retain the room UI interaction/scene projection.")
+	var command_console := _dict(_dict(public_semantic.get("interactions", {})).get("scenario::command_console", {}))
+	var public_action_ids: Array = []
+	for action_value in _array(command_console.get("available_actions", [])):
+		public_action_ids.append(str(_dict(action_value).get("id", "")))
+	public_action_ids.sort()
+	if public_action_ids != ["prepare", "refuse"] or public_semantic_text.contains("finish"):
+		failures.append("Closed public scenario semantics lost an authentic available action or exposed a privately gated action.")
 	var prepare := _runtime_command(initial, definition, "prepare", "bar_node", "arrival", "depth:prepare", {}, "scenario", "command_console")
 	var descriptor := SequenceRuntimeScript._command_descriptor(initial, definition, "scenario", "command_console", "prepare")
 	var action := _dict(descriptor.get("action", {}))
@@ -4263,8 +4275,8 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 	var material_expectations := {
 		"repaired": {"scene": "stocked_rack", "actor": "delivery_clerk", "service_enabled": true, "route": "bar", "route_source": "jazz_club"},
 		"broken": {"scene": "torn_carton", "actor": "", "service_enabled": false, "route": "bar", "route_enabled": false},
-		"refused": {"scene": "sealed_pallet", "actor": "delivery_clerk", "service_enabled": false, "route": "pawn_shop", "route_enabled": false},
-		"interrupted": {"scene": "abandoned_manifest", "actor": "", "service_enabled": true, "route": "gas_station_casino", "route_enabled": false},
+		"refused": {"scene": "sealed_pallet", "actor": "delivery_clerk", "service_enabled": false, "route": "bar", "route_enabled": false},
+		"interrupted": {"scene": "abandoned_manifest", "actor": "", "service_enabled": true, "route": "bar", "route_enabled": false},
 	}
 	for outcome_value in terminals.keys():
 		var outcome := str(outcome_value)

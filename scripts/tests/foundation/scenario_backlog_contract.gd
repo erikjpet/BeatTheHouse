@@ -265,9 +265,15 @@ static func _check_weight_and_layer_seams(library: ContentLibrary, failures: Arr
 		failures.append("Storm Shelter must up-weight through both rain and storm town tags.")
 	if not _strings(library.scenario("punchline_raid_jitters").get("town_weight_tags", [])).has("law:pressure"):
 		failures.append("Raid Jitters lost the Police Sweep pressure weight seam.")
-	for scenario_id in ["punchline_new_muscle", "punchline_raid_jitters"]:
-		if str(library.scenario(scenario_id).get("layer_id", "")) != "casino":
-			failures.append("Punchline backlog scenario %s must target only the casino layer." % scenario_id)
+	var expected_layers := {
+		"punchline_new_muscle": "casino",
+		"punchline_debt_court": "club",
+		"punchline_raid_jitters": "club",
+	}
+	for scenario_id_value in expected_layers.keys():
+		var scenario_id := str(scenario_id_value)
+		if str(library.scenario(scenario_id).get("layer_id", "")) != str(expected_layers.get(scenario_id, "")):
+			failures.append("Punchline backlog scenario %s lost its exact authored layer scope." % scenario_id)
 
 
 static func _check_tutorial_neutrality(library: ContentLibrary, failures: Array) -> void:

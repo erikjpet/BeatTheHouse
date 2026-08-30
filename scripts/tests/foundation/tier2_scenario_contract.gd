@@ -1,6 +1,7 @@
 extends RefCounted
 
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
@@ -285,11 +286,24 @@ static func _check_grand_casino_routes(library: ContentLibrary, failures: Array)
 		_check_showdown_route(library, scenario_id, environment, failures)
 
 
+static func _production_grand_environment(environment: Dictionary, run_state: RunState, generator: RunGenerator) -> Dictionary:
+	var prepared := environment.duplicate(true)
+	prepared["world_node_id"] = RunStateScript.GRAND_CASINO_ARCHETYPE_ID
+	prepared["world_map_travel"] = true
+	generator._apply_world_travel_targets(prepared, run_state, run_state.world_map, RunStateScript.GRAND_CASINO_ARCHETYPE_ID)
+	CrewRecruitmentModelScript.apply_to_environment(run_state, prepared)
+	prepared["layout"] = EnvironmentInstanceScript.ensure_generated_layout(prepared)
+	return prepared
+
+
 static func _check_clean_route(library: ContentLibrary, scenario_id: String, environment: Dictionary, failures: Array) -> void:
 	var run_state := RunStateScript.new()
 	run_state.start_new("CLEAN-%s" % scenario_id)
-	run_state.set_environment(environment.duplicate(true))
 	var generator := RunGeneratorScript.new(library)
+	var installed := generator._install_environment(run_state, _production_grand_environment(environment, run_state, generator))
+	if not bool(installed.get("ok", false)):
+		failures.append("Grand scenario %s failed its trusted clean-route install/finalization: %s" % [scenario_id, JSON.stringify(installed.get("errors", []))])
+		return
 	for expected_tier in [RunStateScript.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE, RunStateScript.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER]:
 		var status := run_state.demo_objective_status()
 		_qualify_card_segment(run_state, int(status.get("players_card_next_min_games", 0)), int(status.get("players_card_next_net_winnings", 0)))
@@ -343,7 +357,11 @@ static func _qualify_card_segment(run_state: RunState, game_count: int, net_winn
 static func _check_showdown_route(library: ContentLibrary, scenario_id: String, environment: Dictionary, failures: Array) -> void:
 	var run_state := RunStateScript.new()
 	run_state.start_new("SHOWDOWN-%s" % scenario_id)
-	run_state.set_environment(environment.duplicate(true))
+	var generator := RunGeneratorScript.new(library)
+	var installed := generator._install_environment(run_state, _production_grand_environment(environment, run_state, generator))
+	if not bool(installed.get("ok", false)):
+		failures.append("Grand scenario %s failed its trusted showdown install/finalization: %s" % [scenario_id, JSON.stringify(installed.get("errors", []))])
+		return
 	run_state.narrative_flags["grand_casino_showdown_pending"] = true
 	var module := EventModuleScript.new()
 	module.setup(library.event(RunStateScript.GRAND_CASINO_SHOWDOWN_EVENT_ID), library)

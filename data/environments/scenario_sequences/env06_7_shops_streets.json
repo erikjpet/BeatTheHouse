@@ -73,8 +73,7 @@
                     "visible": true,
                     "enabled": true,
                     "state": "unread",
-                    "appearance": "torn_label",
-                    "anchor_id": "package_a_delivery_crate"
+                    "appearance": "torn_label"
                   }
                 },
                 {
@@ -673,8 +672,7 @@
                   "receipt_id": "awaiting_stock_move_crate",
                   "owner_namespace": "scenario",
                   "stable_object_id": "mismarked_crate",
-                  "zone_id": "foreground",
-                  "anchor_id": "package_a_delivery_crate"
+                  "zone_id": "foreground"
                 },
                 {
                   "family": "scene_ops",
@@ -808,21 +806,6 @@
                     "fact_type": "travel_departed"
                   },
                   "next_phase": "resolution"
-                },
-                {
-                  "id": "stock_rejected",
-                  "condition": {
-                    "type": "fact",
-                    "fact_type": "event_result",
-                    "payload_equals": {
-                      "event_id": "scenario_delivery_day_stock",
-                      "choice_id": "clear_the_aisle",
-                      "resolution_id": "clear_the_aisle",
-                      "resolved": true,
-                      "ok": false
-                    }
-                  },
-                  "next_phase": "resolution"
                 }
               ]
             },
@@ -916,9 +899,9 @@
                     "type": "command",
                     "command_id": "ignore_delivery"
                   },
-                  "outcome": "broken",
+                  "outcome": "interrupted",
                   "objective_outcomes": {
-                    "sort_delivery": "failure"
+                    "sort_delivery": "ignore"
                   }
                 },
                 {
@@ -930,24 +913,6 @@
                   "outcome": "interrupted",
                   "objective_outcomes": {
                     "sort_delivery": "cancel"
-                  }
-                },
-                {
-                  "id": "resolve_rejected",
-                  "condition": {
-                    "type": "fact",
-                    "fact_type": "event_result",
-                    "payload_equals": {
-                      "event_id": "scenario_delivery_day_stock",
-                      "choice_id": "clear_the_aisle",
-                      "resolution_id": "clear_the_aisle",
-                      "resolved": true,
-                      "ok": false
-                    }
-                  },
-                  "outcome": "broken",
-                  "objective_outcomes": {
-                    "sort_delivery": "failure"
                   }
                 }
               ]
@@ -1106,7 +1071,7 @@
         "aftermath": {
           "repaired": {
             "label": "Rack stocked and sorted",
-            "revisit_feedback": "The stocked rack is orderly, Ada is relieved, and the cashier tip remains enabled.",
+            "revisit_feedback": "The stocked rack is orderly, Ada is relieved, the cashier tip remains enabled, and the jazz-club route is open.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -1167,11 +1132,21 @@
                   "enabled": true
                 }
               }
+            ],
+            "route_ops": [
+              {
+                "family": "route_ops",
+                "op": "retarget",
+                "receipt_id": "aftermath_repaired_jazz_route",
+                "owner_namespace": "base",
+                "stable_object_id": "world:bar",
+                "source_id": "jazz_club"
+              }
             ]
           },
           "broken": {
             "label": "Torn carton remains",
-            "revisit_feedback": "A torn carton remains after Priya departs, and the cashier tip is disabled while Ada documents the damage.",
+            "revisit_feedback": "A torn carton remains after Priya departs; the cashier tip is disabled and the bar route is closed.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -1218,11 +1193,21 @@
                   "disabled_reason": "Ada is documenting the crushed delivery instead of pricing an exit tip."
                 }
               }
+            ],
+            "route_ops": [
+              {
+                "family": "route_ops",
+                "op": "close",
+                "receipt_id": "aftermath_broken_bar_route",
+                "owner_namespace": "base",
+                "stable_object_id": "world:bar",
+                "disabled_reason": "The damaged delivery blocks the route toward the bar."
+              }
             ]
           },
           "refused": {
             "label": "Delivery refused",
-            "revisit_feedback": "A sealed pallet remains under Ada's watch, and the cashier tip is disabled while the return paperwork stays open.",
+            "revisit_feedback": "A sealed pallet remains under Ada's watch; the cashier tip is disabled and the bar route is closed.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -1276,11 +1261,21 @@
                   "disabled_reason": "Ada is handling the return paperwork and will not sell the delivery tip."
                 }
               }
+            ],
+            "route_ops": [
+              {
+                "family": "route_ops",
+                "op": "close",
+                "receipt_id": "aftermath_refused_bar_route",
+                "owner_namespace": "base",
+                "stable_object_id": "world:bar",
+                "disabled_reason": "The return pickup occupies the bar route."
+              }
             ]
           },
           "interrupted": {
             "label": "Delivery interrupted",
-            "revisit_feedback": "An abandoned manifest remains after Priya departs, while the cashier tip stays enabled for this visit.",
+            "revisit_feedback": "An abandoned manifest remains after Priya departs; the cashier tip stays enabled and the bar route is closed.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -1318,6 +1313,16 @@
                   "enabled": true
                 }
               }
+            ],
+            "route_ops": [
+              {
+                "family": "route_ops",
+                "op": "close",
+                "receipt_id": "aftermath_interrupted_bar_route",
+                "owner_namespace": "base",
+                "stable_object_id": "world:bar",
+                "disabled_reason": "The interrupted unloading closes the bar route for this visit."
+              }
             ]
           }
         },
@@ -1331,7 +1336,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "a5a6937fe72c4eea1fe55ed7c244ee0697f8edaa45bf2e29d665bf32786704c8",
+        "sequence_signature": "1bb120d6a74b4a507e8865348c331b864da4a91abdb18cf48079910049b16431",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1347,8 +1352,7 @@
             "base::anchor:delivery_manifest",
             "base::anchor:delivery_runner_route",
             "base::anchor:delivery_verification_shelf",
-            "base::anchor:travel_1",
-            "base::anchor:package_a_delivery_crate"
+            "base::anchor:travel_1"
           ],
           "zones": [
             "base::zone:background",
@@ -1358,6 +1362,9 @@
             "base::zone:left",
             "base::zone:right",
             "base::zone:service_lane"
+          ],
+          "routes": [
+            "base::world:bar"
           ]
         },
         "fact_subscriptions": [
@@ -1469,7 +1476,10 @@
             "event::event:scenario_delivery_day_stock",
             "service::shopkeeper:merchant",
             "service::service:cashier_tip",
-            "base::travel:leave"
+            "base::travel:leave",
+            "base::world:bar",
+            "base::world:gas_station_casino",
+            "base::world:pawn_shop"
           ]
         },
         "capture_ids": [

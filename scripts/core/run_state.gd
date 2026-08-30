@@ -1537,22 +1537,23 @@ func scenario_preflight_environment_change(source_id: String = "", target_id: St
 		if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure."]}
 		var state := ScenarioEngineScript.ensure_sequence_state(candidate, definition)
 		if state.is_empty(): return {"ok": false, "errors": ["Dynamic room sequence departure could not initialize its causal state."]}
-		var serial := maxi(1, int(state.get("fact_serial_next", 1)))
-		var departure_fact := ScenarioSequenceRuntimeScript.fact(
-			"travel_departed",
-			"travel",
-			current_world_node_id(),
-			"travel:travel_departed:%d" % serial,
-			serial,
-			maxi(int(state.get("boundary_serial", 0)), _crew_action_index()),
-			{"source_id": source_id, "target_id": target_id, "travel_kind": travel_kind}
-		)
-		var enqueued := ScenarioEngineScript.enqueue_sequence_fact(candidate, definition, departure_fact)
-		if not bool(enqueued.get("ok", false)):
-			return {"ok": false, "errors": _copy_array(enqueued.get("errors", []))}
-		var flushed := ScenarioEngineScript.flush_sequence_facts(candidate, definition, _crew_action_index())
-		if not bool(flushed.get("ok", false)):
-			return {"ok": false, "errors": _copy_array(flushed.get("errors", []))}
+		if str(state.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_ACTIVE:
+			var serial := maxi(1, int(state.get("fact_serial_next", 1)))
+			var departure_fact := ScenarioSequenceRuntimeScript.fact(
+				"travel_departed",
+				"travel",
+				current_world_node_id(),
+				"travel:travel_departed:%d" % serial,
+				serial,
+				maxi(int(state.get("boundary_serial", 0)), _crew_action_index()),
+				{"source_id": source_id, "target_id": target_id, "travel_kind": travel_kind}
+			)
+			var enqueued := ScenarioEngineScript.enqueue_sequence_fact(candidate, definition, departure_fact)
+			if not bool(enqueued.get("ok", false)):
+				return {"ok": false, "errors": _copy_array(enqueued.get("errors", []))}
+			var flushed := ScenarioEngineScript.flush_sequence_facts(candidate, definition, _crew_action_index())
+			if not bool(flushed.get("ok", false)):
+				return {"ok": false, "errors": _copy_array(flushed.get("errors", []))}
 	var boundary := _scenario_environment_change_expiry_boundary()
 	if boundary.is_empty(): return {"ok": true, "inactive": true, "errors": []}
 	if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure."]}
@@ -2904,6 +2905,11 @@ func scenario_publish_service_result(kind: String, hook_id: String, result: Dict
 func scenario_publish_travel(fact_type: String, source_id: String, target_id: String, travel_kind: String = "world") -> Dictionary:
 	if not ["travel_departed", "travel_arrived"].has(fact_type):
 		return {"ok": false, "errors": ["Scenario travel fact type is unregistered."]}
+	var definition := scenario_sequence_definition()
+	if ScenarioSequenceSchemaScript.is_sequence(definition):
+		var state := ScenarioEngineScript.ensure_sequence_state(current_environment.duplicate(true), definition)
+		if not state.is_empty() and str(state.get("status", "")) != ScenarioSequenceRuntimeScript.STATUS_ACTIVE:
+			return {"ok": true, "inactive": true, "errors": []}
 	var result := scenario_enqueue_fact(fact_type, "travel", {"source_id": source_id, "target_id": target_id, "travel_kind": travel_kind})
 	if bool(result.get("inactive", false)):
 		return {"ok": true, "inactive": true, "errors": []}
