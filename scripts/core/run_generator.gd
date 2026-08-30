@@ -44,7 +44,7 @@ func _trusted_scenario_install_data(run_state: RunState, environment_data: Dicti
 		return {"ok": true, "environment": install_data, "errors": []}
 	if library == null or not library.has_method("scenario"):
 		return {"ok": false, "environment": {}, "errors": ["Selected scenario %s cannot be resolved without ContentLibrary." % scenario_id]}
-	var catalog_definition: Dictionary = library.scenario(scenario_id)
+	var catalog_definition: Dictionary = library._scenario_readonly(scenario_id)
 	var archetype_id := str(install_data.get("archetype_id", "")).strip_edges()
 	if catalog_definition.is_empty() or str(catalog_definition.get("id", "")).strip_edges() != scenario_id:
 		return {"ok": false, "environment": {}, "errors": ["Selected scenario %s is not an exact catalog definition." % scenario_id]}
@@ -578,7 +578,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		CrewRecruitmentModelScript.apply_to_environment(run_state, restored)
 		_apply_world_travel_targets(restored, run_state, map_data, node_id)
 		restored["world_node_id"] = node_id
-		var restored_definition := _apply_scenario_pin_suppression(run_state, node_id, run_state.seeded_scenario_definition_for_node(node_id))
+		var restored_definition := _apply_scenario_pin_suppression(run_state, node_id, run_state._seeded_scenario_definition_for_node_readonly(node_id))
 		ScenarioEngineScript.ensure_sequence_state(restored, restored_definition)
 		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored)
 		return restored
@@ -812,10 +812,10 @@ func _prime_town_scenarios(run_state: RunState, map_data: Dictionary) -> void:
 func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream) -> Dictionary:
 	if run_state == null or library == null or rng == null:
 		return {}
-	var pool := library.scenarios_for_archetype(archetype_id)
+	var pool := library._scenarios_for_archetype_readonly(archetype_id)
 	if pool.is_empty():
 		return {}
-	var seeded_definition := run_state.seeded_scenario_definition_for_node(archetype_id)
+	var seeded_definition := run_state._seeded_scenario_definition_for_node_readonly(archetype_id)
 	if not seeded_definition.is_empty():
 		return _apply_scenario_pin_suppression(run_state, archetype_id, seeded_definition)
 	var seeded := run_state.seeded_scenario_for_node(archetype_id)

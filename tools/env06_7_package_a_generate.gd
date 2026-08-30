@@ -240,9 +240,33 @@ func _repair_delivery_day(entry: Dictionary) -> Dictionary:
 			actor_ops[operation_index] = operation
 		row["actor_ops"] = actor_ops
 		aftermath[outcome] = row
+	var phase_graph := sequence.get("phase_graph", {}) as Dictionary
+	var phases := phase_graph.get("phases", []) as Array
+	for phase_index in range(phases.size()):
+		var phase := phases[phase_index] as Dictionary
+		if str(phase.get("id", "")) != str(phase_graph.get("initial_phase", "")):
+			continue
+		var scene_ops := phase.get("scene_ops", []) as Array
+		for operation_index in range(scene_ops.size()):
+			var operation := scene_ops[operation_index] as Dictionary
+			if str(operation.get("stable_object_id", "")) != "mismarked_crate":
+				continue
+			var object := operation.get("object", {}) as Dictionary
+			object["anchor_id"] = "package_a_delivery_crate"
+			operation["object"] = object
+			scene_ops[operation_index] = operation
+		phase["scene_ops"] = scene_ops
+		phases[phase_index] = phase
+	phase_graph["phases"] = phases
+	sequence["phase_graph"] = phase_graph
 	sequence["aftermath"] = aftermath
 	var targets := sequence.get("declared_targets", {}) as Dictionary
 	targets["routes"] = ["base::world:bar"]
+	var anchors := targets.get("anchors", []) as Array
+	if not anchors.has("base::anchor:package_a_delivery_crate"):
+		anchors.append("base::anchor:package_a_delivery_crate")
+	anchors.sort()
+	targets["anchors"] = anchors
 	sequence["declared_targets"] = targets
 	repaired["sequence"] = sequence
 	return repaired

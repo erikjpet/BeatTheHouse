@@ -73,7 +73,8 @@
                     "visible": true,
                     "enabled": true,
                     "state": "unread",
-                    "appearance": "torn_label"
+                    "appearance": "torn_label",
+                    "anchor_id": "package_a_delivery_crate"
                   }
                 },
                 {
@@ -1336,7 +1337,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "1bb120d6a74b4a507e8865348c331b864da4a91abdb18cf48079910049b16431",
+        "sequence_signature": "36db74aed19e34ffde99c6859ced4ade09f124c6c0463edf9e17f0b22fa4b08f",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1352,6 +1353,7 @@
             "base::anchor:delivery_manifest",
             "base::anchor:delivery_runner_route",
             "base::anchor:delivery_verification_shelf",
+            "base::anchor:package_a_delivery_crate",
             "base::anchor:travel_1"
           ],
           "zones": [

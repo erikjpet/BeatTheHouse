@@ -968,7 +968,7 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	var explicit_empty := EnvironmentInstance.from_archetype(motel, 2, legacy_run.create_rng("empty_pool"), library, {}, {}).to_dict()
 	_assert_json_equal(legacy_environment, explicit_empty, "Scenario empty-pool path changed a legacy environment byte shape.", failures)
 
-	var bar_definition := library.scenario("bar_fight_night")
+	var bar_definition := library._scenario_readonly("bar_fight_night")
 	var phase_run := RunStateScript.new()
 	phase_run.start_new("SCENARIO-PHASE")
 	var phased := EnvironmentInstance.from_archetype(library.environment_archetype("bar"), 1, phase_run.create_rng("bar"), library, {}, bar_definition).to_dict()
@@ -1247,7 +1247,7 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	ordinary_selector_modifiers["scenario_pins"] = {"corner_store": "corner_store_delivery_day"}
 	ordinary_selector_modifiers["scenario_pins_apply_mutations"] = true
 	ordinary_selector_config["modifiers"] = ordinary_selector_modifiers
-	var authored_delivery := library.scenario("corner_store_delivery_day")
+	var authored_delivery := library._scenario_readonly("corner_store_delivery_day")
 	for pin_seed_index in range(20):
 		var neutral_seed_run := RunStateScript.new()
 		neutral_seed_run.start_new("TIER1-TUTORIAL-PIN-%02d" % pin_seed_index, tutorial_config)

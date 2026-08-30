@@ -94,7 +94,7 @@ static func _check_punchline_layers(library: ContentLibrary, failures: Array) ->
 	var archetype := library.environment_archetype("small_underground_casino")
 	for scenario_id_value in EXPECTED["small_underground_casino"]:
 		var scenario_id := str(scenario_id_value)
-		var definition := library.scenario(scenario_id)
+		var definition := library._scenario_readonly(scenario_id)
 		var target_layer := str(definition.get("layer_id", ""))
 		var event_id := str(_dict(_dict(definition.get("mutations", {})).get("exclusive_opportunity", {})).get("event_id", ""))
 		var event_definition := library.event(event_id)
@@ -161,7 +161,7 @@ static func _check_engine_lock(library: ContentLibrary, failures: Array) -> void
 
 
 static func _check_debt_court(library: ContentLibrary, failures: Array) -> void:
-	var definition := library.scenario("punchline_debt_court")
+	var definition := library._scenario_readonly("punchline_debt_court")
 	var archetype := library.environment_archetype("small_underground_casino")
 	var run_state := RunStateScript.new()
 	run_state.start_new("DEBT-COURT")
@@ -234,15 +234,15 @@ static func _check_estate_lot(library: ContentLibrary, failures: Array) -> void:
 
 
 static func _check_anchor_ownership(library: ContentLibrary, failures: Array) -> void:
-	var whale := _dict(_dict(library.scenario("delta_queen_whale_aboard").get("mutations", {})).get("hook_flags", {}))
-	var audit := _dict(_dict(library.scenario("grand_casino_audit_night").get("mutations", {})).get("hook_flags", {}))
-	var gala := _dict(_dict(library.scenario("grand_casino_gala_night").get("mutations", {})).get("hook_flags", {}))
+	var whale := _dict(_dict(library._scenario_readonly("delta_queen_whale_aboard").get("mutations", {})).get("hook_flags", {}))
+	var audit := _dict(_dict(library._scenario_readonly("grand_casino_audit_night").get("mutations", {})).get("hook_flags", {}))
+	var gala := _dict(_dict(library._scenario_readonly("grand_casino_gala_night").get("mutations", {})).get("hook_flags", {}))
 	if not bool(whale.get("heist_plan_b_criteria", false)) or not bool(audit.get("heist_plan_a_criteria", false)):
 		failures.append("Whale Aboard and Audit Night did not own their required heist anchors.")
 	for key_value in gala.keys():
 		if str(key_value).contains("heist") or str(key_value).contains("plan_b"):
 			failures.append("Gala Night acquired a heist criterion outside its allowed texture scope.")
-	if not _array(library.scenario("pawn_shop_serial_check_day").get("town_weight_tags", [])).has("law:pressure"):
+	if not _array(library._scenario_readonly("pawn_shop_serial_check_day").get("town_weight_tags", [])).has("law:pressure"):
 		failures.append("Serial-Check Day lost the Police Sweep pressure seam tag.")
 
 
@@ -250,7 +250,7 @@ static func _check_grand_casino_routes(library: ContentLibrary, failures: Array)
 	var archetype := library.environment_archetype("grand_casino")
 	for scenario_id_value in EXPECTED["grand_casino"]:
 		var scenario_id := str(scenario_id_value)
-		var definition := library.scenario(scenario_id)
+		var definition := library._scenario_readonly(scenario_id)
 		var mutations := _dict(definition.get("mutations", {}))
 		for mutation_key_value in mutations.keys():
 			if not ALLOWED_GRAND_MUTATION_KEYS.has(str(mutation_key_value)):

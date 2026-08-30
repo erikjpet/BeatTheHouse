@@ -82,6 +82,7 @@ var _trigger_event_index_full_pack_scan_count := 0
 var _content_index_generation := 0
 var _load_timing: Dictionary = {}
 var _load_pack_timings: Array = []
+var _validated_scenario_definition_cache: Dictionary = {}
 
 
 # Returns the active README pack paths required by the foundation path.
@@ -118,6 +119,7 @@ static func future_pack_paths() -> Dictionary:
 # Loads the active packs and any future packs that already exist.
 func load(run_validation: bool = true) -> Dictionary:
 	var load_started_usec := Time.get_ticks_usec()
+	_validated_scenario_definition_cache.clear()
 	_load_errors = []
 	_load_pack_timings = []
 	validation_complete = false
@@ -185,6 +187,7 @@ func load(run_validation: bool = true) -> Dictionary:
 
 # Validates loaded packs without reading demo runtime data.
 func validate() -> Array:
+	_validated_scenario_definition_cache.clear()
 	validation_complete = true
 	events = _normalize_event_definitions(events)
 	dialogues = _normalize_dialogue_definitions(dialogues)
@@ -347,6 +350,9 @@ func validate() -> Array:
 	_validate_character_chain_definitions()
 	_validate_environment_references()
 	_validate_scenario_definitions()
+	# Validation can normalize or reject definitions. Do not retain any canonical
+	# overlay assembled while validation was still in progress.
+	_validated_scenario_definition_cache.clear()
 	return validation_errors.duplicate(true)
 
 
@@ -621,7 +627,23 @@ func scenarios_for_archetype(archetype_id: String) -> Array:
 		return result
 	for definition_value in value as Array:
 		if typeof(definition_value) == TYPE_DICTIONARY:
-			result.append(_scenario_with_runtime_validation_receipt(definition_value as Dictionary))
+			result.append(_canonical_runtime_scenario_definition(definition_value as Dictionary).duplicate(true))
+	return result
+
+
+# Internal generation view. Validated production definitions are immutable; the
+# selector duplicates only the chosen result instead of rebuilding every overlay
+# in the pool for every reachability probe or destination visit.
+func _scenarios_for_archetype_readonly(archetype_id: String) -> Array:
+	if not validation_complete or not validation_errors.is_empty():
+		return scenarios_for_archetype(archetype_id)
+	var value: Variant = environment_scenarios.get(archetype_id, [])
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for definition_value in value as Array:
+		if typeof(definition_value) == TYPE_DICTIONARY:
+			result.append(_canonical_runtime_scenario_definition(definition_value as Dictionary))
 	return result
 
 
@@ -630,16 +652,39 @@ func scenario(scenario_id: String) -> Dictionary:
 	var wanted := scenario_id.strip_edges()
 	if wanted.is_empty():
 		return {}
+	if validation_complete and validation_errors.is_empty() and _validated_scenario_definition_cache.has(wanted):
+		return (_validated_scenario_definition_cache.get(wanted, {}) as Dictionary).duplicate(true)
 	for pool_value in environment_scenarios.values():
 		if typeof(pool_value) != TYPE_ARRAY:
 			continue
 		for scenario_value in pool_value as Array:
 			if typeof(scenario_value) == TYPE_DICTIONARY and str((scenario_value as Dictionary).get("id", "")) == wanted:
-				return _scenario_with_runtime_validation_receipt(scenario_value as Dictionary)
+				return _canonical_runtime_scenario_definition(scenario_value as Dictionary).duplicate(true)
 	return {}
 
 
-func _scenario_with_runtime_validation_receipt(definition: Dictionary) -> Dictionary:
+func _scenario_readonly(scenario_id: String) -> Dictionary:
+	if not validation_complete or not validation_errors.is_empty():
+		return scenario(scenario_id)
+	var wanted := scenario_id.strip_edges()
+	if wanted.is_empty():
+		return {}
+	if _validated_scenario_definition_cache.has(wanted):
+		return _validated_scenario_definition_cache.get(wanted, {})
+	for pool_value in environment_scenarios.values():
+		if typeof(pool_value) != TYPE_ARRAY:
+			continue
+		for scenario_value in pool_value as Array:
+			if typeof(scenario_value) == TYPE_DICTIONARY and str((scenario_value as Dictionary).get("id", "")) == wanted:
+				return _canonical_runtime_scenario_definition(scenario_value as Dictionary)
+	return {}
+
+
+func _canonical_runtime_scenario_definition(definition: Dictionary) -> Dictionary:
+	var scenario_id := str(definition.get("id", "")).strip_edges()
+	var cache_enabled := validation_complete and validation_errors.is_empty() and not scenario_id.is_empty()
+	if cache_enabled and _validated_scenario_definition_cache.has(scenario_id):
+		return _validated_scenario_definition_cache.get(scenario_id, {})
 	var result := ScenarioSequenceCatalogScript.apply_overlay(definition, scenario_sequence_catalog)
 	# The staged load validates sequence overlays against the exact independent
 	# semantic target inventory. Runtime has no ContentLibrary at its migration
@@ -649,6 +694,8 @@ func _scenario_with_runtime_validation_receipt(definition: Dictionary) -> Dictio
 		validate()
 	if validation_complete and validation_errors.is_empty() and ScenarioSequenceSchemaScript.is_sequence(result):
 		result[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
+	if cache_enabled:
+		_validated_scenario_definition_cache[scenario_id] = result
 	return result
 
 

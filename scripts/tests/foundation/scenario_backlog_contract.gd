@@ -68,7 +68,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 
 
 static func _check_scenario(library: ContentLibrary, archetype_id: String, scenario_id: String, base_event_ids: Dictionary, claimed_event_ids: Dictionary, failures: Array) -> void:
-	var definition := library.scenario(scenario_id)
+	var definition := library._scenario_readonly(scenario_id)
 	if definition.is_empty() or str(definition.get("archetype_id", "")) != archetype_id:
 		failures.append("Scenario backlog is missing %s under %s." % [scenario_id, archetype_id])
 		return
@@ -223,7 +223,7 @@ static func _number_word(value: int) -> String:
 static func _check_phase_arcs(library: ContentLibrary, failures: Array) -> void:
 	for scenario_id_value in PHASE_ARCS.keys():
 		var scenario_id := str(scenario_id_value)
-		var definition := library.scenario(scenario_id)
+		var definition := library._scenario_readonly(scenario_id)
 		var phases := _array(definition.get("phases", []))
 		var actual_ids: Array = []
 		for phase_value in phases:
@@ -260,10 +260,10 @@ static func _check_phase_arcs(library: ContentLibrary, failures: Array) -> void:
 
 
 static func _check_weight_and_layer_seams(library: ContentLibrary, failures: Array) -> void:
-	var storm_tags := _strings(library.scenario("gas_station_storm_shelter").get("town_weight_tags", []))
+	var storm_tags := _strings(library._scenario_readonly("gas_station_storm_shelter").get("town_weight_tags", []))
 	if not storm_tags.has("weather:rain") or not storm_tags.has("weather:storm"):
 		failures.append("Storm Shelter must up-weight through both rain and storm town tags.")
-	if not _strings(library.scenario("punchline_raid_jitters").get("town_weight_tags", [])).has("law:pressure"):
+	if not _strings(library._scenario_readonly("punchline_raid_jitters").get("town_weight_tags", [])).has("law:pressure"):
 		failures.append("Raid Jitters lost the Police Sweep pressure weight seam.")
 	var expected_layers := {
 		"punchline_new_muscle": "casino",

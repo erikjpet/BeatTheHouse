@@ -15,6 +15,7 @@ const ScenarioPresentationContractScript := preload("res://scripts/tests/foundat
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
+const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const DELIVERY_SCENARIO_ID := "corner_store_delivery_day"
 const DELIVERY_NODE_ID := "corner_store_delivery_day_node"
 const DELIVERY_EVENT_ID := "scenario_delivery_day_stock"
@@ -1677,8 +1678,16 @@ static func _check_catalog_rollout(library: ContentLibrary, failures: Array) -> 
 				var target_inventory := _dict(target_catalog.get("guaranteed", {})).duplicate(true)
 				target_inventory["event_choices"] = _dict(target_catalog.get("event_choices", {}))
 				target_inventories[str(definition.get("id", ""))] = target_inventory
-	var report := SequenceSchemaScript.catalog_rollout_report(definitions, RolloutManifestScript.expected_ids(), OperationRegistryScript, {}, RolloutManifestScript.required_sequence_ids(), target_inventories)
-	if RolloutManifestScript.EXPECTED_COUNT != 55 or RolloutManifestScript.expected_ids().size() != 55 or not bool(report.get("ok", false)):
+	var expected_ids := RolloutManifestScript.expected_ids()
+	var required_ids := RolloutManifestScript.required_sequence_ids()
+	var report := SequenceSchemaScript.catalog_rollout_report(definitions, expected_ids, OperationRegistryScript, {}, required_ids, target_inventories)
+	var authority_channels := ContentLibraryScript.scenario_uniqueness_validation_channels(report)
+	if RolloutManifestScript.EXPECTED_COUNT != 55 \
+		or expected_ids.size() != 55 \
+		or required_ids != expected_ids \
+		or int(report.get("catalog_actual_count", 0)) != 55 \
+		or int(report.get("comparison_count", 0)) != 1485 \
+		or not _array(authority_channels.get("errors", [])).is_empty():
 		failures.append("Production sequence rollout manifest does not enforce the exact 55-id completed catalog: %s" % JSON.stringify(report.get("failures", [])))
 	var proof := _fixture_definition()
 	proof["id"] = "proof"
@@ -4134,7 +4143,7 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 	var declared_zones := _array(_dict(sequence.get("declared_targets", {})).get("zones", []))
 	if declared_zones != ["base::zone:background", "base::zone:center", "base::zone:exit_lane", "base::zone:foreground", "base::zone:left", "base::zone:right", "base::zone:service_lane"]:
 		failures.append("Committed delivery-day sequence does not declare every exact base zone used by its spatial operations.")
-	if _array(_dict(sequence.get("declared_targets", {})).get("anchors", [])) != ["base::anchor:delivery_clerk", "base::anchor:delivery_clerk_work", "base::anchor:delivery_manifest", "base::anchor:delivery_runner_route", "base::anchor:delivery_verification_shelf", "base::anchor:travel_1"]:
+	if _array(_dict(sequence.get("declared_targets", {})).get("anchors", [])) != ["base::anchor:delivery_clerk", "base::anchor:delivery_clerk_work", "base::anchor:delivery_manifest", "base::anchor:delivery_runner_route", "base::anchor:delivery_verification_shelf", "base::anchor:package_a_delivery_crate", "base::anchor:travel_1"]:
 		failures.append("Committed delivery-day sequence does not declare its exact base actor anchors.")
 	var authoring := _dict(definition.get("sequence_authoring", {}))
 	var references := _dict(authoring.get("references", {}))
