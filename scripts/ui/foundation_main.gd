@@ -11625,6 +11625,8 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 		CONTEXT_MODE_NUMBERS:
 			return _open_numbers_surface(source_id)
 		CONTEXT_MODE_DELIVERY:
+			if str(object_data.get("confirm_action_id", "")) == "delivery_physical_action":
+				return _activate_delivery_physical_action(source_id)
 			return _complete_delivery_handoff(source_id)
 		CONTEXT_MODE_HOME_TENURE:
 			return confirm_home_tenure_action()
@@ -11923,6 +11925,24 @@ func _complete_delivery_handoff(node_id: String) -> bool:
 		return false
 	clear_interaction_focus()
 	_show_message(str(result.get("message", "The package changes hands.")))
+	_autosave_foundation_run("Delivery saved.")
+	_refresh()
+	return true
+
+
+func _activate_delivery_physical_action(verb: String) -> bool:
+	if run_state == null:
+		return false
+	var delivery := run_state.delivery_snapshot()
+	var physical := _copy_dict(delivery.get("physical", {}))
+	var receipt_key := "ui:%s:%s:%d" % [str(delivery.get("run_id", "delivery")), verb, int(physical.get("command_sequence", 0)) + 1]
+	var result := run_state.delivery_apply_physical_action(verb, receipt_key)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("message", "That street action is no longer available.")))
+		_refresh()
+		return false
+	clear_interaction_focus()
+	_show_message(str(result.get("message", "The route changes here.")))
 	_autosave_foundation_run("Delivery saved.")
 	_refresh()
 	return true

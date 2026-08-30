@@ -134,6 +134,7 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 	if not bool(run.crew_heist_begin_count_swap_cart().get("ok", false)):
 		failures.append("Plan A swap cart did not start a real package run.")
 	else:
+		run.delivery_apply_physical_action("pickup", "crew_heist:swap_cart:pickup")
 		_move(run, "grand_casino")
 		run.delivery_resolve_travel_arrival()
 		run.delivery_complete_handoff()

@@ -342,6 +342,7 @@ func _check_delivery_no_soft_lock_worst_cases(failures: Array) -> void:
 func _check_delivery_sweep_and_map_intel(failures: Array) -> void:
 	var sweep_run := _delivery_test_run("DELIVERY-SWEEP")
 	sweep_run.delivery_begin_package({"run_id": "sweep", "deadline_actions": 9, "cargo_id": "proof_case", "consumer_payload": {"failure": {"heat": 0}}})
+	_delivery_pickup_if_needed(sweep_run)
 	sweep_run.add_suspicion("fixture", 50, "test", false)
 	var swept := sweep_run.resolve_police_sweep_encounter_for_test({"node_id": sweep_run.current_world_node_id(), "segment_index": 0, "encounter_seed": 44})
 	if str(swept.get("outcome", "")) != "confiscation" or not str(swept.get("confiscated_item_id", "")).begins_with("delivery:") \
@@ -434,6 +435,7 @@ func _delivery_first_target(run_state: RunState) -> String:
 
 
 func _delivery_enter_node(run_state: RunState, node_id: String) -> Dictionary:
+	_delivery_pickup_if_needed(run_state)
 	var node := DeliveryWorldMapTestScript.node_metadata_by_id(run_state.world_map, node_id)
 	run_state.world_map = DeliveryWorldMapTestScript.enter_node(run_state.world_map, node_id, {})
 	run_state.current_environment = {
@@ -447,9 +449,17 @@ func _delivery_enter_node(run_state: RunState, node_id: String) -> Dictionary:
 
 
 func _delivery_generate_and_arrive(run_state: RunState, node_id: String) -> Dictionary:
+	_delivery_pickup_if_needed(run_state)
 	var route := DeliveryWorldMapTestScript.new(null).route_for_target(run_state.world_map, run_state.current_world_node_id(), node_id)
 	RunGeneratorScript.new(delivery_test_library).next_environment(run_state, node_id, true)
 	return run_state.delivery_resolve_travel_arrival(route, run_state.travel_route_risk(route, node_id))
+
+
+func _delivery_pickup_if_needed(run_state: RunState) -> void:
+	var physical_value: Variant = run_state.delivery_snapshot().get("physical", {})
+	var physical: Dictionary = (physical_value as Dictionary).duplicate(true) if typeof(physical_value) == TYPE_DICTIONARY else {}
+	if str(physical.get("cargo_state", "")) == "pickup_pending":
+		run_state.delivery_apply_physical_action("pickup", "foundation:pickup:%s" % str(run_state.active_delivery_run.get("run_id", "delivery")))
 
 
 func _delivery_complete_all_targets(run_state: RunState) -> bool:
