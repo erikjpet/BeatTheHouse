@@ -10,29 +10,29 @@ const CONFIGS := [
 	{"id":"punchline_headliner_night","archetype":"small_underground_casino","arrival":"Credential ropes seal the L1 stair, an equipment case waits on L2, and a runner holds at the L3 service door.","verbs":["verify_l1_credential","carry_l2_runner_case","signal_l3_door","escort_headliner_route","reset_service_rope"],"beats":["credential_turn","case_transfer","door_release","headliner_move","rope_reset"],"fact":"service_result","tags":["three_layer_credential","runner_relay","backstage_route"],"objects":[["credential_rope","Layer 1 credential rope","barrier","left","sealed"],["runner_case","Layer 2 runner case","equipment","center","waiting"],["service_door","Layer 3 service door","route_fixture","right","locked"]],"actors":[["credential_runner","Headliner runner","actor_headliner_runner","center","wait"],["door_guard","Backstage door guard","actor_door_guard","right","guard"]],"decision":{"at":"work_1","options":[["honor_headliner_route","work_2"],["escort_headliner_direct","work_2"],["divert_headliner_runner","terminal_failure"]]},"outcomes":["headliner_reached","runner_diverted","credential_refused","arrival_interrupted"]},
 	{"id":"punchline_bringer_show","archetype":"small_underground_casino","arrival":"Three labeled crowd groups wait behind separate ropes while empty chair blocks face an unlit stage.","verbs":["open_first_crowd_rope","usher_supporters_to_block","count_minimum_seats","close_hostile_pitch"],"beats":["rope_open","crowd_move","seat_count","stage_light"],"fact":"travel_arrived","tags":["occupancy_threshold","crowd_usher","pitch_aftermath"],"objects":[["crowd_ropes","Bringer crowd ropes","barrier","left","segmented"],["seat_blocks","Reserved chair blocks","seating","center","empty"],["unlit_stage","Bringer stage","performance","background","dark"]],"actors":[["bringer_performer","Bringer performer","actor_bringer_performer","background","wait"],["crowd_captain","Crowd captain","actor_crowd_captain","left","queue"]],"decision":{"at":"work_1","options":[["seat_bringer_supporters","work_2"],["defend_bringer_minimum","terminal_success"],["accept_hostile_pitch","terminal_failure"]]},"outcomes":["show_seated","hostile_pitch","ushering_refused","crowd_interrupted"]},
 	{"id":"punchline_high_stakes_night","archetype":"small_underground_casino","arrival":"A protected table displaces ordinary chairs while guard sightlines and an observer rail divide the casino floor.","verbs":["clear_ordinary_chairs","mark_guard_sightline","open_observer_rail","restore_public_game_lane"],"beats":["chair_stack","guard_turn","rail_open","floor_restore"],"fact":"game_result","tags":["protected_table_layout","observer_service","game_lane_restoration"],"objects":[["protected_table","Protected high-stakes table","game_fixture","center","reserved"],["observer_rail","High-stakes observer rail","barrier","right","closed"],["chair_stack","Displaced ordinary chairs","furniture","left","stacked"]],"actors":[["high_stakes_guard","High-stakes guard","actor_high_stakes_guard","right","guard"],["floor_service_runner","Floor service runner","actor_floor_runner","left","work"]],"decision":{"at":"work_2","options":[["serve_protected_table","work_3"],["open_public_observer_rail","terminal_success"],["seal_public_game_lane","terminal_failure"]]},"outcomes":["public_lane_restored","floor_remains_protected","service_refused","session_interrupted"]},
-	{"id":"punchline_greased_week","archetype":"small_underground_casino","arrival":"Inspection seals mark three layer doors while a payoff ledger and moving inspector define a visible route through the club.","verbs":["read_l1_inspection_seal","carry_ledger_to_l2","shadow_inspector_to_l3","unseal_declared_service","post_route_record"],"beats":["seal_read","ledger_move","inspector_route","service_unseal","record_post"],"fact":"heat_changed","tags":["inspection_route","payoff_chain","service_exposure"],"objects":[["inspection_seals","Layer inspection seals","evidence","left","posted"],["payoff_ledger","Payoff route ledger","ledger","center","sealed"],["service_barrier","Declared service barrier","barrier","right","closed"]],"actors":[["moving_inspector","Moving inspector","actor_inspector","left","patrol"],["payoff_runner","Payoff runner","actor_payoff_runner","center","work"]],"decision":{"at":"work_1","options":[["expose_payoff_chain","terminal_success"],["maintain_payoff_route","terminal_failure"],["redirect_inspector_route","work_2"]]},"outcomes":["chain_exposed","payoff_maintained","route_refused","inspection_interrupted"]},
+	{"id":"punchline_greased_week","archetype":"small_underground_casino","arrival":"Inspection seals mark three layer doors while a payoff ledger and moving inspector define a visible route through the club.","verbs":["read_l1_inspection_seal","carry_ledger_to_l2","shadow_inspector_to_l3","unseal_declared_service","post_route_record"],"beats":["seal_read","ledger_move","inspector_route","service_unseal","record_post"],"fact":"heat_changed","tags":["inspection_route","payoff_chain","service_exposure"],"objects":[["inspection_seals","Layer inspection seals","evidence","left","posted"],["payoff_ledger","Payoff route ledger","ledger","center","sealed"],["service_barrier","Declared service barrier","barrier","right","closed"]],"actors":[["moving_inspector","Moving inspector","actor_inspector","left","watch"],["payoff_runner","Payoff runner","actor_payoff_runner","center","work"]],"decision":{"at":"work_1","options":[["expose_payoff_chain","terminal_success"],["maintain_payoff_route","terminal_failure"],["redirect_inspector_route","work_2"]]},"outcomes":["chain_exposed","payoff_maintained","route_refused","inspection_interrupted"]},
 	{"id":"punchline_debt_court","archetype":"small_underground_casino","arrival":"Hearing chairs replace the L3 poker-night room while an evidence stand and witness mark sit outside the paused table boundary.","verbs":["form_hearing_aisle","place_public_evidence","call_room_witness","clear_chairs_for_work"],"beats":["aisle_form","evidence_place","witness_move","room_restore"],"fact":"game_result","tags":["l3_hearing_layout","public_poker_pause","ruling_aftermath"],"objects":[["hearing_chairs","Debt-court hearing chairs","seating","center","formed"],["evidence_stand","Public evidence stand","evidence","left","empty"],["paused_table_rope","Paused poker table rope","barrier","right","sealed"]],"actors":[["court_steward","Debt-court steward","actor_court_steward","background","work"],["room_witness","Room witness","actor_room_witness","left","wait"]],"decision":{"at":"work_2","options":[["uphold_debt_ruling","terminal_success"],["contest_debt_ruling","terminal_failure"],["adjourn_debt_court","terminal_refused"]]},"outcomes":["room_returns_ordered","ruling_contested","hearing_refused","poker_boundary_interrupted"]},
-	{"id":"punchline_new_muscle","archetype":"small_underground_casino","arrival":"New guard posts, inspection trays, and a marked bypass lane create functional checkpoints across the three layers.","verbs":["present_item_at_l1_tray","test_l2_guard_gap","mark_l3_bypass_lane","reassign_checkpoint_posts","open_clean_route"],"beats":["tray_check","guard_gap","bypass_mark","post_rotate","route_open"],"fact":"crew_changed","tags":["checkpoint_procedure","guard_test","layer_route_open"],"objects":[["inspection_tray","Checkpoint inspection tray","workstation","left","ready"],["guard_posts","Three-layer guard posts","barrier","center","staffed"],["bypass_lane","Marked bypass lane","route_marker","right","narrow"]],"actors":[["new_guard_lead","New guard lead","actor_new_guard_lead","center","guard"],["checkpoint_rover","Checkpoint rover","actor_checkpoint_rover","left","patrol"]],"decision":{"at":"arrival","options":[["train_new_guard_posts","work_1"],["test_guard_loyalty","work_1"],["entrench_checkpoint_posts","terminal_failure"]]},"outcomes":["posts_reassigned","checkpoint_entrenched","test_refused","checkpoint_interrupted"]},
+	{"id":"punchline_new_muscle","archetype":"small_underground_casino","arrival":"New guard posts, inspection trays, and a marked bypass lane create functional checkpoints across the three layers.","verbs":["present_item_at_l1_tray","test_l2_guard_gap","mark_l3_bypass_lane","reassign_checkpoint_posts","open_clean_route"],"beats":["tray_check","guard_gap","bypass_mark","post_rotate","route_open"],"fact":"crew_changed","tags":["checkpoint_procedure","guard_test","layer_route_open"],"objects":[["inspection_tray","Checkpoint inspection tray","workstation","left","ready"],["guard_posts","Three-layer guard posts","barrier","center","staffed"],["bypass_lane","Marked bypass lane","route_marker","right","narrow"]],"actors":[["new_guard_lead","New guard lead","actor_new_guard_lead","center","guard"],["checkpoint_rover","Checkpoint rover","actor_checkpoint_rover","left","watch"]],"decision":{"at":"arrival","options":[["train_new_guard_posts","work_1"],["test_guard_loyalty","work_1"],["entrench_checkpoint_posts","terminal_failure"]]},"outcomes":["posts_reassigned","checkpoint_entrenched","test_refused","checkpoint_interrupted"]},
 	{"id":"punchline_raid_jitters","archetype":"small_underground_casino","arrival":"Hide carts, clear bins, and reopen seals wait on different layers while a lookout listens at the outer knock point.","verbs":["wheel_l1_hide_cart","clear_l2_service_lane","seal_l3_room_screen","answer_outer_knock","reopen_safe_floor"],"beats":["cart_move","lane_clear","screen_seal","lookout_turn","floor_reopen"],"fact":"sweep_changed","tags":["raid_staging","three_layer_clear","public_poker_abort"],"objects":[["hide_cart","Layer 1 hide cart","storage","left","loaded"],["clear_bins","Layer 2 clear bins","workstation","center","open"],["room_screen","Layer 3 room screen","barrier","right","unsealed"]],"actors":[["raid_lookout","Raid lookout","actor_raid_lookout","left","listen"],["reopen_steward","Reopen steward","actor_reopen_steward","background","work"]],"decision":{"at":"work_3","options":[["hide_raid_evidence","work_4"],["abort_raid_night","terminal_failure"],["reopen_after_false_alarm","terminal_success"]]},"outcomes":["altered_floor_reopened","night_aborted","hide_task_refused","raid_interrupted"]},
-	{"id":"kitty_cat_lounge_amateur_night","archetype":"kitty_cat_lounge","arrival":"Signup, dressing, stage, and judging stations form a visible four-stop contestant circuit around the lounge.","verbs":["register_amateur_act","carry_costume_to_dressing","set_stage_mark","deliver_judges_card","rotate_final_lineup"],"beats":["signup_cycle","costume_move","stage_mark","judge_card","lineup_rotate"],"fact":"town_transition","tags":["contestant_circuit","bracket_operation","backstage_rotation"],"objects":[["amateur_signup","Amateur signup station","queue_station","left","open"],["dressing_rack","Dressing costume rack","equipment","center","loaded"],["judging_desk","Judging station","scoreboard","right","blank"]],"actors":[["amateur_contestant","Amateur contestant","actor_amateur_contestant","left","watch"],["amateur_judge","Amateur-night judge","actor_amateur_judge","right","watch"]],"decision":{"at":"work_2","options":[["judge_amateur_bracket","work_3"],["reseed_amateur_lineup","work_3"],["stall_amateur_bracket","terminal_failure"]]},"outcomes":["final_lineup_rotated","bracket_stalled","act_refused","show_interrupted"]},
+	{"id":"kitty_cat_lounge_amateur_night","archetype":"kitty_cat_lounge","arrival":"Signup, dressing, stage, and judging stations form a visible four-stop contestant circuit around the lounge.","verbs":["register_amateur_act","carry_costume_to_dressing","set_stage_mark","deliver_judges_card","rotate_final_lineup"],"beats":["signup_cycle","costume_move","stage_mark","judge_card","lineup_rotate"],"fact":"town_transition","tags":["contestant_circuit","bracket_operation","backstage_rotation"],"objects":[["amateur_signup","Signup station","queue_station","left","open"],["dressing_rack","Dressing costume rack","equipment","center","loaded"],["judging_desk","Judges","scoreboard","right","blank"]],"actors":[["amateur_contestant","Amateur contestant","actor_amateur_contestant","left","watch"],["amateur_judge","Judge","actor_amateur_judge","right","watch"]],"decision":{"at":"work_2","options":[["judge_amateur_bracket","work_3"],["reseed_amateur_lineup","work_3"],["stall_amateur_bracket","terminal_failure"]]},"outcomes":["final_lineup_rotated","bracket_stalled","act_refused","show_interrupted"]},
 	{"id":"kitty_cat_lounge_buyout","archetype":"kitty_cat_lounge","arrival":"Private-party ropes advance from the entrance toward the stage while a guest desk and request cart split public circulation.","verbs":["verify_first_guest","advance_buyout_rope","carry_request_cart","mark_public_half_floor","reset_entry_desk"],"beats":["guest_verify","rope_advance","cart_move","floor_split","desk_reset"],"fact":"service_result","tags":["progressive_buyout","guest_verification","split_floor_route"],"objects":[["buyout_ropes","Private buyout ropes","barrier","center","advancing"],["guest_desk","Buyout guest desk","workstation","left","checking"],["request_cart","Private request cart","service","right","loaded"]],"actors":[["buyout_host","Buyout host","actor_buyout_host","left","work"],["public_floor_steward","Public floor steward","actor_floor_steward","right","guard"]],"decision":{"at":"work_1","options":[["split_buyout_floor","work_2"],["claim_full_buyout","terminal_failure"],["preserve_public_half","work_2"]]},"outcomes":["split_floor_running","full_buyout_claimed","service_refused","buyout_interrupted"]},
-	{"id":"kitty_cat_lounge_slow_night","archetype":"kitty_cat_lounge","arrival":"Closed section ropes consolidate the room around a dark mini-stage, an exposed maintenance panel, and one occupied conversation booth.","verbs":["choose_zone_to_reactivate","coil_closed_section_rope","power_selected_station","move_remaining_staff"],"beats":["zone_choice","rope_coil","station_power","staff_move"],"fact":"world_boundary","tags":["exclusive_zone_reactivation","maintenance_choice","remaining_staff_layout"],"objects":[["closed_section_ropes","Closed section ropes","barrier","center","consolidated"],["mini_stage","Dark mini-stage","performance","left","dark"],["maintenance_panel","Exposed maintenance panel","workstation","right","open"]],"actors":[["slow_night_host","Slow-night host","actor_slow_night_host","center","wait"],["booth_regular","Remaining booth regular","actor_booth_regular","right","idle"]],"decision":{"at":"arrival","options":[["reactivate_mini_stage","work_1"],["maintain_conversation_booth","work_1"],["close_wrong_lounge_zone","terminal_failure"]]},"outcomes":["selected_zone_active","wrong_zone_closed","task_refused","night_interrupted"]},
-	{"id":"kitty_cat_lounge_bachelorette_storm","archetype":"kitty_cat_lounge","arrival":"Two party groups, a rolling prop trunk, and a missing-person marker crowd the stage-to-bar lane.","verbs":["separate_party_groups","roll_prop_trunk_off_lane","trace_missing_guest_marker","return_stage_prop","restore_bar_route","seat_orderly_finale"],"beats":["groups_split","trunk_move","marker_trace","prop_return","route_restore","finale_seat"],"fact":"heat_band_changed","tags":["moving_party_pressure","missing_guest_trace","stage_route_recovery"],"objects":[["party_prop_trunk","Rolling party prop trunk","equipment","center","blocking"],["missing_guest_marker","Missing guest marker","evidence","left","fresh"],["bar_route_rope","Bar route rope","route_marker","right","buried"]],"actors":[["party_leader","Bachelorette party leader","actor_party_leader","left","search"],["floor_recovery_host","Floor recovery host","actor_floor_host","right","work"]],"decision":{"at":"work_3","options":[["rescue_missing_guest","work_4"],["commandeer_lounge_stage","terminal_failure"],["evacuate_party_groups","terminal_interrupted"]]},"outcomes":["orderly_finale","stage_commandeered","recovery_refused","storm_interrupted"]},
+	{"id":"kitty_cat_lounge_slow_night","archetype":"kitty_cat_lounge","arrival":"Closed section ropes consolidate the room around a dark mini-stage, an exposed maintenance panel, and one occupied conversation booth.","verbs":["choose_zone_to_reactivate","coil_closed_section_rope","power_selected_station","move_remaining_staff"],"beats":["zone_choice","rope_coil","station_power","staff_move"],"fact":"world_boundary","tags":["exclusive_zone_reactivation","maintenance_choice","remaining_staff_layout"],"objects":[["closed_section_ropes","Section ropes","barrier","center","consolidated"],["mini_stage","Mini-stage","performance","left","dark"],["maintenance_panel","Panel","workstation","right","open"]],"actors":[["slow_night_host","Host","actor_slow_night_host","center","wait"],["booth_regular","Regular","actor_booth_regular","right","idle"]],"decision":{"at":"arrival","options":[["reactivate_mini_stage","work_1"],["maintain_conversation_booth","work_1"],["close_wrong_lounge_zone","terminal_failure"]]},"outcomes":["selected_zone_active","wrong_zone_closed","task_refused","night_interrupted"]},
+	{"id":"kitty_cat_lounge_bachelorette_storm","archetype":"kitty_cat_lounge","arrival":"Two party groups, a rolling prop trunk, and a missing-person marker crowd the stage-to-bar lane.","verbs":["separate_party_groups","roll_prop_trunk_off_lane","trace_missing_guest_marker","return_stage_prop","restore_bar_route","seat_orderly_finale"],"beats":["groups_split","trunk_move","marker_trace","prop_return","route_restore","finale_seat"],"fact":"heat_band_changed","tags":["moving_party_pressure","missing_guest_trace","stage_route_recovery"],"objects":[["party_prop_trunk","Prop trunk","equipment","center","blocking"],["missing_guest_marker","Missing guest marker","evidence","left","fresh"],["bar_route_rope","Bar route rope","route_marker","right","buried"]],"actors":[["party_leader","Bachelorette party leader","actor_party_leader","left","search"],["floor_recovery_host","Floor recovery host","actor_floor_host","right","work"]],"decision":{"at":"work_3","options":[["rescue_missing_guest","work_4"],["commandeer_lounge_stage","terminal_failure"],["evacuate_party_groups","terminal_interrupted"]]},"outcomes":["orderly_finale","stage_commandeered","recovery_refused","storm_interrupted"]},
 ]
 
 const SPATIAL_BINDINGS := {
-	"punchline_open_mic_night":{"layer":"club","anchors":["punchline_open_mic_signup","punchline_open_mic_waiting_comic"],"route":"base::layer:casino"},
-	"punchline_headliner_night":{"layer":"back_room","anchors":["punchline_headliner_credential_rope","punchline_headliner_door_guard"],"route":"base::layer:casino"},
-	"punchline_bringer_show":{"layer":"club","anchors":["punchline_bringer_crowd_ropes","punchline_bringer_crowd_captain"],"route":"base::layer:casino"},
-	"punchline_high_stakes_night":{"layer":"casino","anchors":["punchline_high_stakes_protected_table","punchline_high_stakes_floor_runner"],"route":"base::layer:back_room"},
-	"punchline_greased_week":{"layer":"casino","anchors":["punchline_greased_inspection_seals","punchline_greased_payoff_runner"],"route":"base::layer:club"},
-	"punchline_debt_court":{"layer":"club","anchors":["punchline_debt_hearing_chairs","punchline_debt_room_witness"],"route":"base::layer:casino"},
-	"punchline_new_muscle":{"layer":"casino","anchors":["punchline_new_muscle_inspection_tray","punchline_new_muscle_checkpoint_rover"],"route":"base::layer:back_room"},
-	"punchline_raid_jitters":{"layer":"club","anchors":["punchline_raid_hide_cart","punchline_raid_reopen_steward"],"route":"base::layer:casino"},
-	"kitty_cat_lounge_amateur_night":{"layer":"flat","anchors":["kitty_amateur_signup","kitty_amateur_judge"],"route":"base::world:bar"},
-	"kitty_cat_lounge_buyout":{"layer":"flat","anchors":["kitty_buyout_ropes","kitty_buyout_steward"],"route":"base::world:gas_station_casino"},
-	"kitty_cat_lounge_slow_night":{"layer":"flat","anchors":["kitty_slow_closed_section","kitty_slow_booth_regular"],"route":"base::world:delta_queen"},
-	"kitty_cat_lounge_bachelorette_storm":{"layer":"flat","anchors":["kitty_storm_prop_trunk","kitty_storm_floor_host"],"route":"base::world:grand_casino"},
+	"punchline_open_mic_night":{"layer":"club","task_anchor":"punchline_open_mic_signup","anchors":["punchline_open_mic_signup","punchline_open_mic_waiting_comic"],"phase_object_anchors":{"work_1":{"signup_lectern":"punchline_open_mic_lectern_work_1"}},"route":"base::layer:casino"},
+	"punchline_headliner_night":{"layer":"back_room","task_anchor":"punchline_headliner_task","anchors":["punchline_headliner_credential_rope","punchline_headliner_door_guard"],"phase_object_anchors":{"work_1":{"credential_rope":"punchline_headliner_rope_work_1"}},"actor_anchors":{"credential_runner":"punchline_headliner_runner_arrival"},"route":"base::layer:casino"},
+	"punchline_bringer_show":{"layer":"club","task_anchor":"punchline_bringer_crowd_ropes","anchors":["punchline_bringer_crowd_ropes","punchline_bringer_crowd_captain"],"object_anchors":{"unlit_stage":"punchline_bringer_unlit_stage"},"actor_anchors":{"bringer_performer":"punchline_bringer_performer_arrival"},"phase_object_anchors":{"work_1":{"crowd_ropes":"punchline_bringer_ropes_work_1"}},"route":"base::layer:casino"},
+	"punchline_high_stakes_night":{"layer":"casino","task_anchor":"punchline_high_stakes_task","anchors":["punchline_high_stakes_protected_table","punchline_high_stakes_floor_runner"],"phase_actor_anchors":{"work_2":{"floor_service_runner":"punchline_high_stakes_runner_work_2"}},"route":"base::layer:casino"},
+	"punchline_greased_week":{"layer":"casino","task_anchor":"punchline_greased_inspection_seals","anchors":["punchline_greased_inspection_seals","punchline_greased_payoff_runner"],"phase_object_anchors":{"work_1":{"inspection_seals":"punchline_greased_seals_work_1"}},"route":"base::layer:casino"},
+	"punchline_debt_court":{"layer":"club","task_anchor":"punchline_debt_task","anchors":["punchline_debt_hearing_chairs","punchline_debt_room_witness"],"object_anchors":{"hearing_chairs":"punchline_debt_chairs_work_1"},"phase_object_anchors":{"work_1":{"hearing_chairs":"punchline_debt_chairs_work_1"}},"phase_actor_anchors":{"work_2":{"room_witness":"punchline_debt_witness_work_2"}},"route":"base::layer:casino"},
+	"punchline_new_muscle":{"layer":"casino","task_anchor":"punchline_new_muscle_task","anchors":["punchline_new_muscle_inspection_tray","punchline_new_muscle_checkpoint_rover"],"actor_anchors":{"checkpoint_rover":"punchline_new_muscle_rover_arrival"},"phase_object_anchors":{"work_1":{"inspection_tray":"punchline_new_muscle_tray_work_1"}},"route":"base::layer:casino"},
+	"punchline_raid_jitters":{"layer":"club","task_anchor":"punchline_raid_hide_cart","anchors":["punchline_raid_hide_cart","punchline_raid_reopen_steward"],"actor_anchors":{"reopen_steward":"punchline_raid_steward_arrival"},"phase_object_anchors":{"work_1":{"hide_cart":"punchline_raid_cart_work_1"}},"route":"base::layer:casino"},
+	"kitty_cat_lounge_amateur_night":{"layer":"flat","task_anchor":"kitty_amateur_task","anchors":["kitty_amateur_signup","kitty_amateur_judge"],"object_anchors":{"amateur_signup":"kitty_amateur_signup","judging_desk":"kitty_amateur_judge"},"actor_anchors":{"amateur_contestant":"kitty_amateur_contestant_arrival","amateur_judge":"kitty_amateur_judge_arrival"},"route":"base::world:bar"},
+	"kitty_cat_lounge_buyout":{"layer":"flat","anchors":["kitty_buyout_ropes","kitty_buyout_steward"],"object_anchors":{"request_cart":"kitty_buyout_request_cart"},"actor_anchors":{"public_floor_steward":"kitty_buyout_steward_arrival"},"route":"base::world:bar"},
+	"kitty_cat_lounge_slow_night":{"layer":"flat","task_anchor":"kitty_slow_task","anchors":["kitty_slow_closed_section","kitty_slow_booth_regular"],"object_anchors":{"closed_section_ropes":"kitty_slow_closed_section","mini_stage":"kitty_slow_mini_stage","maintenance_panel":"kitty_slow_maintenance"},"actor_anchors":{"slow_night_host":"kitty_slow_host_arrival","booth_regular":"kitty_slow_regular_arrival"},"route":"base::world:gas_station_casino"},
+	"kitty_cat_lounge_bachelorette_storm":{"layer":"flat","task_anchor":"kitty_storm_task","exit_anchor":"kitty_storm_safe_exit","anchors":["kitty_storm_prop_trunk","kitty_storm_floor_host"],"object_anchors":{"party_prop_trunk":"kitty_storm_prop_trunk","bar_route_rope":"kitty_storm_bar_rope"},"actor_anchors":{"party_leader":"kitty_storm_party_leader","floor_recovery_host":"kitty_storm_host_arrival"},"route":"base::world:gas_station_casino"},
 }
 
 
@@ -80,18 +80,27 @@ func _entry(c: Dictionary) -> Dictionary:
 	for object_index in range(c.objects.size()):
 		var o: Array = c.objects[object_index]
 		var object_id := "%s_%s" % [prefix, o[0]]
-		scene_ops.append(_scene_spawn(prefix, "arrival", object_id, str(o[1]), str(o[2]), str(o[3]), str(o[4]), 52 + object_index * 8, 46 + object_index * 6))
+		var object_anchor := str(_dict(spatial.get("object_anchors", {})).get(str(o[0]), ""))
+		scene_ops.append(_scene_spawn(prefix, "arrival", object_id, str(o[1]), str(o[2]), str(o[3]), str(o[4]), 52 + object_index * 8, 46 + object_index * 6, object_anchor))
 		cleanup.append(_remove("scene_ops", prefix, object_id))
 	var actor_ops: Array = []
 	for actor_index in range(c.actors.size()):
 		var a: Array = c.actors[actor_index]
 		var actor_id := "%s_%s" % [prefix, a[0]]
-		actor_ops.append(_actor_spawn(prefix, "arrival", actor_id, str(a[1]), str(a[2]), str(a[3]), str(a[4])))
+		var actor_anchor := str(_dict(spatial.get("actor_anchors", {})).get(str(a[0]), ""))
+		actor_ops.append(_actor_spawn(prefix, "arrival", actor_id, str(a[1]), str(a[2]), str(a[3]), str(a[4]), actor_anchor))
 		cleanup.append(_despawn(prefix, actor_id))
 	var exit_id := "%s_safe_exit" % prefix
+	var exit_scene := _scene_spawn(prefix, "arrival", exit_id, "Clear exit", "exit", "exit_lane", "marked_lane", 56, 56)
+	var exit_anchor := _exit_anchor(spatial)
+	if not exit_anchor.is_empty(): exit_scene["object"]["anchor_id"] = exit_anchor
+	scene_ops.append(exit_scene)
+	cleanup.append(_remove("scene_ops", prefix, exit_id))
 	var first_task_id := "%s_task_0" % prefix
+	scene_ops.append(_task_scene_spawn(prefix, "arrival", first_task_id, str(c.verbs[0]), spatial))
+	cleanup.append(_remove("scene_ops", prefix, first_task_id))
 	var arrival_interactions := [
-		_interaction_add(prefix, "arrival", exit_id, "%s clean exit" % prefix.replace("_"," ").capitalize(), "Leave or refuse the %s task without crossing its active work zone." % prefix.replace("_"," "), [_action("ignore_%s" % prefix, "Ignore the sequence", "ui_down"), _action("refuse_%s" % prefix, "Refuse the task", "ui_cancel")], true),
+		_interaction_add(prefix, "arrival", exit_id, "Clear exit", "Leave or refuse the %s task without crossing its active work zone." % prefix.replace("_"," "), [_action("refuse_%s" % prefix, "Refuse the task", "ui_cancel")], true),
 		_interaction_add(prefix, "arrival", first_task_id, str(c.verbs[0]).replace("_", " ").capitalize(), "Begin the first physical task or commit to this scenario's named strategy.", [_step_action(str(c.verbs[0]), prefix, str(c.verbs[0])), _action("fail_%s" % prefix, "Let the pressure win", "ui_right")] + _decision_actions(c, "arrival", prefix), false),
 	]
 	cleanup.append(_remove("interaction_ops", prefix, exit_id))
@@ -108,13 +117,12 @@ func _entry(c: Dictionary) -> Dictionary:
 	for index in range(1, c.verbs.size()):
 		var task_id := "%s_task_%d" % [prefix, index]
 		var previous_task_id := "%s_task_%d" % [prefix, index - 1]
-		var gate_id := "%s_gate_%d" % [prefix, index - 1]
 		var operations := _beat_operations(c, index - 1, spatial)
 		var phase_id := "work_%d" % index
-		var interactions := [_gate(prefix,phase_id,gate_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this distinct room operation or take its identity-specific branch.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave cleanly","ui_cancel")] + _decision_actions(c, phase_id, prefix),false)]
-		# Remove gate overlays before their underlying task interactions so cleanup
-		# cannot restore an already-removed target and leak it across revisit.
-		cleanup.push_front(_remove("interaction_ops",prefix,gate_id))
+		operations.scene.append(_scene_remove(prefix, phase_id, previous_task_id))
+		operations.scene.append(_task_scene_spawn(prefix, phase_id, task_id, str(c.verbs[index]), spatial))
+		var interactions := [_interaction_remove(prefix,phase_id,previous_task_id), _interaction_add(prefix,phase_id,task_id,str(c.verbs[index]).replace("_"," ").capitalize(),"Complete this distinct room operation or take its identity-specific branch.",[_step_action(str(c.verbs[index]),prefix,str(c.verbs[index])),_action("fail_%s" % prefix,"Let the pressure win","ui_right"),_action("refuse_%s" % prefix,"Refuse and leave cleanly","ui_cancel")] + _decision_actions(c, phase_id, prefix),false)]
+		cleanup.append(_remove("scene_ops",prefix,task_id))
 		cleanup.append(_remove("interaction_ops",prefix,task_id))
 		objective_steps.append({"id":str(c.verbs[index]),"label":str(c.verbs[index]).replace("_"," ").capitalize(),"kind":"command","command_id":str(c.verbs[index])})
 		var next_phase := "terminal_success" if index == c.verbs.size() - 1 else "work_%d" % (index + 1)
@@ -139,7 +147,7 @@ func _entry(c: Dictionary) -> Dictionary:
 		"expiry":{"boundary":"night_end","after":1,"policy":"cleanup"},
 		"cleanup":{"operations":cleanup},
 		"aftermath":aftermath,
-		"declared_targets":{"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[str(spatial.get("route", ""))],"anchors":_declared_anchor_ids(spatial),"zones":_base_zones()},
+		"declared_targets":{"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":_declared_anchor_ids(spatial),"zones":_base_zones()},
 		"mechanic_tags":c.tags,
 		"sequence_signature":"pending",
 		"owner_exceptions":[],
@@ -150,7 +158,7 @@ func _entry(c: Dictionary) -> Dictionary:
 	var decision_verbs: Array = []
 	for option_value in _array(decision.get("options", [])):
 		decision_verbs.append(str((option_value as Array)[0]))
-	return {"scenario_id":c.id,"sequence":sequence,"authoring":{"arrival_summary":c.arrival,"player_verbs":c.verbs + decision_verbs + ["refuse_%s" % prefix,"ignore_%s" % prefix],"world_connections":[str(c.fact),"travel_departed"],"references":{"objects":["base::travel:leave"]},"capture_ids":["%s_arrival" % prefix,"%s_partial" % prefix,"%s_success" % prefix,"%s_failure" % prefix,"%s_refused" % prefix,"%s_interrupted" % prefix,"%s_reduced_motion" % prefix,"%s_small_screen" % prefix,"%s_hit_overlay" % prefix,"%s_obstruction" % prefix],"seed_evidence":{"proof_seed":"%s_seed" % prefix,"save_boundaries":["arrival","partial","success","failure","refused","interrupted"],"minimum_target_size":44,"expected_outcomes":c.outcomes,"identity_decision_phase":str(decision.get("at", "")),"identity_decision_verbs":decision_verbs},"masked_visual_explanations":{}}}
+	return {"scenario_id":c.id,"sequence":sequence,"authoring":{"arrival_summary":c.arrival,"player_verbs":c.verbs + decision_verbs + ["refuse_%s" % prefix],"world_connections":[str(c.fact),"travel_departed"],"references":{"objects":["base::travel:leave"]},"capture_ids":["%s_arrival" % prefix,"%s_partial" % prefix,"%s_success" % prefix,"%s_failure" % prefix,"%s_refused" % prefix,"%s_interrupted" % prefix,"%s_reduced_motion" % prefix,"%s_small_screen" % prefix,"%s_hit_overlay" % prefix,"%s_obstruction" % prefix],"seed_evidence":{"proof_seed":"%s_seed" % prefix,"save_boundaries":["arrival","partial","success","failure","refused","interrupted"],"minimum_target_size":44,"expected_outcomes":c.outcomes,"identity_decision_phase":str(decision.get("at", "")),"identity_decision_verbs":decision_verbs},"masked_visual_explanations":{}}}
 
 
 func _phase(id:String,label:String,feedback:String,exit_prompt:String,objectives:Array,scene:Array,interactions:Array,actors:Array,transitions:Array,branches:Array,terminal:bool=false)->Dictionary:
@@ -213,13 +221,31 @@ func _branch(prefix:String,id:String,condition:Dictionary,next_phase:String,outc
 	return result
 
 
-func _scene_spawn(prefix:String,boundary:String,id:String,label:String,role:String,zone:String,state:String,w:int,h:int)->Dictionary:
-	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":{"label":label,"role":role,"zone_id":zone,"bounds":{"w":w,"h":h},"visible":true,"enabled":true,"state":state,"appearance":state}}
+func _scene_spawn(prefix:String,boundary:String,id:String,label:String,role:String,zone:String,state:String,w:int,h:int,anchor_id:String="")->Dictionary:
+	var object := {"label":label,"role":role,"zone_id":zone,"bounds":{"w":w,"h":h},"visible":true,"enabled":true,"state":state,"appearance":state}
+	if not anchor_id.is_empty(): object["anchor_id"] = anchor_id
+	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":object}
 
 
-func _actor_spawn(prefix:String,boundary:String,id:String,label:String,actor_id:String,zone:String,behavior:String)->Dictionary:
+func _task_scene_spawn(prefix:String,boundary:String,id:String,verb:String,spatial:Dictionary)->Dictionary:
+	var anchors := _array(spatial.get("anchors", []))
+	var object := {"label":verb.replace("_", " ").capitalize(),"role":"task_station","bounds":{"w":64,"h":56},"visible":true,"enabled":true,"state":"ready","appearance":"task_ready"}
+	var task_anchor := str(spatial.get("task_anchor", ""))
+	if not task_anchor.is_empty(): object["anchor_id"] = task_anchor
+	elif not anchors.is_empty(): object["anchor_id"] = str(anchors[0])
+	else: object["zone_id"] = "service_lane"
+	return {"family":"scene_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"object":object}
+
+
+func _scene_remove(prefix:String,boundary:String,id:String)->Dictionary:
+	return {"family":"scene_ops","op":"remove","receipt_id":"%s_%s_remove_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id}
+
+
+func _actor_spawn(prefix:String,boundary:String,id:String,label:String,actor_id:String,zone:String,behavior:String,anchor_id:String="")->Dictionary:
 	var bounded_behavior := behavior if ["idle", "watch", "patrol", "guard", "flee", "fight", "work", "depart"].has(behavior) else "watch"
-	return {"family":"actor_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"actor":{"label":label,"actor_id":actor_id,"zone_id":zone,"behavior":bounded_behavior,"pose":"arrival"}}
+	var actor := {"label":label,"actor_id":actor_id,"zone_id":zone,"behavior":bounded_behavior,"pose":"arrival"}
+	if not anchor_id.is_empty(): actor["anchor_id"] = anchor_id
+	return {"family":"actor_ops","op":"spawn","receipt_id":"%s_%s_spawn_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"actor":actor}
 
 
 func _interaction_add(prefix:String,boundary:String,id:String,label:String,prompt:String,actions:Array,safe_exit:bool)->Dictionary:
@@ -237,12 +263,12 @@ func _step_action(id:String,prefix:String,step:String)->Dictionary:
 	return {"id":id,"label":id.replace("_"," ").capitalize(),"input_action":"ui_accept","non_color_state":"work","handler":"complete_objective_step","inputs":{"objective_id":"main_task","step_id":step}}
 
 
-func _gate(prefix:String,boundary:String,id:String,target:String)->Dictionary:
-	return {"family":"interaction_ops","op":"gate","receipt_id":"%s_%s_gate_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id,"mode":"gate","target_owner_namespace":"scenario","target_stable_object_id":target,"enabled":false,"disabled_reason":"%s has advanced beyond %s to its next physical station." % [prefix.replace("_"," ").capitalize(),target.replace("_"," ")]}
+func _interaction_remove(prefix:String,boundary:String,id:String)->Dictionary:
+	return {"family":"interaction_ops","op":"remove","receipt_id":"%s_%s_interaction_remove_%s" % [prefix,boundary,id],"owner_namespace":"scenario","stable_object_id":id}
 
 
 func _remove(family:String,prefix:String,id:String)->Dictionary:
-	return {"family":family,"op":"remove","receipt_id":"%s_cleanup_remove_%s" % [prefix,id],"owner_namespace":"scenario","stable_object_id":id}
+	return {"family":family,"op":"remove","receipt_id":"%s_cleanup_%s_remove_%s" % [prefix,family,id],"owner_namespace":"scenario","stable_object_id":id}
 
 
 func _despawn(prefix:String,id:String)->Dictionary:
@@ -260,23 +286,30 @@ func _transition(prefix:String,boundary:String,kind:String,message:String)->Dict
 func _beat_operations(c:Dictionary,index:int,spatial:Dictionary)->Dictionary:
 	var prefix := str(c.id)
 	var beat := str(c.beats[index % c.beats.size()])
-	var object_id := "%s_%s" % [prefix,c.objects[index % c.objects.size()][0]]
-	var actor_id := "%s_%s" % [prefix,c.actors[index % c.actors.size()][0]]
+	var object_suffix := str(c.objects[index % c.objects.size()][0])
+	var actor_suffix := str(c.actors[index % c.actors.size()][0])
+	var object_id := "%s_%s" % [prefix,object_suffix]
+	var actor_id := "%s_%s" % [prefix,actor_suffix]
+	var phase_id := "work_%d" % (index + 1)
+	var phase_object_anchor := str(_dict(_dict(spatial.get("phase_object_anchors", {})).get(phase_id, {})).get(object_suffix, ""))
+	var phase_actor_anchor := str(_dict(_dict(spatial.get("phase_actor_anchors", {})).get(phase_id, {})).get(actor_suffix, ""))
 	var scene: Array = []
 	var actor: Array = []
 	match index % 5:
 		0:
-			scene.append({"family":"scene_ops","op":"move","receipt_id":"%s_%s_move" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"anchor_id":str(_array(spatial.get("anchors", []))[0])})
+			var move_anchor := phase_object_anchor if not phase_object_anchor.is_empty() else str(_array(spatial.get("anchors", []))[0])
+			scene.append({"family":"scene_ops","op":"move","receipt_id":"%s_%s_move" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"anchor_id":move_anchor})
 			actor.append({"family":"actor_ops","op":"set_pose","receipt_id":"%s_%s_pose" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"pose":beat})
 		1:
 			scene.append({"family":"scene_ops","op":"set_appearance","receipt_id":"%s_%s_appearance" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"appearance":"%s_changed" % beat})
-			actor.append({"family":"actor_ops","op":"set_position","receipt_id":"%s_%s_position" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"anchor_id":str(_array(spatial.get("anchors", []))[1])})
+			var position_anchor := phase_actor_anchor if not phase_actor_anchor.is_empty() else str(_array(spatial.get("anchors", []))[1])
+			actor.append({"family":"actor_ops","op":"set_position","receipt_id":"%s_%s_position" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"anchor_id":position_anchor})
 		2:
 			scene.append({"family":"scene_ops","op":"set_state","receipt_id":"%s_%s_state" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"state":"%s_resolved" % beat})
 			actor.append({"family":"actor_ops","op":"set_behavior","receipt_id":"%s_%s_behavior" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"behavior":"watch"})
 		3:
 			scene.append({"family":"scene_ops","op":"hide","receipt_id":"%s_%s_hide" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id})
-			actor.append({"family":"actor_ops","op":"set_behavior","receipt_id":"%s_%s_depart" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"behavior":"depart"})
+			actor.append({"family":"actor_ops","op":"despawn","receipt_id":"%s_%s_despawn" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id})
 		_:
 			scene.append({"family":"scene_ops","op":"disable","receipt_id":"%s_%s_disable" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":object_id,"disabled_reason":"This station closes after its task."})
 			actor.append({"family":"actor_ops","op":"set_pose","receipt_id":"%s_%s_final_pose" % [prefix,beat],"owner_namespace":"scenario","stable_object_id":actor_id,"pose":"finished"})
@@ -312,11 +345,30 @@ func _base_zones() -> Array:
 func _declared_anchor_ids(spatial: Dictionary) -> Array:
 	var result: Array = []
 	for anchor_value in _array(spatial.get("anchors", [])): result.append("base::anchor:%s" % str(anchor_value))
+	var task_anchor := str(spatial.get("task_anchor", ""))
+	if not task_anchor.is_empty() and not result.has("base::anchor:%s" % task_anchor): result.append("base::anchor:%s" % task_anchor)
+	for group_name in ["object_anchors", "actor_anchors"]:
+		for anchor_value in _dict(spatial.get(group_name, {})).values():
+			var identity := "base::anchor:%s" % str(anchor_value)
+			if not result.has(identity): result.append(identity)
+	for group_name in ["phase_object_anchors", "phase_actor_anchors"]:
+		for phase_value in _dict(spatial.get(group_name, {})).values():
+			for anchor_value in _dict(phase_value).values():
+				var identity := "base::anchor:%s" % str(anchor_value)
+				if not result.has(identity): result.append(identity)
+	var exit_anchor := _exit_anchor(spatial)
+	if not exit_anchor.is_empty() and not result.has("base::anchor:%s" % exit_anchor): result.append("base::anchor:%s" % exit_anchor)
 	return result
 
 
+func _exit_anchor(spatial: Dictionary) -> String:
+	var configured := str(spatial.get("exit_anchor", ""))
+	if not configured.is_empty(): return configured
+	return "punchline_headliner_door_guard" if str(spatial.get("layer", "")) != "flat" else ""
+
+
 func _target_inventory(spatial: Dictionary) -> Dictionary:
-	return {"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[str(spatial.get("route", ""))],"anchors":_declared_anchor_ids(spatial),"zones":_base_zones(),"event_choices":{}}
+	return {"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":_declared_anchor_ids(spatial),"zones":_base_zones(),"event_choices":{}}
 
 
 func _dossier(c:Dictionary,entry:Dictionary)->Dictionary:

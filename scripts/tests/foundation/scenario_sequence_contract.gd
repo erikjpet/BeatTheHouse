@@ -15,6 +15,7 @@ const ScenarioPresentationContractScript := preload("res://scripts/tests/foundat
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
+const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const DELIVERY_SCENARIO_ID := "corner_store_delivery_day"
 const DELIVERY_NODE_ID := "corner_store_delivery_day_node"
 const DELIVERY_EVENT_ID := "scenario_delivery_day_stock"
@@ -909,10 +910,11 @@ static func _check_semantic_inventory(library: ContentLibrary, failures: Array) 
 	wrong_layer_definition["layer_id"] = "ghost_layer"
 	if not _contains_text(_array(library.scenario_target_catalog(wrong_layer_definition).get("errors", [])), "layer"):
 		failures.append("Public scenario target catalog did not diagnose an authored layer mismatch.")
-	var exact_environment := {"id": "grand_casino_001", "world_node_id": "node_1", "archetype_id": "grand_casino", "game_ids": ["slot"], "event_ids": ["late_shift_discount"], "item_offers": [{"id": "marked_cards"}], "service_ids": ["house_drink"], "lender_hooks": ["street_lender"], "next_archetypes": ["bar"], "travel_hooks": ["bar"], "current_layer_id": "main", "layer_ids": ["main", "cage"], "layer_transitions": [{"target_layer_id": "cage"}], "local_narrative_flags": {"casino_room_targets": ["grand_casino_cage"]}, "layout": {"object_rects": {"game:slot": {"x": 0.1, "y": 0.1, "w": 0.12, "h": 0.18}, "game:slot:2": {"x": 0.1, "y": 0.1, "w": 0.12, "h": 0.18}}}}
+	var exact_environment := {"id": "grand_casino_001", "world_node_id": "node_1", "archetype_id": "grand_casino", "game_ids": ["slot"], "event_ids": ["late_shift_discount"], "item_offers": [{"id": "marked_cards"}], "service_ids": ["house_drink"], "lender_hooks": ["street_lender"], "next_archetypes": ["bar"], "travel_hooks": ["bar"], "current_layer_id": "main", "layer_ids": ["main", "cage"], "layer_transitions": [{"target_layer_id": "cage"}], "local_narrative_flags": {"casino_room_targets": ["grand_casino_cage"]}, "layout": {"object_rects": {"game:slot": {"x": 0.1, "y": 0.1, "w": 0.12, "h": 0.18}, "game:slot:2": {"x": 0.1, "y": 0.1, "w": 0.12, "h": 0.18}, "travel:grand_casino_cage": {"x": 0.3, "y": 0.1, "w": 0.12, "h": 0.18}}}}
 	var exact_stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records([
 		_presentation_record("game:slot", "game", "slot", Rect2(0.1, 0.1, 0.12, 0.18)),
 		_presentation_record("game:slot:2", "game", "slot", Rect2(0.1, 0.1, 0.12, 0.18)),
+		_presentation_record("travel:grand_casino_cage", "travel", "grand_casino_cage", Rect2(0.3, 0.1, 0.12, 0.18)),
 	], exact_environment, library)
 	var exact_records := _array(exact_stamped.get("records", []))
 	var exact := EnvironmentSemanticInventoryScript.for_instance(exact_environment, library, exact_records)
@@ -922,7 +924,7 @@ static func _check_semantic_inventory(library: ContentLibrary, failures: Array) 
 	var tampered := exact.duplicate(true)
 	tampered["environment_id"] = "forged"
 	if EnvironmentSemanticInventoryScript.validate(tampered).is_empty() or not EnvironmentSemanticInventoryScript.exact_collections(tampered).is_empty(): failures.append("Tampered semantic inventory digest was accepted.")
-	var duplicate_exact := EnvironmentSemanticInventoryScript.for_instance(exact_environment, library, [exact_records[0], exact_records[0]])
+	var duplicate_exact := EnvironmentSemanticInventoryScript.for_instance(exact_environment, library, [exact_records[0], exact_records[0], exact_records[2]])
 	var duplicate_exact_errors := _array(duplicate_exact.get("errors", []))
 	if duplicate_exact_errors != ["base interaction inventory contains duplicate/colliding identity or presentation id game:slot."]:
 		failures.append("Duplicate exact base interaction identity did not retain its exact structured collision diagnostic: %s" % JSON.stringify(duplicate_exact_errors))
@@ -1666,11 +1668,27 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 
 static func _check_catalog_rollout(library: ContentLibrary, failures: Array) -> void:
 	var definitions: Array = []
+	var target_inventories: Dictionary = {}
 	for pool_value in library.environment_scenarios.values():
-		definitions.append_array(_array(pool_value))
-	var report := SequenceSchemaScript.catalog_rollout_report(definitions, RolloutManifestScript.expected_ids(), OperationRegistryScript, {}, RolloutManifestScript.required_sequence_ids())
-	if RolloutManifestScript.EXPECTED_COUNT != 55 or RolloutManifestScript.expected_ids().size() != 55 or not bool(report.get("ok", false)):
-		failures.append("Production sequence rollout manifest does not enforce the exact 55-id catalog without blocking pending env06_7 packages: %s" % JSON.stringify(report.get("failures", [])))
+		for definition_value in _array(pool_value):
+			if typeof(definition_value) == TYPE_DICTIONARY:
+				var definition := SequenceCatalogScript.apply_overlay(definition_value as Dictionary, library.scenario_sequence_catalog)
+				definitions.append(definition)
+				var target_catalog := library.scenario_target_catalog(definition)
+				var target_inventory := _dict(target_catalog.get("guaranteed", {})).duplicate(true)
+				target_inventory["event_choices"] = _dict(target_catalog.get("event_choices", {}))
+				target_inventories[str(definition.get("id", ""))] = target_inventory
+	var expected_ids := RolloutManifestScript.expected_ids()
+	var required_ids := RolloutManifestScript.required_sequence_ids()
+	var report := SequenceSchemaScript.catalog_rollout_report(definitions, expected_ids, OperationRegistryScript, {}, required_ids, target_inventories)
+	var authority_channels := ContentLibraryScript.scenario_uniqueness_validation_channels(report)
+	if RolloutManifestScript.EXPECTED_COUNT != 55 \
+		or expected_ids.size() != 55 \
+		or required_ids != expected_ids \
+		or int(report.get("catalog_actual_count", 0)) != 55 \
+		or int(report.get("comparison_count", 0)) != 1485 \
+		or not _array(authority_channels.get("errors", [])).is_empty():
+		failures.append("Production sequence rollout manifest does not enforce the exact 55-id completed catalog: %s" % JSON.stringify(report.get("failures", [])))
 	var proof := _fixture_definition()
 	proof["id"] = "proof"
 	var pending := {"id": "pending"}
@@ -1761,7 +1779,9 @@ static func _check_public_projection_privacy(failures: Array) -> void:
 	var projection := SequenceRuntimeScript.public_projection(state, definition)
 	var public_semantic := _dict(projection.get("semantic_state", {}))
 	var public_text := JSON.stringify(projection)
-	if not bool(applied.get("ok", false)) or _dict(projection.get("local_state", {})) != {"pressure": 3} or public_semantic.has("transition_queue") or public_semantic.has("operation_receipts") or public_semantic.has("operation_receipt_records") or public_text.contains("transition_feedback_777") or public_text.contains("hidden_stage_receipt") or int(projection.get("pending_transition_count", -1)) != 1:
+	var expected_public_local: Variant = SequenceRuntimeScript._canonical_variant(JSON.parse_string(JSON.stringify({"pressure": 3})))
+	var actual_public_local: Variant = SequenceRuntimeScript._canonical_variant(JSON.parse_string(JSON.stringify(_dict(projection.get("local_state", {})))))
+	if not bool(applied.get("ok", false)) or JSON.stringify(actual_public_local) != JSON.stringify(expected_public_local) or public_semantic.has("transition_queue") or public_semantic.has("operation_receipts") or public_semantic.has("operation_receipt_records") or public_text.contains("transition_feedback_777") or public_text.contains("hidden_stage_receipt") or int(projection.get("pending_transition_count", -1)) != 1:
 		failures.append("Public sequence projection leaked private branch state or operation queue/receipt metadata instead of exposing only opted-in local state and pending counts.")
 	var drained := SequenceRuntimeScript.drain_transitions(state, definition)
 	var delivered := _dict(_array(drained.get("transitions", []))[0]) if not _array(drained.get("transitions", [])).is_empty() else {}
@@ -2959,6 +2979,7 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	var host_semantics := _fixture_host_semantics(definition)
 	var initial := SequenceRuntimeScript.initial_state(definition, "bar_node", "depth_remediation_seed", host_semantics)
 	var public_semantic := _dict(SequenceRuntimeScript.public_projection(initial, definition).get("semantic_state", {}))
+	var public_semantic_text := JSON.stringify(public_semantic)
 	var public_semantic_keys := public_semantic.keys()
 	var expected_public_semantic_keys := OperationRegistryScript.PUBLIC_SEMANTIC_KEYS.duplicate()
 	public_semantic_keys.sort()
@@ -2966,8 +2987,17 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	if public_semantic_keys != expected_public_semantic_keys:
 		failures.append("Public scenario semantic projection exposed runtime authorization or journal internals: %s" % JSON.stringify(public_semantic_keys))
 	var resolved_semantic := OperationRegistryScript.public_semantic_state(_dict(initial.get("semantic_state", {})))
-	if _dict(public_semantic.get("interactions", {})).keys() != _dict(resolved_semantic.get("interactions", {})).keys() or SequenceRuntimeScript.content_fingerprint(public_semantic.get("scene_objects", {})) != SequenceRuntimeScript.content_fingerprint(resolved_semantic.get("scene_objects", {})):
+	var public_scene_wire: Variant = SequenceRuntimeScript._canonical_variant(JSON.parse_string(JSON.stringify(public_semantic.get("scene_objects", {}))))
+	var resolved_scene_wire: Variant = SequenceRuntimeScript._canonical_variant(JSON.parse_string(JSON.stringify(resolved_semantic.get("scene_objects", {}))))
+	if _dict(public_semantic.get("interactions", {})).keys() != _dict(resolved_semantic.get("interactions", {})).keys() or JSON.stringify(public_scene_wire) != JSON.stringify(resolved_scene_wire):
 		failures.append("Closed public scenario semantics did not retain the room UI interaction/scene projection.")
+	var command_console := _dict(_dict(public_semantic.get("interactions", {})).get("scenario::command_console", {}))
+	var public_action_ids: Array = []
+	for action_value in _array(command_console.get("available_actions", [])):
+		public_action_ids.append(str(_dict(action_value).get("id", "")))
+	public_action_ids.sort()
+	if public_action_ids != ["prepare", "refuse"] or public_semantic_text.contains("finish"):
+		failures.append("Closed public scenario semantics lost an authentic available action or exposed a privately gated action.")
 	var prepare := _runtime_command(initial, definition, "prepare", "bar_node", "arrival", "depth:prepare", {}, "scenario", "command_console")
 	var descriptor := SequenceRuntimeScript._command_descriptor(initial, definition, "scenario", "command_console", "prepare")
 	var action := _dict(descriptor.get("action", {}))
@@ -4113,7 +4143,7 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 	var declared_zones := _array(_dict(sequence.get("declared_targets", {})).get("zones", []))
 	if declared_zones != ["base::zone:background", "base::zone:center", "base::zone:exit_lane", "base::zone:foreground", "base::zone:left", "base::zone:right", "base::zone:service_lane"]:
 		failures.append("Committed delivery-day sequence does not declare every exact base zone used by its spatial operations.")
-	if _array(_dict(sequence.get("declared_targets", {})).get("anchors", [])) != ["base::anchor:delivery_clerk", "base::anchor:delivery_clerk_work", "base::anchor:delivery_manifest", "base::anchor:delivery_runner_route", "base::anchor:delivery_verification_shelf", "base::anchor:travel_1"]:
+	if _array(_dict(sequence.get("declared_targets", {})).get("anchors", [])) != ["base::anchor:delivery_clerk", "base::anchor:delivery_clerk_work", "base::anchor:delivery_manifest", "base::anchor:delivery_runner_route", "base::anchor:delivery_verification_shelf", "base::anchor:package_a_delivery_crate", "base::anchor:travel_1"]:
 		failures.append("Committed delivery-day sequence does not declare its exact base actor anchors.")
 	var authoring := _dict(definition.get("sequence_authoring", {}))
 	var references := _dict(authoring.get("references", {}))
@@ -4262,8 +4292,8 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 	var material_expectations := {
 		"repaired": {"scene": "stocked_rack", "actor": "delivery_clerk", "service_enabled": true, "route": "bar", "route_source": "jazz_club"},
 		"broken": {"scene": "torn_carton", "actor": "", "service_enabled": false, "route": "bar", "route_enabled": false},
-		"refused": {"scene": "sealed_pallet", "actor": "delivery_clerk", "service_enabled": false, "route": "pawn_shop", "route_enabled": false},
-		"interrupted": {"scene": "abandoned_manifest", "actor": "", "service_enabled": true, "route": "gas_station_casino", "route_enabled": false},
+		"refused": {"scene": "sealed_pallet", "actor": "delivery_clerk", "service_enabled": false, "route": "bar", "route_enabled": false},
+		"interrupted": {"scene": "abandoned_manifest", "actor": "", "service_enabled": true, "route": "bar", "route_enabled": false},
 	}
 	for outcome_value in terminals.keys():
 		var outcome := str(outcome_value)

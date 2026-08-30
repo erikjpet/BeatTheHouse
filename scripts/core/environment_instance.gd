@@ -147,9 +147,12 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.travel_hooks = _copy_array(archetype.get("travel_hooks", []))
 	environment.next_archetypes = _copy_array(archetype.get("next_archetypes", []))
 	environment.object_fixtures = _copy_array(archetype.get("object_fixtures", []))
-	environment.semantic_anchors = _copy_dict(archetype.get("semantic_anchors", {}))
-	environment.semantic_zones = _copy_dict(archetype.get("semantic_zones", {}))
-	environment.semantic_actors = _copy_array(archetype.get("semantic_actors", []))
+	# The expanded semantic catalog belongs to an installed dynamic sequence.
+	# Keep legacy no-sequence room snapshots compact and byte-compatible.
+	if not selected_state.is_empty():
+		environment.semantic_anchors = _copy_dict(archetype.get("semantic_anchors", {}))
+		environment.semantic_zones = _copy_dict(archetype.get("semantic_zones", {}))
+		environment.semantic_actors = _copy_array(archetype.get("semantic_actors", []))
 	var rare_route_rng := rng.fork("rare_next:%s" % environment.id)
 	_append_rare_archetypes(environment.next_archetypes, archetype, rare_route_rng)
 	environment.local_narrative_flags = _copy_dict(archetype.get("local_narrative_flags", {}))
@@ -513,8 +516,8 @@ static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
 	_assign_object_layout_entries(object_rects, layout, _cage_gift_layout_entries(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "shopkeeper:merchant", "shopkeeper", 0, "shopkeeper_spots", _shopkeeper_should_exist(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "travel:leave", "travel", 0, "travel_spots", not _travel_target_ids(environment_data).is_empty(), active_object_ids)
-	_assign_string_object_rects(object_rects, layout, "casino_fixture", _casino_fixture_ids(environment_data), "casino_fixture_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "travel", _grand_casino_local_target_ids(environment_data), "casino_door_spots", active_object_ids)
+	_assign_string_object_rects(object_rects, layout, "casino_fixture", _casino_fixture_ids(environment_data), "casino_fixture_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots", active_object_ids)
 	_assign_object_layout_entries(object_rects, layout, _filter_unique_object_layout_entries(_game_hook_layout_entries(environment_data)), active_object_ids)
@@ -1148,8 +1151,8 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 		entries.append({"object_id": "shopkeeper:merchant", "object_type": "shopkeeper", "index": 0, "spot_field": "shopkeeper_spots"})
 	if not _travel_target_ids(environment_data).is_empty():
 		entries.append({"object_id": "travel:leave", "object_type": "travel", "index": 0, "spot_field": "travel_spots"})
-	_append_string_layout_entries(entries, "casino_fixture", _casino_fixture_ids(environment_data), "casino_fixture_spots")
 	_append_string_layout_entries(entries, "travel", _grand_casino_local_target_ids(environment_data), "casino_door_spots")
+	_append_string_layout_entries(entries, "casino_fixture", _casino_fixture_ids(environment_data), "casino_fixture_spots")
 	_append_string_layout_entries(entries, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots")
 	_append_string_layout_entries(entries, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots")
 	entries.append_array(_game_hook_layout_entries(environment_data))

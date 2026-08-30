@@ -32,7 +32,13 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 			"event": definition = _dict(library.call("event", source_id)) if library.has_method("event") else {}
 			"service": definition = _dict(library.call("service", source_id)) if library.has_method("service") else {}
 			"lender": definition = _dict(library.call("lender", source_id)) if library.has_method("lender") else {}
-			"travel": definition = {"display_name": "Leave"} if source_id == "leave" else (_dict(library.call("route", source_id)) if library.has_method("route") else {})
+			"travel":
+				if source_id == "leave":
+					definition = {"display_name": "Leave"}
+				elif _casino_room_target_authorized(environment, library, source_id, object_id):
+					definition = _dict(library.call("environment_archetype", source_id))
+				else:
+					definition = _dict(library.call("route", source_id)) if library.has_method("route") else {}
 		if definition.is_empty():
 			errors.append("authoritative base semantic source %s is not catalog-backed." % object_id)
 			continue
@@ -325,8 +331,13 @@ static func _identity_for_record(source: Dictionary, environment: Dictionary, li
 			source_field = "crew_presence"
 			if str(source.get("object_type", "")) != "dialogue" or not _record_present(environment.get(source_field, []), "member_id", source_id): return {}
 		"travel":
-			source_field = "travel_hooks"
-			if str(source.get("object_type", "")) != "travel" or (source_id != "leave" and (not _route_present(environment, source_id) or not _library_route_target(library, source_id))): return {}
+			var room_target := _exact_id(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", []), source_id)
+			if room_target:
+				source_field = "local_narrative_flags.casino_room_targets"
+				if str(source.get("object_type", "")) != "travel" or presentation_id != "travel:%s" % source_id or not _casino_room_target_authorized(environment, library, source_id, presentation_id): return {}
+			else:
+				source_field = "travel_hooks"
+				if str(source.get("object_type", "")) != "travel" or (source_id != "leave" and (not _ordinary_route_present(environment, source_id) or not _library_route_target(library, source_id))): return {}
 			if source_id == "leave" and _ids(_array(environment.get("travel_hooks", [])) + _array(environment.get("next_archetypes", []))).is_empty(): return {}
 		"environment_layer":
 			if str(source.get("object_type", "")) != "environment_layer": return {}
@@ -533,6 +544,41 @@ static func _transition_present(value: Variant, source_id: String) -> bool:
 static func _route_present(environment: Dictionary, source_id: String) -> bool:
 	if _exact_id(environment.get("travel_hooks", []), source_id) or _exact_id(environment.get("next_archetypes", []), source_id): return true
 	return _exact_id(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", []), source_id)
+
+
+static func _ordinary_route_present(environment: Dictionary, source_id: String) -> bool:
+	return _exact_id(environment.get("travel_hooks", []), source_id) or _exact_id(environment.get("next_archetypes", []), source_id)
+
+
+static func _casino_room_target_authorized(environment: Dictionary, library: Variant, source_id: String, presentation_id: String) -> bool:
+	if source_id.is_empty() or presentation_id != "travel:%s" % source_id: return false
+	if not _exact_id(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", []), source_id): return false
+	if not _layout_present(environment, presentation_id) or not _library_has(library, "environment_archetype", source_id): return false
+	var selected := _selected_authored_archetype(environment, library)
+	return not selected.is_empty() and _exact_id(_dict(selected.get("local_narrative_flags", {})).get("casino_room_targets", []), source_id)
+
+
+static func _selected_authored_archetype(environment: Dictionary, library: Variant) -> Dictionary:
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	if archetype_id.is_empty() or library == null or not library.has_method("environment_archetype"): return {}
+	var archetype := _dict(library.call("environment_archetype", archetype_id))
+	if archetype.is_empty(): return {}
+	var layer_id := str(environment.get("current_layer_id", "")).strip_edges()
+	var layers := _dict(archetype.get("layers", {}))
+	if layer_id.is_empty() or layers.is_empty(): return archetype
+	if not layers.has(layer_id): return {}
+	return _deep_merge(archetype, _dict(layers.get(layer_id, {})))
+
+
+static func _deep_merge(base: Dictionary, overlay: Dictionary) -> Dictionary:
+	var result := base.duplicate(true)
+	for key_value in overlay.keys():
+		var incoming: Variant = overlay.get(key_value)
+		if typeof(incoming) == TYPE_DICTIONARY and typeof(result.get(key_value)) == TYPE_DICTIONARY:
+			result[key_value] = _deep_merge(_dict(result.get(key_value)), incoming as Dictionary)
+		else:
+			result[key_value] = incoming.duplicate(true) if typeof(incoming) in [TYPE_DICTIONARY, TYPE_ARRAY] else incoming
+	return result
 
 
 static func _layout_present(environment: Dictionary, presentation_id: String) -> bool:

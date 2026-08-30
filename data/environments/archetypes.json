@@ -212,6 +212,48 @@
         ],
         "zone_id": "foreground"
       },
+      "package_a_lotto_queue": {
+        "position": [
+          450,
+          270
+        ],
+        "zone_id": "center"
+      },
+      "package_a_dead_breaker": {
+        "position": [
+          700,
+          100
+        ],
+        "zone_id": "foreground"
+      },
+      "package_a_delivery_crate": {
+        "position": [
+          400,
+          280
+        ],
+        "zone_id": "center"
+      },
+      "package_a_dead_shift_exit": {
+        "position": [
+          300,
+          400
+        ],
+        "zone_id": "foreground"
+      },
+      "package_a_inventory_clerk_arrival": {
+        "position": [
+          300,
+          200
+        ],
+        "zone_id": "center"
+      },
+      "package_a_inventory_clerk_work": {
+        "position": [
+          700,
+          100
+        ],
+        "zone_id": "background"
+      },
       "shopkeeper_0": {
         "position": [
           470,
@@ -779,7 +821,13 @@
       "front_desk": {"position": [736, 162], "zone_id": "service_lane"},
       "parking_exit": {"position": [820, 350], "zone_id": "exit_lane"},
       "room_walkway": {"position": [430, 154], "zone_id": "center"},
-      "weekly_room": {"position": [150, 260], "zone_id": "left"}
+      "weekly_room": {"position": [150, 260], "zone_id": "left"},
+      "package_b_motel_top_left": {"position": [100, 40], "zone_id": "background"},
+      "package_b_motel_top_mid": {"position": [260, 40], "zone_id": "background"},
+      "package_b_motel_top_right": {"position": [550, 40], "zone_id": "background"},
+      "package_b_motel_service_top_right": {"position": [550, 40], "zone_id": "service_lane"},
+      "package_b_motel_safe_exit": {"position": [180, 40], "zone_id": "background"},
+      "package_b_motel_station": {"position": [350, 210], "zone_id": "center"}
     },
     "security_profile": {
       "strictness": "private",
@@ -1032,18 +1080,31 @@
     },
     "semantic_anchors": {
       "dead_tuesday_bartender": {"position": [624, 130], "zone_id": "service_lane"},
+	  "dead_tuesday_booth": {"position": [650, 250], "zone_id": "right"},
+	  "dead_tuesday_lone_patron": {"position": [500, 380], "zone_id": "foreground"},
       "darts_oche": {"position": [650, 256], "zone_id": "right"},
-      "darts_scorer": {"position": [520, 326], "zone_id": "foreground"},
+	  "darts_scorer": {"position": [500, 380], "zone_id": "foreground"},
+	  "darts_task": {"position": [60, 70], "zone_id": "background"},
+	  "dead_tuesday_task": {"position": [60, 70], "zone_id": "background"},
+	  "fight_door_buffer": {"position": [650, 340], "zone_id": "foreground"},
       "fight_right_brawler": {"position": [812, 202], "zone_id": "right"},
-      "fight_toppled_chair": {"position": [500, 286], "zone_id": "center"},
+	  "fight_right_brawler_arrival": {"position": [500, 380], "zone_id": "foreground"},
+	  "fight_task": {"position": [60, 70], "zone_id": "background"},
+      "fight_toppled_chair": {"position": [600, 210], "zone_id": "center"},
       "live_band_runner": {"position": [84, 290], "zone_id": "left"},
-      "live_band_speakers": {"position": [486, 92], "zone_id": "background"},
+	  "live_band_leader_arrival": {"position": [500, 380], "zone_id": "foreground"},
+      "live_band_speakers": {"position": [400, 100], "zone_id": "background"},
+	  "live_band_task": {"position": [60, 70], "zone_id": "background"},
       "lockin_regular": {"position": [234, 318], "zone_id": "foreground"},
-      "lockin_shutters": {"position": [820, 376], "zone_id": "exit_lane"},
+      "lockin_shutters": {"position": [650, 280], "zone_id": "right"},
+	  "lockin_task": {"position": [60, 70], "zone_id": "background"},
       "payday_order_rail": {"position": [624, 130], "zone_id": "service_lane"},
       "payday_runner": {"position": [322, 202], "zone_id": "center"},
+	  "payday_task": {"position": [60, 70], "zone_id": "background"},
       "wake_host": {"position": [486, 92], "zone_id": "background"},
-      "wake_memorial_tables": {"position": [136, 202], "zone_id": "left"}
+      "wake_memorial_tables": {"position": [136, 202], "zone_id": "left"},
+	  "wake_regular_work_1": {"position": [500, 380], "zone_id": "foreground"},
+	  "wake_task": {"position": [60, 70], "zone_id": "background"}
     },
     "security_profile": {
       "strictness": "loose",
@@ -1280,7 +1341,11 @@
       "cashier_counter": {"position": [702, 190], "zone_id": "service_lane"},
       "highway_exit": {"position": [820, 348], "zone_id": "exit_lane"},
       "machine_bank": {"position": [482, 254], "zone_id": "center"},
-      "truck_lot": {"position": [118, 328], "zone_id": "left"}
+      "truck_lot": {"position": [118, 328], "zone_id": "left"},
+      "package_b_gas_top_left": {"position": [100, 40], "zone_id": "background"},
+      "package_b_gas_top_mid": {"position": [420, 40], "zone_id": "background"},
+      "package_b_gas_top_right": {"position": [650, 40], "zone_id": "background"},
+      "package_b_gas_low_left": {"position": [250, 250], "zone_id": "left"}
     },
     "security_profile": {
       "strictness": "low",
@@ -1473,20 +1538,38 @@
     "semantic_anchors": {
       "punchline_open_mic_signup": {"position": [154, 264]},
       "punchline_open_mic_waiting_comic": {"position": [410, 130]},
+	  "punchline_open_mic_lectern_work_1": {"position": [300, 320], "zone_id": "center"},
       "punchline_headliner_credential_rope": {"position": [786, 302]},
       "punchline_headliner_door_guard": {"position": [842, 374]},
+	  "punchline_headliner_rope_work_1": {"position": [450, 330], "zone_id": "center"},
+	  "punchline_headliner_runner_arrival": {"position": [300, 70], "zone_id": "background"},
+	  "punchline_headliner_task": {"position": [300, 320], "zone_id": "center"},
       "punchline_bringer_crowd_ropes": {"position": [410, 130]},
       "punchline_bringer_crowd_captain": {"position": [704, 214]},
+	  "punchline_bringer_unlit_stage": {"position": [560, 65], "zone_id": "background"},
+	  "punchline_bringer_performer_arrival": {"position": [700, 100], "zone_id": "right"},
+	  "punchline_bringer_ropes_work_1": {"position": [300, 320], "zone_id": "center"},
       "punchline_high_stakes_protected_table": {"position": [798, 176]},
       "punchline_high_stakes_floor_runner": {"position": [78, 220]},
+	  "punchline_high_stakes_task": {"position": [300, 320], "zone_id": "center"},
+	  "punchline_high_stakes_runner_work_2": {"position": [500, 70], "zone_id": "background"},
       "punchline_greased_inspection_seals": {"position": [786, 302]},
       "punchline_greased_payoff_runner": {"position": [410, 96]},
+	  "punchline_greased_seals_work_1": {"position": [560, 330], "zone_id": "center"},
       "punchline_debt_hearing_chairs": {"position": [450, 218]},
       "punchline_debt_room_witness": {"position": [270, 205]},
+	  "punchline_debt_chairs_work_1": {"position": [600, 320], "zone_id": "center"},
+	  "punchline_debt_task": {"position": [300, 320], "zone_id": "center"},
+	  "punchline_debt_witness_work_2": {"position": [500, 70], "zone_id": "background"},
       "punchline_new_muscle_inspection_tray": {"position": [154, 264]},
       "punchline_new_muscle_checkpoint_rover": {"position": [220, 300]},
+	  "punchline_new_muscle_task": {"position": [360, 330], "zone_id": "center"},
+	  "punchline_new_muscle_rover_arrival": {"position": [600, 70], "zone_id": "background"},
+	  "punchline_new_muscle_tray_work_1": {"position": [500, 330], "zone_id": "center"},
       "punchline_raid_hide_cart": {"position": [410, 130]},
-      "punchline_raid_reopen_steward": {"position": [410, 168]}
+	  "punchline_raid_reopen_steward": {"position": [410, 168]},
+	  "punchline_raid_steward_arrival": {"position": [600, 70], "zone_id": "background"},
+	  "punchline_raid_cart_work_1": {"position": [300, 320], "zone_id": "center"}
     },
     "security_profile": {
       "strictness": "low",
@@ -1984,14 +2067,22 @@
       "service_lane": {"bounds": [120, 220, 560, 160]}
     },
     "semantic_anchors": {
-      "guest_legend_stage_manager": {"position": [500, 170], "zone_id": "center"},
+	  "guest_legend_manager_arrival": {"position": [350, 350], "zone_id": "foreground"},
+      "guest_legend_stage_manager": {"position": [350, 350], "zone_id": "foreground"},
       "guest_legend_table": {"position": [612, 380], "zone_id": "foreground"},
-      "recording_audience": {"position": [466, 255], "zone_id": "center"},
-      "recording_microphone": {"position": [500, 342], "zone_id": "foreground"},
+	  "guest_legend_task": {"position": [450, 60], "zone_id": "background"},
+      "recording_audience": {"position": [350, 350], "zone_id": "foreground"},
+      "recording_microphone": {"position": [600, 200], "zone_id": "center"},
+	  "recording_task": {"position": [450, 60], "zone_id": "background"},
       "rent_party_creditor": {"position": [322, 258], "zone_id": "center"},
+	  "rent_party_creditor_arrival": {"position": [350, 350], "zone_id": "foreground"},
       "rent_party_donation": {"position": [170, 255], "zone_id": "service_lane"},
-      "union_manager": {"position": [500, 72], "zone_id": "background"},
-      "union_picket": {"position": [650, 380], "zone_id": "foreground"}
+	  "rent_party_task": {"position": [450, 60], "zone_id": "background"},
+	  "union_delegate_arrival": {"position": [350, 350], "zone_id": "foreground"},
+	  "union_manager": {"position": [700, 100], "zone_id": "background"},
+	  "union_manager_arrival": {"position": [700, 100], "zone_id": "background"},
+      "union_picket": {"position": [300, 160], "zone_id": "left"},
+	  "union_task": {"position": [450, 60], "zone_id": "background"}
     },
     "security_profile": {
       "strictness": "loose",
@@ -2390,14 +2481,29 @@
       "service_lane": {"bounds": [320, 100, 360, 160]}
     },
     "semantic_anchors": {
-      "kitty_amateur_signup": {"position": [92, 100]},
-      "kitty_amateur_judge": {"position": [820, 72]},
+      "kitty_amateur_signup": {"position": [370, 80], "zone_id": "background"},
+      "kitty_amateur_judge": {"position": [700, 130], "zone_id": "right"},
+	  "kitty_amateur_task": {"position": [450, 330], "zone_id": "center"},
+	  "kitty_amateur_contestant_arrival": {"position": [180, 320], "zone_id": "left"},
+	  "kitty_amateur_judge_arrival": {"position": [580, 380], "zone_id": "center"},
       "kitty_buyout_ropes": {"position": [520, 260]},
-      "kitty_buyout_steward": {"position": [638, 160]},
-      "kitty_slow_closed_section": {"position": [330, 250]},
-      "kitty_slow_booth_regular": {"position": [690, 376]},
-      "kitty_storm_prop_trunk": {"position": [500, 176]},
-      "kitty_storm_floor_host": {"position": [520, 150]}
+	  "kitty_buyout_steward": {"position": [350, 70], "zone_id": "background"},
+	  "kitty_buyout_request_cart": {"position": [450, 330], "zone_id": "center"},
+	  "kitty_buyout_steward_arrival": {"position": [350, 70], "zone_id": "background"},
+      "kitty_slow_closed_section": {"position": [220, 180], "zone_id": "left"},
+	  "kitty_slow_booth_regular": {"position": [210, 40], "zone_id": "background"},
+	  "kitty_slow_mini_stage": {"position": [700, 360], "zone_id": "right"},
+	  "kitty_slow_host_arrival": {"position": [700, 40], "zone_id": "background"},
+	  "kitty_slow_maintenance": {"position": [440, 40], "zone_id": "background"},
+	  "kitty_slow_regular_arrival": {"position": [210, 40], "zone_id": "background"},
+	  "kitty_slow_task": {"position": [400, 330], "zone_id": "center"},
+      "kitty_storm_prop_trunk": {"position": [500, 176], "zone_id": "center"},
+      "kitty_storm_floor_host": {"position": [100, 400]},
+	  "kitty_storm_party_leader": {"position": [700, 40], "zone_id": "background"},
+	  "kitty_storm_bar_rope": {"position": [740, 320], "zone_id": "right"},
+	  "kitty_storm_host_arrival": {"position": [200, 40], "zone_id": "background"},
+      "kitty_storm_safe_exit": {"position": [430, 40], "zone_id": "exit_lane"},
+	  "kitty_storm_task": {"position": [320, 350], "zone_id": "center"}
     },
     "security_profile": {
       "strictness": "velvet",
@@ -2682,6 +2788,39 @@
       "right": {"bounds": [620, 90, 248, 280]},
       "service_lane": {"bounds": [320, 100, 360, 160]}
     },
+      "semantic_anchors": {
+		"delta_scenario_task": {"position": [344, 270], "zone_id": "center"},
+		"delta_scenario_safe_exit": {"position": [705, 270], "zone_id": "foreground"},
+		"delta_scenario_spare": {"position": [250, 70], "zone_id": "foreground"},
+		"delta_secondary_top": {"position": [380, 70], "zone_id": "foreground"},
+		"delta_noninteractive_right": {"position": [860, 220], "zone_id": "right"},
+		"delta_bottom_left": {"position": [60, 380], "zone_id": "foreground"},
+		"delta_bottom_middle": {"position": [170, 380], "zone_id": "foreground"},
+		"delta_fog_officer": {"position": [228, 380], "zone_id": "foreground"},
+		"delta_fog_waiting_crowd": {"position": [450, 390], "zone_id": "foreground"},
+		"delta_captains_entry": {"position": [380, 120], "zone_id": "foreground"},
+		"delta_phase_left": {"position": [65, 380], "zone_id": "foreground"},
+		"delta_captain_scorer_phase": {"position": [250, 380], "zone_id": "foreground"},
+		"delta_engine_benches": {"position": [450, 390], "zone_id": "foreground"},
+		"delta_engine_guard": {"position": [620, 80], "zone_id": "background"},
+		"delta_decision_left": {"position": [60, 190], "zone_id": "left"},
+		"delta_decision_middle": {"position": [325, 190], "zone_id": "center"},
+		"delta_decision_right": {"position": [344, 270], "zone_id": "center"},
+		"delta_aftermath_scene": {"position": [250, 70], "zone_id": "foreground"},
+		"delta_aftermath_actor": {"position": [325, 190], "zone_id": "center"},
+		"delta_wedding_task": {"position": [344, 270], "zone_id": "center"},
+		"delta_wedding_rope": {"position": [676, 260], "zone_id": "right"},
+		"delta_wedding_table": {"position": [860, 220], "zone_id": "right"},
+		"delta_wedding_best_man": {"position": [170, 380], "zone_id": "foreground"},
+		"delta_wedding_coordinator": {"position": [450, 390], "zone_id": "foreground"},
+		"delta_wedding_ring_phase": {"position": [65, 380], "zone_id": "foreground"},
+		"delta_wedding_safe_exit": {"position": [360, 80], "zone_id": "background"},
+		"delta_wedding_choice_left": {"position": [60, 170], "zone_id": "left"},
+		"delta_wedding_choice_middle": {"position": [320, 190], "zone_id": "center"},
+		"delta_wedding_choice_right": {"position": [344, 270], "zone_id": "center"},
+		"delta_wedding_aftermath_scene": {"position": [60, 170], "zone_id": "left"},
+		"delta_wedding_aftermath_actor": {"position": [320, 190], "zone_id": "center"}
+      },
     "security_profile": {
       "strictness": "licensed-gray",
       "attention_scale": 1.15,
@@ -2893,7 +3032,10 @@
       "boardwalk_service": {"position": [628, 322], "zone_id": "service_lane"},
       "road_exit": {"position": [812, 322], "zone_id": "exit_lane"},
       "shoreline": {"position": [450, 330], "zone_id": "foreground"},
-      "shelter_station": {"position": [224, 284], "zone_id": "service_lane"}
+      "shelter_station": {"position": [224, 284], "zone_id": "service_lane"},
+      "package_b_beach_top_left": {"position": [100, 70], "zone_id": "background"},
+      "package_b_beach_top_mid": {"position": [350, 70], "zone_id": "background"},
+      "package_b_beach_safe_exit_low_left": {"position": [100, 330], "zone_id": "exit_lane"}
     },
     "security_profile": {
       "strictness": "loose",
@@ -3317,8 +3459,8 @@
       ],
       "service_spots": [
         [
-          450,
-          292
+          520,
+          340
         ]
       ],
       "casino_fixture_spots": [
@@ -3333,16 +3475,16 @@
       ],
       "casino_door_spots": [
         [
-          808,
-          220
+          792,
+          266
         ],
         [
-          808,
-          350
+          118,
+          250
         ],
         [
-          700,
-          350
+          252,
+          266
         ]
       ],
       "game_hook_spots": [
@@ -3370,6 +3512,31 @@
       "left": {"bounds": [32, 90, 280, 280]},
       "right": {"bounds": [620, 90, 248, 280]},
       "service_lane": {"bounds": [320, 100, 360, 160]}
+    },
+    "semantic_anchors": {
+      "grand_aftermath_scene": {"position": [300, 70], "zone_id": "background"},
+      "grand_aftermath_actor": {"position": [430, 70], "zone_id": "background"},
+      "grand_decision_left": {"position": [414, 70], "zone_id": "background"},
+      "grand_decision_middle": {"position": [520, 70], "zone_id": "background"},
+      "grand_decision_middle_right": {"position": [646, 70], "zone_id": "background"},
+      "grand_decision_right": {"position": [772, 70], "zone_id": "background"},
+      "grand_work_object_left": {"position": [356, 230], "zone_id": "center"},
+      "grand_work_object_middle": {"position": [486, 230], "zone_id": "center"},
+        "grand_audit_cage": {"position": [480, 230], "zone_id": "center"},
+		"grand_audit_pit_ledger": {"position": [338, 348], "zone_id": "foreground"},
+      "grand_work_actor_right": {"position": [696, 230], "zone_id": "center"},
+      "grand_scenario_safe_exit": {"position": [268, 70], "zone_id": "background"},
+      "grand_scenario_top_400": {"position": [400, 70], "zone_id": "background"},
+      "grand_scenario_top_520": {"position": [520, 70], "zone_id": "background"},
+      "grand_convention_machine_banks": {"position": [520, 73], "zone_id": "background"},
+      "grand_scenario_top_650": {"position": [650, 70], "zone_id": "background"},
+      "grand_scenario_top_650_low": {"position": [650, 75], "zone_id": "background"},
+      "grand_scenario_top_800": {"position": [800, 70], "zone_id": "background"},
+      "grand_scenario_top_800_low": {"position": [800, 75], "zone_id": "background"},
+      "grand_scenario_top_50_actor": {"position": [50, 70], "zone_id": "background"},
+      "grand_convention_badge_delegations": {"position": [65, 70], "zone_id": "background"},
+      "grand_convention_table_block": {"position": [650, 73], "zone_id": "background"},
+      "grand_scenario_bottom_830": {"position": [830, 390], "zone_id": "foreground"}
     },
     "security_profile": {
       "strictness": "boss",

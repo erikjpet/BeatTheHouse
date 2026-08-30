@@ -82,6 +82,7 @@ var _trigger_event_index_full_pack_scan_count := 0
 var _content_index_generation := 0
 var _load_timing: Dictionary = {}
 var _load_pack_timings: Array = []
+var _validated_scenario_definition_cache: Dictionary = {}
 
 
 # Returns the active README pack paths required by the foundation path.
@@ -118,6 +119,7 @@ static func future_pack_paths() -> Dictionary:
 # Loads the active packs and any future packs that already exist.
 func load(run_validation: bool = true) -> Dictionary:
 	var load_started_usec := Time.get_ticks_usec()
+	_validated_scenario_definition_cache.clear()
 	_load_errors = []
 	_load_pack_timings = []
 	validation_complete = false
@@ -185,6 +187,7 @@ func load(run_validation: bool = true) -> Dictionary:
 
 # Validates loaded packs without reading demo runtime data.
 func validate() -> Array:
+	_validated_scenario_definition_cache.clear()
 	validation_complete = true
 	events = _normalize_event_definitions(events)
 	dialogues = _normalize_dialogue_definitions(dialogues)
@@ -347,6 +350,9 @@ func validate() -> Array:
 	_validate_character_chain_definitions()
 	_validate_environment_references()
 	_validate_scenario_definitions()
+	# Validation can normalize or reject definitions. Do not retain any canonical
+	# overlay assembled while validation was still in progress.
+	_validated_scenario_definition_cache.clear()
 	return validation_errors.duplicate(true)
 
 
@@ -621,7 +627,23 @@ func scenarios_for_archetype(archetype_id: String) -> Array:
 		return result
 	for definition_value in value as Array:
 		if typeof(definition_value) == TYPE_DICTIONARY:
-			result.append(_scenario_with_runtime_validation_receipt(definition_value as Dictionary))
+			result.append(_canonical_runtime_scenario_definition(definition_value as Dictionary).duplicate(true))
+	return result
+
+
+# Internal generation view. Validated production definitions are immutable; the
+# selector duplicates only the chosen result instead of rebuilding every overlay
+# in the pool for every reachability probe or destination visit.
+func _scenarios_for_archetype_readonly(archetype_id: String) -> Array:
+	if not validation_complete or not validation_errors.is_empty():
+		return scenarios_for_archetype(archetype_id)
+	var value: Variant = environment_scenarios.get(archetype_id, [])
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for definition_value in value as Array:
+		if typeof(definition_value) == TYPE_DICTIONARY:
+			result.append(_canonical_runtime_scenario_definition(definition_value as Dictionary))
 	return result
 
 
@@ -630,16 +652,39 @@ func scenario(scenario_id: String) -> Dictionary:
 	var wanted := scenario_id.strip_edges()
 	if wanted.is_empty():
 		return {}
+	if validation_complete and validation_errors.is_empty() and _validated_scenario_definition_cache.has(wanted):
+		return (_validated_scenario_definition_cache.get(wanted, {}) as Dictionary).duplicate(true)
 	for pool_value in environment_scenarios.values():
 		if typeof(pool_value) != TYPE_ARRAY:
 			continue
 		for scenario_value in pool_value as Array:
 			if typeof(scenario_value) == TYPE_DICTIONARY and str((scenario_value as Dictionary).get("id", "")) == wanted:
-				return _scenario_with_runtime_validation_receipt(scenario_value as Dictionary)
+				return _canonical_runtime_scenario_definition(scenario_value as Dictionary).duplicate(true)
 	return {}
 
 
-func _scenario_with_runtime_validation_receipt(definition: Dictionary) -> Dictionary:
+func _scenario_readonly(scenario_id: String) -> Dictionary:
+	if not validation_complete or not validation_errors.is_empty():
+		return scenario(scenario_id)
+	var wanted := scenario_id.strip_edges()
+	if wanted.is_empty():
+		return {}
+	if _validated_scenario_definition_cache.has(wanted):
+		return _validated_scenario_definition_cache.get(wanted, {})
+	for pool_value in environment_scenarios.values():
+		if typeof(pool_value) != TYPE_ARRAY:
+			continue
+		for scenario_value in pool_value as Array:
+			if typeof(scenario_value) == TYPE_DICTIONARY and str((scenario_value as Dictionary).get("id", "")) == wanted:
+				return _canonical_runtime_scenario_definition(scenario_value as Dictionary)
+	return {}
+
+
+func _canonical_runtime_scenario_definition(definition: Dictionary) -> Dictionary:
+	var scenario_id := str(definition.get("id", "")).strip_edges()
+	var cache_enabled := validation_complete and validation_errors.is_empty() and not scenario_id.is_empty()
+	if cache_enabled and _validated_scenario_definition_cache.has(scenario_id):
+		return _validated_scenario_definition_cache.get(scenario_id, {})
 	var result := ScenarioSequenceCatalogScript.apply_overlay(definition, scenario_sequence_catalog)
 	# The staged load validates sequence overlays against the exact independent
 	# semantic target inventory. Runtime has no ContentLibrary at its migration
@@ -649,6 +694,8 @@ func _scenario_with_runtime_validation_receipt(definition: Dictionary) -> Dictio
 		validate()
 	if validation_complete and validation_errors.is_empty() and ScenarioSequenceSchemaScript.is_sequence(result):
 		result[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
+	if cache_enabled:
+		_validated_scenario_definition_cache[scenario_id] = result
 	return result
 
 
@@ -3441,16 +3488,22 @@ func _validate_scenario_definitions() -> void:
 		target_inventories[scenario_id] = target_inventory
 	var sequence_validation_batch := ScenarioEngineScript.validate_sequence_catalog_and_audit(sequence_definitions, sequence_validation_references, sequence_definitions.size(), masked_visual_explanations, target_inventories)
 	validation_errors.append_array(_copy_array(sequence_validation_batch.get("validation_errors", [])))
-	if not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty():
-		var uniqueness_audit := _as_dict(sequence_validation_batch.get("audit", {}))
+	var rollout_ids := ScenarioSequenceRolloutManifestScript.expected_ids()
+	var required_sequence_ids := ScenarioSequenceRolloutManifestScript.required_sequence_ids()
+	if ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT != 55 or rollout_ids.size() != ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT:
+		validation_errors.append("scenario sequence rollout manifest must contain exactly 55 catalog ids.")
+	var uniqueness_audit := _as_dict(sequence_validation_batch.get("audit", {}))
+	var rollout_report: Dictionary = {}
+	var reuse_rollout_audit := not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty() and _scenario_catalogs_match_for_internal_reuse(sequence_definitions, rollout_definitions, rollout_ids, required_sequence_ids)
+	if reuse_rollout_audit:
+		rollout_report = _scenario_rollout_report_from_uniqueness_audit(uniqueness_audit, rollout_definitions, rollout_ids, required_sequence_ids)
+	else:
+		rollout_report = ScenarioSequenceSchemaScript.catalog_rollout_report(rollout_definitions, rollout_ids, ScenarioOperationRegistryScript, masked_visual_explanations, required_sequence_ids, target_inventories)
+	if not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty() and not uniqueness_audit.is_empty():
 		scenario_sequence_catalog["uniqueness_audit"] = uniqueness_audit
 		var authority_channels := scenario_uniqueness_validation_channels(uniqueness_audit)
 		validation_errors.append_array(_copy_array(authority_channels.get("errors", [])))
 		validation_warnings.append_array(_copy_array(authority_channels.get("warnings", [])))
-	var rollout_ids := ScenarioSequenceRolloutManifestScript.expected_ids()
-	if ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT != 55 or rollout_ids.size() != ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT:
-		validation_errors.append("scenario sequence rollout manifest must contain exactly 55 catalog ids.")
-	var rollout_report := ScenarioSequenceSchemaScript.catalog_rollout_report(rollout_definitions, rollout_ids, ScenarioOperationRegistryScript, masked_visual_explanations, ScenarioSequenceRolloutManifestScript.required_sequence_ids(), target_inventories)
 	var validation_channels := scenario_uniqueness_validation_channels(rollout_report)
 	for rollout_error_value in _copy_array(validation_channels.get("errors", [])):
 		if not validation_errors.has(rollout_error_value):
@@ -3478,6 +3531,96 @@ static func scenario_uniqueness_validation_channels(report: Dictionary) -> Dicti
 	var warnings: Array = review_findings.duplicate(true)
 	warnings.append_array(_static_array(report.get("warnings", [])))
 	return {"errors": errors, "warnings": warnings}
+
+
+static func _scenario_catalogs_match_for_internal_reuse(sequence_definitions: Array, rollout_definitions: Array, expected_ids: Array, required_ids: Array) -> bool:
+	if sequence_definitions.size() != 55 or rollout_definitions.size() != 55 or expected_ids.size() != 55 or required_ids.size() != 55:
+		return false
+	var expected := _sorted_static_strings(expected_ids)
+	var required := _sorted_static_strings(required_ids)
+	if expected != required:
+		return false
+	var sequence_by_id := _scenario_definition_content_by_id(sequence_definitions)
+	var rollout_by_id := _scenario_definition_content_by_id(rollout_definitions)
+	if sequence_by_id.size() != 55 or rollout_by_id.size() != 55:
+		return false
+	if _sorted_static_strings(sequence_by_id.keys()) != expected or _sorted_static_strings(rollout_by_id.keys()) != expected:
+		return false
+	for scenario_id in expected:
+		var sequence_definition: Dictionary = sequence_by_id.get(scenario_id, {})
+		var rollout_definition: Dictionary = rollout_by_id.get(scenario_id, {})
+		if not ScenarioSequenceSchemaScript.is_sequence(sequence_definition) or not ScenarioSequenceSchemaScript.is_sequence(rollout_definition):
+			return false
+		if JSON.stringify(sequence_definition) != JSON.stringify(rollout_definition):
+			return false
+	return true
+
+
+static func _scenario_definition_content_by_id(definitions: Array) -> Dictionary:
+	var by_id: Dictionary = {}
+	for definition_value in definitions:
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			return {}
+		var definition := definition_value as Dictionary
+		var scenario_id := str(definition.get("id", "")).strip_edges()
+		if scenario_id.is_empty() or by_id.has(scenario_id):
+			return {}
+		by_id[scenario_id] = definition
+	return by_id
+
+
+static func _scenario_uniqueness_audit_from_rollout_report(report: Dictionary) -> Dictionary:
+	# Preserve the exact key order and JSON shape returned by
+	# ScenarioSequenceSchema.catalog_uniqueness_report.
+	return {
+		"ok": bool(report.get("ok", false)),
+		"expected_count": int(report.get("expected_count", 0)),
+		"actual_count": int(report.get("actual_count", 0)),
+		"expected_comparison_count": int(report.get("expected_comparison_count", 0)),
+		"comparison_count": int(report.get("comparison_count", 0)),
+		"rows": _static_array(report.get("rows", [])),
+		"pairs": _static_array(report.get("pairs", [])),
+		"dossiers": _static_array(report.get("dossiers", [])),
+		"failures": _static_array(report.get("failures", [])),
+		"warnings": _static_array(report.get("warnings", [])),
+	}
+
+
+static func _scenario_rollout_report_from_uniqueness_audit(audit: Dictionary, definitions: Array, expected_ids: Array, required_ids: Array) -> Dictionary:
+	var report := audit.duplicate(true)
+	var expected := _sorted_static_strings(expected_ids)
+	var required := _sorted_static_strings(required_ids)
+	var actual: Array = []
+	for definition_value in definitions:
+		if typeof(definition_value) == TYPE_DICTIONARY:
+			actual.append(str((definition_value as Dictionary).get("id", "")).strip_edges())
+	actual = _sorted_static_strings(actual)
+	var failures := _static_array(report.get("failures", []))
+	if definitions.size() != expected.size():
+		failures.append("scenario catalog manifest expected %d definitions, got %d." % [expected.size(), definitions.size()])
+	if actual != expected:
+		failures.append("scenario sequence rollout ids must exactly match the production manifest (expected %s, got %s)." % [JSON.stringify(expected), JSON.stringify(actual)])
+	var status_rows: Array = []
+	for scenario_id_value in expected:
+		var scenario_id := str(scenario_id_value)
+		status_rows.append({"id": scenario_id, "status": "sequence_required" if required.has(scenario_id) else "legacy_pending_env06_7"})
+	report["expected_ids"] = expected
+	report["actual_ids"] = actual
+	report["catalog_expected_count"] = expected.size()
+	report["catalog_actual_count"] = definitions.size()
+	report["required_sequence_ids"] = required
+	report["rollout_statuses"] = status_rows
+	report["failures"] = failures
+	report["ok"] = failures.is_empty()
+	return report
+
+
+static func _sorted_static_strings(values: Array) -> Array:
+	var result: Array = []
+	for value in values:
+		result.append(str(value))
+	result.sort()
+	return result
 
 
 static func _static_array(value: Variant) -> Array:

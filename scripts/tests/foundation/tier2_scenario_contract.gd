@@ -1,6 +1,7 @@
 extends RefCounted
 
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
@@ -93,7 +94,7 @@ static func _check_punchline_layers(library: ContentLibrary, failures: Array) ->
 	var archetype := library.environment_archetype("small_underground_casino")
 	for scenario_id_value in EXPECTED["small_underground_casino"]:
 		var scenario_id := str(scenario_id_value)
-		var definition := library.scenario(scenario_id)
+		var definition := library._scenario_readonly(scenario_id)
 		var target_layer := str(definition.get("layer_id", ""))
 		var event_id := str(_dict(_dict(definition.get("mutations", {})).get("exclusive_opportunity", {})).get("event_id", ""))
 		var event_definition := library.event(event_id)
@@ -160,7 +161,7 @@ static func _check_engine_lock(library: ContentLibrary, failures: Array) -> void
 
 
 static func _check_debt_court(library: ContentLibrary, failures: Array) -> void:
-	var definition := library.scenario("punchline_debt_court")
+	var definition := library._scenario_readonly("punchline_debt_court")
 	var archetype := library.environment_archetype("small_underground_casino")
 	var run_state := RunStateScript.new()
 	run_state.start_new("DEBT-COURT")
@@ -233,15 +234,15 @@ static func _check_estate_lot(library: ContentLibrary, failures: Array) -> void:
 
 
 static func _check_anchor_ownership(library: ContentLibrary, failures: Array) -> void:
-	var whale := _dict(_dict(library.scenario("delta_queen_whale_aboard").get("mutations", {})).get("hook_flags", {}))
-	var audit := _dict(_dict(library.scenario("grand_casino_audit_night").get("mutations", {})).get("hook_flags", {}))
-	var gala := _dict(_dict(library.scenario("grand_casino_gala_night").get("mutations", {})).get("hook_flags", {}))
+	var whale := _dict(_dict(library._scenario_readonly("delta_queen_whale_aboard").get("mutations", {})).get("hook_flags", {}))
+	var audit := _dict(_dict(library._scenario_readonly("grand_casino_audit_night").get("mutations", {})).get("hook_flags", {}))
+	var gala := _dict(_dict(library._scenario_readonly("grand_casino_gala_night").get("mutations", {})).get("hook_flags", {}))
 	if not bool(whale.get("heist_plan_b_criteria", false)) or not bool(audit.get("heist_plan_a_criteria", false)):
 		failures.append("Whale Aboard and Audit Night did not own their required heist anchors.")
 	for key_value in gala.keys():
 		if str(key_value).contains("heist") or str(key_value).contains("plan_b"):
 			failures.append("Gala Night acquired a heist criterion outside its allowed texture scope.")
-	if not _array(library.scenario("pawn_shop_serial_check_day").get("town_weight_tags", [])).has("law:pressure"):
+	if not _array(library._scenario_readonly("pawn_shop_serial_check_day").get("town_weight_tags", [])).has("law:pressure"):
 		failures.append("Serial-Check Day lost the Police Sweep pressure seam tag.")
 
 
@@ -249,7 +250,7 @@ static func _check_grand_casino_routes(library: ContentLibrary, failures: Array)
 	var archetype := library.environment_archetype("grand_casino")
 	for scenario_id_value in EXPECTED["grand_casino"]:
 		var scenario_id := str(scenario_id_value)
-		var definition := library.scenario(scenario_id)
+		var definition := library._scenario_readonly(scenario_id)
 		var mutations := _dict(definition.get("mutations", {}))
 		for mutation_key_value in mutations.keys():
 			if not ALLOWED_GRAND_MUTATION_KEYS.has(str(mutation_key_value)):
@@ -285,11 +286,24 @@ static func _check_grand_casino_routes(library: ContentLibrary, failures: Array)
 		_check_showdown_route(library, scenario_id, environment, failures)
 
 
+static func _production_grand_environment(environment: Dictionary, run_state: RunState, generator: RunGenerator) -> Dictionary:
+	var prepared := environment.duplicate(true)
+	prepared["world_node_id"] = RunStateScript.GRAND_CASINO_ARCHETYPE_ID
+	prepared["world_map_travel"] = true
+	generator._apply_world_travel_targets(prepared, run_state, run_state.world_map, RunStateScript.GRAND_CASINO_ARCHETYPE_ID)
+	CrewRecruitmentModelScript.apply_to_environment(run_state, prepared)
+	prepared["layout"] = EnvironmentInstanceScript.ensure_generated_layout(prepared)
+	return prepared
+
+
 static func _check_clean_route(library: ContentLibrary, scenario_id: String, environment: Dictionary, failures: Array) -> void:
 	var run_state := RunStateScript.new()
 	run_state.start_new("CLEAN-%s" % scenario_id)
-	run_state.set_environment(environment.duplicate(true))
 	var generator := RunGeneratorScript.new(library)
+	var installed := generator._install_environment(run_state, _production_grand_environment(environment, run_state, generator))
+	if not bool(installed.get("ok", false)):
+		failures.append("Grand scenario %s failed its trusted clean-route install/finalization: %s" % [scenario_id, JSON.stringify(installed.get("errors", []))])
+		return
 	for expected_tier in [RunStateScript.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE, RunStateScript.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER]:
 		var status := run_state.demo_objective_status()
 		_qualify_card_segment(run_state, int(status.get("players_card_next_min_games", 0)), int(status.get("players_card_next_net_winnings", 0)))
@@ -343,7 +357,11 @@ static func _qualify_card_segment(run_state: RunState, game_count: int, net_winn
 static func _check_showdown_route(library: ContentLibrary, scenario_id: String, environment: Dictionary, failures: Array) -> void:
 	var run_state := RunStateScript.new()
 	run_state.start_new("SHOWDOWN-%s" % scenario_id)
-	run_state.set_environment(environment.duplicate(true))
+	var generator := RunGeneratorScript.new(library)
+	var installed := generator._install_environment(run_state, _production_grand_environment(environment, run_state, generator))
+	if not bool(installed.get("ok", false)):
+		failures.append("Grand scenario %s failed its trusted showdown install/finalization: %s" % [scenario_id, JSON.stringify(installed.get("errors", []))])
+		return
 	run_state.narrative_flags["grand_casino_showdown_pending"] = true
 	var module := EventModuleScript.new()
 	module.setup(library.event(RunStateScript.GRAND_CASINO_SHOWDOWN_EVENT_ID), library)

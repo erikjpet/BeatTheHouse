@@ -16,7 +16,7 @@ const CATALOG_IDS := [
 	"pawn_shop_estate_lot_day", "pawn_shop_sals_mood", "pawn_shop_serial_check_day",
 	"punchline_bringer_show", "punchline_debt_court", "punchline_greased_week", "punchline_headliner_night", "punchline_high_stakes_night", "punchline_new_muscle", "punchline_open_mic_night", "punchline_raid_jitters",
 ]
-const SEQUENCE_REQUIRED_IDS := []
+const SEQUENCE_REQUIRED_IDS := CATALOG_IDS
 
 
 static func expected_ids() -> Array:

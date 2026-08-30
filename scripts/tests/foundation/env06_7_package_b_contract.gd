@@ -149,10 +149,20 @@ func _check_runtime_trace(scenario_id: String, definition: Dictionary, host: Dic
 	if not bool(duplicate.get("ok", false)) or not bool(duplicate.get("duplicate", false)) or JSON.stringify(duplicate.get("state", {})) != JSON.stringify(queued.get("state", {})):
 		failures.append("%s interruption fact did not deduplicate before its safe boundary." % scenario_id)
 	var conflicting_fact := fact.duplicate(true)
-	conflicting_fact["producer_serial"] = 2
-	if bool(Runtime.enqueue_fact(queued.get("state", {}), definition, conflicting_fact).get("ok", true)):
+	(conflicting_fact["payload"] as Dictionary)["conflict_probe"] = true
+	var queued_before_conflict := JSON.stringify(queued.get("state", {}))
+	var queued_conflict := Runtime.enqueue_fact(queued.get("state", {}), definition, conflicting_fact)
+	if bool(queued_conflict.get("ok", true)) or JSON.stringify(queued_conflict.get("state", {})) != queued_before_conflict:
 		failures.append("%s accepted conflicting reuse of its interruption fact id." % scenario_id)
 	var flushed := Runtime.flush_facts(queued.get("state", {}), definition, fact_boundary)
+	if bool(flushed.get("ok", false)):
+		var flushed_before_replay := JSON.stringify(flushed.get("state", {}))
+		var receipt_replay := Runtime.enqueue_fact(flushed.get("state", {}), definition, fact)
+		if not bool(receipt_replay.get("ok", false)) or not bool(receipt_replay.get("duplicate", false)) or JSON.stringify(receipt_replay.get("state", {})) != flushed_before_replay:
+			failures.append("%s committed interruption receipt did not replay byte-identically." % scenario_id)
+		var receipt_conflict := Runtime.enqueue_fact(flushed.get("state", {}), definition, conflicting_fact)
+		if bool(receipt_conflict.get("ok", true)) or JSON.stringify(receipt_conflict.get("state", {})) != flushed_before_replay:
+			failures.append("%s committed interruption receipt accepted a changed payload or mutated state." % scenario_id)
 	if fact_type == "world_boundary" and bool(flushed.get("ok", false)) and str((flushed.get("state", {}) as Dictionary).get("status", "")) == Runtime.STATUS_ACTIVE:
 		var second_boundary := fact_boundary + 1
 		var second_fact := Runtime.fact(fact_type, "scenario", str(state.get("node_id", "")), "%s_interrupt_fact_after_grace" % scenario_id, 2, second_boundary, _fact_payload(fact_type, state))
