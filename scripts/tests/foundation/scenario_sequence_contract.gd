@@ -1667,11 +1667,19 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 
 static func _check_catalog_rollout(library: ContentLibrary, failures: Array) -> void:
 	var definitions: Array = []
+	var target_inventories: Dictionary = {}
 	for pool_value in library.environment_scenarios.values():
-		definitions.append_array(_array(pool_value))
-	var report := SequenceSchemaScript.catalog_rollout_report(definitions, RolloutManifestScript.expected_ids(), OperationRegistryScript, {}, RolloutManifestScript.required_sequence_ids())
+		for definition_value in _array(pool_value):
+			if typeof(definition_value) == TYPE_DICTIONARY:
+				var definition := SequenceCatalogScript.apply_overlay(definition_value as Dictionary, library.scenario_sequence_catalog)
+				definitions.append(definition)
+				var target_catalog := library.scenario_target_catalog(definition)
+				var target_inventory := _dict(target_catalog.get("guaranteed", {})).duplicate(true)
+				target_inventory["event_choices"] = _dict(target_catalog.get("event_choices", {}))
+				target_inventories[str(definition.get("id", ""))] = target_inventory
+	var report := SequenceSchemaScript.catalog_rollout_report(definitions, RolloutManifestScript.expected_ids(), OperationRegistryScript, {}, RolloutManifestScript.required_sequence_ids(), target_inventories)
 	if RolloutManifestScript.EXPECTED_COUNT != 55 or RolloutManifestScript.expected_ids().size() != 55 or not bool(report.get("ok", false)):
-		failures.append("Production sequence rollout manifest does not enforce the exact 55-id catalog without blocking pending env06_7 packages: %s" % JSON.stringify(report.get("failures", [])))
+		failures.append("Production sequence rollout manifest does not enforce the exact 55-id completed catalog: %s" % JSON.stringify(report.get("failures", [])))
 	var proof := _fixture_definition()
 	proof["id"] = "proof"
 	var pending := {"id": "pending"}
