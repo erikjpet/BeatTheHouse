@@ -493,6 +493,8 @@ static func _check_contact_surfaces(library: ContentLibrary, failures: Array) ->
 
 static func _check_crew_ignoring_regression(library: ContentLibrary, failures: Array) -> void:
 	_check_ignored_numeric_normalizer(failures)
+	for no_op_failure in CrewIgnoredGoldenProbeScript.world_sequence_noop_failures(library):
+		failures.append("Crew-ignoring world-sequence invariant: %s." % str(no_op_failure))
 	var run_state := RunStateScript.new()
 	run_state.start_new("CREW-IGNORED")
 	var environment := {"id": "ignored", "archetype_id": "bar", "kind": "casino", "event_ids": ["rowdy_regular"], "scenario_patron_ids": ["fight_crowd"]}

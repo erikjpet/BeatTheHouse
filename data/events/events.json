@@ -2274,6 +2274,7 @@
           "id": "run_package",
           "label": "Run the package",
           "text": "You run it exactly on their clock.",
+          "world_sequence_package_id": "world06_1_crew_favor_delivery",
           "consequence_summary": "Bankroll +22, heat +4",
           "streets_failure": {
             "suspicion_delta": 9,

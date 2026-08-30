@@ -7,6 +7,7 @@ const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioOperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
+const CrewWorldSequenceAdapterScript := preload("res://scripts/core/crew_world_sequence_adapter.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const EnvironmentEventResolverScript := preload("res://scripts/core/environment_event_resolver.gd")
 
@@ -79,6 +80,7 @@ var scenario_sequence_base_service_ids: Array = []
 var scenario_sequence_base_travel_hooks: Array = []
 var scenario_sequence_base_game_modifiers: Dictionary = {}
 var scenario_event_choices: Dictionary = {}
+var world_sequence_instances: Dictionary = {}
 var environment_layer_schema_version: int = 0
 var current_layer_id: String = ""
 var default_layer_id: String = ""
@@ -245,6 +247,7 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.scenario_sequence_base_travel_hooks = _copy_array(data.get("scenario_sequence_base_travel_hooks", []))
 	environment.scenario_sequence_base_game_modifiers = _copy_dict(data.get("scenario_sequence_base_game_modifiers", {}))
 	environment.scenario_event_choices = {}
+	environment.world_sequence_instances = CrewWorldSequenceAdapterScript.durable_container(data.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {}))
 	environment.environment_layer_schema_version = maxi(0, int(data.get("environment_layer_schema_version", 0)))
 	environment.current_layer_id = str(data.get("current_layer_id", "")).strip_edges()
 	environment.default_layer_id = str(data.get("default_layer_id", "")).strip_edges()
@@ -328,6 +331,8 @@ func to_dict() -> Dictionary:
 	if not scenario_sequence_migration.is_empty():
 		result["scenario_sequence_migration"] = scenario_sequence_migration.duplicate(true)
 	if not sequence_migration_error.is_empty(): result["scenario_sequence_migration_error"] = sequence_migration_error
+	if not world_sequence_instances.is_empty():
+		result[CrewWorldSequenceAdapterScript.CONTAINER_KEY] = CrewWorldSequenceAdapterScript.durable_container(world_sequence_instances)
 	if scenario_semantic_inventory_version > 0 and not scenario_semantic_digest.strip_edges().is_empty():
 		result["scenario_semantic_inventory_version"] = scenario_semantic_inventory_version
 		result["scenario_semantic_digest"] = scenario_semantic_digest.strip_edges()
@@ -384,6 +389,10 @@ static func _durable_layer_states(value: Variant) -> Dictionary:
 	for layer_id_value in _copy_dict(value).keys():
 		var body := _copy_dict(_copy_dict(value).get(layer_id_value, {})).duplicate(true)
 		for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_semantic_action_digest", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_event_choices", "scenario_sequence_projection", "scenario_sequence_lifecycle_errors"]: body.erase(key)
+		if body.has(CrewWorldSequenceAdapterScript.CONTAINER_KEY):
+			var world_instances := CrewWorldSequenceAdapterScript.durable_container(body.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {}))
+			if world_instances.is_empty(): body.erase(CrewWorldSequenceAdapterScript.CONTAINER_KEY)
+			else: body[CrewWorldSequenceAdapterScript.CONTAINER_KEY] = world_instances
 		if body.has("scenario_sequence_state"):
 			var raw_sequence_state: Variant = body.get("scenario_sequence_state", {})
 			var durable := _durable_sequence_state(raw_sequence_state)

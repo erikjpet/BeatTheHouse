@@ -226,10 +226,28 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		conclusion_animation = "bankroll_transfer"
 	result["conclusion_animation"] = conclusion_animation
 	if get_id() == "crew_favor_delivery" and choice_key == "run_package":
+		var delivery_rollback := run_state.to_dict()
+		var delivery_rollback_environment := run_state.current_environment.duplicate(true)
+		var delivery_rollback_world_map := run_state.world_map.duplicate(true)
+		var delivery_rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
 		var delivery_result := run_state.resolve_crew_favor_delivery_job(choice_key, {
 			"success": consequences,
 			"failure": _copy_dict(selected_choice.get("streets_failure", {})),
 		})
+		var sequence_schedule := {"ok": true, "inactive": true}
+		if bool(delivery_result.get("ok", false)):
+			sequence_schedule = _schedule_choice_world_sequence(run_state, selected_choice, delivery_result)
+			if not bool(sequence_schedule.get("ok", false)):
+				run_state.from_dict(delivery_rollback)
+				run_state.current_environment = delivery_rollback_environment
+				run_state.world_map = delivery_rollback_world_map
+				run_state.grand_casino_room_states = delivery_rollback_room_states
+				result["ok"] = false
+				result["delivery_started"] = false
+				result["world_sequence_scheduled"] = false
+				result["errors"] = _copy_array(sequence_schedule.get("errors", []))
+				result["message"] = str((result["errors"] as Array)[0]) if not (result["errors"] as Array).is_empty() else "The Crew route could not be staged safely."
+				return result
 		var start_message := str(delivery_result.get("message", "The route is marked. Keep your head down."))
 		var start_deltas := _copy_dict(result.get("deltas", {}))
 		start_deltas["bankroll_delta"] = 0
@@ -250,12 +268,37 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		result["conclusion_animation"] = ""
 		result["delivery_started"] = bool(delivery_result.get("ok", false))
 		result["delivery_snapshot"] = delivery_result.get("snapshot", {})
+		result["world_sequence_scheduled"] = bool(sequence_schedule.get("ok", false)) and not bool(sequence_schedule.get("inactive", false))
+		result["world_sequence_owner_token"] = str(sequence_schedule.get("owner_token", ""))
 		apply_event_result(run_state, result)
 		return result
 	apply_event_result(run_state, result)
 	if get_id() == "crew_favor_delivery":
 		run_state.resolve_crew_favor_delivery_job(choice_key, {"success": consequences})
 	return result
+
+
+# Schedules an authored owner sequence using only the public result returned by
+# the existing owning model. The package id is allowlisted in trusted code;
+# authored event data cannot supply a path, model method, node, or owner token.
+func _schedule_choice_world_sequence(run_state: RunState, selected_choice: Dictionary, owner_start_result: Dictionary) -> Dictionary:
+	var package_id := str(selected_choice.get("world_sequence_package_id", "")).strip_edges()
+	if package_id.is_empty():
+		return {"ok": true, "inactive": true}
+	var snapshot := _copy_dict(owner_start_result.get("snapshot", {}))
+	var targets := _copy_array(snapshot.get("targets", []))
+	var target := _copy_dict(targets[0]) if not targets.is_empty() else {}
+	var node_id := str(target.get("node_id", "")).strip_edges()
+	var public_instance_token := str(snapshot.get("job_id", "")).strip_edges()
+	if public_instance_token.is_empty():
+		public_instance_token = str(snapshot.get("run_id", "")).strip_edges()
+	if node_id.is_empty() or public_instance_token.is_empty():
+		return {"ok": false, "errors": ["World sequence owner start result lacks a public instance or target."]}
+	return run_state.world_sequence_schedule_mount(
+		package_id,
+		public_instance_token,
+		node_id
+	)
 
 
 # Applies a shared event result and records event-specific outcomes.

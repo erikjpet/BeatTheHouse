@@ -1,7 +1,13 @@
 class_name DeliveryRunModel
 extends RefCounted
 
-const SCHEMA_VERSION := 1
+const SCHEMA_VERSION := 2
+const CLOSED_CHECKPOINT_SCHEMA_VERSION := 1
+const CLOSED_CHECKPOINT_FIELDS := [
+	"schema_version", "delivery_instance_id", "job_id", "owner_token", "public_instance_token",
+	"outcome_receipt_id", "outcome_receipt_fingerprint", "outcome_cause_fingerprint",
+	"resolution_fingerprint", "delivery_receipt_fingerprint", "public_result", "public_result_fingerprint",
+]
 const MODE_PACKAGE := "package"
 const MODE_MULTI_STOP := "multi_stop"
 const MODE_HOLD := "hold"
@@ -53,6 +59,7 @@ static func begin(spec: Dictionary, started_action: int) -> Dictionary:
 		"confiscated": false,
 		"resolution": {},
 		"receipt": {},
+		"closed_checkpoint": {},
 		"world_applied": false,
 	})
 
@@ -74,7 +81,7 @@ static func normalize_state(value: Variant) -> Dictionary:
 	var resolution := _copy_dict(source.get("resolution", {}))
 	if status == "resolved" and resolution.is_empty():
 		resolution = _resolution("failed", "invalid_state", source, false)
-	return {
+	var result := {
 		"schema_version": SCHEMA_VERSION,
 		"status": status,
 		"mode": mode,
@@ -109,6 +116,98 @@ static func normalize_state(value: Variant) -> Dictionary:
 		"receipt": _copy_dict(source.get("receipt", {})),
 		"world_applied": bool(source.get("world_applied", false)),
 	}
+	# Preserve an untrusted persisted checkpoint byte-for-byte. Validation belongs
+	# at the consume boundary; silently normalizing hostile data would turn a
+	# detectable corrupt authority record into an ambiguous legacy snapshot.
+	if source.has("closed_checkpoint"):
+		result["closed_checkpoint"] = _copy_dict(source.get("closed_checkpoint", {}))
+	return result
+
+
+static func closed_checkpoint(state_value: Variant) -> Dictionary:
+	var state := normalize_state(state_value)
+	return _copy_dict(state.get("closed_checkpoint", {}))
+
+
+# DeliveryRunModel is the only issuer of the persisted closed checkpoint. The
+# caller supplies a preview made from trusted live adapter state; all persisted
+# identities and consequence fingerprints are sealed here from the resolved
+# delivery state and the canonical public result.
+static func commit_closed_checkpoint(state_value: Variant, binding_value: Dictionary, public_result_value: Dictionary) -> Dictionary:
+	var state := normalize_state(state_value)
+	if state.is_empty() or str(state.get("status", "")) != "resolved":
+		return {"ok": false, "state": state, "errors": ["delivery checkpoint requires a resolved delivery"]}
+	var binding := binding_value.duplicate(true)
+	var public_result := _canonical_public_result(public_result_value)
+	if public_result.is_empty() or JSON.stringify(public_result_value) != JSON.stringify(public_result):
+		return {"ok": false, "state": state, "errors": ["delivery checkpoint public result is not canonical"]}
+	for key in ["owner_token", "public_instance_token", "outcome_receipt_id", "outcome_receipt_fingerprint", "outcome_cause_fingerprint"]:
+		if typeof(binding.get(key)) != TYPE_STRING or str(binding.get(key, "")).is_empty() or str(binding.get(key, "")) != str(binding.get(key, "")).strip_edges():
+			return {"ok": false, "state": state, "errors": ["delivery checkpoint binding is incomplete or noncanonical"]}
+	var delivery_instance_id := str(state.get("job_id", "")).strip_edges()
+	if delivery_instance_id.is_empty(): delivery_instance_id = str(state.get("run_id", "")).strip_edges()
+	if delivery_instance_id.is_empty() or delivery_instance_id != str(binding.get("public_instance_token", "")):
+		return {"ok": false, "state": state, "errors": ["delivery checkpoint public instance does not match the resolved delivery"]}
+	var checkpoint := {
+		"schema_version": CLOSED_CHECKPOINT_SCHEMA_VERSION,
+		"delivery_instance_id": delivery_instance_id,
+		"job_id": str(state.get("job_id", "")),
+		"owner_token": str(binding.get("owner_token", "")),
+		"public_instance_token": str(binding.get("public_instance_token", "")),
+		"outcome_receipt_id": str(binding.get("outcome_receipt_id", "")),
+		"outcome_receipt_fingerprint": str(binding.get("outcome_receipt_fingerprint", "")),
+		"outcome_cause_fingerprint": str(binding.get("outcome_cause_fingerprint", "")),
+		"resolution_fingerprint": _fingerprint(_copy_dict(state.get("resolution", {}))),
+		"delivery_receipt_fingerprint": _fingerprint(_copy_dict(state.get("receipt", {}))),
+		"public_result": public_result,
+		"public_result_fingerprint": _fingerprint(public_result),
+	}
+	state["closed_checkpoint"] = checkpoint
+	state["world_applied"] = true
+	return {"ok": true, "state": state, "checkpoint": checkpoint.duplicate(true), "public_result": public_result.duplicate(true), "errors": []}
+
+
+static func closed_checkpoint_errors(state_value: Variant, binding_value: Dictionary = {}) -> Array:
+	var state := normalize_state(state_value)
+	var checkpoint := _copy_dict(state.get("closed_checkpoint", {}))
+	var errors: Array = []
+	if checkpoint.is_empty(): return ["delivery closed checkpoint is missing"]
+	var keys := checkpoint.keys()
+	keys.sort()
+	var expected := CLOSED_CHECKPOINT_FIELDS.duplicate()
+	expected.sort()
+	if keys != expected: errors.append("delivery closed checkpoint fields are not exact")
+	if typeof(checkpoint.get("schema_version")) != TYPE_INT or int(checkpoint.get("schema_version", 0)) != CLOSED_CHECKPOINT_SCHEMA_VERSION:
+		errors.append("delivery closed checkpoint schema is invalid")
+	for key in CLOSED_CHECKPOINT_FIELDS:
+		if key in ["schema_version", "public_result"]: continue
+		if typeof(checkpoint.get(key)) != TYPE_STRING:
+			errors.append("delivery closed checkpoint field %s has the wrong type" % key)
+	var delivery_instance_id := str(state.get("job_id", "")).strip_edges()
+	if delivery_instance_id.is_empty(): delivery_instance_id = str(state.get("run_id", "")).strip_edges()
+	if str(checkpoint.get("delivery_instance_id", "")) != delivery_instance_id \
+			or str(checkpoint.get("job_id", "")) != str(state.get("job_id", "")) \
+			or str(checkpoint.get("public_instance_token", "")) != delivery_instance_id:
+		errors.append("delivery closed checkpoint does not bind this delivery instance")
+	for key in ["delivery_instance_id", "owner_token", "public_instance_token", "outcome_receipt_id", "outcome_receipt_fingerprint", "outcome_cause_fingerprint", "resolution_fingerprint", "delivery_receipt_fingerprint", "public_result_fingerprint"]:
+		var text := str(checkpoint.get(key, ""))
+		if text.is_empty() or text != text.strip_edges(): errors.append("delivery closed checkpoint field %s is noncanonical" % key)
+	if str(checkpoint.get("resolution_fingerprint", "")) != _fingerprint(_copy_dict(state.get("resolution", {}))):
+		errors.append("delivery closed checkpoint resolution fingerprint does not match")
+	if str(checkpoint.get("delivery_receipt_fingerprint", "")) != _fingerprint(_copy_dict(state.get("receipt", {}))):
+		errors.append("delivery closed checkpoint receipt fingerprint does not match")
+	var public_result := _copy_dict(checkpoint.get("public_result", {}))
+	var canonical_public_result := _canonical_public_result(public_result)
+	if canonical_public_result.is_empty() or JSON.stringify(public_result) != JSON.stringify(canonical_public_result):
+		errors.append("delivery closed checkpoint public result is not canonical")
+	elif str(checkpoint.get("public_result_fingerprint", "")) != _fingerprint(public_result):
+		errors.append("delivery closed checkpoint public result fingerprint does not match")
+	for key in ["owner_token", "public_instance_token", "outcome_receipt_id", "outcome_receipt_fingerprint", "outcome_cause_fingerprint"]:
+		if binding_value.has(key) and str(checkpoint.get(key, "")) != str(binding_value.get(key, "")):
+			errors.append("delivery closed checkpoint does not match live %s" % key)
+	if not bool(state.get("world_applied", false)):
+		errors.append("delivery closed checkpoint exists without committed world consequences")
+	return errors
 
 
 static func snapshot(state_value: Variant) -> Dictionary:
@@ -342,3 +441,47 @@ static func _string_array(value: Variant) -> Array:
 		if not entry.is_empty() and not result.has(entry):
 			result.append(entry)
 	return result
+
+
+static func _canonical_public_result(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = value
+	var allowed := ["ok", "resolved", "message", "outcome"]
+	for key_value in source.keys():
+		if not allowed.has(str(key_value)):
+			return {}
+	if typeof(source.get("ok")) != TYPE_BOOL or not bool(source.get("ok", false)) \
+			or typeof(source.get("resolved")) != TYPE_BOOL or not bool(source.get("resolved", false)) \
+			or typeof(source.get("message")) != TYPE_STRING:
+		return {}
+	var message := str(source.get("message", ""))
+	if message != message.strip_edges():
+		return {}
+	var result := {"ok": true, "resolved": true, "message": message}
+	if source.has("outcome"):
+		if typeof(source.get("outcome")) != TYPE_STRING or str(source.get("outcome", "")) not in ["delivered", "expired", "abandoned"]:
+			return {}
+		result["outcome"] = str(source.get("outcome", ""))
+	return result
+
+
+static func _fingerprint(value: Variant) -> String:
+	return JSON.stringify(_canonical_variant(value)).sha256_text()
+
+
+static func _canonical_variant(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		var source: Dictionary = value
+		var result: Dictionary = {}
+		var keys := source.keys()
+		keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+		for key_value in keys:
+			result[str(key_value)] = _canonical_variant(source.get(key_value))
+		return result
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for entry in value as Array:
+			result.append(_canonical_variant(entry))
+		return result
+	return value

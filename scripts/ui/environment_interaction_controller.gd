@@ -11,6 +11,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	if host._is_meta_session():
 		return host._meta_interactable_object_view_list()
 	var preparation: Dictionary = _dict(host.run_state.scenario_prepare_semantic_finalization())
+	var world_preparation: Dictionary = _dict(host.run_state.world_sequence_prepare_semantic_finalization())
 	var failed = host._run_failed_without_recovery()
 	var failed_reason = host._pressure_status_text(host._run_pressure_view())
 	if failed_reason.strip_edges().is_empty():
@@ -99,6 +100,10 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var preparation_failure := projection_failure_result(result, _array(preparation.get("errors", [])))
 		var committed_preparation_failure := committed_projection_status_result(host.run_state, preparation_failure, trusted_base_result)
 		return _array(committed_preparation_failure.get("records", trusted_base_result))
+	if not bool(world_preparation.get("ok", false)):
+		var world_preparation_failure := projection_failure_result(result, _array(world_preparation.get("errors", [])))
+		var committed_world_preparation_failure := committed_projection_status_result(host.run_state, world_preparation_failure, trusted_base_result)
+		return _array(committed_world_preparation_failure.get("records", trusted_base_result))
 	if ScenarioSequenceSchemaScript.is_sequence(definition):
 		var finalized: Dictionary = _dict(host.run_state.scenario_finalize_installed_environment(host.library, layout_context))
 		if not bool(finalized.get("ok", false)):
@@ -109,6 +114,16 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var projection_result := project_finalized_sequence_interaction_result(result, finalized)
 		var committed_result := committed_projection_status_result(host.run_state, projection_result, trusted_base_result)
 		result = _array(committed_result.get("records", trusted_base_result))
+	elif bool(world_preparation.get("active", false)):
+		var world_finalized: Dictionary = _dict(host.run_state.world_sequence_finalize_base_semantics(result, host.library, layout_context))
+		if not bool(world_finalized.get("ok", false)):
+			var world_finalization_failure := projection_failure_result(result, _array(world_finalized.get("errors", [])), _dict(world_finalized.get("layout_audit", {})))
+			var committed_world_finalization_failure := committed_projection_status_result(host.run_state, world_finalization_failure, trusted_base_result)
+			return _array(committed_world_finalization_failure.get("records", trusted_base_result))
+		result = host._copy_array(world_finalized.get("records", []))
+		var world_projection_result := project_finalized_sequence_interaction_result(result, world_finalized)
+		var committed_world_result := committed_projection_status_result(host.run_state, world_projection_result, trusted_base_result)
+		result = _array(committed_world_result.get("records", trusted_base_result))
 	else:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 		host.run_state.current_environment.erase("scenario_layout_audit")
@@ -402,7 +417,8 @@ static func _compose_projected_records(base_records: Array, resolved_projection:
 
 static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary, authority: Dictionary, authority_digest: String) -> Dictionary:
 	var result := base.duplicate(true)
-	var scenario_owned := str(semantic.get("owner_namespace", "")) == "scenario"
+	var world_owner_token := str(semantic.get("world_sequence_owner_token", ""))
+	var scenario_owned := str(semantic.get("owner_namespace", "")) == "scenario" or not world_owner_token.is_empty()
 	var owned_identity := "%s::%s" % [str(semantic.get("owner_namespace", "")), str(semantic.get("stable_object_id", ""))]
 	var presentation_id := owned_identity if scenario_owned else str(semantic.get("presentation_object_id", result.get("object_id", "")))
 	result["object_id"] = presentation_id
@@ -411,6 +427,7 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary,
 	result["source_id"] = str(semantic.get("source_id", result.get("source_id", semantic.get("stable_object_id", ""))))
 	result["owner_namespace"] = str(semantic.get("owner_namespace", ""))
 	result["stable_object_id"] = str(semantic.get("stable_object_id", ""))
+	if not world_owner_token.is_empty(): result["world_sequence_owner_token"] = world_owner_token
 	result["label"] = str(semantic.get("label", result.get("label", presentation_id)))
 	result["short_description"] = str(semantic.get("prompt", result.get("short_description", "")))
 	result["action_summary"] = str(semantic.get("prompt", result.get("action_summary", "Choose an action.")))
@@ -430,7 +447,7 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary,
 	var sequence_actions: Array = []
 	for action_value in actions:
 		var action := _dict(action_value)
-		if scenario_owned or not str(action.get("action_origin_receipt_key", "")).is_empty(): sequence_actions.append(action)
+		if scenario_owned or not str(action.get("action_origin_receipt_key", "")).is_empty() or not str(action.get("world_sequence_owner_token", "")).is_empty(): sequence_actions.append(action)
 	result["scenario_sequence_actions"] = sequence_actions
 	return result
 
@@ -452,6 +469,8 @@ static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary
 	result["source_id"] = str(result.get("source_id", stable_id))
 	result["owner_namespace"] = owner
 	result["stable_object_id"] = stable_id
+	var world_owner_token := str(semantic.get("world_sequence_owner_token", ""))
+	if not world_owner_token.is_empty(): result["world_sequence_owner_token"] = world_owner_token
 	result["label"] = str(semantic.get("label", result.get("label", stable_id)))
 	result["short_description"] = str(semantic.get("role", result.get("short_description", "Room fixture")))
 	result["state_label"] = str(semantic.get("state", semantic.get("appearance", result.get("state_label", "Present"))))
@@ -788,6 +807,10 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 	if handoff.is_empty():
 		return []
 	var node_id := str(handoff.get("node_id", "")).strip_edges()
+	# A mounted owner projection is the sole player-facing handoff at this node.
+	# The old delivery record remains unchanged for legacy/unconverted runs.
+	if not host.run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", node_id).is_empty():
+		return []
 	var object_id := "delivery:handoff:%s" % node_id
 	var occupied_rects: Array[Rect2] = []
 	var layout: Dictionary = host._current_environment_layout()
