@@ -31,7 +31,10 @@ const CARGO_STATES := [
 	CARGO_DITCHED, CARGO_CONFISCATED, CARGO_FOUND, CARGO_NONE,
 ]
 const STREET_VERBS := ["pickup", "move", "wait", "duck", "stash", "retrieve", "ditch", "signal", "break_hold", "handoff"]
-const HOST_VERBS := STREET_VERBS + ["found", "interruption", "abandon"]
+const HOST_VERBS := [
+	"pickup", "move", "wait", "duck", "stash", "retrieve", "ditch", "signal", "break_hold", "handoff",
+	"found", "interruption", "abandon",
+]
 
 
 static func begin(spec: Dictionary, started_action: int) -> Dictionary:
@@ -576,7 +579,6 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 			var next_target := _copy_dict(_copy_array(state.get("targets", []))[next_target_index])
 			if target_id.is_empty() or target_id != str(next_target.get("id", "")) or node_id != str(next_target.get("node_id", "")):
 				return state
-			state = _record_physical_position(state, node_id, action)
 			var handed := complete_handoff(state, node_id)
 			if JSON.stringify(handed) == JSON.stringify(state):
 				return state
