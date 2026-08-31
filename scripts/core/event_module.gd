@@ -302,7 +302,7 @@ func _schedule_choice_world_sequence(run_state: RunState, selected_choice: Dicti
 
 
 # Applies a shared event result and records event-specific outcomes.
-static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
+func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 	if run_state == null or not bool(result.get("ok", false)):
 		return
 	var rollback_run := run_state.to_dict()
