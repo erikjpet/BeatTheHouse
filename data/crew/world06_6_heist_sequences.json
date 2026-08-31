@@ -1,0 +1,2621 @@
+[
+  {
+    "schema_version": 1,
+    "package_id": "world06_6_count_setup",
+    "definitions": [
+      {
+        "source": {
+          "domain": "crew",
+          "owner_id": "crew",
+          "definition_id": "heist_count_setup"
+        },
+        "mount": {
+          "zone_id": "center"
+        },
+        "ownership_claims": [
+          {
+            "target": "crew::heist_count_setup",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_count_setup_status",
+            "property": "interaction_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_count_setup_closed",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          }
+        ],
+        "outcome_channels": {
+          "closed": "heist_scene"
+        },
+        "private_capabilities": [],
+        "definition": {
+          "id": "heist_count_setup",
+          "sequence": {
+            "schema_version": 2,
+            "local_state_schema": {},
+            "phase_graph": {
+              "initial_phase": "staged",
+              "phases": [
+                {
+                  "id": "staged",
+                  "label": "Count setup",
+                  "arrival_feedback": "The cage schedule and swap-cart route sit under separate lamps.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [
+                    {
+                      "type": "always"
+                    }
+                  ],
+                  "objective_ids": [
+                    "read_scene"
+                  ],
+                  "advance_after_actions": 0,
+                  "scene_ops": [
+                    {
+                      "family": "scene_ops",
+                      "op": "spawn",
+                      "receipt_id": "mount_heist_count_setup",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_count_setup",
+                      "object": {
+                        "label": "Count setup",
+                        "role": "heist_evidence",
+                        "zone_id": "center",
+                        "bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "visible": true,
+                        "enabled": true,
+                        "state": "staged",
+                        "appearance": "count_setup"
+                      }
+                    }
+                  ],
+                  "interaction_ops": [
+                    {
+                      "family": "interaction_ops",
+                      "op": "add",
+                      "receipt_id": "mount_heist_count_setup_status",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_count_setup_status",
+                      "interaction": {
+                        "owner_namespace": "crew",
+                        "stable_object_id": "heist_count_setup_status",
+                        "label": "Read the Count setup",
+                        "state_label": "Host staged",
+                        "prompt": "The cage schedule and swap-cart route sit under separate lamps.",
+                        "enabled": false,
+                        "disabled_reason": "Use the live planning table, game table, cage, or getaway controls.",
+                        "available_actions": [],
+                        "input_actions": [],
+                        "non_color_state": "count_setup",
+                        "focus_order": 20,
+                        "hit_bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "min_target_size": 44,
+                        "safe_exit": false,
+                        "alternate_exit": false
+                      }
+                    }
+                  ],
+                  "actor_ops": [],
+                  "transition_ops": [
+                    {
+                      "family": "transition_ops",
+                      "op": "stage",
+                      "receipt_id": "mount_heist_count_setup_feedback",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_count_setup_arrival",
+                      "channel": "room",
+                      "message": "The cage schedule and swap-cart route sit under separate lamps.",
+                      "stage_id": "heist_count_setup_arrival",
+                      "duration_boundaries": 1,
+                      "reduced_motion_message": "The cage schedule and swap-cart route sit under separate lamps."
+                    }
+                  ],
+                  "branches": [
+                    {
+                      "id": "owner_closed",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_closed"
+                      },
+                      "next_phase": "closed_result"
+                    }
+                  ]
+                },
+                {
+                  "id": "closed_result",
+                  "label": "Count setup closed",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "closed_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "closed"
+                    }
+                  ]
+                }
+              ]
+            },
+            "objectives": [
+              {
+                "id": "read_scene",
+                "label": "Read the Count setup",
+                "progress_label": "Staged evidence",
+                "steps": [
+                  {
+                    "id": "owner_phase_closed",
+                    "label": "Close the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_closed"
+                  }
+                ],
+                "outcomes": [
+                  "success",
+                  "failure",
+                  "ignore",
+                  "cancel"
+                ]
+              }
+            ],
+            "reentry_policy": {
+              "partial": "resume",
+              "terminal": "aftermath",
+              "expired": "expired"
+            },
+            "expiry": {
+              "boundary": "none",
+              "after": 0,
+              "policy": "cancel"
+            },
+            "cleanup": {
+              "operations": [
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_count_setup",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_count_setup"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_count_setup_status",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_count_setup_status"
+                }
+              ]
+            },
+            "aftermath": {
+              "closed": {
+                "label": "Count setup closed",
+                "revisit_feedback": "The staged Crew beat has moved on.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_count_setup",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_count_setup_closed",
+                    "object": {
+                      "label": "Count setup closed",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44,
+                        "h": 44
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "closed",
+                      "appearance": "count_setup_closed"
+                    }
+                  }
+                ]
+              }
+            },
+            "declared_targets": {
+              "scene_objects": [],
+              "interactions": [],
+              "actors": [],
+              "services": [],
+              "games": [],
+              "routes": [],
+              "anchors": [],
+              "zones": [
+                "base::zone:center"
+              ]
+            },
+            "mechanic_tags": [
+              "heist_scene",
+              "host_evidence",
+              "environment_composition",
+              "privacy_safe"
+            ],
+            "sequence_signature": "17eb8197e3962f6cc2e27f64d7b71c0eec62db786d986967c33c483b774c1c5e",
+            "owner_exceptions": [
+              {
+                "row": "world_connection",
+                "reason": "The owner-scoped heist overlay composes with the sealed room and never duplicates travel or chase authority.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "primary_verb",
+                "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              }
+            ],
+            "fact_subscriptions": [],
+            "completion_contract": {
+              "arrival_readable": true,
+              "semantic_changes": true,
+              "scenario_interaction": true,
+              "action_boundaries": true,
+              "choice_or_failure": true,
+              "material_outcomes": true,
+              "revisit_coverage": true,
+              "world_connection": true,
+              "primary_verb": true,
+              "feedback_and_exit": true
+            }
+          }
+        },
+        "authoring": {
+          "host_owner": "crew_heist",
+          "hidden_state_policy": "Only public staging fields enter this package.",
+          "player_surface_owner": "EventModule/GameModule/DeliveryRunModel"
+        }
+      }
+    ]
+  },
+  {
+    "schema_version": 1,
+    "package_id": "world06_6_count_play",
+    "definitions": [
+      {
+        "source": {
+          "domain": "crew",
+          "owner_id": "crew",
+          "definition_id": "heist_count_play"
+        },
+        "mount": {
+          "zone_id": "center"
+        },
+        "ownership_claims": [
+          {
+            "target": "crew::heist_count_play",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_count_play_status",
+            "property": "interaction_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_count_play_closed",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          }
+        ],
+        "outcome_channels": {
+          "closed": "heist_scene"
+        },
+        "private_capabilities": [],
+        "definition": {
+          "id": "heist_count_play",
+          "sequence": {
+            "schema_version": 2,
+            "local_state_schema": {},
+            "phase_graph": {
+              "initial_phase": "staged",
+              "phases": [
+                {
+                  "id": "staged",
+                  "label": "Count live table",
+                  "arrival_feedback": "A deliberately ordinary blackjack table holds Bishop's three live decisions.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [
+                    {
+                      "type": "always"
+                    }
+                  ],
+                  "objective_ids": [
+                    "read_scene"
+                  ],
+                  "advance_after_actions": 0,
+                  "scene_ops": [
+                    {
+                      "family": "scene_ops",
+                      "op": "spawn",
+                      "receipt_id": "mount_heist_count_play",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_count_play",
+                      "object": {
+                        "label": "Count live table",
+                        "role": "heist_evidence",
+                        "zone_id": "center",
+                        "bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "visible": true,
+                        "enabled": true,
+                        "state": "staged",
+                        "appearance": "count_play"
+                      }
+                    }
+                  ],
+                  "interaction_ops": [
+                    {
+                      "family": "interaction_ops",
+                      "op": "add",
+                      "receipt_id": "mount_heist_count_play_status",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_count_play_status",
+                      "interaction": {
+                        "owner_namespace": "crew",
+                        "stable_object_id": "heist_count_play_status",
+                        "label": "Read the live Count",
+                        "state_label": "Host staged",
+                        "prompt": "A deliberately ordinary blackjack table holds Bishop's three live decisions.",
+                        "enabled": false,
+                        "disabled_reason": "Use the live planning table, game table, cage, or getaway controls.",
+                        "available_actions": [],
+                        "input_actions": [],
+                        "non_color_state": "count_play",
+                        "focus_order": 20,
+                        "hit_bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "min_target_size": 44,
+                        "safe_exit": false,
+                        "alternate_exit": false
+                      }
+                    }
+                  ],
+                  "actor_ops": [],
+                  "transition_ops": [
+                    {
+                      "family": "transition_ops",
+                      "op": "stage",
+                      "receipt_id": "mount_heist_count_play_feedback",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_count_play_arrival",
+                      "channel": "room",
+                      "message": "A deliberately ordinary blackjack table holds Bishop's three live decisions.",
+                      "stage_id": "heist_count_play_arrival",
+                      "duration_boundaries": 1,
+                      "reduced_motion_message": "A deliberately ordinary blackjack table holds Bishop's three live decisions."
+                    }
+                  ],
+                  "branches": [
+                    {
+                      "id": "owner_closed",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_closed"
+                      },
+                      "next_phase": "closed_result"
+                    }
+                  ]
+                },
+                {
+                  "id": "closed_result",
+                  "label": "Count live table closed",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "closed_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "closed"
+                    }
+                  ]
+                }
+              ]
+            },
+            "objectives": [
+              {
+                "id": "read_scene",
+                "label": "Read the live Count",
+                "progress_label": "Staged evidence",
+                "steps": [
+                  {
+                    "id": "owner_phase_closed",
+                    "label": "Close the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_closed"
+                  }
+                ],
+                "outcomes": [
+                  "success",
+                  "failure",
+                  "ignore",
+                  "cancel"
+                ]
+              }
+            ],
+            "reentry_policy": {
+              "partial": "resume",
+              "terminal": "aftermath",
+              "expired": "expired"
+            },
+            "expiry": {
+              "boundary": "none",
+              "after": 0,
+              "policy": "cancel"
+            },
+            "cleanup": {
+              "operations": [
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_count_play",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_count_play"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_count_play_status",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_count_play_status"
+                }
+              ]
+            },
+            "aftermath": {
+              "closed": {
+                "label": "Count live table closed",
+                "revisit_feedback": "The staged Crew beat has moved on.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_count_play",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_count_play_closed",
+                    "object": {
+                      "label": "Count live table closed",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44,
+                        "h": 44
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "closed",
+                      "appearance": "count_play_closed"
+                    }
+                  }
+                ]
+              }
+            },
+            "declared_targets": {
+              "scene_objects": [],
+              "interactions": [],
+              "actors": [],
+              "services": [],
+              "games": [],
+              "routes": [],
+              "anchors": [],
+              "zones": [
+                "base::zone:center"
+              ]
+            },
+            "mechanic_tags": [
+              "heist_scene",
+              "host_evidence",
+              "environment_composition",
+              "privacy_safe"
+            ],
+            "sequence_signature": "f8cdaa9426c2f3c00f803a46e3a922a5d2672e5312fd403ba5416a2aeff080a7",
+            "owner_exceptions": [
+              {
+                "row": "world_connection",
+                "reason": "The owner-scoped heist overlay composes with the sealed room and never duplicates travel or chase authority.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "primary_verb",
+                "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              }
+            ],
+            "fact_subscriptions": [],
+            "completion_contract": {
+              "arrival_readable": true,
+              "semantic_changes": true,
+              "scenario_interaction": true,
+              "action_boundaries": true,
+              "choice_or_failure": true,
+              "material_outcomes": true,
+              "revisit_coverage": true,
+              "world_connection": true,
+              "primary_verb": true,
+              "feedback_and_exit": true
+            }
+          }
+        },
+        "authoring": {
+          "host_owner": "crew_heist",
+          "hidden_state_policy": "Only public staging fields enter this package.",
+          "player_surface_owner": "EventModule/GameModule/DeliveryRunModel"
+        }
+      }
+    ]
+  },
+  {
+    "schema_version": 1,
+    "package_id": "world06_6_count_getaway",
+    "definitions": [
+      {
+        "source": {
+          "domain": "crew",
+          "owner_id": "crew",
+          "definition_id": "heist_count_getaway"
+        },
+        "mount": {
+          "zone_id": "center"
+        },
+        "ownership_claims": [
+          {
+            "target": "crew::heist_count_getaway",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_count_getaway_status",
+            "property": "interaction_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_count_getaway_closed",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          }
+        ],
+        "outcome_channels": {
+          "closed": "heist_scene"
+        },
+        "private_capabilities": [],
+        "definition": {
+          "id": "heist_count_getaway",
+          "sequence": {
+            "schema_version": 2,
+            "local_state_schema": {},
+            "phase_graph": {
+              "initial_phase": "staged",
+              "phases": [
+                {
+                  "id": "staged",
+                  "label": "Count exits",
+                  "arrival_feedback": "Dock paint and the earned service-corridor marker stay physically distinct.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [
+                    {
+                      "type": "always"
+                    }
+                  ],
+                  "objective_ids": [
+                    "read_scene"
+                  ],
+                  "advance_after_actions": 0,
+                  "scene_ops": [
+                    {
+                      "family": "scene_ops",
+                      "op": "spawn",
+                      "receipt_id": "mount_heist_count_getaway",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_count_getaway",
+                      "object": {
+                        "label": "Count exits",
+                        "role": "heist_evidence",
+                        "zone_id": "center",
+                        "bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "visible": true,
+                        "enabled": true,
+                        "state": "staged",
+                        "appearance": "count_exits"
+                      }
+                    }
+                  ],
+                  "interaction_ops": [
+                    {
+                      "family": "interaction_ops",
+                      "op": "add",
+                      "receipt_id": "mount_heist_count_getaway_status",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_count_getaway_status",
+                      "interaction": {
+                        "owner_namespace": "crew",
+                        "stable_object_id": "heist_count_getaway_status",
+                        "label": "Read the marked exits",
+                        "state_label": "Host staged",
+                        "prompt": "Dock paint and the earned service-corridor marker stay physically distinct.",
+                        "enabled": false,
+                        "disabled_reason": "Use the live planning table, game table, cage, or getaway controls.",
+                        "available_actions": [],
+                        "input_actions": [],
+                        "non_color_state": "count_exits",
+                        "focus_order": 20,
+                        "hit_bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "min_target_size": 44,
+                        "safe_exit": false,
+                        "alternate_exit": false
+                      }
+                    }
+                  ],
+                  "actor_ops": [],
+                  "transition_ops": [
+                    {
+                      "family": "transition_ops",
+                      "op": "stage",
+                      "receipt_id": "mount_heist_count_getaway_feedback",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_count_getaway_arrival",
+                      "channel": "room",
+                      "message": "Dock paint and the earned service-corridor marker stay physically distinct.",
+                      "stage_id": "heist_count_getaway_arrival",
+                      "duration_boundaries": 1,
+                      "reduced_motion_message": "Dock paint and the earned service-corridor marker stay physically distinct."
+                    }
+                  ],
+                  "branches": [
+                    {
+                      "id": "owner_closed",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_closed"
+                      },
+                      "next_phase": "closed_result"
+                    }
+                  ]
+                },
+                {
+                  "id": "closed_result",
+                  "label": "Count exits closed",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "closed_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "closed"
+                    }
+                  ]
+                }
+              ]
+            },
+            "objectives": [
+              {
+                "id": "read_scene",
+                "label": "Read the marked exits",
+                "progress_label": "Staged evidence",
+                "steps": [
+                  {
+                    "id": "owner_phase_closed",
+                    "label": "Close the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_closed"
+                  }
+                ],
+                "outcomes": [
+                  "success",
+                  "failure",
+                  "ignore",
+                  "cancel"
+                ]
+              }
+            ],
+            "reentry_policy": {
+              "partial": "resume",
+              "terminal": "aftermath",
+              "expired": "expired"
+            },
+            "expiry": {
+              "boundary": "none",
+              "after": 0,
+              "policy": "cancel"
+            },
+            "cleanup": {
+              "operations": [
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_count_getaway",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_count_getaway"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_count_getaway_status",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_count_getaway_status"
+                }
+              ]
+            },
+            "aftermath": {
+              "closed": {
+                "label": "Count exits closed",
+                "revisit_feedback": "The staged Crew beat has moved on.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_count_getaway",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_count_getaway_closed",
+                    "object": {
+                      "label": "Count exits closed",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44,
+                        "h": 44
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "closed",
+                      "appearance": "count_exits_closed"
+                    }
+                  }
+                ]
+              }
+            },
+            "declared_targets": {
+              "scene_objects": [],
+              "interactions": [],
+              "actors": [],
+              "services": [],
+              "games": [],
+              "routes": [],
+              "anchors": [],
+              "zones": [
+                "base::zone:center"
+              ]
+            },
+            "mechanic_tags": [
+              "heist_scene",
+              "host_evidence",
+              "environment_composition",
+              "privacy_safe"
+            ],
+            "sequence_signature": "7c2ac5f141c6f8459d97b1c76dad2b652569e3740eb810d55d6594d3e188a78d",
+            "owner_exceptions": [
+              {
+                "row": "world_connection",
+                "reason": "The owner-scoped heist overlay composes with the sealed room and never duplicates travel or chase authority.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "primary_verb",
+                "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              }
+            ],
+            "fact_subscriptions": [],
+            "completion_contract": {
+              "arrival_readable": true,
+              "semantic_changes": true,
+              "scenario_interaction": true,
+              "action_boundaries": true,
+              "choice_or_failure": true,
+              "material_outcomes": true,
+              "revisit_coverage": true,
+              "world_connection": true,
+              "primary_verb": true,
+              "feedback_and_exit": true
+            }
+          }
+        },
+        "authoring": {
+          "host_owner": "crew_heist",
+          "hidden_state_policy": "Only public staging fields enter this package.",
+          "player_surface_owner": "EventModule/GameModule/DeliveryRunModel"
+        }
+      }
+    ]
+  },
+  {
+    "schema_version": 1,
+    "package_id": "world06_6_whale_setup",
+    "definitions": [
+      {
+        "source": {
+          "domain": "crew",
+          "owner_id": "crew",
+          "definition_id": "heist_whale_setup"
+        },
+        "mount": {
+          "zone_id": "center"
+        },
+        "ownership_claims": [
+          {
+            "target": "crew::heist_whale_setup",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_setup_status",
+            "property": "interaction_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_setup_closed",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          }
+        ],
+        "outcome_channels": {
+          "closed": "heist_scene"
+        },
+        "private_capabilities": [],
+        "definition": {
+          "id": "heist_whale_setup",
+          "sequence": {
+            "schema_version": 2,
+            "local_state_schema": {},
+            "phase_graph": {
+              "initial_phase": "staged",
+              "phases": [
+                {
+                  "id": "staged",
+                  "label": "Whale setup",
+                  "arrival_feedback": "The vouch, the setting rig, and the borrowed name occupy three public stations.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [
+                    {
+                      "type": "always"
+                    }
+                  ],
+                  "objective_ids": [
+                    "read_scene"
+                  ],
+                  "advance_after_actions": 0,
+                  "scene_ops": [
+                    {
+                      "family": "scene_ops",
+                      "op": "spawn",
+                      "receipt_id": "mount_heist_whale_setup",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_setup",
+                      "object": {
+                        "label": "Whale setup",
+                        "role": "heist_evidence",
+                        "zone_id": "center",
+                        "bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "visible": true,
+                        "enabled": true,
+                        "state": "staged",
+                        "appearance": "whale_setup"
+                      }
+                    }
+                  ],
+                  "interaction_ops": [
+                    {
+                      "family": "interaction_ops",
+                      "op": "add",
+                      "receipt_id": "mount_heist_whale_setup_status",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_setup_status",
+                      "interaction": {
+                        "owner_namespace": "crew",
+                        "stable_object_id": "heist_whale_setup_status",
+                        "label": "Read the Whale setup",
+                        "state_label": "Host staged",
+                        "prompt": "The vouch, the setting rig, and the borrowed name occupy three public stations.",
+                        "enabled": false,
+                        "disabled_reason": "Use the live planning table, game table, cage, or getaway controls.",
+                        "available_actions": [],
+                        "input_actions": [],
+                        "non_color_state": "whale_setup",
+                        "focus_order": 20,
+                        "hit_bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "min_target_size": 44,
+                        "safe_exit": false,
+                        "alternate_exit": false
+                      }
+                    }
+                  ],
+                  "actor_ops": [],
+                  "transition_ops": [
+                    {
+                      "family": "transition_ops",
+                      "op": "stage",
+                      "receipt_id": "mount_heist_whale_setup_feedback",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_setup_arrival",
+                      "channel": "room",
+                      "message": "The vouch, the setting rig, and the borrowed name occupy three public stations.",
+                      "stage_id": "heist_whale_setup_arrival",
+                      "duration_boundaries": 1,
+                      "reduced_motion_message": "The vouch, the setting rig, and the borrowed name occupy three public stations."
+                    }
+                  ],
+                  "branches": [
+                    {
+                      "id": "owner_closed",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_closed"
+                      },
+                      "next_phase": "closed_result"
+                    }
+                  ]
+                },
+                {
+                  "id": "closed_result",
+                  "label": "Whale setup closed",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "closed_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "closed"
+                    }
+                  ]
+                }
+              ]
+            },
+            "objectives": [
+              {
+                "id": "read_scene",
+                "label": "Read the Whale setup",
+                "progress_label": "Staged evidence",
+                "steps": [
+                  {
+                    "id": "owner_phase_closed",
+                    "label": "Close the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_closed"
+                  }
+                ],
+                "outcomes": [
+                  "success",
+                  "failure",
+                  "ignore",
+                  "cancel"
+                ]
+              }
+            ],
+            "reentry_policy": {
+              "partial": "resume",
+              "terminal": "aftermath",
+              "expired": "expired"
+            },
+            "expiry": {
+              "boundary": "none",
+              "after": 0,
+              "policy": "cancel"
+            },
+            "cleanup": {
+              "operations": [
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_whale_setup",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_whale_setup"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_whale_setup_status",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_whale_setup_status"
+                }
+              ]
+            },
+            "aftermath": {
+              "closed": {
+                "label": "Whale setup closed",
+                "revisit_feedback": "The staged Crew beat has moved on.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_whale_setup",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_whale_setup_closed",
+                    "object": {
+                      "label": "Whale setup closed",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44,
+                        "h": 44
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "closed",
+                      "appearance": "whale_setup_closed"
+                    }
+                  }
+                ]
+              }
+            },
+            "declared_targets": {
+              "scene_objects": [],
+              "interactions": [],
+              "actors": [],
+              "services": [],
+              "games": [],
+              "routes": [],
+              "anchors": [],
+              "zones": [
+                "base::zone:center"
+              ]
+            },
+            "mechanic_tags": [
+              "heist_scene",
+              "host_evidence",
+              "environment_composition",
+              "privacy_safe"
+            ],
+            "sequence_signature": "122e2f2bd52136d9911522cca53c2a95e8f18a537b85db5ccff0a7232a271044",
+            "owner_exceptions": [
+              {
+                "row": "world_connection",
+                "reason": "The owner-scoped heist overlay composes with the sealed room and never duplicates travel or chase authority.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "primary_verb",
+                "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              }
+            ],
+            "fact_subscriptions": [],
+            "completion_contract": {
+              "arrival_readable": true,
+              "semantic_changes": true,
+              "scenario_interaction": true,
+              "action_boundaries": true,
+              "choice_or_failure": true,
+              "material_outcomes": true,
+              "revisit_coverage": true,
+              "world_connection": true,
+              "primary_verb": true,
+              "feedback_and_exit": true
+            }
+          }
+        },
+        "authoring": {
+          "host_owner": "crew_heist",
+          "hidden_state_policy": "Only public staging fields enter this package.",
+          "player_surface_owner": "EventModule/GameModule/DeliveryRunModel"
+        }
+      }
+    ]
+  },
+  {
+    "schema_version": 1,
+    "package_id": "world06_6_whale_play",
+    "definitions": [
+      {
+        "source": {
+          "domain": "crew",
+          "owner_id": "crew",
+          "definition_id": "heist_whale_play"
+        },
+        "mount": {
+          "zone_id": "center"
+        },
+        "ownership_claims": [
+          {
+            "target": "crew::heist_whale_play",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_play_status",
+            "property": "interaction_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_play_closed",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          }
+        ],
+        "outcome_channels": {
+          "closed": "heist_scene"
+        },
+        "private_capabilities": [],
+        "definition": {
+          "id": "heist_whale_play",
+          "sequence": {
+            "schema_version": 2,
+            "local_state_schema": {},
+            "phase_graph": {
+              "initial_phase": "staged",
+              "phases": [
+                {
+                  "id": "staged",
+                  "label": "Whale invitational",
+                  "arrival_feedback": "The three-game invitational advances around one visible pot under Rourke's attention.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [
+                    {
+                      "type": "always"
+                    }
+                  ],
+                  "objective_ids": [
+                    "read_scene"
+                  ],
+                  "advance_after_actions": 0,
+                  "scene_ops": [
+                    {
+                      "family": "scene_ops",
+                      "op": "spawn",
+                      "receipt_id": "mount_heist_whale_play",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_play",
+                      "object": {
+                        "label": "Whale invitational",
+                        "role": "heist_evidence",
+                        "zone_id": "center",
+                        "bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "visible": true,
+                        "enabled": true,
+                        "state": "staged",
+                        "appearance": "whale_play"
+                      }
+                    }
+                  ],
+                  "interaction_ops": [
+                    {
+                      "family": "interaction_ops",
+                      "op": "add",
+                      "receipt_id": "mount_heist_whale_play_status",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_play_status",
+                      "interaction": {
+                        "owner_namespace": "crew",
+                        "stable_object_id": "heist_whale_play_status",
+                        "label": "Read the invitational",
+                        "state_label": "Host staged",
+                        "prompt": "The three-game invitational advances around one visible pot under Rourke's attention.",
+                        "enabled": false,
+                        "disabled_reason": "Use the live planning table, game table, cage, or getaway controls.",
+                        "available_actions": [],
+                        "input_actions": [],
+                        "non_color_state": "whale_play",
+                        "focus_order": 20,
+                        "hit_bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "min_target_size": 44,
+                        "safe_exit": false,
+                        "alternate_exit": false
+                      }
+                    }
+                  ],
+                  "actor_ops": [],
+                  "transition_ops": [
+                    {
+                      "family": "transition_ops",
+                      "op": "stage",
+                      "receipt_id": "mount_heist_whale_play_feedback",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_play_arrival",
+                      "channel": "room",
+                      "message": "The three-game invitational advances around one visible pot under Rourke's attention.",
+                      "stage_id": "heist_whale_play_arrival",
+                      "duration_boundaries": 1,
+                      "reduced_motion_message": "The three-game invitational advances around one visible pot under Rourke's attention."
+                    }
+                  ],
+                  "branches": [
+                    {
+                      "id": "owner_closed",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_closed"
+                      },
+                      "next_phase": "closed_result"
+                    }
+                  ]
+                },
+                {
+                  "id": "closed_result",
+                  "label": "Whale invitational closed",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "closed_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "closed"
+                    }
+                  ]
+                }
+              ]
+            },
+            "objectives": [
+              {
+                "id": "read_scene",
+                "label": "Read the invitational",
+                "progress_label": "Staged evidence",
+                "steps": [
+                  {
+                    "id": "owner_phase_closed",
+                    "label": "Close the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_closed"
+                  }
+                ],
+                "outcomes": [
+                  "success",
+                  "failure",
+                  "ignore",
+                  "cancel"
+                ]
+              }
+            ],
+            "reentry_policy": {
+              "partial": "resume",
+              "terminal": "aftermath",
+              "expired": "expired"
+            },
+            "expiry": {
+              "boundary": "none",
+              "after": 0,
+              "policy": "cancel"
+            },
+            "cleanup": {
+              "operations": [
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_whale_play",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_whale_play"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_whale_play_status",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_whale_play_status"
+                }
+              ]
+            },
+            "aftermath": {
+              "closed": {
+                "label": "Whale invitational closed",
+                "revisit_feedback": "The staged Crew beat has moved on.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_whale_play",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_whale_play_closed",
+                    "object": {
+                      "label": "Whale invitational closed",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44,
+                        "h": 44
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "closed",
+                      "appearance": "whale_play_closed"
+                    }
+                  }
+                ]
+              }
+            },
+            "declared_targets": {
+              "scene_objects": [],
+              "interactions": [],
+              "actors": [],
+              "services": [],
+              "games": [],
+              "routes": [],
+              "anchors": [],
+              "zones": [
+                "base::zone:center"
+              ]
+            },
+            "mechanic_tags": [
+              "heist_scene",
+              "host_evidence",
+              "environment_composition",
+              "privacy_safe"
+            ],
+            "sequence_signature": "5bccf8827a6f989be788925e32ee9b10d7884174db0a5470069b10bcfa434ccd",
+            "owner_exceptions": [
+              {
+                "row": "world_connection",
+                "reason": "The owner-scoped heist overlay composes with the sealed room and never duplicates travel or chase authority.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "primary_verb",
+                "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              }
+            ],
+            "fact_subscriptions": [],
+            "completion_contract": {
+              "arrival_readable": true,
+              "semantic_changes": true,
+              "scenario_interaction": true,
+              "action_boundaries": true,
+              "choice_or_failure": true,
+              "material_outcomes": true,
+              "revisit_coverage": true,
+              "world_connection": true,
+              "primary_verb": true,
+              "feedback_and_exit": true
+            }
+          }
+        },
+        "authoring": {
+          "host_owner": "crew_heist",
+          "hidden_state_policy": "Only public staging fields enter this package.",
+          "player_surface_owner": "EventModule/GameModule/DeliveryRunModel"
+        }
+      }
+    ]
+  },
+  {
+    "schema_version": 1,
+    "package_id": "world06_6_whale_interview",
+    "definitions": [
+      {
+        "source": {
+          "domain": "crew",
+          "owner_id": "crew",
+          "definition_id": "heist_whale_interview"
+        },
+        "mount": {
+          "zone_id": "center"
+        },
+        "ownership_claims": [
+          {
+            "target": "crew::heist_whale_interview",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_interview_status",
+            "property": "interaction_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_interview_closed",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          }
+        ],
+        "outcome_channels": {
+          "closed": "heist_scene"
+        },
+        "private_capabilities": [],
+        "definition": {
+          "id": "heist_whale_interview",
+          "sequence": {
+            "schema_version": 2,
+            "local_state_schema": {},
+            "phase_graph": {
+              "initial_phase": "staged",
+              "phases": [
+                {
+                  "id": "staged",
+                  "label": "Cage interview",
+                  "arrival_feedback": "The cage window holds the pot and a checkable receipt while Rourke waits.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [
+                    {
+                      "type": "always"
+                    }
+                  ],
+                  "objective_ids": [
+                    "read_scene"
+                  ],
+                  "advance_after_actions": 0,
+                  "scene_ops": [
+                    {
+                      "family": "scene_ops",
+                      "op": "spawn",
+                      "receipt_id": "mount_heist_whale_interview",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_interview",
+                      "object": {
+                        "label": "Cage interview",
+                        "role": "heist_evidence",
+                        "zone_id": "center",
+                        "bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "visible": true,
+                        "enabled": true,
+                        "state": "staged",
+                        "appearance": "whale_interview"
+                      }
+                    }
+                  ],
+                  "interaction_ops": [
+                    {
+                      "family": "interaction_ops",
+                      "op": "add",
+                      "receipt_id": "mount_heist_whale_interview_status",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_interview_status",
+                      "interaction": {
+                        "owner_namespace": "crew",
+                        "stable_object_id": "heist_whale_interview_status",
+                        "label": "Read the cage interview",
+                        "state_label": "Host staged",
+                        "prompt": "The cage window holds the pot and a checkable receipt while Rourke waits.",
+                        "enabled": false,
+                        "disabled_reason": "Use the live planning table, game table, cage, or getaway controls.",
+                        "available_actions": [],
+                        "input_actions": [],
+                        "non_color_state": "whale_interview",
+                        "focus_order": 20,
+                        "hit_bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "min_target_size": 44,
+                        "safe_exit": false,
+                        "alternate_exit": false
+                      }
+                    }
+                  ],
+                  "actor_ops": [],
+                  "transition_ops": [
+                    {
+                      "family": "transition_ops",
+                      "op": "stage",
+                      "receipt_id": "mount_heist_whale_interview_feedback",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_interview_arrival",
+                      "channel": "room",
+                      "message": "The cage window holds the pot and a checkable receipt while Rourke waits.",
+                      "stage_id": "heist_whale_interview_arrival",
+                      "duration_boundaries": 1,
+                      "reduced_motion_message": "The cage window holds the pot and a checkable receipt while Rourke waits."
+                    }
+                  ],
+                  "branches": [
+                    {
+                      "id": "owner_closed",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_closed"
+                      },
+                      "next_phase": "closed_result"
+                    }
+                  ]
+                },
+                {
+                  "id": "closed_result",
+                  "label": "Cage interview closed",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "closed_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "closed"
+                    }
+                  ]
+                }
+              ]
+            },
+            "objectives": [
+              {
+                "id": "read_scene",
+                "label": "Read the cage interview",
+                "progress_label": "Staged evidence",
+                "steps": [
+                  {
+                    "id": "owner_phase_closed",
+                    "label": "Close the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_closed"
+                  }
+                ],
+                "outcomes": [
+                  "success",
+                  "failure",
+                  "ignore",
+                  "cancel"
+                ]
+              }
+            ],
+            "reentry_policy": {
+              "partial": "resume",
+              "terminal": "aftermath",
+              "expired": "expired"
+            },
+            "expiry": {
+              "boundary": "none",
+              "after": 0,
+              "policy": "cancel"
+            },
+            "cleanup": {
+              "operations": [
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_whale_interview",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_whale_interview"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_whale_interview_status",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_whale_interview_status"
+                }
+              ]
+            },
+            "aftermath": {
+              "closed": {
+                "label": "Cage interview closed",
+                "revisit_feedback": "The staged Crew beat has moved on.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_whale_interview",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_whale_interview_closed",
+                    "object": {
+                      "label": "Cage interview closed",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44,
+                        "h": 44
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "closed",
+                      "appearance": "whale_interview_closed"
+                    }
+                  }
+                ]
+              }
+            },
+            "declared_targets": {
+              "scene_objects": [],
+              "interactions": [],
+              "actors": [],
+              "services": [],
+              "games": [],
+              "routes": [],
+              "anchors": [],
+              "zones": [
+                "base::zone:center"
+              ]
+            },
+            "mechanic_tags": [
+              "heist_scene",
+              "host_evidence",
+              "environment_composition",
+              "privacy_safe"
+            ],
+            "sequence_signature": "e8e2930d37f58c34e2d6ee3d62b972447284ee07b2b0d170cb76a8b1ac9950e1",
+            "owner_exceptions": [
+              {
+                "row": "world_connection",
+                "reason": "The owner-scoped heist overlay composes with the sealed room and never duplicates travel or chase authority.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "primary_verb",
+                "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              }
+            ],
+            "fact_subscriptions": [],
+            "completion_contract": {
+              "arrival_readable": true,
+              "semantic_changes": true,
+              "scenario_interaction": true,
+              "action_boundaries": true,
+              "choice_or_failure": true,
+              "material_outcomes": true,
+              "revisit_coverage": true,
+              "world_connection": true,
+              "primary_verb": true,
+              "feedback_and_exit": true
+            }
+          }
+        },
+        "authoring": {
+          "host_owner": "crew_heist",
+          "hidden_state_policy": "Only public staging fields enter this package.",
+          "player_surface_owner": "EventModule/GameModule/DeliveryRunModel"
+        }
+      }
+    ]
+  },
+  {
+    "schema_version": 1,
+    "package_id": "world06_6_whale_getaway",
+    "definitions": [
+      {
+        "source": {
+          "domain": "crew",
+          "owner_id": "crew",
+          "definition_id": "heist_whale_getaway"
+        },
+        "mount": {
+          "zone_id": "center"
+        },
+        "ownership_claims": [
+          {
+            "target": "crew::heist_whale_getaway",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_getaway_status",
+            "property": "interaction_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_getaway_closed",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          }
+        ],
+        "outcome_channels": {
+          "closed": "heist_scene"
+        },
+        "private_capabilities": [],
+        "definition": {
+          "id": "heist_whale_getaway",
+          "sequence": {
+            "schema_version": 2,
+            "local_state_schema": {},
+            "phase_graph": {
+              "initial_phase": "staged",
+              "phases": [
+                {
+                  "id": "staged",
+                  "label": "Whale exit",
+                  "arrival_feedback": "The front door remains clean unless the settled table and interview made the exit hot.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [
+                    {
+                      "type": "always"
+                    }
+                  ],
+                  "objective_ids": [
+                    "read_scene"
+                  ],
+                  "advance_after_actions": 0,
+                  "scene_ops": [
+                    {
+                      "family": "scene_ops",
+                      "op": "spawn",
+                      "receipt_id": "mount_heist_whale_getaway",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_getaway",
+                      "object": {
+                        "label": "Whale exit",
+                        "role": "heist_evidence",
+                        "zone_id": "center",
+                        "bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "visible": true,
+                        "enabled": true,
+                        "state": "staged",
+                        "appearance": "whale_exit"
+                      }
+                    }
+                  ],
+                  "interaction_ops": [
+                    {
+                      "family": "interaction_ops",
+                      "op": "add",
+                      "receipt_id": "mount_heist_whale_getaway_status",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_getaway_status",
+                      "interaction": {
+                        "owner_namespace": "crew",
+                        "stable_object_id": "heist_whale_getaway_status",
+                        "label": "Read the Whale exit",
+                        "state_label": "Host staged",
+                        "prompt": "The front door remains clean unless the settled table and interview made the exit hot.",
+                        "enabled": false,
+                        "disabled_reason": "Use the live planning table, game table, cage, or getaway controls.",
+                        "available_actions": [],
+                        "input_actions": [],
+                        "non_color_state": "whale_exit",
+                        "focus_order": 20,
+                        "hit_bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "min_target_size": 44,
+                        "safe_exit": false,
+                        "alternate_exit": false
+                      }
+                    }
+                  ],
+                  "actor_ops": [],
+                  "transition_ops": [
+                    {
+                      "family": "transition_ops",
+                      "op": "stage",
+                      "receipt_id": "mount_heist_whale_getaway_feedback",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_getaway_arrival",
+                      "channel": "room",
+                      "message": "The front door remains clean unless the settled table and interview made the exit hot.",
+                      "stage_id": "heist_whale_getaway_arrival",
+                      "duration_boundaries": 1,
+                      "reduced_motion_message": "The front door remains clean unless the settled table and interview made the exit hot."
+                    }
+                  ],
+                  "branches": [
+                    {
+                      "id": "owner_closed",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_closed"
+                      },
+                      "next_phase": "closed_result"
+                    }
+                  ]
+                },
+                {
+                  "id": "closed_result",
+                  "label": "Whale exit closed",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "closed_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "closed"
+                    }
+                  ]
+                }
+              ]
+            },
+            "objectives": [
+              {
+                "id": "read_scene",
+                "label": "Read the Whale exit",
+                "progress_label": "Staged evidence",
+                "steps": [
+                  {
+                    "id": "owner_phase_closed",
+                    "label": "Close the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_closed"
+                  }
+                ],
+                "outcomes": [
+                  "success",
+                  "failure",
+                  "ignore",
+                  "cancel"
+                ]
+              }
+            ],
+            "reentry_policy": {
+              "partial": "resume",
+              "terminal": "aftermath",
+              "expired": "expired"
+            },
+            "expiry": {
+              "boundary": "none",
+              "after": 0,
+              "policy": "cancel"
+            },
+            "cleanup": {
+              "operations": [
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_whale_getaway",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_whale_getaway"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_whale_getaway_status",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_whale_getaway_status"
+                }
+              ]
+            },
+            "aftermath": {
+              "closed": {
+                "label": "Whale exit closed",
+                "revisit_feedback": "The staged Crew beat has moved on.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_whale_getaway",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_whale_getaway_closed",
+                    "object": {
+                      "label": "Whale exit closed",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44,
+                        "h": 44
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "closed",
+                      "appearance": "whale_exit_closed"
+                    }
+                  }
+                ]
+              }
+            },
+            "declared_targets": {
+              "scene_objects": [],
+              "interactions": [],
+              "actors": [],
+              "services": [],
+              "games": [],
+              "routes": [],
+              "anchors": [],
+              "zones": [
+                "base::zone:center"
+              ]
+            },
+            "mechanic_tags": [
+              "heist_scene",
+              "host_evidence",
+              "environment_composition",
+              "privacy_safe"
+            ],
+            "sequence_signature": "5b38b667f92c2d56288bc5eb6043426ab4a470204c89d1cd7c02a4924e5cc6cb",
+            "owner_exceptions": [
+              {
+                "row": "world_connection",
+                "reason": "The owner-scoped heist overlay composes with the sealed room and never duplicates travel or chase authority.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "primary_verb",
+                "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              }
+            ],
+            "fact_subscriptions": [],
+            "completion_contract": {
+              "arrival_readable": true,
+              "semantic_changes": true,
+              "scenario_interaction": true,
+              "action_boundaries": true,
+              "choice_or_failure": true,
+              "material_outcomes": true,
+              "revisit_coverage": true,
+              "world_connection": true,
+              "primary_verb": true,
+              "feedback_and_exit": true
+            }
+          }
+        },
+        "authoring": {
+          "host_owner": "crew_heist",
+          "hidden_state_policy": "Only public staging fields enter this package.",
+          "player_surface_owner": "EventModule/GameModule/DeliveryRunModel"
+        }
+      }
+    ]
+  },
+  {
+    "schema_version": 1,
+    "package_id": "world06_6_quiet_clue",
+    "definitions": [
+      {
+        "source": {
+          "domain": "crew",
+          "owner_id": "crew",
+          "definition_id": "heist_quiet_clue"
+        },
+        "mount": {
+          "zone_id": "center"
+        },
+        "ownership_claims": [
+          {
+            "target": "crew::heist_quiet_clue",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_quiet_clue_status",
+            "property": "interaction_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_quiet_clue_closed",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          }
+        ],
+        "outcome_channels": {
+          "closed": "heist_scene"
+        },
+        "private_capabilities": [],
+        "definition": {
+          "id": "heist_quiet_clue",
+          "sequence": {
+            "schema_version": 2,
+            "local_state_schema": {},
+            "phase_graph": {
+              "initial_phase": "staged",
+              "phases": [
+                {
+                  "id": "staged",
+                  "label": "Quiet-table clue",
+                  "arrival_feedback": "A neutral Crew voice leaves one public, checkable contradiction without naming its source.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [
+                    {
+                      "type": "always"
+                    }
+                  ],
+                  "objective_ids": [
+                    "read_scene"
+                  ],
+                  "advance_after_actions": 0,
+                  "scene_ops": [
+                    {
+                      "family": "scene_ops",
+                      "op": "spawn",
+                      "receipt_id": "mount_heist_quiet_clue",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_quiet_clue",
+                      "object": {
+                        "label": "Quiet-table clue",
+                        "role": "heist_evidence",
+                        "zone_id": "center",
+                        "bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "visible": true,
+                        "enabled": true,
+                        "state": "staged",
+                        "appearance": "quiet_clue"
+                      }
+                    }
+                  ],
+                  "interaction_ops": [
+                    {
+                      "family": "interaction_ops",
+                      "op": "add",
+                      "receipt_id": "mount_heist_quiet_clue_status",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_quiet_clue_status",
+                      "interaction": {
+                        "owner_namespace": "crew",
+                        "stable_object_id": "heist_quiet_clue_status",
+                        "label": "Read the public clue",
+                        "state_label": "Host staged",
+                        "prompt": "A neutral Crew voice leaves one public, checkable contradiction without naming its source.",
+                        "enabled": false,
+                        "disabled_reason": "Use the live planning table, game table, cage, or getaway controls.",
+                        "available_actions": [],
+                        "input_actions": [],
+                        "non_color_state": "quiet_clue",
+                        "focus_order": 20,
+                        "hit_bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "min_target_size": 44,
+                        "safe_exit": false,
+                        "alternate_exit": false
+                      }
+                    }
+                  ],
+                  "actor_ops": [],
+                  "transition_ops": [
+                    {
+                      "family": "transition_ops",
+                      "op": "stage",
+                      "receipt_id": "mount_heist_quiet_clue_feedback",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_quiet_clue_arrival",
+                      "channel": "room",
+                      "message": "A neutral Crew voice leaves one public, checkable contradiction without naming its source.",
+                      "stage_id": "heist_quiet_clue_arrival",
+                      "duration_boundaries": 1,
+                      "reduced_motion_message": "A neutral Crew voice leaves one public, checkable contradiction without naming its source."
+                    }
+                  ],
+                  "branches": [
+                    {
+                      "id": "owner_closed",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_closed"
+                      },
+                      "next_phase": "closed_result"
+                    }
+                  ]
+                },
+                {
+                  "id": "closed_result",
+                  "label": "Quiet-table clue closed",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "closed_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "closed"
+                    }
+                  ]
+                }
+              ]
+            },
+            "objectives": [
+              {
+                "id": "read_scene",
+                "label": "Read the public clue",
+                "progress_label": "Staged evidence",
+                "steps": [
+                  {
+                    "id": "owner_phase_closed",
+                    "label": "Close the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_closed"
+                  }
+                ],
+                "outcomes": [
+                  "success",
+                  "failure",
+                  "ignore",
+                  "cancel"
+                ]
+              }
+            ],
+            "reentry_policy": {
+              "partial": "resume",
+              "terminal": "aftermath",
+              "expired": "expired"
+            },
+            "expiry": {
+              "boundary": "none",
+              "after": 0,
+              "policy": "cancel"
+            },
+            "cleanup": {
+              "operations": [
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_quiet_clue",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_quiet_clue"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_quiet_clue_status",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_quiet_clue_status"
+                }
+              ]
+            },
+            "aftermath": {
+              "closed": {
+                "label": "Quiet-table clue closed",
+                "revisit_feedback": "The staged Crew beat has moved on.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_quiet_clue",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_quiet_clue_closed",
+                    "object": {
+                      "label": "Quiet-table clue closed",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44,
+                        "h": 44
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "closed",
+                      "appearance": "quiet_clue_closed"
+                    }
+                  }
+                ]
+              }
+            },
+            "declared_targets": {
+              "scene_objects": [],
+              "interactions": [],
+              "actors": [],
+              "services": [],
+              "games": [],
+              "routes": [],
+              "anchors": [],
+              "zones": [
+                "base::zone:center"
+              ]
+            },
+            "mechanic_tags": [
+              "heist_scene",
+              "host_evidence",
+              "environment_composition",
+              "privacy_safe"
+            ],
+            "sequence_signature": "2193cb69dbdfd91b358beec61ba946db8a05ba3c5b7970aaa669868cab35796f",
+            "owner_exceptions": [
+              {
+                "row": "world_connection",
+                "reason": "The owner-scoped heist overlay composes with the sealed room and never duplicates travel or chase authority.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "primary_verb",
+                "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              }
+            ],
+            "fact_subscriptions": [],
+            "completion_contract": {
+              "arrival_readable": true,
+              "semantic_changes": true,
+              "scenario_interaction": true,
+              "action_boundaries": true,
+              "choice_or_failure": true,
+              "material_outcomes": true,
+              "revisit_coverage": true,
+              "world_connection": true,
+              "primary_verb": true,
+              "feedback_and_exit": true
+            }
+          }
+        },
+        "authoring": {
+          "host_owner": "crew_heist",
+          "hidden_state_policy": "Only public staging fields enter this package.",
+          "player_surface_owner": "EventModule/GameModule/DeliveryRunModel"
+        }
+      }
+    ]
+  },
+  {
+    "schema_version": 1,
+    "package_id": "world06_6_closed_door",
+    "definitions": [
+      {
+        "source": {
+          "domain": "crew",
+          "owner_id": "crew",
+          "definition_id": "heist_closed_door"
+        },
+        "mount": {
+          "zone_id": "center"
+        },
+        "ownership_claims": [
+          {
+            "target": "crew::heist_closed_door",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_closed_door_status",
+            "property": "interaction_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_closed_door_closed",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          }
+        ],
+        "outcome_channels": {
+          "closed": "heist_scene"
+        },
+        "private_capabilities": [],
+        "definition": {
+          "id": "heist_closed_door",
+          "sequence": {
+            "schema_version": 2,
+            "local_state_schema": {},
+            "phase_graph": {
+              "initial_phase": "staged",
+              "phases": [
+                {
+                  "id": "staged",
+                  "label": "Closed-door confrontation",
+                  "arrival_feedback": "One closed chair and a neutral Crew voice stage the confrontation without exposing private terms.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [
+                    {
+                      "type": "always"
+                    }
+                  ],
+                  "objective_ids": [
+                    "read_scene"
+                  ],
+                  "advance_after_actions": 0,
+                  "scene_ops": [
+                    {
+                      "family": "scene_ops",
+                      "op": "spawn",
+                      "receipt_id": "mount_heist_closed_door",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_closed_door",
+                      "object": {
+                        "label": "Closed-door confrontation",
+                        "role": "heist_evidence",
+                        "zone_id": "center",
+                        "bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "visible": true,
+                        "enabled": true,
+                        "state": "staged",
+                        "appearance": "closed_door"
+                      }
+                    }
+                  ],
+                  "interaction_ops": [
+                    {
+                      "family": "interaction_ops",
+                      "op": "add",
+                      "receipt_id": "mount_heist_closed_door_status",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_closed_door_status",
+                      "interaction": {
+                        "owner_namespace": "crew",
+                        "stable_object_id": "heist_closed_door_status",
+                        "label": "Read the confrontation",
+                        "state_label": "Host staged",
+                        "prompt": "One closed chair and a neutral Crew voice stage the confrontation without exposing private terms.",
+                        "enabled": false,
+                        "disabled_reason": "Use the live planning table, game table, cage, or getaway controls.",
+                        "available_actions": [],
+                        "input_actions": [],
+                        "non_color_state": "closed_door",
+                        "focus_order": 20,
+                        "hit_bounds": {
+                          "w": 88,
+                          "h": 64
+                        },
+                        "min_target_size": 44,
+                        "safe_exit": false,
+                        "alternate_exit": false
+                      }
+                    }
+                  ],
+                  "actor_ops": [],
+                  "transition_ops": [
+                    {
+                      "family": "transition_ops",
+                      "op": "stage",
+                      "receipt_id": "mount_heist_closed_door_feedback",
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_closed_door_arrival",
+                      "channel": "room",
+                      "message": "One closed chair and a neutral Crew voice stage the confrontation without exposing private terms.",
+                      "stage_id": "heist_closed_door_arrival",
+                      "duration_boundaries": 1,
+                      "reduced_motion_message": "One closed chair and a neutral Crew voice stage the confrontation without exposing private terms."
+                    }
+                  ],
+                  "branches": [
+                    {
+                      "id": "owner_closed",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_closed"
+                      },
+                      "next_phase": "closed_result"
+                    }
+                  ]
+                },
+                {
+                  "id": "closed_result",
+                  "label": "Closed-door confrontation closed",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "closed_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "closed"
+                    }
+                  ]
+                }
+              ]
+            },
+            "objectives": [
+              {
+                "id": "read_scene",
+                "label": "Read the confrontation",
+                "progress_label": "Staged evidence",
+                "steps": [
+                  {
+                    "id": "owner_phase_closed",
+                    "label": "Close the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_closed"
+                  }
+                ],
+                "outcomes": [
+                  "success",
+                  "failure",
+                  "ignore",
+                  "cancel"
+                ]
+              }
+            ],
+            "reentry_policy": {
+              "partial": "resume",
+              "terminal": "aftermath",
+              "expired": "expired"
+            },
+            "expiry": {
+              "boundary": "none",
+              "after": 0,
+              "policy": "cancel"
+            },
+            "cleanup": {
+              "operations": [
+                {
+                  "family": "scene_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_closed_door",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_closed_door"
+                },
+                {
+                  "family": "interaction_ops",
+                  "op": "remove",
+                  "receipt_id": "cleanup_heist_closed_door_status",
+                  "owner_namespace": "crew",
+                  "stable_object_id": "heist_closed_door_status"
+                }
+              ]
+            },
+            "aftermath": {
+              "closed": {
+                "label": "Closed-door confrontation closed",
+                "revisit_feedback": "The staged Crew beat has moved on.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_closed_door",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_closed_door_closed",
+                    "object": {
+                      "label": "Closed-door confrontation closed",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44,
+                        "h": 44
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "closed",
+                      "appearance": "closed_door_closed"
+                    }
+                  }
+                ]
+              }
+            },
+            "declared_targets": {
+              "scene_objects": [],
+              "interactions": [],
+              "actors": [],
+              "services": [],
+              "games": [],
+              "routes": [],
+              "anchors": [],
+              "zones": [
+                "base::zone:center"
+              ]
+            },
+            "mechanic_tags": [
+              "heist_scene",
+              "host_evidence",
+              "environment_composition",
+              "privacy_safe"
+            ],
+            "sequence_signature": "71cd8d3c622431b8790a02d20f822b99a8bead2683263d7f2e0953ea0a32824c",
+            "owner_exceptions": [
+              {
+                "row": "world_connection",
+                "reason": "The owner-scoped heist overlay composes with the sealed room and never duplicates travel or chase authority.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "primary_verb",
+                "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              }
+            ],
+            "fact_subscriptions": [],
+            "completion_contract": {
+              "arrival_readable": true,
+              "semantic_changes": true,
+              "scenario_interaction": true,
+              "action_boundaries": true,
+              "choice_or_failure": true,
+              "material_outcomes": true,
+              "revisit_coverage": true,
+              "world_connection": true,
+              "primary_verb": true,
+              "feedback_and_exit": true
+            }
+          }
+        },
+        "authoring": {
+          "host_owner": "crew_heist",
+          "hidden_state_policy": "Only public staging fields enter this package.",
+          "player_surface_owner": "EventModule/GameModule/DeliveryRunModel"
+        }
+      }
+    ]
+  }
+]

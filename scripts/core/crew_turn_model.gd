@@ -4,7 +4,9 @@ extends RefCounted
 # Hidden, deterministic heist-fracture rules. Persisted state uses neutral keys
 # because raw saves are a player-visible surface.
 
-const STATE_VERSION := 1
+const STATE_VERSION := 2
+const LEGACY_STATE_VERSION := 1
+const TOMBSTONE_LIMIT := 16
 const MEMBER_ROOK := "crew_rook"
 const SIGNAL_PATTERN := "p"
 const SIGNAL_ROUTE := "r"
@@ -13,7 +15,7 @@ const SIGNAL_IDS := [SIGNAL_PATTERN, SIGNAL_ROUTE, SIGNAL_PAYMENT]
 
 
 static func empty_state() -> Dictionary:
-	return {"v": STATE_VERSION, "m": "", "w": [], "e": [], "h": false, "c": false, "f": 0}
+	return {"v": STATE_VERSION, "m": "", "w": [], "e": [], "h": false, "c": false, "f": 0, "t": []}
 
 
 static func normalize_state(value: Variant, member_ids: Array) -> Dictionary:
@@ -29,7 +31,42 @@ static func normalize_state(value: Variant, member_ids: Array) -> Dictionary:
 		"h": bool(source.get("h", false)),
 		"c": bool(source.get("c", false)),
 		"f": maxi(0, int(source.get("f", 0))),
+		"t": _tombstone_array(source.get("t", [])),
 	}
+
+
+static func restore_state(value: Variant, member_ids: Array) -> Dictionary:
+	if not can_restore_state(value, member_ids):
+		return empty_state()
+	var source: Dictionary = value
+	return normalize_state(source)
+
+
+static func can_restore_state(value: Variant, member_ids: Array) -> bool:
+	if typeof(value) != TYPE_DICTIONARY or (value as Dictionary).is_empty(): return false
+	var source: Dictionary = value
+	var version := int(source.get("v", 0))
+	var legacy_keys := ["c", "e", "f", "h", "m", "v", "w"]
+	var current_keys := legacy_keys.duplicate(); current_keys.append("t")
+	if version not in [LEGACY_STATE_VERSION, STATE_VERSION] or not _exact_keys(source, legacy_keys if version == LEGACY_STATE_VERSION else current_keys) \
+			or typeof(source.get("w")) != TYPE_ARRAY or typeof(source.get("e")) != TYPE_ARRAY \
+			or (version == STATE_VERSION and (typeof(source.get("t")) != TYPE_ARRAY or (source.get("t") as Array).size() > TOMBSTONE_LIMIT)):
+		return false
+	if not str(source.get("m", "")).is_empty() and not member_ids.has(str(source.get("m", ""))): return false
+	if _signal_array(source.get("w", [])).size() != (source.get("w") as Array).size() \
+			or _signal_array(source.get("e", [])).size() != (source.get("e") as Array).size(): return false
+	return version != STATE_VERSION or _tombstone_array(source.get("t", [])).size() == (source.get("t") as Array).size()
+
+
+static func record_tombstone(state_value: Variant, boundary: int, code: int, member_ids: Array) -> Dictionary:
+	var state := normalize_state(state_value, member_ids)
+	var row := {"b": maxi(0, boundary), "q": clampi(code, 1, 99)}
+	var rows := _tombstone_array(state.get("t", []))
+	if rows.has(row): return state
+	rows.append(row)
+	while rows.size() > TOMBSTONE_LIMIT: rows.pop_front()
+	state["t"] = rows
+	return state
 
 
 static func eligible_members(plan_definition: Dictionary, met_members: Array, member_ids: Array) -> Array:
@@ -141,6 +178,24 @@ static func _int_array(value: Variant) -> Array:
 		for entry_value in value:
 			result.append(int(entry_value))
 	return result
+
+
+static func _tombstone_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY: return result
+	for row_value in value:
+		if typeof(row_value) != TYPE_DICTIONARY: continue
+		var row: Dictionary = row_value
+		if not _exact_keys(row, ["b", "q"]) or int(row.get("b", -1)) < 0 or int(row.get("q", 0)) < 1 or int(row.get("q", 0)) > 99: continue
+		result.append({"b": int(row.get("b", 0)), "q": int(row.get("q", 0))})
+	while result.size() > TOMBSTONE_LIMIT: result.pop_front()
+	return result
+
+
+static func _exact_keys(value: Dictionary, expected: Array) -> bool:
+	var keys := value.keys(); keys.sort()
+	var exact := expected.duplicate(); exact.sort()
+	return keys == exact
 
 
 # WORLD06_6_PUBLIC_SURFACE_BEGIN

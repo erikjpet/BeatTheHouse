@@ -6,6 +6,9 @@ extends RefCounted
 const CONFIG_PATH := "res://data/crew/heist.json"
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const SCHEMA_VERSION := 1
+const STATE_SCHEMA_VERSION := 2
+const LEGACY_STATE_SCHEMA_VERSION := 1
+const TOMBSTONE_LIMIT := 16
 const SURFACE_SCHEMA_VERSION := 1
 const SURFACE_AUTHORITY_GAP := "host_heist_evidence_not_verifiable_in_model"
 const PLAN_COUNT := "the_count"
@@ -48,7 +51,7 @@ static func begin(plan_id: String, action_index: int) -> Dictionary:
 	if not PLAN_IDS.has(plan_id) or plan(plan_id).is_empty():
 		return {}
 	return normalize_state({
-		"schema_version": SCHEMA_VERSION,
+		"schema_version": STATE_SCHEMA_VERSION,
 		"plan_id": plan_id,
 		"status": STATUS_SETUP,
 		"locked_action": maxi(0, action_index),
@@ -58,6 +61,7 @@ static func begin(plan_id: String, action_index: int) -> Dictionary:
 		"outcome": "",
 		"payout": 0,
 		"r": {"v": 1, "s": "0"},
+		"q": [],
 		"x": CrewTurnModelScript.empty_state(),
 	})
 
@@ -84,12 +88,47 @@ static func normalize_state(value: Variant) -> Dictionary:
 		"payout": maxi(0, int(source.get("payout", 0))),
 		"r": _copy_dict(source.get("r", {"v": 1, "s": "0"})),
 		"x": CrewTurnModelScript.normalize_state(source.get("x", {}), ["crew_rook", "crew_velvet", "crew_knuckles", "crew_switch", "crew_mags", "crew_bishop", "crew_lucky"]),
+		"q": _tombstones(source.get("q", [])),
 	}
 	if source.has("abort"):
 		result["abort"] = _copy_dict(source.get("abort", {}))
 	if source.has("interview"):
 		result["interview"] = _copy_dict(source.get("interview", {}))
 	return result
+
+
+static func restore_state(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY or (value as Dictionary).is_empty(): return {}
+	var source: Dictionary = value
+	var version := int(source.get("schema_version", 0))
+	var legacy_keys := ["getaway", "locked_action", "outcome", "payout", "plan_id", "play", "r", "schema_version", "setup", "status", "x"]
+	if source.has("abort"): legacy_keys.append("abort")
+	if source.has("interview"): legacy_keys.append("interview")
+	var current_keys := legacy_keys.duplicate(); current_keys.append("q")
+	if version not in [LEGACY_STATE_SCHEMA_VERSION, STATE_SCHEMA_VERSION] or not _exact_keys(source, legacy_keys if version == LEGACY_STATE_SCHEMA_VERSION else current_keys) \
+			or not PLAN_IDS.has(str(source.get("plan_id", ""))) or not STATUSES.has(str(source.get("status", ""))) \
+			or typeof(source.get("setup")) != TYPE_DICTIONARY or typeof(source.get("play")) != TYPE_DICTIONARY \
+			or typeof(source.get("getaway")) != TYPE_DICTIONARY or typeof(source.get("r")) != TYPE_DICTIONARY \
+			or typeof(source.get("x")) != TYPE_DICTIONARY or (version == STATE_SCHEMA_VERSION and (typeof(source.get("q")) != TYPE_ARRAY or (source.get("q") as Array).size() > TOMBSTONE_LIMIT)):
+		return {}
+	var restored := normalize_state(source)
+	var member_ids := ["crew_rook", "crew_velvet", "crew_knuckles", "crew_switch", "crew_mags", "crew_bishop", "crew_lucky"]
+	if not CrewTurnModelScript.can_restore_state(source.get("x", {}), member_ids): return {}
+	var private_state := CrewTurnModelScript.restore_state(source.get("x", {}), member_ids)
+	restored["x"] = private_state
+	if version == STATE_SCHEMA_VERSION and _tombstones(source.get("q", [])).size() != (source.get("q") as Array).size(): return {}
+	return restored
+
+
+static func record_tombstone(state_value: Variant, action_index: int, action_code: int, phase_code: int) -> Dictionary:
+	var state := normalize_state(state_value)
+	if state.is_empty(): return {}
+	var row := {"a": maxi(0, action_index), "c": clampi(action_code, 1, 99), "p": clampi(phase_code, 1, 9)}
+	var rows := _tombstones(state.get("q", []))
+	if not rows.has(row): rows.append(row)
+	while rows.size() > TOMBSTONE_LIMIT: rows.pop_front()
+	state["q"] = rows
+	return state
 
 
 static func setup_complete(state_value: Variant) -> bool:
@@ -318,7 +357,7 @@ static func _exact_keys(value: Dictionary, expected: Array) -> bool:
 static func validate_content() -> Array:
 	var failures: Array = []
 	var source := config()
-	if int(source.get("schema_version", 0)) != SCHEMA_VERSION or int(source.get("state_schema_version", 0)) != SCHEMA_VERSION:
+	if int(source.get("schema_version", 0)) != SCHEMA_VERSION or int(source.get("state_schema_version", 0)) != STATE_SCHEMA_VERSION:
 		failures.append("heist.json schema versions must match CrewHeistModel.")
 	var ids: Array = []
 	for value in source.get("plans", []):
@@ -366,3 +405,13 @@ static func _copy_dict(value: Variant) -> Dictionary:
 
 static func _copy_array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+
+
+static func _tombstones(value: Variant) -> Array:
+	var result: Array = []
+	for row_value in _copy_array(value):
+		var row := _copy_dict(row_value)
+		if not _exact_keys(row, ["a", "c", "p"]) or int(row.get("a", -1)) < 0 or int(row.get("c", 0)) < 1 or int(row.get("c", 0)) > 99 or int(row.get("p", 0)) < 1 or int(row.get("p", 0)) > 9: continue
+		result.append({"a": int(row.get("a", 0)), "c": int(row.get("c", 0)), "p": int(row.get("p", 0))})
+	while result.size() > TOMBSTONE_LIMIT: result.pop_front()
+	return result

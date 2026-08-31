@@ -7,6 +7,15 @@ extends RefCounted
 
 const PACKAGE_PATHS := {
 	"world06_1_crew_favor_delivery": "res://data/crew/world06_1_crew_favor_delivery_sequence.json",
+	"world06_6_count_setup": "res://data/crew/world06_6_heist_sequences.json",
+	"world06_6_count_play": "res://data/crew/world06_6_heist_sequences.json",
+	"world06_6_count_getaway": "res://data/crew/world06_6_heist_sequences.json",
+	"world06_6_whale_setup": "res://data/crew/world06_6_heist_sequences.json",
+	"world06_6_whale_play": "res://data/crew/world06_6_heist_sequences.json",
+	"world06_6_whale_interview": "res://data/crew/world06_6_heist_sequences.json",
+	"world06_6_whale_getaway": "res://data/crew/world06_6_heist_sequences.json",
+	"world06_6_quiet_clue": "res://data/crew/world06_6_heist_sequences.json",
+	"world06_6_closed_door": "res://data/crew/world06_6_heist_sequences.json",
 }
 
 static var _cache: Dictionary = {}
@@ -19,10 +28,14 @@ static func entry(package_id: String) -> Dictionary:
 	if _cache.has(clean_id):
 		return _copy_dict(_cache.get(clean_id, {}))
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(str(PACKAGE_PATHS.get(clean_id, ""))))
-	if typeof(parsed) != TYPE_ARRAY or (parsed as Array).size() != 1 or typeof((parsed as Array)[0]) != TYPE_DICTIONARY:
+	if typeof(parsed) != TYPE_ARRAY or (parsed as Array).is_empty() or (parsed as Array).size() > PACKAGE_PATHS.size():
 		return {}
-	var package := (parsed as Array)[0] as Dictionary
-	if str(package.get("package_id", "")) != clean_id:
+	var package: Dictionary = {}
+	for package_value in parsed as Array:
+		if typeof(package_value) == TYPE_DICTIONARY and str((package_value as Dictionary).get("package_id", "")) == clean_id:
+			package = package_value as Dictionary
+			break
+	if package.is_empty():
 		return {}
 	var definitions: Array = package.get("definitions", []) if typeof(package.get("definitions", [])) == TYPE_ARRAY else []
 	if definitions.size() != 1 or typeof(definitions[0]) != TYPE_DICTIONARY:
