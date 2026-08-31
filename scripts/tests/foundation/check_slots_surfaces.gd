@@ -1,6 +1,7 @@
 extends "res://scripts/tests/foundation/check_core_content.gd"
 
 const SlotsBlackjackAuthorityDriver := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
+const BarDiceFoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
 
 class MotionSymbolHarness:
@@ -2306,14 +2307,9 @@ func _grand_casino_game_cheat_result_for_action(game_id: String, action_id: Stri
 	var rng := run_state.create_rng("c1_%s_heat_result" % game_id)
 	match game_id:
 		"bar_dice":
-			var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, environment)
-			var dice_ui: Dictionary = roll_command.get("ui_state", {})
 			if action_id == "palmed_swap":
-				dice_ui = _skill_contract_bar_dice_palm_ui(game, run_state, environment, dice_ui)
-				return game.resolve_with_context("palmed_swap", 10, run_state, environment, rng, dice_ui)
-			var load_command: Dictionary = game.surface_action_command("bar_dice_load", 0, false, dice_ui, run_state, environment)
-			dice_ui = _bar_dice_controlled_roll_timed_ui(game, run_state, load_command.get("ui_state", dice_ui), 999)
-			return game.resolve_with_context("loaded_toss", 10, run_state, environment, rng, dice_ui)
+				return _bar_dice_play_round(game, run_state, rng, "palmed_swap", 10, 999)
+			return _bar_dice_play_round(game, run_state, rng, "loaded_toss", 10, 999)
 		"video_poker":
 			var deal_command: Dictionary = game.surface_action_command("video_poker_deal", 0, false, {}, run_state, environment)
 			var poker_ui: Dictionary = _video_poker_holdout_timed_ui(game, run_state, deal_command.get("ui_state", {}), 999)
@@ -2618,11 +2614,7 @@ func _xgame_bar_dice_win_metric(game: GameModule, seed: String, luck: int, item_
 
 func _xgame_bar_dice_heat_metric(game: GameModule, seed: String, drunk: bool, watched: bool, item_id: String) -> int:
 	var run_state: RunState = _xgame_bar_dice_run(game, seed, 0, drunk, watched, item_id)
-	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, run_state.current_environment)
-	var ui: Dictionary = roll_command.get("ui_state", {})
-	var load_command: Dictionary = game.surface_action_command("bar_dice_load", 0, false, ui, run_state, run_state.current_environment)
-	ui = _bar_dice_controlled_roll_timed_ui(game, run_state, load_command.get("ui_state", ui), 0)
-	var result: Dictionary = game.resolve_with_context("loaded_toss", 10, run_state, run_state.current_environment, run_state.create_rng("xgame_bar_dice_heat"), ui)
+	var result: Dictionary = _bar_dice_play_round(game, run_state, run_state.create_rng("xgame_bar_dice_heat"), "loaded_toss")
 	return int(result.get("suspicion_delta", 0))
 
 
@@ -4082,11 +4074,14 @@ func _bar_dice_controlled_roll_timed_ui(game: GameModule, run_state: RunState, b
 	var release_command: Dictionary = game.surface_action_command("bar_dice_release", 0, false, load_ui, run_state, run_state.current_environment)
 	return release_command.get("ui_state", load_ui)
 
-func _bar_dice_play_round(game: GameModule, run_state: RunState, rng: RngStream, action_id: String, stake: int = 10) -> Dictionary:
-	var environment: Dictionary = run_state.current_environment
-	var initial_ui := _bar_dice_stake_ui(run_state, stake)
-	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, initial_ui, run_state, environment)
-	var ui: Dictionary = roll_command.get("ui_state", {})
+func _bar_dice_play_round(game: GameModule, run_state: RunState, _rng: RngStream, action_id: String, stake: int = 10, skill_margin_msec: int = 0) -> Dictionary:
+	var host := _bar_dice_test_host(game, run_state, stake)
+	var stake_ui := _bar_dice_stake_ui(run_state, stake)
+	var stake_index := int(stake_ui.get("selected_stake_index", 0))
+	host.call("_sealed_action_host_surface_intent", "bar_dice_stake", stake_index, false)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_roll", 0, false)
+	var command: Dictionary = host.call("_sealed_action_host_surface_intent", "bar_dice_ack_cover", 0, false)
+	var ui: Dictionary = command.get("ui_state", {})
 	while int(ui.get("shake_number", 0)) < 3:
 		var dice: Array = ui.get("dice", []) if typeof(ui.get("dice", [])) == TYPE_ARRAY else []
 		if dice.size() != 5:
@@ -4094,14 +4089,75 @@ func _bar_dice_play_round(game: GameModule, run_state: RunState, rng: RngStream,
 		var suggested: Array = game.call("_suggested_reroll_for_ruleset", dice, "ship_captain_crew")
 		if suggested.is_empty():
 			break
-		ui["reroll"] = suggested
+		for die_index_value in suggested:
+			command = host.call("_sealed_action_host_surface_intent", "bar_dice_select", int(die_index_value), false)
+		command = host.call("_sealed_action_host_surface_intent", "bar_dice_shake", 0, false)
+		ui = command.get("ui_state", ui)
+	if action_id == "loaded_toss":
+		command = host.call("_sealed_action_host_surface_intent", "bar_dice_load", 0, false, 14000)
+		var controlled: Dictionary = (command.get("ui_state", {}) as Dictionary).get("controlled_roll", {})
+		command = host.call("_sealed_action_host_surface_intent", "bar_dice_release", 0, false, int(controlled.get("target_msec", 14000)) + skill_margin_msec)
+	elif action_id == "palmed_swap":
+		command = host.call("_sealed_action_host_surface_intent", "bar_dice_palm", 0, false, 18000)
+		var palm: Dictionary = (command.get("ui_state", {}) as Dictionary).get("palmed_swap_challenge", {})
+		command = host.call("_sealed_action_host_surface_intent", "bar_dice_palm", 0, false, int(palm.get("target_msec", 18000)) + skill_margin_msec)
+	else:
+		command = host.call("_sealed_action_host_surface_intent", "bar_dice_resolve", 0, false)
+	command = host.call("_sealed_action_host_surface_intent", "bar_dice_throw", 0, false)
+	command = host.call("_sealed_action_host_surface_intent", "bar_dice_reveal", 0, false)
+	command = host.call("_sealed_action_host_surface_intent", "bar_dice_ack_call", 0, false)
+	var delivery: Dictionary = command.get("_sealed_action_host_delivery", {})
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, stake, delivery)
+	host.free()
+	return result
+
+# Statistical fixtures consume the pure deterministic proposal boundary without
+# minting authority or applying account deltas. They carry forward only the
+# proposal's table/RNG snapshots and inspect the proposed result distribution.
+func _bar_dice_simulate_round(game: GameModule, run_state: RunState, rng: RngStream, action_id: String, stake: int = 10, skill_margin_msec: int = 0) -> Dictionary:
+	var environment: Dictionary = run_state.current_environment
+	var ui := _bar_dice_stake_ui(run_state, stake)
+	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, ui, run_state, environment)
+	var cover_command: Dictionary = game.surface_action_command("bar_dice_ack_cover", 0, false, roll_command.get("ui_state", {}), run_state, environment)
+	ui = cover_command.get("ui_state", {})
+	while int(ui.get("shake_number", 0)) < 3:
+		var dice: Array = ui.get("dice", []) if typeof(ui.get("dice", [])) == TYPE_ARRAY else []
+		if dice.size() != 5:
+			break
+		var suggested: Array = game.call("_suggested_reroll_for_ruleset", dice, "ship_captain_crew")
+		if suggested.is_empty():
+			break
+		for die_index_value in suggested:
+			var select_command: Dictionary = game.surface_action_command("bar_dice_select", int(die_index_value), false, ui, run_state, environment)
+			ui = select_command.get("ui_state", ui)
 		var shake_command: Dictionary = game.surface_action_command("bar_dice_shake", 0, false, ui, run_state, environment)
 		ui = shake_command.get("ui_state", ui)
 	if action_id == "loaded_toss":
-		ui = _bar_dice_controlled_roll_timed_ui(game, run_state, ui, 0)
+		ui = _bar_dice_controlled_roll_timed_ui(game, run_state, ui, skill_margin_msec)
 	elif action_id == "palmed_swap":
-		ui = _bar_dice_palmed_swap_timed_ui(game, run_state, ui, 0)
-	return game.resolve_with_context(action_id, stake, run_state, environment, rng, ui)
+		ui = _bar_dice_palmed_swap_timed_ui(game, run_state, ui, skill_margin_msec)
+	else:
+		var settle_command: Dictionary = game.surface_action_command("bar_dice_resolve", 0, false, ui, run_state, environment)
+		ui = settle_command.get("ui_state", ui)
+	var throw_command: Dictionary = game.surface_action_command("bar_dice_throw", 0, false, ui, run_state, environment)
+	var reveal_command: Dictionary = game.surface_action_command("bar_dice_reveal", 0, false, throw_command.get("ui_state", ui), run_state, environment)
+	var call_command: Dictionary = game.surface_action_command("bar_dice_ack_call", 0, false, reveal_command.get("ui_state", ui), run_state, environment)
+	ui = call_command.get("ui_state", ui)
+	var proposal: Dictionary = game.call("_bar_dice_resolve_proposal", action_id, stake, run_state.to_save_snapshot(), rng.snapshot(), ui)
+	var result: Dictionary = (proposal.get("result", {}) as Dictionary).duplicate(true)
+	if bool(proposal.get("ok", false)):
+		run_state.from_dict((proposal.get("run_snapshot", {}) as Dictionary).duplicate(true))
+		rng.restore((proposal.get("rng_snapshot", {}) as Dictionary).duplicate(true))
+		run_state.save_rng(rng)
+	return result
+
+func _bar_dice_test_host(game: GameModule, run_state: RunState, stake: int) -> Control:
+	var host: Control = BarDiceFoundationMainScript.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {"bar_dice": game})
+	host.set("run_state", run_state)
+	host.set("selected_stake", stake)
+	return host
 
 func _bar_dice_state_for(game: GameModule, run_state: RunState, environment: Dictionary, ruleset: String, tier: String, bonus_mode: String) -> Dictionary:
 	var state: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("bar_dice_forced_%s_%s_%s" % [ruleset, tier, bonus_mode]))
