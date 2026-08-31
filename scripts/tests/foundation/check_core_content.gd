@@ -560,7 +560,6 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
 			_foundation_run_check(report, failures, "slot_acceptance_deep", Callable(self, "_check_slot_acceptance"), [content_library])
 		"coin_pusher":
-			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
 			_foundation_run_check(report, failures, "coin_pusher_contract", Callable(self, "_check_coin_pusher_contract"), [content_library])
 		"all":
 			_foundation_run_all_suite(content_library, fixture_library, failures, report)

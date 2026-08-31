@@ -215,8 +215,10 @@ struct Kernel {
   Array events;
   int64_t collisions = 0, candidate_peak = 0;
   bool energy_ok = true, conservation_ok = true;
-  Kernel(Dictionary s, Dictionary c)
-      : state(s), config(c.duplicate(false)), g(geometry(s)) {}
+  Kernel(Dictionary s, Dictionary c, bool own_call_config = false)
+      : state(s),
+        config(own_call_config ? c.duplicate(false) : c),
+        g(geometry(s)) {}
   void resume(Dictionary s, Dictionary c) {
     state = s;
     config = c.duplicate(false);
@@ -1453,7 +1455,7 @@ Dictionary CoinPusherNativeCore::step_ticks(Dictionary state,
       live_cache = new LiveKernelCache;
     if (reset || !live_cache->kernel || live_cache->key != cache_key) {
       live_cache->key = cache_key;
-      live_cache->kernel = std::make_unique<Kernel>(state, config);
+      live_cache->kernel = std::make_unique<Kernel>(state, config, true);
       Dictionary result = live_cache->kernel->run(tick_count);
       live_cache->kernel->release_call_context();
       return result;

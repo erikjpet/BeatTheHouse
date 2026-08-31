@@ -1154,8 +1154,9 @@ func _check_pusher_v3_landing_skill(machine: Dictionary, failures: Array) -> voi
 		definitions[variation_id] = variant
 	for variation_id in definitions.keys():
 		var definition: Dictionary = definitions[variation_id]
+		var failures_before_jitter := failures.size()
 		_check_pusher_v3_production_release_jitter(str(variation_id), definition, failures)
-		if not failures.is_empty():
+		if failures.size() > failures_before_jitter:
 			return
 		var period := int((definition.get("stroke", {}) as Dictionary).get("period_ticks", 240))
 		var traversal_metrics := {}
