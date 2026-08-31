@@ -33,14 +33,23 @@ shared runtime or visual layer; file a runtime request instead.
 
 Treat slot and video poker as two logical commit groups on one branch.
 
+## Owner-selected authority amendment (W0 + H0)
+
+Slot and Video Poker use the existing host-rooted direct-bankroll wager and
+settlement boundary. They expose no machine-credit balance, buy-in, cash-out,
+conversion, or credit-ledger schema. Every player-funds display labels the value
+as bankroll/cash. Video Poker has no hand-pay qualification or acknowledgement
+flow. Slot's existing jackpot/grand attendant acknowledgement remains in scope
+and must be sealed, receipted, replay-safe, and settlement-neutral.
+
 ## 1. The cabinet is the game
 
 - Give both games a cabinet as a scene object: body, glass, belly art, button
   deck, credit meter, denomination state, candle or tower light, and a bill
   validator or coin path that is where money physically goes.
-- Buying in, cashing out and a hand-pay are transactions with the machine and,
-  above a threshold, with a floor attendant actor. Credits must be visibly
-  distinct from cash, and the conversion must be legible in both directions.
+- Wagers and settlements are direct-bankroll host transactions. The cabinet's
+  money path and meter must make the committed cash wager and returned payout
+  legible without presenting a machine-credit balance or conversion flow.
 - Attract, idle, play, feature and lockup are machine states that change the
   cabinet's appearance and audio, not just a label.
 - Preserve the shipped slot families, generators, definitions and paytables
@@ -67,7 +76,7 @@ Treat slot and video poker as two logical commit groups on one branch.
 - Seat neighbours are actors playing their own machines, with seeded, bounded
   reactions. They never consume or generate player money and never affect player
   outcomes.
-- A floor attendant actor appears for hand-pays, lockups and suspicion; the
+- A floor attendant actor appears for Slot jackpot acknowledgement, lockups and suspicion; the
   cabinet's tower light is how that attention becomes visible.
 - A big win must change the room — heads turn, the attendant walks over, the
   candle lights — rather than printing a bigger number. Energy tiers must change
@@ -92,23 +101,24 @@ Treat slot and video poker as two logical commit groups on one branch.
 ## 5. Tests and acceptance
 
 - Preserve and extend the full RTP and paytable matrices for every shipped slot
-  family and for video poker. Money and credit conservation asserted exactly,
-  including buy-in, cash-out, hand-pay and mid-feature exit.
+  family and for video poker. Direct-bankroll conservation is asserted exactly,
+  including rejected wagers, Slot jackpot acknowledgement, replay, and
+  mid-feature exit.
 - Phase and machine-state assertions: no input can double-spin, double-pay,
-  hold after draw, strand credits or charge on a rejected verb.
+  hold after draw, duplicate a bankroll charge or charge on a rejected verb.
 - Presentation provably matches the authoritative outcome for 10 seeds on native
   and Web, including feature and bonus sequences.
 - Per-frame cost and allocation assertions for both games, plus the idle
   liveness counter-gate.
-- Save, exit and revisit mid-spin, mid-feature, at a lockup and at a hand-pay,
-  with no lost or duplicated credit and no replayed reward, audio or one-shot
-  effect.
+- Save, exit and revisit mid-spin, mid-feature, at a Slot jackpot lockup and
+  before/after its acknowledgement, with no lost or duplicated bankroll and no
+  replayed reward, audio or one-shot effect. Video Poker has no hand-pay phase.
 - Visual QA: attract, base play, near-miss, feature entry, bonus, big win,
-  lockup, hand-pay, every denomination state, reduced motion, small screen,
-  colorblind.
-- Playtest checklist: a new player can buy in, spin, understand what they won and
-  cash out; and can play a video poker hand, hold correctly and read the paytable
-  line they hit.
+  Slot lockup/jackpot acknowledgement, every denomination state, reduced
+  motion, small screen, colorblind, and no Video Poker hand-pay presentation.
+- Playtest checklist: a new player can commit a direct-bankroll Slot wager,
+  spin, and understand the exact settlement; and can play a direct-bankroll
+  Video Poker hand, hold correctly and read the paytable line they hit.
 
 Run project validation, all relevant foundation suites, 10-seed determinism,
 native/Web parity, RTP, performance, accessibility and visual QA. Archive only

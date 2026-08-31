@@ -117,6 +117,9 @@ const GAME_SURFACE_UI_PREFERENCE_KEYS := [
 	"bet_level",
 	"denomination_index",
 ]
+const SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST := {
+	"slot": ["slot_handpay_acknowledge"],
+}
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
@@ -1681,6 +1684,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal changed its delivery authority.", request_key)
 	var proposed_rng := RngStream.new()
 	proposed_rng.restore((proposal.get("rng_snapshot", {}) as Dictionary).duplicate(true))
+	var skip_environment_turn := _sealed_action_host_normalize_environment_turn(result, action_id)
 	var requires_apply := _sealed_action_host_normalize_result_authority(result, provider_contract)
 	result[ActionAuthorityScript.HOST_COMMITTED_KEY] = true
 	result[ActionAuthorityScript.HOST_REQUEST_KEY] = request_key
@@ -1719,7 +1723,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack authority disappeared after result apply.", request_key)
 	proposed_ledger["checkpoint_fingerprint"] = proposed_candidate.action_authority_checkpoint_fingerprint()
 	_sealed_action_host_store_ledger(proposed_candidate, proposed_ledger)
-	if not bool(result.get("defer_bankroll_zero_failure", false)):
+	if not bool(result.get("defer_bankroll_zero_failure", false)) and not skip_environment_turn:
 		var turn_result := _sealed_action_host_advance_environment_turn(proposed_candidate)
 		if not bool(turn_result.get("ok", false)):
 			return _sealed_action_host_rejection(str(turn_result.get("error_code", "environment_turn_failed")), "Blackjack transaction could not cross the environment boundary.", request_key)
@@ -1782,6 +1786,20 @@ func _sealed_action_host_normalize_result_authority(result: Dictionary, provider
 		if requires_apply:
 			result[authoritative_result_marker] = true
 	return requires_apply
+
+
+func _sealed_action_host_normalize_environment_turn(result: Dictionary, action_id: String) -> bool:
+	# A proposal may describe an internal preference, but it cannot grant itself
+	# authority over the host's environment clock. Erase the inbound marker and
+	# derive the exception only from this host-owned, exact game/action allowlist.
+	result.erase(ActionAuthorityScript.SKIP_ENVIRONMENT_TURN_KEY)
+	if current_game == null:
+		return false
+	var game_id := current_game.get_id()
+	var allowed_value: Variant = SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST.get(game_id, [])
+	if typeof(allowed_value) != TYPE_ARRAY:
+		return false
+	return (allowed_value as Array).has(action_id)
 
 
 # `input_route_guarded` is trusted call-stack context only. It is never read

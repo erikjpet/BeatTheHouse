@@ -46,6 +46,11 @@ from an implementation rather than specified, or weakened to match a schedule.
 - [ ] The state machine makes double commit, double settlement, out-of-phase
   action, charge-on-rejection, and stranded pending commitment structurally
   impossible.
+- [ ] Machine-game consumers explicitly select their funds and hand-pay
+  authority. Under game06_4 W0 + H0, Slot and Video Poker reuse the sealed
+  direct-bankroll host, declare no machine-credit conversion schema, Video
+  Poker declares no hand-pay flow, and Slot acknowledgement is receipted,
+  replay-safe, and settlement-neutral.
 - [ ] Place, correct, undo, remove-one, clear, repeat, re-bet, and confirm are
   distinct staged-commitment concepts; the contract does not require a game to
   support an action its rules forbid.

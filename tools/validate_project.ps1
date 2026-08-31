@@ -23,6 +23,26 @@ function Test-JsonObjectRoot {
     return $null -ne $Value -and $Value.GetType() -eq [System.Management.Automation.PSCustomObject]
 }
 
+function Get-FoundationUiContentSelectionScan {
+    param([string]$Source)
+    $normalized = $Source.Replace("`r`n", "`n")
+    $hostSecurityAllowlist = @'
+const SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST := {
+	"slot": ["slot_handpay_acknowledge"],
+}
+'@
+    $hostSecurityAllowlist = $hostSecurityAllowlist.Replace("`r`n", "`n")
+    $matchCount = [regex]::Matches($normalized, [regex]::Escape($hostSecurityAllowlist)).Count
+    $scanText = $normalized
+    if ($matchCount -eq 1) {
+        $scanText = $normalized.Replace($hostSecurityAllowlist, "")
+    }
+    return @{
+        HostSecurityAllowlistCount = $matchCount
+        ScanText = $scanText
+    }
+}
+
 $requiredFiles = @(
     "README.md",
     "project.godot",
@@ -133,6 +153,20 @@ foreach ($fixture in $objectRootContractFixtures) {
     if ((Test-JsonObjectRoot $fixture.Value) -ne $fixture.Expected) {
         $failures.Add("JSON object-root classifier contract failed for $($fixture.Label).")
     }
+}
+
+$foundationUiClassifierAllowedFixture = @'
+const SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST := {
+	"slot": ["slot_handpay_acknowledge"],
+}
+'@
+$foundationUiClassifierAllowed = Get-FoundationUiContentSelectionScan $foundationUiClassifierAllowedFixture
+if ([int]$foundationUiClassifierAllowed.HostSecurityAllowlistCount -ne 1 -or ([string]$foundationUiClassifierAllowed.ScanText).Contains('"slot"')) {
+    $failures.Add("Foundation UI content-id classifier did not exempt only the exact host security allowlist literal.")
+}
+$foundationUiClassifierHostile = Get-FoundationUiContentSelectionScan ($foundationUiClassifierAllowedFixture + "`nvar hostile_content_choice := `"slot`"")
+if (-not ([string]$foundationUiClassifierHostile.ScanText).Contains('"slot"')) {
+    $failures.Add("Foundation UI content-id classifier hid a hardcoded slot outside the exact host security allowlist.")
 }
 
 foreach ($relative in $requiredFiles) {
@@ -1528,8 +1562,13 @@ foreach ($contentFile in $contentIdFiles) {
     }
 }
 $foundationUiText = Get-ProjectText $foundationUi
+$foundationUiContentSelectionScan = Get-FoundationUiContentSelectionScan $foundationUiText
+if ([int]$foundationUiContentSelectionScan.HostSecurityAllowlistCount -ne 1) {
+    $failures.Add("Foundation UI host security allowlist classification must match exactly once.")
+}
+$foundationUiContentSelectionText = [string]$foundationUiContentSelectionScan.ScanText
 foreach ($id in $contentIds) {
-    if ($foundationUiText.Contains('"' + $id + '"') -or $foundationUiText.Contains("'" + $id + "'")) {
+    if ($foundationUiContentSelectionText.Contains('"' + $id + '"') -or $foundationUiContentSelectionText.Contains("'" + $id + "'")) {
         $failures.Add("Foundation UI shell hardcodes content id instead of deriving it from ContentLibrary: $id")
     }
 }

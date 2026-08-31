@@ -11,6 +11,8 @@ const ResolverScript := preload("res://scripts/games/slots/slot_resolver.gd")
 const PresentationScript := preload("res://scripts/games/slots/slot_presentation.gd")
 const RendererScript := preload("res://scripts/games/slots/slot_renderer.gd")
 const PinballFeatureScript := preload("res://scripts/games/slots/pinball/pinball_feature.gd")
+const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
+const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const SELECT_BET_PREFIX := "select_bet_option:"
 const SLOT_BONUS_WATCHDOG_ACTION := "slot_bonus_watchdog"
 const SLOT_BONUS_WATCHDOG_GRACE_MSEC := 2200
@@ -24,6 +26,10 @@ const LUCKY_REEL_GREASE_ITEM_ID := "lucky_reel_grease"
 const COLD_QUARTERS_ITEM_ID := "cold_quarters"
 const SPLIT_REEL_NOTE_ITEM_ID := "split_reel_note"
 const CUMQUAT_SANDWICH_ITEM_ID := "cumquat_sandwich"
+const SLOT_RITUAL_CONTRACT := "game_ritual/1"
+const SLOT_RITUAL_ID := "slot.machine_session"
+const SLOT_HANDLE_PULL_GESTURE := "slot_handle_pull_gesture"
+const SLOT_HANDLE_MIN_PULL := 36.0
 
 var generator
 var resolver
@@ -31,6 +37,110 @@ var presentation
 var renderer
 var catalog
 var definition_cache
+func sealed_action_authority_script() -> Script:
+	return ActionAuthorityScript
+
+
+func sealed_action_authority_contract() -> Dictionary:
+	return {
+		"resolve_proposal_method": &"_machine_game_resolve_proposal",
+		"wager_cost_proposal_method": &"_machine_game_wager_cost_proposal",
+		"host_auto_tick_method": &"_machine_game_host_needs_auto_tick",
+		"surface_intent_key": "",
+		"surface_intent_index_key": "",
+		"retry_surface_actions": ["slot_retry_pending", "slot_spin", "spin"],
+		"cancel_surface_actions": ["slot_cancel_pending"],
+		"proposal_requires_apply_key": "machine_game_proposal_requires_apply",
+		"authoritative_result_marker": "sealed_action_authoritative",
+		"place_bet_action": "",
+		"host_pointer_intent": true,
+	}
+
+
+func slot_machine_ritual_contract() -> Dictionary:
+	# Slot-owned declaration only: resolver authority and RNG remain in the
+	# shipped machine state/resolver. Shared runtime use is limited to canonical
+	# sealed-proposal fingerprints; it does not execute Slot phases or math.
+	var action_ids := ["slot_handpay_acknowledge", "slot_bet", "spin", "nudge", "slot_auto_toggle", "launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt"]
+	var declarations: Array = []
+	for action_id in action_ids:
+		declarations.append({"action_id": action_id, "handler_id": "slot_machine_authority", "parameters": {}})
+	return {
+		"contract": SLOT_RITUAL_CONTRACT,
+		"ritual_id": SLOT_RITUAL_ID,
+		"initial_phase": "bankroll",
+		"ritual_phases": [
+			_slot_ritual_phase("bankroll", ["slot_bet", "spin", "slot_auto_toggle"], "commitment"),
+			_slot_ritual_phase("commitment", ["spin"], "activation"),
+			_slot_ritual_phase("activation", [], "outcome_staging"),
+			{"id": "outcome_staging", "entry_conditions": [], "permitted_actions": ["nudge"], "entry_operations": [], "transitions": [
+				{"id": "outcome_to_feature", "condition": {"kind": "public_state_equals", "key": "feature_active", "value": true}, "next_phase": "feature", "operations": []},
+				{"id": "outcome_to_payout", "condition": {"kind": "public_state_equals", "key": "feature_active", "value": false}, "next_phase": "payout_or_handpay", "operations": []},
+			], "terminal": false},
+			_slot_ritual_phase("feature", ["launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt"], "payout_or_handpay"),
+			_slot_ritual_phase("payout_or_handpay", ["slot_handpay_acknowledge"], "bankroll"),
+		],
+		"action_declarations": declarations,
+		"staged_commitment": {
+			"pending_collection": "pending_items", "working_collection": "working_items", "resolution_collection": "item_resolutions", "funds_authority": "slot_game_rules",
+			"actions": [{"id": "slot_bet", "effect": "correct_one_pending_amount"}, {"id": "spin", "effect": "authorize_pending_set"}],
+			"readable_totals": ["available_funds", "pending_total", "at_risk_total", "returned_stake", "payout", "net_change"],
+		},
+		"pointer_verbs": [
+			_slot_ritual_pointer("slot_button_press", "hold", "spin", "button_deck"),
+			_slot_ritual_pointer("slot_handle_pull", "drag", "spin", "handle_lane"),
+		],
+		"actors": [
+			{"id": "attendant_primary", "role": "attendant", "anchor": "attendant_station", "poses": ["absent", "approaching", "servicing"], "behavior_states": ["idle", "handpay", "security"], "initial_pose": "absent", "initial_behavior": "idle", "fact_reactions": []},
+			{"id": "neighbour_seats", "role": "neighbours", "anchor": "seat_rail", "poses": ["seated", "turning"], "behavior_states": ["idle", "playing", "reacting"], "initial_pose": "seated", "initial_behavior": "idle", "fact_reactions": []},
+		],
+		"scene_objects": [
+			_slot_ritual_object("cabinet_body", "cabinet", ["attract", "idle", "play", "feature", "lockup"], ["passive"]),
+			_slot_ritual_object("cabinet_reels", "reel_window", ["idle", "spinning", "stopped", "feature"], ["read_only"]),
+			_slot_ritual_object("cabinet_button_deck", "button_deck", ["ready", "pressed", "locked"], ["enabled", "locked"]),
+			_slot_ritual_object("cabinet_credit_meter", "credit_meter", ["ready", "committed", "paying"], ["read_only"]),
+			_slot_ritual_object("cabinet_tower_light", "tower_light", ["off", "service", "feature", "handpay", "security"], ["passive"]),
+			_slot_ritual_object("cabinet_money_path", "money_path", ["idle", "accepting", "paying"], ["enabled", "locked"]),
+		],
+		"energy": {"initial_tier": "quiet", "tiers": [
+			{"id": "quiet", "actor_operations": [{"target": "neighbour_seats", "behavior": "idle"}], "object_operations": [{"target": "cabinet_body", "state": "idle"}], "interaction_operations": [], "audio_cues": []},
+			{"id": "engaged", "actor_operations": [{"target": "neighbour_seats", "behavior": "playing"}], "object_operations": [{"target": "cabinet_button_deck", "state": "pressed"}], "interaction_operations": [], "audio_cues": []},
+			{"id": "feature", "actor_operations": [{"target": "neighbour_seats", "behavior": "reacting"}], "object_operations": [{"target": "cabinet_tower_light", "state": "feature"}], "interaction_operations": [], "audio_cues": []},
+			{"id": "lockup", "actor_operations": [{"target": "attendant_primary", "behavior": "handpay"}], "object_operations": [{"target": "cabinet_tower_light", "state": "handpay"}], "interaction_operations": [{"target": "button_deck", "state": "locked"}], "audio_cues": []},
+		]},
+		"game_facts": [
+			{"fact_type": "machine.commitment_accepted", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"bankroll_at_risk": "int"}},
+			{"fact_type": "machine.result_completed", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"coin_out": "int", "result_class": "string"}},
+			{"fact_type": "machine.handpay_required", "fact_version": 1, "boundary": "action", "visibility": "public", "payload": {"jackpot_result_id": "string"}},
+		],
+		"ritual_persistence": {
+			"authoritative_serialized": ["machine_state", "selected_bet", "host_bankroll", "active_bonus", "result_receipts"],
+			"derived_projection": ["actors", "scene_objects", "energy", "hit_regions"],
+			"transient_presentation": ["pointer_path", "reel_interpolation", "pulse", "hover"],
+			"one_shot_receipted": ["coin_out_audio", "feature_entry", "room_reaction", "handpay_call"],
+			"save_boundaries": ["bankroll", "commitment", "activation", "outcome_staging", "feature", "payout_or_handpay"],
+			"restore_policy": "restore_legal_phase_without_replay",
+		},
+		"handler_registry": [{
+			"handler_id": "slot_machine_authority", "version": 1, "accepted_actions": action_ids, "accepted_operations": [], "inputs": {"phase_id": "string"}, "outputs": {"public_projection": "qualified_id"},
+			"authority": "sealed_host_slot_game_rules", "persisted_state": ["machine_state", "result_receipts"], "transient_state": ["pointer_path", "reel_interpolation"],
+			"rng": {"owner": "slot_game_rules", "stream": "existing_action_stream", "consumption": "accepted_authoritative_action_only"},
+			"emitted_facts": ["machine.commitment_accepted", "machine.result_completed", "machine.handpay_required"], "rejection": "side_effect_free",
+		}],
+		"declared_targets": {"anchors": ["cabinet", "attendant_station", "seat_rail", "reel_window", "credit_meter", "tower_light", "money_path"], "regions": ["button_deck", "handle_lane"], "sealed_host_targets": []},
+	}
+
+
+func _slot_ritual_phase(phase_id: String, permitted_actions: Array, next_phase: String) -> Dictionary:
+	return {"id": phase_id, "entry_conditions": [], "permitted_actions": permitted_actions, "entry_operations": [], "transitions": [{"id": "%s_to_%s" % [phase_id, next_phase], "condition": {"kind": "public_state_equals", "key": "phase_complete", "value": true}, "next_phase": next_phase, "operations": []}], "terminal": false}
+
+
+func _slot_ritual_pointer(pointer_id: String, verb: String, action_id: String, region: String) -> Dictionary:
+	return {"id": pointer_id, "verb": verb, "source_region": region, "target_regions": [region], "bounds": {"space": "design", "min_distance": 0, "max_distance": 220}, "phases": ["bankroll", "commitment"], "accepted_action": action_id, "rejection": "restore_focus", "rejection_effects": [], "equivalents": {"keyboard": {"action_id": action_id, "target_selection": "focus"}, "controller": {"action_id": action_id, "target_selection": "focus"}, "reduced_motion": {"action_id": action_id, "target_selection": "focus", "staging": "short"}}}
+
+
+func _slot_ritual_object(object_id: String, anchor: String, appearances: Array, functions: Array) -> Dictionary:
+	return {"id": object_id, "anchor": anchor, "bounds": {"space": "design", "x": 80, "y": 50, "w": 740, "h": 330}, "z_layer": 10, "visual_states": appearances, "functional_states": functions, "initial_visual_state": str(appearances[0]), "initial_functional_state": str(functions[0]), "hit_regions": [], "text_safety_regions": []}
 
 
 func setup(p_definition: Dictionary, p_library: ContentLibrary = null) -> void:
@@ -231,7 +341,120 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var surface: Dictionary = presentation.surface_state(presentation_machine, run_state, definition, ui_state)
 	if bool(surface.get("slot_bonus_trigger_revealed", false)):
 		_commit_bonus_trigger_reveal(environment, machine)
+	surface["ritual_contract"] = SLOT_RITUAL_CONTRACT
+	surface["ritual_id"] = SLOT_RITUAL_ID
+	surface["ritual_projection"] = _slot_live_ritual_projection(machine, surface, run_state)
 	return surface
+
+
+func _slot_live_ritual_projection(machine: Dictionary, surface: Dictionary, run_state: RunState) -> Dictionary:
+	var animation_id := str(machine.get("slot_animation_id", ""))
+	var feature_active := StateScript.active_bonus_incomplete(machine)
+	var phase_id := "bankroll"
+	if feature_active:
+		phase_id = "feature"
+	elif not animation_id.is_empty():
+		phase_id = "outcome_staging"
+	elif str(machine.get("last_classification", "idle")) != "idle":
+		phase_id = "payout_or_handpay"
+	var suspicion := run_state.suspicion_level() if run_state != null else 0
+	var celebration := str(surface.get("slot_celebration_tier", "none"))
+	var result_id := _slot_handpay_result_id(machine)
+	var handpay := celebration in ["jackpot", "grand"] and not result_id.is_empty() and str(machine.get("ritual_acknowledged_result_id", "")) != result_id
+	var energy_tier := "lockup" if handpay or suspicion >= 70 else "feature" if feature_active or celebration not in ["", "none"] else "engaged" if not animation_id.is_empty() else "quiet"
+	var tower_state := "handpay" if handpay else "security" if suspicion >= 50 else "feature" if feature_active else "off"
+	var selected_bet := int(surface.get("selected_bet_total_credits", 0))
+	var actor_states := {
+		"attendant_primary": {"visible": handpay or suspicion >= 50, "behavior": "handpay" if handpay else "security"},
+		"neighbour_seats": {"visible": true, "behavior": "reacting" if celebration not in ["", "none"] else "playing", "authority": "none"},
+	}
+	var object_states := {
+		"cabinet_body": {"visual_state": "lockup" if handpay else "feature" if feature_active else "play" if not animation_id.is_empty() else "idle"},
+		"cabinet_reels": {"visual_state": "feature" if feature_active else "spinning" if not animation_id.is_empty() else "stopped"},
+		"cabinet_button_deck": {"visual_state": "locked" if handpay or feature_active else "pressed" if not animation_id.is_empty() else "ready", "functional_state": "locked" if handpay or feature_active else "enabled"},
+		"cabinet_credit_meter": {"visual_state": "ready", "cash_balance": int(surface.get("bankroll", 0)), "machine_credit_ledger": "unavailable"},
+		"cabinet_tower_light": {"visual_state": tower_state},
+		"cabinet_money_path": {"visual_state": "idle", "functional_state": "locked"},
+	}
+	return {
+		"phase_id": phase_id,
+		"cabinet_state": "lockup" if handpay else "feature" if feature_active else "play" if not animation_id.is_empty() else "idle",
+		"energy_tier": energy_tier,
+		"cash_balance": int(surface.get("bankroll", 0)),
+		"machine_credit_ledger_available": false,
+		"currency_representability_gap": "W0 direct-bankroll play is authoritative; no machine-credit ledger or conversion boundary exists.",
+		"denomination_label": "$%d BET" % selected_bet,
+		"tower_state": tower_state,
+		"validator_state": "locked" if handpay or not animation_id.is_empty() else "ready",
+		"button_state": "locked" if handpay or feature_active else "pressed" if not animation_id.is_empty() else "ready",
+		"result_stage": "feature" if feature_active else "reel_stops" if not animation_id.is_empty() else "readout" if phase_id == "payout_or_handpay" else "idle",
+		"payout": int(surface.get("slot_payout", 0)),
+		"result_id": result_id,
+		"acknowledgement_available": handpay and run_state != null,
+		"actors": actor_states,
+		"scene_objects": object_states,
+	}
+
+
+func _slot_handpay_result_id(machine: Dictionary) -> String:
+	var spin_count := maxi(0, int(machine.get("spin_count", 0)))
+	var outcome_id := str(machine.get("last_outcome_id", ""))
+	if spin_count <= 0 or outcome_id.is_empty():
+		return ""
+	return "slot_result_%d_%s" % [spin_count, outcome_id]
+
+
+func _slot_handpay_acknowledgement(run_state: RunState, environment: Dictionary, caller_claims: Dictionary = {}, sealed_host_proposal: bool = false) -> Dictionary:
+	# Compatibility seam is deliberately non-authoritative. Neither a cached live
+	# RunState identity nor a caller-authored boolean/capability may mutate Slot.
+	return {
+		"ok": false,
+		"error_code": "unsealed_authority",
+		"caller_claims_ignored": not caller_claims.is_empty(),
+		"live_identity_ignored": run_state != null,
+		"caller_proposal_flag_ignored": sealed_host_proposal,
+		"environment_observed_only": not environment.is_empty(),
+	}
+
+
+func _slot_handpay_acknowledgement_proposal(environment: Dictionary) -> Dictionary:
+	# Pure proposal construction. Only _machine_game_resolve_proposal writes this
+	# candidate into its detached RunState snapshot; Foundation alone can commit it.
+	var machine := _read_machine(environment).duplicate(true)
+	var result_id := _slot_handpay_result_id(machine)
+	if result_id.is_empty() or not str(machine.get("slot_celebration_tier", "none")) in ["jackpot", "grand"]:
+		return {"ok": false, "error_code": "precondition_failed"}
+	if str(machine.get("ritual_acknowledged_result_id", "")) == result_id:
+		return {"ok": false, "error_code": "already_acknowledged", "result_id": result_id}
+	machine["ritual_acknowledged_result_id"] = result_id
+	var deltas := GameModule.empty_result_deltas()
+	deltas["messages"] = ["The attendant acknowledges jackpot %s." % result_id]
+	var result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": get_id(),
+		"game_id": get_id(),
+		"action_id": "slot_handpay_acknowledge",
+		"action_kind": "legal",
+		"stake": 0,
+		"deltas": deltas,
+		"won": false,
+		"environment_id": str(environment.get("id", "")),
+		"environment_archetype_id": str(environment.get("archetype_id", "")),
+		"message": str((deltas.get("messages", []) as Array)[0]),
+	})
+	# build_action_result closes the shared envelope, so append only the sealed
+	# Slot acknowledgement receipt fields after that normalization boundary.
+	result["slot_handpay_acknowledgement"] = true
+	result["slot_handpay_result_id"] = result_id
+	result[ActionAuthorityScript.SKIP_ENVIRONMENT_TURN_KEY] = true
+	return {"ok": true, "machine": machine, "result": result}
+
+
+func _slot_sealed_handpay_acknowledgement_result(_run_state: RunState, environment: Dictionary) -> Dictionary:
+	# Kept only as a hostile compatibility target: direct invocation never returns
+	# a committable acknowledgement, regardless of live-object identity.
+	return _empty_slot_result("slot_handpay_acknowledge", environment, "The attendant acknowledgement requires the sealed host.")
 
 
 func _saved_checkpoint_presentation_view(machine: Dictionary) -> Dictionary:
@@ -292,6 +515,55 @@ func debug_surface_asset_cache_snapshot() -> Dictionary:
 
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
+
+
+func _machine_game_resolve_proposal(action_id: String, stake: int, run_snapshot: Dictionary, rng_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var proposal_input := {
+		"action_id": action_id,
+		"stake": stake,
+		"run_snapshot": run_snapshot,
+		"rng_snapshot": rng_snapshot,
+		"ui_state": ui_state,
+	}
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var proposal_rng := RngStream.new()
+	proposal_rng.restore(rng_snapshot.duplicate(true))
+	var result: Dictionary
+	if action_id == "slot_handpay_acknowledge":
+		var acknowledgement := _slot_handpay_acknowledgement_proposal(candidate.current_environment)
+		if bool(acknowledgement.get("ok", false)):
+			_write_machine(candidate.current_environment, (acknowledgement.get("machine", {}) as Dictionary).duplicate(true), false)
+			result = (acknowledgement.get("result", {}) as Dictionary).duplicate(true)
+		else:
+			result = _empty_slot_result("slot_handpay_acknowledge", candidate.current_environment, "The attendant acknowledgement is unavailable or already receipted.")
+	else:
+		result = resolve_with_context(action_id, stake, candidate, candidate.current_environment, proposal_rng, ui_state.duplicate(true))
+		if bool(result.get("ok", false)) and bool(result.get("host_apply_result", false)):
+			result["machine_game_proposal_requires_apply"] = true
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
+		"result": result.duplicate(true),
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": proposal_rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
+	return proposal
+
+
+func _machine_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var cost := wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+	return {
+		"cost": maxi(0, cost),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
+
+
+func _machine_game_host_needs_auto_tick(surface_time_msec: int, run_state: RunState, environment: Dictionary) -> bool:
+	return surface_needs_auto_tick({"surface_time_msec": surface_time_msec, "drunk_scaled_surface_time_msec": surface_time_msec}, run_state, environment)
 
 
 func resolve_with_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, _ui_state: Dictionary = {}) -> Dictionary:
@@ -385,7 +657,7 @@ func _apply_tutorial_first_night_match(resolved: Dictionary, machine: Dictionary
 
 func wager_cost_for_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> int:
 	var normalized_action := _normalize_action(action_id)
-	if normalized_action.begins_with("slot_bonus_") or normalized_action == "slot_bet" or normalized_action == "slot_auto_toggle":
+	if normalized_action.begins_with("slot_bonus_") or normalized_action in ["slot_bet", "slot_auto_toggle", "slot_handpay_acknowledge"]:
 		return 0
 	# Wager queries are read-only and run immediately before resolution. Reuse the
 	# canonical stored machine instead of cloning its nested reel/bonus state.
@@ -409,6 +681,35 @@ func minimum_wager_return_for_context(action_id: String, _stake: int, wager_cost
 		if refund_percent > 0:
 			guaranteed_return += mini(wager_cost, maxi(1, int(round(float(wager_cost) * float(refund_percent) / 100.0))))
 	return mini(wager_cost, guaranteed_return)
+
+
+func surface_pointer_command(surface_action: String, index: int, phase: String, board_position: Vector2, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if surface_action != SLOT_HANDLE_PULL_GESTURE:
+		return {"handled": false}
+	var next := ui_state
+	if phase == "begin":
+		next["slot_handle_active"] = true
+		next["slot_handle_origin"] = board_position
+		next["slot_handle_distance"] = 0.0
+		return GameModule.surface_command({"handled": true, "ui_state": next, "preserve_surface_ui_state": true})
+	if phase == "move" and bool(next.get("slot_handle_active", false)):
+		var origin: Vector2 = next.get("slot_handle_origin", board_position)
+		next["slot_handle_distance"] = maxf(0.0, board_position.y - origin.y)
+		return GameModule.surface_command({"handled": true, "ui_state": next, "preserve_surface_ui_state": true})
+	if phase in ["cancel", "end"]:
+		var end_origin: Vector2 = next.get("slot_handle_origin", board_position)
+		var pull_distance := maxf(float(next.get("slot_handle_distance", 0.0)), board_position.y - end_origin.y)
+		var pulled := pull_distance >= SLOT_HANDLE_MIN_PULL
+		next.erase("slot_handle_active")
+		next.erase("slot_handle_origin")
+		next.erase("slot_handle_distance")
+		if phase == "end" and pulled:
+			var command := surface_action_command("slot_spin", index, false, next, run_state, environment)
+			command["ui_state"] = next
+			command["preserve_surface_ui_state"] = true
+			return command
+		return GameModule.surface_command({"handled": true, "ui_state": next, "preserve_surface_ui_state": true, "message": "Pull the handle through its full travel to spin."})
+	return GameModule.surface_command({"handled": true, "ui_state": next, "preserve_surface_ui_state": true})
 
 
 func surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -436,6 +737,16 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			"message": "Bonus input.",
 		})
 	match surface_action:
+		"slot_handpay_acknowledge":
+			return GameModule.surface_command({
+				"handled": true,
+				"action_id": "slot_handpay_acknowledge",
+				"action_kind": "legal",
+				"direct_resolve": true,
+				"skip_stake_validation": true,
+				"set_stake": 0,
+				"message": "Calling the attendant to acknowledge the sealed jackpot result.",
+			})
 		"spin", "slot_spin":
 			return GameModule.surface_command({
 				"handled": true,
@@ -1221,6 +1532,18 @@ func _query_machine(run_state: RunState, environment: Dictionary, rng_salt: Stri
 	if not machine.is_empty() and int(machine.get("schema_version", 0)) == StateScript.SCHEMA_VERSION:
 		return machine
 	return _ensure_machine_state(run_state, environment, run_state.create_rng(rng_salt) if run_state != null else null)
+
+
+func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+	return _ensure_machine_state(run_state, environment, run_state.create_rng("slot_authority_state") if run_state != null else null)
+
+
+func _table_state_preview(_run_state: RunState, environment: Dictionary) -> Dictionary:
+	return _peek_machine(environment)
+
+
+func _update_environment_table(environment: Dictionary, machine: Dictionary) -> void:
+	_write_owned_machine(environment, machine, false)
 
 
 func _empty_slot_result(action_id: String, environment: Dictionary, text: String) -> Dictionary:
