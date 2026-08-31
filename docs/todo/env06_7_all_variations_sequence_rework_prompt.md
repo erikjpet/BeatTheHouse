@@ -1,4 +1,4 @@
-Status: TODO
+Status: IN_PROGRESS — implementation landed on `main`; formal row acceptance remains open
 Board row: `env06_7` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 env06_7: Rebuild All 55 Environment Variations as Unique Sequences

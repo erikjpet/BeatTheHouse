@@ -1,9 +1,10 @@
 # Scratch Ticket Art Alignment — Root Cause Analysis + Fix Prompt
 
-**Status:** analysed 2026-08-11, NOT fixed; explicitly deferred from the 0.5
-release line to 0.6 on 2026-08-13. Everything below is diagnosis and a plan;
-no gameplay code was changed. The only file added was the read-only diagnostic
-`tools/scratch_ticket_alignment_audit.py`.
+**Status:** PARTIALLY IMPLEMENTED / BLOCKED. Six-ticket alignment, v8→v9
+partial-progress migration, regenerated overlays, and GPU visual capture are
+on `main`. Phase 5 remains blocked on the owner's Crossword Corner
+art/mechanics choice; do not archive this prompt until that choice is applied
+and verified.
 
 **Release target:** 0.6. This is not a 0.5.1 blocker. Phase 5 still requires the
 owner to choose how Crossword Corner reconciles printed art and mechanics; do

@@ -26,7 +26,7 @@ not the accepted completion-program composition.
   while the integrated validator expects an array at that location.
 - `docs/todo/README_0_6_board.md` contains duplicate World06_1 rows, one TODO
   and one IN_PROGRESS.
-- `docs/todo/game06_5_unreviewed_blocked_handoff.md` explicitly describes the
+- the now-archived `docs/todone/game06_5_unreviewed_blocked_handoff.md` explicitly describes the
   included Game06_5 state as unreviewed and blocked, with pull-tab,
   art-alignment, test, and acceptance work absent.
 - The candidate contains none of the 31 unlanded paths from the frozen

@@ -1,4 +1,4 @@
-Status: TODO
+Status: IN_PROGRESS — implementation landed with Crossword stock held; owner art/mechanics decision and Family 1 closeout remain open
 Board row: `game06_5` in `docs/todo/README_0_6_board.md`
 
 ## Executing amendment: Crossword Option C

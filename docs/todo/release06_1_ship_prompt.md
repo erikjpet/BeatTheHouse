@@ -1,4 +1,4 @@
-Status: TODO
+Status: PARKED — do not claim until playtest, triage, tuning, voice, and cleanup are complete
 Board row: `release06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
@@ -18,7 +18,7 @@ You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). This is the 0.6
 closure task, modeled on the 0.5 release discipline
 (`docs/plans/0.5_release_checklist.md`,
-`docs/todo/README_0_5_release_queue.md` in `docs/todone/` history).
+`docs/todone/README_0_5_release_queue_final.md` in historical records).
 Binding design contract: `docs/plans/0.6_living_world_roadmap.md`.
 This prompt is self-contained for rules and scope.
 

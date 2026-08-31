@@ -7,6 +7,28 @@ The roadmap is the single source of truth for **design intent**. When
 code reality disagrees with either, code reality wins — record the
 disagreement in the linked Discovery & Decision Log companion.
 
+## Current-state audit — 2026-08-31
+
+Audited against GitHub `main` at
+`9bcb641cf93128006a7b61dc93c7b92efd035ab4`, merged PRs #21/#22, the
+landing report, active prompt contents, and the exact-main post-land gate.
+The implementation tree is green, but the board had not been reconciled after
+the branch-recovery landing.
+
+Use these distinctions when choosing work:
+
+- `DONE` means the prompt is accepted and archived under `docs/todone/`.
+- `IN_PROGRESS` may now mean implementation is already on `main` but the
+  prompt's independent acceptance/closeout is still missing. Do not rebuild
+  those rows; audit and close what landed.
+- `TODO` with prestage means documentation or harness preparation landed, not
+  that the actual row ran.
+- `PARKED` remains intentionally unavailable until its named owner/playtest
+  dependency opens it.
+
+The complete file-by-file reconciliation and recommended execution order are
+in `docs/plans/0.6_todo_state_audit_2026-08-31.md`.
+
 ## What 0.6 is (direction, for any agent landing here cold)
 
 0.5 shipped the complete game loop. 0.6 makes the world alive and adds
@@ -167,27 +189,24 @@ each stage builds on the last.
 
 ### Owner-requested depth rework — living games and real environment sequences (2026-08-25)
 
-The shipped Craps, back-room poker, and Tonight variants satisfy their original
-contracts but do not yet satisfy the owner's experiential bar. In particular,
-scenario overlays mostly alter data/presentation and resolve a one-shot event;
-they do not reliably transform the room or give the player a unique multi-step
-task. These rows supersede no stable ids or verified rules. They deepen the
-runtime and convert every existing variation. Completion is all-or-nothing at
-`depth06_1`.
+The original depth audit found that shipped Craps, back-room poker, and Tonight
+variants did not satisfy the owner's experiential bar. Recovered implementations
+now deepen those surfaces on `main`, but completion remains all-or-nothing at
+`depth06_1`; the audit must judge the current result rather than repeat the old
+implementation plan.
 
 Parallel execution launcher:
-`docs/todo/depth06_0_parallel_orchestration_prompt.md`. Give that prompt to one
-primary integrator; it requires isolated worktrees, sub-agent implementation
-and review, preserved logical commits, staged merges, and final exact-tree
-acceptance. It is an orchestration prompt, not an additional completion row.
+`docs/todone/depth06_0_parallel_orchestration_prompt.md`. That historical
+launcher has completed its recovery/landing role; do not relaunch it. The
+remaining work is acceptance and closeout of the landed tree.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| env06_6 | `env06_6_dynamic_scenario_runtime_prompt.md` | IN_PROGRESS | env06_1/2/3/5 (DONE) | env06_7, craps06_3, crew06_10 | PM:Codex/sub:runtime-owner | 2026-08-25 | — | Static implementation and evidence tooling independently accepted at `a5ae1d8f`; formal row acceptance remains withheld pending the serialized Full/audit/determinism/native-Web parity/performance/21-image visual gates and independent visual review. |
-| env06_7 | `env06_7_all_variations_sequence_rework_prompt.md` | TODO | env06_6 | depth06_1 | — | — | — | Convert and individually accept all 55 catalog ids; every prompt checkbox has a distinct physical sequence and branch aftermath. |
-| craps06_3 | `craps06_3_craps_depth_rework_prompt.md` | TODO | craps06_1/2, env06_6 | depth06_1 | — | — | — | Tactile throw/settlement phases, complete wager controls, staffed table ritual, physical energy reactions, and deeper street sequence. |
-| crew06_10 | `crew06_10_backroom_poker_depth_rework_prompt.md` | TODO | crew06_2/5/6/9, env06_6 | depth06_1 | — | — | — | Ordered betting, real session reentry, observable tell timelines, character staging, and five changing-room poker nights. |
-| depth06_1 | `depth06_1_games_and_scenarios_release_gate_prompt.md` | TODO | env06_7, craps06_3, crew06_10 | depth-program closure | — | — | — | Independent exact-tree audit; cannot pass with an omitted/reward-only variation or static-panel game experience. |
+| env06_6 | `env06_6_dynamic_scenario_runtime_prompt.md` | IN_PROGRESS | env06_1/2/3/5 (DONE) | env06_7, craps06_3, crew06_10 | recovery landing | 2026-08-25 | — | Runtime and post-land fixes are on `main` via `03fee92d`, `b014ca0a`, and later reconciliation. Exact-main smoke is green. Close the prompt only after its named native/Web, determinism, visual, and independent-review evidence is reconciled. |
+| env06_7 | `env06_7_all_variations_sequence_rework_prompt.md` | IN_PROGRESS | env06_6 | depth06_1 | recovery landing | 2026-08-28 | — | The 55-sequence rollout is on `main` via `c284a063` through `372e6087`; do not rebuild it. Reconcile the per-sequence dossier/visual evidence and close or route exact gaps. |
+| craps06_3 | `craps06_3_craps_depth_rework_prompt.md` | IN_PROGRESS | craps06_1/2, env06_6 | depth06_1 | recovery landing | 2026-08-28 | — | Accepted core depth slice is on `main` at `7d230a63`; exact-main contracts are green. Full experiential/visual prompt acceptance is not recorded. |
+| crew06_10 | `crew06_10_backroom_poker_depth_rework_prompt.md` | IN_PROGRESS | crew06_2/5/6/9, env06_6 | depth06_1 | recovery landing | 2026-08-28 | — | Accepted core poker slice and legacy-tell fix are on `main` at `0d4529ac`/`040c0603`. Full prompt acceptance remains unrecorded. |
+| depth06_1 | `depth06_1_games_and_scenarios_release_gate_prompt.md` | IN_PROGRESS | env06_7, craps06_3, crew06_10 | depth-program closure | recovery landing | 2026-08-29 | — | Gate scaffolding and crew-scenario registration landed at `f1ebe9a7`; the independent all-or-nothing closure audit still must be completed against current `main`. |
 
 ### Wave D — Crew depth
 
@@ -233,10 +252,10 @@ the owner's playtest is expected to change.
 | fix06_3 | `scratch_ticket_art_alignment_rca_and_fix_prompt.md` | BLOCKED | — (analysed 2026-08-11, deferred from 0.5 to 0.6) | game06_5 inherits a clean surface | Codex | 2026-08-25 | — | Six-ticket alignment, exact v8→v9 partial-progress migration, regenerated overlays, and GPU visual capture are complete; Phase 5 is blocked on the owner's Crossword Corner art/mechanics choice. |
 | fix06_5 | `../todone/fix06_5_contract_timing_measurement_prompt.md` | DONE | — | reliable Contract timing guard | PM:Codex/sub:fix05_measurement | 2026-08-26 | 2026-08-26 | INCONCLUSIVE result accepted at `c4e364f7`, staged at `87fa674e`, landed at main `4ade3ac3`, and post-land PASS by `/root/fix05_rereview`. Attempt 01 is noneligible and explicitly operator-observed/raw-unverifiable; attempts 02–05 were eligible timing-only reds at 252.197/247.542/240.187/245.767s with 16/16 checks green on `native_v3`. No five-eligible-run median, stale-baseline candidate, baseline/cap change or product/test/tool change exists. Raw evidence worktrees are retained. |
 | fix06_6 | `../todone/fix06_6_delivery_full_state_golden_closure_prompt.md` | DONE | `fix06_4` landed | — | PM:Codex/sub:preflight_inventory | 2026-08-26 | 2026-08-26 | Documentation-only closure accepted by Feynman (`/root/fix06_collect_impl`) at `b323f841`, landed at `fe0c76d9`, and post-land accepted on the identical tree after static validation passed in 77.967s. Historical proof classified the two-hash red as authored Coin Pusher persisted-state fixture drift already remediated in accepted `fix06_4`; no code, test, golden, product, capture or runtime gate changed, and owner work remained untouched. |
-| fix06_9 | `fix06_9_coin_pusher_web_performance_evidence_prompt.md` | PARKED | pusherv3_11 finding | fix06_13 | Codex | 2026-08-26 | — | Evidence path independently accepted at `f6a06d5f`, pre-land qualification PASS, and landed unchanged at main `112cb02d`. COLLECT and reduced motion reinstall exact 300-origin fixtures; console policy permits only the known autoplay warning and rejects hostile/unclassified warnings. The first actual shipped-Web red at `54e6398a` remains preserved, so this row is not DONE and its prompt is not archived; it awaits product-performance row `fix06_13`. No cap was changed and no result was hidden. |
-| fix06_13 | `fix06_13_coin_pusher_shipped_web_performance_prompt.md` | PARKED | accepted fix06_9 evidence remediation | fix06_9, pusherv3_11 closure | `/root/fix06_13_web_perf` | 2026-08-27 | — | Off-main implementation `7ec148e4d9a6096627fa26e1afee508e5b1c0b25` and exact review/docs head `718af3da7176abfaec9f9dbc10884454298a9872` were independently accepted, but nothing from that branch is accepted on or transplanted to `main`. Its retained locked run at `c914546f` remained red. Dependencies `fix06_14` and `fix06_16` are now DONE on main at `616b5a76` / `53f6ed2d`; the lifecycle blocker is cleared and this row may now unpark. Next: semantic integration onto current main, current-main gates, fresh independent exact-head review, then exactly one new locked shipped-Web run. Every red and hash remains retained on `codex/land06-fix06_13` and under its ignored evidence paths. |
-| fix06_14 | `fix06_14_coin_pusher_collect_reinstall_clock_evidence_prompt.md` | DONE | fix06_13 shipped-Web evidence | fix06_9 evidence closure | `/root/fix06_14_clock` | 2026-08-27 | 2026-08-27 | Landed by merge `616b5a76` with parents current main `7cd6a5cb` and accepted integration/docs `5917baf2`; owner WIP remained untouched. The first disposable-checkout post-land gate retained an environmental disk-full red after validation passed 51.033s: import failed in 43.037s with exit 127 and 74 stderr issues while D: had 270,336 bytes free. Evidence was moved before removing only the disposable worktree, restoring 1,054,285,824 bytes free. On the identical exact main and native DLL, the single corrected retry passed validation/import/load/focused Coin Pusher in 47.832/17.645/23.346/164.588s with zero failures. `fix06_14` is landed and post-land green; separately routed `fix06_16` is now DONE at `53f6ed2d`, so `fix06_13` may unpark to semantic current-main integration. |
-| fix06_16 | `fix06_16_web_perf_server_orphan_cleanup_prompt.md` | DONE | fix06_14 exact-head qualification | fix06_13 unparked locked run | `/root/fix06_16_impl`; PM:Codex landing | 2026-08-27 | 2026-08-27 | `/root/fix06_16_review` ACCEPT `b38f3e35`; landed by merge `53f6ed2d` with parents `f0637b8c` / `b38f3e35`. Exact-main non-Web lifecycle and static validation passed; lifecycle stdout `A31FFEB9...2EDE82`, lifecycle stderr plus validation stdout/stderr all empty `E3B0C442...B855`; zero residual processes. All rejected heads/findings remain retained. No browser/Web timing/export ran. `fix06_13` may now unpark to semantic current-main integration. |
+| fix06_9 | `fix06_9_coin_pusher_web_performance_evidence_prompt.md` | BLOCKED | landed evidence path | fix06_13 formal closeout | Codex | 2026-08-26 | — | Evidence path is accepted and landed at `112cb02d`. Current exact-main Web/performance evidence is green; archive this row after fix06_13's formal acceptance record confirms the product remediation. |
+| fix06_13 | `fix06_13_coin_pusher_shipped_web_performance_prompt.md` | IN_PROGRESS | accepted fix06_9 evidence remediation | fix06_9, pusherv3_11 closure | recovery landing | 2026-08-27 | — | The accepted rendering/product path is now on `main` through `33d8f5ea` and related cache fixes. Chrome shipped-Web live-batch and full performance gates pass on the integrated tree. Reconcile the prompt's locked-run evidence and complete formal closeout; do not reimplement it. |
+| fix06_14 | `../todone/fix06_14_coin_pusher_collect_reinstall_clock_evidence_prompt.md` | DONE | fix06_13 shipped-Web evidence | fix06_9 evidence closure | `/root/fix06_14_clock` | 2026-08-27 | 2026-08-27 | Archived after accepted landing `616b5a76` and exact-main post-land verification. |
+| fix06_16 | `../todone/fix06_16_web_perf_server_orphan_cleanup_prompt.md` | DONE | fix06_14 exact-head qualification | fix06_13 unparked locked run | `/root/fix06_16_impl`; PM:Codex landing | 2026-08-27 | 2026-08-27 | Archived after accepted landing `53f6ed2d` and exact-main lifecycle/static verification. |
 
 ### Archived rows — superseded or false premise
 
@@ -245,19 +264,19 @@ Nothing in this archive is deleted; the notes preserve why each row retired.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| pusher06_0 | SUPERSEDED | OPTIONAL | rework06_2 accepted | — | | | | Superseded by the V3 machine rework (`coin_pusher_v3_machine_rework_plan.md`, owner round-6 design session 2026-08-17). Do not claim. |
-| pusher06_1 | SUPERSEDED | REFERENCE | rework06_2 accepted | — | | | | Superseded by the V3 machine rework (`coin_pusher_v3_machine_rework_plan.md`, owner round-6 design session 2026-08-17). Do not claim. |
-| pusher06_3 | SUPERSEDED | TODO | pusher06_2 | pusher06_4 | | | | Superseded by the V3 machine rework (`coin_pusher_v3_machine_rework_plan.md`, owner round-6 design session 2026-08-17). Do not claim. |
-| pusher06_4 | SUPERSEDED | TODO | pusher06_1/2/3 landed | coin pusher closure | | | | Superseded by the V3 machine rework (`coin_pusher_v3_machine_rework_plan.md`, owner round-6 design session 2026-08-17). Do not claim. |
-| art06_1 | `art06_1_punchline_layers_prompt.md` | CLOSED — FALSE PREMISE | env06_4 (DONE) | — | owner-side finding | 2026-08-16 | 2026-08-16 | **Stop work; do not build a renderer seam.** No environment renders from a raster — every venue is procedurally drawn via `pixel_scene_canvas.gd`'s `scene_type` dispatch, and `visual_context.asset_path` is metadata the canvas never consumes. `_draw_punchline_club()` and `_draw_punchline_back_room()` already exist, are dispatched, and are at detail parity with `_draw_bar`/`_draw_underground`. The objective was already met before the row was authored. New PNGs kept as metadata-only. |
+| pusher06_0 | `../todone/pusher06_0_physics_lab_prompt.md` | SUPERSEDED | rework06_2 accepted | — | | | | Archived; superseded by the V3 machine rework. |
+| pusher06_1 | `../todone/pusher06_1_solver_core_prompt.md` | SUPERSEDED | rework06_2 accepted | — | | | | Archived; superseded by the V3 machine rework. |
+| pusher06_3 | `../todone/pusher06_3_variations_prompt.md` | SUPERSEDED | pusher06_2 | pusher06_4 | | | | Archived; superseded by the V3 machine rework. |
+| pusher06_4 | `../todone/pusher06_4_environment_integration_prompt.md` | SUPERSEDED | pusher06_1/2/3 landed | coin pusher closure | | | | Archived; superseded by the V3 machine rework. |
+| art06_1 | `../todone/art06_1_punchline_layers_prompt.md` | CLOSED — FALSE PREMISE | env06_4 (DONE) | — | owner-side finding | 2026-08-16 | 2026-08-16 | Archived. Procedural Punchline renderers already satisfied the objective; the rejected raster-runtime branch remains historical. |
 
 ### Family 1 — Game depth parity (owner scope decision, 2026-08-25)
 
 The owner's depth standard applies to the whole game, not to craps, poker and
 the coin pusher alone. `data/games/games.json` ships eleven games; eight of them
-plus the Grand Casino duel still resolve as control panels. Launcher:
-`game06_0_game_depth_orchestration_prompt.md` (PM copies it into one primary
-integrator, which employs sub-agents). Program design:
+plus the Grand Casino duel were targeted by the depth recovery. Historical
+launcher: `../todone/game06_0_game_depth_orchestration_prompt.md`. Its product
+payloads are now on `main`; do not relaunch or rebuild them. Program design:
 `docs/plans/0.6_remaining_work_program.md`.
 
 Shared-file hazard: `table_game_visuals.gd` and `game_surface_canvas.gd` serve
@@ -266,33 +285,34 @@ rows can run in parallel without colliding in both files.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| game06_1 | `game06_1_table_machine_ritual_runtime_prompt.md` | IN_PROGRESS | contract specification authored before implementation (program §3 override); implementation still consumes craps06_3 | game06_2..7 | Contract Authors A/B (contract only; director-controlled reassignments) | 2026-08-27 | — | Rejected heads `89bdafe9`, `6a47d19b`, and `a2760d81` are preserved. Earlier P1s are fixed; the director narrowed the remaining closure to typed canonical numbers, declared bounds, executable receipt matching, and correct resolved/rejected request-cache binding. Product implementation remains stopped until exact contract acceptance. No craps special-case is permitted. |
-| game06_2 | `game06_2_blackjack_depth_prompt.md` | TODO | game06_1 | game06_7 | — | — | — | 7000 lines, most-integrated game. Consumer audit before any settlement edit. |
-| game06_3 | `game06_3_baccarat_roulette_depth_prompt.md` | TODO | game06_1 | depth parity | — | — | — | Baccarat ceremony and squeeze; roulette wheel, ball and layout chip placement. |
-| game06_4 | `game06_4_machine_games_depth_prompt.md` | TODO | game06_1 | depth parity | — | — | — | Cabinet, credits, handle, hand-pay. Per-frame deep copies forbidden — slot watchdog precedent. |
-| game06_5 | `game06_5_counter_games_depth_prompt.md` | TODO | game06_1 | depth parity | — | — | — | Clerk, rack, counter transaction; preserves mask/foil/region renderers; disposes of the open art-alignment defect. |
-| game06_6 | `game06_6_bar_dice_depth_prompt.md` | TODO | game06_1, craps06_3 | depth parity | — | — | — | Street register game; reuses craps06_2 dispersal/teaching seams. |
-| game06_7 | `game06_7_showdown_duel_depth_prompt.md` | TODO | game06_1, game06_2 | depth parity | — | — | — | Rourke duel staging; both endings; outcome ladder preserved exactly. |
+| game06_1 | `game06_1_table_machine_ritual_runtime_prompt.md` | IN_PROGRESS | contract specification authored before implementation | game06_2..7 | recovery landing | 2026-08-28 | — | Deterministic ritual runtime landed at `5a2b1e1a`; later exact-main authority fixes are green. Reconcile the prompt's acceptance record; do not rebuild the runtime. |
+| game06_2 | `game06_2_blackjack_depth_prompt.md` | IN_PROGRESS | game06_1 | game06_7 | recovery landing | 2026-08-28 | — | Blackjack depth and post-land recovery landed at `d47feee3`/`b091bc43`. Close through `game06_8` after focused acceptance reconciliation. |
+| game06_3 | `game06_3_baccarat_roulette_depth_prompt.md` | IN_PROGRESS | game06_1 | depth parity | recovery landing | 2026-08-29 | — | Sealed Roulette/Baccarat depth landed at `21247535`; current authority and foundation contracts are green. Formal row closeout remains. |
+| game06_4 | `game06_4_machine_games_depth_prompt.md` | IN_PROGRESS | game06_1 | depth parity | recovery landing | 2026-08-29 | — | Machine-game ritual depth landed at `e874d6bc`; formal row closeout remains. |
+| game06_5 | `game06_5_counter_games_depth_prompt.md` | IN_PROGRESS | game06_1 | depth parity | recovery landing | 2026-08-29 | — | Counter ritual depth landed at `ed47a1bd`, with Crossword stock deliberately held. `fix06_3` still needs the owner's Crossword art/mechanics decision before full closure. |
+| game06_6 | `game06_6_bar_dice_depth_prompt.md` | IN_PROGRESS | game06_1, craps06_3 | depth parity | recovery landing | 2026-08-29 | — | Sealed Bar Dice ritual depth landed at `d98de544`; formal row closeout remains. |
+| game06_7 | `game06_7_showdown_duel_depth_prompt.md` | IN_PROGRESS | game06_1, game06_2 | depth parity | recovery landing | 2026-08-29 | — | Host-projected Showdown depth landed at `a6e7be91`; formal row closeout remains. |
 | game06_8 | `game06_8_games_depth_release_gate_prompt.md` | TODO | game06_2..7, depth06_1 | Family 1 closure | — | — | — | Independent exact-tree audit. Cannot pass with a control-panel game or a pointer-only verb. |
 
 ### Family 2 — Crew and world surface depth (owner scope decision, 2026-08-25)
 
-The flagship pillar is still a text menu: streets, Numbers, jobs, plays, sweep
-encounters, heist phases and the Turn all resolve through `EventModule` choice
-actions while the environments around them become rooms. Launcher:
-`world06_0_crew_world_depth_orchestration_prompt.md`.
+The original audit found the flagship pillar was still a text menu: streets,
+Numbers, jobs, plays, sweep encounters, heist phases and the Turn were targeted
+by the recovery. Historical
+launcher: `../todone/world06_0_crew_world_depth_orchestration_prompt.md`. Its
+product payloads are now on `main`; do not relaunch or rebuild them.
 
 Hidden-state discipline is absolute across this family. A Turn or heist leak is
 an automatic P0 and blocks the program.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| world06_1 | `world06_1_crew_sequence_adapter_prompt.md` | TODO — CLAIM AUTHORIZED BY OTHER LANE | frozen env06_6 head `855a2961` is sufficient; rebase if rejected | world06_2..6 | other former-PM lane to claim | — | — | Owner dependency relaxation 2026-08-27: the worker may claim and implement immediately against frozen `env06_6` head `855a2961` without waiting for main. It retains exclusive crew/world model and EventModule crew-seam ownership. If env06_6 review rejects, world06_1 rebases. |
-| world06_2 | `world06_2_streets_sequences_prompt.md` | TODO | world06_1 | world06_6 | — | — | — | Deliveries, multi-stop routes, holds, stash/ditch, pursuit. Owns the reusable chase verbs. |
-| world06_3 | `world06_3_numbers_depth_prompt.md` | TODO | world06_1, world06_2 | — | — | — | — | Book as a place, slips as objects, the draw as an occasion, both rig routes staged. |
-| world06_4 | `world06_4_backroom_jobs_recruitment_prompt.md` | TODO | world06_1 | — | — | — | — | L3 occupancy, job board, all 13 jobs, seven recruitment encounters. `stake_horse` and `collection` need real sequences. |
-| world06_5 | `world06_5_plays_and_sweep_encounters_prompt.md` | TODO | world06_1, game06_1 | — | — | — | — | Five plays as table presence; sweep encounters as street moments. Chip Dump funding = shipped model A. |
-| world06_6 | `world06_6_heist_and_turn_staging_prompt.md` | TODO | world06_1, world06_2, crew06_10 | world06_7 | — | — | — | Both plans staged, both exits, the confrontation. Read the crew06_8 log entries before planning. |
+| world06_1 | `world06_1_crew_sequence_adapter_prompt.md` | IN_PROGRESS | env06_6 runtime | world06_2..6 | recovery landing | 2026-08-28 | — | Host-sealed sequence adapter landed at `95c6aaf5`; formal Family 2 closeout remains. |
+| world06_2 | `world06_2_streets_sequences_prompt.md` | IN_PROGRESS | world06_1 | world06_6 | recovery landing | 2026-08-28 | — | Host-authoritative delivery depth and no-op rejection fix landed at `e46ae808`/`a244eb6a`; formal closeout remains. |
+| world06_3 | `world06_3_numbers_depth_prompt.md` | IN_PROGRESS | world06_1, world06_2 | — | recovery landing | 2026-08-29 | — | Host-rooted Numbers depth landed at `7425fb53`; formal closeout remains. |
+| world06_4 | `world06_4_backroom_jobs_recruitment_prompt.md` | IN_PROGRESS | world06_1 | — | recovery landing | 2026-08-29 | — | Jobs/recruitment depth and event-rooted aftermath fix landed at `d94977b9`/`334674fb`; formal closeout remains. |
+| world06_5 | `world06_5_plays_and_sweep_encounters_prompt.md` | IN_PROGRESS | world06_1, game06_1 | — | recovery landing | 2026-08-29 | — | Crew plays/sweeps and capability sealing landed at `418d6e7f`/`9f89b615`; formal closeout remains. |
+| world06_6 | `world06_6_heist_and_turn_staging_prompt.md` | IN_PROGRESS | world06_1, world06_2, crew06_10 | world06_7 | recovery landing | 2026-08-29 | — | Host-derived heist sequences and migration repair landed at `4822d288`/`613f5013`; formal closeout remains. |
 | world06_7 | `world06_7_crew_world_depth_release_gate_prompt.md` | TODO | world06_2..6 | Family 2 closure | — | — | — | Independent audit; the hidden-information audit is the blocking one. |
 
 ### Family 3 — Cross-cutting completion (2026-08-25)
@@ -301,20 +321,21 @@ Work the board never covered: the update being visible between runs, the
 combined economy, teaching what 0.6 became, the sound of the reworked surfaces,
 whether a real 0.5 save survives all of 0.6 at once, whether it still runs on
 Web and low-end, whether the playtest gate still describes the thing being
-playtested, and what the second half of 0.6 is. Launcher:
-`cross06_0_cross_cutting_orchestration_prompt.md`.
+playtested, and what the second half of 0.6 is. Historical launcher:
+`../todone/cross06_0_cross_cutting_orchestration_prompt.md`; the actual rows
+below remain independently actionable.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | meta06_1 | `../todone/meta06_1_career_run_report_surfacing_prompt.md` | DONE | — | — | prior implementer; `/root/landing_coordinator` | 2026-08-26 | 2026-08-27 | Accepted source `27dc4be0`; Review Pool accepted exact integration and main merge `12e127c9`. Contract 16/16 and Foundation all 24/24 were functionally green; timing-only wrapper reds were retained unchanged. UI reproduced the byte-identical inherited env06_6/P1 inactive-delivery digest red on clean parent `ff2d4e14`, proving no meta-caused digest change. |
 | balance06_1 | `../todone/balance06_1_cross_system_economy_audit_prompt.md` | DONE | — | `balance06_1-follow-on` after Families 1/2 | PM:Codex/sub:cross-balance | 2026-08-25 | 2026-08-26 | Partial scope accepted and landed at `7c748f5b`: opt-in eight-playstyle harness, honest report and hash-manifested evidence archive; exact-tree Systems, smoke, determinism and full Smoke are green. Contract is functionally green but timing-red and routed to `fix06_5`. Full distributions, 600k pusher EV, findings and proposals remain the separately ordered follow-on. |
 | board06_1 | `../todone/board06_1_board_hygiene_prompt.md` | DONE | — | — | PM:Codex/sub:board-hygiene | 2026-08-25 | 2026-08-26 | Board split landed at `70eaaf80`: 170/170 decisions and 124/124 historical work entries preserved, indexes/links verified, superseded rows archived, owner questions reconciled, and post-land native-backed Smoke PASS. |
-| pusherv3_11 | `pusherv3_11_pusher_program_closure_audit_prompt.md` | BLOCKED | pusherv3_10; current-main fix06_13 closure; fix06_8 owner decision | pusher closure | `/root/landing_coordinator`; `/root/review_pool` | 2026-08-27 | — | Review Pool rejected claim-only head `8541f643`: the preserved audit explicitly remains IN PROGRESS and required EV/determinism/parity/lifecycle/performance/broad-suite/visual evidence is pending. `fix06_13` is not on main and shipped-Web is red; `fix06_8` needs the smallest owner decision recorded in the Work Log. All heads and uncommitted audit bytes remain preserved. |
-| audio06_1 | `audio06_1_surface_sfx_pass_prompt.md` | TODO | Families 1 and 2 rituals landed | — | — | — | — | The SFX manifest holds one profile (the pusher). Music stays external; this row writes the handoff delta. |
-| integ06_1 | `integ06_1_composition_migration_soak_prompt.md` | TODO | Families 1 and 2 merged | playtest06_2 | — | — | — | 0.5→0.6 migration matrix, maximal-node composition, full-run soaks on both platforms. |
-| perf06_1 | `perf06_1_performance_platform_pass_prompt.md` | TODO | Families 1 and 2 merged | playtest06_2 | — | — | — | First project-wide pass since the pusher physics and the scenario runtime. Idle 0.000 without a liveness counter is a failure. |
-| teach06_2 | `teach06_2_teaching_pass_two_prompt.md` | TODO | depth06_1, game06_8, world06_7 | — | — | — | — | Audit all 63 lessons for staleness, then teach the systems that have none. |
-| playtest06_2 | `playtest06_2_playtest_gate_refresh_prompt.md` | TODO | integ06_1, perf06_1 | owner playtest | — | — | — | Amends `playtest06_1` in place: real dependency list, named seeds, playtest script, finding-capture format. |
+| pusherv3_11 | `pusherv3_11_pusher_program_closure_audit_prompt.md` | BLOCKED | pusherv3_10; current-main fix06_13 closeout; fix06_8 owner decision | pusher closure | prior review pool | 2026-08-27 | — | The earlier claim-only head remains rejected. The fix06_13 product path is now on `main` and exact Web/performance gates are green. Remaining blockers are pusherv3_10 acceptance, fix06_8 owner disposition, fix06_13 formal closeout, and this row's complete EV/determinism/parity/lifecycle/visual audit. |
+| audio06_1 | `audio06_1_surface_sfx_pass_prompt.md` | TODO | Families 1 and 2 rituals landed | — | — | — | — | Only inventory/prestage landed at `d09e5619`; the authored SFX pass has not run. Music stays external. |
+| integ06_1 | `integ06_1_composition_migration_soak_prompt.md` | TODO | Families 1 and 2 merged | playtest06_2 | — | — | — | Only save-inventory prestage landed at `6e3973f3`; the 0.5→0.6 migration matrix, maximal composition, and native/Web soaks have not run. |
+| perf06_1 | `perf06_1_performance_platform_pass_prompt.md` | TODO | Families 1 and 2 merged | playtest06_2 | — | — | — | Measurement prestage landed at `5f7933c0` and current smoke/performance gates are green, but the complete platform/low-end pass has not run. |
+| teach06_2 | `teach06_2_teaching_pass_two_prompt.md` | TODO | depth06_1, game06_8, world06_7 | — | — | — | — | Current-lesson audit prestage landed at `8ebc4172`; the teaching implementation pass has not run. |
+| playtest06_2 | `playtest06_2_playtest_gate_refresh_prompt.md` | TODO | integ06_1, perf06_1, teach06_2 | owner playtest | — | — | — | Intake prestage landed at `569e5b23`; named seeds, current dependency rewrite, playtest script, and seed verification have not run. |
 | polish06_0 | `../todone/polish06_0_post_playtest_program_prompt.md` | DONE | — | the parked second half | PM:Codex/sub:polish-program | 2026-08-26 | 2026-08-26 | Planning program landed at `cabf2fea` with 11 source-identical documents and full native-backed Smoke PASS. Every output remains PARKED and non-claimable until the owner explicitly opens the polish pass; no polish or release activity was performed. |
 
 ### The owner playtest is the terminus of this board

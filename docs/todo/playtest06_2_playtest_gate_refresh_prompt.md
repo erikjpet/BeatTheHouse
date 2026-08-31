@@ -1,4 +1,4 @@
-Status: TODO
+Status: TODO — intake prestage landed; seed verification and gate refresh have not run
 Board row: `playtest06_2` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 playtest06_2: Playtest Gate Refresh

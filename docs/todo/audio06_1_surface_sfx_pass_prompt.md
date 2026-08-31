@@ -1,4 +1,4 @@
-Status: TODO
+Status: TODO — inventory/prestage landed; the authored SFX pass has not run
 Board row: `audio06_1` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 audio06_1: Surface SFX Pass

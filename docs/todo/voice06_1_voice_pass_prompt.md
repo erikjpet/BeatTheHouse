@@ -1,4 +1,4 @@
-Status: TODO
+Status: PARKED — do not claim until owner playtest findings and final copy exist
 Board row: `voice06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
