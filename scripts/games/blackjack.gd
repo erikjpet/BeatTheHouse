@@ -11,6 +11,7 @@ const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
 const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
+const ShowdownDuelProjectionScript := preload("res://scripts/core/grand_casino_duel_ritual_projection.gd")
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
@@ -932,7 +933,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			deal_animation_active,
 			payout_animation_active
 		)
-	return _rourke_duel_surface_state(spec, run_state, environment, session, table)
+	return _rourke_duel_surface_state(spec, run_state, environment, session, table, deal_animation_active, payout_animation_active)
 
 
 func _blackjack_ritual_projection(run_state: RunState, environment: Dictionary, table: Dictionary, session: Dictionary, spec: Dictionary, deal_animation_active: bool, payout_animation_active: bool) -> Dictionary:
@@ -1184,7 +1185,7 @@ func _blackjack_ritual_action_state(enabled: bool, disabled_reason: String) -> D
 	return {"enabled": enabled, "disabled_reason": "" if enabled else disabled_reason}
 
 
-func _rourke_duel_surface_state(spec: Dictionary, run_state: RunState, environment: Dictionary, session: Dictionary, _table: Dictionary) -> Dictionary:
+func _rourke_duel_surface_state(spec: Dictionary, run_state: RunState, environment: Dictionary, session: Dictionary, table: Dictionary, deal_animation_active: bool, payout_animation_active: bool) -> Dictionary:
 	if not _is_rourke_duel(run_state, environment):
 		return spec
 	var duel := run_state.grand_casino_duel_status()
@@ -1219,11 +1220,45 @@ func _rourke_duel_surface_state(spec: Dictionary, run_state: RunState, environme
 	spec["patrons"] = []
 	spec["can_split"] = false
 	spec["can_surrender"] = false
-	spec["can_double"] = _can_double(session, _table, ante, run_state)
+	spec["can_double"] = _can_double(session, table, ante, run_state)
 	spec["table_rules_text"] = "Five fixed-ante hands. Final stack margin decides the door."
 	spec["table_notice"] = str(session.get("table_notice", duel.get("last_bark", "Rourke cuts the cards.")))
 	spec["surface_ui_protected_regions"] = _rourke_duel_ui_protected_regions()
+	# Game7 is presentation-only here. The frozen Blackjack projection remains
+	# untouched; this additive adapter consumes a closed projection fingerprinted
+	# to the live public duel state and carries no crew/world or settlement input.
+	var blackjack_projection := _blackjack_ritual_projection(run_state, environment, table, session, spec, deal_animation_active, payout_animation_active)
+	var duel_fingerprint: String = ShowdownDuelProjectionScript.public_duel_fingerprint(duel)
+	var hands := _dictionary_array(duel.get("hands", []))
+	var duel_authority := {
+		"duel_id": "grand_casino_showdown",
+		"route_id": "pit_boss_showdown",
+		"attempt": maxi(0, int(duel.get("attempt", 0))),
+		"result_serial": hands.size(),
+		"authoritative_result_ref": "duel:%d:hand:%d:%s" % [maxi(0, int(duel.get("attempt", 0))), hands.size(), str(duel.get("status", "active"))],
+		"duel_content_fingerprint": duel_fingerprint,
+		"current_edge": edge,
+	}
+	var showdown_projection: Dictionary = ShowdownDuelProjectionScript.sealed_product_projection(
+		duel,
+		str(blackjack_projection.get("phase_id", "")),
+		duel_authority
+	)
+	if ShowdownDuelProjectionScript.verify_product_projection(showdown_projection, duel, str(blackjack_projection.get("phase_id", "")), duel_authority):
+		spec["showdown_duel_projection"] = showdown_projection
+		spec["ritual_actors"] = [showdown_projection.get("rourke_actor", {})]
+		spec["ritual_scene_objects"] = _showdown_duel_scene_objects(showdown_projection)
 	return spec
+
+
+func _showdown_duel_scene_objects(projection: Dictionary) -> Array:
+	var room := _local_copy_dict(projection.get("room_state", {}))
+	if room.is_empty(): return []
+	return [
+		{"id":"showdown.table","visual":str(room.get("table_state", "active")),"functional":"locked","visible":true,"enabled":false},
+		{"id":"showdown.rail","visual":str(room.get("rail_state", "open")),"functional":"projection","visible":true,"enabled":false},
+		{"id":"showdown.exit","visual":str(room.get("exit_state", "blocked")),"functional":"locked","visible":true,"enabled":false},
+	]
 
 
 func _rourke_duel_ui_protected_regions() -> Array:
@@ -1275,6 +1310,8 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 		_prepare_draw_deal_events_cache(surface_state)
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_blackjack_room(surface, surface_state)
+	if bool(surface_state.get("boss_duel_active", false)):
+		_draw_showdown_duel_room_staging(surface, surface_state)
 	_draw_blackjack_table(surface, surface_state)
 	if not bool(surface_state.get("boss_duel_active", false)):
 		_draw_table_patrons(surface, surface_state)
@@ -3205,12 +3242,48 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 func _draw_rourke_duel_hud(surface, surface_state: Dictionary) -> void:
 	var hud := Rect2(18, 12, 860, 62)
 	_draw_neon_panel(surface, hud, C_YELLOW, 0.12)
+	var projection := _local_copy_dict(surface_state.get("showdown_duel_projection", {}))
+	if projection.is_empty():
+		surface.surface_label("ROURKE'S TABLE", hud.position + Vector2(14, 18), 13, C_YELLOW)
+		surface.surface_label("HAND %d / %d" % [int(surface_state.get("boss_hand_number", 1)), int(surface_state.get("boss_hand_limit", 5))], hud.position + Vector2(14, 40), 10, C_SOFT)
+		surface.surface_label("YOU  %d" % int(surface_state.get("boss_player_stack", 0)), hud.position + Vector2(178, 29), 18, C_CYAN)
+		surface.surface_label("ROURKE  %d" % int(surface_state.get("boss_rourke_stack", 0)), hud.position + Vector2(326, 29), 18, C_PINK)
+		surface.surface_label(str(surface_state.get("boss_bark", "Rourke waits.")).left(42), hud.position + Vector2(510, 22), 10, C_WHITE)
+		surface.surface_label(str(surface_state.get("boss_tell", "")).left(48), hud.position + Vector2(510, 42), 9, C_SOFT)
+		return
+	var actor := _local_copy_dict(projection.get("rourke_actor", {}))
+	var room := _local_copy_dict(projection.get("room_state", {}))
+	var phase_id := str(projection.get("phase_id", "commitment"))
+	var actor_state := str(actor.get("behavior_state", "arrival"))
 	surface.surface_label("ROURKE'S TABLE", hud.position + Vector2(14, 18), 13, C_YELLOW)
-	surface.surface_label("HAND %d / %d" % [int(surface_state.get("boss_hand_number", 1)), int(surface_state.get("boss_hand_limit", 5))], hud.position + Vector2(14, 40), 10, C_SOFT)
+	surface.surface_label("%s  HAND %d/%d" % [phase_id.replace("_", " ").to_upper().left(12), int(surface_state.get("boss_hand_number", 1)), int(surface_state.get("boss_hand_limit", 5))], hud.position + Vector2(14, 40), 9, C_SOFT)
 	surface.surface_label("YOU  %d" % int(surface_state.get("boss_player_stack", 0)), hud.position + Vector2(178, 29), 18, C_CYAN)
 	surface.surface_label("ROURKE  %d" % int(surface_state.get("boss_rourke_stack", 0)), hud.position + Vector2(326, 29), 18, C_PINK)
-	surface.surface_label(str(surface_state.get("boss_bark", "Rourke waits.")).left(42), hud.position + Vector2(510, 22), 10, C_WHITE)
-	surface.surface_label(str(surface_state.get("boss_tell", "")).left(48), hud.position + Vector2(510, 42), 9, C_SOFT)
+	surface.surface_label(str(surface_state.get("boss_bark", "Rourke waits.")).left(34), hud.position + Vector2(510, 20), 9, C_WHITE)
+	surface.surface_label("%s / %s / SECURITY %s" % [actor_state.replace("_", " ").to_upper(), str(room.get("crowd_state", "full")).replace("_", " ").to_upper(), str(room.get("security_state", "low")).to_upper()], hud.position + Vector2(510, 38), 8, C_YELLOW)
+	surface.surface_label(str(surface_state.get("boss_tell", "")).left(42), hud.position + Vector2(510, 53), 8, C_SOFT)
+
+
+func _draw_showdown_duel_room_staging(surface, surface_state: Dictionary) -> void:
+	var projection := _local_copy_dict(surface_state.get("showdown_duel_projection", {}))
+	if projection.is_empty(): return
+	var room := _local_copy_dict(projection.get("room_state", {}))
+	var crowd_state := str(room.get("crowd_state", "full"))
+	var crowd_count := 8 if crowd_state == "full" else 5 if crowd_state == "thinning" else 7 if crowd_state in ["celebrating", "hostile"] else 0
+	var crowd_color := C_ORANGE if crowd_state == "hostile" else C_YELLOW if crowd_state == "celebrating" else C_SOFT
+	for index in range(crowd_count):
+		var x := 76.0 + float(index) * 106.0
+		var y := 104.0 + (8.0 if index % 2 == 0 else 0.0)
+		surface.draw_circle(Vector2(x, y), 5.0, Color(crowd_color.r, crowd_color.g, crowd_color.b, 0.42))
+		surface.draw_rect(Rect2(x - 4.0, y + 5.0, 8.0, 13.0), Color(crowd_color.r, crowd_color.g, crowd_color.b, 0.25))
+	var security_state := str(room.get("security_state", "low"))
+	var security_count := 2 if security_state == "high" else 1 if security_state == "present" else 0
+	for index in range(security_count):
+		var guard_x := 688.0 + float(index) * 46.0
+		surface.draw_rect(Rect2(guard_x, 88, 18, 34), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.28))
+		surface.draw_circle(Vector2(guard_x + 9.0, 83.0), 7.0, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.42))
+	if crowd_count > 0:
+		surface.surface_label(crowd_state.replace("_", " ").to_upper(), Vector2(36, 112), 8, crowd_color)
 
 
 func _draw_rourke_duel_actions(surface, surface_state: Dictionary, panel: Rect2) -> void:
