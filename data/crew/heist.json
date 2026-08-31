@@ -1,6 +1,6 @@
 [{ 
   "schema_version": 1,
-  "state_schema_version": 1,
+  "state_schema_version": 2,
   "hidden_resolution": {
     "chance_percent_per_weight": 12,
     "chance_percent_cap": 72,
@@ -25,7 +25,28 @@
       },
       "play": {"required_rounds": 3, "window_actions": 9, "table_game": "blackjack", "decision_rounds": {"go": 0, "distraction": 1, "exit": 2}, "boring_bet_min": 8, "boring_bet_max": 30, "heat_spike": 15},
       "getaway": {"default_exit": "dock", "routes": {"dock": {"deadline_actions": 7, "pursuit_pressure": 4, "pursuit_limit": 11}, "corridor": {"deadline_actions": 12, "pursuit_pressure": 1, "pursuit_limit": 11}}},
-      "payout": {"base": 900, "clean_bonus": 250, "hot_penalty": 180}
+      "payout": {"base": 900, "clean_bonus": 250, "hot_penalty": 180},
+      "semantics": {
+        "place_roles": ["planning_table", "grand_casino_floor", "count_table", "loading_dock", "service_corridor", "street_exit"],
+        "actor_roles": ["architect", "player", "floor_staff", "runner", "driver"],
+        "object_roles": ["plan_cards", "audit_schedule", "swap_cart", "count_cart"],
+        "public_verbs": ["plan", "prepare", "sit", "signal", "choose_exit", "carry", "escape"],
+        "phases": {
+          "plan": {"place": "planning_table", "actors": ["architect", "player"], "objects": ["plan_cards"], "verbs": ["arrive", "review", "commit", "leave"], "aftermath": "plan_is_set"},
+          "setup": {"place": "grand_casino_floor", "actors": ["player", "floor_staff", "runner"], "objects": ["audit_schedule", "swap_cart"], "verbs": ["arrive", "observe", "prepare", "clear"], "aftermath": "floor_looks_ordinary"},
+          "play": {"place": "count_table", "actors": ["player", "floor_staff", "runner"], "objects": ["count_cart"], "verbs": ["arrive", "sit", "signal", "hold", "choose_exit"], "aftermath": "cart_moves_from_the_floor"},
+          "getaway": {"place": "street_exit", "actors": ["player", "runner", "driver"], "objects": ["count_cart"], "verbs": ["arrive", "carry", "board", "escape"], "aftermath": "exit_route_shows_what_happened"}
+        },
+        "exits": {
+          "dock": {"place": "loading_dock", "actors": ["player", "runner", "driver"], "objects": ["count_cart"], "verbs": ["arrive", "load", "board", "leave"], "aftermath": "dock_shows_a_hurried_departure"},
+          "corridor": {"place": "service_corridor", "actors": ["player", "runner"], "objects": ["count_cart"], "verbs": ["arrive", "guide", "carry", "leave"], "aftermath": "corridor_shows_the_cart_passage"}
+        },
+        "confrontation": {"place": "exit_threshold", "actors": ["player", "associate"], "objects": ["score_envelope"], "verbs": ["face", "listen", "answer", "hedge", "leave"], "aftermath": ["terms_kept", "terms_changed"]},
+        "failure_beats": {
+          "identity_shortfall": {"place": "count_table", "actors": ["player", "floor_staff"], "objects": ["table_session"], "verbs": ["notice", "stop", "withdraw"], "aftermath": "the_table_does_not_hold"},
+          "corridor_closes": {"place": "service_corridor", "actors": ["player", "associate"], "objects": ["count_cart"], "verbs": ["confront", "hedge", "retreat"], "aftermath": "the_corridor_does_not_open"}
+        }
+      }
     },
     {
       "id": "the_whale_game",
@@ -42,7 +63,28 @@
       "play": {"required_rounds": 5, "venue_archetype": "grand_casino_high_limit", "game_sequence": ["craps", "blackjack", "craps", "baccarat", "blackjack"], "hazard_rounds": [2, 4], "starting_pot": 650, "made_suspicion": 100, "lifelines": 2},
       "interview": {"clean_score_min": 80, "clean_choice": "show_receipt", "hot_choice": "cut_short"},
       "getaway": {"exit": "front_door", "deadline_actions": 9, "hot_pursuit_pressure": 3, "pursuit_limit": 10},
-      "payout": {"minimum": 180, "maximum": 1300}
+      "payout": {"minimum": 180, "maximum": 1300},
+      "semantics": {
+        "place_roles": ["planning_table", "private_invitational", "casino_cage", "interview_room", "front_door", "street_exit"],
+        "actor_roles": ["architect", "player", "table_guests", "cage_attendant", "interviewer", "driver"],
+        "object_roles": ["plan_cards", "table_rig", "chip_rack", "cage_receipt"],
+        "public_verbs": ["plan", "prepare", "play", "cash_out", "answer", "walk", "escape"],
+        "phases": {
+          "plan": {"place": "planning_table", "actors": ["architect", "player"], "objects": ["plan_cards"], "verbs": ["arrive", "review", "commit", "leave"], "aftermath": "plan_is_set"},
+          "setup": {"place": "private_invitational", "actors": ["player", "table_guests"], "objects": ["table_rig"], "verbs": ["arrive", "prepare", "practice", "clear"], "aftermath": "invitation_is_ready"},
+          "play": {"place": "private_invitational", "actors": ["player", "table_guests"], "objects": ["table_rig", "chip_rack"], "verbs": ["arrive", "sit", "play", "read_table", "finish"], "aftermath": "table_result_is_visible"},
+          "getaway": {"place": "casino_cage", "actors": ["player", "cage_attendant", "interviewer", "driver"], "objects": ["chip_rack", "cage_receipt"], "verbs": ["arrive", "cash_out", "answer", "walk", "escape"], "aftermath": "cage_and_interview_show_what_happened"}
+        },
+        "exits": {
+          "clean_walk": {"place": "front_door", "actors": ["player", "driver"], "objects": ["cage_receipt"], "verbs": ["arrive", "present_receipt", "walk", "leave"], "aftermath": "front_door_stays_calm"},
+          "hot_chase": {"place": "street_exit", "actors": ["player", "driver"], "objects": ["cage_receipt"], "verbs": ["arrive", "run", "board", "escape"], "aftermath": "street_exit_shows_a_hurried_departure"}
+        },
+        "confrontation": {"place": "interview_room", "actors": ["player", "associate"], "objects": ["cage_receipt"], "verbs": ["face", "listen", "answer", "hedge", "leave"], "aftermath": ["terms_kept", "terms_changed"]},
+        "failure_beats": {
+          "table_breaks": {"place": "private_invitational", "actors": ["player", "table_guests"], "objects": ["chip_rack"], "verbs": ["lose", "stand", "withdraw"], "aftermath": "the_table_keeps_the_score"},
+          "rig_is_read": {"place": "private_invitational", "actors": ["player", "associate"], "objects": ["table_rig"], "verbs": ["confront", "hedge", "retreat"], "aftermath": "the_table_closes_around_the_rig"}
+        }
+      }
     }
   ],
   "outcomes": [

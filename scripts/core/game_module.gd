@@ -60,6 +60,18 @@ func is_full_simulation() -> bool:
 	return gameplay_model() == GAMEPLAY_MODEL_FULL_SIMULATION
 
 
+# Optional closed authority provider for modules whose live actions require a
+# Foundation-owned sealed transaction host. Generic modules return no provider.
+func sealed_action_authority_script() -> Script:
+	return null
+
+
+# Module-owned vocabulary for the optional sealed authority provider. The live
+# host consumes generic field names and never infers game identity from methods.
+func sealed_action_authority_contract() -> Dictionary:
+	return {}
+
+
 # Creates the entry message shown when a player enters the game.
 func enter(_run_state: RunState, environment: Dictionary) -> Dictionary:
 	return {
@@ -764,6 +776,11 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	if not bool(result.get("ok", false)):
 		run_state.clear_deferred_bankroll_zero_resolution()
 		return
+	if (str(result.get("game_id", result.get("source_id", ""))) == "blackjack" \
+			or result.has("table_game_authoritative") \
+			or result.has("sealed_action_authoritative")) \
+			and not run_state.consume_blackjack_authority_result_receipt(result):
+		return
 	normalize_skill_cheat_contract(result)
 	var deltas := _normalize_result_deltas(result.get("deltas", {}))
 	run_state.record_score_spending_from_result(result, deltas)
@@ -919,6 +936,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 		result["deltas"] = deltas
 		result["ended"] = true
 		result["state"] = RESULT_ENDED
+	run_state.scenario_publish_game_result(result, deltas)
 	if rng != null:
 		run_state.save_rng(rng)
 	run_state.clear_deferred_bankroll_zero_resolution()

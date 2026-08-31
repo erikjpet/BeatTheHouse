@@ -615,7 +615,7 @@
       }
     },
     {
-      "id": "punchline_debt_court", "archetype_id": "small_underground_casino", "layer_id": "casino", "display_name": "Debt Court", "weight": 6,
+      "id": "punchline_debt_court", "archetype_id": "small_underground_casino", "layer_id": "club", "display_name": "Debt Court", "weight": 6,
       "mutations": {
         "staff_set": ["collector"], "patron_set": ["marker_holders"], "event_pool_add": ["scenario_debt_court_office_hours"],
         "economic_profile_overrides": {"stake_floor": 10, "stake_ceiling": 80}, "game_modifier_hooks": {"debt_court_discount_percent": 25},
@@ -636,7 +636,7 @@
       }
     },
     {
-      "id": "punchline_raid_jitters", "archetype_id": "small_underground_casino", "layer_id": "casino", "display_name": "Raid Jitters", "weight": 3,
+      "id": "punchline_raid_jitters", "archetype_id": "small_underground_casino", "layer_id": "club", "display_name": "Raid Jitters", "weight": 3,
       "town_weight_tags": ["law:pressure"],
       "mutations": {
         "staff_set": ["door_listener", "crew_floor"], "patron_set": ["nervous_regulars"], "event_pool_add": ["scenario_raid_jitters_check"],

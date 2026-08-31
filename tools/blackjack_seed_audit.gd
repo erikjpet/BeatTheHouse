@@ -2,6 +2,7 @@ extends SceneTree
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 const PAYOUT_DRIFT_HANDS := 1000
 const PAYOUT_DRIFT_MIN_EDGE := -0.35
 const PAYOUT_DRIFT_MAX_EDGE := 0.20
@@ -270,7 +271,7 @@ func _audit_count_hand(game: GameModule, index: int) -> void:
 		for i in range(icons.size()):
 			var pulse := game.surface_action_command("blackjack_count_icon", i, false, ui, run_state, environment)
 			ui = pulse.get("ui_state", {})
-		var clean_count_result := game.resolve_with_context("count_cards", 0, run_state, environment, run_state.create_rng("count_resolve_%03d" % index), ui)
+		var clean_count_result := BlackjackAuthorityTestDriverScript.resolve(game, "count_cards", 0, run_state, environment, run_state.create_rng("count_resolve_%03d" % index), ui)
 		if int(clean_count_result.get("suspicion_delta", 0)) != 0:
 			failures.append("Seed %d clean count pulse run created heat." % index)
 
@@ -344,7 +345,7 @@ func _record_action_command_time(start_usec: int) -> void:
 
 func _resolve_and_record(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui: Dictionary) -> Dictionary:
 	var started := Time.get_ticks_usec()
-	var result: Dictionary = game.resolve_with_context(action_id, stake, run_state, environment, rng, ui)
+	var result: Dictionary = BlackjackAuthorityTestDriverScript.resolve(game, action_id, stake, run_state, environment, rng, ui)
 	var elapsed_ms := float(Time.get_ticks_usec() - started) / 1000.0
 	resolve_ms_samples.append(elapsed_ms)
 	stats["resolve_samples"] = resolve_ms_samples.size()
@@ -446,7 +447,7 @@ func _force_natural(game: GameModule) -> void:
 	data.environment["game_states"] = {"blackjack": table}
 	var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, data.run_state, data.environment)
 	var settle := game.surface_action_command("blackjack_deal", 0, false, deal.get("ui_state", {}), data.run_state, data.environment)
-	var result := game.resolve_with_context("play_basic", 5, data.run_state, data.environment, data.run_state.create_rng("natural_resolve"), settle.get("ui_state", {}))
+	var result := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 5, data.run_state, data.environment, data.run_state.create_rng("natural_resolve"), settle.get("ui_state", {}))
 	var hands: Array = result.get("blackjack_hand_results", []) as Array
 	if hands.is_empty() or str((hands[0] as Dictionary).get("outcome", "")) != "blackjack":
 		failures.append("Natural blackjack fixture did not settle as blackjack.")
@@ -498,7 +499,7 @@ func _force_surrender(game: GameModule) -> void:
 	data.environment["game_states"] = {"blackjack": table}
 	var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, data.run_state, data.environment)
 	var surrender := game.surface_action_command("blackjack_surrender", 0, false, deal.get("ui_state", {}), data.run_state, data.environment)
-	var result := game.resolve_with_context("play_basic", 5, data.run_state, data.environment, data.run_state.create_rng("surrender_resolve"), surrender.get("ui_state", {}))
+	var result := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 5, data.run_state, data.environment, data.run_state.create_rng("surrender_resolve"), surrender.get("ui_state", {}))
 	var hands: Array = result.get("blackjack_hand_results", []) as Array
 	if hands.is_empty() or str((hands[0] as Dictionary).get("outcome", "")) != "surrender":
 		failures.append("Surrender fixture did not settle as surrender.")
@@ -609,7 +610,7 @@ func _force_watched_peek(game: GameModule) -> void:
 	if not bool(peek.get("resolve", false)):
 		failures.append("Watched peek fixture did not resolve immediately.")
 		return
-	var result := game.resolve_with_context("peek_hole_card", 0, data.run_state, data.environment, data.run_state.create_rng("watched_peek_resolve"), peek.get("ui_state", {}))
+	var result := BlackjackAuthorityTestDriverScript.resolve(game, "peek_hole_card", 0, data.run_state, data.environment, data.run_state.create_rng("watched_peek_resolve"), peek.get("ui_state", {}))
 	if bool(result.get("blackjack_table_barred", false)) and int(result.get("suspicion_delta", 0)) >= 60:
 		stats["watched_peek_ejections"] = int(stats.get("watched_peek_ejections", 0)) + 1
 	else:
@@ -633,7 +634,7 @@ func _force_strategy_confrontation(game: GameModule) -> void:
 	var peek := game.surface_action_command("blackjack_peek", 0, false, distract.get("ui_state", {}), data.run_state, data.environment)
 	var hit := game.surface_action_command("blackjack_hit", 0, false, peek.get("ui_state", {}), data.run_state, data.environment)
 	var stand := game.surface_action_command("blackjack_stand", 0, false, hit.get("ui_state", {}), data.run_state, data.environment)
-	var result := game.resolve_with_context("play_basic", 5, data.run_state, data.environment, data.run_state.create_rng("strategy_resolve"), stand.get("ui_state", {}))
+	var result := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 5, data.run_state, data.environment, data.run_state.create_rng("strategy_resolve"), stand.get("ui_state", {}))
 	if bool(result.get("blackjack_strategy_confronted", false)) and int(result.get("suspicion_delta", 0)) > 0:
 		stats["strategy_confrontations"] = int(stats.get("strategy_confrontations", 0)) + 1
 	else:
@@ -663,7 +664,7 @@ func _force_patron_peek_adjustment(game: GameModule) -> void:
 	var distract := game.surface_action_command("blackjack_distraction", 0, false, deal.get("ui_state", {}), data.run_state, data.environment)
 	var peek := game.surface_action_command("blackjack_peek", 0, false, distract.get("ui_state", {}), data.run_state, data.environment)
 	var stand := game.surface_action_command("blackjack_stand", 0, false, peek.get("ui_state", {}), data.run_state, data.environment)
-	var result := game.resolve_with_context("play_basic", 5, data.run_state, data.environment, data.run_state.create_rng("patron_peek_resolve"), stand.get("ui_state", {}))
+	var result := BlackjackAuthorityTestDriverScript.resolve(game, "play_basic", 5, data.run_state, data.environment, data.run_state.create_rng("patron_peek_resolve"), stand.get("ui_state", {}))
 	var found_peek_hit := false
 	for event_value in result.get("blackjack_patron_action_events", []) as Array:
 		if typeof(event_value) != TYPE_DICTIONARY:

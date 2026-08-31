@@ -4,6 +4,7 @@ const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_
 const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
+const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 
 
 class EmbeddedCoachFixtureGame:
@@ -74,8 +75,58 @@ class CoinManualDeferredProbeHost:
 		super._play_result_surface_audio_cue(result)
 
 
+class CoachLifecycleDeliveryRun:
+	extends RunState
+
+	var reject_delivery := true
+	var delivery_resolve_count := 0
+
+	func delivery_has_active_run() -> bool:
+		return true
+
+	func delivery_snapshot() -> Dictionary:
+		return {"status": "active", "route_id": "ui_lifecycle_delivery", "target_id": "motel"}
+
+	func delivery_resolve_travel_arrival(_route: Dictionary = {}, _route_risk: Dictionary = {}) -> Dictionary:
+		delivery_resolve_count += 1
+		if not reject_delivery:
+			return {"ok": true, "status": "active"}
+		bankroll += 47
+		current_environment["coach_lifecycle_delivery_poison"] = true
+		world_map["coach_lifecycle_delivery_poison"] = true
+		grand_casino_room_states["coach_lifecycle_delivery_poison"] = {"active": true}
+		return {"ok": false, "errors": ["Coach lifecycle delivery rejected."]}
+
+
+class CoachLifecycleProbeHost:
+	extends EmbeddedCoachProbeHost
+
+	var observe_lifecycle_transaction := false
+	var lifecycle_guard_count := 0
+	var lifecycle_refresh_count := 0
+	var lifecycle_refresh_active_ids: Array[String] = []
+	var lifecycle_refresh_copies: Array[String] = []
+	var lifecycle_refresh_tweens: Array = []
+	var lifecycle_refresh_parent_indexes: Array[int] = []
+
+	func _guard_player_input_route(force_closing_allowed: bool = false, coach_action_id: String = "ui:any", notify_coach: bool = true) -> bool:
+		if observe_lifecycle_transaction:
+			lifecycle_guard_count += 1
+		return super._guard_player_input_route(force_closing_allowed, coach_action_id, notify_coach)
+
+	func _refresh() -> void:
+		super._refresh()
+		if not observe_lifecycle_transaction:
+			return
+		lifecycle_refresh_count += 1
+		lifecycle_refresh_active_ids.append(coach_overlay.active_lesson_id() if coach_overlay != null else "")
+		lifecycle_refresh_copies.append(coach_overlay.copy_label.text if coach_overlay != null and coach_overlay.copy_label != null else "")
+		lifecycle_refresh_tweens.append(coach_overlay.attention_tween if coach_overlay != null else null)
+		lifecycle_refresh_parent_indexes.append(coach_overlay.get_index() if coach_overlay != null else -1)
+
+
 func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
-	var probe: Control = EmbeddedCoachProbeHost.new()
+	var probe: Control = CoachLifecycleProbeHost.new()
 	probe.set("continuous_environment_clock_enabled", false)
 	root.add_child(probe)
 	await process_frame
@@ -137,9 +188,191 @@ func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 			and str(fallback_canvas_state.get("outcome_message", "")) == "Deferred coach fixture completed."
 	if not passed:
 		push_error("Completed embedded action did not execute its real deferred coach callback and conservative full-snapshot fallback: armed=%s schedules=%d frames=%d calls=%s incremental=%d fallback=%d canvas=%s." % [str(armed_after_action), action_schedule_count, action_frames, JSON.stringify(boundary_calls), int(probe.get("embedded_incremental_snapshot_count")), int(probe.get("embedded_full_snapshot_fallback_count")), JSON.stringify(fallback_canvas_state)])
-	probe.queue_free()
+	var lifecycle_passed := await _check_normal_coach_lifecycle_rollback(probe)
+	return passed and lifecycle_passed
+
+
+func _check_normal_coach_lifecycle_rollback(existing_probe: Control = null) -> bool:
+	const OLD_TIP_ID := "tip06_tonight_changes_rooms"
+	const OLD_TIP_COPY := "Tonight changes a room. Listen before you settle in; a rumor here can sharpen another stop on the map."
+	const NEXT_TIP_ID := "tip06_delivery_route"
+	const NEXT_TIP_COPY := "That package is contraband. Every action spends the deadline. The map marks real stops; choose your route."
+	var failure_probe := await _normal_coach_lifecycle_probe(true, existing_probe)
+	if failure_probe == null:
+		return false
+	var failure_coach: CoachOverlay = failure_probe.get("coach_overlay")
+	var failure_run: CoachLifecycleDeliveryRun = failure_probe.get("run_state")
+	var failure_old_tween: Variant = failure_coach.attention_tween_lifecycle_snapshot().get("tween", null)
+	var failure_old_parent_index := failure_coach.get_index()
+	var failure_before := _normal_coach_lifecycle_signature(failure_probe)
+	var failure_initial_exact := failure_coach.active_lesson_id() == OLD_TIP_ID \
+			and failure_coach.copy_label.text == OLD_TIP_COPY \
+			and failure_old_tween is Tween and (failure_old_tween as Tween).is_valid() \
+			and failure_coach.ok_button != null and failure_coach.ok_button.has_focus()
+	failure_probe.set("observe_lifecycle_transaction", true)
+	var failure_ok := bool(failure_probe.call("confirm_selected_travel", true))
+	var failure_after := _normal_coach_lifecycle_signature(failure_probe)
+	var observed_next_index := (failure_probe.get("lifecycle_refresh_active_ids") as Array).find(NEXT_TIP_ID)
+	var failure_new_tween: Variant = (failure_probe.get("lifecycle_refresh_tweens") as Array)[observed_next_index] if observed_next_index >= 0 else null
+	var failure_old_alpha := failure_coach.panel.modulate.a
+	var failure_old_tween_advanced := false
+	if failure_old_tween is Tween:
+		failure_old_tween_advanced = (failure_old_tween as Tween).custom_step(0.03)
+	var failure_old_tween_progressed := failure_coach.panel.modulate.a > failure_old_alpha
+	var failure_exact: bool = failure_initial_exact \
+			and not failure_ok \
+			and failure_before == failure_after \
+			and int(failure_probe.get("lifecycle_guard_count")) == 1 \
+			and observed_next_index >= 0 \
+			and str((failure_probe.get("lifecycle_refresh_copies") as Array)[observed_next_index]) == NEXT_TIP_COPY \
+			and int((failure_probe.get("lifecycle_refresh_parent_indexes") as Array)[observed_next_index]) != failure_old_parent_index \
+			and failure_new_tween is Tween and failure_new_tween != failure_old_tween and not (failure_new_tween as Tween).is_valid() \
+			and failure_coach.attention_tween == failure_old_tween and (failure_old_tween as Tween).is_valid() \
+			and failure_coach.lifecycle_protected_attention_tweens.is_empty() and failure_coach.lifecycle_attention_checkpoints.is_empty() \
+			and failure_coach.get_index() == failure_old_parent_index \
+			and failure_coach.ok_button.has_focus() \
+			and failure_old_tween_advanced and failure_old_tween_progressed \
+			and not failure_run.current_environment.has("coach_lifecycle_delivery_poison") \
+			and not failure_run.world_map.has("coach_lifecycle_delivery_poison") \
+			and not failure_run.grand_casino_room_states.has("coach_lifecycle_delivery_poison")
+	if not failure_exact:
+		push_error("Failed real travel did not restore the old normal Coach model, rendered controls, ordering, focus, and owned Tween exactly after rendering the queued delivery tip: initial=%s ok=%s guard=%d refresh_ids=%s refresh_copies=%s before=%s after=%s." % [str(failure_initial_exact), str(failure_ok), int(failure_probe.get("lifecycle_guard_count")), JSON.stringify(failure_probe.get("lifecycle_refresh_active_ids")), JSON.stringify(failure_probe.get("lifecycle_refresh_copies")), failure_before, failure_after])
+	var success_probe := await _normal_coach_lifecycle_probe(false, failure_probe)
+	if success_probe == null:
+		return false
+	var success_coach: CoachOverlay = success_probe.get("coach_overlay")
+	var success_run: CoachLifecycleDeliveryRun = success_probe.get("run_state")
+	var success_old_tween: Variant = success_coach.attention_tween_lifecycle_snapshot().get("tween", null)
+	success_probe.set("observe_lifecycle_transaction", true)
+	var success_ok := bool(success_probe.call("confirm_selected_travel", true))
+	var success_observed_next := (success_probe.get("lifecycle_refresh_active_ids") as Array).find(NEXT_TIP_ID)
+	var success_new_tween: Variant = success_coach.attention_tween
+	var success_parent := success_coach.get_parent()
+	var success_exact: bool = success_ok \
+			and int(success_probe.get("lifecycle_guard_count")) == 1 \
+			and success_run.delivery_resolve_count == 1 \
+			and success_observed_next >= 0 \
+			and success_coach.active_lesson_id() == NEXT_TIP_ID \
+			and success_coach.copy_label.text == NEXT_TIP_COPY \
+			and bool(success_coach.seen.get(NEXT_TIP_ID, false)) \
+			and not success_coach.queued_ids.has(NEXT_TIP_ID) \
+			and success_coach.queued_lessons.is_empty() \
+			and success_new_tween is Tween and (success_new_tween as Tween).is_valid() and success_new_tween != success_old_tween \
+			and success_old_tween is Tween and not (success_old_tween as Tween).is_valid() \
+			and success_parent != null and success_coach.get_index() == success_parent.get_child_count() - 1 \
+			and success_coach.lifecycle_protected_attention_tweens.is_empty() and success_coach.lifecycle_attention_checkpoints.is_empty()
+	if not success_exact:
+		push_error("Successful real travel did not commit the queued delivery tip/new Tween while releasing the old normal-tip checkpoint: ok=%s guard=%d refresh_ids=%s active=%s copy=%s queued=%s protected=%s message=%s node=%s selected=%s." % [str(success_ok), int(success_probe.get("lifecycle_guard_count")), JSON.stringify(success_probe.get("lifecycle_refresh_active_ids")), success_coach.active_lesson_id(), success_coach.copy_label.text, JSON.stringify(success_coach.queued_lessons), JSON.stringify(success_coach.lifecycle_protected_attention_tweens), str(success_probe.get("message_label").text), success_run.current_world_node_id(), str(success_probe.get("selected_travel_target_id"))])
+	success_probe.queue_free()
 	await process_frame
-	return passed
+	return failure_exact and success_exact
+
+
+func _normal_coach_lifecycle_probe(reject_delivery: bool, existing_probe: Control = null) -> Control:
+	var probe: Control = existing_probe if existing_probe != null else CoachLifecycleProbeHost.new()
+	if existing_probe == null:
+		probe.set("continuous_environment_clock_enabled", false)
+		probe.set_process(false)
+		root.add_child(probe)
+		probe.set_process(false)
+		await process_frame
+		await process_frame
+	if not bool(probe.call("uses_foundation_runtime")):
+		push_error("Normal Coach lifecycle probe could not initialize the real Foundation UI tree.")
+		probe.queue_free()
+		await process_frame
+		return null
+	probe.set("observe_lifecycle_transaction", false)
+	probe.set("lifecycle_guard_count", 0)
+	probe.set("lifecycle_refresh_count", 0)
+	(probe.get("lifecycle_refresh_active_ids") as Array).clear()
+	(probe.get("lifecycle_refresh_copies") as Array).clear()
+	(probe.get("lifecycle_refresh_tweens") as Array).clear()
+	(probe.get("lifecycle_refresh_parent_indexes") as Array).clear()
+	var library: ContentLibrary = probe.get("library")
+	var run := CoachLifecycleDeliveryRun.new()
+	run.reject_delivery = reject_delivery
+	run.start_new("UI-NORMAL-COACH-LIFECYCLE-%s" % ("REJECT" if reject_delivery else "SUCCESS"))
+	run.challenge_config["modifiers"] = {
+		"scenario_pins": {
+			"small_underground_casino": "punchline_open_mic_night",
+			"motel": "motel_conventioneers",
+		},
+		"scenario_pins_apply_mutations": false,
+	}
+	var rng := RngStream.new()
+	rng.configure(91827 if reject_delivery else 91828)
+	var environment := EnvironmentInstance.from_archetype(library.environment_archetype("small_underground_casino"), 1, rng, library).to_dict()
+	environment["id"] = "ui_normal_coach_lifecycle_room"
+	environment["world_node_id"] = "small_underground_casino"
+	environment["current_layer_id"] = "club"
+	var scenario_definition := library.scenario("punchline_open_mic_night")
+	environment["scenario_id"] = str(scenario_definition.get("id", ""))
+	environment["scenario_state"] = ScenarioEngineScript.initial_state(scenario_definition)
+	run.set_environment(environment)
+	run.world_map = {
+		"version": 3,
+		"seed_text": "UI-NORMAL-COACH-LIFECYCLE",
+		"start_node_id": "small_underground_casino",
+		"current_node_id": "small_underground_casino",
+		"nodes": [
+			{"id": "small_underground_casino", "archetype_id": "small_underground_casino", "kind": "casino", "tier": 1, "state": "revealed", "seen": true, "environment": environment.duplicate(true)},
+			{"id": "motel", "archetype_id": "motel", "kind": "home", "tier": 1, "state": "revealed", "seen": true, "environment": {}},
+		],
+		"edges": [{"a": "small_underground_casino", "b": "motel"}],
+		"visited_path": ["small_underground_casino"],
+	}
+	run.seed_scenario_for_node("small_underground_casino", scenario_definition)
+	probe.set("run_state", run)
+	probe.set("current_screen", FoundationMain.SCREEN_ENVIRONMENT)
+	probe.set("selected_action_category", FoundationMain.ACTION_CATEGORY_TRAVEL)
+	probe.set("selected_travel_target_id", "motel")
+	probe.set("selected_travel_label", "Motel")
+	probe.call("_refresh_run_action_service")
+	var coach: CoachOverlay = probe.get("coach_overlay")
+	coach.suspend()
+	coach.set_lessons([library.tutorial_lesson("tip06_tonight_changes_rooms")])
+	coach.restore_seen({})
+	coach.set_tips_enabled(true)
+	coach.set_reduce_motion(false)
+	probe.call("_refresh")
+	if coach.active_lesson_id() != "tip06_tonight_changes_rooms":
+		push_error("Normal Coach lifecycle probe did not admit the production scenario tip first: %s." % coach.active_lesson_id())
+		probe.queue_free()
+		await process_frame
+		return null
+	var enriched_context := coach.latest_context.duplicate(true)
+	var run_context: Dictionary = enriched_context.get("run", {}) if typeof(enriched_context.get("run", {})) == TYPE_DICTIONARY else {}
+	var delivery_lesson := library.tutorial_lesson("tip06_delivery_route")
+	coach.queued_lessons.append({"lesson": delivery_lesson, "context": enriched_context})
+	coach.queued_ids["tip06_delivery_route"] = true
+	var ordering_sentinel := Control.new()
+	ordering_sentinel.name = "CoachLifecycleOrderingSentinel"
+	ordering_sentinel.visible = false
+	probe.add_child(ordering_sentinel)
+	if coach.ok_button != null:
+		coach.ok_button.grab_focus()
+	if not bool(run_context.get("delivery_active", false)) or coach.active_lesson_id() != "tip06_tonight_changes_rooms":
+		push_error("Normal Coach lifecycle probe did not preserve the enriched active-delivery context before the transaction.")
+		probe.queue_free()
+		await process_frame
+		return null
+	return probe
+
+
+func _normal_coach_lifecycle_signature(probe: Control) -> String:
+	var lifecycle_snapshot: Dictionary = probe.call("_foundation_lifecycle_snapshot")
+	var coach_state: Dictionary = lifecycle_snapshot.get("coach", {}) if typeof(lifecycle_snapshot.get("coach", {})) == TYPE_DICTIONARY else {}
+	coach_state = coach_state.duplicate(true)
+	coach_state.erase("ref")
+	coach_state.erase("parent_ref")
+	coach_state.erase("focus_ref")
+	var attention_state: Dictionary = coach_state.get("attention", {}) if typeof(coach_state.get("attention", {})) == TYPE_DICTIONARY else {}
+	attention_state = attention_state.duplicate(true)
+	attention_state.erase("tween")
+	attention_state.erase("checkpoint_token")
+	coach_state["attention"] = attention_state
+	return JSON.stringify(coach_state)
 
 
 func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
@@ -333,6 +566,17 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var pre_action_previous_bodies: Variant = pre_action_canvas_state.get("coin_pusher_previous_bodies", [])
 	var pre_action_liveness_ticks := int(pre_action_canvas_state.get("coin_pusher_liveness_ticks", 0))
 	var pre_action_face_y := int(pre_action_canvas_state.get("coin_pusher_face_position_y", -1))
+	var pre_action_phase_fp := int(pre_action_canvas_state.get("coin_pusher_phase_fp", -1))
+	var pre_action_surface_time := int(pre_action_canvas_state.get("surface_time_msec", -1))
+	var entry_host_stamp := int(probe.get("last_game_surface_realtime_refresh_msec"))
+	var entry_run_state: RunState = probe.get("run_state")
+	var entry_live_key := str(game.call("_live_key", entry_run_state, entry_run_state.current_environment)) if entry_run_state != null else ""
+	var entry_live_machines: Dictionary = game.get("_live_machines") if typeof(game.get("_live_machines")) == TYPE_DICTIONARY else {}
+	var entry_live_machine: Dictionary = entry_live_machines.get(entry_live_key, {}) if typeof(entry_live_machines.get(entry_live_key, {})) == TYPE_DICTIONARY else {}
+	var entry_live_session: Dictionary = entry_live_machine.get("live_session", {}) if typeof(entry_live_machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var entry_session_clock := int(entry_live_session.get("last_clock_msec", -1))
+	var entry_session_bodies: Variant = entry_live_session.get("presentation_current_bodies", [])
+	var entry_session_view_serial := int(entry_live_session.get("presentation_view_serial", -1))
 	var pre_action_tell_rung := int(pre_action_canvas_state.get("coin_pusher_tell_rung", -1))
 	var pre_action_locked := bool(pre_action_canvas_state.get("coin_pusher_locked", false))
 	var pre_action_preferences: Dictionary = probe.get("game_surface_ui_state") if typeof(probe.get("game_surface_ui_state")) == TYPE_DICTIONARY else {}
@@ -476,6 +720,18 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 				and (action_canvas_previous_bodies as Array).size() == (action_canvas_bodies as Array).size(),
 		"liveness_unchanged_until_live_tick": int(action_canvas_state.get("coin_pusher_liveness_ticks", -1)) == pre_action_liveness_ticks,
 		"face_unchanged_until_live_tick": int(action_canvas_state.get("coin_pusher_face_position_y", -2)) == pre_action_face_y,
+		# This fails closed if entry rendering ever omits the host clock or merely
+		# stamps the canvas without anchoring the production live session.
+		"entry_clock_anchored": pre_action_surface_time >= 0 \
+				and entry_host_stamp == pre_action_surface_time \
+				and entry_session_clock == pre_action_surface_time,
+		# Entry must transfer the live session's already-built opening projection,
+		# not regenerate or republish another 300-body array before the first tick.
+		"entry_body_projection_reused": typeof(entry_session_bodies) == TYPE_ARRAY \
+				and (entry_session_bodies as Array).size() == int(pre_action_canvas_state.get("coin_pusher_body_count", -1)) \
+				and bool(pre_action_canvas_state.get("coin_pusher_entry_body_projection_reused", false)) \
+				and entry_session_view_serial == 0 \
+				and int(pre_action_canvas_state.get("coin_pusher_ticks_advanced", -1)) == 0,
 		"interpolation_alpha_bounded": float(action_canvas_state.get("coin_pusher_interpolation_alpha", -1.0)) >= 0.0 \
 				and float(action_canvas_state.get("coin_pusher_interpolation_alpha", 2.0)) <= 1.0,
 		"tell_rung_unchanged": int(action_canvas_state.get("coin_pusher_tell_rung", -2)) == pre_action_tell_rung,
@@ -505,14 +761,16 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var action_view_passed := failed_invariants.is_empty()
 	var draw_soak_after: Dictionary = canvas.call("debug_soak_snapshot")
 	var draw_sample_count_after := int(draw_soak_after.get("draw_sample_count", 0))
-	var rendered_drop_hit := false
+	var rendered_hold_drop_hit := false
+	var rendered_legacy_drop_hit := false
 	var rendered_nudge_hit := false
 	var hit_regions: Array = canvas.call("_hit_region_snapshots")
 	for region_value in hit_regions:
 		if typeof(region_value) != TYPE_DICTIONARY:
 			continue
 		var hit_action := str((region_value as Dictionary).get("action", ""))
-		rendered_drop_hit = rendered_drop_hit or hit_action == "coin_pusher_drop"
+		rendered_hold_drop_hit = rendered_hold_drop_hit or hit_action == "coin_pusher_drop_charge"
+		rendered_legacy_drop_hit = rendered_legacy_drop_hit or hit_action == "coin_pusher_drop"
 		rendered_nudge_hit = rendered_nudge_hit or hit_action == "coin_pusher_nudge"
 	var render_invariants := {
 		"refresh_contract": refresh_contract_passed,
@@ -521,7 +779,10 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		"draw_snapshot_present": not draw_snapshots.is_empty(),
 		"draw_live_body_count": int(draw_state.get("coin_pusher_body_count", -1)) == int(action_canvas_state.get("coin_pusher_body_count", -2)),
 		"draw_sample_recorded": draw_sample_count_after > draw_sample_count_before,
-		"drop_hit_region": rendered_drop_hit,
+		"hold_drop_hit_region": rendered_hold_drop_hit,
+		# The one-shot compatibility command remains callable, but the production
+		# canvas must expose only the accessible press/hold/release control.
+		"no_legacy_drop_hit_region": not rendered_legacy_drop_hit,
 		"nudge_hit_region": rendered_nudge_hit,
 	}
 	for invariant_name in render_invariants.keys():
@@ -600,14 +861,18 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var realtime_bodies: Variant = realtime_canvas_state.get("coin_pusher_bodies", [])
 	var realtime_previous_bodies: Variant = realtime_canvas_state.get("coin_pusher_previous_bodies", [])
 	var realtime_alpha := float(realtime_canvas_state.get("coin_pusher_interpolation_alpha", -1.0))
+	var realtime_ticks_advanced := int(realtime_canvas_state.get("coin_pusher_ticks_advanced", 0))
+	var realtime_phase_fp := int(realtime_canvas_state.get("coin_pusher_phase_fp", -1))
 	var realtime_passed: bool = success_preconditions_exact \
 			and realtime_clock_wait_frames < 16 \
 			and progression_wait_frames < 32 \
+			and surface_time_before >= 0 \
 			and success_stamp > surface_time_before \
 			and int(realtime_canvas_state.get("surface_time_msec", -1)) == success_stamp \
-			and (int(realtime_canvas_state.get("coin_pusher_liveness_ticks", -1)) > liveness_before \
-					or not is_equal_approx(realtime_alpha, interpolation_alpha_before)) \
-			and int(realtime_canvas_state.get("coin_pusher_face_position_y", -1)) != pre_action_face_y \
+			and int(realtime_canvas_state.get("coin_pusher_liveness_ticks", -1)) > liveness_before \
+			and int(realtime_canvas_state.get("coin_pusher_liveness_ticks", -1)) > 0 \
+			and realtime_ticks_advanced > 0 \
+			and realtime_phase_fp != pre_action_phase_fp \
 			and typeof(realtime_bodies) == TYPE_ARRAY and typeof(realtime_previous_bodies) == TYPE_ARRAY \
 			and (realtime_bodies as Array).size() == int(realtime_canvas_state.get("coin_pusher_body_count", -2)) \
 			# A queued DROP is born on this tick, so the exact previous projection
@@ -616,7 +881,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			and (realtime_previous_bodies as Array).size() <= (realtime_bodies as Array).size() \
 			and (realtime_bodies as Array).size() - (realtime_previous_bodies as Array).size() <= 1
 	if not realtime_passed:
-		push_error("FoundationMain production realtime advance did not stamp/update the live owned canvas from current machine state: preconditions=%s wait=%d progression_wait=%d before_time=%d stamp=%d canvas_time=%d live=%d->%d alpha=%s->%s bodies=%d previous=%d public=%d." % [success_preconditions_exact, realtime_clock_wait_frames, progression_wait_frames, surface_time_before, success_stamp, int(realtime_canvas_state.get("surface_time_msec", -1)), liveness_before, int(realtime_canvas_state.get("coin_pusher_liveness_ticks", -1)), interpolation_alpha_before, realtime_alpha, (realtime_bodies as Array).size() if typeof(realtime_bodies) == TYPE_ARRAY else -1, (realtime_previous_bodies as Array).size() if typeof(realtime_previous_bodies) == TYPE_ARRAY else -1, int(realtime_canvas_state.get("coin_pusher_body_count", -1))])
+		push_error("FoundationMain production realtime advance did not stamp/update the live owned canvas from current machine state: preconditions=%s entry=%d/%d/%d wait=%d progression_wait=%d before_time=%d stamp=%d canvas_time=%d live=%d->%d ticks=%d phase=%d->%d alpha=%s->%s bodies=%d previous=%d public=%d." % [success_preconditions_exact, pre_action_surface_time, entry_host_stamp, entry_session_clock, realtime_clock_wait_frames, progression_wait_frames, surface_time_before, success_stamp, int(realtime_canvas_state.get("surface_time_msec", -1)), liveness_before, int(realtime_canvas_state.get("coin_pusher_liveness_ticks", -1)), realtime_ticks_advanced, pre_action_phase_fp, realtime_phase_fp, interpolation_alpha_before, realtime_alpha, (realtime_bodies as Array).size() if typeof(realtime_bodies) == TYPE_ARRAY else -1, (realtime_previous_bodies as Array).size() if typeof(realtime_previous_bodies) == TYPE_ARRAY else -1, int(realtime_canvas_state.get("coin_pusher_body_count", -1))])
 	# Replacing only the result boundary while the exact run/game/room/session stay
 	# active must stale the captured identity rather than render the wrong result.
 	var generation_before_stale := int(probe.get("deferred_embedded_refresh_generation"))
@@ -1307,7 +1572,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 		return false
 	app.set("autosave_slot_id", menu_slot)
 
-	app.call("start_foundation_run", "UI-RUN-MENU-SCREENS", RunStateScript.custom_challenge("ui_run_menu_home_fixture", "UI-RUN-MENU-SCREENS", {"home_archetype_id": "bar"}))
+	app.call("start_foundation_run", "UI-RUN-MENU-SCREENS", RunStateScript.custom_challenge("ui_run_menu_home_fixture", "UI-RUN-MENU-SCREENS", {"home_archetype_id": "bar"}), false)
 	await process_frame
 	var top_menu_button: Button = app.get("top_menu_button")
 	if top_menu_button == null:
@@ -1372,7 +1637,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 	if not await _check_run_menu_open_resume(app, "RESULT", "result screen"):
 		return false
 
-	app.call("start_foundation_run", "UI-RUN-MENU-FAILURE")
+	app.call("start_foundation_run", "UI-RUN-MENU-FAILURE", {}, false)
 	await process_frame
 	var failure_run: RunState = app.get("run_state")
 	failure_run.fail_run(RunState.FAILURE_POLICE_CAPTURE, RunState.POLICE_CAPTURE_FAILURE_MESSAGE)
@@ -1381,7 +1646,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 	if not await _check_run_menu_open_resume(app, "FAILURE", "failure screen"):
 		return false
 
-	app.call("start_foundation_run", "UI-RUN-MENU-VICTORY")
+	app.call("start_foundation_run", "UI-RUN-MENU-VICTORY", {}, false)
 	await process_frame
 	var victory_run: RunState = app.get("run_state")
 	victory_run.narrative_flags["demo_victory"] = true
@@ -1394,7 +1659,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 	if not await _check_run_menu_open_resume(app, "VICTORY", "victory screen"):
 		return false
 
-	app.call("start_foundation_run", "UI-RUN-MENU-SAVE-ENV")
+	app.call("start_foundation_run", "UI-RUN-MENU-SAVE-ENV", {}, false)
 	await process_frame
 	app.call("open_run_menu")
 	await process_frame
@@ -1415,7 +1680,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 		push_error("Environment-screen in-run load did not return to a playable run view.")
 		return false
 
-	app.call("start_foundation_run", "UI-RUN-MENU-SAVE-GAME", RunStateScript.custom_challenge("ui_run_menu_save_game_fixture", "UI-RUN-MENU-SAVE-GAME", {"home_archetype_id": "bar"}))
+	app.call("start_foundation_run", "UI-RUN-MENU-SAVE-GAME", RunStateScript.custom_challenge("ui_run_menu_save_game_fixture", "UI-RUN-MENU-SAVE-GAME", {"home_archetype_id": "bar"}), false)
 	await process_frame
 	if not await _travel_to_first_game_environment(app):
 		push_error("Run menu game-surface save test could not reach a gambling environment.")
@@ -1448,7 +1713,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 	if not await _check_showdown_phase_ui(app):
 		return false
 
-	app.call("start_foundation_run", "UI-RUN-MENU-ABANDON")
+	app.call("start_foundation_run", "UI-RUN-MENU-ABANDON", {}, false)
 	await process_frame
 	app.call("open_run_menu")
 	await process_frame
@@ -1560,7 +1825,7 @@ func _check_run_menu_main_menu_button_closes_overlay(app: Control, seed: String,
 		await process_frame
 		app.call("open_meta_home")
 	else:
-		app.call("start_foundation_run", seed)
+		app.call("start_foundation_run", seed, {}, false)
 	await process_frame
 	app.call("open_run_menu")
 	await process_frame
@@ -1849,6 +2114,29 @@ func _check_scratch_ticket_selected_slot_purchase(app: Control) -> bool:
 	run_state.bankroll = 100000
 	var machine: Dictionary = game.call("_ensure_machine_state", run_state, run_state.current_environment, true)
 	var stock: Array = machine.get("stock", []) if typeof(machine.get("stock", [])) == TYPE_ARRAY else []
+	var ticket_types: Array = game.call("_ticket_types")
+	var expected_type_ids := {}
+	for ticket_type_value in ticket_types:
+		if typeof(ticket_type_value) == TYPE_DICTIONARY:
+			expected_type_ids[str((ticket_type_value as Dictionary).get("id", ""))] = true
+	var stocked_type_ids := {}
+	for slot_value in stock:
+		if typeof(slot_value) != TYPE_DICTIONARY:
+			continue
+		var practice_slot: Dictionary = slot_value
+		var practice_type_id := str(practice_slot.get("type_id", ""))
+		stocked_type_ids[practice_type_id] = true
+		if int(practice_slot.get("remaining", 0)) != 100 or int(practice_slot.get("capacity", 0)) != 100:
+			push_error("Scratch practice stock did not provide 100 copies of %s." % practice_type_id)
+			return false
+	var all_ticket_types_stocked := expected_type_ids.size() == 7 and stocked_type_ids.size() == expected_type_ids.size()
+	for expected_type_id in expected_type_ids:
+		if not stocked_type_ids.has(expected_type_id):
+			all_ticket_types_stocked = false
+			break
+	if not all_ticket_types_stocked:
+		push_error("Scratch practice stock did not cover all seven ticket types: expected=%s actual=%s." % [expected_type_ids.keys(), stocked_type_ids.keys()])
+		return false
 	if stock.size() < 2 or typeof(stock[0]) != TYPE_DICTIONARY or typeof(stock[1]) != TYPE_DICTIONARY:
 		push_error("Scratch selected-slot purchase fixture did not expose two vending rows.")
 		return false
@@ -2038,6 +2326,10 @@ func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 	run_state.add_item("coin_return_shim")
 	var refund_machine: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
 	refund_machine["format_id"] = "classic_3_reel"
+	# This fixture deliberately changes immutable cabinet content. Treat that
+	# setup as a fresh machine so the host seals the new canonical content rather
+	# than correctly rejecting it as a mutation of the previously bound cabinet.
+	refund_machine.erase("_blackjack_action_authority")
 	SlotMachineStateScript.write_machine(run_state.current_environment, "slot", refund_machine)
 	var slot_game: GameModule = app.get("current_game")
 	var wager_cost := slot_game.wager_cost_for_context("spin", 0, run_state, run_state.current_environment, {})
@@ -2057,7 +2349,7 @@ func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 		return false
 	var refund_machine_after: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
 	if int(refund_machine_after.get("spin_count", 0)) != refunded_spin_count_before + 1:
-		push_error("The guaranteed-refund slot spin did not execute after skipping confirmation.")
+		push_error("The guaranteed-refund slot spin did not execute after skipping confirmation: result=%s message=%s machine=%s." % [JSON.stringify(app.get("last_game_result")), str(app.get("message_label").text), JSON.stringify(refund_machine_after)])
 		return false
 	if run_state.wager_capacity_for_game("slot", run_state.current_environment) <= 0:
 		push_error("Coin-Return Shim did not preserve spendable cash after the all-in slot spin.")
@@ -2075,7 +2367,7 @@ func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 func _check_confirmed_all_in_wager_result_then_failure(app: Control) -> bool:
 	var original_run_state: Variant = app.get("run_state")
 	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
-	app.call("start_foundation_run", "UI-ALL-IN-RESULT")
+	app.call("start_foundation_run", "UI-ALL-IN-RESULT", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -2149,7 +2441,7 @@ func _check_confirmed_all_in_wager_result_then_failure(app: Control) -> bool:
 func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 	var original_run_state: Variant = app.get("run_state")
 	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
-	app.call("start_foundation_run", "UI-BANKROLL-PRESENTATION")
+	app.call("start_foundation_run", "UI-BANKROLL-PRESENTATION", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -2158,10 +2450,23 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 	run_state.bankroll = 100
 	var fixture_game := BankrollPresentationFixtureGame.new()
 	var environment := run_state.current_environment.duplicate(true)
+	var scenario_state: Dictionary = environment.get("scenario_state", {}) if typeof(environment.get("scenario_state", {})) == TYPE_DICTIONARY else {}
+	var fixture_scenario_id := str(scenario_state.get("id", environment.get("scenario_id", ""))).strip_edges()
+	var fixture_archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	if not fixture_scenario_id.is_empty() and not fixture_archetype_id.is_empty():
+		var modifiers: Dictionary = run_state.challenge_config.get("modifiers", {}).duplicate(true) if typeof(run_state.challenge_config.get("modifiers", {})) == TYPE_DICTIONARY else {}
+		var scenario_pins: Dictionary = modifiers.get("scenario_pins", {}).duplicate(true) if typeof(modifiers.get("scenario_pins", {})) == TYPE_DICTIONARY else {}
+		scenario_pins[fixture_archetype_id] = fixture_scenario_id
+		modifiers["scenario_pins"] = scenario_pins
+		modifiers["scenario_pins_apply_mutations"] = false
+		run_state.challenge_config["modifiers"] = modifiers
 	environment["game_ids"] = [fixture_game.get_id()]
 	environment["game_states"] = {}
 	environment["economic_profile"] = {"stake_floor": 10, "stake_ceiling": 100}
-	run_state.set_environment(environment)
+	var fixture_install := run_state.set_environment(environment)
+	if not bool(fixture_install.get("ok", false)):
+		push_error("Bankroll presentation fixture could not install through the scenario host: %s." % JSON.stringify(fixture_install))
+		return false
 	app.call("_refresh_run_action_service")
 	app.set("current_game", fixture_game)
 	app.call("_reset_game_surface_runtime_state")
@@ -2182,12 +2487,14 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 	if settled_bankroll != 140:
 		var debug_game_value: Variant = app.get("current_game")
 		var debug_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
-		push_error("Bankroll presentation fixture did not settle simulation immediately: %d game=%s stake=%d screen=%s popup=%s." % [
+		push_error("Bankroll presentation fixture did not settle simulation immediately: %d game=%s stake=%d screen=%s popup=%s result=%s message=%s." % [
 			settled_bankroll,
 			str(debug_game_value),
 			int(app.get("selected_stake")),
 			str((app.call("current_screen_snapshot") as Dictionary).get("screen", "")),
 			JSON.stringify(debug_popup),
+			JSON.stringify(app.get("last_game_result")),
+			str(app.get("message_label").text),
 		])
 		return false
 	var mid_hud: Dictionary = app.call("current_objective_hud_snapshot")
@@ -2226,19 +2533,39 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 	if not bool(reveal_animation.get("active", false)):
 		push_error("Bankroll presentation fixture did not expose an active reveal animation.")
 		return false
-	await create_timer(0.35).timeout
-	await process_frame
+	# The reveal contract uses Time.get_ticks_msec(). Wait against that exact
+	# unscaled clock as well: SceneTreeTimer can still inherit altered suite-wide
+	# timing state after earlier animation/accessibility coverage.
+	var release_not_before_msec := Time.get_ticks_msec() + 350
+	while Time.get_ticks_msec() < release_not_before_msec:
+		await process_frame
+	# The full UI suite can cross the deadline between FoundationMain's process
+	# callback and this timer callback. Allow the already-expired reveal a small
+	# number of frame boundaries to publish its final bankroll state.
+	for _release_frame in range(4):
+		await process_frame
+		if not bool(app.get("presented_bankroll_hold_active")):
+			break
 	var post_hud: Dictionary = app.call("current_objective_hud_snapshot")
 	var post_consequence: Dictionary = app.call("current_consequence_view_snapshot")
 	if int(post_hud.get("bankroll", -1)) != settled_bankroll:
-		push_error("Presented bankroll did not sync after the reveal animation completed.")
+		push_error("Presented bankroll did not sync after the reveal animation completed: hud=%d settled=%d hold=%s started=%d surface=%s." % [
+			int(post_hud.get("bankroll", -1)),
+			settled_bankroll,
+			str(app.get("presented_bankroll_hold_active")),
+			int(app.get("presented_bankroll_started_msec")),
+			JSON.stringify(game_surface_canvas.call("surface_runtime_status")),
+		])
 		return false
 	if int(post_consequence.get("recent_bankroll_delta", 0)) != 40:
 		push_error("Result delta did not become visible after the reveal animation completed.")
 		return false
 	run_state.bankroll = 100
 	environment["game_states"] = {}
-	run_state.set_environment(environment)
+	fixture_install = run_state.set_environment(environment)
+	if not bool(fixture_install.get("ok", false)):
+		push_error("Bankroll presentation replay fixture could not install through the scenario host: %s." % JSON.stringify(fixture_install))
+		return false
 	app.set("current_game", fixture_game)
 	app.call("_reset_game_surface_runtime_state")
 	app.call("_set_current_screen", "GAME")
@@ -2854,7 +3181,7 @@ func _check_run_journal_flow(app: Control, save_service: SaveService, viewport_r
 		push_error("Could not prepare the run-journal test save slot.")
 		return false
 	app.set("autosave_slot_id", journal_slot)
-	app.call("start_foundation_run", "UI-RUN-JOURNAL")
+	app.call("start_foundation_run", "UI-RUN-JOURNAL", {}, false)
 	await process_frame
 	var journal_run: RunState = app.get("run_state")
 	_add_run_journal_fixture_entries(journal_run)
@@ -2942,7 +3269,7 @@ func _check_run_journal_flow(app: Control, save_service: SaveService, viewport_r
 	app.call("close_run_journal")
 	await process_frame
 
-	app.call("start_foundation_run", "UI-RUN-JOURNAL-TERMINAL")
+	app.call("start_foundation_run", "UI-RUN-JOURNAL-TERMINAL", {}, false)
 	await process_frame
 	var terminal_run: RunState = app.get("run_state")
 	terminal_run.fail_run(RunState.FAILURE_POLICE_CAPTURE, RunState.POLICE_CAPTURE_FAILURE_MESSAGE)
@@ -3592,7 +3919,7 @@ func _grand_casino_environment_for_ui(app: Control) -> Dictionary:
 
 
 func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-CREW-LENDER-NO-MOTEL-POPUP")
+	app.call("start_foundation_run", "UI-CREW-LENDER-NO-MOTEL-POPUP", {}, false)
 	await process_frame
 	var library: ContentLibrary = app.get("library")
 	if library == null or library.lender("the_crew").is_empty() or library.event("motel_knock").is_empty():

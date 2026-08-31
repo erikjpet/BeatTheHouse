@@ -6,6 +6,9 @@ extends RefCounted
 
 const CONFIG_PATH := "res://data/crew/plays.json"
 const SCHEMA_VERSION := 1
+const STATE_SCHEMA_VERSION := 2
+const LEGACY_STATE_SCHEMA_VERSION := 1
+const TOMBSTONE_LIMIT := 16
 const ACTION_PREFIX := "crew_play:"
 const PLAY_IDS := ["spotter", "distraction", "big_player", "chip_dump", "table_flood"]
 const RANK_IDS := ["stranger", "marker", "associate", "made", "inner_circle"]
@@ -14,29 +17,38 @@ static var _config_cache: Dictionary = {}
 
 
 static func config() -> Dictionary:
+	return _config_ref().duplicate(true)
+
+
+static func _config_ref() -> Dictionary:
 	if _config_cache.is_empty():
 		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(CONFIG_PATH)) if FileAccess.file_exists(CONFIG_PATH) else []
 		if typeof(parsed) == TYPE_ARRAY and (parsed as Array).size() == 1 and typeof((parsed as Array)[0]) == TYPE_DICTIONARY:
 			_config_cache = ((parsed as Array)[0] as Dictionary).duplicate(true)
-	return _config_cache.duplicate(true)
+	return _config_cache
 
 
 static func definition(play_id: String) -> Dictionary:
-	for value in _array(config().get("plays", [])):
+	return _definition_ref(play_id).duplicate(true)
+
+
+static func _definition_ref(play_id: String) -> Dictionary:
+	for value in _array(_config_ref().get("plays", [])):
 		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("id", "")) == play_id:
-			return (value as Dictionary).duplicate(true)
+			return value as Dictionary
 	return {}
 
 
 static func default_state() -> Dictionary:
 	return {
-		"schema_version": SCHEMA_VERSION,
+		"schema_version": STATE_SCHEMA_VERSION,
 		"uses": {},
 		"member_cooldowns": {},
 		"active": [],
 		"sequence": 0,
 		"last_beat": {},
 		"distraction_liability": {},
+		"tombstones": [],
 	}
 
 
@@ -67,14 +79,46 @@ static func normalize_state(value: Variant) -> Dictionary:
 		var liability := source.get("distraction_liability", {}) as Dictionary
 		if not str(liability.get("member_id", "")).is_empty() and not bool(liability.get("recorded", false)):
 			result["distraction_liability"] = liability.duplicate(true)
+	for tombstone_value in _array(source.get("tombstones", [])):
+		var tombstone := _normalize_tombstone(_dict(tombstone_value))
+		if not tombstone.is_empty():
+			result["tombstones"].append(tombstone)
+	while (result["tombstones"] as Array).size() > TOMBSTONE_LIMIT:
+		(result["tombstones"] as Array).pop_front()
 	return result
+
+
+static func restore_state(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY or (value as Dictionary).is_empty():
+		return default_state()
+	var source: Dictionary = value
+	var state_keys := ["active", "distraction_liability", "last_beat", "member_cooldowns", "schema_version", "sequence", "tombstones", "uses"]
+	if int(source.get("schema_version", 0)) not in [LEGACY_STATE_SCHEMA_VERSION, STATE_SCHEMA_VERSION] or not _exact_keys(source, state_keys) \
+			or typeof(source.get("uses")) != TYPE_DICTIONARY or typeof(source.get("member_cooldowns")) != TYPE_DICTIONARY \
+			or typeof(source.get("active")) != TYPE_ARRAY or typeof(source.get("last_beat")) != TYPE_DICTIONARY \
+			or typeof(source.get("distraction_liability")) != TYPE_DICTIONARY or typeof(source.get("tombstones")) != TYPE_ARRAY \
+			or (source.get("tombstones") as Array).size() > TOMBSTONE_LIMIT:
+		return default_state()
+	for play_key in (source.get("uses") as Dictionary).keys():
+		if str(play_key) not in PLAY_IDS or int((source.get("uses") as Dictionary).get(play_key, -1)) < 0: return default_state()
+	for active_value in source.get("active") as Array:
+		if typeof(active_value) != TYPE_DICTIONARY or not _exact_keys(active_value as Dictionary, ["activated_action", "effect", "environment_key", "expires_at_action", "game_id", "member_ids", "play_id", "sequence"]) \
+				or _normalize_active(active_value as Dictionary).is_empty(): return default_state()
+	for tombstone_value in source.get("tombstones") as Array:
+		if typeof(tombstone_value) != TYPE_DICTIONARY or not _exact_keys(tombstone_value as Dictionary, ["ended_action", "environment_key", "game_id", "member_ids", "play_id", "reason", "sequence"]) \
+				or _normalize_tombstone(tombstone_value as Dictionary).is_empty(): return default_state()
+	var last_beat: Dictionary = source.get("last_beat")
+	if not last_beat.is_empty() and not _exact_keys(last_beat, ["action_index", "member_ids", "message", "play_id"]): return default_state()
+	var liability: Dictionary = source.get("distraction_liability")
+	if not liability.is_empty() and not _exact_keys(liability, ["member_id", "recorded", "source_ref", "until_action"]): return default_state()
+	return normalize_state(source)
 
 
 static func available_actions(run_state: RunState, environment: Dictionary, game_id: String) -> Array:
 	if run_state == null or environment.is_empty() or game_id.is_empty():
 		return []
 	var result: Array = []
-	for value in _array(config().get("plays", [])):
+	for value in _array(_config_ref().get("plays", [])):
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var play: Dictionary = value
@@ -96,7 +140,7 @@ static func available_actions(run_state: RunState, environment: Dictionary, game
 
 
 static func availability(run_state: RunState, environment: Dictionary, game_id: String, play_id: String) -> Dictionary:
-	var play := definition(play_id)
+	var play := _definition_ref(play_id)
 	if run_state == null or play.is_empty() or not _string_array(play.get("game_ids", [])).has(game_id):
 		return {"available": false, "reason": "wrong_context"}
 	var state := normalize_state(run_state.crew_play_state)
@@ -144,11 +188,89 @@ static func availability(run_state: RunState, environment: Dictionary, game_id: 
 	}
 
 
-static func activate(run_state: RunState, environment: Dictionary, game_id: String, play_id: String) -> Dictionary:
+# Player-safe description of the table-presence sequence a host adapter may
+# mount. This model has no sealed adapter receipt or live actor/scene inventory,
+# so the projection is deliberately non-authoritative and never mutates state.
+static func table_presence_proposal(run_state: RunState, environment: Dictionary, game_id: String, play_id: String) -> Dictionary:
+	var base := {
+		"authoritative": false,
+		"proposal_only": true,
+		"can_mutate": false,
+		"authority_gap": "adapter_host_root_unavailable",
+		"play_id": play_id,
+		"game_id": game_id,
+		"environment_key": environment_key(environment),
+	}
+	if run_state == null or environment.is_empty() or JSON.stringify(environment) != JSON.stringify(run_state.current_environment) \
+			or str(environment.get("active_game_id", "")) != game_id:
+		return base.merged({"eligible": false, "reason": "untrusted_table_context"}, true)
+	var status := availability(run_state, environment, game_id, play_id)
+	if not bool(status.get("available", false)):
+		return base.merged({"eligible": false, "reason": str(status.get("reason", "unavailable"))}, true)
+	var play := _definition_ref(play_id)
+	var members := _string_array(status.get("member_ids", []))
+	var action_index := run_state.crew_action_index()
+	var state := normalize_state(run_state.crew_play_state)
+	var used := maxi(0, int((state.get("uses", {}) as Dictionary).get(play_id, 0)))
+	var uses_per_run := maxi(0, int(play.get("uses_per_run", 0)))
+	var window_boundaries := maxi(0, int(play.get("window_boundaries", 0)))
+	var cooldown_boundaries := maxi(0, int(play.get("cooldown_boundaries", 0)))
+	var actor_ops: Array = []
+	for member_id in members:
+		actor_ops.append({"phase_id": "arrive", "verb": "behavior", "actor_id": member_id, "state": "arriving"})
+		actor_ops.append({"phase_id": "work", "verb": "behavior", "actor_id": member_id, "state": "working"})
+		actor_ops.append({"phase_id": "detected", "verb": "behavior", "actor_id": member_id, "state": "detected"})
+		actor_ops.append({"phase_id": "clean", "verb": "behavior", "actor_id": member_id, "state": "working"})
+		actor_ops.append({"phase_id": "leave", "verb": "behavior", "actor_id": member_id, "state": "leaving"})
+	var funding: Dictionary = {}
+	if play_id == "chip_dump":
+		var effect := _dict(play.get("effect", {}))
+		funding = {
+			"model": "A_player_funded",
+			"direction": str(effect.get("direction", "")),
+			"cash_debit": maxi(0, int(effect.get("transfer_amount", 0))) + maxi(0, int(effect.get("transfer_fee", 0))),
+			"chip_credit": maxi(0, int(effect.get("transfer_amount", 0))),
+			"fee_sink": maxi(0, int(effect.get("transfer_fee", 0))),
+		}
+	return base.merged({
+		"eligible": true,
+		"reason": "proposal_ready_host_authorization_required",
+		"member_ids": members,
+		"lifecycle_phases": ["arrive", "work", "detected_or_clean", "leave"],
+		"actor_ops": actor_ops,
+		"transition_ops": [
+			{"from": "arrive", "to": "work", "cause": "host_arrival_complete"},
+			{"from": "work", "to": "detected", "cause": "host_authenticated_detected"},
+			{"from": "work", "to": "clean", "cause": "host_authenticated_clean"},
+			{"from": "detected", "to": "leave", "cause": "host_aftermath_complete"},
+			{"from": "clean", "to": "leave", "cause": "host_window_complete"},
+		],
+		"window_state": {
+			"boundaries": window_boundaries,
+			"active": is_active(state, play_id, action_index, environment),
+			"would_expire_at_action": action_index + window_boundaries + 1 if window_boundaries > 0 else action_index,
+		},
+		"cooldown_state": {"boundaries": cooldown_boundaries, "would_end_at_action": action_index + cooldown_boundaries + 1},
+		"use_state": {"used": used, "cap": uses_per_run, "remaining": maxi(0, uses_per_run - used)},
+		"detection": {
+			"chance_percent": clampi(int(play.get("detection_chance_percent", 0)), 0, 100),
+			"heat": maxi(0, int(play.get("detection_heat", 0))),
+			"outcome_authority": "host_authenticated_only",
+			"branches": ["detected", "clean"],
+		},
+		"funding": funding,
+		"effect": _dict(play.get("effect", {})),
+		"voice_lines": _dict(play.get("voice_lines", {})),
+	}, true)
+
+
+static func activate(run_state: RunState, environment: Dictionary, game_id: String, play_id: String, host_capability: Variant = null) -> Dictionary:
+	if run_state == null or not run_state.crew_play_host_authorizes(host_capability, environment, game_id):
+		return _result(false, play_id, environment, "That crew play is not bound to the live table host.")
 	var status := availability(run_state, environment, game_id, play_id)
 	if not bool(status.get("available", false)):
 		return _result(false, play_id, environment, "That crew play is not available now.")
-	var play := definition(play_id)
+	var play := _definition_ref(play_id)
 	var state := normalize_state(run_state.crew_play_state)
 	var members := _string_array(status.get("member_ids", []))
 	var current_action := run_state.crew_action_index()
@@ -242,9 +364,9 @@ static func activate(run_state: RunState, environment: Dictionary, game_id: Stri
 	}, true)
 
 
-static func advance_boundary(run_state: RunState, environment: Dictionary) -> Array:
+static func advance_boundary(run_state: RunState, environment: Dictionary, host_capability: Variant = null) -> Array:
 	var events: Array = []
-	if run_state == null:
+	if run_state == null or not run_state.crew_play_host_authorizes(host_capability, environment, str(environment.get("active_game_id", "")), false):
 		return events
 	var state := normalize_state(run_state.crew_play_state)
 	var action_index := run_state.crew_action_index()
@@ -255,17 +377,19 @@ static func advance_boundary(run_state: RunState, environment: Dictionary) -> Ar
 		var active: Dictionary = active_value
 		var play_id := str(active.get("play_id", ""))
 		if action_index >= int(active.get("expires_at_action", 0)):
-			events.append({"type": "crew_play_ended", "play_id": play_id, "message": "%s's window closes." % str(definition(play_id).get("display_name", play_id.capitalize()))})
+			events.append({"type": "crew_play_ended", "play_id": play_id, "message": "%s's window closes." % str(_definition_ref(play_id).get("display_name", play_id.capitalize()))})
+			_append_tombstone(state, active, action_index, "window_ended")
 			continue
 		var detected := false
 		if play_id == "spotter" and action_index > int(active.get("activated_action", action_index)) and environment_key(environment) == str(active.get("environment_key", "")):
 			var pit := run_state.pit_boss_watch_status(environment)
 			if bool(pit.get("watched", false)):
-				detected = _window_detected(run_state, definition(play_id), int(active.get("sequence", 0)), action_index)
+				detected = _window_detected(run_state, _definition_ref(play_id), int(active.get("sequence", 0)), action_index)
 		if detected:
-			var heat := maxi(0, int(definition(play_id).get("detection_heat", 0)))
+			var heat := maxi(0, int(_definition_ref(play_id).get("detection_heat", 0)))
 			var applied := run_state.add_suspicion("crew_play_spotter_burned", heat, "crew_play", true, _environment_context(environment).merged({"action_kind": "cheat"}, true), true)
 			events.append({"type": "crew_play_detected", "play_id": play_id, "suspicion_delta": applied, "message": "The pit sweep catches Switch signaling the count. Spotter burns; Heat +%d." % applied})
+			_append_tombstone(state, active, action_index, "detected")
 			continue
 		active_next.append(active)
 	state["active"] = active_next
@@ -290,7 +414,7 @@ static func active_status(state_value: Variant, action_index: int, environment: 
 		var play_id := str(active.get("play_id", ""))
 		result.append({
 			"play_id": play_id,
-			"display_name": str(definition(play_id).get("display_name", play_id.capitalize())),
+			"display_name": str(_definition_ref(play_id).get("display_name", play_id.capitalize())),
 			"member_ids": _string_array(active.get("member_ids", [])),
 			"remaining_boundaries": maxi(0, int(active.get("expires_at_action", 0)) - action_index),
 			"effect": (active.get("effect", {}) as Dictionary).duplicate(true) if typeof(active.get("effect", {})) == TYPE_DICTIONARY else {},
@@ -319,7 +443,7 @@ static func distraction_grievance_candidate(state_value: Variant, action_index: 
 	var liability: Dictionary = state.get("distraction_liability", {}) if typeof(state.get("distraction_liability", {})) == TYPE_DICTIONARY else {}
 	if liability.is_empty() or bool(liability.get("recorded", false)) or action_index > int(liability.get("until_action", -1)):
 		return {}
-	var threshold := maxi(1, int(config().get("security_consequence_heat", 65)))
+	var threshold := maxi(1, int(_config_ref().get("security_consequence_heat", 65)))
 	if heat_before >= threshold or heat_after < threshold:
 		return {}
 	return liability.duplicate(true)
@@ -333,7 +457,7 @@ static func mark_distraction_grievance_recorded(state_value: Variant) -> Diction
 
 static func validate_content(member_ids: Array) -> Array:
 	var failures: Array = []
-	var source := config()
+	var source := _config_ref()
 	if int(source.get("schema_version", 0)) != SCHEMA_VERSION:
 		failures.append("plays.json schema_version must match CrewPlayModel.")
 	var seen: Array = []
@@ -388,11 +512,11 @@ static func _concurrency_allows(state: Dictionary, play_id: String, action_index
 	var active := active_status(state, action_index, environment)
 	if active.is_empty():
 		return true
-	if active.size() < maxi(1, int(config().get("active_window_cap", 1))):
+	if active.size() < maxi(1, int(_config_ref().get("active_window_cap", 1))):
 		return true
 	for active_value in active:
 		var pair := "%s:%s" % [str((active_value as Dictionary).get("play_id", "")), play_id]
-		if _string_array(config().get("pairing_exceptions", [])).has(pair):
+		if _string_array(_config_ref().get("pairing_exceptions", [])).has(pair):
 			return true
 	return false
 
@@ -481,6 +605,39 @@ static func _normalize_active(value: Dictionary) -> Dictionary:
 	}
 
 
+static func _append_tombstone(state: Dictionary, active: Dictionary, ended_action: int, reason: String) -> void:
+	var tombstones := _array(state.get("tombstones", []))
+	tombstones.append({
+		"play_id": str(active.get("play_id", "")),
+		"member_ids": _string_array(active.get("member_ids", [])),
+		"environment_key": str(active.get("environment_key", "")),
+		"game_id": str(active.get("game_id", "")),
+		"sequence": maxi(0, int(active.get("sequence", 0))),
+		"ended_action": maxi(0, ended_action),
+		"reason": reason,
+	})
+	while tombstones.size() > TOMBSTONE_LIMIT:
+		tombstones.pop_front()
+	state["tombstones"] = tombstones
+
+
+static func _normalize_tombstone(value: Dictionary) -> Dictionary:
+	var play_id := str(value.get("play_id", ""))
+	var reason := str(value.get("reason", ""))
+	if not PLAY_IDS.has(play_id) or reason not in ["window_ended", "detected"] or str(value.get("environment_key", "")).is_empty() \
+			or not _string_array(_definition_ref(play_id).get("game_ids", [])).has(str(value.get("game_id", ""))):
+		return {}
+	return {
+		"play_id": play_id,
+		"member_ids": _string_array(value.get("member_ids", [])),
+		"environment_key": str(value.get("environment_key", "")),
+		"game_id": str(value.get("game_id", "")),
+		"sequence": maxi(0, int(value.get("sequence", 0))),
+		"ended_action": maxi(0, int(value.get("ended_action", 0))),
+		"reason": reason,
+	}
+
+
 static func _string_array(value: Variant) -> Array:
 	var result: Array = []
 	for entry in _array(value):
@@ -490,5 +647,15 @@ static func _string_array(value: Variant) -> Array:
 	return result
 
 
+static func _dict(value: Variant) -> Dictionary:
+	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+
+
 static func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+
+
+static func _exact_keys(value: Dictionary, expected: Array) -> bool:
+	var keys := value.keys(); keys.sort()
+	var exact := expected.duplicate(); exact.sort()
+	return keys == exact

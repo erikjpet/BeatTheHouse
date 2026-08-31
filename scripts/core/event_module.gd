@@ -226,10 +226,28 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		conclusion_animation = "bankroll_transfer"
 	result["conclusion_animation"] = conclusion_animation
 	if get_id() == "crew_favor_delivery" and choice_key == "run_package":
+		var delivery_rollback := run_state.to_dict()
+		var delivery_rollback_environment := run_state.current_environment.duplicate(true)
+		var delivery_rollback_world_map := run_state.world_map.duplicate(true)
+		var delivery_rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
 		var delivery_result := run_state.resolve_crew_favor_delivery_job(choice_key, {
 			"success": consequences,
 			"failure": _copy_dict(selected_choice.get("streets_failure", {})),
 		})
+		var sequence_schedule := {"ok": true, "inactive": true}
+		if bool(delivery_result.get("ok", false)):
+			sequence_schedule = _schedule_choice_world_sequence(run_state, selected_choice, delivery_result)
+			if not bool(sequence_schedule.get("ok", false)):
+				run_state.from_dict(delivery_rollback)
+				run_state.current_environment = delivery_rollback_environment
+				run_state.world_map = delivery_rollback_world_map
+				run_state.grand_casino_room_states = delivery_rollback_room_states
+				result["ok"] = false
+				result["delivery_started"] = false
+				result["world_sequence_scheduled"] = false
+				result["errors"] = _copy_array(sequence_schedule.get("errors", []))
+				result["message"] = str((result["errors"] as Array)[0]) if not (result["errors"] as Array).is_empty() else "The Crew route could not be staged safely."
+				return result
 		var start_message := str(delivery_result.get("message", "The route is marked. Keep your head down."))
 		var start_deltas := _copy_dict(result.get("deltas", {}))
 		start_deltas["bankroll_delta"] = 0
@@ -250,6 +268,8 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		result["conclusion_animation"] = ""
 		result["delivery_started"] = bool(delivery_result.get("ok", false))
 		result["delivery_snapshot"] = delivery_result.get("snapshot", {})
+		result["world_sequence_scheduled"] = bool(sequence_schedule.get("ok", false)) and not bool(sequence_schedule.get("inactive", false))
+		result["world_sequence_owner_token"] = str(sequence_schedule.get("owner_token", ""))
 		apply_event_result(run_state, result)
 		return result
 	apply_event_result(run_state, result)
@@ -258,10 +278,37 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 	return result
 
 
+# Schedules an authored owner sequence using only the public result returned by
+# the existing owning model. The package id is allowlisted in trusted code;
+# authored event data cannot supply a path, model method, node, or owner token.
+func _schedule_choice_world_sequence(run_state: RunState, selected_choice: Dictionary, owner_start_result: Dictionary) -> Dictionary:
+	var package_id := str(selected_choice.get("world_sequence_package_id", "")).strip_edges()
+	if package_id.is_empty():
+		return {"ok": true, "inactive": true}
+	var snapshot := _copy_dict(owner_start_result.get("snapshot", {}))
+	var targets := _copy_array(snapshot.get("targets", []))
+	var target := _copy_dict(targets[0]) if not targets.is_empty() else {}
+	var node_id := str(target.get("node_id", "")).strip_edges()
+	var public_instance_token := str(snapshot.get("job_id", "")).strip_edges()
+	if public_instance_token.is_empty():
+		public_instance_token = str(snapshot.get("run_id", "")).strip_edges()
+	if node_id.is_empty() or public_instance_token.is_empty():
+		return {"ok": false, "errors": ["World sequence owner start result lacks a public instance or target."]}
+	return run_state.world_sequence_schedule_mount(
+		package_id,
+		public_instance_token,
+		node_id
+	)
+
+
 # Applies a shared event result and records event-specific outcomes.
-static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
+func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 	if run_state == null or not bool(result.get("ok", false)):
 		return
+	var rollback_run := run_state.to_dict()
+	var rollback_environment := run_state.current_environment.duplicate(true)
+	var rollback_world_map := run_state.world_map.duplicate(true)
+	var rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
 	var deltas: Dictionary = result.get("deltas", {})
 	var debt_settlement := _copy_dict(deltas.get("discounted_debt_settlement", {}))
 	if not debt_settlement.is_empty():
@@ -300,15 +347,30 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 			"crew_rook_ride":
 				service_result = run_state.crew_rook_begin_ride()
 			"crew_heist":
-				service_result = run_state.crew_heist_event_action(pre_hook)
+				service_result = run_state.crew_record_heist_event_result(result)
 		if not service_result.is_empty():
 			if not bool(service_result.get("ok", false)):
 				result["ok"] = false
 				result["message"] = "That Crew service is no longer available."
 				return
 			result["crew_service_result"] = service_result
-	run_state.advance_environment_turns(1)
+	var advance_result := run_state.advance_environment_turns(1)
+	if not bool(advance_result.get("ok", false)):
+		run_state.from_dict(rollback_run)
+		run_state.current_environment = rollback_environment
+		run_state.world_map = rollback_world_map
+		run_state.grand_casino_room_states = rollback_room_states
+		var advance_errors: Array = advance_result.get("errors", []) if typeof(advance_result.get("errors", [])) == TYPE_ARRAY else []
+		result["ok"] = false
+		result["message"] = str(advance_errors[0]) if not advance_errors.is_empty() else "The event boundary could not advance safely."
+		result["errors"] = advance_errors.duplicate(true)
+		return
 	GameModule.apply_result(run_state, result)
+	# Recruitment aftermath is committed from this exact resolved event result,
+	# before resolve_event removes the live placement. The host derives member,
+	# path and outcome; consequence payloads never write Crew state directly.
+	if get_id().begins_with("recruitment_") and get_id() not in ["recruitment_rook_signpost", "recruitment_rook_leads"]:
+		result["crew_recruitment_result"] = run_state.crew_record_recruitment_event_result(result)
 	for hook in deltas.get("event_hooks", []):
 		if typeof(hook) != TYPE_DICTIONARY:
 			continue
@@ -320,10 +382,8 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				_apply_trigger_event_hook(run_state, result, hook_data)
 			"hear_rumor":
 				pass
-			"crew_recruit":
-				run_state.crew_recruit_member(str(hook_data.get("member_id", "")))
-			"crew_meet":
-				run_state.crew_meet_member(str(hook_data.get("member_id", "")))
+			"crew_recruit", "crew_meet":
+				pass
 			"crew_rook_lead_closed":
 				run_state.crew_close_rook_leads_event()
 			"resolve_lender_favor":
@@ -335,6 +395,11 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 			"crew_switch_reveal", "crew_lucky_collection", "crew_knuckles_stash", "crew_knuckles_retrieve", "crew_job_accept", "crew_practice_rig", "crew_stake_loss_choice", "crew_collection_choice", "crew_rook_ride", "crew_heist":
 				pass
 	CharacterChainModelScript.apply_to_environment(run_state, run_state.current_environment)
+	run_state.scenario_publish_event_result(result)
+	# The event action already advanced the authoritative world boundary above.
+	# Consume its correlated scenario fact on that same boundary so an accepted
+	# choice cannot leave sequence aftermath pending until another player action.
+	run_state.scenario_flush_facts()
 
 
 # Returns a no-op event result for invalid choices.

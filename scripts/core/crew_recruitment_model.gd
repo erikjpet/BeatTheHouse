@@ -8,7 +8,10 @@ extends RefCounted
 const CONFIG_PATH := "res://data/crew/recruitment.json"
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const SCHEMA_VERSION := 1
+const ENCOUNTER_STATE_SCHEMA_VERSION := 1
 const RANKS := ["stranger", "marker", "associate", "made", "inner_circle"]
+const MEETING_OUTCOMES := ["refused", "deferred", "accepted"]
+const MEETING_PATHS := ["primary", "fallback"]
 const MEMBER_IDS := [
 	"crew_rook", "crew_switch", "crew_mags", "crew_knuckles",
 	"crew_velvet", "crew_bishop", "crew_lucky",
@@ -53,6 +56,129 @@ static func contact_event_ids() -> Array:
 		if not event_id.is_empty():
 			result.append(event_id)
 	return result
+
+
+# Model-owned recruitment memory. Scene commands and their authentication stay
+# with the world adapter; this compact state records only resolved public facts.
+static func new_encounter_state() -> Dictionary:
+	return {"schema_version": ENCOUNTER_STATE_SCHEMA_VERSION, "meetings": {}, "contacts": {}}
+
+
+static func normalize_encounter_state(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = value
+	var exact_keys: Array = source.keys()
+	exact_keys.sort()
+	if exact_keys != ["contacts", "meetings", "schema_version"] or typeof(source.get("schema_version")) != TYPE_INT \
+			or int(source.get("schema_version", 0)) != ENCOUNTER_STATE_SCHEMA_VERSION:
+		return {}
+	var meetings := _normalize_meeting_rows(source.get("meetings", {}))
+	var contacts := _normalize_contact_rows(source.get("contacts", {}), meetings)
+	if meetings.is_empty() and not _dict(source.get("meetings", {})).is_empty():
+		return {}
+	if contacts.is_empty() and not _dict(source.get("contacts", {})).is_empty():
+		return {}
+	return {"schema_version": ENCOUNTER_STATE_SCHEMA_VERSION, "meetings": meetings, "contacts": contacts}
+
+
+static func meeting_path_public(member_id: String, path_kind: String) -> Dictionary:
+	var definition := member_definition(member_id.strip_edges())
+	var clean_path := path_kind.strip_edges().to_lower()
+	if definition.is_empty() or clean_path not in MEETING_PATHS:
+		return {}
+	var placement := _dict(definition.get(clean_path, {}))
+	return {
+		"member_id": member_id.strip_edges(),
+		"event_id": str(definition.get("event_id", "")),
+		"contact_event_id": str(definition.get("contact_event_id", "")),
+		"path_kind": clean_path,
+		"placement_kind": str(placement.get("kind", "environment")),
+		"archetype_ids": _string_array(placement.get("archetype_ids", [])),
+		"scenario_ids": _string_array(placement.get("scenario_ids", [])),
+		"layer_ids": _string_array(placement.get("layer_ids", [])),
+		"requires_system": str(placement.get("requires_system", "")),
+	}
+
+
+static func first_meeting_proposal(run_state: Variant, environment: Dictionary, member_id: String, path_kind: String, outcome: String) -> Dictionary:
+	var clean_member := member_id.strip_edges()
+	var clean_path := path_kind.strip_edges().to_lower()
+	var clean_outcome := outcome.strip_edges().to_lower()
+	var eligible := _meeting_environment_eligible(run_state, environment, clean_member, clean_path)
+	var path := meeting_path_public(clean_member, clean_path)
+	return {
+		"authoritative": false,
+		"proposal_only": true,
+		"can_mutate": false,
+		"reason": "adapter_host_root_unavailable" if eligible and clean_outcome in MEETING_OUTCOMES else "ineligible_environment",
+		"member_id": clean_member,
+		"path_kind": clean_path,
+		"outcome": clean_outcome if clean_outcome in MEETING_OUTCOMES else "",
+		"event_id": str(path.get("event_id", "")),
+		"environment_id": str(environment.get("id", environment.get("world_node_id", ""))),
+	}
+
+
+static func contact_proposal(run_state: Variant, environment: Dictionary, member_id: String) -> Dictionary:
+	var clean_member := member_id.strip_edges()
+	if not (run_state is RunState) or not MEMBER_IDS.has(clean_member) or JSON.stringify(environment) != JSON.stringify(run_state.current_environment) \
+			or not run_state.crew_member_present(clean_member, environment):
+		return {"authoritative": false, "proposal_only": true, "can_mutate": false, "reason": "ineligible_environment", "member_id": clean_member}
+	var standing: String = str(run_state.crew_rank(clean_member))
+	var aggrieved: bool = not run_state.crew_grievances(clean_member).is_empty()
+	var job_out := false
+	for job_value in run_state.crew_jobs.values():
+		var job := _dict(job_value)
+		if str(job.get("member_id", "")) == clean_member and str(job.get("status", "")) in ["offered", "accepted", "active"]:
+			job_out = true
+			break
+	var contact_state := "aggrieved" if aggrieved else ("job_out" if job_out else ("trusted" if standing in ["made", "inner_circle"] else "familiar"))
+	return {
+		"authoritative": false,
+		"proposal_only": true,
+		"can_mutate": false,
+		"reason": "adapter_host_root_unavailable",
+		"member_id": clean_member,
+		"standing": standing,
+		"contact_state": contact_state,
+		"contact_event_id": str(member_definition(clean_member).get("contact_event_id", "")),
+	}
+
+
+static func record_first_meeting(state_value: Variant, _member_id: String, _path_kind: String, _outcome: String, _action_index: int = 0, _authenticated_adapter_outcome: Dictionary = {}) -> Dictionary:
+	var state := normalize_encounter_state(state_value)
+	return state
+
+
+static func record_contact(state_value: Variant, _member_id: String, _standing: String, _aggrieved: bool, _job_out: bool, _action_index: int = 0, _authenticated_adapter_outcome: Dictionary = {}) -> Dictionary:
+	var state := normalize_encounter_state(state_value)
+	return state
+
+
+static func encounter_public_state(state_value: Variant, member_id: String) -> Dictionary:
+	var state := normalize_encounter_state(state_value)
+	var clean_member := member_id.strip_edges()
+	if state.is_empty() or not MEMBER_IDS.has(clean_member):
+		return {}
+	var meeting := _dict(_dict(state.get("meetings", {})).get(clean_member, {}))
+	var contact := _dict(_dict(state.get("contacts", {})).get(clean_member, {}))
+	if meeting.is_empty():
+		return {"member_id": clean_member, "meeting_state": "unmet", "contact_available": false}
+	var outcome := str(meeting.get("outcome", ""))
+	var actor_state := "guarded" if outcome == "refused" else ("waiting" if outcome == "deferred" else "contact")
+	return {
+		"member_id": clean_member,
+		"meeting_state": outcome,
+		"path_kind": str(meeting.get("path_kind", "")),
+		"first_path_kind": str(meeting.get("first_path_kind", "")),
+		"first_outcome": str(meeting.get("first_outcome", "")),
+		"actor_state": actor_state,
+		"aftermath_id": str(meeting.get("aftermath_id", "")),
+		"contact_available": outcome == "accepted",
+		"standing": str(contact.get("standing", "")),
+		"contact_state": str(contact.get("contact_state", "")),
+	}
 
 
 static func apply_to_environment(run_state: RunState, environment: Dictionary) -> void:
@@ -182,7 +308,7 @@ static func contact_choices(run_state: RunState, _environment: Dictionary, membe
 		var sweep := run_state.sweep_status()
 		if run_state.crew_capability_active("sweep_intel") and choices.size() < 3:
 			var sweep_text := "Sweep is quiet for now."
-			if bool(sweep.get("active", false)):
+			if bool(sweep.get("available", false)):
 				var current_node := str(sweep.get("current_node_id", "")).replace("_", " ").capitalize()
 				var heading_node := str(sweep.get("heading_node_id", "")).replace("_", " ").capitalize()
 				var heading_suffix := ""
@@ -326,7 +452,12 @@ static func presence_for_environment(run_state: RunState, environment: Dictionar
 			continue
 		var lines := _dict(definition.get("presence_lines", {}))
 		var line := str(lines.get(rank, lines.get("marker", ""))).strip_edges()
-		result.append({"member_id": member_id, "rank": rank, "line": line})
+		var entry := {"member_id": member_id, "rank": rank, "line": line}
+		var aftermath := run_state.crew_recruitment_public_state(member_id)
+		if not aftermath.is_empty() and str(aftermath.get("meeting_state", "unmet")) != "unmet":
+			entry["actor_state"] = str(aftermath.get("actor_state", ""))
+			entry["aftermath_id"] = str(aftermath.get("aftermath_id", ""))
+		result.append(entry)
 	return result
 
 
@@ -350,12 +481,17 @@ static func _back_room_residency(run_state: RunState, segment: int) -> Array:
 		var member_id := str(member_value)
 		var rank := run_state.crew_rank(member_id)
 		var lines := _dict(member_definition(member_id).get("presence_lines", {}))
-		result.append({
+		var entry := {
 			"member_id": member_id,
 			"rank": rank,
 			"line": str(lines.get(rank, lines.get("marker", ""))).strip_edges(),
 			"resident": true,
-		})
+		}
+		var aftermath := run_state.crew_recruitment_public_state(member_id)
+		if not aftermath.is_empty() and str(aftermath.get("meeting_state", "unmet")) != "unmet":
+			entry["actor_state"] = str(aftermath.get("actor_state", ""))
+			entry["aftermath_id"] = str(aftermath.get("aftermath_id", ""))
+		result.append(entry)
 	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("member_id", "")) < str(b.get("member_id", "")))
 	return result
 
@@ -423,6 +559,27 @@ static func _location_matches(location: Dictionary, environment: Dictionary) -> 
 	return not archetype_ids.is_empty() or not scenario_ids.is_empty()
 
 
+static func _meeting_environment_eligible(run_state: Variant, environment: Dictionary, member_id: String, path_kind: String) -> bool:
+	if not (run_state is RunState) or environment.is_empty() or not MEMBER_IDS.has(member_id) or path_kind not in MEETING_PATHS \
+			or JSON.stringify(environment) != JSON.stringify(run_state.current_environment):
+		return false
+	# Rook's loan/legacy-marker authority is owned by the shipped debt encounter,
+	# not by an environment placement this model can authenticate.
+	if member_id == "crew_rook":
+		return false
+	var definition := member_definition(member_id)
+	var location := _dict(definition.get(path_kind, {}))
+	if location.is_empty() or placement_kind(run_state, environment, definition) != path_kind:
+		return false
+	var scenario_ids := _string_array(location.get("scenario_ids", []))
+	if not scenario_ids.is_empty():
+		var node_id := str(environment.get("world_node_id", environment.get("archetype_id", "")))
+		var seeded_id := str(run_state.seeded_scenario_for_node(node_id).get("id", ""))
+		if seeded_id.is_empty() or seeded_id != str(environment.get("scenario_id", "")) or not scenario_ids.has(seeded_id):
+			return false
+	return true
+
+
 static func _world_node_ids(run_state: RunState) -> Array:
 	var result: Array = []
 	if run_state == null:
@@ -438,6 +595,57 @@ static func _world_node_ids(run_state: RunState) -> Array:
 
 static func _rank_at_least(rank: String, minimum: String) -> bool:
 	return RANKS.has(rank) and RANKS.has(minimum) and RANKS.find(rank) >= RANKS.find(minimum)
+
+
+static func _normalize_meeting_rows(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var result: Dictionary = {}
+	for key_value in (value as Dictionary).keys():
+		var member_id := str(key_value).strip_edges()
+		var row := _dict((value as Dictionary).get(key_value, {}))
+		var keys: Array = row.keys()
+		keys.sort()
+		if not MEMBER_IDS.has(member_id) or member_id != str(row.get("member_id", "")) \
+				or keys != ["action_index", "aftermath_id", "first_outcome", "first_path_kind", "history", "member_id", "outcome", "path_kind"] \
+				or str(row.get("outcome", "")) not in MEETING_OUTCOMES or str(row.get("first_outcome", "")) not in MEETING_OUTCOMES \
+				or str(row.get("path_kind", "")) not in MEETING_PATHS or str(row.get("first_path_kind", "")) not in MEETING_PATHS \
+				or typeof(row.get("action_index")) != TYPE_INT or int(row.get("action_index", -1)) < 0 \
+				or str(row.get("aftermath_id", "")) != "%s_%s" % [member_id, str(row.get("outcome", ""))]:
+			return {}
+		var history: Array = []
+		for fact_value in _array(row.get("history", [])):
+			var fact := _dict(fact_value)
+			var fact_keys: Array = fact.keys()
+			fact_keys.sort()
+			if fact_keys != ["action_index", "outcome", "path_kind"] or str(fact.get("outcome", "")) not in MEETING_OUTCOMES \
+					or str(fact.get("path_kind", "")) not in MEETING_PATHS or typeof(fact.get("action_index")) != TYPE_INT \
+					or int(fact.get("action_index", -1)) < 0:
+				return {}
+			history.append(fact)
+		if history.is_empty():
+			return {}
+		row["history"] = history
+		result[member_id] = row
+	return result
+
+
+static func _normalize_contact_rows(value: Variant, meetings: Dictionary) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var result: Dictionary = {}
+	for key_value in (value as Dictionary).keys():
+		var member_id := str(key_value).strip_edges()
+		var row := _dict((value as Dictionary).get(key_value, {}))
+		var keys: Array = row.keys()
+		keys.sort()
+		if not MEMBER_IDS.has(member_id) or member_id != str(row.get("member_id", "")) or keys != ["action_index", "contact_state", "member_id", "standing"] \
+				or str(_dict(meetings.get(member_id, {})).get("outcome", "")) != "accepted" or str(row.get("standing", "")) not in RANKS \
+				or str(row.get("contact_state", "")) not in ["aggrieved", "job_out", "trusted", "familiar"] \
+				or typeof(row.get("action_index")) != TYPE_INT or int(row.get("action_index", -1)) < 0:
+			return {}
+		result[member_id] = row
+	return result
 
 
 static func _load_array(path: String) -> Array:

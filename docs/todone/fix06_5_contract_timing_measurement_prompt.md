@@ -1,0 +1,234 @@
+Status: DONE — INCONCLUSIVE result independently accepted, landed and post-land verified
+Board row: `fix06_5` in `docs/todo/README_0_6_board.md`
+
+# fix06_5 — Contract Suite Timing Measurement
+
+## Purpose
+
+Determine whether the unchanged `foundation_contracts` wall-time guard is
+representative on an idle host. This is a measurement row, not authority to
+change the baseline, multiplier, cap, runner, tests or product.
+
+The exact measurement source is commit
+`e75f2c3d7f283d75d7faa44ac10694784b63bb25`, tree
+`099eeb0233b0d468f52aa0bc196dee4144dac536`. All five attempts must run from
+that same clean tracked tree. The machine-readable copy of this contract is
+[`docs/plans/evidence/fix06_5/predeclaration.json`](../plans/evidence/fix06_5/predeclaration.json).
+
+## Preserved historical evidence
+
+- The guard remains baseline `153.594s` times multiplier `1.50`, cap
+  `230.391s`, as committed in `tools/check_godot.ps1`.
+- A live, dirty review tree completed the native-backed Contract stage in
+  `213.643s`; a byte-identical tree later measured `231.531s`. Both ran amid
+  parallel agents/native work and are contextual evidence, not members of the
+  new idle-host series.
+- Accepted `fix06_4` head `91e050bf` retained `261.805s`; post-land main
+  `9a2022ae` retained `261.650s`. Functional assertions were green and the
+  exact supplied native addon was recorded.
+- Exact main `7c748f5b` completed all 16 Contract checks with zero functional
+  failures or stderr and `native_v3`, but retained `259.847s > 230.391s`.
+- Every historical red and green remains evidence. None may be deleted,
+  relabeled as an idle run, or used to replace one of the five attempts below.
+
+These observations motivate the measurement; they do not by themselves prove
+that the baseline is stale or authorize a cap change.
+
+## Locked environment and identities
+
+Before attempt 01, record and preserve the following once, then verify them
+again before every later attempt:
+
+1. exact Git HEAD/tree above and an empty `git status --short
+   --untracked-files=no`;
+2. Windows host name, OS build, CPU model/logical count and installed memory;
+3. Godot executable absolute path, version output and SHA-256;
+4. ignored native addon identity and successful `native_v3` qualification.
+
+Use the accepted ignored addon layout, without rebuilding it:
+
+- `addons/coin_pusher_native/coin_pusher_native.gdextension` SHA-256
+  `72EE625D61257DCBD65400E57F39077EADEDD3C265C25C83F68BC2F8EFBC9861`;
+- its `.uid` SHA-256
+  `F606704CBF202403DE82CBFD19B4160889346206EAD1D96E86C6A452B0C3A06A`;
+- both accepted native DLL names SHA-256
+  `1052770B5A96057928F67A72159D8A31B89D5591EAB7A64F07F8FCAE458E83F5`.
+
+If the layout or any identity differs, do not start the series. Record the
+precondition failure and restore the exact accepted ignored layout; never build
+or swap binaries between attempts.
+
+## Idle-host eligibility
+
+Each attempt begins only after all of these conditions pass:
+
+- no other Godot process for this project is running;
+- no project test, import, export, capture, native compile or other timed job is
+  running anywhere on the host;
+- the previous attempt has ended and at least two minutes have elapsed;
+- a fresh 60-second Windows total-CPU sample (`Get-Counter
+  '\Processor(_Total)\% Processor Time' -SampleInterval 1 -MaxSamples 60`)
+  has median at most 10% and nearest-rank p95 (sorted sample 57 of 60) at most
+  25%; preserve every raw sample;
+- AC power state and the Windows power plan are unchanged from attempt 01.
+
+If eligibility is red, wait and repeat the precheck. A red precheck is retained
+but is not a measurement attempt. Once a numbered attempt starts, it is never
+discarded, repeated or replaced, even if it fails or is interrupted.
+
+## Exact five-attempt method
+
+Run attempts 01 through 05 serially, in that order, with no sixth attempt:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\check_godot.ps1 `
+  -RequireGodot -KeepGoing -Suite Contract -FoundationSuite contracts `
+  -TimeoutSec 600 -ReportDir .tmp\fix06_5_contract_timing\run_0N
+```
+
+Replace `0N` only with `01`, `02`, `03`, `04` or `05`. Do not add
+`-AllowConcurrentGodot`, `-NoImport`, change the timeout, or change any source,
+runner setting or host identity between attempts.
+
+`-KeepGoing` is mandatory here. Without it, a budget-only stage red exits the
+wrapper from the stage helper with that stage's `126` after writing its immediate
+summary, instead of reaching normal FoundationSuite aggregation. With it, the
+wrapper preserves the same stage artifacts, reaches the dedicated aggregate
+summary path and returns wrapper exit `1` for any recorded failed stage. Because
+`-FoundationSuite contracts` takes the wrapper's dedicated FoundationSuite
+branch and exits after its summary, `-KeepGoing` does not launch the broader
+`-Suite Contract` stages. The prerequisite validation, import and script-load
+stages still run and must be green for a timing result to be eligible.
+
+For every attempt preserve the full report directory and record: start/end
+timestamp, precheck data, command, process exit, all stage durations,
+`foundation_contracts.duration_sec`, budget metadata, all 16 functional check
+results, stderr issues, timeout state, solver backend and all identity hashes.
+Report all five in attempt order, not sorted order.
+
+## Eligibility and decision rule
+
+A numbered attempt is timing-eligible only when it uses every locked identity,
+reaches the Contract result, completes all 16 functional checks with zero
+assertion/script/stderr failures, does not time out and identifies
+`native_v3`. A timing red remains eligible only when the
+`foundation_contracts` stage itself records `exit_code = 126` and that unchanged
+stage-time cap is the sole failed-stage reason. The outer `check_godot.ps1`
+wrapper exit `1` is timing-eligible if and only if that sole stage-126 budget
+result caused it while all functional, stderr, timeout and identity predicates
+above remain green. Every attempt must include the predeclared `-KeepGoing`;
+wrapper exit `126` from an early stage exit is not timing-eligible. No other
+nonzero stage or wrapper exit is timing-eligible.
+
+- If any of the five attempts is not timing-eligible, preserve it and classify
+  the five-run timing conclusion as **INCONCLUSIVE**. Route the functional,
+  identity or host interruption separately; do not substitute another run.
+- If all five are eligible, compute the median of their exact
+  `foundation_contracts.duration_sec` values: sort ascending and use value 3
+  of 5. Do not round before comparison.
+- Median `<= 230.391s`: the committed guard is **SUPPORTED BY THIS SERIES**.
+  Individual reds remain reported as variance; no baseline/cap change follows.
+- Median `> 230.391s`: record **STALE-BASELINE CANDIDATE** and prepare an
+  owner-visible rebaseline proposal containing all five values, min/median/max,
+  date, host and method. This row still does not change the baseline or cap;
+  owner authorization, independent review and a separate committed decision
+  are required first.
+
+Do not call the baseline stale before five eligible results exist. Never select
+only passing runs, average away a functional failure, raise a cap to clear the
+series, or rerun until green.
+
+## Boundaries and completion
+
+Measurement execution may write only ignored evidence under
+`.tmp/fix06_5_contract_timing/` plus later documentation records. No product,
+test, runner, baseline, multiplier, cap, schema, migration, RNG, golden, native
+source or build change belongs to this row. Do not perform visual capture,
+remote, release, version, publish or package actions.
+
+After the five attempts: commit the complete honest result record, obtain
+independent implementation/evidence review, land only the accepted docs/evidence
+payload, repeat a proportionate post-land documentation/evidence check and then
+update the board and ledger. The row remains IN_PROGRESS until those steps are
+complete.
+
+## Execution result — 2026-08-26
+
+The accepted native addon was copied without rebuild into a detached clean
+worktree at exact source `e75f2c3d` / tree `099eeb0`. On host
+`DESKTOP-1950ULQ` (Windows 10 build 19045, i9-9900K, 16 logical processors,
+68,653,654,016 bytes installed memory), Godot
+`4.6.stable.official.89cea1439` at SHA-256 `FC759F9D...AD271AE` imported with
+exit 0 and the native smoke passed with backend `native_v3`. The power plan was
+Balanced (`381b4222-f694-41f0-9685-ff5bb260df2e`) on a desktop with no battery
+detected.
+
+The first candidate idle sample was retained as red: 60 samples, median
+`7.37561761081066%`, nearest-rank p95 `93.1980750662089%`. Its replacement
+precheck was eligible: 60 samples, median `6.76016865331285%`, nearest-rank p95
+`12.368124562579%`, maximum `22.0422867475001%`, with zero Godot processes
+before and after.
+
+Numbered attempt 01 then ran the exact predeclared command, including mandatory
+`-KeepGoing`, once. The orchestrating shell displayed start
+`22:14:41.3296803-05:00`, end `22:15:30.8813904-05:00`, validation PASS in
+`49.157s`, wrapper exit 1 and `Godot was not found` before import. Those values
+are operator-observed: no outer wrapper transcript was preserved, and the
+retained `run_01` directory contains only zero-byte validation stdout/stderr,
+so they are not independently verifiable from raw attempt artifacts. The child
+PowerShell process had not received an explicit `GODOT_BIN`, while the detached
+clean worktree deliberately had no ignored `.tools` installation. Attempt 01
+is therefore **not timing-eligible** and provides no Contract duration. It was
+not repeated or discarded. Independent review correctly found that the five-run
+method still required attempts 02–05 once each even though attempt 01 already
+locked the final classification as INCONCLUSIVE. All four later attempts ran
+exactly once after fresh eligible prechecks and at least 120 seconds of cooldown.
+
+| Attempt | Precheck median / p95 / max | Validation / import / load | Contract stage | Functional result | Eligibility |
+| --- | --- | --- | --- | --- | --- |
+| 01 | `6.760% / 12.368% / 22.042%` | operator-observed `49.157s / not reached / not reached` | not reached | not reached | noneligible; missing Godot path |
+| 02 | `6.789% / 14.924% / 18.792%` | `48.111 / 17.820 / 24.359s` | `252.197s`, exit 126 | 16/16 pass, zero stderr, `native_v3` | eligible timing red |
+| 03 | `4.917% / 21.440% / 89.506%` | `46.402 / 16.779 / 22.931s` | `247.542s`, exit 126 | 16/16 pass, zero stderr, `native_v3` | eligible timing red |
+| 04 | `0.511% / 5.098% / 7.192%` | `46.072 / 16.580 / 22.919s` | `240.187s`, exit 126 | 16/16 pass, zero stderr, `native_v3` | eligible timing red |
+| 05 | `0.694% / 5.898% / 7.613%` | `46.004 / 16.975 / 23.005s` | `245.767s`, exit 126 | 16/16 pass, zero stderr, `native_v3` | eligible timing red |
+
+Before attempt 01, a separate red precheck was retained at median `7.376%`,
+p95 `93.198%` and max `94.845%`; it did not consume an attempt. For attempt 02,
+two other agents performed static source/RCA work after the attempt began until
+the PM paused them. They ran no Godot, test, import, export, capture, native
+compile or other timed job, so this disclosed activity does not violate the
+literal timed-job exclusion. Attempts 03–05 ran with those agents paused.
+
+The final series classification is **INCONCLUSIVE** because attempt 01 was
+noneligible. Attempts 02–05 were all timing-eligible reds at `252.197`,
+`247.542`, `240.187` and `245.767s`, respectively, but the decision rule
+requires five eligible attempts. No five-value decision median is computed.
+The series cannot support the existing guard or create a stale-baseline
+candidate. The baseline, multiplier, cap,
+runner, tests and product remain unchanged. Machine-readable details are in
+[`docs/plans/evidence/fix06_5/result.json`](../plans/evidence/fix06_5/result.json);
+ignored raw samples, qualification output, outer transcripts and run directories are
+preserved under `.tmp/fix06_5_contract_timing/` in both the detached measurement
+worktree and the row worktree.
+
+## Closeout
+
+The final documentation/evidence source was accepted at
+`c4e364f79fe8862dc2d7a44635d2572c1a1b2eed`, staged without semantic change at
+integration `87fa674e0e2f1f12532b1784296796402c13994b`, and landed on main at
+`4ade3ac393ee6624865b6ddf2855637aa894e210`. Independent post-land reviewer
+`/root/fix05_rereview` returned PASS on the exact landed state.
+
+Rejected head `c94a9b5e` remains preserved with its two P1 findings: attempt 01
+needed explicit operator-observed/raw-unverifiable disclosure, and attempts
+02–05 still had to run once despite the already-INCONCLUSIVE classification.
+Rejected head `6d5437c5` remains preserved with its P2 companion-log count
+finding; the accepted head corrected only those four numeric counts.
+
+The final result remains **INCONCLUSIVE**: attempt 01 is noneligible, so there
+is no five-eligible-run decision median. Eligible attempts 02–05 measured
+`252.197`, `247.542`, `240.187` and `245.767s`; each completed all 16 checks
+with zero functional/stderr/timeout failures on `native_v3`, and each exceeded
+the unchanged `230.391s` cap solely through stage exit 126. No baseline, cap,
+runner, test or product change was made. Both raw-evidence worktrees remain
+retained.

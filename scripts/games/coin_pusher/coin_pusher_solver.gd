@@ -452,6 +452,19 @@ static func native_backend_available_for_test() -> bool:
 	return _native_solver_backend() != null
 
 
+static func native_live_batch_supported() -> bool:
+	var native := _native_solver_backend()
+	return native != null and native.has_method("supports_live_batch_capture") and bool(native.call("supports_live_batch_capture"))
+
+
+static func native_live_render_batch(config: Dictionary, current: Array, previous: Array, alpha: float) -> Dictionary:
+	var native := _native_solver_backend()
+	if native == null or not native.has_method("build_live_render_batch"):
+		return {}
+	var result: Variant = native.call("build_live_render_batch", config, current, previous, alpha)
+	return result as Dictionary if typeof(result) == TYPE_DICTIONARY else {}
+
+
 static func last_step_backend_for_test() -> String:
 	return _last_step_backend
 

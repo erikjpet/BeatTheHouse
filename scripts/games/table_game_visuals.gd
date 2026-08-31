@@ -24,6 +24,58 @@ const DEFAULT_PATRON_POSITIONS := [
 ]
 
 
+# Draws the neutral projection emitted by GameRitualRuntime. This is opt-in and
+# performs no state copying, clock reads, or authoritative work during a frame.
+static func draw_ritual_projection(surface, projection: Dictionary, authored_anchors: Dictionary = {}) -> void:
+	for object_value in projection.get("scene_objects", []):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object: Dictionary = object_value
+		var object_state: Dictionary = object.get("state", {}) if typeof(object.get("state", {})) == TYPE_DICTIONARY else {}
+		if not bool(object_state.get("visible", true)):
+			continue
+		var bounds := _ritual_rect(object.get("bounds", {}))
+		if not bounds.has_area():
+			continue
+		var enabled := bool(object_state.get("enabled", true))
+		var accent := C_CYAN if enabled else C_SOFT
+		surface.draw_rect(bounds, Color(C_DARK_2.r, C_DARK_2.g, C_DARK_2.b, 0.82))
+		surface.draw_rect(bounds, Color(accent.r, accent.g, accent.b, 0.62), false, 2)
+		var label := str(object_state.get("visual", object.get("id", ""))).replace("_", " ").to_upper().left(22)
+		surface.surface_label_centered(label, Rect2(bounds.position + Vector2(4, 4), Vector2(maxf(0.0, bounds.size.x - 8.0), 18)), 10, accent)
+	for actor_value in projection.get("actors", []):
+		if typeof(actor_value) != TYPE_DICTIONARY:
+			continue
+		var actor: Dictionary = actor_value
+		var actor_state: Dictionary = actor.get("state", {}) if typeof(actor.get("state", {})) == TYPE_DICTIONARY else {}
+		if not bool(actor_state.get("visible", true)):
+			continue
+		var anchor_id := str(actor_state.get("anchor", actor.get("anchor", "")))
+		var anchor_value: Variant = authored_anchors.get(anchor_id)
+		var position := _ritual_vector(anchor_value)
+		if position == Vector2.ZERO and not authored_anchors.has(anchor_id):
+			continue
+		var behavior := str(actor_state.get("behavior", "idle"))
+		var pose := str(actor_state.get("pose", "idle"))
+		var accent := C_PINK if behavior in ["watching", "reacting"] else C_TEAL
+		surface.draw_circle(position, 18.0, Color(C_DARK_2.r, C_DARK_2.g, C_DARK_2.b, 0.96))
+		surface.draw_circle(position, 18.0, Color(accent.r, accent.g, accent.b, 0.72), false, 2)
+		surface.surface_label_centered(pose.replace("_", " ").left(14), Rect2(position + Vector2(-54, 22), Vector2(108, 16)), 9, accent)
+
+
+static func _ritual_rect(value: Variant) -> Rect2:
+	var record: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
+	return Rect2(float(record.get("x", 0)), float(record.get("y", 0)), float(record.get("w", 0)), float(record.get("h", 0)))
+
+
+static func _ritual_vector(value: Variant) -> Vector2:
+	if typeof(value) == TYPE_VECTOR2:
+		return value
+	if typeof(value) == TYPE_DICTIONARY:
+		return Vector2(float((value as Dictionary).get("x", 0)), float((value as Dictionary).get("y", 0)))
+	return Vector2.ZERO
+
+
 static func draw_room(surface, state: Dictionary, title: String, info: String = "") -> void:
 	var clock := _surface_clock(surface)
 	var low_detail := _surface_low_detail_idle(surface)
@@ -115,13 +167,14 @@ static func draw_dealer_station(surface, state: Dictionary, label_override: Stri
 	var meter := clampi(int(focus.get("attention_meter", 0)), 0, 100)
 	_draw_status_meter(surface, Rect2(566, 92, 118, 9), meter, "dealer %s" % str(focus.get("status", "watching")), C_PINK if meter >= 70 else C_YELLOW if meter >= 42 else C_TEAL)
 	_draw_status_meter(surface, Rect2(566, 116, 118, 6), int(focus.get("peek_danger", 0)), str(focus.get("gaze_phase", "read")).left(20), attention_color)
-	if peek_window:
-		_draw_neon_panel(surface, Rect2(566, 130, 122, 22), C_TEAL, 0.28)
-		var peek_label := "PEEK %.1fs" % (float(int(focus.get("lookaway_remaining_msec", 0))) / 1000.0) if looking_away else "READ WINDOW"
-		surface.surface_label_centered(peek_label, Rect2(570, 134, 114, 14), 11, C_TEAL)
-	else:
-		var label := label_override if not label_override.is_empty() else str(focus.get("body_language", focus.get("tell", "")))
-		surface.surface_label(label.left(26), Vector2(566, 142), 9, C_SOFT)
+	# A gaze phase may change the panel's presentation, but never its draw-command
+	# membership. That keeps repeated draws of one snapshot structurally stable
+	# when wall-clock time crosses into or out of a read window.
+	var panel_rect := Rect2(566, 130, 122, 22)
+	var panel_accent := C_TEAL if peek_window else C_SOFT
+	_draw_neon_panel(surface, panel_rect, panel_accent, 0.28 if peek_window else 0.05)
+	var focus_label := "PEEK %.1fs" % (float(int(focus.get("lookaway_remaining_msec", 0))) / 1000.0) if looking_away else "READ WINDOW" if peek_window else (label_override if not label_override.is_empty() else str(focus.get("body_language", focus.get("tell", ""))))
+	surface.surface_label_centered(focus_label.left(26), Rect2(570, 134, 114, 14), 11, panel_accent)
 
 
 static func draw_table_patrons(surface, state: Dictionary, positions: Array = []) -> void:
@@ -152,8 +205,10 @@ static func draw_table_patrons(surface, state: Dictionary, positions: Array = []
 		var watching := bool(patron.get("watching_player", false))
 		var covered := bool(patron.get("covered", false))
 		var risk := int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))
-		var threshold := int(patron.get("snitch_threshold", 30))
-		var tell_active := bool(patron.get("tell_active", false)) or (watching and (risk >= threshold or (phase > 0.58 and phase < 0.82)))
+		# Surface state seals whether the tell is active. Re-evaluating its phase
+		# here made two draws of the same snapshot cross a wall-clock boundary and
+		# conditionally add or remove draw commands.
+		var tell_active := bool(patron.get("tell_active", false))
 		var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
 		var character_clock := _surface_clock(surface) + float(int(patron.get("animation_offset", 0))) / 1000.0
 		_draw_table_character(surface, {

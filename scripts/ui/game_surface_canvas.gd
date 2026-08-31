@@ -72,6 +72,8 @@ var last_audio_profile_id: String = ""
 var perf_full_snapshot_calls := 0
 var perf_runtime_status_calls := 0
 var perf_draw_frame_usec_samples: Array = []
+var perf_patch_redraw_requests := 0
+var perf_reduced_motion_measurement_redraw_requests := 0
 var surface_label_fit_cache: Dictionary = {}
 var surface_text_protected_rects: Array = []
 var hit_region_group_cache: Dictionary = {}
@@ -88,6 +90,7 @@ var last_touch_press_msec: int = -100000
 var last_touch_press_position := Vector2(-100000.0, -100000.0)
 var surface_animation_redraw_accumulator := 0.0
 var surface_animation_redraw_count := 0
+var perf_surface_animation_scheduler_elapsed_sec := 0.0
 var surface_animation_handoff_until_msec := 0
 var surface_render_elapsed_sec := 0.0
 var surface_simulation_clock_msec := 0.0
@@ -141,6 +144,7 @@ func clear_runtime_state() -> void:
 	perf_draw_frame_usec_samples = []
 	surface_animation_redraw_accumulator = 0.0
 	surface_animation_redraw_count = 0
+	perf_surface_animation_scheduler_elapsed_sec = 0.0
 	surface_animation_handoff_until_msec = 0
 	surface_render_elapsed_sec = 0.0
 	surface_simulation_clock_msec = 0.0
@@ -155,6 +159,10 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	uses_foundation_snapshot = true
 	surface_render_elapsed_sec = 0.0
 	view_data = snapshot.duplicate(false)
+	# Patch-routing metadata is never renderer state. Entry assembly can merge a
+	# module patch before this boundary, so consume it defensively here as well as
+	# in apply_surface_state_patch().
+	view_data.erase("surface_defer_patch_redraw")
 	game_id = str(view_data.get("game_id", game_id))
 	state = view_data
 	surface_simulation_clock_msec = float(state.get("surface_time_msec", surface_simulation_clock_msec))
@@ -170,7 +178,10 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 func apply_surface_state_patch(patch: Dictionary) -> void:
 	if patch.is_empty():
 		return
+	var defer_redraw := bool(patch.get("surface_defer_patch_redraw", false))
 	for key in patch.keys():
+		if str(key) == "surface_defer_patch_redraw":
+			continue
 		view_data[key] = patch[key]
 	state = view_data
 	if patch.has("surface_time_msec"):
@@ -187,7 +198,9 @@ func apply_surface_state_patch(patch: Dictionary) -> void:
 		_update_drunk_distortion_overlay()
 	if patch.has("surface_animation_channels"):
 		_update_surface_animation_channels()
-	queue_redraw()
+	if not defer_redraw:
+		perf_patch_redraw_requests += 1
+		queue_redraw()
 
 
 func set_selected_index(index: int) -> void:
@@ -310,20 +323,37 @@ func reset_performance_counters() -> void:
 	perf_full_snapshot_calls = 0
 	perf_runtime_status_calls = 0
 	perf_draw_frame_usec_samples = []
+	perf_patch_redraw_requests = 0
+	perf_reduced_motion_measurement_redraw_requests = 0
 	surface_animation_redraw_count = 0
+	perf_surface_animation_scheduler_elapsed_sec = 0.0
+	if surface_game_module != null and surface_game_module.has_method("reset_renderer_performance_counters"):
+		surface_game_module.call("reset_renderer_performance_counters")
+	# Reduced motion intentionally freezes the animation scheduler. A performance
+	# sample still needs one real production-canvas draw after its counters reset
+	# so the measured state cannot be a stale pre-reset frame.
+	if reduce_motion:
+		perf_reduced_motion_measurement_redraw_requests += 1
+		queue_redraw()
 
 
 func performance_counters() -> Dictionary:
-	return {
+	var result := {
 		"full_snapshot_calls": perf_full_snapshot_calls,
 		"runtime_status_calls": perf_runtime_status_calls,
+		"patch_redraw_requests": perf_patch_redraw_requests,
+		"reduced_motion_measurement_redraw_requests": perf_reduced_motion_measurement_redraw_requests,
 		"surface_animation_redraw_count": surface_animation_redraw_count,
+		"surface_animation_scheduler_elapsed_msec": maxi(0, int(round(perf_surface_animation_scheduler_elapsed_sec * 1000.0))),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
 		"draw_frame_usec_samples": perf_draw_frame_usec_samples.duplicate(),
 		"draw_avg_ms": _draw_average_ms(),
 		"draw_p95_ms": _draw_percentile_ms(0.95),
 		"draw_max_ms": _draw_max_ms(),
 	}
+	if surface_game_module != null and surface_game_module.has_method("renderer_performance_counters"):
+		result["renderer_stage_usec_samples"] = surface_game_module.call("renderer_performance_counters")
+	return result
 
 
 func performance_live_status() -> Dictionary:
@@ -730,6 +760,31 @@ func surface_add_drag_hit(rect: Rect2, action: String, index: int = -1) -> void:
 # action. Games opt in per region; the canvas never names a game or command.
 func surface_add_hold_hit(rect: Rect2, action: String, index: int = -1) -> void:
 	hit_regions.append({"rect": rect, "action": action, "index": index, "drag": true, "keyboard_hold": true})
+
+
+# Opt-in adapter for GameRitualLayout.compile_pointer_hits(). Existing games do
+# not call this method, so their hit registration and input traces are unchanged.
+func surface_add_ritual_hits(compiled_hits: Array) -> void:
+	for index in range(compiled_hits.size()):
+		var hit_value: Variant = compiled_hits[index]
+		if typeof(hit_value) != TYPE_DICTIONARY:
+			continue
+		var hit: Dictionary = hit_value
+		var rect: Rect2 = hit.get("rect", Rect2())
+		var action := str(hit.get("action", ""))
+		if not rect.has_area() or action.is_empty():
+			continue
+		var verb := str(hit.get("verb", ""))
+		if verb == "hold":
+			surface_add_hold_hit(rect, action, index)
+		elif bool(hit.get("capture", false)):
+			surface_add_drag_hit(rect, action, index)
+		else:
+			surface_add_exact_hit(rect, action, index)
+		var registered: Dictionary = hit_regions[-1]
+		registered["ritual_pointer_id"] = str(hit.get("pointer_id", ""))
+		registered["ritual_target_region"] = str(hit.get("target_region", ""))
+		hit_regions[-1] = registered
 
 
 func surface_region_hovered(action: String, index: int = -1) -> bool:
@@ -1148,6 +1203,7 @@ func _schedule_surface_animation_redraws(delta: float) -> void:
 	var redraw_demand := _surface_animation_redraw_demand()
 	var main_redraw := bool(redraw_demand.get("main", false))
 	if main_redraw:
+		perf_surface_animation_scheduler_elapsed_sec += maxf(0.0, delta)
 		if _surface_animation_redraw_due(delta):
 			queue_redraw()
 	elif continuous_redraw_was_active:

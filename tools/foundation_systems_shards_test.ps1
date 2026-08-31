@@ -110,9 +110,10 @@ $foundationSources = @(
     (Join-Path $projectRoot "scripts/tests/foundation/check_lenders_release_saves.gd")
 )
 $foundationSourceText = ($foundationSources | ForEach-Object { Get-Content -LiteralPath $_ -Raw }) -join "`n"
-$fixtureSource = Get-Content -LiteralPath (Join-Path $projectRoot "scripts/tests/foundation/check_lenders_release_saves.gd") -Raw
-$fixtureMatch = [regex]::Match($fixtureSource, '(?s)func _fixture_library\(failures: Array\) -> ContentLibrary:(.*?)(?=\r?\n\r?\nfunc )')
+$fixtureMatch = [regex]::Match($foundationSourceText, '(?s)func _fixture_library\(failures: Array\) -> ContentLibrary:(.*?)(?=\r?\n\r?\nfunc )')
 Assert-True ($fixtureMatch.Success -and $fixtureMatch.Value.IndexOf('before_hydration := _foundation_library_fingerprint(library)') -ge 0 -and $fixtureMatch.Value.IndexOf('library._rebuild_indexes()') -gt $fixtureMatch.Value.IndexOf('before_hydration :=') -and $fixtureMatch.Value.IndexOf('library._rebuild_indexes()') -lt $fixtureMatch.Value.LastIndexOf('return library')) "Fixture ContentLibrary is not fully indexed before the immutable baseline captures it."
+$hostileFixtureMatch = [regex]::Match($foundationSourceText.Replace('library._rebuild_indexes()', '# hostile fixture omitted hydration'), '(?s)func _fixture_library\(failures: Array\) -> ContentLibrary:(.*?)(?=\r?\n\r?\nfunc )')
+Assert-True (-not ($hostileFixtureMatch.Success -and $hostileFixtureMatch.Value.IndexOf('library._rebuild_indexes()') -gt $hostileFixtureMatch.Value.IndexOf('before_hydration :=') -and $hostileFixtureMatch.Value.IndexOf('library._rebuild_indexes()') -lt $hostileFixtureMatch.Value.LastIndexOf('return library'))) "Hostile combined-source fixture without hydration was accepted."
 Assert-True ($fixtureMatch.Value.Contains('_foundation_library_fingerprint(library, false)') -and $fixtureMatch.Value.Contains('changed state outside the lazy index cache')) "Fixture hydration regression no longer proves that only the lazy index cache changes."
 Assert-True $runnerSource.Contains('var fixture_library := _fixture_library(failures)') "Foundation runner no longer reports hostile unhydrated-fixture regression failures."
 $literalUserPaths = @([regex]::Matches($foundationSourceText, 'user://[^"\s]+') | ForEach-Object { $_.Value } | Sort-Object -Unique)
@@ -147,6 +148,16 @@ foreach ($field in $requiredLibraryFields) {
 }
 
 $checkGodotSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot "check_godot.ps1") -Raw
+$validateProjectSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot "validate_project.ps1") -Raw
+$surfaceGuardDirectPattern = [regex]'\bsurface\s*\.\s*((?:surface|draw)_[A-Za-z0-9_]+)\s*\('
+$surfaceGuardDynamicPattern = [regex]'\bsurface\s*\.\s*(?:call|has_method)\s*\(\s*["''](surface_[A-Za-z0-9_]+)["'']'
+Assert-True ($validateProjectSource.Contains('$directSurfaceCallPattern = [regex]') -and $validateProjectSource.Contains('$dynamicSurfaceCallPattern = [regex]') -and $validateProjectSource.Contains('foreach ($callMatch in @($directSurfaceCallPattern.Matches($gameSource)) + @($dynamicSurfaceCallPattern.Matches($gameSource)))')) "Static SurfaceHarness parity guard patterns changed without updating their hostile contract."
+Assert-True ($surfaceGuardDirectPattern.Match('surface.surface_add_exact_hover_hit(rect, "action")').Groups[1].Value -eq "surface_add_exact_hover_hit") "Static SurfaceHarness parity guard missed a direct surface call."
+Assert-True ($surfaceGuardDirectPattern.Match('surface . draw_arc(center, radius)').Groups[1].Value -eq "draw_arc") "Static SurfaceHarness parity guard missed a whitespace-separated draw call."
+Assert-True ($surfaceGuardDynamicPattern.Match('surface.call("surface_runtime_status")').Groups[1].Value -eq "surface_runtime_status") "Static SurfaceHarness parity guard missed a literal dynamic call."
+Assert-True ($surfaceGuardDynamicPattern.Match("surface.has_method('surface_runtime_status')").Groups[1].Value -eq "surface_runtime_status") "Static SurfaceHarness parity guard missed a literal has_method call."
+Assert-True (-not $surfaceGuardDirectPattern.IsMatch('surface_alias.surface_add_exact_hover_hit(rect, "action")')) "Static SurfaceHarness parity guard exceeded its documented surface-identifier scope."
+Assert-True (-not $surfaceGuardDynamicPattern.IsMatch('surface.call(method_name)')) "Static SurfaceHarness parity guard treated a computed method name as discoverable."
 $expectedOverrides = @("BTH_DISTRIBUTION_DATA_ROOT", "BTH_DISTRIBUTION_BUILD", "BTH_META_COLLECTION_PATH", "BTH_PROFILE_INVENTORY_PATH")
 Assert-True (((Get-FoundationShardClearedEnvironmentNames) -join "|") -eq ($expectedOverrides -join "|")) "Shard persistence override clearing list is incomplete or reordered."
 Assert-True ($checkGodotSource.Contains('foreach ($overrideName in Get-FoundationShardClearedEnvironmentNames)')) "Shard launcher does not consume the validated persistence override list."

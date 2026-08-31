@@ -342,8 +342,19 @@ func _check_delivery_no_soft_lock_worst_cases(failures: Array) -> void:
 func _check_delivery_sweep_and_map_intel(failures: Array) -> void:
 	var sweep_run := _delivery_test_run("DELIVERY-SWEEP")
 	sweep_run.delivery_begin_package({"run_id": "sweep", "deadline_actions": 9, "cargo_id": "proof_case", "consumer_payload": {"failure": {"heat": 0}}})
+	_delivery_pickup_if_needed(sweep_run)
 	sweep_run.add_suspicion("fixture", 50, "test", false)
-	var swept := sweep_run.resolve_police_sweep_encounter_for_test({"node_id": sweep_run.current_world_node_id(), "segment_index": 0, "encounter_seed": 44})
+	var sweep = sweep_run.town_state.police_sweep
+	sweep.configured = true
+	sweep.disabled = false
+	sweep.start_action = int(sweep_run.town_state.action_index)
+	sweep.action_index = sweep.start_action
+	sweep.end_action = sweep.start_action + 4
+	sweep.segments = [{"node_id": sweep_run.current_world_node_id(), "start_action": sweep.start_action, "end_action": sweep.end_action, "dwell_actions": 4}]
+	sweep.segment_index = 0
+	sweep.last_encounter_segment = -1
+	sweep.last_encounter_node_id = ""
+	var swept := sweep_run.resolve_current_police_sweep_encounter()
 	if str(swept.get("outcome", "")) != "confiscation" or not str(swept.get("confiscated_item_id", "")).begins_with("delivery:") \
 		or sweep_run.delivery_has_active_run() or str((sweep_run.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "swept":
 		failures.append("Police Sweep did not confiscate active delivery cargo and fail the run.")
@@ -351,7 +362,7 @@ func _check_delivery_sweep_and_map_intel(failures: Array) -> void:
 	var intel_run := _delivery_test_run("DELIVERY-SWEEP-INTEL")
 	intel_run.delivery_begin_package({"run_id": "intel", "deadline_actions": 9})
 	var hidden_layer := intel_run.delivery_map_layer()
-	if not intel_run.sweep_status().is_empty() or JSON.stringify(hidden_layer).find("reported sweep") >= 0 \
+	if bool(intel_run.sweep_status().get("available", true)) or JSON.stringify(hidden_layer).find("reported sweep") >= 0 \
 		or JSON.stringify(hidden_layer).find("current_node_id") >= 0 or JSON.stringify(hidden_layer).find("heading_node_id") >= 0:
 		failures.append("Courier risk read leaked unearned Police Sweep position or heading.")
 	if (hidden_layer.get("edge_reads", []) as Array).is_empty() or str((hidden_layer.get("cargo", {}) as Dictionary).get("label", "")).is_empty():
@@ -366,7 +377,7 @@ func _check_delivery_save_and_migration(failures: Array) -> void:
 	source.delivery_complete_handoff(first_target)
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(source.to_dict())
-	if JSON.stringify(restored.delivery_snapshot()) != JSON.stringify(source.delivery_snapshot()) or int(restored.delivery_snapshot().get("schema_version", 0)) != 1:
+	if JSON.stringify(restored.delivery_snapshot()) != JSON.stringify(source.delivery_snapshot()) or int(restored.delivery_snapshot().get("schema_version", 0)) != DeliveryRunModelTestScript.SCHEMA_VERSION:
 		failures.append("Schema-versioned delivery state did not round-trip mid-job.")
 
 	var legacy := source.to_dict()
@@ -434,6 +445,7 @@ func _delivery_first_target(run_state: RunState) -> String:
 
 
 func _delivery_enter_node(run_state: RunState, node_id: String) -> Dictionary:
+	_delivery_pickup_if_needed(run_state)
 	var node := DeliveryWorldMapTestScript.node_metadata_by_id(run_state.world_map, node_id)
 	run_state.world_map = DeliveryWorldMapTestScript.enter_node(run_state.world_map, node_id, {})
 	run_state.current_environment = {
@@ -447,9 +459,17 @@ func _delivery_enter_node(run_state: RunState, node_id: String) -> Dictionary:
 
 
 func _delivery_generate_and_arrive(run_state: RunState, node_id: String) -> Dictionary:
+	_delivery_pickup_if_needed(run_state)
 	var route := DeliveryWorldMapTestScript.new(null).route_for_target(run_state.world_map, run_state.current_world_node_id(), node_id)
 	RunGeneratorScript.new(delivery_test_library).next_environment(run_state, node_id, true)
 	return run_state.delivery_resolve_travel_arrival(route, run_state.travel_route_risk(route, node_id))
+
+
+func _delivery_pickup_if_needed(run_state: RunState) -> void:
+	var physical_value: Variant = run_state.delivery_snapshot().get("physical", {})
+	var physical: Dictionary = (physical_value as Dictionary).duplicate(true) if typeof(physical_value) == TYPE_DICTIONARY else {}
+	if str(physical.get("cargo_state", "")) == "pickup_pending":
+		run_state.delivery_apply_physical_action("pickup", "foundation:pickup:%s" % str(run_state.active_delivery_run.get("run_id", "delivery")))
 
 
 func _delivery_complete_all_targets(run_state: RunState) -> bool:

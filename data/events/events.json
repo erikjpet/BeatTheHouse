@@ -2274,6 +2274,7 @@
           "id": "run_package",
           "label": "Run the package",
           "text": "You run it exactly on their clock.",
+          "world_sequence_package_id": "world06_1_crew_favor_delivery",
           "consequence_summary": "Bankroll +22, heat +4",
           "streets_failure": {
             "suspicion_delta": 9,
@@ -4062,7 +4063,7 @@
     ]}
   },
   {
-    "id": "scenario_debt_court_office_hours", "display_name": "Office Hours", "type": "lender", "interaction_mode": "interactable", "scopes": ["casino"],
+    "id": "scenario_debt_court_office_hours", "display_name": "Office Hours", "type": "lender", "interaction_mode": "interactable", "scopes": ["club"],
     "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The Collector has a chair and short pencil.", "trigger": {"type": "manual"},
     "payload": {"summary": "The Collector has a chair and short pencil.", "choices": [
       {"id": "settle_the_marker", "label": "Settle the marker", "conditions": {"requires_collectible_debt": true}, "text": "The Collector takes less. The whole note disappears.", "consequence_summary": "Active marker settled at 25% off", "consequences": {"debt_settlement_discount_percent": 25, "flags": {"debt_court_settlement": true}, "resolve_event": true}},
@@ -4475,7 +4476,7 @@
     ]}
   },
   {
-    "id": "scenario_raid_jitters_check", "display_name": "The Second Check", "type": "security", "interaction_mode": "interactable", "scopes": ["casino"],
+    "id": "scenario_raid_jitters_check", "display_name": "The Second Check", "type": "security", "interaction_mode": "interactable", "scopes": ["club"],
     "asset_path": "res://assets/art/events/heat_at_exit.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Every knock sounds official downstairs.", "trigger": {"type": "manual"},
     "payload": {"summary": "Every knock sounds official downstairs.", "choices": [
       {"id": "use_the_second_check", "label": "Use the second check", "text": "The nervous floor checks somebody else first.", "consequence_summary": "Heat -3", "consequences": {"suspicion_delta": -3, "flags": {"raid_jitters_check_used": true}, "resolve_event": true}},

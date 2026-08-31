@@ -6,16 +6,25 @@ import process from "node:process";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 
+const args = parseArgs(process.argv.slice(2));
+if (boolArg(args.selfTestConsolePolicy ?? args["self-test-console-policy"] ?? false)) {
+  runConsolePolicySelfTest();
+  process.exit(0);
+}
+if (args["self-test-post-capture-failure"]) {
+  runPostCaptureFailureSelfTest(String(args["self-test-post-capture-failure"]));
+  process.exit(0);
+}
+
 const workspacePlaywrightPackage = path.resolve(".tmp/l02_playwright/package.json");
 const requireFromPlaywrightInstall = fs.existsSync(workspacePlaywrightPackage)
   ? createRequire(pathToFileURL(workspacePlaywrightPackage))
   : createRequire(import.meta.url);
 const { chromium, firefox } = requireFromPlaywrightInstall("playwright");
-
-const args = parseArgs(process.argv.slice(2));
 const browserName = String(args.browser ?? "chrome");
 const url = String(args.url ?? "http://127.0.0.1:8060/?bth_perf=1&bth_perf_plan=l02&bth_perf_auto_quit=1");
 const outputPath = String(args.out ?? ".tmp/l02_baseline/web_report.json");
+const diagnosticPath = String(args.diagnosticOut ?? args["diagnostic-out"] ?? `${outputPath}.diagnostic.json`);
 const profileDir = String(args.profile ?? `.tmp/l02_playwright/${browserName}_profile`);
 const timeoutMs = Number(args.timeoutMs ?? args["timeout-ms"] ?? 900000);
 const cpuRate = Number(args.cpu ?? 1);
@@ -45,20 +54,45 @@ if (browserName === "chrome") {
 }
 
 let context;
+let page;
 let report = null;
 let ready = null;
 const started = Date.now();
 let navigationStarted = 0;
 let readyPageMsec = 0;
 const startupConsole = [];
+const pageErrors = [];
+const requestFailures = [];
+const failedResponses = [];
 
 try {
   context = await browserType.launchPersistentContext(profileDir, launchOptions);
-  const page = context.pages()[0] ?? await context.newPage();
+  page = context.pages()[0] ?? await context.newPage();
   if (browserName === "chrome" && cpuRate > 1) {
     const cdp = await context.newCDPSession(page);
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpuRate });
   }
+  page.on("pageerror", (error) => {
+    pageErrors.push({ message: String(error?.message ?? error), wall_msec: Date.now() - started });
+  });
+  page.on("requestfailed", (request) => {
+    requestFailures.push({
+      url: request.url(),
+      method: request.method(),
+      failure: String(request.failure()?.errorText ?? "request failed"),
+      wall_msec: Date.now() - started,
+    });
+  });
+  page.on("response", (response) => {
+    if (response.status() >= 400) {
+      failedResponses.push({
+        url: response.url(),
+        status: response.status(),
+        status_text: response.statusText(),
+        wall_msec: Date.now() - started,
+      });
+    }
+  });
   await page.addInitScript(() => {
     const originalLog = console.log.bind(console);
     console.log = (...values) => {
@@ -72,7 +106,8 @@ try {
   page.on("console", (message) => {
     const text = message.text();
     if (message.type() === "warning" || message.type() === "error" || text.includes("Blocking on the main thread")) {
-      startupConsole.push({ type: message.type(), text, wall_msec: Date.now() - started });
+      const classification = classifyConsoleEntry(message.type(), text);
+      startupConsole.push({ type: message.type(), classification, text, wall_msec: Date.now() - started });
     }
     if (text.startsWith("__BTH_READY_PAGE_MSEC__ ")) {
       readyPageMsec = Number(text.slice("__BTH_READY_PAGE_MSEC__ ".length)) || 0;
@@ -87,6 +122,13 @@ try {
       console.log(text);
     } else if (text.startsWith("BTH_PERF_REPORT ")) {
       report = safeJson(text.slice("BTH_PERF_REPORT ".length));
+      atomicWriteJson(outputPath, makeProbeEnvelope({
+        status: "report_captured",
+        enrichment: { status: "pending" },
+        browserName, cpuRate, url, coldCache, readyOnly, ready,
+        startupConsole, pageErrors, requestFailures, failedResponses,
+        wallMsec: Date.now() - started, report,
+      }));
       console.log(`BTH_PERF_REPORT_CAPTURED scenarios=${report?.scenario_count ?? "?"}`);
     } else if (text.includes("BTH_PERF")) {
       console.log(text);
@@ -123,7 +165,18 @@ try {
       decoded_bytes: entry.decodedBodySize,
     })).sort((left, right) => right.duration_msec - left.duration_msec),
   }));
+  const viewportIdentity = await page.evaluate(() => ({
+    inner_width: window.innerWidth,
+    inner_height: window.innerHeight,
+    outer_width: window.outerWidth,
+    outer_height: window.outerHeight,
+    device_pixel_ratio: window.devicePixelRatio,
+    screen_width: window.screen.width,
+    screen_height: window.screen.height,
+  }));
   const output = {
+    status: "complete",
+    enrichment: { status: "complete" },
     browser: browserName,
     browser_version: browserVersion,
     user_agent: userAgent,
@@ -134,11 +187,24 @@ try {
     ready,
     startup_timing: startupTiming,
     startup_console: startupConsole,
+    page_errors: pageErrors,
+    request_failures: requestFailures,
+    failed_responses: failedResponses,
+    viewport: viewportIdentity,
     wall_msec: Date.now() - started,
     report,
   };
-  fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));
+  atomicWriteJson(outputPath, output);
   console.log(`${readyOnly ? "Web startup" : "L0.2 web perf"} report written to ${outputPath}`);
+} catch (error) {
+  retainProbeFailure({
+    outputPath, diagnosticPath, error, browserName, cpuRate, url, coldCache,
+    readyOnly, timeoutMs, ready, report, startupConsole, pageErrors,
+    requestFailures, failedResponses, wallMsec: Date.now() - started,
+    pageUrl: page && !page.isClosed() ? page.url() : "",
+  });
+  console.error(`Web perf failure diagnostic written to ${diagnosticPath}`);
+  throw error;
 } finally {
   if (context) {
     await context.close();
@@ -168,6 +234,152 @@ function boolArg(value) {
   }
   const raw = String(value ?? "").trim().toLowerCase();
   return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+}
+
+function classifyConsoleEntry(type, text) {
+  const messageType = String(type ?? "");
+  const messageText = String(text ?? "");
+  if (messageType === "error") {
+    return "error";
+  }
+  if (messageText.includes("Blocking on the main thread")) {
+    return "main_thread_blocking_warning";
+  }
+  if (messageType === "warning"
+      && messageText.includes("The AudioContext was not allowed to start")
+      && messageText.includes("after a user gesture")) {
+    return "expected_audio_autoplay_warning";
+  }
+  return "unclassified_warning";
+}
+
+function runConsolePolicySelfTest() {
+  const cases = [
+    ["warning", "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page.", "expected_audio_autoplay_warning"],
+    ["warning", "hostile unexpected warning", "unclassified_warning"],
+    ["log", "Blocking on the main thread is very dangerous. See https://emscripten.org/docs/porting/pthreads.html", "main_thread_blocking_warning"],
+    ["error", "hostile browser error", "error"],
+  ];
+  for (const [type, text, expected] of cases) {
+    const actual = classifyConsoleEntry(type, text);
+    if (actual !== expected) {
+      throw new Error(`Console policy self-test failed: expected ${expected}, got ${actual}.`);
+    }
+  }
+  const allowed = cases.filter(([type, text]) => classifyConsoleEntry(type, text) === "expected_audio_autoplay_warning");
+  if (allowed.length !== 1) {
+    throw new Error(`Console policy self-test failed: expected exactly one allowed warning, got ${allowed.length}.`);
+  }
+  console.log("Console policy self-test passed (expected autoplay only; hostile warning/error/blocking rejected).");
+}
+
+function makeProbeEnvelope({
+  status, enrichment, browserName, cpuRate, url, coldCache, readyOnly, ready,
+  startupConsole, pageErrors, requestFailures, failedResponses, wallMsec, report,
+}) {
+  return {
+    status,
+    enrichment,
+    browser: browserName,
+    cpu_throttle_rate: cpuRate,
+    url,
+    cold_cache: coldCache,
+    ready_only: readyOnly,
+    ready,
+    startup_console: startupConsole,
+    page_errors: pageErrors,
+    request_failures: requestFailures,
+    failed_responses: failedResponses,
+    wall_msec: wallMsec,
+    report,
+  };
+}
+
+function atomicWriteJson(filePath, value) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const temporaryPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  fs.writeFileSync(temporaryPath, JSON.stringify(value, null, 2));
+  fs.renameSync(temporaryPath, filePath);
+}
+
+function retainProbeFailure({
+  outputPath, diagnosticPath, error, browserName, cpuRate, url, coldCache,
+  readyOnly, timeoutMs, ready, report, startupConsole, pageErrors,
+  requestFailures, failedResponses, wallMsec, pageUrl,
+}) {
+  const reportCaptured = report !== null;
+  const errorText = String(error?.stack ?? error);
+  if (reportCaptured) {
+    atomicWriteJson(outputPath, makeProbeEnvelope({
+      status: "report_captured_enrichment_failed",
+      enrichment: { status: "failed", error: errorText },
+      browserName, cpuRate, url, coldCache, readyOnly, ready,
+      startupConsole, pageErrors, requestFailures, failedResponses,
+      wallMsec, report,
+    }));
+  }
+  const diagnostic = {
+    status: reportCaptured ? "report_captured_enrichment_failed" : "failed_before_report",
+    captured_at: new Date().toISOString(),
+    browser: browserName,
+    cpu_throttle_rate: cpuRate,
+    url,
+    cold_cache: coldCache,
+    ready_only: readyOnly,
+    timeout_ms: timeoutMs,
+    wall_msec: wallMsec,
+    ready,
+    report_captured: reportCaptured,
+    startup_console: startupConsole,
+    page_errors: pageErrors,
+    request_failures: requestFailures,
+    failed_responses: failedResponses,
+    page_url: pageUrl,
+    error: errorText,
+  };
+  if (!fs.existsSync(diagnosticPath)) {
+    atomicWriteJson(diagnosticPath, diagnostic);
+  }
+  return diagnostic;
+}
+
+function runPostCaptureFailureSelfTest(outDir) {
+  const absoluteOutDir = path.resolve(outDir);
+  if (fs.existsSync(absoluteOutDir)) {
+    throw new Error(`Refusing to overwrite post-capture failure self-test evidence: ${absoluteOutDir}`);
+  }
+  fs.mkdirSync(absoluteOutDir, { recursive: true });
+  const output = path.join(absoluteOutDir, "report.json");
+  const diagnostic = path.join(absoluteOutDir, "report.diagnostic.json");
+  const sampleReport = { schema: "post_capture_failure_self_test", scenario_count: 1, scenarios: [{ name: "retained" }] };
+  const common = {
+    browserName: "self-test", cpuRate: 4, url: "self-test://captured", coldCache: true,
+    readyOnly: false, ready: { wall_msec: 1 }, startupConsole: [], pageErrors: [],
+    requestFailures: [], failedResponses: [], wallMsec: 2, report: sampleReport,
+  };
+  atomicWriteJson(output, makeProbeEnvelope({
+    ...common, status: "report_captured", enrichment: { status: "pending" },
+  }));
+  const enrichmentError = new Error("injected post-capture enrichment failure");
+  retainProbeFailure({
+    outputPath: output, diagnosticPath: diagnostic, error: enrichmentError,
+    browserName: common.browserName, cpuRate: common.cpuRate, url: common.url,
+    coldCache: common.coldCache, readyOnly: common.readyOnly, timeoutMs: 3,
+    ready: common.ready, report: common.report, startupConsole: common.startupConsole,
+    pageErrors: common.pageErrors, requestFailures: common.requestFailures,
+    failedResponses: common.failedResponses, wallMsec: common.wallMsec, pageUrl: common.url,
+  });
+  const retained = JSON.parse(fs.readFileSync(output, "utf8"));
+  const retainedDiagnostic = JSON.parse(fs.readFileSync(diagnostic, "utf8"));
+  if (retained.status !== "report_captured_enrichment_failed"
+      || retained.enrichment?.status !== "failed"
+      || retained.report?.scenario_count !== 1
+      || retained.report?.scenarios?.[0]?.name !== "retained"
+      || retainedDiagnostic.status !== "report_captured_enrichment_failed"
+      || retainedDiagnostic.report_captured !== true) {
+    throw new Error("Post-capture failure self-test did not retain and classify the captured report atomically.");
+  }
+  console.log(`Post-capture failure self-test passed: ${output}`);
 }
 
 function safeJson(text) {

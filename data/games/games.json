@@ -13,6 +13,22 @@
     "environment_prop": "machine",
     "intro": "A ticket machine buzzes like it knows you.",
     "description": "Buy, scratch, hope. Quietly.",
+    "environment_interactable_objects": [
+      {
+        "id": "scratch_ticket_clerk",
+        "object_id": "game_hook:scratch_tickets:scratch_ticket_clerk"
+      },
+      {
+        "id": "scratch_ticket_scalper",
+        "object_id": "dialogue:scratch_ticket_scalper",
+        "dialogue_id": "scratch_ticket_scalper_knows"
+      },
+      {
+        "id": "scratch_ticket_scalper",
+        "object_id": "dialogue:scratch_ticket_scalper",
+        "dialogue_id": "scratch_ticket_scalper_oblivious"
+      }
+    ],
     "legal_actions": [
       {
         "id": "buy_scratch_ticket",
@@ -38,6 +54,17 @@
     "environment_prop": "machine",
     "intro": "A pull-tab rack waits by the counter.",
     "description": "Peel paper. Cash the survivors.",
+    "environment_interactable_objects": [
+      {
+        "id": "ticket_redeemer",
+        "object_id": "game_hook:pull_tabs:ticket_redeemer"
+      },
+      {
+        "id": "pull_tab_clerk_dialogue",
+        "object_id": "dialogue:pull_tab_clerk",
+        "dialogue_id": "pull_tab_clerk"
+      }
+    ],
     "pull_tab_deals": [
       {
         "id": "cherry_bells",
@@ -3549,8 +3576,8 @@
     "asset_path": "res://assets/art/games/slot.png",
     "scene_asset_path": "res://assets/art/game_scenes/slot.png",
     "environment_prop": "slot_machine",
-    "intro": "Two shelves shove a pile somebody else started.",
-    "description": "Aim. Read the shelves. Walk the alarm line.",
+    "intro": "One platform shoves a pile somebody else started.",
+    "description": "Aim. Read the pile. Walk the alarm line.",
     "legal_actions": [
       {
         "id": "drop_quarter",

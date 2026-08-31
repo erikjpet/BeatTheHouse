@@ -68,7 +68,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 
 
 static func _check_scenario(library: ContentLibrary, archetype_id: String, scenario_id: String, base_event_ids: Dictionary, claimed_event_ids: Dictionary, failures: Array) -> void:
-	var definition := library.scenario(scenario_id)
+	var definition := library._scenario_readonly(scenario_id)
 	if definition.is_empty() or str(definition.get("archetype_id", "")) != archetype_id:
 		failures.append("Scenario backlog is missing %s under %s." % [scenario_id, archetype_id])
 		return
@@ -223,7 +223,7 @@ static func _number_word(value: int) -> String:
 static func _check_phase_arcs(library: ContentLibrary, failures: Array) -> void:
 	for scenario_id_value in PHASE_ARCS.keys():
 		var scenario_id := str(scenario_id_value)
-		var definition := library.scenario(scenario_id)
+		var definition := library._scenario_readonly(scenario_id)
 		var phases := _array(definition.get("phases", []))
 		var actual_ids: Array = []
 		for phase_value in phases:
@@ -260,14 +260,20 @@ static func _check_phase_arcs(library: ContentLibrary, failures: Array) -> void:
 
 
 static func _check_weight_and_layer_seams(library: ContentLibrary, failures: Array) -> void:
-	var storm_tags := _strings(library.scenario("gas_station_storm_shelter").get("town_weight_tags", []))
+	var storm_tags := _strings(library._scenario_readonly("gas_station_storm_shelter").get("town_weight_tags", []))
 	if not storm_tags.has("weather:rain") or not storm_tags.has("weather:storm"):
 		failures.append("Storm Shelter must up-weight through both rain and storm town tags.")
-	if not _strings(library.scenario("punchline_raid_jitters").get("town_weight_tags", [])).has("law:pressure"):
+	if not _strings(library._scenario_readonly("punchline_raid_jitters").get("town_weight_tags", [])).has("law:pressure"):
 		failures.append("Raid Jitters lost the Police Sweep pressure weight seam.")
-	for scenario_id in ["punchline_new_muscle", "punchline_raid_jitters"]:
-		if str(library.scenario(scenario_id).get("layer_id", "")) != "casino":
-			failures.append("Punchline backlog scenario %s must target only the casino layer." % scenario_id)
+	var expected_layers := {
+		"punchline_new_muscle": "casino",
+		"punchline_debt_court": "club",
+		"punchline_raid_jitters": "club",
+	}
+	for scenario_id_value in expected_layers.keys():
+		var scenario_id := str(scenario_id_value)
+		if str(library.scenario(scenario_id).get("layer_id", "")) != str(expected_layers.get(scenario_id, "")):
+			failures.append("Punchline backlog scenario %s lost its exact authored layer scope." % scenario_id)
 
 
 static func _check_tutorial_neutrality(library: ContentLibrary, failures: Array) -> void:

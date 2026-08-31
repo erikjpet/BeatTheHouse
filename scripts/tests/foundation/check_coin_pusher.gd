@@ -19,6 +19,8 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_played_in_opening_state(library, game_definition, failures)
 	_check_pusher_v3_plinko_bounce_and_variance(machine_definition, failures)
 	_check_pusher_v3_alive_cabinet(library, machine_definition, failures)
+	_check_pusher_v3_realtime_redraw_ownership(failures)
+	_check_pusher_v3_native_live_cache_ownership(machine_definition, failures)
 	_check_pusher_v3_presentation_view(machine_definition, failures)
 	_check_pusher_v3_rejected_mechanics_deleted(failures)
 	_check_pusher_v3_landing_skill(machine_definition, failures)
@@ -45,6 +47,99 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_items_alarm_and_rumor(library, failures)
 	_check_pusher_v3_generated_rider_production(library, failures)
 	_check_pusher_v3_solver_performance(machine_definition, failures)
+
+
+func _check_pusher_v3_realtime_redraw_ownership(failures: Array) -> void:
+	var canvas: Control = PusherGameSurfaceCanvasScript.new()
+	canvas.call("render_game_snapshot", {
+		"game_id": "coin_pusher",
+		"surface_renderer": "coin_pusher",
+		"surface_animates_idle": true,
+		"surface_defer_patch_redraw": true,
+		"coin_pusher_body_count": 1,
+	})
+	if (canvas.call("realtime_surface_state") as Dictionary).has("surface_defer_patch_redraw"):
+		failures.append("Coin Pusher entry render leaked redraw-policy metadata into public canvas state.")
+	canvas.call("reset_performance_counters")
+	canvas.call("apply_surface_state_patch", {
+		"surface_defer_patch_redraw": true,
+		"coin_pusher_body_count": 2,
+	})
+	var deferred_state: Dictionary = canvas.call("realtime_surface_state")
+	var deferred_counters: Dictionary = canvas.call("performance_counters")
+	if int(deferred_state.get("coin_pusher_body_count", 0)) != 2:
+		failures.append("Coin Pusher deferred realtime patch did not update the authoritative canvas state.")
+	if deferred_state.has("surface_defer_patch_redraw"):
+		failures.append("Coin Pusher redraw-policy metadata leaked into render state.")
+	if int(deferred_counters.get("patch_redraw_requests", -1)) != 0:
+		failures.append("Coin Pusher deferred realtime patch bypassed the maintained redraw scheduler.")
+	canvas.call("apply_surface_state_patch", {"coin_pusher_carriage_x": 55000})
+	var action_counters: Dictionary = canvas.call("performance_counters")
+	if int(action_counters.get("patch_redraw_requests", 0)) != 1:
+		failures.append("Coin Pusher action-visible dirty patch did not request an immediate redraw.")
+	canvas.call("apply_surface_state_patch", {"reduce_motion": true})
+	canvas.call("reset_performance_counters")
+	var reduced_counters: Dictionary = canvas.call("performance_counters")
+	if int(reduced_counters.get("surface_animation_redraw_count", -1)) != 0 \
+			or int(reduced_counters.get("reduced_motion_measurement_redraw_requests", 0)) != 1:
+		failures.append("Coin Pusher reduced-motion measurement did not request exactly one real dirty draw while keeping the animation scheduler frozen.")
+	canvas.free()
+
+
+func _check_pusher_v3_native_live_cache_ownership(machine_definition: Dictionary, failures: Array) -> void:
+	if not ClassDB.class_exists("CoinPusherNativeCore"):
+		return
+	var native: Object = ClassDB.instantiate("CoinPusherNativeCore")
+	if native == null or not native.has_method("supports_live_batch_capture") or not bool(native.call("supports_live_batch_capture")):
+		return
+	var state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-LIVE-CACHE-OWNERSHIP-OPENING"), machine_definition, 0)
+	var reset_rng: RngStream = _pusher_v3_rng("PUSHER-V3-LIVE-CACHE-OWNERSHIP-RESET-RNG")
+	var reset_rng_weak: WeakRef = weakref(reset_rng)
+	var reset_config := {
+		"input_trace": [{"tick": int(state.get("tick", 0)), "kind": "drop", "x": 50000, "density": 1}],
+		"rng": reset_rng,
+		"motor_enabled": false,
+		"live_cache_key": "foundation:ownership",
+		"live_cache_reset": true,
+		"capture_previous_views": false,
+		"capture_current_views": true,
+	}
+	var reset_value_bytes := _coin_pusher_live_cache_config_value_bytes(reset_config)
+	var reset_keys: Array = reset_config.keys().duplicate()
+	native.call("step_ticks", state, reset_config, 1)
+	if reset_config.keys() != reset_keys or _coin_pusher_live_cache_config_value_bytes(reset_config) != reset_value_bytes or reset_config.get("rng") != reset_rng:
+		failures.append("Coin Pusher native live-cache reset/new path mutated the caller's per-call config.")
+	reset_config = {}
+	reset_rng = null
+	if reset_rng_weak.get_ref() != null:
+		failures.append("Coin Pusher native live-cache reset/new path retained its per-call RngStream after caller release.")
+
+	var reuse_rng: RngStream = _pusher_v3_rng("PUSHER-V3-LIVE-CACHE-OWNERSHIP-REUSE-RNG")
+	var reuse_rng_weak: WeakRef = weakref(reuse_rng)
+	var reuse_config := {
+		"input_trace": [{"tick": int(state.get("tick", 0)), "kind": "carriage", "x": 61000}],
+		"rng": reuse_rng,
+		"motor_enabled": true,
+		"live_cache_key": "foundation:ownership",
+		"live_cache_reset": false,
+		"capture_previous_views": true,
+		"capture_current_views": false,
+	}
+	var reuse_value_bytes := _coin_pusher_live_cache_config_value_bytes(reuse_config)
+	var reuse_keys: Array = reuse_config.keys().duplicate()
+	native.call("step_ticks", state, reuse_config, 1)
+	if reuse_config.keys() != reuse_keys or _coin_pusher_live_cache_config_value_bytes(reuse_config) != reuse_value_bytes or reuse_config.get("rng") != reuse_rng:
+		failures.append("Coin Pusher native live-cache reuse path mutated the caller's per-call config.")
+	reuse_config = {}
+	reuse_rng = null
+	if reuse_rng_weak.get_ref() != null:
+		failures.append("Coin Pusher native live-cache reuse path retained its per-call RngStream after caller release.")
+
+
+func _coin_pusher_live_cache_config_value_bytes(config: Dictionary) -> PackedByteArray:
+	var values := config.duplicate(false)
+	values.erase("rng")
+	return var_to_bytes(values)
 
 
 func _check_pusher_v3_10_idle_queue_cups_and_stack(library: ContentLibrary, game_definition: Dictionary, machine: Dictionary, failures: Array) -> void:
@@ -351,6 +446,9 @@ func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary
 	for required_cue in ["coin_pusher_coin_stack", "coin_pusher_slide", "coin_pusher_coin_metal", "coin_pusher_tray", "coin_pusher_gutter"]:
 		if not audio_cues.has(required_cue):
 			failures.append("Coin Pusher V3 physics-audio event map omitted %s: %s." % [required_cue, JSON.stringify(audio_schedule)])
+	var entry_anchor: Dictionary = game.surface_realtime_entry_anchor_patch(run_state, environment, {"surface_time_msec": 0}, initial)
+	if entry_anchor.has("surface_defer_patch_redraw"):
+		failures.append("Coin Pusher production entry-anchor patch leaked transient redraw-policy metadata into snapshot assembly.")
 	var first_patch: Dictionary = game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": 1}, initial)
 	var second_patch: Dictionary = game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": 35}, first_patch)
 	var previous: Array = second_patch.get("coin_pusher_previous_bodies", []) if typeof(second_patch.get("coin_pusher_previous_bodies", [])) == TYPE_ARRAY else []
@@ -451,6 +549,112 @@ func _check_pusher_v3_presentation_view(machine: Dictionary, failures: Array) ->
 				return
 	if canonical_after != canonical_before:
 		failures.append("Coin Pusher V3 lean public presentation projection mutated canonical solver state/outcomes.")
+
+	# The common renderer path keeps body order stable across ticks. It must use
+	# the same-index prior body without constructing a 300-entry ID dictionary,
+	# while a hostile reordering still falls back to exact ID interpolation.
+	var renderer := CoinPusherRenderer.new()
+	var interpolation_current := [
+		{"id": "front", "kind": "coin", "x": 100, "y": 100, "z": 0},
+		{"id": "rear", "kind": "coin", "x": 200, "y": 200, "z": 0},
+	]
+	var interpolation_previous := [
+		{"id": "front", "kind": "coin", "x": 0, "y": 100, "z": 0},
+		{"id": "rear", "kind": "coin", "x": 100, "y": 200, "z": 0},
+	]
+	var interpolation_current_before := JSON.stringify(interpolation_current)
+	var interpolation_previous_before := JSON.stringify(interpolation_previous)
+	var aligned_projection: Array = renderer.debug_interpolated_bodies_for_test(interpolation_current, interpolation_previous, 0.5, 700)
+	var reordered_previous := [interpolation_previous[1].duplicate(true), interpolation_previous[0].duplicate(true)]
+	var reordered_before := JSON.stringify(reordered_previous)
+	var fallback_projection: Array = renderer.debug_interpolated_bodies_for_test(interpolation_current, reordered_previous, 0.5, 701)
+	if aligned_projection != fallback_projection \
+			or aligned_projection.size() != 2 \
+			or str((aligned_projection[0] as Dictionary).get("id", "")) != "rear" \
+			or float((aligned_projection[0] as Dictionary).get("x", -1.0)) != 150.0 \
+			or str((aligned_projection[1] as Dictionary).get("id", "")) != "front" \
+			or float((aligned_projection[1] as Dictionary).get("x", -1.0)) != 50.0:
+		failures.append("Coin Pusher V3 renderer fast/fallback interpolation paths did not preserve exact ID and depth-order projection: aligned=%s fallback=%s." % [JSON.stringify(aligned_projection), JSON.stringify(fallback_projection)])
+	if JSON.stringify(interpolation_current) != interpolation_current_before \
+			or JSON.stringify(interpolation_previous) != interpolation_previous_before \
+			or JSON.stringify(reordered_previous) != reordered_before:
+		failures.append("Coin Pusher V3 renderer interpolation mutated its current/previous public view buffers.")
+
+	# Presentation serials restart for each session. Two distinct session arrays
+	# can therefore collide on serial, size, and endpoint IDs while their middle
+	# depth geometry requires a different exact order.
+	var session_a_bodies := [
+		{"id": "same_first", "y": 400, "z": 0},
+		{"id": "middle_a", "y": 300, "z": 0},
+		{"id": "middle_b", "y": 200, "z": 0},
+		{"id": "same_last", "y": 100, "z": 0},
+	]
+	var session_b_bodies := [
+		{"id": "same_first", "y": 400, "z": 0},
+		{"id": "middle_a", "y": 150, "z": 0},
+		{"id": "middle_b", "y": 350, "z": 0},
+		{"id": "same_last", "y": 100, "z": 0},
+	]
+	var session_a_before := JSON.stringify(session_a_bodies)
+	var session_b_before := JSON.stringify(session_b_bodies)
+	var session_a_order := renderer.debug_batch_body_order_for_test(session_a_bodies, 777)
+	var session_b_order := renderer.debug_batch_body_order_for_test(session_b_bodies, 777)
+	if is_same(session_a_bodies, session_b_bodies) \
+			or session_a_order != ["same_first", "middle_a", "middle_b", "same_last"] \
+			or session_b_order != ["same_first", "middle_b", "middle_a", "same_last"]:
+		failures.append("Coin Pusher V3 renderer depth cache reused stale indices across distinct session arrays with a colliding serial/key: a=%s b=%s." % [JSON.stringify(session_a_order), JSON.stringify(session_b_order)])
+	if JSON.stringify(session_a_bodies) != session_a_before or JSON.stringify(session_b_bodies) != session_b_before:
+		failures.append("Coin Pusher V3 renderer depth-cache collision guard mutated or aliased distinct session arrays.")
+
+	# Four-tick catch-up must publish only the exact final consecutive pair. The
+	# opening and published buffers remain distinct, ordered, and equivalent to
+	# canonical projection without changing save/reload results.
+	var live_simulation := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-PRESENTATION-CATCHUP"), machine, 24)
+	var expected_simulation := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-PRESENTATION-CATCHUP"), machine, 24)
+	var live_machine := {"simulation": live_simulation, "motor_started": true, "locked_down": false, "drop_queue": [], "variation_state": {}}
+	var live_session: Dictionary = CoinPusherLiveSessionScript.begin(live_machine, machine, 8814)
+	var opening_previous: Array = live_session.get("presentation_previous_bodies", [])
+	var opening_current: Array = live_session.get("presentation_current_bodies", [])
+	var opening_previous_before := JSON.stringify(opening_previous)
+	var opening_current_before := JSON.stringify(opening_current)
+	CoinPusherLiveSessionScript.advance(live_machine, 0)
+	CoinPusherSolverScript.step_ticks(expected_simulation, {"motor_enabled": true}, 3)
+	var expected_previous := CoinPusherLiveSessionScript.presentation_body_views_for_test(expected_simulation)
+	CoinPusherSolverScript.step_ticks(expected_simulation, {"motor_enabled": true}, 1)
+	var expected_current := CoinPusherLiveSessionScript.presentation_body_views_for_test(expected_simulation)
+	var catch_up := CoinPusherLiveSessionScript.advance(live_machine, 67)
+	var catch_up_previous: Array = live_session.get("presentation_previous_bodies", [])
+	var catch_up_current: Array = live_session.get("presentation_current_bodies", [])
+	if is_same(opening_previous, opening_current) or is_same(catch_up_previous, catch_up_current) \
+			or JSON.stringify(opening_previous) != opening_previous_before \
+			or JSON.stringify(opening_current) != opening_current_before:
+		failures.append("Coin Pusher V3 presentation double buffers aliased or mutated a previously published view.")
+	if int(catch_up.get("ticks", 0)) != 4 \
+			or int(live_session.get("presentation_view_serial", -1)) != 4 \
+			or catch_up_previous != expected_previous \
+			or catch_up_current != expected_current:
+		failures.append("Coin Pusher V3 bounded catch-up did not publish the exact final consecutive projection pair: ticks=%s serial=%s previous=%s current=%s." % [catch_up.get("ticks"), live_session.get("presentation_view_serial"), JSON.stringify(catch_up_previous), JSON.stringify(catch_up_current)])
+	var live_body_ids: Array = catch_up_current.map(func(body: Dictionary) -> String: return str(body.get("id", "")))
+	var solver_body_ids: Array = (live_simulation.get("bodies", []) as Array).map(func(body: Dictionary) -> String: return str(body.get("id", "")))
+	if catch_up_current.size() != (live_simulation.get("bodies", []) as Array).size() or live_body_ids != solver_body_ids:
+		failures.append("Coin Pusher V3 bounded presentation projection changed body count/order: live=%s solver=%s." % [JSON.stringify(live_body_ids), JSON.stringify(solver_body_ids)])
+	var saved := CoinPusherLiveSessionScript.make_snapshot(live_simulation, live_machine)
+	var restored := CoinPusherLiveSessionScript.restore_snapshot(saved, machine)
+	var resaved := CoinPusherLiveSessionScript.make_snapshot(restored, live_machine)
+	var restored_canonical_views := CoinPusherSolverScript.body_views(restored)
+	var restored_presentation_views := CoinPusherLiveSessionScript.presentation_body_views_for_test(restored)
+	var restored_projection_matches := restored_canonical_views.size() == restored_presentation_views.size()
+	for body_index in range(restored_canonical_views.size()):
+		if not restored_projection_matches:
+			break
+		var restored_canonical_body: Dictionary = restored_canonical_views[body_index]
+		var restored_presentation_body: Dictionary = restored_presentation_views[body_index]
+		for field in ["id", "kind", "x", "y", "z", "rest_state", "support_kind"]:
+			if restored_presentation_body.get(field) != restored_canonical_body.get(field):
+				restored_projection_matches = false
+				break
+	if JSON.stringify(resaved) != JSON.stringify(saved) or not restored_projection_matches:
+		failures.append("Coin Pusher V3 bounded presentation projection changed compact save/reload determinism or restored visual projection equivalence.")
 
 
 func _check_pusher_v3_machine_data(machine: Dictionary, failures: Array) -> void:
@@ -950,8 +1154,9 @@ func _check_pusher_v3_landing_skill(machine: Dictionary, failures: Array) -> voi
 		definitions[variation_id] = variant
 	for variation_id in definitions.keys():
 		var definition: Dictionary = definitions[variation_id]
+		var failures_before_jitter := failures.size()
 		_check_pusher_v3_production_release_jitter(str(variation_id), definition, failures)
-		if not failures.is_empty():
+		if failures.size() > failures_before_jitter:
 			return
 		var period := int((definition.get("stroke", {}) as Dictionary).get("period_ticks", 240))
 		var traversal_metrics := {}

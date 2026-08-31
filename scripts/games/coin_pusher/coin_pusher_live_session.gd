@@ -8,8 +8,11 @@ const FIXED_HZ := 60
 const MAX_CATCH_UP_TICKS := 4
 const MAX_SETTLE_TICKS := 1200
 
+static var _native_cache_generation := 0
+
 
 static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int) -> Dictionary:
+	_native_cache_generation += 1
 	if typeof(machine.get("simulation", {})) != TYPE_DICTIONARY \
 			or str((machine.get("simulation", {}) as Dictionary).get("schema", "")) != CoinPusherSolverScript.SCHEMA:
 		var snapshot: Dictionary = machine.get("settled_state", {}) if typeof(machine.get("settled_state", {})) == TYPE_DICTIONARY else {}
@@ -65,13 +68,17 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		# Presentation-only tick pair. These public views let the renderer
 		# interpolate exact contact results without reading solver internals or
 		# reconstructing a previous position from velocity.
-		"presentation_previous_bodies": opening_views,
+		"presentation_previous_bodies": opening_views.duplicate(true),
 		"presentation_current_bodies": opening_views,
 		"presentation_feature_count": _presentation_feature_count(opening_views),
 		"presentation_previous_face_y": int(simulation.get("face_y", 0)),
 		"presentation_current_face_y": int(simulation.get("face_y", 0)),
 		"presentation_view_serial": 0,
 		"presentation_audio_serial": 0,
+		# A fresh authority gets a new generation even when deterministic fixture
+		# re-entry deliberately reuses the same seed.
+		"native_cache_key": "live:%s:%s" % [seed, _native_cache_generation],
+		"native_cache_reset": true,
 	}
 	return machine["live_session"]
 
@@ -374,27 +381,64 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 	var simulation: Dictionary = machine.get("simulation", {})
 	var rng := _session_rng(session)
 	var all_events: Array = []
-	for _tick in range(maxi(0, tick_count)):
+	var safe_tick_count := maxi(0, tick_count)
+	var previous_views: Array = []
+	var previous_face_y := int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
+	if safe_tick_count == 1:
 		var current_views: Variant = session.get("presentation_current_bodies", [])
-		session["presentation_previous_bodies"] = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
-		session["presentation_previous_face_y"] = int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
+		previous_views = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
+	var native_batch := CoinPusherSolverScript.native_live_batch_supported()
+	var remaining := safe_tick_count
+	var final_result: Dictionary = {}
+	while remaining > 0:
 		var tick_value := int(simulation.get("tick", 0))
+		if safe_tick_count > 1 and not native_batch and remaining == 1:
+			previous_views = _presentation_body_views(simulation)
+			previous_face_y = int(simulation.get("face_y", 0))
 		_release_due_drop(machine, simulation, tick_value)
+		# A queued release is an authored tick boundary. Batch only up to that
+		# boundary so the queue produces the same one-release-per-tick trace.
+		var chunk_ticks := remaining
+		if remaining > 1 and not native_batch:
+			chunk_ticks = remaining - 1
+		var queue: Array = machine.get("drop_queue", []) if typeof(machine.get("drop_queue", [])) == TYPE_ARRAY else []
+		if not queue.is_empty() and typeof(queue[0]) == TYPE_DICTIONARY:
+			var next_emit_tick := int((queue[0] as Dictionary).get("next_emit_tick", tick_value))
+			chunk_ticks = mini(chunk_ticks, 1 if next_emit_tick <= tick_value else next_emit_tick - tick_value)
 		var trace_slice: Array = []
 		var cursor := int(session.get("input_cursor", 0))
 		var trace: Array = session.get("input_trace", [])
-		while cursor < trace.size() and int((trace[cursor] as Dictionary).get("tick", -1)) == tick_value:
+		while cursor < trace.size() and int((trace[cursor] as Dictionary).get("tick", -1)) < tick_value + chunk_ticks:
 			trace_slice.append(trace[cursor])
 			cursor += 1
 		session["input_cursor"] = cursor
-		var result := CoinPusherSolverScript.step_ticks(simulation, {"input_trace": trace_slice, "rng": rng, "motor_enabled": bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false))}, 1)
-		session["presentation_current_bodies"] = _presentation_body_views(simulation)
-		session["presentation_feature_count"] = _presentation_feature_count(session["presentation_current_bodies"])
-		session["presentation_current_face_y"] = int(simulation.get("face_y", 0))
-		session["presentation_view_serial"] = int(session.get("presentation_view_serial", 0)) + 1
+		var is_final_chunk := chunk_ticks == remaining
+		var result := CoinPusherSolverScript.step_ticks(simulation, {
+			"input_trace": trace_slice,
+			"rng": rng,
+			"motor_enabled": bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false)),
+			"live_cache_key": str(session.get("native_cache_key", "")) if native_batch else "",
+			"live_cache_reset": bool(session.get("native_cache_reset", false)),
+			"capture_previous_views": native_batch and safe_tick_count > 1 and is_final_chunk,
+			"capture_current_views": native_batch and is_final_chunk,
+		}, chunk_ticks)
+		final_result = result
+		session["native_cache_reset"] = false
 		all_events.append_array(result.get("events", []))
+		if native_batch and safe_tick_count > 1 and is_final_chunk:
+			previous_views = result.get("presentation_previous_bodies", []) if typeof(result.get("presentation_previous_bodies", [])) == TYPE_ARRAY else []
+			previous_face_y = int(result.get("presentation_previous_face_y", simulation.get("previous_face_y", 0)))
+		remaining -= chunk_ticks
+	if safe_tick_count > 0:
+		var current_views: Array = final_result.get("presentation_current_bodies", []) if native_batch and typeof(final_result.get("presentation_current_bodies", [])) == TYPE_ARRAY else _presentation_body_views(simulation)
+		session["presentation_previous_bodies"] = previous_views
+		session["presentation_current_bodies"] = current_views
+		session["presentation_feature_count"] = _presentation_feature_count(current_views)
+		session["presentation_previous_face_y"] = previous_face_y
+		session["presentation_current_face_y"] = int(final_result.get("presentation_current_face_y", simulation.get("face_y", 0))) if native_batch else int(simulation.get("face_y", 0))
+		session["presentation_view_serial"] = int(session.get("presentation_view_serial", 0)) + safe_tick_count
 	session["rng"] = rng.snapshot()
-	session["liveness_ticks"] = int(session.get("liveness_ticks", 0)) + maxi(0, tick_count)
+	session["liveness_ticks"] = int(session.get("liveness_ticks", 0)) + safe_tick_count
 	return {"events": all_events}
 
 

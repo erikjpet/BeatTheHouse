@@ -9,7 +9,11 @@ param(
     [switch]$VerboseStages,
     [switch]$ExhaustiveParse,
     [string]$FoundationSuite = "",
-    [switch]$AllowConcurrentGodot
+    [switch]$AllowConcurrentGodot,
+    [switch]$PostLand,
+    [string]$ExpectedMain = "",
+    [string]$NativePluginPath = "",
+    [string]$ExpectedNativePluginSha256 = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,6 +22,26 @@ $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
 $suiteKey = $Suite.ToLowerInvariant()
 $foundationSuiteKey = $FoundationSuite.Trim().ToLowerInvariant()
+$postLandInvocationErrors = New-Object System.Collections.Generic.List[string]
+if ($PostLand) {
+    if ($suiteKey -ne "smoke") {
+        $postLandInvocationErrors.Add("Post-land verification is the complete Smoke path; Suite must be Smoke.")
+        $Suite = "Smoke"
+        $suiteKey = "smoke"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($foundationSuiteKey)) {
+        $postLandInvocationErrors.Add("Post-land verification cannot narrow Smoke with FoundationSuite.")
+        $FoundationSuite = ""
+        $foundationSuiteKey = ""
+    }
+    if ($NoImport) {
+        $postLandInvocationErrors.Add("Post-land verification cannot skip the required Godot import with NoImport.")
+        $NoImport = $false
+    }
+    $RequireGodot = $true
+    $KeepGoing = $true
+    $VerboseStages = $true
+}
 $validFoundationSuites = @(
     "",
     "smoke",
@@ -301,6 +325,8 @@ $script:ReportRoot = [System.IO.Path]::GetFullPath($ReportDir)
 New-Item -ItemType Directory -Force -Path $script:ReportRoot | Out-Null
 
 $script:StageResults = New-Object System.Collections.Generic.List[object]
+$script:PostLandIdentity = $null
+$script:PostLandEndVerified = $false
 $FoundationSuiteBudgetMultiplier = 1.5
 $FoundationSuiteStageBaselinesSec = @{
     "foundation_all" = 153.768
@@ -327,6 +353,182 @@ function Get-FoundationSuiteStageBaselineSec {
         return [double]$FoundationSuiteStageBaselinesSec[$Name]
     }
     return 0.0
+}
+
+function Get-GitIdentityValue {
+    param([string[]]$Arguments)
+    $value = & git -C $root @Arguments 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        throw "git identity command failed: git $($Arguments -join ' ')"
+    }
+    return ([string]($value -join "`n")).Trim()
+}
+
+function Get-GDExtensionWindowsDebugTarget {
+    param([string]$DescriptorPath)
+    $inLibraries = $false
+    foreach ($rawLine in Get-Content -LiteralPath $DescriptorPath) {
+        $line = ([string]$rawLine).Trim()
+        if ($line -match '^\[([^\]]+)\]$') {
+            $inLibraries = $Matches[1] -ceq "libraries"
+            continue
+        }
+        if (-not $inLibraries -or $line.StartsWith("#") -or $line.StartsWith(";")) {
+            continue
+        }
+        if ($line -match '^windows\.debug\.x86_64\s*=\s*"([^"]+)"\s*$') {
+            return $Matches[1]
+        }
+    }
+    return ""
+}
+
+function Add-PostLandIdentityStage {
+    param([ValidateSet("start", "end")][string]$Phase)
+    $errors = New-Object System.Collections.Generic.List[string]
+    foreach ($invocationError in $postLandInvocationErrors) {
+        $errors.Add([string]$invocationError)
+    }
+    $identity = [ordered]@{
+        phase = $Phase
+        expected_main = ""
+        main_commit = ""
+        head_commit = ""
+        tree = ""
+        tracked_clean = $false
+        native_descriptor_path = ""
+        native_descriptor_sha256 = ""
+        native_descriptor_windows_debug_target = ""
+        native_descriptor_windows_debug_path = ""
+        native_plugin_path = ""
+        native_plugin_sha256 = ""
+        expected_native_plugin_sha256 = $ExpectedNativePluginSha256.Trim().ToUpperInvariant()
+        native_source_tree = ""
+        godot_path = if ($script:Godot) { [string]$script:Godot } else { "" }
+        godot_sha256 = if ($script:Godot -and (Test-Path -LiteralPath $script:Godot)) { (Get-FileHash -LiteralPath $script:Godot -Algorithm SHA256).Hash } else { "" }
+    }
+    try {
+        $identity.main_commit = (Get-GitIdentityValue @("rev-parse", "refs/heads/main")).ToLowerInvariant()
+        $identity.head_commit = (Get-GitIdentityValue @("rev-parse", "HEAD")).ToLowerInvariant()
+        $identity.tree = (Get-GitIdentityValue @("rev-parse", "HEAD^{tree}")).ToLowerInvariant()
+        $identity.native_source_tree = (Get-GitIdentityValue @("rev-parse", "HEAD:native/coin_pusher")).ToLowerInvariant()
+        $requestedMain = $ExpectedMain.Trim().ToLowerInvariant()
+        $identity.expected_main = if ([string]::IsNullOrWhiteSpace($requestedMain)) { $identity.main_commit } else { $requestedMain }
+        if ($identity.expected_main -notmatch '^[0-9a-f]{40}$') {
+            $errors.Add("ExpectedMain is not a full lowercase SHA-1 commit identity.")
+        }
+        if ($identity.expected_main -cne $identity.main_commit) {
+            $errors.Add("ExpectedMain does not equal the current local main ref: expected=$($identity.expected_main) main=$($identity.main_commit).")
+        }
+        if ($identity.head_commit -cne $identity.main_commit) {
+            $errors.Add("Post-land checkout is not exact current main: head=$($identity.head_commit) main=$($identity.main_commit).")
+        }
+        $trackedStatus = Get-GitIdentityValue @("status", "--porcelain", "--untracked-files=no")
+        $identity.tracked_clean = [string]::IsNullOrWhiteSpace($trackedStatus)
+        if (-not $identity.tracked_clean) {
+            $errors.Add("Post-land checkout has tracked working-tree or index changes.")
+        }
+
+        $descriptorPath = Join-Path $root "addons\coin_pusher_native\coin_pusher_native.gdextension"
+        $pluginPath = $NativePluginPath.Trim()
+        if ([string]::IsNullOrWhiteSpace($pluginPath)) {
+            $errors.Add("NativePluginPath must explicitly name the canonical Windows debug library loaded by the GDExtension descriptor.")
+        }
+        elseif (-not [System.IO.Path]::IsPathRooted($pluginPath)) {
+            $pluginPath = Join-Path $root $pluginPath
+        }
+        $descriptorPath = [System.IO.Path]::GetFullPath($descriptorPath)
+        if (-not [string]::IsNullOrWhiteSpace($pluginPath)) {
+            $pluginPath = [System.IO.Path]::GetFullPath($pluginPath)
+        }
+        $identity.native_descriptor_path = $descriptorPath
+        $identity.native_plugin_path = $pluginPath
+        if (-not [string]::IsNullOrWhiteSpace($pluginPath) -and -not (Test-PathInsideDirectory -Path $pluginPath -Directory $root)) {
+            $errors.Add("Native plugin is outside the exact post-land checkout: $pluginPath")
+        }
+        if (-not (Test-Path -LiteralPath $descriptorPath -PathType Leaf)) {
+            $errors.Add("Native plugin descriptor is missing: $descriptorPath")
+        }
+        else {
+            $identity.native_descriptor_sha256 = (Get-FileHash -LiteralPath $descriptorPath -Algorithm SHA256).Hash
+            $descriptorTarget = Get-GDExtensionWindowsDebugTarget -DescriptorPath $descriptorPath
+            $identity.native_descriptor_windows_debug_target = $descriptorTarget
+            if ([string]::IsNullOrWhiteSpace($descriptorTarget)) {
+                $errors.Add("Native plugin descriptor has no canonical windows.debug.x86_64 library target.")
+            }
+            elseif (-not $descriptorTarget.StartsWith("res://", [System.StringComparison]::Ordinal)) {
+                $errors.Add("Native plugin descriptor windows.debug.x86_64 target is not a canonical res:// path: $descriptorTarget")
+            }
+            else {
+                $descriptorPluginPath = [System.IO.Path]::GetFullPath((Join-Path $root $descriptorTarget.Substring(6).Replace('/', [System.IO.Path]::DirectorySeparatorChar)))
+                $identity.native_descriptor_windows_debug_path = $descriptorPluginPath
+                if (-not (Test-PathInsideDirectory -Path $descriptorPluginPath -Directory $root)) {
+                    $errors.Add("Native plugin descriptor Windows debug target is outside the exact post-land checkout: $descriptorPluginPath")
+                }
+                if (-not [string]::IsNullOrWhiteSpace($pluginPath) -and -not [string]::Equals($pluginPath, $descriptorPluginPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+                    $errors.Add("NativePluginPath is not the canonical Windows debug library loaded by the descriptor: supplied=$pluginPath descriptor=$descriptorPluginPath")
+                }
+            }
+        }
+        if ([string]::IsNullOrWhiteSpace($pluginPath)) {
+            # The explicit parameter error above is the authoritative failure.
+        }
+        elseif (-not (Test-Path -LiteralPath $pluginPath -PathType Leaf)) {
+            $errors.Add("Built native plugin is missing: $pluginPath")
+        }
+        else {
+            $identity.native_plugin_sha256 = (Get-FileHash -LiteralPath $pluginPath -Algorithm SHA256).Hash
+        }
+        if ($identity.expected_native_plugin_sha256 -notmatch '^[0-9A-F]{64}$') {
+            $errors.Add("ExpectedNativePluginSha256 must be the full approved Gate Service build hash.")
+        }
+        elseif ($identity.native_plugin_sha256 -cne $identity.expected_native_plugin_sha256) {
+            $errors.Add("Native plugin does not match the approved Gate Service build hash: expected=$($identity.expected_native_plugin_sha256) actual=$($identity.native_plugin_sha256).")
+        }
+        if ([string]::IsNullOrWhiteSpace($identity.godot_path) -or -not (Test-Path -LiteralPath $identity.godot_path -PathType Leaf) -or [string]::IsNullOrWhiteSpace($identity.godot_sha256)) {
+            $errors.Add("Godot executable identity is missing before the post-land gate starts.")
+        }
+        if ($Phase -eq "end" -and $null -ne $script:PostLandIdentity) {
+            foreach ($key in @("expected_main", "main_commit", "head_commit", "tree", "native_source_tree", "native_descriptor_sha256", "native_descriptor_windows_debug_target", "native_descriptor_windows_debug_path", "native_plugin_path", "native_plugin_sha256", "expected_native_plugin_sha256", "godot_path", "godot_sha256")) {
+                if ([string]$identity[$key] -cne [string]$script:PostLandIdentity[$key]) {
+                    $errors.Add("Post-land identity changed during the gate at ${key}: start=$($script:PostLandIdentity[$key]) end=$($identity[$key]).")
+                }
+            }
+        }
+    }
+    catch {
+        $errors.Add($_.Exception.Message)
+    }
+    $identityPath = Join-Path $script:ReportRoot ("post_land_identity.{0}.json" -f $Phase)
+    $identity | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $identityPath
+    $stderrPath = Join-Path $script:ReportRoot ("post_land_identity.{0}.stderr.txt" -f $Phase)
+    [System.IO.File]::WriteAllText($stderrPath, ($errors -join [Environment]::NewLine))
+    $exitCode = if ($errors.Count -eq 0) { 0 } else { 1 }
+    $script:StageResults.Add([pscustomobject][ordered]@{
+        name = "post_land_identity_$Phase"
+        command = "git/Get-FileHash"
+        arguments = @("exact current main", "tracked clean", "native descriptor and plugin SHA-256")
+        exit_code = $exitCode
+        timed_out = $false
+        duration_msec = 0
+        duration_sec = 0.0
+        suite_time_baseline_sec = 0.0
+        suite_time_budget_sec = 0.0
+        suite_time_budget_exceeded = $false
+        stderr_issue_count = $errors.Count
+        stderr_issues = @($errors)
+        stdout = $identityPath
+        stderr = $stderrPath
+        error = $errors -join " | "
+    })
+    if ($Phase -eq "start" -and $exitCode -eq 0) {
+        $script:PostLandIdentity = $identity
+    }
+    if ($Phase -eq "end") {
+        $script:PostLandEndVerified = ($exitCode -eq 0)
+    }
+    Write-Host ("{0,-28} {1,7} {2,8}ms" -f "post_land_identity_$Phase", $(if ($exitCode -eq 0) { "PASS" } else { "FAIL" }), 0)
+    return $exitCode -eq 0
 }
 
 function Invoke-ProcessStage {
@@ -479,6 +681,16 @@ function Write-TestSummary {
         suite_time_budget_multiplier = $FoundationSuiteBudgetMultiplier
         suite_time_stage_baselines_sec = $FoundationSuiteStageBaselinesSec
         stages = $stages
+    }
+    if ($PostLand) {
+        $summary["post_land"] = [ordered]@{
+            enabled = $true
+            invocation_errors = @($postLandInvocationErrors)
+            complete_import_forced = (-not $NoImport)
+            exact_main_identity = $script:PostLandIdentity
+            end_identity_verified = $script:PostLandEndVerified
+            eligible_for_done = ($failed.Count -eq 0 -and $script:PostLandEndVerified)
+        }
     }
     $summaryPath = Join-Path $script:ReportRoot "summary.json"
     $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $summaryPath
@@ -929,9 +1141,13 @@ if (-not (Enter-CheckGodotWorkspaceMutex)) {
     Write-TestSummary
     exit 125
 }
+$script:Godot = Find-Godot
+if ($PostLand -and -not (Add-PostLandIdentityStage -Phase "start")) {
+    Write-TestSummary
+    exit 1
+}
 Invoke-ProcessStage -Name "validate_project" -FilePath $powerShellExe -Arguments @("-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "validate_project.ps1"), "-Quiet") -StageTimeoutSec 120 | Out-Null
 
-$script:Godot = Find-Godot
 if (-not $script:Godot) {
     if ($RequireGodot) {
         throw "Godot was not found. Run tools/install_godot.ps1 or set GODOT_BIN."
@@ -948,6 +1164,9 @@ if (-not $NoImport) {
 }
 
 Invoke-GDScriptLoadCheck
+if ($PostLand) {
+    Invoke-GodotScript -Name "native_coin_pusher_smoke" -ScriptPath "res://tools/native_coin_pusher_smoke.gd" -StageTimeoutSec 120
+}
 
 if ($ExhaustiveParse -or $suiteKey -eq "full") {
     Invoke-ExhaustiveParse
@@ -1010,6 +1229,9 @@ switch ($suiteKey) {
     }
 }
 
+if ($PostLand) {
+    Add-PostLandIdentityStage -Phase "end" | Out-Null
+}
 Write-TestSummary
 $failedStages = @($script:StageResults | Where-Object { $_.exit_code -ne 0 })
 if ($failedStages.Count -gt 0) {

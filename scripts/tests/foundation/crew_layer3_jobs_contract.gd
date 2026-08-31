@@ -10,6 +10,7 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 
 static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_catalog(library, failures)
+	_check_host_authority(failures)
 	_check_residency(failures)
 	_check_board_and_decline(library, failures)
 	_check_delivery_kinds(failures)
@@ -17,6 +18,26 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_collection(failures)
 	_check_services_and_training(failures)
 	_check_save_round_trip(failures)
+
+
+static func _check_host_authority(failures: Array) -> void:
+	var hostile := _crew_run("L3-HOSTILE")
+	var before := hostile.to_dict()
+	for definition_value in CrewStateModelScript.job_definitions():
+		if not hostile.job_offer(definition_value).is_empty():
+			failures.append("Caller-authored %s offer crossed the host-only job boundary." % str((definition_value as Dictionary).get("id", "")))
+	if hostile.to_dict() != before or not hostile.job_accept("forged").is_empty() or not hostile.job_activate("forged").is_empty() or not hostile.job_resolve("forged", "success").is_empty():
+		failures.append("Caller-authored job lifecycle mutated RunState.")
+	var recruit_before := hostile.crew_trust("crew_switch")
+	if bool(hostile.crew_recruit_member("crew_switch").get("ok", true)) or hostile.crew_trust("crew_switch") != recruit_before:
+		failures.append("Caller-authored recruitment crossed the host-only event boundary.")
+	for definition_value in CrewStateModelScript.job_definitions():
+		var definition: Dictionary = definition_value
+		var run := _crew_run("L3-HOST-%s" % str(definition.get("id", "")))
+		run.current_environment["crew_presence"] = [{"member_id": str(definition.get("member_id", ""))}]
+		var started := run.crew_job_accept_definition(str(definition.get("id", "")))
+		if not bool(started.get("ok", false)) or str(_job_by_definition(run, str(definition.get("id", ""))).get("status", "")) != "active":
+			failures.append("Host-rooted surface did not activate shipped job %s." % str(definition.get("id", "")))
 
 
 static func _check_catalog(library: ContentLibrary, failures: Array) -> void:
@@ -256,6 +277,9 @@ static func _back_room_environment() -> Dictionary:
 
 
 static func _complete_all_handoffs(run: RunState) -> void:
+	var physical: Dictionary = run.delivery_snapshot().get("physical", {})
+	if str(physical.get("cargo_state", "")) == "pickup_pending":
+		run.delivery_apply_physical_action("pickup", "crew_layer3:pickup:%s" % str(run.active_delivery_run.get("run_id", "delivery")))
 	while run.delivery_has_active_run():
 		var snapshot := run.delivery_snapshot()
 		var pending := ""

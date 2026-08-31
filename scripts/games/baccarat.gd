@@ -9,6 +9,8 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
+const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
+const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -26,6 +28,17 @@ const BACCARAT_DEAL_CHANNEL := "baccarat_deal"
 const BACCARAT_PAYOUT_CHANNEL := "baccarat_payout"
 const DEAL_ANIMATION_DURATION_MSEC := 4200
 const PAYOUT_ANIMATION_DURATION_MSEC := 1600
+const BACCARAT_SHOE_PHASE_MSEC := 400
+const BACCARAT_DEAL_PHASE_MSEC := 1800
+const BACCARAT_SQUEEZE_PHASE_MSEC := 2400
+const BACCARAT_THIRD_CARD_PHASE_MSEC := 3600
+const BACCARAT_RITUAL_PHASES := ["betting", "shoe", "deal", "squeeze_reveal", "third_card_rule", "settlement"]
+const BACCARAT_SQUEEZE_ACTION := "baccarat_squeeze"
+const TABLE_GAME_HOST_TRANSIENT_UI_KEYS := [
+	"surface_time_msec", "drunk_scaled_surface_time_msec", "reduce_motion",
+	"selected_action_id", "selected_action_kind", "selected_index",
+	"focused_talk_speaker",
+]
 const HISTORY_LIMIT := 72
 const BACCARAT_ROAD_ROWS := 6
 const BACCARAT_ROAD_COLUMNS := 12
@@ -34,6 +47,7 @@ const PLAYER_CARD_BASE := Vector2(304, 230)
 const BANKER_CARD_BASE := Vector2(526, 166)
 const CARD_SIZE := Vector2(42, 60)
 const CONSOLE_Y := 344.0
+const BACCARAT_SQUEEZE_REGION := Rect2(382, 190, 136, 34)
 
 const BET_TARGETS := [
 	{"id": "player_pair", "label": "PLAYER PAIR", "short": "P PAIR", "type": "pair", "family": "side", "payout_key": "player_pair_payout", "rect": Rect2(262, 168, 126, 48)},
@@ -66,6 +80,26 @@ const SHOE_READ_ITEM_EFFECT_KEYS := [
 	"baccarat_edge_sort_heat_delta",
 	"skill_cheat_drunk_memory_offset",
 ]
+
+
+func sealed_action_authority_script() -> Script:
+	return ActionAuthorityScript
+
+
+func sealed_action_authority_contract() -> Dictionary:
+	return {
+		"resolve_proposal_method": &"_table_game_resolve_proposal",
+		"wager_cost_proposal_method": &"_table_game_wager_cost_proposal",
+		"host_auto_tick_method": &"_table_game_host_needs_auto_tick",
+		"surface_intent_key": "",
+		"surface_intent_index_key": "",
+		"retry_surface_actions": ["table_game_retry_pending", "baccarat_retry_pending"],
+		"cancel_surface_actions": ["table_game_cancel_pending", "baccarat_cancel_pending"],
+		"proposal_requires_apply_key": "table_game_proposal_requires_apply",
+		"authoritative_result_marker": "table_game_authoritative",
+		"place_bet_action": "",
+		"host_pointer_intent": true,
+	}
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -148,7 +182,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var selected_chip := int(session.get("selected_chip", _chip_denominations(table)[0]))
 	var total_wager := _total_wager(bets)
 	var last_result := _copy_dict(table.get("last_result", {}))
-	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var elapsed_msec := now_msec - int(last_result.get("resolved_at_msec", 0))
 	var deal_active := not last_result.is_empty() and elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC
 	var payout_active := not last_result.is_empty() and elapsed_msec >= DEAL_ANIMATION_DURATION_MSEC and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
@@ -158,7 +192,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var table_notice := _table_notice(table, session, last_result, deal_active, payout_active, round_timer)
 	var rules := _table_rules(table)
 	var targets := _baccarat_bet_targets(table)
-	var surface_patrons := GameModule.patrons_with_talk_focus(_patrons_for_surface(table, last_result), ui_state.get("focused_talk_speaker", {}))
+	var surface_patrons := GameModule.patrons_with_talk_focus(_patrons_for_surface(table, last_result, now_msec), ui_state.get("focused_talk_speaker", {}))
 	var hand_explainer := _baccarat_hand_explainer(session, last_result, deal_active, payout_active, round_timer)
 	var edge_challenge := _normalized_edge_sort_challenge(table.get("edge_sort_challenge", {}))
 	var edge := _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
@@ -171,7 +205,14 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var road_state := _baccarat_road_state(table.get("hand_history", []))
 	var shoe_penetration := _baccarat_shoe_penetration(table)
 	var squeeze_state := _baccarat_squeeze_state(last_result)
-	return GameModule.surface_spec({
+	var ritual_phase := _baccarat_ritual_phase(last_result, elapsed_msec)
+	var visible_bankroll := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 0
+	var crew_status := run_state.crew_play_active_status(get_id(), environment) if run_state != null else []
+	var ritual_projection := _baccarat_ritual_projection(ritual_phase, bets, last_result, table, surface_patrons, crew_status, visible_bankroll, run_state.suspicion_level() if run_state != null else 0)
+	var squeeze_progress := 1.0 if bool(ui_state.get("reduce_motion", false)) else clampf(float(session.get("baccarat_squeeze_progress", 0.0)), 0.0, 1.0)
+	var authority_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var pending_delivery: Dictionary = authority_ledger.get("pending_delivery", {}) if typeof(authority_ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
+	var spec := GameModule.surface_spec({
 		"surface_renderer": "baccarat",
 		"surface_life": "immersive_table",
 		"surface_cast": "dealer_table",
@@ -203,6 +244,19 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		],
 		"surface_action_blocks": _surface_action_blocks(),
 		"phase": "dealing" if deal_active else "payout" if payout_active else "betting",
+		"ritual_contract": "game_ritual/1",
+		"ritual_id": "baccarat.table.v1",
+		"ritual_phase": ritual_phase,
+		"ritual_phase_sequence": BACCARAT_RITUAL_PHASES.duplicate(),
+		"ritual_projection": ritual_projection,
+		"available_funds": int(ritual_projection.get("available_funds", 0)),
+		"total_new_stake": int(ritual_projection.get("total_new_stake", 0)),
+		"at_risk_stake": int(ritual_projection.get("at_risk_stake", 0)),
+		"per_bet_resolutions": _dictionary_array(ritual_projection.get("per_bet_resolutions", [])),
+		"ritual_actors": _dictionary_array(ritual_projection.get("actors", [])),
+		"ritual_scene_objects": _dictionary_array(ritual_projection.get("scene_objects", [])),
+		"ritual_energy": _copy_dict(ritual_projection.get("energy", {})),
+		"third_card_procedure": _baccarat_third_card_procedure(_copy_dict(last_result.get("hand", {}))),
 		"table_name": str(table.get("table_name", "Baccarat")),
 		"dealer_name": str(table.get("dealer_name", "Croupier")),
 		"dealer_profile": _copy_dict(table.get("dealer_profile", {})),
@@ -210,7 +264,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"patron_wager_action": "baccarat_patron_bet",
 		"snitch_pressure": _patron_snitch_pressure(surface_patrons),
 		"suspicion_level": run_state.suspicion_level() if run_state != null else 0,
-		"crew_play_status": run_state.crew_play_active_status(get_id(), environment) if run_state != null else [],
+		"crew_play_status": crew_status,
 		"dealer_attention_pressure": 10 if deal_active else 6 if payout_active else 0,
 		"rules": rules,
 		"bet_targets": targets,
@@ -239,6 +293,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"baccarat_road": road_state,
 		"baccarat_scoreboard": road_state,
 		"baccarat_squeeze_reveal": squeeze_state,
+		"baccarat_squeeze_progress": squeeze_progress,
+		"baccarat_squeeze_available": ritual_phase == "squeeze_reveal" and not squeeze_state.is_empty(),
+		"commission_this_hand": int(last_result.get("commission", 0)),
+		"commission_running_total": int(table.get("commission_owed", 0)),
 		"deal_animation_events": _dictionary_array(last_result.get("animation_events", [])),
 		"baccarat_explainer": hand_explainer,
 		"baccarat_edge_sort_challenge": edge_challenge.duplicate(true),
@@ -292,6 +350,23 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			},
 		}),
 	})
+	if not pending_delivery.is_empty():
+		spec["table_game_host_pending_delivery"] = pending_delivery.duplicate(true)
+		spec["table_game_host_retry_available"] = true
+		spec["table_game_host_cancel_available"] = true
+		spec["table_notice"] = "A sealed action is waiting. Retry it or cancel back to the prior table ceremony."
+		spec["can_deal"] = false
+		spec["can_clear"] = false
+		spec["can_undo"] = false
+		spec["can_rebet"] = false
+		spec["surface_action_bindings"] = {
+			"legal": {"action": "table_game_retry_pending", "index": 0},
+			"cheat": {"action": "table_game_cancel_pending", "index": 0},
+			"surface_stake_down": {"action": "table_game_cancel_pending", "index": 0},
+			"surface_stake_up": {"action": "table_game_retry_pending", "index": 0},
+			"surface_stake_max": {"action": "table_game_retry_pending", "index": 0},
+		}
+	return spec
 
 
 func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
@@ -302,7 +377,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	var bets := _bet_dict(session.get("baccarat_bets", current_surface_state.get("baccarat_bets", {})))
 	var total_wager := _total_wager(bets)
 	var last_result := _copy_dict(table.get("last_result", current_surface_state.get("last_result", {})))
-	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var elapsed_msec := now_msec - int(last_result.get("resolved_at_msec", 0))
 	var deal_active := not last_result.is_empty() and elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC
 	var payout_active := not last_result.is_empty() and elapsed_msec >= DEAL_ANIMATION_DURATION_MSEC and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
@@ -314,6 +389,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	var shoe_read_challenge := _normalized_shoe_read_challenge(session.get("shoe_read_challenge", current_surface_state.get("shoe_read_challenge", {})))
 	var shoe_read_status := _shoe_read_status(shoe_read_challenge, now_msec)
 	var shoe_read_active := not shoe_read_challenge.is_empty() and str(shoe_read_challenge.get("skill_grade", "")).is_empty()
+	var ritual_phase := _baccarat_ritual_phase(last_result, elapsed_msec)
 	return {
 		"surface_realtime_state_refresh": deal_active or payout_active or shoe_read_active,
 		"surface_time_msec": now_msec,
@@ -334,6 +410,9 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		],
 		"surface_action_blocks": _surface_action_blocks(),
 		"phase": "dealing" if deal_active else "payout" if payout_active else "betting",
+		"ritual_phase": ritual_phase,
+		"baccarat_squeeze_progress": 1.0 if bool(ui_state.get("reduce_motion", false)) else clampf(float(session.get("baccarat_squeeze_progress", current_surface_state.get("baccarat_squeeze_progress", 0.0))), 0.0, 1.0),
+		"baccarat_squeeze_available": ritual_phase == "squeeze_reveal" and not _baccarat_squeeze_state(last_result).is_empty(),
 		"dealer_attention_pressure": 10 if deal_active else 6 if payout_active else 0,
 		"can_deal": (total_wager <= 0 or min_ready) and not deal_active and not payout_active,
 		"can_clear": not bets.is_empty() and not deal_active and not payout_active,
@@ -381,7 +460,7 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 	var table := _peek_table_state(environment)
 	if table.is_empty():
 		return false
-	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var last_result: Variant = table.get("last_result", {})
 	if typeof(last_result) == TYPE_DICTIONARY and not (last_result as Dictionary).is_empty():
 		var elapsed_msec := now_msec - int((last_result as Dictionary).get("resolved_at_msec", 0))
@@ -391,6 +470,30 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 	if bool(timer.get("active", false)):
 		return bool(timer.get("due", false))
 	return typeof(last_result) == TYPE_DICTIONARY and not (last_result as Dictionary).is_empty()
+
+
+func _table_game_host_needs_auto_tick(surface_time_msec: int, _run_state: RunState, environment: Dictionary) -> bool:
+	# Foundation calls this before constructing any per-frame UI snapshot. Keep
+	# the authoritative idle probe scalar-only and operate on the stored table.
+	var states_value: Variant = environment.get("game_states")
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return false
+	var table_value: Variant = (states_value as Dictionary).get("baccarat")
+	if typeof(table_value) != TYPE_DICTIONARY:
+		return false
+	var table: Dictionary = table_value
+	if str(table.get("schema")) != "baccarat_table_state":
+		return false
+	var last_result_value: Variant = table.get("last_result")
+	if typeof(last_result_value) != TYPE_DICTIONARY or (last_result_value as Dictionary).is_empty():
+		return false
+	var elapsed_msec := surface_time_msec - int((last_result_value as Dictionary).get("resolved_at_msec", 0))
+	if elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC:
+		return false
+	var timer_started_msec := int(table.get("table_round_timer_started_msec", 0))
+	if timer_started_msec == 0:
+		return true
+	return maxi(0, surface_time_msec - timer_started_msec) >= GameModule.TABLE_ROUND_START_DELAY_MSEC
 
 
 func _peek_table_state(environment: Dictionary) -> Dictionary:
@@ -408,9 +511,9 @@ func _peek_table_state(environment: Dictionary) -> Dictionary:
 func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
 	var table := _table_state(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
-	if _surface_locked(table, session):
+	if _surface_locked(table, session, run_state):
 		return {"handled": false}
-	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand")
 	if not bool(timer.get("active", false)):
 		var last_result: Dictionary = _copy_dict(table.get("last_result", {}))
@@ -439,7 +542,9 @@ func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, envi
 func surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var table := _table_state(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
-	if _surface_locked(table, session):
+	if surface_action == BACCARAT_SQUEEZE_ACTION:
+		return _squeeze_command(session, table, run_state, confirm_requested)
+	if _surface_locked(table, session, run_state):
 		return _message_command(session, "No more bets while the hand is being dealt.")
 	match surface_action:
 		"baccarat_chip":
@@ -487,15 +592,114 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			return {"handled": false}
 
 
+func surface_pointer_uses_lightweight_ui_state(surface_action: String) -> bool:
+	return surface_action == BACCARAT_SQUEEZE_ACTION
+
+
+func surface_pointer_command(surface_action: String, _index: int, phase: String, board_position: Vector2, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if surface_action != BACCARAT_SQUEEZE_ACTION:
+		return {"handled": false}
+	var session := ui_state.duplicate(true)
+	var table := _table_state_preview(run_state, environment)
+	var last_result := _copy_dict(table.get("last_result", {}))
+	var elapsed := GameModule.deterministic_time_msec(run_state, session) - int(last_result.get("resolved_at_msec", 0))
+	if _baccarat_ritual_phase(last_result, elapsed) != "squeeze_reveal" or _baccarat_squeeze_state(last_result).is_empty():
+		return _message_command(session, "The card is not in the squeeze window; nothing changes.")
+	if phase == "begin":
+		if not BACCARAT_SQUEEZE_REGION.has_point(board_position):
+			return _message_command(session, "Begin the squeeze on the raised card edge.")
+		session["baccarat_squeeze_origin"] = board_position
+		session["baccarat_squeeze_progress"] = 0.0
+		return GameModule.surface_command({"ui_state": session, "preserve_surface_ui_state": true}, true)
+	if phase == "cancel":
+		session.erase("baccarat_squeeze_origin")
+		return GameModule.surface_command({"ui_state": session, "preserve_surface_ui_state": true, "message": "The croupier squares the card; its value is unchanged."}, true)
+	if phase in ["move", "end"] and session.has("baccarat_squeeze_origin"):
+		var origin: Vector2 = session.get("baccarat_squeeze_origin", board_position)
+		var distance := origin.distance_to(board_position)
+		var prior_progress := clampf(float(session.get("baccarat_squeeze_progress", 0.0)), 0.0, 1.0)
+		var next_progress := maxf(prior_progress, clampf(distance / 96.0, 0.0, 1.0))
+		if phase == "end" and next_progress >= 0.85:
+			next_progress = 1.0
+		session["baccarat_squeeze_progress"] = next_progress
+		if phase == "end":
+			session.erase("baccarat_squeeze_origin")
+		return GameModule.surface_command({"ui_state": session, "preserve_surface_ui_state": true, "message": "Card revealed; the authored card and hand remain unchanged." if next_progress >= 1.0 else "The partial squeeze holds; continue from the raised edge." if phase == "end" else ""}, true)
+	return _message_command(session, "The croupier squares the incomplete squeeze; nothing changes.")
+
+
 func wager_cost_for_context(action_id: String, stake: int, _run_state: RunState, _environment: Dictionary, ui_state: Dictionary = {}) -> int:
-	if action_id.begins_with("crew_play:"):
-		return 0
 	if action_id == "deal_baccarat":
 		return _total_wager(_bet_dict(ui_state.get("baccarat_bets", {})))
-	return maxi(0, stake)
+	# Reads, advantage play, crew verbs, stale actions, and unknown actions do not
+	# acquire a wager lease. Only the canonical deal consumes table stake.
+	return 0
 
 
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	return _table_game_compatibility_simulation(action_id, stake, run_state, environment, rng, ui_state)
+
+
+func _table_game_compatibility_simulation(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+	# Legacy callers may inspect a Baccarat outcome, but live settlement belongs
+	# exclusively to FoundationMain. The authoritative proposal seam below still
+	# uses sealed save snapshots; this observational compatibility path only needs
+	# detached table and RNG state and must remain inside the resolve-time budget.
+	if run_state == null or rng == null:
+		return _empty_baccarat_result(action_id, stake, environment, "Baccarat simulation requires serialized run and RNG inputs.")
+	var simulation_environment := environment.duplicate(true)
+	var simulation_rng := RngStream.new()
+	simulation_rng.restore(rng.snapshot())
+	var run_rng_seed := run_state.rng_seed
+	var run_rng_state := run_state.rng_state
+	var staffing_before := run_state.grand_casino_staffing.duplicate(true)
+	var result := _resolve_baccarat_proposal_core(action_id, stake, run_state, simulation_environment, simulation_rng, ui_state.duplicate(true))
+	run_state.rng_seed = run_rng_seed
+	run_state.rng_state = run_rng_state
+	run_state.grand_casino_staffing = staffing_before
+	result.erase("table_game_proposal_requires_apply")
+	result.erase("blackjack_host_apply_receipt")
+	result.erase("blackjack_host_content_fingerprint")
+	result["table_game_compatibility_simulation"] = true
+	result["table_game_authoritative"] = false
+	return result
+
+
+func _table_game_resolve_proposal(action_id: String, stake: int, run_snapshot: Dictionary, rng_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var proposal_input := {
+		"action_id": action_id,
+		"stake": stake,
+		"run_snapshot": run_snapshot,
+		"rng_snapshot": rng_snapshot,
+		"ui_state": ui_state,
+	}
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var proposal_rng := RngStream.new()
+	proposal_rng.restore(rng_snapshot.duplicate(true))
+	var result := _resolve_baccarat_proposal_core(action_id, stake, candidate, candidate.current_environment, proposal_rng, ui_state.duplicate(true))
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
+		"result": result.duplicate(true),
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": proposal_rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
+	return proposal
+
+
+func _table_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var cost := wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+	return {
+		"cost": maxi(0, cost),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
+
+
+func _resolve_baccarat_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	if action_id == "read_baccarat_shoe":
 		return _resolve_read_shoe(action_id, stake, run_state, environment, rng, ui_state)
 	if action_id == EDGE_SORT_ACTION_ID:
@@ -560,6 +764,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"deltas": deltas,
 		"won": bankroll_delta > 0,
 		"environment_id": environment.get("id", ""),
+		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": message,
 	})
 	result["baccarat_winner"] = str(hand.get("winner", ""))
@@ -575,7 +780,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["baccarat_edge_sort_edge_remaining"] = int(_copy_dict(table.get("edge_sort_edge", {})).get("hands_remaining", 0))
 	result["baccarat_road"] = _baccarat_road_state(table.get("hand_history", []))
 	result["baccarat_shoe_penetration"] = _baccarat_shoe_penetration(table)
-	GameModule.apply_result(run_state, result, rng)
+	result["table_game_proposal_requires_apply"] = true
 	return result
 
 
@@ -697,7 +902,7 @@ func _resolve_read_shoe(action_id: String, stake: int, run_state: RunState, envi
 	result["baccarat_pit_boss_watched"] = bool(pit_boss_status.get("watched", false))
 	result["baccarat_pit_boss_heat_bonus"] = pit_bonus
 	result["baccarat_table_pressure"] = table_pressure
-	GameModule.apply_result(run_state, result, rng)
+	result["table_game_proposal_requires_apply"] = true
 	return result
 
 
@@ -815,7 +1020,12 @@ func _settle_baccarat_bets(bets_value: Variant, hand: Dictionary, rules: Diction
 					payout = stake * int(rules.get("banker_pair_payout", 11))
 			_:
 				pass
-		var net := 0 if push else payout if won else -stake
+		# The host guarantees that the complete stake can be funded before this
+		# proposal runs. Settlement remains a net delta: winning and pushed stake
+		# is returned exactly once, while payout is profit after commission.
+		var stake_return := stake if won or push else 0
+		var gross_return := stake_return + (payout if won else 0)
+		var net := gross_return - stake
 		bankroll_delta += net
 		commission_total += commission
 		bet_results.append({
@@ -824,6 +1034,8 @@ func _settle_baccarat_bets(bets_value: Variant, hand: Dictionary, rules: Diction
 			"won": won,
 			"push": push,
 			"payout": payout,
+			"stake_return": stake_return,
+			"gross_return": gross_return,
 			"commission": commission,
 			"net": net,
 			"label": _target_label(str(bet_id)),
@@ -900,12 +1112,17 @@ func _baccarat_deal_events(player_cards: Array, banker_cards: Array, natural: bo
 		order.append({"zone": "player", "card": player_cards[2], "to": _player_card_target(2), "delay": 2460, "label": "Player draw"})
 	if banker_cards.size() >= 3:
 		order.append({"zone": "banker", "card": banker_cards[2], "to": _banker_card_target(2), "delay": 3020, "label": "Banker draw"})
+	var zone_slots := {"player": 0, "banker": 0}
 	for i in range(order.size()):
 		var entry: Dictionary = order[i]
+		var zone := str(entry.get("zone", ""))
+		var zone_card_slot := int(zone_slots.get(zone, 0))
+		zone_slots[zone] = zone_card_slot + 1
 		events.append({
 			"type": "card",
-			"zone": str(entry.get("zone", "")),
+			"zone": zone,
 			"card_index": i,
+			"zone_card_slot": zone_card_slot,
 			"card": _copy_dict(entry.get("card", {})),
 			"from": _event_point(CARD_SHOE_POS),
 			"to": _event_point(entry.get("to", Vector2.ZERO)),
@@ -915,18 +1132,19 @@ func _baccarat_deal_events(player_cards: Array, banker_cards: Array, natural: bo
 		})
 	var player_total := _hand_total(player_cards)
 	var banker_total := _hand_total(banker_cards)
+	var player_initial_total := _hand_total(player_cards.slice(0, 2))
+	var banker_initial_total := _hand_total(banker_cards.slice(0, 2))
 	var marker_delay := 3600
 	if _hand_needs_squeeze(natural, player_total, banker_total):
 		events.append({
 			"type": "squeeze",
 			"label": "Squeeze reveal",
-			"winner": winner,
-			"player_total": player_total,
-			"banker_total": banker_total,
+			"target_zone": "player" if player_initial_total <= banker_initial_total else "banker",
+			"card_slot": 1,
 			"player_drew": player_drew,
 			"banker_drew": banker_drew,
-			"delay_msec": 3380,
-			"duration_msec": 520,
+			"delay_msec": BACCARAT_DEAL_PHASE_MSEC,
+			"duration_msec": BACCARAT_SQUEEZE_PHASE_MSEC - BACCARAT_DEAL_PHASE_MSEC,
 		})
 		marker_delay = 3880
 	events.append({
@@ -950,13 +1168,102 @@ func _baccarat_squeeze_state(last_result: Dictionary) -> Dictionary:
 			return {
 				"active": true,
 				"label": str(event.get("label", "Squeeze reveal")),
-				"winner": str(event.get("winner", "")),
-				"player_total": int(event.get("player_total", 0)),
-				"banker_total": int(event.get("banker_total", 0)),
+				"target_zone": str(event.get("target_zone", "player")),
+				"card_slot": int(event.get("card_slot", 1)),
 				"delay_msec": int(event.get("delay_msec", 0)),
 				"duration_msec": int(event.get("duration_msec", 0)),
 			}
 	return {}
+
+
+func _squeeze_command(session: Dictionary, table: Dictionary, run_state: RunState, complete: bool = false) -> Dictionary:
+	var last_result := _copy_dict(table.get("last_result", {}))
+	var elapsed_msec := GameModule.deterministic_time_msec(run_state, session) - int(last_result.get("resolved_at_msec", 0))
+	if _baccarat_ritual_phase(last_result, elapsed_msec) != "squeeze_reveal" or _baccarat_squeeze_state(last_result).is_empty():
+		return _message_command(session, "The card is not in the squeeze window; no card or wager changes.")
+	var progress := 1.0 if complete or bool(session.get("reduce_motion", false)) else clampf(float(session.get("baccarat_squeeze_progress", 0.0)) + 0.25, 0.0, 1.0)
+	session["baccarat_squeeze_progress"] = progress
+	return GameModule.surface_command({
+		"ui_state": session,
+		"preserve_surface_ui_state": true,
+		"message": "Card edge revealed %d%%. The authored card is unchanged." % int(round(progress * 100.0)),
+		"surface_audio_cue": "baccarat_chip",
+	})
+
+
+func _baccarat_ritual_phase(last_result: Dictionary, elapsed_msec: int) -> String:
+	if last_result.is_empty() or elapsed_msec < 0 or elapsed_msec >= DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC:
+		return "betting"
+	if elapsed_msec < BACCARAT_SHOE_PHASE_MSEC:
+		return "shoe"
+	if elapsed_msec < BACCARAT_DEAL_PHASE_MSEC:
+		return "deal"
+	if elapsed_msec < BACCARAT_SQUEEZE_PHASE_MSEC:
+		return "squeeze_reveal"
+	if elapsed_msec < BACCARAT_THIRD_CARD_PHASE_MSEC:
+		return "third_card_rule"
+	return "settlement"
+
+
+func _baccarat_third_card_procedure(hand: Dictionary) -> Dictionary:
+	if hand.is_empty():
+		return {}
+	var natural := bool(hand.get("natural", false))
+	var player_initial := int(hand.get("player_initial_total", 0))
+	var banker_initial := int(hand.get("banker_initial_total", 0))
+	var player_drew := bool(hand.get("player_drew", false))
+	var banker_drew := bool(hand.get("banker_drew", false))
+	var player_third := int(hand.get("player_third_value", -1))
+	var steps: Array = []
+	if natural:
+		steps.append({"actor": "caller", "rule": "natural_8_or_9", "decision": "both_stand", "observed_total": maxi(player_initial, banker_initial)})
+	else:
+		steps.append({"actor": "player", "rule": "draw_0_to_5_stand_6_to_7", "observed_total": player_initial, "decision": "draw" if player_drew else "stand"})
+		steps.append({"actor": "banker", "rule": "banker_table_uses_player_third_card", "observed_total": banker_initial, "player_third_value": player_third, "decision": "draw" if banker_drew else "stand"})
+	return {"natural": natural, "steps": steps, "player_drew": player_drew, "banker_drew": banker_drew}
+
+
+func _baccarat_ritual_projection(ritual_phase: String, pending_bets: Dictionary, last_result: Dictionary, table: Dictionary, patrons: Array, crew_status: Array, visible_bankroll: int, suspicion: int) -> Dictionary:
+	var pending_total := _total_wager(pending_bets)
+	var locked_bets := _bet_dict(last_result.get("bets", {}))
+	var at_risk := _total_wager(locked_bets) if ritual_phase != "betting" else 0
+	var dealer_behavior: String = str({
+		"betting": "idle",
+		"shoe": "drawing_from_shoe",
+		"deal": "dealing",
+		"squeeze_reveal": "offering_squeeze",
+		"third_card_rule": "following_tableau",
+		"settlement": "sweep_then_pay",
+	}.get(ritual_phase, "idle"))
+	var actors: Array = [
+		{"id": "baccarat.dealer", "role": "dealer", "behavior": dealer_behavior},
+		{"id": "baccarat.caller", "role": "caller", "behavior": "calling_rule" if ritual_phase == "third_card_rule" else "calling_result" if ritual_phase == "settlement" else "idle"},
+	]
+	for patron_index in range(patrons.size()):
+		var patron: Dictionary = patrons[patron_index] if typeof(patrons[patron_index]) == TYPE_DICTIONARY else {}
+		actors.append({"id": "baccarat.neighbor.%d" % patron_index, "role": "neighbor", "behavior": str(patron.get("last_reaction", "watching")), "wager": maxi(0, int(patron.get("cosmetic_bet", patron.get("chip_stack", 0)))), "player_money_authority": false})
+	for crew_index in range(crew_status.size()):
+		var crew: Dictionary = crew_status[crew_index] if typeof(crew_status[crew_index]) == TYPE_DICTIONARY else {}
+		actors.append({"id": "baccarat.crew.%d" % crew_index, "role": "crew", "behavior": str(crew.get("state", crew.get("status", "present"))), "cost": int(crew.get("cost", 0)), "window": str(crew.get("window", ""))})
+	if suspicion > 0:
+		actors.append({"id": "baccarat.security", "role": "security", "behavior": "present" if suspicion < 60 else "watching_player", "heat": suspicion})
+	var energy_tier := "quiet" if patrons.size() <= 1 else "busy" if patrons.size() <= 2 else "packed"
+	return {
+		"phase": ritual_phase,
+		"available_funds": maxi(0, visible_bankroll - pending_total),
+		"total_new_stake": pending_total,
+		"at_risk_stake": at_risk,
+		"per_bet_resolutions": _dictionary_array(last_result.get("bet_results", [])) if ritual_phase == "settlement" else [],
+		"commission": {"this_hand": int(last_result.get("commission", 0)), "running_total": int(table.get("commission_owed", 0)), "collection_phase": "settlement"},
+		"actors": actors,
+		"scene_objects": [
+			{"id": "baccarat.shoe", "visual_state": "in_use" if ritual_phase in ["shoe", "deal"] else "rest", "remaining": int(table.get("shoe_remaining", 0)), "reshuffle_pending": bool(table.get("reshuffle_pending", false))},
+			{"id": "baccarat.road_boards", "visual_state": "updating" if ritual_phase == "settlement" else "readable", "history_count": _array(table.get("hand_history", [])).size(), "predictive_authority": false},
+			{"id": "baccarat.discard_tray", "visual_state": "receiving" if ritual_phase == "settlement" else "stacked", "card_count": _array(table.get("discard", [])).size()},
+			{"id": "baccarat.felt", "functional_state": "open" if ritual_phase == "betting" else "locked", "pending_space_count": pending_bets.size(), "at_risk_space_count": locked_bets.size()},
+		],
+		"energy": {"tier": energy_tier, "rail_space": "open" if energy_tier == "quiet" else "limited" if energy_tier == "busy" else "crowded", "dealer_attention": "player" if suspicion > 0 else "table", "security_presence": suspicion > 0},
+	}
 
 
 func _baccarat_road_state(history_value: Variant) -> Dictionary:
@@ -1817,7 +2124,7 @@ func _resolve_edge_sort(action_id: String, run_state: RunState, environment: Dic
 	result["skill_margin_msec"] = int(challenge.get("skill_margin_msec", 0))
 	result["base_suspicion_delta"] = base_suspicion_delta
 	GameModule.normalize_skill_cheat_contract(result, result)
-	GameModule.apply_result(run_state, result, rng)
+	result["table_game_proposal_requires_apply"] = true
 	return result
 
 
@@ -2289,11 +2596,11 @@ func _surface_action_blocks() -> Array:
 	]
 
 
-func _surface_locked(table: Dictionary, session: Dictionary) -> bool:
+func _surface_locked(table: Dictionary, session: Dictionary, run_state: RunState = null) -> bool:
 	var last_result := _copy_dict(table.get("last_result", {}))
 	if last_result.is_empty():
 		return false
-	var now_msec := int(session.get("surface_time_msec", Time.get_ticks_msec()))
+	var now_msec := GameModule.deterministic_time_msec(run_state, session)
 	var elapsed_msec := now_msec - int(last_result.get("resolved_at_msec", 0))
 	return elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
 
@@ -2530,6 +2837,7 @@ func _empty_baccarat_result(action_id: String, stake: int, environment: Dictiona
 		"stake": stake,
 		"won": false,
 		"environment_id": environment.get("id", ""),
+		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": text,
 	})
 
@@ -2671,7 +2979,13 @@ func _refresh_shoe_remaining_metadata(table: Dictionary) -> void:
 func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_state: Dictionary, table: Dictionary) -> Dictionary:
 	# Every nested field changed below is replaced with a normalized copy. A shallow
 	# shell avoids cloning unrelated UI payload on every command/surface read.
-	var session := ui_state.duplicate(false)
+	var host_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var host_session_initialized := bool(host_ledger.get("initialized", false))
+	var session: Dictionary = (host_ledger.get("session", {}) as Dictionary).duplicate(true) if host_session_initialized and typeof(host_ledger.get("session", {})) == TYPE_DICTIONARY else ui_state.duplicate(false)
+	if host_session_initialized:
+		for key in TABLE_GAME_HOST_TRANSIENT_UI_KEYS:
+			if ui_state.has(key):
+				session[key] = ui_state[key]
 	var denoms := _chip_denominations(table)
 	var selected_chip := int(session.get("selected_chip", session.get("selected_stake", denoms[0])))
 	if not denoms.has(selected_chip):
@@ -2825,10 +3139,9 @@ func _normalize_patrons(value: Variant, table: Dictionary) -> Array:
 	return patrons
 
 
-func _patrons_for_surface(table: Dictionary, last_result: Dictionary) -> Array:
+func _patrons_for_surface(table: Dictionary, last_result: Dictionary, now_msec: int) -> Array:
 	var patrons := _dictionary_array(table.get("patrons", []))
 	var winner := str(last_result.get("winner", ""))
-	var now := Time.get_ticks_msec()
 	for i in range(patrons.size()):
 		var patron: Dictionary = patrons[i]
 		var reaction_bonus := 0
@@ -2842,7 +3155,7 @@ func _patrons_for_surface(table: Dictionary, last_result: Dictionary) -> Array:
 			reaction_bonus = 8 if winner != "tie" else 2
 		var rapport_adjust := int((50 - clampi(int(patron.get("rapport", 50)), 0, 100)) / 5)
 		var risk := clampi(int(patron.get("snitch_risk", 0)) + reaction_bonus + rapport_adjust, 0, 60)
-		var phase := float((now + int(patron.get("animation_offset", 0))) % 2200) / 2200.0
+		var phase := float((now_msec + int(patron.get("animation_offset", 0))) % 2200) / 2200.0
 		var watching := bool(patron.get("watching", true)) and risk > 0
 		var threshold := int(patron.get("snitch_threshold", 30))
 		var tell_active := watching and (risk >= threshold or (phase > 0.58 and phase < 0.82))
@@ -2963,12 +3276,19 @@ func _draw_card_areas(surface, state: Dictionary) -> void:
 	var deal_active := bool(surface.surface_animation_active(BACCARAT_DEAL_CHANNEL))
 	var visible_cards := _visible_animation_cards(surface, state) if deal_active else []
 	if deal_active and not visible_cards.is_empty():
+		var squeeze_event := _active_squeeze_event(surface, state)
+		var authored_squeeze := _authored_squeeze_event(state)
+		var deal_elapsed_msec := int(round(float(surface.surface_elapsed(BACCARAT_DEAL_CHANNEL)) * 1000.0))
+		var squeeze_pending := not authored_squeeze.is_empty() and deal_elapsed_msec <= int(authored_squeeze.get("delay_msec", 0)) + int(authored_squeeze.get("duration_msec", 0))
 		for event in visible_cards:
 			var card_event: Dictionary = event
-			_draw_card(surface, card_event.get("card", {}), card_event.get("position", Vector2.ZERO), 1.0)
-		var squeeze_event := _active_squeeze_event(surface, state)
+			var is_squeeze_card := squeeze_pending and str(card_event.get("zone", "")) == str(authored_squeeze.get("target_zone", "")) and int(card_event.get("zone_card_slot", -1)) == int(authored_squeeze.get("card_slot", -2))
+			if is_squeeze_card:
+				_draw_squeezed_card(surface, card_event.get("card", {}), card_event.get("position", Vector2.ZERO), float(state.get("baccarat_squeeze_progress", 0.0)))
+			else:
+				_draw_card(surface, card_event.get("card", {}), card_event.get("position", Vector2.ZERO), 1.0)
 		if not squeeze_event.is_empty():
-			_draw_squeeze_badge(surface, squeeze_event)
+			_draw_squeeze_badge(surface, squeeze_event, state)
 	else:
 		for i in range(player_cards.size()):
 			_draw_card(surface, player_cards[i], _player_card_target(i), 1.0)
@@ -3001,12 +3321,41 @@ func _active_squeeze_event(surface, state: Dictionary) -> Dictionary:
 	return {}
 
 
-func _draw_squeeze_badge(surface, event: Dictionary) -> void:
-	var rect := Rect2(382, 190, 136, 34)
-	var accent := _target_color(str(event.get("winner", "")))
+func _authored_squeeze_event(state: Dictionary) -> Dictionary:
+	for event_value in _draw_array_view(state.get("deal_animation_events", [])):
+		var event: Dictionary = event_value
+		if str(event.get("type", "")) == "squeeze":
+			return event
+	return {}
+
+
+func _draw_squeeze_badge(surface, event: Dictionary, state: Dictionary) -> void:
+	var rect := BACCARAT_SQUEEZE_REGION
+	var accent := C_AMBER
+	var progress := clampf(float(state.get("baccarat_squeeze_progress", 0.0)), 0.0, 1.0)
 	_draw_neon_panel(surface, rect, accent, 0.24)
-	surface.surface_label_centered("SQUEEZE", Rect2(rect.position + Vector2(6, 4), Vector2(rect.size.x - 12, 12)), 12, C_WHITE)
-	surface.surface_label_centered("P%d  B%d" % [int(event.get("player_total", 0)), int(event.get("banker_total", 0))], Rect2(rect.position + Vector2(6, 18), Vector2(rect.size.x - 12, 10)), 8, C_YELLOW)
+	surface.draw_rect(Rect2(rect.position + Vector2(2, rect.size.y - 5), Vector2((rect.size.x - 4) * progress, 3)), C_YELLOW)
+	surface.surface_label_centered("SQUEEZE %d%%" % int(round(progress * 100.0)), Rect2(rect.position + Vector2(6, 4), Vector2(rect.size.x - 12, 12)), 12, C_WHITE)
+	surface.surface_label_centered("%s CARD - VALUE FIXED" % str(event.get("target_zone", "player")).to_upper(), Rect2(rect.position + Vector2(6, 18), Vector2(rect.size.x - 12, 10)), 7, C_YELLOW)
+	if bool(state.get("baccarat_squeeze_available", false)):
+		surface.surface_add_hold_hit(rect, BACCARAT_SQUEEZE_ACTION, 0)
+
+
+func _draw_squeezed_card(surface, card_value: Variant, pos: Vector2, progress_value: float) -> void:
+	var progress := clampf(progress_value, 0.0, 1.0)
+	if progress >= 1.0:
+		_draw_card(surface, card_value, pos, 1.0)
+		return
+	_draw_card_back(surface, pos, 1.0)
+	var card := _draw_dict_view(card_value)
+	var peel_height := maxf(2.0, CARD_SIZE.y * progress)
+	var reveal := Rect2(pos, Vector2(CARD_SIZE.x, peel_height))
+	surface.draw_rect(reveal, Color(0.96, 0.94, 0.84, 1.0))
+	surface.draw_rect(reveal, C_DARK, false, 1)
+	if progress >= 0.24:
+		var rank := str(card.get("rank", "?"))
+		var suit := str(card.get("suit", "?")).left(1).to_upper()
+		surface.surface_label_centered_plain("%s%s" % [rank, suit], Rect2(pos + Vector2(2, 2), Vector2(CARD_SIZE.x - 4, minf(18.0, peel_height - 2.0))), 9, C_DARK)
 
 
 func _draw_total_badge(surface, rect: Rect2, label: String, total: int, accent: Color) -> void:
@@ -3031,7 +3380,7 @@ func _visible_animation_cards(surface, state: Dictionary) -> Array:
 		var eased := 1.0 - pow(1.0 - t, 3.0)
 		var from_pos := _event_vector(event.get("from", []), CARD_SHOE_POS)
 		var to_pos := _event_vector(event.get("to", []), CARD_SHOE_POS)
-		visible.append({"card": _draw_dict_view(event.get("card", {})), "position": from_pos.lerp(to_pos, eased)})
+		visible.append({"card": _draw_dict_view(event.get("card", {})), "position": from_pos.lerp(to_pos, eased), "zone": str(event.get("zone", "")), "zone_card_slot": int(event.get("zone_card_slot", -1))})
 	return visible
 
 
@@ -3269,6 +3618,12 @@ func _draw_action_console(surface, state: Dictionary) -> void:
 	var panel := Rect2(0, CONSOLE_Y, 900, 86)
 	surface.draw_rect(panel, Color(0.02, 0.02, 0.05, 0.84))
 	surface.draw_rect(panel, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.18), false, 1)
+	if bool(state.get("table_game_host_retry_available", false)):
+		surface.surface_label("SEALED ACTION", Vector2(342, CONSOLE_Y + 24), 12, C_YELLOW)
+		surface.surface_label("Retry or restore the pre-delivery ceremony.", Vector2(342, CONSOLE_Y + 48), 10, C_SOFT)
+		_draw_table_button(surface, Rect2(650, CONSOLE_Y + 15, 104, 42), "RETRY", "table_game_retry_pending", 0, C_YELLOW, true, true)
+		_draw_table_button(surface, Rect2(762, CONSOLE_Y + 15, 112, 42), "CANCEL", "table_game_cancel_pending", 0, C_SOFT, bool(state.get("table_game_host_cancel_available", false)))
+		return
 	surface.surface_label("MIN $%d  MAX $%d" % [int(state.get("table_minimum", 20)), int(state.get("table_maximum", 500))], Vector2(342, CONSOLE_Y + 22), 12, C_SOFT)
 	surface.surface_label("WAGER $%d" % int(state.get("total_wager_cost", 0)), Vector2(342, CONSOLE_Y + 42), 14, C_YELLOW)
 	surface.surface_label("COMM $%d" % int(state.get("commission_owed", 0)), Vector2(342, CONSOLE_Y + 62), 12, C_PINK_2)

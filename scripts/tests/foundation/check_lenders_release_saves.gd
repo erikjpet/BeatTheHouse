@@ -5,6 +5,7 @@ const RunReportTimelineCanvasScript := preload("res://scripts/ui/run_report_time
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
+const LendersBlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const StaffBlackjackGameScript := preload("res://scripts/games/blackjack.gd")
 const StaffBaccaratGameScript := preload("res://scripts/games/baccarat.gd")
 const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
@@ -119,6 +120,138 @@ class EmbeddedRefreshProbeHost:
 
 
 func _check_run_report_foundation(failures: Array) -> void:
+	var outcome_registry := RunReportViewModelScript.load_outcome_registry()
+	var terminal_cases: Array = []
+	var failure_reasons := RunStateScript.terminal_failure_reasons()
+	var expected_failure_reasons := [
+		RunStateScript.FAILURE_BANKROLL_ZERO,
+		RunStateScript.FAILURE_STRANDED,
+		RunStateScript.FAILURE_POLICE_CAPTURE,
+		RunStateScript.FAILURE_CASINO_TAKEN_OUT_BACK,
+		RunStateScript.FAILURE_ABANDONED,
+	]
+	if failure_reasons != expected_failure_reasons:
+		failures.append("Terminal report registry did not cover all five producible failure reasons: %s." % JSON.stringify(failure_reasons))
+	for failure_reason in failure_reasons:
+		terminal_cases.append({"status": RunStateScript.RUN_STATUS_FAILED, "reason": str(failure_reason)})
+	for definition_value in RunStateScript.terminal_victory_route_definitions():
+		var definition: Dictionary = definition_value
+		var runtime_route := str(definition.get("runtime_id", ""))
+		var profile_route := str(definition.get("profile_id", ""))
+		var production_run: RunState = RunStateScript.new()
+		production_run.start_new("META06-ROUTE-%s" % profile_route)
+		production_run.run_status = RunStateScript.RUN_STATUS_ENDED
+		production_run.narrative_flags["demo_victory"] = true
+		production_run.narrative_flags["demo_victory_route"] = runtime_route
+		if str(production_run.act_two_seam_payload().get("victory_route", "")) != profile_route:
+			failures.append("Terminal route registry diverged from the production Act-seam path: %s." % JSON.stringify(definition))
+		if runtime_route == RunStateScript.CREW_HEIST_ROUTE:
+			for heist_outcome in RunStateScript.terminal_crew_heist_outcomes():
+				terminal_cases.append({"status": RunStateScript.RUN_STATUS_ENDED, "route": runtime_route, "heist_outcome": str(heist_outcome)})
+		else:
+			terminal_cases.append({"status": RunStateScript.RUN_STATUS_ENDED, "route": runtime_route})
+	var report_aliases := RunStateScript.terminal_report_route_aliases()
+	var report_alias_ids: Array = report_aliases.keys()
+	report_alias_ids.sort()
+	for alias_value in report_alias_ids:
+		terminal_cases.append({"status": RunStateScript.RUN_STATUS_ENDED, "route": str(alias_value), "report_only": true})
+	for terminal_case in terminal_cases:
+		var terminal_data := {
+			"run_status": str(terminal_case.get("status", "")),
+			"run_failure_reason": str(terminal_case.get("reason", "")),
+			"run_failure_message": "",
+			"narrative_flags": {
+				"demo_victory": str(terminal_case.get("status", "")) == RunStateScript.RUN_STATUS_ENDED,
+				"demo_victory_route": str(terminal_case.get("route", "")),
+				"crew_heist_outcome": str(terminal_case.get("heist_outcome", "")),
+			},
+			"current_environment": {"display_name": "Terminal Fixture"},
+			"game_clock_minutes": RunStateScript.GAME_CLOCK_START_MINUTE,
+		}
+		var terminal_outcome := RunReportViewModelScript.build_outcome(terminal_data, outcome_registry)
+		if str(terminal_outcome.get("title", "")).is_empty() or str(terminal_outcome.get("how", "")).is_empty() or str(terminal_outcome.get("icon_path", "")).is_empty() or not ResourceLoader.exists(str(terminal_outcome.get("icon_path", ""))):
+			failures.append("Run report did not map a finished-run route to complete renderable copy: %s -> %s." % [JSON.stringify(terminal_case), JSON.stringify(terminal_outcome)])
+
+	var ledger_fixture := {
+		"run_status": RunStateScript.RUN_STATUS_FAILED,
+		"game_clock_minutes": RunStateScript.GAME_CLOCK_START_MINUTE + 3000,
+		"narrative_flags": {"profile_games_played": {"craps": 3, "coin_pusher": 2, "crew_draw_poker": 4}, "profile_delivery_runs_completed": 2, "profile_delivery_packages_lost": 1},
+		"crew_state": {
+			"trust": {"crew_rook": 20, "crew_lucky": 40},
+			"jobs": {"job_good": {"status": "resolved", "outcome": "success"}, "job_left": {"status": "resolved", "outcome": "abandoned"}},
+			"crew_heist": {"plan_id": "the_count", "status": "setup", "x": {"m": "crew_lucky", "w": 9, "e": ["pattern"], "c": false}},
+		},
+		"world_map": {
+			"visited_path": ["bar", "corner_store"],
+			"nodes": [
+				{"id": "bar", "environment": {"scenario_state": {"id": "bar_wake", "display_name": "The Wake"}}},
+				{"id": "corner_store", "environment": {"scenario_state": {"id": "corner_store_aftermath", "display_name": "The Aftermath"}}},
+			],
+		},
+		"current_environment": {"world_node_id": "corner_store", "scenario_state": {"id": "corner_store_aftermath", "display_name": "The Aftermath"}},
+		"story_log": [
+			{"type": "police_sweep_encounter"},
+			{"type": "event", "event_id": "scenario_aftermath_fence_offer", "choice_id": "take"},
+		],
+		"town_state": {"living_world": {"heard_by_node": {"corner_store": {"id": "rumor:scenario:corner_store"}, "pawn_shop": {"id": "rumor:scenario:pawn_shop"}}}},
+		"numbers_state": {
+			"slips": [{"status": "settled", "won": true}, {"status": "settled", "won": false}, {"status": "confiscated"}],
+			"fix_state": {"status": "completed"},
+		},
+	}
+	var failed_ledger := RunReportViewModelScript.build_release_ledger(ledger_fixture)
+	var failed_ledger_text := JSON.stringify(failed_ledger).to_lower()
+	if failed_ledger_text.contains("the turn") or failed_ledger_text.contains("traitor") or failed_ledger_text.contains("grievance") or failed_ledger_text.contains("pattern") or failed_ledger_text.contains("\"w\":9"):
+		failures.append("Unresolved/failed run ledger leaked Turn or hidden heist state: %s." % JSON.stringify(failed_ledger))
+	var failed_world := _copy_dict(failed_ledger.get("world", {}))
+	var failed_numbers := _copy_dict(failed_ledger.get("numbers", {}))
+	if _copy_array(failed_world.get("scenarios", [])).size() != 2 or _copy_array(failed_world.get("notable_outcomes", [])).size() != 1 or int(failed_world.get("sweeps_encountered", 0)) != 1 or int(failed_world.get("rumors_proved_true", 0)) != 1 \
+		or int(failed_numbers.get("slips_placed", 0)) != 3 or int(failed_numbers.get("hits", 0)) != 1 or not bool(failed_numbers.get("rig_route_used", false)) or _copy_array(failed_ledger.get("games", [])).size() != 3:
+		failures.append("Run report did not aggregate the complete visible 0.6 ledger at terminal boundary: %s." % JSON.stringify(failed_ledger))
+	var midnight_ledger := RunReportViewModelScript.build_release_ledger({"game_clock_minutes": 1440})
+	if int(_copy_dict(midnight_ledger.get("world", {})).get("nights_survived", 0)) != 1:
+		failures.append("Run report did not record the first survived night at the existing calendar-day boundary.")
+	var meeting_run: RunState = RunStateScript.new()
+	meeting_run.start_new("META06-MEETING-BOUNDARY")
+	meeting_run.crew_trust_by_member["crew_rook"] = CrewStateModelScript.rank_threshold("marker")
+	meeting_run.crew_trust_by_member["crew_lucky"] = CrewStateModelScript.rank_threshold("associate")
+	meeting_run.crew_trust_by_member["crew_bishop"] = CrewStateModelScript.rank_threshold("marker") - 1
+	var production_met: Array = meeting_run.call("_crew_heist_met_members")
+	var reported_members := _copy_array(_copy_dict(RunReportViewModelScript.build_release_ledger(meeting_run.to_dict()).get("crew", {})).get("members_met", []))
+	var reported_member_ids: Array = []
+	for member in reported_members:
+		reported_member_ids.append(str(_copy_dict(member).get("id", "")))
+	if reported_member_ids != production_met or reported_member_ids != ["crew_rook", "crew_lucky"]:
+		failures.append("Run report member detection diverged from the production rank!=stranger meeting boundary: production=%s report=%s." % [JSON.stringify(production_met), JSON.stringify(reported_member_ids)])
+	var completed_ledger_fixture := ledger_fixture.duplicate(true)
+	completed_ledger_fixture["run_status"] = RunStateScript.RUN_STATUS_ENDED
+	completed_ledger_fixture["narrative_flags"]["demo_victory"] = true
+	completed_ledger_fixture["narrative_flags"]["demo_victory_route"] = "crew_heist"
+	completed_ledger_fixture["narrative_flags"]["demo_victory_message"] = "The Turn broke the score. The crew left before the room could count twice."
+	completed_ledger_fixture["crew_state"]["crew_heist"]["status"] = "completed"
+	var completed_ledger := RunReportViewModelScript.build_release_ledger(completed_ledger_fixture)
+	if not str(_copy_dict(completed_ledger.get("crew", {})).get("turn_resolution", "")).contains("The Turn"):
+		failures.append("A completed heist did not surface its contract-approved ending-only Turn resolution.")
+
+	var delivery_reporting_run: RunState = RunStateScript.new()
+	delivery_reporting_run.start_new("META06-DELIVERY-REPORTING")
+	delivery_reporting_run.active_delivery_run = {"status": "resolved", "world_applied": false, "mode": "package", "run_id": "fixture:success", "resolution": {"outcome": "success", "reason": "delivered"}, "consumer_payload": {}}
+	delivery_reporting_run._apply_delivery_resolution()
+	delivery_reporting_run._apply_delivery_resolution()
+	delivery_reporting_run.active_delivery_run = {"status": "resolved", "world_applied": false, "mode": "multi_stop", "run_id": "fixture:loss", "resolution": {"outcome": "failure", "reason": "swept"}, "consumer_payload": {}}
+	delivery_reporting_run._apply_delivery_resolution()
+	delivery_reporting_run.active_delivery_run = {"status": "resolved", "world_applied": false, "mode": "getaway", "run_id": "heist:fixture:getaway", "resolution": {"outcome": "success", "reason": "escaped"}, "consumer_payload": {}}
+	delivery_reporting_run._apply_delivery_resolution()
+	delivery_reporting_run.active_delivery_run = {"status": "resolved", "world_applied": false, "mode": "hold", "run_id": "fixture:lookout", "resolution": {"outcome": "failure", "reason": "attention"}, "consumer_payload": {}}
+	delivery_reporting_run._apply_delivery_resolution()
+	if int(delivery_reporting_run.narrative_flags.get("profile_delivery_runs_completed", 0)) != 1 or int(delivery_reporting_run.narrative_flags.get("profile_delivery_packages_lost", 0)) != 1:
+		failures.append("Delivery reporting counters were not idempotent or counted a lookout/getaway as a package route.")
+	var delivery_round_trip := delivery_reporting_run.to_dict()
+	var delivery_restored: RunState = RunStateScript.new()
+	delivery_restored.from_dict(delivery_round_trip)
+	if int(delivery_restored.narrative_flags.get("profile_delivery_runs_completed", 0)) != 1 or int(delivery_restored.narrative_flags.get("profile_delivery_packages_lost", 0)) != 1:
+		failures.append("Delivery reporting counters did not survive run save/load.")
+
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("RUN-REPORT-FOUNDATION")
 	run_state.set_environment({"id": "bar_fixture", "world_node_id": "bar", "archetype_id": "bar", "display_name": "Fixture Bar"})
@@ -1545,7 +1678,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Grand Casino boss archetype is missing.")
 		return
 	_check_grand_casino_spatial_split(library, boss_archetype, failures)
-	_check_cage_environment_rework(library, failures)
+	call("_check_cage_environment_rework", library, failures)
 	_check_grand_casino_chips_and_cage(library, boss_archetype, failures)
 	_check_grand_casino_living_floor(library, boss_archetype, failures)
 	_check_grand_casino_staff_rotation(library, boss_archetype, failures)
@@ -2096,7 +2229,11 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		elif game.wager_cost_for_context("play_basic", int(duel_state.get("ante", 20)), hit_run, hit_run.current_environment, hit_command_ui) != 0:
 			failures.append("Rourke hit-to-21 settlement incorrectly requested another cash/chip ante.")
 		else:
-			var hit_result := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), hit_run, hit_run.current_environment, hit_run.create_rng("duel_hit_21_unused"), hit_command_ui)
+			var hit_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(hit_run.to_dict()))
+			var hit_compat := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), hit_run, hit_run.current_environment, hit_run.create_rng("duel_hit_21_unused"), hit_command_ui)
+			if not bool(hit_compat.get("blackjack_compatibility_simulation", false)) or JSON.stringify(_save_load_canonical_run_snapshot(hit_run.to_dict())) != hit_before_compat:
+				failures.append("Detached Rourke hit compatibility resolve mutated live RunState.")
+			var hit_result := _blackjack_authority_resolve_for_test(game, "play_basic", int(duel_state.get("ante", 20)), hit_run, hit_command_ui)
 			var hit_hands_after := _copy_array(hit_run.grand_casino_duel_status().get("hands", [])).size()
 			if not bool(hit_result.get("ok", false)) or hit_hands_after != hit_hands_before + 1:
 				failures.append("Rourke hit-to-21 SETTLE path did not advance exactly one duel hand: result=%s state=%s." % [JSON.stringify(hit_result), JSON.stringify(hit_run.grand_casino_duel_status())])
@@ -2133,7 +2270,11 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		if str(double_settle_command.get("action_id", "")) != "play_basic" or not bool(double_settle_command.get("resolve", double_settle_command.get("direct_resolve", false))):
 			failures.append("Rourke duel double did not become settleable after its card animation: %s." % JSON.stringify(double_settle_command))
 		else:
-			var doubled_result := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), double_run, double_run.current_environment, double_run.create_rng("duel_double_unused"), double_command_ui)
+			var double_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(double_run.to_dict()))
+			var double_compat := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), double_run, double_run.current_environment, double_run.create_rng("duel_double_unused"), double_command_ui)
+			if not bool(double_compat.get("blackjack_compatibility_simulation", false)) or JSON.stringify(_save_load_canonical_run_snapshot(double_run.to_dict())) != double_before_compat:
+				failures.append("Detached Rourke double compatibility resolve mutated live RunState.")
+			var doubled_result := _blackjack_authority_resolve_for_test(game, "play_basic", int(duel_state.get("ante", 20)), double_run, double_command_ui)
 			var doubled_status := double_run.grand_casino_duel_status()
 			var doubled_hands := _copy_array(doubled_status.get("hands", []))
 			var result_hands := _copy_array(doubled_result.get("blackjack_hand_results", []))
@@ -2152,8 +2293,14 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		var loaded_surface := game.surface_state(loaded_mid_duel, loaded_mid_duel.current_environment, {}) if loaded_mid_duel != null else {}
 		if loaded_mid_duel != null and _copy_array(loaded_surface.get("player_hands", [])).is_empty():
 			failures.append("Rourke's saved mid-hand cards did not reopen on the boss surface.")
-		var settled_replay := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), replay_run, replay_run.current_environment, replay_run.create_rng("duel_test_unused"), replay_ui)
-		var settled_original := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), win_run, win_run.current_environment, win_run.create_rng("duel_test_unused"), dealt_ui)
+		var replay_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(replay_run.to_dict()))
+		var original_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(win_run.to_dict()))
+		game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), replay_run, replay_run.current_environment, replay_run.create_rng("duel_test_unused"), replay_ui)
+		game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), win_run, win_run.current_environment, win_run.create_rng("duel_test_unused"), dealt_ui)
+		if JSON.stringify(_save_load_canonical_run_snapshot(replay_run.to_dict())) != replay_before_compat or JSON.stringify(_save_load_canonical_run_snapshot(win_run.to_dict())) != original_before_compat:
+			failures.append("Detached deterministic Rourke compatibility probes mutated live RunState.")
+		var settled_replay := _blackjack_authority_resolve_for_test(game, "play_basic", int(duel_state.get("ante", 20)), replay_run, replay_ui)
+		var settled_original := _blackjack_authority_resolve_for_test(game, "play_basic", int(duel_state.get("ante", 20)), win_run, dealt_ui)
 		if JSON.stringify(_save_load_canonical_value([settled_original.get("blackjack_hand_results", []), win_run.grand_casino_duel_status()])) != JSON.stringify(_save_load_canonical_value([settled_replay.get("blackjack_hand_results", []), replay_run.grand_casino_duel_status()])):
 			failures.append("Identical Rourke duel actions did not reproduce the settled hand and duel state.")
 
@@ -3023,7 +3170,13 @@ func _check_grand_casino_staff_game_state_reset(library: ContentLibrary, main_en
 	# seeding familiarity. Passive surface projection is intentionally
 	# observational and must not make a later dealer look like a rotation.
 	run_state.bankroll = maxi(run_state.bankroll, 100)
-	blackjack.resolve_with_context("blackjack_place_bet", 1, run_state, run_state.current_environment, run_state.create_rng("gc_staff_initial_assignment_action"), {"selected_stake": 1})
+	var staff_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(run_state.to_dict()))
+	var staff_compat := blackjack.resolve_with_context("blackjack_place_bet", 1, run_state, run_state.current_environment, run_state.create_rng("gc_staff_initial_assignment_action"), {"selected_stake": 1})
+	if not bool(staff_compat.get("blackjack_compatibility_simulation", false)) or JSON.stringify(_save_load_canonical_run_snapshot(run_state.to_dict())) != staff_before_compat:
+		failures.append("Detached blackjack staff-assignment compatibility resolve mutated live RunState.")
+	var staff_result := _blackjack_authority_resolve_for_test(blackjack, "blackjack_place_bet", 1, run_state, {"selected_stake": 1})
+	if not bool(staff_result.get("blackjack_host_committed", false)):
+		failures.append("Blackjack host did not commit the initial dealer assignment exactly once.")
 	var blackjack_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var blackjack_table: Dictionary = blackjack_states.get("blackjack", {}) if typeof(blackjack_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
 	var first_blackjack_id := str(blackjack_table.get("staff_assignment_id", ""))
@@ -3064,17 +3217,51 @@ func _check_grand_casino_staff_game_state_reset(library: ContentLibrary, main_en
 	var rotated_profile: Dictionary = rotated_surface.get("dealer_profile", {}) if typeof(rotated_surface.get("dealer_profile", {})) == TYPE_DICTIONARY else {}
 	if str(rotated_surface.get("dealer_name", "")) != str(rotated_assignment.get("name", "")) or str(rotated_profile.get("identity_id", "")) != str(rotated_assignment.get("id", "")) or int(rotated_surface.get("strategy_watch_pressure", -1)) != 0:
 		failures.append("Fresh blackjack dealer preview did not project the rotated identity with cleared strategy pressure.")
-	# Resolution is the write boundary. The durable ban intentionally rejects the
-	# wager after _table_state() commits the dealer-local reset, without dealing a
-	# hand or disturbing the physical table history this contract also protects.
+	# The fresh identity is projected immediately. The durable ban rejects the
+	# wager atomically, so only its retryable delivery may persist; dealer-local
+	# familiarity remains nonauthoritative projection until an accepted boundary.
 	run_state.bankroll = maxi(run_state.bankroll, 100)
+	var reset_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(run_state.to_dict()))
 	blackjack.resolve_with_context("blackjack_place_bet", 1, run_state, run_state.current_environment, run_state.create_rng("gc_staff_reset_action"), {"selected_stake": 1})
-	if int(blackjack_table.get("strategy_deviation_strikes", -1)) != 0 or int(blackjack_table.get("strategy_watch_pressure", -1)) != 0 or not str(blackjack_table.get("strategy_last_notice", "missing")).is_empty():
-		failures.append("Fresh blackjack dealer action boundary did not reset exactly the existing dealer-local strategy familiarity state.")
+	if JSON.stringify(_save_load_canonical_run_snapshot(run_state.to_dict())) != reset_before_compat:
+		failures.append("Detached blackjack dealer-reset compatibility resolve mutated live RunState.")
+	var reset_result := _blackjack_authority_resolve_for_test(blackjack, "blackjack_place_bet", 1, run_state, {"selected_stake": 1})
+	blackjack_states = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	blackjack_table = blackjack_states.get("blackjack", {}) if typeof(blackjack_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
+	if bool(reset_result.get("ok", true)) or str(reset_result.get("blackjack_host_request_key", "")).is_empty():
+		failures.append("Durably barred blackjack dealer reset did not fail atomically behind a retryable host delivery.")
+	var rotated_projection := blackjack.surface_state(run_state, run_state.current_environment, {})
+	if int(rotated_projection.get("strategy_watch_pressure", -1)) != 0:
+		failures.append("Fresh blackjack dealer projection retained the prior dealer's strategy familiarity.")
 	if int(blackjack_table.get("hands_played", 0)) != 9 or int(blackjack_table.get("running_count", 0)) != 4 or not bool(blackjack_table.get("barred", false)) or str(blackjack_table.get("barred_reason", "")) != "Casino memory persists.":
 		failures.append("Dealer rotation reset physical table history or durable casino ban state.")
 	if run_state.suspicion_level() != 28 or int(run_state.narrative_flags.get("grand_casino_games_played", 0)) != 4 or not bool(run_state.narrative_flags.get("grand_casino_cheat_evidence", false)) or str(run_state.narrative_flags.get("grand_casino_players_card_highest_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER or int(run_state.narrative_flags.get("grand_casino_comp_drink_tokens", 0)) != 2:
 		failures.append("Dealer rotation changed heat, evidence, counters, Players Card progress, or durable comp tokens.")
+
+
+func _blackjack_authority_resolve_for_test(game: GameModule, action_id: String, stake: int, run_state: RunState, session: Dictionary) -> Dictionary:
+	var environment := run_state.current_environment
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Dictionary = (game_states.get("blackjack", {}) as Dictionary).duplicate(true) if typeof(game_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
+	var binding := "blackjack:%s:%s" % [str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	var ledger := LendersBlackjackActionAuthorityScript.validate_persisted_ledger(
+		table.get(LendersBlackjackActionAuthorityScript.LEDGER_KEY, {}),
+		binding,
+		run_state.blackjack_authority_checkpoint_fingerprint()
+	)
+	if ledger.is_empty():
+		ledger = LendersBlackjackActionAuthorityScript.default_ledger(binding, run_state.blackjack_authority_checkpoint_fingerprint())
+	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
+		return {"ok": false, "error_code": "pending_delivery", "message": "Test host already has a pending Blackjack action."}
+	table[LendersBlackjackActionAuthorityScript.LEDGER_KEY] = LendersBlackjackActionAuthorityScript.stage_session(ledger, session)
+	game.call("_update_environment_table", environment, table)
+	run_state.current_environment = environment
+	var host: Control = FoundationMain.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {"blackjack": game})
+	host.set("run_state", run_state)
+	host.set("selected_stake", stake)
+	return host.call("_sealed_action_host_resolve_intent", action_id, stake)
 
 
 func _check_grand_casino_memory_entry_lines(main_environment: Dictionary, outside_environment: Dictionary, failures: Array) -> void:
@@ -3997,15 +4184,6 @@ func _check_broke_idle_terminal_evaluator_not_per_frame(library: ContentLibrary,
 	_sb4_dispose_app(app)
 
 
-func _save_service_expected_snapshot(run_state: RunState) -> Dictionary:
-	var parsed: Variant = JSON.parse_string(JSON.stringify(run_state.to_dict()))
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return run_state.to_dict()
-	var normalized: RunState = RunStateScript.new()
-	normalized.from_dict(parsed as Dictionary)
-	return normalized.to_dict()
-
-
 func _fixture_system_pressure_result(environment: Dictionary, bankroll_delta: int, message: String) -> Dictionary:
 	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = bankroll_delta
@@ -4030,27 +4208,6 @@ func _fixture_system_pressure_result(environment: Dictionary, bankroll_delta: in
 	})
 
 
-func _string_array_from_variant(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		var id := str(entry)
-		if not id.is_empty():
-			result.append(id)
-	return result
-
-
-func _unique_strings(first: Array, second: Array) -> Array:
-	var result: Array = []
-	for source in [first, second]:
-		for id in _string_array_from_variant(source):
-			if not result.has(id):
-				result.append(id)
-	return result
-
-
-# Resolves one foundation game action before saving, if generated content allows it.
 func _resolve_first_save_test_action(library: ContentLibrary, run_state: RunState, environment: EnvironmentInstance, failures: Array) -> void:
 	if environment.game_ids.is_empty():
 		failures.append("SaveService round trip needs a generated game option.")
@@ -4206,7 +4363,8 @@ func _check_canonical_pack_paths(failures: Array) -> void:
 	for pack_name in required_paths.keys():
 		var path := str(required_paths[pack_name])
 		_check_foundation_pack_path(path, failures)
-		if not FileAccess.file_exists(path):
+		var exists := DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(path)) if path.get_extension().is_empty() else FileAccess.file_exists(path)
+		if not exists:
 			failures.append("Missing required foundation pack %s at %s." % [pack_name, path])
 
 	var future_paths := ContentLibraryScript.future_pack_paths()
@@ -4531,7 +4689,14 @@ func _check_grand_casino_invite_table_win_spawn(library: ContentLibrary, invite_
 	if bool(run_state.narrative_flags.get(RunState.GRAND_CASINO_INVITATION_TABLE_WIN_FLAG, false)):
 		failures.append("Grand Casino table-win invite triggered at exactly $300 or from a non-table game.")
 
-	var qualifying_result := {"ok": true, "game_id": "blackjack", "source_id": "blackjack", "action_id": "play_basic", "deltas": {"bankroll_delta": 301}}
+	var forged_blackjack_result := {"ok": true, "game_id": "blackjack", "source_id": "blackjack", "action_id": "play_basic", "deltas": {"bankroll_delta": 301}}
+	forged_blackjack_result["blackjack_host_apply_receipt"] = {"request_key": "test:blackjack:qualifying_table_win", "context_fingerprint": "copied_context"}
+	var before_forged_blackjack := run_state.to_dict()
+	GameModule.apply_result(run_state, forged_blackjack_result)
+	if run_state.bankroll != int(before_forged_blackjack.get("bankroll", run_state.bankroll)) \
+			or bool(run_state.narrative_flags.get(RunState.GRAND_CASINO_INVITATION_TABLE_WIN_FLAG, false)):
+		failures.append("A fabricated +301 Blackjack result escaped the exact pending host receipt.")
+	var qualifying_result := {"ok": true, "game_id": "roulette", "source_id": "roulette", "action_id": "spin_roulette", "deltas": {"bankroll_delta": 301}}
 	GameModule.apply_result(run_state, qualifying_result)
 	if not bool(run_state.narrative_flags.get(RunState.GRAND_CASINO_INVITATION_TABLE_WIN_FLAG, false)):
 		failures.append("A net blackjack win over $300 did not trigger the Grand Casino invitation.")
@@ -4869,15 +5034,6 @@ func _check_blackjack_item_content(library: ContentLibrary, failures: Array) -> 
 			failures.append("Broken Cufflinks repair did not cost exactly $50.")
 
 
-func _item_count_ceiling(value: Variant) -> int:
-	if typeof(value) == TYPE_ARRAY:
-		var values: Array = value
-		if values.is_empty():
-			return 0
-		return int(values[values.size() - 1])
-	return int(value)
-
-
 func _check_replaceable_asset(label: String, data: Dictionary, failures: Array) -> void:
 	var asset_path := str(data.get("asset_path", "")).strip_edges()
 	if asset_path.is_empty():
@@ -4906,121 +5062,6 @@ func _check_events(event_ids: Array, library: ContentLibrary, scopes: Array, fai
 
 
 # Creates in-memory content for contract checks.
-func _fixture_library(failures: Array) -> ContentLibrary:
-	var library := ContentLibraryScript.new()
-	library.environment_archetypes = [
-		{
-			"id": "fixture_environment",
-			"tier": 1,
-			"name_prefixes": ["Fixture"],
-			"name_nouns": ["Venue"],
-			"visual_context": {
-				"perspective": "first_person",
-				"scene_type": "fixture",
-			},
-			"security_profile": {
-				"strictness": "fixture",
-				"visible_cues": ["fixture cue"],
-			},
-			"economic_profile": {
-				"stake_floor": 1,
-				"stake_ceiling": 10,
-			},
-			"game_pool": ["fixture_game"],
-			"game_count": [1, 1],
-			"event_pool": ["fixture_event"],
-			"event_count": [1, 1],
-			"item_pool": ["fixture_item"],
-			"item_count": [1, 1],
-			"service_pool": ["fixture_service"],
-			"lender_hooks": ["fixture_lender"],
-			"suspicion_cues": ["fixture behavior cue"],
-			"travel_hooks": ["fixture_route"],
-			"next_archetypes": ["fixture_environment"],
-			"local_narrative_flags": {
-				"fixture_flag": true,
-			},
-			"moods": ["fixture_mood"],
-		},
-	]
-	library.games = [
-		{
-			"id": "fixture_game",
-			"module": "base",
-			"family": "fixture",
-			"display_name": "Fixture Game",
-			"intro": "Fixture game contract.",
-			"legal_actions": [{"id": "legal_fixture", "label": "Legal Fixture", "win_chance": 55, "payout_mult": 2}],
-			"cheat_actions": [{"id": "cheat_fixture", "label": "Cheat Fixture", "win_chance": 70, "payout_mult": 2, "suspicion_delta": 2}],
-		},
-	]
-	library.items = [
-		{
-			"id": "fixture_item",
-			"class": "permanent",
-			"domain": "global",
-			"effect": {"win_chance": 1},
-		},
-	]
-	library.events = [
-		{
-			"id": "fixture_event",
-			"type": "security",
-			"scopes": ["any"],
-			"tier_min": 1,
-			"min_suspicion": 0,
-			"consequences": {
-				"suspicion_delta": 1,
-			},
-			"payload": {
-				"summary": "Fixture event contract.",
-				"choices": [
-					{"id": "raise_heat", "label": "Raise Heat", "text": "Fixture heat rises.", "consequences": {"suspicion_delta": 2, "flags": {"fixture_event_flag": true}, "resolve_event": true}},
-				],
-			},
-		},
-	]
-	library.challenges = [
-		RunState.custom_challenge("fixture_challenge", "FIXTURE-SEED", {"fixture": true}),
-	]
-	library.lenders = [
-		{
-			"id": "fixture_lender",
-			"source": "fixture",
-			"display_name": "Fixture Lender",
-			"risk_profile": "fixture",
-			"consequences": ["fixture_consequence"],
-		},
-	]
-	library.services = [
-		{
-			"id": "fixture_service",
-			"type": "fixture",
-			"cost": 1,
-			"effect": {},
-		},
-	]
-	library.travel_routes = [
-		{
-			"id": "fixture_route",
-			"display_name": "Fixture Route",
-			"cost": 1,
-			"destination_tier_hint": 1,
-		},
-	]
-	# Match ContentLibrary.load(): prove an intentionally unhydrated fixture
-	# changes only its lazy index cache, then freeze the fully constructed state
-	# before any check receives it.
-	var before_hydration := _foundation_library_fingerprint(library)
-	var before_non_index_state := _foundation_library_fingerprint(library, false)
-	library._rebuild_indexes()
-	if _foundation_library_fingerprint(library) == before_hydration:
-		failures.append("Foundation fixture hydration regression did not exercise the unhydrated index state.")
-	if _foundation_library_fingerprint(library, false) != before_non_index_state:
-		failures.append("Foundation fixture hydration changed state outside the lazy index cache.")
-	return library
-
-
 func _check_card_shoe_core_primitives(failures: Array) -> void:
 	var shoe: Array = [
 		{"rank": 14, "suit": 0, "deck": 0},
@@ -5841,13 +5882,6 @@ func _check_save_load_world_event_lender_midstates(library: ContentLibrary, fail
 	_save_load_checkpoint(library, challenge_run, "target/challenge_mid_modifier", true, failures)
 
 
-func _save_load_first_event_id(library: ContentLibrary) -> String:
-	if not library.event("family_loan").is_empty():
-		return "family_loan"
-	var definition := _first_definition(library.events)
-	return str(definition.get("id", ""))
-
-
 func _save_load_canonical_run(run_state: RunState) -> RunState:
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(run_state.to_dict())
@@ -6119,18 +6153,6 @@ func _check_run_state_snapshot_keys(snapshot: Dictionary, failures: Array) -> vo
 
 
 # Compares scalar values in foundation checks.
-func _assert_equal(actual: Variant, expected: Variant, message: String, failures: Array) -> void:
-	if actual != expected:
-		failures.append(message)
-
-
-# Compares dictionaries and arrays in foundation checks.
-func _assert_json_equal(actual: Variant, expected: Variant, message: String, failures: Array) -> void:
-	if JSON.stringify(actual) != JSON.stringify(expected):
-		failures.append(message)
-
-
-# Checks core contracts with fixture content.
 func _check_contracts(library: ContentLibrary, failures: Array) -> void:
 	var custom_challenge := RunState.custom_challenge("foundation_contracts", "FOUNDATION-CONTRACT-SEED", {"fixture": true})
 	var run_state: RunState = RunStateScript.new()

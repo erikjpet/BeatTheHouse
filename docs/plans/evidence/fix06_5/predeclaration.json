@@ -1,0 +1,68 @@
+{
+  "schema": "fix06_5_contract_timing_predeclaration_v1",
+  "status": "series_completed_inconclusive_see_result_json",
+  "created_at": "2026-08-26T20:57:52-05:00",
+  "source": {
+    "commit": "e75f2c3d7f283d75d7faa44ac10694784b63bb25",
+    "tree": "099eeb0233b0d468f52aa0bc196dee4144dac536",
+    "tracked_tree_must_be_clean": true
+  },
+  "guard": {
+    "stage": "foundation_contracts",
+    "baseline_sec": 153.594,
+    "multiplier": 1.5,
+    "cap_sec": 230.391,
+    "change_authorized": false
+  },
+  "series": {
+    "attempt_ids": ["01", "02", "03", "04", "05"],
+    "replacement_attempts_allowed": false,
+    "same_host_required": true,
+    "same_source_head_required": true,
+    "same_godot_binary_required": true,
+    "same_native_addon_required": true,
+    "cooldown_seconds": 120,
+    "command_template": "powershell -NoProfile -ExecutionPolicy Bypass -File tools\\check_godot.ps1 -RequireGodot -KeepGoing -Suite Contract -FoundationSuite contracts -TimeoutSec 600 -ReportDir .tmp\\fix06_5_contract_timing\\run_0N",
+    "keep_going_required_for_normal_foundation_suite_aggregation_and_wrapper_exit_normalization": true,
+    "foundation_suite_contracts_early_return_prevents_broader_contract_stages": true
+  },
+  "idle_precheck": {
+    "cpu_counter": "\\Processor(_Total)\\% Processor Time",
+    "sample_interval_seconds": 1,
+    "sample_count": 60,
+    "p95_method": "nearest_rank_sorted_sample_57_of_60",
+    "median_cpu_percent_max": 10.0,
+    "p95_cpu_percent_max": 25.0,
+    "other_project_godot_processes_max": 0,
+    "concurrent_project_jobs_max": 0,
+    "power_identity_must_match_attempt_01": true
+  },
+  "native_identity": {
+    "backend_required": "native_v3",
+    "gdextension_sha256": "72EE625D61257DCBD65400E57F39077EADEDD3C265C25C83F68BC2F8EFBC9861",
+    "uid_sha256": "F606704CBF202403DE82CBFD19B4160889346206EAD1D96E86C6A452B0C3A06A",
+    "dll_sha256": "1052770B5A96057928F67A72159D8A31B89D5591EAB7A64F07F8FCAE458E83F5"
+  },
+  "timing_eligibility": {
+    "all_locked_identities_match": true,
+    "functional_checks_required": 16,
+    "functional_failures_max": 0,
+    "stderr_issues_max": 0,
+    "timed_out": false,
+    "foundation_contracts_stage_exit_code_for_timing_red": 126,
+    "foundation_contracts_stage_126_must_be_sole_failed_stage_reason": true,
+    "wrapper_exit_code_allowed_for_sole_stage_126_budget_red": 1,
+    "wrapper_exit_code_1_allowed_if_and_only_if_sole_stage_126_budget_red": true,
+    "keep_going_required": true,
+    "other_nonzero_stage_or_wrapper_exit_allowed": false
+  },
+  "decision_rule": {
+    "median_method": "sort_ascending_and_use_value_3_of_5_without_precomparison_rounding",
+    "missing_any_eligible_attempt": "INCONCLUSIVE",
+    "median_duration_sec_lte_cap": "SUPPORTED_BY_THIS_SERIES",
+    "median_duration_sec_gt_cap": "STALE_BASELINE_CANDIDATE_REQUIRES_OWNER_AUTHORIZATION",
+    "automatic_baseline_or_cap_change": false
+  },
+  "historical_context_sec": [213.643, 231.531, 261.805, 261.65, 259.847],
+  "historical_results_are_series_members": false
+}

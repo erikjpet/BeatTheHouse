@@ -304,13 +304,17 @@ static func _clear_region(mask: Array, region: Dictionary) -> void:
 
 static func _apply_linear_progress(mask: Array, region: Dictionary, progress: float) -> void:
 	var ranges := _region_ranges(region)
-	var width := int(ranges[1]) - int(ranges[0])
-	var clear_columns := clampi(roundi(float(width) * progress), 0, width)
-	for row in range(int(ranges[2]), int(ranges[3])):
-		var offset := row * MASK_COLUMNS
-		for column in range(int(ranges[0]), int(ranges[0]) + clear_columns):
+	# Migration preserves the old completion percentage exactly (to one mask
+	# sample), including ellipses whose cleared area is not linear in width.
+	var target := clampi(roundi(float(region.get("sample_total", 0)) * progress), 0, int(region.get("sample_total", 0)))
+	var cleared := 0
+	for column in range(int(ranges[0]), int(ranges[1])):
+		for row in range(int(ranges[2]), int(ranges[3])):
+			if cleared >= target:
+				return
 			if _sample_inside_region(region, column, row):
-				mask[offset + column] = 0
+				mask[row * MASK_COLUMNS + column] = 0
+				cleared += 1
 
 
 static func _remaining_units(mask: Array, region: Dictionary) -> int:

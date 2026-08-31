@@ -36,8 +36,52 @@ func draw(surface, state: Dictionary, _context: Dictionary = {}) -> bool:
 		_draw_hands(surface, state, palette)
 	_draw_controls(surface, state, palette)
 	_draw_holdout(surface, state, palette)
+	_draw_machine_ritual_layer(surface, state, palette)
 	surface.surface_end_design_space()
 	return true
+
+
+func _draw_machine_ritual_layer(surface, state: Dictionary, palette: Dictionary) -> void:
+	var projection_value: Variant = state.get("ritual_projection", {})
+	if typeof(projection_value) != TYPE_DICTIONARY:
+		return
+	var projection: Dictionary = projection_value
+	if projection.is_empty():
+		return
+	var primary: Color = palette["primary"]
+	var trim: Color = palette["trim"]
+	var scene_objects: Dictionary = projection.get("scene_objects", {}) if typeof(projection.get("scene_objects", {})) == TYPE_DICTIONARY else {}
+	var tower_object: Dictionary = scene_objects.get("cabinet_tower_light", {}) if typeof(scene_objects.get("cabinet_tower_light", {})) == TYPE_DICTIONARY else {}
+	var tower_state := str(tower_object.get("visual_state", "off"))
+	var tower_color := C_ORANGE if tower_state in ["handpay", "security"] else C_YELLOW if tower_state == "service" else Color("#334057")
+	var tower := Rect2(872, 18, 54, 48)
+	surface.draw_rect(tower, Color("#02050b"))
+	surface.draw_rect(tower, trim.darkened(0.25), false, 2)
+	surface.draw_circle(tower.position + Vector2(27, 14), 10, tower_color)
+	surface.surface_label_centered(tower_state.to_upper(), Rect2(tower.position + Vector2(2, 27), Vector2(50, 17)), 7, tower_color)
+	var validator := Rect2(920, 470, 22, 42)
+	surface.draw_rect(validator, Color("#02040a"))
+	var money_path: Dictionary = scene_objects.get("cabinet_money_path", {}) if typeof(scene_objects.get("cabinet_money_path", {})) == TYPE_DICTIONARY else {}
+	surface.draw_rect(validator, primary if str(money_path.get("functional_state", "locked")) == "enabled" else Color("#6f2634"), false, 2)
+	surface.draw_line(validator.position + Vector2(5, 13), validator.position + Vector2(17, 13), C_WHITE, 2)
+	var actors: Dictionary = projection.get("actors", {}) if typeof(projection.get("actors", {})) == TYPE_DICTIONARY else {}
+	var neighbours: Dictionary = actors.get("neighbour_seats", {}) if typeof(actors.get("neighbour_seats", {})) == TYPE_DICTIONARY else {}
+	if bool(neighbours.get("visible", false)):
+		for x in [18.0, 942.0]:
+			surface.draw_circle(Vector2(x, 286), 12, Color(0.10, 0.13, 0.18, 0.94))
+			surface.draw_rect(Rect2(x - 11, 298, 22, 46), Color(0.06, 0.08, 0.12, 0.90))
+	var attendant: Dictionary = actors.get("attendant_primary", {}) if typeof(actors.get("attendant_primary", {})) == TYPE_DICTIONARY else {}
+	if bool(attendant.get("visible", false)):
+		surface.draw_circle(Vector2(846, 188), 14, Color("#d8b287"))
+		surface.draw_rect(Rect2(832, 202, 28, 64), Color("#26344d"))
+		surface.surface_label("ATTENDANT", Vector2(796, 280), 8, tower_color)
+	var stage := str(projection.get("result_stage", "idle"))
+	if stage != "idle":
+		var stage_rect := Rect2(708, 438, 204, 22)
+		surface.draw_rect(stage_rect, Color("#02050b"))
+		surface.draw_rect(stage_rect, primary, false, 1)
+		var stage_text := "REPLACING UNHELD CARDS" if stage == "card_replacements" else "READ: %s" % str(projection.get("paytable_line", "NO PAY")).to_upper()
+		surface.surface_label_centered(stage_text.left(30), stage_rect.grow(-3), 8, C_WHITE)
 
 
 func _palette(state: Dictionary) -> Dictionary:
@@ -354,8 +398,8 @@ func _draw_controls(surface, state: Dictionary, palette: Dictionary) -> void:
 	var meters := Rect2(704, y, 212, 40)
 	surface.draw_rect(meters, Color("#02050b"))
 	surface.draw_rect(meters, trim.darkened(0.25), false, 2)
-	surface.surface_label("CRED %d    WIN %d" % [int(state.get("credits", 0)), int(state.get("win_credits", 0))], Vector2(meters.position.x + 8, meters.position.y + 15), 9, C_YELLOW)
-	surface.surface_label("BET %d (%d COIN/HAND)" % [wager, coins], Vector2(meters.position.x + 8, meters.position.y + 31), 9, C_CYAN)
+	surface.surface_label("CASH $%d    WIN $%d" % [int(state.get("bankroll", 0)), int(state.get("win_credits", 0))], Vector2(meters.position.x + 8, meters.position.y + 15), 9, C_YELLOW)
+	surface.surface_label("BET $%d (%d COIN/HAND)" % [wager, coins], Vector2(meters.position.x + 8, meters.position.y + 31), 9, C_CYAN)
 
 
 func _button(surface, rect: Rect2, label: String, action: String, index: int, accent: Color, enabled: bool) -> void:

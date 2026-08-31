@@ -41,6 +41,7 @@ const RESTOCK_ONE_PERCENT := 40
 const RESTOCK_TWO_PERCENT := 10
 const SCALPER_VISIT_CHANCE_PERCENT := 30
 const SCALPER_KNOWS_CHANCE_PERCENT := 50
+const PRACTICE_STOCK_COUNT := 100
 const MACHINE_RECT := Rect2(18, 13, 278, 404)
 const PLAY_SURFACE_RECT := Rect2(306, 48, 586, 370)
 const DEFAULT_TICKET_RECT := Rect2(422, 54, 354, 356)
@@ -49,16 +50,40 @@ const STATUS_HUD_RECT := Rect2(306, 8, 460, 34)
 const WIN_PILE_RECT := Rect2(318, 184, 82, 54)
 const LOSS_PILE_RECT := Rect2(318, 292, 82, 54)
 const BIG_WIN_THRESHOLD := 100
-const COLLECTION_TOTAL := 7
+const COLLECTION_TOTAL := 6
 const DEFAULT_BRUSH_RADIUS := 15.0
 const DEFAULT_PASS_REMOVAL := 0.66
 const DEFAULT_SWEEP_THRESHOLD := 0.80
 const DEFAULT_MASK_COLUMNS := MaskScript.MASK_COLUMNS
 const DEFAULT_MASK_ROWS := MaskScript.MASK_ROWS
+const HELD_TICKET_TYPE_ID := "crossword_corner"
+const ACTIVE_TICKET_TYPE_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const DISCARD_ARM_DISTANCE := 120.0
 const DISCARD_DROP_DISTANCE := 190.0
 const MACHINE_STATE_VERSION := 4
 const REGION_LAYOUT_VERSION := RegionModelScript.LAYOUT_VERSION
+const CROSSWORD_LAYOUT_SLOTS := [
+	{"dir": "across", "x": 1, "y": 1, "length": 4},
+	{"dir": "down", "x": 4, "y": 1, "length": 5},
+	{"dir": "across", "x": 4, "y": 4, "length": 4},
+	{"dir": "down", "x": 6, "y": 3, "length": 4},
+	{"dir": "across", "x": 2, "y": 7, "length": 4},
+	{"dir": "across", "x": 1, "y": 9, "length": 4},
+	{"dir": "down", "x": 9, "y": 2, "length": 5},
+]
+const CROSSWORD_CHAINS := [
+	["CASH", "HOUSE", "SLOT", "GOLD"],
+	["DEAL", "LIGHT", "HAND", "ANTE"],
+	["CARD", "DAILY", "LUCK", "ACES"],
+	["INKS", "SUITS", "TYPE", "SPIN"],
+	["REEL", "LUCKY", "KING", "ANTE"],
+	["CALL", "LIGHT", "HAND", "ANTE"],
+	["DICE", "ENTRY", "REEL", "DEAL"],
+]
+const CROSSWORD_FREE_FOUR_WORDS := ["PAIR", "CITY", "RACE", "GRID", "CLUE", "PAGE", "READ", "PLAY", "ROAD", "ROLL", "TELL", "TILE"]
+const CROSSWORD_FREE_FIVE_WORDS := ["VAULT", "RAISE", "ROYAL", "TOKEN", "CHIPS", "CARDS", "DEALS", "SPINS", "REELS", "COINS", "HANDS", "PAIRS", "CALLS", "LOANS", "CLUES"]
+const CROSSWORD_PUZZLE_CYCLE := 13860
+const CROSSWORD_LETTERS := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 var active_ticket_rect := DEFAULT_TICKET_RECT
 
@@ -76,7 +101,7 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var result := super.enter(run_state, environment)
 	result["message"] = "The scratcher vending machine hums beside the clerk. Stock releases in small unposted batches; pick a live slot, then drag across the latex."
-	result["scratch_stock_count"] = _dictionary_array(machine.get("stock", [])).size()
+	result["scratch_stock_count"] = _stock_view(machine).size()
 	result["scratch_stock_available"] = _stock_total(machine)
 	result["scratch_scalper_present"] = bool(machine.get("scalper_present", false))
 	return result
@@ -104,10 +129,15 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var active_ticket := _dict_ref(machine.get("active_ticket", {}))
+	if not active_ticket.is_empty():
+		# Build the high-resolution foil at the presentation boundary. The purchase
+		# transaction fixes every outcome and durable field first, without making
+		# settlement latency depend on allocating a 49,152-sample render mask.
+		_ensure_ticket_regions(active_ticket)
 	var stock := _stock_view(machine)
 	var queue := _dictionary_array(machine.get("pending_queue", []))
 	var crumbs := _dictionary_array(ui_state.get("scratch_crumbs", []))
-	var discovered := _string_array(run_state.narrative_flags.get("scratch_ticket_types_discovered", [])) if run_state != null else []
+	var discovered := _active_discovered_ticket_types(_string_array(run_state.narrative_flags.get("scratch_ticket_types_discovered", [])) if run_state != null else [])
 	var collection_complete := discovered.size() >= COLLECTION_TOTAL
 	var last_dispense_id := str(machine.get("last_dispense_id", ""))
 	var last_file_id := str(machine.get("last_file_id", ""))
@@ -119,10 +149,16 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var sweep_duration := 0 if reduce_motion else SWEEP_DURATION_MSEC
 	_configure_active_ticket_layout(active_ticket, compact_mode)
 	var result_ready := bool(active_ticket.get("result_ready", false))
+	var counter_ritual := _scratch_counter_ritual(machine, active_ticket, run_state, environment)
 	return GameModule.surface_spec({
 		"surface_renderer": "scratch_tickets",
 		"surface_life": "scratch_vending_machine",
-		"surface_cast": "machine",
+		"surface_cast": "clerk_and_machine",
+		"counter_ritual": counter_ritual,
+		"counter_phase": str(counter_ritual.get("phase", "selection")),
+		"counter_actors": counter_ritual.get("actors", []),
+		"counter_objects": counter_ritual.get("objects", []),
+		"counter_attention": counter_ritual.get("attention", {}),
 		"surface_controls_native": true,
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
@@ -182,6 +218,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_collection_total": COLLECTION_TOTAL,
 		"scratch_collection_complete": collection_complete,
 		"scratch_collection_status": "FULL SET FOUND" if collection_complete else "%d/%d PRINTS FOUND" % [discovered.size(), COLLECTION_TOTAL],
+		"scratch_held_ticket_type": HELD_TICKET_TYPE_ID,
 		"scratch_xray_peeks": _dictionary_array(active_ticket.get("xray_peeks", [])) if result_ready else [],
 		"scratch_fortune": str(active_ticket.get("fortune_tier", "")) if result_ready else "",
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
@@ -243,7 +280,7 @@ func _ticket_foil_style_id(ticket: Dictionary) -> String:
 
 
 func surface_action_command(surface_action: String, index: int, _confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	var machine := _ensure_machine_state(run_state, environment, true)
+	var machine := _ensure_machine_state(run_state, environment, false)
 	match surface_action:
 		"scratch_compact_machine", "scratch_compact_ticket":
 			var tab_state := ui_state.duplicate(false)
@@ -256,6 +293,8 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			if stock_index < 0 or stock_index >= stock.size():
 				return GameModule.surface_command({"message": "That vending slot is empty."})
 			var slot: Dictionary = stock[stock_index]
+			if _ticket_type_is_held(str(slot.get("type_id", ""))):
+				return GameModule.surface_command({"message": "Crossword Corner is held from new sale. Previously issued tickets remain valid."})
 			var price := maxi(1, int(slot.get("price", 1)))
 			if int(slot.get("remaining", 0)) < quantity:
 				return GameModule.surface_command({"message": "%s is sold out." % str(slot.get("display_name", "That ticket"))})
@@ -467,6 +506,8 @@ func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, 
 	var quantity := maxi(1, int(ui_state.get("scratch_buy_quantity", 1)))
 	if index < 0 or index >= stock.size():
 		return maxi(0, stake)
+	if _ticket_type_is_held(str((stock[index] as Dictionary).get("type_id", ""))):
+		return 0
 	return maxi(1, int((stock[index] as Dictionary).get("price", stake))) * quantity
 
 
@@ -608,13 +649,15 @@ func measure_rtp(type_id: String, samples: int = 20000, seed_text: String = "SCR
 
 
 func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
-	var machine := _ensure_machine_state(run_state, environment, true)
+	var machine := _ensure_machine_state(run_state, environment, false)
 	var stock := _dictionary_array(machine.get("stock", []))
 	var stock_index := int(ui_state.get("scratch_stock_index", 0))
 	var quantity := maxi(1, int(ui_state.get("scratch_buy_quantity", 1)))
 	if stock_index < 0 or stock_index >= stock.size():
 		return _scratch_empty_result(BUY_ACTION, environment, "That vending slot is empty.")
 	var slot: Dictionary = stock[stock_index]
+	if _ticket_type_is_held(str(slot.get("type_id", ""))):
+		return _scratch_empty_result(BUY_ACTION, environment, "Crossword Corner is held from new sale. Previously issued tickets remain valid.")
 	var price := maxi(1, int(slot.get("price", 1)))
 	if int(slot.get("remaining", 0)) < quantity:
 		return _scratch_empty_result(BUY_ACTION, environment, "%s is sold out." % str(slot.get("display_name", "That ticket")))
@@ -645,11 +688,9 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 		_reserve_penalty_shields(ticket, shield_capacity)
 		purchased_tickets.append(ticket)
 		if not has_active_ticket:
-			# Queued tickets intentionally stay compact until they reach the table,
-			# but the visible ticket must have its authored mask before its first
-			# frame. Initializing it on the first drag makes the foil suddenly pop
-			# into existence over the background artwork.
-			_ensure_ticket_regions(ticket)
+			# Keep the transaction compact. surface_state initializes the visible
+			# ticket before its first rendered frame; queued tickets stay compact
+			# until they reach the table.
 			machine["active_ticket"] = ticket
 			machine["penalty_shields_remaining"] = shield_capacity
 			has_active_ticket = true
@@ -665,6 +706,16 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 	machine["last_dispense_id"] = "scratch-dispense:%s" % str(first_ticket.get("id", first_purchase_number))
 	machine["last_dispense_slot"] = stock_index
 	machine["dispense_started_msec"] = GameModule.deterministic_time_msec(run_state, ui_state)
+	machine["last_counter_transaction"] = {
+		"kind": "purchase",
+		"phase": "handover",
+		"ticket_count": quantity,
+		"tendered": total_price,
+		"price": total_price,
+		"change": 0,
+		"ticket_id": str(first_ticket.get("id", "")),
+		"completed": true,
+	}
 	_write_machine_state(environment, machine, run_state, false)
 	var message := "%s%s paid for now. Scratch one at a time." % [str(first_ticket.get("display_name", "A scratch ticket")), " x%d" % quantity if quantity > 1 else ""]
 	if not _dictionary_array(first_ticket.get("xray_peeks", [])).is_empty():
@@ -835,6 +886,14 @@ func _resolve_redemption(run_state: RunState, environment: Dictionary, rng: RngS
 	var heat := big_wins * 4
 	machine["winner_pile"] = []
 	machine["redeemed_count"] = int(machine.get("redeemed_count", 0)) + winners.size()
+	machine["last_counter_transaction"] = {
+		"kind": "redemption",
+		"phase": "payout",
+		"ticket_count": winners.size(),
+		"payout": payout,
+		"scrutiny": "extended" if big_wins > 0 else "standard",
+		"completed": true,
+	}
 	_write_machine_state(environment, machine, run_state)
 	var message := "The clerk scans %d ticket%s and counts out $%d." % [winners.size(), "" if winners.size() == 1 else "s", payout]
 	if heat > 0:
@@ -870,6 +929,68 @@ func _redeemer_label(environment: Dictionary) -> String:
 	return "Lottery Clerk"
 
 
+func _scratch_counter_ritual(machine: Dictionary, active_ticket: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var winners := _dictionary_array(machine.get("winner_pile", []))
+	var losers := _dictionary_array(machine.get("loser_pile", []))
+	var suspicion := run_state.suspicion_level() if run_state != null else 0
+	var transaction := _copy_dict(machine.get("last_counter_transaction", {}))
+	var phase := "selection"
+	if not winners.is_empty():
+		phase = "redemption_ready"
+	elif not active_ticket.is_empty():
+		phase = "file" if bool(active_ticket.get("result_ready", false)) else "play"
+	elif str(transaction.get("phase", "")) == "handover":
+		phase = "handover"
+	var clerk_state := "idle"
+	if suspicion >= 70:
+		clerk_state = "refusing"
+	elif suspicion >= 45:
+		clerk_state = "suspicious"
+	elif suspicion >= 20:
+		clerk_state = "watching"
+	elif phase == "redemption_ready":
+		clerk_state = "paying_out"
+	elif phase in ["handover", "selection"] and not transaction.is_empty():
+		clerk_state = "serving"
+	elif _stock_total(machine) <= 0:
+		clerk_state = "bored"
+	var stock_rows := _dictionary_array(machine.get("stock", []))
+	var rack_rows: Array = []
+	for row_value in stock_rows:
+		var row: Dictionary = row_value
+		if _ticket_type_is_held(str(row.get("type_id", ""))):
+			continue
+		rack_rows.append({
+			"type_id": str(row.get("type_id", "")),
+			"remaining": maxi(0, int(row.get("remaining", 0))),
+			"capacity": maxi(0, int(row.get("capacity", 0))),
+			"material_energy": "lit" if int(row.get("remaining", 0)) > 0 else "spent",
+		})
+	return {
+		"version": 1,
+		"phase": phase,
+		"actors": [{
+			"id": "scratch_clerk",
+			"label": _redeemer_label(environment),
+			"state": clerk_state,
+			"material_energy": "alert" if clerk_state in ["watching", "suspicious", "refusing"] else "working" if clerk_state in ["serving", "paying_out"] else "ambient",
+		}],
+		"objects": [
+			{"id": "ticket_rack", "state": "stocked" if _stock_total(machine) > 0 else "empty", "stock": rack_rows, "material_energy": "interactive" if _stock_total(machine) > 0 else "spent"},
+			{"id": "counter", "state": phase, "material_energy": "active" if phase in ["handover", "redemption_ready"] else "ambient"},
+			{"id": "losing_ticket_pile", "count": losers.size() + maxi(0, int(machine.get("loser_archive_count", 0))), "visible": true, "material_energy": "spent"},
+		],
+		"transaction": transaction,
+		"attention": {"tier": clerk_state, "suspicion": suspicion, "reveals_hidden_outcomes": false},
+	}
+
+
+func _is_practice_environment(environment: Dictionary) -> bool:
+	var flags_value: Variant = environment.get("local_narrative_flags", {})
+	var flags: Dictionary = flags_value if typeof(flags_value) == TYPE_DICTIONARY else {}
+	return bool(flags.get("practice_session", false))
+
+
 func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	var day_key := int(environment.get("generated_day", environment.get("day", 0)))
 	var stream_key := "scratch-stock:%s:day:%d" % [str(environment.get("id", "room")), day_key]
@@ -877,13 +998,17 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	var machine_rng := root_rng.fork(stream_key)
 	var current_absolute_minute := maxi(0, run_state.game_clock_minutes) if run_state != null else maxi(0, day_key * 1440)
 	var restock_phase_minute := machine_rng.randi_range(0, RESTOCK_INTERVAL_MINUTES - 1)
+	var practice_session := _is_practice_environment(environment)
 	var stock: Array = []
 	for ticket_type_value in _ticket_types():
 		var ticket_type: Dictionary = ticket_type_value
 		var count_range := _int_array(ticket_type.get("stock_count", [0, 5]))
-		var maximum := clampi(int(count_range[1]) if count_range.size() > 1 else 5, 1, 5)
+		var maximum := PRACTICE_STOCK_COUNT if practice_session else clampi(int(count_range[1]) if count_range.size() > 1 else 5, 1, 5)
 		var stock_roll := machine_rng.randi_range(0, 19)
-		var remaining := 0 if stock_roll < 15 else mini(maximum, stock_roll - 14)
+		# Consume the same per-family roll as the seven-ticket intake so holding
+		# Crossword cannot perturb deterministic stock for the six active families.
+		var held := _ticket_type_is_held(str(ticket_type.get("id", "")))
+		var remaining := 0 if held else (PRACTICE_STOCK_COUNT if practice_session else (0 if stock_roll < 15 else mini(maximum, stock_roll - 14)))
 		stock.append({
 			"type_id": str(ticket_type.get("id", "")),
 			"display_name": str(ticket_type.get("display_name", "Ticket")),
@@ -893,6 +1018,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 			"stock_weight": maxi(1, int(ticket_type.get("stock_weight", 1))),
 			"size_id": str(ticket_type.get("size_id", "medium_square")),
 			"palette": _copy_dict(_copy_dict(ticket_type.get("face", {})).get("palette", {})),
+			"release_availability": "held" if held else "active",
 		})
 	var initially_empty := _stock_total_from_rows(stock) <= 0
 	var initial_scalper_present := initially_empty and run_state != null and not run_state.is_tutorial_run()
@@ -961,7 +1087,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 func _roll_ticket(ticket_type: Dictionary, rng: RngStream, luck_modifier: int, purchase_key: String, initialize_mask: bool = true) -> Dictionary:
 	var prize := _weighted_prize(ticket_type, rng, luck_modifier)
 	var mechanic := _copy_dict(ticket_type.get("mechanic", {}))
-	var content := _build_mechanic_content(str(mechanic.get("type", "")), mechanic, prize, rng)
+	var content := _build_mechanic_content(str(mechanic.get("type", "")), mechanic, prize, rng, purchase_key)
 	var ticket_id := "%s:%s:%s" % [str(ticket_type.get("id", "ticket")), purchase_key, str(rng.randi_range(100000, 999999))]
 	var ticket := {
 		"id": ticket_id,
@@ -1014,7 +1140,7 @@ func _ensure_ticket_regions(ticket: Dictionary) -> void:
 func _sections_from_regions(regions: Array) -> Array:
 	return MaskScript.sections_from_regions(regions)
 
-func _build_mechanic_content(mechanic_type: String, mechanic: Dictionary, prize: Dictionary, rng: RngStream) -> Dictionary:
+func _build_mechanic_content(mechanic_type: String, mechanic: Dictionary, prize: Dictionary, rng: RngStream, generation_key: String = "") -> Dictionary:
 	match mechanic_type:
 		"match_two_of_three":
 			return _build_two_fer_content(mechanic, prize, rng)
@@ -1023,7 +1149,7 @@ func _build_mechanic_content(mechanic_type: String, mechanic: Dictionary, prize:
 		"tic_tac_toe":
 			return _build_tic_tac_gold_content(prize, rng)
 		"crossword":
-			return _build_crossword_content(mechanic, prize, rng)
+			return _build_crossword_content(mechanic, prize, rng, generation_key)
 		"bingo":
 			return _build_bingo_content(prize, rng)
 		"beat_dealer_poker":
@@ -1114,36 +1240,29 @@ func _build_tic_tac_gold_content(prize: Dictionary, rng: RngStream) -> Dictionar
 	return {"spots": spots, "marks": marks, "completed_lines": completed, "line_prizes": line_prizes, "bonus": bonus, "bonus_prize": bonus_prize, "print_variant": rng.randi_range(1000, 9999)}
 
 
-func _build_crossword_content(mechanic: Dictionary, prize: Dictionary, rng: RngStream) -> Dictionary:
-	var words := _crossword_layout_words(_string_array(mechanic.get("words", [])))
-	var completion_order := words.duplicate(false)
-	_shuffle_array(completion_order, rng)
-	var completed_count := clampi(int(prize.get("word_count", 0)), 0, words.size())
+func _build_crossword_content(mechanic: Dictionary, prize: Dictionary, rng: RngStream, generation_key: String = "") -> Dictionary:
+	var puzzle_index := _crossword_puzzle_index(generation_key, rng)
+	var words := _crossword_layout_words(puzzle_index)
+	var layout := _crossword_layout_entries(words)
+	var requested_count := clampi(int(prize.get("word_count", 0)), 0, words.size())
+	var valid_completed_sets := _crossword_valid_completed_sets(words, requested_count)
+	if valid_completed_sets.is_empty():
+		push_error("Crossword puzzle %d cannot represent exactly %d completed words." % [puzzle_index, requested_count])
+		return {"spots": []}
+	var selected_words: Array = valid_completed_sets[rng.randi_range(0, valid_completed_sets.size() - 1)]
+	var bank := _crossword_letter_bank(words, selected_words, rng)
 	var completed_words: Array = []
-	for index in range(completed_count):
-		completed_words.append(completion_order[index])
-	var bank: Array = []
-	for word_value in completed_words:
-		for character_index in range(str(word_value).length()):
-			var letter := str(word_value).substr(character_index, 1)
-			if not bank.has(letter):
-				bank.append(letter)
-	var fillers: Array = []
-	for filler_index in range("ETAOINSHRDLUCMFWYP".length()):
-		fillers.append("ETAOINSHRDLUCMFWYP".substr(filler_index, 1))
-	_shuffle_array(fillers, rng)
-	for filler_value in fillers:
-		var filler := str(filler_value)
-		if not bank.has(filler):
-			bank.append(filler)
-		if bank.size() >= 18:
-			break
-	_shuffle_array(bank, rng)
+	for word_value in words:
+		if _crossword_word_complete(str(word_value), bank):
+			completed_words.append(str(word_value))
+	var completed_count := completed_words.size()
+	if completed_count != requested_count:
+		push_error("Crossword puzzle %d printed %d completed words but prize requires %d." % [puzzle_index, completed_count, requested_count])
 	var spots: Array = []
 	for index in range(bank.size()):
 		spots.append({"index": spots.size(), "section_id": "letter_bank", "letter": str(bank[index]), "bank_index": index, "role": "bank_letter"})
 	var cell_map: Dictionary = {}
-	for entry in _crossword_layout_entries(words):
+	for entry in layout:
 		var word := str(entry.get("word", ""))
 		var across := str(entry.get("dir", "")) == "across"
 		for letter_index in range(word.length()):
@@ -1167,34 +1286,141 @@ func _build_crossword_content(mechanic: Dictionary, prize: Dictionary, rng: RngS
 		cell["section_id"] = "crossword"
 		cell["role"] = "crossword_cell"
 		spots.append(cell)
-	return {"spots": spots, "letter_bank": bank, "words": words, "completed_words": completed_words, "word_count": completed_count, "legend": _copy_dict(mechanic.get("legend", {})), "crossword_layout": _crossword_layout_entries(words)}
+	return {
+		"spots": spots,
+		"letter_bank": bank,
+		"words": words,
+		"completed_words": completed_words,
+		"word_count": completed_count,
+		"legend": _copy_dict(mechanic.get("legend", {})),
+		"crossword_layout": layout,
+		"puzzle_id": "crossword-%05d" % puzzle_index,
+		"puzzle_generation": "procedural_unique_v1",
+	}
 
 
-func _crossword_layout_words(fallback_words: Array) -> Array:
-	var configured := _string_array(fallback_words)
-	var defaults := ["CASH", "HOUSE", "SLOT", "GOLD", "LUCK", "RISK", "VAULT"]
-	var words: Array = []
-	for default_word in defaults:
-		words.append(default_word if configured.has(default_word) else default_word)
+func _crossword_puzzle_index(generation_key: String, rng: RngStream) -> int:
+	if generation_key.is_empty():
+		return rng.randi_range(0, CROSSWORD_PUZZLE_CYCLE - 1) if rng != null else 0
+	var separator := generation_key.rfind(":")
+	if separator >= 0:
+		var suffix := generation_key.substr(separator + 1)
+		if suffix.is_valid_int():
+			var purchase_namespace := generation_key.left(separator)
+			var namespace_offset := posmod(RunState.text_to_seed(purchase_namespace), CROSSWORD_PUZZLE_CYCLE)
+			return posmod(namespace_offset + int(suffix), CROSSWORD_PUZZLE_CYCLE)
+	return posmod(RunState.text_to_seed(generation_key), CROSSWORD_PUZZLE_CYCLE)
+
+
+func _crossword_layout_words(puzzle_index: int) -> Array:
+	var cursor := posmod(puzzle_index, CROSSWORD_PUZZLE_CYCLE)
+	var chain_index := cursor % CROSSWORD_CHAINS.size()
+	cursor = floori(float(cursor) / float(CROSSWORD_CHAINS.size()))
+	var first_free_index := cursor % CROSSWORD_FREE_FOUR_WORDS.size()
+	cursor = floori(float(cursor) / float(CROSSWORD_FREE_FOUR_WORDS.size()))
+	var second_free_index := cursor % (CROSSWORD_FREE_FOUR_WORDS.size() - 1)
+	if second_free_index >= first_free_index:
+		second_free_index += 1
+	cursor = floori(float(cursor) / float(CROSSWORD_FREE_FOUR_WORDS.size() - 1))
+	var five_letter_index := cursor % CROSSWORD_FREE_FIVE_WORDS.size()
+	var words: Array = (CROSSWORD_CHAINS[chain_index] as Array).duplicate(false)
+	words.append(CROSSWORD_FREE_FOUR_WORDS[first_free_index])
+	words.append(CROSSWORD_FREE_FOUR_WORDS[second_free_index])
+	words.append(CROSSWORD_FREE_FIVE_WORDS[five_letter_index])
 	return words
 
 
 func _crossword_layout_entries(words: Array) -> Array:
-	var wanted := _string_array(words)
-	var entries := [
-		{"word": "CASH", "dir": "across", "x": 1, "y": 1},
-		{"word": "HOUSE", "dir": "down", "x": 4, "y": 1},
-		{"word": "SLOT", "dir": "across", "x": 4, "y": 4},
-		{"word": "GOLD", "dir": "down", "x": 6, "y": 3},
-		{"word": "LUCK", "dir": "across", "x": 2, "y": 7},
-		{"word": "RISK", "dir": "across", "x": 1, "y": 9},
-		{"word": "VAULT", "dir": "down", "x": 9, "y": 2},
-	]
 	var result: Array = []
-	for entry in entries:
-		if wanted.has(str((entry as Dictionary).get("word", ""))):
-			result.append((entry as Dictionary).duplicate(true))
+	for index in range(mini(words.size(), CROSSWORD_LAYOUT_SLOTS.size())):
+		var entry: Dictionary = (CROSSWORD_LAYOUT_SLOTS[index] as Dictionary).duplicate(true)
+		var word := str(words[index])
+		if word.length() != int(entry.get("length", 0)):
+			push_error("Crossword puzzle word %s does not fit layout slot %d." % [word, index])
+		entry["word"] = word
+		entry.erase("length")
+		result.append(entry)
 	return result
+
+
+func _crossword_valid_completed_sets(words: Array, completed_count: int) -> Array:
+	var result: Array = []
+	for selection_mask in range(1 << words.size()):
+		var selected_words: Array = []
+		for word_index in range(words.size()):
+			if (selection_mask & (1 << word_index)) != 0:
+				selected_words.append(str(words[word_index]))
+		if selected_words.size() != completed_count:
+			continue
+		var required_letters := _crossword_letter_set(selected_words)
+		if required_letters.size() > 18:
+			continue
+		var exact := true
+		for word_value in words:
+			var word := str(word_value)
+			if selected_words.has(word):
+				continue
+			var has_blocker := false
+			for letter_index in range(word.length()):
+				if not required_letters.has(word.substr(letter_index, 1)):
+					has_blocker = true
+					break
+			if not has_blocker:
+				exact = false
+				break
+		if exact:
+			result.append(selected_words)
+	return result
+
+
+func _crossword_letter_bank(words: Array, completed_words: Array, rng: RngStream) -> Array:
+	var required_letters := _crossword_letter_set(completed_words)
+	var blocked_letters := {}
+	for word_value in words:
+		var word := str(word_value)
+		if completed_words.has(word):
+			continue
+		var blocker_candidates: Array = []
+		for letter_index in range(word.length()):
+			var letter := word.substr(letter_index, 1)
+			if not required_letters.has(letter) and not blocker_candidates.has(letter):
+				blocker_candidates.append(letter)
+		_shuffle_array(blocker_candidates, rng)
+		if blocker_candidates.is_empty():
+			push_error("Crossword word %s has no letter available to keep it incomplete." % word)
+			continue
+		blocked_letters[str(blocker_candidates[0])] = true
+	var bank: Array = required_letters.keys()
+	var fillers: Array = []
+	for letter_index in range(CROSSWORD_LETTERS.length()):
+		var letter := CROSSWORD_LETTERS.substr(letter_index, 1)
+		if not required_letters.has(letter) and not blocked_letters.has(letter):
+			fillers.append(letter)
+	_shuffle_array(fillers, rng)
+	for filler_value in fillers:
+		if bank.size() >= 18:
+			break
+		bank.append(str(filler_value))
+	if bank.size() != 18:
+		push_error("Crossword letter bank contains %d letters instead of 18." % bank.size())
+	_shuffle_array(bank, rng)
+	return bank
+
+
+func _crossword_letter_set(words: Array) -> Dictionary:
+	var letters := {}
+	for word_value in words:
+		var word := str(word_value)
+		for letter_index in range(word.length()):
+			letters[word.substr(letter_index, 1)] = true
+	return letters
+
+
+func _crossword_word_complete(word: String, bank: Array) -> bool:
+	for letter_index in range(word.length()):
+		if not bank.has(word.substr(letter_index, 1)):
+			return false
+	return true
 
 
 func _build_bingo_content(prize: Dictionary, rng: RngStream) -> Dictionary:
@@ -1809,8 +2035,14 @@ func _fortune_tier(ticket: Dictionary) -> String:
 
 func _stock_view(machine: Dictionary) -> Array:
 	var result: Array = []
-	for value in _dictionary_array(machine.get("stock", [])):
-		result.append((value as Dictionary).duplicate(true))
+	var stock := _dictionary_array(machine.get("stock", []))
+	for index in range(stock.size()):
+		var value: Dictionary = stock[index]
+		if _ticket_type_is_held(str(value.get("type_id", ""))):
+			continue
+		var view := value.duplicate(true)
+		view["source_stock_index"] = index
+		result.append(view)
 	return result
 
 
@@ -1885,7 +2117,8 @@ func _add_restock_tickets(machine: Dictionary, count: int, rng: RngStream) -> in
 		var total_weight := 0
 		for index in range(stock.size()):
 			var slot: Dictionary = stock[index]
-			if int(slot.get("remaining", 0)) >= int(slot.get("capacity", 5)):
+			var held := _ticket_type_is_held(str(slot.get("type_id", "")))
+			if not held and int(slot.get("remaining", 0)) >= int(slot.get("capacity", 5)):
 				continue
 			eligible_indexes.append(index)
 			total_weight += maxi(1, int(slot.get("stock_weight", 1)))
@@ -1899,6 +2132,10 @@ func _add_restock_tickets(machine: Dictionary, count: int, rng: RngStream) -> in
 				chosen_index = index
 				break
 		var chosen: Dictionary = stock[chosen_index]
+		if _ticket_type_is_held(str(chosen.get("type_id", ""))):
+			# Preserve the historical stock weight as a no-supply draw. Redistributing
+			# it would silently change the other six families' stock probabilities.
+			continue
 		chosen["remaining"] = int(chosen.get("remaining", 0)) + 1
 		stock[chosen_index] = chosen
 		added += 1
@@ -1910,6 +2147,12 @@ func _refresh_scalper_for_visit(run_state: RunState, environment: Dictionary, ma
 	if run_state == null:
 		return false
 	var visit_token := _scratch_visit_token(run_state, environment)
+	if _is_practice_environment(environment):
+		var practice_changed := bool(machine.get("scalper_present", false)) or bool(machine.get("scalper_knows_schedule", false))
+		machine["scalper_present"] = false
+		machine["scalper_knows_schedule"] = false
+		machine["scalper_visit_token"] = visit_token
+		return practice_changed
 	if run_state.is_tutorial_run():
 		var tutorial_changed := bool(machine.get("scalper_present", false)) or bool(machine.get("scalper_knows_schedule", false))
 		machine["scalper_present"] = false
@@ -1936,6 +2179,11 @@ func _clear_machine_stock(machine: Dictionary) -> int:
 	var cleared := 0
 	for index in range(stock.size()):
 		var slot: Dictionary = stock[index]
+		if _ticket_type_is_held(str(slot.get("type_id", ""))):
+			# Historical unsold Crossword quantity is preserved as held evidence.
+			# A scalper can clear only active supply; holding is not confiscation,
+			# refund, conversion, or issuance.
+			continue
 		cleared += maxi(0, int(slot.get("remaining", 0)))
 		slot["remaining"] = 0
 		stock[index] = slot
@@ -1950,7 +2198,10 @@ func _stock_total(machine: Dictionary) -> int:
 func _stock_total_from_rows(stock: Array) -> int:
 	var total := 0
 	for slot_value in stock:
-		total += maxi(0, int((slot_value as Dictionary).get("remaining", 0)))
+		var slot: Dictionary = slot_value
+		if str(slot.get("type_id", "")) == HELD_TICKET_TYPE_ID:
+			continue
+		total += maxi(0, int(slot.get("remaining", 0)))
 	return total
 
 
@@ -2034,6 +2285,8 @@ func _normalize_machine_state(machine: Dictionary, run_state: RunState = null) -
 		var default_capacity := clampi(int(count_range[1]) if count_range.size() > 1 else 5, 1, 5)
 		slot["capacity"] = maxi(1, int(slot.get("capacity", default_capacity)))
 		slot["remaining"] = clampi(int(slot.get("remaining", 0)), 0, int(slot.get("capacity", default_capacity)))
+		if _ticket_type_is_held(str(slot.get("type_id", ""))):
+			slot["release_availability"] = "held"
 		stock[index] = slot
 	machine["stock"] = stock
 	var phase_fallback := posmod(RunState.text_to_seed(str(machine.get("stock_stream_key", "scratch-restock"))), RESTOCK_INTERVAL_MINUTES)
@@ -2064,6 +2317,12 @@ func _machine_state_is_current(machine: Dictionary) -> bool:
 		return false
 	for field in ["stock", "pending_queue", "winner_pile", "loser_pile"]:
 		if typeof(machine.get(field, null)) != TYPE_ARRAY:
+			return false
+	for slot_value in machine.get("stock", []) as Array:
+		if typeof(slot_value) != TYPE_DICTIONARY:
+			return false
+		var slot := slot_value as Dictionary
+		if _ticket_type_is_held(str(slot.get("type_id", ""))) and str(slot.get("release_availability", "")) != "held":
 			return false
 	if typeof(machine.get("active_ticket", null)) != TYPE_DICTIONARY:
 		return false
@@ -2251,6 +2510,23 @@ func _ticket_types() -> Array:
 	if library != null:
 		return _dictionary_array(library.scratch_ticket_types)
 	return []
+
+
+func _ticket_type_is_held(type_id: String) -> bool:
+	return type_id == HELD_TICKET_TYPE_ID
+
+
+func _active_discovered_ticket_types(discovered_type_ids: Array) -> Array:
+	var discovered_set: Dictionary = {}
+	for type_id_value in discovered_type_ids:
+		var type_id := str(type_id_value)
+		if ACTIVE_TICKET_TYPE_IDS.has(type_id):
+			discovered_set[type_id] = true
+	var active: Array = []
+	for type_id in ACTIVE_TICKET_TYPE_IDS:
+		if discovered_set.has(type_id):
+			active.append(type_id)
+	return active
 
 
 func _ticket_type(type_id: String) -> Dictionary:

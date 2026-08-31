@@ -1,0 +1,61 @@
+[
+  {
+    "schema_version": 1,
+    "binding_id": "craps06_3_environment_bindings",
+    "ritual_package_id": "craps06_3_sequences",
+    "runtime_contract": "scenario_host_transaction/1+scenario_operation_registry/1",
+    "profiles": [
+      {
+        "profile_id": "craps.ordinary_casino",
+        "surface_kind": "casino",
+        "authoritative_fund_domain": "chips",
+        "response_fact": "craps.point_set",
+        "required_inventory": {"anchors": ["base::anchor:craps_table_north"]},
+        "operations": [
+          {"family": "actor_ops", "op": "spawn", "receipt_id": "ordinary_point_stickperson", "owner_namespace": "scenario", "stable_object_id": "craps_ordinary_stickperson", "actor": {"label": "Stickperson calling the point", "actor_id": "craps_stickperson", "anchor_id": "craps_table_north", "behavior": "work", "pose": "calling_point"}}
+        ]
+      },
+      {
+        "profile_id": "craps.hot_high_stakes",
+        "surface_kind": "casino",
+        "authoritative_fund_domain": "chips",
+        "response_fact": "craps.streak_tier",
+        "required_inventory": {"anchors": ["base::anchor:craps_rail"]},
+        "operations": [
+          {"family": "actor_ops", "op": "spawn", "receipt_id": "hot_table_pit_boss", "owner_namespace": "scenario", "stable_object_id": "craps_hot_pit_boss", "actor": {"label": "Pit boss at the hot rail", "actor_id": "craps_pit_boss", "anchor_id": "craps_rail", "behavior": "watch", "pose": "rail_attention"}}
+        ]
+      },
+      {
+        "profile_id": "craps.security_audit",
+        "surface_kind": "casino",
+        "authoritative_fund_domain": "chips",
+        "response_fact": "craps.cheat_attempt",
+        "required_inventory": {"anchors": ["base::anchor:craps_security_rail"]},
+        "operations": [
+          {"family": "actor_ops", "op": "spawn", "receipt_id": "audit_security_observer", "owner_namespace": "scenario", "stable_object_id": "craps_security_observer", "actor": {"label": "Security observer at the rail", "actor_id": "craps_security_observer", "anchor_id": "craps_security_rail", "behavior": "guard", "pose": "audit_watch"}}
+        ]
+      },
+      {
+        "profile_id": "craps.ordinary_street",
+        "surface_kind": "street",
+        "authoritative_fund_domain": "bankroll",
+        "response_fact": "craps.point_set",
+        "required_inventory": {"anchors": ["base::anchor:street_lookout_post"]},
+        "operations": [
+          {"family": "actor_ops", "op": "spawn", "receipt_id": "street_point_lookout", "owner_namespace": "scenario", "stable_object_id": "craps_street_lookout", "actor": {"label": "Lookout holding the corner", "actor_id": "craps_lookout", "anchor_id": "street_lookout_post", "behavior": "watch", "pose": "corner_watch"}}
+        ]
+      },
+      {
+        "profile_id": "craps.interrupted_street",
+        "surface_kind": "street",
+        "authoritative_fund_domain": "bankroll",
+        "response_fact": "craps.street_lookout_warning",
+        "required_inventory": {"anchors": ["base::anchor:street_pressure_approach"], "routes": ["base::world:street_exit"]},
+        "operations": [
+          {"family": "actor_ops", "op": "spawn", "receipt_id": "street_pressure_arrival", "owner_namespace": "scenario", "stable_object_id": "craps_approaching_pressure", "actor": {"label": "Approaching street pressure", "actor_id": "craps_approaching_pressure", "anchor_id": "street_pressure_approach", "behavior": "patrol", "pose": "approaching"}},
+          {"family": "route_ops", "op": "close", "receipt_id": "street_exit_pressure_gate", "owner_namespace": "base", "stable_object_id": "world:street_exit", "disabled_reason": "The lookout warning closes the exposed exit."}
+        ]
+      }
+    ]
+  }
+]

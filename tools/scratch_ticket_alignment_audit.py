@@ -3,8 +3,8 @@
 
 The JSON emitted by --generate is the runtime source of truth.  Geometry is
 measured as individual connected components; no repeated pitch is inferred.
-Crossword is measured too, but remains decision_required because its printed
-puzzle/content disagreement needs the owner's Phase 5 choice.
+Crossword uses its 27 measured printed grid cells as the stable layout template;
+each ticket generates unique words and letters inside that measured template.
 """
 from __future__ import annotations
 
@@ -24,6 +24,14 @@ OUT = ROOT / ".tmp" / "scratch_alignment_audit"
 SIZES = {"two_fer": (500, 224), "lucky_7s": (354, 356), "tic_tac_gold": (354, 356),
          "crossword_corner": (548, 356), "bonus_bingo": (548, 356),
          "high_roller_holdem": (292, 366), "golden_vault": (292, 366)}
+SYMBOL_INSET = .92
+OVERLAY_SCALE = 3
+REPORT_SAMPLES = {
+    "bonus_bingo": ((0, "CALL 1"), (5, "CALL 6"), (8, "CALL 9"), (11, "CALL 12")),
+    "lucky_7s": ((0, "WIN 1"), (2, "YOUR 1"), (3, "YOUR 2"), (4, "YOUR 3"), (8, "BONUS")),
+    "tic_tac_gold": ((0, "GRID 1"), (4, "GRID 5"), (8, "GRID 9")),
+    "golden_vault": ((1, "RUNG 1"), (3, "RUNG 3"), (5, "RUNG 5")),
+}
 
 
 def image_data(type_id: str):
@@ -111,23 +119,23 @@ def measured_regions(type_id: str):
         # Detector finds the 27 printed grid cells and 18 printed letter wells.
         found = components(type_id, True, 180, (40, 30), (110, 160), (.30, .82), .70)
         grid, bank = [r for r in found if r[0] < .56], [r for r in found if r[0] >= .56]
-        # Keep the currently shipped mechanical mapping inert until Phase 5 is chosen.
-        legacy = []
-        for i in range(18):
-            col, row = i % 6, i // 6
-            cw, ch = (0.378 - .006 * 5) / 6, (0.37 - .012 * 2) / 3
-            legacy.append(entry(f"letter_bank_{i:02d}", "letter_bank", f"LETTER {i+1}",
-                                (.585 + col*(cw+.006), .42 + row*(ch+.012), cw, ch)))
+        if len(grid) != 27 or len(bank) != 18:
+            raise RuntimeError(f"crossword detector expected 27 grid/18 bank wells; found {len(grid)}/{len(bank)}")
+        measured = [entry(f"letter_bank_{i:02d}", "letter_bank", f"LETTER {i+1}", r)
+                    for i, r in enumerate(bank)]
         cells = [(1,1),(1,9),(2,1),(2,7),(2,9),(3,1),(3,7),(3,9),(4,1),(4,2),(4,3),(4,4),(4,5),(4,7),(4,9),(5,4),(5,7),(6,3),(6,4),(6,5),(6,6),(7,4),(9,2),(9,3),(9,4),(9,5),(9,6)]
+        unused = list(grid)
         for i, (col, row) in enumerate(cells, 18):
-            legacy.append(entry(f"crossword_{i:02d}", "crossword", f"GRID {col+1},{row+1}",
-                                (.06+col*.50/11, .32+row*.48/10, .50/11, .48/10)))
-        return legacy, {"printed_grid_wells": [list(r) for r in grid], "printed_letter_wells": [list(r) for r in bank]}
+            target = (.06+(col+.5)*.50/11, .32+(row+.5)*.48/10)
+            closest = min(unused, key=lambda r: (r[0]+r[2]/2-target[0])**2 + (r[1]+r[3]/2-target[1])**2)
+            unused.remove(closest)
+            measured.append(entry(f"crossword_{i:02d}", "crossword", f"GRID {col+1},{row+1}", closest))
+        return measured, {"printed_grid_wells": [list(r) for r in grid], "printed_letter_wells": [list(r) for r in bank]}
     raise KeyError(type_id)
 
 
 def generate():
-    payload = {"layout_version": 9, "source_art": {}, "regions": {}, "alignment_status": {}}
+    payload = {"layout_version": 10, "source_art": {}, "regions": {}, "alignment_status": {}}
     for type_id in SIZES:
         path, image, _ = image_data(type_id)
         payload["source_art"][type_id] = {"file": path.name, "w": image.width, "h": image.height,
@@ -135,7 +143,7 @@ def generate():
         result = measured_regions(type_id)
         if type_id == "crossword_corner":
             payload["regions"][type_id], payload["crossword_detected_reference"] = result
-            payload["alignment_status"][type_id] = "decision_required"
+            payload["alignment_status"][type_id] = "measured_procedural"
         else:
             payload["regions"][type_id] = result
             payload["alignment_status"][type_id] = "measured"
@@ -149,6 +157,51 @@ def frame(size, art_size):
     return art_size[0]*scale, art_size[1]*scale
 
 
+def frame_rect(size, art_size):
+    width, height = frame(size, art_size)
+    return ((size[0] - width) / 2, (size[1] - height) / 2, width, height)
+
+
+def screen_rect(rect, fitted):
+    left, top, width, height = fitted
+    return (left + rect[0] * width, top + rect[1] * height,
+            rect[2] * width, rect[3] * height)
+
+
+def centered_inset(rect, scale=SYMBOL_INSET):
+    x, y, width, height = rect
+    fitted_width, fitted_height = width * scale, height * scale
+    return (x + (width - fitted_width) / 2, y + (height - fitted_height) / 2,
+            fitted_width, fitted_height)
+
+
+def draw_overlay(type_id, entries, source):
+    """Render the contain-fit frame at 1x, then enlarge 3x with nearest-neighbour.
+
+    Magenta is the measured printed well. Cyan is the declared maximum reveal
+    bound after the renderer's single 0.92 inset; texture-aspect containment can
+    only make the actual reveal smaller, never exceed this box.
+    """
+    size = SIZES[type_id]
+    fitted = frame_rect(size, (source["w"], source["h"]))
+    canvas = Image.new("RGBA", size, (17, 16, 21, 255))
+    art = Image.open(LAYERS/source["file"]).convert("RGBA")
+    art_size = (max(1, round(fitted[2])), max(1, round(fitted[3])))
+    art = art.resize(art_size, Image.Resampling.LANCZOS)
+    canvas.alpha_composite(art, (round(fitted[0]), round(fitted[1])))
+    draw = ImageDraw.Draw(canvas)
+    for value in entries:
+        art_box = screen_rect(value["art_rect"], fitted)
+        icon_box = centered_inset(art_box)
+        for box, color in ((art_box, "magenta"), (icon_box, "cyan")):
+            x, y, width, height = box
+            draw.rectangle((round(x), round(y), round(x + width), round(y + height)),
+                           outline=color, width=1)
+    enlarged = canvas.resize((size[0] * OVERLAY_SCALE, size[1] * OVERLAY_SCALE),
+                             Image.Resampling.NEAREST)
+    enlarged.save(OUT / f"overlay_{type_id}.png")
+
+
 def old_regions(type_id):
     out = []
     if type_id == "two_fer":
@@ -159,6 +212,13 @@ def old_regions(type_id):
         out += [(.285, .755, .19, .13)]
     elif type_id == "tic_tac_gold":
         out = [(.095+(i%3)*.205, .42+(i//3)*.12, .18, .105) for i in range(9)] + [(.73,.50,.21,.17)]
+    elif type_id == "crossword_corner":
+        for i in range(18):
+            col, row = i % 6, i // 6
+            cw, ch = (0.378 - .006 * 5) / 6, (0.37 - .012 * 2) / 3
+            out.append((.585 + col*(cw+.006), .42 + row*(ch+.012), cw, ch))
+        cells = [(1,1),(1,9),(2,1),(2,7),(2,9),(3,1),(3,7),(3,9),(4,1),(4,2),(4,3),(4,4),(4,5),(4,7),(4,9),(5,4),(5,7),(6,3),(6,4),(6,5),(6,6),(7,4),(9,2),(9,3),(9,4),(9,5),(9,6)]
+        out += [(.06+col*.50/11, .32+row*.48/10, .50/11, .48/10) for col, row in cells]
     elif type_id == "bonus_bingo":
         out = [(.175+(i%12)*.058, .295+(i//12)*.065, .038, .05) for i in range(24)]
         for card in range(4):
@@ -177,38 +237,76 @@ def metric(actual, measured, screen):
     return center, size
 
 
+def axis_metric(actual, measured, screen):
+    return (
+        (actual[0] + actual[2]/2 - measured[0] - measured[2]/2) * screen[0],
+        (actual[1] + actual[3]/2 - measured[1] - measured[3]/2) * screen[1],
+        (actual[2] - measured[2]) * screen[0],
+        (actual[3] - measured[3]) * screen[1],
+    )
+
+
 def report():
     data = json.loads(DATA.read_text(encoding="utf-8"))
     print("ticket,before_center_px,before_size_pct,after_center_px,after_size_pct")
     for type_id in SIZES:
-        if data["alignment_status"].get(type_id) != "measured":
+        if data["alignment_status"].get(type_id) not in ("measured", "measured_procedural"):
             print(f"{type_id},PENDING_PHASE_5,PENDING_PHASE_5,PENDING_PHASE_5,PENDING_PHASE_5")
             continue
-        expected = measured_regions(type_id)
+        expected_result = measured_regions(type_id)
+        expected = expected_result[0] if type_id == "crossword_corner" else expected_result
         source = data["source_art"][type_id]
         old_screen, new_screen = SIZES[type_id], frame(SIZES[type_id], (source["w"], source["h"]))
         before = [metric(old, measured["art_rect"], old_screen) for old, measured in zip(old_regions(type_id), expected)]
         after = [metric(value["art_rect"], measured["art_rect"], new_screen) for value, measured in zip(data["regions"][type_id], expected)]
         print(f"{type_id},{max(v[0] for v in before):.2f},{max(v[1] for v in before):.2f},{max(v[0] for v in after):.2f},{max(v[1] for v in after):.2f}")
+    print("\nregion,before_dcx_px,before_dcy_px,before_dw_px,before_dh_px,after_dcx_px,after_dcy_px,after_dw_px,after_dh_px")
+    for type_id, samples in REPORT_SAMPLES.items():
+        expected = measured_regions(type_id)
+        source = data["source_art"][type_id]
+        new_screen = frame(SIZES[type_id], (source["w"], source["h"]))
+        old = old_regions(type_id)
+        for index, label in samples:
+            measured = expected[index]["art_rect"]
+            before = axis_metric(old[index], measured, SIZES[type_id])
+            after = axis_metric(data["regions"][type_id][index]["art_rect"], measured, new_screen)
+            values = ",".join(f"{value:+.2f}" for value in (*before, *after))
+            print(f"{type_id} {label},{values}")
 
 
-def verify(write_overlays=False):
+def verify(write_overlays=False, hold_crossword=False):
     data = json.loads(DATA.read_text(encoding="utf-8"))
     failures, worst_center, worst_size = [], 0.0, 0.0
     if write_overlays:
         OUT.mkdir(parents=True, exist_ok=True)
     for type_id, entries in data["regions"].items():
+        if hold_crossword and type_id == "crossword_corner":
+            print("HELD crossword_corner: art/mechanics preserved; excluded from active offering")
+            continue
         source = data["source_art"][type_id]
         path = LAYERS/source["file"]
         if hashlib.sha256(path.read_bytes()).hexdigest() != source["sha256"]:
             failures.append(f"{type_id}: source SHA mismatch")
             continue
-        if data["alignment_status"].get(type_id) != "measured":
-            print(f"SKIP {type_id}: owner Phase 5 decision required")
+        with Image.open(path) as image:
+            if image.size != (source["w"], source["h"]):
+                failures.append(f"{type_id}: source dimensions changed from the measured table")
+                continue
+        if data["alignment_status"].get(type_id) not in ("measured", "measured_procedural"):
+            print(f"SKIP {type_id}: alignment status is not verifiable")
+            if write_overlays:
+                draw_overlay(type_id, entries, source)
             continue
-        expected = measured_regions(type_id)
+        expected_result = measured_regions(type_id)
+        expected = expected_result[0] if type_id == "crossword_corner" else expected_result
+        if len(entries) != len(expected):
+            failures.append(f"{type_id}: table has {len(entries)} regions; detector measured {len(expected)}")
+            continue
         fw, fh = frame(SIZES[type_id], (source["w"], source["h"]))
         for actual, measured in zip(entries, expected):
+            if actual["id"] != measured["id"] or actual["shape"] != measured["shape"]:
+                failures.append(f"{type_id}: detector/table identity or shape mismatch at {actual['id']}")
+                continue
             ar, mr = actual["art_rect"], measured["art_rect"]
             center = (((ar[0]+ar[2]/2-mr[0]-mr[2]/2)*fw)**2 + ((ar[1]+ar[3]/2-mr[1]-mr[3]/2)*fh)**2)**.5
             size_error = max(abs(ar[2]-mr[2])/mr[2], abs(ar[3]-mr[3])/mr[3]) * 100
@@ -216,13 +314,10 @@ def verify(write_overlays=False):
             if center > 1.0 or size_error > 5.0:
                 failures.append(f"{type_id}/{actual['id']}: center={center:.2f}px size={size_error:.2f}%")
         if write_overlays:
-            image = Image.open(path).convert("RGBA")
-            draw = ImageDraw.Draw(image)
-            for value in entries:
-                x,y,w,h = value["art_rect"]
-                draw.rectangle((x*image.width,y*image.height,(x+w)*image.width,(y+h)*image.height), outline="magenta", width=3)
-            image.save(OUT/f"measured_{type_id}.png")
-    print(f"VERIFY worst_center={worst_center:.3f}px worst_size={worst_size:.3f}% checked=6 pending=crossword_corner")
+            draw_overlay(type_id, entries, source)
+    checked = 6 if hold_crossword else 7
+    pending = "crossword_corner:HELD" if hold_crossword else "none"
+    print(f"VERIFY worst_center={worst_center:.3f}px worst_size={worst_size:.3f}% checked={checked} pending={pending}")
     if failures:
         print("\n".join(failures))
         return 1
@@ -235,12 +330,14 @@ def main():
     parser.add_argument("--verify", action="store_true")
     parser.add_argument("--overlay", action="store_true")
     parser.add_argument("--report", action="store_true")
+    parser.add_argument("--measure", action="store_true", help="Alias for --report used by the fix prompt")
+    parser.add_argument("--hold-crossword", action="store_true", help="Verify six active Option C tickets and report Crossword as HELD")
     args = parser.parse_args()
     if args.generate:
         generate()
     if args.verify or args.overlay or not args.generate:
-        result = verify(args.overlay)
-        if args.report:
+        result = verify(args.overlay, args.hold_crossword)
+        if args.report or args.measure:
             report()
         raise SystemExit(result)
 

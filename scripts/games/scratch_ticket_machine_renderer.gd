@@ -34,7 +34,7 @@ static func draw(surface, state: Dictionary, machine_rect: Rect2) -> void:
 		surface.draw_circle(Vector2(x, marquee.position.y + 6), 2.4, C_YELLOW)
 		surface.draw_circle(Vector2(x, marquee.end.y - 6), 2.4, C_YELLOW)
 	surface.surface_label_centered("LUCKY ROAD", Rect2(marquee.position + Vector2(8, 9), Vector2(marquee.size.x - 16, 25)), 20, C_WHITE)
-	surface.surface_label_centered("INSTANT TICKETS  /  SEVEN GAMES", Rect2(marquee.position + Vector2(8, 35), Vector2(marquee.size.x - 16, 13)), 8, C_YELLOW)
+	surface.surface_label_centered("INSTANT TICKETS  /  SIX GAMES", Rect2(marquee.position + Vector2(8, 35), Vector2(marquee.size.x - 16, 13)), 8, C_YELLOW)
 	var glass := Rect2(machine_rect.position + Vector2(15, 76), Vector2(machine_rect.size.x - 30, 238))
 	surface.draw_rect(glass, Color("#080b12"))
 	surface.draw_rect(glass.grow(3), Color("#d6a14a"), false, 3)
@@ -45,7 +45,7 @@ static func draw(surface, state: Dictionary, machine_rect: Rect2) -> void:
 		if typeof(stock[index]) != TYPE_DICTIONARY:
 			continue
 		var row := Rect2(glass.position + Vector2(5, 5 + float(index) * row_height), Vector2(glass.size.x - 10, row_height - 3))
-		_paint_stock_row(surface, stock[index], row, index)
+		_paint_stock_row(surface, stock[index], row, index, int((stock[index] as Dictionary).get("source_stock_index", index)))
 	surface.draw_polygon([
 		glass.position + Vector2(7, 3),
 		glass.position + Vector2(30, 3),
@@ -77,7 +77,7 @@ static func draw(surface, state: Dictionary, machine_rect: Rect2) -> void:
 	_paint_waste_basket(surface, basket, basket_enabled, basket_drop_target)
 	var collection := Rect2(machine_rect.position + Vector2(24, 397), Vector2(162, 10))
 	var complete := bool(state.get("scratch_collection_complete", false))
-	surface.surface_label_centered(str(state.get("scratch_collection_status", "0/7 PRINTS FOUND")), collection, 6, C_YELLOW if not complete else Color("#fff3a0"))
+	surface.surface_label_centered(str(state.get("scratch_collection_status", "0/6 PRINTS FOUND")), collection, 6, C_YELLOW if not complete else Color("#fff3a0"))
 
 
 static func waste_basket_rect(machine_rect: Rect2) -> Rect2:
@@ -89,7 +89,7 @@ static func waste_basket_drop_rect(machine_rect: Rect2) -> Rect2:
 	return Rect2(basket.position + Vector2(7, 9), Vector2(basket.size.x - 14, basket.size.y - 18))
 
 
-static func _paint_stock_row(surface, slot: Dictionary, rect: Rect2, index: int) -> void:
+static func _paint_stock_row(surface, slot: Dictionary, rect: Rect2, display_index: int, action_index: int) -> void:
 	var palette: Dictionary = slot.get("palette", {}) if typeof(slot.get("palette", {})) == TYPE_DICTIONARY else {}
 	var paper := Color(str(palette.get("paper", "#fff2c7")))
 	var ink := Color(str(palette.get("ink", "#35152e")))
@@ -110,16 +110,16 @@ static func _paint_stock_row(surface, slot: Dictionary, rect: Rect2, index: int)
 	var select := Rect2(rect.end - Vector2(26, rect.size.y - 4), Vector2(22, rect.size.y - 8))
 	surface.draw_rect(select, Color("#43131b") if sold_out else Color("#126544"))
 	surface.draw_rect(select, C_PINK if sold_out else Color("#62e3a2"), false, 2)
-	surface.surface_label_centered(str(index + 1), select, 9, C_WHITE)
+	surface.surface_label_centered(str(display_index + 1), select, 9, C_WHITE)
 	if not sold_out:
-		surface.surface_add_hit(rect, "scratch_buy", index)
-		surface.surface_add_hit(select, "scratch_buy", index)
+		surface.surface_add_hit(rect, "scratch_buy", action_index)
+		surface.surface_add_hit(select, "scratch_buy", action_index)
 		for quantity in range(2, mini(3, remaining) + 1):
 			var quantity_rect := Rect2(select.position - Vector2(float(quantity - 1) * 23.0, -select.size.y + 10), Vector2(20, 9))
 			surface.draw_rect(quantity_rect, Color("#1d4734"))
 			surface.draw_rect(quantity_rect, Color("#62e3a2"), false, 1)
 			surface.surface_label_centered("x%d" % quantity, quantity_rect, 5, C_WHITE)
-			surface.surface_add_hit(quantity_rect, "scratch_buy", index + (quantity - 1) * 100)
+			surface.surface_add_hit(quantity_rect, "scratch_buy", action_index + (quantity - 1) * 100)
 
 
 static func _stock_label(slot: Dictionary) -> String:

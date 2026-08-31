@@ -7,6 +7,7 @@ const CREW_CONFIG_PATH := "res://data/crew/crew.json"
 const CREW_JOBS_PATH := "res://data/crew/jobs.json"
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const STATE_SCHEMA_VERSION := 1
+const JOB_EXECUTION_SCHEMA_VERSION := 1
 const MEMBER_IDS := [
 	"crew_rook",
 	"crew_velvet",
@@ -163,6 +164,7 @@ static func normalize_job_definition(value: Dictionary) -> Dictionary:
 		"kind": str(value.get("kind", "")).strip_edges(),
 		"min_rank": str(value.get("min_rank", "associate")).strip_edges(),
 		"payload": (value.get("payload", {}) as Dictionary).duplicate(true) if typeof(value.get("payload", {})) == TYPE_DICTIONARY else {},
+		"semantics": (value.get("semantics", {}) as Dictionary).duplicate(true) if typeof(value.get("semantics", {})) == TYPE_DICTIONARY else {},
 		"expiry_in_actions": maxi(1, int(value.get("expiry_in_actions", 1))),
 		"rewards": {
 			"cash": maxi(0, int(rewards.get("cash", 0))),
@@ -174,6 +176,165 @@ static func normalize_job_definition(value: Dictionary) -> Dictionary:
 			"grievance_weight": maxi(1, int(failure.get("grievance_weight", 1))),
 		},
 	}
+
+
+# Additive player-safe Layer 3 projections. Residency is supplied by the
+# authoritative itinerary owner; this model only renders member/job state.
+static func layer3_room_state(resident_member_ids: Array, trust_value: Variant, grievances_value: Variant, jobs_value: Variant) -> Dictionary:
+	var trust := normalize_trust(trust_value)
+	var grievances := normalize_grievances(grievances_value)
+	var jobs := normalize_jobs(jobs_value)
+	var residents: Array = []
+	for member_value in resident_member_ids:
+		var member_id := str(member_value).strip_edges()
+		if MEMBER_IDS.has(member_id) and not residents.has(member_id): residents.append(member_id)
+	residents.sort()
+	var members: Array = []
+	for member_id in residents: members.append(member_public_state(member_id, int(trust.get(member_id, 0)), grievances, jobs, true))
+	return {
+		"schema_version": JOB_EXECUTION_SCHEMA_VERSION,
+		"occupancy_count": members.size(),
+		"resident_member_ids": residents,
+		"members": members,
+		"objects": layer3_service_states(trust, residents, jobs),
+	}
+
+
+static func member_public_state(member_id: String, trust: int, grievances_value: Variant, jobs_value: Variant, resident: bool = false) -> Dictionary:
+	if not MEMBER_IDS.has(member_id): return {}
+	var grievances: Array = []
+	for grievance in normalize_grievances(grievances_value):
+		if str(grievance.get("member_id", "")) == member_id:
+			grievances.append({"id": str(grievance.get("id", "")), "kind": str(grievance.get("kind", ""))})
+	var active_job_ids: Array = []
+	for job_value in normalize_jobs(jobs_value).values():
+		var job: Dictionary = job_value
+		if str(job.get("member_id", "")) == member_id and str(job.get("status", "")) in ["accepted", "active"]: active_job_ids.append(str(job.get("id", "")))
+	active_job_ids.sort()
+	var rank := rank_for_trust(trust)
+	return {
+		"member_id": member_id,
+		"resident": resident,
+		"rank": rank,
+		"pose": "working" if not active_job_ids.is_empty() else ("guarded" if not grievances.is_empty() else "at_ease"),
+		"behavior_state": "job_out" if not active_job_ids.is_empty() else ("aggrieved" if not grievances.is_empty() else "available"),
+		"active_job_ids": active_job_ids,
+		"grievances": grievances,
+	}
+
+
+static func layer3_service_states(trust_value: Variant, resident_member_ids: Array, jobs_value: Variant = {}) -> Array:
+	var trust := normalize_trust(trust_value)
+	var jobs := normalize_jobs(jobs_value)
+	var services := config().get("member_services", {}) as Dictionary
+	var active_members := {}
+	for job_value in jobs.values():
+		var job: Dictionary = job_value
+		if str(job.get("status", "")) in ["accepted", "active"]: active_members[str(job.get("member_id", ""))] = true
+	var result: Array = [
+		_service("job_board", "crew_job_board", "open", "", true),
+		_service("numbers_desk", "numbers_desk", "available", "crew_lucky", resident_member_ids.has("crew_lucky")),
+		_service("planning_table", "crew_planning_table", "waiting", "", true),
+		_service("mags_bench", "crew_mags_bench", "in_use" if active_members.has("crew_mags") else "ready", "crew_mags", resident_member_ids.has("crew_mags")),
+		_service("rook_ride", "crew_rook_ride", "in_use" if active_members.has("crew_rook") else "ready", "crew_rook", resident_member_ids.has("crew_rook")),
+		_service("practice_rig", "crew_practice_rig", "ready", "", true),
+	]
+	for row in result:
+		match str(row.get("id", "")):
+			"practice_rig": row["successes_required"] = int(services.get("practice_rig_successes_required", 2))
+			"rook_ride":
+				var rank := rank_for_trust(int(trust.get("crew_rook", 0)))
+				row["uses"] = int((services.get("rook_ride_uses_by_rank", {}) as Dictionary).get(rank, 0))
+				row["discount_percent"] = int((services.get("rook_ride_discount_percent_by_rank", {}) as Dictionary).get(rank, 0))
+			"mags_bench": row["catalog_ready"] = true
+	return result
+
+
+static func new_job_execution(definition_id: String, instance_id: String, offered_action: int = 0) -> Dictionary:
+	var definition := job_definition(definition_id)
+	var clean_id := instance_id.strip_edges()
+	if definition.is_empty() or clean_id.is_empty(): return {}
+	return {
+		"schema_version": JOB_EXECUTION_SCHEMA_VERSION,
+		"instance_id": clean_id,
+		"definition_id": definition_id,
+		"member_id": str(definition.get("member_id", "")),
+		"kind": str(definition.get("kind", "")),
+		"phase": "offered_proposal",
+		"offered_action": maxi(0, offered_action),
+		"expires_at_action": maxi(0, offered_action) + int(definition.get("expiry_in_actions", 1)),
+		"payload": (definition.get("payload", {}) as Dictionary).duplicate(true),
+		"verbs": job_proposal_verbs(str(definition.get("kind", ""))),
+		"definition_fingerprint": _job_fingerprint(definition),
+		"step_index": 0,
+		"evidence_claims": [],
+		"proposal_chain": [],
+		"proposal_sequence": 0,
+		"outcome_proposal": "",
+		"authoritative": false,
+		"authority_gap": "host_commitment_not_verifiable_in_model",
+	}
+
+
+static func normalize_job_execution(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY: return {}
+	var state: Dictionary = (value as Dictionary).duplicate(true)
+	var exact := ["authoritative", "authority_gap", "definition_fingerprint", "definition_id", "evidence_claims", "expires_at_action", "instance_id", "kind", "member_id", "offered_action", "outcome_proposal", "payload", "phase", "proposal_chain", "proposal_sequence", "schema_version", "step_index", "verbs"]
+	var keys := state.keys(); keys.sort()
+	if keys != exact or int(state.get("schema_version", 0)) != JOB_EXECUTION_SCHEMA_VERSION or bool(state.get("authoritative", true)): return {}
+	var definition := job_definition(str(state.get("definition_id", "")))
+	if definition.is_empty() or str(state.get("instance_id", "")).strip_edges().is_empty() or int(state.get("offered_action", -1)) < 0 or str(state.get("definition_fingerprint", "")) != _job_fingerprint(definition) or str(state.get("member_id", "")) != str(definition.get("member_id", "")) or str(state.get("kind", "")) != str(definition.get("kind", "")) or state.get("payload", {}) != definition.get("payload", {}): return {}
+	if state.get("verbs", []) != job_proposal_verbs(str(state.get("kind", ""))) or typeof(state.get("evidence_claims", [])) != TYPE_ARRAY: return {}
+	if str(state.get("phase", "")) != "offered_proposal" or int(state.get("step_index", -1)) != 0 or not (state.get("evidence_claims", []) as Array).is_empty() or not str(state.get("outcome_proposal", "")).is_empty(): return {}
+	if int(state.get("expires_at_action", -1)) != int(state.get("offered_action", 0)) + int(definition.get("expiry_in_actions", 0)): return {}
+	if bool(state.get("authoritative", true)) or str(state.get("authority_gap", "")) != "host_commitment_not_verifiable_in_model": return {}
+	if typeof(state.get("proposal_chain", [])) != TYPE_ARRAY or not (state.get("proposal_chain", []) as Array).is_empty() or int(state.get("proposal_sequence", -1)) != 0: return {}
+	return state
+
+
+static func apply_job_action(state_value: Variant, receipt_key: String, action: String, context: Dictionary = {}) -> Dictionary:
+	var state := normalize_job_execution(state_value)
+	# This model has no host-rooted job/game/world authority. Caller-authored
+	# dictionaries cannot authenticate an offer, played fact, terminal result,
+	# or deadline. Preserve the exact projection until the host supplies such a
+	# root through an integration-owned API outside this row.
+	var _ignored_proposal := {"proposal_id": receipt_key, "action": action, "context": context}
+	return state
+
+
+static func job_execution_public_state(value: Variant) -> Dictionary:
+	var state := normalize_job_execution(value)
+	if state.is_empty(): return {}
+	return {"instance_id": str(state.get("instance_id", "")), "definition_id": str(state.get("definition_id", "")), "member_id": str(state.get("member_id", "")), "kind": str(state.get("kind", "")), "phase": str(state.get("phase", "")), "expires_at_action": int(state.get("expires_at_action", 0)), "outcome_proposal": str(state.get("outcome_proposal", "")), "step_index": int(state.get("step_index", 0)), "step_count": (state.get("verbs", []) as Array).size(), "authoritative": false, "authority_gap": "host_commitment_not_verifiable_in_model", "requires": ["host_job_record", "host_game_or_world_evidence"]}
+
+
+static func _service(id: String, object_id: String, state: String, operator_id: String, occupied: bool) -> Dictionary:
+	return {"id": id, "object_id": object_id, "state": state, "operator_id": operator_id, "occupied": occupied, "reachable": true}
+
+
+static func job_proposal_verbs(kind: String) -> Array:
+	for definition in job_definitions():
+		if str(definition.get("kind", "")) != kind:
+			continue
+		var semantics: Dictionary = definition.get("semantics", {}) if typeof(definition.get("semantics", {})) == TYPE_DICTIONARY else {}
+		return _string_array(semantics.get("public_verbs", []))
+	return []
+
+
+static func _job_fingerprint(value: Variant) -> String:
+	return JSON.stringify(_canonical_job_value(value)).sha256_text()
+
+
+static func _canonical_job_value(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		var result := {}; var keys := (value as Dictionary).keys(); keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+		for key in keys: result[str(key)] = _canonical_job_value((value as Dictionary).get(key))
+		return result
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for entry in value as Array: result.append(_canonical_job_value(entry))
+		return result
+	return value
 
 
 static func validate_content() -> Array:

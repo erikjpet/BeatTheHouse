@@ -32,6 +32,12 @@ const V3_HEADLESS_MESSAGE := "The pusher hums continuously. Time the rail, stop 
 var _live_machines: Dictionary = {}
 var _exit_settle_active := false
 var _renderer := CoinPusherRendererScript.new()
+var _machine_definition_cache: Dictionary = {}
+
+
+func setup(p_definition: Dictionary, p_library: ContentLibrary = null) -> void:
+	super.setup(p_definition, p_library)
+	_machine_definition_cache.clear()
 
 
 func gameplay_model() -> String:
@@ -202,6 +208,7 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 				"coin_pusher_carriage_x": selected_x,
 			},
 		}, true)
+	var immediate_patch: Dictionary = {}
 	match surface_action:
 		"coin_pusher_drop":
 			if _drop_refused(machine):
@@ -215,18 +222,23 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 			var requested := int(simulation.get("carriage_x", 50000)) + direction * speed
 			var actual := CoinPusherSolverScript.set_carriage(simulation, requested)
 			CoinPusherLiveSessionScript.queue_input(machine, {"kind": "carriage", "x": actual})
+			immediate_patch["coin_pusher_carriage_x"] = actual
+			immediate_patch["coin_pusher_selected_hole"] = int(simulation.get("selected_hole", 0))
 		SKILL_STOP_ACTION:
 			var simulation := _simulation(machine)
 			var engaged := not bool(simulation.get("skill_stop_engaged", false))
 			var resume_rate := _variation_motor_rate_fp(machine)
 			CoinPusherSolverScript.set_skill_stop(simulation, engaged, resume_rate)
 			CoinPusherLiveSessionScript.queue_input(machine, {"kind": "skill_stop", "engaged": engaged, "resume_rate_fp": resume_rate})
+			immediate_patch["coin_pusher_skill_stop_engaged"] = engaged
+			immediate_patch["coin_pusher_motor_rate_fp"] = int(simulation.get("motor_rate_fp", 0))
 		COLLECT_ACTION:
 			return _collect_surface_command(run_state, environment, machine)
 		_:
 			return {"handled": false}
 	_write_live_durable(run_state, environment, machine, false)
-	return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": _v3_headless_surface_state(machine)}, true)
+	immediate_patch.merge(_surface_action_view_patch(machine, run_state, environment, _ui_state), false)
+	return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": immediate_patch}, true)
 
 
 func surface_pointer_uses_lightweight_ui_state(surface_action: String) -> bool:
@@ -414,6 +426,14 @@ func renderer_signature(state: Dictionary) -> Dictionary:
 	return _renderer.render_signature(state)
 
 
+func reset_renderer_performance_counters() -> void:
+	_renderer.reset_performance_stage_counters()
+
+
+func renderer_performance_counters() -> Dictionary:
+	return _renderer.performance_stage_counters()
+
+
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
 
@@ -535,9 +555,37 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	patch["coin_pusher_audio_events"] = audio_events
 	patch["coin_pusher_audio_serial"] = int(presentation_session.get("presentation_audio_serial", 0))
 	patch["surface_realtime_state_refresh"] = true
+	# The Web canvas owns a measured low-detail presentation cadence. Solver
+	# patches still land every tick, but they must not bypass that scheduler and
+	# force a complete 300-body draw for every 16 ms authority refresh.
+	patch["surface_defer_patch_redraw"] = true
 	patch["coin_pusher_ticks_advanced"] = int(advanced.get("ticks", 0))
 	patch["request_foundation_autosave"] = request_autosave
 	return patch
+
+
+func surface_realtime_entry_anchor_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary) -> Dictionary:
+	# Entry already built the complete 300-body surface from this live session.
+	# Anchor its clock without asking the realtime projector to publish those same
+	# bodies a second time. A missing/incomplete session fails back to the normal
+	# realtime path in FoundationMain.
+	if _machine_busy(environment) or str(current_surface_state.get("game_id", "")) != get_id() \
+			or int(current_surface_state.get("coin_pusher_body_count", 0)) <= 0:
+		return {}
+	var key := _live_key(run_state, environment)
+	if not _live_machines.has(key):
+		return {}
+	var machine: Dictionary = _live_machines[key]
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	if session.is_empty() or not bool(session.get("open", false)) or int(session.get("last_clock_msec", -1)) >= 0:
+		return {}
+	var advanced := CoinPusherLiveSessionScript.advance(machine, int(ui_state.get("surface_time_msec", 0)))
+	if int(advanced.get("ticks", -1)) != 0 or not (advanced.get("events", []) as Array).is_empty():
+		return {}
+	return {
+		"surface_realtime_state_refresh": true,
+		"coin_pusher_ticks_advanced": 0,
+	}
 
 
 func checkpoint_surface_ui_state(_ui_state: Dictionary, _run_state: RunState, environment: Dictionary) -> void:
@@ -916,7 +964,12 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), definition)
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
-	var body_views := CoinPusherSolverScript.body_views(simulation)
+	# `begin()` already created the authoritative opening projection. Reuse it on
+	# live entry; headless catalog reads without a session still project normally.
+	var body_views: Array = session.get("presentation_current_bodies", []) if typeof(session.get("presentation_current_bodies", [])) == TYPE_ARRAY else []
+	var body_projection_reused := not body_views.is_empty()
+	if body_views.is_empty() and not (simulation.get("bodies", []) as Array).is_empty():
+		body_views = CoinPusherSolverScript.body_views(simulation)
 	var variation_id := str(machine.get("variation_id", _variation_id()))
 	var feature_kind := "rider" if variation_id == "quarter_falls" else "puck" if variation_id == "jackpot_ridge" else "fragment"
 	var feature_views := _feature_views(machine, feature_kind)
@@ -926,6 +979,10 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 	var geometry: Dictionary = (definition.get("geometry", {}) as Dictionary).duplicate(true) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
 	var apparatus: Dictionary = (definition.get("apparatus", {}) as Dictionary).duplicate(true) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
 	apparatus["drop_y"] = int(geometry.get("drop_y", CoinPusherSolverScript.DROP_Y))
+	# Static-cache dependencies are authored/reinstall state, not live-frame
+	# state. Fingerprint them while constructing the complete snapshot so the
+	# shipped Web renderer never serializes these nested dictionaries per draw.
+	var static_content_key := JSON.stringify([cabinet, geometry, apparatus], "", true).sha256_text()
 	var tell_rung := clampi(int(machine.get("tell_rung", 0)), 0, _tell_labels().size() - 1)
 	if not session.is_empty():
 		session["presentation_binding_signature"] = _realtime_binding_signature(machine, simulation, tray)
@@ -948,6 +1005,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_solver_version": int(simulation.get("version", 0)),
 		"coin_pusher_body_count": (simulation.get("bodies", []) as Array).size(),
 		"coin_pusher_bodies": body_views,
+		"coin_pusher_entry_body_projection_reused": body_projection_reused,
 		"coin_pusher_previous_bodies": session.get("presentation_previous_bodies", body_views),
 		"coin_pusher_presentation_view_serial": int(session.get("presentation_view_serial", 0)),
 		"coin_pusher_interpolation_alpha": clampf(float(int(session.get("accumulator_units", 0))) / 1000.0, 0.0, 1.0),
@@ -977,6 +1035,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_cabinet": cabinet,
 		"coin_pusher_geometry": geometry,
 		"coin_pusher_apparatus": apparatus,
+		"coin_pusher_static_content_key": static_content_key,
 		"coin_pusher_coin_height": int((definition.get("coins", {}) as Dictionary).get("height", CoinPusherSolverScript.COIN_HEIGHT)) if typeof(definition.get("coins", {})) == TYPE_DICTIONARY else CoinPusherSolverScript.COIN_HEIGHT,
 		"coin_pusher_coin_radius": int((definition.get("coins", {}) as Dictionary).get("radius", CoinPusherSolverScript.COIN_RADIUS)) if typeof(definition.get("coins", {})) == TYPE_DICTIONARY else CoinPusherSolverScript.COIN_RADIUS,
 		"coin_pusher_ridge_multiplier": JackpotRidgeScript.payout_multiplier(variation_state) if variation_id == "jackpot_ridge" else 1,
@@ -1033,6 +1092,7 @@ func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = 
 		"coin_pusher_drop_queue_count": _queued_drop_count(machine),
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
+		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
 		"coin_pusher_last_step_metrics": simulation.get("last_step_metrics", {}),
 		"coin_pusher_liveness_ticks": int(session.get("liveness_ticks", 0)),
 		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
@@ -1110,6 +1170,7 @@ func _surface_action_view_patch(machine: Dictionary, run_state: RunState, enviro
 		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
+		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
 		"native_selected_surface_actions": _native_surface_actions(machine),
 		"surface_action_bindings": _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment),
 	}
@@ -1185,11 +1246,32 @@ func _write_live_durable(run_state: RunState, environment: Dictionary, live_mach
 		live_machine["v2_migration_logged"] = true
 		if run_state != null:
 			run_state.log_story({"type": "coin_pusher_v2_migrated", "game_id": get_id(), "environment_id": str(environment.get("id", "")), "tray_value": int(live_machine.get("tray_value", 0)), "message": "The rebuilt pusher carries the old tray forward and reseeds its changed playfield."})
-	var durable := live_machine.duplicate(true)
+	# Active ticks retain a large live simulation while the environment owns the
+	# last settled checkpoint. Rebuilding the durable record by deep-copying the
+	# live machine copied both 300-body graphs only to discard the simulation.
+	# Patch the existing durable record instead, preserving its immutable settled
+	# checkpoint until an explicit settle boundary replaces it.
+	var game_states := _game_states(environment)
+	var existing_value: Variant = game_states.get(get_id(), {})
+	var durable: Dictionary = (existing_value as Dictionary).duplicate(false) if typeof(existing_value) == TYPE_DICTIONARY else {}
+	for durable_key in durable.keys():
+		if durable_key != "settled_state" and not live_machine.has(durable_key):
+			durable.erase(durable_key)
+	for live_key in live_machine.keys():
+		if live_key in ["simulation", "live_session", "settled_state"]:
+			continue
+		var live_value: Variant = live_machine[live_key]
+		durable[live_key] = live_value.duplicate(true) if typeof(live_value) in [TYPE_DICTIONARY, TYPE_ARRAY] else live_value
 	if update_snapshot and _has_v3_simulation(live_machine):
 		durable["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(live_machine), live_machine)
-	durable.erase("simulation")
-	durable.erase("live_session")
+	elif not live_machine.has("simulation") and typeof(live_machine.get("settled_state", {})) == TYPE_DICTIONARY:
+		# freeze_after_chunked_settle() has already replaced the active solver with
+		# its final checkpoint. This is the explicit persistence boundary, so the
+		# newly frozen state must replace the prior durable checkpoint.
+		durable["settled_state"] = (live_machine.get("settled_state", {}) as Dictionary).duplicate(true)
+	elif not durable.has("settled_state"):
+		var settled_value: Variant = live_machine.get("settled_state", {})
+		durable["settled_state"] = settled_value.duplicate(true) if typeof(settled_value) == TYPE_DICTIONARY else {}
 	_write_machine_state(environment, durable)
 
 
@@ -1274,7 +1356,10 @@ func _collect_surface_command(run_state: RunState, environment: Dictionary, mach
 	GameModule.apply_result(run_state, result)
 	_write_live_durable(run_state, environment, machine, false)
 	_register_pile_rumor(run_state, environment, machine)
-	return GameModule.surface_command({"handled": true, "environment_changed": true, "message": message, "surface_state_patch": _v3_headless_surface_state(machine), "preserve_surface_ui_state": true}, true)
+	var patch := _surface_action_view_patch(machine, run_state, environment)
+	patch["coin_pusher_collected_count"] = int(simulation.get("collected_count", 0))
+	patch["coin_pusher_collected_value"] = int(simulation.get("collected_value", 0))
+	return GameModule.surface_command({"handled": true, "environment_changed": true, "message": message, "surface_state_patch": patch, "preserve_surface_ui_state": true}, true)
 
 
 func _resolve_live_nudge(run_state: RunState, environment: Dictionary, machine: Dictionary, ui_state: Dictionary) -> Dictionary:
@@ -1900,7 +1985,7 @@ func _variation_intro(variation_id: String) -> String:
 	match variation_id:
 		"jackpot_ridge": return "Jackpot Ridge carries pucks through a pile built for sequencing, locks, and lane jams."
 		"vault_drop": return "The Vault Drop carries key fragments toward a town-fed progressive."
-	return "Quarter Falls shoves two shelves under a pile that remembers every coin."
+	return "Quarter Falls moves one platform under a pile that remembers every coin."
 
 
 func _register_pile_rumor(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
@@ -2043,14 +2128,18 @@ func _tuning() -> Dictionary:
 
 
 func _machine_definition(variation_id: String = "") -> Dictionary:
+	var selected := variation_id.strip_edges()
+	var cache_key := selected if not selected.is_empty() else "__base__"
+	if _machine_definition_cache.has(cache_key):
+		return _machine_definition_cache[cache_key]
 	var value: Variant = definition.get("coin_pusher_machine", {})
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
 	var base: Dictionary = (value as Dictionary).duplicate(true)
 	var machines: Dictionary = base.get("machines", {}) if typeof(base.get("machines", {})) == TYPE_DICTIONARY else {}
 	base.erase("machines")
-	var selected := variation_id.strip_edges()
 	if selected.is_empty() or selected == str(base.get("machine_id", "quarter_falls")):
+		_machine_definition_cache[cache_key] = base
 		return base
 	var override: Dictionary = machines.get(selected, {}) if typeof(machines.get(selected, {})) == TYPE_DICTIONARY else {}
 	for key in override.keys():
@@ -2060,6 +2149,7 @@ func _machine_definition(variation_id: String = "") -> Dictionary:
 		sub_game.merge(override.get("sub_game", {}), true)
 	base["sub_game"] = sub_game
 	base["cabinet"] = _resolved_cabinet(selected)
+	_machine_definition_cache[cache_key] = base
 	return base
 
 

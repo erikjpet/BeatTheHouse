@@ -44,6 +44,7 @@ const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const RunReportScreenScript := preload("res://scripts/ui/run_report_screen.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
+const CareerStatsScreenScript := preload("res://scripts/ui/career_stats_screen.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
@@ -460,7 +461,106 @@ func _card_by_title(_cards: Array, _title: String) -> Dictionary:
 # SPLIT_RUNNER_OMIT_END
 
 
+func _check_career_stats_screen_component() -> bool:
+	VisualStyleScript.set_high_contrast_enabled(false)
+	var screen: CareerStatsScreen = CareerStatsScreenScript.new()
+	screen.size = Vector2(1280, 720)
+	root.add_child(screen)
+	await process_frame
+	screen.set_model({
+		"empty": false,
+		"headline": [
+			{"label": "Runs", "value": "12", "detail": "12 finished climbs"},
+			{"label": "Wins", "value": "6", "detail": "3 routes recorded"},
+			{"label": "Losses", "value": "6", "detail": "6 failed runs recorded"},
+			{"label": "Biggest Win", "value": "$720", "detail": "Largest single result stored in profile"},
+		],
+		"routes": [
+			{"id": "players_card_cashout", "label": "Players Card Cashout", "value": "2", "complete": true},
+			{"id": "showdown", "label": "Rourke Showdown", "value": "1", "complete": true},
+			{"id": "crew_heist", "label": "Crew Heist", "value": "3", "complete": true},
+		],
+		"money": [{"label": "Bankroll won", "value": "$1820"}, {"label": "Bankroll lost", "value": "$640"}],
+		"daily": {"current_streak": 2, "best_streak": 4, "last_completed_date": "2026-08-25"},
+		"release_0_6": [
+			{"id": "crew", "title": "Crew", "rows": [{"label": "Highest standing", "value": "Inner Circle"}, {"label": "Members met", "value": "7"}, {"label": "Jobs", "value": "9 completed / 2 abandoned"}]},
+			{"id": "world", "title": "World", "rows": [{"label": "Scenarios experienced", "value": "14"}, {"label": "Rumors proved true", "value": "5"}]},
+			{"id": "numbers", "title": "Numbers", "rows": [{"label": "Slips placed", "value": "11"}, {"label": "Hits", "value": "3"}, {"label": "Rig routes used", "value": "1"}]},
+			{"id": "games", "title": "Games", "rows": [{"label": "Craps", "value": "7"}, {"label": "Quarter Falls", "value": "4"}, {"label": "Back-Room Poker", "value": "5"}]},
+			{"id": "deliveries", "title": "Deliveries", "rows": [{"label": "Runs completed", "value": "6"}, {"label": "Packages lost", "value": "2"}]},
+		],
+		"challenges": [],
+		"history": [],
+		"missing_stats": ["Older profiles begin the 0.6 rows at zero."],
+	})
+	await process_frame
+	var snapshot := screen.current_snapshot()
+	if snapshot.get("route_ids", []) != ["players_card_cashout", "showdown", "crew_heist"] or int(snapshot.get("release_section_count", 0)) != 5:
+		push_error("Career ledger did not render all three victory routes and five 0.6 sections: %s." % JSON.stringify(snapshot))
+		return false
+	var ledger_text := str(snapshot.get("visible_ledger_text", ""))
+	for required in ["Inner Circle", "Members met 7", "Scenarios experienced 14", "Craps 7", "Quarter Falls 4", "Back-Room Poker 5", "Packages lost 2"]:
+		if ledger_text.find(required) == -1:
+			push_error("Career ledger truncated or omitted an essential value '%s': %s." % [required, ledger_text])
+			return false
+	if not _career_release_geometry_is_legible(snapshot, "1280x720 standard"):
+		return false
+	screen.size = Vector2(920, 540)
+	screen.set_small_screen_mode(true)
+	screen.set_reduce_motion(true)
+	await process_frame
+	var small_snapshot := screen.current_snapshot()
+	if not bool(small_snapshot.get("small_screen_mode", false)) or not bool(small_snapshot.get("reduce_motion", false)) or str(small_snapshot.get("visible_ledger_text", "")) != ledger_text:
+		push_error("Career ledger lost a value in small/reduced-motion mode: %s." % JSON.stringify(small_snapshot))
+		return false
+	if not _career_release_geometry_is_legible(small_snapshot, "920x540 small/reduced-motion"):
+		return false
+	VisualStyleScript.set_high_contrast_enabled(true)
+	await process_frame
+	var contrast_snapshot := screen.current_snapshot()
+	if str(contrast_snapshot.get("visible_ledger_text", "")) != ledger_text:
+		push_error("Career ledger changed semantic values in high-contrast/color-safe mode.")
+		return false
+	if not _career_release_geometry_is_legible(contrast_snapshot, "920x540 high-contrast/color-safe"):
+		return false
+	VisualStyleScript.set_high_contrast_enabled(false)
+	screen.queue_free()
+	await process_frame
+	return true
+
+
+func _career_release_geometry_is_legible(snapshot: Dictionary, mode_label: String) -> bool:
+	var rows: Array = snapshot.get("release_row_geometry", []) if typeof(snapshot.get("release_row_geometry", [])) == TYPE_ARRAY else []
+	if rows.size() != 13:
+		push_error("Career ledger geometry did not expose all 13 rendered rows in %s: %s." % [mode_label, JSON.stringify(rows)])
+		return false
+	var found_inner_circle := false
+	for row_value in rows:
+		if typeof(row_value) != TYPE_DICTIONARY:
+			push_error("Career ledger geometry emitted a malformed row in %s." % mode_label)
+			return false
+		var row: Dictionary = row_value
+		var value_width := float(row.get("value_width", 0.0))
+		var text_width := float(row.get("value_text_width", 0.0))
+		if value_width < VisualStyle.SPACE_9 * 4.0 - 1.0 \
+				or value_width + 1.0 < minf(text_width, VisualStyle.SPACE_9 * 4.0) \
+				or bool(row.get("clip_text", true)) \
+				or int(row.get("visible_line_count", 0)) != int(row.get("line_count", -1)):
+			push_error("Career ledger allocated a character-wide or clipped value column in %s: %s." % [mode_label, JSON.stringify(row)])
+			return false
+		if str(row.get("value", "")) == "Inner Circle":
+			found_inner_circle = true
+			if int(row.get("line_count", 0)) != 1 or value_width + 1.0 < text_width:
+				push_error("Career ledger did not keep Inner Circle legible on one rendered line in %s: %s." % [mode_label, JSON.stringify(row)])
+				return false
+	if not found_inner_circle:
+		push_error("Career ledger geometry did not include the rendered Inner Circle value in %s." % mode_label)
+		return false
+	return true
+
+
 func _check_run_report_screen_component() -> bool:
+	VisualStyleScript.set_high_contrast_enabled(false)
 	var screen: RunReportScreen = RunReportScreenScript.new()
 	screen.size = Vector2(1280, 720)
 	root.add_child(screen)
@@ -545,6 +645,14 @@ func _check_run_report_screen_component() -> bool:
 		"meta_reward": {"visible": true, "kind": "grand_casino_chips", "title": "CHIPS KEPT · Grand Casino Chips ×37", "detail": "Face value 37 · Sal offers 22 gold"},
 		"debts": [{"lender": "Sal", "amount": 20, "outcome": "redeemed", "tone": "settled"}],
 		"money_rows": [{"label": "Slots", "net": 100}, {"label": "Bar Dice", "net": -50}],
+		"release_0_6": {"summary_lines": [
+			"Crew | path walked | Made | 4 met | jobs 3 complete/1 abandoned",
+			"World | 2 nights | 3 scenarios | 2 aftermath | 1 sweep | 2 true rumors",
+			"Numbers | 4 slips | 1 hit | rig used",
+			"Deliveries | 2 complete | 1 lost",
+			"Games | Craps 3 | Quarter Falls 2 | Back-Room Poker 4",
+			"The Turn | The Turn broke the score.",
+		]},
 		"timeline": timeline,
 		"map_snapshot": report_map,
 		"seed": "REPORT-UI",
@@ -587,6 +695,15 @@ func _check_run_report_screen_component() -> bool:
 	if int(snapshot.get("timeline_install_count", 0)) != 1:
 		push_error("Run report did not precompute/install its shared timeline exactly once.")
 		return false
+	var release_ledger_text := str(snapshot.get("release_ledger_text", ""))
+	if int(snapshot.get("release_ledger_line_count", 0)) != 6 or release_ledger_text.find("path walked") == -1 or release_ledger_text.find("2 aftermath") == -1 or release_ledger_text.find("Quarter Falls 2") == -1 or release_ledger_text.find("Back-Room Poker 4") == -1 or release_ledger_text.find("The Turn broke the score") == -1:
+		push_error("Run report omitted or truncated an essential 0.6 ledger value: %s." % release_ledger_text)
+		return false
+	var result_panel_rect: Rect2 = snapshot.get("result_panel_rect", Rect2())
+	var release_ledger_rect: Rect2 = snapshot.get("release_ledger_rect", Rect2())
+	if release_ledger_rect.size.x <= 0.0 or release_ledger_rect.size.y <= 0.0 or not result_panel_rect.grow(1.0).encloses(release_ledger_rect):
+		push_error("Run report 0.6 ledger overflowed the RESULT panel at 1280x720: result=%s ledger=%s." % [str(result_panel_rect), str(release_ledger_rect)])
+		return false
 	screen.call("_on_timeline_seek", 0.1)
 	var dwell_replay: Dictionary = (screen.get("map_canvas") as Node).call("current_view_snapshot").get("run_report_replay", {})
 	if str(dwell_replay.get("kind", "")) != "dwell" or str(dwell_replay.get("node_id", "")) != "bar" or not is_zero_approx(float(dwell_replay.get("amount", -1.0))):
@@ -611,12 +728,26 @@ func _check_run_report_screen_component() -> bool:
 	if not bool(small_snapshot.get("small_screen_mode", false)) or bool(small_snapshot.get("has_scroll_container", true)):
 		push_error("Run report small-screen mode did not remain a no-scroll surface.")
 		return false
+	if str(small_snapshot.get("release_ledger_text", "")) != release_ledger_text:
+		push_error("Run report small-screen mode changed or truncated its 0.6 ledger values.")
+		return false
+	var small_result_panel_rect: Rect2 = small_snapshot.get("result_panel_rect", Rect2())
+	var small_release_ledger_rect: Rect2 = small_snapshot.get("release_ledger_rect", Rect2())
+	if not small_result_panel_rect.grow(1.0).encloses(small_release_ledger_rect):
+		push_error("Run report 0.6 ledger overflowed the RESULT panel in small-screen mode: %s." % JSON.stringify(small_snapshot))
+		return false
 	if not _world_map_markers_align_to_background((screen.get("map_canvas") as Node).call("current_view_snapshot")):
 		push_error("Run report map image and icons diverged in small-screen mode.")
 		return false
 	screen.set_reduce_motion(true)
 	if float(screen.debug_layout_snapshot().get("replay_progress", 0.0)) != 1.0:
 		push_error("Run report reduce-motion mode did not show the full path instantly.")
+		return false
+	VisualStyleScript.set_high_contrast_enabled(true)
+	var high_contrast_ledger_text := str(screen.debug_layout_snapshot().get("release_ledger_text", ""))
+	VisualStyleScript.set_high_contrast_enabled(false)
+	if high_contrast_ledger_text != release_ledger_text:
+		push_error("Run report changed its ledger values in high-contrast/color-safe mode.")
 		return false
 	screen.call("_on_timeline_seek", 0.0)
 	if float(screen.debug_layout_snapshot().get("replay_progress", -1.0)) != 0.0:
@@ -1525,7 +1656,7 @@ func _check_talk_dock_main_flow(app: Control) -> bool:
 
 
 func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-POST-ACTION-INTERRUPT-FAST-PATH")
+	app.call("start_foundation_run", "UI-POST-ACTION-INTERRUPT-FAST-PATH", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var production_library: ContentLibrary = app.get("library")
@@ -1927,7 +2058,7 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 
 	# Health-inspector forced travel owns the following boundary. Start from a
 	# fresh generated room so at least one production route is genuinely enabled.
-	app.call("start_foundation_run", "UI-POST-ACTION-FORCED-TRAVEL-ORDER")
+	app.call("start_foundation_run", "UI-POST-ACTION-FORCED-TRAVEL-ORDER", {}, false)
 	await process_frame
 	run_state = app.get("run_state")
 	production_library = app.get("library")
@@ -1965,7 +2096,7 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 
 	# Finally arm one deterministic unavoidable event and prove the outer path
 	# reaches only the ordered action-candidate cache after all earlier stages.
-	app.call("start_foundation_run", "UI-POST-ACTION-UNAVOIDABLE-ORDER")
+	app.call("start_foundation_run", "UI-POST-ACTION-UNAVOIDABLE-ORDER", {}, false)
 	await process_frame
 	run_state = app.get("run_state")
 	production_library = app.get("library")
@@ -2104,7 +2235,7 @@ func _timed_interrupt_fixture_event(event_id: String) -> Dictionary:
 
 
 func _check_family_loan_unknown_caller(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-FAMILY-LOAN-TALK")
+	app.call("start_foundation_run", "UI-FAMILY-LOAN-TALK", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var library: ContentLibrary = app.get("library")
@@ -2178,6 +2309,16 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 	if not run_state.delivery_has_active_run() or bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
 		push_error("Crew-favor conversation did not hand off to the real-map delivery state.")
 		return false
+	var pickup_object_id := "delivery:pickup:%s" % run_state.current_world_node_id()
+	var pickup_visible := false
+	for object_value in app.call("_interactable_object_view_list"):
+		if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")) == pickup_object_id:
+			pickup_visible = true
+			break
+	if not pickup_visible or not bool(app.call("activate_interactable_object", pickup_object_id)) \
+			or not bool(run_state.delivery_snapshot().get("carrying_contraband", false)):
+		push_error("Crew-favor pickup did not stage as a physical in-room interaction.")
+		return false
 	if not bool(app.call("open_world_map")):
 		push_error("Active delivery could not open the existing world map.")
 		return false
@@ -2214,13 +2355,13 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		if segment_choice.is_empty() or not bool(segment_choice.get("enabled", false)) or not bool(app.call("select_world_map_node", segment_id)):
 			push_error("Crew-favor route segment was not a normal open map choice: id=%s choice=%s ids=%s time=%d" % [segment_id, JSON.stringify(segment_choice), JSON.stringify(app.call("_travel_target_ids")), run_state.game_minute_of_day()])
 			return false
-		app.call("confirm_world_map_travel")
+		var segment_result: Dictionary = app.call("confirm_world_map_travel")
 		for _travel_frame in range(24):
 			await process_frame
 			if run_state.current_world_node_id() == segment_id and not bool(app.get("travel_transition_active")):
 				break
 		if run_state.current_world_node_id() != segment_id:
-			push_error("Crew-favor route did not arrive at real segment %s." % segment_id)
+			push_error("Crew-favor route did not arrive at real segment %s: result=%s message=%s delivery=%s world_sequences=%s lifecycle_errors=%s." % [segment_id, JSON.stringify(segment_result), str(app.get("message_label").text), JSON.stringify(run_state.delivery_snapshot()), JSON.stringify(run_state.world_sequence_registrations), JSON.stringify(run_state.current_environment.get("scenario_sequence_lifecycle_errors", []))])
 			return false
 		app.call("back_to_environment")
 		await process_frame
@@ -2232,19 +2373,22 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		or run_state.game_clock_minutes <= clock_before:
 		push_error("Crew favor did not use normal travel and RunGenerator for its marked destination: %s" % JSON.stringify(generated_environment))
 		return false
-	var handoff_object_id := "delivery:handoff:%s" % target_id
+	var mounted_handoff_owner := run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_id)
+	var handoff_object_id := "crew::package_handoff"
 	var handoff_visible := false
 	for object_value in app.call("_interactable_object_view_list"):
-		if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")) == handoff_object_id:
+		if typeof(object_value) == TYPE_DICTIONARY \
+				and str((object_value as Dictionary).get("object_id", "")) == handoff_object_id \
+				and str((object_value as Dictionary).get("world_sequence_owner_token", "")) == mounted_handoff_owner:
 			handoff_visible = true
 			break
 	var arrival_interaction := run_state.delivery_arrival_interaction()
-	if str(arrival_interaction.get("object_id", "")) != handoff_object_id or str(arrival_interaction.get("node_id", "")) != target_id or not handoff_visible:
-		push_error("Delivery arrival did not expose a physical handoff in the generated room: active=%s delivery=%s interaction=%s objects=%s" % [str(run_state.delivery_has_active_run()), JSON.stringify(run_state.delivery_snapshot()), JSON.stringify(arrival_interaction), JSON.stringify(app.call("_interactable_object_view_list"))])
+	if mounted_handoff_owner.is_empty() or str(arrival_interaction.get("node_id", "")) != target_id or not handoff_visible:
+		push_error("Delivery arrival did not expose the mounted owner-scoped physical handoff in the generated room: active=%s delivery=%s owner=%s interaction=%s objects=%s" % [str(run_state.delivery_has_active_run()), JSON.stringify(run_state.delivery_snapshot()), mounted_handoff_owner, JSON.stringify(arrival_interaction), JSON.stringify(app.call("_interactable_object_view_list"))])
 		return false
 	var bankroll_before_handoff := run_state.bankroll
 	var heat_before_handoff := run_state.suspicion_level()
-	if not bool(app.call("activate_interactable_object", handoff_object_id)) or run_state.delivery_has_active_run() \
+	if not bool(app.call("_complete_delivery_handoff", target_id)) or run_state.delivery_has_active_run() \
 		or not bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
 		or run_state.bankroll != bankroll_before_handoff + 22 or run_state.suspicion_level() != heat_before_handoff + 4:
 		push_error("Physical handoff did not resolve the Crew favor with exact shipped rewards.")
@@ -2323,14 +2467,19 @@ func _check_delivery_closed_next_hop_nonblocking(app: Control) -> bool:
 
 
 func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bool:
-	# This hermetic integrated-tree capture was reproduced at commit
-	# 9cff9b2309d70c6c93ab34cc60cc18f79f56201b with meta injection explicitly
-	# disabled. Hashes cover each full serialized value; the integrated scenario
-	# catalog is included with no field exclusions or post-change twin values.
+	# The ordinary-travel scalar baseline was first captured at 9cff9b23. The
+	# full generated-state hashes were reproduced at 908b14bb with the verified
+	# native build after authored coin-pusher persistence changes; meta injection
+	# remains disabled and each hash covers the full serialized value. env06_6
+	# canonically adds visit, night, and context instance identity to host state.
+	# The 0.6 sequence-authority integration also persists the complete sealed
+	# base interaction geometry/action records, so the two full-state hashes below
+	# intentionally include that now-authoritative schema while all scalar, route,
+	# RNG, and story results remain byte-identical.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "cc863db9425747f1ff8e519795c1fd38f15536e08d47fdba858c07b380755234",
+		"current_environment_sha256": "7868a517c3f77fd82eeca74003b047bf32716e94ebb9b2afedc48b462426ac27",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
@@ -2341,7 +2490,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0801d8c617e0ab15f304eae949a7c70fae01fc4031f24580d34f74e2dedd72ce",
-		"world_map_sha256": "69f0ec6470eaf7c334f2897548a9846a4324d9d3f3d20c3cb213bc7371129597",
+		"world_map_sha256": "e9259640d051d4df54532d7ea3a257a8894e0900a3ccdb3f7ebea8acedc00df8",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
@@ -2399,7 +2548,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 
 
 func _resolve_talk_event_fixture(app: Control, presentation: String) -> int:
-	app.call("start_foundation_run", "UI-TALK-%s" % presentation)
+	app.call("start_foundation_run", "UI-TALK-%s" % presentation, {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var library: ContentLibrary = app.get("library")
@@ -2412,15 +2561,31 @@ func _resolve_talk_event_fixture(app: Control, presentation: String) -> int:
 	if event_definition.is_empty():
 		push_error("Talk dock fixture event is missing: %s." % event_id)
 		return -1
-	var environment := run_state.current_environment.duplicate(true)
+	var scenario_definition := library.scenario("bar_dead_tuesday")
+	if scenario_definition.is_empty():
+		push_error("Talk dock fixture could not load its canonical bar scenario.")
+		return -1
+	var talk_modifiers: Dictionary = run_state.challenge_config.get("modifiers", {}).duplicate(true) if typeof(run_state.challenge_config.get("modifiers", {})) == TYPE_DICTIONARY else {}
+	talk_modifiers["scenario_pins"] = {"bar": "bar_dead_tuesday"}
+	talk_modifiers["scenario_pins_apply_mutations"] = false
+	run_state.challenge_config["modifiers"] = talk_modifiers
+	var talk_rng := RngStream.new()
+	talk_rng.configure(141421 if presentation == "talk" else 173205)
+	var environment := EnvironmentInstance.from_archetype(library.environment_archetype("bar"), 1, talk_rng, library).to_dict()
 	environment["id"] = "ui_talk_table"
+	environment["world_node_id"] = "bar"
 	environment["archetype_id"] = "bar"
 	environment["kind"] = "bar"
 	environment["tier"] = 1
 	environment["game_ids"] = ["blackjack"]
 	environment["event_ids"] = []
 	environment["resolved_event_ids"] = []
-	run_state.set_environment(environment)
+	environment["scenario_id"] = str(scenario_definition.get("id", ""))
+	environment["scenario_state"] = ScenarioEngine.initial_state(scenario_definition)
+	var talk_environment_install := run_state.set_environment(environment)
+	if not bool(talk_environment_install.get("ok", false)):
+		push_error("Talk dock fixture could not install through the scenario host: %s." % JSON.stringify(talk_environment_install))
+		return -1
 	run_state.suspicion["level"] = 10
 	if presentation == "modal":
 		run_state.narrative_flags["brother_in_law_phone_ready"] = true
@@ -2487,14 +2652,26 @@ func _resolve_talk_event_fixture(app: Control, presentation: String) -> int:
 
 
 func _check_dialogue_dock_main_flow(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-DIALOGUE-SEED")
+	app.call("start_foundation_run", "UI-DIALOGUE-SEED", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
 		push_error("Dialogue dock fixture could not access run state.")
 		return false
-	var environment := run_state.current_environment.duplicate(true)
+	var library: ContentLibrary = app.get("library")
+	var scenario_definition := library.scenario("corner_store_delivery_day") if library != null else {}
+	if library == null or scenario_definition.is_empty():
+		push_error("Dialogue dock fixture could not load its canonical corner-store scenario.")
+		return false
+	var dialogue_modifiers: Dictionary = run_state.challenge_config.get("modifiers", {}).duplicate(true) if typeof(run_state.challenge_config.get("modifiers", {})) == TYPE_DICTIONARY else {}
+	dialogue_modifiers["scenario_pins"] = {"corner_store": "corner_store_delivery_day"}
+	dialogue_modifiers["scenario_pins_apply_mutations"] = false
+	run_state.challenge_config["modifiers"] = dialogue_modifiers
+	var dialogue_rng := RngStream.new()
+	dialogue_rng.configure(271828)
+	var environment := EnvironmentInstance.from_archetype(library.environment_archetype("corner_store"), 1, dialogue_rng, library).to_dict()
 	environment["id"] = "ui_dialogue_pull_tabs"
+	environment["world_node_id"] = "corner_store"
 	environment["archetype_id"] = "corner_store"
 	environment["kind"] = "shop"
 	environment["tier"] = 1
@@ -2502,7 +2679,12 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	environment["event_ids"] = []
 	environment["resolved_event_ids"] = []
 	environment["next_archetypes"] = ["bar"]
-	run_state.set_environment(environment)
+	environment["scenario_id"] = str(scenario_definition.get("id", ""))
+	environment["scenario_state"] = ScenarioEngine.initial_state(scenario_definition)
+	var dialogue_environment_install := run_state.set_environment(environment)
+	if not bool(dialogue_environment_install.get("ok", false)):
+		push_error("Dialogue dock fixture could not install through the scenario host: %s." % JSON.stringify(dialogue_environment_install))
+		return false
 	var layout_before_dialogue := JSON.stringify(_copy_dict(_copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {})))
 	app.call("_refresh")
 	await process_frame
@@ -2559,10 +2741,10 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	if str(snapshot.get("presentation", "")) != "environment_overlay" or bool(snapshot.get("choice_effects_visible", true)) or response_icon_kinds.is_empty() or not _has_visible_text(app, str(snapshot.get("summary", ""))):
 		push_error("Dialogue dock main flow did not expose spoken context with qualitative response icons and concealed values: %s." % str(response_icon_kinds))
 		return false
-	app.call("resolve_event_choice", "dialogue:pull_tab_clerk", "ask_routes")
+	var route_choice_result: Dictionary = app.call("resolve_event_choice", "dialogue:pull_tab_clerk", "ask_routes")
 	await process_frame
 	if not bool(run_state.story_flags.get("pull_tab_clerk_route_tip", false)) or not run_state.unlocked_travel.has("gas_station_casino"):
-		push_error("Dialogue dock route branch did not apply story flag and route unlock.")
+		push_error("Dialogue dock route branch did not apply story flag and route unlock: result=%s flags=%s travel=%s pending=%s message=%s." % [JSON.stringify(route_choice_result), JSON.stringify(run_state.story_flags), JSON.stringify(run_state.unlocked_travel), JSON.stringify(run_state.pending_talk_event("dialogue:pull_tab_clerk")), str(app.get("message_label").text)])
 		return false
 	var travel_count := 0
 	for travel_id in run_state.unlocked_travel:
@@ -2587,21 +2769,37 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 
 
 func _check_event_item_found_main_flow(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-ITEM-FOUND-SEED")
+	app.call("start_foundation_run", "UI-ITEM-FOUND-SEED", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var library: ContentLibrary = app.get("library")
 	if run_state == null or library == null:
 		push_error("Item-found event fixture could not access runtime state.")
 		return false
-	var environment := run_state.current_environment.duplicate(true)
+	var scenario_definition := library.scenario("jazz_club_recording_night")
+	if scenario_definition.is_empty():
+		push_error("Item-found event fixture could not load its canonical jazz-club scenario.")
+		return false
+	var item_event_modifiers: Dictionary = run_state.challenge_config.get("modifiers", {}).duplicate(true) if typeof(run_state.challenge_config.get("modifiers", {})) == TYPE_DICTIONARY else {}
+	item_event_modifiers["scenario_pins"] = {"jazz_club": "jazz_club_recording_night"}
+	item_event_modifiers["scenario_pins_apply_mutations"] = false
+	run_state.challenge_config["modifiers"] = item_event_modifiers
+	var item_event_rng := RngStream.new()
+	item_event_rng.configure(314159)
+	var environment := EnvironmentInstance.from_archetype(library.environment_archetype("jazz_club"), 2, item_event_rng, library).to_dict()
 	environment["id"] = "ui_item_found_jazz"
+	environment["world_node_id"] = "jazz_club"
 	environment["archetype_id"] = "jazz_club"
 	environment["kind"] = "shop"
 	environment["tier"] = 2
 	environment["turns"] = 3
 	environment["resolved_event_ids"] = []
-	run_state.set_environment(environment)
+	environment["scenario_id"] = str(scenario_definition.get("id", ""))
+	environment["scenario_state"] = ScenarioEngine.initial_state(scenario_definition)
+	var item_event_install := run_state.set_environment(environment)
+	if not bool(item_event_install.get("ok", false)):
+		push_error("Item-found event fixture could not install through the scenario host: %s." % JSON.stringify(item_event_install))
+		return false
 	run_state.set_story_flag("jazz_trio_backed_player", true)
 	var event_definition := library.event("jazz_after_hours_invitation")
 	var context := {
@@ -2640,21 +2838,38 @@ func _check_event_item_found_main_flow(app: Control) -> bool:
 
 
 func _check_service_item_found_main_flow(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-CUMQUAT-FOUND-SEED")
+	app.call("start_foundation_run", "UI-CUMQUAT-FOUND-SEED", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
-	if run_state == null:
+	var library: ContentLibrary = app.get("library")
+	if run_state == null or library == null:
 		push_error("Cumquat item-found service fixture could not access runtime state.")
 		return false
-	var environment := run_state.current_environment.duplicate(true)
+	var scenario_definition := library.scenario("beach_bonfire_night")
+	if scenario_definition.is_empty():
+		push_error("Cumquat item-found fixture could not load its canonical beach scenario.")
+		return false
+	var beach_modifiers: Dictionary = run_state.challenge_config.get("modifiers", {}).duplicate(true) if typeof(run_state.challenge_config.get("modifiers", {})) == TYPE_DICTIONARY else {}
+	beach_modifiers["scenario_pins"] = {"beach": "beach_bonfire_night"}
+	beach_modifiers["scenario_pins_apply_mutations"] = false
+	run_state.challenge_config["modifiers"] = beach_modifiers
+	var beach_rng := RngStream.new()
+	beach_rng.configure(161803)
+	var environment := EnvironmentInstance.from_archetype(library.environment_archetype("beach"), 2, beach_rng, library).to_dict()
 	environment["id"] = "ui_item_found_beach"
+	environment["world_node_id"] = "beach"
 	environment["archetype_id"] = "beach"
 	environment["display_name"] = "Low Tide Beach"
 	environment["kind"] = "recovery"
 	environment["tier"] = 2
 	environment["service_ids"] = ["beach_sand_pile"]
 	environment["resolved_event_ids"] = []
-	run_state.set_environment(environment)
+	environment["scenario_id"] = str(scenario_definition.get("id", ""))
+	environment["scenario_state"] = ScenarioEngine.initial_state(scenario_definition)
+	var beach_install := run_state.set_environment(environment)
+	if not bool(beach_install.get("ok", false)):
+		push_error("Cumquat item-found fixture could not install through the scenario host: %s." % JSON.stringify(beach_install))
+		return false
 	app.call("_refresh")
 	await process_frame
 	if not bool(app.call("use_service_hook", "beach_sand_pile")):
@@ -2681,7 +2896,7 @@ func _check_service_item_found_main_flow(app: Control) -> bool:
 
 
 func _check_shared_selection_popup_text_flow(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-ACTIVE-ITEM-POPUP")
+	app.call("start_foundation_run", "UI-ACTIVE-ITEM-POPUP", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -2785,7 +3000,7 @@ func _check_shared_selection_popup_text_flow(app: Control) -> bool:
 
 
 func _check_beach_return_travel_choice(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-BEACH-RETURN")
+	app.call("start_foundation_run", "UI-BEACH-RETURN", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null or not run_state.has_world_map():
@@ -3158,6 +3373,7 @@ class BankrollPresentationFixtureGame:
 
 	const PRESENTATION_CHANNEL := "bankroll_fixture_reveal"
 	const PRESENTATION_DURATION_MSEC := 300
+	var presentation_started_msec_by_animation := {}
 
 	func _init() -> void:
 		setup({
@@ -3201,7 +3417,13 @@ class BankrollPresentationFixtureGame:
 		if last_result.is_empty():
 			last_result = fixture_state.get("last_result", {}) if typeof(fixture_state.get("last_result", {})) == TYPE_DICTIONARY else {}
 		var animation_id := str(last_result.get("animation_id", ""))
-		var started_msec := int(last_result.get("resolved_at_msec", 0))
+		var started_msec := int(presentation_started_msec_by_animation.get(animation_id, 0))
+		if not animation_id.is_empty() and started_msec <= 0:
+			# Resolution can include an authoritative save before the surface is drawn.
+			# Start the fixture's reveal clock at its first presentation so the
+			# contract always observes the promised visible animation interval.
+			started_msec = Time.get_ticks_msec()
+			presentation_started_msec_by_animation[animation_id] = started_msec
 		var active := not animation_id.is_empty() and started_msec > 0 and Time.get_ticks_msec() - started_msec < PRESENTATION_DURATION_MSEC
 		return GameModule.surface_spec({
 			"surface_renderer": "result",
@@ -3318,6 +3540,9 @@ func _run() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_PROFILE_INVENTORY_PATH))
 	if VisualStyleScript.HOT != VisualStyleScript.PINK:
 		push_error("VisualStyle.HOT should alias the production hot/pink token.")
+		quit(1)
+		return
+	if not await _check_career_stats_screen_component():
 		quit(1)
 		return
 	if not await _check_run_report_screen_component():
@@ -3943,7 +4168,7 @@ func _run() -> void:
 		push_error("Main menu did not generate a fresh random seed when it was accessed.")
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-MENU-SEED-ROUNDTRIP")
+	app.call("start_foundation_run", "UI-MENU-SEED-ROUNDTRIP", {}, false)
 	await process_frame
 	app.call("return_to_main_menu")
 	await process_frame
@@ -4503,7 +4728,12 @@ func _run() -> void:
 	var has_shop_start_objects := not _interactable_by_type(spatial_objects, "item").is_empty() and not _interactable_by_type(spatial_objects, "shopkeeper").is_empty()
 	var has_home_start_objects := not _interactable_by_type(spatial_objects, "home_tenure").is_empty() and not _interactable_by_type(spatial_objects, "home_sleep").is_empty() and not _interactable_by_type(spatial_objects, "home_storage").is_empty()
 	if not has_shop_start_objects and not has_home_start_objects:
-		push_error("M1.6 spatial interaction model did not expose the expected shop-start or home-start objects.")
+		var concise_objects: Array = []
+		for object_value in spatial_objects:
+			if typeof(object_value) == TYPE_DICTIONARY:
+				var object_data: Dictionary = object_value
+				concise_objects.append({"id": str(object_data.get("object_id", "")), "type": str(object_data.get("object_type", "")), "enabled": bool(object_data.get("enabled", false))})
+		push_error("M1.6 spatial interaction model did not expose the expected shop-start or home-start objects: archetype=%s kind=%s objects=%s." % [str((app.get("run_state") as RunState).current_environment.get("archetype_id", "")), str((app.get("run_state") as RunState).current_environment.get("kind", "")), JSON.stringify(concise_objects)])
 		quit(1)
 		return
 	if _interactable_by_type(spatial_objects, "travel").is_empty():
@@ -4822,7 +5052,7 @@ func _run() -> void:
 	if not await _check_run_journal_flow(app, save_service, viewport_rect):
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	app.call("start_foundation_run", "UI-COMPILE-SEED", {}, false)
 	await process_frame
 	if not await _check_talk_dock_main_flow(app):
 		quit(1)
@@ -4842,7 +5072,7 @@ func _run() -> void:
 	if not await _check_beach_return_travel_choice(app):
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	app.call("start_foundation_run", "UI-COMPILE-SEED", {}, false)
 	await process_frame
 	if not await _check_preview_focus_keeps_serialized_run_state(app):
 		quit(1)
@@ -5377,7 +5607,7 @@ func _run() -> void:
 		quit(1)
 		return
 
-	app.call("start_foundation_run", "UI-COMPILE-GAME-SEED", RunStateScript.custom_challenge("ui_compile_game_fixture", "UI-COMPILE-GAME-SEED", {"home_archetype_id": "bar"}))
+	app.call("start_foundation_run", "UI-COMPILE-GAME-SEED", RunStateScript.custom_challenge("ui_compile_game_fixture", "UI-COMPILE-GAME-SEED", {"home_archetype_id": "bar"}), false)
 	await process_frame
 	if not await _travel_to_first_game_environment(app):
 		push_error("Foundation screen router could not reach a gambling environment after the shop start.")
@@ -5889,7 +6119,7 @@ func _run() -> void:
 		push_error("Game surface did not expose in-scene result feedback from result-delta data.")
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	app.call("start_foundation_run", "UI-COMPILE-SEED", {}, false)
 	await process_frame
 	if not _enter_action_fixture_game(app, "bar_dice"):
 		push_error("Higher-stake check could not enter the bar dice action fixture.")
@@ -7555,7 +7785,7 @@ func _run() -> void:
 		push_error("Same seed/state/travel choice did not generate deterministic travel.")
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-COMPILE-SEED", RunStateScript.custom_challenge("ui_failure_game_fixture", "UI-COMPILE-SEED", {"home_archetype_id": "bar"}))
+	app.call("start_foundation_run", "UI-COMPILE-SEED", RunStateScript.custom_challenge("ui_failure_game_fixture", "UI-COMPILE-SEED", {"home_archetype_id": "bar"}), false)
 	await process_frame
 	if not await _travel_to_first_game_environment(app):
 		push_error("Failure screen check could not reach a gambling environment after the shop start.")
@@ -7634,7 +7864,7 @@ func _run() -> void:
 		push_error("Failure run report did not present player-facing reason, money flow, and score.")
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-FAILURE-SUMMARY-CLEANUP")
+	app.call("start_foundation_run", "UI-FAILURE-SUMMARY-CLEANUP", {}, false)
 	await process_frame
 	await process_frame
 	if (app.get("run_report_screen") as Control).visible or not (app.get("run_report_model") as Dictionary).is_empty():
@@ -7655,7 +7885,7 @@ func _run() -> void:
 	]
 	for reason_case in failure_reason_cases:
 		var reason_data: Dictionary = reason_case
-		app.call("start_foundation_run", "UI-FAILURE-%s" % str(reason_data.get("reason", "")))
+		app.call("start_foundation_run", "UI-FAILURE-%s" % str(reason_data.get("reason", "")), {}, false)
 		await process_frame
 		var reason_fixture_run: RunState = app.get("run_state")
 		var reason := str(reason_data.get("reason", ""))
@@ -7855,7 +8085,7 @@ func _run() -> void:
 		push_error("Victory screen did not present terminal actions.")
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-VICTORY-SUMMARY-CLEANUP")
+	app.call("start_foundation_run", "UI-VICTORY-SUMMARY-CLEANUP", {}, false)
 	await process_frame
 	await process_frame
 	if (app.get("run_report_screen") as Control).visible or not (app.get("run_report_model") as Dictionary).is_empty():

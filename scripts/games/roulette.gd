@@ -6,6 +6,8 @@ extends GameModule
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
+const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
+const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
@@ -24,6 +26,15 @@ const SPIN_ANIMATION_DURATION_MSEC := 5600
 const PAYOUT_ANIMATION_DURATION_MSEC := 1800
 const ROULETTE_RESULT_REVEAL_MSEC := 1600
 const ROULETTE_ROUND_DELAY_MSEC := 40000
+const ROULETTE_NO_MORE_BETS_MSEC := 650
+const ROULETTE_BALL_SETTLE_MSEC := 1100
+const ROULETTE_CLEARING_MSEC := 650
+const ROULETTE_RITUAL_PHASES := ["betting", "no_more_bets", "spin", "ball_settle", "croupier_settlement"]
+const TABLE_GAME_HOST_TRANSIENT_UI_KEYS := [
+	"surface_time_msec", "drunk_scaled_surface_time_msec", "reduce_motion",
+	"selected_action_id", "selected_action_kind", "selected_index",
+	"focused_talk_speaker",
+]
 const WHEEL_CENTER := Vector2(150, 182)
 const WHEEL_RADIUS := 108.0
 const GRID_RECT := Rect2(332, 156, 360, 108)
@@ -90,6 +101,26 @@ const RED_NUMBERS := ["1", "3", "5", "7", "9", "12", "14", "16", "18", "19", "21
 const BLACK_NUMBERS := ["2", "4", "6", "8", "10", "11", "13", "15", "17", "20", "22", "24", "26", "28", "29", "31", "33", "35"]
 
 var bet_targets_cache: Dictionary = {}
+
+
+func sealed_action_authority_script() -> Script:
+	return ActionAuthorityScript
+
+
+func sealed_action_authority_contract() -> Dictionary:
+	return {
+		"resolve_proposal_method": &"_table_game_resolve_proposal",
+		"wager_cost_proposal_method": &"_table_game_wager_cost_proposal",
+		"host_auto_tick_method": &"_table_game_host_needs_auto_tick",
+		"surface_intent_key": "",
+		"surface_intent_index_key": "",
+		"retry_surface_actions": ["table_game_retry_pending", "roulette_retry_pending"],
+		"cancel_surface_actions": ["table_game_cancel_pending", "roulette_cancel_pending"],
+		"proposal_requires_apply_key": "table_game_proposal_requires_apply",
+		"authoritative_result_marker": "table_game_authoritative",
+		"place_bet_action": "",
+		"host_pointer_intent": true,
+	}
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -212,6 +243,17 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var visible_last_results := _roulette_visible_last_results(table, last_result_source, result_settled_for_display)
 	var recent_numbers := _roulette_recent_numbers_from_history(visible_last_results)
 	var visible_bankroll := _roulette_visible_bankroll(run_state, environment, last_result_source, result_settled_for_display)
+	var surface_patrons := GameModule.patrons_with_talk_focus(_patrons_for_surface(table, last_result, now_msec), ui_state.get("focused_talk_speaker", {}))
+	var ritual_phase := _roulette_ritual_phase(phase_status, barred)
+	var ritual_projection := _roulette_ritual_projection(
+		ritual_phase,
+		bets,
+		last_result_source,
+		phase_status,
+		visible_bankroll,
+		surface_patrons,
+		run_state.suspicion_level() if run_state != null else 0
+	)
 	var timer_active := not barred and not roulette_wheel_locked
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin", ROULETTE_ROUND_DELAY_MSEC) if timer_active else {}
 	var table_notice := _table_notice(table, session, last_result, spin_active, payout_active or result_reveal_active or not result_settled_for_display, round_timer)
@@ -221,12 +263,13 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		table_notice = "Track the cyan tick and lock it over the timing marker."
 	if barred:
 		table_notice = str(table.get("barred_reason", "The roulette wheel is closed to you."))
-	var surface_patrons := GameModule.patrons_with_talk_focus(_patrons_for_surface(table, last_result, now_msec), ui_state.get("focused_talk_speaker", {}))
 	var patron_layout := _roulette_patron_layout(surface_patrons)
 	var cheat_binding_action := "roulette_past_post" if past_post_available else "roulette_nudge"
 	var past_post_item_modifiers := skill_item_modifier_badges(run_state, PAST_POST_ITEM_EFFECT_KEYS)
 	var wheel_read_item_modifiers := skill_item_modifier_badges(run_state, WHEEL_READ_ITEM_EFFECT_KEYS)
-	return GameModule.surface_spec({
+	var authority_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var pending_delivery: Dictionary = authority_ledger.get("pending_delivery", {}) if typeof(authority_ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
+	var spec := GameModule.surface_spec({
 		"surface_renderer": "roulette",
 		"surface_life": "immersive_table",
 		"surface_cast": "dealer_table",
@@ -263,6 +306,18 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		],
 		"surface_action_blocks": _surface_action_blocks(roulette_wheel_locked),
 		"phase": "barred" if barred else "spinning" if spin_active else "payout" if payout_active or result_reveal_active else "betting",
+		"ritual_contract": "game_ritual/1",
+		"ritual_id": "roulette.table.v1",
+		"ritual_phase": ritual_phase,
+		"ritual_phase_sequence": ROULETTE_RITUAL_PHASES.duplicate(),
+		"ritual_projection": ritual_projection,
+		"available_funds": int(ritual_projection.get("available_funds", 0)),
+		"total_new_stake": int(ritual_projection.get("total_new_stake", 0)),
+		"at_risk_stake": int(ritual_projection.get("at_risk_stake", 0)),
+		"per_bet_resolutions": _dictionary_array(ritual_projection.get("per_bet_resolutions", [])),
+		"ritual_actors": _dictionary_array(ritual_projection.get("actors", [])),
+		"ritual_scene_objects": _dictionary_array(ritual_projection.get("scene_objects", [])),
+		"ritual_energy": _copy_dict(ritual_projection.get("energy", {})),
 		"table_barred": barred,
 		"barred_reason": str(table.get("barred_reason", "")),
 		"table_name": str(table.get("table_name", "Roulette")),
@@ -284,6 +339,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"physics_profile_summary": _physics_summary(table),
 		"bet_targets": bet_targets,
 		"roulette_bets": bets,
+		"roulette_focused_stack_id": str(session.get("roulette_focused_stack_id", "")),
 		"roulette_rebet": _bet_array(session.get("roulette_rebet", table.get("last_bets", []))),
 		"selected_chip": selected_chip,
 		"selected_stake": selected_chip,
@@ -295,6 +351,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"can_spin": not barred and not roulette_wheel_locked,
 		"can_undo": not barred and not roulette_wheel_locked and not (_array(session.get("roulette_undo_stack", [])).is_empty()),
 		"can_clear": not barred and not roulette_wheel_locked and not bets.is_empty(),
+		"can_remove": not barred and not roulette_wheel_locked and not bets.is_empty(),
 		"can_rebet": not barred and not roulette_wheel_locked and not _bet_array(session.get("roulette_rebet", table.get("last_bets", []))).is_empty(),
 		"bankroll": visible_bankroll,
 		"last_result": last_result,
@@ -323,7 +380,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_action_bindings": {
 			"legal": {"action": "roulette_spin", "index": 0},
 			"cheat": {"action": cheat_binding_action, "index": 0},
-			"surface_stake_down": {"action": "roulette_clear", "index": 0},
+			"surface_stake_down": {"action": "roulette_remove", "index": -1},
 			"surface_stake_up": {"action": "roulette_chip", "index": 0},
 			"surface_stake_max": {"action": "roulette_max_bet", "index": 0},
 		},
@@ -333,6 +390,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				"roulette_chip": "roulette_chip_select",
 				"roulette_patron_focus": "roulette_chip_select",
 				"roulette_clear": "roulette_chip_sweep",
+				"roulette_remove": "roulette_chip_lift",
 				"roulette_undo": "roulette_chip_lift",
 				"roulette_rebet": "roulette_chip_stack",
 				"roulette_double": "roulette_chip_stack",
@@ -351,6 +409,23 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			},
 		}),
 	})
+	if not pending_delivery.is_empty():
+		spec["table_game_host_pending_delivery"] = pending_delivery.duplicate(true)
+		spec["table_game_host_retry_available"] = true
+		spec["table_game_host_cancel_available"] = true
+		spec["table_notice"] = "A sealed action is waiting. Retry it or cancel back to the prior table ceremony."
+		spec["can_spin"] = false
+		spec["can_clear"] = false
+		spec["can_undo"] = false
+		spec["can_rebet"] = false
+		spec["surface_action_bindings"] = {
+			"legal": {"action": "table_game_retry_pending", "index": 0},
+			"cheat": {"action": "table_game_cancel_pending", "index": 0},
+			"surface_stake_down": {"action": "table_game_cancel_pending", "index": 0},
+			"surface_stake_up": {"action": "table_game_retry_pending", "index": 0},
+			"surface_stake_max": {"action": "table_game_retry_pending", "index": 0},
+		}
+	return spec
 
 
 func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
@@ -374,6 +449,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	var wheel_read_active := not wheel_read_challenge.is_empty() and str(wheel_read_challenge.get("skill_grade", "")).is_empty()
 	var roulette_motion_active := roulette_wheel_locked or past_post_available or wheel_read_active
 	var barred := bool(table.get("table_barred", false))
+	var ritual_phase := _roulette_ritual_phase(phase_status, barred)
 	var visible_last_results := _roulette_visible_last_results(table, last_result_source, result_settled_for_display)
 	var recent_numbers := _roulette_recent_numbers_from_history(visible_last_results)
 	var timer_active := not barred and not roulette_wheel_locked
@@ -409,10 +485,12 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		],
 		"surface_action_blocks": _surface_action_blocks(roulette_wheel_locked),
 		"phase": "barred" if barred else "spinning" if spin_active else "payout" if payout_active or result_reveal_active else "betting",
+		"ritual_phase": ritual_phase,
 		"dealer_attention_pressure": 12 if spin_active else 8 if payout_active else 0,
 		"can_spin": not barred and not roulette_wheel_locked,
 		"can_undo": not barred and not roulette_wheel_locked and not (_array(session.get("roulette_undo_stack", [])).is_empty()),
 		"can_clear": not barred and not roulette_wheel_locked and not bets.is_empty(),
+		"can_remove": not barred and not roulette_wheel_locked and not bets.is_empty(),
 		"can_rebet": not barred and not roulette_wheel_locked and not _bet_array(session.get("roulette_rebet", table.get("last_bets", []))).is_empty(),
 		"bankroll": _roulette_visible_bankroll(run_state, environment, last_result_source, result_settled_for_display),
 		"last_result": last_result,
@@ -489,6 +567,32 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 	return not last_result.is_empty()
 
 
+func _table_game_host_needs_auto_tick(surface_time_msec: int, _run_state: RunState, environment: Dictionary) -> bool:
+	# Foundation calls this before constructing any per-frame UI snapshot. Keep
+	# the authoritative idle probe scalar-only and operate on the stored table.
+	var states_value: Variant = environment.get("game_states")
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return false
+	var table_value: Variant = (states_value as Dictionary).get("roulette")
+	if typeof(table_value) != TYPE_DICTIONARY:
+		return false
+	var table: Dictionary = table_value
+	if table.is_empty() or bool(table.get("table_barred")):
+		return false
+	var last_result_value: Variant = table.get("last_result")
+	if typeof(last_result_value) != TYPE_DICTIONARY or (last_result_value as Dictionary).is_empty():
+		return false
+	var elapsed_msec := surface_time_msec - int((last_result_value as Dictionary).get("resolved_at_msec", 0))
+	var reveal_end_msec := SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC + ROULETTE_RESULT_REVEAL_MSEC
+	var timer_started_msec := int(table.get("table_round_timer_started_msec", 0))
+	var timer_due := timer_started_msec != 0 and maxi(0, surface_time_msec - timer_started_msec) >= ROULETTE_ROUND_DELAY_MSEC
+	if elapsed_msec >= 0 and elapsed_msec < reveal_end_msec and not timer_due:
+		return false
+	if timer_started_msec != 0:
+		return timer_due
+	return true
+
+
 func _peek_table_state(environment: Dictionary) -> Dictionary:
 	# Zero-copy view of the stored table for read-mostly per-frame checks.
 	# Callers must not mutate it or hold it across writes.
@@ -554,6 +658,8 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			return _patron_bet_command(index, next_state, table, run_state, environment)
 		"roulette_clear":
 			return _clear_bets_command(next_state)
+		"roulette_remove":
+			return _remove_bet_chip_command(index, next_state, table)
 		"roulette_undo":
 			return _undo_bets_command(next_state)
 		"roulette_rebet":
@@ -576,6 +682,65 @@ func resolve(action_id: String, stake: int, run_state: RunState, environment: Di
 
 
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	return _table_game_compatibility_simulation(action_id, stake, run_state, environment, rng, ui_state)
+
+
+func _table_game_compatibility_simulation(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+	if run_state == null or rng == null:
+		return _empty_roulette_result(action_id, stake, environment, "Roulette simulation requires serialized run and RNG inputs.")
+	var simulation_environment := environment.duplicate(true)
+	var simulation_rng := RngStream.new()
+	simulation_rng.restore(rng.snapshot())
+	var run_rng_seed := run_state.rng_seed
+	var run_rng_state := run_state.rng_state
+	var staffing_before := run_state.grand_casino_staffing.duplicate(true)
+	var result := _resolve_roulette_proposal_core(action_id, stake, run_state, simulation_environment, simulation_rng, ui_state.duplicate(true))
+	run_state.rng_seed = run_rng_seed
+	run_state.rng_state = run_rng_state
+	run_state.grand_casino_staffing = staffing_before
+	result.erase("table_game_proposal_requires_apply")
+	result.erase("blackjack_host_apply_receipt")
+	result.erase("blackjack_host_content_fingerprint")
+	result["table_game_compatibility_simulation"] = true
+	result["table_game_authoritative"] = false
+	return result
+
+
+func _table_game_resolve_proposal(action_id: String, stake: int, run_snapshot: Dictionary, rng_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var proposal_input := {
+		"action_id": action_id,
+		"stake": stake,
+		"run_snapshot": run_snapshot,
+		"rng_snapshot": rng_snapshot,
+		"ui_state": ui_state,
+	}
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var proposal_rng := RngStream.new()
+	proposal_rng.restore(rng_snapshot.duplicate(true))
+	var result := _resolve_roulette_proposal_core(action_id, stake, candidate, candidate.current_environment, proposal_rng, ui_state.duplicate(true))
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
+		"result": result.duplicate(true),
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": proposal_rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
+	return proposal
+
+
+func _table_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var candidate := RunState.new()
+	candidate.from_dict(run_snapshot.duplicate(true))
+	var cost := wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+	return {
+		"cost": maxi(0, cost),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
+
+
+func _resolve_roulette_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	if action_id == "read_wheel_bias":
 		return _resolve_read_wheel(action_id, run_state, environment, rng, ui_state)
 	if action_id == PAST_POST_ACTION_ID:
@@ -702,7 +867,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["roulette_pit_boss_watched"] = bool(pit_boss_status.get("watched", false))
 	result["roulette_pit_boss_heat_bonus"] = pit_boss_bonus
 	result["roulette_table_pressure"] = table_pressure
-	GameModule.apply_result(run_state, result, rng)
+	result["table_game_proposal_requires_apply"] = true
 	return result
 
 
@@ -863,7 +1028,7 @@ func _resolve_past_post(action_id: String, run_state: RunState, environment: Dic
 	result["skill_margin_msec"] = int(challenge.get("skill_margin_msec", 0))
 	result["base_suspicion_delta"] = base_suspicion_delta
 	GameModule.normalize_skill_cheat_contract(result, result)
-	GameModule.apply_result(run_state, result, rng)
+	result["table_game_proposal_requires_apply"] = true
 	return result
 
 
@@ -1688,9 +1853,14 @@ func _settle_roulette_bets(winning_number: String, bets: Array, table: Dictionar
 		var stake := maxi(0, int(bet.get("stake", 0)))
 		var payout := maxi(0, int(bet.get("payout", 0)))
 		var won := numbers.has(winning_number)
-		var bankroll_delta := stake * payout if won else -stake
+		# Payout odds are profit-to-one. Express the returned stake separately so
+		# the net result cannot accidentally short-pay a win or debit a loss twice.
+		var stake_return := stake if won else 0
+		var payout_profit := stake * payout if won else 0
 		if not won and _is_zero(winning_number) and la_partage_enabled and str(bet.get("family", "")) == "outside" and payout == 1:
-			bankroll_delta = -int(ceil(float(stake) * 0.5))
+			stake_return = int(floor(float(stake) * 0.5))
+		var gross_return := stake_return + payout_profit
+		var bankroll_delta := gross_return - stake
 		var celebration_score := _roulette_celebration_score(bet, won)
 		results.append({
 			"id": str(bet.get("id", "")),
@@ -1699,6 +1869,9 @@ func _settle_roulette_bets(winning_number: String, bets: Array, table: Dictionar
 			"numbers": numbers,
 			"stake": stake,
 			"payout": payout,
+			"stake_return": stake_return,
+			"payout_profit": payout_profit,
+			"gross_return": gross_return,
 			"won": won,
 			"winning_number": winning_number,
 			"winning_color": color,
@@ -1821,6 +1994,7 @@ func _place_bet_command(index: int, state: Dictionary, table: Dictionary, run_st
 	state["roulette_bets"] = bets
 	state["selected_chip"] = chip
 	state["selected_stake"] = chip
+	state["roulette_focused_stack_id"] = str(target.get("id", ""))
 	state.erase("table_social_alignment")
 	return GameModule.surface_command({
 		"handled": true,
@@ -2037,6 +2211,44 @@ func _clear_bets_command(state: Dictionary) -> Dictionary:
 	state["roulette_bets"] = []
 	state.erase("table_social_alignment")
 	return GameModule.surface_command({"handled": true, "ui_state": state, "message": "The croupier clears your unspun chips."})
+
+
+func _remove_bet_chip_command(index: int, state: Dictionary, table: Dictionary) -> Dictionary:
+	var bets := _bet_array(state.get("roulette_bets", []))
+	if bets.is_empty():
+		return _message_command(state, "There is no pending roulette chip to remove.")
+	var remove_index := index if index >= 0 and index < bets.size() else -1
+	if remove_index < 0:
+		var focused_id := str(state.get("roulette_focused_stack_id", ""))
+		for bet_index in range(bets.size()):
+			if str((bets[bet_index] as Dictionary).get("id", "")) == focused_id:
+				remove_index = bet_index
+				break
+	if remove_index < 0:
+		return _message_command(state, "Focus a named roulette stack before removing a chip.")
+	var bet: Dictionary = bets[remove_index]
+	var selected_chip := maxi(1, int(state.get("selected_chip", _chip_denominations(table)[0])))
+	var removed := mini(selected_chip, maxi(0, int(bet.get("stake", 0))))
+	var remaining := int(bet.get("stake", 0)) - removed
+	var minimum := int(_table_rules(table).get("outside_min_each", 1)) if str(bet.get("family", "")) == "outside" else 1
+	if remaining > 0 and remaining < minimum:
+		removed += remaining
+		remaining = 0
+	_push_undo_state(state)
+	if remaining <= 0:
+		bets.remove_at(remove_index)
+		state["roulette_focused_stack_id"] = str((bets[mini(remove_index, bets.size() - 1)] as Dictionary).get("id", "")) if not bets.is_empty() else ""
+	else:
+		bet["stake"] = remaining
+		bets[remove_index] = bet
+	state["roulette_bets"] = bets
+	state.erase("table_social_alignment")
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": state,
+		"surface_audio_cue": "roulette_chip_lift",
+		"message": "$%d removed from %s; no other stack changed." % [removed, str(bet.get("label", "roulette"))],
+	})
 
 
 func _undo_bets_command(state: Dictionary) -> Dictionary:
@@ -2427,7 +2639,7 @@ func _resolve_read_wheel(action_id: String, run_state: RunState, environment: Di
 	result["roulette_pit_boss_watched"] = bool(pit_boss_status.get("watched", false))
 	result["roulette_pit_boss_heat_bonus"] = pit_boss_bonus
 	result["roulette_table_pressure"] = table_pressure
-	GameModule.apply_result(run_state, result, rng)
+	result["table_game_proposal_requires_apply"] = true
 	return result
 
 
@@ -2798,19 +3010,21 @@ func _draw_bet_chips(surface, surface_state: Dictionary) -> void:
 		_draw_result_bet_chips(surface, last_result.get("bet_results", []), true, false)
 	else:
 		var bets := _bet_array(surface_state.get("roulette_bets", []))
-		for bet_value in bets:
-			var bet: Dictionary = bet_value
-			_draw_player_bet_chip(surface, bet)
+		for bet_index in range(bets.size()):
+			var bet: Dictionary = bets[bet_index]
+			_draw_player_bet_chip(surface, bet, bet_index)
 	var spin_done: bool = not bool(surface.surface_animation_active(ROULETTE_SPIN_CHANNEL))
 	if not last_result.is_empty() and spin_done:
 		_draw_result_bet_chips(surface, last_result.get("bet_results", []), false, true)
 
 
-func _draw_player_bet_chip(surface, bet: Dictionary) -> void:
+func _draw_player_bet_chip(surface, bet: Dictionary, bet_index: int = -1) -> void:
 	var placement := _vector_from_dict(bet.get("placement", {}), Vector2(490, 190))
 	_draw_casino_chip(surface, placement, int(bet.get("stake", 0)), 12, 1.0, false)
 	surface.draw_rect(Rect2(placement - Vector2(16, 16), Vector2(32, 36)), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.72), false, 1)
 	surface.surface_label_centered_plain("YOU", Rect2(placement + Vector2(-15, 13), Vector2(30, 9)), 6, C_CYAN)
+	if bet_index >= 0:
+		surface.surface_add_exact_hit(Rect2(placement - Vector2(18, 18), Vector2(36, 38)), "roulette_remove", bet_index)
 
 
 func _draw_result_bet_chips(surface, entries_value: Variant, include_losers: bool, winners_paid: bool) -> void:
@@ -2922,6 +3136,11 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	var panel := Rect2(274, CONSOLE_Y + 8, 352, CONSOLE_H - 16)
 	_draw_neon_panel(surface, panel, C_CYAN, 0.10)
+	if bool(surface_state.get("table_game_host_retry_available", false)):
+		surface.surface_label("SEALED ACTION", panel.position + Vector2(10, 14), 10, C_YELLOW)
+		_draw_table_button(surface, Rect2(panel.position.x + 16, panel.position.y + 26, 144, 38), "RETRY", "table_game_retry_pending", 0, C_YELLOW, true, true)
+		_draw_table_button(surface, Rect2(panel.position.x + 176, panel.position.y + 26, 144, 38), "CANCEL", "table_game_cancel_pending", 0, C_SOFT, bool(surface_state.get("table_game_host_cancel_available", false)))
+		return
 	surface.surface_label("WHEEL ACTIONS", panel.position + Vector2(10, 14), 10, C_SOFT)
 	if bool(surface_state.get("table_barred", false)):
 		surface.surface_label("TABLE CLOSED", panel.position + Vector2(14, 42), 15, C_PINK)
@@ -3227,7 +3446,13 @@ func _normalize_physics_profile(value: Variant) -> Dictionary:
 
 
 func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_state: Dictionary, table: Dictionary) -> Dictionary:
-	var session := ui_state.duplicate(true)
+	var host_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var host_session_initialized := bool(host_ledger.get("initialized", false))
+	var session: Dictionary = (host_ledger.get("session", {}) as Dictionary).duplicate(true) if host_session_initialized and typeof(host_ledger.get("session", {})) == TYPE_DICTIONARY else ui_state.duplicate(true)
+	if host_session_initialized:
+		for key in TABLE_GAME_HOST_TRANSIENT_UI_KEYS:
+			if ui_state.has(key):
+				session[key] = ui_state[key]
 	var denoms := _chip_denominations(table)
 	var selected_chip := int(session.get("selected_chip", session.get("selected_stake", denoms[0])))
 	if not denoms.has(selected_chip):
@@ -3462,7 +3687,7 @@ func _message_command(ui_state: Dictionary, message: String) -> Dictionary:
 func _surface_action_blocks(blocked: bool) -> Array:
 	if not blocked:
 		return []
-	var actions := ["roulette_bet", "roulette_patron_focus", "roulette_patron_bet", "roulette_chip", "roulette_clear", "roulette_undo", "roulette_rebet", "roulette_double", "roulette_spin", "roulette_read_wheel", "roulette_nudge", "roulette_max_bet"]
+	var actions := ["roulette_bet", "roulette_patron_focus", "roulette_patron_bet", "roulette_chip", "roulette_clear", "roulette_remove", "roulette_undo", "roulette_rebet", "roulette_double", "roulette_spin", "roulette_read_wheel", "roulette_nudge", "roulette_max_bet"]
 	var result: Array = []
 	for action in actions:
 		result.append({"action": action, "reason": "No more bets while the wheel is moving."})
@@ -3843,6 +4068,80 @@ func _surface_time_msec_for_result(ui_state: Dictionary, last_result: Dictionary
 
 func _roulette_phase_status(table: Dictionary, now_msec: int) -> Dictionary:
 	return _roulette_phase_status_for_result(table.get("last_result", {}), now_msec)
+
+
+func _roulette_ritual_phase(phase_status: Dictionary, barred: bool = false) -> String:
+	if barred:
+		return "betting"
+	var elapsed_msec := int(phase_status.get("elapsed_msec", -1))
+	if elapsed_msec < 0 or not bool(phase_status.get("motion_active", false)):
+		return "betting"
+	if elapsed_msec < ROULETTE_NO_MORE_BETS_MSEC:
+		return "no_more_bets"
+	if elapsed_msec < SPIN_ANIMATION_DURATION_MSEC - ROULETTE_BALL_SETTLE_MSEC:
+		return "spin"
+	if elapsed_msec < SPIN_ANIMATION_DURATION_MSEC:
+		return "ball_settle"
+	return "croupier_settlement"
+
+
+func _roulette_ritual_projection(ritual_phase: String, pending_bets: Array, last_result: Dictionary, phase_status: Dictionary, visible_bankroll: int, patrons: Array, suspicion: int) -> Dictionary:
+	var settled_bets := _dictionary_array(last_result.get("bet_results", []))
+	var locked_bets := _bet_array(last_result.get("bets", []))
+	var pending_total := _total_wager(pending_bets)
+	var at_risk_total := _total_wager(locked_bets) if ritual_phase != "betting" else 0
+	var payout_elapsed := maxi(0, int(phase_status.get("elapsed_msec", -1)) - SPIN_ANIMATION_DURATION_MSEC)
+	var settlement_beat := "idle"
+	if ritual_phase == "croupier_settlement":
+		settlement_beat = "clear_losers" if payout_elapsed < ROULETTE_CLEARING_MSEC else "pay_winners" if bool(phase_status.get("payout_active", false)) else "place_dolly"
+	var croupier_behavior: String = str({
+		"betting": "accepting_bets",
+		"no_more_bets": "waving_off_bets",
+		"spin": "watching_wheel",
+		"ball_settle": "calling_pocket",
+		"croupier_settlement": settlement_beat,
+	}.get(ritual_phase, "idle"))
+	var neighbor_actors: Array = []
+	for patron_index in range(patrons.size()):
+		var patron: Dictionary = patrons[patron_index] if typeof(patrons[patron_index]) == TYPE_DICTIONARY else {}
+		neighbor_actors.append({
+			"id": "roulette.neighbor.%d" % patron_index,
+			"role": "neighbor",
+			"behavior": str(patron.get("reaction", "watching")),
+			"wager": maxi(0, int(patron.get("cosmetic_bet", patron.get("chip_stack", 0)))),
+			"player_money_authority": false,
+		})
+	var actors: Array = [{
+		"id": "roulette.croupier",
+		"role": "croupier",
+		"behavior": croupier_behavior,
+		"settlement_beat": settlement_beat,
+	}]
+	actors.append_array(neighbor_actors)
+	if suspicion > 0:
+		actors.append({
+			"id": "roulette.security",
+			"role": "security",
+			"behavior": "present" if suspicion < 60 else "watching_player",
+			"heat": suspicion,
+		})
+	var energy_tier := "quiet" if patrons.size() <= 1 else "busy" if patrons.size() <= 2 else "packed"
+	return {
+		"phase": ritual_phase,
+		"available_funds": maxi(0, visible_bankroll - pending_total),
+		"total_new_stake": pending_total,
+		"at_risk_stake": at_risk_total,
+		"per_bet_resolutions": settled_bets if ritual_phase == "croupier_settlement" else [],
+		"late_input_policy": "reject_without_charge" if ritual_phase != "betting" else "accept",
+		"actors": actors,
+		"scene_objects": [
+			{"id": "roulette.wheel", "visual_state": "moving" if ritual_phase in ["spin", "ball_settle"] else "still", "authoritative_outcome_source": false},
+			{"id": "roulette.ball", "visual_state": "travel" if ritual_phase == "spin" else "bounce" if ritual_phase == "ball_settle" else "pocket" if ritual_phase == "croupier_settlement" else "rest"},
+			{"id": "roulette.dolly", "visual_state": "on_winner" if settlement_beat == "place_dolly" else "ready"},
+			{"id": "roulette.felt", "functional_state": "locked" if ritual_phase != "betting" else "open", "pending_stack_count": pending_bets.size(), "at_risk_stack_count": locked_bets.size()},
+		],
+		"energy": {"tier": energy_tier, "rail_space": "open" if energy_tier == "quiet" else "limited" if energy_tier == "busy" else "crowded", "croupier_attention": "table" if suspicion <= 0 else "player"},
+	}
 
 
 func _roulette_phase_status_for_result(last_result_value: Variant, now_msec: int) -> Dictionary:

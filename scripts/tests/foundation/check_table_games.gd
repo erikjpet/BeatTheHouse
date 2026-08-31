@@ -1,9 +1,13 @@
 extends "res://scripts/tests/foundation/check_slots_surfaces.gd"
 
 const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
+const GameRitualRuntimeContractScript := preload("res://scripts/tests/foundation/game_ritual_runtime_contract.gd")
+const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
+const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
 
 func _check_craps_surface_contract(game: GameModule, failures: Array, library: ContentLibrary = null) -> void:
+	GameRitualRuntimeContractScript.check(library, failures)
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CRAPS-SURFACE-CONTRACT")
 	run_state.bankroll = 100000
@@ -62,7 +66,7 @@ func _check_craps_surface_contract(game: GameModule, failures: Array, library: C
 	_check_craps_energy_projection(game, table, failures)
 	_check_craps_street_variant(game, library, failures)
 	_check_craps_casino_activation_invariant(game, failures)
-	_check_craps_currency_routing(failures)
+	_check_craps_currency_routing(library, failures)
 	if library != null:
 		_check_craps_room_registration_and_duel(game, library, failures)
 
@@ -683,7 +687,7 @@ func _check_craps_energy_projection(game: GameModule, base_table: Dictionary, fa
 		failures.append("An unrelated Roulette result boundary leaked Craps music or patron projection state.")
 
 
-func _check_craps_currency_routing(failures: Array) -> void:
+func _check_craps_currency_routing(library: ContentLibrary, failures: Array) -> void:
 	for game_id in ["blackjack", "baccarat", "roulette", "craps"]:
 		var run_state: RunState = RunStateScript.new()
 		run_state.start_new("CRAPS-CHIPS-REGRESSION-%s" % game_id)
@@ -696,7 +700,24 @@ func _check_craps_currency_routing(failures: Array) -> void:
 		result["baccarat_total_wager"] = 5
 		result["roulette_total_wager"] = 5
 		result["craps_total_wager"] = 5
-		GameModule.apply_result(run_state, result, run_state.create_rng("currency_apply"))
+		if game_id == "blackjack":
+			var before_unsealed := JSON.stringify(run_state.to_save_snapshot())
+			GameModule.apply_result(run_state, result, run_state.create_rng("currency_unsealed_rejection"))
+			if JSON.stringify(run_state.to_save_snapshot()) != before_unsealed:
+				failures.append("Grand Casino Blackjack shared-chips fixture accepted an unsealed direct result.")
+			var definition := library.game("blackjack")
+			var module_script: Script = load(str(definition.get("module_path", "")))
+			var blackjack: GameModule = module_script.new() if module_script != null else null
+			if blackjack == null:
+				failures.append("Grand Casino Blackjack shared-chips fixture could not load its module.")
+				continue
+			blackjack.setup(definition, library)
+			var table := blackjack.generate_environment_state(run_state, run_state.current_environment, run_state.create_rng("currency_blackjack_table"))
+			run_state.current_environment["game_states"] = {"blackjack": table}
+			var deal_command := SlotsBlackjackAuthorityDriver.surface_intent(blackjack, "blackjack_deal", 5, run_state, run_state.current_environment)
+			result = SlotsBlackjackAuthorityDriver.resolve_surface_command(blackjack, deal_command, 5, run_state, run_state.current_environment)
+		else:
+			GameModule.apply_result(run_state, result, run_state.create_rng("currency_apply"))
 		if run_state.bankroll != 100 or run_state.grand_casino_chips != 45 or str(result.get("currency", "")) != "chips":
 			failures.append("Grand Casino %s no longer routes through the shared chips seam." % game_id)
 	var outside: RunState = RunStateScript.new()
@@ -1696,8 +1717,8 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Roulette second spin click did not resolve the confirmed spin.")
 	var before := _run_state_result_snapshot(run_state)
 	var result := game.resolve_with_context("spin_roulette", contract_chip, run_state, environment, run_state.create_rng("roulette_contract_spin"), confirm_spin.get("ui_state", {}))
-	_check_action_result_shape(result, "legal", failures)
-	_check_action_result_application_contract(before, run_state, result, "roulette spin result", failures)
+	call("_check_action_result_shape", result, "legal", failures)
+	call("_check_action_result_application_contract", before, run_state, result, "roulette spin result", failures)
 	if not wheel_sequence.has(str(result.get("roulette_winning_number", ""))):
 		failures.append("Roulette spin landed on a number outside the table wheel sequence.")
 	if (result.get("roulette_spin_trajectory", []) as Array).size() < 48:
@@ -1843,7 +1864,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Roulette sit-out confirmation did not resolve on the second click.")
 	var sit_before := _run_state_result_snapshot(sit_run_state)
 	var sit_result := game.resolve_with_context("spin_roulette", contract_chip, sit_run_state, sit_environment, sit_run_state.create_rng("roulette_sitout_spin"), sit_confirm.get("ui_state", {}))
-	_check_action_result_application_contract(sit_before, sit_run_state, sit_result, "roulette sit-out result", failures)
+	call("_check_action_result_application_contract", sit_before, sit_run_state, sit_result, "roulette sit-out result", failures)
 	if not bool(sit_result.get("roulette_sat_out", false)) or int(sit_result.get("roulette_total_wager", -1)) != 0 or int(sit_result.get("bankroll_delta", 999)) != 0:
 		failures.append("Roulette sit-out spin did not resolve with zero wager and zero bankroll movement.")
 
@@ -1914,8 +1935,8 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Roulette read-wheel second input did not resolve the timing challenge.")
 	var read_before := _run_state_result_snapshot(read_run_state)
 	var read_result := game.resolve_with_context("read_wheel_bias", 0, read_run_state, read_environment, read_run_state.create_rng("roulette_read_wheel_resolve"), lock_read.get("ui_state", read_ui))
-	_check_action_result_shape(read_result, "cheat", failures)
-	_check_action_result_application_contract(read_before, read_run_state, read_result, "roulette read wheel result", failures)
+	call("_check_action_result_shape", read_result, "cheat", failures)
+	call("_check_action_result_application_contract", read_before, read_run_state, read_result, "roulette read wheel result", failures)
 	var revealed_read: Dictionary = read_result.get("roulette_bias_read", {}) if typeof(read_result.get("roulette_bias_read", {})) == TYPE_DICTIONARY else {}
 	var persisted_read: Dictionary = (((read_environment.get("game_states", {}) as Dictionary).get("roulette", {}) as Dictionary).get("bias_read", {}) as Dictionary)
 	if int(read_result.get("suspicion_delta", -1)) != 0 or str(read_result.get("skill_grade", "")) != "perfect" or not bool(read_result.get("roulette_wheel_read_applied", false)) or not bool(revealed_read.get("applied", false)):
@@ -2090,11 +2111,11 @@ func _check_roulette_past_post_contract(game: GameModule, library: ContentLibrar
 	var perfect_result: Dictionary = perfect.get("result", {})
 	if str(perfect_result.get("skill_grade", "")) != "perfect" or not bool(perfect_result.get("roulette_past_post_applied", false)) or int(perfect_result.get("bankroll_delta", 0)) <= 0:
 		failures.append("Roulette perfect past-post did not apply a positive graded late-chip payoff.")
-	_check_action_result_shape(perfect_result, "cheat", failures)
+	call("_check_action_result_shape", perfect_result, "cheat", failures)
 	var perfect_before: Dictionary = perfect.get("before", {})
 	var perfect_run := perfect.get("run_state", null) as RunState
 	if perfect_run != null:
-		_check_action_result_application_contract(perfect_before, perfect_run, perfect_result, "roulette perfect past-post result", failures)
+		call("_check_action_result_application_contract", perfect_before, perfect_run, perfect_result, "roulette perfect past-post result", failures)
 
 	var good_result: Dictionary = _roulette_past_post_result(game, "ROULETTE-PAST-GOOD", 180, false, library).get("result", {})
 	if str(good_result.get("skill_grade", "")) != "good" or int(good_result.get("roulette_past_post_payout_mult", 0)) > 17:
@@ -2183,56 +2204,6 @@ func _roulette_past_post_result(game: GameModule, seed_text: String, margin_msec
 		"ui_state": resolve_ui,
 		"before": before,
 		"result": result,
-	}
-
-
-func _roulette_past_post_fixture(game: GameModule, seed_text: String, chip: int, grand_casino: bool = false, library: ContentLibrary = null) -> Dictionary:
-	var run_state: RunState = RunStateScript.new()
-	run_state.start_new(seed_text)
-	run_state.bankroll = 100000
-	var environment := _surface_contract_environment()
-	if grand_casino and library != null:
-		var boss_archetype := _archetype_by_id(library, "grand_casino")
-		if not boss_archetype.is_empty():
-			run_state = _grand_casino_game_fixture_run(library, boss_archetype, "roulette", game, seed_text)
-			var objective: Dictionary = boss_archetype.get("demo_objective", {}) if typeof(boss_archetype.get("demo_objective", {})) == TYPE_DICTIONARY else {}
-			var showdown_threshold := clampi(int(objective.get("showdown_heat_threshold", 70)), 1, 100)
-			run_state.add_suspicion("%s_preheat" % seed_text.to_lower(), maxi(0, showdown_threshold - 1), "behavior")
-			environment = run_state.current_environment
-	environment["archetype_id"] = "grand_casino" if grand_casino else str(environment.get("archetype_id", "surface_contract_room"))
-	environment["kind"] = "boss" if grand_casino else str(environment.get("kind", "casino"))
-	environment["game_ids"] = ["roulette"]
-	environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 200}
-	environment["security_profile"] = {"strictness": "boss", "pit_boss": {"enabled": true, "cycle_length": 1, "watched_turns": 1, "cheat_heat_bonus": 20}} if grand_casino else {"strictness": "low"}
-	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var table: Dictionary = game_states.get("roulette", {}) if typeof(game_states.get("roulette", {})) == TYPE_DICTIONARY else {}
-	if table.is_empty():
-		table = game.generate_environment_state(run_state, environment, run_state.create_rng("%s_state" % seed_text.to_lower()))
-	if grand_casino:
-		var patrons: Array = table.get("patrons", []) if typeof(table.get("patrons", [])) == TYPE_ARRAY else []
-		for i in range(patrons.size()):
-			if typeof(patrons[i]) == TYPE_DICTIONARY:
-				var patron: Dictionary = patrons[i]
-				patron["watching"] = true
-				patron["snitch_risk"] = 70
-				patron["snitch_threshold"] = 1
-				patrons[i] = patron
-		table["patrons"] = patrons
-	game_states["roulette"] = table
-	environment["game_states"] = game_states
-	run_state.set_environment(environment)
-	var spin_ui := {"roulette_bets": [game.call("_default_smoke_bet", chip)], "selected_chip": chip}
-	var spin_result := game.resolve_with_context("spin_roulette", chip, run_state, run_state.current_environment, run_state.create_rng("%s_spin" % seed_text.to_lower()), spin_ui)
-	var spun_table: Dictionary = ((run_state.current_environment.get("game_states", {}) as Dictionary).get("roulette", {}) as Dictionary)
-	var last_result: Dictionary = spun_table.get("last_result", {}) if typeof(spun_table.get("last_result", {})) == TYPE_DICTIONARY else {}
-	var payout_ui := {
-		"selected_chip": chip,
-		"surface_time_msec": int(last_result.get("resolved_at_msec", 0)) + 5600 + 10,
-	}
-	return {
-		"run_state": run_state,
-		"spin_result": spin_result,
-		"payout_ui": payout_ui,
 	}
 
 
@@ -2393,32 +2364,31 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 	# Dealer focus intentionally samples wall-clock time for gaze/status animation,
 	# so exact text, colors, and coordinates may differ between consecutive draws.
 	# The invariant contract is command structure and interaction order.
-	var first_hit_order: Array = []
-	var repeat_hit_order: Array = []
-	for hit_value in harness.hit_regions:
-		var hit: Dictionary = hit_value
-		first_hit_order.append([str(hit.get("action", "")), int(hit.get("index", -1))])
-	for hit_value in repeat_harness.hit_regions:
-		var hit: Dictionary = hit_value
-		repeat_hit_order.append([str(hit.get("action", "")), int(hit.get("index", -1))])
-	var first_draw_shape: Array = []
-	var repeat_draw_shape: Array = []
-	for draw_value in harness.draw_rect_records:
-		var draw: Dictionary = draw_value
-		first_draw_shape.append([bool(draw.get("filled", true)), float(draw.get("width", -1.0))])
-	for draw_value in repeat_harness.draw_rect_records:
-		var draw: Dictionary = draw_value
-		repeat_draw_shape.append([bool(draw.get("filled", true)), float(draw.get("width", -1.0))])
-	var first_label_slots: Array = []
-	var repeat_label_slots: Array = []
-	for label_value in harness.label_records:
-		first_label_slots.append(int((label_value as Dictionary).get("font_size", 0)))
-	for label_value in repeat_harness.label_records:
-		repeat_label_slots.append(int((label_value as Dictionary).get("font_size", 0)))
-	if JSON.stringify(repeat_hit_order) != JSON.stringify(first_hit_order) \
-			or JSON.stringify(repeat_draw_shape) != JSON.stringify(first_draw_shape) \
-			or JSON.stringify(repeat_label_slots) != JSON.stringify(first_label_slots):
+	if JSON.stringify(_baccarat_draw_structure(repeat_harness)) != JSON.stringify(_baccarat_draw_structure(harness)):
 		failures.append("Baccarat repeated draw changed interaction order or structural draw/label command slots.")
+	var boundary_surface := surface.duplicate(true)
+	var boundary_patrons := _baccarat_dictionary_array(boundary_surface.get("patrons", []))
+	if not boundary_patrons.is_empty():
+		var boundary_patron := (boundary_patrons[0] as Dictionary).duplicate(true)
+		boundary_patron["animation_offset"] = 0
+		boundary_patron["watching_player"] = true
+		boundary_patron["active_snitch_risk"] = 1
+		boundary_patron["snitch_threshold"] = 60
+		boundary_patron["tell_active"] = false
+		boundary_surface["patrons"] = [boundary_patron]
+		for phase_pair in [[0.57, 0.59], [0.81, 0.83]]:
+			var before_boundary := SurfaceHarness.new()
+			before_boundary.setup(boundary_surface)
+			before_boundary.record_draw_rects = true
+			before_boundary.flicker_value = float(phase_pair[0]) * 2.2
+			game.draw_surface(before_boundary, boundary_surface, {"contract_harness": true})
+			var after_boundary := SurfaceHarness.new()
+			after_boundary.setup(boundary_surface)
+			after_boundary.record_draw_rects = true
+			after_boundary.flicker_value = float(phase_pair[1]) * 2.2
+			game.draw_surface(after_boundary, boundary_surface, {"contract_harness": true})
+			if JSON.stringify(_baccarat_draw_structure(after_boundary)) != JSON.stringify(_baccarat_draw_structure(before_boundary)):
+				failures.append("Baccarat patron phase boundary %.2f changed structural draw/label command slots." % float(phase_pair[1]))
 	var found_bead_plate_label := false
 	for label_value in harness.labels:
 		if str(label_value).find("BEAD PLATE") >= 0:
@@ -2460,8 +2430,8 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Baccarat deal command did not resolve through the legal baccarat action.")
 	var before := _run_state_result_snapshot(run_state)
 	var result := game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_contract_deal"), deal_click.get("ui_state", {}))
-	_check_action_result_shape(result, "legal", failures)
-	_check_action_result_application_contract(before, run_state, result, "baccarat deal result", failures)
+	call("_check_action_result_shape", result, "legal", failures)
+	call("_check_action_result_application_contract", before, run_state, result, "baccarat deal result", failures)
 	if not ["player", "banker", "tie"].has(str(result.get("baccarat_winner", ""))):
 		failures.append("Baccarat resolve produced an invalid winner.")
 	if (result.get("baccarat_animation_events", []) as Array).size() < 4:
@@ -2510,7 +2480,7 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Baccarat no-bet deal did not route as a sit-out hand.")
 	var sit_before := _run_state_result_snapshot(sit_run_state)
 	var sit_result := game.resolve_with_context("deal_baccarat", 20, sit_run_state, sit_environment, sit_run_state.create_rng("baccarat_sitout_deal"), sit_deal.get("ui_state", {}))
-	_check_action_result_application_contract(sit_before, sit_run_state, sit_result, "baccarat sit-out result", failures)
+	call("_check_action_result_application_contract", sit_before, sit_run_state, sit_result, "baccarat sit-out result", failures)
 	if not bool(sit_result.get("baccarat_sat_out", false)) or int(sit_result.get("baccarat_total_wager", -1)) != 0 or int(sit_result.get("bankroll_delta", 999)) != 0:
 		failures.append("Baccarat sit-out hand did not resolve with zero wager and zero bankroll movement.")
 	var timer_table: Dictionary = table.duplicate(true)
@@ -2549,8 +2519,8 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Baccarat read-shoe answer did not resolve after the cue reveal.")
 	var read_before := _run_state_result_snapshot(read_run_state)
 	var read_result := game.resolve_with_context("read_baccarat_shoe", 0, read_run_state, read_environment, read_run_state.create_rng("baccarat_read_shoe_resolve"), answer_command.get("ui_state", read_ui))
-	_check_action_result_shape(read_result, "cheat", failures)
-	_check_action_result_application_contract(read_before, read_run_state, read_result, "baccarat read shoe result", failures)
+	call("_check_action_result_shape", read_result, "cheat", failures)
+	call("_check_action_result_application_contract", read_before, read_run_state, read_result, "baccarat read shoe result", failures)
 	if int(read_result.get("suspicion_delta", 0)) <= 0 or str(read_result.get("skill_grade", "")) != "perfect" or not bool(read_result.get("baccarat_shoe_read_applied", false)) or (read_result.get("baccarat_shoe_read", {}) as Dictionary).is_empty():
 		failures.append("Baccarat read-shoe cheat did not grade correct recall, add heat, and expose shoe-read context.")
 	var direct_fixture := _baccarat_shoe_read_fixture(game, table, "BACCARAT-READ-SHOE-DIRECT")
@@ -2662,8 +2632,8 @@ func _check_baccarat_edge_sort_contract(game: GameModule, failures: Array, libra
 		failures.append("Baccarat edge-sort granted an edge before the memory challenge was resolved.")
 	var before := _run_state_result_snapshot(run_state)
 	var edge_result := game.resolve_with_context("edge_sort", 0, run_state, environment, run_state.create_rng("baccarat_edge_resolve"), {"edge_sort_challenge": ready_challenge, "edge_sort_answer_mode": "perfect"})
-	_check_action_result_shape(edge_result, "cheat", failures)
-	_check_action_result_application_contract(before, run_state, edge_result, "baccarat edge-sort result", failures)
+	call("_check_action_result_shape", edge_result, "cheat", failures)
+	call("_check_action_result_application_contract", before, run_state, edge_result, "baccarat edge-sort result", failures)
 	if str(edge_result.get("skill_grade", "")) != "perfect" or not bool(edge_result.get("baccarat_edge_sort_applied", false)):
 		failures.append("Baccarat edge-sort perfect memory did not produce an applied perfect grade.")
 	if not bool(edge_result.get("skill_security_pressure_checked", false)) or str(edge_result.get("skill_outcome", "")).find("edge_sort") < 0:
@@ -2788,16 +2758,6 @@ func _baccarat_target_index(targets: Array, target_id: String) -> int:
 		if typeof(targets[i]) == TYPE_DICTIONARY and str((targets[i] as Dictionary).get("id", "")) == target_id:
 			return i
 	return -1
-
-
-func _baccarat_dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
 
 
 func _check_baccarat_rules_contract(game: GameModule, failures: Array) -> void:
@@ -3256,7 +3216,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var control_harness := SurfaceHarness.new()
 	control_harness.setup(control_surface)
 	game.draw_surface(control_harness, control_surface, {"contract_harness": true})
-	_check_blackjack_control_hit_regions(control_harness, failures)
+	call("_check_blackjack_control_hit_regions", control_harness, failures)
 	var focus_runtime: Dictionary = dealt_surface.get("dealer_focus_runtime", {}) if typeof(dealt_surface.get("dealer_focus_runtime", {})) == TYPE_DICTIONARY else {}
 	if focus_runtime.is_empty():
 		failures.append("Blackjack dealt surface did not expose lightweight dealer focus runtime data.")
@@ -3282,7 +3242,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	settle_anim_environment["game_states"] = {"blackjack": generated_state.duplicate(true)}
 	var settle_anim_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, settle_anim_run_state, settle_anim_environment)
 	var settle_anim_stand := game.surface_action_command("blackjack_stand", 0, true, settle_anim_deal.get("ui_state", {}), settle_anim_run_state, settle_anim_environment)
-	var settle_anim_result := game.resolve_with_context("play_basic", 5, settle_anim_run_state, settle_anim_environment, settle_anim_run_state.create_rng("blackjack_stand_animation_resolve"), settle_anim_stand.get("ui_state", {}))
+	var settle_anim_result := _blackjack_authority_resolve(game, "play_basic", 5, settle_anim_run_state, settle_anim_environment, settle_anim_run_state.create_rng("blackjack_stand_animation_resolve"), settle_anim_stand.get("ui_state", {}))
 	if not bool(settle_anim_result.get("ok", false)):
 		failures.append("Blackjack stand animation fixture did not resolve through the normal play_basic path.")
 	var settle_anim_surface := game.surface_state(settle_anim_run_state, settle_anim_environment, {})
@@ -3348,7 +3308,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var clock_stand := game.surface_action_command("blackjack_stand", 0, true, clock_deal_ui, clock_run_state, clock_environment)
 	if not bool(clock_stand.get("resolve", false)):
 		failures.append("Blackjack post-decision clock fixture did not become settleable after the opening deal presentation.")
-	var clock_result := game.resolve_with_context("play_basic", 5, clock_run_state, clock_environment, clock_run_state.create_rng("blackjack_post_decision_clock_resolve"), clock_stand.get("ui_state", {}))
+	var clock_result := _blackjack_authority_resolve(game, "play_basic", 5, clock_run_state, clock_environment, clock_run_state.create_rng("blackjack_post_decision_clock_resolve"), clock_stand.get("ui_state", {}))
 	var clock_dealer: Array = clock_result.get("blackjack_dealer", []) if typeof(clock_result.get("blackjack_dealer", [])) == TYPE_ARRAY else []
 	if clock_dealer.size() != 4:
 		failures.append("Blackjack post-decision fixture did not execute both required dealer draws.")
@@ -3403,7 +3363,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var sit_table: Dictionary = game.generate_environment_state(sit_run_state, sit_environment, sit_run_state.create_rng("blackjack_sitout_table"))
 	sit_environment["game_states"] = {"blackjack": sit_table}
 	sit_run_state.current_environment = sit_environment.duplicate(true)
-	var sit_result := game.resolve_with_context("play_basic", 0, sit_run_state, sit_environment, sit_run_state.create_rng("blackjack_sitout_resolve"), {"blackjack_sit_out": true})
+	var sit_result := _blackjack_authority_resolve(game, "play_basic", 0, sit_run_state, sit_environment, sit_run_state.create_rng("blackjack_sitout_resolve"), {"blackjack_sit_out": true})
 	if not bool(sit_result.get("blackjack_sat_out", false)) or int(sit_result.get("total_wager", int(sit_result.get("stake", -1)))) != 0 or int(sit_result.get("bankroll_delta", 999)) != 0:
 		failures.append("Blackjack sit-out hand did not consume a hand with zero wager and zero bankroll movement.")
 	if not (sit_result.get("blackjack_player_hands", []) as Array).is_empty():
@@ -3496,8 +3456,9 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		live_clock_harness.simulation_clock_msec = first_spawn + 10
 		var challenge_before_draw := JSON.stringify(live_clock_surface.get("count_challenge", {}))
 		game.call("_draw_count_challenge", live_clock_harness, live_clock_surface)
-		if _surface_harness_first_hit(live_clock_harness, "blackjack_count_icon", 0).is_empty():
-			failures.append("Blackjack count bubble animation used the stale snapshot clock instead of the live canvas clock.")
+		var live_count_hit := _surface_harness_first_hit(live_clock_harness, "blackjack_count_icon", 0)
+		if live_count_hit.is_empty() or not bool(live_count_hit.get("activate_on_hover", false)):
+			failures.append("Blackjack count bubble animation did not expose a live hover-activation target from the canvas clock.")
 		if not live_clock_harness.labels.has("COUNT +7"):
 			failures.append("Blackjack count badge reset to the current hand delta instead of retaining the cumulative shoe count.")
 		if JSON.stringify(live_clock_surface.get("count_challenge", {})) != challenge_before_draw:
@@ -3531,7 +3492,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var answered_challenge: Dictionary = answer_state.get("count_challenge", {})
 	if int(answered_challenge.get("dealer_attention_risk", 0)) != int(count_challenge.get("dealer_attention_risk", 0)):
 		failures.append("Blackjack successful count pulse hits raised dealer suspicion.")
-	var clean_count_result := game.resolve_with_context("count_cards", 1, run_state, environment, run_state.create_rng("blackjack_clean_count_contract"), answer_state)
+	var clean_count_result := _blackjack_authority_resolve(game, "count_cards", 1, run_state, environment, run_state.create_rng("blackjack_clean_count_contract"), answer_state)
 	if int(clean_count_result.get("suspicion_delta", 0)) != 0:
 		failures.append("Blackjack clean live count produced suspicion heat.")
 	var dirty_count_state: Dictionary = count_state.duplicate(true)
@@ -3544,8 +3505,8 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		dirty_count_state["count_challenge"] = dirty_count_challenge
 		dirty_count_state["count_answered"] = true
 		dirty_count_state["count_correct"] = false
-		var dirty_count_result := game.resolve_with_context("count_cards", 1, run_state, environment, run_state.create_rng("blackjack_dirty_count_contract"), dirty_count_state)
-		if int(dirty_count_result.get("suspicion_delta", 0)) < 14:
+		var dirty_count_result := _blackjack_authority_resolve(game, "count_cards", 1, run_state, environment, run_state.create_rng("blackjack_dirty_count_contract"), dirty_count_state)
+		if int(dirty_count_result.get("blackjack_host_action_suspicion_delta", dirty_count_result.get("suspicion_delta", 0))) < 14:
 			failures.append("Blackjack inaccurate live count did not produce significant heat.")
 	var miss_state: Dictionary = count_state.duplicate(true)
 	var miss_challenge: Dictionary = miss_state.get("count_challenge", {})
@@ -3560,7 +3521,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		miss_state["surface_time_msec"] = test_now
 		if not game.surface_needs_auto_tick(miss_state, run_state, environment):
 			failures.append("Blackjack live count did not request auto tick when a count symbol expired.")
-		var miss_tick := game.surface_auto_action_command(miss_state, run_state, environment, {})
+		var miss_tick := _blackjack_authority_auto_command(game, 1, run_state, environment, miss_state, test_now)
 		var tick_state: Dictionary = miss_tick.get("ui_state", {})
 		var tick_challenge: Dictionary = tick_state.get("count_challenge", {})
 		if (_string_array(tick_challenge.get("missed_icons", []))).is_empty():
@@ -3581,7 +3542,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack watched peek did not resolve as an immediate high-risk cheat.")
 	if not bool(watched_peek_ui.get("peek_caught_watching", false)) or bool(watched_peek_ui.get("dealer_hole_visible", false)):
 		failures.append("Blackjack watched peek exposed the hole card instead of flagging the dealer confrontation.")
-	var watched_peek_result := game.resolve_with_context("peek_hole_card", 0, watched_peek_run_state, watched_peek_environment, watched_peek_run_state.create_rng("blackjack_watched_peek_resolve"), watched_peek_ui)
+	var watched_peek_result := _blackjack_authority_resolve(game, "peek_hole_card", 0, watched_peek_run_state, watched_peek_environment, watched_peek_run_state.create_rng("blackjack_watched_peek_resolve"), watched_peek_ui)
 	if not bool(watched_peek_result.get("blackjack_table_barred", false)):
 		failures.append("Blackjack watched peek did not bar the player from the table.")
 	if int(watched_peek_result.get("blackjack_confiscated_bet", 0)) <= 0 or int(watched_peek_result.get("bankroll_delta", 0)) >= 0:
@@ -3627,7 +3588,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	if int((frozen_peek_a.get("dealer_focus", {}) as Dictionary).get("lookaway_remaining_msec", -1)) != int((frozen_peek_b.get("dealer_focus", {}) as Dictionary).get("lookaway_remaining_msec", -2)):
 		failures.append("Tutorial blackjack Peek time advanced while the supplied simulation clock was frozen.")
 	var tutorial_bad_peek := game.surface_action_command("blackjack_peek", 0, false, tutorial_deal.get("ui_state", {}), tutorial_peek_run, tutorial_peek_environment)
-	var tutorial_peek_result := game.resolve_with_context("peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_reprieve"), tutorial_bad_peek.get("ui_state", {}))
+	var tutorial_peek_result := _blackjack_authority_resolve(game, "peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_reprieve"), tutorial_bad_peek.get("ui_state", {}))
 	var tutorial_after_table: Dictionary = ((tutorial_peek_environment.get("game_states", {}) as Dictionary).get("blackjack", {}) as Dictionary)
 	if not bool(tutorial_peek_result.get("blackjack_tutorial_peek_reprieve", false)) or bool(tutorial_peek_result.get("blackjack_table_barred", true)) or bool(tutorial_after_table.get("barred", true)):
 		failures.append("The first caught tutorial Peek did not leave the blackjack table open through the dealer reprieve.")
@@ -3638,12 +3599,73 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("The tutorial Peek reprieve did not preserve the current hand without confiscating its wager twice.")
 	if not bool(tutorial_peek_run.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false)):
 		failures.append("Tutorial blackjack did not persist the one-time dealer warning marker.")
+	var backoff_guard_run: RunState = RunStateScript.new()
+	backoff_guard_run.start_new("BLACKJACK-TUTORIAL-REPRIEVE-BACKOFF-GUARD", {"tutorial": true, "modifiers": {"tutorial_run": true}})
+	backoff_guard_run.current_environment = {
+		"id": "blackjack_reprieve_backoff_guard",
+		"display_name": "Pal's Tutorial Table",
+		"archetype_id": "small_underground_casino",
+		"game_states": {"blackjack": {"dealer_name": "Pal"}},
+	}
+	backoff_guard_run.suspicion["level"] = RunState.BLACKJACK_BACKOFF_HEAT
+	var protected_backoff := backoff_guard_run.apply_blackjack_heat_backoff({
+		"game_id": "blackjack",
+		"action_id": "peek_hole_card",
+		"blackjack_tutorial_peek_reprieve": true,
+	})
+	var protected_backoff_table: Dictionary = (backoff_guard_run.current_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
+	if not protected_backoff.is_empty() or bool(protected_backoff_table.get("barred", false)) or bool(protected_backoff_table.get("heat_backoff", false)):
+		failures.append("RunState Heat backoff overrode a Blackjack tutorial Peek reprieve.")
+	var normal_backoff := backoff_guard_run.apply_blackjack_heat_backoff({
+		"game_id": "blackjack",
+		"action_id": "peek_hole_card",
+	})
+	var normal_backoff_table: Dictionary = (backoff_guard_run.current_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
+	if normal_backoff.is_empty() or not bool(normal_backoff_table.get("barred", false)) or not bool(normal_backoff_table.get("heat_backoff", false)):
+		failures.append("RunState Heat backoff accepted live tutorial eligibility without an emitted reprieve marker.")
+	var normal_barred_snapshot := JSON.stringify(backoff_guard_run.current_environment)
+	if not backoff_guard_run.apply_blackjack_heat_backoff({"game_id": "blackjack", "action_id": "peek_hole_card"}).is_empty() \
+			or JSON.stringify(backoff_guard_run.current_environment) != normal_barred_snapshot:
+		failures.append("Normal Blackjack Heat backoff lost idempotency after the first persistent bar.")
+	var hostile_reprieve_cases := [
+		{"id": "post_completion", "tutorial": true, "archetype_id": "small_underground_casino", "action_id": "peek_hole_card", "tutorial_count_completed": true},
+		{"id": "non_tutorial", "tutorial": false, "archetype_id": "small_underground_casino", "action_id": "peek_hole_card", "tutorial_count_completed": false},
+		{"id": "non_pal_venue", "tutorial": true, "archetype_id": "delta_queen", "action_id": "peek_hole_card", "tutorial_count_completed": false},
+		{"id": "non_peek", "tutorial": true, "archetype_id": "small_underground_casino", "action_id": "play_basic", "tutorial_count_completed": false},
+	]
+	for hostile_case_value in hostile_reprieve_cases:
+		var hostile_case: Dictionary = hostile_case_value
+		var hostile_run: RunState = RunStateScript.new()
+		var hostile_config := {"tutorial": true, "modifiers": {"tutorial_run": true}} if bool(hostile_case.get("tutorial", false)) else {}
+		hostile_run.start_new("BLACKJACK-REPRIEVE-HOSTILE-%s" % str(hostile_case.get("id", "case")).to_upper(), hostile_config)
+		hostile_run.current_environment = {
+			"id": "blackjack_reprieve_hostile_%s" % str(hostile_case.get("id", "case")),
+			"display_name": "Blackjack Reprieve Hostile Guard",
+			"archetype_id": str(hostile_case.get("archetype_id", "")),
+			"game_states": {"blackjack": {
+				"dealer_name": "Guard Dealer",
+				"tutorial_count_completed": bool(hostile_case.get("tutorial_count_completed", false)),
+			}},
+		}
+		hostile_run.suspicion["level"] = RunState.BLACKJACK_BACKOFF_HEAT
+		var hostile_result := {
+			"game_id": "blackjack",
+			"action_id": str(hostile_case.get("action_id", "")),
+			"blackjack_tutorial_peek_reprieve": true,
+		}
+		var hostile_backoff := hostile_run.apply_blackjack_heat_backoff(hostile_result)
+		var hostile_table: Dictionary = (hostile_run.current_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
+		if hostile_backoff.is_empty() or not bool(hostile_table.get("barred", false)) or not bool(hostile_table.get("heat_backoff", false)):
+			failures.append("RunState trusted a hostile Blackjack tutorial reprieve marker for %s." % str(hostile_case.get("id", "case")))
+		var barred_snapshot := JSON.stringify(hostile_run.current_environment)
+		if not hostile_run.apply_blackjack_heat_backoff(hostile_result).is_empty() or JSON.stringify(hostile_run.current_environment) != barred_snapshot:
+			failures.append("Blackjack Heat backoff lost idempotency after rejecting hostile reprieve case %s." % str(hostile_case.get("id", "case")))
 	var second_tutorial_table := tutorial_peek_table.duplicate(true)
 	second_tutorial_table["barred"] = false
 	tutorial_peek_environment["game_states"] = {"blackjack": second_tutorial_table}
 	var second_tutorial_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5, "surface_time_msec": 8000}, tutorial_peek_run, tutorial_peek_environment)
 	var second_tutorial_peek := game.surface_action_command("blackjack_peek", 0, false, second_tutorial_deal.get("ui_state", {}), tutorial_peek_run, tutorial_peek_environment)
-	var second_tutorial_result := game.resolve_with_context("peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_barred"), second_tutorial_peek.get("ui_state", {}))
+	var second_tutorial_result := _blackjack_authority_resolve(game, "peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_barred"), second_tutorial_peek.get("ui_state", {}))
 	if bool(second_tutorial_result.get("blackjack_table_barred", true)) \
 			or not bool(second_tutorial_result.get("blackjack_tutorial_peek_reprieve", false)):
 		failures.append("A repeated bad Peek barred the tutorial table before the player completed the counting lesson.")
@@ -3653,7 +3675,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	tutorial_peek_environment["game_states"] = {"blackjack": learned_tutorial_table}
 	var learned_tutorial_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5, "surface_time_msec": 12000}, tutorial_peek_run, tutorial_peek_environment)
 	var learned_tutorial_peek := game.surface_action_command("blackjack_peek", 0, false, learned_tutorial_deal.get("ui_state", {}), tutorial_peek_run, tutorial_peek_environment)
-	var learned_tutorial_result := game.resolve_with_context("peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_after_count"), learned_tutorial_peek.get("ui_state", {}))
+	var learned_tutorial_result := _blackjack_authority_resolve(game, "peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_after_count"), learned_tutorial_peek.get("ui_state", {}))
 	if not bool(learned_tutorial_result.get("blackjack_table_barred", false)):
 		failures.append("Tutorial blackjack kept protecting bad Peeks after the counting lesson was complete.")
 	var cufflinks_run_state: RunState = RunStateScript.new()
@@ -3668,18 +3690,18 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	cufflinks_run_state.current_environment = cufflinks_environment.duplicate(true)
 	var cufflinks_deal: Dictionary = game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, cufflinks_run_state, cufflinks_environment)
 	var cufflinks_peek: Dictionary = game.surface_action_command("blackjack_peek", 0, false, cufflinks_deal.get("ui_state", {}), cufflinks_run_state, cufflinks_environment)
-	var cufflinks_result: Dictionary = game.resolve_with_context("peek_hole_card", 0, cufflinks_run_state, cufflinks_environment, cufflinks_run_state.create_rng("blackjack_cufflinks_peek_resolve"), cufflinks_peek.get("ui_state", {}))
+	var cufflinks_result: Dictionary = _blackjack_authority_resolve(game, "peek_hole_card", 0, cufflinks_run_state, cufflinks_environment, cufflinks_run_state.create_rng("blackjack_cufflinks_peek_resolve"), cufflinks_peek.get("ui_state", {}))
 	if int(cufflinks_result.get("suspicion_delta", -1)) != 0:
 		failures.append("Cooler's Cufflinks did not fully absorb failed blackjack peek heat.")
 	if not bool(cufflinks_result.get("blackjack_coolers_cufflinks_broke", false)):
 		failures.append("Cooler's Cufflinks failed peek did not report the break event.")
 	if cufflinks_run_state.inventory.has("coolers_cufflinks") or not cufflinks_run_state.inventory.has("broken_cufflinks"):
 		failures.append("Cooler's Cufflinks did not turn into Broken Cufflinks after a failed peek.")
-	var distract_click := game.surface_action_command("blackjack_distraction", 0, false, deal_ui, run_state, environment)
-	var peek_click := game.surface_action_command("blackjack_peek", 0, false, distract_click.get("ui_state", {}), run_state, environment)
+	var distract_click := _blackjack_authority_surface(game, "blackjack_distraction", 1, run_state, environment)
+	var peek_click := _blackjack_authority_surface(game, "blackjack_peek", 1, run_state, environment)
 	if str(peek_click.get("action_kind", "")) != "cheat" or not bool(peek_click.get("preserve_surface_ui_state", false)) or not bool((peek_click.get("ui_state", {}) as Dictionary).get("dealer_hole_visible", false)):
 		failures.append("Blackjack peek did not expose the dealer hole card after a distraction.")
-	var successful_peek_result := game.resolve_with_context("peek_hole_card", 0, run_state, environment, run_state.create_rng("blackjack_successful_peek_preserves_hand"), peek_click.get("ui_state", {}))
+	var successful_peek_result := _blackjack_authority_resolve(game, "peek_hole_card", 0, run_state, environment, run_state.create_rng("blackjack_successful_peek_preserves_hand"), peek_click.get("ui_state", {}))
 	var successful_peek_state: Dictionary = successful_peek_result.get("blackjack_surface_ui_state", {}) if typeof(successful_peek_result.get("blackjack_surface_ui_state", {})) == TYPE_DICTIONARY else {}
 	if not bool(successful_peek_result.get("preserve_surface_ui_state", false)) \
 			or not bool(successful_peek_state.get("dealer_hole_visible", false)) \
@@ -3713,7 +3735,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	if int((strategy_focus_surface.get("dealer_focus", {}) as Dictionary).get("strategy_pressure", 0)) <= 0:
 		failures.append("Blackjack strategy deviation did not increase dealer watch pressure during the hand.")
 	var strategy_stand := game.surface_action_command("blackjack_stand", 0, false, strategy_hit_ui, strategy_run_state, strategy_environment)
-	var strategy_result := game.resolve_with_context("play_basic", 5, strategy_run_state, strategy_environment, strategy_run_state.create_rng("blackjack_strategy_deviation_resolve"), strategy_stand.get("ui_state", {}))
+	var strategy_result := _blackjack_authority_resolve(game, "play_basic", 5, strategy_run_state, strategy_environment, strategy_run_state.create_rng("blackjack_strategy_deviation_resolve"), strategy_stand.get("ui_state", {}))
 	if not bool(strategy_result.get("blackjack_strategy_confronted", false)) or int(strategy_result.get("suspicion_delta", 0)) <= 0:
 		failures.append("Blackjack strategy deviation confrontation did not resolve into heat.")
 	if int(strategy_result.get("suspicion_delta", 0)) < 12:
@@ -3744,7 +3766,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		"strategy_attention_boost": 1,
 		"strategy_confronted": false,
 	}
-	var ordinary_strategy_result := game.resolve_with_context("play_basic", 5, ordinary_strategy_run, ordinary_strategy_environment, ordinary_strategy_run.create_rng("blackjack_ordinary_strategy_resolve"), ordinary_ui)
+	var ordinary_strategy_result := _blackjack_authority_resolve(game, "play_basic", 5, ordinary_strategy_run, ordinary_strategy_environment, ordinary_strategy_run.create_rng("blackjack_ordinary_strategy_resolve"), ordinary_ui)
 	if int(ordinary_strategy_result.get("suspicion_delta", -1)) < 0 or int(ordinary_strategy_result.get("suspicion_delta", 99)) > 3:
 		failures.append("Blackjack ordinary strategy mistake was punished with too much heat.")
 	var ordinary_strategy_after: Dictionary = ((ordinary_strategy_environment.get("game_states", {}) as Dictionary).get("blackjack", {}) as Dictionary)
@@ -3777,7 +3799,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	count_advantage_ui["strategy_deviation_events"] = [{"chosen": "stand", "recommended": "hit", "score": 2, "information_source": "count"}]
 	count_advantage_ui["strategy_deviation_score"] = 2
 	count_advantage_ui["strategy_attention_boost"] = 12
-	var count_advantage_result := game.resolve_with_context("play_basic", 5, count_advantage_run, count_advantage_environment, count_advantage_run.create_rng("blackjack_count_advantage_resolve"), count_advantage_ui)
+	var count_advantage_result := _blackjack_authority_resolve(game, "play_basic", 5, count_advantage_run, count_advantage_environment, count_advantage_run.create_rng("blackjack_count_advantage_resolve"), count_advantage_ui)
 	if int(count_advantage_result.get("suspicion_delta", 0)) < 14:
 		failures.append("Blackjack count-informed strategy deviation did not receive significant heat.")
 	var count_advantage_after: Dictionary = ((count_advantage_environment.get("game_states", {}) as Dictionary).get("blackjack", {}) as Dictionary)
@@ -3821,7 +3843,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack busted hand still exposed hit or stand controls.")
 	if str(bust_surface.get("table_notice", "")).to_lower().find("bust") < 0:
 		failures.append("Blackjack busted hand did not expose a clear bust table notice.")
-	var bust_result := game.resolve_with_context("play_basic", 5, bust_run_state, bust_environment, bust_run_state.create_rng("blackjack_bust_resolve"), bust_ui)
+	var bust_result := _blackjack_authority_resolve(game, "play_basic", 5, bust_run_state, bust_environment, bust_run_state.create_rng("blackjack_bust_resolve"), bust_ui)
 	var bust_hands: Array = bust_result.get("blackjack_hand_results", []) as Array
 	if bust_hands.is_empty() or str((bust_hands[0] as Dictionary).get("outcome", "")) != "bust":
 		failures.append("Blackjack bust resolve did not settle the hand as a bust.")
@@ -3845,7 +3867,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var natural_ui: Dictionary = natural_deal.get("ui_state", {})
 	var natural_settle := game.surface_action_command("blackjack_deal", 0, false, natural_ui, natural_run_state, natural_environment)
 	natural_ui = natural_settle.get("ui_state", {})
-	var natural_result := game.resolve_with_context("play_basic", 5, natural_run_state, natural_environment, natural_run_state.create_rng("blackjack_natural_resolve"), natural_ui)
+	var natural_result := _blackjack_authority_resolve(game, "play_basic", 5, natural_run_state, natural_environment, natural_run_state.create_rng("blackjack_natural_resolve"), natural_ui)
 	var natural_hands: Array = natural_result.get("blackjack_hand_results", []) as Array
 	if natural_hands.is_empty() or str((natural_hands[0] as Dictionary).get("outcome", "")) != "blackjack":
 		failures.append("Blackjack natural did not settle as a 3:2 blackjack.")
@@ -3892,7 +3914,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	if not bool(surrender_click.get("resolve", false)):
 		failures.append("Blackjack surrender did not immediately resolve the surrendered hand.")
 	surrender_ui = surrender_click.get("ui_state", {})
-	var surrender_result := game.resolve_with_context("play_basic", 5, surrender_run_state, surrender_environment, surrender_run_state.create_rng("blackjack_surrender_resolve"), surrender_ui)
+	var surrender_result := _blackjack_authority_resolve(game, "play_basic", 5, surrender_run_state, surrender_environment, surrender_run_state.create_rng("blackjack_surrender_resolve"), surrender_ui)
 	var surrender_hands: Array = surrender_result.get("blackjack_hand_results", []) as Array
 	if surrender_hands.is_empty() or str((surrender_hands[0] as Dictionary).get("outcome", "")) != "surrender" or int((surrender_hands[0] as Dictionary).get("bankroll_delta", 0)) != -3:
 		failures.append("Blackjack surrender did not settle as a half-wager loss.")
@@ -3915,7 +3937,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	marked_surrender_environment["game_states"] = {"blackjack": marked_surrender_table}
 	var marked_surrender_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, marked_surrender_run_state, marked_surrender_environment)
 	var marked_surrender_click := game.surface_action_command("blackjack_surrender", 0, false, marked_surrender_deal.get("ui_state", {}), marked_surrender_run_state, marked_surrender_environment)
-	var marked_surrender_result := game.resolve_with_context("play_basic", 5, marked_surrender_run_state, marked_surrender_environment, marked_surrender_run_state.create_rng("blackjack_marked_surrender_resolve"), marked_surrender_click.get("ui_state", {}))
+	var marked_surrender_result := _blackjack_authority_resolve(game, "play_basic", 5, marked_surrender_run_state, marked_surrender_environment, marked_surrender_run_state.create_rng("blackjack_marked_surrender_resolve"), marked_surrender_click.get("ui_state", {}))
 	if int(marked_surrender_result.get("bankroll_delta", 0)) != -3 or int(marked_surrender_result.get("blackjack_main_delta", 0)) != -3:
 		failures.append("Blackjack marked cards reduced a legal reveal loss without an actual peek cheat.")
 
@@ -3936,7 +3958,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var all_in_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 10}, all_in_run_state, all_in_environment)
 	if str(all_in_deal.get("action_id", "")) != "blackjack_place_bet":
 		failures.append("Blackjack all-in opening hand did not route through the upfront wager placement action.")
-	var all_in_bet := game.resolve_with_context("blackjack_place_bet", 10, all_in_run_state, all_in_environment, all_in_run_state.create_rng("blackjack_all_in_bet"), all_in_deal.get("ui_state", {}))
+	var all_in_bet := _blackjack_authority_resolve(game, "blackjack_place_bet", 10, all_in_run_state, all_in_environment, all_in_run_state.create_rng("blackjack_all_in_bet"), all_in_deal.get("ui_state", {}))
 	var all_in_bet_ui: Dictionary = all_in_bet.get("ui_state", {})
 	if all_in_run_state.bankroll != 0:
 		failures.append("Blackjack all-in opening wager did not debit bankroll before hand settlement.")
@@ -3949,7 +3971,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	if (all_in_bet_ui.get("player_hands", []) as Array).is_empty():
 		failures.append("Blackjack all-in upfront wager did not keep the dealt hand in surface state.")
 	var all_in_stand := game.surface_action_command("blackjack_stand", 0, true, all_in_bet_ui, all_in_run_state, all_in_environment)
-	var all_in_result := game.resolve_with_context("play_basic", 10, all_in_run_state, all_in_environment, all_in_run_state.create_rng("blackjack_all_in_settle"), all_in_stand.get("ui_state", {}))
+	var all_in_result := _blackjack_authority_resolve(game, "play_basic", 10, all_in_run_state, all_in_environment, all_in_run_state.create_rng("blackjack_all_in_settle"), all_in_stand.get("ui_state", {}))
 	if int(all_in_result.get("blackjack_wager_debited", 0)) != 10:
 		failures.append("Blackjack all-in settlement did not recognize the upfront-debited wager.")
 	if int(all_in_result.get("bankroll_delta", 999)) != 0:
@@ -3974,13 +3996,13 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	]
 	double_prompt_environment["game_states"] = {"blackjack": double_prompt_table}
 	var double_prompt_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 11}, double_prompt_run_state, double_prompt_environment)
-	var double_prompt_bet := game.resolve_with_context("blackjack_place_bet", 11, double_prompt_run_state, double_prompt_environment, double_prompt_run_state.create_rng("blackjack_double_prompt_bet"), double_prompt_deal.get("ui_state", {}))
+	var double_prompt_bet := _blackjack_authority_resolve(game, "blackjack_place_bet", 11, double_prompt_run_state, double_prompt_environment, double_prompt_run_state.create_rng("blackjack_double_prompt_bet"), double_prompt_deal.get("ui_state", {}))
 	var double_prompt_bet_ui: Dictionary = double_prompt_bet.get("ui_state", {})
 	if double_prompt_run_state.bankroll != 21:
 		failures.append("Blackjack double prompt fixture did not leave $21 after the opening wager.")
 	var double_prompt_command := game.surface_action_command("blackjack_double", 0, false, double_prompt_bet_ui, double_prompt_run_state, double_prompt_environment)
 	var double_prompt_ui: Dictionary = double_prompt_command.get("ui_state", {})
-	var double_prompt_remaining_cost := game.wager_cost_for_context("play_basic", 11, double_prompt_run_state, double_prompt_environment, double_prompt_ui)
+	var double_prompt_remaining_cost := _blackjack_authority_preview(game, "play_basic", 11, double_prompt_run_state, double_prompt_environment, double_prompt_ui)
 	if double_prompt_remaining_cost != 11:
 		failures.append("Blackjack double reported total wager instead of unpaid extra wager; expected 11, got %d." % double_prompt_remaining_cost)
 	if double_prompt_run_state.bankroll - double_prompt_remaining_cost <= 0:
@@ -4073,7 +4095,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	insurance_ui = insurance_click.get("ui_state", {})
 	var insurance_stand := game.surface_action_command("blackjack_stand", 0, false, insurance_ui, insurance_run_state, insurance_environment)
 	insurance_ui = insurance_stand.get("ui_state", {})
-	var insurance_result := game.resolve_with_context("play_basic", 10, insurance_run_state, insurance_environment, insurance_run_state.create_rng("blackjack_insurance_resolve"), insurance_ui)
+	var insurance_result := _blackjack_authority_resolve(game, "play_basic", 10, insurance_run_state, insurance_environment, insurance_run_state.create_rng("blackjack_insurance_resolve"), insurance_ui)
 	var insurance_side_results: Array = insurance_result.get("blackjack_side_bet_results", []) as Array
 	if insurance_side_results.is_empty() or int((insurance_side_results[0] as Dictionary).get("stake", 0)) != 5:
 		failures.append("Blackjack insurance was not priced at half the main wager.")
@@ -4130,7 +4152,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 			settlement_has_hole_card = true
 	if not settlement_has_hole_card:
 		failures.append("Blackjack settlement count preview did not include the revealed dealer hole card.")
-	var first_count_result := game.resolve_with_context("play_basic", 5, persistent_count_run_state, persistent_count_environment, persistent_count_run_state.create_rng("blackjack_persistent_count_resolve"), first_count_stand.get("ui_state", {}))
+	var first_count_result := _blackjack_authority_resolve(game, "play_basic", 5, persistent_count_run_state, persistent_count_environment, persistent_count_run_state.create_rng("blackjack_persistent_count_resolve"), first_count_stand.get("ui_state", {}))
 	if not bool(((persistent_count_environment.get("game_states", {}) as Dictionary).get("blackjack", {}) as Dictionary).get("counting_enabled", false)):
 		failures.append("Blackjack count toggle did not remain enabled after hand settlement.")
 	var second_count_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, persistent_count_run_state, persistent_count_environment)
@@ -4160,24 +4182,24 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var multi_first_deal := game.surface_action_command("blackjack_deal", 0, false, multi_arm_count.get("ui_state", {}), multi_count_run_state, multi_count_environment)
 	var multi_first_preview := game.surface_action_command("blackjack_stand", 0, true, multi_first_deal.get("ui_state", {}), multi_count_run_state, multi_count_environment)
 	var multi_first_ui := _blackjack_click_all_count_icons(game, multi_first_preview.get("ui_state", {}), multi_count_run_state, multi_count_environment)
-	var multi_first_count_action := game.resolve_with_context("count_cards", 0, multi_count_run_state, multi_count_environment, multi_count_run_state.create_rng("blackjack_multi_count_action"), multi_first_ui)
+	var multi_first_count_action := _blackjack_authority_resolve(game, "count_cards", 0, multi_count_run_state, multi_count_environment, multi_count_run_state.create_rng("blackjack_multi_count_action"), multi_first_ui)
 	var multi_first_count_action_ui: Dictionary = multi_first_count_action.get("blackjack_surface_ui_state", {}) if typeof(multi_first_count_action.get("blackjack_surface_ui_state", {})) == TYPE_DICTIONARY else {}
 	if not bool(multi_first_count_action.get("preserve_surface_ui_state", false)) or multi_first_count_action_ui.is_empty():
 		failures.append("Blackjack standalone count action did not return preserved hand UI state.")
 	if not bool(multi_first_count_action_ui.get("count_answered", false)) or int(multi_first_count_action_ui.get("count_delta", 999)) != int(multi_first_ui.get("count_delta", 0)):
 		failures.append("Blackjack standalone count action did not preserve the finalized live count delta.")
-	var multi_first_result := game.resolve_with_context("play_basic", 5, multi_count_run_state, multi_count_environment, multi_count_run_state.create_rng("blackjack_multi_count_first"), multi_first_count_action_ui)
+	var multi_first_result := _blackjack_authority_resolve(game, "play_basic", 5, multi_count_run_state, multi_count_environment, multi_count_run_state.create_rng("blackjack_multi_count_first"), multi_first_count_action_ui)
 	var multi_first_expected_count := _blackjack_test_result_count_delta(multi_first_result)
 	var multi_after_first: Dictionary = (multi_count_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
 	if int(multi_after_first.get("recorded_running_count", 999)) != multi_first_expected_count:
 		failures.append("Blackjack recorded count did not persist after the first counted hand.")
-	var multi_second_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, multi_count_run_state, multi_count_environment)
+	var multi_second_deal := _blackjack_authority_surface(game, "blackjack_deal", 5, multi_count_run_state, multi_count_environment)
 	var multi_second_surface := game.surface_state(multi_count_run_state, multi_count_environment, multi_second_deal.get("ui_state", {}))
 	if int(multi_second_surface.get("persisted_recorded_running_count", 999)) != multi_first_expected_count or int(multi_second_surface.get("recorded_running_count", 999)) != multi_first_expected_count:
 		failures.append("Blackjack recorded count was not visible at the start of the next hand.")
-	var multi_second_preview := game.surface_action_command("blackjack_stand", 0, true, multi_second_deal.get("ui_state", {}), multi_count_run_state, multi_count_environment)
-	var multi_second_ui := _blackjack_click_all_count_icons(game, multi_second_preview.get("ui_state", {}), multi_count_run_state, multi_count_environment)
-	var multi_second_result := game.resolve_with_context("play_basic", 5, multi_count_run_state, multi_count_environment, multi_count_run_state.create_rng("blackjack_multi_count_second"), multi_second_ui)
+	var multi_second_preview := _blackjack_authority_surface(game, "blackjack_stand", 5, multi_count_run_state, multi_count_environment, 0, true)
+	var multi_second_ui := _blackjack_authority_click_all_count_icons(game, 5, multi_count_run_state, multi_count_environment, multi_second_preview.get("ui_state", {}))
+	var multi_second_result := _blackjack_authority_resolve(game, "play_basic", 5, multi_count_run_state, multi_count_environment, multi_count_run_state.create_rng("blackjack_multi_count_second"), multi_second_ui)
 	var multi_second_challenge: Dictionary = multi_second_ui.get("count_challenge", {}) if typeof(multi_second_ui.get("count_challenge", {})) == TYPE_DICTIONARY else {}
 	var multi_second_expected_count := multi_first_expected_count + _blackjack_test_result_count_delta(multi_second_result)
 	var multi_after_second: Dictionary = (multi_count_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
@@ -4214,9 +4236,9 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	if not bool(settle_command.get("resolve", false)):
 		failures.append("Blackjack split hands did not reach a resolvable state after standing.")
 	var split_before := _run_state_result_snapshot(split_run_state)
-	var split_result := game.resolve_with_context("play_basic", 5, split_run_state, split_environment, split_run_state.create_rng("blackjack_split_resolve"), split_ui)
-	_check_action_result_shape(split_result, "legal", failures)
-	_check_action_result_applied(split_before, split_run_state, split_result, "blackjack split hand result", failures)
+	var split_result := _blackjack_authority_resolve(game, "play_basic", 5, split_run_state, split_environment, split_run_state.create_rng("blackjack_split_resolve"), split_ui)
+	call("_check_action_result_shape", split_result, "legal", failures)
+	call("_check_action_result_applied", split_before, split_run_state, split_result, "blackjack split hand result", failures)
 	if (split_result.get("blackjack_hand_results", []) as Array).size() != 2:
 		failures.append("Blackjack split result did not settle both hands.")
 	var split_side_results: Array = split_result.get("blackjack_side_bet_results", []) as Array
@@ -4247,7 +4269,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	shoe_persist_environment["game_states"] = {"blackjack": shoe_persist_table}
 	var shoe_persist_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, shoe_persist_run_state, shoe_persist_environment)
 	var shoe_persist_stand := game.surface_action_command("blackjack_stand", 0, true, shoe_persist_deal.get("ui_state", {}), shoe_persist_run_state, shoe_persist_environment)
-	var shoe_persist_result := game.resolve_with_context("play_basic", 5, shoe_persist_run_state, shoe_persist_environment, shoe_persist_run_state.create_rng("blackjack_shoe_persist_resolve"), shoe_persist_stand.get("ui_state", {}))
+	var shoe_persist_result := _blackjack_authority_resolve(game, "play_basic", 5, shoe_persist_run_state, shoe_persist_environment, shoe_persist_run_state.create_rng("blackjack_shoe_persist_resolve"), shoe_persist_stand.get("ui_state", {}))
 	var _shoe_persist_delta := int(shoe_persist_result.get("blackjack_main_delta", 0))
 	var shoe_persist_updated: Dictionary = (shoe_persist_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
 	var persisted_shoe: Array = shoe_persist_updated.get("shoe", []) as Array
@@ -4277,7 +4299,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	shuffle_environment["game_states"] = {"blackjack": shuffle_table}
 	var shuffle_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, shuffle_run_state, shuffle_environment)
 	var shuffle_stand := game.surface_action_command("blackjack_stand", 0, true, shuffle_deal.get("ui_state", {}), shuffle_run_state, shuffle_environment)
-	var _shuffle_result := game.resolve_with_context("play_basic", 5, shuffle_run_state, shuffle_environment, shuffle_run_state.create_rng("blackjack_forced_shuffle_resolve"), shuffle_stand.get("ui_state", {}))
+	var _shuffle_result := _blackjack_authority_resolve(game, "play_basic", 5, shuffle_run_state, shuffle_environment, shuffle_run_state.create_rng("blackjack_forced_shuffle_resolve"), shuffle_stand.get("ui_state", {}))
 	var shuffle_updated: Dictionary = (shuffle_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
 	var shuffled_shoe: Array = shuffle_updated.get("shoe", []) as Array
 	var shuffle_composition: Dictionary = shuffle_updated.get("shoe_composition", {}) if typeof(shuffle_updated.get("shoe_composition", {})) == TYPE_DICTIONARY else {}
@@ -4319,7 +4341,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var ladies_ui: Dictionary = ladies_deal.get("ui_state", {})
 	var ladies_settle := game.surface_action_command("blackjack_stand", 0, true, ladies_ui, ladies_run_state, ladies_environment)
 	ladies_ui = ladies_settle.get("ui_state", {})
-	var ladies_result := game.resolve_with_context("play_basic", 5, ladies_run_state, ladies_environment, ladies_run_state.create_rng("blackjack_lucky_ladies_resolve"), ladies_ui)
+	var ladies_result := _blackjack_authority_resolve(game, "play_basic", 5, ladies_run_state, ladies_environment, ladies_run_state.create_rng("blackjack_lucky_ladies_resolve"), ladies_ui)
 	var ladies_side_results: Array = ladies_result.get("blackjack_side_bet_results", []) as Array
 	if ladies_side_results.is_empty():
 		failures.append("Blackjack Lucky Ladies side bet did not settle.")
@@ -4330,9 +4352,9 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		if int(ladies_side_result.get("payout_mult", 0)) == 200 or str(ladies_side_result.get("detail", "")) == "queen hearts with dealer blackjack":
 			failures.append("Blackjack Lucky Ladies awarded the queen-hearts jackpot with only one queen of hearts.")
 	var cheat_before := _run_state_result_snapshot(split_run_state)
-	var cheat_result := game.resolve_with_context("peek_hole_card", 0, split_run_state, split_environment, split_run_state.create_rng("blackjack_peek_resolve"), peek_click.get("ui_state", {}))
-	_check_action_result_shape(cheat_result, "cheat", failures)
-	_check_action_result_applied(cheat_before, split_run_state, cheat_result, "blackjack peek cheat result", failures)
+	var cheat_result := _blackjack_authority_resolve(game, "peek_hole_card", 0, split_run_state, split_environment, split_run_state.create_rng("blackjack_peek_resolve"), peek_click.get("ui_state", {}))
+	call("_check_action_result_shape", cheat_result, "cheat", failures)
+	call("_check_action_result_applied", cheat_before, split_run_state, cheat_result, "blackjack peek cheat result", failures)
 	split_run_state.set_environment(split_environment)
 	_check_blackjack_rule_matrix(game, generated_state, failures)
 	var restored: RunState = RunStateScript.new()
@@ -4359,14 +4381,86 @@ func _check_blackjack_surface_time_resolve_determinism(game: GameModule, table_s
 		"selected_stake": 5,
 		"surface_time_msec": 24000,
 	}
-	var result_a: Dictionary = game.resolve_with_context("peek_hole_card", 5, run_a, environment_a, run_a.create_rng(), ui_state.duplicate(true))
-	var result_b: Dictionary = game.resolve_with_context("peek_hole_card", 5, run_b, environment_b, run_b.create_rng(), ui_state.duplicate(true))
+	var result_a: Dictionary = _blackjack_authority_resolve(game, "peek_hole_card", 5, run_a, environment_a, run_a.create_rng(), ui_state.duplicate(true))
+	var result_b: Dictionary = _blackjack_authority_resolve(game, "peek_hole_card", 5, run_b, environment_b, run_b.create_rng(), ui_state.duplicate(true))
 	for key in ["ok", "action_id", "action_kind", "bankroll_delta", "suspicion_delta", "base_suspicion_delta", "blackjack_table_barred", "blackjack_watched_peek", "blackjack_confiscated_bet", "message"]:
 		if result_a.get(key, null) != result_b.get(key, null):
 			failures.append("Blackjack supplied surface_time_msec resolve was not deterministic for %s." % str(key))
 			break
 	if run_a.bankroll != run_b.bankroll or run_a.suspicion_level() != run_b.suspicion_level():
 		failures.append("Blackjack supplied surface_time_msec resolve left divergent RunState economy/heat.")
+
+
+func _blackjack_authority_resolve(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, _rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	# Test fixtures are the trusted host in this suite. Seed their authored
+	# mid-hand state into the same durable table ledger production restores, then
+	# submit only the action through the production authority.
+	_blackjack_seed_authority_session(game, run_state, environment, ui_state)
+	# The production host owns the canonical run RNG. The legacy parameter stays
+	# for call compatibility but may not rebase the durable ledger to a named fork.
+	var host := _blackjack_test_host(game, run_state, stake)
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, stake)
+	host.free()
+	return result
+
+
+func _blackjack_authority_surface(game: GameModule, surface_action: String, stake: int, run_state: RunState, environment: Dictionary, index: int = 0, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:
+	run_state.current_environment = environment
+	var host := _blackjack_test_host(game, run_state, stake)
+	var command: Dictionary = host.call("_sealed_action_host_surface_intent", surface_action, index, confirm_requested, surface_time_msec)
+	host.free()
+	return command
+
+
+func _blackjack_authority_auto_command(game: GameModule, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary, surface_time_msec: int) -> Dictionary:
+	_blackjack_seed_authority_session(game, run_state, environment, ui_state)
+	var host := _blackjack_test_host(game, run_state, stake)
+	var command: Dictionary = host.call("_sealed_action_host_auto_intent", surface_time_msec)
+	host.free()
+	return command
+
+
+func _blackjack_authority_preview(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> int:
+	_blackjack_seed_authority_session(game, run_state, environment, ui_state)
+	var host := _blackjack_test_host(game, run_state, stake)
+	var cost := int(host.call("_sealed_action_host_preview_wager_cost", action_id, stake))
+	host.free()
+	return cost
+
+
+func _blackjack_test_host(game: GameModule, run_state: RunState, stake: int) -> Control:
+	var host: Control = FoundationMainScript.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {"blackjack": game})
+	host.set("run_state", run_state)
+	host.set("selected_stake", stake)
+	return host
+
+
+func _blackjack_authority_click_all_count_icons(game: GameModule, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> Dictionary:
+	var current := ui_state.duplicate(true)
+	var challenge: Dictionary = current.get("count_challenge", {}) if typeof(current.get("count_challenge", {})) == TYPE_DICTIONARY else {}
+	var icons: Array = challenge.get("icons", []) if typeof(challenge.get("icons", [])) == TYPE_ARRAY else []
+	for icon_index in range(icons.size()):
+		var icon: Dictionary = icons[icon_index] if typeof(icons[icon_index]) == TYPE_DICTIONARY else {}
+		var action_msec := int(icon.get("spawn_msec", 0)) + 10
+		var command := _blackjack_authority_surface(game, "blackjack_count_icon", stake, run_state, environment, icon_index, false, action_msec)
+		if typeof(command.get("ui_state", null)) == TYPE_DICTIONARY:
+			current = (command.get("ui_state", {}) as Dictionary).duplicate(true)
+	return current
+
+
+func _blackjack_seed_authority_session(game: GameModule, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> void:
+	run_state.current_environment = environment
+	var table: Dictionary = game.call("_table_state", run_state, environment)
+	var previous_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var binding := "blackjack:%s:%s" % [str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	var checkpoint := run_state.blackjack_authority_checkpoint_fingerprint()
+	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(previous_ledger, binding, checkpoint)
+	if ledger.is_empty():
+		ledger = BlackjackActionAuthorityScript.default_ledger(binding, checkpoint)
+	table["_blackjack_action_authority"] = BlackjackActionAuthorityScript.stage_session(ledger, ui_state)
+	game.call("_update_environment_table", environment, table)
 
 
 func _check_blackjack_rule_matrix(game: GameModule, base_table: Dictionary, failures: Array) -> void:
@@ -4409,7 +4503,7 @@ func _blackjack_stand_and_resolve(game: GameModule, fixture: Dictionary, stake: 
 	var ui: Dictionary = fixture.get("ui", {})
 	var stand := game.surface_action_command("blackjack_stand", 0, true, ui, run_state, environment)
 	ui = stand.get("ui_state", {})
-	return game.resolve_with_context("play_basic", stake, run_state, environment, run_state.create_rng(rng_key), ui)
+	return _blackjack_authority_resolve(game, "play_basic", stake, run_state, environment, run_state.create_rng(rng_key), ui)
 
 
 func _check_blackjack_soft_17_matrix(game: GameModule, base_table: Dictionary, failures: Array) -> void:
@@ -4478,7 +4572,7 @@ func _check_blackjack_split_policy_matrix(game: GameModule, base_table: Dictiona
 	var split_ace_21_surface := game.surface_state(split_ace_21_run_state, split_ace_21_environment, split_ace_21_ui)
 	if int(split_ace_21_surface.get("active_hand_index", -1)) != 1 or int(split_ace_21_surface.get("blackjack_total", 0)) != 17 or not bool(split_ace_21_surface.get("can_hit", false)) or not bool(split_ace_21_surface.get("can_stand", false)):
 		failures.append("Blackjack split ace 21 did not advance to the next playable split hand.")
-	var split_ace_result := game.resolve_with_context("play_basic", 5, split_ace_21_run_state, split_ace_21_environment, split_ace_21_run_state.create_rng("blackjack_rule_split_aces"), split_ace_21_ui)
+	var split_ace_result := _blackjack_authority_resolve(game, "play_basic", 5, split_ace_21_run_state, split_ace_21_environment, split_ace_21_run_state.create_rng("blackjack_rule_split_aces"), split_ace_21_ui)
 	for hand_value in split_ace_result.get("blackjack_hand_results", []) as Array:
 		if typeof(hand_value) == TYPE_DICTIONARY and bool((hand_value as Dictionary).get("blackjack", false)):
 			failures.append("Blackjack treated a split-ace 21 as a natural blackjack.")
@@ -4551,7 +4645,7 @@ func _check_blackjack_insurance_matrix(game: GameModule, base_table: Dictionary,
 	var click := game.surface_action_command("blackjack_side_bet", insurance_index, false, fixture.get("ui", {}), fixture.get("run_state", null), fixture.get("environment", {}))
 	var stand := game.surface_action_command("blackjack_stand", 0, false, click.get("ui_state", {}), fixture.get("run_state", null), fixture.get("environment", {}))
 	var run_state: RunState = fixture.get("run_state", null)
-	var result := game.resolve_with_context("play_basic", 10, run_state, fixture.get("environment", {}), run_state.create_rng("blackjack_rule_insurance"), stand.get("ui_state", {}))
+	var result := _blackjack_authority_resolve(game, "play_basic", 10, run_state, fixture.get("environment", {}), run_state.create_rng("blackjack_rule_insurance"), stand.get("ui_state", {}))
 	var side_results: Array = result.get("blackjack_side_bet_results", []) as Array
 	if side_results.is_empty() or str((side_results[0] as Dictionary).get("id", "")) != "insurance":
 		failures.append("Blackjack implicit insurance did not settle as the selected side bet.")
@@ -5005,31 +5099,6 @@ func _check_video_poker_royal_bonus(game: GameModule, failures: Array) -> void:
 		failures.append("Video poker full-pay tier did not outrank short-pay full house.")
 
 
-func _vp_fresh(game: GameModule, variant_id: String, seed_text: String, bankroll: int, tier_id: String = "standard", hand_count: int = 1, coin_value: int = 1) -> RunState:
-	var run_state: RunState = RunStateScript.new()
-	run_state.start_new(seed_text)
-	run_state.bankroll = bankroll
-	var environment := _surface_contract_environment()
-	environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": maxi(20, coin_value * hand_count * 5)}
-	var state: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("vp_state"))
-	match variant_id:
-		"deuces_wild":
-			state["cabinet_id"] = "double_deuces"
-		"double_double_bonus":
-			state["cabinet_id"] = "triple_double_bonus"
-		_:
-			state["cabinet_id"] = "jacks_or_better"
-	state["variant_id"] = variant_id
-	state["paytable_tier_id"] = tier_id
-	state["coin_denominations"] = [{"label": "$%d" % coin_value, "credits": coin_value}]
-	state["denomination_index"] = 0
-	state["multi_hand_count"] = hand_count
-	state["progressive_meter"] = 300
-	environment["game_states"] = {"video_poker": state}
-	run_state.current_environment = environment.duplicate(true)
-	return run_state
-
-
 func _check_video_poker_triple_denomination_cycle(game: GameModule, failures: Array) -> void:
 	var run_state: RunState = _vp_fresh(game, "double_double_bonus", "VIDEO-POKER-TRIPLE-DENOM", 1000, "full_pay", 3, 3)
 	var environment: Dictionary = run_state.current_environment
@@ -5131,38 +5200,6 @@ func _video_poker_resolve_with_holds(game: GameModule, holds: Array) -> Dictiona
 	var ui: Dictionary = deal_cmd.get("ui_state", {})
 	ui["holds"] = holds
 	return game.resolve_with_context("draw", 5, run_state, run_state.current_environment, run_state.create_rng("vp_holds_resolve"), ui)
-
-
-func _video_poker_holdout_timed_ui(game: GameModule, run_state: RunState, base_ui: Dictionary, margin_msec: int = 0) -> Dictionary:
-	var ui: Dictionary = base_ui.duplicate(true)
-	ui["surface_time_msec"] = int(ui.get("surface_time_msec", 12000))
-	var mark_cmd: Dictionary = game.surface_action_command("video_poker_mark", 0, false, ui, run_state, run_state.current_environment)
-	var mark_ui: Dictionary = mark_cmd.get("ui_state", ui)
-	return _video_poker_complete_holdout_chain(game, run_state, mark_ui, margin_msec)
-
-
-func _video_poker_complete_holdout_chain(game: GameModule, run_state: RunState, mark_ui: Dictionary, margin_msec: int = 0) -> Dictionary:
-	var ui: Dictionary = mark_ui.duplicate(true)
-	var safety := 0
-	while safety < 5:
-		safety += 1
-		var challenge: Dictionary = ui.get("holdout_challenge", {}) if typeof(ui.get("holdout_challenge", {})) == TYPE_DICTIONARY else {}
-		var beats: Array = challenge.get("beats", []) if typeof(challenge.get("beats", [])) == TYPE_ARRAY else []
-		if bool(challenge.get("chain_complete", false)) or not str(challenge.get("skill_grade", "")).is_empty():
-			break
-		if beats.is_empty():
-			ui["holdout_input_msec"] = int(challenge.get("perfect_msec", int(ui.get("surface_time_msec", 12000)))) + margin_msec
-			var legacy_cmd: Dictionary = game.surface_action_command("video_poker_palm", 0, false, ui, run_state, run_state.current_environment)
-			ui = legacy_cmd.get("ui_state", ui)
-			break
-		var beat_index := clampi(int(challenge.get("current_beat", 0)), 0, maxi(0, beats.size() - 1))
-		var beat: Dictionary = beats[beat_index] if typeof(beats[beat_index]) == TYPE_DICTIONARY else {}
-		var index := int(challenge.get("target_slot", 0)) if str(beat.get("kind", "")) == "target" else 0
-		ui["holdout_input_msec"] = int(beat.get("target_msec", int(ui.get("surface_time_msec", 12000)))) + margin_msec
-		ui["surface_time_msec"] = int(ui["holdout_input_msec"])
-		var palm_cmd: Dictionary = game.surface_action_command("video_poker_palm", index, false, ui, run_state, run_state.current_environment)
-		ui = palm_cmd.get("ui_state", ui)
-	return ui
 
 
 func _check_video_poker_multi_hand(game: GameModule, failures: Array) -> void:
@@ -5286,7 +5323,7 @@ func _check_video_poker_cheat(game: GameModule, failures: Array) -> void:
 	var deal_cmd := game.surface_action_command("video_poker_deal", 0, false, {}, run_state, run_state.current_environment)
 	var ui: Dictionary = _video_poker_holdout_timed_ui(game, run_state, deal_cmd.get("ui_state", {}), 0)
 	var cheat_result := game.resolve_with_context("mark_holds", 5, run_state, run_state.current_environment, run_state.create_rng("vp_cheat_resolve"), ui)
-	_check_action_result_shape(cheat_result, "cheat", failures)
+	call("_check_action_result_shape", cheat_result, "cheat", failures)
 	if int(cheat_result.get("suspicion_delta", 0)) <= 0:
 		failures.append("Video poker holdout did not raise suspicion heat.")
 	if not bool(cheat_result.get("video_poker_cheated", false)):
@@ -5322,7 +5359,7 @@ func _check_video_poker_cheat(game: GameModule, failures: Array) -> void:
 		failures.append("Video poker renderer did not draw the blunt holdout result beat.")
 	if typeof(cheat_result.get("skill_story_context", {})) != TYPE_DICTIONARY or int((cheat_result.get("skill_story_context", {}) as Dictionary).get("skill_margin_msec", 999)) != 0:
 		failures.append("Video poker holdout did not expose the shared skill story context with timing margin.")
-	_check_action_result_application_contract(before, run_state, cheat_result, "video poker holdout result", failures)
+	call("_check_action_result_application_contract", before, run_state, cheat_result, "video poker holdout result", failures)
 	var direct_run: RunState = _vp_fresh(game, "jacks_or_better", "VIDEO-POKER-CHEAT-DIRECT", 100000)
 	var direct_deal := game.surface_action_command("video_poker_deal", 0, false, {}, direct_run, direct_run.current_environment)
 	var direct_result := game.resolve_with_context("mark_holds", 5, direct_run, direct_run.current_environment, direct_run.create_rng("vp_direct_cheat"), direct_deal.get("ui_state", {}))
@@ -5546,20 +5583,6 @@ func _video_poker_rtp(game: GameModule, variant_id: String, tier_id: String, act
 	return 1.0 + float(net) / float(staked)
 
 
-func _video_poker_play_hand(game: GameModule, run_state: RunState, rng: RngStream, action_id: String) -> Dictionary:
-	var environment: Dictionary = run_state.current_environment
-	var bet_cmd: Dictionary = game.surface_action_command("video_poker_bet_max", 0, false, {}, run_state, environment)
-	var ui: Dictionary = bet_cmd.get("ui_state", {})
-	ui["hand_active"] = true
-	var state: Dictionary = game.call("_machine_state", run_state, environment)
-	var variant: Dictionary = game.call("_variant", state)
-	var hand: Array = game.call("_opening_hand", run_state, state)
-	ui["holds"] = game.call("_suggested_holds", hand, variant)
-	if action_id == "mark_holds":
-		ui = _video_poker_holdout_timed_ui(game, run_state, ui, 0)
-	return game.resolve_with_context(action_id, 5, run_state, environment, rng, ui)
-
-
 func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("PULL-TABS-SURFACE-CONTRACT")
@@ -5617,6 +5640,12 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var surface := game.surface_state(run_state, environment, {})
 	if str(surface.get("surface_renderer", "")) != "pull_tab_machine":
 		failures.append("Pull Tabs surface did not route to the pull-tab machine renderer.")
+	var counter_ritual: Dictionary = surface.get("counter_ritual", {}) if typeof(surface.get("counter_ritual", {})) == TYPE_DICTIONARY else {}
+	var counter_attention: Dictionary = counter_ritual.get("attention", {}) if typeof(counter_ritual.get("attention", {})) == TYPE_DICTIONARY else {}
+	if str(surface.get("surface_cast", "")) != "clerk_and_machine" or (counter_ritual.get("actors", []) as Array).is_empty() or (counter_ritual.get("objects", []) as Array).size() < 3:
+		failures.append("Pull Tabs did not project the clerk, deal rack, counter, and losing-ticket pile as material ritual state.")
+	if bool(counter_attention.get("reveals_hidden_outcomes", true)) or int(counter_attention.get("suspicion", -1)) != run_state.suspicion_level():
+		failures.append("Pull Tabs clerk attention leaked ticket contents or diverged from existing suspicion authority.")
 	_check_idle_animation_liveness_contract(surface, "Pull Tabs cabinet surface", failures)
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Pull Tabs surface did not expose native surface controls.")
@@ -5669,9 +5698,9 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var machine_before := JSON.stringify(environment.get("game_states", {}))
 	var before := _run_state_result_snapshot(run_state)
 	var result := game.resolve_with_context("buy_tab", int(buy_click.get("set_stake", 1)), run_state, environment, run_state.create_rng("pull_tab_buy"), buy_click.get("ui_state", {}))
-	_check_action_result_shape(result, "legal", failures)
-	_check_action_result_applied(before, run_state, result, "pull-tab buy result", failures)
-	_check_pull_tab_result_details(result, failures)
+	call("_check_action_result_shape", result, "legal", failures)
+	call("_check_action_result_applied", before, run_state, result, "pull-tab buy result", failures)
+	call("_check_pull_tab_result_details", result, failures)
 	if int(result.get("pull_tab_payout", -1)) != expected_first_payout:
 		failures.append("Pull Tabs buy did not dispense the next predefined sleeve outcome.")
 	if not bool(result.get("suppress_music_outcome", false)):
@@ -5688,6 +5717,10 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs surface did not leave the dispensed ticket in the machine tray.")
 	if int(tray_surface.get("pull_tab_stack_count", 0)) != 0:
 		failures.append("Pull Tabs buy moved a ticket directly into the play pile instead of the tray.")
+	var purchase_ritual: Dictionary = tray_surface.get("counter_ritual", {}) if typeof(tray_surface.get("counter_ritual", {})) == TYPE_DICTIONARY else {}
+	var purchase_transaction: Dictionary = purchase_ritual.get("transaction", {}) if typeof(purchase_ritual.get("transaction", {})) == TYPE_DICTIONARY else {}
+	if str(purchase_ritual.get("phase", "")) != "handover" or str(purchase_transaction.get("kind", "")) != "purchase" or int(purchase_transaction.get("price", 0)) != int(result.get("stake", 0)):
+		failures.append("Pull Tabs purchase did not persist its exact clerk handover transaction.")
 	if not bool(tray_surface.get("surface_animates_idle", false)):
 		failures.append("Pull Tabs tray surface lost cabinet idle animation liveness after a ticket purchase.")
 	var dispense_events: Array = tray_surface.get("pull_tab_dispense_events", []) as Array
@@ -5847,9 +5880,9 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs file click did not expose placement animation state.")
 	var sort_before := _run_state_result_snapshot(run_state)
 	var sort_result := game.resolve_with_context("sort_tab_ticket", 0, run_state, environment, run_state.create_rng("pull_tab_sort"), file_state)
-	_check_action_result_shape(sort_result, "legal", failures)
-	_check_action_result_applied(sort_before, run_state, sort_result, "pull-tab sort result", failures)
-	_check_pull_tab_result_details(sort_result, failures)
+	call("_check_action_result_shape", sort_result, "legal", failures)
+	call("_check_action_result_applied", sort_before, run_state, sort_result, "pull-tab sort result", failures)
+	call("_check_pull_tab_result_details", sort_result, failures)
 	if int(sort_result.get("bankroll_delta", 0)) != 0:
 		failures.append("Pull Tabs sorting an opened ticket should not pay bankroll immediately.")
 	if not bool(sort_result.get("suppress_music_outcome", false)):
@@ -5875,9 +5908,9 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	game.call("_draw_pull_tab_ordered_winner_pile", winner_count_harness, Rect2(0, 0, 150, 100), [_pull_tab_test_ticket_result("one", 5), _pull_tab_test_ticket_result("two", 5)])
 	if not winner_count_harness.labels.has("WINNERS x2"):
 		failures.append("Pull Tabs winners pile did not draw its winner count.")
-	_clear_pull_tab_winners(environment)
-	_set_pull_tab_loser_count(environment, 3)
-	_inject_pull_tab_winner(environment, _pull_tab_test_ticket_result("clean", 5))
+	call("_clear_pull_tab_winners", environment)
+	call("_set_pull_tab_loser_count", environment, 3)
+	call("_inject_pull_tab_winner", environment, _pull_tab_test_ticket_result("clean", 5))
 	run_state.capture_portable_ticket_piles_from_environment(environment)
 	var redeem_before := _run_state_result_snapshot(run_state)
 	var redeem_command := game.environment_action_command("ticket_redeemer", "redeem_pull_tab_winners", run_state, environment, run_state.create_rng("pull_tab_redeem"))
@@ -5890,13 +5923,13 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		if int(redeem_result.get("suspicion_delta", 0)) != 0:
 			failures.append("Pull Tabs legitimate redemption added heat without a suspicious ticket trail.")
 		GameModule.apply_result(run_state, redeem_result, run_state.create_rng("pull_tab_redeem_apply"))
-		_check_action_result_applied(redeem_before, run_state, redeem_result, "pull-tab redemption result", failures)
+		call("_check_action_result_applied", redeem_before, run_state, redeem_result, "pull-tab redemption result", failures)
 	var redeemed_surface := game.surface_state(run_state, environment, reveal_state)
 	if int(redeemed_surface.get("pull_tab_pending_payout", 0)) != 0:
 		failures.append("Pull Tabs redemption did not clear pending winner payout.")
-	_set_pull_tab_loser_count(environment, 0)
+	call("_set_pull_tab_loser_count", environment, 0)
 	for high_ticket_index in range(2):
-		_inject_pull_tab_winner(environment, _pull_tab_test_ticket_result("high:%d" % high_ticket_index, 40))
+		call("_inject_pull_tab_winner", environment, _pull_tab_test_ticket_result("high:%d" % high_ticket_index, 40))
 	run_state.capture_portable_ticket_piles_from_environment(environment)
 	var pattern_redeem_before := _run_state_result_snapshot(run_state)
 	var pattern_redeem_command := game.environment_action_command("ticket_redeemer", "redeem_pull_tab_winners", run_state, environment, run_state.create_rng("pull_tab_pattern_redeem"))
@@ -5911,7 +5944,7 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs suspicious cashout did not report the visible loser trail count.")
 	else:
 		GameModule.apply_result(run_state, pattern_redeem_result, run_state.create_rng("pull_tab_pattern_redeem_apply"))
-		_check_action_result_applied(pattern_redeem_before, run_state, pattern_redeem_result, "pull-tab suspicious redemption result", failures)
+		call("_check_action_result_applied", pattern_redeem_before, run_state, pattern_redeem_result, "pull-tab suspicious redemption result", failures)
 	_check_pull_tab_tarot_reading_surface(game, failures)
 	_check_pull_tab_item_cheat_exemption(game, failures)
 	run_state.set_environment(environment)
@@ -6222,7 +6255,7 @@ func _check_pull_tab_full_deal_integrity(game: GameModule, failures: Array) -> v
 			failures.append("Pull Tabs full-deal check could not buy ticket %d before sellout." % draw_index)
 			return
 		var result := game.resolve_with_context("buy_tab", int(command.get("set_stake", 1)), run_state, active_environment, run_state.create_rng("pull_tab_full_deal_%03d" % draw_index), command.get("ui_state", {}))
-		_check_pull_tab_result_details(result, failures)
+		call("_check_pull_tab_result_details", result, failures)
 		var ticket: Dictionary = result.get("pull_tab_ticket", {})
 		var payout := int(ticket.get("payout", 0))
 		if payout > 0:
@@ -6362,7 +6395,7 @@ func _check_pull_tab_tarot_reading_surface(game: GameModule, failures: Array) ->
 		failures.append("Pull Tabs tarot active item did not arm the next ticket.")
 	var buy_command := game.surface_action_command("pull_tab_buy", 0, false, {}, run_state, environment)
 	var buy_result := game.resolve_with_context("buy_tab", int(buy_command.get("set_stake", 1)), run_state, environment, run_state.create_rng("pull_tab_tarot_buy"), buy_command.get("ui_state", {}))
-	_check_pull_tab_result_details(buy_result, failures)
+	call("_check_pull_tab_result_details", buy_result, failures)
 	var ticket: Dictionary = buy_result.get("pull_tab_ticket", {})
 	if not bool(ticket.get("tarot_converted", false)):
 		failures.append("Pull Tabs tarot purchase did not convert the bought ticket into a burned loser.")
@@ -6412,6 +6445,12 @@ func _check_bar_dice_contract(library: ContentLibrary, failures: Array) -> void:
 	_check_bar_dice_save_load(game, failures)
 
 
+func _bar_dice_open_shake_ui(game: GameModule, run_state: RunState, environment: Dictionary, initial_ui: Dictionary = {}) -> Dictionary:
+	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, initial_ui, run_state, environment)
+	var cover_command: Dictionary = game.surface_action_command("bar_dice_ack_cover", 0, false, roll_command.get("ui_state", {}), run_state, environment)
+	return cover_command.get("ui_state", {})
+
+
 # Guards against the surface stranding in the keep/reroll phase after a round
 # resolves: the resolving command must release UI-local state so the host clears
 # `rolled` and the next surface_state shows the settled house reveal and result.
@@ -6422,16 +6461,12 @@ func _check_bar_dice_result_visible(game: GameModule, failures: Array) -> void:
 	var environment := _surface_contract_environment()
 	environment["game_states"] = {"bar_dice": game.generate_environment_state(run_state, environment, run_state.create_rng("bar_dice_visible_state"))}
 	run_state.current_environment = environment.duplicate(true)
-	var roll_cmd := game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, run_state.current_environment)
-	var rolled_ui: Dictionary = roll_cmd.get("ui_state", {})
-	# A confirmed resolve must resolve and must NOT preserve UI-local state, or the
-	# host keeps `rolled` set and the surface never leaves the select phase.
+	var rolled_ui := _bar_dice_open_shake_ui(game, run_state, run_state.current_environment)
+	# SETTLE stages a throw; only the later public call may nominate settlement.
 	var confirm_cmd := game.surface_action_command("bar_dice_resolve", 0, true, rolled_ui, run_state, run_state.current_environment)
-	if not bool(confirm_cmd.get("resolve", false)):
-		failures.append("Bar Dice confirmed resolve did not request resolution.")
-	if bool(confirm_cmd.get("preserve_surface_ui_state", false)):
-		failures.append("Bar Dice resolving command preserved UI-local state, stranding the surface in the select phase.")
-	var result := game.resolve_with_context("roll", 8, run_state, run_state.current_environment, run_state.create_rng("bar_dice_visible_resolve"), confirm_cmd.get("ui_state", rolled_ui))
+	if bool(confirm_cmd.get("resolve", false)) or str((confirm_cmd.get("ui_state", {}) as Dictionary).get("bar_dice_ritual_phase", "")) != "throw":
+		failures.append("Bar Dice SETTLE did not stage the bounded throw without resolving early.")
+	var result := _bar_dice_play_round(game, run_state, run_state.create_rng("bar_dice_visible_resolve"), "roll", 10)
 	if not bool(result.get("ok", false)):
 		failures.append("Bar Dice resolve did not complete a round.")
 	# Emulate the host clearing UI-local state after a non-preserving resolve.
@@ -6653,8 +6688,9 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 	var stake_click := _check_surface_command_non_mutating(game, "bar_dice_stake", 0, false, {}, run_state, environment, "bar dice stake", failures)
 	if int((stake_click.get("ui_state", {}) as Dictionary).get("selected_stake_index", -1)) != 0:
 		failures.append("Bar Dice chip selection did not update UI-local stake state.")
-	var roll_click := _check_surface_command_non_mutating(game, "bar_dice_roll", 0, false, {}, run_state, environment, "bar dice roll", failures)
-	var rolled_state: Dictionary = roll_click.get("ui_state", {})
+	var roll_click := _check_surface_command_non_mutating(game, "bar_dice_roll", 0, false, {}, run_state, environment, "bar dice wager agreement", failures)
+	var cover_click := _check_surface_command_non_mutating(game, "bar_dice_ack_cover", 0, false, roll_click.get("ui_state", {}), run_state, environment, "bar dice cover acknowledgement", failures)
+	var rolled_state: Dictionary = cover_click.get("ui_state", {})
 	if not bool(rolled_state.get("rolled", false)) or (rolled_state.get("dice", []) as Array).size() != 5:
 		failures.append("Bar Dice roll did not open a five-die keep/reroll phase as UI-local state.")
 	var select_surface := game.surface_state(run_state, environment, rolled_state)
@@ -6707,8 +6743,11 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 				failures.append("Bar Dice shake moved a kept die that was not marked for reroll.")
 				break
 	var resolve_click := game.surface_action_command("bar_dice_resolve", 0, false, rolled_state, run_state, environment)
-	if str(resolve_click.get("action_id", "")) != "roll" or str(resolve_click.get("action_kind", "")) != "legal":
-		failures.append("Bar Dice resolve did not map to the legal roll action.")
+	var throw_click := game.surface_action_command("bar_dice_throw", 0, false, resolve_click.get("ui_state", {}), run_state, environment)
+	var reveal_click := game.surface_action_command("bar_dice_reveal", 0, false, throw_click.get("ui_state", {}), run_state, environment)
+	var call_click := game.surface_action_command("bar_dice_ack_call", 0, false, reveal_click.get("ui_state", {}), run_state, environment)
+	if str(call_click.get("action_id", "")) != "roll" or str(call_click.get("action_kind", "")) != "legal" or not bool(call_click.get("resolve", false)):
+		failures.append("Bar Dice call did not map the legal ritual to one roll settlement.")
 	var load_click := _check_surface_command_non_mutating(game, "bar_dice_load", 0, false, rolled_state, run_state, environment, "bar dice load", failures)
 	if str(load_click.get("action_id", "")) != "loaded_toss" or str(load_click.get("action_kind", "")) != "cheat":
 		failures.append("Bar Dice loaded toss did not map to the risky cheat action.")
@@ -6732,7 +6771,12 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 	var released_roll: Dictionary = release_state.get("controlled_roll", {}) if typeof(release_state.get("controlled_roll", {})) == TYPE_DICTIONARY else {}
 	if str(released_roll.get("skill_grade", "")) != "perfect":
 		failures.append("Bar Dice RELEASE did not grade a perfect controlled-roll input.")
-	var cheat_settle := game.surface_action_command("bar_dice_resolve", 0, true, release_state, run_state, environment)
+	var loaded_pre_reveal := game.surface_state(run_state, environment, release_state)
+	if bool(loaded_pre_reveal.get("house_revealed", false)) or not str(loaded_pre_reveal.get("result_message", "")).strip_edges().is_empty() or not (loaded_pre_reveal.get("house", []) as Array).is_empty():
+		failures.append("Bar Dice loaded toss leaked its result before reveal and call.")
+	var cheat_throw := game.surface_action_command("bar_dice_throw", 0, false, release_state, run_state, environment)
+	var cheat_reveal := game.surface_action_command("bar_dice_reveal", 0, false, cheat_throw.get("ui_state", {}), run_state, environment)
+	var cheat_settle := game.surface_action_command("bar_dice_ack_call", 0, false, cheat_reveal.get("ui_state", {}), run_state, environment)
 	if str(cheat_settle.get("action_id", "")) != "loaded_toss" or str(cheat_settle.get("action_kind", "")) != "cheat" or not bool(cheat_settle.get("resolve", false)):
 		failures.append("Bar Dice SETTLE did not resolve the armed controlled-roll cheat.")
 	var palm_click := _check_surface_command_non_mutating(game, "bar_dice_palm", 0, false, rolled_state, run_state, environment, "bar dice palm", failures)
@@ -6746,8 +6790,11 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 	palm_ui["surface_time_msec"] = int(palm_challenge.get("target_msec", 0))
 	var palm_lock := game.surface_action_command("bar_dice_palm", 0, false, palm_ui, run_state, environment)
 	var palm_lock_challenge: Dictionary = (palm_lock.get("ui_state", {}) as Dictionary).get("palmed_swap_challenge", {})
-	if not bool(palm_lock.get("resolve", false)) or str(palm_lock_challenge.get("skill_grade", "")) != "perfect":
+	if bool(palm_lock.get("resolve", false)) or str(palm_lock_challenge.get("skill_grade", "")) != "perfect" or str((palm_lock.get("ui_state", {}) as Dictionary).get("bar_dice_ritual_phase", "")) != "throw":
 		failures.append("Bar Dice SWAP NOW input did not resolve a perfect palmed-swap timing lock.")
+	var palm_pre_reveal := game.surface_state(run_state, environment, palm_lock.get("ui_state", {}))
+	if bool(palm_pre_reveal.get("house_revealed", false)) or not str(palm_pre_reveal.get("result_message", "")).strip_edges().is_empty() or not (palm_pre_reveal.get("house", []) as Array).is_empty():
+		failures.append("Bar Dice palmed swap leaked its result before reveal and call.")
 	var selected_state := rolled_state.duplicate(true)
 	selected_state["selected_action_id"] = "loaded_toss"
 	selected_state["selected_action_kind"] = "cheat"
@@ -6784,13 +6831,22 @@ func _bar_dice_resolve_with_reroll(game: GameModule, seed_text: String, reroll: 
 	var environment := _surface_contract_environment()
 	environment["game_states"] = {"bar_dice": game.generate_environment_state(run_state, environment, run_state.create_rng("bar_dice_keep_state"))}
 	run_state.current_environment = environment.duplicate(true)
-	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, run_state.current_environment)
-	var ui: Dictionary = roll_command.get("ui_state", {})
+	var host := _bar_dice_test_host(game, run_state, 10)
+	var stake_ui := _bar_dice_stake_ui(run_state, 10)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_stake", int(stake_ui.get("selected_stake_index", 0)), false)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_roll", 0, false)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_ack_cover", 0, false)
+	for die_index_value in reroll:
+		host.call("_sealed_action_host_surface_intent", "bar_dice_select", int(die_index_value), false)
 	if not reroll.is_empty():
-		ui["reroll"] = reroll
-		var shake_command: Dictionary = game.surface_action_command("bar_dice_shake", 0, false, ui, run_state, run_state.current_environment)
-		ui = shake_command.get("ui_state", ui)
-	return game.resolve_with_context("roll", 10, run_state, run_state.current_environment, run_state.create_rng("bar_dice_keep_resolve"), ui)
+		host.call("_sealed_action_host_surface_intent", "bar_dice_shake", 0, false)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_resolve", 0, false)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_throw", 0, false)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_reveal", 0, false)
+	var call_command: Dictionary = host.call("_sealed_action_host_surface_intent", "bar_dice_ack_call", 0, false)
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", "roll", 10, call_command.get("_sealed_action_host_delivery", {}))
+	host.free()
+	return result
 
 
 func _check_bar_dice_patron_turn_determinism(game: GameModule, failures: Array) -> void:
@@ -6863,24 +6919,33 @@ func _check_bar_dice_match_and_bonuses(game: GameModule, failures: Array) -> voi
 	if outcome == "carry" and int(forced_state.get("carryover_pot", 0)) <= 0:
 		failures.append("Bar Dice carry result did not move the table pot into carryover.")
 	_check_bar_dice_carryover_math(game, failures)
-	var press_seed: RunState = RunStateScript.new()
-	press_seed.start_new("BAR-DICE-PRESS-OFFER")
-	press_seed.bankroll = 100000
-	var press_environment := _surface_contract_environment()
-	press_environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, press_seed, press_environment, "ship_captain_crew", "friendly", "pot_rake")}
-	press_seed.current_environment = press_environment.duplicate(true)
 	var found_press := false
-	var rng: RngStream = press_seed.create_rng("bar_dice_press_offer")
 	for _i in range(160):
-		var press_result := _bar_dice_play_round(game, press_seed, rng, "roll")
-		var state: Dictionary = press_seed.current_environment.get("game_states", {}).get("bar_dice", {})
-		var last_result: Dictionary = state.get("last_result", {})
-		if bool((last_result.get("press_offer", {}) as Dictionary).get("available", false)):
+		var press_seed_text := "BAR-DICE-PRESS-OFFER-%d" % _i
+		var probe := _bar_dice_fresh_outcome_run(game, press_seed_text, "friendly")
+		var probe_result := _bar_dice_simulate_round(game, probe, probe.create_rng(), "roll")
+		var probe_state: Dictionary = probe.current_environment.get("game_states", {}).get("bar_dice", {})
+		if bool(((probe_state.get("last_result", {}) as Dictionary).get("press_offer", {}) as Dictionary).get("available", false)):
 			found_press = true
+			var press_seed := _bar_dice_fresh_outcome_run(game, press_seed_text, "friendly")
+			_check_bar_dice_pre_reveal_no_leak(game, press_seed_text, 10, "press-offer", failures)
+			var roll_rng_before := press_seed.rng_state
+			var press_result := _bar_dice_play_round(game, press_seed, press_seed.create_rng(), "roll")
+			_check_bar_dice_authenticated_result(press_result, "press-offer", 10, roll_rng_before, press_seed, failures)
+			var state: Dictionary = press_seed.current_environment.get("game_states", {}).get("bar_dice", {})
+			if not bool((((state.get("last_result", {}) as Dictionary).get("press_offer", {}) as Dictionary).get("available", false))):
+				found_press = false
+				continue
 			var before := _run_state_result_snapshot(press_seed)
-			var resolved_press := game.resolve_with_context("press", int(press_result.get("bar_dice_stake", 1)), press_seed, press_seed.current_environment, rng, {})
-			_check_action_result_shape(resolved_press, "legal", failures)
-			_check_action_result_application_contract(before, press_seed, resolved_press, "bar dice press result", failures)
+			var press_stake := int(press_result.get("bar_dice_stake", 1))
+			var press_host := _bar_dice_test_host(game, press_seed, press_stake)
+			var resolved_press: Dictionary = press_host.call("_sealed_action_host_resolve_intent", "press", press_stake)
+			press_host.free()
+			call("_check_action_result_shape", resolved_press, "legal", failures)
+			call("_check_action_result_application_contract", before, press_seed, resolved_press, "bar dice press result", failures)
+			var press_delivery: Dictionary = resolved_press.get(BlackjackActionAuthorityScript.HOST_DELIVERY_KEY, {})
+			if not bool(resolved_press.get(BlackjackActionAuthorityScript.HOST_COMMITTED_KEY, false)) or str(press_delivery.get("action_id", "")) != "press":
+				failures.append("Bar Dice press offer did not settle through an authenticated press receipt.")
 			break
 	if not found_press:
 		failures.append("Bar Dice did not produce a press/double-up offer after repeated clean wins.")
@@ -6896,7 +6961,7 @@ func _check_bar_dice_carryover_math(game: GameModule, failures: Array) -> void:
 	var rng: RngStream = carry_run.create_rng("bar_dice_carryover")
 	var carry_result: Dictionary = {}
 	for _attempt in range(260):
-		var result := _bar_dice_play_round(game, carry_run, rng, "roll")
+		var result := _bar_dice_simulate_round(game, carry_run, rng, "roll")
 		if str(result.get("bar_dice_outcome", "")) == "carry":
 			carry_result = result
 			break
@@ -6908,7 +6973,7 @@ func _check_bar_dice_carryover_math(game: GameModule, failures: Array) -> void:
 	var carry_pot := int(carry_result.get("bar_dice_pot", 0))
 	if carryover != carry_pot:
 		failures.append("Bar Dice carryover pot did not equal the tied/no-qualifying round pot.")
-	var next_result := _bar_dice_play_round(game, carry_run, rng, "roll")
+	var next_result := _bar_dice_simulate_round(game, carry_run, rng, "roll")
 	var next_stake := int(next_result.get("bar_dice_stake", 0))
 	var next_game_states: Dictionary = carry_run.current_environment.get("game_states", {})
 	var next_table: Dictionary = next_game_states.get("bar_dice", {})
@@ -6937,21 +7002,24 @@ func _check_bar_dice_stake_lifecycle(game: GameModule, failures: Array) -> void:
 		var found_result: Dictionary = {}
 		var found_before_bankroll := 0
 		var found_after_bankroll := 0
-		var run_state: RunState = RunStateScript.new()
-		run_state.start_new("BAR-DICE-STAKE-LIFECYCLE-%s" % target_outcome)
-		run_state.bankroll = 100000
-		var environment := _surface_contract_environment()
-		environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, run_state, environment, "ship_captain_crew", "standard", "pot_rake")}
-		run_state.current_environment = environment.duplicate(true)
-		var rng: RngStream = run_state.create_rng("bar_dice_stake_lifecycle_%s" % target_outcome)
+		var run_state: RunState = null
 		for _attempt in range(360):
+			var seed_text := "BAR-DICE-STAKE-LIFECYCLE-%s-%d" % [target_outcome, _attempt]
+			var probe := _bar_dice_fresh_outcome_run(game, seed_text)
+			var probe_result := _bar_dice_simulate_round(game, probe, probe.create_rng(), "roll", target_stake)
+			if str(probe_result.get("bar_dice_outcome", "")) != target_outcome:
+				continue
+			run_state = _bar_dice_fresh_outcome_run(game, seed_text)
+			_check_bar_dice_pre_reveal_no_leak(game, seed_text, target_stake, target_outcome, failures)
 			var before_bankroll := run_state.bankroll
-			var result := _bar_dice_play_round(game, run_state, rng, "roll", target_stake)
+			var rng_before := run_state.rng_state
+			var result := _bar_dice_play_round(game, run_state, run_state.create_rng(), "roll", target_stake)
 			if str(result.get("bar_dice_outcome", "")) != target_outcome:
 				continue
 			found_result = result
 			found_before_bankroll = before_bankroll
 			found_after_bankroll = run_state.bankroll
+			_check_bar_dice_authenticated_result(result, target_outcome, target_stake, rng_before, run_state, failures)
 			break
 		if found_result.is_empty():
 			failures.append("Bar Dice stake lifecycle fixture could not find a %s result." % target_outcome)
@@ -6981,6 +7049,41 @@ func _check_bar_dice_stake_lifecycle(game: GameModule, failures: Array) -> void:
 				failures.append("Bar Dice carry lifecycle did not store the full pot as carryover.")
 
 
+func _bar_dice_fresh_outcome_run(game: GameModule, seed_text: String, tier: String = "standard") -> RunState:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(seed_text)
+	run_state.bankroll = 100000
+	var environment := _surface_contract_environment()
+	environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, run_state, environment, "ship_captain_crew", tier, "pot_rake")}
+	run_state.current_environment = environment.duplicate(true)
+	return run_state
+
+
+func _check_bar_dice_authenticated_result(result: Dictionary, outcome: String, stake: int, rng_before: int, run_state: RunState, failures: Array) -> void:
+	var delivery: Dictionary = result.get(BlackjackActionAuthorityScript.HOST_DELIVERY_KEY, {})
+	var receipt: Dictionary = result.get(BlackjackActionAuthorityScript.HOST_APPLY_RECEIPT_KEY, {})
+	if not bool(result.get(BlackjackActionAuthorityScript.HOST_COMMITTED_KEY, false)) \
+			or str(delivery.get("action_id", "")) != "roll" or int(delivery.get("stake", -1)) != stake \
+			or int(receipt.get("stake", -1)) != stake \
+			or str(result.get(BlackjackActionAuthorityScript.HOST_CONTENT_FINGERPRINT_KEY, "")).is_empty():
+		failures.append("Bar Dice %s lifecycle lacked exact authenticated proposal/delivery/receipt identity." % outcome)
+	if run_state.rng_state == rng_before:
+		failures.append("Bar Dice %s authenticated lifecycle did not advance canonical RNG." % outcome)
+
+
+func _check_bar_dice_pre_reveal_no_leak(game: GameModule, seed_text: String, stake: int, outcome: String, failures: Array) -> void:
+	var probe := _bar_dice_fresh_outcome_run(game, seed_text)
+	var stake_ui := _bar_dice_stake_ui(probe, stake)
+	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, stake_ui, probe, probe.current_environment)
+	var cover_command: Dictionary = game.surface_action_command("bar_dice_ack_cover", 0, false, roll_command.get("ui_state", {}), probe, probe.current_environment)
+	var settle_command: Dictionary = game.surface_action_command("bar_dice_resolve", 0, false, cover_command.get("ui_state", {}), probe, probe.current_environment)
+	var pre_reveal := game.surface_state(probe, probe.current_environment, settle_command.get("ui_state", {}))
+	if bool(pre_reveal.get("house_revealed", false)) \
+			or not str(pre_reveal.get("result_message", "")).strip_edges().is_empty() \
+			or not (pre_reveal.get("house", []) as Array).is_empty():
+		failures.append("Bar Dice %s selected lifecycle leaked the result before reveal/call." % outcome)
+
+
 func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("BAR-DICE-CHEAT")
@@ -6989,10 +7092,8 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	environment["game_states"] = {"bar_dice": game.generate_environment_state(run_state, environment, run_state.create_rng("bar_dice_cheat_state"))}
 	run_state.current_environment = environment.duplicate(true)
 	var before := _run_state_result_snapshot(run_state)
-	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, run_state.current_environment)
-	var ui: Dictionary = _bar_dice_controlled_roll_timed_ui(game, run_state, roll_command.get("ui_state", {}), 0)
-	var loaded_result := game.resolve_with_context("loaded_toss", 10, run_state, run_state.current_environment, run_state.create_rng("bar_dice_cheat_resolve"), ui)
-	_check_action_result_shape(loaded_result, "cheat", failures)
+	var loaded_result := _bar_dice_play_round(game, run_state, run_state.create_rng("bar_dice_cheat_resolve"), "loaded_toss")
+	call("_check_action_result_shape", loaded_result, "cheat", failures)
 	if int(loaded_result.get("suspicion_delta", 0)) <= 0:
 		failures.append("Bar Dice loaded toss did not raise suspicion heat.")
 	if not bool(loaded_result.get("bar_dice_loaded", false)) or int(loaded_result.get("bar_dice_loaded_value", 0)) < 1:
@@ -7003,17 +7104,23 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 		failures.append("Bar Dice perfect controlled roll did not apply the desired die face.")
 	if typeof(loaded_result.get("skill_story_context", {})) != TYPE_DICTIONARY or int((loaded_result.get("skill_story_context", {}) as Dictionary).get("skill_margin_msec", 999)) != 0:
 		failures.append("Bar Dice controlled roll did not expose timing margin in skill_story_context.")
-	_check_action_result_application_contract(before, run_state, loaded_result, "bar dice loaded result", failures)
+	call("_check_action_result_application_contract", before, run_state, loaded_result, "bar dice loaded result", failures)
 	var direct_state: RunState = RunStateScript.new()
 	direct_state.start_new("BAR-DICE-CHEAT-DIRECT")
 	direct_state.bankroll = 100000
 	var direct_environment := _surface_contract_environment()
 	direct_environment["game_states"] = {"bar_dice": game.generate_environment_state(direct_state, direct_environment, direct_state.create_rng("bar_dice_direct_state"))}
 	direct_state.current_environment = direct_environment.duplicate(true)
-	var direct_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, direct_state, direct_state.current_environment)
-	var direct_result := game.resolve_with_context("loaded_toss", 10, direct_state, direct_state.current_environment, direct_state.create_rng("bar_dice_direct_resolve"), direct_roll.get("ui_state", {}))
-	if bool(direct_result.get("bar_dice_controlled_roll_applied", false)) or str(direct_result.get("skill_grade", "")) != "miss":
-		failures.append("Bar Dice loaded_toss without RELEASE granted an ungraded controlled-roll payoff.")
+	var direct_snapshot_before := JSON.stringify(direct_state.to_save_snapshot())
+	var direct_rng := direct_state.create_rng("bar_dice_direct_resolve")
+	var direct_rng_before := JSON.stringify(direct_rng.snapshot())
+	var direct_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, _bar_dice_stake_ui(direct_state, 10), direct_state, direct_state.current_environment)
+	var direct_result := game.resolve_with_context("loaded_toss", 10, direct_state, direct_state.current_environment, direct_rng, direct_roll.get("ui_state", {}))
+	if bool(direct_result.get("ok", true)) or not bool(direct_result.get("bar_dice_compatibility_simulation", false)) or not bool(direct_result.get("sealed_action_authoritative", false)) or direct_result.has("skill_grade") or direct_result.has("bar_dice_player_dice") or direct_result.has("bar_dice_house_dice"):
+		failures.append("Bar Dice direct loaded_toss did not remain a receipt-required observer rejection without hidden grading or dice.")
+	GameModule.apply_result(direct_state, direct_result, direct_rng)
+	if JSON.stringify(direct_state.to_save_snapshot()) != direct_snapshot_before or JSON.stringify(direct_rng.snapshot()) != direct_rng_before:
+		failures.append("Bar Dice out-of-phase direct loaded_toss changed run or RNG state.")
 	var deterministic_a: RunState = RunStateScript.new()
 	deterministic_a.start_new("BAR-DICE-CONTROL-DETERMINISTIC")
 	deterministic_a.bankroll = 100000
@@ -7026,10 +7133,8 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	var deterministic_env_b := _surface_contract_environment()
 	deterministic_env_b["game_states"] = {"bar_dice": game.generate_environment_state(deterministic_b, deterministic_env_b, deterministic_b.create_rng("bar_dice_det_state"))}
 	deterministic_b.current_environment = deterministic_env_b.duplicate(true)
-	var det_roll_a := game.surface_action_command("bar_dice_roll", 0, false, {"surface_time_msec": 20000}, deterministic_a, deterministic_a.current_environment)
-	var det_roll_b := game.surface_action_command("bar_dice_roll", 0, false, {"surface_time_msec": 20000}, deterministic_b, deterministic_b.current_environment)
-	var det_ui_a: Dictionary = _bar_dice_controlled_roll_timed_ui(game, deterministic_a, det_roll_a.get("ui_state", {"surface_time_msec": 20000}), 0)
-	var det_ui_b: Dictionary = _bar_dice_controlled_roll_timed_ui(game, deterministic_b, det_roll_b.get("ui_state", {"surface_time_msec": 20000}), 0)
+	var det_ui_a: Dictionary = _bar_dice_controlled_roll_timed_ui(game, deterministic_a, _bar_dice_open_shake_ui(game, deterministic_a, deterministic_a.current_environment, {"surface_time_msec": 20000}), 0)
+	var det_ui_b: Dictionary = _bar_dice_controlled_roll_timed_ui(game, deterministic_b, _bar_dice_open_shake_ui(game, deterministic_b, deterministic_b.current_environment, {"surface_time_msec": 20000}), 0)
 	if JSON.stringify(det_ui_a.get("controlled_roll", {})) != JSON.stringify(det_ui_b.get("controlled_roll", {})):
 		failures.append("Bar Dice controlled-roll challenge did not start deterministically from seeded input.")
 	var round_trip_state: Dictionary = JSON.parse_string(JSON.stringify(det_ui_a))
@@ -7042,22 +7147,28 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	var palm_environment := _surface_contract_environment()
 	palm_environment["game_states"] = {"bar_dice": game.generate_environment_state(palm_state, palm_environment, palm_state.create_rng("bar_dice_palm_state"))}
 	palm_state.current_environment = palm_environment.duplicate(true)
-	var palm_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, palm_state, palm_state.current_environment)
-	var palm_ui: Dictionary = _bar_dice_palmed_swap_timed_ui(game, palm_state, palm_roll.get("ui_state", {}), 0)
-	var palm_result := game.resolve_with_context("palmed_swap", 10, palm_state, palm_state.current_environment, palm_state.create_rng("bar_dice_palm_resolve"), palm_ui)
-	_check_action_result_shape(palm_result, "cheat", failures)
+	var palm_result := _bar_dice_play_round(game, palm_state, palm_state.create_rng("bar_dice_palm_resolve"), "palmed_swap")
+	call("_check_action_result_shape", palm_result, "cheat", failures)
 	if not bool(palm_result.get("bar_dice_palmed", false)) or not bool(palm_result.get("bar_dice_palmed_swap_applied", false)) or str(palm_result.get("skill_grade", "")) != "perfect" or int(palm_result.get("suspicion_delta", 0)) <= 0:
 		failures.append("Bar Dice palmed swap did not grade perfect input, improve a die, and add suspicion heat.")
+	if str(palm_result.get("message", "")).find("Palmed swap") < 0:
+		failures.append("Bar Dice authenticated palmed swap lacked readable graded feedback.")
 	var direct_palm_state: RunState = RunStateScript.new()
 	direct_palm_state.start_new("BAR-DICE-PALM-DIRECT")
 	direct_palm_state.bankroll = 100000
 	var direct_palm_environment := _surface_contract_environment()
 	direct_palm_environment["game_states"] = {"bar_dice": game.generate_environment_state(direct_palm_state, direct_palm_environment, direct_palm_state.create_rng("bar_dice_palm_direct_state"))}
 	direct_palm_state.current_environment = direct_palm_environment.duplicate(true)
-	var direct_palm_roll := game.surface_action_command("bar_dice_roll", 0, false, {}, direct_palm_state, direct_palm_state.current_environment)
-	var direct_palm_result := game.resolve_with_context("palmed_swap", 10, direct_palm_state, direct_palm_state.current_environment, direct_palm_state.create_rng("bar_dice_palm_direct_resolve"), direct_palm_roll.get("ui_state", {}))
-	if str(direct_palm_result.get("skill_grade", "")) != "miss" or bool(direct_palm_result.get("bar_dice_palmed_swap_applied", true)) or str(direct_palm_result.get("message", "")).to_lower().find("no die") < 0:
-		failures.append("Bar Dice direct palmed_swap resolve granted an ungraded die change or lacked readable failure feedback.")
+	var direct_palm_snapshot_before := JSON.stringify(direct_palm_state.to_save_snapshot())
+	var direct_palm_rng := direct_palm_state.create_rng("bar_dice_palm_direct_resolve")
+	var direct_palm_rng_before := JSON.stringify(direct_palm_rng.snapshot())
+	var direct_palm_roll := game.surface_action_command("bar_dice_roll", 0, false, _bar_dice_stake_ui(direct_palm_state, 10), direct_palm_state, direct_palm_state.current_environment)
+	var direct_palm_result := game.resolve_with_context("palmed_swap", 10, direct_palm_state, direct_palm_state.current_environment, direct_palm_rng, direct_palm_roll.get("ui_state", {}))
+	if bool(direct_palm_result.get("ok", true)) or not bool(direct_palm_result.get("bar_dice_compatibility_simulation", false)) or not bool(direct_palm_result.get("sealed_action_authoritative", false)) or direct_palm_result.has("skill_grade") or direct_palm_result.has("bar_dice_player_dice") or direct_palm_result.has("bar_dice_house_dice"):
+		failures.append("Bar Dice direct palmed_swap did not remain a receipt-required observer rejection without hidden grading or dice.")
+	GameModule.apply_result(direct_palm_state, direct_palm_result, direct_palm_rng)
+	if JSON.stringify(direct_palm_state.to_save_snapshot()) != direct_palm_snapshot_before or JSON.stringify(direct_palm_rng.snapshot()) != direct_palm_rng_before:
+		failures.append("Bar Dice out-of-phase direct palmed_swap changed run or RNG state.")
 	var palm_deterministic_a := _bar_dice_palmed_swap_fixture(game, "BAR-DICE-PALM-DETERMINISTIC")
 	var palm_deterministic_b := _bar_dice_palmed_swap_fixture(game, "BAR-DICE-PALM-DETERMINISTIC")
 	if JSON.stringify(palm_deterministic_a.get("challenge", {})) != JSON.stringify(palm_deterministic_b.get("challenge", {})):
@@ -7084,7 +7195,8 @@ func _check_bar_dice_cheat(game: GameModule, failures: Array) -> void:
 	var palm_blown_challenge: Dictionary = palm_blown_ui.get("palmed_swap_challenge", {})
 	palm_blown_ui["surface_time_msec"] = int(palm_blown_challenge.get("target_msec", 0)) + int(palm_blown_challenge.get("meter_period_msec", 1500)) / 2
 	var palm_blown_lock := game.surface_action_command("bar_dice_palm", 0, false, palm_blown_ui, palm_blown_run, palm_blown_run.current_environment)
-	var palm_blown_result := game.resolve_with_context("palmed_swap", 10, palm_blown_run, palm_blown_run.current_environment, palm_blown_run.create_rng("bar_dice_palm_blown_resolve"), palm_blown_lock.get("ui_state", palm_blown_ui))
+	var palm_blown_margin := int(palm_blown_challenge.get("meter_period_msec", 1500)) / 2
+	var palm_blown_result := _bar_dice_play_round(game, palm_blown_run, palm_blown_run.create_rng("bar_dice_palm_blown_resolve"), "palmed_swap", 10, palm_blown_margin)
 	if str(palm_blown_result.get("skill_grade", "")) != "blown" or bool(palm_blown_result.get("bar_dice_palmed_swap_applied", true)) or str(palm_blown_result.get("message", "")).to_lower().find("no die") < 0:
 		failures.append("Bar Dice blown palmed swap did not leave dice unchanged with distinct failure feedback.")
 	var honest_wins := _bar_dice_win_rate(game, "roll", "BAR-DICE-HONEST")
@@ -7108,7 +7220,7 @@ func _bar_dice_win_rate(game: GameModule, action_id: String, seed_text: String) 
 	var wins := 0
 	for _round in range(rounds):
 		run_state.suspicion = {"level": 0, "cues": [], "local_levels": {}}
-		var result := _bar_dice_play_round(game, run_state, rng, action_id)
+		var result := _bar_dice_simulate_round(game, run_state, rng, action_id)
 		if str(result.get("bar_dice_outcome", "")) == "win":
 			wins += 1
 	return float(wins) / float(rounds)
@@ -7123,9 +7235,7 @@ func _check_bar_dice_item_luck_alcohol(game: GameModule, failures: Array) -> voi
 	sober_environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, sober, sober_environment, "ship_captain_crew", "standard", "pot_rake")}
 	sober.current_environment = sober_environment.duplicate(true)
 	_xgame_apply_watched_spatial_state(sober, "bar_dice", true)
-	var sober_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, sober, sober.current_environment)
-	var sober_ui: Dictionary = _bar_dice_controlled_roll_timed_ui(game, sober, sober_roll.get("ui_state", {}), 0)
-	var sober_result := game.resolve_with_context("loaded_toss", 10, sober, sober.current_environment, sober.create_rng("bar_dice_sober"), sober_ui)
+	var sober_result := _bar_dice_play_round(game, sober, sober.create_rng("bar_dice_sober"), "loaded_toss")
 	var drunk: RunState = RunStateScript.new()
 	drunk.start_new("BAR-DICE-ALCOHOL-SOBER")
 	drunk.bankroll = 100000
@@ -7135,9 +7245,7 @@ func _check_bar_dice_item_luck_alcohol(game: GameModule, failures: Array) -> voi
 	drunk_environment["game_states"] = {"bar_dice": _bar_dice_state_for(game, drunk, drunk_environment, "ship_captain_crew", "standard", "pot_rake")}
 	drunk.current_environment = drunk_environment.duplicate(true)
 	_xgame_apply_watched_spatial_state(drunk, "bar_dice", true)
-	var drunk_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, drunk, drunk.current_environment)
-	var drunk_ui: Dictionary = _bar_dice_controlled_roll_timed_ui(game, drunk, drunk_roll.get("ui_state", {}), 0)
-	var drunk_result := game.resolve_with_context("loaded_toss", 10, drunk, drunk.current_environment, drunk.create_rng("bar_dice_sober"), drunk_ui)
+	var drunk_result := _bar_dice_play_round(game, drunk, drunk.create_rng("bar_dice_sober"), "loaded_toss")
 	if int(drunk_result.get("suspicion_delta", 0)) <= int(sober_result.get("suspicion_delta", 0)):
 		failures.append("Bar Dice cheat heat did not respond to alcohol pressure.")
 	var low_snitch: RunState = RunStateScript.new()
@@ -7148,9 +7256,7 @@ func _check_bar_dice_item_luck_alcohol(game: GameModule, failures: Array) -> voi
 	low_state["patrons"] = [{"id": "quiet_rail", "name": "Quiet Rail", "watching": false, "snitch_risk": 0, "rapport": 60}]
 	low_environment["game_states"] = {"bar_dice": low_state}
 	low_snitch.current_environment = low_environment.duplicate(true)
-	var low_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, low_snitch, low_snitch.current_environment)
-	var low_ui: Dictionary = _bar_dice_controlled_roll_timed_ui(game, low_snitch, low_roll.get("ui_state", {}), 999)
-	var low_result := game.resolve_with_context("loaded_toss", 10, low_snitch, low_snitch.current_environment, low_snitch.create_rng("bar_dice_snitch_low"), low_ui)
+	var low_result := _bar_dice_play_round(game, low_snitch, low_snitch.create_rng("bar_dice_snitch_low"), "loaded_toss", 10, 999)
 	var high_snitch: RunState = RunStateScript.new()
 	high_snitch.start_new("BAR-DICE-SNITCH-HIGH")
 	high_snitch.bankroll = 100000
@@ -7163,9 +7269,7 @@ func _check_bar_dice_item_luck_alcohol(game: GameModule, failures: Array) -> voi
 	]
 	high_environment["game_states"] = {"bar_dice": high_state}
 	high_snitch.current_environment = high_environment.duplicate(true)
-	var high_roll: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, high_snitch, high_snitch.current_environment)
-	var high_ui: Dictionary = _bar_dice_controlled_roll_timed_ui(game, high_snitch, high_roll.get("ui_state", {}), 999)
-	var high_result := game.resolve_with_context("loaded_toss", 10, high_snitch, high_snitch.current_environment, high_snitch.create_rng("bar_dice_snitch_high"), high_ui)
+	var high_result := _bar_dice_play_round(game, high_snitch, high_snitch.create_rng("bar_dice_snitch_high"), "loaded_toss", 10, 999)
 	if int(high_result.get("suspicion_delta", 0)) <= int(low_result.get("suspicion_delta", 0)) or int(high_result.get("bar_dice_patron_snitch_heat_bonus", 0)) <= int(low_result.get("bar_dice_patron_snitch_heat_bonus", 0)):
 		failures.append("Bar Dice patron snitch pressure did not raise controlled-roll heat.")
 	var luck_low := _bar_dice_win_rate_with_luck(game, "BAR-DICE-LUCK-LOW", 0)
@@ -7189,7 +7293,7 @@ func _bar_dice_win_rate_with_luck(game: GameModule, seed_text: String, luck: int
 	var rounds := 1200
 	var wins := 0
 	for _round in range(rounds):
-		var result := _bar_dice_play_round(game, run_state, rng, "roll")
+		var result := _bar_dice_simulate_round(game, run_state, rng, "roll")
 		if str(result.get("bar_dice_outcome", "")) == "win":
 			wins += 1
 	return float(wins) / float(rounds)
@@ -7213,10 +7317,9 @@ func _check_bar_dice_edge_for(game: GameModule, ruleset: String, tier: String, f
 	var staked := 0
 	var net := 0
 	for _round in range(rounds):
-		var before := run_state.bankroll
-		var result := _bar_dice_play_round(game, run_state, rng, "roll")
+		var result := _bar_dice_simulate_round(game, run_state, rng, "roll")
 		staked += int(result.get("bar_dice_stake", 0)) + int(result.get("bar_dice_side_bet", 0))
-		net += run_state.bankroll - before
+		net += int(result.get("bankroll_delta", 0))
 	var edge := -float(net) / float(staked)
 	print("BAR_DICE %s/%s house edge over %d rounds = %.4f" % [ruleset, tier, rounds, edge])
 	var min_edge := -0.02
@@ -7254,17 +7357,23 @@ func _check_bar_dice_save_load_mid_round(game: GameModule, failures: Array) -> v
 	var environment := _surface_contract_environment()
 	environment["game_states"] = {"bar_dice": game.generate_environment_state(run_state, environment, run_state.create_rng("bar_dice_mid_round_state"))}
 	run_state.current_environment = environment.duplicate(true)
-	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, run_state.current_environment)
-	var ui: Dictionary = roll_command.get("ui_state", {})
+	var host := _bar_dice_test_host(game, run_state, 10)
+	var stake_ui := _bar_dice_stake_ui(run_state, 10)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_stake", int(stake_ui.get("selected_stake_index", 0)), false)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_roll", 0, false, 27000)
+	var cover_command: Dictionary = host.call("_sealed_action_host_surface_intent", "bar_dice_ack_cover", 0, false, 27000)
+	var ui: Dictionary = cover_command.get("ui_state", {})
 	var surface := game.surface_state(run_state, run_state.current_environment, ui)
 	var suggested: Array = surface.get("suggested_reroll", [])
 	if not suggested.is_empty():
-		ui["reroll"] = [int(suggested[0])]
-	ui["surface_time_msec"] = 27000
+		var select_command: Dictionary = host.call("_sealed_action_host_surface_intent", "bar_dice_select", int(suggested[0]), false, 27000)
+		ui = select_command.get("ui_state", ui)
+	host.free()
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(run_state.to_dict())
-	var parsed_ui: Variant = JSON.parse_string(JSON.stringify(ui))
-	var restored_ui: Dictionary = parsed_ui if typeof(parsed_ui) == TYPE_DICTIONARY else {}
+	var restored_table: Dictionary = game.call("_table_state_preview", restored, restored.current_environment)
+	var restored_ledger: Dictionary = restored_table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {})
+	var restored_ui: Dictionary = (restored_ledger.get("session", {}) as Dictionary).duplicate(true)
 	var restored_surface := game.surface_state(restored, restored.current_environment, restored_ui)
 	if str(restored_surface.get("phase", "")) != "select":
 		failures.append("Bar Dice save/load mid-round did not restore the select phase.")
@@ -7272,68 +7381,23 @@ func _check_bar_dice_save_load_mid_round(game: GameModule, failures: Array) -> v
 		failures.append("Bar Dice save/load mid-round did not preserve visible player dice.")
 	if JSON.stringify(restored_surface.get("reroll", [])) != JSON.stringify(ui.get("reroll", [])):
 		failures.append("Bar Dice save/load mid-round did not preserve reroll marks.")
-	var result := game.resolve_with_context("roll", 10, restored, restored.current_environment, restored.create_rng("bar_dice_mid_round_resolve"), restored_ui)
+	var restored_host := _bar_dice_test_host(game, restored, 10)
+	restored_host.call("_sealed_action_host_surface_intent", "bar_dice_resolve", 0, false)
+	restored_host.call("_sealed_action_host_surface_intent", "bar_dice_throw", 0, false)
+	restored_host.call("_sealed_action_host_surface_intent", "bar_dice_reveal", 0, false)
+	var call_command: Dictionary = restored_host.call("_sealed_action_host_surface_intent", "bar_dice_ack_call", 0, false)
+	var result: Dictionary = restored_host.call("_sealed_action_host_resolve_intent", "roll", 10, call_command.get("_sealed_action_host_delivery", {}))
+	restored_host.free()
 	if not bool(result.get("ok", false)) or (result.get("bar_dice_player_dice", []) as Array).size() != 5:
 		failures.append("Bar Dice restored mid-round state could not resolve a valid table round.")
-
-
-func _bar_dice_play_round(game: GameModule, run_state: RunState, rng: RngStream, action_id: String, stake: int = 10) -> Dictionary:
-	var environment: Dictionary = run_state.current_environment
-	var initial_ui := _bar_dice_stake_ui(run_state, stake)
-	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, initial_ui, run_state, environment)
-	var ui: Dictionary = roll_command.get("ui_state", {})
-	while int(ui.get("shake_number", 0)) < 3:
-		var dice: Array = ui.get("dice", []) if typeof(ui.get("dice", [])) == TYPE_ARRAY else []
-		if dice.size() != 5:
-			break
-		var suggested: Array = game.call("_suggested_reroll_for_ruleset", dice, "ship_captain_crew")
-		if suggested.is_empty():
-			break
-		ui["reroll"] = suggested
-		var shake_command: Dictionary = game.surface_action_command("bar_dice_shake", 0, false, ui, run_state, environment)
-		ui = shake_command.get("ui_state", ui)
-	if action_id == "loaded_toss":
-		ui = _bar_dice_controlled_roll_timed_ui(game, run_state, ui, 0)
-	elif action_id == "palmed_swap":
-		ui = _bar_dice_palmed_swap_timed_ui(game, run_state, ui, 0)
-	return game.resolve_with_context(action_id, stake, run_state, environment, rng, ui)
-
-
-func _bar_dice_stake_ui(run_state: RunState, stake: int) -> Dictionary:
-	var game_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var state: Dictionary = game_states.get("bar_dice", {}) if typeof(game_states.get("bar_dice", {})) == TYPE_DICTIONARY else {}
-	var ladder: Array = []
-	if typeof(state.get("stake_ladder", [])) == TYPE_ARRAY:
-		for value in state.get("stake_ladder", []):
-			ladder.append(int(value))
-	var selected_index := int(state.get("selected_stake_index", 0))
-	for index in range(ladder.size()):
-		if int(ladder[index]) == stake:
-			selected_index = index
-			break
-	return {"selected_stake_index": selected_index}
-
-
-func _bar_dice_controlled_roll_timed_ui(game: GameModule, run_state: RunState, base_ui: Dictionary, margin_msec: int = 0) -> Dictionary:
-	var ui: Dictionary = base_ui.duplicate(true)
-	ui["surface_time_msec"] = int(ui.get("surface_time_msec", 14000))
-	var load_command: Dictionary = game.surface_action_command("bar_dice_load", 0, false, ui, run_state, run_state.current_environment)
-	var load_ui: Dictionary = load_command.get("ui_state", ui)
-	var challenge: Dictionary = load_ui.get("controlled_roll", {}) if typeof(load_ui.get("controlled_roll", {})) == TYPE_DICTIONARY else {}
-	load_ui["controlled_roll_input_msec"] = int(challenge.get("target_msec", int(load_ui.get("surface_time_msec", 14000)))) + margin_msec
-	var release_command: Dictionary = game.surface_action_command("bar_dice_release", 0, false, load_ui, run_state, run_state.current_environment)
-	return release_command.get("ui_state", load_ui)
-
-
-func _bar_dice_palmed_swap_timed_ui(game: GameModule, run_state: RunState, base_ui: Dictionary, margin_msec: int = 0) -> Dictionary:
-	var ui: Dictionary = base_ui.duplicate(true)
-	ui["surface_time_msec"] = int(ui.get("surface_time_msec", 18000))
-	var palm_command: Dictionary = game.surface_action_command("bar_dice_palm", 0, false, ui, run_state, run_state.current_environment)
-	var palm_ui: Dictionary = palm_command.get("ui_state", ui)
-	var challenge: Dictionary = palm_ui.get("palmed_swap_challenge", {}) if typeof(palm_ui.get("palmed_swap_challenge", {})) == TYPE_DICTIONARY else {}
-	palm_ui["surface_time_msec"] = int(challenge.get("target_msec", int(palm_ui.get("surface_time_msec", 18000)))) + margin_msec
-	var lock_command: Dictionary = game.surface_action_command("bar_dice_palm", 0, false, palm_ui, run_state, run_state.current_environment)
-	return lock_command.get("ui_state", palm_ui)
+	else:
+		var final_dice: Array = result.get("bar_dice_player_dice", [])
+		var marked: Array = restored_ui.get("reroll", [])
+		var saved_dice: Array = restored_ui.get("dice", [])
+		for die_index in range(saved_dice.size()):
+			if not marked.has(die_index) and int(final_dice[die_index]) != int(saved_dice[die_index]):
+				failures.append("Bar Dice restored mid-round settlement changed a saved kept die.")
+				break
 
 
 func _bar_dice_palmed_swap_fixture(game: GameModule, seed_text: String, drunk_level: int = 0, item_id: String = "") -> Dictionary:
@@ -7346,37 +7410,83 @@ func _bar_dice_palmed_swap_fixture(game: GameModule, seed_text: String, drunk_le
 	var environment := _surface_contract_environment()
 	environment["game_states"] = {"bar_dice": game.generate_environment_state(run_state, environment, run_state.create_rng("bar_dice_palmed_fixture_state"))}
 	run_state.current_environment = environment.duplicate(true)
-	var roll_command := game.surface_action_command("bar_dice_roll", 0, false, {"surface_time_msec": 22000}, run_state, run_state.current_environment)
-	var palm_command := game.surface_action_command("bar_dice_palm", 0, false, roll_command.get("ui_state", {}), run_state, run_state.current_environment)
+	var shake_ui := _bar_dice_open_shake_ui(game, run_state, run_state.current_environment, {"surface_time_msec": 22000})
+	var palm_command := game.surface_action_command("bar_dice_palm", 0, false, shake_ui, run_state, run_state.current_environment)
 	var palm_ui: Dictionary = palm_command.get("ui_state", {})
 	return {"run_state": run_state, "environment": environment, "command": palm_command, "challenge": palm_ui.get("palmed_swap_challenge", {})}
 
 
-func _bar_dice_state_for(game: GameModule, run_state: RunState, environment: Dictionary, ruleset: String, tier: String, bonus_mode: String) -> Dictionary:
-	var state: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("bar_dice_forced_%s_%s_%s" % [ruleset, tier, bonus_mode]))
-	state["ruleset_family"] = "ship_captain_crew"
-	state["ruleset_label"] = "Ship, Captain, Crew"
-	state["edge_tier"] = tier
-	state["edge_label"] = {
-		"friendly": "Friendly Rake",
-		"standard": "House Rake",
-		"sharp": "Sharp Rake",
-	}.get(tier, "House Rack")
-	state["rake_percent"] = {
-		"friendly": 4,
-		"standard": 7,
-		"sharp": 10,
-	}.get(tier, 7)
-	state["hosted_payout_percent"] = {
-		"friendly": 68,
-		"standard": 66,
-		"sharp": 70,
-	}.get(tier, 66)
-	state["bonus_mode"] = "pot_rake"
-	state["bonus_label"] = "Carryover Pot"
-	state["carryover_pot"] = 0
-	state["stake_ladder"] = [2, 5, 10, 20, 40]
-	state["selected_stake_index"] = 2
-	return state
+func _baccarat_draw_structure(harness: SurfaceHarness) -> Dictionary:
+	var hit_order: Array = []
+	for hit_value in harness.hit_regions:
+		var hit: Dictionary = hit_value
+		hit_order.append([str(hit.get("action", "")), int(hit.get("index", -1))])
+	var draw_shape: Array = []
+	for draw_value in harness.draw_rect_records:
+		var draw: Dictionary = draw_value
+		draw_shape.append([bool(draw.get("filled", true)), float(draw.get("width", -1.0))])
+	var label_slots: Array = []
+	for label_value in harness.label_records:
+		label_slots.append(int((label_value as Dictionary).get("font_size", 0)))
+	return {"hit_order": hit_order, "draw_shape": draw_shape, "label_slots": label_slots}
 
 
+
+
+# Shared test-chain helpers owned here so this inheritance layer compiles.
+
+func _check_surface_command_non_mutating(game: GameModule, action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary, label: String, failures: Array) -> Dictionary:
+	var before := JSON.stringify(run_state.to_dict())
+	var command: Dictionary = game.surface_action_command(action, index, confirm_requested, ui_state, run_state, environment)
+	if not bool(command.get("handled", false)):
+		failures.append("Surface command was not handled: %s." % label)
+	if JSON.stringify(run_state.to_dict()) != before:
+		failures.append("Surface command mutated RunState before resolution: %s." % label)
+	return command
+
+func _pull_tab_sleeve_entry_payout(deal: Dictionary, sleeve_entry: int) -> int:
+	if sleeve_entry < 0:
+		return 0
+	var prizes: Array = deal.get("prizes", [])
+	if sleeve_entry >= prizes.size():
+		return 0
+	return maxi(0, int((prizes[sleeve_entry] as Dictionary).get("payout", 0)))
+
+func _string_array_from_variant(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry in value as Array:
+		var id := str(entry)
+		if not id.is_empty():
+			result.append(id)
+	return result
+
+func _surface_blocks_action(surface_state: Dictionary, action_id: String) -> bool:
+	for block_value in surface_state.get("surface_action_blocks", []):
+		if typeof(block_value) != TYPE_DICTIONARY:
+			continue
+		var block: Dictionary = block_value
+		if str(block.get("action", "")) == action_id:
+			return true
+		for blocked_action in block.get("actions", []):
+			if str(blocked_action) == action_id:
+				return true
+	return false
+
+
+# Captures the RunState domains ActionResult is allowed to update.
+
+func _surface_blocks_action_while(surface_state: Dictionary, action_id: String, animation_channel: String) -> bool:
+	for block_value in surface_state.get("surface_action_blocks", []):
+		if typeof(block_value) != TYPE_DICTIONARY:
+			continue
+		var block: Dictionary = block_value
+		if str(block.get("while_animation", "")) != animation_channel:
+			continue
+		if str(block.get("action", "")) == action_id:
+			return true
+		for blocked_action in block.get("actions", []):
+			if str(blocked_action) == action_id:
+				return true
+	return false

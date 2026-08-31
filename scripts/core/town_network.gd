@@ -143,7 +143,11 @@ func seeded_scenario_for_node(node_id: String) -> Dictionary:
 
 
 func seeded_scenario_definition_for_node(node_id: String) -> Dictionary:
-	return _dictionary(seeded_scenario_definitions_by_node.get(node_id.strip_edges(), {})).duplicate(true)
+	return _seeded_scenario_definition_for_node_readonly(node_id).duplicate(true)
+
+
+func _seeded_scenario_definition_for_node_readonly(node_id: String) -> Dictionary:
+	return _dictionary(seeded_scenario_definitions_by_node.get(node_id.strip_edges(), {}))
 
 
 func register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionary) -> bool:

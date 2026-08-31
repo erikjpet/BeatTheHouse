@@ -1,7 +1,13 @@
 class_name PoliceSweepModel
 extends RefCounted
 
-const SCHEMA_VERSION := 1
+const SCHEMA_VERSION := 2
+const LEGACY_SCHEMA_VERSION := 1
+const ENCOUNTER_TOMBSTONE_LIMIT := 16
+const ENCOUNTER_PROPOSAL_SCHEMA_VERSION := 1
+const ENCOUNTER_AUTHORITY_GAP := "host_encounter_resolution_not_verifiable_in_model"
+const INTEL_AUTHORITY_GAP := "host_sweep_intel_capability_not_verifiable_in_model"
+const ENCOUNTER_OUTCOMES := ["pass_over", "shakedown", "confiscation", "travel_lock", "punchline_l2_near_miss"]
 const GRAND_CASINO_IDS := [
 	"grand_casino",
 	"grand_casino_high_limit",
@@ -24,6 +30,9 @@ var last_encounter_node_id: String = ""
 var last_adjacent_sighting_segment: int = -1
 var config: Dictionary = {}
 var reroute_history: Array = []
+var encounter_tombstones: Array = []
+
+var _host_capability: RefCounted
 
 var _node_metadata: Dictionary = {}
 var _neighbors_by_node: Dictionary = {}
@@ -45,8 +54,20 @@ func reset(p_seed_value: int, source_config: Dictionary = {}) -> void:
 	last_adjacent_sighting_segment = -1
 	config = source_config.duplicate(true)
 	reroute_history = []
+	encounter_tombstones = []
 	_node_metadata = {}
 	_neighbors_by_node = {}
+
+
+func bind_host_capability(capability: RefCounted) -> bool:
+	if capability == null or _host_capability != null:
+		return false
+	_host_capability = capability
+	return true
+
+
+func _host_authorized(candidate: Variant) -> bool:
+	return typeof(candidate) == TYPE_OBJECT and candidate != null and is_instance_valid(candidate) and candidate == _host_capability
 
 
 func disable(p_seed_value: int, source_config: Dictionary = {}) -> void:
@@ -128,28 +149,58 @@ func status() -> Dictionary:
 	}
 
 
-func intel_status(capabilities: Dictionary) -> Dictionary:
-	if not bool(capabilities.get("sweep_intel", false)):
-		return {}
-	return status()
+func intel_status(host_capability: Variant = null, intel_enabled: bool = false) -> Dictionary:
+	if not _host_authorized(host_capability) or not intel_enabled:
+		return {"available": false, "authority_gap": INTEL_AUTHORITY_GAP}
+	var current := status()
+	if not bool(current.get("active", false)):
+		return {"available": false, "observed": false, "live": false}
+	return {
+		"available": true,
+		"active": true,
+		"observed": true,
+		"live": true,
+		"current_node_id": str(current.get("current_node_id", "")),
+		"heading_node_id": str(current.get("heading_node_id", "")),
+		"moves_in_actions": maxi(0, int(current.get("next_move_action", action_index)) - action_index),
+	}
 
 
-func report_intel_at_boundary(capabilities: Dictionary, source: String = "crew_intel") -> Dictionary:
-	if not bool(capabilities.get("sweep_intel", false)):
-		return {}
-	return record_personal_sighting(source)
+func report_intel_at_boundary(host_capability: Variant = null, intel_enabled: bool = false, source: String = "crew_intel") -> Dictionary:
+	var intel := intel_status(host_capability, intel_enabled)
+	if not bool(intel.get("available", false)):
+		return intel
+	personal_marker = {
+		"node_id": str(intel.get("current_node_id", "")),
+		"heading_node_id": str(intel.get("heading_node_id", "")),
+		"sighted_action": action_index,
+		"source": source if source in ["crew_intel", "direct", "adjacent"] else "crew_intel",
+		"segment_index": segment_index,
+	}
+	return map_marker(host_capability, intel_enabled)
 
 
-func map_marker(_capabilities: Dictionary = {}) -> Dictionary:
+func map_marker(host_capability: Variant = null, intel_enabled: bool = false) -> Dictionary:
 	if personal_marker.is_empty():
 		return {}
-	var marker := personal_marker.duplicate(true)
-	marker["stale_actions"] = maxi(0, action_index - int(marker.get("sighted_action", action_index)))
-	marker["live"] = false
-	return marker
+	if not _host_authorized(host_capability) or not intel_enabled:
+		return {"observed": true, "live": false, "available": false, "authority_gap": INTEL_AUTHORITY_GAP}
+	var live := int(personal_marker.get("segment_index", -1)) == segment_index and bool(status().get("active", false))
+	return {
+		"available": true,
+		"observed": true,
+		"live": live,
+		"node_id": str(personal_marker.get("node_id", "")),
+		"heading_node_id": str(personal_marker.get("heading_node_id", "")),
+		"sighted_action": maxi(0, int(personal_marker.get("sighted_action", action_index))),
+		"stale_actions": maxi(0, action_index - int(personal_marker.get("sighted_action", action_index))),
+		"source": str(personal_marker.get("source", "crew_intel")),
+	}
 
 
-func record_personal_sighting(source: String = "direct") -> Dictionary:
+func record_personal_sighting(source: String = "direct", host_capability: Variant = null) -> Dictionary:
+	if not _host_authorized(host_capability):
+		return {}
 	var current := status()
 	if not bool(current.get("active", false)):
 		return {}
@@ -160,7 +211,7 @@ func record_personal_sighting(source: String = "direct") -> Dictionary:
 		"source": source,
 		"segment_index": int(current.get("segment_index", -1)),
 	}
-	return map_marker()
+	return map_marker(host_capability, true)
 
 
 func is_at(node_id: String) -> bool:
@@ -190,7 +241,9 @@ func adjacent_sighting_due(player_node_id: String) -> bool:
 	return true
 
 
-func claim_encounter(node_id: String) -> Dictionary:
+func claim_encounter(node_id: String, host_capability: Variant = null) -> Dictionary:
+	if not _host_authorized(host_capability):
+		return {}
 	if not is_at(node_id):
 		return {}
 	var current := status()
@@ -218,6 +271,165 @@ func swept_window(node_id: String) -> Dictionary:
 	result["cheat_window_open"] = true
 	result["pusher_alarm_tolerance_band_delta"] = 1
 	return result
+
+
+# Presentation-only encounter seam. The model can bind this proposal to its
+# current track claim, but RunState remains the owner of every economic effect.
+func encounter_proposal(claim: Dictionary, cargo_value: Variant, exit_node_ids: Array, host_capability: Variant = null, intel_enabled: bool = false) -> Dictionary:
+	if not _encounter_claim_matches_current(claim):
+		return {}
+	var cargo := _cargo_public_context(cargo_value)
+	var exits := _string_array(exit_node_ids)
+	exits.sort()
+	var unique_exits: Array = []
+	for exit_id in exits:
+		if exit_id != str(claim.get("node_id", "")) and not unique_exits.has(exit_id): unique_exits.append(exit_id)
+	var proposal := {
+		"schema_version": ENCOUNTER_PROPOSAL_SCHEMA_VERSION,
+		"phase": "arrival_proposal",
+		"officer_presence": "street_control",
+		"positions": {"officers": "blocking_route", "player": "street_approach", "cargo": "carried" if bool(cargo.get("active", false)) else "none"},
+		"exit_node_ids": unique_exits,
+		"cargo_context": cargo,
+		"intel_projection": map_marker(host_capability, intel_enabled),
+		"costed_rungs": encounter_costed_rungs(_dictionary(config.get("encounter", {}))),
+		"authoritative": false,
+		"can_mutate": false,
+		"authority_gap": ENCOUNTER_AUTHORITY_GAP,
+	}
+	if (proposal["intel_projection"] as Dictionary).is_empty():
+		proposal["intel_projection"] = intel_status(host_capability, intel_enabled)
+	return proposal
+
+
+static func normalize_encounter_proposal(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY: return {}
+	var proposal: Dictionary = (value as Dictionary).duplicate(true)
+	if not _exact_keys(proposal, ["authoritative", "authority_gap", "can_mutate", "cargo_context", "costed_rungs", "exit_node_ids", "intel_projection", "officer_presence", "phase", "positions", "schema_version"]): return {}
+	if int(proposal.get("schema_version", 0)) != ENCOUNTER_PROPOSAL_SCHEMA_VERSION or bool(proposal.get("authoritative", true)) or bool(proposal.get("can_mutate", true)) or str(proposal.get("authority_gap", "")) != ENCOUNTER_AUTHORITY_GAP: return {}
+	if str(proposal.get("phase", "")) != "arrival_proposal" or str(proposal.get("officer_presence", "")) != "street_control": return {}
+	if not _cargo_context_valid(proposal.get("cargo_context")) or not _intel_projection_valid(proposal.get("intel_projection")) or not _positions_valid(proposal.get("positions")) or not _rungs_valid(proposal.get("costed_rungs")): return {}
+	var exits := _string_array(proposal.get("exit_node_ids", []))
+	var sorted := exits.duplicate(); sorted.sort()
+	if exits != sorted or exits.size() != _unique_strings(exits).size(): return {}
+	var normalized := {
+		"schema_version": ENCOUNTER_PROPOSAL_SCHEMA_VERSION,
+		"phase": "arrival_proposal",
+		"officer_presence": "street_control",
+		"positions": (proposal.get("positions", {}) as Dictionary).duplicate(true),
+		"exit_node_ids": exits,
+		"cargo_context": (proposal.get("cargo_context", {}) as Dictionary).duplicate(true),
+		"intel_projection": _normalized_intel_projection(proposal.get("intel_projection", {})),
+		"costed_rungs": _normalized_rungs(proposal.get("costed_rungs", [])),
+		"authoritative": false,
+		"can_mutate": false,
+		"authority_gap": ENCOUNTER_AUTHORITY_GAP,
+	}
+	return normalized
+
+
+static func encounter_action_proposal(state_value: Variant, action: String) -> Dictionary:
+	var state := normalize_encounter_proposal(state_value)
+	var clean_action := action.strip_edges().to_lower()
+	if state.is_empty() or clean_action not in ["observe_officers", "use_intel", "choose_exit", "comply"]: return {}
+	var intel := _dictionary(state.get("intel_projection", {}))
+	if clean_action == "use_intel" and not bool(intel.get("available", false)): return {}
+	var result := {
+		"action": clean_action,
+		"current_phase": "arrival_proposal",
+		"next_phase_proposal": "route_choice_proposal" if clean_action in ["observe_officers", "use_intel"] else "host_resolution_required",
+		"authoritative": false,
+		"can_mutate": false,
+		"authority_gap": ENCOUNTER_AUTHORITY_GAP,
+	}
+	if clean_action == "use_intel":
+		var exits := _string_array(state.get("exit_node_ids", []))
+		var heading := str(intel.get("heading_node_id", ""))
+		for exit_id in exits:
+			if exit_id != heading:
+				result["recommended_exit_id"] = exit_id
+				break
+	return result
+
+
+static func encounter_public_state(state_value: Variant) -> Dictionary:
+	var state := normalize_encounter_proposal(state_value)
+	if state.is_empty(): return {}
+	return {
+		"phase": str(state.get("phase", "")),
+		"officer_presence": str(state.get("officer_presence", "")), "positions": (state.get("positions", {}) as Dictionary).duplicate(true),
+		"exit_node_ids": (state.get("exit_node_ids", []) as Array).duplicate(), "cargo_context": (state.get("cargo_context", {}) as Dictionary).duplicate(true),
+		"intel_projection": (state.get("intel_projection", {}) as Dictionary).duplicate(true), "costed_rungs": (state.get("costed_rungs", []) as Array).duplicate(true),
+		"authoritative": false, "can_mutate": false, "authority_gap": ENCOUNTER_AUTHORITY_GAP,
+	}
+
+
+static func aftermath_proposal(state_value: Variant, outcome: String, cost_kind: String, cost_amount: int) -> Dictionary:
+	var state := normalize_encounter_proposal(state_value)
+	var clean_outcome := outcome.strip_edges().to_lower()
+	var clean_cost := cost_kind.strip_edges().to_lower()
+	if state.is_empty() or not _cost_matches_rung(state.get("costed_rungs", []), clean_outcome, clean_cost, cost_amount): return {}
+	var cargo: Dictionary = state.get("cargo_context", {})
+	return {
+		"phase": "aftermath_proposal",
+		"outcome": clean_outcome, "cost_kind": clean_cost, "cost_amount": cost_amount, "run_continues": true,
+		"cargo_consequence": "host_may_confiscate_delivery" if clean_cost == "contraband" and bool(cargo.get("active", false)) else "none",
+		"officer_presence": "departing", "wake_expected": true,
+		"authoritative": false, "can_mutate": false, "authority_gap": ENCOUNTER_AUTHORITY_GAP,
+	}
+
+
+func swept_window_aftermath(node_id: String) -> Dictionary:
+	var window := swept_window(node_id)
+	if window.is_empty(): return {}
+	return {
+		"node_id": str(window.get("node_id", "")), "phase": "swept_window", "officer_presence": "departed", "remaining_actions": int(window.get("remaining_actions", 0)),
+		"security_strictness_band_delta": int(window.get("security_strictness_band_delta", 0)), "cheat_window_open": bool(window.get("cheat_window_open", false)),
+		"pusher_alarm_tolerance_band_delta": int(window.get("pusher_alarm_tolerance_band_delta", 0)), "visible_cues": ["fresh_tire_tracks", "street_reopening"],
+	}
+
+
+func record_encounter_resolution(host_capability: Variant, claim: Dictionary, outcome: String, cost_kind: String, cost_amount: int) -> Dictionary:
+	var rungs := encounter_costed_rungs(_dictionary(config.get("encounter", {})))
+	var validation_kind := "cash" if cost_kind == "street_debt" else cost_kind
+	var cost_valid := _cost_matches_rung(rungs, outcome, validation_kind, cost_amount)
+	if not cost_valid and validation_kind == "cash" and cost_amount >= 0:
+		for rung_value in rungs:
+			var rung := _dictionary(rung_value)
+			if str(rung.get("outcome", "")) != outcome: continue
+			for option_value in _dictionary_array(rung.get("cost_options", [])):
+				var option := _dictionary(option_value)
+				var amount_range: Array = (option.get("amount_range", []) as Array).duplicate() if typeof(option.get("amount_range", [])) == TYPE_ARRAY else []
+				if str(option.get("cost_kind", "")) == "cash" and amount_range.size() == 2 and cost_amount <= int(amount_range[1]): cost_valid = true
+	if not _host_authorized(host_capability) or not _encounter_claim_matches_current(claim) \
+			or outcome not in ENCOUNTER_OUTCOMES or not cost_valid:
+		return {}
+	var tombstone := {
+		"segment_index": int(claim.get("segment_index", -1)),
+		"node_id": str(claim.get("node_id", "")),
+		"action_index": int(claim.get("action_index", action_index)),
+		"outcome": outcome,
+		"cost_kind": cost_kind,
+		"cost_amount": maxi(0, cost_amount),
+	}
+	for existing_value in encounter_tombstones:
+		var existing := _dictionary(existing_value)
+		if int(existing.get("segment_index", -2)) == int(tombstone.get("segment_index", -1)):
+			return existing.duplicate(true) if existing == tombstone else {}
+	encounter_tombstones.append(tombstone)
+	while encounter_tombstones.size() > ENCOUNTER_TOMBSTONE_LIMIT:
+		encounter_tombstones.pop_front()
+	return tombstone.duplicate(true)
+
+
+static func encounter_costed_rungs(encounter_config: Dictionary) -> Array:
+	return [
+		_rung("pass_over", "brief_check", [["cash", _int_range(encounter_config.get("pass_over_fee", [2, 6]), 2, 6)], ["travel_delay", [maxi(1, int(encounter_config.get("pass_over_fallback_lock_actions", 1))), maxi(1, int(encounter_config.get("pass_over_fallback_lock_actions", 1)))]]]),
+		_rung("shakedown", "street_search", [["cash", _int_range(encounter_config.get("shakedown_fee", [10, 28]), 10, 28)], ["travel_delay", [maxi(1, int(encounter_config.get("shakedown_fallback_lock_actions", 1))), maxi(1, int(encounter_config.get("shakedown_fallback_lock_actions", 1)))]]]),
+		_rung("confiscation", "cargo_search", [["contraband", [1, 1]], ["cash", _int_range(encounter_config.get("empty_confiscation_fee", [8, 16]), 8, 16)], ["travel_delay", [maxi(1, int(encounter_config.get("empty_confiscation_fallback_lock_actions", 2))), maxi(1, int(encounter_config.get("empty_confiscation_fallback_lock_actions", 2)))]]]),
+		_rung("travel_lock", "road_block", [["travel_delay", _int_range(encounter_config.get("travel_lock_actions", [2, 4]), 2, 4)], ["cash", _int_range(encounter_config.get("occupied_lock_fine", [6, 12]), 6, 12)]]),
+		_rung("punchline_l2_near_miss", "layer_two_near_miss", [["travel_delay", [maxi(1, int(encounter_config.get("punchline_near_miss_lock_actions", 2))), maxi(1, int(encounter_config.get("punchline_near_miss_lock_actions", 2)))]], ["cash", _int_range(encounter_config.get("occupied_lock_fine", [6, 12]), 6, 12)]])
+	]
 
 
 # Narrow landed-consumer seam: deterministically rewrites future segments along
@@ -304,12 +516,16 @@ func snapshot() -> Dictionary:
 		"last_adjacent_sighting_segment": last_adjacent_sighting_segment,
 		"config": config.duplicate(true),
 		"reroute_history": reroute_history.duplicate(true),
+		"encounter_tombstones": encounter_tombstones.duplicate(true),
 	}
 
 
 func restore(source: Dictionary, p_seed_value: int, source_config: Dictionary = {}) -> bool:
 	reset(p_seed_value, source_config)
-	if int(source.get("schema_version", 0)) != SCHEMA_VERSION:
+	var version := int(source.get("schema_version", 0))
+	var legacy_keys := ["schema_version", "seed_value", "action_index", "configured", "disabled", "start_action", "end_action", "segments", "segment_index", "swept_windows_by_node", "personal_marker", "last_encounter_segment", "last_encounter_node_id", "last_adjacent_sighting_segment", "config", "reroute_history"]
+	var current_keys := legacy_keys.duplicate(); current_keys.append("encounter_tombstones")
+	if version not in [LEGACY_SCHEMA_VERSION, SCHEMA_VERSION] or not _exact_keys(source, legacy_keys if version == LEGACY_SCHEMA_VERSION else current_keys):
 		disable(p_seed_value, source_config)
 		return false
 	seed_value = maxi(1, int(source.get("seed_value", p_seed_value)))
@@ -327,9 +543,25 @@ func restore(source: Dictionary, p_seed_value: int, source_config: Dictionary = 
 	last_adjacent_sighting_segment = int(source.get("last_adjacent_sighting_segment", -1))
 	config = _dictionary(source.get("config", source_config)).duplicate(true)
 	reroute_history = _dictionary_array(source.get("reroute_history", []))
+	encounter_tombstones = []
+	for tombstone_value in _dictionary_array(source.get("encounter_tombstones", [])):
+		var tombstone := _normalize_encounter_tombstone(tombstone_value)
+		if tombstone.is_empty() or encounter_tombstones.size() >= ENCOUNTER_TOMBSTONE_LIMIT:
+			disable(p_seed_value, source_config)
+			return false
+		encounter_tombstones.append(tombstone)
 	_sync_segment_index()
 	_prune_windows()
 	return true
+
+
+static func _normalize_encounter_tombstone(value: Dictionary) -> Dictionary:
+	if not _exact_keys(value, ["action_index", "cost_amount", "cost_kind", "node_id", "outcome", "segment_index"]): return {}
+	if str(value.get("node_id", "")).is_empty() or str(value.get("outcome", "")) not in ENCOUNTER_OUTCOMES \
+			or str(value.get("cost_kind", "")) not in ["cash", "contraband", "travel_delay", "street_debt"] \
+			or int(value.get("segment_index", -1)) < 0 or int(value.get("action_index", -1)) < 0 or int(value.get("cost_amount", -1)) < 0:
+		return {}
+	return value.duplicate(true)
 
 
 func align_restored_action_index(restored_action_index: int) -> void:
@@ -485,6 +717,145 @@ func _shortest_path(start_node: String, target_node: String) -> Array:
 				return path
 			queue.append(neighbor)
 	return []
+
+
+func _encounter_claim_matches_current(claim: Dictionary) -> bool:
+	if not _exact_keys(claim, ["action_index", "encounter_seed", "node_id", "segment_index", "sweep_departure_action"]): return false
+	var current := status()
+	return not current.is_empty() and int(claim.get("segment_index", -1)) == last_encounter_segment \
+		and str(claim.get("node_id", "")) == last_encounter_node_id and int(claim.get("segment_index", -1)) == int(current.get("segment_index", -2)) \
+		and str(claim.get("node_id", "")) == str(current.get("current_node_id", "")) and int(claim.get("action_index", -1)) == action_index \
+		and int(claim.get("encounter_seed", 0)) == _stable_hash("%d:%d:sweep_encounter" % [seed_value, int(claim.get("segment_index", -1))]) \
+		and int(claim.get("sweep_departure_action", -1)) == int(current.get("next_move_action", -2))
+
+
+static func _cargo_public_context(value: Variant) -> Dictionary:
+	var source := _dictionary(value)
+	var cargo_id := str(source.get("cargo_id", source.get("id", ""))).strip_edges()
+	return {
+		"active": not cargo_id.is_empty(),
+		"cargo_id": cargo_id,
+		"cargo_label": str(source.get("cargo_label", source.get("label", cargo_id.replace("_", " ").capitalize()))).strip_edges() if not cargo_id.is_empty() else "",
+		"contraband": bool(source.get("contraband", false)) if not cargo_id.is_empty() else false,
+	}
+
+
+static func _cargo_context_valid(value: Variant) -> bool:
+	if typeof(value) != TYPE_DICTIONARY: return false
+	var cargo: Dictionary = value
+	if not _exact_keys(cargo, ["active", "cargo_id", "cargo_label", "contraband"]): return false
+	var active := bool(cargo.get("active", false))
+	return (active and not str(cargo.get("cargo_id", "")).strip_edges().is_empty() and not str(cargo.get("cargo_label", "")).strip_edges().is_empty()) \
+		or (not active and str(cargo.get("cargo_id", "")).is_empty() and str(cargo.get("cargo_label", "")).is_empty() and not bool(cargo.get("contraband", false)))
+
+
+static func _intel_projection_valid(value: Variant) -> bool:
+	if typeof(value) != TYPE_DICTIONARY: return false
+	var intel: Dictionary = value
+	if not bool(intel.get("available", false)):
+		return _exact_keys(intel, ["authority_gap", "available"]) and str(intel.get("authority_gap", "")) == INTEL_AUTHORITY_GAP \
+			or _exact_keys(intel, ["available", "live", "observed"]) and not bool(intel.get("live", true))
+	var live_status := _exact_keys(intel, ["active", "available", "current_node_id", "heading_node_id", "live", "moves_in_actions", "observed"]) \
+		and bool(intel.get("observed", false)) and not str(intel.get("current_node_id", "")).is_empty() and int(intel.get("moves_in_actions", -1)) >= 0
+	var reported_marker := _exact_keys(intel, ["available", "heading_node_id", "live", "node_id", "observed", "sighted_action", "source", "stale_actions"]) \
+		and bool(intel.get("observed", false)) and not str(intel.get("node_id", "")).is_empty() and int(intel.get("sighted_action", -1)) >= 0 \
+		and int(intel.get("stale_actions", -1)) >= 0 and str(intel.get("source", "")) in ["crew_intel", "direct", "adjacent"]
+	return live_status or reported_marker
+
+
+static func _normalized_intel_projection(value: Variant) -> Dictionary:
+	var intel := _dictionary(value)
+	if not bool(intel.get("available", false)):
+		if intel.has("authority_gap"):
+			return {"available": false, "authority_gap": INTEL_AUTHORITY_GAP}
+		return {"available": false, "observed": bool(intel.get("observed", false)), "live": false}
+	if intel.has("current_node_id"):
+		return {
+			"available": true,
+			"active": bool(intel.get("active", false)),
+			"observed": bool(intel.get("observed", false)),
+			"live": bool(intel.get("live", false)),
+			"current_node_id": str(intel.get("current_node_id", "")),
+			"heading_node_id": str(intel.get("heading_node_id", "")),
+			"moves_in_actions": maxi(0, int(intel.get("moves_in_actions", 0))),
+		}
+	return {
+		"available": true,
+		"observed": bool(intel.get("observed", false)),
+		"live": bool(intel.get("live", false)),
+		"node_id": str(intel.get("node_id", "")),
+		"heading_node_id": str(intel.get("heading_node_id", "")),
+		"sighted_action": maxi(0, int(intel.get("sighted_action", 0))),
+		"stale_actions": maxi(0, int(intel.get("stale_actions", 0))),
+		"source": str(intel.get("source", "crew_intel")),
+	}
+
+
+static func _positions_valid(value: Variant) -> bool:
+	return typeof(value) == TYPE_DICTIONARY and _exact_keys(value as Dictionary, ["cargo", "officers", "player"]) \
+		and str((value as Dictionary).get("officers", "")) == "blocking_route" and str((value as Dictionary).get("player", "")) == "street_approach" \
+		and str((value as Dictionary).get("cargo", "")) in ["carried", "none"]
+
+
+static func _rung(outcome: String, beat: String, options_value: Array) -> Dictionary:
+	var options: Array = []
+	for option_value in options_value:
+		var option: Array = option_value
+		options.append({"cost_kind": str(option[0]), "amount_range": (option[1] as Array).duplicate()})
+	return {"outcome": outcome, "staged_beat": beat, "run_continues": true, "cost_options": options}
+
+
+static func _rungs_valid(value: Variant) -> bool:
+	if typeof(value) != TYPE_ARRAY or (value as Array).size() != ENCOUNTER_OUTCOMES.size(): return false
+	var outcomes: Array = []
+	for rung_value in value as Array:
+		if typeof(rung_value) != TYPE_DICTIONARY: return false
+		var rung: Dictionary = rung_value
+		if not _exact_keys(rung, ["cost_options", "outcome", "run_continues", "staged_beat"]) or not bool(rung.get("run_continues", false)) or str(rung.get("staged_beat", "")).is_empty() or typeof(rung.get("cost_options")) != TYPE_ARRAY: return false
+		outcomes.append(str(rung.get("outcome", "")))
+		for option_value in rung.get("cost_options", []):
+			if typeof(option_value) != TYPE_DICTIONARY or not _exact_keys(option_value as Dictionary, ["amount_range", "cost_kind"]): return false
+			var amount_range: Variant = (option_value as Dictionary).get("amount_range")
+			if typeof(amount_range) != TYPE_ARRAY or (amount_range as Array).size() != 2 or int((amount_range as Array)[0]) <= 0 or int((amount_range as Array)[1]) < int((amount_range as Array)[0]): return false
+	return outcomes == ENCOUNTER_OUTCOMES
+
+
+static func _normalized_rungs(value: Variant) -> Array:
+	var result: Array = []
+	for rung_value in value as Array:
+		var rung: Dictionary = rung_value
+		var options: Array = []
+		for option_value in rung.get("cost_options", []):
+			var option: Dictionary = option_value
+			var amount_range: Array = option.get("amount_range", [])
+			options.append({"cost_kind": str(option.get("cost_kind", "")), "amount_range": [int(amount_range[0]), int(amount_range[1])]})
+		result.append({"outcome": str(rung.get("outcome", "")), "staged_beat": str(rung.get("staged_beat", "")), "run_continues": bool(rung.get("run_continues", false)), "cost_options": options})
+	return result
+
+
+static func _cost_matches_rung(rungs_value: Variant, outcome: String, cost_kind: String, cost_amount: int) -> bool:
+	if not _rungs_valid(rungs_value) or cost_amount <= 0: return false
+	for rung_value in rungs_value as Array:
+		var rung: Dictionary = rung_value
+		if str(rung.get("outcome", "")) != outcome: continue
+		for option_value in rung.get("cost_options", []):
+			var option: Dictionary = option_value
+			var amount_range: Array = option.get("amount_range", [])
+			if str(option.get("cost_kind", "")) == cost_kind and cost_amount >= int(amount_range[0]) and cost_amount <= int(amount_range[1]): return true
+	return false
+
+
+static func _exact_keys(value: Dictionary, expected: Array) -> bool:
+	var keys := value.keys(); keys.sort()
+	var exact := expected.duplicate(); exact.sort()
+	return keys == exact
+
+
+static func _unique_strings(value: Array) -> Array:
+	var result: Array = []
+	for entry in value:
+		if not result.has(str(entry)): result.append(str(entry))
+	return result
 
 
 static func _dictionary(value: Variant) -> Dictionary:

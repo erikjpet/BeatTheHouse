@@ -268,8 +268,12 @@ func slot_status(slot_id: String = "autosave") -> Dictionary:
 
 
 func _slot_status_unlocked(clean_slot: String) -> Dictionary:
-	var primary := _read_run_state_from_path(run_save_path(clean_slot))
-	var backup := _read_run_state_from_path(backup_save_path(clean_slot))
+	# Menu/status polling only needs to know whether each atomic generation has a
+	# valid save envelope. Constructing and normalizing two complete RunStates on
+	# every hidden or visible menu refresh made late-run UI checks take seconds.
+	# Continue/load remains the boundary that performs the full trusted restore.
+	var primary := _slot_generation_status(run_save_path(clean_slot))
+	var backup := _slot_generation_status(backup_save_path(clean_slot))
 	var primary_loadable := bool(primary.get("loadable", false))
 	var backup_loadable := bool(backup.get("loadable", false))
 	if primary_loadable:
@@ -285,6 +289,15 @@ func _slot_status_unlocked(clean_slot: String) -> Dictionary:
 		"backup_loadable": backup_loadable,
 		"primary_corrupt": bool(primary.get("exists", false)) and not primary_loadable,
 		"backup_corrupt": bool(backup.get("exists", false)) and not backup_loadable,
+	}
+
+
+func _slot_generation_status(path: String) -> Dictionary:
+	var absolute_path := ProjectSettings.globalize_path(path)
+	var exists := FileAccess.file_exists(absolute_path)
+	return {
+		"exists": exists,
+		"loadable": exists and _worker_payload_loadable(absolute_path),
 	}
 
 
