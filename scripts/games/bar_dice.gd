@@ -368,6 +368,16 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_cast": "dealer_table",
 		"surface_controls_native": true,
 		"surface_stake_controls_required": false,
+		# Accessibility confirmation bypasses the native chip hit region, but it
+		# must still fund the exact authored ladder chip shown on the table.
+		"surface_action_stake_view": {
+			"stake_floor": maxi(1, active_stake),
+			"stake_ceiling": maxi(1, active_stake),
+			"base_stake_ceiling": maxi(1, active_stake),
+			"economy_stake_ceiling": maxi(1, active_stake),
+			"economy_state": run_state.economy() if run_state != null else {},
+			"economy_pressure_applied": false,
+		},
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_animates_idle": true,

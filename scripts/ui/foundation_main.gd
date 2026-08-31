@@ -1244,17 +1244,32 @@ func _sealed_action_host_trusted_context(candidate: RunState, stake: int) -> Dic
 func _sealed_action_host_detached() -> RunState:
 	if run_state == null:
 		return null
+	return _sealed_action_host_restored_candidate(
+		run_state.to_save_snapshot(),
+		_copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
+	)
+
+
+func _sealed_action_host_restored_candidate(snapshot: Dictionary, layout_context: Dictionary = {}) -> RunState:
 	var candidate := RunState.new()
-	candidate.from_dict(run_state.to_save_snapshot())
+	candidate.from_dict(snapshot)
+	# Save snapshots deliberately omit renderer-derived scenario semantics and
+	# mark dynamic rooms for a trusted rebuild. Sealed game transactions operate
+	# on detached save snapshots, so rebuild that non-causal authority before an
+	# environment-turn boundary is allowed to run on the candidate.
+	var finalized := candidate.scenario_finalize_installed_environment(library, layout_context)
+	if not bool(finalized.get("ok", false)):
+		return null
 	return candidate
 
 
 func _sealed_action_host_normalized_candidate(candidate: RunState) -> RunState:
 	if candidate == null:
 		return null
-	var normalized := RunState.new()
-	normalized.from_dict(candidate.to_save_snapshot())
-	return normalized
+	return _sealed_action_host_restored_candidate(
+		candidate.to_save_snapshot(),
+		_copy_dict(candidate.current_environment.get("scenario_layout_context", {}))
+	)
 
 
 func _sealed_action_host_publish(candidate: RunState) -> bool:
@@ -1272,6 +1287,17 @@ func _sealed_action_host_publish(candidate: RunState) -> bool:
 	var original_environment := run_state.current_environment
 	var original_environment_snapshot := original_environment.duplicate(true)
 	run_state.from_dict(snapshot)
+	var published_finalization := run_state.scenario_finalize_installed_environment(
+		library,
+		_copy_dict(normalized.current_environment.get("scenario_layout_context", {}))
+	)
+	if not bool(published_finalization.get("ok", false)):
+		run_state.from_dict(original_snapshot)
+		original_environment.clear()
+		for key in original_environment_snapshot:
+			original_environment[key] = original_environment_snapshot[key]
+		run_state.current_environment = original_environment
+		return false
 	var published_environment := run_state.current_environment.duplicate(true)
 	original_environment.clear()
 	for key in published_environment:
@@ -1303,6 +1329,8 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 	if not _current_game_uses_action_authority() or run_state == null or surface_action.is_empty():
 		return _sealed_action_host_rejection("invalid_intent", "Blackjack action intent is unavailable.")
 	var candidate := _sealed_action_host_detached()
+	if candidate == null:
+		return _sealed_action_host_rejection("internal_fail_closed", "Sealed table semantics could not be rebuilt.")
 	var ledger := _sealed_action_host_ledger(candidate, true)
 	# First entry can materialize and normalize the Blackjack table while the
 	# authority ledger is being created. Persist that deterministic, non-economic
@@ -1442,6 +1470,8 @@ func _sealed_action_host_preview_wager_cost(action_id: String, stake: int) -> in
 	if not _current_game_uses_action_authority() or run_state == null or action_id.is_empty():
 		return 0
 	var candidate := _sealed_action_host_detached()
+	if candidate == null:
+		return 0
 	var ledger := _sealed_action_host_ledger(candidate, true)
 	_sealed_action_host_store_ledger(candidate, ledger)
 	var snapshot := candidate.to_save_snapshot()
@@ -1466,6 +1496,8 @@ func _sealed_action_host_replay_request(delivery_claim: Dictionary) -> Dictionar
 	if request_key.is_empty() or not _current_game_uses_action_authority() or run_state == null:
 		return _sealed_action_host_rejection("unknown_receipt", "Blackjack request receipt is unavailable.", request_key)
 	var candidate := _sealed_action_host_detached()
+	if candidate == null:
+		return _sealed_action_host_rejection("internal_fail_closed", "Sealed table semantics could not be rebuilt.", request_key)
 	var ledger := _sealed_action_host_ledger(candidate, false)
 	var replay: Dictionary = ActionAuthorityScript.cached_response(ledger, request_key, delivery_claim)
 	if replay.is_empty():
@@ -1608,6 +1640,8 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	var delivery: Dictionary = prepared.get("delivery", {})
 	var request_key := str(delivery.get("request_key", ""))
 	var candidate := _sealed_action_host_detached()
+	if candidate == null:
+		return _sealed_action_host_rejection("internal_fail_closed", "Sealed table semantics could not be rebuilt.", request_key)
 	var ledger := _sealed_action_host_ledger(candidate, false)
 	if ledger.is_empty() or GameRitualRuntimeScript.canonical_json(ledger.get("pending_delivery", {})) != GameRitualRuntimeScript.canonical_json(delivery):
 		return _sealed_action_host_rejection("stale_boundary", "Blackjack delivery was not present on the canonical candidate.", request_key)
@@ -1677,8 +1711,12 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 			or str(result.get("action_id", "")) != action_id \
 			or str(result.get("environment_id", "")) != str(candidate.current_environment.get("id", "")):
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack result identity did not match the sealed delivery.", request_key)
-	var proposed_candidate := RunState.new()
-	proposed_candidate.from_dict((proposal.get("run_snapshot", {}) as Dictionary).duplicate(true))
+	var proposed_candidate := _sealed_action_host_restored_candidate(
+		(proposal.get("run_snapshot", {}) as Dictionary).duplicate(true),
+		_copy_dict(candidate.current_environment.get("scenario_layout_context", {}))
+	)
+	if proposed_candidate == null:
+		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal scenario semantics could not be rebuilt.", request_key)
 	var proposed_ledger := _sealed_action_host_ledger(proposed_candidate, false, false)
 	if proposed_ledger.is_empty() or GameRitualRuntimeScript.canonical_json(proposed_ledger.get("pending_delivery", {})) != GameRitualRuntimeScript.canonical_json(delivery):
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal changed its delivery authority.", request_key)
